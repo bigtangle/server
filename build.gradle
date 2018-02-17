@@ -3,8 +3,8 @@ apply from: "dependencies.gradle"
 
 allprojects {
 
-    project.group = 'de.db.vdv'
-    project.version = '1.1-SNAPSHOT'
+    project.group = 'com.bignetcoin'
+    project.version = '0.1-SNAPSHOT'
 
     ext {
         projectName = rootProject.name + '.' + project.name
@@ -19,12 +19,7 @@ allprojects {
     }
 
     repositories {
-        mavenLocal()
-        maven { url "http://nexus.reisendeninfo.aws.db.de/nexus/content/groups/public/" }
-        maven { url "http://nexus.reisendeninfo.aws.db.de/nexus/content/groups/pxr/" }
-        maven { url "http://nexus.reisendeninfo.aws.db.de/nexus/content/repositories/rikern-releases/" }
-        maven { url "http://nexus.reisendeninfo.aws.db.de/nexus/content/repositories/rikern-snapshots/" }
-        maven { url "http://packages.confluent.io/maven/" }
+      //  mavenLocal() 
         mavenCentral()
     }
 

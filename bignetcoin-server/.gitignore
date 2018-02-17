@@ -13,3 +13,4 @@ target/*
 *.jar
 src/main/ixi/
 /bin/
+/build/
