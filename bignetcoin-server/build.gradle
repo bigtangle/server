@@ -1,0 +1,120 @@
+buildscript {
+    ext {
+        springBootVersion = '1.5.6.RELEASE'
+    }
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+    }
+}
+plugins {
+    id 'org.sonarqube' version '2.2'
+    id 'jacoco'
+    id 'com.github.ksoichiro.build.info' version '0.1.5'
+}
+
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'org.springframework.boot'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+
+dependencies {
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-web', version:  ver.sprin_boot
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version:  ver.sprin_boot
+    compile group: 'org.projectlombok', name: 'lombok', version:  ver.lombok
+  
+    compile group: 'org.aspectj', name: 'aspectjrt',   version:ver.aspectjrt
+    compile group: 'org.aspectj', name: 'aspectjweaver', version:ver.aspectjweaver
+   	compile group: 'org.apache.commons', name: 'commons-lang3', version:ver.commons_lang3
+
+	compile group: 'org.springframework.data', name: 'spring-data-cassandra', version:ver.spring_data_cassandra
+
+ 	compile group: 'org.apache.kafka', name: 'kafka-streams', version:ver.kafka
+ 
+	compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version:ver.bcprov_jdk15on
+	
+    compile group: 'commons-io', name: 'commons-io', version:ver.commons_io
+     compile group: 'org.rocksdb', name: 'rocksdbjni', version:ver.rocksdbjni
+      compile group: 'com.google.code.gson', name: 'gson', version:ver.gson
+     compile group: 'com.jayway.restassured', name: 'rest-assured', version:ver.rest_assured
+      compile group: 'org.zeromq', name: 'jeromq', version:ver.jeromq
+     compile group: 'org.ini4j', name: 'ini4j', version:ver.ini4j
+     compile group: 'com.sanityinc', name: 'jargs', version:ver.jargs
+          compile group: 'io.undertow', name: 'undertow-core', version:ver.undertow
+        compile group: 'io.undertow', name: 'undertow-servlet', version:ver.undertow
+    /**
+     * test dependencies
+     */
+    testCompile group: 'org.testng', name: 'testng', version: ver.testng
+    testCompile group: 'org.mockito', name: 'mockito-all', version:  ver.mockito_all
+  	testCompile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-avro', version: ver.jackson_dataformat_avro
+  
+  
+  
+  /**
+     * test dependencies
+     */
+    testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
+    testCompile group: 'junit', name: 'junit',version:ver.junit
+    testCompile group: 'com.google.code.gson', name: 'gson', version:ver.gson
+
+
+}
+
+test {
+    useTestNG()
+
+    testLogging.showStandardStreams = true
+}
+
+
+sonarqube {
+    properties customSonarProperties
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+
+task createDistributable(type: Copy) {
+    dependsOn bootRepackage
+    def distDir = file('build/dist')
+    from('build/libs') {
+        include '*.jar'
+        rename '.*', 'as-vdv-aus-builder.jar'
+        into 'build/libs'
+    }
+    from('etc/') {
+        include 'Dockerfile'
+        include 'entrypoint.sh'
+    }
+    destinationDir distDir
+}
+
+task buildDockerImage(dependsOn: createDistributable) {
+    group 'docker'
+    doLast {
+        parent.buildDockerImageProcessing('as-vdv-aus-builder/build/dist', dockerLocalTag, dockerRegistryTag, project.name, project.group, projectName)
+    }
+}
+
+task pushDockerImage(dependsOn: buildDockerImage) {
+    group 'docker'
+    doLast {
+        parent.buildDockerPush(dockerRegistryTag)
+    }
+}

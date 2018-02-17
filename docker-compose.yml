@@ -1,0 +1,42 @@
+version: '2'
+networks:
+  as-vdv-aus-bridged-network:
+    driver: bridge
+services:
+  kafka-as-vdv-aus:
+    image: dockerregistry.reisendeninfo.aws.db.de:5000/generalgrievous/kafka-schema-registry:0.10
+    container_name: kafka-as-vdv-aus
+    restart: always
+    ports:
+    - 8081:8081
+    - 9092:9092
+    - 2181:2181
+    networks:
+    - as-vdv-aus-bridged-network
+    environment:
+      ADVERTISED_HOST: kafka-as-vdv-aus
+      ADVERTISED_PORT: 9092
+  cassandra-as-vdv-aus:
+    image: cassandra
+    container_name: cassandra-as-vdv-aus
+    ports:
+    - 9042:9042
+    - 9160:9160
+    networks:
+    - as-vdv-aus-bridged-network
+  as-vdv-aus-builder:
+    image: dockerregistry.reisendeninfo.aws.db.de:5000/de.db.vdv/as-vdv-aus.as-vdv-aus-builder
+    container_name: as-vdv-aus-builder
+    ports:
+    - 8080:8080
+    depends_on:
+    - kafka-as-vdv-aus
+    - cassandra-as-vdv-aus
+    networks:
+    - as-vdv-aus-bridged-network
+    environment:
+      KAFKA_BROKER: kafka-as-vdv-aus:9092
+      KAFKA_BOOTSTRAP_SERVERS: kafka-as-vdv-aus:9092
+      KAFKA_ZOO_KEEPER_SERVER: kafka-as-vdv-aus:2181
+      KAFKA_SCHEMA_REGISTRY_URL: http://kafka-as-vdv-aus:8081
+      CASSANDRA_NODES: cassandra-as-vdv-aus

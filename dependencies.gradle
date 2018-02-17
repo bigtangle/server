@@ -1,0 +1,33 @@
+ext {
+
+    ver = [
+            avro       : '1.8.2',
+            kafka      : '0.10.2.1',
+            spring     : '4.3.13.RELEASE',
+            spring_boot : '1.5.9.RELEASE',
+            rocksdbjni : '5.7.3',
+            spring_data_cassandra:'1.5.6.RELEASE',
+            commons_lang3 : '3.6',
+            commons_io : '2.5',   
+            slf4j_api :'1.7.25',
+            converter_gson :'2.3.0',
+            avro_serde:'0.1.2',
+            aspectjrt :'1.8.10',
+            aspectjweaver :'1.8.10',
+            junit       : '4.12',
+            jackson_dataformat_avro :'2.8.9',
+            gson :'2.8.1',
+            testng :'6.10',
+            mockito_all :'1.10.19',
+            lombok :'1.16.16',
+            bcprov_jdk15on:'1.58',
+            rest_assured:'2.9.0',
+             ini4j:'0.5.4',
+            jeromq:'0.4.0',
+            jargs:'2.0-SNAPSHOT',
+            undertow:'1.4.6.Final',
+            retrofit:'2.3.0',
+            jadler_all:'1.3.0'
+    ]
+
+}

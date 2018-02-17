@@ -1,0 +1,121 @@
+
+apply from: "dependencies.gradle"
+
+allprojects {
+
+    project.group = 'de.db.vdv'
+    project.version = '1.1-SNAPSHOT'
+
+    ext {
+        projectName = rootProject.name + '.' + project.name
+        customSonarProperties = {
+            property 'sonar.projectName', projectName
+            property 'sonar.projectKey', project.group + ':' + projectName
+        }
+        dockerRegistryUrl =  "dockerregistry.reisendeninfo.aws.db.de:5000"
+        dockerBasename = projectName
+        dockerLocalTag = "$project.group/$dockerBasename"
+        dockerRegistryTag = "$dockerRegistryUrl/$dockerLocalTag"
+    }
+
+    repositories {
+        mavenLocal()
+        maven { url "http://nexus.reisendeninfo.aws.db.de/nexus/content/groups/public/" }
+        maven { url "http://nexus.reisendeninfo.aws.db.de/nexus/content/groups/pxr/" }
+        maven { url "http://nexus.reisendeninfo.aws.db.de/nexus/content/repositories/rikern-releases/" }
+        maven { url "http://nexus.reisendeninfo.aws.db.de/nexus/content/repositories/rikern-snapshots/" }
+        maven { url "http://packages.confluent.io/maven/" }
+        mavenCentral()
+    }
+
+
+    configurations.all {
+        // check for updates of dependencies marked as changing or -SNAPSHOT versions every build
+        resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+    }
+}
+
+subprojects {
+
+    apply plugin: 'java'
+    apply plugin: 'idea'
+    apply plugin: 'eclipse'
+
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+    }
+
+    jar {
+        manifest {
+            attributes(
+                    'GroupId': project.group,
+                    'ArtifactId': project.name,
+                    'Version': project.version
+            )
+        }
+    }
+
+    apply plugin: 'maven-publish'
+
+    publishing {
+        repositories {
+            maven {
+                credentials {
+                    username project.properties['mavenRepositoryUserName']
+                    password project.properties['mavenRepositoryPassword']
+                }
+
+                if (project.version.endsWith('-SNAPSHOT')) {
+                    url project.properties['mavenSnapshotRepositoryUrl']
+                } else {
+                    url project.properties['mavenReleaseRepositoryUrl']
+                }
+            }
+        }
+    }
+
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        classifier 'sources'
+        from sourceSets.main.allJava
+    }
+
+
+    test {
+        // enable TestNG support (default is JUnit)
+        useTestNG()
+        testLogging.showStandardStreams = true
+    }
+}
+
+
+// buildDockerImage.dependsOn createDistributable
+
+def buildDockerImageProcessing(String dockerfileFolder, String localTag, String registryTag, String appName, String projectGroup, String projectName) {
+    println "Executing buildDockerImageProcessing: tag $localTag dockerfileFolder=$dockerfileFolder"
+    execute("docker build " +
+        "--build-arg VERSION=$project.version " +
+        "--build-arg APPNAME=$appName " +
+        "--build-arg PROJECTGROUP=$projectGroup " +
+        "--build-arg PROJECTNAME=$projectName " +
+        "-t $localTag " +
+        "-t $registryTag " +
+        "--no-cache $dockerfileFolder")
+    execute("docker tag $localTag $localTag:$project.version")
+    execute("docker tag $localTag $registryTag:$project.version")
+}
+
+def buildDockerPush(String registryTag) {
+    execute("docker push $registryTag")
+    execute("docker push $registryTag:$project.version")
+}
+
+void execute(String command) {
+    println "Executing \"$command\""
+    def process = new ProcessBuilder(command.split(' ')).inheritIO().start()
+    def exitValue = process.waitFor()
+    if (exitValue != 0) {
+        throw new GradleScriptException("Execution of \"$command\" failed with exit code $exitValue", null)
+    }
+}

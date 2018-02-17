@@ -1,0 +1,4 @@
+rootProject.name = 'bignetcoin'
+include 'bignetcoin-client'
+include 'bignetcoin-server'
+//include 'loadtest'
