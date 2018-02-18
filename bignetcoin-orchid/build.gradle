@@ -1,0 +1,62 @@
+
+plugins {
+    id 'org.sonarqube' version '2.2'
+    id 'jacoco'
+    id 'com.github.ksoichiro.build.info' version '0.1.5'
+}
+
+apply plugin: 'java'
+apply plugin: 'idea'
+
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+
+dependencies {
+  
+ 
+     compile group: 'com.google.guava', name: 'guava', version:ver.guava
+    /**
+     * test dependencies
+     */
+    testCompile group: 'org.testng', name: 'testng', version: ver.testng
+    testCompile group: 'org.mockito', name: 'mockito-all', version:  ver.mockito_all
+  	testCompile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-avro', version:ver.jackson_dataformat_avro
+  
+  
+  
+  /**
+     * test dependencies
+     */
+    testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
+    testCompile group: 'junit', name: 'junit',  version:ver.junit
+    testCompile group: 'com.google.code.gson', name: 'gson', version:ver.gson
+
+
+}
+
+test {
+    useTestNG()
+
+    testLogging.showStandardStreams = true
+}
+
+
+sonarqube {
+    properties customSonarProperties
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+ 

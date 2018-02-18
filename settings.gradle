@@ -1,4 +1,6 @@
 rootProject.name = 'bignetcoin'
 include 'bignetcoin-client'
 include 'bignetcoin-server'
+include 'bignetcoin-core'
+include 'bignetcoin-orchid'
 //include 'loadtest'

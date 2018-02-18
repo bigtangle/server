@@ -1,0 +1,94 @@
+buildscript {
+    ext {
+        springBootVersion = '1.5.9.RELEASE'
+    }
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+    }
+}
+
+plugins {
+    id 'org.sonarqube' version '2.2'
+    id 'jacoco'
+    id 'com.github.ksoichiro.build.info' version '0.1.5'
+}
+
+apply plugin: 'java'
+apply plugin: 'idea'
+
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+
+dependencies {
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-web', version:  '1.5.9.RELEASE'
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version:  '1.5.9.RELEASE'
+    compile group: 'org.projectlombok', name: 'lombok', version:  ver.lombok
+  
+    compile group: 'org.aspectj', name: 'aspectjrt',   version:ver.aspectjrt
+    compile group: 'org.aspectj', name: 'aspectjweaver', version:ver.aspectjweaver
+   compile group: 'com.google.guava', name: 'guava', version:ver.guava
+    compile group: 'com.google.protobuf', name: 'protobuf-java', version:ver.protobuf_java
+ 
+    compile group: 'com.google.code.findbugs', name: 'jsr305', version:ver.jsr305
+	    compile group: 'com.madgag.spongycastle', name: 'core', version:ver.spongycastlecore
+    compile group: 'com.h2database', name: 'h2', version:ver.h2
+ 
+     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:ver.jackson_databind
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:ver.jackson_databind
+    compile group: 'net.jcip', name: 'jcip-annotations', version:ver.jcip_annotations
+    compile group: 'com.lambdaworks', name: 'scrypt', version:ver.scrypt
+    compile group: 'postgresql', name: 'postgresql', version:ver.postgresql
+    compile group: 'mysql', name: 'mysql-connector-java', version:ver.mysql_connector_java
+     compile group: 'org.fusesource.leveldbjni', name: 'leveldbjni-all', version:ver.leveldbjni_all
+     compile group: 'com.squareup.okhttp', name: 'okhttp', version:ver.okhttp
+     compile group: 'mysql', name: 'mysql-connector-java', version:ver.mysql_connector_java
+    compile project(':bignetcoin-orchid')
+   
+    /**
+     * test dependencies
+     */
+    testCompile group: 'org.testng', name: 'testng', version: ver.testng
+    testCompile group: 'org.easymock', name: 'easymock', version:  ver.easymock
+  	testCompile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-avro', version:ver.jackson_dataformat_avro
+  
+  
+  
+  /**
+     * test dependencies
+     */
+    testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
+    testCompile group: 'junit', name: 'junit',  version:ver.junit
+    testCompile group: 'com.google.code.gson', name: 'gson', version:ver.gson
+
+
+}
+
+test {
+    useTestNG()
+
+    testLogging.showStandardStreams = true
+}
+
+
+sonarqube {
+    properties customSonarProperties
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+ 
