@@ -62,12 +62,7 @@ dependencies {
 
 }
 
-test {
-    useTestNG()
-
-    testLogging.showStandardStreams = true
-}
-
+ 
 
 sonarqube {
     properties customSonarProperties

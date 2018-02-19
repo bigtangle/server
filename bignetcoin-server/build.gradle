@@ -73,7 +73,7 @@ dependencies {
 }
 
 test {
-    useTestNG()
+  //  useTestNG()
 
     testLogging.showStandardStreams = true
 }
