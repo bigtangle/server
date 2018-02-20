@@ -13,5 +13,6 @@ Tip management (  iota)
 Web Service ( Spring)
 validate service (bitcoinj)
 Storage (bitcoinj) 
-Full SQL using postgres first, then to Hbase or Spark Job server
+Full SQL using mysql or postgres first, then to Hbase or Spark Job server
 
+Unit test and docker container test

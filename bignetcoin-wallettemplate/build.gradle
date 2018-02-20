@@ -1,0 +1,10 @@
+
+dependencies {
+
+     compile group: 'com.google.guava', name: 'guava', version:ver.guava
+     compile group: 'org.fxmisc.easybind', name: 'easybind', version:'1.0.2'
+     compile group: 'de.jensd', name: 'fontawesomefx', version:'8.0.0'
+          compile group: 'net.glxn', name: 'qrgen', version:'1.3'
+    compile project(':bignetcoin-core')
+   
+}

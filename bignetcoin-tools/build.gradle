@@ -1,0 +1,7 @@
+
+dependencies {
+
+     compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version:'4.3'
+    compile project(':bignetcoin-core')
+   
+}
