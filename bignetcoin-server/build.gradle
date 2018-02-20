@@ -97,7 +97,7 @@ task createDistributable(type: Copy) {
     def distDir = file('build/dist')
     from('build/libs') {
         include '*.jar'
-        rename '.*', 'as-vdv-aus-builder.jar'
+        rename '.*', 'bignetcoin-server.jar'
         into 'build/libs'
     }
     from('etc/') {
@@ -110,7 +110,7 @@ task createDistributable(type: Copy) {
 task buildDockerImage(dependsOn: createDistributable) {
     group 'docker'
     doLast {
-        parent.buildDockerImageProcessing('as-vdv-aus-builder/build/dist', dockerLocalTag, dockerRegistryTag, project.name, project.group, projectName)
+        parent.buildDockerImageProcessing('bignetcoin-server/build/dist', dockerLocalTag, dockerRegistryTag, project.name, project.group, projectName)
     }
 }
 

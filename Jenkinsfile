@@ -1,4 +1,4 @@
-def product = 'as-vdv-aus-builder'
+def product = 'bignetcoin-server'
 def default_recipients = 'thomas.strauss@pentasys.de, thst@strauss-it.de'
 // Check required build parameters
 assert env.jenkinsNode?.trim(): 'Parameter jenkinsNode must be defined!'

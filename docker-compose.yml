@@ -24,9 +24,9 @@ services:
     - 9160:9160
     networks:
     - as-vdv-aus-bridged-network
-  as-vdv-aus-builder:
-    image: dockerregistry.reisendeninfo.aws.db.de:5000/de.db.vdv/as-vdv-aus.as-vdv-aus-builder
-    container_name: as-vdv-aus-builder
+  bignetcoin-server:
+    image: dockerregistry.reisendeninfo.aws.db.de:5000/de.db.vdv/as-vdv-aus.bignetcoin-server
+    container_name: bignetcoin-server
     ports:
     - 8080:8080
     depends_on:
