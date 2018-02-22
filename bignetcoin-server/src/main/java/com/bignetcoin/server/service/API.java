@@ -5,10 +5,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Arrays;
@@ -28,7 +28,6 @@ import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -40,14 +39,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.xnio.channels.StreamSinkChannel;
-import org.xnio.streams.ChannelInputStream;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.iota.iri.BundleValidator;
 import com.iota.iri.IRI;
-import com.iota.iri.IXI;
-import com.iota.iri.Iota;
 import com.iota.iri.Milestone;
 import com.iota.iri.SignedFiles;
 import com.iota.iri.Snapshot;
@@ -93,15 +89,14 @@ import io.undertow.security.impl.BasicAuthenticationMechanism;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderMap;
-import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
-import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/")
-@Slf4j
+
 public class API {
 
+    private static final Logger log = LoggerFactory.getLogger(API.class);
     public static final String REFERENCE_TRANSACTION_NOT_FOUND = "reference transaction not found";
     public static final String REFERENCE_TRANSACTION_TOO_OLD = "reference transaction is too old";
     // private static final Logger log = LoggerFactory.getLogger(API.class);
@@ -136,7 +131,7 @@ public class API {
 
     public API(Bignet instance) {
         this.instance = instance;
-      //  this.ixi = ixi;
+        // this.ixi = ixi;
         minRandomWalks = instance.configuration.integer(DefaultConfSettings.MIN_RANDOM_WALKS);
         maxRandomWalks = instance.configuration.integer(DefaultConfSettings.MAX_RANDOM_WALKS);
         maxFindTxs = instance.configuration.integer(DefaultConfSettings.MAX_FIND_TRANSACTIONS);
@@ -145,6 +140,15 @@ public class API {
         maxBodyLength = instance.configuration.integer(DefaultConfSettings.MAX_BODY_LENGTH);
 
         previousEpochsSpentAddresses = new ConcurrentHashMap<>();
+
+    }
+
+    @RequestMapping(method = { RequestMethod.POST, RequestMethod.GET })
+    public AbstractResponse process(@RequestBody byte[] vdvAnfrageBytes) throws UnsupportedEncodingException {
+        String body = new String(vdvAnfrageBytes, Charset.forName("UTF-8"));
+        log.debug(" requestString ", body);
+
+        return process(body);
 
     }
 
@@ -176,26 +180,7 @@ public class API {
         }
     }
 
-    private void processRequest(final HttpServerExchange exchange) throws IOException {
-        final ChannelInputStream cis = new ChannelInputStream(exchange.getRequestChannel());
-        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-
-        final long beginningTime = System.currentTimeMillis();
-        final String body = IOUtils.toString(cis, StandardCharsets.UTF_8);
-        final AbstractResponse response;
-
-        if (!exchange.getRequestHeaders().contains("X-IOTA-API-Version")) {
-            response = ErrorResponse.create("Invalid API Version");
-        } else if (body.length() > maxBodyLength) {
-            response = ErrorResponse.create("Request too long");
-        } else {
-            response = process(body, exchange.getSourceAddress());
-        }
-        sendResponse(exchange, response, beginningTime);
-    }
-
-    private AbstractResponse process(final String requestString, InetSocketAddress sourceAddress)
-            throws UnsupportedEncodingException {
+    private AbstractResponse process(final String requestString) throws UnsupportedEncodingException {
 
         try {
 
@@ -209,8 +194,7 @@ public class API {
                 return ErrorResponse.create("COMMAND parameter has not been specified in the request.");
             }
 
-            if (instance.configuration.string(DefaultConfSettings.REMOTE_LIMIT_API).contains(command)
-                    && !sourceAddress.getAddress().isLoopbackAddress()) {
+            if (instance.configuration.string(DefaultConfSettings.REMOTE_LIMIT_API).contains(command)) {
                 return AccessLimitedResponse.create("COMMAND " + command + " is not available on this node");
             }
 
@@ -365,7 +349,7 @@ public class API {
             }
 
         } catch (final ValidationException e) {
-            log.info("API Validation failed: " + e.getLocalizedMessage());
+            log.info("API Validation failed: " + e.getLocalizedMessage(), e);
             return ErrorResponse.create(e.getLocalizedMessage());
         } catch (final Exception e) {
             log.error("API Exception: ", e);
@@ -527,7 +511,7 @@ public class API {
         if (size > 0) {
             // validate
             for (final String param : paramList) {
-                validateTrytes(paramName, size, param);
+         //       validateTrytes(paramName, size, param);
             }
         }
 

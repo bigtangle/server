@@ -50,17 +50,6 @@ public class Bignet  {
     protected ServerConfiguration serverConfiguration;
     
 
- 
-   
-
-    @PostConstruct
-    public void runService() throws Exception {
-        
-    
-        
-    }
-    
-
     private static final Logger log = LoggerFactory.getLogger(Iota.class);
 
     public static final String MAINNET_COORDINATOR_ADDRESS = "KPWCHICGJZXKE9GSUDXZYUAPLHAKAHYHDXNPHENTERYMMBQOPSQIDENXKLKCEYCPVTZQLEEJVYJZV9BWU";

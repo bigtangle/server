@@ -8,11 +8,13 @@ The Transaction and block are from bitcoinj project for the  security and script
 
 
 Transaction (bitcoinj)
-Block (bitcoinj)
+Block (bitcoinj) BlockChain as BlockGraph (two previous Blocks) 
 Tip management (  iota)
+snapshot and milestone (iota)
 Web Service ( Spring)
 validate service (bitcoinj)
 Storage (bitcoinj) 
-Full SQL using mysql or postgres first, then to Hbase or Spark Job server
+all data in database Full SQL using mysql or postgres first, then to Hbase or Spark Job server
+data sync process using kafka
 
 Unit test and docker container test
