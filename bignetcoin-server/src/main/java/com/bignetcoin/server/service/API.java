@@ -36,9 +36,6 @@ import org.xnio.channels.StreamSinkChannel;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.iota.iri.BundleValidator;
-import com.iota.iri.IRI;
-import com.iota.iri.Milestone;
 import com.iota.iri.conf.Configuration;
 import com.iota.iri.conf.Configuration.DefaultConfSettings;
 import com.iota.iri.controllers.AddressViewModel;
@@ -64,7 +61,6 @@ import com.iota.iri.service.dto.GetNeighborsResponse;
 import com.iota.iri.service.dto.GetNodeInfoResponse;
 import com.iota.iri.service.dto.GetTipsResponse;
 import com.iota.iri.service.dto.GetTransactionsToApproveResponse;
-import com.iota.iri.service.dto.GetTrytesResponse;
 import com.iota.iri.service.dto.RemoveNeighborsResponse;
 import com.iota.iri.service.dto.wereAddressesSpentFrom;
 import com.iota.iri.utils.Converter;
@@ -92,7 +88,9 @@ public class API {
     public static final String REFERENCE_TRANSACTION_TOO_OLD = "reference transaction is too old";
     // private static final Logger log = LoggerFactory.getLogger(API.class);
     // private final IXI ixi;
-
+    public static final String MAINNET_NAME = "IRI";
+    public static final String TESTNET_NAME = "IRI Testnet";
+    public static final String VERSION = "1.4.2.1";
     private final Gson gson = new GsonBuilder().create();
     private volatile PearlDiver pearlDiver = new PearlDiver();
 
@@ -214,9 +212,9 @@ public class API {
             }
             case "getNodeInfo": {
                 String name = instance.configuration.booling(Configuration.DefaultConfSettings.TESTNET)
-                        ? IRI.TESTNET_NAME
-                        : IRI.MAINNET_NAME;
-                return GetNodeInfoResponse.create(name, IRI.VERSION, Runtime.getRuntime().availableProcessors(),
+                        ? TESTNET_NAME
+                        :  MAINNET_NAME;
+                return GetNodeInfoResponse.create(name,  VERSION, Runtime.getRuntime().availableProcessors(),
                         Runtime.getRuntime().freeMemory(), System.getProperty("java.version"),
                         Runtime.getRuntime().maxMemory(), Runtime.getRuntime().totalMemory(),
                         instance.milestone.latestMilestone, instance.milestone.latestMilestoneIndex,
@@ -464,7 +462,7 @@ public class API {
     }
 
     public boolean invalidSubtangleStatus() {
-        return (instance.milestone.latestSolidSubtangleMilestoneIndex == Milestone.MILESTONE_START_INDEX);
+        return (instance.milestone.latestSolidSubtangleMilestoneIndex == MilestoneService.MILESTONE_START_INDEX);
     }
 
     private AbstractResponse removeNeighborsStatement(List<String> uris) {

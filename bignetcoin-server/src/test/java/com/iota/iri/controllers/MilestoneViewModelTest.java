@@ -1,15 +1,17 @@
 package com.iota.iri.controllers;
 
-import com.iota.iri.Milestone;
-import com.iota.iri.conf.Configuration;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import com.bignetcoin.server.service.MilestoneService;
 import com.iota.iri.model.Hash;
 import com.iota.iri.storage.Tangle;
 import com.iota.iri.storage.rocksDB.RocksDBPersistenceProvider;
-import com.iota.iri.storage.rocksDB.RocksDBPersistenceProviderTest;
-import org.junit.*;
-import org.junit.rules.TemporaryFolder;
-
-import static org.junit.Assert.*;
 
 /**
  * Created by paul on 4/11/17.
@@ -169,7 +171,7 @@ public class MilestoneViewModelTest {
 
     @Test
     public void nextGreaterThan() throws Exception {
-        int first = Milestone.MILESTONE_START_INDEX + 1;
+        int first = MilestoneService.MILESTONE_START_INDEX + 1;
         int next = first + 1;
         new MilestoneViewModel(next, new Hash("GBCDEBGHIJKLMNOPQRSTUVWXYZ9ABCDEFGHIJKLMNOPQRSTUVWXYZ9ABCDEFGHIJKLMNOPQRSTUV99999")).store(tangle);
         new MilestoneViewModel(first, new Hash("GBCDEFGHIJKLMNODQRSTUVWXYZ9ABCDEFGHIJKLMNOPQRSTUVWXYZ9ABCDEFGHIJKLMNOPQRSTUV99999")).store(tangle);

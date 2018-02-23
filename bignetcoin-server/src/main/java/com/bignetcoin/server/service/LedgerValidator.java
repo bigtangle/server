@@ -1,4 +1,4 @@
-package com.iota.iri;
+package com.bignetcoin.server.service;
 
 import com.iota.iri.controllers.*;
 import com.iota.iri.model.Hash;
@@ -17,12 +17,12 @@ public class LedgerValidator {
 
     private final Logger log = LoggerFactory.getLogger(LedgerValidator.class);
     private final Tangle tangle;
-    private final Milestone milestone;
+    private final MilestoneService milestone;
     private final TransactionRequester transactionRequester;
     private final MessageQ messageQ;
     private volatile int numberOfConfirmedTransactions;
 
-    public LedgerValidator(Tangle tangle, Milestone milestone, TransactionRequester transactionRequester, MessageQ messageQ) {
+    public LedgerValidator(Tangle tangle, MilestoneService milestone, TransactionRequester transactionRequester, MessageQ messageQ) {
         this.tangle = tangle;
         this.milestone = milestone;
         this.transactionRequester = transactionRequester;

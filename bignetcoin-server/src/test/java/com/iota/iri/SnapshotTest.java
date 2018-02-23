@@ -1,14 +1,16 @@
 package com.iota.iri;
 
-import com.iota.iri.model.Hash;
-import org.junit.Assert;
-import org.junit.Test;
+import static org.junit.Assert.assertFalse;
 
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import org.junit.Assert;
+import org.junit.Test;
+
+import com.bignetcoin.server.service.Snapshot;
+import com.iota.iri.model.Hash;
 
 /**
  * Created by paul on 4/12/17.

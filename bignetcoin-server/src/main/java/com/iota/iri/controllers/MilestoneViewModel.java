@@ -1,5 +1,9 @@
 package com.iota.iri.controllers;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import com.bignetcoin.server.service.MilestoneService;
 import com.iota.iri.model.Hash;
 import com.iota.iri.model.IntegerIndex;
 import com.iota.iri.model.Milestone;
@@ -7,10 +11,6 @@ import com.iota.iri.storage.Indexable;
 import com.iota.iri.storage.Persistable;
 import com.iota.iri.storage.Tangle;
 import com.iota.iri.utils.Pair;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Created by paul on 4/11/17.
@@ -111,7 +111,7 @@ public class MilestoneViewModel {
     }
 
     public static MilestoneViewModel findClosestNextMilestone(Tangle tangle, int index) throws Exception {
-        if(index <= com.iota.iri.Milestone.MILESTONE_START_INDEX) {
+        if(index <= MilestoneService.MILESTONE_START_INDEX) {
             return first(tangle);
         }
         Pair<Indexable, Persistable> milestonePair = tangle.next(Milestone.class, new IntegerIndex(index));

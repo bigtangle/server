@@ -1,4 +1,4 @@
-package com.iota.iri;
+package com.bignetcoin.server.service;
 
 import com.iota.iri.controllers.BundleViewModel;
 import com.iota.iri.hash.*;

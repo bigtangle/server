@@ -1,25 +1,34 @@
-package com.iota.iri.service;
+package com.bignetcoin.server.service;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.Random;
+import java.util.Set;
+import java.util.Stack;
 
-import com.iota.iri.LedgerValidator;
-import com.iota.iri.Snapshot;
-import com.iota.iri.TransactionValidator;
-import com.iota.iri.model.Hash;
-import com.iota.iri.controllers.*;
-import com.iota.iri.storage.Tangle;
-import com.iota.iri.zmq.MessageQ;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.iota.iri.Milestone;
+import com.iota.iri.controllers.MilestoneViewModel;
+import com.iota.iri.controllers.TipsViewModel;
+import com.iota.iri.controllers.TransactionViewModel;
+import com.iota.iri.model.Hash;
+import com.iota.iri.storage.Tangle;
+import com.iota.iri.zmq.MessageQ;
 
 public class TipsManager {
 
     private final Logger log = LoggerFactory.getLogger(TipsManager.class);
     private final Tangle tangle;
     private final TipsViewModel tipsViewModel;
-    private final Milestone milestone;
+    private final MilestoneService milestone;
     private final LedgerValidator ledgerValidator;
     private final TransactionValidator transactionValidator;
     private final MessageQ messageQ;
@@ -40,7 +49,7 @@ public class TipsManager {
                        final LedgerValidator ledgerValidator,
                        final TransactionValidator transactionValidator,
                        final TipsViewModel tipsViewModel,
-                       final Milestone milestone,
+                       final MilestoneService milestone,
                        final int maxDepth,
                        final MessageQ messageQ) {
         this.tangle = tangle;
@@ -106,8 +115,8 @@ public class TipsManager {
             depth = maxDepth;
         }
 
-        if(milestone.latestSolidSubtangleMilestoneIndex > Milestone.MILESTONE_START_INDEX ||
-                milestone.latestMilestoneIndex == Milestone.MILESTONE_START_INDEX) {
+        if(milestone.latestSolidSubtangleMilestoneIndex > MilestoneService.MILESTONE_START_INDEX ||
+                milestone.latestMilestoneIndex == MilestoneService.MILESTONE_START_INDEX) {
 
             Map<Hash, Long> ratings = new HashMap<>();
             Set<Hash> analyzedTips = new HashSet<>();

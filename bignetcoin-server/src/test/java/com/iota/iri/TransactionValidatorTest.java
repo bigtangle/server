@@ -1,5 +1,15 @@
 package com.iota.iri;
 
+import static com.iota.iri.controllers.TransactionViewModelTest.getRandomTransactionTrits;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import com.bignetcoin.server.service.TransactionValidator;
 import com.iota.iri.controllers.TipsViewModel;
 import com.iota.iri.controllers.TransactionViewModel;
 import com.iota.iri.hash.SpongeFactory;
@@ -9,15 +19,6 @@ import com.iota.iri.storage.Tangle;
 import com.iota.iri.storage.rocksDB.RocksDBPersistenceProvider;
 import com.iota.iri.utils.Converter;
 import com.iota.iri.zmq.MessageQ;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
-import static com.iota.iri.controllers.TransactionViewModelTest.getRandomTransactionTrits;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 /** Created by paul on 5/14/17. */
 public class TransactionValidatorTest {

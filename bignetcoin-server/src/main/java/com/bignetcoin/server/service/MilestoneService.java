@@ -1,4 +1,4 @@
-package com.iota.iri;
+package com.bignetcoin.server.service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -14,20 +14,20 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.net.ssl.HttpsURLConnection;
 
-import com.iota.iri.controllers.*;
-import com.iota.iri.hash.SpongeFactory;
-import com.iota.iri.zmq.MessageQ;
-import com.iota.iri.storage.Tangle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.iota.iri.controllers.AddressViewModel;
+import com.iota.iri.controllers.MilestoneViewModel;
+import com.iota.iri.controllers.TransactionViewModel;
 import com.iota.iri.hash.ISS;
+import com.iota.iri.hash.SpongeFactory;
 import com.iota.iri.model.Hash;
+import com.iota.iri.storage.Tangle;
 import com.iota.iri.utils.Converter;
+import com.iota.iri.zmq.MessageQ;
 
-import static com.iota.iri.Milestone.Validity.*;
-
-public class Milestone {
+public class MilestoneService {
 
     enum Validity {
         VALID,
@@ -35,7 +35,7 @@ public class Milestone {
         INCOMPLETE
     }
 
-    private final Logger log = LoggerFactory.getLogger(Milestone.class);
+    private final Logger log = LoggerFactory.getLogger(MilestoneService.class);
     private final Tangle tangle;
     private final Hash coordinator;
     private final TransactionValidator transactionValidator;
@@ -55,7 +55,7 @@ public class Milestone {
 
     private final Set<Hash> analyzedMilestoneCandidates = new HashSet<>();
 
-    public Milestone(final Tangle tangle,
+    public MilestoneService(final Tangle tangle,
                      final Hash coordinator,
                      final Snapshot initialSnapshot,
                      final TransactionValidator transactionValidator,
@@ -172,16 +172,16 @@ public class Milestone {
 
     private Validity validateMilestone(SpongeFactory.Mode mode, TransactionViewModel transactionViewModel, int index) throws Exception {
         if (index < 0 || index >= 0x200000) {
-            return INVALID;
+            return Validity.INVALID;
         }
 
         if (MilestoneViewModel.get(tangle, index) != null) {
             // Already validated.
-            return VALID;
+            return Validity.VALID;
         }
         final List<List<TransactionViewModel>> bundleTransactions = BundleValidator.validate(tangle, transactionViewModel.getHash());
         if (bundleTransactions.size() == 0) {
-            return INCOMPLETE;
+            return Validity.INCOMPLETE;
         }
         else {
             for (final List<TransactionViewModel> bundleTransactionViewModels : bundleTransactions) {
@@ -205,15 +205,15 @@ public class Milestone {
                                 transactionViewModel2.trits(), 0, index, NUMBER_OF_KEYS_IN_A_MILESTONE);
                         if (testnet || (new Hash(merkleRoot)).equals(coordinator)) {
                             new MilestoneViewModel(index, transactionViewModel.getHash()).store(tangle);
-                            return VALID;
+                            return Validity.VALID;
                         } else {
-                            return INVALID;
+                            return Validity.INVALID;
                         }
                     }
                 }
             }
         }
-        return INVALID;
+        return Validity.INVALID;
     }
 
     void updateLatestSolidSubtangleMilestone() throws Exception {
