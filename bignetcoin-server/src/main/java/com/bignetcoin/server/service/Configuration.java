@@ -1,0 +1,121 @@
+package com.bignetcoin.server.service;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * All those settings are modificable at runtime,
+ * but for most of them the node needs to be restarted.
+ */
+public class Configuration {
+    
+
+
+    private final Map<String, String> conf = new ConcurrentHashMap<>();
+
+    public enum DefaultConfSettings {
+        CONFIG,
+        PORT,
+        API_HOST,
+        UDP_RECEIVER_PORT,
+        TCP_RECEIVER_PORT,
+        TESTNET,
+        DEBUG,
+        REMOTE_LIMIT_API,
+        REMOTE_AUTH,
+        NEIGHBORS,
+        IXI_DIR,
+        DB_PATH,
+        DB_LOG_PATH,
+        DB_CACHE_SIZE,
+        P_REMOVE_REQUEST,
+        P_DROP_TRANSACTION,
+        P_SELECT_MILESTONE_CHILD,
+        P_SEND_MILESTONE,
+        P_REPLY_RANDOM_TIP,
+        P_PROPAGATE_REQUEST,
+        MAIN_DB, EXPORT, // exports transaction trytes to filesystem
+        SEND_LIMIT,
+        MAX_PEERS,
+        DNS_RESOLUTION_ENABLED,
+        DNS_REFRESHER_ENABLED,
+        COORDINATOR,
+        REVALIDATE,
+        RESCAN_DB,
+        MIN_RANDOM_WALKS,
+        MAX_RANDOM_WALKS,
+        MAX_FIND_TRANSACTIONS,
+        MAX_REQUESTS_LIST,
+        MAX_GET_TRYTES,
+        MAX_BODY_LENGTH,
+        MAX_DEPTH,
+        MAINNET_MWM,
+        TESTNET_MWM,
+        ZMQ_ENABLED,
+        ZMQ_PORT,
+        ZMQ_IPC,
+        ZMQ_THREADS,
+        Q_SIZE_NODE,
+        P_DROP_CACHE_ENTRY,
+        CACHE_SIZE_BYTES,
+    }
+
+    {
+        // defaults
+        conf.put(DefaultConfSettings.PORT.name(), "14600");
+        conf.put(DefaultConfSettings.API_HOST.name(), "localhost");
+        conf.put(DefaultConfSettings.UDP_RECEIVER_PORT.name(), "14600");
+        conf.put(DefaultConfSettings.TCP_RECEIVER_PORT.name(), "15600");
+        conf.put(DefaultConfSettings.TESTNET.name(), "false");
+        conf.put(DefaultConfSettings.DEBUG.name(), "false");
+        conf.put(DefaultConfSettings.REMOTE_LIMIT_API.name(), "");
+        conf.put(DefaultConfSettings.REMOTE_AUTH.name(), "");
+        conf.put(DefaultConfSettings.NEIGHBORS.name(), "");
+        conf.put(DefaultConfSettings.IXI_DIR.name(), "ixi");
+        conf.put(DefaultConfSettings.DB_PATH.name(), "mainnetdb");
+        conf.put(DefaultConfSettings.DB_LOG_PATH.name(), "mainnet.log");
+        conf.put(DefaultConfSettings.DB_CACHE_SIZE.name(), "100000"); //KB
+        conf.put(DefaultConfSettings.CONFIG.name(), "iota.ini");
+        conf.put(DefaultConfSettings.P_REMOVE_REQUEST.name(), "0.01");
+        conf.put(DefaultConfSettings.P_DROP_TRANSACTION.name(), "0.0");
+        conf.put(DefaultConfSettings.P_SELECT_MILESTONE_CHILD.name(), "0.7");
+        conf.put(DefaultConfSettings.P_SEND_MILESTONE.name(), "0.02");
+        conf.put(DefaultConfSettings.P_REPLY_RANDOM_TIP.name(), "0.66");
+        conf.put(DefaultConfSettings.P_PROPAGATE_REQUEST.name(), "0.01");
+        conf.put(DefaultConfSettings.MAIN_DB.name(), "rocksdb");
+        conf.put(DefaultConfSettings.EXPORT.name(), "false");
+        conf.put(DefaultConfSettings.SEND_LIMIT.name(), "-1.0");
+        conf.put(DefaultConfSettings.MAX_PEERS.name(), "0");
+        conf.put(DefaultConfSettings.DNS_REFRESHER_ENABLED.name(), "true");
+        conf.put(DefaultConfSettings.DNS_RESOLUTION_ENABLED.name(), "true");
+        conf.put(DefaultConfSettings.REVALIDATE.name(), "false");
+        conf.put(DefaultConfSettings.RESCAN_DB.name(), "false");
+        conf.put(DefaultConfSettings.MAINNET_MWM.name(), "14");
+        conf.put(DefaultConfSettings.TESTNET_MWM.name(), "13");
+
+        // Pick a number based on best performance
+        conf.put(DefaultConfSettings.MIN_RANDOM_WALKS.name(), "5");
+        conf.put(DefaultConfSettings.MAX_RANDOM_WALKS.name(), "27");
+        // Pick a milestone depth number depending on risk model
+        conf.put(DefaultConfSettings.MAX_DEPTH.name(), "15");
+
+        conf.put(DefaultConfSettings.MAX_FIND_TRANSACTIONS.name(), "100000");
+        conf.put(DefaultConfSettings.MAX_REQUESTS_LIST.name(), "1000");
+        conf.put(DefaultConfSettings.MAX_GET_TRYTES.name(), "10000");
+        conf.put(DefaultConfSettings.MAX_BODY_LENGTH.name(), "1000000");
+        conf.put(DefaultConfSettings.ZMQ_ENABLED.name(), "false");
+        conf.put(DefaultConfSettings.ZMQ_PORT.name(), "5556");
+        conf.put(DefaultConfSettings.ZMQ_IPC.name(), "ipc://iri");
+        conf.put(DefaultConfSettings.ZMQ_THREADS.name(), "2");
+
+        conf.put(DefaultConfSettings.Q_SIZE_NODE.name(), "1000");
+        conf.put(DefaultConfSettings.P_DROP_CACHE_ENTRY.name(), "0.02");
+        conf.put(DefaultConfSettings.CACHE_SIZE_BYTES.name(), "15000");
+
+    }
+
+   
+
+ 
+
+}

@@ -1,9 +1,6 @@
 package com.bignetcoin.server.service;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -20,10 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
@@ -45,8 +39,6 @@ import com.google.gson.GsonBuilder;
 import com.iota.iri.BundleValidator;
 import com.iota.iri.IRI;
 import com.iota.iri.Milestone;
-import com.iota.iri.SignedFiles;
-import com.iota.iri.Snapshot;
 import com.iota.iri.conf.Configuration;
 import com.iota.iri.conf.Configuration.DefaultConfSettings;
 import com.iota.iri.controllers.AddressViewModel;
@@ -93,7 +85,6 @@ import io.undertow.util.HttpString;
 
 @RestController
 @RequestMapping("/")
-
 public class API {
 
     private static final Logger log = LoggerFactory.getLogger(API.class);
@@ -107,7 +98,6 @@ public class API {
 
     private final AtomicInteger counter = new AtomicInteger(0);
 
-    private Pattern trytesPattern = Pattern.compile("[9A-Z]*");
 
     private final static int HASH_SIZE = 81;
     private final static int TRYTES_SIZE = 2673;
@@ -123,7 +113,7 @@ public class API {
     private final static String overMaxErrorMessage = "Could not complete request";
     private final static String invalidParams = "Invalid parameters";
 
-    private ConcurrentHashMap<Hash, Boolean> previousEpochsSpentAddresses;
+ 
 
     private final static char ZERO_LENGTH_ALLOWED = 'Y';
     private final static char ZERO_LENGTH_NOT_ALLOWED = 'N';
@@ -139,7 +129,7 @@ public class API {
         maxGetTrytes = instance.configuration.integer(DefaultConfSettings.MAX_GET_TRYTES);
         maxBodyLength = instance.configuration.integer(DefaultConfSettings.MAX_BODY_LENGTH);
 
-        previousEpochsSpentAddresses = new ConcurrentHashMap<>();
+    
 
     }
 
@@ -152,34 +142,8 @@ public class API {
 
     }
 
-    public void init() throws IOException {
-        readPreviousEpochsSpentAddresses();
 
-        final int apiPort = instance.configuration.integer(DefaultConfSettings.PORT);
-        final String apiHost = instance.configuration.string(DefaultConfSettings.API_HOST);
-
-        log.debug("Binding JSON-REST API Undertow server on {}:{}", apiHost, apiPort);
-
-    }
-
-    private void readPreviousEpochsSpentAddresses() {
-        if (!SignedFiles.isFileSignatureValid("/previousEpochsSpentAddresses.txt", "/previousEpochsSpentAddresses.sig",
-                Snapshot.SNAPSHOT_PUBKEY, Snapshot.SNAPSHOT_PUBKEY_DEPTH, Snapshot.SPENT_ADDRESSES_INDEX)) {
-            throw new RuntimeException("Failed to load previousEpochsSpentAddresses - signature failed.");
-        }
-
-        InputStream in = Snapshot.class.getResourceAsStream("/previousEpochsSpentAddresses.txt");
-        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-        String line;
-        try {
-            while ((line = reader.readLine()) != null) {
-                previousEpochsSpentAddresses.put(new Hash(line), true);
-            }
-        } catch (IOException e) {
-            log.error("Failed to load previousEpochsSpentAddresses.");
-        }
-    }
-
+ 
     private AbstractResponse process(final String requestString) throws UnsupportedEncodingException {
 
         try {
@@ -292,11 +256,7 @@ public class API {
                     return ErrorResponse.create(e.getLocalizedMessage());
                 }
             }
-            case "getTrytes": {
-                final List<String> hashes = getParameterAsList(request, "hashes", HASH_SIZE);
-                return getTrytesStatement(hashes);
-            }
-
+      
             case "interruptAttachingToTangle": {
                 pearlDiver.cancel();
                 return AbstractResponse.createEmptyResponse();
@@ -369,9 +329,7 @@ public class API {
     }
 
     private boolean wasAddressSpentFrom(Hash address) throws Exception {
-        if (previousEpochsSpentAddresses.containsKey(address)) {
-            return true;
-        }
+      
         Set<Hash> hashes = AddressViewModel.load(instance.tangle, address).getHashes();
         for (Hash hash : hashes) {
             final TransactionViewModel tx = TransactionViewModel.fromHash(instance.tangle, hash);
@@ -458,17 +416,7 @@ public class API {
         return CheckConsistency.create(state, info);
     }
 
-    private double getParameterAsDouble(Map<String, Object> request, String paramName) throws ValidationException {
-        validateParamExists(request, paramName);
-        final double result;
-        try {
-            result = ((Double) request.get(paramName));
-        } catch (ClassCastException e) {
-            throw new ValidationException("Invalid " + paramName + " input");
-        }
-        return result;
-    }
-
+  
     private int getParameterAsInt(Map<String, Object> request, String paramName) throws ValidationException {
         validateParamExists(request, paramName);
         final int result;
@@ -484,15 +432,11 @@ public class API {
             throws ValidationException {
         validateParamExists(request, paramName);
         String result = (String) request.get(paramName);
-        validateTrytes(paramName, size, result);
+       // validateTrytes(paramName, size, result);
         return result;
     }
 
-    private void validateTrytes(String paramName, int size, String result) throws ValidationException {
-        if (!validTrytes(result, size, ZERO_LENGTH_NOT_ALLOWED)) {
-            throw new ValidationException("Invalid " + paramName + " input");
-        }
-    }
+   
 
     private void validateParamExists(Map<String, Object> request, String paramName) throws ValidationException {
         if (!request.containsKey(paramName)) {
@@ -538,20 +482,6 @@ public class API {
         return RemoveNeighborsResponse.create(numberOfRemovedNeighbors);
     }
 
-    private synchronized AbstractResponse getTrytesStatement(List<String> hashes) throws Exception {
-        final List<String> elements = new LinkedList<>();
-        for (final String hash : hashes) {
-            final TransactionViewModel transactionViewModel = TransactionViewModel.fromHash(instance.tangle,
-                    new Hash(hash));
-            if (transactionViewModel != null) {
-                elements.add(Converter.trytes(transactionViewModel.trits()));
-            }
-        }
-        if (elements.size() > maxGetTrytes) {
-            return ErrorResponse.create(overMaxErrorMessage);
-        }
-        return GetTrytesResponse.create(elements);
-    }
 
     private static int counter_getTxToApprove = 0;
 
@@ -1069,17 +999,6 @@ public class API {
             }
         });
         sinkChannel.resumeWrites();
-    }
-
-    private boolean validTrytes(String trytes, int length, char zeroAllowed) {
-        if (trytes.length() == 0 && zeroAllowed == ZERO_LENGTH_ALLOWED) {
-            return true;
-        }
-        if (trytes.length() != length) {
-            return false;
-        }
-        Matcher matcher = trytesPattern.matcher(trytes);
-        return matcher.matches();
     }
 
     private static void setupResponseHeaders(final HttpServerExchange exchange) {
