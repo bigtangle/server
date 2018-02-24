@@ -94,7 +94,7 @@ public class Block extends Message {
      * hash solutions. Used in unit testing.
      */
     public static final long EASIEST_DIFFICULTY_TARGET = 0x207fFFFFL;
-
+    public static final long Client_DIFFICULTY_TARGET = 541065215;
     /** Value to use if the block height is unknown */
     public static final int BLOCK_HEIGHT_UNKNOWN = -1;
     /** Height of the first block */
@@ -111,7 +111,7 @@ public class Block extends Message {
     // Fields defined as part of the protocol format.
     private long version;
     private Sha256Hash prevBlockHash;
-
+   //Add as tangle 
     private Sha256Hash prevBranchBlockHash;
 
     private Sha256Hash merkleRoot;
@@ -330,9 +330,12 @@ public class Block extends Message {
         cursor = offset;
         version = readUint32();
         prevBlockHash = readHash();
-        if(version > 1) {
+        //TODO remove the check of old data from .dat
+        if (version > 1) {
             log.debug("version" + version);
-        prevBranchBlockHash = readHash();
+            prevBranchBlockHash = readHash();
+        } else {
+            prevBranchBlockHash = prevBlockHash;
         }
         merkleRoot = readHash();
         time = readUint32();
@@ -623,6 +626,7 @@ public class Block extends Message {
      */
     public BigInteger getDifficultyTargetAsInteger() throws VerificationException {
         BigInteger target = Utils.decodeCompactBits(difficultyTarget);
+   //TODO     Utils.encodeCompactBits(target.divide(new BigInteger("2")));
         if (target.signum() < 0 || target.compareTo(params.maxTarget) > 0)
             throw new VerificationException("Difficulty target is bad: " + target.toString());
         return target;
@@ -804,7 +808,7 @@ public class Block extends Message {
         // Firstly we need to ensure this block does in fact represent real work
         // done. If the difficulty is high
         // enough, it's probably been done by the network.
-      checkProofOfWork(true);
+        checkProofOfWork(true);
         checkTimestamp();
     }
 

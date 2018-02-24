@@ -17,7 +17,17 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.io.ByteStreams;
+import static org.bitcoinj.core.Utils.HEX;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.List;
 
 import org.bitcoinj.core.AbstractBlockGraph.NewBlockType;
 import org.bitcoinj.params.MainNetParams;
@@ -30,13 +40,11 @@ import org.bitcoinj.wallet.Wallet.BalanceType;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.List;
-
-import static org.bitcoinj.core.Utils.HEX;
-import static org.junit.Assert.*;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.google.common.io.ByteStreams;
 
 public class BlockTest {
     private static final NetworkParameters PARAMS = TestNet2Params.get();
@@ -74,6 +82,7 @@ public class BlockTest {
     @Test
     public void testDate() throws Exception {
         Block block = PARAMS.getDefaultSerializer().makeBlock(blockBytes);
+       System.out.println(jsonmapper().writeValueAsBytes(block) );
         assertEquals("4 Nov 2010 16:06:04 GMT", block.getTime().toGMTString());
     }
 
@@ -82,20 +91,15 @@ public class BlockTest {
         // This params accepts any difficulty target.
         NetworkParameters params = UnitTestParams.get();
         Block block = params.getDefaultSerializer().makeBlock(blockBytes);
-        block.setNonce(12346);
-        try {
-            block.verify(Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
-            fail();
-        } catch (VerificationException e) {
-            // Expected.
-        }
+     
         // Blocks contain their own difficulty target. The BlockChain verification mechanism is what stops real blocks
         // from containing artificially weak difficulties.
-        block.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
+        block.setDifficultyTarget(Block.Client_DIFFICULTY_TARGET);
+        block.solve();
         // Now it should pass.
         block.verify(Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
         // Break the nonce again at the lower difficulty level so we can try solving for it.
-        block.setNonce(1);
+        block.setNonce(2);
         try {
             block.verify(Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
             fail();
@@ -105,7 +109,7 @@ public class BlockTest {
         // Should find an acceptable nonce.
         block.solve();
         block.verify(Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
-        assertEquals(block.getNonce(), 2);
+        assertEquals(block.getNonce(), 5);
     }
 
     @Test
@@ -285,5 +289,23 @@ public class BlockTest {
         assertTrue(block370661.isBIP34());
         assertTrue(block370661.isBIP66());
         assertTrue(block370661.isBIP65());
+    }
+    
+    public static ObjectMapper jsonmapper() {
+
+        // getJsonName(response);
+        ObjectMapper mapper = new ObjectMapper();
+       // mapper.registerModule(new JavaTimeModule());
+        // mapper.findAndRegisterModules();
+        mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        //   mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+        // SimpleDateFormat outputFormat = new SimpleDateFormat("dd MMM yyyy");
+        // mapper.setDateFormat(outputFormat);
+
+        mapper.setSerializationInclusion(Include.NON_EMPTY);
+        mapper.setSerializationInclusion(Include.NON_NULL);
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return mapper;
+        // mapper.writeValue(System.out, response);
     }
 }
