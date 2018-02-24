@@ -16,7 +16,7 @@
 
 package org.bitcoinj.utils;
 
-import org.bitcoinj.core.BlockChain;
+import org.bitcoinj.core.BlockGraph;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.StoredBlock;
@@ -95,7 +95,7 @@ public class VersionTallyTest {
     @Test
     public void testInitialize() throws BlockStoreException {
         final BlockStore blockStore = new MemoryBlockStore(PARAMS);
-        final BlockChain chain = new BlockChain(PARAMS, blockStore);
+        final BlockGraph chain = new BlockGraph(PARAMS, blockStore);
 
         // Build a historical chain of version 2 blocks
         long timeSeconds = 1231006505;

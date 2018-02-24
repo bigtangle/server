@@ -99,8 +99,8 @@ public class PaymentChannelStateTest extends TestWithWallet {
                 return null;
             }
         }));
-        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN);
-        chain = new BlockChain(PARAMS, wallet, blockStore); // Recreate chain as sendMoneyToWallet will confuse it
+        sendMoneyToWallet(AbstractBlockGraph.NewBlockType.BEST_CHAIN, COIN);
+        chain = new BlockGraph(PARAMS, wallet, blockStore); // Recreate chain as sendMoneyToWallet will confuse it
         serverWallet = new Wallet(PARAMS);
         serverKey = serverWallet.freshReceiveKey();
         chain.addWallet(serverWallet);
@@ -888,7 +888,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         }
 
         // Now give the server enough coins to pay the fee
-        sendMoneyToWallet(serverWallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN, serverKey.toAddress(PARAMS));
+        sendMoneyToWallet(serverWallet, AbstractBlockGraph.NewBlockType.BEST_CHAIN, COIN, serverKey.toAddress(PARAMS));
 
         // The contract is still not worth redeeming - its worth less than we pay in fee
         try {
@@ -995,7 +995,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         doubleSpendContract = new Transaction(PARAMS, doubleSpendContract.bitcoinSerialize());
 
         StoredBlock block = new StoredBlock(PARAMS.getGenesisBlock().createNextBlock(myKey.toAddress(PARAMS)), BigInteger.TEN, 1);
-        serverWallet.receiveFromBlock(doubleSpendContract, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
+        serverWallet.receiveFromBlock(doubleSpendContract, block, AbstractBlockGraph.NewBlockType.BEST_CHAIN, 0);
 
         // Now if we try to spend again the server will reject it since it saw a double-spend
         try {

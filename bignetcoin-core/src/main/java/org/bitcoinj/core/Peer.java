@@ -61,7 +61,7 @@ public class Peer extends PeerSocketHandler {
     protected final ReentrantLock lock = Threading.lock("peer");
 
     private final NetworkParameters params;
-    private final AbstractBlockChain blockChain;
+    private final AbstractBlockGraph blockChain;
     private final Context context;
 
     private final CopyOnWriteArrayList<ListenerRegistration<BlocksDownloadedEventListener>> blocksDownloadedEventListeners
@@ -185,7 +185,7 @@ public class Peer extends PeerSocketHandler {
      * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
      */
-    public Peer(NetworkParameters params, VersionMessage ver, @Nullable AbstractBlockChain chain, PeerAddress remoteAddress) {
+    public Peer(NetworkParameters params, VersionMessage ver, @Nullable AbstractBlockGraph chain, PeerAddress remoteAddress) {
         this(params, ver, remoteAddress, chain);
     }
 
@@ -204,7 +204,7 @@ public class Peer extends PeerSocketHandler {
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
      */
     public Peer(NetworkParameters params, VersionMessage ver, PeerAddress remoteAddress,
-                @Nullable AbstractBlockChain chain) {
+                @Nullable AbstractBlockGraph chain) {
         this(params, ver, remoteAddress, chain, Integer.MAX_VALUE);
     }
 
@@ -223,7 +223,7 @@ public class Peer extends PeerSocketHandler {
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
      */
     public Peer(NetworkParameters params, VersionMessage ver, PeerAddress remoteAddress,
-                @Nullable AbstractBlockChain chain, int downloadTxDependencyDepth) {
+                @Nullable AbstractBlockGraph chain, int downloadTxDependencyDepth) {
         super(params, remoteAddress);
         this.params = Preconditions.checkNotNull(params);
         this.versionMessage = Preconditions.checkNotNull(ver);
@@ -260,7 +260,7 @@ public class Peer extends PeerSocketHandler {
      * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
      */
-    public Peer(NetworkParameters params, AbstractBlockChain blockChain, PeerAddress peerAddress, String thisSoftwareName, String thisSoftwareVersion) {
+    public Peer(NetworkParameters params, AbstractBlockGraph blockChain, PeerAddress peerAddress, String thisSoftwareName, String thisSoftwareVersion) {
         this(params, new VersionMessage(params, blockChain.getBestChainHeight()), blockChain, peerAddress);
         this.versionMessage.appendToSubVer(thisSoftwareName, thisSoftwareVersion, null);
     }

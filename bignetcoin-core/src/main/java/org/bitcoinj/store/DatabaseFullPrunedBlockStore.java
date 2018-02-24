@@ -135,10 +135,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     // Compatibility SQL.
     private static final String SELECT_COMPATIBILITY_COINBASE_SQL               = "SELECT coinbase FROM openoutputs WHERE 1 = 2";
 
-    protected Sha256Hash chainHeadHash;
-    protected StoredBlock chainHeadBlock;
-    protected Sha256Hash verifiedChainHeadHash;
-    protected StoredBlock verifiedChainHeadBlock;
     protected NetworkParameters params;
     protected ThreadLocal<Connection> conn;
     protected List<Connection> allConnections;
@@ -568,7 +564,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             List<Transaction> genesisTransactions = Lists.newLinkedList();
             StoredUndoableBlock storedGenesis = new StoredUndoableBlock(params.getGenesisBlock().getHash(), genesisTransactions);
             put(storedGenesisHeader, storedGenesis);
-            setChainHead(storedGenesisHeader);
+
             setVerifiedChainHead(storedGenesisHeader);
         } catch (VerificationException e) {
             throw new RuntimeException(e); // Cannot happen.
@@ -590,11 +586,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
         Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));
         rs.close();
-        this.chainHeadBlock = get(hash);
-        this.chainHeadHash = hash;
-        if (this.chainHeadBlock == null) {
-            throw new BlockStoreException("corrupt database block store - head block not found");
-        }
+ 
         ps.setString(1, VERIFIED_CHAIN_HEAD_SETTING);
         rs = ps.executeQuery();
         if (!rs.next()) {
@@ -603,11 +595,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         hash = Sha256Hash.wrap(rs.getBytes(1));
         rs.close();
         ps.close();
-        this.verifiedChainHeadBlock = get(hash);
-        this.verifiedChainHeadHash = hash;
-        if (this.verifiedChainHeadBlock == null) {
-            throw new BlockStoreException("corrupt databse block store - verified head block not found");
-        }
+   
     }
 
     protected void putUpdateStoredBlock(StoredBlock storedBlock, boolean wasUndoable) throws SQLException {
@@ -726,10 +714,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     public StoredBlock get(Sha256Hash hash, boolean wasUndoableOnly) throws BlockStoreException {
         // Optimize for chain head
-        if (chainHeadHash != null && chainHeadHash.equals(hash))
-            return chainHeadBlock;
-        if (verifiedChainHeadHash != null && verifiedChainHeadHash.equals(hash))
-            return verifiedChainHeadBlock;
+   
         maybeConnect();
         PreparedStatement s = null;
         try {
@@ -846,55 +831,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 }
             }
         }
-    }
-
-    @Override
-    public StoredBlock getChainHead() throws BlockStoreException {
-        return chainHeadBlock;
-    }
-
-    @Override
-    public void setChainHead(StoredBlock chainHead) throws BlockStoreException {
-        Sha256Hash hash = chainHead.getHeader().getHash();
-        this.chainHeadHash = hash;
-        this.chainHeadBlock = chainHead;
-        maybeConnect();
-        try {
-            PreparedStatement s = conn.get()
-                    .prepareStatement(getUpdateSettingsSLQ());
-            s.setString(2, CHAIN_HEAD_SETTING);
-            s.setBytes(1, hash.getBytes());
-            s.executeUpdate();
-            s.close();
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        }
-    }
-
-    @Override
-    public StoredBlock getVerifiedChainHead() throws BlockStoreException {
-        return verifiedChainHeadBlock;
-    }
-
-    @Override
-    public void setVerifiedChainHead(StoredBlock chainHead) throws BlockStoreException {
-        Sha256Hash hash = chainHead.getHeader().getHash();
-        this.verifiedChainHeadHash = hash;
-        this.verifiedChainHeadBlock = chainHead;
-        maybeConnect();
-        try {
-            PreparedStatement s = conn.get()
-                    .prepareStatement(getUpdateSettingsSLQ());
-            s.setString(2, VERIFIED_CHAIN_HEAD_SETTING);
-            s.setBytes(1, hash.getBytes());
-            s.executeUpdate();
-            s.close();
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        }
-        if (this.chainHeadBlock.getHeight() < chainHead.getHeight())
-            setChainHead(chainHead);
-        removeUndoableBlocksWhereHeightIsLessThan(chainHead.getHeight() - fullStoreDepth);
     }
 
     private void removeUndoableBlocksWhereHeightIsLessThan(int height) throws BlockStoreException {

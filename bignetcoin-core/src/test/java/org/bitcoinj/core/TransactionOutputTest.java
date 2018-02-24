@@ -41,7 +41,7 @@ public class TransactionOutputTest extends TestWithWallet {
 
     @Test
     public void testMultiSigOutputToString() throws Exception {
-        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, Coin.COIN);
+        sendMoneyToWallet(AbstractBlockGraph.NewBlockType.BEST_CHAIN, Coin.COIN);
         ECKey myKey = new ECKey();
         this.wallet.importKey(myKey);
 

@@ -115,6 +115,10 @@ public class StoredBlock {
         return store.get(getHeader().getPrevBlockHash());
     }
 
+    public StoredBlock getPrevBranch(BlockStore store) throws BlockStoreException {
+        return store.get(getHeader().getPrevBranchBlockHash());
+    }
+    
     /** Serializes the stored block to a custom packed format. Used by {@link CheckpointManager}. */
     public void serializeCompact(ByteBuffer buffer) {
         byte[] chainWorkBytes = getChainWork().toByteArray();

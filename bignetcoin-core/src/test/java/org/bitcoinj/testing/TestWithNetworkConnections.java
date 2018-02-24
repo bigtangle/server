@@ -51,7 +51,7 @@ public class TestWithNetworkConnections {
     protected static final NetworkParameters PARAMS = UnitTestParams.get();
     protected Context context;
     protected BlockStore blockStore;
-    protected BlockChain blockChain;
+    protected BlockGraph blockChain;
     protected Wallet wallet;
     protected ECKey key;
     protected Address address;
@@ -92,7 +92,7 @@ public class TestWithNetworkConnections {
             key = wallet.freshReceiveKey();
             address = key.toAddress(PARAMS);
         }
-        blockChain = new BlockChain(PARAMS, wallet, blockStore);
+        blockChain = new BlockGraph(PARAMS, wallet, blockStore);
 
         startPeerServers();
         if (clientType == ClientType.NIO_CLIENT_MANAGER || clientType == ClientType.BLOCKING_CLIENT_MANAGER) {

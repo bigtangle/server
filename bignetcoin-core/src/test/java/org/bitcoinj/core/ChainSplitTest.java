@@ -50,7 +50,7 @@ public class ChainSplitTest {
     private static final Logger log = LoggerFactory.getLogger(ChainSplitTest.class);
     private static final NetworkParameters PARAMS = UnitTestParams.get();
     private Wallet wallet;
-    private BlockChain chain;
+    private BlockGraph chain;
     private Address coinsTo;
     private Address coinsTo2;
     private Address someOtherGuy;
@@ -64,7 +64,7 @@ public class ChainSplitTest {
         wallet = new Wallet(PARAMS);
         ECKey key1 = wallet.freshReceiveKey();
         ECKey key2 = wallet.freshReceiveKey();
-        chain = new BlockChain(PARAMS, wallet, blockStore);
+        chain = new BlockGraph(PARAMS, wallet, blockStore);
         coinsTo = key1.toAddress(PARAMS);
         coinsTo2 = key2.toAddress(PARAMS);
         someOtherGuy = new ECKey().toAddress(PARAMS);

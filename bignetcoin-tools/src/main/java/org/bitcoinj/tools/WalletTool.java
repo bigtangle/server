@@ -101,7 +101,7 @@ public class WalletTool {
     private static NetworkParameters params;
     private static File walletFile;
     private static BlockStore store;
-    private static AbstractBlockChain chain;
+    private static AbstractBlockGraph chain;
     private static PeerGroup peers;
     private static Wallet wallet;
     private static File chainFileName;
@@ -1182,7 +1182,7 @@ public class WalletTool {
         }
         if (mode == ValidationMode.SPV) {
             store = new SPVBlockStore(params, chainFileName);
-            chain = new BlockChain(params, wallet, store);
+            chain = new BlockGraph(params, wallet, store);
             if (reset) {
                 try {
                     CheckpointManager.checkpoint(params, CheckpointManager.openStream(params), store,
@@ -1197,7 +1197,7 @@ public class WalletTool {
         } else if (mode == ValidationMode.FULL) {
             FullPrunedBlockStore s = new H2FullPrunedBlockStore(params, chainFileName.getAbsolutePath(), 5000);
             store = s;
-            chain = new FullPrunedBlockChain(params, wallet, s);
+            chain = new FullPrunedBlockGraph(params, wallet, s);
         }
         // This will ensure the wallet is saved when it changes.
         wallet.autosaveToFile(walletFile, 5, TimeUnit.SECONDS, null);

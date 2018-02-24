@@ -44,8 +44,8 @@ import static com.google.common.base.Preconditions.checkState;
  * serve the full block chain to other clients, but it nevertheless provides the same security guarantees as Bitcoin
  * Core does.</p>
  */
-public class FullPrunedBlockChain extends AbstractBlockChain {
-    private static final Logger log = LoggerFactory.getLogger(FullPrunedBlockChain.class);
+public class FullPrunedBlockGraph extends AbstractBlockGraph {
+    private static final Logger log = LoggerFactory.getLogger(FullPrunedBlockGraph.class);
 
     /**
      * Keeps a map of block hashes to StoredBlocks.
@@ -60,7 +60,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
      * one from scratch, or you can deserialize a saved wallet from disk using
      * {@link Wallet#loadFromFile(java.io.File, WalletExtension...)}
      */
-    public FullPrunedBlockChain(Context context, Wallet wallet, FullPrunedBlockStore blockStore) throws BlockStoreException {
+    public FullPrunedBlockGraph(Context context, Wallet wallet, FullPrunedBlockStore blockStore) throws BlockStoreException {
         this(context, new ArrayList<Wallet>(), blockStore);
         addWallet(wallet);
     }
@@ -70,28 +70,28 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
      * one from scratch, or you can deserialize a saved wallet from disk using
      * {@link Wallet#loadFromFile(java.io.File, WalletExtension...)}
      */
-    public FullPrunedBlockChain(NetworkParameters params, Wallet wallet, FullPrunedBlockStore blockStore) throws BlockStoreException {
+    public FullPrunedBlockGraph(NetworkParameters params, Wallet wallet, FullPrunedBlockStore blockStore) throws BlockStoreException {
         this(Context.getOrCreate(params), wallet, blockStore);
     }
 
     /**
      * Constructs a block chain connected to the given store.
      */
-    public FullPrunedBlockChain(Context context, FullPrunedBlockStore blockStore) throws BlockStoreException {
+    public FullPrunedBlockGraph(Context context, FullPrunedBlockStore blockStore) throws BlockStoreException {
         this(context, new ArrayList<Wallet>(), blockStore);
     }
 
     /**
      * See {@link #FullPrunedBlockChain(Context, Wallet, FullPrunedBlockStore)}
      */
-    public FullPrunedBlockChain(NetworkParameters params, FullPrunedBlockStore blockStore) throws BlockStoreException {
+    public FullPrunedBlockGraph(NetworkParameters params, FullPrunedBlockStore blockStore) throws BlockStoreException {
         this(Context.getOrCreate(params), blockStore);
     }
 
     /**
      * Constructs a block chain connected to the given list of wallets and a store.
      */
-    public FullPrunedBlockChain(Context context, List<Wallet> listeners, FullPrunedBlockStore blockStore) throws BlockStoreException {
+    public FullPrunedBlockGraph(Context context, List<Wallet> listeners, FullPrunedBlockStore blockStore) throws BlockStoreException {
         super(context, listeners, blockStore);
         this.blockStore = blockStore;
         // Ignore upgrading for now
@@ -101,7 +101,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     /**
      * See {@link #FullPrunedBlockChain(Context, List, FullPrunedBlockStore)}
      */
-    public FullPrunedBlockChain(NetworkParameters params, List<Wallet> listeners,
+    public FullPrunedBlockGraph(NetworkParameters params, List<Wallet> listeners,
                                 FullPrunedBlockStore blockStore) throws BlockStoreException {
         this(Context.getOrCreate(params), listeners, blockStore);
     }

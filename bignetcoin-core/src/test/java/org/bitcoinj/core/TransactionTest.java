@@ -116,7 +116,7 @@ public class TransactionTest {
         int TEST_LOCK_TIME = 20;
         Date now = Calendar.getInstance().getTime();
 
-        BlockChain mockBlockChain = createMock(BlockChain.class);
+        BlockGraph mockBlockChain = createMock(BlockGraph.class);
         EasyMock.expect(mockBlockChain.estimateBlockTime(TEST_LOCK_TIME)).andReturn(now);
 
         Transaction tx = FakeTxBuilder.createFakeTx(PARAMS);
@@ -257,7 +257,7 @@ public class TransactionTest {
         cal.set(2085, 10, 4, 17, 53, 21);
         cal.set(Calendar.MILLISECOND, 0);
 
-        BlockChain mockBlockChain = createMock(BlockChain.class);
+        BlockGraph mockBlockChain = createMock(BlockGraph.class);
         EasyMock.expect(mockBlockChain.estimateBlockTime(TEST_LOCK_TIME)).andReturn(cal.getTime());
 
         replay(mockBlockChain);

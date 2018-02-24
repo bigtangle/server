@@ -49,9 +49,9 @@ import static com.google.common.base.Preconditions.*;
  * verification.  It verifies headers and is implements most of what is required to implement SPV mode, but
  * also provides callback hooks which can be used to do full verification.</p>
  *
- * <p>There are two subclasses of AbstractBlockChain that are useful: {@link BlockChain}, which is the simplest
+ * <p>There are two subclasses of AbstractBlockChain that are useful: {@link BlockGraph}, which is the simplest
  * class and implements <i>simplified payment verification</i>. This is a lightweight and efficient mode that does
- * not verify the contents of blocks, just their headers. A {@link FullPrunedBlockChain} paired with a
+ * not verify the contents of blocks, just their headers. A {@link FullPrunedBlockGraph} paired with a
  * {@link org.bitcoinj.store.H2FullPrunedBlockStore} implements full verification, which is equivalent to
  * Bitcoin Core. To learn more about the alternative security models, please consult the articles on the
  * website.</p>
@@ -76,8 +76,8 @@ import static com.google.common.base.Preconditions.*;
  * <p>Every so often the block chain passes a difficulty transition point. At that time, all the blocks in the last
  * 2016 blocks are examined and a new difficulty target is calculated from them.</p>
  */
-public abstract class AbstractBlockChain {
-    private static final Logger log = LoggerFactory.getLogger(AbstractBlockChain.class);
+public abstract class AbstractBlockGraph {
+    private static final Logger log = LoggerFactory.getLogger(AbstractBlockGraph.class);
     protected final ReentrantLock lock = Threading.lock("blockchain");
 
     /** Keeps a map of block hashes to StoredBlocks. */
@@ -135,7 +135,7 @@ public abstract class AbstractBlockChain {
     private final VersionTally versionTally;
 
     /** See {@link #AbstractBlockChain(Context, List, BlockStore)} */
-    public AbstractBlockChain(NetworkParameters params, List<? extends Wallet> transactionReceivedListeners,
+    public AbstractBlockGraph(NetworkParameters params, List<? extends Wallet> transactionReceivedListeners,
                               BlockStore blockStore) throws BlockStoreException {
         this(Context.getOrCreate(params), transactionReceivedListeners, blockStore);
     }
@@ -143,7 +143,7 @@ public abstract class AbstractBlockChain {
     /**
      * Constructs a BlockChain connected to the given list of listeners (eg, wallets) and a store.
      */
-    public AbstractBlockChain(Context context, List<? extends Wallet> wallets,
+    public AbstractBlockGraph(Context context, List<? extends Wallet> wallets,
                               BlockStore blockStore) throws BlockStoreException {
         this.blockStore = blockStore;
         chainHead = blockStore.getChainHead();
@@ -313,7 +313,7 @@ public abstract class AbstractBlockChain {
             throws BlockStoreException, VerificationException;
 
     /**
-     * Rollback the block store to a given height. This is currently only supported by {@link BlockChain} instances.
+     * Rollback the block store to a given height. This is currently only supported by {@link BlockGraph} instances.
      * 
      * @throws BlockStoreException
      *             if the operation fails or is unsupported.

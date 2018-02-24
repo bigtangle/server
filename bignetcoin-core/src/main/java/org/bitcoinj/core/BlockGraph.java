@@ -33,7 +33,7 @@ import java.util.List;
  * choice to use for programs that have limited resources as it won't verify transactions signatures or attempt to store
  * all of the block chain. Really, this class should be called SPVBlockChain but for backwards compatibility it is not.
  */
-public class BlockChain extends AbstractBlockChain {
+public class BlockGraph extends AbstractBlockGraph {
     /** Keeps a map of block hashes to StoredBlocks. */
     protected final BlockStore blockStore;
 
@@ -46,13 +46,13 @@ public class BlockChain extends AbstractBlockChain {
      * {@link org.bitcoinj.store.MemoryBlockStore} if you want to hold all headers in RAM and don't care about
      * disk serialization (this is rare).</p>
      */
-    public BlockChain(Context context, Wallet wallet, BlockStore blockStore) throws BlockStoreException {
+    public BlockGraph(Context context, Wallet wallet, BlockStore blockStore) throws BlockStoreException {
         this(context, new ArrayList<Wallet>(), blockStore);
         addWallet(wallet);
     }
 
     /** See {@link #BlockChain(Context, Wallet, BlockStore)}} */
-    public BlockChain(NetworkParameters params, Wallet wallet, BlockStore blockStore) throws BlockStoreException {
+    public BlockGraph(NetworkParameters params, Wallet wallet, BlockStore blockStore) throws BlockStoreException {
         this(Context.getOrCreate(params), wallet, blockStore);
     }
 
@@ -60,25 +60,25 @@ public class BlockChain extends AbstractBlockChain {
      * Constructs a BlockChain that has no wallet at all. This is helpful when you don't actually care about sending
      * and receiving coins but rather, just want to explore the network data structures.
      */
-    public BlockChain(Context context, BlockStore blockStore) throws BlockStoreException {
+    public BlockGraph(Context context, BlockStore blockStore) throws BlockStoreException {
         this(context, new ArrayList<Wallet>(), blockStore);
     }
 
     /** See {@link #BlockChain(Context, BlockStore)} */
-    public BlockChain(NetworkParameters params, BlockStore blockStore) throws BlockStoreException {
+    public BlockGraph(NetworkParameters params, BlockStore blockStore) throws BlockStoreException {
         this(params, new ArrayList<Wallet>(), blockStore);
     }
 
     /**
      * Constructs a BlockChain connected to the given list of listeners and a store.
      */
-    public BlockChain(Context params, List<? extends Wallet> wallets, BlockStore blockStore) throws BlockStoreException {
+    public BlockGraph(Context params, List<? extends Wallet> wallets, BlockStore blockStore) throws BlockStoreException {
         super(params, wallets, blockStore);
         this.blockStore = blockStore;
     }
 
     /** See {@link #BlockChain(Context, List, BlockStore)} */
-    public BlockChain(NetworkParameters params, List<? extends Wallet> wallets, BlockStore blockStore) throws BlockStoreException {
+    public BlockGraph(NetworkParameters params, List<? extends Wallet> wallets, BlockStore blockStore) throws BlockStoreException {
         this(Context.getOrCreate(params), wallets, blockStore);
     }
 

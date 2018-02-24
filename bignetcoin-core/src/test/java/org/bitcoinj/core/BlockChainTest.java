@@ -49,10 +49,10 @@ public class BlockChainTest {
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
-    private BlockChain testNetChain;
+    private BlockGraph testNetChain;
 
     private Wallet wallet;
-    private BlockChain chain;
+    private BlockGraph chain;
     private BlockStore blockStore;
     private Address coinbaseTo;
     private static final NetworkParameters PARAMS = UnitTestParams.get();
@@ -74,11 +74,11 @@ public class BlockChainTest {
     public void setUp() throws Exception {
         BriefLogFormatter.initVerbose();
         Context.propagate(new Context(testNet, 100, Coin.ZERO, false));
-        testNetChain = new BlockChain(testNet, new Wallet(testNet), new MemoryBlockStore(testNet));
+        testNetChain = new BlockGraph(testNet, new Wallet(testNet), new MemoryBlockStore(testNet));
         Context.propagate(new Context(PARAMS, 100, Coin.ZERO, false));
         wallet = new Wallet(PARAMS) {
             @Override
-            public void receiveFromBlock(Transaction tx, StoredBlock block, BlockChain.NewBlockType blockType,
+            public void receiveFromBlock(Transaction tx, StoredBlock block, BlockGraph.NewBlockType blockType,
                                          int relativityOffset) throws VerificationException {
                 super.receiveFromBlock(tx, block, blockType, relativityOffset);
                 BlockChainTest.this.block[0] = block;
@@ -90,7 +90,7 @@ public class BlockChainTest {
         wallet.freshReceiveKey();
 
         resetBlockStore();
-        chain = new BlockChain(PARAMS, wallet, blockStore);
+        chain = new BlockGraph(PARAMS, wallet, blockStore);
 
         coinbaseTo = wallet.currentReceiveKey().toAddress(PARAMS);
     }
@@ -238,7 +238,7 @@ public class BlockChainTest {
     private void testDeprecatedBlockVersion(final long deprecatedVersion, final long newVersion)
             throws Exception {
         final BlockStore versionBlockStore = new MemoryBlockStore(PARAMS);
-        final BlockChain versionChain = new BlockChain(PARAMS, versionBlockStore);
+        final BlockGraph versionChain = new BlockGraph(PARAMS, versionBlockStore);
 
         // Build a historical chain of version 3 blocks
         long timeSeconds = 1231006505;
@@ -418,7 +418,7 @@ public class BlockChainTest {
     @Test
     public void estimatedBlockTime() throws Exception {
         NetworkParameters params = MainNetParams.get();
-        BlockChain prod = new BlockChain(new Context(params), new MemoryBlockStore(params));
+        BlockGraph prod = new BlockGraph(new Context(params), new MemoryBlockStore(params));
         Date d = prod.estimateBlockTime(200000);
         // The actual date of block 200,000 was 2012-09-22 10:47:00
         assertEquals(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.US).parse("2012-10-23T08:35:05.000-0700"), d);
@@ -426,7 +426,7 @@ public class BlockChainTest {
 
     @Test
     public void falsePositives() throws Exception {
-        double decay = AbstractBlockChain.FP_ESTIMATOR_ALPHA;
+        double decay = AbstractBlockGraph.FP_ESTIMATOR_ALPHA;
         assertTrue(0 == chain.getFalsePositiveRate()); // Exactly
         chain.trackFalsePositives(55);
         assertEquals(decay * 55, chain.getFalsePositiveRate(), 1e-4);
