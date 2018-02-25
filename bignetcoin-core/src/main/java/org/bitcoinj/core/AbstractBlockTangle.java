@@ -17,39 +17,58 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.*;
-import com.google.common.collect.*;
-import com.google.common.util.concurrent.*;
-import org.bitcoinj.core.listeners.*;
-import org.bitcoinj.store.*;
-import org.bitcoinj.utils.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
+import java.util.concurrent.locks.ReentrantLock;
+
+import javax.annotation.Nullable;
+
+import org.bitcoinj.core.listeners.NewBestBlockListener;
+import org.bitcoinj.core.listeners.ReorganizeListener;
+import org.bitcoinj.core.listeners.TransactionReceivedInBlockListener;
+import org.bitcoinj.store.BlockStore;
+import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.utils.ListenerRegistration;
+import org.bitcoinj.utils.Threading;
+import org.bitcoinj.utils.VersionTally;
 import org.bitcoinj.wallet.Wallet;
-import org.slf4j.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.annotation.*;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.locks.*;
-
-import static com.google.common.base.Preconditions.*;
+import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 
 /**
- * <p>An AbstractBlockChain holds a series of {@link Block} objects, links them together, and knows how to verify that
- * the chain follows the rules of the {@link NetworkParameters} for this chain.</p>
+ * <p>An AbstractBlockTangle holds a series of {@link Block} objects, links them together, and knows how to verify that
+ * the tangle follows the rules of the {@link NetworkParameters} for this tangle.</p>
  *
  * <p>It can be connected to a {@link Wallet}, and also {@link TransactionReceivedInBlockListener}s that can receive transactions and
  * notifications of re-organizations.</p>
  *
- * <p>An AbstractBlockChain implementation must be connected to a {@link BlockStore} implementation. The chain object
+ * <p>An AbstractBlockTangle implementation must be connected to a {@link BlockStore} implementation. The tangle object
  * by itself doesn't store any data, that's delegated to the store. Which store you use is a decision best made by
- * reading the getting started guide, but briefly, fully validating block chains need fully validating stores. In
+ * reading the getting started guide, but briefly, fully validating block tangles need fully validating stores. In
  * the lightweight SPV mode, a {@link org.bitcoinj.store.SPVBlockStore} is the right choice.</p>
  *
- * <p>This class implements an abstract class which makes it simple to create a BlockChain that does/doesn't do full
+ * <p>This class implements an abstract class which makes it simple to create a BlockTangle that does/doesn't do full
  * verification.  It verifies headers and is implements most of what is required to implement SPV mode, but
  * also provides callback hooks which can be used to do full verification.</p>
  *
- * <p>There are two subclasses of AbstractBlockChain that are useful: {@link BlockGraph}, which is the simplest
+ * <p>There are two subclasses of AbstractBlockTangle that are useful: {@link BlockGraph}, which is the simplest
  * class and implements <i>simplified payment verification</i>. This is a lightweight and efficient mode that does
  * not verify the contents of blocks, just their headers. A {@link FullPrunedBlockGraph} paired with a
  * {@link org.bitcoinj.store.H2FullPrunedBlockStore} implements full verification, which is equivalent to
@@ -58,45 +77,45 @@ import static com.google.common.base.Preconditions.*;
  *
  * <b>Theory</b>
  *
- * <p>The 'chain' is actually a tree although in normal operation it operates mostly as a list of {@link Block}s.
+ * <p>The 'tangle' is actually a tree although in normal operation it operates mostly as a list of {@link Block}s.
  * When multiple new head blocks are found simultaneously, there are multiple stories of the economy competing to become
  * the one true consensus. This can happen naturally when two miners solve a block within a few seconds of each other,
- * or it can happen when the chain is under attack.</p>
+ * or it can happen when the tangle is under attack.</p>
  *
- * <p>A reference to the head block of the best known chain is stored. If you can reach the genesis block by repeatedly
- * walking through the prevBlock pointers, then we say this is a full chain. If you cannot reach the genesis block
- * we say it is an orphan chain. Orphan chains can occur when blocks are solved and received during the initial block
- * chain download, or if we connect to a peer that doesn't send us blocks in order.</p>
+ * <p>A reference to the head block of the best known tangle is stored. If you can reach the genesis block by repeatedly
+ * walking through the prevBlock pointers, then we say this is a full tangle. If you cannot reach the genesis block
+ * we say it is an orphan tangle. Orphan tangles can occur when blocks are solved and received during the initial block
+ * tangle download, or if we connect to a peer that doesn't send us blocks in order.</p>
  *
- * <p>A reorganize occurs when the blocks that make up the best known chain changes. Note that simply adding a
- * new block to the top of the best chain isn't as reorganize, but that a reorganize is always triggered by adding
- * a new block that connects to some other (non best head) block. By "best" we mean the chain representing the largest
+ * <p>A reorganize occurs when the blocks that make up the best known tangle changes. Note that simply adding a
+ * new block to the top of the best tangle isn't as reorganize, but that a reorganize is always triggered by adding
+ * a new block that connects to some other (non best head) block. By "best" we mean the tangle representing the largest
  * amount of work done.</p>
  *
- * <p>Every so often the block chain passes a difficulty transition point. At that time, all the blocks in the last
+ * <p>Every so often the block tangle passes a difficulty transition point. At that time, all the blocks in the last
  * 2016 blocks are examined and a new difficulty target is calculated from them.</p>
  */
-public abstract class AbstractBlockGraph {
-    private static final Logger log = LoggerFactory.getLogger(AbstractBlockGraph.class);
-    protected final ReentrantLock lock = Threading.lock("blockchain");
+public abstract class AbstractBlockTangle {
+    private static final Logger log = LoggerFactory.getLogger(AbstractBlockTangle.class);
+    protected final ReentrantLock lock = Threading.lock("blocktangle");
 
     /** Keeps a map of block hashes to StoredBlocks. */
     private final BlockStore blockStore;
 
     /**
-     * Tracks the top of the best known chain.<p>
+     * Tracks the top of the best known tangle.<p>
      *
      * Following this one down to the genesis block produces the story of the economy from the creation of Bitcoin
-     * until the present day. The chain head can change if a new set of blocks is received that results in a chain of
+     * until the present day. The tangle head can change if a new set of blocks is received that results in a tangle of
      * greater work than the one obtained by following this one down. In that case a reorganize is triggered,
      * potentially invalidating transactions in our wallet.
      */
     protected StoredBlock chainHead;
 
-    // TODO: Scrap this and use a proper read/write for all of the block chain objects.
-    // The chainHead field is read/written synchronized with this object rather than BlockChain. However writing is
-    // also guaranteed to happen whilst BlockChain is synchronized (see setChainHead). The goal of this is to let
-    // clients quickly access the chain head even whilst the block chain is downloading and thus the BlockChain is
+    // TODO: Scrap this and use a proper read/write for all of the block tangle objects.
+    // The tangleHead field is read/written synchronized with this object rather than BlockTangle. However writing is
+    // also guaranteed to happen whilst BlockTangle is synchronized (see setTangleHead). The goal of this is to let
+    // clients quickly access the tangle head even whilst the block tangle is downloading and thus the BlockTangle is
     // locked most of the time.
     private final Object chainHeadLock = new Object();
 
@@ -105,23 +124,8 @@ public abstract class AbstractBlockGraph {
     private final CopyOnWriteArrayList<ListenerRegistration<ReorganizeListener>> reorganizeListeners;
     private final CopyOnWriteArrayList<ListenerRegistration<TransactionReceivedInBlockListener>> transactionReceivedListeners;
 
-    // Holds a block header and, optionally, a list of tx hashes or block's transactions
-    class OrphanBlock {
-        final Block block;
-        final List<Sha256Hash> filteredTxHashes;
-        final Map<Sha256Hash, Transaction> filteredTxn;
-        OrphanBlock(Block block, @Nullable List<Sha256Hash> filteredTxHashes, @Nullable Map<Sha256Hash, Transaction> filteredTxn) {
-            final boolean filtered = filteredTxHashes != null && filteredTxn != null;
-            Preconditions.checkArgument((block.transactions == null && filtered)
-                                        || (block.transactions != null && !filtered));
-            this.block = block;
-            this.filteredTxHashes = filteredTxHashes;
-            this.filteredTxn = filteredTxn;
-        }
-    }
-    // Holds blocks that we have received but can't plug into the chain yet, eg because they were created whilst we
-    // were downloading the block chain.
-    private final LinkedHashMap<Sha256Hash, OrphanBlock> orphanBlocks = new LinkedHashMap<Sha256Hash, OrphanBlock>();
+ 
+  
 
     /** False positive estimation uses a double exponential moving average. */
     public static final double FP_ESTIMATOR_ALPHA = 0.0001;
@@ -134,16 +138,16 @@ public abstract class AbstractBlockGraph {
 
     private final VersionTally versionTally;
 
-    /** See {@link #AbstractBlockChain(Context, List, BlockStore)} */
-    public AbstractBlockGraph(NetworkParameters params, List<? extends Wallet> transactionReceivedListeners,
+    /** See {@link #AbstractBlockTangle(Context, List, BlockStore)} */
+    public AbstractBlockTangle(NetworkParameters params, List<? extends Wallet> transactionReceivedListeners,
                               BlockStore blockStore) throws BlockStoreException {
         this(Context.getOrCreate(params), transactionReceivedListeners, blockStore);
     }
 
     /**
-     * Constructs a BlockChain connected to the given list of listeners (eg, wallets) and a store.
+     * Constructs a BlockTangle connected to the given list of listeners (eg, wallets) and a store.
      */
-    public AbstractBlockGraph(Context context, List<? extends Wallet> wallets,
+    public AbstractBlockTangle(Context context, List<? extends Wallet> wallets,
                               BlockStore blockStore) throws BlockStoreException {
         this.blockStore = blockStore;
         chainHead = blockStore.getChainHead();
@@ -162,9 +166,9 @@ public abstract class AbstractBlockGraph {
     }
 
     /**
-     * Add a wallet to the BlockChain. Note that the wallet will be unaffected by any blocks received while it
-     * was not part of this BlockChain. This method is useful if the wallet has just been created, and its keys
-     * have never been in use, or if the wallet has been loaded along with the BlockChain. Note that adding multiple
+     * Add a wallet to the BlockTangle. Note that the wallet will be unaffected by any blocks received while it
+     * was not part of this BlockTangle. This method is useful if the wallet has just been created, and its keys
+     * have never been in use, or if the wallet has been loaded along with the BlockTangle. Note that adding multiple
      * wallets is not well tested!
      */
     public final void addWallet(Wallet wallet) {
@@ -198,92 +202,73 @@ public abstract class AbstractBlockGraph {
         removeTransactionReceivedListener(wallet);
     }
 
-    /** Replaced with more specific listener methods: use them instead. */
-    @Deprecated @SuppressWarnings("deprecation")
-    public void addListener(BlockChainListener listener) {
-        addListener(listener, Threading.USER_THREAD);
-    }
-
-    /** Replaced with more specific listener methods: use them instead. */
-    @Deprecated
-    public void addListener(BlockChainListener listener, Executor executor) {
-        addReorganizeListener(executor, listener);
-        addNewBestBlockListener(executor, listener);
-        addTransactionReceivedListener(executor, listener);
-    }
-
-    @Deprecated
-    public void removeListener(BlockChainListener listener) {
-        removeReorganizeListener(listener);
-        removeNewBestBlockListener(listener);
-        removeTransactionReceivedListener(listener);
-    }
+     
 
     /**
-     * Adds a {@link NewBestBlockListener} listener to the chain.
+     * Adds a {@link NewBestBlockListener} listener to the tangle.
      */
     public void addNewBestBlockListener(NewBestBlockListener listener) {
         addNewBestBlockListener(Threading.USER_THREAD, listener);
     }
 
     /**
-     * Adds a {@link NewBestBlockListener} listener to the chain.
+     * Adds a {@link NewBestBlockListener} listener to the tangle.
      */
     public final void addNewBestBlockListener(Executor executor, NewBestBlockListener listener) {
         newBestBlockListeners.add(new ListenerRegistration<NewBestBlockListener>(listener, executor));
     }
 
     /**
-     * Adds a generic {@link ReorganizeListener} listener to the chain.
+     * Adds a generic {@link ReorganizeListener} listener to the tangle.
      */
     public void addReorganizeListener(ReorganizeListener listener) {
         addReorganizeListener(Threading.USER_THREAD, listener);
     }
 
     /**
-     * Adds a generic {@link ReorganizeListener} listener to the chain.
+     * Adds a generic {@link ReorganizeListener} listener to the tangle.
      */
     public final void addReorganizeListener(Executor executor, ReorganizeListener listener) {
         reorganizeListeners.add(new ListenerRegistration<ReorganizeListener>(listener, executor));
     }
 
     /**
-     * Adds a generic {@link TransactionReceivedInBlockListener} listener to the chain.
+     * Adds a generic {@link TransactionReceivedInBlockListener} listener to the tangle.
      */
     public void addTransactionReceivedListener(TransactionReceivedInBlockListener listener) {
         addTransactionReceivedListener(Threading.USER_THREAD, listener);
     }
 
     /**
-     * Adds a generic {@link TransactionReceivedInBlockListener} listener to the chain.
+     * Adds a generic {@link TransactionReceivedInBlockListener} listener to the tangle.
      */
     public final void addTransactionReceivedListener(Executor executor, TransactionReceivedInBlockListener listener) {
         transactionReceivedListeners.add(new ListenerRegistration<TransactionReceivedInBlockListener>(listener, executor));
     }
 
     /**
-     * Removes the given {@link NewBestBlockListener} from the chain.
+     * Removes the given {@link NewBestBlockListener} from the tangle.
      */
     public void removeNewBestBlockListener(NewBestBlockListener listener) {
         ListenerRegistration.removeFromList(listener, newBestBlockListeners);
     }
 
     /**
-     * Removes the given {@link ReorganizeListener} from the chain.
+     * Removes the given {@link ReorganizeListener} from the tangle.
      */
     public void removeReorganizeListener(ReorganizeListener listener) {
         ListenerRegistration.removeFromList(listener, reorganizeListeners);
     }
 
     /**
-     * Removes the given {@link TransactionReceivedInBlockListener} from the chain.
+     * Removes the given {@link TransactionReceivedInBlockListener} from the tangle.
      */
     public void removeTransactionReceivedListener(TransactionReceivedInBlockListener listener) {
         ListenerRegistration.removeFromList(listener, transactionReceivedListeners);
     }
     
     /**
-     * Returns the {@link BlockStore} the chain was constructed with. You can use this to iterate over the chain.
+     * Returns the {@link BlockStore} the tangle was constructed with. You can use this to iterate over the tangle.
      */
     public BlockStore getBlockStore() {
         return blockStore;
@@ -321,7 +306,7 @@ public abstract class AbstractBlockGraph {
     protected abstract void rollbackBlockStore(int height) throws BlockStoreException;
 
     /**
-     * Called before setting chain head in memory.
+     * Called before setting tangle head in memory.
      * Should write the new head to block store and then commit any database transactions
      * that were started by disconnectTransactions/connectTransactions.
      */
@@ -365,9 +350,9 @@ public abstract class AbstractBlockGraph {
     }
     
     /**
-     * Processes a received block and tries to add it to the chain. If there's something wrong with the block an
-     * exception is thrown. If the block is OK but cannot be connected to the chain at this time, returns false.
-     * If the block can be connected to the chain, returns true.
+     * Processes a received block and tries to add it to the tangle. If there's something wrong with the block an
+     * exception is thrown. If the block is OK but cannot be connected to the tangle at this time, returns false.
+     * If the block can be connected to the tangle, returns true.
      */
     public boolean add(FilteredBlock block) throws VerificationException, PrunedException {
         try {
@@ -376,7 +361,7 @@ public abstract class AbstractBlockGraph {
             // in the case where we were already around to witness the initial broadcast, so we downloaded the
             // transaction and sent it to the wallet before this point (the wallet may have thrown it away if it was
             // a false positive, as expected in any Bloom filtering scheme). The filteredTxn list here will usually
-            // only be full of data when we are catching up to the head of the chain and thus haven't witnessed any
+            // only be full of data when we are catching up to the head of the tangle and thus haven't witnessed any
             // of the transactions.
             return add(block.getBlockHeader(), true, block.getTransactionHashes(), block.getAssociatedTransactions());
         } catch (BlockStoreException e) {
@@ -425,7 +410,7 @@ public abstract class AbstractBlockGraph {
     private boolean add(Block block, boolean tryConnecting,
                         @Nullable List<Sha256Hash> filteredTxHashList, @Nullable Map<Sha256Hash, Transaction> filteredTxn)
             throws BlockStoreException, VerificationException, PrunedException {
-        // TODO: Use read/write locks to ensure that during chain download properties are still low latency.
+        // TODO: Use read/write locks to ensure that during tangle download properties are still low latency.
         lock.lock();
         try {
             // Quick check for duplicates to avoid an expensive check further down (in findSplit). This can happen a lot
@@ -433,10 +418,7 @@ public abstract class AbstractBlockGraph {
             if (block.equals(getChainHead().getHeader())) {
                 return true;
             }
-            if (tryConnecting && orphanBlocks.containsKey(block.getHash())) {
-                return false;
-            }
-
+         
             // If we want to verify transactions (ie we are running with full blocks), verify that block has transactions
             if (shouldVerifyTransactions() && block.transactions == null)
                 throw new VerificationException("Got a block header while running in full-block mode");
@@ -448,6 +430,7 @@ public abstract class AbstractBlockGraph {
             }
 
             final StoredBlock storedPrev;
+            final StoredBlock storedPrevBranch;
             final int height;
             final EnumSet<Block.VerifyFlag> flags;
 
@@ -463,6 +446,9 @@ public abstract class AbstractBlockGraph {
                 } else {
                     height = Block.BLOCK_HEIGHT_UNKNOWN;
                 }
+                storedPrevBranch = getStoredBlockInCurrentScope(block.getPrevBranchBlockHash());
+            
+                
                 flags = params.getBlockVerificationFlags(block, versionTally, height);
                 if (shouldVerifyTransactions())
                     block.verifyTransactions(height, flags);
@@ -474,47 +460,21 @@ public abstract class AbstractBlockGraph {
 
             // Try linking it to a place in the currently known blocks.
 
-            if (storedPrev == null) {
-                // We can't find the previous block. Probably we are still in the process of downloading the chain and a
-                // block was solved whilst we were doing it. We put it to one side and try to connect it later when we
-                // have more blocks.
-                checkState(tryConnecting, "bug in tryConnectingOrphans");
-                log.warn("Block does not connect: {} prev {}", block.getHashAsString(), block.getPrevBlockHash());
-                orphanBlocks.put(block.getHash(), new OrphanBlock(block, filteredTxHashList, filteredTxn));
-                return false;
-            } else {
+            if (storedPrev != null) {  
                 checkState(lock.isHeldByCurrentThread());
-                // It connects to somewhere on the chain. Not necessarily the top of the best known chain.
-                params.checkDifficultyTransitions(storedPrev, block, blockStore);
+                // It connects to somewhere on the tangle. Not necessarily the top of the best known tangle.
+                 params.checkDifficultyTransitions(storedPrev, block, blockStore);
                 connectBlock(block, storedPrev, shouldVerifyTransactions(), filteredTxHashList, filteredTxn);
             }
-
-            if (tryConnecting)
-                tryConnectingOrphans();
-
+ 
             return true;
         } finally {
             lock.unlock();
         }
     }
 
-    /**
-     * Returns the hashes of the currently stored orphan blocks and then deletes them from this objects storage.
-     * Used by Peer when a filter exhaustion event has occurred and thus any orphan blocks that have been downloaded
-     * might be inaccurate/incomplete.
-     */
-    public Set<Sha256Hash> drainOrphanBlocks() {
-        lock.lock();
-        try {
-            Set<Sha256Hash> hashes = new HashSet<Sha256Hash>(orphanBlocks.keySet());
-            orphanBlocks.clear();
-            return hashes;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    // expensiveChecks enables checks that require looking at blocks further back in the chain
+    
+    // expensiveChecks enables checks that require looking at blocks further back in the tangle
     // than the previous one when connecting (eg median timestamp check)
     // It could be exposed, but for now we just set it to shouldVerifyTransactions()
     private void connectBlock(final Block block, StoredBlock storedPrev, boolean expensiveChecks,
@@ -897,43 +857,7 @@ public abstract class AbstractBlockGraph {
         }
     }
 
-    /**
-     * For each block in orphanBlocks, see if we can now fit it on top of the chain and if so, do so.
-     */
-    private void tryConnectingOrphans() throws VerificationException, BlockStoreException, PrunedException {
-        checkState(lock.isHeldByCurrentThread());
-        // For each block in our orphan list, try and fit it onto the head of the chain. If we succeed remove it
-        // from the list and keep going. If we changed the head of the list at the end of the round try again until
-        // we can't fit anything else on the top.
-        //
-        // This algorithm is kind of crappy, we should do a topo-sort then just connect them in order, but for small
-        // numbers of orphan blocks it does OK.
-        int blocksConnectedThisRound;
-        do {
-            blocksConnectedThisRound = 0;
-            Iterator<OrphanBlock> iter = orphanBlocks.values().iterator();
-            while (iter.hasNext()) {
-                OrphanBlock orphanBlock = iter.next();
-                // Look up the blocks previous.
-                StoredBlock prev = getStoredBlockInCurrentScope(orphanBlock.block.getPrevBlockHash());
-                if (prev == null) {
-                    // This is still an unconnected/orphan block.
-                    log.debug("Orphan block {} is not connectable right now", orphanBlock.block.getHash());
-                    continue;
-                }
-                // Otherwise we can connect it now.
-                // False here ensures we don't recurse infinitely downwards when connecting huge chains.
-                log.info("Connected orphan {}", orphanBlock.block.getHash());
-                add(orphanBlock.block, false, orphanBlock.filteredTxHashes, orphanBlock.filteredTxn);
-                iter.remove();
-                blocksConnectedThisRound++;
-            }
-            if (blocksConnectedThisRound > 0) {
-                log.info("Connected {} orphan blocks.", blocksConnectedThisRound);
-            }
-        } while (blocksConnectedThisRound > 0);
-    }
-
+    
     /**
      * Returns the block at the head of the current best chain. This is the block which represents the greatest
      * amount of cumulative work done.
@@ -943,42 +867,8 @@ public abstract class AbstractBlockGraph {
             return chainHead;
         }
     }
-
-    /**
-     * An orphan block is one that does not connect to the chain anywhere (ie we can't find its parent, therefore
-     * it's an orphan). Typically this occurs when we are downloading the chain and didn't reach the head yet, and/or
-     * if a block is solved whilst we are downloading. It's possible that we see a small amount of orphan blocks which
-     * chain together, this method tries walking backwards through the known orphan blocks to find the bottom-most.
-     *
-     * @return from or one of froms parents, or null if "from" does not identify an orphan block
-     */
-    @Nullable
-    public Block getOrphanRoot(Sha256Hash from) {
-        lock.lock();
-        try {
-            OrphanBlock cursor = orphanBlocks.get(from);
-            if (cursor == null)
-                return null;
-            OrphanBlock tmp;
-            while ((tmp = orphanBlocks.get(cursor.block.getPrevBlockHash())) != null) {
-                cursor = tmp;
-            }
-            return cursor.block;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /** Returns true if the given block is currently in the orphan blocks list. */
-    public boolean isOrphan(Sha256Hash block) {
-        lock.lock();
-        try {
-            return orphanBlocks.containsKey(block);
-        } finally {
-            lock.unlock();
-        }
-    }
-
+ 
+ 
     /**
      * Returns an estimate of when the given block will be reached, assuming a perfect 10 minute average for each
      * block. This is useful for turning transaction lock times into human readable times. Note that a height in

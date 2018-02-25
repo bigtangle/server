@@ -40,7 +40,7 @@ public class LevelDBBlockStoreTest {
 
         // Build a new block.
         Address to = Address.fromBase58(params, "mrj2K6txjo2QBcSmuAzHj4nD1oXSEJE1Qo");
-        StoredBlock b1 = genesis.build(genesis.getHeader().createNextBlock(to).cloneAsHeader());
+        StoredBlock b1 = genesis.build(genesis.getHeader().createNextBlock(to, params.getGenesisBlock().getHash()).cloneAsHeader());
         store.put(b1);
         store.setChainHead(b1);
         store.close();

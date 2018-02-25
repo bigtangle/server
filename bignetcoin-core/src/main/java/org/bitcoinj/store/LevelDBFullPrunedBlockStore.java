@@ -491,7 +491,7 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
         if (instrument)
             beginMethod("putUpdateStoredBlock");
         Sha256Hash hash = storedBlock.getHeader().getHash();
-        ByteBuffer bb = ByteBuffer.allocate(97);
+        ByteBuffer bb = ByteBuffer.allocate(97+32);
         storedBlock.serializeCompact(bb);
         bb.put((byte) (wasUndoable ? 1 : 0));
         batchPut(getKey(KeyType.HEADERS_ALL, hash), bb.array());

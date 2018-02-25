@@ -33,10 +33,12 @@ import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 
 /**
- * Just check the Transaction.verify() method. Most methods that have complicated logic in Transaction are tested
- * elsewhere, e.g. signing and hashing are well exercised by the wallet tests, the full block chain tests and so on.
- * The verify method is also exercised by the full block chain tests, but it can also be used by API users alone,
- * so we make sure to cover it here as well.
+ * Just check the Transaction.verify() method. Most methods that have
+ * complicated logic in Transaction are tested elsewhere, e.g. signing and
+ * hashing are well exercised by the wallet tests, the full block chain tests
+ * and so on. The verify method is also exercised by the full block chain tests,
+ * but it can also be used by API users alone, so we make sure to cover it here
+ * as well.
  */
 public class TransactionTest {
     private static final NetworkParameters PARAMS = UnitTestParams.get();
@@ -106,7 +108,8 @@ public class TransactionTest {
     @Test(expected = VerificationException.CoinbaseScriptSizeOutOfRange.class)
     public void coinbaseScriptSigTooLarge() throws Exception {
         tx.clearInputs();
-        TransactionInput input = tx.addInput(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().data(new byte[99]).build());
+        TransactionInput input = tx.addInput(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL,
+                new ScriptBuilder().data(new byte[99]).build());
         assertEquals(101, input.getScriptBytes().length);
         tx.verify();
     }
@@ -146,7 +149,9 @@ public class TransactionTest {
 
     private int getCombinedLength(List<? extends Message> list) {
         int sumOfAllMsgSizes = 0;
-        for (Message m: list) { sumOfAllMsgSizes += m.getMessageSize() + 1; }
+        for (Message m : list) {
+            sumOfAllMsgSizes += m.getMessageSize() + 1;
+        }
         return sumOfAllMsgSizes;
     }
 
@@ -175,20 +180,14 @@ public class TransactionTest {
         tx.addInput(new TransactionInput(PARAMS, tx, new byte[] {}));
         tx.getInput(0).setSequenceNumber(0);
         tx.setLockTime(time.subtract(BigInteger.ONE).longValue());
-        TransactionSignature fromSig =
-                tx.calculateSignature(0, from, outputScript, Transaction.SigHash.SINGLE, false);
-        TransactionSignature toSig =
-                tx.calculateSignature(0, to, outputScript, Transaction.SigHash.SINGLE, false);
-        TransactionSignature incorrectSig =
-                tx.calculateSignature(0, incorrect, outputScript, Transaction.SigHash.SINGLE, false);
-        Script scriptSig =
-                ScriptBuilder.createCLTVPaymentChannelInput(fromSig, toSig);
-        Script refundSig =
-                ScriptBuilder.createCLTVPaymentChannelRefund(fromSig);
-        Script invalidScriptSig1 =
-                ScriptBuilder.createCLTVPaymentChannelInput(fromSig, incorrectSig);
-        Script invalidScriptSig2 =
-                ScriptBuilder.createCLTVPaymentChannelInput(incorrectSig, toSig);
+        TransactionSignature fromSig = tx.calculateSignature(0, from, outputScript, Transaction.SigHash.SINGLE, false);
+        TransactionSignature toSig = tx.calculateSignature(0, to, outputScript, Transaction.SigHash.SINGLE, false);
+        TransactionSignature incorrectSig = tx.calculateSignature(0, incorrect, outputScript,
+                Transaction.SigHash.SINGLE, false);
+        Script scriptSig = ScriptBuilder.createCLTVPaymentChannelInput(fromSig, toSig);
+        Script refundSig = ScriptBuilder.createCLTVPaymentChannelRefund(fromSig);
+        Script invalidScriptSig1 = ScriptBuilder.createCLTVPaymentChannelInput(fromSig, incorrectSig);
+        Script invalidScriptSig2 = ScriptBuilder.createCLTVPaymentChannelInput(incorrectSig, toSig);
 
         try {
             scriptSig.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
@@ -200,15 +199,18 @@ public class TransactionTest {
         try {
             refundSig.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
             fail("Refund passed before expiry");
-        } catch (ScriptException e) { }
+        } catch (ScriptException e) {
+        }
         try {
             invalidScriptSig1.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
             fail("Invalid sig 1 passed");
-        } catch (ScriptException e) { }
+        } catch (ScriptException e) {
+        }
         try {
             invalidScriptSig2.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
             fail("Invalid sig 2 passed");
-        } catch (ScriptException e) { }
+        } catch (ScriptException e) {
+        }
     }
 
     @Test
@@ -222,14 +224,11 @@ public class TransactionTest {
         tx.addInput(new TransactionInput(PARAMS, tx, new byte[] {}));
         tx.getInput(0).setSequenceNumber(0);
         tx.setLockTime(time.add(BigInteger.ONE).longValue());
-        TransactionSignature fromSig =
-                tx.calculateSignature(0, from, outputScript, Transaction.SigHash.SINGLE, false);
-        TransactionSignature incorrectSig =
-                tx.calculateSignature(0, incorrect, outputScript, Transaction.SigHash.SINGLE, false);
-        Script scriptSig =
-                ScriptBuilder.createCLTVPaymentChannelRefund(fromSig);
-        Script invalidScriptSig =
-                ScriptBuilder.createCLTVPaymentChannelRefund(incorrectSig);
+        TransactionSignature fromSig = tx.calculateSignature(0, from, outputScript, Transaction.SigHash.SINGLE, false);
+        TransactionSignature incorrectSig = tx.calculateSignature(0, incorrect, outputScript,
+                Transaction.SigHash.SINGLE, false);
+        Script scriptSig = ScriptBuilder.createCLTVPaymentChannelRefund(fromSig);
+        Script invalidScriptSig = ScriptBuilder.createCLTVPaymentChannelRefund(incorrectSig);
 
         try {
             scriptSig.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
@@ -241,7 +240,8 @@ public class TransactionTest {
         try {
             invalidScriptSig.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
             fail("Invalid sig passed");
-        } catch (ScriptException e) { }
+        } catch (ScriptException e) {
+        }
     }
 
     @Test
@@ -347,25 +347,25 @@ public class TransactionTest {
     @Test
     public void testCoinbaseHeightCheck() throws VerificationException {
         // Coinbase transaction from block 300,000
-        final byte[] transactionBytes = HEX.decode("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4803e09304062f503253482f0403c86d53087ceca141295a00002e522cfabe6d6d7561cf262313da1144026c8f7a43e3899c44f6145f39a36507d36679a8b7006104000000000000000000000001c8704095000000001976a91480ad90d403581fa3bf46086a91b2d9d4125db6c188ac00000000");
+        final byte[] transactionBytes = HEX.decode(
+                "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4803e09304062f503253482f0403c86d53087ceca141295a00002e522cfabe6d6d7561cf262313da1144026c8f7a43e3899c44f6145f39a36507d36679a8b7006104000000000000000000000001c8704095000000001976a91480ad90d403581fa3bf46086a91b2d9d4125db6c188ac00000000");
         final int height = 300000;
         final Transaction transaction = PARAMS.getDefaultSerializer().makeTransaction(transactionBytes);
         transaction.checkCoinBaseHeight(height);
     }
 
     /**
-     * Test a coinbase transaction whose script has nonsense after the block height.
-     * See https://github.com/bitcoinj/bitcoinj/issues/1097
+     * Test a coinbase transaction whose script has nonsense after the block
+     * height. See https://github.com/bitcoinj/bitcoinj/issues/1097
      */
     @Test
     public void testCoinbaseHeightCheckWithDamagedScript() throws VerificationException {
         // Coinbase transaction from block 224,430
-        final byte[] transactionBytes = HEX.decode(
-            "010000000100000000000000000000000000000000000000000000000000000000"
-            + "00000000ffffffff3b03ae6c0300044bd7031a0400000000522cfabe6d6d0000"
-            + "0000000000b7b8bf0100000068692066726f6d20706f6f6c7365727665726aac"
-            + "1eeeed88ffffffff01e0587597000000001976a91421c0d001728b3feaf11551"
-            + "5b7c135e779e9f442f88ac00000000");
+        final byte[] transactionBytes = HEX.decode("010000000100000000000000000000000000000000000000000000000000000000"
+                + "00000000ffffffff3b03ae6c0300044bd7031a0400000000522cfabe6d6d0000"
+                + "0000000000b7b8bf0100000068692066726f6d20706f6f6c7365727665726aac"
+                + "1eeeed88ffffffff01e0587597000000001976a91421c0d001728b3feaf11551"
+                + "5b7c135e779e9f442f88ac00000000");
         final int height = 224430;
         final Transaction transaction = PARAMS.getDefaultSerializer().makeTransaction(transactionBytes);
         transaction.checkCoinBaseHeight(height);
@@ -382,24 +382,28 @@ public class TransactionTest {
     }
 
     /**
-     * Ensure that hashForSignature() doesn't modify a transaction's data, which could wreak multithreading havoc.
+     * Ensure that hashForSignature() doesn't modify a transaction's data, which
+     * could wreak multithreading havoc.
      */
     @Test
     public void testHashForSignatureThreadSafety() {
         Block genesis = UnitTestParams.get().getGenesisBlock();
         Block block1 = genesis.createNextBlock(new ECKey().toAddress(UnitTestParams.get()),
-                    genesis.getTransactions().get(0).getOutput(0).getOutPointFor());
+                genesis.getTransactions().get(0).getOutput(0).getOutPointFor(), genesis.getHash());
 
         final Transaction tx = block1.getTransactions().get(1);
         final String txHash = tx.getHashAsString();
-        final String txNormalizedHash = tx.hashForSignature(0, new byte[0], Transaction.SigHash.ALL.byteValue()).toString();
+        final String txNormalizedHash = tx.hashForSignature(0, new byte[0], Transaction.SigHash.ALL.byteValue())
+                .toString();
 
         for (int i = 0; i < 100; i++) {
-            // ensure the transaction object itself was not modified; if it was, the hash will change
+            // ensure the transaction object itself was not modified; if it was,
+            // the hash will change
             assertEquals(txHash, tx.getHashAsString());
-            new Thread(){
+            new Thread() {
                 public void run() {
-                    assertEquals(txNormalizedHash, tx.hashForSignature(0, new byte[0], Transaction.SigHash.ALL.byteValue()).toString());
+                    assertEquals(txNormalizedHash,
+                            tx.hashForSignature(0, new byte[0], Transaction.SigHash.ALL.byteValue()).toString());
                 }
             };
         }

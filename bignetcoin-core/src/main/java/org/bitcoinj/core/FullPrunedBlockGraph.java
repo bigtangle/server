@@ -44,7 +44,7 @@ import static com.google.common.base.Preconditions.checkState;
  * serve the full block chain to other clients, but it nevertheless provides the same security guarantees as Bitcoin
  * Core does.</p>
  */
-public class FullPrunedBlockGraph extends AbstractBlockGraph {
+public class FullPrunedBlockGraph extends AbstractBlockTangle {
     private static final Logger log = LoggerFactory.getLogger(FullPrunedBlockGraph.class);
 
     /**

@@ -68,7 +68,7 @@ public class Block extends Message {
      * How many bytes are required to represent a block header WITHOUT the
      * trailing 00 length byte.
      */
-    public static final int HEADER_SIZE = 80;
+    public static final int HEADER_SIZE = 80+32;
 
     static final long ALLOWED_TIME_DRIFT = 2 * 60 * 60; // Same value as Bitcoin
                                                         // Core.
@@ -94,7 +94,8 @@ public class Block extends Message {
      * hash solutions. Used in unit testing.
      */
     public static final long EASIEST_DIFFICULTY_TARGET = 0x207fFFFFL;
-    public static final long Client_DIFFICULTY_TARGET = 541065215;
+    // As client provided difficult for proof of work
+    public static final long CLIENT_DIFFICULTY_TARGET = 541065215;
     /** Value to use if the block height is unknown */
     public static final int BLOCK_HEIGHT_UNKNOWN = -1;
     /** Height of the first block */
@@ -107,11 +108,13 @@ public class Block extends Message {
     public static final long BLOCK_VERSION_BIP66 = 3;
     /** Block version introduced in BIP 65: OP_CHECKLOCKTIMEVERIFY */
     public static final long BLOCK_VERSION_BIP65 = 4;
+    // we use new Version
+    public static final long BLOCK_VERSION_BIG1 = 5;
 
     // Fields defined as part of the protocol format.
     private long version;
     private Sha256Hash prevBlockHash;
-   //Add as tangle 
+    // Add as tangle
     private Sha256Hash prevBranchBlockHash;
 
     private Sha256Hash merkleRoot;
@@ -330,13 +333,7 @@ public class Block extends Message {
         cursor = offset;
         version = readUint32();
         prevBlockHash = readHash();
-        //TODO remove the check of old data from .dat
-        if (version > 1) {
-            log.debug("version" + version);
-            prevBranchBlockHash = readHash();
-        } else {
-            prevBranchBlockHash = prevBlockHash;
-        }
+        prevBranchBlockHash = readHash();
         merkleRoot = readHash();
         time = readUint32();
         difficultyTarget = readUint32();
@@ -364,7 +361,9 @@ public class Block extends Message {
             return;
         }
         // fall back to manual write
-        Utils.uint32ToByteStreamLE(version, stream);
+       
+            Utils.uint32ToByteStreamLE(version, stream);
+        
         stream.write(prevBlockHash.getReversedBytes());
         stream.write(prevBranchBlockHash.getReversedBytes());
         stream.write(getMerkleRoot().getReversedBytes());
@@ -626,7 +625,7 @@ public class Block extends Message {
      */
     public BigInteger getDifficultyTargetAsInteger() throws VerificationException {
         BigInteger target = Utils.decodeCompactBits(difficultyTarget);
-   //TODO     Utils.encodeCompactBits(target.divide(new BigInteger("2")));
+        // TODO Utils.encodeCompactBits(target.divide(new BigInteger("2")));
         if (target.signum() < 0 || target.compareTo(params.maxTarget) > 0)
             throw new VerificationException("Difficulty target is bad: " + target.toString());
         return target;
@@ -1076,8 +1075,9 @@ public class Block extends Message {
      * unit tests.
      */
     @VisibleForTesting
-    public Block createNextBlock(Address to, long version, long time, int blockHeight) {
-        return createNextBlock(to, version, null, time, pubkeyForTesting, FIFTY_COINS, blockHeight);
+    public Block createNextBlock(Address to, long version, long time, int blockHeight, Sha256Hash prevBranchBlockHash) {
+        return createNextBlock(to, version, null, time, pubkeyForTesting, FIFTY_COINS, blockHeight,
+                prevBranchBlockHash);
     }
 
     /**
@@ -1089,7 +1089,8 @@ public class Block extends Message {
      *            block height, if known, or -1 otherwise.
      */
     Block createNextBlock(@Nullable final Address to, final long version, @Nullable TransactionOutPoint prevOut,
-            final long time, final byte[] pubKey, final Coin coinbaseValue, final int height) {
+            final long time, final byte[] pubKey, final Coin coinbaseValue, final int height,
+            Sha256Hash prevBranchBlockHash) {
         Block b = new Block(params, version);
         b.setDifficultyTarget(difficultyTarget);
         b.addCoinbaseTransaction(pubKey, coinbaseValue, height);
@@ -1119,7 +1120,7 @@ public class Block extends Message {
         }
 
         b.setPrevBlockHash(getHash());
-        b.setPrevBranchBlockHash(getHash());
+        b.setPrevBranchBlockHash(prevBranchBlockHash);
         // Don't let timestamp go backwards
         if (getTimeSeconds() >= time)
             b.setTime(getTimeSeconds() + 1);
@@ -1138,26 +1139,27 @@ public class Block extends Message {
     }
 
     @VisibleForTesting
-    public Block createNextBlock(@Nullable Address to, TransactionOutPoint prevOut) {
+    public Block createNextBlock(@Nullable Address to, TransactionOutPoint prevOut, Sha256Hash prevBranchBlockHash) {
         return createNextBlock(to, BLOCK_VERSION_GENESIS, prevOut, getTimeSeconds() + 5, pubkeyForTesting, FIFTY_COINS,
-                BLOCK_HEIGHT_UNKNOWN);
+                BLOCK_HEIGHT_UNKNOWN, prevBranchBlockHash);
     }
 
     @VisibleForTesting
-    public Block createNextBlock(@Nullable Address to, Coin value) {
+    public Block createNextBlock(@Nullable Address to, Coin value, Sha256Hash prevBranchBlockHash) {
         return createNextBlock(to, BLOCK_VERSION_GENESIS, null, getTimeSeconds() + 5, pubkeyForTesting, value,
-                BLOCK_HEIGHT_UNKNOWN);
+                BLOCK_HEIGHT_UNKNOWN, prevBranchBlockHash);
     }
 
     @VisibleForTesting
-    public Block createNextBlock(@Nullable Address to) {
-        return createNextBlock(to, FIFTY_COINS);
+    public Block createNextBlock(@Nullable Address to, Sha256Hash prevBranchBlockHash) {
+        return createNextBlock(to, FIFTY_COINS, prevBranchBlockHash);
     }
 
     @VisibleForTesting
-    public Block createNextBlockWithCoinbase(long version, byte[] pubKey, Coin coinbaseValue, final int height) {
+    public Block createNextBlockWithCoinbase(long version, byte[] pubKey, Coin coinbaseValue, final int height,
+            Sha256Hash prevBranchBlockHash) {
         return createNextBlock(null, version, (TransactionOutPoint) null, Utils.currentTimeSeconds(), pubKey,
-                coinbaseValue, height);
+                coinbaseValue, height, prevBranchBlockHash);
     }
 
     /**
@@ -1165,9 +1167,9 @@ public class Block extends Message {
      * specified. This method is intended for test use only.
      */
     @VisibleForTesting
-    Block createNextBlockWithCoinbase(long version, byte[] pubKey, final int height) {
+    Block createNextBlockWithCoinbase(long version, byte[] pubKey, final int height, Sha256Hash prevBranchBlockHash) {
         return createNextBlock(null, version, (TransactionOutPoint) null, Utils.currentTimeSeconds(), pubKey,
-                FIFTY_COINS, height);
+                FIFTY_COINS, height, prevBranchBlockHash);
     }
 
     @VisibleForTesting

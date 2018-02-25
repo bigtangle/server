@@ -105,8 +105,8 @@ public class ChannelConnectionTest extends TestWithWallet {
         super.setUp();
         Utils.setMockClock(); // Use mock clock
         Context.propagate(new Context(PARAMS, 3, Coin.ZERO, false)); // Shorter event horizon for unit tests.
-        sendMoneyToWallet(AbstractBlockGraph.NewBlockType.BEST_CHAIN, COIN);
-        sendMoneyToWallet(AbstractBlockGraph.NewBlockType.BEST_CHAIN, COIN);
+        sendMoneyToWallet(AbstractBlockTangle.NewBlockType.BEST_CHAIN, COIN);
+        sendMoneyToWallet(AbstractBlockTangle.NewBlockType.BEST_CHAIN, COIN);
         wallet.addExtension(new StoredPaymentChannelClientStates(wallet, failBroadcaster));
         serverWallet = new Wallet(PARAMS);
         serverWallet.addExtension(new StoredPaymentChannelServerStates(serverWallet, failBroadcaster));
@@ -258,7 +258,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         assertTrue(channels.mapChannels.isEmpty());
 
         // Send the settle TX to the client wallet.
-        sendMoneyToWallet(AbstractBlockGraph.NewBlockType.BEST_CHAIN, settleTx);
+        sendMoneyToWallet(AbstractBlockTangle.NewBlockType.BEST_CHAIN, settleTx);
         assertTrue(client.state().getState() == PaymentChannelClientState.State.CLOSED);
 
         server.close();
@@ -651,7 +651,7 @@ public class ChannelConnectionTest extends TestWithWallet {
 
         // Now check that if the server has a lower min size than what we are willing to spend, we do actually open
         // a channel of that size.
-        sendMoneyToWallet(AbstractBlockGraph.NewBlockType.BEST_CHAIN, COIN.multiply(10));
+        sendMoneyToWallet(AbstractBlockTangle.NewBlockType.BEST_CHAIN, COIN.multiply(10));
 
         pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
         server = pair.server;
@@ -852,7 +852,7 @@ public class ChannelConnectionTest extends TestWithWallet {
             assertEquals(settlement1, settlement2);
             client.receiveMessage(closeMsg);
             assertNotNull(wallet.getTransaction(settlement2.getHash()));   // Close TX entered the wallet.
-            sendMoneyToWallet(AbstractBlockGraph.NewBlockType.BEST_CHAIN, settlement1);
+            sendMoneyToWallet(AbstractBlockTangle.NewBlockType.BEST_CHAIN, settlement1);
             client.connectionClosed();
             server.connectionClosed();
         }

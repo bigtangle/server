@@ -56,7 +56,7 @@ public class BlockImporter {
             return;
         }
         
-        AbstractBlockGraph chain = null;
+        AbstractBlockTangle chain = null;
         if (store instanceof FullPrunedBlockStore)
             chain = new FullPrunedBlockGraph(params, (FullPrunedBlockStore) store);
         else

@@ -61,7 +61,7 @@ public class Peer extends PeerSocketHandler {
     protected final ReentrantLock lock = Threading.lock("peer");
 
     private final NetworkParameters params;
-    private final AbstractBlockGraph blockChain;
+    private final AbstractBlockTangle blockChain;
     private final Context context;
 
     private final CopyOnWriteArrayList<ListenerRegistration<BlocksDownloadedEventListener>> blocksDownloadedEventListeners
@@ -185,7 +185,7 @@ public class Peer extends PeerSocketHandler {
      * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
      */
-    public Peer(NetworkParameters params, VersionMessage ver, @Nullable AbstractBlockGraph chain, PeerAddress remoteAddress) {
+    public Peer(NetworkParameters params, VersionMessage ver, @Nullable AbstractBlockTangle chain, PeerAddress remoteAddress) {
         this(params, ver, remoteAddress, chain);
     }
 
@@ -204,7 +204,7 @@ public class Peer extends PeerSocketHandler {
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
      */
     public Peer(NetworkParameters params, VersionMessage ver, PeerAddress remoteAddress,
-                @Nullable AbstractBlockGraph chain) {
+                @Nullable AbstractBlockTangle chain) {
         this(params, ver, remoteAddress, chain, Integer.MAX_VALUE);
     }
 
@@ -223,7 +223,7 @@ public class Peer extends PeerSocketHandler {
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
      */
     public Peer(NetworkParameters params, VersionMessage ver, PeerAddress remoteAddress,
-                @Nullable AbstractBlockGraph chain, int downloadTxDependencyDepth) {
+                @Nullable AbstractBlockTangle chain, int downloadTxDependencyDepth) {
         super(params, remoteAddress);
         this.params = Preconditions.checkNotNull(params);
         this.versionMessage = Preconditions.checkNotNull(ver);
@@ -260,7 +260,7 @@ public class Peer extends PeerSocketHandler {
      * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
      */
-    public Peer(NetworkParameters params, AbstractBlockGraph blockChain, PeerAddress peerAddress, String thisSoftwareName, String thisSoftwareVersion) {
+    public Peer(NetworkParameters params, AbstractBlockTangle blockChain, PeerAddress peerAddress, String thisSoftwareName, String thisSoftwareVersion) {
         this(params, new VersionMessage(params, blockChain.getBestChainHeight()), blockChain, peerAddress);
         this.versionMessage.appendToSubVer(thisSoftwareName, thisSoftwareVersion, null);
     }
@@ -1018,8 +1018,8 @@ public class Peer extends PeerSocketHandler {
                 lock.lock();
                 try {
                     if (downloadBlockBodies) {
-                        final Block orphanRoot = checkNotNull(blockChain.getOrphanRoot(m.getHash()));
-                        blockChainDownloadLocked(orphanRoot.getHash());
+                    //CUI    final Block orphanRoot = checkNotNull(blockChain.getOrphanRoot(m.getHash()));
+                        //CUI    blockChainDownloadLocked(orphanRoot.getHash());
                     } else {
                         log.info("Did not start chain download on solved block due to in-flight header download.");
                     }
@@ -1090,7 +1090,7 @@ public class Peer extends PeerSocketHandler {
                     log.info("Bloom filter exhausted whilst processing block {}, discarding", m.getHash());
                     awaitingFreshFilter = new LinkedList<Sha256Hash>();
                     awaitingFreshFilter.add(m.getHash());
-                    awaitingFreshFilter.addAll(blockChain.drainOrphanBlocks());
+                  //CUI     awaitingFreshFilter.addAll(blockChain.drainOrphanBlocks());
                     return;   // Chain download process is restarted via a call to setBloomFilter.
                 }
             } finally {
@@ -1118,8 +1118,8 @@ public class Peer extends PeerSocketHandler {
                 // no matter how many blocks are solved, and therefore that the (2) duplicate filtering can work.
                 lock.lock();
                 try {
-                    final Block orphanRoot = checkNotNull(blockChain.getOrphanRoot(m.getHash()));
-                    blockChainDownloadLocked(orphanRoot.getHash());
+                  //CUI     final Block orphanRoot = checkNotNull(blockChain.getOrphanRoot(m.getHash()));
+                  //CUI      blockChainDownloadLocked(orphanRoot.getHash());
                 } finally {
                     lock.unlock();
                 }
@@ -1200,9 +1200,8 @@ public class Peer extends PeerSocketHandler {
             // the chain then this probably means a new block was solved and the peer believes it connects to the best
             // chain, so count it. This way getBestChainHeight() can be accurate.
             if (downloadData && blockChain != null) {
-                if (!blockChain.isOrphan(blocks.get(0).hash)) {
-                    blocksAnnounced.incrementAndGet();
-                }
+              //CUI    if (!blockChain.isOrphan(blocks.get(0).hash)) {
+              //CUI         blocksAnnounced.incrementAndGet();
             } else {
                 blocksAnnounced.incrementAndGet();
             }
@@ -1247,12 +1246,12 @@ public class Peer extends PeerSocketHandler {
                 // disk IO to figure out what we've got. Normally peers will not send us inv for things we already have
                 // so we just re-request it here, and if we get duplicates the block chain / wallet will filter them out.
                 for (InventoryItem item : blocks) {
-                    if (blockChain.isOrphan(item.hash) && downloadBlockBodies) {
+                  //CUI   if (blockChain.isOrphan(item.hash) && downloadBlockBodies) {
                         // If an orphan was re-advertised, ask for more blocks unless we are not currently downloading
                         // full block data because we have a getheaders outstanding.
-                        final Block orphanRoot = checkNotNull(blockChain.getOrphanRoot(item.hash));
-                        blockChainDownloadLocked(orphanRoot.getHash());
-                    } else {
+                      //CUI    final Block orphanRoot = checkNotNull(blockChain.getOrphanRoot(item.hash));
+                      //CUI     blockChainDownloadLocked(orphanRoot.getHash());
+                  //CUI     } else {
                         // Don't re-request blocks we already requested. Normally this should not happen. However there is
                         // an edge case: if a block is solved and we complete the inv<->getdata<->block<->getblocks cycle
                         // whilst other parts of the chain are streaming in, then the new getblocks request won't match the
@@ -1274,7 +1273,6 @@ public class Peer extends PeerSocketHandler {
                             }
                             pendingBlockDownloads.add(item.hash);
                         }
-                    }
                 }
                 // If we're downloading the chain, doing a getdata on the last block we were told about will cause the
                 // peer to advertize the head block to us in a single-item inv. When we download THAT, it will be an

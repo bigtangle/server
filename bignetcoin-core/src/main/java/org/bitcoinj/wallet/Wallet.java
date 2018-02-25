@@ -26,7 +26,7 @@ import com.google.protobuf.*;
 import net.jcip.annotations.*;
 import org.bitcoin.protocols.payments.Protos.*;
 import org.bitcoinj.core.listeners.*;
-import org.bitcoinj.core.AbstractBlockGraph;
+import org.bitcoinj.core.AbstractBlockTangle;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.BlockGraph;
 import org.bitcoinj.core.BloomFilter;
@@ -3179,7 +3179,7 @@ public class Wallet extends BaseTaggableObject
      * @param chain If set, will be used to estimate lock times for block timelocked transactions.
      */
     public String toString(boolean includePrivateKeys, boolean includeTransactions, boolean includeExtensions,
-                           @Nullable AbstractBlockGraph chain) {
+                           @Nullable AbstractBlockTangle chain) {
         lock.lock();
         keyChainGroupLock.lock();
         try {
@@ -3251,7 +3251,7 @@ public class Wallet extends BaseTaggableObject
     }
 
     private void toStringHelper(StringBuilder builder, Map<Sha256Hash, Transaction> transactionMap,
-                                @Nullable AbstractBlockGraph chain, @Nullable Comparator<Transaction> sortOrder) {
+                                @Nullable AbstractBlockTangle chain, @Nullable Comparator<Transaction> sortOrder) {
         checkState(lock.isHeldByCurrentThread());
 
         final Collection<Transaction> txns;

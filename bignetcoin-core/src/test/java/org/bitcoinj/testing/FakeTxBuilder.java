@@ -38,7 +38,8 @@ public class FakeTxBuilder {
     }
 
     /** Create a fake transaction, without change. */
-    public static Transaction createFakeTxWithoutChange(final NetworkParameters params, final TransactionOutput output) {
+    public static Transaction createFakeTxWithoutChange(final NetworkParameters params,
+            final TransactionOutput output) {
         Transaction prevTx = FakeTxBuilder.createFakeTx(params, Coin.COIN, new ECKey().toAddress(params));
         Transaction tx = new Transaction(params);
         tx.addOutput(output);
@@ -61,16 +62,19 @@ public class FakeTxBuilder {
     }
 
     /**
-     * Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
-     * else to simulate change. There is one random input.
+     * Create a fake TX of sufficient realism to exercise the unit tests. Two
+     * outputs, one to us, one to somewhere else to simulate change. There is
+     * one random input.
      */
-    public static Transaction createFakeTxWithChangeAddress(NetworkParameters params, Coin value, Address to, Address changeOutput) {
+    public static Transaction createFakeTxWithChangeAddress(NetworkParameters params, Coin value, Address to,
+            Address changeOutput) {
         Transaction t = new Transaction(params);
         TransactionOutput outputToMe = new TransactionOutput(params, t, value, to);
         t.addOutput(outputToMe);
         TransactionOutput change = new TransactionOutput(params, t, valueOf(1, 11), changeOutput);
         t.addOutput(change);
-        // Make a previous tx simply to send us sufficient coins. This prev tx is not really valid but it doesn't
+        // Make a previous tx simply to send us sufficient coins. This prev tx
+        // is not really valid but it doesn't
         // matter for our purposes.
         Transaction prevTx = new Transaction(params);
         TransactionOutput prevOut = new TransactionOutput(params, prevTx, value, to);
@@ -78,28 +82,36 @@ public class FakeTxBuilder {
         // Connect it.
         t.addInput(prevOut).setScriptSig(ScriptBuilder.createInputScript(TransactionSignature.dummy()));
         // Fake signature.
-        // Serialize/deserialize to ensure internal state is stripped, as if it had been read from the wire.
+        // Serialize/deserialize to ensure internal state is stripped, as if it
+        // had been read from the wire.
         return roundTripTransaction(params, t);
     }
 
     /**
-     * Create a fake TX for unit tests, for use with unit tests that need greater control. One outputs, 2 random inputs,
-     * split randomly to create randomness.
+     * Create a fake TX for unit tests, for use with unit tests that need
+     * greater control. One outputs, 2 random inputs, split randomly to create
+     * randomness.
      */
     public static Transaction createFakeTxWithoutChangeAddress(NetworkParameters params, Coin value, Address to) {
         Transaction t = new Transaction(params);
         TransactionOutput outputToMe = new TransactionOutput(params, t, value, to);
         t.addOutput(outputToMe);
 
-        // Make a random split in the output value so we get a distinct hash when we call this multiple times with same args
+        // Make a random split in the output value so we get a distinct hash
+        // when we call this multiple times with same args
         long split = new Random().nextLong();
-        if (split < 0) { split *= -1; }
-        if (split == 0) { split = 15; }
+        if (split < 0) {
+            split *= -1;
+        }
+        if (split == 0) {
+            split = 15;
+        }
         while (split > value.getValue()) {
             split /= 2;
         }
 
-        // Make a previous tx simply to send us sufficient coins. This prev tx is not really valid but it doesn't
+        // Make a previous tx simply to send us sufficient coins. This prev tx
+        // is not really valid but it doesn't
         // matter for our purposes.
         Transaction prevTx1 = new Transaction(params);
         TransactionOutput prevOut1 = new TransactionOutput(params, prevTx1, Coin.valueOf(split), to);
@@ -114,21 +126,24 @@ public class FakeTxBuilder {
         prevTx2.addOutput(prevOut2);
         t.addInput(prevOut2).setScriptSig(ScriptBuilder.createInputScript(TransactionSignature.dummy()));
 
-        // Serialize/deserialize to ensure internal state is stripped, as if it had been read from the wire.
+        // Serialize/deserialize to ensure internal state is stripped, as if it
+        // had been read from the wire.
         return roundTripTransaction(params, t);
     }
 
     /**
-     * Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
-     * else to simulate change. There is one random input.
+     * Create a fake TX of sufficient realism to exercise the unit tests. Two
+     * outputs, one to us, one to somewhere else to simulate change. There is
+     * one random input.
      */
     public static Transaction createFakeTx(NetworkParameters params, Coin value, Address to) {
         return createFakeTxWithChangeAddress(params, value, to, new ECKey().toAddress(params));
     }
 
     /**
-     * Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
-     * else to simulate change. There is one random input.
+     * Create a fake TX of sufficient realism to exercise the unit tests. Two
+     * outputs, one to us, one to somewhere else to simulate change. There is
+     * one random input.
      */
     public static Transaction createFakeTx(NetworkParameters params, Coin value, ECKey to) {
         Transaction t = new Transaction(params);
@@ -136,30 +151,34 @@ public class FakeTxBuilder {
         t.addOutput(outputToMe);
         TransactionOutput change = new TransactionOutput(params, t, valueOf(1, 11), new ECKey());
         t.addOutput(change);
-        // Make a previous tx simply to send us sufficient coins. This prev tx is not really valid but it doesn't
+        // Make a previous tx simply to send us sufficient coins. This prev tx
+        // is not really valid but it doesn't
         // matter for our purposes.
         Transaction prevTx = new Transaction(params);
         TransactionOutput prevOut = new TransactionOutput(params, prevTx, value, to);
         prevTx.addOutput(prevOut);
         // Connect it.
         t.addInput(prevOut);
-        // Serialize/deserialize to ensure internal state is stripped, as if it had been read from the wire.
+        // Serialize/deserialize to ensure internal state is stripped, as if it
+        // had been read from the wire.
         return roundTripTransaction(params, t);
     }
 
     /**
      * Transaction[0] is a feeder transaction, supplying BTC to Transaction[1]
      */
-    public static Transaction[] createFakeTx(NetworkParameters params, Coin value,
-                                             Address to, Address from) {
-        // Create fake TXes of sufficient realism to exercise the unit tests. This transaction send BTC from the
-        // from address, to the to address with to one to somewhere else to simulate change.
+    public static Transaction[] createFakeTx(NetworkParameters params, Coin value, Address to, Address from) {
+        // Create fake TXes of sufficient realism to exercise the unit tests.
+        // This transaction send BTC from the
+        // from address, to the to address with to one to somewhere else to
+        // simulate change.
         Transaction t = new Transaction(params);
         TransactionOutput outputToMe = new TransactionOutput(params, t, value, to);
         t.addOutput(outputToMe);
         TransactionOutput change = new TransactionOutput(params, t, valueOf(1, 11), new ECKey().toAddress(params));
         t.addOutput(change);
-        // Make a feeder tx that sends to the from address specified. This feeder tx is not really valid but it doesn't
+        // Make a feeder tx that sends to the from address specified. This
+        // feeder tx is not really valid but it doesn't
         // matter for our purposes.
         Transaction feederTx = new Transaction(params);
         TransactionOutput feederOut = new TransactionOutput(params, feederTx, value, from);
@@ -174,12 +193,14 @@ public class FakeTxBuilder {
         prevTx.addInput(feederOut);
         t.addInput(prevOut);
 
-        // roundtrip the tx so that they are just like they would be from the wire
-        return new Transaction[]{roundTripTransaction(params, prevTx), roundTripTransaction(params,t)};
+        // roundtrip the tx so that they are just like they would be from the
+        // wire
+        return new Transaction[] { roundTripTransaction(params, prevTx), roundTripTransaction(params, t) };
     }
 
     /**
-     * Roundtrip a transaction so that it appears as if it has just come from the wire
+     * Roundtrip a transaction so that it appears as if it has just come from
+     * the wire
      */
     public static Transaction roundTripTransaction(NetworkParameters params, Transaction tx) {
         try {
@@ -188,7 +209,7 @@ public class FakeTxBuilder {
             bs.serialize(tx, bos);
             return (Transaction) bs.deserialize(ByteBuffer.wrap(bos.toByteArray()));
         } catch (IOException e) {
-            throw new RuntimeException(e);   // Should not happen.
+            throw new RuntimeException(e); // Should not happen.
         }
     }
 
@@ -197,8 +218,9 @@ public class FakeTxBuilder {
     }
 
     /**
-     * Creates two transactions that spend the same (fake) output. t1 spends to "to". t2 spends somewhere else.
-     * The fake output goes to the same address as t2.
+     * Creates two transactions that spend the same (fake) output. t1 spends to
+     * "to". t2 spends somewhere else. The fake output goes to the same address
+     * as t2.
      */
     public static DoubleSpends createFakeDoubleSpendTxns(NetworkParameters params, Address to) {
         DoubleSpends doubleSpends = new DoubleSpends();
@@ -234,19 +256,18 @@ public class FakeTxBuilder {
     }
 
     /** Emulates receiving a valid block that builds on top of the chain. */
-    public static BlockPair createFakeBlock(BlockStore blockStore, long version,
-                                            long timeSeconds, Transaction... transactions) {
+    public static BlockPair createFakeBlock(BlockStore blockStore, long version, long timeSeconds,
+            Transaction... transactions) {
         return createFakeBlock(blockStore, version, timeSeconds, 0, transactions);
     }
 
     /** Emulates receiving a valid block */
     public static BlockPair createFakeBlock(BlockStore blockStore, StoredBlock previousStoredBlock, long version,
-                                            long timeSeconds, int height,
-                                            Transaction... transactions) {
+            long timeSeconds, int height, Transaction... transactions) {
         try {
             Block previousBlock = previousStoredBlock.getHeader();
             Address to = new ECKey().toAddress(previousBlock.getParams());
-            Block b = previousBlock.createNextBlock(to, version, timeSeconds, height);
+            Block b = previousBlock.createNextBlock(to, version, timeSeconds, height, previousBlock.getHash());
             // Coinbase tx was already added.
             for (Transaction tx : transactions) {
                 tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
@@ -260,29 +281,32 @@ public class FakeTxBuilder {
             blockStore.setChainHead(pair.storedBlock);
             return pair;
         } catch (VerificationException e) {
-            throw new RuntimeException(e);  // Cannot happen.
+            throw new RuntimeException(e); // Cannot happen.
         } catch (BlockStoreException e) {
-            throw new RuntimeException(e);  // Cannot happen.
+            throw new RuntimeException(e); // Cannot happen.
         }
     }
 
-    public static BlockPair createFakeBlock(BlockStore blockStore, StoredBlock previousStoredBlock, int height, Transaction... transactions) {
-        return createFakeBlock(blockStore, previousStoredBlock, Block.BLOCK_VERSION_BIP66, Utils.currentTimeSeconds(), height, transactions);
+    public static BlockPair createFakeBlock(BlockStore blockStore, StoredBlock previousStoredBlock, int height,
+            Transaction... transactions) {
+        return createFakeBlock(blockStore, previousStoredBlock, Block.BLOCK_VERSION_BIP66, Utils.currentTimeSeconds(),
+                height, transactions);
     }
 
     /** Emulates receiving a valid block that builds on top of the chain. */
-    public static BlockPair createFakeBlock(BlockStore blockStore, long version, long timeSeconds, int height, Transaction... transactions) {
+    public static BlockPair createFakeBlock(BlockStore blockStore, long version, long timeSeconds, int height,
+            Transaction... transactions) {
         try {
             return createFakeBlock(blockStore, blockStore.getChainHead(), version, timeSeconds, height, transactions);
         } catch (BlockStoreException e) {
-            throw new RuntimeException(e);  // Cannot happen.
+            throw new RuntimeException(e); // Cannot happen.
         }
     }
 
     /** Emulates receiving a valid block that builds on top of the chain. */
-    public static BlockPair createFakeBlock(BlockStore blockStore, int height,
-                                            Transaction... transactions) {
-        return createFakeBlock(blockStore, Block.BLOCK_VERSION_GENESIS, Utils.currentTimeSeconds(), height, transactions);
+    public static BlockPair createFakeBlock(BlockStore blockStore, int height, Transaction... transactions) {
+        return createFakeBlock(blockStore, Block.BLOCK_VERSION_GENESIS, Utils.currentTimeSeconds(), height,
+                transactions);
     }
 
     /** Emulates receiving a valid block that builds on top of the chain. */
@@ -291,14 +315,15 @@ public class FakeTxBuilder {
     }
 
     public static Block makeSolvedTestBlock(BlockStore blockStore, Address coinsTo) throws BlockStoreException {
-        Block b = blockStore.getChainHead().getHeader().createNextBlock(coinsTo);
+        Block b = blockStore.getChainHead().getHeader().createNextBlock(coinsTo,
+                blockStore.getChainHead().getHeader().getHash());
         b.solve();
         return b;
     }
 
     public static Block makeSolvedTestBlock(Block prev, Transaction... transactions) throws BlockStoreException {
         Address to = new ECKey().toAddress(prev.getParams());
-        Block b = prev.createNextBlock(to);
+        Block b = prev.createNextBlock(to, prev.getHash());
         // Coinbase tx already exists.
         for (Transaction tx : transactions) {
             b.addTransaction(tx);
@@ -307,8 +332,9 @@ public class FakeTxBuilder {
         return b;
     }
 
-    public static Block makeSolvedTestBlock(Block prev, Address to, Transaction... transactions) throws BlockStoreException {
-        Block b = prev.createNextBlock(to);
+    public static Block makeSolvedTestBlock(Block prev, Address to, Transaction... transactions)
+            throws BlockStoreException {
+        Block b = prev.createNextBlock(to, prev.getHash());
         // Coinbase tx already exists.
         for (Transaction tx : transactions) {
             b.addTransaction(tx);

@@ -639,7 +639,7 @@ public class Transaction extends ChildMessage {
      * A human readable version of the transaction useful for debugging. The format is not guaranteed to be stable.
      * @param chain If provided, will be used to estimate lock times (if set). Can be null.
      */
-    public String toString(@Nullable AbstractBlockGraph chain) {
+    public String toString(@Nullable AbstractBlockTangle chain) {
         StringBuilder s = new StringBuilder();
         s.append("  ").append(getHashAsString()).append('\n');
         if (updatedAt != null)
@@ -1330,7 +1330,7 @@ public class Transaction extends ChildMessage {
      * Returns either the lock time as a date, if it was specified in seconds, or an estimate based on the time in
      * the current head block if it was specified as a block time.
      */
-    public Date estimateLockTime(AbstractBlockGraph chain) {
+    public Date estimateLockTime(AbstractBlockTangle chain) {
         if (lockTime < LOCKTIME_THRESHOLD)
             return chain.estimateBlockTime((int)getLockTime());
         else

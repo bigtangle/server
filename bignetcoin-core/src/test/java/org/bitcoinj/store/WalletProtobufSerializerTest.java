@@ -244,11 +244,11 @@ public class WalletProtobufSerializerTest {
         });
 
         // Start by building two blocks on top of the genesis block.
-        Block b1 = PARAMS.getGenesisBlock().createNextBlock(myAddress);
+        Block b1 = PARAMS.getGenesisBlock().createNextBlock(myAddress, PARAMS.getGenesisBlock().getHash());
         BigInteger work1 = b1.getWork();
         assertTrue(work1.signum() > 0);
 
-        Block b2 = b1.createNextBlock(myAddress);
+        Block b2 = b1.createNextBlock(myAddress, PARAMS.getGenesisBlock().getHash());
         BigInteger work2 = b2.getWork();
         assertTrue(work2.signum() > 0);
 
@@ -375,7 +375,7 @@ public class WalletProtobufSerializerTest {
     @Test
     public void coinbaseTxns() throws Exception {
         // Covers issue 420 where the outpoint index of a coinbase tx input was being mis-serialized.
-        Block b = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, myKey.getPubKey(), FIFTY_COINS, Block.BLOCK_HEIGHT_GENESIS);
+        Block b = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, myKey.getPubKey(), FIFTY_COINS, Block.BLOCK_HEIGHT_GENESIS,  PARAMS.getGenesisBlock().getHash());
         Transaction coinbase = b.getTransactions().get(0);
         assertTrue(coinbase.isCoinBase());
         BlockGraph chain = new BlockGraph(PARAMS, myWallet, new MemoryBlockStore(PARAMS));
