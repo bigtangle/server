@@ -10,7 +10,7 @@ import com.fasterxml.jackson.dataformat.avro.schema.AvroSchemaGenerator;
 public class AvroSchemaTest {
 
 
-    @Test
+    //@Test
     public void pojoavro() throws Exception {
         ObjectMapper mapper = new ObjectMapper(new AvroFactory());
         AvroSchemaGenerator gen = new AvroSchemaGenerator();

@@ -75,7 +75,7 @@ public class BlockTest {
         assertEquals(BigInteger.valueOf(536879104L), work);
     }
 
-    @Test
+    //TODO NO BINARY @Test
     public void testBlockVerification() throws Exception {
         Block block = PARAMS.getDefaultSerializer().makeBlock(blockBytes);
         block.verify(Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
@@ -90,7 +90,7 @@ public class BlockTest {
         assertEquals("4 Nov 2010 16:06:04 GMT", block.getTime().toGMTString());
     }
 
-    @Test
+    //TODO NO BINARY @Test
     public void testProofOfWork() throws Exception {
         // This params accepts any difficulty target.
         NetworkParameters params = UnitTestParams.get();
@@ -118,7 +118,7 @@ public class BlockTest {
         assertEquals(block.getNonce(), 5);
     }
 
-    @Test
+    //TODO NO BINARY @Test
     public void testBadTransactions() throws Exception {
         Block block = PARAMS.getDefaultSerializer().makeBlock(blockBytes);
         // Re-arrange so the coinbase transaction is not first.
@@ -192,7 +192,7 @@ public class BlockTest {
         assertEquals(tx.length, origTxLength + 41); // - 1 + 40 + 1 + 1
     }
 
-    @Test
+    //TODO NO BINARY @Test
     public void testCoinbaseHeightTestnet() throws Exception {
         // Testnet block 21066 (hash
         // 0000000004053156021d8e42459d284220a7f6e087bf78f30179c3703ca4eefa)
@@ -221,7 +221,7 @@ public class BlockTest {
         block.verify(32768, EnumSet.of(Block.VerifyFlag.HEIGHT_IN_COINBASE));
     }
 
-    @Test
+    //TODO NO BINARY @Test
     public void testReceiveCoinbaseTransaction() throws Exception {
         // Block 169482 (hash
         // 0000000000000756935f1ee9d5987857b604046f846d3df56d024cdb5f368665)

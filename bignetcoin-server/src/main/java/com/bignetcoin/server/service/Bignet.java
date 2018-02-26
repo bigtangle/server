@@ -29,11 +29,8 @@ import com.iota.iri.storage.rocksDB.RocksDBPersistenceProvider;
 import com.iota.iri.utils.Pair;
 import com.iota.iri.zmq.MessageQ;
 
-import lombok.extern.slf4j.Slf4j;
-
 
 @Component
-@Slf4j
 public class Bignet  {
 
     

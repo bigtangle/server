@@ -19,14 +19,6 @@ apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'org.springframework.boot'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-repositories {
-    mavenCentral()
-     maven { url "https://oss.sonatype.org/content/groups/public/" }
-  
-}
 
 
 dependencies {
@@ -51,8 +43,9 @@ dependencies {
       compile group: 'org.zeromq', name: 'jeromq', version:ver.jeromq
      compile group: 'org.ini4j', name: 'ini4j', version:ver.ini4j
      compile group: 'com.sanityinc', name: 'jargs', version:ver.jargs
-          compile group: 'io.undertow', name: 'undertow-core', version:ver.undertow
-        compile group: 'io.undertow', name: 'undertow-servlet', version:ver.undertow
+           
+      compile project(':bignetcoin-core')
+            
     /**
      * test dependencies
      */
@@ -74,13 +67,7 @@ dependencies {
 
 test {
   //  useTestNG()
-
     testLogging.showStandardStreams = true
-}
-
-
-sonarqube {
-    properties customSonarProperties
 }
 
 publishing {

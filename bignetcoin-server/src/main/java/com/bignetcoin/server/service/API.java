@@ -1,12 +1,9 @@
 package com.bignetcoin.server.service;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Collections;
@@ -32,7 +29,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-import org.xnio.channels.StreamSinkChannel;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -64,20 +60,6 @@ import com.iota.iri.service.dto.GetTransactionsToApproveResponse;
 import com.iota.iri.service.dto.RemoveNeighborsResponse;
 import com.iota.iri.service.dto.wereAddressesSpentFrom;
 import com.iota.iri.utils.Converter;
-import com.iota.iri.utils.MapIdentityManager;
-
-import io.undertow.security.api.AuthenticationMechanism;
-import io.undertow.security.api.AuthenticationMode;
-import io.undertow.security.handlers.AuthenticationCallHandler;
-import io.undertow.security.handlers.AuthenticationConstraintHandler;
-import io.undertow.security.handlers.AuthenticationMechanismsHandler;
-import io.undertow.security.handlers.SecurityInitialHandler;
-import io.undertow.security.idm.IdentityManager;
-import io.undertow.security.impl.BasicAuthenticationMechanism;
-import io.undertow.server.HttpHandler;
-import io.undertow.server.HttpServerExchange;
-import io.undertow.util.HeaderMap;
-import io.undertow.util.HttpString;
 
 @RestController
 @RequestMapping("/")
@@ -96,7 +78,6 @@ public class API {
 
     private final AtomicInteger counter = new AtomicInteger(0);
 
-
     private final static int HASH_SIZE = 81;
     private final static int TRYTES_SIZE = 2673;
 
@@ -110,8 +91,6 @@ public class API {
     private final int maxBodyLength;
     private final static String overMaxErrorMessage = "Could not complete request";
     private final static String invalidParams = "Invalid parameters";
-
- 
 
     private final static char ZERO_LENGTH_ALLOWED = 'Y';
     private final static char ZERO_LENGTH_NOT_ALLOWED = 'N';
@@ -127,8 +106,6 @@ public class API {
         maxGetTrytes = instance.configuration.integer(DefaultConfSettings.MAX_GET_TRYTES);
         maxBodyLength = instance.configuration.integer(DefaultConfSettings.MAX_BODY_LENGTH);
 
-    
-
     }
 
     @RequestMapping(method = { RequestMethod.POST, RequestMethod.GET })
@@ -140,8 +117,6 @@ public class API {
 
     }
 
-
- 
     private AbstractResponse process(final String requestString) throws UnsupportedEncodingException {
 
         try {
@@ -211,10 +186,9 @@ public class API {
                 return getNeighborsStatement();
             }
             case "getNodeInfo": {
-                String name = instance.configuration.booling(Configuration.DefaultConfSettings.TESTNET)
-                        ? TESTNET_NAME
-                        :  MAINNET_NAME;
-                return GetNodeInfoResponse.create(name,  VERSION, Runtime.getRuntime().availableProcessors(),
+                String name = instance.configuration.booling(Configuration.DefaultConfSettings.TESTNET) ? TESTNET_NAME
+                        : MAINNET_NAME;
+                return GetNodeInfoResponse.create(name, VERSION, Runtime.getRuntime().availableProcessors(),
                         Runtime.getRuntime().freeMemory(), System.getProperty("java.version"),
                         Runtime.getRuntime().maxMemory(), Runtime.getRuntime().totalMemory(),
                         instance.milestone.latestMilestone, instance.milestone.latestMilestoneIndex,
@@ -254,7 +228,7 @@ public class API {
                     return ErrorResponse.create(e.getLocalizedMessage());
                 }
             }
-      
+
             case "interruptAttachingToTangle": {
                 pearlDiver.cancel();
                 return AbstractResponse.createEmptyResponse();
@@ -327,7 +301,7 @@ public class API {
     }
 
     private boolean wasAddressSpentFrom(Hash address) throws Exception {
-      
+
         Set<Hash> hashes = AddressViewModel.load(instance.tangle, address).getHashes();
         for (Hash hash : hashes) {
             final TransactionViewModel tx = TransactionViewModel.fromHash(instance.tangle, hash);
@@ -414,7 +388,6 @@ public class API {
         return CheckConsistency.create(state, info);
     }
 
-  
     private int getParameterAsInt(Map<String, Object> request, String paramName) throws ValidationException {
         validateParamExists(request, paramName);
         final int result;
@@ -430,11 +403,9 @@ public class API {
             throws ValidationException {
         validateParamExists(request, paramName);
         String result = (String) request.get(paramName);
-       // validateTrytes(paramName, size, result);
+        // validateTrytes(paramName, size, result);
         return result;
     }
-
-   
 
     private void validateParamExists(Map<String, Object> request, String paramName) throws ValidationException {
         if (!request.containsKey(paramName)) {
@@ -453,7 +424,7 @@ public class API {
         if (size > 0) {
             // validate
             for (final String param : paramList) {
-         //       validateTrytes(paramName, size, param);
+                // validateTrytes(paramName, size, param);
             }
         }
 
@@ -479,7 +450,6 @@ public class API {
         }
         return RemoveNeighborsResponse.create(numberOfRemovedNeighbors);
     }
-
 
     private static int counter_getTxToApprove = 0;
 
@@ -962,88 +932,8 @@ public class API {
         return AddedNeighborsResponse.create(numberOfAddedNeighbors);
     }
 
-    private void sendResponse(final HttpServerExchange exchange, final AbstractResponse res, final long beginningTime)
-            throws IOException {
-        res.setDuration((int) (System.currentTimeMillis() - beginningTime));
-        final String response = gson.toJson(res);
-
-        if (res instanceof ErrorResponse) {
-            exchange.setStatusCode(400); // bad request
-        } else if (res instanceof AccessLimitedResponse) {
-            exchange.setStatusCode(401); // api method not allowed
-        } else if (res instanceof ExceptionResponse) {
-            exchange.setStatusCode(500); // internal error
-        }
-
-        setupResponseHeaders(exchange);
-
-        ByteBuffer responseBuf = ByteBuffer.wrap(response.getBytes(StandardCharsets.UTF_8));
-        exchange.setResponseContentLength(responseBuf.array().length);
-        StreamSinkChannel sinkChannel = exchange.getResponseChannel();
-        sinkChannel.getWriteSetter().set(channel -> {
-            if (responseBuf.remaining() > 0)
-                try {
-                    sinkChannel.write(responseBuf);
-                    if (responseBuf.remaining() == 0) {
-                        exchange.endExchange();
-                    }
-                } catch (IOException e) {
-                    log.error("Lost connection to client - cannot send response");
-                    exchange.endExchange();
-                    sinkChannel.getWriteSetter().set(null);
-                }
-            else {
-                exchange.endExchange();
-            }
-        });
-        sinkChannel.resumeWrites();
-    }
-
-    private static void setupResponseHeaders(final HttpServerExchange exchange) {
-        final HeaderMap headerMap = exchange.getResponseHeaders();
-        headerMap.add(new HttpString("Access-Control-Allow-Origin"), "*");
-        headerMap.add(new HttpString("Keep-Alive"), "timeout=500, max=100");
-    }
-
-    private HttpHandler addSecurity(final HttpHandler toWrap) {
-        String credentials = instance.configuration.string(DefaultConfSettings.REMOTE_AUTH);
-        if (credentials == null || credentials.isEmpty())
-            return toWrap;
-
-        final Map<String, char[]> users = new HashMap<>(2);
-        users.put(credentials.split(":")[0], credentials.split(":")[1].toCharArray());
-
-        IdentityManager identityManager = new MapIdentityManager(users);
-        HttpHandler handler = toWrap;
-        handler = new AuthenticationCallHandler(handler);
-        handler = new AuthenticationConstraintHandler(handler);
-        final List<AuthenticationMechanism> mechanisms = Collections
-                .singletonList(new BasicAuthenticationMechanism("Iota Realm"));
-        handler = new AuthenticationMechanismsHandler(handler, mechanisms);
-        handler = new SecurityInitialHandler(AuthenticationMode.PRO_ACTIVE, identityManager, handler);
-        return handler;
-    }
-
     /**
-     * Single point of control of VDV.
-     * <p>
-     * Supported input forms:
-     * <ul>
-     * <li>/(control center code)/(service code)/(request code)</li>
-     * </ul>
-     * </p>
-     *
-     * @param controlCenterCode
-     *            The control center code from the URL
-     * @param serviceCodeEnum
-     *            the vdv service code for example aus
-     * @param requestCodeEnum
-     *            the vdv request type, for example status
-     * @param vdvAnfrageBytes
-     *            The request body
-     * @param response
-     *            The http response, required to configure the output buffers...
-     * @return The VDV Response Object
+     * Single point of control 
      */
     @RequestMapping(method = { RequestMethod.POST,
             RequestMethod.GET }, path = "/{controlCenterCode}/{serviceCodeEnum}/{requestCodeEnum:.+}", consumes = "text/xml", produces = "text/xml")

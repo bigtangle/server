@@ -18,3 +18,17 @@ all data in database Full SQL using mysql or postgres first, then to Hbase or Sp
 data sync process using kafka
 
 Unit test and docker container test
+
+
+
+<p>A Wallet stores keys and a record of transactions that send and receive value from those keys. Using these,
+it is able to create new transactions that spend the recorded transactions, and this is the fundamental operation
+of the  protocol.</p>
+
+<p>To learn more about this class, read <b><a href="https://bitcoinj.github.io/working-with-the-wallet">
+    working with the wallet.</a></b></p>
+
+<p>To fill up a Wallet with transactions, you need to use it in combination with a {@link BlockGraph} and various
+other objects, see the <a href="https://bitcoinj.github.io/getting-started">Getting started</a> tutorial
+on the website to learn more about how to set everything up.</p>
+  
