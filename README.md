@@ -47,6 +47,81 @@ Milestone Service creates snapshot for calculation of incentive for mining.
 checkout this project and import this project. It may require the configure the project as gradle project.
 
 # design
-Block is the class with list of transactions. 
+Block is the class with list of transactions. It points to prevBlockHash and prevbranchBlockHash
 
+persistence in db: block hash as key +  prevBlockHash and prevbranchBlockHash + ...
+
+recursive select of the block DAG graph:
+
+my child select * from block where prevBlockHash= :myblockhash
+
+Transactions is defined by TransactionInput and TransactionOutput
+TransactionInput has a point to the original output
+TransactionOutPoint:  Hash of the transaction to which we refer and index 
+
+TransactionOutput:
+value and scriptPubKey
+
+
+
+
+ class MySQLFullPrunedBlockStore:
+ 
+   private static final String CREATE_HEADERS_TABLE = "CREATE TABLE headers (\n" +
+            "    hash varbinary(28) NOT NULL,\n" +
+            "    chainwork varbinary(12) NOT NULL,\n" +
+            "    height integer NOT NULL,\n" +
+            "    header varbinary(80) NOT NULL,\n" +
+            "    wasundoable tinyint(1) NOT NULL,\n" +
+            "    CONSTRAINT headers_pk PRIMARY KEY (hash) USING BTREE \n" +
+            ")";
+
+   private static final String CREATE_UNDOABLE_TABLE = "CREATE TABLE undoableblocks (\n" +
+            "    hash varbinary(28) NOT NULL,\n" +
+            "    height integer NOT NULL,\n" +
+            "    txoutchanges mediumblob,\n" +
+            "    transactions mediumblob,\n" +
+            "    CONSTRAINT undoableblocks_pk PRIMARY KEY (hash) USING BTREE \n" +
+            ")\n";
+            
+            
+   private static final String CREATE_OPEN_OUTPUT_TABLE = "CREATE TABLE openoutputs (\n" +
+            "    hash varbinary(32) NOT NULL,\n" +
+            "    `index` integer NOT NULL,\n" +
+            "    height integer NOT NULL,\n" +
+            "    value bigint NOT NULL,\n" +
+            "    scriptbytes mediumblob NOT NULL,\n" +
+            "    toaddress varchar(35),\n" +
+            "    addresstargetable tinyint(1),\n" +
+            "    coinbase boolean,\n" +
+            "    CONSTRAINT openoutputs_pk PRIMARY KEY (hash, `index`) USING BTREE \n" +
+            ")\n";
+
+
+==> New tables for blocks and transactions:
+
+
+   private static final String CREATE_BLOCK_TABLE = "CREATE TABLE block (\n" +
+            "    hash varbinary(28) NOT NULL,\n" +
+            "    prevblockhash  varbinary(28) NOT NULL,\n" +
+            "    prevbranchblockhash  varbinary(28) NOT NULL,\n" +
+            "    height integer NOT NULL,\n" +
+            "    header varbinary(80) NOT NULL,\n" +
+            "    mineraddress varchar(35),\n" +
+            "    CONSTRAINT block_pk PRIMARY KEY (hash)  \n" +
+
+  private static final String CREATE_TRANSACTION_OUTPUT_TABLE = "CREATE TABLE transaction (\n" +
+            "    hash varbinary(32) NOT NULL,\n" +
+            "    indexposition integer NOT NULL,\n" +
+            "    blockhash  varbinary(28)  NOT NULL,\n" +
+            "    prevtransactiohash  varbinary(28),\n" +
+            "    value bigint NOT NULL,\n" +
+            "    scriptbytes mediumblob NOT NULL,\n" +
+            "    toaddress varchar(35),\n" +
+            "    fromaddress varchar(35),\n" +
+            "    addresstargetable tinyint(1),\n" +
+            "    coinbase boolean,\n" +
+            "    tokenid varchar(40),\n" +
+            "    CONSTRAINT transaction_pk PRIMARY KEY (hash, indexposition) \n" +
+            ")\n";
 
