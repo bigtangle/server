@@ -54,6 +54,8 @@ persistence in db: block hash as key +  prevBlockHash and prevbranchBlockHash + 
 recursive select of the block DAG graph:
 
 my child select * from block where prevBlockHash= :myblockhash
+tip as block with no child, the select return empty
+
 
 Transactions is defined by TransactionInput and TransactionOutput
 TransactionInput has a point to the original output
@@ -125,3 +127,11 @@ value and scriptPubKey
             "    CONSTRAINT transaction_pk PRIMARY KEY (hash, indexposition) \n" +
             ")\n";
 
+
+helper tables
+
+private static final String CREATE_MILESTONE_TABLE = "CREATE TABLE milestone (\n" +
+            "    blockhash varbinary(28) NOT NULL,\n" +
+            "    milestone integer NOT NULL,\n" +
+            "    rating integer NOT NULL,\n" +
+            "    CONSTRAINT block_pk PRIMARY KEY (blockhash)  \n" +
