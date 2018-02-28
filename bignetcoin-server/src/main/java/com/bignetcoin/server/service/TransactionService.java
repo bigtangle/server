@@ -37,26 +37,27 @@ public class TransactionService {
     protected FullPrunedBlockStore store;
 
     protected CoinSelector coinSelector = new DefaultCoinSelector();
-    @Autowired
-    protected  NetworkParameters params;
 
-    public Coin getBalance(List<ECKey> keys) {
-        return getBalance(BalanceType.AVAILABLE, keys);
+    @Autowired
+    protected NetworkParameters networkParameters;
+
+    public Coin getBalance(List<byte[]> pubKeyHashs) {
+        return getBalance(BalanceType.AVAILABLE, pubKeyHashs);
     }
 
     /**
      * Returns the balance of this wallet as calculated by the provided
      * balanceType.
      */
-    public Coin getBalance(BalanceType balanceType, List<ECKey> keys) {
+    public Coin getBalance(BalanceType balanceType, List<byte[]> pubKeyHashs) {
 
         if (balanceType == BalanceType.AVAILABLE || balanceType == BalanceType.AVAILABLE_SPENDABLE) {
-            List<TransactionOutput> candidates = calculateAllSpendCandidates(keys, true,
+            List<TransactionOutput> candidates = calculateAllSpendCandidates(pubKeyHashs, true,
                     balanceType == BalanceType.AVAILABLE_SPENDABLE);
             CoinSelection selection = coinSelector.select(NetworkParameters.MAX_MONEY, candidates);
             return selection.valueGathered;
         } else if (balanceType == BalanceType.ESTIMATED || balanceType == BalanceType.ESTIMATED_SPENDABLE) {
-            List<TransactionOutput> all = calculateAllSpendCandidates(keys, false,
+            List<TransactionOutput> all = calculateAllSpendCandidates(pubKeyHashs, false,
                     balanceType == BalanceType.ESTIMATED_SPENDABLE);
             Coin value = Coin.ZERO;
             for (TransactionOutput out : all)
@@ -81,10 +82,10 @@ public class TransactionService {
      *            Whether to ignore outputs that we are tracking but don't have
      *            the keys to sign for.
      */
-    public List<TransactionOutput> calculateAllSpendCandidates(List<ECKey> keys, boolean excludeImmatureCoinbases,
-            boolean excludeUnsignable) {
+    public List<TransactionOutput> calculateAllSpendCandidates(List<byte[]> pubKeyHashs,
+            boolean excludeImmatureCoinbases, boolean excludeUnsignable) {
 
-        List<TransactionOutput> candidates = calculateAllSpendCandidatesFromUTXOProvider(keys,
+        List<TransactionOutput> candidates = calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs,
                 excludeImmatureCoinbases);
 
         return candidates;
@@ -97,7 +98,7 @@ public class TransactionService {
      * 
      * @return The list of candidates.
      */
-    protected LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(List<ECKey> keys,
+    protected LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(List<byte[]> pubKeyHashs,
             boolean excludeImmatureCoinbases) {
 
         // UTXOProvider utxoProvider = checkNotNull(vUTXOProvider, "No UTXO
@@ -105,7 +106,7 @@ public class TransactionService {
         LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
         try {
             int chainHeight = store.getChainHeadHeight();
-            for (UTXO output : getStoredOutputsFromUTXOProvider(keys)) {
+            for (UTXO output : getStoredOutputsFromUTXOProvider(pubKeyHashs)) {
                 boolean coinbase = output.isCoinbase();
                 int depth = chainHeight - output.getHeight() + 1; // the current
                                                                   // depth of
@@ -114,8 +115,8 @@ public class TransactionService {
                                                                   // as head).
                 // Do not try and spend coinbases that were mined too recently,
                 // the protocol forbids it.
-                if (!excludeImmatureCoinbases || !coinbase || depth >= params.getSpendableCoinbaseDepth()) {
-                    candidates.add(new FreeStandingTransactionOutput(params, output, chainHeight));
+                if (!excludeImmatureCoinbases || !coinbase || depth >= networkParameters.getSpendableCoinbaseDepth()) {
+                    candidates.add(new FreeStandingTransactionOutput(networkParameters, output, chainHeight));
                 }
             }
         } catch (UTXOProviderException e) {
@@ -142,19 +143,18 @@ public class TransactionService {
      * 
      * @return The list of stored outputs.
      */
-    protected List<UTXO> getStoredOutputsFromUTXOProvider(List<ECKey> keys) throws UTXOProviderException {
+    protected List<UTXO> getStoredOutputsFromUTXOProvider(List<byte[]> pubKeyHashs) throws UTXOProviderException {
         // UTXOProvider utxoProvider = checkNotNull(vUTXOProvider, "No UTXO
-        // provider has been set");
-        List<UTXO> candidates = new ArrayList<UTXO>();
+        // provider has been s
         // List<ECKey> keys = getImportedKeys();
         // keys.addAll(getActiveKeyChain().getLeafKeys());
         List<Address> addresses = new ArrayList<Address>();
-        for (ECKey key : keys) {
-            Address address = new Address(params, key.getPubKeyHash());
+        for (byte[] key : pubKeyHashs) {
+            Address address = new Address(networkParameters, key);
             addresses.add(address);
         }
-        candidates.addAll(store.getOpenTransactionOutputs(addresses));
-        return candidates;
+        return store.getOpenTransactionOutputs(addresses);
+
     }
 
     private class FreeStandingTransactionOutput extends TransactionOutput {

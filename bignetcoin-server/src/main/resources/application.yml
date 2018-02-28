@@ -12,3 +12,7 @@ server:
 cassandra:
   keyspace: dk_fahrtwissen
   nodes: cassandra-as-vdv-aus
+
+---
+spring:
+  profiles: testnet

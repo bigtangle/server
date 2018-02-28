@@ -1,12 +1,14 @@
 package com.bignetcoin.server.service;
 
+import static org.bitcoinj.core.Utils.HEX;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -19,8 +21,10 @@ import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.bitcoinj.core.Coin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
@@ -87,24 +91,22 @@ public class API {
     private final int maxRandomWalks;
     private final int maxFindTxs;
     private final int maxRequestList;
-    private final int maxGetTrytes;
-    private final int maxBodyLength;
+
     private final static String overMaxErrorMessage = "Could not complete request";
     private final static String invalidParams = "Invalid parameters";
 
-    private final static char ZERO_LENGTH_ALLOWED = 'Y';
-    private final static char ZERO_LENGTH_NOT_ALLOWED = 'N';
     private Bignet instance;
+    private TransactionService transactionService;
 
-    public API(Bignet instance) {
+    @Autowired
+    public API(Bignet instance, TransactionService transactionService) {
         this.instance = instance;
+        this.transactionService = transactionService;
         // this.ixi = ixi;
         minRandomWalks = instance.configuration.integer(DefaultConfSettings.MIN_RANDOM_WALKS);
         maxRandomWalks = instance.configuration.integer(DefaultConfSettings.MAX_RANDOM_WALKS);
         maxFindTxs = instance.configuration.integer(DefaultConfSettings.MAX_FIND_TRANSACTIONS);
         maxRequestList = instance.configuration.integer(DefaultConfSettings.MAX_REQUESTS_LIST);
-        maxGetTrytes = instance.configuration.integer(DefaultConfSettings.MAX_GET_TRYTES);
-        maxBodyLength = instance.configuration.integer(DefaultConfSettings.MAX_BODY_LENGTH);
 
     }
 
@@ -660,16 +662,6 @@ public class API {
         final Set<Hash> foundTransactions = new HashSet<>();
         boolean containsKey = false;
 
-        final Set<Hash> bundlesTransactions = new HashSet<>();
-        if (request.containsKey("bundles")) {
-            final HashSet<String> bundles = getParameterAsSet(request, "bundles", HASH_SIZE);
-            for (final String bundle : bundles) {
-                bundlesTransactions.addAll(BundleViewModel.load(instance.tangle, new Hash(bundle)).getHashes());
-            }
-            foundTransactions.addAll(bundlesTransactions);
-            containsKey = true;
-        }
-
         final Set<Hash> addressesTransactions = new HashSet<>();
         if (request.containsKey("addresses")) {
             final HashSet<String> addresses = getParameterAsSet(request, "addresses", HASH_SIZE);
@@ -707,11 +699,6 @@ public class API {
             throw new ValidationException(invalidParams);
         }
 
-        // Using multiple of these input fields returns the intersection of the
-        // values.
-        if (request.containsKey("bundles")) {
-            foundTransactions.retainAll(bundlesTransactions);
-        }
         if (request.containsKey("addresses")) {
             foundTransactions.retainAll(addressesTransactions);
         }
@@ -779,46 +766,20 @@ public class API {
         final List<Hash> addresses = addrss.stream().map(address -> (new Hash(address)))
                 .collect(Collectors.toCollection(LinkedList::new));
         final List<Hash> hashes;
-        final Map<Hash, Long> balances = new HashMap<>();
-        instance.milestone.latestSnapshot.rwlock.readLock().lock();
-        final int index = instance.milestone.latestSnapshot.index();
-        if (tips == null || tips.size() == 0) {
-            hashes = Collections.singletonList(instance.milestone.latestSolidSubtangleMilestone);
-        } else {
-            hashes = tips.stream().map(address -> (new Hash(address)))
-                    .collect(Collectors.toCollection(LinkedList::new));
-        }
-        try {
-            for (final Hash address : addresses) {
-                Long value = instance.milestone.latestSnapshot.getBalance(address);
-                if (value == null)
-                    value = 0L;
-                balances.put(address, value);
-            }
+        final Map<String, Coin> balances = new HashMap<>();
 
-            final Set<Hash> visitedHashes;
-            final Map<Hash, Long> diff;
+        for (final String address : addrss) {
+            List<byte[]> l = new ArrayList<byte[]>();
+            l.add(HEX.decode(address));
+            Coin value = transactionService.getBalance(l);
 
-            visitedHashes = new HashSet<>();
-            diff = new HashMap<>();
-            for (Hash tip : hashes) {
-                if (!TransactionViewModel.exists(instance.tangle, tip)) {
-                    return ErrorResponse.create("Tip not found: " + tip.toString());
-                }
-                if (!instance.ledgerValidator.updateDiff(visitedHashes, diff, tip)) {
-                    return ErrorResponse.create("Tips are not consistent");
-                }
-            }
-            diff.forEach((key, value) -> balances.computeIfPresent(key, (hash, aLong) -> value + aLong));
-        } finally {
-            instance.milestone.latestSnapshot.rwlock.readLock().unlock();
+            balances.put(address, value);
         }
 
         final List<String> elements = addresses.stream().map(address -> balances.get(address).toString())
                 .collect(Collectors.toCollection(LinkedList::new));
 
-        return GetBalancesResponse.create(elements, hashes.stream().map(h -> h.toString()).collect(Collectors.toList()),
-                index);
+        return GetBalancesResponse.create(elements, null, 0);
     }
 
     private static int counter_PoW = 0;
@@ -930,49 +891,6 @@ public class API {
             return ErrorResponse.create("Invalid uri scheme: " + e.getLocalizedMessage());
         }
         return AddedNeighborsResponse.create(numberOfAddedNeighbors);
-    }
-
-    /**
-     * Single point of control 
-     */
-    @RequestMapping(method = { RequestMethod.POST,
-            RequestMethod.GET }, path = "/{controlCenterCode}/{serviceCodeEnum}/{requestCodeEnum:.+}", consumes = "text/xml", produces = "text/xml")
-    public ResponseEntity<byte[]> vdvEntrypoint(@PathVariable String controlCenterCode,
-
-            @RequestBody byte[] vdvAnfrageBytes, HttpServletResponse response) {
-
-        ResponseEntity<byte[]> result = null;
-
-        // TODO perform error handling as it used to be.
-
-        return result;
-    }
-
-    /**
-     * tweak the response buffer to match the response size.
-     *
-     * @param response
-     *            the response
-     * @param resultBody
-     *            the result data blob
-     */
-    private void configureHttpResponse(HttpServletResponse response, byte[] resultBody) {
-        if (response.getBufferSize() < resultBody.length) {
-            response.setBufferSize(resultBody.length);
-        }
-    }
-
-    /**
-     * configure ObjectMapper to create enums from string contents.
-     *
-     * @param webdataBinder
-     */
-    @InitBinder
-    public void initParameterMapping(final WebDataBinder webdataBinder) {
-        // webdataBinder.registerCustomEditor(VdvRequestTypeEnum.class, new
-        // VdvRequestTypeEnumMapper());
-        // webdataBinder.registerCustomEditor(VdvServiceTypeEnum.class, new
-        // VdvServiceTypeEnumMapper());
     }
 
 }

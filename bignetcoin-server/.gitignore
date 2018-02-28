@@ -14,3 +14,4 @@ target/*
 src/main/ixi/
 /bin/
 /build/
+/test-leveldb/
