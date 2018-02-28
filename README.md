@@ -43,3 +43,10 @@ Key management  and  related transactions
 6) MilestoneService  
 Milestone Service creates snapshot for calculation of incentive for mining.
 
+#For development using the latest eclipse
+checkout this project and import this project. It may require the configure the project as gradle project.
+
+# design
+Block is the class with list of transactions. 
+
+
