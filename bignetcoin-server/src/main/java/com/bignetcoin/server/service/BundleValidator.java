@@ -1,3 +1,7 @@
+/*******************************************************************************
+ *  Copyright   2018  Inasset GmbH. 
+ *  
+ *******************************************************************************/
 package com.bignetcoin.server.service;
 
 import com.iota.iri.controllers.BundleViewModel;

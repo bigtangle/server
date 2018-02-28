@@ -1,3 +1,7 @@
+/*******************************************************************************
+ *  Copyright   2018  Inasset GmbH. 
+ *  
+ *******************************************************************************/
 package com.iota.iri.service.dto;
 
 public class AddedNeighborsResponse extends AbstractResponse {

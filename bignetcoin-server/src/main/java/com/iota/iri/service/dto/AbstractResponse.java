@@ -1,3 +1,7 @@
+/*******************************************************************************
+ *  Copyright   2018  Inasset GmbH. 
+ *  
+ *******************************************************************************/
 package com.iota.iri.service.dto;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;

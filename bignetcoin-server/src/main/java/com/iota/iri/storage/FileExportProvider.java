@@ -1,3 +1,7 @@
+/*******************************************************************************
+ *  Copyright   2018  Inasset GmbH. 
+ *  
+ *******************************************************************************/
 package com.iota.iri.storage;
 
 import com.iota.iri.controllers.TransactionViewModel;

@@ -1,3 +1,7 @@
+/*******************************************************************************
+ *  Copyright   2018  Inasset GmbH. 
+ *  
+ *******************************************************************************/
 package com.iota.iri;
 
 import static com.iota.iri.controllers.TransactionViewModelTest.getRandomTransactionTrits;
