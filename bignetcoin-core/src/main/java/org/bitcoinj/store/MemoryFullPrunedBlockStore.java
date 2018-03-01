@@ -415,4 +415,10 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
         }
         return foundOutputs;
     }
+
+    @Override
+    public StoredBlock getStoredBlockFromPrev(Sha256Hash hash) throws BlockStoreException {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

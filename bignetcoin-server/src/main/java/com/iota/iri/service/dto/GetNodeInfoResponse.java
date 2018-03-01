@@ -4,7 +4,7 @@
  *******************************************************************************/
 package com.iota.iri.service.dto;
 
-import com.iota.iri.model.Hash;
+import org.bitcoinj.core.Sha256Hash;
 
 public class GetNodeInfoResponse extends AbstractResponse {
 
@@ -29,8 +29,8 @@ public class GetNodeInfoResponse extends AbstractResponse {
     private int transactionsToRequest;
 
 	public static AbstractResponse create(String appName, String appVersion, int jreAvailableProcessors, long jreFreeMemory,
-	        String jreVersion, long maxMemory, long totalMemory, Hash latestMilestone, int latestMilestoneIndex,
-	        Hash latestSolidSubtangleMilestone, int latestSolidSubtangleMilestoneIndex,
+	        String jreVersion, long maxMemory, long totalMemory, Sha256Hash latestMilestone, int latestMilestoneIndex,
+	        Sha256Hash latestSolidSubtangleMilestone, int latestSolidSubtangleMilestoneIndex,
 	        int neighbors, int packetsQueueSize,
 	        long currentTimeMillis, int tips, int numberOfTransactionsToRequest) {
 		final GetNodeInfoResponse res = new GetNodeInfoResponse();

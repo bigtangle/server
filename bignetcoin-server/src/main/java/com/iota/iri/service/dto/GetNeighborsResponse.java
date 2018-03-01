@@ -43,29 +43,6 @@ public class GetNeighborsResponse extends AbstractResponse {
         public String getConnectionType() {
             return connectionType;
         }
-
-        public static Neighbor createFrom(com.iota.iri.network.Neighbor n) {
-            Neighbor ne = new Neighbor();
-            int port = n.getPort();
-            ne.address = n.getAddress().getHostString() + ":" + port;
-            ne.numberOfAllTransactions = n.getNumberOfAllTransactions();
-            ne.numberOfInvalidTransactions = n.getNumberOfInvalidTransactions();
-            ne.numberOfNewTransactions = n.getNumberOfNewTransactions();
-            ne.numberOfRandomTransactionRequests = n.getNumberOfRandomTransactionRequests();
-            ne.numberOfSentTransactions = n.getNumberOfSentTransactions();
-            ne.connectionType = n.connectionType();
-            return ne;
-        }
-    }
-
-    public static AbstractResponse create(final List<com.iota.iri.network.Neighbor> elements) {
-        GetNeighborsResponse res = new GetNeighborsResponse();
-        res.neighbors = new Neighbor[elements.size()];
-        int i = 0;
-        for (com.iota.iri.network.Neighbor n : elements) {
-            res.neighbors[i++] = Neighbor.createFrom(n);
-        }
-        return res;
     }
 
 }

@@ -53,6 +53,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
      */
     StoredBlock getOnceUndoableStoredBlock(Sha256Hash hash) throws BlockStoreException;
 
+    
+    StoredBlock getStoredBlockFromPrev(Sha256Hash hash) throws BlockStoreException;
     /**
      * Returns a {@link StoredUndoableBlock} whose block.getHash() method will be equal to the parameter. If no such
      * block is found, returns null. Note that this may return null more often than get(Sha256Hash hash) as not all

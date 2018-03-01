@@ -14,11 +14,9 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
+import org.bitcoinj.core.Sha256Hash;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.iota.iri.controllers.TransactionViewModel;
-import com.iota.iri.model.Hash;
 
 
 public class Snapshot {
@@ -28,16 +26,13 @@ public class Snapshot {
     public static int SNAPSHOT_INDEX = 2;
     public static int SPENT_ADDRESSES_INDEX = 3;
 
-    public static final Map<Hash, Long> initialState = new HashMap<>();
+    public static final Map<Sha256Hash, Long> initialState = new HashMap<>();
     public static final Snapshot initialSnapshot;
     public final ReadWriteLock rwlock = new ReentrantReadWriteLock();
 
     static {
 
-        if (!SignedFiles.isFileSignatureValid("/Snapshot.txt", "/Snapshot.sig", SNAPSHOT_PUBKEY, SNAPSHOT_PUBKEY_DEPTH, SNAPSHOT_INDEX)) {
-            throw new RuntimeException("Snapshot signature failed.");
-        }
-
+       
         InputStream in = Snapshot.class.getResourceAsStream("/Snapshot.txt");
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
         String line;
@@ -48,7 +43,7 @@ public class Snapshot {
                 {
                     String key = parts[0];
                     String value = parts[1];
-                    initialState.put(new Hash(key), Long.valueOf(value));
+                    initialState.put(new Sha256Hash(key), Long.valueOf(value));
                 }
             }
         } catch (IOException e) {
@@ -58,10 +53,7 @@ public class Snapshot {
 
         initialSnapshot = new Snapshot(initialState, 0);
         long stateValue = initialState.values().stream().reduce(Math::addExact).orElse(Long.MAX_VALUE);
-        if(stateValue != TransactionViewModel.SUPPLY) {
-            log.error("Transaction resolves to incorrect ledger balance: {}", TransactionViewModel.SUPPLY - stateValue);
-            System.exit(-1);
-        }
+         
 
         if(!isConsistent(initialState)) {
             System.out.println("Initial Snapshot inconsistent.");
@@ -69,7 +61,7 @@ public class Snapshot {
         }
     }
 
-    protected final Map<Hash, Long> state;
+    protected final Map<Sha256Hash, Long> state;
     private int index;
 
     public int index() {
@@ -80,7 +72,7 @@ public class Snapshot {
         return i;
     }
 
-    private Snapshot(Map<Hash, Long> initialState, int index) {
+    private Snapshot(Map<Sha256Hash, Long> initialState, int index) {
         state = new HashMap<>(initialState);
         this.index = index;
     }
@@ -89,7 +81,7 @@ public class Snapshot {
         return new Snapshot(state, index);
     }
 
-    public Long getBalance(Hash hash) {
+    public Long getBalance(Sha256Hash hash) {
         Long l;
         rwlock.readLock().lock();
         l = state.get(hash);
@@ -97,8 +89,8 @@ public class Snapshot {
         return l;
     }
 
-    public Map<Hash, Long> patchedDiff(Map<Hash, Long> diff) {
-        Map<Hash, Long> patch;
+    public Map<Sha256Hash, Long> patchedDiff(Map<Sha256Hash, Long> diff) {
+        Map<Sha256Hash, Long> patch;
         rwlock.readLock().lock();
         patch = diff.entrySet().stream().map(hashLongEntry ->
             new HashMap.SimpleEntry<>(hashLongEntry.getKey(), state.getOrDefault(hashLongEntry.getKey(), 0L) + hashLongEntry.getValue())
@@ -107,7 +99,7 @@ public class Snapshot {
         return patch;
     }
 
-    void apply(Map<Hash, Long> patch, int newIndex) {
+    void apply(Map<Sha256Hash, Long> patch, int newIndex) {
         if (!patch.entrySet().stream().map(Map.Entry::getValue).reduce(Math::addExact).orElse(0L).equals(0L)) {
             throw new RuntimeException("Diff is not consistent.");
         }
@@ -121,11 +113,11 @@ public class Snapshot {
         rwlock.writeLock().unlock();
     }
 
-    public static boolean isConsistent(Map<Hash, Long> state) {
-        final Iterator<Map.Entry<Hash, Long>> stateIterator = state.entrySet().iterator();
+    public static boolean isConsistent(Map<Sha256Hash, Long> state) {
+        final Iterator<Map.Entry<Sha256Hash, Long>> stateIterator = state.entrySet().iterator();
         while (stateIterator.hasNext()) {
 
-            final Map.Entry<Hash, Long> entry = stateIterator.next();
+            final Map.Entry<Sha256Hash, Long> entry = stateIterator.next();
             if (entry.getValue() <= 0) {
 
                 if (entry.getValue() < 0) {
@@ -139,7 +131,7 @@ public class Snapshot {
                 /*
                  * if (entry.getValue() > 0) {
                  *
-                 * System.out.ln("initialState.put(new Hash(\"" + entry.getKey()
+                 * System.out.ln("initialState.put(new Sha256Hash(\"" + entry.getKey()
                  * + "\"), " + entry.getValue() + "L);"); }
                  */
             ////////////

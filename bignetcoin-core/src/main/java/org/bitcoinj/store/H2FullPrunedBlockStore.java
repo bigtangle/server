@@ -150,4 +150,10 @@ public class H2FullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     protected String getDatabaseDriverClass() {
         return DATABASE_DRIVER_CLASS;
     }
+
+    @Override
+    public StoredBlock getStoredBlockFromPrev(Sha256Hash hash) throws BlockStoreException {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

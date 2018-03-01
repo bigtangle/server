@@ -5,10 +5,11 @@
 package com.bignetcoin.server.service;
 
 
+import javax.validation.constraints.NotNull;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
-
-import javax.validation.constraints.NotNull;
 
 @Component
 @ConfigurationProperties(prefix = "server")
@@ -34,6 +35,15 @@ public class ServerConfiguration {
     private String remote_auth;
 
     private long remote_limit_api;
+   
+    @Value("${minRandomWalks:5}")
+    private   int minRandomWalks;
+    @Value("${maxRandomWalks:27}")
+    private   int maxRandomWalks;
+    @Value("${maxFindTxs:100000}")
+    private   int maxFindTxs;
+    @Value("${maxRequestList:1000}")
+    private   int maxRequestList;
 
     public String getNeighbors() {
         return neighbors;
@@ -105,6 +115,38 @@ public class ServerConfiguration {
 
     public void setRemote_limit_api(long remote_limit_api) {
         this.remote_limit_api = remote_limit_api;
+    }
+
+    public int getMinRandomWalks() {
+        return minRandomWalks;
+    }
+
+    public void setMinRandomWalks(int minRandomWalks) {
+        this.minRandomWalks = minRandomWalks;
+    }
+
+    public int getMaxRandomWalks() {
+        return maxRandomWalks;
+    }
+
+    public void setMaxRandomWalks(int maxRandomWalks) {
+        this.maxRandomWalks = maxRandomWalks;
+    }
+
+    public int getMaxFindTxs() {
+        return maxFindTxs;
+    }
+
+    public void setMaxFindTxs(int maxFindTxs) {
+        this.maxFindTxs = maxFindTxs;
+    }
+
+    public int getMaxRequestList() {
+        return maxRequestList;
+    }
+
+    public void setMaxRequestList(int maxRequestList) {
+        this.maxRequestList = maxRequestList;
     }
 
     
