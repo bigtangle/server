@@ -1,5 +1,5 @@
 test of client needs the server to be started
-IRI -p 14265  --testnet
+ ServerStart --spring.profiles.active=testnet
 
 #Design
 The application is based on spring boot and using the following components and service
