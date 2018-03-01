@@ -14,7 +14,7 @@ import org.junit.Ignore;
 /**
  * A MySQL implementation of the {@link AbstractFullPrunedBlockChainTest}
  */
-@Ignore("enable the mysql driver dependency in the maven POM")
+//@Ignore("enable the mysql driver dependency in the maven POM")
 public class MySQLFullPrunedBlockChainTest extends AbstractFullPrunedBlockChainTest {
 
     @After
