@@ -124,6 +124,7 @@ value and scriptPubKey
             "    addresstargetable tinyint(1),\n" +
             "    coinbase boolean,\n" +
             "    tokenid varchar(40),\n" +
+            "    spent  tinyint(1) NOT NULL,\n" +
             "    CONSTRAINT transaction_pk PRIMARY KEY (hash, indexposition) \n" +
             ")\n";
 
