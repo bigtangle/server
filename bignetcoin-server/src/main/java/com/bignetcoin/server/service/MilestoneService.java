@@ -11,7 +11,8 @@ import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Sha256Hash;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.springframework.stereotype.Service;
+@Service
 public class MilestoneService {
 
     enum Validity {
