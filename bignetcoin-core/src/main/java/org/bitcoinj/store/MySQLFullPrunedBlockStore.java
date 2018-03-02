@@ -34,7 +34,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    hash varbinary(28) NOT NULL,\n" +
             "    chainwork varbinary(12) NOT NULL,\n" +
             "    height integer NOT NULL,\n" +
-            "    header varbinary(80) NOT NULL,\n" +
+            "    header varbinary(255) NOT NULL,\n" +
             "    wasundoable tinyint(1) NOT NULL,\n" +
             "    CONSTRAINT headers_pk PRIMARY KEY (hash) USING BTREE \n" +
             ")";
