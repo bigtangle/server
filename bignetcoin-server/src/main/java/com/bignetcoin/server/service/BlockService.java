@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class BlockService {
+
     @Autowired
     protected FullPrunedBlockStore store;
 
@@ -30,21 +31,29 @@ public class BlockService {
     @Autowired
     protected NetworkParameters networkParameters;
 
+    /**
+     * 取得当前block
+     * @param blockhash
+     * @return
+     * @throws BlockStoreException
+     */
     public Block getBlock(Sha256Hash blockhash) throws BlockStoreException {
-
         return store.get(blockhash).getHeader();
     }
 
-    
+    /**
+     * 获取前置block
+     * @param prevblockhash
+     * @return
+     * @throws BlockStoreException
+     */
     public StoredBlock getPrevBlock(Sha256Hash prevblockhash) throws BlockStoreException {
-
-        return store.get(prevblockhash);
+        StoredBlock storedBlock = store.getStoredBlockFromPrev(prevblockhash);
+        return storedBlock;
     }
-    public Sha256Hash[] getBlockToApprove( )  {
 
-        return  null  ;
+    public Sha256Hash[] getBlockToApprove() {
+        return null;
     }
-    
-    
-    
+
 }
