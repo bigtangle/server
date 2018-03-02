@@ -28,7 +28,7 @@ public class MySQLDBStoreConfiguration {
             return new MySQLFullPrunedBlockStore(
                     params, fullStoreDepth, hostname, dbName, username, password);
         } catch (BlockStoreException e) {
-            throw new DBException();
+            throw new DBException(e);
         }
     }
 }

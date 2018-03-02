@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Profile;
 @Configuration
 @Profile("mainent")
 public class MainnetConfiguration {
+    
     @Bean
     public NetworkParameters networkParameters() {
         return new MainNetParams();
