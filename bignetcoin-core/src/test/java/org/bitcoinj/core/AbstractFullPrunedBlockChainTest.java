@@ -313,6 +313,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         Transaction t = new Transaction(PARAMS);
         t.addOutput(new TransactionOutput(PARAMS, t, amount, toKey));
         t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
+        
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
         chain.add(rollingBlock);

@@ -136,3 +136,23 @@ private static final String CREATE_MILESTONE_TABLE = "CREATE TABLE milestone (\n
             "    milestone integer NOT NULL,\n" +
             "    rating integer NOT NULL,\n" +
             "    CONSTRAINT block_pk PRIMARY KEY (blockhash)  \n" +
+            
+            
+            
+            
+            
+1)client prepares new transactions and asks node server for account balance and unspent transaction. (input public key, toadress, amount)
+
+2)server node does select two previous blocks (MCMC) and approve those only if all transactions in it are valid and  not conflicting and do not approve conflicting blocks.
+
+3)server node returns the prepared transaction block with all client transactions. 
+
+return Block with the  transaction 
+
+
+4)client node must compute the nonce of the transaction block as proof of work and signs the transaction
+(API) 
+. 
+5) server get the block, save data and broadcast to all server nodes.
+
+(API)
