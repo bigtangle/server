@@ -86,7 +86,8 @@ public abstract class AbstractFullPrunedBlockChainTest {
                     throw e;
                 }
                 if (block.connects) {
-                    log.error("Block didn't match connects flag on block " + block.ruleName);
+             
+                	log.error("Block didn't match connects flag on block " + block.ruleName);
                     fail();
                 }
             }
