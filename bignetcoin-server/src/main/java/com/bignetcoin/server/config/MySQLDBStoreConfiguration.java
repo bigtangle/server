@@ -4,33 +4,31 @@
  *******************************************************************************/
 package com.bignetcoin.server.config;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.UnitTestParams;
+import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
-import org.bitcoinj.store.LevelDBFullPrunedBlockStore;
+import org.bitcoinj.store.MySQLFullPrunedBlockStore;
+import org.iq80.leveldb.DBException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class MySQLDBStoreConfiguration {
+    
     @Bean
     public FullPrunedBlockStore store() {
-
-        File f;
-        try {
-            f = File.createTempFile("test-leveldb", null);
-            f.delete();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
         NetworkParameters params = UnitTestParams.get();
-
-        return new LevelDBFullPrunedBlockStore(params, "test-leveldb", 10);
-
+        String hostname = "localhost";
+        String dbName = "bitcoinj_test";
+        String username = "root";
+        String password = "adminroot";
+        int fullStoreDepth = 10;
+        try {
+            return new MySQLFullPrunedBlockStore(
+                    params, fullStoreDepth, hostname, dbName, username, password);
+        } catch (BlockStoreException e) {
+            throw new DBException();
+        }
     }
 }
