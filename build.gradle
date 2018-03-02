@@ -12,7 +12,7 @@ allprojects {
             property 'sonar.projectName', projectName
             property 'sonar.projectKey', project.group + ':' + projectName
         }
-        dockerRegistryUrl =  "dockerregistry.reisendeninfo.aws.db.de:5000"
+        dockerRegistryUrl =  "registry.dasimi.com"
         dockerBasename = projectName
         dockerLocalTag = "$project.group/$dockerBasename"
         dockerRegistryTag = "$dockerRegistryUrl/$dockerLocalTag"
@@ -80,6 +80,7 @@ subprojects {
     test {
         // enable TestNG support (default is JUnit)
         //useTestNG()
+         useJUnit()
         testLogging.showStandardStreams = true
     }
 }

@@ -9,9 +9,11 @@ server:
   remote_auth: 
   remote_limit_api: 5000
 
-cassandra:
-  keyspace: dk_fahrtwissen
-  nodes: cassandra-as-vdv-aus
+db:
+  hostname: localhost
+  dbName: info
+  username: root
+  password: test1234
 
 ---
 spring:

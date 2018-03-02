@@ -10,23 +10,32 @@ import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.store.MySQLFullPrunedBlockStore;
 import org.iq80.leveldb.DBException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class MySQLDBStoreConfiguration {
+
+    @Value("${db.hostname:localhost}")
+    private String hostname;
+    @Value("${db.dbName:bitcoinj_test}")
+    private String dbName = "bitcoinj_test";
+    @Value("${db.username:root}")
+    private String username = "root";
+    @Value("${db.password:adminroot}")
+    private String password;
+    @Value("${db.port:3306}")
+    private String port;
     
+    private int fullStoreDepth = 10;
+
     @Bean
     public FullPrunedBlockStore store() {
         NetworkParameters params = UnitTestParams.get();
-        String hostname = "localhost";
-        String dbName = "bitcoinj_test";
-        String username = "root";
-        String password = "adminroot";
-        int fullStoreDepth = 10;
+
         try {
-            return new MySQLFullPrunedBlockStore(
-                    params, fullStoreDepth, hostname, dbName, username, password);
+            return new MySQLFullPrunedBlockStore(params, fullStoreDepth, hostname+ ":"+ port, dbName, username, password);
         } catch (BlockStoreException e) {
             throw new DBException(e);
         }

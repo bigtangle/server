@@ -24,7 +24,6 @@ apply plugin: 'org.springframework.boot'
 dependencies {
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-web', version:'1.5.9.RELEASE'
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version:'1.5.9.RELEASE'
-    compile group: 'org.projectlombok', name: 'lombok', version:  ver.lombok
   
     compile group: 'org.aspectj', name: 'aspectjrt',   version:ver.aspectjrt
     compile group: 'org.aspectj', name: 'aspectjweaver', version:ver.aspectjweaver
@@ -37,12 +36,10 @@ dependencies {
 	compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version:ver.bcprov_jdk15on
 	
     compile group: 'commons-io', name: 'commons-io', version:ver.commons_io
-     compile group: 'org.rocksdb', name: 'rocksdbjni', version:ver.rocksdbjni
-      compile group: 'com.google.code.gson', name: 'gson', version:ver.gson
-     compile group: 'com.jayway.restassured', name: 'rest-assured', version:ver.rest_assured
-      compile group: 'org.zeromq', name: 'jeromq', version:ver.jeromq
-     compile group: 'org.ini4j', name: 'ini4j', version:ver.ini4j
-     compile group: 'com.sanityinc', name: 'jargs', version:ver.jargs
+   
+    compile group: 'com.google.code.gson', name: 'gson', version:ver.gson
+   
+
            
       compile project(':bignetcoin-core')
             

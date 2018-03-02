@@ -139,6 +139,7 @@ public class BlockTest {
         //
         // NB: This tests the bitcoin serialization protocol.
         Block block = PARAMS.getDefaultSerializer().makeBlock(blockBytes);
+        
         assertTrue(Arrays.equals(blockBytes, block.bitcoinSerialize()));
     }
 
@@ -331,4 +332,14 @@ public class BlockTest {
         return mapper;
         // mapper.writeValue(System.out, response);
     }
+    
+
+    @Test
+    public void testJSON() throws Exception {
+        Block block = PARAMS.getDefaultSerializer().makeBlock(blockBytes);
+        Block header = block.cloneAsHeader();
+        Block reparsed = PARAMS.getDefaultSerializer().makeBlock(header.bitcoinSerialize());
+        assertEquals(reparsed, header);
+    }
+    
 }

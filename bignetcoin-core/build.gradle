@@ -31,7 +31,6 @@ repositories {
 dependencies {
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-web', version:  '1.5.9.RELEASE'
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version:  '1.5.9.RELEASE'
-    compile group: 'org.projectlombok', name: 'lombok', version:  ver.lombok
   
     compile group: 'org.aspectj', name: 'aspectjrt',   version:ver.aspectjrt
     compile group: 'org.aspectj', name: 'aspectjweaver', version:ver.aspectjweaver

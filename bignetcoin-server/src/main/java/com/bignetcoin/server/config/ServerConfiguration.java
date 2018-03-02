@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package com.bignetcoin.server.service;
+package com.bignetcoin.server.config;
 
 
 import javax.validation.constraints.NotNull;
