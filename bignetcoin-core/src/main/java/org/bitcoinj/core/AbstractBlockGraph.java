@@ -83,8 +83,8 @@ import com.google.common.util.concurrent.SettableFuture;
  * <p>Every so often the block tangle passes a difficulty transition point. At that time, all the blocks in the last
  * 2016 blocks are examined and a new difficulty target is calculated from them.</p>
  */
-public abstract class AbstractBlockTangle {
-    private static final Logger log = LoggerFactory.getLogger(AbstractBlockTangle.class);
+public abstract class AbstractBlockGraph {
+    private static final Logger log = LoggerFactory.getLogger(AbstractBlockGraph.class);
     protected final ReentrantLock lock = Threading.lock("blocktangle");
 
     /** Keeps a map of block hashes to StoredBlocks. */
@@ -127,7 +127,7 @@ public abstract class AbstractBlockTangle {
     private final VersionTally versionTally;
 
     /** See {@link #AbstractBlockTangle(Context, List, BlockStore)} */
-    public AbstractBlockTangle(NetworkParameters params, List<? extends Wallet> transactionReceivedListeners,
+    public AbstractBlockGraph(NetworkParameters params, List<? extends Wallet> transactionReceivedListeners,
                               BlockStore blockStore) throws BlockStoreException {
         this(Context.getOrCreate(params), transactionReceivedListeners, blockStore);
     }
@@ -135,7 +135,7 @@ public abstract class AbstractBlockTangle {
     /**
      * Constructs a BlockTangle connected to the given list of listeners (eg, wallets) and a store.
      */
-    public AbstractBlockTangle(Context context, List<? extends Wallet> wallets,
+    public AbstractBlockGraph(Context context, List<? extends Wallet> wallets,
                               BlockStore blockStore) throws BlockStoreException {
         this.blockStore = blockStore;
         chainHead = blockStore.getChainHead();

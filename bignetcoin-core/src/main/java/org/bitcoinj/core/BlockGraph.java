@@ -21,7 +21,7 @@ import java.util.List;
  * choice to use for programs that have limited resources as it won't verify transactions signatures or attempt to store
  * all of the block chain. Really, this class should be called SPVBlockChain but for backwards compatibility it is not.
  */
-public class BlockGraph extends AbstractBlockTangle {
+public class BlockGraph extends AbstractBlockGraph {
     /** Keeps a map of block hashes to StoredBlocks. */
     protected final BlockStore blockStore;
 

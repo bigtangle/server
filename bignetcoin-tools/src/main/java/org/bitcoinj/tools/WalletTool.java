@@ -101,7 +101,7 @@ public class WalletTool {
     private static NetworkParameters params;
     private static File walletFile;
     private static BlockStore store;
-    private static AbstractBlockTangle chain;
+    private static AbstractBlockGraph chain;
     private static PeerGroup peers;
     private static Wallet wallet;
     private static File chainFileName;

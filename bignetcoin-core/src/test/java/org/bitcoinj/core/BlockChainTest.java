@@ -405,7 +405,7 @@ public class BlockChainTest {
 
     @Test
     public void falsePositives() throws Exception {
-        double decay = AbstractBlockTangle.FP_ESTIMATOR_ALPHA;
+        double decay = AbstractBlockGraph.FP_ESTIMATOR_ALPHA;
         assertTrue(0 == chain.getFalsePositiveRate()); // Exactly
         chain.trackFalsePositives(55);
         assertEquals(decay * 55, chain.getFalsePositiveRate(), 1e-4);

@@ -80,7 +80,7 @@ public class PeerGroup implements TransactionBroadcaster {
     protected final ReentrantLock lock = Threading.lock("peergroup");
 
     protected final NetworkParameters params;
-    @Nullable protected final AbstractBlockTangle chain;
+    @Nullable protected final AbstractBlockGraph chain;
 
     // This executor is used to queue up jobs: it's used when we don't want to use locks for mutual exclusion,
     // typically because the job might call in to user provided code that needs/wants the freedom to use the API
@@ -289,8 +289,8 @@ public class PeerGroup implements TransactionBroadcaster {
         this(context, null);
     }
 
-    /** See {@link #PeerGroup(Context, AbstractBlockTangle)} */
-    public PeerGroup(NetworkParameters params, @Nullable AbstractBlockTangle chain) {
+    /** See {@link #PeerGroup(Context, AbstractBlockGraph)} */
+    public PeerGroup(NetworkParameters params, @Nullable AbstractBlockGraph chain) {
         this(Context.getOrCreate(params), chain, new NioClientManager());
     }
 
@@ -298,12 +298,12 @@ public class PeerGroup implements TransactionBroadcaster {
      * Creates a PeerGroup for the given context and chain. Blocks will be passed to the chain as they are broadcast
      * and downloaded. This is probably the constructor you want to use.
      */
-    public PeerGroup(Context context, @Nullable AbstractBlockTangle chain) {
+    public PeerGroup(Context context, @Nullable AbstractBlockGraph chain) {
         this(context, chain, new NioClientManager());
     }
 
-    /** See {@link #newWithTor(Context, AbstractBlockTangle, TorClient)} */
-    public static PeerGroup newWithTor(NetworkParameters params, @Nullable AbstractBlockTangle chain, TorClient torClient) throws TimeoutException {
+    /** See {@link #newWithTor(Context, AbstractBlockGraph, TorClient)} */
+    public static PeerGroup newWithTor(NetworkParameters params, @Nullable AbstractBlockGraph chain, TorClient torClient) throws TimeoutException {
         return newWithTor(Context.getOrCreate(params), chain, torClient);
     }
 
@@ -321,7 +321,7 @@ public class PeerGroup implements TransactionBroadcaster {
      *
      * @throws TimeoutException if Tor fails to start within 20 seconds.
      */
-    public static PeerGroup newWithTor(Context context, @Nullable AbstractBlockTangle chain, TorClient torClient) throws TimeoutException {
+    public static PeerGroup newWithTor(Context context, @Nullable AbstractBlockGraph chain, TorClient torClient) throws TimeoutException {
         return newWithTor(context, chain, torClient, true);
     }
 
@@ -339,7 +339,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * @param doDiscovery if true, DNS or HTTP peer discovery will be performed via Tor: this is almost always what you want.
      * @throws java.util.concurrent.TimeoutException if Tor fails to start within 20 seconds.
      */
-    public static PeerGroup newWithTor(Context context, @Nullable AbstractBlockTangle chain, TorClient torClient, boolean doDiscovery) throws TimeoutException {
+    public static PeerGroup newWithTor(Context context, @Nullable AbstractBlockGraph chain, TorClient torClient, boolean doDiscovery) throws TimeoutException {
         checkNotNull(torClient);
         DRMWorkaround.maybeDisableExportControls();
         BlockingClientManager manager = new BlockingClientManager(torClient.getSocketFactory());
@@ -366,8 +366,8 @@ public class PeerGroup implements TransactionBroadcaster {
         return result;
     }
 
-    /** See {@link #PeerGroup(Context, AbstractBlockTangle, ClientConnectionManager)} */
-    public PeerGroup(NetworkParameters params, @Nullable AbstractBlockTangle chain, ClientConnectionManager connectionManager) {
+    /** See {@link #PeerGroup(Context, AbstractBlockGraph, ClientConnectionManager)} */
+    public PeerGroup(NetworkParameters params, @Nullable AbstractBlockGraph chain, ClientConnectionManager connectionManager) {
         this(Context.getOrCreate(params), chain, connectionManager, null);
     }
 
@@ -375,7 +375,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * Creates a new PeerGroup allowing you to specify the {@link ClientConnectionManager} which is used to create new
      * connections and keep track of existing ones.
      */
-    public PeerGroup(Context context, @Nullable AbstractBlockTangle chain, ClientConnectionManager connectionManager) {
+    public PeerGroup(Context context, @Nullable AbstractBlockGraph chain, ClientConnectionManager connectionManager) {
         this(context, chain, connectionManager, null);
     }
 
@@ -383,7 +383,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * Creates a new PeerGroup allowing you to specify the {@link ClientConnectionManager} which is used to create new
      * connections and keep track of existing ones.
      */
-    private PeerGroup(Context context, @Nullable AbstractBlockTangle chain, ClientConnectionManager connectionManager, @Nullable TorClient torClient) {
+    private PeerGroup(Context context, @Nullable AbstractBlockGraph chain, ClientConnectionManager connectionManager, @Nullable TorClient torClient) {
         checkNotNull(context);
         this.params = context.getParams();
         this.chain = chain;

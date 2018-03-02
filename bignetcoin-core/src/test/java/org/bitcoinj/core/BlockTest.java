@@ -17,7 +17,7 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
-import org.bitcoinj.core.AbstractBlockTangle.NewBlockType;
+import org.bitcoinj.core.AbstractBlockGraph.NewBlockType;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet2Params;
 import org.bitcoinj.params.TestNet3Params;

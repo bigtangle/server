@@ -47,7 +47,7 @@ public class TestWithWallet {
     }
 
     @Nullable
-    protected Transaction sendMoneyToWallet(Wallet wallet, AbstractBlockTangle.NewBlockType type, Transaction... transactions)
+    protected Transaction sendMoneyToWallet(Wallet wallet, AbstractBlockGraph.NewBlockType type, Transaction... transactions)
             throws VerificationException {
         if (type == null) {
             // Pending transaction
@@ -58,7 +58,7 @@ public class TestWithWallet {
             FakeTxBuilder.BlockPair bp = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS, transactions);
             for (Transaction tx : transactions)
                 wallet.receiveFromBlock(tx, bp.storedBlock, type, 0);
-            if (type == AbstractBlockTangle.NewBlockType.BEST_CHAIN)
+            if (type == AbstractBlockGraph.NewBlockType.BEST_CHAIN)
                 wallet.notifyNewBestBlock(bp.storedBlock);
         }
         if (transactions.length == 1)
@@ -68,32 +68,32 @@ public class TestWithWallet {
     }
 
     @Nullable
-    protected Transaction sendMoneyToWallet(Wallet wallet, AbstractBlockTangle.NewBlockType type, Coin value, Address toAddress) throws VerificationException {
+    protected Transaction sendMoneyToWallet(Wallet wallet, AbstractBlockGraph.NewBlockType type, Coin value, Address toAddress) throws VerificationException {
         return sendMoneyToWallet(wallet, type, createFakeTx(PARAMS, value, toAddress));
     }
 
     @Nullable
-    protected Transaction sendMoneyToWallet(Wallet wallet, AbstractBlockTangle.NewBlockType type, Coin value, ECKey toPubKey) throws VerificationException {
+    protected Transaction sendMoneyToWallet(Wallet wallet, AbstractBlockGraph.NewBlockType type, Coin value, ECKey toPubKey) throws VerificationException {
         return sendMoneyToWallet(wallet, type, createFakeTx(PARAMS, value, toPubKey));
     }
 
     @Nullable
-    protected Transaction sendMoneyToWallet(AbstractBlockTangle.NewBlockType type, Transaction... transactions) throws VerificationException {
+    protected Transaction sendMoneyToWallet(AbstractBlockGraph.NewBlockType type, Transaction... transactions) throws VerificationException {
         return sendMoneyToWallet(this.wallet, type, transactions);
     }
 
     @Nullable
-    protected Transaction sendMoneyToWallet(AbstractBlockTangle.NewBlockType type, Coin value) throws VerificationException {
+    protected Transaction sendMoneyToWallet(AbstractBlockGraph.NewBlockType type, Coin value) throws VerificationException {
         return sendMoneyToWallet(this.wallet, type, value, myAddress);
     }
 
     @Nullable
-    protected Transaction sendMoneyToWallet(AbstractBlockTangle.NewBlockType type, Coin value, Address toAddress) throws VerificationException {
+    protected Transaction sendMoneyToWallet(AbstractBlockGraph.NewBlockType type, Coin value, Address toAddress) throws VerificationException {
         return sendMoneyToWallet(this.wallet, type, value, toAddress);
     }
 
     @Nullable
-    protected Transaction sendMoneyToWallet(AbstractBlockTangle.NewBlockType type, Coin value, ECKey toPubKey) throws VerificationException {
+    protected Transaction sendMoneyToWallet(AbstractBlockGraph.NewBlockType type, Coin value, ECKey toPubKey) throws VerificationException {
         return sendMoneyToWallet(this.wallet, type, value, toPubKey);
     }
 }
