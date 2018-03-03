@@ -31,16 +31,18 @@ import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.store.MySQLFullPrunedBlockStore;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.util.encoders.Hex;
 
 /**
  * 测试mysql数据对block数据表操作
  * @author R12
  *
  */
+//Use MySQLFullPrunedBlockChainTest
+@Ignore
 public class MySQLBlockTest {
     
 //    public static final byte[] blockBytes;
@@ -150,7 +152,7 @@ public class MySQLBlockTest {
         blocks.add(fullBlockTestGenerator.new BlockAndValidity(b0, false, true, b0.getHash(), chainHeadHeight, "b0"));
         blocks.add(fullBlockTestGenerator.new BlockAndValidity(b1, false, true, b1.getHash(), chainHeadHeight + 1, "b1"));
         for (BlockAndValidity b : blocks) {
-            StoredBlock storedBlock = new StoredBlock(b.block, b.block.getWork(), b.heightAfterBlock);
+            StoredBlock storedBlock = new StoredBlock(b.block, b.heightAfterBlock);
             try {
                 String sql = "INSERT INTO block (hash, prevblockhash, prevbranchblockhash, height, header, mineraddress) VALUES (?, ?, ?, ?, ?, ?)";
                 PreparedStatement preparedStatement = this.store.getConnection().get().prepareStatement(sql);
