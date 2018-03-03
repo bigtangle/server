@@ -71,17 +71,17 @@ public class BlockGraph extends AbstractBlockGraph {
     }
 
     @Override
-    protected StoredBlock addToBlockStore(StoredBlock storedPrev, Block blockHeader, TransactionOutputChanges txOutChanges)
+    protected StoredBlock addToBlockStore(StoredBlock storedPrev, StoredBlock storedPrevBranch,  Block blockHeader, TransactionOutputChanges txOutChanges)
             throws BlockStoreException, VerificationException {
-        StoredBlock newBlock = storedPrev.build(blockHeader);
+        StoredBlock newBlock = storedPrev.build(blockHeader,storedPrevBranch);
         blockStore.put(newBlock);
         return newBlock;
     }
     
     @Override
-    protected StoredBlock addToBlockStore(StoredBlock storedPrev, Block blockHeader)
+    protected StoredBlock addToBlockStore(StoredBlock storedPrev, StoredBlock storedPrevBranch,Block blockHeader)
             throws BlockStoreException, VerificationException {
-        StoredBlock newBlock = storedPrev.build(blockHeader);
+        StoredBlock newBlock = storedPrev.build(blockHeader, storedPrevBranch);
         blockStore.put(newBlock);
         return newBlock;
     }

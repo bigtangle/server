@@ -185,7 +185,7 @@ public class CheckpointManager {
             Map.Entry<Long, StoredBlock> entry = checkpoints.floorEntry(time);
             if (entry != null) return entry.getValue();
             Block genesis = params.getGenesisBlock().cloneAsHeader();
-            return new StoredBlock(genesis, genesis.getWork(), 0);
+            return new StoredBlock(genesis,  0);
         } catch (VerificationException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }

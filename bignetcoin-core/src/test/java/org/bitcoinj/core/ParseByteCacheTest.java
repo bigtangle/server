@@ -194,7 +194,7 @@ public class ParseByteCacheTest {
         bRef = (Block) bsRef.deserialize(ByteBuffer.wrap(blockBytes));
         
         // retrieve a value from header
-        b1.getDifficultyTarget();
+      //  b1.getDifficultyTarget();
         
         // does it still match ref block?
         serDeser(bs, b1, bos.toByteArray(), null, null);
@@ -204,7 +204,7 @@ public class ParseByteCacheTest {
         bRef = (Block) bsRef.deserialize(ByteBuffer.wrap(blockBytes));
         
         // retrieve a value from a child and header
-        b1.getDifficultyTarget();
+       // b1.getDifficultyTarget();
 
         b1.getTransactions();
         if (b1.getTransactions().size() > 0) {

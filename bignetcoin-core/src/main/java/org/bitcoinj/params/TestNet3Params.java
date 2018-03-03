@@ -37,7 +37,7 @@ public class TestNet3Params extends AbstractBitcoinNetParams {
         acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
         dumpedPrivateKeyHeader = 239;
         genesisBlock.setTime(1296688602L);
-        genesisBlock.setDifficultyTarget(0x1d00ffffL);
+       // genesisBlock.setDifficultyTarget(0x1d00ffffL);
         genesisBlock.setNonce(414098458);
         spendableCoinbaseDepth = 100;
         subsidyDecreaseBlockCount = 210000;
@@ -99,13 +99,11 @@ public class TestNet3Params extends AbstractBitcoinNetParams {
                     cursor = cursor.getPrev(blockStore);
         	BigInteger cursorTarget = cursor.getHeader().getDifficultyTargetAsInteger();
         	BigInteger newTarget = nextBlock.getDifficultyTargetAsInteger();
-        	if (!cursorTarget.equals(newTarget))
-                    throw new VerificationException("Testnet block transition that is not allowed: " +
-                	Long.toHexString(cursor.getHeader().getDifficultyTarget()) + " vs " +
-                	Long.toHexString(nextBlock.getDifficultyTarget()));
+        	 
+                //    throw new VerificationException("Testnet block transition that is not allowed: " +
+            //    	Long.toHexString(cursor.getHeader().getDifficultyTarget()) + " vs " +
+            //    	Long.toHexString(nextBlock.getDifficultyTarget()));
             }
-        } else {
-            super.checkDifficultyTransitions(storedPrev, nextBlock, blockStore);
         }
     }
 }

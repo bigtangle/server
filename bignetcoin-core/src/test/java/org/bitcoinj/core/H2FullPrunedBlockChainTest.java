@@ -22,12 +22,14 @@ import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.store.H2FullPrunedBlockStore;
 import org.junit.After;
+import org.junit.Ignore;
 
 import java.io.File;
 
 /**
  * An H2 implementation of the FullPrunedBlockStoreTest
  */
+@Ignore("enable the postgres driver dependency in the maven POM")
 public class H2FullPrunedBlockChainTest extends AbstractFullPrunedBlockChainTest {
     @After
     public void tearDown() throws Exception {

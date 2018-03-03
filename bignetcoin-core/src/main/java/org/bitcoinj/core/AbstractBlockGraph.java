@@ -269,7 +269,7 @@ public abstract class AbstractBlockGraph {
      * @param block The {@link Block} to add/update.
      * @return the newly created {@link StoredBlock}
      */
-    protected abstract StoredBlock addToBlockStore(StoredBlock storedPrev, Block block)
+    protected abstract StoredBlock addToBlockStore(StoredBlock storedPrev, StoredBlock storedBlockPrevBranch, Block block)
             throws BlockStoreException, VerificationException;
     
     /**
@@ -281,7 +281,7 @@ public abstract class AbstractBlockGraph {
      *                        (from a call to connectTransactions), if in fully verifying mode (null otherwise).
      * @return the newly created {@link StoredBlock}
      */
-    protected abstract StoredBlock addToBlockStore(StoredBlock storedPrev, Block header,
+    protected abstract StoredBlock addToBlockStore(StoredBlock storedPrev,StoredBlock storedBlockPrevBranch,  Block header,
                                                    @Nullable TransactionOutputChanges txOutputChanges)
             throws BlockStoreException, VerificationException;
 
@@ -429,13 +429,14 @@ public abstract class AbstractBlockGraph {
             try {
                 block.verifyHeader();
                 storedPrev = getStoredBlockInCurrentScope(block.getPrevBlockHash());
-                if (storedPrev != null) {
-                    height = storedPrev.getHeight() + 1;
+                storedPrevBranch = getStoredBlockInCurrentScope(block.getPrevBranchBlockHash());
+                
+                if (storedPrev != null && storedPrevBranch != null) {
+                    height = Math.max(storedPrev.getHeight(), storedPrevBranch.getHeight()) + 1;
                 } else {
                     height = Block.BLOCK_HEIGHT_UNKNOWN;
                 }
-                storedPrevBranch = getStoredBlockInCurrentScope(block.getPrevBranchBlockHash());
-            
+                 
                 
                 flags = params.getBlockVerificationFlags(block, versionTally, height);
                 if (shouldVerifyTransactions())
@@ -448,12 +449,12 @@ public abstract class AbstractBlockGraph {
 
             // Try linking it to a place in the currently known blocks.
 
-            if (storedPrev != null) {  
+           
                 checkState(lock.isHeldByCurrentThread());
                 // It connects to somewhere on the tangle. Not necessarily the top of the best known tangle.
                  params.checkDifficultyTransitions(storedPrev, block, blockStore);
-                connectBlock(block, storedPrev, shouldVerifyTransactions(), filteredTxHashList, filteredTxn);
-            }
+                connectBlock(block, storedPrev,storedPrevBranch,  shouldVerifyTransactions(), filteredTxHashList, filteredTxn);
+            
  
             return true;
         } finally {
@@ -465,18 +466,19 @@ public abstract class AbstractBlockGraph {
     // expensiveChecks enables checks that require looking at blocks further back in the tangle
     // than the previous one when connecting (eg median timestamp check)
     // It could be exposed, but for now we just set it to shouldVerifyTransactions()
-    private void connectBlock(final Block block, StoredBlock storedPrev, boolean expensiveChecks,
+    private void connectBlock(final Block block, StoredBlock storedPrev,StoredBlock storedPrevBranch, boolean expensiveChecks,
                               @Nullable final List<Sha256Hash> filteredTxHashList,
                               @Nullable final Map<Sha256Hash, Transaction> filteredTxn) throws BlockStoreException, VerificationException, PrunedException {
         checkState(lock.isHeldByCurrentThread());
         boolean filtered = filteredTxHashList != null && filteredTxn != null;
         // Check that we aren't connecting a block that fails a checkpoint check
-        if (!params.passesCheckpoint(storedPrev.getHeight() + 1, block.getHash()))
+        if (!params.passesCheckpoint(
+                Math.max( storedPrev.getHeight(),storedPrevBranch.getHeight()) + 1, block.getHash()))
             throw new VerificationException("Block failed checkpoint lockin at " + (storedPrev.getHeight() + 1));
         if (shouldVerifyTransactions()) {
             checkNotNull(block.transactions);
             for (Transaction tx : block.transactions)
-                if (!tx.isFinal(storedPrev.getHeight() + 1, block.getTimeSeconds()))
+                if (!tx.isFinal(Math.max( storedPrev.getHeight(),storedPrevBranch.getHeight()) + 1, block.getTimeSeconds()))
                    throw new VerificationException("Block contains non-final transaction");
         }
         
@@ -506,8 +508,8 @@ public abstract class AbstractBlockGraph {
             // This block connects to the best known block, it is a normal continuation of the system.
             TransactionOutputChanges txOutChanges = null;
             if (shouldVerifyTransactions())
-                txOutChanges = connectTransactions(storedPrev.getHeight() + 1, block);
-            StoredBlock newStoredBlock = addToBlockStore(storedPrev,
+                txOutChanges = connectTransactions(Math.max( storedPrev.getHeight(),storedPrevBranch.getHeight()) + 1, block);
+            StoredBlock newStoredBlock = addToBlockStore(storedPrev,storedPrevBranch,
                     block.transactions == null ? block : block.cloneAsHeader(), txOutChanges);
             versionTally.add(block.getVersion());
             setChainHead(newStoredBlock);
@@ -518,11 +520,8 @@ public abstract class AbstractBlockGraph {
             //
             // Note that we send the transactions to the wallet FIRST, even if we're about to re-organize this block
             // to become the new best chain head. This simplifies handling of the re-org in the Wallet class.
-            StoredBlock newBlock = storedPrev.build(block);
-            boolean haveNewBestChain = newBlock.moreWorkThan(head);
-            if (haveNewBestChain) {
-                log.info("Block is causing a re-organize");
-            } else {
+            StoredBlock newBlock = storedPrev.build(block, storedPrevBranch);
+        
                 StoredBlock splitPoint = findSplit(newBlock, head, blockStore);
                 if (splitPoint != null && splitPoint.equals(newBlock)) {
                     // newStoredBlock is a part of the same chain, there's no fork. This happens when we receive a block
@@ -539,13 +538,13 @@ public abstract class AbstractBlockGraph {
                     throw new VerificationException("Block forks the chain but splitPoint is null");
                 } else {
                     // We aren't actually spending any transactions (yet) because we are on a fork
-                    addToBlockStore(storedPrev, block);
+                    addToBlockStore(storedPrev,storedPrevBranch, block);
                     int splitPointHeight = splitPoint.getHeight();
                     String splitPointHash = splitPoint.getHeader().getHashAsString();
                     log.info("Block forks the chain at height {}/block {}, but it did not cause a reorganize:\n{}",
                             splitPointHeight, splitPointHash, newBlock.getHeader().getHashAsString());
                 }
-            }
+            
             
             // We may not have any transactions if we received only a header, which can happen during fast catchup.
             // If we do, send them to the wallet but state that they are on a side chain so it knows not to try and
@@ -554,8 +553,7 @@ public abstract class AbstractBlockGraph {
                 informListenersForNewBlock(block, NewBlockType.SIDE_CHAIN, filteredTxHashList, filteredTxn, newBlock);
             }
             
-            if (haveNewBestChain)
-                handleNewBestChain(storedPrev, newBlock, block, expensiveChecks);
+            
         }
     }
 
@@ -688,7 +686,7 @@ public abstract class AbstractBlockGraph {
      * if (shouldVerifyTransactions)
      *     Either newChainHead needs to be in the block store as a FullStoredBlock, or (block != null && block.transactions != null)
      */
-    private void handleNewBestChain(StoredBlock storedPrev, StoredBlock newChainHead, Block block, boolean expensiveChecks)
+    private void handleNewBestChain(StoredBlock storedPrev, StoredBlock storedPrevBranch, StoredBlock newChainHead, Block block, boolean expensiveChecks)
             throws BlockStoreException, VerificationException, PrunedException {
         checkState(lock.isHeldByCurrentThread());
         // This chain has overtaken the one we currently believe is best. Reorganize is required.
@@ -730,11 +728,11 @@ public abstract class AbstractBlockGraph {
                     txOutChanges = connectTransactions(cursor);
                 else
                     txOutChanges = connectTransactions(newChainHead.getHeight(), block);
-                storedNewHead = addToBlockStore(storedNewHead, cursorBlock.cloneAsHeader(), txOutChanges);
+                storedNewHead = addToBlockStore(storedNewHead, storedPrevBranch,cursorBlock.cloneAsHeader(), txOutChanges);
             }
         } else {
             // (Finally) write block to block store
-            storedNewHead = addToBlockStore(storedPrev, newChainHead.getHeader());
+            storedNewHead = addToBlockStore(storedPrev, storedPrevBranch, newChainHead.getHeader());
         }
         // Now inform the listeners. This is necessary so the set of currently active transactions (that we can spend)
         // can be updated to take into account the re-organize. We might also have received new coins we didn't have
@@ -954,4 +952,6 @@ public abstract class AbstractBlockGraph {
     protected VersionTally getVersionTally() {
         return versionTally;
     }
+
+    
 }

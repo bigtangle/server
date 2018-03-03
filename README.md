@@ -100,47 +100,66 @@ value and scriptPubKey
             ")\n";
 
 
-==> New tables for blocks and transactions:
+==> changed tables 
+	headers:  remove chainwork  add  prevblockhash, prevbranchblockhash, mineraddress,tokenid, genesisblock  change  header mediumblob
+	
 
 
-   private static final String CREATE_BLOCK_TABLE = "CREATE TABLE block (\n" +
+   private static final String CREATE_HEADERS_TABLE = "CREATE TABLE headers (\n" +
             "    hash varbinary(28) NOT NULL,\n" +
+            "    height integer NOT NULL,\n" +
+            "    header mediumblob NOT NULL,\n" +
+            "    wasundoable tinyint(1) NOT NULL,\n" +
             "    prevblockhash  varbinary(28) NOT NULL,\n" +
             "    prevbranchblockhash  varbinary(28) NOT NULL,\n" +
-            "    height integer NOT NULL,\n" +
-            "    header varbinary(80) NOT NULL,\n" +
-            "    mineraddress varchar(35),\n" +
-            "    CONSTRAINT block_pk PRIMARY KEY (hash)  \n" +
+            "    mineraddress varbinary(20),\n" +
+            "    tokenid bigint,\n" +
+            "    blocktype bigint NOT NULL,\n" +
+            "    CONSTRAINT headers_pk PRIMARY KEY (hash) USING BTREE \n" +
+            ")";
 
-  private static final String CREATE_TRANSACTION_OUTPUT_TABLE = "CREATE TABLE transaction (\n" +
+openoutputs: add  blockhash, tokenid
+
+  private static final String CREATE_OPEN_OUTPUT_TABLE = "CREATE TABLE openoutputs (\n" +
             "    hash varbinary(32) NOT NULL,\n" +
-            "    indexposition integer NOT NULL,\n" +
-            "    blockhash  varbinary(28)  NOT NULL,\n" +
-            "    prevtransactiohash  varbinary(28),\n" +
+            "    `index` integer NOT NULL,\n" +
+            "    height integer NOT NULL,\n" +
             "    value bigint NOT NULL,\n" +
             "    scriptbytes mediumblob NOT NULL,\n" +
             "    toaddress varchar(35),\n" +
-            "    fromaddress varchar(35),\n" +
             "    addresstargetable tinyint(1),\n" +
             "    coinbase boolean,\n" +
-            "    tokenid varchar(40),\n" +
-            "    spent  tinyint(1) NOT NULL,\n" +
-            "    CONSTRAINT transaction_pk PRIMARY KEY (hash, indexposition) \n" +
+            "    blockhash  varbinary(28)  NOT NULL,\n" +
+            "    tokenid bigint,\n" +
+            "    fromaddress varchar(35),\n" +
+            "    description varchar(80),\n" +
+            "    CONSTRAINT openoutputs_pk PRIMARY KEY (hash, `index`) USING BTREE \n" +
             ")\n";
 
 
 helper tables
 
+ private static final String CREATE_BLOCK_TABLE = "CREATE TABLE tips (\n" +
+            "    hash varbinary(28) NOT NULL,\n" +
+            "    CONSTRAINT tips_pk PRIMARY KEY (hash) USING BTREE \n" +
+            ")";
+ 
 private static final String CREATE_MILESTONE_TABLE = "CREATE TABLE milestone (\n" +
             "    blockhash varbinary(28) NOT NULL,\n" +
             "    milestone integer NOT NULL,\n" +
             "    rating integer NOT NULL,\n" +
-            "    CONSTRAINT block_pk PRIMARY KEY (blockhash)  \n" +
+            "    depth integer NOT NULL,\n" +
+            "    cumulativeweight  integer ,\n" +      
+            "    CONSTRAINT block_pk PRIMARY KEY (blockhash,milestone)  \n" +
             
             
-            
-            
-            
+
+only keep undoable block  min (rating, days)       
+
+? openoutouts delete ??
+? undoableblock delete?? 
+
+
 1)client prepares new transactions and asks node server for account balance and unspent transaction. (input public key, toadress, amount)
 
 2)server node does select two previous blocks (MCMC) and approve those only if all transactions in it are valid and  not conflicting and do not approve conflicting blocks.

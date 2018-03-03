@@ -19,7 +19,7 @@ public class MySQLFullPrunedBlockChainTest extends AbstractFullPrunedBlockChainT
 
     @After
     public void tearDown() throws Exception {
-        //  ((MySQLFullPrunedBlockStore)store).deleteStore();
+    //      ((MySQLFullPrunedBlockStore)store).deleteStore();
     }
 
     // Replace these with your mysql location/credentials and remove @Ignore to test
@@ -29,10 +29,19 @@ public class MySQLFullPrunedBlockChainTest extends AbstractFullPrunedBlockChainT
     private static final String DB_PASSWORD = "test1234";
 
     @Override
-    public FullPrunedBlockStore createStore(NetworkParameters params, int blockCount)
-            throws BlockStoreException {
-        return new MySQLFullPrunedBlockStore(params, blockCount, DB_HOSTNAME, DB_NAME, DB_USERNAME, DB_PASSWORD);
+    public FullPrunedBlockStore createStore(NetworkParameters params, int blockCount) throws BlockStoreException
+              {
+        
+          try {
+            store =new MySQLFullPrunedBlockStore(params, blockCount, DB_HOSTNAME, DB_NAME, DB_USERNAME, DB_PASSWORD);
+        } catch (RuntimeException e) {
+            // TODO Auto-generated catch block
+          //  e.printStackTrace();
+        }
+          resetStore( store  );
+          return store;
     }
+  
 
     @Override
     public void resetStore(FullPrunedBlockStore store) throws BlockStoreException {

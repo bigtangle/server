@@ -983,7 +983,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         doubleSpendContract.addOutput(HALF_COIN, myKey);
         doubleSpendContract = new Transaction(PARAMS, doubleSpendContract.bitcoinSerialize());
 
-        StoredBlock block = new StoredBlock(PARAMS.getGenesisBlock().createNextBlock(myKey.toAddress(PARAMS), PARAMS.getGenesisBlock().getHash()), BigInteger.TEN, 1);
+        StoredBlock block = new StoredBlock(PARAMS.getGenesisBlock().createNextBlock(myKey.toAddress(PARAMS), PARAMS.getGenesisBlock().getHash()),  1);
         serverWallet.receiveFromBlock(doubleSpendContract, block, AbstractBlockGraph.NewBlockType.BEST_CHAIN, 0);
 
         // Now if we try to spend again the server will reject it since it saw a double-spend

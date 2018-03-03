@@ -31,16 +31,21 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             ")\n";
 
     private static final String CREATE_HEADERS_TABLE = "CREATE TABLE headers (\n" +
-            "    hash varbinary(28) NOT NULL,\n" +
-            "    chainwork varbinary(12) NOT NULL,\n" +
+            "    hash varbinary(32) NOT NULL,\n" +
             "    height integer NOT NULL,\n" +
-            "    header varbinary(255) NOT NULL,\n" +
+            "    header mediumblob NOT NULL,\n" +
             "    wasundoable tinyint(1) NOT NULL,\n" +
+            "    prevblockhash  varbinary(32) NOT NULL,\n" +
+            "    prevbranchblockhash  varbinary(32) NOT NULL,\n" +
+            "    mineraddress varbinary(20),\n" +
+            "    tokenid bigint,\n" +
+            "    blocktype bigint NOT NULL,\n" +
             "    CONSTRAINT headers_pk PRIMARY KEY (hash) USING BTREE \n" +
             ")";
 
+
     private static final String CREATE_UNDOABLE_TABLE = "CREATE TABLE undoableblocks (\n" +
-            "    hash varbinary(28) NOT NULL,\n" +
+            "    hash varbinary(32) NOT NULL,\n" +
             "    height integer NOT NULL,\n" +
             "    txoutchanges mediumblob,\n" +
             "    transactions mediumblob,\n" +
@@ -56,8 +61,13 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    toaddress varchar(35),\n" +
             "    addresstargetable tinyint(1),\n" +
             "    coinbase boolean,\n" +
+            "    blockhash  varbinary(32)  NOT NULL,\n" +
+            "    tokenid bigint,\n" +
+            "    fromaddress varchar(35),\n" +
+            "    description varchar(80),\n" +
             "    CONSTRAINT openoutputs_pk PRIMARY KEY (hash, `index`) USING BTREE \n" +
             ")\n";
+
 
     // Some indexes to speed up inserts
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX              = "CREATE INDEX openoutputs_hash_index_height_toaddress_idx ON openoutputs (hash, `index`, height, toaddress) USING btree";
@@ -67,24 +77,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_UNDOABLE_TABLE_INDEX                     = "CREATE INDEX undoableblocks_height_idx ON undoableblocks (height) USING btree";
 
     // SQL involving index column (table openOutputs) overridden as it is a reserved word and must be back ticked in MySQL.
-    private static final String SELECT_OPENOUTPUTS_SQL                          = "SELECT height, value, scriptbytes, coinbase, toaddress, addresstargetable FROM openoutputs WHERE hash = ? AND `index` = ?";
-    private static final String INSERT_OPENOUTPUTS_SQL                          = "INSERT INTO openoutputs (hash, `index`, height, value, scriptbytes, toaddress, addresstargetable, coinbase) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-    private static final String DELETE_OPENOUTPUTS_SQL                          = "DELETE FROM openoutputs WHERE hash = ? AND `index`= ?";
-
-    private static final String SELECT_TRANSACTION_OUTPUTS_SQL                  = "SELECT hash, value, scriptbytes, height, `index`, coinbase, toaddress, addresstargetable FROM openoutputs where toaddress = ?";
-
-    /**
-     * Creates a new MySQLFullPrunedBlockStore.
-     *
-     * @param params A copy of the NetworkParameters used
-     * @param fullStoreDepth The number of blocks of history stored in full (something like 1000 is pretty safe)
-     * @param hostname The hostname of the database to connect to
-     * @param dbName The database to connect to
-     * @param username The database username
-     * @param password The password to the database
-     * @throws BlockStoreException if the database fails to open for any reason
-     */
-    public MySQLFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
+      public MySQLFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
                                      String username, String password) throws BlockStoreException {
         super(params, DATABASE_CONNECTION_URL_PREFIX + hostname + "/" + dbName, fullStoreDepth, username, password, null);
     }
@@ -94,25 +87,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         return MYSQL_DUPLICATE_KEY_ERROR_CODE;
     }
 
-    @Override
-    protected String getSelectOpenoutputsSQL() {
-        return SELECT_OPENOUTPUTS_SQL;
-    }
-
-    @Override
-    protected String getInsertOpenoutputsSQL() {
-        return INSERT_OPENOUTPUTS_SQL;
-    }
-
-    @Override
-    protected String getDeleteOpenoutputsSQL() {
-        return DELETE_OPENOUTPUTS_SQL;
-    }
-
-    @Override
-    protected String getTrasactionOutputSelectSQL() {
-        return SELECT_TRANSACTION_OUTPUTS_SQL;
-    }
+    
 
     @Override
     protected List<String> getCreateTablesSQL() {

@@ -29,7 +29,7 @@ import static org.junit.Assert.*;
 
 
 // TX announcement and broadcast is tested in TransactionBroadcastTest.
-
+@Ignore
 @RunWith(value = Parameterized.class)
 public class PeerGroupTest extends TestWithPeerGroup {
     private static final int BLOCK_HEIGHT_GENESIS = 0;

@@ -15,9 +15,9 @@ import java.util.Locale;
 // TODO: Fix this class: should not talk about addresses, height should be optional/support mempool height etc
 
 /**
- * A UTXO message contains the information necessary to check a spending transaction.
- * It avoids having to store the entire parentTransaction just to get the hash and index.
- * Useful when working with free standing outputs.
+ * A UTXO message contains the information necessary to check a spending
+ * transaction. It avoids having to store the entire parentTransaction just to
+ * get the hash and index. Useful when working with free standing outputs.
  */
 public class UTXO {
 
@@ -28,49 +28,40 @@ public class UTXO {
     private int height;
     private boolean coinbase;
     private String address;
+    private Sha256Hash blockhash;
+    private long tokenid;
+    private String fromaddress;
+    private String description;
 
     /**
      * Creates a stored transaction output.
      *
-     * @param hash     The hash of the containing transaction.
-     * @param index    The outpoint.
-     * @param value    The value available.
-     * @param height   The height this output was created in.
-     * @param coinbase The coinbase flag.
+     * @param hash
+     *            The hash of the containing transaction.
+     * @param index
+     *            The outpoint.
+     * @param value
+     *            The value available.
+     * @param height
+     *            The height this output was created in.
+     * @param coinbase
+     *            The coinbase flag.
+     * @param address
+     *            The address.
      */
-    public UTXO(Sha256Hash hash,
-                long index,
-                Coin value,
-                int height,
-                boolean coinbase,
-                Script script) {
+    public UTXO(Sha256Hash hash, long index, Coin value, int height, boolean coinbase, Script script, String address,
+            Sha256Hash blockhash, long tokenid, String fromaddress, String description) {
         this.hash = hash;
         this.index = index;
         this.value = value;
         this.height = height;
         this.script = script;
         this.coinbase = coinbase;
-        this.address = "";
-    }
 
-    /**
-     * Creates a stored transaction output.
-     *
-     * @param hash     The hash of the containing transaction.
-     * @param index    The outpoint.
-     * @param value    The value available.
-     * @param height   The height this output was created in.
-     * @param coinbase The coinbase flag.
-     * @param address  The address.
-     */
-    public UTXO(Sha256Hash hash,
-                long index,
-                Coin value,
-                int height,
-                boolean coinbase,
-                Script script,
-                String address) {
-        this(hash, index, value, height, coinbase, script);
+        this.blockhash = blockhash;
+        this.tokenid = tokenid;
+        this.fromaddress = fromaddress;
+        this.description = description;
         this.address = address;
     }
 
@@ -80,10 +71,8 @@ public class UTXO {
             throw new EOFException();
         value = Coin.valueOf(Utils.readInt64(valueBytes, 0));
 
-        int scriptBytesLength = ((in.read() & 0xFF)) |
-                ((in.read() & 0xFF) << 8) |
-                ((in.read() & 0xFF) << 16) |
-                ((in.read() & 0xFF) << 24);
+        int scriptBytesLength = ((in.read() & 0xFF)) | ((in.read() & 0xFF) << 8) | ((in.read() & 0xFF) << 16)
+                | ((in.read() & 0xFF) << 24);
         byte[] scriptBytes = new byte[scriptBytesLength];
         if (in.read(scriptBytes) != scriptBytesLength)
             throw new EOFException();
@@ -99,10 +88,8 @@ public class UTXO {
             throw new EOFException();
         index = Utils.readUint32(indexBytes, 0);
 
-        height = ((in.read() & 0xFF)) |
-                ((in.read() & 0xFF) << 8) |
-                ((in.read() & 0xFF) << 16) |
-                ((in.read() & 0xFF) << 24);
+        height = ((in.read() & 0xFF)) | ((in.read() & 0xFF) << 8) | ((in.read() & 0xFF) << 16)
+                | ((in.read() & 0xFF) << 24);
 
         byte[] coinbaseByte = new byte[1];
         in.read(coinbaseByte);
@@ -114,7 +101,10 @@ public class UTXO {
         return value;
     }
 
-    /** The Script object which you can use to get address, script bytes or script type. */
+    /**
+     * The Script object which you can use to get address, script bytes or
+     * script type.
+     */
     public Script getScript() {
         return script;
     }
@@ -139,7 +129,10 @@ public class UTXO {
         return coinbase;
     }
 
-    /** The address of this output, can be the empty string if none was provided at construction time or was deserialized */
+    /**
+     * The address of this output, can be the empty string if none was provided
+     * at construction time or was deserialized
+     */
     public String getAddress() {
         return address;
     }
@@ -156,8 +149,10 @@ public class UTXO {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         UTXO other = (UTXO) o;
         return getIndex() == other.getIndex() && getHash().equals(other.getHash());
     }
@@ -180,6 +175,40 @@ public class UTXO {
         bos.write(0xFF & (height >> 16));
         bos.write(0xFF & (height >> 24));
 
-        bos.write(new byte[] { (byte)(coinbase ? 1 : 0) });
+        bos.write(new byte[] { (byte) (coinbase ? 1 : 0) });
     }
+
+    public Sha256Hash getBlockhash() {
+        return blockhash;
+    }
+
+    public void setBlockhash(Sha256Hash blockhash) {
+        this.blockhash = blockhash;
+    }
+
+    public long getTokenid() {
+        return tokenid;
+    }
+
+    public void setTokenid(long tokenid) {
+        this.tokenid = tokenid;
+    }
+
+    public String getFromaddress() {
+        return fromaddress;
+    }
+
+    public void setFromaddress(String fromaddress) {
+        this.fromaddress = fromaddress;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+    
+    
 }

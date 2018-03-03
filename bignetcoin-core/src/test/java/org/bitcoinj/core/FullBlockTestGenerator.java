@@ -911,7 +911,7 @@ public class FullBlockTestGenerator {
         Block b44 = new Block(params, Block.BLOCK_VERSION_GENESIS);
         byte[] outScriptBytes = ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(coinbaseOutKeyPubKey)).getProgram();
         {
-            b44.setDifficultyTarget(b43.block.getDifficultyTarget());
+            //b44.setDifficultyTarget(b43.block.getDifficultyTarget());
             b44.addCoinbaseTransaction(coinbaseOutKeyPubKey, ZERO, chainHeadHeight + 15);
 
             Transaction t = new Transaction(params);
@@ -934,7 +934,7 @@ public class FullBlockTestGenerator {
         // A block with a non-coinbase as the first tx
         Block b45 = new Block(params, Block.BLOCK_VERSION_GENESIS);
         {
-            b45.setDifficultyTarget(b44.getDifficultyTarget());
+            //b45.setDifficultyTarget(b44.getDifficultyTarget());
             //b45.addCoinbaseTransaction(pubKey, coinbaseValue);
 
             Transaction t = new Transaction(params);
@@ -961,7 +961,7 @@ public class FullBlockTestGenerator {
         Block b46 = new Block(params, Block.BLOCK_VERSION_GENESIS);
         {
             b46.transactions = new ArrayList<Transaction>();
-            b46.setDifficultyTarget(b44.getDifficultyTarget());
+           // b46.setDifficultyTarget(b44.getDifficultyTarget());
             b46.setMerkleRoot(Sha256Hash.ZERO_HASH);
 
             b46.setPrevBlockHash(b44.getHash());
@@ -1006,9 +1006,9 @@ public class FullBlockTestGenerator {
         // Block with incorrect POW limit
         NewBlock b50 = createNextBlock(b44, chainHeadHeight + 16, out15, null);
         {
-            long diffTarget = b44.getDifficultyTarget();
-            diffTarget &= 0xFFBFFFFF; // Make difficulty one bit harder
-            b50.block.setDifficultyTarget(diffTarget);
+          //  long diffTarget = b44.getDifficultyTarget();
+           // diffTarget &= 0xFFBFFFFF; // Make difficulty one bit harder
+           // b50.block.setDifficultyTarget(diffTarget);
         }
         b50.solve();
         blocks.add(new BlockAndValidity(b50, false, true, b44.getHash(), chainHeadHeight + 15, "b50"));

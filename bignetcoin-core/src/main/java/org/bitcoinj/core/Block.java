@@ -5,19 +5,31 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.annotations.*;
-import com.google.common.base.*;
-import com.google.common.collect.*;
-import org.bitcoinj.script.*;
-import org.slf4j.*;
+import static org.bitcoinj.core.Coin.FIFTY_COINS;
+import static org.bitcoinj.core.Sha256Hash.hashTwice;
 
-import javax.annotation.*;
-import java.io.*;
-import java.math.*;
-import java.util.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
 
-import static org.bitcoinj.core.Coin.*;
-import static org.bitcoinj.core.Sha256Hash.*;
+import javax.annotation.Nullable;
+
+import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 
 /**
  * <p>
@@ -56,7 +68,7 @@ public class Block extends Message {
      * How many bytes are required to represent a block header WITHOUT the
      * trailing 00 length byte.
      */
-    public static final int HEADER_SIZE = 80+32;
+    public static final int HEADER_SIZE = 80 + 32 +20+4;
 
     static final long ALLOWED_TIME_DRIFT = 2 * 60 * 60; // Same value as Bitcoin
                                                         // Core.
@@ -107,8 +119,12 @@ public class Block extends Message {
 
     private Sha256Hash merkleRoot;
     private long time;
-    private long difficultyTarget; // "nBits"
+  //  private long difficultyTarget; // "nBits"
     private long nonce;
+    //Utils.sha256hash160
+    private byte[] mineraddress = new byte[20];
+    private long tokenid;
+    private long blocktype;
 
     // TODO: Get rid of all the direct accesses to this field. It's a long-since
     // unnecessary holdover from the Dalvik days.
@@ -138,10 +154,13 @@ public class Block extends Message {
         super(params);
         // Set up a few basic things. We are not complete after this though.
         version = setVersion;
-        difficultyTarget = 0x1d07fff8L;
+      //  difficultyTarget = EASIEST_DIFFICULTY_TARGET;
         time = System.currentTimeMillis() / 1000;
         prevBlockHash = Sha256Hash.ZERO_HASH;
         prevBranchBlockHash = Sha256Hash.ZERO_HASH;
+        tokenid = NetworkParameters.BIGNETCOIN_TOKENID;
+        blocktype = NetworkParameters.BLOCKTYPE_TRANSFER;
+        mineraddress = new byte[20];
         length = HEADER_SIZE;
     }
 
@@ -258,7 +277,7 @@ public class Block extends Message {
         this.prevBranchBlockHash = prevBranchBlockHash;
         this.merkleRoot = merkleRoot;
         this.time = time;
-        this.difficultyTarget = difficultyTarget;
+      //  this.difficultyTarget = difficultyTarget;
         this.nonce = nonce;
         this.transactions = new LinkedList<Transaction>();
         this.transactions.addAll(transactions);
@@ -324,8 +343,11 @@ public class Block extends Message {
         prevBranchBlockHash = readHash();
         merkleRoot = readHash();
         time = readUint32();
-        difficultyTarget = readUint32();
+       // difficultyTarget = readUint32();
         nonce = readUint32();
+        mineraddress = readBytes(20);
+        tokenid = readUint32();
+        blocktype = readUint32();
         hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(payload, offset, cursor - offset));
         headerBytesValid = serializer.isParseRetainMode();
 
@@ -349,15 +371,18 @@ public class Block extends Message {
             return;
         }
         // fall back to manual write
-       
-            Utils.uint32ToByteStreamLE(version, stream);
-        
+
+        Utils.uint32ToByteStreamLE(version, stream);
+
         stream.write(prevBlockHash.getReversedBytes());
         stream.write(prevBranchBlockHash.getReversedBytes());
         stream.write(getMerkleRoot().getReversedBytes());
         Utils.uint32ToByteStreamLE(time, stream);
-        Utils.uint32ToByteStreamLE(difficultyTarget, stream);
+      //  Utils.uint32ToByteStreamLE(difficultyTarget, stream);
         Utils.uint32ToByteStreamLE(nonce, stream);
+        stream.write(mineraddress);
+        Utils.uint32ToByteStreamLE(tokenid, stream);
+        Utils.uint32ToByteStreamLE(blocktype, stream);
     }
 
     private void writeTransactions(OutputStream stream) throws IOException {
@@ -545,7 +570,10 @@ public class Block extends Message {
         block.merkleRoot = getMerkleRoot();
         block.version = version;
         block.time = time;
-        block.difficultyTarget = difficultyTarget;
+      //  block.difficultyTarget = difficultyTarget
+        block.mineraddress = mineraddress;
+        block.tokenid = tokenid;
+        block.blocktype = blocktype;
         block.transactions = null;
         block.hash = getHash();
     }
@@ -569,8 +597,11 @@ public class Block extends Message {
         s.append("   previous branch block: ").append(getPrevBranchBlockHash()).append("\n");
         s.append("   merkle root: ").append(getMerkleRoot()).append("\n");
         s.append("   time: ").append(time).append(" (").append(Utils.dateTimeFormat(time * 1000)).append(")\n");
-        s.append("   difficulty target (nBits): ").append(difficultyTarget).append("\n");
+      //  s.append("   difficulty target (nBits): ").append(difficultyTarget).append("\n");
         s.append("   nonce: ").append(nonce).append("\n");
+        s.append("   mineraddress: ").append(mineraddress).append("\n");
+        s.append("   tokenid: ").append(tokenid).append("\n");
+        s.append("   blocktype: ").append(blocktype).append("\n");
         if (transactions != null && transactions.size() > 0) {
             s.append("   with ").append(transactions.size()).append(" transaction(s):\n");
             for (Transaction tx : transactions) {
@@ -612,7 +643,7 @@ public class Block extends Message {
      * is thrown.
      */
     public BigInteger getDifficultyTargetAsInteger() throws VerificationException {
-        BigInteger target = Utils.decodeCompactBits(difficultyTarget);
+        BigInteger target = Utils.decodeCompactBits(EASIEST_DIFFICULTY_TARGET);
         // TODO Utils.encodeCompactBits(target.divide(new BigInteger("2")));
         if (target.signum() < 0 || target.compareTo(params.maxTarget) > 0)
             throw new VerificationException("Difficulty target is bad: " + target.toString());
@@ -938,7 +969,7 @@ public class Block extends Message {
 
     public void setPrevBranchBlockHash(Sha256Hash prevBranchBlockHash) {
         unCacheHeader();
-        this.prevBranchBlockHash = prevBlockHash;
+        this.prevBranchBlockHash = prevBranchBlockHash;
         this.hash = null;
     }
 
@@ -965,28 +996,6 @@ public class Block extends Message {
         this.hash = null;
     }
 
-    /**
-     * Returns the difficulty of the proof of work that this block should meet
-     * encoded <b>in compact form</b>. The {@link BlockGraph} verifies that this
-     * is not too easy by looking at the length of the chain when the block is
-     * added. To find the actual value the hash should be compared against, use
-     * {@link org.bitcoinj.core.Block#getDifficultyTargetAsInteger()}. Note that
-     * this is <b>not</b> the same as the difficulty value reported by the
-     * Bitcoin "getdifficulty" RPC that you may see on various block explorers.
-     * That number is the result of applying a formula to the underlying
-     * difficulty to normalize the minimum to 1. Calculating the difficulty that
-     * way is currently unsupported.
-     */
-    public long getDifficultyTarget() {
-        return difficultyTarget;
-    }
-
-    /** Sets the difficulty target in compact form. */
-    public void setDifficultyTarget(long compactForm) {
-        unCacheHeader();
-        this.difficultyTarget = compactForm;
-        this.hash = null;
-    }
 
     /**
      * Returns the nonce, an arbitrary value that exists only to make the hash
@@ -1080,7 +1089,7 @@ public class Block extends Message {
             final long time, final byte[] pubKey, final Coin coinbaseValue, final int height,
             Sha256Hash prevBranchBlockHash) {
         Block b = new Block(params, version);
-        b.setDifficultyTarget(difficultyTarget);
+      //  b.setDifficultyTarget(difficultyTarget);
         b.addCoinbaseTransaction(pubKey, coinbaseValue, height);
 
         if (to != null) {
@@ -1207,5 +1216,36 @@ public class Block extends Message {
         return version >= BLOCK_VERSION_BIP65;
     }
 
-     
+ 
+
+    public byte[] getMineraddress() {
+        return mineraddress;
+    }
+
+    public void setMineraddress(byte[] mineraddress) {
+        unCacheHeader(); 
+        this.mineraddress = mineraddress;
+        this.hash = null;
+    }
+
+    public long getTokenid() {
+        return tokenid;
+    }
+
+    public void setTokenid(long tokenid) {
+        unCacheHeader(); 
+        this.tokenid = tokenid;
+        this.hash = null;
+    }
+
+    public long getBlocktype() {
+        return blocktype;
+    }
+
+    public void setBlocktype(long blocktype) {
+        unCacheHeader(); 
+        this.blocktype = blocktype;
+        this.hash = null;
+    }
+
 }

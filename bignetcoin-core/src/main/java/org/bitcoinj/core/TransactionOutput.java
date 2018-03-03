@@ -44,6 +44,12 @@ public class TransactionOutput extends ChildMessage {
 
     private int scriptLen;
 
+    
+    private long tokenid;
+    private String fromaddress;
+    private String description;
+    
+    
     /**
      * Deserializes a transaction output message. This is usually part of a transaction message.
      */
@@ -415,4 +421,30 @@ public class TransactionOutput extends ChildMessage {
     public int hashCode() {
         return Objects.hashCode(value, parent, Arrays.hashCode(scriptBytes));
     }
+
+    public long getTokenid() {
+        return tokenid;
+    }
+
+    public void setTokenid(long tokenid) {
+        this.tokenid = tokenid;
+    }
+
+    public String getFromaddress() {
+        return fromaddress;
+    }
+
+    public void setFromaddress(String fromaddress) {
+        this.fromaddress = fromaddress;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+    
+    
 }

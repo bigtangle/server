@@ -95,17 +95,17 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     @Override
-    protected StoredBlock addToBlockStore(StoredBlock storedPrev, Block header, TransactionOutputChanges txOutChanges)
+    protected StoredBlock addToBlockStore(StoredBlock storedPrev, StoredBlock storedPrevBranch, Block header, TransactionOutputChanges txOutChanges)
             throws BlockStoreException, VerificationException {
-        StoredBlock newBlock = storedPrev.build(header);
+        StoredBlock newBlock = storedPrev.build(header, storedPrevBranch);
         blockStore.put(newBlock, new StoredUndoableBlock(newBlock.getHeader().getHash(), txOutChanges));
         return newBlock;
     }
 
     @Override
-    protected StoredBlock addToBlockStore(StoredBlock storedPrev, Block block)
+    protected StoredBlock addToBlockStore(StoredBlock storedPrev, StoredBlock storedPrevBranch, Block block)
             throws BlockStoreException, VerificationException {
-        StoredBlock newBlock = storedPrev.build(block);
+        StoredBlock newBlock = storedPrev.build(block,storedPrevBranch);
         blockStore.put(newBlock, new StoredUndoableBlock(newBlock.getHeader().getHash(), block.transactions));
         return newBlock;
     }
@@ -278,7 +278,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                             out.getValue(),
                             height, isCoinBase,
                             script,
-                            getScriptAddress(script));
+                            getScriptAddress(script), block.getHash(),out.getTokenid(), out.getFromaddress(),out.getDescription() );
                     blockStore.addUnspentTransactionOutput(newOut);
                     txOutsCreated.add(newOut);
                 }
@@ -409,7 +409,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                                 newBlock.getHeight(),
                                 isCoinBase,
                                 script,
-                                getScriptAddress(script));
+                                getScriptAddress(script), block.getHash(),out.getTokenid(), out.getFromaddress(),out.getDescription());
                         blockStore.addUnspentTransactionOutput(newOut);
                         txOutsCreated.add(newOut);
                     }

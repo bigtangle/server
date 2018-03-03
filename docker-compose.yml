@@ -6,7 +6,6 @@ services:
   zookeeper-bignetcoin:
     image: wurstmeister/zookeeper
     container_name: zookeeper-bignetcoin
-    restart: always
     ports:
     - 2181:2181
     networks:
@@ -15,7 +14,6 @@ services:
   kafka-bignetcoin:
     image: wurstmeister/kafka
     container_name: kafka-bignetcoin
-    restart: always
     ports:
     - 9092:9092
     networks:
