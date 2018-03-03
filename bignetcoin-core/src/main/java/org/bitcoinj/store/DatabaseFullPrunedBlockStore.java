@@ -226,6 +226,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String username;
     protected String password;
     protected String schemaName;
+    
+    public ThreadLocal<Connection> getConnection() {
+        return this.conn;
+    }
 
     /**
      * <p>
