@@ -13,6 +13,7 @@ import static org.bitcoinj.script.ScriptOpCodes.OP_1;
 import static org.bitcoinj.script.ScriptOpCodes.OP_TRUE;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ import java.util.Random;
 
 import javax.annotation.Nullable;
 
+import org.bitcoinj.core.FullBlockTestGenerator.BlockAndValidity;
 import org.bitcoinj.core.Transaction.SigHash;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.params.UnitTestParams;
@@ -30,6 +32,9 @@ import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.store.MySQLFullPrunedBlockStore;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.spongycastle.util.encoders.Hex;
 
 /**
  * 测试mysql数据对block数据表操作
@@ -132,25 +137,26 @@ public class MySQLBlockTest {
     @Test
     public void testBlockStore() throws BlockStoreException {
         int chainHeadHeight = 1;
-        List<Block> blockList = new ArrayList<Block>();
-        Block baseBlock = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey, chainHeadHeight,PARAMS.getGenesisBlock().getHash());
-        Block block;
+        List<FullBlockTestGenerator.BlockAndValidity> blocks = new ArrayList<FullBlockTestGenerator.BlockAndValidity>();
+        Block b0 = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey, chainHeadHeight,PARAMS.getGenesisBlock().getHash());
+        Block b1;
         try {
-            block = createNextBlock(baseBlock, chainHeadHeight + 1, null, null);
+            b1 = createNextBlock(b0, chainHeadHeight + 1, null, null);
 //            block = PARAMS.getDefaultSerializer().makeBlock(b1.bitcoinSerialize());
         } catch (ProtocolException e) {
             throw new RuntimeException(e);
         }
-        blockList.add(baseBlock);
-        blockList.add(block);
-        for (Block b : blockList) {
-            StoredBlock storedBlock = new StoredBlock(b, b.getWork(), chainHeadHeight + 1);
+        FullBlockTestGenerator fullBlockTestGenerator = new FullBlockTestGenerator(PARAMS);
+        blocks.add(fullBlockTestGenerator.new BlockAndValidity(b0, false, true, b0.getHash(), chainHeadHeight, "b0"));
+        blocks.add(fullBlockTestGenerator.new BlockAndValidity(b1, false, true, b1.getHash(), chainHeadHeight + 1, "b1"));
+        for (BlockAndValidity b : blocks) {
+            StoredBlock storedBlock = new StoredBlock(b.block, b.block.getWork(), b.heightAfterBlock);
             try {
                 String sql = "INSERT INTO block (hash, prevblockhash, prevbranchblockhash, height, header, mineraddress) VALUES (?, ?, ?, ?, ?, ?)";
                 PreparedStatement preparedStatement = this.store.getConnection().get().prepareStatement(sql);
-                preparedStatement.setBytes(1, b.getHash().getBytes());
-                preparedStatement.setBytes(2, b.getPrevBlockHash().getBytes());
-                preparedStatement.setBytes(3, b.getPrevBranchBlockHash().getBytes());
+                preparedStatement.setBytes(1, b.block.getHash().getBytes());
+                preparedStatement.setBytes(2, b.block.getPrevBlockHash().getBytes());
+                preparedStatement.setBytes(3, b.block.getPrevBranchBlockHash().getBytes());
                 preparedStatement.setInt(4, storedBlock.getHeight());
                 preparedStatement.setBytes(5, storedBlock.getHeader().cloneAsHeader().unsafeBitcoinSerialize());
                 preparedStatement.setString(6, "00000000");
@@ -158,10 +164,53 @@ public class MySQLBlockTest {
                 preparedStatement.close();
             }
             catch (SQLException e) {
-                e.printStackTrace();
+                throw new RuntimeException("插入数据失败", e);
             }
         }
+        try {
+            String sql = "SELECT * FROM block where hash = ?";
+            PreparedStatement preparedStatement = this.store.getConnection().get().prepareStatement(sql);
+            preparedStatement.setBytes(1, b0.getHash().getBytes());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next() == false) {
+                logger.info("查询块数据为空\n  hex : " + Utils.HEX.encode(b0.getHash().getBytes()));
+            }
+            else {
+                viewBlockDbRes(resultSet);
+            }
+        }
+        catch (SQLException e) {
+            throw new RuntimeException("查询块数据失败", e);
+        }
+        try {
+            String sql = "SELECT * FROM block where prevblockhash = ?";
+            PreparedStatement preparedStatement = this.store.getConnection().get().prepareStatement(sql);
+            preparedStatement.setBytes(1, b0.getPrevBlockHash().getBytes());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next() == false) {
+                logger.info("查询块数据为空\n  hex : " + Utils.HEX.encode(b0.getHash().getBytes()));
+            }
+            else {
+                viewBlockDbRes(resultSet);
+            }
+        }
+        catch (SQLException e) {
+            throw new RuntimeException("查询块数据失败", e);
+        }
     }
+
+    public void viewBlockDbRes(ResultSet resultSet) throws SQLException {
+        byte[] hash = resultSet.getBytes(1);
+        byte[] prevblockhash = resultSet.getBytes(2);
+        byte[] prevbranchblockhash = resultSet.getBytes(3);
+        logger.info(
+                "查询块数据\n  hash : {}\n  prevblockhash : {}\n  prevbranchblockhash : {}",
+                Utils.HEX.encode(hash),
+                Utils.HEX.encode(prevblockhash),
+                Utils.HEX.encode(prevbranchblockhash));
+    }
+    
+    private static Logger logger = LoggerFactory.getLogger(MySQLBlockTest.class);
     
     private void addOnlyInputToTransaction(Transaction t, TransactionOutPointWithValue prevOut, long sequence) throws ScriptException {
         TransactionInput input = new TransactionInput(PARAMS, t, new byte[]{}, prevOut.outpoint);
@@ -180,7 +229,9 @@ public class MySQLBlockTest {
         Coin coinbaseValue = FIFTY_COINS.shiftRight(nextBlockHeight / PARAMS.getSubsidyDecreaseBlockCount())
                 .add((prevOut != null ? prevOut.value.subtract(SATOSHI) : ZERO))
                 .add(additionalCoinbaseValue == null ? ZERO : additionalCoinbaseValue);
-        Block block = baseBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey, coinbaseValue, nextBlockHeight,PARAMS.getGenesisBlock().getHash());
+        Block block = baseBlock.createNextBlockWithCoinbase(
+                Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey,
+                coinbaseValue, nextBlockHeight, PARAMS.getGenesisBlock().getHash());
         Transaction t = new Transaction(PARAMS);
         if (prevOut != null) {
             t.addOutput(new TransactionOutput(PARAMS, t, ZERO, new byte[] {(byte)(new Random().nextInt() & 0xff), uniquenessCounter++}));
