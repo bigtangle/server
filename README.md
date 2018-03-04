@@ -142,21 +142,6 @@ openoutputs: add  blockhash, tokenid, spent, time (UNIX time seconds)
             ")\n";
 
 
-helper tables
-
- private static final String CREATE_BLOCK_TABLE = "CREATE TABLE tips (\n" +
-            "    hash varbinary(32) NOT NULL,\n" +
-            "    CONSTRAINT tips_pk PRIMARY KEY (hash) USING BTREE \n" +
-            ")";
- 
-private static final String CREATE_MILESTONE_TABLE = "CREATE TABLE milestone (\n" +
-            "    blockhash varbinary(32) NOT NULL,\n" +
-            "    milestoneindex integer NOT NULL,\n" +
-            "    rating integer NOT NULL,\n" +
-            "    depth integer \n" +
-            "    cumulativeweight  integer ,\n" +      
-            "    CONSTRAINT block_pk PRIMARY KEY (blockhash,milestoneindex)  \n" +
-            
             
 
 only keep undoable block  min (rating, days)       
@@ -185,3 +170,43 @@ return Block with the  transaction
 update openoutputs
 
 (API)
+
+
+helper tables
+
+ private static final String CREATE_BLOCK_TABLE = "CREATE TABLE tips (\n" +
+            "    hash varbinary(32) NOT NULL,\n" +
+            "    CONSTRAINT tips_pk PRIMARY KEY (hash) USING BTREE \n" +
+            ")";
+ 
+private static final String CREATE_BLOCKEVALUATION_TABLE = "CREATE TABLE BlockEvaluation (\n" +
+            "    blockhash varbinary(32) NOT NULL,\n" +
+            "    rating integer NOT NULL,\n" +
+            "    depth integer \n" +
+            "    cumulativeweight  integer ,\n" +      
+            "    solid tinyint(1) NOT NULL,\n" +
+            "    CONSTRAINT block_pk PRIMARY KEY (blockhash)  \n" +
+            
+
+
+add update, insert here DatabaseFullPrunedBlockStore and create table MySQLFullPrunedBlockStore
+
+add service methods BlockService
+
+ public BlockEvaluation  getBlockEvaluation(Sha256Hash hash) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+public void updateSolidBlocks(Set<Sha256Hash> analyzedHashes) {
+        // TODO Auto-generated method stub
+        
+    }
+
+public void updateSolid(BlockEvaluation blockEvaluation, boolean b) {
+        // TODO Auto-generated method stub
+        
+    }
+
+add unit spring test for TipsServiceTest and BlockService
+

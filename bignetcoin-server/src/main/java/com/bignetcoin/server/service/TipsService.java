@@ -269,7 +269,7 @@ public class TipsService {
         }
     }
 
-    Set<Sha256Hash> updateHashRatings(Sha256Hash txHash, Map<Sha256Hash, Set<Sha256Hash>> ratings,
+   public Set<Sha256Hash> updateHashRatings(Sha256Hash txHash, Map<Sha256Hash, Set<Sha256Hash>> ratings,
             Set<Sha256Hash> analyzedTips) throws Exception {
         Set<Sha256Hash> rating;
         if (analyzedTips.add(txHash)) {

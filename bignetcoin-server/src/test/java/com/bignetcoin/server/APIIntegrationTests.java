@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package com.iota.iri;
+package com.bignetcoin.server;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
