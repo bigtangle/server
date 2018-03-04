@@ -101,24 +101,27 @@ value and scriptPubKey
 
 
 ==> changed tables 
-	headers:  remove chainwork  add  prevblockhash, prevbranchblockhash, mineraddress,tokenid, genesisblock  change  header mediumblob
+	headers:  remove chainwork  
+	          add  prevblockhash, prevbranchblockhash, mineraddress,tokenid, blocktype, time (UNIX time seconds)
+	          change  header mediumblob
 	
 
 
    private static final String CREATE_HEADERS_TABLE = "CREATE TABLE headers (\n" +
-            "    hash varbinary(28) NOT NULL,\n" +
+            "    hash varbinary(32) NOT NULL,\n" +
             "    height integer NOT NULL,\n" +
             "    header mediumblob NOT NULL,\n" +
             "    wasundoable tinyint(1) NOT NULL,\n" +
-            "    prevblockhash  varbinary(28) NOT NULL,\n" +
-            "    prevbranchblockhash  varbinary(28) NOT NULL,\n" +
+            "    prevblockhash  varbinary(32) NOT NULL,\n" +
+            "    prevbranchblockhash  varbinary(32) NOT NULL,\n" +
             "    mineraddress varbinary(20),\n" +
             "    tokenid bigint,\n" +
             "    blocktype bigint NOT NULL,\n" +
+            "    time bigint NOT NULL,\n" +
             "    CONSTRAINT headers_pk PRIMARY KEY (hash) USING BTREE \n" +
             ")";
 
-openoutputs: add  blockhash, tokenid
+openoutputs: add  blockhash, tokenid, spent, time (UNIX time seconds)
 
   private static final String CREATE_OPEN_OUTPUT_TABLE = "CREATE TABLE openoutputs (\n" +
             "    hash varbinary(32) NOT NULL,\n" +
@@ -129,10 +132,12 @@ openoutputs: add  blockhash, tokenid
             "    toaddress varchar(35),\n" +
             "    addresstargetable tinyint(1),\n" +
             "    coinbase boolean,\n" +
-            "    blockhash  varbinary(28)  NOT NULL,\n" +
+            "    blockhash  varbinary(32)  NOT NULL,\n" +
             "    tokenid bigint,\n" +
             "    fromaddress varchar(35),\n" +
             "    description varchar(80),\n" +
+            "    spent tinyint(1) NOT NULL,\n" +
+            "    time bigint NOT NULL,\n" +
             "    CONSTRAINT openoutputs_pk PRIMARY KEY (hash, `index`) USING BTREE \n" +
             ")\n";
 
@@ -140,25 +145,24 @@ openoutputs: add  blockhash, tokenid
 helper tables
 
  private static final String CREATE_BLOCK_TABLE = "CREATE TABLE tips (\n" +
-            "    hash varbinary(28) NOT NULL,\n" +
+            "    hash varbinary(32) NOT NULL,\n" +
             "    CONSTRAINT tips_pk PRIMARY KEY (hash) USING BTREE \n" +
             ")";
  
 private static final String CREATE_MILESTONE_TABLE = "CREATE TABLE milestone (\n" +
-            "    blockhash varbinary(28) NOT NULL,\n" +
-            "    milestone integer NOT NULL,\n" +
+            "    blockhash varbinary(32) NOT NULL,\n" +
+            "    milestoneindex integer NOT NULL,\n" +
             "    rating integer NOT NULL,\n" +
-            "    depth integer NOT NULL,\n" +
+            "    depth integer \n" +
             "    cumulativeweight  integer ,\n" +      
-            "    CONSTRAINT block_pk PRIMARY KEY (blockhash,milestone)  \n" +
+            "    CONSTRAINT block_pk PRIMARY KEY (blockhash,milestoneindex)  \n" +
             
             
 
 only keep undoable block  min (rating, days)       
 
-? openoutouts delete ??
-? undoableblock delete?? 
-
+? openoutouts delete,  no delete, set spent=true ??
+? undoableblock delete, save to history data ?? 
 
 1)client prepares new transactions and asks node server for account balance and unspent transaction. (input public key, toadress, amount)
 
@@ -172,6 +176,12 @@ return Block with the  transaction
 4)client node must compute the nonce of the transaction block as proof of work and signs the transaction
 (API) 
 . 
-5) server get the block, save data and broadcast to all server nodes.
+5) server get the block and goto 6a)
+
+? add block in two parts, 
+6a)when receiving blocks, only check static formal, save data in header table and broadcast to all server nodes. no update openoutputs)
+
+6b)during milestone creation, when confirmation rate > 75% and no conflicts, add block data to milestone, 
+update openoutputs
 
 (API)

@@ -5,6 +5,8 @@
 
 package org.bitcoinj.store;
 
+import java.util.List;
+
 import org.bitcoinj.core.*;
 
 
@@ -53,8 +55,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
      */
     StoredBlock getOnceUndoableStoredBlock(Sha256Hash hash) throws BlockStoreException;
 
-    
-    StoredBlock getStoredBlockFromPrev(Sha256Hash hash) throws BlockStoreException;
+
     /**
      * Returns a {@link StoredUndoableBlock} whose block.getHash() method will be equal to the parameter. If no such
      * block is found, returns null. Note that this may return null more often than get(Sha256Hash hash) as not all
@@ -118,4 +119,9 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     void beginDatabaseBatchWrite() throws BlockStoreException;
     void commitDatabaseBatchWrite() throws BlockStoreException;
     void abortDatabaseBatchWrite() throws BlockStoreException;
+    
+    /*
+     * get the blocks which confirm the block
+     */
+    public List<StoredBlock> getApproverBlocks (Sha256Hash hash) throws BlockStoreException;
 }

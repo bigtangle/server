@@ -7,20 +7,13 @@ package com.bignetcoin.server.service;
 import static org.bitcoinj.core.Utils.HEX;
 
 import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.Charset;
-import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.bitcoinj.core.Coin;
@@ -36,22 +29,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.bignetcoin.server.config.ServerConfiguration;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
 import com.iota.iri.service.dto.AbstractResponse;
-import com.iota.iri.service.dto.AccessLimitedResponse;
-import com.iota.iri.service.dto.AddedNeighborsResponse;
-import com.iota.iri.service.dto.AttachToTangleResponse;
-import com.iota.iri.service.dto.CheckConsistency;
 import com.iota.iri.service.dto.ErrorResponse;
 import com.iota.iri.service.dto.ExceptionResponse;
-import com.iota.iri.service.dto.FindTransactionsResponse;
 import com.iota.iri.service.dto.GetBalancesResponse;
-import com.iota.iri.service.dto.GetInclusionStatesResponse;
-import com.iota.iri.service.dto.GetNeighborsResponse;
 import com.iota.iri.service.dto.GetNodeInfoResponse;
-import com.iota.iri.service.dto.GetTipsResponse;
 import com.iota.iri.service.dto.GetTransactionsToApproveResponse;
-import com.iota.iri.service.dto.RemoveNeighborsResponse;
 import com.iota.iri.service.dto.wereAddressesSpentFrom;
 
 @RestController
@@ -72,20 +55,16 @@ public class API {
     private final static String overMaxErrorMessage = "Could not complete request";
     private final static String invalidParams = "Invalid parameters";
 
-    private TransactionService transactionService;
-    private ServerConfiguration serverConfiguration;
-    private MilestoneService milestoneService;
-    private BlockService blockService;
-
     @Autowired
-    public API(TransactionService transactionService, ServerConfiguration serverConfiguration,
-            MilestoneService milestoneService, BlockService blockService) {
-
-        this.transactionService = transactionService;
-        this.serverConfiguration = serverConfiguration;
-        this.milestoneService = milestoneService;
-        this.blockService = blockService;
-    }
+    private TransactionService transactionService;
+    @Autowired
+    private ServerConfiguration serverConfiguration;
+    @Autowired
+    private MilestoneService milestoneService;
+    @Autowired
+    private BlockService blockService;
+    @Autowired
+    private TipsService tipsService;
 
     @RequestMapping(method = { RequestMethod.POST, RequestMethod.GET })
     public AbstractResponse process(@RequestBody byte[] vdvAnfrageBytes) throws UnsupportedEncodingException {
@@ -143,11 +122,11 @@ public class API {
                     numWalks = serverConfiguration.getMinRandomWalks();
                 }
                 try {
-                    final Sha256Hash[] tips = getBlockToApproveStatement(depth, reference, numWalks);
+                    final List<Sha256Hash> tips = getBlockToApproveStatement(depth, reference, numWalks);
                     if (tips == null) {
                         return ErrorResponse.create("The subtangle is not solid");
                     }
-                    return GetTransactionsToApproveResponse.create(tips[0], tips[1]);
+                    return GetTransactionsToApproveResponse.create(tips.get(0), tips.get(1));
                 } catch (RuntimeException e) {
                     log.info("Tip selection failed: " + e.getLocalizedMessage());
                     return ErrorResponse.create(e.getLocalizedMessage());
@@ -186,9 +165,9 @@ public class API {
         }
     }
 
-    private Sha256Hash[] getBlockToApproveStatement(int depth, String reference, int numWalks) {
-         
-        return blockService.getBlockToApprove ();
+    private List<Sha256Hash> getBlockToApproveStatement(int depth, String reference, int numWalks) {
+
+        return tipsService.blockToApprove(depth, reference,numWalks );
     }
 
     private AbstractResponse wereAddressesSpentFromStatement(List<String> addressesStr) throws Exception {

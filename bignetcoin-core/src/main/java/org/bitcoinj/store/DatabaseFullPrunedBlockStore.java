@@ -184,6 +184,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private static final String UPDATE_SETTINGS_SQL = "UPDATE settings SET value = ? WHERE name = ?";
 
     private static final String SELECT_HEADERS_SQL = "SELECT  height, header, wasundoable,prevblockhash,prevbranchblockhash,mineraddress,tokenid,blocktype FROM headers WHERE hash = ?";
+    private static final String SELECT_HEADERS_APPROVE_SQL = "SELECT  height, header, wasundoable,prevblockhash,prevbranchblockhash,mineraddress,tokenid,blocktype FROM headers WHERE prevblockhash = ? or prevbranchblockhash=?";
+
     private static final String INSERT_HEADERS_SQL = "INSERT INTO headers(hash,  height, header, wasundoable,prevblockhash,prevbranchblockhash,mineraddress,tokenid,blocktype ) VALUES(?, ?, ?, ?, ?,?, ?, ?, ?)";
     private static final String UPDATE_HEADERS_SQL = "UPDATE headers SET wasundoable=? WHERE hash=?";
 
@@ -226,7 +228,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String username;
     protected String password;
     protected String schemaName;
-    
+
     public ThreadLocal<Connection> getConnection() {
         return this.conn;
     }
@@ -284,7 +286,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             } else {
                 checkCompatibility();
             }
-          //  initFromDatabase();
+            // initFromDatabase();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         }
@@ -714,8 +716,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             // Set up the genesis block. When we start out fresh, it is by
             // definition the top of the chain.
-            StoredBlock storedGenesisHeader = new StoredBlock(params.getGenesisBlock().cloneAsHeader(),
-                     0);
+            StoredBlock storedGenesisHeader = new StoredBlock(params.getGenesisBlock().cloneAsHeader(), 0);
             // The coinbase in the genesis block is not spendable. This is
             // because of how Bitcoin Core inits
             // its database - the genesis transaction isn't actually in the db
@@ -772,13 +773,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected void putUpdateStoredBlock(StoredBlock storedBlock, boolean wasUndoable) throws SQLException {
         try {
             PreparedStatement s = conn.get().prepareStatement(getInsertHeadersSQL());
-     
+
             s.setBytes(1, storedBlock.getHeader().getHash().getBytes());
             s.setInt(2, storedBlock.getHeight());
             s.setBytes(3, storedBlock.getHeader().cloneAsHeader().unsafeBitcoinSerialize());
-            s.setBoolean(4, wasUndoable); 
-            s.setBytes(5,storedBlock.getHeader().getPrevBlockHash().getBytes() ); 
-            s.setBytes(6, storedBlock.getHeader().getPrevBranchBlockHash().getBytes()); 
+            s.setBoolean(4, wasUndoable);
+            s.setBytes(5, storedBlock.getHeader().getPrevBlockHash().getBytes());
+            s.setBytes(6, storedBlock.getHeader().getPrevBranchBlockHash().getBytes());
             s.setBytes(7, storedBlock.getHeader().getMineraddress());
             s.setLong(8, storedBlock.getHeader().getTokenid());
             s.setLong(9, storedBlock.getHeader().getBlocktype());
@@ -793,7 +794,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
             PreparedStatement s = conn.get().prepareStatement(getUpdateHeadersSQL());
             s.setBoolean(1, true);
-          
+
             s.setBytes(2, storedBlock.getHeader().getHash().getBytes());
             s.executeUpdate();
             s.close();
@@ -815,7 +816,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         // We skip the first 4 bytes because (on mainnet) the minimum target has
         // 4 0-bytes
- 
+
         int height = storedBlock.getHeight();
         byte[] transactions = null;
         byte[] txOutChanges = null;
@@ -890,7 +891,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(getSelectHeadersSQL()); 
+            s = conn.get().prepareStatement(getSelectHeadersSQL());
             s.setBytes(1, hash.getBytes());
             ResultSet results = s.executeQuery();
             if (!results.next()) {
@@ -903,8 +904,45 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             int height = results.getInt(1);
             Block b = params.getDefaultSerializer().makeBlock(results.getBytes(2));
             b.verifyHeader();
-            StoredBlock stored = new StoredBlock(b,  height);
+            StoredBlock stored = new StoredBlock(b, height);
             return stored;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            // Corrupted database.
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            // Should not be able to happen unless the database contains bad
+            // blocks.
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    public List<StoredBlock> getApproverBlocks(Sha256Hash hash) throws BlockStoreException {
+        List<StoredBlock> storedBlocks = new ArrayList<StoredBlock>();
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(SELECT_HEADERS_APPROVE_SQL);
+            s.setBytes(1, hash.getBytes());
+            s.setBytes(2, hash.getBytes());
+            ResultSet results = s.executeQuery();
+            while (results.next()) { 
+                // Parse it.
+                int height = results.getInt(1);
+                Block b = params.getDefaultSerializer().makeBlock(results.getBytes(2));
+                b.verifyHeader();
+                storedBlocks.add(new StoredBlock(b, height));
+            }
+            return storedBlocks;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } catch (ProtocolException e) {
@@ -941,7 +979,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement s = null;
         try {
             s = conn.get().prepareStatement(getSelectUndoableBlocksSQL());
-         
+
             s.setBytes(1, hash.getBytes());
             ResultSet results = s.executeQuery();
             if (!results.next()) {
@@ -1333,7 +1371,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     int index = rs.getInt(5);
                     boolean coinbase = rs.getBoolean(6);
                     String toAddress = rs.getString(7);
-                   // addresstargetable =rs.getBytes(8);
+                    // addresstargetable =rs.getBytes(8);
                     Sha256Hash blockhash = Sha256Hash.wrap(rs.getBytes(9));
                     long tokenid = rs.getLong(10);
                     String fromaddress = rs.getString(11);

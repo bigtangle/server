@@ -9,12 +9,22 @@ import java.util.Set;
 
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.store.FullPrunedBlockStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+/*
+ *  check the valuation of block and trigger an update of openoutputs
+ */
 @Service
 public class MilestoneService {
 
+    @Autowired
+    protected FullPrunedBlockStore store;
+
+    
     enum Validity {
         VALID, INVALID, INCOMPLETE
     }

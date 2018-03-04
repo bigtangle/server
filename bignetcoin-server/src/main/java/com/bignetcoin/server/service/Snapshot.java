@@ -8,10 +8,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.bitcoinj.core.Sha256Hash;
@@ -21,23 +21,24 @@ import org.slf4j.LoggerFactory;
 
 public class Snapshot {
     private static final Logger log = LoggerFactory.getLogger(Snapshot.class);
-    public static String SNAPSHOT_PUBKEY = "TTXJUGKTNPOOEXSTQVVACENJOQUROXYKDRCVK9LHUXILCLABLGJTIPNF9REWHOIMEUKWQLUOKD9CZUYAC";
-    public static int SNAPSHOT_PUBKEY_DEPTH = 6;
-    public static int SNAPSHOT_INDEX = 2;
-    public static int SPENT_ADDRESSES_INDEX = 3;
+    private static String SNAPSHOT_PUBKEY = "TTXJUGKTNPOOEXSTQVVACENJOQUROXYKDRCVK9LHUXILCLABLGJTIPNF9REWHOIMEUKWQLUOKD9CZUYAC";
+    private static int SNAPSHOT_PUBKEY_DEPTH = 6;
+    private static int SNAPSHOT_INDEX = 1;
 
     public static final Map<Sha256Hash, Long> initialState = new HashMap<>();
     public static final Snapshot initialSnapshot;
-    public final ReadWriteLock rwlock = new ReentrantReadWriteLock();
 
+    public static final long SUPPLY = 2779530283277761L; // = (3^33 - 1) / 2
+    
     static {
 
-       
         InputStream in = Snapshot.class.getResourceAsStream("/Snapshot.txt");
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
         String line;
+       
         try {
             while((line = reader.readLine()) != null) {
+       
                 String[] parts = line.split(";", 2);
                 if (parts.length >= 2)
                 {
@@ -46,30 +47,32 @@ public class Snapshot {
                     initialState.put(new Sha256Hash(key), Long.valueOf(value));
                 }
             }
+            { }
         } catch (IOException e) {
             System.out.println("Failed to load snapshot.");
             System.exit(-1);
         }
 
         initialSnapshot = new Snapshot(initialState, 0);
-        long stateValue = initialState.values().stream().reduce(Math::addExact).orElse(Long.MAX_VALUE);
-         
-
-        if(!isConsistent(initialState)) {
+        if(!initialSnapshot.isConsistent()) {
             System.out.println("Initial Snapshot inconsistent.");
             System.exit(-1);
         }
     }
 
-    protected final Map<Sha256Hash, Long> state;
+    public final Object snapshotSyncObject = new Object();
+    public final Object approvalsSyncObject = new Object();
+    public final Set<Sha256Hash> approvedHashes = new HashSet<>();
+    private final Map<Sha256Hash, Long> state;
     private int index;
 
     public int index() {
-        int i;
-        rwlock.readLock().lock();
-        i = index;
-        rwlock.readLock().unlock();
-        return i;
+        return index;
+    }
+
+    public Snapshot(Snapshot snapshot) {
+        state = new HashMap<>(snapshot.state);
+        this.index = snapshot.index;
     }
 
     private Snapshot(Map<Sha256Hash, Long> initialState, int index) {
@@ -77,43 +80,49 @@ public class Snapshot {
         this.index = index;
     }
 
-    public Snapshot clone() {
-        return new Snapshot(state, index);
+    public Map<Sha256Hash, Long> getState() {
+        return state;
     }
 
-    public Long getBalance(Sha256Hash hash) {
-        Long l;
-        rwlock.readLock().lock();
-        l = state.get(hash);
-        rwlock.readLock().unlock();
-        return l;
+    public Map<Sha256Hash, Long> diff(Map<Sha256Hash, Long> newState) {
+        return newState.entrySet().parallelStream()
+                .map(hashLongEntry ->
+                        new HashMap.SimpleEntry<>(hashLongEntry.getKey(),
+                                hashLongEntry.getValue() -
+                                        (state.containsKey(hashLongEntry.getKey()) ?
+                                                state.get(hashLongEntry.getKey()): 0) ))
+                .filter(e -> e.getValue() != 0L)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    public Map<Sha256Hash, Long> patchedDiff(Map<Sha256Hash, Long> diff) {
-        Map<Sha256Hash, Long> patch;
-        rwlock.readLock().lock();
-        patch = diff.entrySet().stream().map(hashLongEntry ->
-            new HashMap.SimpleEntry<>(hashLongEntry.getKey(), state.getOrDefault(hashLongEntry.getKey(), 0L) + hashLongEntry.getValue())
-        ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        rwlock.readLock().unlock();
-        return patch;
+    public Snapshot patch(Map<Sha256Hash, Long> diff, int index) {
+        Map<Sha256Hash, Long> patchedState = state.entrySet().parallelStream()
+                .map( hashLongEntry ->
+                        new HashMap.SimpleEntry<>(hashLongEntry.getKey(),
+                                hashLongEntry.getValue() +
+                                        (diff.containsKey(hashLongEntry.getKey()) ?
+                                         diff.get(hashLongEntry.getKey()) : 0)) )
+                .filter(e -> e.getValue() != 0L)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        diff.entrySet().stream()
+                .filter(e -> e.getValue() > 0L)
+                .forEach(e -> patchedState.putIfAbsent(e.getKey(), e.getValue()));
+        return new Snapshot(patchedState, index);
     }
 
-    void apply(Map<Sha256Hash, Long> patch, int newIndex) {
-        if (!patch.entrySet().stream().map(Map.Entry::getValue).reduce(Math::addExact).orElse(0L).equals(0L)) {
-            throw new RuntimeException("Diff is not consistent.");
+    void merge(Snapshot snapshot) {
+        state.clear();
+        state.putAll(snapshot.state);
+        index = snapshot.index;
+    }
+
+    boolean isConsistent() {
+        long stateValue = state.values().stream().reduce(Math::addExact).orElse(Long.MAX_VALUE);
+        if(stateValue != SUPPLY) {
+            long difference = SUPPLY - stateValue;
+            log.info("Transaction resolves to incorrect ledger balance: {}", difference);
+            return false;
         }
-        rwlock.writeLock().lock();
-        patch.entrySet().stream().forEach(hashLongEntry -> {
-            if (state.computeIfPresent(hashLongEntry.getKey(), (hash, aLong) -> hashLongEntry.getValue() + aLong) == null) {
-                state.putIfAbsent(hashLongEntry.getKey(), hashLongEntry.getValue());
-            }
-        });
-        index = newIndex;
-        rwlock.writeLock().unlock();
-    }
-
-    public static boolean isConsistent(Map<Sha256Hash, Long> state) {
         final Iterator<Map.Entry<Sha256Hash, Long>> stateIterator = state.entrySet().iterator();
         while (stateIterator.hasNext()) {
 

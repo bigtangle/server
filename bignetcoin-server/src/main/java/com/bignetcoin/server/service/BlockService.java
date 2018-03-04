@@ -4,6 +4,9 @@
  *******************************************************************************/
 package com.bignetcoin.server.service;
 
+import java.util.List;
+import java.util.Set;
+
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
@@ -14,6 +17,8 @@ import org.bitcoinj.wallet.CoinSelector;
 import org.bitcoinj.wallet.DefaultCoinSelector;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import com.bignetcoin.server.model.BlockEvaluation;
 
 /**
  * <p>
@@ -32,7 +37,6 @@ public class BlockService {
     protected NetworkParameters networkParameters;
 
     /**
-     * 取得当前block
      * @param blockhash
      * @return
      * @throws BlockStoreException
@@ -42,18 +46,29 @@ public class BlockService {
     }
 
     /**
-     * 获取前置block
      * @param prevblockhash
+     * @return 
      * @return
      * @throws BlockStoreException
-     */
-    public StoredBlock getPrevBlock(Sha256Hash prevblockhash) throws BlockStoreException {
-        StoredBlock storedBlock = store.getStoredBlockFromPrev(prevblockhash);
-        return storedBlock;
+     */ 
+
+    public  List<StoredBlock> getApproverBlocks(Sha256Hash blockhash) throws BlockStoreException {
+        return store.getApproverBlocks(blockhash);
     }
 
-    public Sha256Hash[] getBlockToApprove() {
+    public BlockEvaluation  getBlockEvaluation(Sha256Hash hash) {
+        // TODO Auto-generated method stub
         return null;
+    }
+
+    public void updateSolidBlocks(Set<Sha256Hash> analyzedHashes) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void updateSolid(BlockEvaluation blockEvaluation, boolean b) {
+        // TODO Auto-generated method stub
+        
     }
 
 }
