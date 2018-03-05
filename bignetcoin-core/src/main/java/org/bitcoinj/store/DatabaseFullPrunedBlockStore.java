@@ -1311,6 +1311,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             createTables();
             initFromDatabase();
         } catch (SQLException ex) {
+            log.warn("Warning: deleteStore", ex);
             throw new RuntimeException(ex);
         }
     }
@@ -1330,7 +1331,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
             s.close();
         } catch (SQLException ex) {
-            throw new RuntimeException(ex);
+            log.warn("Warning: deleteStore", ex);
+           // throw new RuntimeException(ex);
         }
     }
 

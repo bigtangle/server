@@ -13,7 +13,7 @@ db:
   hostname: localhost
   dbName: info
   username: root
-  password: test1234
+  password: abcd1234
 
 ---
 spring:

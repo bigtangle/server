@@ -56,7 +56,9 @@ dependencies {
     testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
     testCompile group: 'junit', name: 'junit',version:ver.junit
     testCompile group: 'com.google.code.gson', name: 'gson', version:ver.gson
-    testCompile group: 'org.springframework' name: 'spring-test', version: '4.3.6.RELEASE'
+   // testCompile group: 'org.springframework' name: 'spring-test', version: ver.spring
+      testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
+ 
 }
 
 test {

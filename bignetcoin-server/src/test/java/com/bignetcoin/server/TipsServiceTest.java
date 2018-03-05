@@ -15,10 +15,15 @@ import org.bitcoinj.core.TransactionOutPoint;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.bignetcoin.server.config.ServerConfiguration;
+import com.bignetcoin.server.service.BlockService;
+import com.bignetcoin.server.service.MilestoneService;
 import com.bignetcoin.server.service.TipsService;
+import com.bignetcoin.server.service.TransactionService;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -26,6 +31,16 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
 
     @Mock
     TipsService tipsManager;
+    @Mock
+    private TransactionService transactionService;
+    @Mock
+    private ServerConfiguration serverConfiguration;
+    @Mock
+    private MilestoneService milestoneService;
+    @Mock
+    private BlockService blockService;
+    @Mock
+    private TipsService tipsService;
     
     @Test
     public void testECKey() {

@@ -77,7 +77,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    depth integer,\n" +
             "    cumulativeweight  integer ,\n" +
             "    solid tinyint(1) NOT NULL,\n" +
-            "    CONSTRAINT block_pk PRIMARY KEY (blockhash)\n";
+            "    CONSTRAINT blockevaluation_pk PRIMARY KEY (blockhash) )\n";
 
     // Some indexes to speed up inserts
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX              = "CREATE INDEX openoutputs_hash_index_height_toaddress_idx ON openoutputs (hash, `index`, height, toaddress) USING btree";
