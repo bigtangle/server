@@ -29,6 +29,14 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
 
     @Mock
     TipsService tipsManager;
+    
+    @Test
+    public void testECKey() {
+        for (int i = 0; i < 100; i ++) {
+            ECKey outKey = new ECKey();
+            System.out.println("prK : " + outKey.getPrivateKeyAsHex() + ", " + outKey.getPublicKeyAsHex());
+        }
+    }
 
     @Test
     public void updateLinearRatingsTestWorks() throws Exception {
