@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.sql.PreparedStatement;
@@ -243,8 +244,10 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             if (!e.getSQLState().equals(POSTGRES_DUPLICATE_KEY_ERROR_CODE))
                 throw new BlockStoreException(e);
         }
-
     }
 
- 
+    @Override
+    public BlockEvaluation getBlockEvaluation(Sha256Hash hash) {
+        return null;
+    }
 }

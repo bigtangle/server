@@ -7,7 +7,12 @@ package org.bitcoinj.store;
 
 import java.util.List;
 
-import org.bitcoinj.core.*;
+import org.bitcoinj.core.BlockEvaluation;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.StoredBlock;
+import org.bitcoinj.core.StoredUndoableBlock;
+import org.bitcoinj.core.UTXO;
+import org.bitcoinj.core.UTXOProvider;
 
 
 /**
@@ -124,4 +129,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
      * get the blocks which confirm the block
      */
     public List<StoredBlock> getApproverBlocks (Sha256Hash hash) throws BlockStoreException;
+
+    public BlockEvaluation getBlockEvaluation(Sha256Hash hash);
 }

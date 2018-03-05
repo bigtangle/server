@@ -7,16 +7,14 @@ package com.bignetcoin.server.service;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 import java.util.Stack;
 
+import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.slf4j.Logger;
@@ -24,8 +22,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.bignetcoin.server.model.BlockEvaluation;
-import com.bignetcoin.server.model.BlockEvaluation;
 import com.bignetcoin.server.model.TipsViewModel;
 
 @Service
@@ -316,8 +312,6 @@ public class TipsService {
     }
 
     public List<Sha256Hash> blockToApprove(int depth, String reference, int numWalks) {
-        // TODO Auto-generated method stub
         return null;
     }
-
 }

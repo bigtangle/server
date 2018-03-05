@@ -5,13 +5,13 @@
 
 package org.bitcoinj.store;
 
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.StoredBlock;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import org.bitcoinj.core.BlockEvaluation;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Sha256Hash;
 
 /**
  * <p>A full pruned block store using the MySQL database engine. As an added bonus an address index is calculated,
@@ -67,7 +67,19 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    description varchar(80),\n" +
             "    CONSTRAINT openoutputs_pk PRIMARY KEY (hash, `index`) USING BTREE \n" +
             ")\n";
-
+    
+    private static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" +
+            "    hash varbinary(32) NOT NULL,\n" +
+            "    CONSTRAINT tips_pk PRIMARY KEY (hash) USING BTREE \n" +
+            ")\n";
+ 
+    private static final String CREATE_BLOCKEVALUATION_TABLE = "CREATE TABLE blockevaluation (\n" +
+            "    blockhash varbinary(32) NOT NULL,\n" +
+            "    rating integer NOT NULL,\n" +
+            "    depth integer,\n" +
+            "    cumulativeweight  integer ,\n" +
+            "    solid tinyint(1) NOT NULL,\n" +
+            "    CONSTRAINT block_pk PRIMARY KEY (blockhash)\n";
 
     // Some indexes to speed up inserts
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX              = "CREATE INDEX openoutputs_hash_index_height_toaddress_idx ON openoutputs (hash, `index`, height, toaddress) USING btree";
@@ -96,6 +108,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_HEADERS_TABLE);
         sqlStatements.add(CREATE_UNDOABLE_TABLE);
         sqlStatements.add(CREATE_OPEN_OUTPUT_TABLE);
+        sqlStatements.add(CREATE_TIPS_TABLE);
+        sqlStatements.add(CREATE_BLOCKEVALUATION_TABLE);
         return sqlStatements;
     }
 
@@ -121,5 +135,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         return DATABASE_DRIVER_CLASS;
     }
 
-    
+    @Override
+    public BlockEvaluation getBlockEvaluation(Sha256Hash hash) {
+        return null;
+    }
 }

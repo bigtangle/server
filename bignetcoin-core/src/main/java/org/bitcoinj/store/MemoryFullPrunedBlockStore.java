@@ -6,11 +6,13 @@
 package org.bitcoinj.store;
 
 import org.bitcoinj.core.*;
+
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 import javax.annotation.Nullable;
+
 import java.util.*;
 
 /**
@@ -422,5 +424,8 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
         return null;
     }
 
-  
+    @Override
+    public BlockEvaluation getBlockEvaluation(Sha256Hash hash) {
+        return null;
+    }
 }

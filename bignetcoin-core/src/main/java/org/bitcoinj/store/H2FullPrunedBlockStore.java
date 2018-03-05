@@ -151,5 +151,8 @@ public class H2FullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         return DATABASE_DRIVER_CLASS;
     }
 
-  
+    @Override
+    public BlockEvaluation getBlockEvaluation(Sha256Hash hash) {
+        return null;
+    }
 }

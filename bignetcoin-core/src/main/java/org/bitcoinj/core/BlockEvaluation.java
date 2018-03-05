@@ -1,4 +1,4 @@
-package com.bignetcoin.server.model;
+package org.bitcoinj.core;
 
 import org.bitcoinj.core.Sha256Hash;
 
