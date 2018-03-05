@@ -75,7 +75,7 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
     }
 
     @Test
-    public void getTransactionToApproveStatement() throws Exception {
+    public void getBlockToApprove() throws Exception {
         updateLinearRatingsTestWorks();
         final SecureRandom random = new SecureRandom();
 
