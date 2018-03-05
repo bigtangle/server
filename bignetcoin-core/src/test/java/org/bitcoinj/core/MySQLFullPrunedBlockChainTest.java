@@ -9,7 +9,6 @@ import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.store.MySQLFullPrunedBlockStore;
 import org.junit.After;
-import org.junit.Ignore;
 
 /**
  * A MySQL implementation of the {@link AbstractFullPrunedBlockChainTest}
@@ -29,17 +28,13 @@ public class MySQLFullPrunedBlockChainTest extends AbstractFullPrunedBlockChainT
     private static final String DB_PASSWORD = "test1234";
 
     @Override
-    public FullPrunedBlockStore createStore(NetworkParameters params, int blockCount) throws BlockStoreException
-              {
-        
-          try {
-            store =new MySQLFullPrunedBlockStore(params, blockCount, DB_HOSTNAME, DB_NAME, DB_USERNAME, DB_PASSWORD);
+    public FullPrunedBlockStore createStore(NetworkParameters params, int blockCount) throws BlockStoreException {
+        try {
+            store = new MySQLFullPrunedBlockStore(params, blockCount, DB_HOSTNAME, DB_NAME, DB_USERNAME, DB_PASSWORD);
         } catch (RuntimeException e) {
-            // TODO Auto-generated catch block
-          //  e.printStackTrace();
         }
-          resetStore( store  );
-          return store;
+        resetStore(store);
+        return store;
     }
   
 

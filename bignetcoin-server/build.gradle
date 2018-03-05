@@ -39,19 +39,16 @@ dependencies {
    
     compile group: 'com.google.code.gson', name: 'gson', version:ver.gson
    
- compile group: 'com.jayway.restassured', name: 'rest-assured', version:ver.rest_assured
+    compile group: 'com.jayway.restassured', name: 'rest-assured', version:ver.rest_assured
    
-           
-      compile project(':bignetcoin-core')
+    compile project(':bignetcoin-core')
             
     /**
      * test dependencies
      */
     testCompile group: 'org.testng', name: 'testng', version: ver.testng
     testCompile group: 'org.mockito', name: 'mockito-all', version:  ver.mockito_all
-  	testCompile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-avro', version: ver.jackson_dataformat_avro
-  
-  
+    testCompile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-avro', version: ver.jackson_dataformat_avro
   
   /**
      * test dependencies
@@ -59,8 +56,7 @@ dependencies {
     testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
     testCompile group: 'junit', name: 'junit',version:ver.junit
     testCompile group: 'com.google.code.gson', name: 'gson', version:ver.gson
-
-
+    testCompile group: 'org.springframework' name: 'spring-test', version: '4.3.6.RELEASE'
 }
 
 test {

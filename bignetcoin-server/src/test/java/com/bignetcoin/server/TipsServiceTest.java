@@ -2,10 +2,7 @@ package com.bignetcoin.server;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
 import org.bitcoinj.core.Block;
@@ -15,16 +12,16 @@ import org.bitcoinj.core.MySQLFullPrunedBlockChainTest;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutPoint;
-import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 
-import com.bignetcoin.server.service.Snapshot;
 import com.bignetcoin.server.service.TipsService;
 
-/**
- * Created by paul on 4/27/17.
- */
+@RunWith(SpringRunner.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
 
     @Mock
