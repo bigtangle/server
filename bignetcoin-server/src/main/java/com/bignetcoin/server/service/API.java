@@ -8,6 +8,7 @@ import static org.bitcoinj.core.Utils.HEX;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -165,9 +166,12 @@ public class API {
         }
     }
 
-    private List<Sha256Hash> getBlockToApproveStatement(int depth, String reference, int numWalks) {
-
-        return tipsService.blockToApprove(depth, reference,numWalks );
+    private List<Sha256Hash> getBlockToApproveStatement(int depth, String reference, int numWalks) throws Exception {
+        List<Sha256Hash>  re= new ArrayList<Sha256Hash>();
+        final SecureRandom random = new SecureRandom();
+        re.add(  tipsService.blockToApprove(null, null, depth, numWalks, random)) ;
+        re.add(  tipsService.blockToApprove(null, null, depth, numWalks, random)) ;
+         return re;
     }
 
     private AbstractResponse wereAddressesSpentFromStatement(List<String> addressesStr) throws Exception {

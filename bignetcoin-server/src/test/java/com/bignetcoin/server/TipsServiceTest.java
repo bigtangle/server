@@ -1,5 +1,6 @@
 package com.bignetcoin.server;
 
+import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -14,37 +15,25 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutPoint;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import com.bignetcoin.server.config.ServerConfiguration;
 import com.bignetcoin.server.service.BlockService;
-import com.bignetcoin.server.service.MilestoneService;
 import com.bignetcoin.server.service.TipsService;
-import com.bignetcoin.server.service.TransactionService;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
 
-    @Mock
+    @Autowired
     TipsService tipsManager;
-    @Mock
-    private TransactionService transactionService;
-    @Mock
-    private ServerConfiguration serverConfiguration;
-    @Mock
-    private MilestoneService milestoneService;
-    @Mock
+    @Autowired
     private BlockService blockService;
-    @Mock
-    private TipsService tipsService;
-    
+
     @Test
     public void testECKey() {
-        for (int i = 0; i < 100; i ++) {
+        for (int i = 0; i < 1; i++) {
             ECKey outKey = new ECKey();
             System.out.println("prK : " + outKey.getPrivateKeyAsHex() + ", " + outKey.getPublicKeyAsHex());
         }
@@ -63,12 +52,13 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
         int height = 1;
 
         // Build some blocks on genesis block to create a spendable output
-        Block rollingBlock = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS,
+        Block rollingBlock1 = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS,
                 outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
-        blockgraph.add(rollingBlock);
-        Transaction transaction = rollingBlock.getTransactions().get(0);
+        blockgraph.add(rollingBlock1);
+        Transaction transaction = rollingBlock1.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, transaction.getHash());
         byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
+        Block rollingBlock = rollingBlock1;
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                     height++, PARAMS.getGenesisBlock().getHash());
@@ -76,8 +66,22 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
         }
 
         Map<Sha256Hash, Set<Sha256Hash>> ratings = new HashMap<>();
-        tipsManager.updateHashRatings(rollingBlock.getHash(), ratings, new HashSet<>());
+        tipsManager.updateHashRatings(rollingBlock1.getHash(), ratings, new HashSet<>());
+        System.out.println(ratings);
+        tipsManager.updateHashRatings(PARAMS.getGenesisBlock().getHash(), ratings, new HashSet<>());
 
+        System.out.println(ratings);
+
+    }
+
+    @Test
+    public void getTransactionToApproveStatement() throws Exception {
+        updateLinearRatingsTestWorks();
+        final SecureRandom random = new SecureRandom();
+
+        Sha256Hash re = tipsManager.blockToApprove(null, null, 27, 27, random);
+        System.out.println(re);
+        System.out.println(blockService.getBlock(re));
     }
 
 }
