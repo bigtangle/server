@@ -245,9 +245,4 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
                 throw new BlockStoreException(e);
         }
     }
-
-    @Override
-    public BlockEvaluation getBlockEvaluation(Sha256Hash hash) {
-        return null;
-    }
 }

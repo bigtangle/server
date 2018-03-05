@@ -130,5 +130,5 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
      */
     public List<StoredBlock> getApproverBlocks (Sha256Hash hash) throws BlockStoreException;
 
-    public BlockEvaluation getBlockEvaluation(Sha256Hash hash);
+    public BlockEvaluation getBlockEvaluation(Sha256Hash hash) throws BlockStoreException;
 }

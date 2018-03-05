@@ -9,9 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Sha256Hash;
 
 /**
  * <p>A full pruned block store using the MySQL database engine. As an added bonus an address index is calculated,
@@ -133,10 +131,5 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     @Override
     protected String getDatabaseDriverClass() {
         return DATABASE_DRIVER_CLASS;
-    }
-
-    @Override
-    public BlockEvaluation getBlockEvaluation(Sha256Hash hash) {
-        return null;
     }
 }

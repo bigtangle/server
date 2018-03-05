@@ -24,7 +24,11 @@ import static com.google.common.base.Preconditions.checkArgument;
  * map. It also checks that the length is correct and provides a bit more type safety.
  */
 public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
+    
+    private static final long serialVersionUID = 7806870908693322289L;
+    
     public static final int LENGTH = 32; // bytes
+    
     public static final Sha256Hash ZERO_HASH = wrap(new byte[LENGTH]);
 
     private final byte[] bytes;
@@ -54,7 +58,6 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
      * @return a new instance
      * @throws IllegalArgumentException if the given array length is not exactly 32
      */
-    @SuppressWarnings("deprecation") // the constructor will be made private in the future
     public static Sha256Hash wrap(byte[] rawHashBytes) {
         return new Sha256Hash(rawHashBytes);
     }
@@ -78,7 +81,6 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
      * @return a new instance
      * @throws IllegalArgumentException if the given array length is not exactly 32
      */
-    @SuppressWarnings("deprecation") // the constructor will be made private in the future
     public static Sha256Hash wrapReversed(byte[] rawHashBytes) {
         return wrap(Utils.reverseBytes(rawHashBytes));
     }

@@ -5,19 +5,44 @@
 
 package org.bitcoinj.store;
 
-import com.google.common.collect.Lists;
-import org.bitcoinj.core.*;
-import org.bitcoinj.script.Script;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Properties;
+
+import javax.annotation.Nullable;
+
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.Block;
+import org.bitcoinj.core.BlockEvaluation;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.ProtocolException;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.StoredBlock;
+import org.bitcoinj.core.StoredUndoableBlock;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionOutputChanges;
+import org.bitcoinj.core.UTXO;
+import org.bitcoinj.core.UTXOProviderException;
+import org.bitcoinj.core.VerificationException;
+import org.bitcoinj.script.Script;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Lists;
 
 /**
  * <p>
@@ -177,6 +202,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private static final String DROP_HEADERS_TABLE = "DROP TABLE headers";
     private static final String DROP_UNDOABLE_TABLE = "DROP TABLE undoableblocks";
     private static final String DROP_OPEN_OUTPUT_TABLE = "DROP TABLE openoutputs";
+    private static final String DROP_TIPS_TABLE = "DROP TABLE tips";
+    private static final String DROP_BLOCKEVALUATION_TABLE = "DROP TABLE blockevaluation";
 
     // Queries SQL.
     private static final String SELECT_SETTINGS_SQL = "SELECT value FROM settings WHERE name = ?";
@@ -215,6 +242,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     // Compatibility SQL.
     private static final String SELECT_COMPATIBILITY_COINBASE_SQL = "SELECT coinbase FROM openoutputs WHERE 1 = 2";
+    
+    private static final String SELECT_BLOCKEVALUATION_SQL = "select blockhash, rating, depth, cumulativeweight, solid from blockevaluation";
 
     protected Sha256Hash chainHeadHash;
     protected StoredBlock chainHeadBlock;
@@ -383,6 +412,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_HEADERS_TABLE);
         sqlStatements.add(DROP_UNDOABLE_TABLE);
         sqlStatements.add(DROP_OPEN_OUTPUT_TABLE);
+        sqlStatements.add(DROP_TIPS_TABLE);
+        sqlStatements.add(DROP_BLOCKEVALUATION_TABLE);
         return sqlStatements;
     }
 
@@ -1477,5 +1508,36 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         System.out.println("Total Size: " + totalSize);
 
         s.close();
+    }
+
+    @Override
+    public BlockEvaluation getBlockEvaluation(Sha256Hash hash) throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_BLOCKEVALUATION_SQL);
+            preparedStatement.setBytes(1, hash.getBytes());
+            
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (!resultSet.next()) {
+                return null;
+            }
+            BlockEvaluation blockEvaluation = new BlockEvaluation();
+            blockEvaluation.setBlockhash(Sha256Hash.wrap(resultSet.getBytes(1)));
+            blockEvaluation.setRating(resultSet.getInt(2));
+            blockEvaluation.setDepth(resultSet.getInt(3));
+            blockEvaluation.setCumulativeweight(resultSet.getInt(4));
+            blockEvaluation.setSolid(resultSet.getBoolean(5));
+            return blockEvaluation;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
     }
 }

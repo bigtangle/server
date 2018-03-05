@@ -55,7 +55,7 @@ public class BlockService {
         return store.getApproverBlocks(blockhash);
     }
 
-    public BlockEvaluation getBlockEvaluation(Sha256Hash hash) {
+    public BlockEvaluation getBlockEvaluation(Sha256Hash hash) throws BlockStoreException {
         BlockEvaluation blockEvaluation = store.getBlockEvaluation(hash);
         return blockEvaluation;
     }
