@@ -39,7 +39,8 @@ dependencies {
    
     compile group: 'com.google.code.gson', name: 'gson', version:ver.gson
    
-
+ compile group: 'com.jayway.restassured', name: 'rest-assured', version:ver.rest_assured
+   
            
       compile project(':bignetcoin-core')
             

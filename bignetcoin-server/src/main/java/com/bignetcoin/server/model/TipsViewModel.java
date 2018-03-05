@@ -11,8 +11,9 @@ import java.util.concurrent.ExecutionException;
 import org.bitcoinj.core.Sha256Hash;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
-
+@Service
 public class TipsViewModel {
     final Logger log = LoggerFactory.getLogger(TipsViewModel.class);
 
