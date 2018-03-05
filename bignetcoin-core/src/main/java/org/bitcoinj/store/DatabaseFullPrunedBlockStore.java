@@ -243,7 +243,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     // Compatibility SQL.
     private static final String SELECT_COMPATIBILITY_COINBASE_SQL = "SELECT coinbase FROM openoutputs WHERE 1 = 2";
     
-    private static final String SELECT_BLOCKEVALUATION_SQL = "select blockhash, rating, depth, cumulativeweight, solid from blockevaluation";
+    private static final String SELECT_BLOCKEVALUATION_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid FROM blockevaluation WHERE blockhash = ?";
 
     protected Sha256Hash chainHeadHash;
     protected StoredBlock chainHeadBlock;

@@ -64,8 +64,5 @@ public class BlockService {
     }
 
     public void updateSolid(BlockEvaluation blockEvaluation, boolean b) {
-        // TODO Auto-generated method stub
-        
     }
-
 }
