@@ -106,10 +106,13 @@ public class TipsService {
         Set<Sha256Hash> maxDepthOk = new HashSet<Sha256Hash>();
         try {
             Sha256Hash entryPointTipSha256Hash = entryPoint(reference);
-            serialUpdateRatings(entryPointTipSha256Hash, ratings, analyzedTips, extraTip);
+            // serialUpdateRatings(entryPointTipSha256Hash, ratings,
+            // analyzedTips, extraTip);
+            recursiveUpdateRatings(entryPointTipSha256Hash, ratings, analyzedTips);
             System.out.println(ratings);
             analyzedTips.clear();
-            return markovChainMonteCarlo(entryPointTipSha256Hash, extraTip, ratings, iterations, milestone.latestSolidSubtangleMilestoneIndex - depth * 2, maxDepthOk, seed);
+            return markovChainMonteCarlo(entryPointTipSha256Hash, extraTip, ratings, iterations,
+                    milestone.latestSolidSubtangleMilestoneIndex - depth * 2, maxDepthOk, seed);
         } catch (Exception e) {
             e.printStackTrace();
             log.error("Encountered error: " + e.getLocalizedMessage());
@@ -118,8 +121,10 @@ public class TipsService {
     }
 
     Sha256Hash entryPoint(final Sha256Hash sha256Hash) throws Exception {
-        Block block = this.blockService.getBlock(sha256Hash);
-        return block.getHash();
+        // Block block = this.blockService.getBlock(sha256Hash);
+        // return block.getHash();
+        return networkParameters.getGenesisBlock().getHash();
+
     }
 
     Sha256Hash markovChainMonteCarlo(final Sha256Hash tip, final Sha256Hash extraTip,
@@ -150,56 +155,51 @@ public class TipsService {
 
     Sha256Hash randomWalk(final Sha256Hash start, final Sha256Hash extraTip, final Map<Sha256Hash, Long> ratings,
             final int maxDepth, final Set<Sha256Hash> maxDepthOk, Random rnd) throws Exception {
-        Sha256Hash tip = start, tail = tip;
-        Sha256Hash[] tips;
-
+        Sha256Hash tip = start;
+        Sha256Hash[] tipApprovers;
         Set<Sha256Hash> analyzedTips = new HashSet<>();
-        int traversedTails = 0;
-
         int approverIndex;
         double ratingWeight;
         double[] walkRatings;
 
         while (tip != null) {
 
-            List<StoredBlock> approvers = blockService.getApproverBlocks(tip);
+            List<Sha256Hash> approvers = blockService.getApproverBlockHash(tip);
 
             if (approvers.size() == 0) { // TODO check solidity
                 log.info("Reason to stop:  is a tip =" + tip);
                 break;
             } else if (approvers.size() == 1) {
-
-                tip = approvers.get(0).getHeader().getHash();
-
+                tip = approvers.get(0);
             } else {
-                tips = approvers.toArray(new Sha256Hash[approvers.size()]);
+                tipApprovers = approvers.toArray(new Sha256Hash[approvers.size()]);
                 if (!ratings.containsKey(tip)) {
-                    serialUpdateRatings(tip, ratings, analyzedTips, extraTip);
+                    // serialUpdateRatings(tip, ratings, analyzedTips,
+                    // extraTip);
+                    recursiveUpdateRatings(tip, ratings, analyzedTips);
                     analyzedTips.clear();
                 }
 
-                walkRatings = new double[tips.length];
+                walkRatings = new double[tipApprovers.length];
                 double maxRating = 0;
                 long tipRating = ratings.get(tip);
-                for (int i = 0; i < tips.length; i++) {
+                for (int i = 0; i < tipApprovers.length; i++) {
                     // transition probability = ((Hx-Hy)^-3)/maxRating
-                    walkRatings[i] = Math.pow(tipRating - ratings.getOrDefault(tips[i], 0L), -3);
+                    walkRatings[i] = Math.pow(tipRating - ratings.getOrDefault(tipApprovers[i], 0L), -3);
                     maxRating += walkRatings[i];
                 }
                 ratingWeight = rnd.nextDouble() * maxRating;
-                for (approverIndex = tips.length; approverIndex-- > 1;) {
+                for (approverIndex = tipApprovers.length; approverIndex-- > 1;) {
                     ratingWeight -= walkRatings[approverIndex];
                     if (ratingWeight <= 0) {
                         break;
                     }
                 }
-                tip = tips[approverIndex];
+                tip = tipApprovers[approverIndex];
 
             }
         }
-        log.info("Tx traversed to find tip: " + traversedTails);
-        // messageQ.publish("mctn %d", traversedTails);
-        return tail;
+        return tip;
     }
 
     static long capSum(long a, long b, long max) {
@@ -209,23 +209,23 @@ public class TipsService {
         return a + b;
     }
 
-    void serialUpdateRatings(final Sha256Hash txHash, final Map<Sha256Hash, Long> ratings, final Set<Sha256Hash> analyzedTips, final Sha256Hash extraTip) throws Exception {
+    void serialUpdateRatings(final Sha256Hash txHash, final Map<Sha256Hash, Long> ratings,
+            final Set<Sha256Hash> analyzedTips, final Sha256Hash extraTip) throws Exception {
         Stack<Sha256Hash> hashesToRate = new Stack<Sha256Hash>();
         hashesToRate.push(txHash);
         Sha256Hash currentHash;
         boolean addedBack;
         while (!hashesToRate.empty()) {
             currentHash = hashesToRate.pop();
-            List<StoredBlock> approvers = blockService.getApproverBlocks(txHash);
+            List<Sha256Hash> approvers = blockService.getApproverBlockHash(txHash);
             addedBack = false;
-            for (StoredBlock approver : approvers) {
-                if (ratings.get(approver.getHeader().getHash()) == null
-                        && !approver.getHeader().getHash().equals(currentHash)) {
+            for (Sha256Hash approver : approvers) {
+                if (ratings.get(approver) == null && !approver.equals(currentHash)) {
                     if (!addedBack) {
                         addedBack = true;
                         hashesToRate.push(currentHash);
                     }
-                    hashesToRate.push(approver.getHeader().getHash());
+                    hashesToRate.push(approver);
                 }
             }
             if (!addedBack && analyzedTips.add(currentHash)) {
@@ -240,10 +240,10 @@ public class TipsService {
             Set<Sha256Hash> analyzedTips) throws Exception {
         Set<Sha256Hash> rating;
         if (analyzedTips.add(txHash)) {
-            List<StoredBlock> approvers = blockService.getApproverBlocks(txHash);
+            List<Sha256Hash> approvers = blockService.getApproverBlockHash(txHash);
             rating = new HashSet<>(Collections.singleton(txHash));
-            for (StoredBlock approver : approvers) {
-                rating.addAll(updateHashRatings(approver.getHeader().getHash(), ratings, analyzedTips));
+            for (Sha256Hash approver : approvers) {
+                rating.addAll(updateHashRatings(approver, ratings, analyzedTips));
             }
             ratings.put(txHash, rating);
         } else {
@@ -261,11 +261,10 @@ public class TipsService {
         long rating = 1;
         if (analyzedTips.add(txHash)) {
 
-            List<StoredBlock> approvers = blockService.getApproverBlocks(txHash);
+            List<Sha256Hash> approvers = blockService.getApproverBlockHash(txHash);
 
-            for (StoredBlock approver : approvers) {
-                rating = capSum(rating, recursiveUpdateRatings(approver.getHeader().getHash(), ratings, analyzedTips),
-                        Long.MAX_VALUE / 2);
+            for (Sha256Hash approver : approvers) {
+                rating = capSum(rating, recursiveUpdateRatings(approver, ratings, analyzedTips), Long.MAX_VALUE / 2);
             }
             ratings.put(txHash, rating);
         } else {

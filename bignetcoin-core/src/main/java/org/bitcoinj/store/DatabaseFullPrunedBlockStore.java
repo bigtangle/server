@@ -212,6 +212,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     private static final String SELECT_HEADERS_SQL = "SELECT  height, header, wasundoable,prevblockhash,prevbranchblockhash,mineraddress,tokenid,blocktype FROM headers WHERE hash = ?";
     private static final String SELECT_HEADERS_APPROVE_SQL = "SELECT  height, header, wasundoable,prevblockhash,prevbranchblockhash,mineraddress,tokenid,blocktype FROM headers WHERE prevblockhash = ? or prevbranchblockhash=?";
+    private static final String SELECT_HASH_APPROVE_SQL = "SELECT hash FROM headers WHERE prevblockhash = ? or prevbranchblockhash=?";
 
     private static final String INSERT_HEADERS_SQL = "INSERT INTO headers(hash,  height, header, wasundoable,prevblockhash,prevbranchblockhash,mineraddress,tokenid,blocktype ) VALUES(?, ?, ?, ?, ?,?, ?, ?, ?)";
     private static final String UPDATE_HEADERS_SQL = "UPDATE headers SET wasundoable=? WHERE hash=?";
@@ -242,7 +243,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     // Compatibility SQL.
     private static final String SELECT_COMPATIBILITY_COINBASE_SQL = "SELECT coinbase FROM openoutputs WHERE 1 = 2";
-    
+
     private static final String SELECT_BLOCKEVALUATION_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid FROM blockevaluation WHERE blockhash = ?";
 
     protected Sha256Hash chainHeadHash;
@@ -966,7 +967,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setBytes(1, hash.getBytes());
             s.setBytes(2, hash.getBytes());
             ResultSet results = s.executeQuery();
-            while (results.next()) { 
+            while (results.next()) {
                 // Parse it.
                 int height = results.getInt(1);
                 Block b = params.getDefaultSerializer().makeBlock(results.getBytes(2));
@@ -974,6 +975,39 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 storedBlocks.add(new StoredBlock(b, height));
             }
             return storedBlocks;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            // Corrupted database.
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            // Should not be able to happen unless the database contains bad
+            // blocks.
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    public List<Sha256Hash> getApproverBlockHash(Sha256Hash hash) throws BlockStoreException {
+        List<Sha256Hash> storedBlockHash = new ArrayList<Sha256Hash>();
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(SELECT_HASH_APPROVE_SQL);
+            s.setBytes(1, hash.getBytes());
+            s.setBytes(2, hash.getBytes());
+            ResultSet results = s.executeQuery();
+            while (results.next()) {
+                storedBlockHash.add(Sha256Hash.wrap(results.getBytes(1)));
+            }
+            return storedBlockHash;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } catch (ProtocolException e) {
@@ -1332,7 +1366,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.close();
         } catch (SQLException ex) {
             log.warn("Warning: deleteStore", ex);
-           // throw new RuntimeException(ex);
+            // throw new RuntimeException(ex);
         }
     }
 
@@ -1518,7 +1552,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_BLOCKEVALUATION_SQL);
             preparedStatement.setBytes(1, hash.getBytes());
-            
+
             ResultSet resultSet = preparedStatement.executeQuery();
             if (!resultSet.next()) {
                 return null;

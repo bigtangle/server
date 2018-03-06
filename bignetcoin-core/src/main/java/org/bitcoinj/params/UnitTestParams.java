@@ -43,6 +43,8 @@ public class UnitTestParams extends AbstractBitcoinNetParams {
         majorityEnforceBlockUpgrade = 3;
         majorityRejectBlockOutdated = 4;
         majorityWindow = 7;
+        genesisBlock.setTime(1231006505L);
+        genesisBlock.setNonce(2083236893);
     }
 
     private static UnitTestParams instance;

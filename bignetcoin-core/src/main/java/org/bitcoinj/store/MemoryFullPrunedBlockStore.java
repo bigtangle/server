@@ -428,4 +428,10 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     public BlockEvaluation getBlockEvaluation(Sha256Hash hash) {
         return null;
     }
+
+    @Override
+    public List<Sha256Hash> getApproverBlockHash(Sha256Hash hash) throws BlockStoreException {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

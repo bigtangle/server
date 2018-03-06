@@ -41,18 +41,25 @@ public class BlockService {
      * @throws BlockStoreException
      */
     public Block getBlock(Sha256Hash blockhash) throws BlockStoreException {
+        // Genesis Block is hardcoded is not saved in database
+        if (networkParameters.getGenesisBlock().getHash().equals(blockhash))
+            return networkParameters.getGenesisBlock();
         return store.get(blockhash).getHeader();
     }
 
     /**
      * @param prevblockhash
-     * @return 
+     * @return
      * @return
      * @throws BlockStoreException
-     */ 
+     */
 
-    public  List<StoredBlock> getApproverBlocks(Sha256Hash blockhash) throws BlockStoreException {
+    public List<StoredBlock> getApproverBlocks(Sha256Hash blockhash) throws BlockStoreException {
         return store.getApproverBlocks(blockhash);
+    }
+
+    public List<Sha256Hash> getApproverBlockHash(Sha256Hash blockhash) throws BlockStoreException {
+        return store.getApproverBlockHash(blockhash);
     }
 
     public BlockEvaluation getBlockEvaluation(Sha256Hash hash) throws BlockStoreException {
