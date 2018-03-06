@@ -108,7 +108,7 @@ public class TipsService {
             Sha256Hash entryPointTipSha256Hash = entryPoint(reference);
             // serialUpdateRatings(entryPointTipSha256Hash, ratings,
             // analyzedTips, extraTip);
-            recursiveUpdateRatings(entryPointTipSha256Hash, ratings, analyzedTips);
+           // recursiveUpdateRatings(entryPointTipSha256Hash, ratings, analyzedTips);
             System.out.println(ratings);
             analyzedTips.clear();
             return markovChainMonteCarlo(entryPointTipSha256Hash, extraTip, ratings, iterations,

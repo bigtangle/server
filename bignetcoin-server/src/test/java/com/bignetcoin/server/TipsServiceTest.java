@@ -95,10 +95,10 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
                 b0.getHash());
         Block b3 = b1.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,
                 b2.getHash());
-        Block b4 = rollingBlock1.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,
-                rollingBlock.getHash());
-        Block b5 = b2.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,
-                b0.getHash());
+        Block b4 = b3.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,
+                b2.getHash());
+        Block b5 = b4.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,
+                b1.getHash());
         List<Block> blocks = new ArrayList<Block>();
         blocks.add(b0);
         blocks.add(b1);
@@ -165,13 +165,13 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
         ECKey outKey = new ECKey();
         int height = 1;
 
-        for (int i = 1; i < 200; i++) {
+        for (int i = 1; i < 20; i++) {
             Block r1 = blockService.getBlock(getNextBlockToApprove());
             Block r2 = blockService.getBlock(getNextBlockToApprove());
             Block rollingBlock = r2.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,
                     r1.getHash());
             blockgraph.add(rollingBlock);
-            System.out.println("create block  : " + rollingBlock);
+            System.out.println("create block  : "+ i + " " + rollingBlock);
         }
 
     }
