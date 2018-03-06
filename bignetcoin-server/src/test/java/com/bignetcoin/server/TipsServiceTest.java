@@ -1,8 +1,10 @@
 package com.bignetcoin.server;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -12,8 +14,6 @@ import org.bitcoinj.core.FullPrunedBlockGraph;
 import org.bitcoinj.core.MySQLFullPrunedBlockChainTest;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.store.MySQLFullPrunedBlockStore;
@@ -84,6 +84,38 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
             blockgraph.add(rollingBlock);
             System.out.println("创建block, hash : " + rollingBlock.getHashAsString());
         }
+        
+        Block b0 = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
+        Block b1 = b0.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, rollingBlock.getHash());
+        Block b2 = b1.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, b0.getHash());
+        Block b3 = b1.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, b2.getHash());
+        Block b4 = rollingBlock1.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, rollingBlock.getHash());
+        Block b5 = b2.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, b0.getHash());
+        List<Block> blocks = new ArrayList<Block>();
+        blocks.add(b0);
+        blocks.add(b1);
+        blocks.add(b2);
+        blocks.add(b3);
+        blocks.add(b4);
+        blocks.add(b5);
+        for (Block block : blocks) {
+            this.blockgraph.add(block);
+            System.out.println("创建block, hash : " + block.getHashAsString());
+        }
+        
+//        Map<Sha256Hash, Set<Sha256Hash>> blockRatings1 = new HashMap<Sha256Hash, Set<Sha256Hash>>();
+//        tipsManager.updateHashRatings(b2.getHash(), blockRatings1, new HashSet<>());
+//        
+//        for (Sha256Hash sha256Hash : blockRatings1.get(b2.getHash())) {
+//            System.out.println("hash : " + sha256Hash.toString());
+//        }
+
+        Map<Sha256Hash, Set<Sha256Hash>> blockRatings1 = new HashMap<Sha256Hash, Set<Sha256Hash>>();
+        tipsManager.updateHashRatings(b0.getHash(), blockRatings1, new HashSet<>());
+        
+        for (Sha256Hash sha256Hash : blockRatings1.get(b0.getHash())) {
+            System.out.println("hash : " + sha256Hash.toString());
+        }
         System.out.println("-------------------- 创建block过程结束 -------------------------");
     }
 
@@ -95,16 +127,24 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
         
         Map<Sha256Hash, Set<Sha256Hash>> blockRatings1 = new HashMap<Sha256Hash, Set<Sha256Hash>>();
         tipsManager.updateHashRatings(PARAMS.getGenesisBlock().getHash(), blockRatings1, new HashSet<>());
-        System.out.println(blockRatings1);
+        /*for (Entry<Sha256Hash, Set<Sha256Hash>> entry : blockRatings1.entrySet()) {
+            System.out.println("hash : " + entry.getKey().toString() + " rating");
+            for (Sha256Hash sha256Hash : entry.getValue()) {
+                System.out.println("hash : " + sha256Hash.toString());
+            }
+        }*/
+        for (Sha256Hash sha256Hash : blockRatings1.get(PARAMS.getGenesisBlock().getHash())) {
+            System.out.println("hash : " + sha256Hash.toString());
+        }
     }
 
     @Test
     public void getBlockToApprove() throws Exception {
-        updateLinearRatingsTestWorks();
         final SecureRandom random = new SecureRandom();
-        PARAMS.getGenesisBlock();
-        Sha256Hash b0Sha256Hash = tipsManager.blockToApprove(null, null, 27, 27, random);
-        Sha256Hash b1Sha256Hash = tipsManager.blockToApprove(null, null, 27, 27, random);
+        Sha256Hash b0Sha256Hash = tipsManager.blockToApprove(PARAMS.getGenesisBlock().getHash(), null, 27, 27, random);
+        Sha256Hash b1Sha256Hash = tipsManager.blockToApprove(PARAMS.getGenesisBlock().getHash(), null, 27, 27, random);
+        System.out.println("b0Sha256Hash : " + b0Sha256Hash.toString());
+        System.out.println("b1Sha256Hash : " + b1Sha256Hash.toString());
     }
 
 }
