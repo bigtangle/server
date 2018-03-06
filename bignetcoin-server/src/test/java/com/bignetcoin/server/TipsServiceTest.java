@@ -63,6 +63,9 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
             rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                     height++, PARAMS.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
+            
+            
+            System.out.println(rollingBlock.getHashAsString());
         }
 
         Map<Sha256Hash, Set<Sha256Hash>> ratings = new HashMap<>();
@@ -80,8 +83,12 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
         final SecureRandom random = new SecureRandom();
 
         Sha256Hash re = tipsManager.blockToApprove(null, null, 27, 27, random);
+        Sha256Hash re2 = tipsManager.blockToApprove(null, null, 27, 27, random);
         System.out.println(re);
         System.out.println(blockService.getBlock(re));
+        
+ 
+         
     }
 
 }
