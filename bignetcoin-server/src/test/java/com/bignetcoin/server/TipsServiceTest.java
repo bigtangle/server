@@ -17,6 +17,7 @@ import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.store.MySQLFullPrunedBlockStore;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +33,8 @@ import com.bignetcoin.server.service.TipsService;
 public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
 
     @Autowired
-    TipsService tipsManager;
+    private TipsService tipsManager;
+    
     @Autowired
     private BlockService blockService;
 
@@ -60,57 +62,49 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
         resetStore(store);
         return store;
     }
-
-    @Test
-    public void updateLinearRatingsTestWorks() throws Exception {
+    
+    @Before
+    public void createBlock() throws Exception {
+        System.out.println("-------------------- 创建block过程开始 -------------------------");
         final int UNDOABLE_BLOCKS_STORED = 10;
         store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
         resetStore(store);
+        
         blockgraph = new FullPrunedBlockGraph(PARAMS, store);
-
-        // Check that we aren't accidentally leaving any references
-        // to the full StoredUndoableBlock's lying around (ie memory leaks)
         ECKey outKey = new ECKey();
         int height = 1;
 
-        // Build some blocks on genesis block to create a spendable output
-        Block rollingBlock1 = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS,
-                outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
+        Block rollingBlock1 = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock1);
-        Transaction transaction = rollingBlock1.getTransactions().get(0);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, transaction.getHash());
-        byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
+        System.out.println("创建block, hash : " + rollingBlock1.getHashAsString());
+        
         Block rollingBlock = rollingBlock1;
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
-            rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                    height++, PARAMS.getGenesisBlock().getHash());
+            rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
-            
-            
-            System.out.println(rollingBlock.getHashAsString());
+            System.out.println("创建block, hash : " + rollingBlock.getHashAsString());
         }
+        System.out.println("-------------------- 创建block过程结束 -------------------------");
+    }
 
-        Map<Sha256Hash, Set<Sha256Hash>> ratings = new HashMap<>();
-        tipsManager.updateHashRatings(rollingBlock1.getHash(), ratings, new HashSet<>());
-        System.out.println(ratings);
-        tipsManager.updateHashRatings(PARAMS.getGenesisBlock().getHash(), ratings, new HashSet<>());
-
-        System.out.println(ratings);
-
+    @Test
+    public void updateLinearRatingsTestWorks() throws Exception {
+//        Map<Sha256Hash, Set<Sha256Hash>> blockRatings0 = new HashMap<Sha256Hash, Set<Sha256Hash>>();
+//        tipsManager.updateHashRatings(rollingBlock1.getHash(), blockRatings0, new HashSet<>());
+//        System.out.println(blockRatings0);
+        
+        Map<Sha256Hash, Set<Sha256Hash>> blockRatings1 = new HashMap<Sha256Hash, Set<Sha256Hash>>();
+        tipsManager.updateHashRatings(PARAMS.getGenesisBlock().getHash(), blockRatings1, new HashSet<>());
+        System.out.println(blockRatings1);
     }
 
     @Test
     public void getBlockToApprove() throws Exception {
         updateLinearRatingsTestWorks();
         final SecureRandom random = new SecureRandom();
-
-        Sha256Hash re = tipsManager.blockToApprove(null, null, 27, 27, random);
-        Sha256Hash re2 = tipsManager.blockToApprove(null, null, 27, 27, random);
-        System.out.println(re);
-        System.out.println(blockService.getBlock(re));
-        
- 
-         
+        PARAMS.getGenesisBlock();
+        Sha256Hash b0Sha256Hash = tipsManager.blockToApprove(null, null, 27, 27, random);
+        Sha256Hash b1Sha256Hash = tipsManager.blockToApprove(null, null, 27, 27, random);
     }
 
 }

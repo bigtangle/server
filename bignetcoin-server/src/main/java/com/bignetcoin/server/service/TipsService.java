@@ -14,6 +14,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.Stack;
 
+import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
@@ -94,44 +95,31 @@ public class TipsService {
 
     public Sha256Hash blockToApprove(final Sha256Hash reference, final Sha256Hash extraTip, final int depth,
             final int iterations, Random seed) throws Exception {
-
-        long startTime = System.nanoTime();
         final int msDepth;
         if (depth > maxDepth) {
             msDepth = maxDepth;
         } else {
             msDepth = depth;
         }
-
-        Map<Sha256Hash, Long> ratings = new HashMap<>();
-        Set<Sha256Hash> analyzedTips = new HashSet<>();
-        Set<Sha256Hash> maxDepthOk = new HashSet<>();
+        Map<Sha256Hash, Long> ratings = new HashMap<Sha256Hash, Long>();
+        Set<Sha256Hash> analyzedTips = new HashSet<Sha256Hash>();
+        Set<Sha256Hash> maxDepthOk = new HashSet<Sha256Hash>();
         try {
-            Sha256Hash tip = entryPoint(reference, extraTip, msDepth);
-            serialUpdateRatings(tip, ratings, analyzedTips, extraTip);
+            Sha256Hash entryPointTipSha256Hash = entryPoint(reference);
+            serialUpdateRatings(entryPointTipSha256Hash, ratings, analyzedTips, extraTip);
+            System.out.println(ratings);
             analyzedTips.clear();
-            // if (ledgerValidator.isTipConsistent(referenceSnapshot, tip))
-            // {
-            return markovChainMonteCarlo(tip, extraTip, ratings, iterations,
-                    milestone.latestSolidSubtangleMilestoneIndex - depth * 2, maxDepthOk, seed);
-            /*
-             * } else { throw new
-             * RuntimeException("starting tip failed consistency check: " +
-             * tip.toString()); }
-             */
+            return markovChainMonteCarlo(entryPointTipSha256Hash, extraTip, ratings, iterations, milestone.latestSolidSubtangleMilestoneIndex - depth * 2, maxDepthOk, seed);
         } catch (Exception e) {
             e.printStackTrace();
             log.error("Encountered error: " + e.getLocalizedMessage());
             throw e;
-        } finally {
-            // API.incEllapsedTime_getTxToApprove(System.nanoTime() -
-            // startTime);
         }
-
     }
 
-    Sha256Hash entryPoint(final Sha256Hash reference, final Sha256Hash extraTip, final int depth) throws Exception {
-        return networkParameters.getGenesisBlock().getHash();
+    Sha256Hash entryPoint(final Sha256Hash sha256Hash) throws Exception {
+        Block block = this.blockService.getBlock(sha256Hash);
+        return block.getHash();
     }
 
     Sha256Hash markovChainMonteCarlo(final Sha256Hash tip, final Sha256Hash extraTip,
@@ -178,14 +166,12 @@ public class TipsService {
 
             if (approvers.size() == 0) { // TODO check solidity
                 log.info("Reason to stop:  is a tip =" + tip);
-                // messageQ.publish("rtst %s", tip);
                 break;
             } else if (approvers.size() == 1) {
 
                 tip = approvers.get(0).getHeader().getHash();
 
             } else {
-                // walk to the next approver
                 tips = approvers.toArray(new Sha256Hash[approvers.size()]);
                 if (!ratings.containsKey(tip)) {
                     serialUpdateRatings(tip, ratings, analyzedTips, extraTip);
@@ -223,19 +209,15 @@ public class TipsService {
         return a + b;
     }
 
-    void serialUpdateRatings(final Sha256Hash txHash, final Map<Sha256Hash, Long> ratings,
-            final Set<Sha256Hash> analyzedTips, final Sha256Hash extraTip) throws Exception {
-        Stack<Sha256Hash> hashesToRate = new Stack<>();
+    void serialUpdateRatings(final Sha256Hash txHash, final Map<Sha256Hash, Long> ratings, final Set<Sha256Hash> analyzedTips, final Sha256Hash extraTip) throws Exception {
+        Stack<Sha256Hash> hashesToRate = new Stack<Sha256Hash>();
         hashesToRate.push(txHash);
         Sha256Hash currentHash;
         boolean addedBack;
         while (!hashesToRate.empty()) {
             currentHash = hashesToRate.pop();
-
             List<StoredBlock> approvers = blockService.getApproverBlocks(txHash);
-
             addedBack = false;
-
             for (StoredBlock approver : approvers) {
                 if (ratings.get(approver.getHeader().getHash()) == null
                         && !approver.getHeader().getHash().equals(currentHash)) {
@@ -258,11 +240,8 @@ public class TipsService {
             Set<Sha256Hash> analyzedTips) throws Exception {
         Set<Sha256Hash> rating;
         if (analyzedTips.add(txHash)) {
-
             List<StoredBlock> approvers = blockService.getApproverBlocks(txHash);
-
             rating = new HashSet<>(Collections.singleton(txHash));
-
             for (StoredBlock approver : approvers) {
                 rating.addAll(updateHashRatings(approver.getHeader().getHash(), ratings, analyzedTips));
             }
