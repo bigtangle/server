@@ -211,3 +211,16 @@ public void updateSolid(BlockEvaluation blockEvaluation, boolean b) {
 
 add unit spring test for TipsServiceTest and BlockService
 
+
+First step: use the existing p2p broadcasting.
+
+Different to Peer to Peer broadcast is the clustered and quick as 
+
+Kafka Stream:
+dynamic discovery and swicht of Kafka cluster 
+1)publish block to kafka
+2)consumer block from kafka
+3)relay kafka topic to all other cluster. (no cycle)
+
+
+Performance Test
