@@ -1,6 +1,7 @@
 package com.bignetcoin.server;
 
 import java.security.SecureRandom;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,17 +47,21 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
     private GlobalConfigurationProperties globalConfigurationProperties;
 
     @Override
-    public FullPrunedBlockStore createStore(NetworkParameters params, int blockCount) throws BlockStoreException {
+    public FullPrunedBlockStore createStore(NetworkParameters params, int blockCount) throws BlockStoreException  {
         try {
             String DB_HOSTNAME = globalConfigurationProperties.getHostname();
             String DB_NAME = globalConfigurationProperties.getDbName();
             String DB_USERNAME = globalConfigurationProperties.getUsername();
             String DB_PASSWORD = globalConfigurationProperties.getPassword();
             store = new MySQLFullPrunedBlockStore(params, blockCount, DB_HOSTNAME, DB_NAME, DB_USERNAME, DB_PASSWORD);
-        } catch (RuntimeException e) {
+          //  ((MySQLFullPrunedBlockStore)store).initFromDatabase(); 
+            // delete + create +initFromDatabase
+            ((MySQLFullPrunedBlockStore)store).resetStore();
+        } catch (Exception e) {
+            System.out.println(e);
         }
         // reset pro @test
-        resetStore(store);
+     
         return store;
     }
 
@@ -132,6 +137,14 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
                     + cumulativweigths.get(re.get(i).getHash()));
             i++;
         }
+        
+        Iterator it = cumulativweigths.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<Sha256Hash, Set<Sha256Hash>> pair = (Map.Entry<Sha256Hash, Set<Sha256Hash>>) it.next();
+            System.out.println(
+                    "hash : " + pair.getKey() + " \n  size " + pair.getValue().size() + "-> " + pair.getValue());
+        }
+
     }
 
     @Test
@@ -166,10 +179,12 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
     @Test
     public void getBlockToApprove() throws Exception {
         final SecureRandom random = new SecureRandom();
+        for (int i = 1; i < 20000; i++) {
         Sha256Hash b0Sha256Hash = tipsManager.blockToApprove(PARAMS.getGenesisBlock().getHash(), null, 27, 27, random);
         Sha256Hash b1Sha256Hash = tipsManager.blockToApprove(PARAMS.getGenesisBlock().getHash(), null, 27, 27, random);
         System.out.println("b0Sha256Hash : " + b0Sha256Hash.toString());
         System.out.println("b1Sha256Hash : " + b1Sha256Hash.toString());
+        }
     }
 
     @Test
@@ -197,4 +212,6 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
         // 27, 27, random);
 
     }
+    
+  
 }

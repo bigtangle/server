@@ -772,7 +772,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * @throws BlockStoreException
      *             If there is a block store error.
      */
-    private void initFromDatabase() throws SQLException, BlockStoreException {
+    public void initFromDatabase() throws SQLException, BlockStoreException {
         PreparedStatement ps = conn.get().prepareStatement(getSelectSettingsSQL());
         ResultSet rs;
         ps.setString(1, CHAIN_HEAD_SETTING);

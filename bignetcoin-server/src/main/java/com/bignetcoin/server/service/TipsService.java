@@ -47,10 +47,8 @@ public class TipsService {
 
     private int RATING_THRESHOLD = 75; // Must be in [0..100] range
 
-    private boolean shuttingDown = false;
     private int RESCAN_TX_TO_REQUEST_INTERVAL = 750;
     private int maxDepth;
-    private Thread solidityRescanHandle;
 
     public void setRATING_THRESHOLD(int value) {
         if (value < 0)
@@ -328,10 +326,10 @@ public class TipsService {
         // if tip unconfirmed, check if any referenced tx is confirmed below
         // maxDepth
         Queue<Sha256Hash> nonAnalyzedBlocks = new LinkedList<>(Collections.singleton(tip));
-        Set<Sha256Hash> analyzedTranscations = new HashSet<>();
+        Set<Sha256Hash> analyzeds = new HashSet<>();
         Sha256Hash hash;
         while ((hash = nonAnalyzedBlocks.poll()) != null) {
-            if (analyzedTranscations.add(hash)) {
+            if (analyzeds.add(hash)) {
                 BlockEvaluation b = blockService.getBlockEvaluation(hash);
                 if (b == null)
                     return false;
