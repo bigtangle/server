@@ -17,6 +17,7 @@ import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.wallet.Wallet.BalanceType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,7 @@ public class TransactionServiceTest extends MySQLFullPrunedBlockChainTest {
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
         ECKey outKey = new ECKey();
         int height = 1;
+        System.out.println(outKey.getPublicKeyAsHex());
 
         // Build some blocks on genesis block to create a spendable output
         Block rollingBlock = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS,
@@ -79,7 +81,10 @@ public class TransactionServiceTest extends MySQLFullPrunedBlockChainTest {
         UTXO output = outputs.get(0);
         assertEquals("The address is not equal", address.toString(), output.getAddress());
         assertEquals("The amount is not equal", totalAmount, output.getValue());
-
+        List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
+        pubKeyHashs.add(outKey.getPubKeyHash());
+       Coin coin= transactionService.getBalance(BalanceType.ESTIMATED,pubKeyHashs);
+       System.out.println("coin value:"+coin.value);
         outputs = null;
         output = null;
         try {

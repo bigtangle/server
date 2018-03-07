@@ -18,7 +18,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.wallet.Wallet.BalanceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,6 +93,13 @@ public class API {
             }
             switch (command) {
 
+            case "askTransaction": {
+                final List<String> addresses = getParameterAsList(request, "addresses", HASH_SIZE);
+                final List<String> tips = request.containsKey("tips") ? getParameterAsList(request, "tips ", HASH_SIZE)
+                        : null;
+                final int threshold = getParameterAsInt(request, "threshold");
+                return getBalancesStatement(addresses, tips, threshold);
+            }
             case "getBalances": {
                 final List<String> addresses = getParameterAsList(request, "addresses", HASH_SIZE);
                 final List<String> tips = request.containsKey("tips") ? getParameterAsList(request, "tips ", HASH_SIZE)
@@ -167,11 +176,11 @@ public class API {
     }
 
     private List<Sha256Hash> getBlockToApproveStatement(int depth, String reference, int numWalks) throws Exception {
-        List<Sha256Hash>  re= new ArrayList<Sha256Hash>();
+        List<Sha256Hash> re = new ArrayList<Sha256Hash>();
         final SecureRandom random = new SecureRandom();
-        re.add(  tipsService.blockToApprove(null, null, depth, numWalks, random)) ;
-        re.add(  tipsService.blockToApprove(null, null, depth, numWalks, random)) ;
-         return re;
+        re.add(tipsService.blockToApprove(null, null, depth, numWalks, random));
+        re.add(tipsService.blockToApprove(null, null, depth, numWalks, random));
+        return re;
     }
 
     private AbstractResponse wereAddressesSpentFromStatement(List<String> addressesStr) throws Exception {
@@ -231,6 +240,11 @@ public class API {
 
     }
 
+    // private AbstractResponse askTransaction(String pubkey,String address,Long
+    // coinvalue) {
+    //
+    // }
+
     private HashSet<String> getParameterAsSet(Map<String, Object> request, String paramName, int size) {
 
         HashSet<String> result = getParameterAsList(request, paramName, size).stream()
@@ -246,20 +260,21 @@ public class API {
             return ErrorResponse.create("Illegal 'threshold'");
         }
 
-        final List<Sha256Hash> addresses = addrss.stream().map(address -> (new Sha256Hash(address)))
-                .collect(Collectors.toCollection(LinkedList::new));
-        final List<Sha256Hash> hashes;
         final Map<String, Coin> balances = new HashMap<>();
 
         for (final String address : addrss) {
             List<byte[]> l = new ArrayList<byte[]>();
-            l.add(HEX.decode(address));
-            Coin value = transactionService.getBalance(l);
-
+            System.out.println("addr:" + address);
+            byte[] bytes = HEX.decode(address);
+            ECKey key = ECKey.fromPublicOnly(bytes);
+            System.out.println("bytes:" + key.getPubKeyHash().length);
+            l.add(key.getPubKeyHash());
+            Coin value = transactionService.getBalance(BalanceType.ESTIMATED,l);
+            System.out.println(value.value);
             balances.put(address, value);
         }
 
-        final List<String> elements = addresses.stream().map(address -> balances.get(address).toString())
+        final List<String> elements = addrss.stream().map(address -> balances.get(address).toString())
                 .collect(Collectors.toCollection(LinkedList::new));
 
         return GetBalancesResponse.create(elements, null, 0);
