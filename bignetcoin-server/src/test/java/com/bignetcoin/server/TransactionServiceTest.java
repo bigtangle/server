@@ -118,7 +118,7 @@ public class TransactionServiceTest extends MySQLFullPrunedBlockChainTest {
         // assertEquals("Available balance is incorrect", Coin.ZERO,
         // wallet.getBalance(Wallet.BalanceType.AVAILABLE));
         List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
-        pubKeyHashs.add(outKey.getPubKey());
+        pubKeyHashs.add(outKey.getPubKeyHash());
        Coin coin= transactionService.getBalance(pubKeyHashs);
        System.out.println(coin.value);
     }
