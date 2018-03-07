@@ -27,7 +27,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import com.bignetcoin.server.config.GlobalConfigurationProperties;
 import com.bignetcoin.server.service.BlockService;
 import com.bignetcoin.server.service.TipsService;
-import com.bignetcoin.server.service.TransactionService;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -122,7 +121,7 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
     public void cumulativweigth() throws Exception {
         List<Block> re = createBlock();
         Map<Sha256Hash, Long> cumulativweigths = new HashMap<Sha256Hash, Long>();
-        tipsManager.recursiveUpdateRatings(re.get(0).getHash(), cumulativweigths, new HashSet<>());
+        tipsManager.recursiveUpdateCumulativeweights(re.get(0).getHash(), cumulativweigths, new HashSet<>());
         int i = 0;
         for (Block block : re) {
             System.out.println("  " + i + " block:" + block.getHashAsString() + " cumulativweigth : "
@@ -132,23 +131,12 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
     }
 
     @Test
-    public void updateLinearRatingsTestWorks() throws Exception {
-        // Map<Sha256Hash, Set<Sha256Hash>> blockRatings0 = new
-        // HashMap<Sha256Hash, Set<Sha256Hash>>();
-        // tipsManager.updateHashRatings(rollingBlock1.getHash(), blockRatings0,
-        // new HashSet<>());
-        // System.out.println(blockRatings0);
-
-        Map<Sha256Hash, Set<Sha256Hash>> blockRatings1 = new HashMap<Sha256Hash, Set<Sha256Hash>>();
-        tipsManager.updateHashRatings(PARAMS.getGenesisBlock().getHash(), blockRatings1, new HashSet<>());
-        /*
-         * for (Entry<Sha256Hash, Set<Sha256Hash>> entry :
-         * blockRatings1.entrySet()) { System.out.println("hash : " +
-         * entry.getKey().toString() + " rating"); for (Sha256Hash sha256Hash :
-         * entry.getValue()) { System.out.println("hash : " +
-         * sha256Hash.toString()); } }
-         */
-        for (Sha256Hash sha256Hash : blockRatings1.get(PARAMS.getGenesisBlock().getHash())) {
+    public void updateLinearCumulativeweightsTestWorks() throws Exception {
+     
+        Map<Sha256Hash, Set<Sha256Hash>> blockCumulativeweights1 = new HashMap<Sha256Hash, Set<Sha256Hash>>();
+        tipsManager.updateHashCumulativeweights(PARAMS.getGenesisBlock().getHash(), blockCumulativeweights1, new HashSet<>());
+        
+        for (Sha256Hash sha256Hash : blockCumulativeweights1.get(PARAMS.getGenesisBlock().getHash())) {
             System.out.println("hash : " + sha256Hash.toString());
         }
     }
