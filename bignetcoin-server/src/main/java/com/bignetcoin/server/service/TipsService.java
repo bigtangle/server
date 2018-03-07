@@ -7,6 +7,7 @@ package com.bignetcoin.server.service;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -59,25 +60,6 @@ public class TipsService {
         RATING_THRESHOLD = value;
     }
 
-    public void init() {
-        solidityRescanHandle = new Thread(() -> {
-
-            while (!shuttingDown) {
-                try {
-                    scanTipsForSolidity();
-                } catch (Exception e) {
-                    log.error("Error during solidity scan : {}", e);
-                }
-                try {
-                    Thread.sleep(RESCAN_TX_TO_REQUEST_INTERVAL);
-                } catch (InterruptedException e) {
-                    log.error("Solidity rescan interrupted.");
-                }
-            }
-        }, "Tip Solidity Rescan");
-        solidityRescanHandle.start();
-    }
-
     private void scanTipsForSolidity() throws Exception {
         int size = tipsViewModel.nonSolidSize();
         if (size != 0) {
@@ -89,7 +71,7 @@ public class TipsService {
             }
             if (hash != null && isTip && blockValidator.checkSolidity(hash, false)) {
                 // if(hash != null &&
-                // TransactionViewModel.fromHash(hash).isSolid() && isTip) {
+                // BlockViewModel.fromHash(hash).isSolid() && isTip) {
                 tipsViewModel.setSolid(hash);
             }
         }
@@ -103,19 +85,20 @@ public class TipsService {
         } else {
             msDepth = depth;
         }
-        Map<Sha256Hash, Long> ratings = new HashMap<Sha256Hash, Long>();
+        Map<Sha256Hash, Long> cumulativeweights = new HashMap<Sha256Hash, Long>();
         Set<Sha256Hash> analyzedTips = new HashSet<Sha256Hash>();
         Set<Sha256Hash> maxDepthOk = new HashSet<Sha256Hash>();
         try {
             Sha256Hash entryPointTipSha256Hash = entryPoint(reference);
-            // serialUpdateCumulativeweights(entryPointTipSha256Hash, ratings,
+            // serialUpdateCumulativeweights(entryPointTipSha256Hash,
+            // cumulativeweights,
             // analyzedTips, extraTip);
             // recursiveUpdateCumulativeweights(entryPointTipSha256Hash,
-            // ratings,
+            // cumulativeweights,
             // analyzedTips);
-            System.out.println(ratings);
+            System.out.println(cumulativeweights);
             analyzedTips.clear();
-            return markovChainMonteCarlo(entryPointTipSha256Hash, extraTip, ratings, iterations,
+            return markovChainMonteCarlo(entryPointTipSha256Hash, extraTip, cumulativeweights, iterations,
                     milestone.latestSolidSubtangleMilestoneIndex - depth * 2, maxDepthOk, seed);
         } catch (Exception e) {
             e.printStackTrace();
@@ -132,12 +115,12 @@ public class TipsService {
     }
 
     Sha256Hash markovChainMonteCarlo(final Sha256Hash tip, final Sha256Hash extraTip,
-            final Map<Sha256Hash, Long> ratings, final int iterations, final int maxDepth,
+            final Map<Sha256Hash, Long> cumulativeweights, final int iterations, final int maxDepth,
             final Set<Sha256Hash> maxDepthOk, final Random seed) throws Exception {
         Map<Sha256Hash, Integer> monteCarloIntegrations = new HashMap<>();
         Sha256Hash tail;
         for (int i = iterations; i-- > 0;) {
-            tail = randomWalk(tip, extraTip, ratings, maxDepth, maxDepthOk, seed);
+            tail = randomWalk(tip, extraTip, cumulativeweights, maxDepth, maxDepthOk, seed);
             if (monteCarloIntegrations.containsKey(tail)) {
                 monteCarloIntegrations.put(tail, monteCarloIntegrations.get(tail) + 1);
             } else {
@@ -157,13 +140,14 @@ public class TipsService {
         }).map(Map.Entry::getKey).orElse(null);
     }
 
-    Sha256Hash randomWalk(final Sha256Hash start, final Sha256Hash extraTip, final Map<Sha256Hash, Long> ratings,
-            final int maxDepth, final Set<Sha256Hash> maxDepthOk, Random rnd) throws Exception {
+    Sha256Hash randomWalk(final Sha256Hash start, final Sha256Hash extraTip,
+            final Map<Sha256Hash, Long> cumulativeweights, final int maxDepth, final Set<Sha256Hash> maxDepthOk,
+            Random rnd) throws Exception {
         Sha256Hash tip = start;
         Sha256Hash[] tipApprovers;
         Set<Sha256Hash> analyzedTips = new HashSet<>();
         int approverIndex;
-        double ratingWeight;
+        double cumulativeweightWeight;
         double[] walkCumulativeweights;
 
         while (tip != null) {
@@ -180,26 +164,27 @@ public class TipsService {
                 tip = approvers.get(0);
             } else {
                 tipApprovers = approvers.toArray(new Sha256Hash[approvers.size()]);
-                if (!ratings.containsKey(tip)) {
-                    // serialUpdateCumulativeweights(tip, ratings, analyzedTips,
+                if (!cumulativeweights.containsKey(tip)) {
+                    // serialUpdateCumulativeweights(tip, cumulativeweights,
+                    // analyzedTips,
                     // extraTip);
-                    recursiveUpdateCumulativeweights(tip, ratings, analyzedTips);
+                    recursiveUpdateCumulativeweights(tip, cumulativeweights, analyzedTips);
                     analyzedTips.clear();
                 }
 
                 walkCumulativeweights = new double[tipApprovers.length];
                 double maxCumulativeweight = 0;
-                long tipCumulativeweight = ratings.get(tip);
+                long tipCumulativeweight = cumulativeweights.get(tip);
                 for (int i = 0; i < tipApprovers.length; i++) {
                     // transition probability = ((Hx-Hy)^-3)/maxCumulativeweight
-                    walkCumulativeweights[i] = Math.pow(tipCumulativeweight - ratings.getOrDefault(tipApprovers[i], 0L),
-                            -3);
+                    walkCumulativeweights[i] = Math
+                            .pow(tipCumulativeweight - cumulativeweights.getOrDefault(tipApprovers[i], 0L), -3);
                     maxCumulativeweight += walkCumulativeweights[i];
                 }
-                ratingWeight = rnd.nextDouble() * maxCumulativeweight;
+                cumulativeweightWeight = rnd.nextDouble() * maxCumulativeweight;
                 for (approverIndex = tipApprovers.length; approverIndex-- > 1;) {
-                    ratingWeight -= walkCumulativeweights[approverIndex];
-                    if (ratingWeight <= 0) {
+                    cumulativeweightWeight -= walkCumulativeweights[approverIndex];
+                    if (cumulativeweightWeight <= 0) {
                         break;
                     }
                 }
@@ -217,7 +202,7 @@ public class TipsService {
         return a + b;
     }
 
-    void serialUpdateCumulativeweights(final Sha256Hash txHash, final Map<Sha256Hash, Long> ratings,
+    void serialUpdateCumulativeweights(final Sha256Hash txHash, final Map<Sha256Hash, Long> cumulativeweights,
             final Set<Sha256Hash> analyzedTips, final Sha256Hash extraTip) throws Exception {
         Stack<Sha256Hash> hashesToRate = new Stack<Sha256Hash>();
         hashesToRate.push(txHash);
@@ -228,7 +213,7 @@ public class TipsService {
             List<Sha256Hash> approvers = blockService.getApproverBlockHash(txHash);
             addedBack = false;
             for (Sha256Hash approver : approvers) {
-                if (ratings.get(approver) == null && !approver.equals(currentHash)) {
+                if (cumulativeweights.get(approver) == null && !approver.equals(currentHash)) {
                     if (!addedBack) {
                         addedBack = true;
                         hashesToRate.push(currentHash);
@@ -237,33 +222,38 @@ public class TipsService {
                 }
             }
             if (!addedBack && analyzedTips.add(currentHash)) {
-                long rating = approvers.stream().map(ratings::get).filter(Objects::nonNull)
+                long cumulativeweight = approvers.stream().map(cumulativeweights::get).filter(Objects::nonNull)
                         .reduce((a, b) -> capSum(a, b, Long.MAX_VALUE / 2)).orElse(0L);
-                ratings.put(currentHash, rating);
+                cumulativeweights.put(currentHash, cumulativeweight);
             }
         }
     }
 
-    public Set<Sha256Hash> updateHashCumulativeweights(Sha256Hash txHash, Map<Sha256Hash, Set<Sha256Hash>> ratings,
-            Set<Sha256Hash> analyzedTips) throws Exception {
-        Set<Sha256Hash> rating;
+    public Set<Sha256Hash> updateHashCumulativeweights(Sha256Hash txHash,
+            Map<Sha256Hash, Set<Sha256Hash>> cumulativeweights, Set<Sha256Hash> analyzedTips) throws Exception {
+        Set<Sha256Hash> cumulativeweight;
         if (analyzedTips.add(txHash)) {
             List<Sha256Hash> approvers = blockService.getApproverBlockHash(txHash);
-            rating = new HashSet<>(Collections.singleton(txHash));
+            cumulativeweight = new HashSet<>(Collections.singleton(txHash));
             for (Sha256Hash approver : approvers) {
-                rating.addAll(updateHashCumulativeweights(approver, ratings, analyzedTips));
+                cumulativeweight.addAll(updateHashCumulativeweights(approver, cumulativeweights, analyzedTips));
             }
-            ratings.put(txHash, rating);
+            cumulativeweights.put(txHash, cumulativeweight);
         } else {
-            if (ratings.containsKey(txHash)) {
-                rating = ratings.get(txHash);
+            if (cumulativeweights.containsKey(txHash)) {
+                cumulativeweight = cumulativeweights.get(txHash);
             } else {
-                rating = new HashSet<>();
+                cumulativeweight = new HashSet<>();
             }
         }
-        return rating;
+        return cumulativeweight;
     }
 
+    /*
+     * cumulative weight of a block: it is defined as the own weight of this
+     * block plus the sum of own weights of all blocks that approve our block
+     * directly or indirectly.
+     */
     public long recursiveUpdateCumulativeweights(Sha256Hash txHash, Map<Sha256Hash, Long> cumulativeweights,
             Set<Sha256Hash> analyzedTips) throws Exception {
         long cumulativeweight = 1;
@@ -287,18 +277,60 @@ public class TipsService {
         return cumulativeweight;
     }
 
+    /*
+     * the length of the longest reverse-oriented path to some tip.
+     */
+    public void recursiveUpdateDepth(Sha256Hash start, Map<Sha256Hash, Long> depths) throws Exception {
+        Map<Sha256Hash, Set<Sha256Hash>> blockCumulativeweights1 = new HashMap<Sha256Hash, Set<Sha256Hash>>();
+        updateHashCumulativeweights(start, blockCumulativeweights1, new HashSet<>());
+
+        Iterator it = blockCumulativeweights1.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<Sha256Hash, Set<Sha256Hash>> pair = (Map.Entry<Sha256Hash, Set<Sha256Hash>>) it.next();
+            depths.put(pair.getKey(), new Long(pair.getValue().size()));
+            // System.out.println(
+            // "hash : " + pair.getKey() + " \n size " + pair.getValue().size()
+            // + "-> " + pair.getValue());
+        }
+
+    }
+
+    /*
+     * the length of the longest reverse-oriented path to some tip.
+     */
+    public void recursiveUpdateDepth(Sha256Hash tip, Map<Sha256Hash, Long> depths, Set<Sha256Hash> analyzedBlocks)
+            throws Exception {
+
+        Queue<Sha256Hash> nonAnalyzedBlocks = new LinkedList<>(Collections.singleton(tip));
+        Sha256Hash txHash;
+        while ((txHash = nonAnalyzedBlocks.poll()) != null) {
+            Long depth = depths.get(txHash);
+            if (depth != null) {
+                depths.put(txHash, depth + 1l);
+            } else {
+                depths.put(txHash, 1l);
+            }
+            if (analyzedBlocks.add(txHash) && !txHash.equals(Sha256Hash.ZERO_HASH)) {
+                Block b = blockService.getBlock(txHash);
+                nonAnalyzedBlocks.offer(b.getPrevBlockHash());
+                nonAnalyzedBlocks.offer(b.getPrevBranchBlockHash());
+
+            }
+        }
+    }
+
     boolean belowMaxDepth(Sha256Hash tip, int depth, Set<Sha256Hash> maxDepthOk) throws Exception {
         // if tip is confirmed stop
         /*
-         * if (TransactionViewModel.fromHash(tangle, tip).snapshotIndex() >=
-         * depth) { return false; }
+         * if (BlockViewModel.fromHash(tangle, tip).snapshotIndex() >= depth) {
+         * return false; }
          */
         // if tip unconfirmed, check if any referenced tx is confirmed below
         // maxDepth
-        Queue<Sha256Hash> nonAnalyzedTransactions = new LinkedList<>(Collections.singleton(tip));
+        Queue<Sha256Hash> nonAnalyzedBlocks = new LinkedList<>(Collections.singleton(tip));
         Set<Sha256Hash> analyzedTranscations = new HashSet<>();
         Sha256Hash hash;
-        while ((hash = nonAnalyzedTransactions.poll()) != null) {
+        while ((hash = nonAnalyzedBlocks.poll()) != null) {
             if (analyzedTranscations.add(hash)) {
                 BlockEvaluation b = blockService.getBlockEvaluation(hash);
                 if (b == null)
@@ -306,8 +338,8 @@ public class TipsService {
                 if (b.getDepth() < depth) {
                     return true;
                 } else {
-                    nonAnalyzedTransactions.offer(blockService.getBlock(b.getBlockhash()).getPrevBlockHash());
-                    nonAnalyzedTransactions.offer(blockService.getBlock(b.getBlockhash()).getPrevBranchBlockHash());
+                    nonAnalyzedBlocks.offer(blockService.getBlock(b.getBlockhash()).getPrevBlockHash());
+                    nonAnalyzedBlocks.offer(blockService.getBlock(b.getBlockhash()).getPrevBranchBlockHash());
 
                 }
             }

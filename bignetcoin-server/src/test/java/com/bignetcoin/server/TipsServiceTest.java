@@ -4,6 +4,7 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -70,11 +71,12 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
         blockgraph = new FullPrunedBlockGraph(PARAMS, store);
     }
 
-    public void createLinearBlock() throws Exception {
-
+    public List<Block> createLinearBlock() throws Exception {
+        List<Block> blocks = new ArrayList<Block>();
         Block rollingBlock1 = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS,
                 outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock1);
+        blocks.add(rollingBlock1);
         System.out.println("create block, hash : " + rollingBlock1.getHashAsString());
 
         Block rollingBlock = rollingBlock1;
@@ -83,7 +85,9 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
                     height++, PARAMS.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
             System.out.println("create block, hash : " + rollingBlock.getHashAsString());
+            blocks.add(rollingBlock);
         }
+        return blocks;
     }
 
     public List<Block> createBlock() throws Exception {
@@ -131,14 +135,32 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
     }
 
     @Test
-    public void updateLinearCumulativeweightsTestWorks() throws Exception {
-     
-        Map<Sha256Hash, Set<Sha256Hash>> blockCumulativeweights1 = new HashMap<Sha256Hash, Set<Sha256Hash>>();
-        tipsManager.updateHashCumulativeweights(PARAMS.getGenesisBlock().getHash(), blockCumulativeweights1, new HashSet<>());
-        
-        for (Sha256Hash sha256Hash : blockCumulativeweights1.get(PARAMS.getGenesisBlock().getHash())) {
-            System.out.println("hash : " + sha256Hash.toString());
+    public void depth() throws Exception {
+        List<Block> re = createLinearBlock();
+        Map<Sha256Hash, Long> depths = new HashMap<Sha256Hash, Long>();
+        tipsManager.recursiveUpdateDepth(re.get(0).getHash(), depths);
+        int i = 0;
+        for (Block block : re) {
+            System.out.println(
+                    "  " + i + " block:" + block.getHashAsString() + " depth : " + depths.get(re.get(i).getHash()));
+            i++;
         }
+    }
+
+    @Test
+    public void updateLinearCumulativeweightsTestWorks() throws Exception {
+        createLinearBlock();
+        Map<Sha256Hash, Set<Sha256Hash>> blockCumulativeweights1 = new HashMap<Sha256Hash, Set<Sha256Hash>>();
+        tipsManager.updateHashCumulativeweights(PARAMS.getGenesisBlock().getHash(), blockCumulativeweights1,
+                new HashSet<>());
+
+        Iterator it = blockCumulativeweights1.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<Sha256Hash, Set<Sha256Hash>> pair = (Map.Entry<Sha256Hash, Set<Sha256Hash>>) it.next();
+            System.out.println(
+                    "hash : " + pair.getKey() + " \n  size " + pair.getValue().size() + "-> " + pair.getValue());
+        }
+
     }
 
     @Test
