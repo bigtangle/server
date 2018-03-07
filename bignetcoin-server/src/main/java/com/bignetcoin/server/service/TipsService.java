@@ -7,9 +7,11 @@ package com.bignetcoin.server.service;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 import java.util.Stack;
@@ -108,7 +110,8 @@ public class TipsService {
             Sha256Hash entryPointTipSha256Hash = entryPoint(reference);
             // serialUpdateRatings(entryPointTipSha256Hash, ratings,
             // analyzedTips, extraTip);
-           // recursiveUpdateRatings(entryPointTipSha256Hash, ratings, analyzedTips);
+            // recursiveUpdateRatings(entryPointTipSha256Hash, ratings,
+            // analyzedTips);
             System.out.println(ratings);
             analyzedTips.clear();
             return markovChainMonteCarlo(entryPointTipSha256Hash, extraTip, ratings, iterations,
@@ -165,7 +168,10 @@ public class TipsService {
         while (tip != null) {
 
             List<Sha256Hash> approvers = blockService.getApproverBlockHash(tip);
-
+            if (belowMaxDepth(tip, maxDepth, maxDepthOk)) {
+                log.info("Reason to stop: belowMaxDepth" + tip);
+                break;
+            }
             if (approvers.size() == 0) { // TODO check solidity
                 log.info("Reason to stop:  is a tip =" + tip);
                 break;
@@ -256,25 +262,54 @@ public class TipsService {
         return rating;
     }
 
-    long recursiveUpdateRatings(Sha256Hash txHash, Map<Sha256Hash, Long> ratings, Set<Sha256Hash> analyzedTips)
-            throws Exception {
-        long rating = 1;
+    public long recursiveUpdateRatings(Sha256Hash txHash, Map<Sha256Hash, Long> cumulativeweights,
+            Set<Sha256Hash> analyzedTips) throws Exception {
+        long cumulativeweight = 1;
         if (analyzedTips.add(txHash)) {
 
             List<Sha256Hash> approvers = blockService.getApproverBlockHash(txHash);
 
             for (Sha256Hash approver : approvers) {
-                rating = capSum(rating, recursiveUpdateRatings(approver, ratings, analyzedTips), Long.MAX_VALUE / 2);
+                cumulativeweight = capSum(cumulativeweight,
+                        recursiveUpdateRatings(approver, cumulativeweights, analyzedTips), Long.MAX_VALUE / 2);
             }
-            ratings.put(txHash, rating);
+            cumulativeweights.put(txHash, cumulativeweight);
         } else {
-            if (ratings.containsKey(txHash)) {
-                rating = ratings.get(txHash);
+            if (cumulativeweights.containsKey(txHash)) {
+                cumulativeweight = cumulativeweights.get(txHash);
             } else {
-                rating = 0;
+                cumulativeweight = 0;
             }
         }
-        return rating;
+        return cumulativeweight;
     }
 
+    boolean belowMaxDepth(Sha256Hash tip, int depth, Set<Sha256Hash> maxDepthOk) throws Exception {
+        // if tip is confirmed stop
+        /*
+         * if (TransactionViewModel.fromHash(tangle, tip).snapshotIndex() >=
+         * depth) { return false; }
+         */
+        // if tip unconfirmed, check if any referenced tx is confirmed below
+        // maxDepth
+        Queue<Sha256Hash> nonAnalyzedTransactions = new LinkedList<>(Collections.singleton(tip));
+        Set<Sha256Hash> analyzedTranscations = new HashSet<>();
+        Sha256Hash hash;
+        while ((hash = nonAnalyzedTransactions.poll()) != null) {
+            if (analyzedTranscations.add(hash)) {
+                BlockEvaluation b = blockService.getBlockEvaluation(hash);
+                if (b == null)
+                    return false;
+                if (b.getDepth() < depth) {
+                    return true;
+                } else {
+                    nonAnalyzedTransactions.offer(blockService.getBlock(b.getBlockhash()).getPrevBlockHash());
+                    nonAnalyzedTransactions.offer(blockService.getBlock(b.getBlockhash()).getPrevBranchBlockHash());
+
+                }
+            }
+        }
+        maxDepthOk.add(tip);
+        return false;
+    }
 }

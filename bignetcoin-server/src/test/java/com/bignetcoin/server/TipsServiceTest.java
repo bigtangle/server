@@ -27,6 +27,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import com.bignetcoin.server.config.GlobalConfigurationProperties;
 import com.bignetcoin.server.service.BlockService;
 import com.bignetcoin.server.service.TipsService;
+import com.bignetcoin.server.service.TransactionService;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -38,13 +39,8 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
     @Autowired
     private BlockService blockService;
 
-    @Test
-    public void testECKey() {
-        for (int i = 0; i < 1; i++) {
-            ECKey outKey = new ECKey();
-            System.out.println("prK : " + outKey.getPrivateKeyAsHex() + ", " + outKey.getPublicKeyAsHex());
-        }
-    }
+    ECKey outKey = new ECKey();
+    int height = 1;
 
     @Autowired
     private GlobalConfigurationProperties globalConfigurationProperties;
@@ -59,20 +55,23 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
             store = new MySQLFullPrunedBlockStore(params, blockCount, DB_HOSTNAME, DB_NAME, DB_USERNAME, DB_PASSWORD);
         } catch (RuntimeException e) {
         }
+        // reset pro @test
         resetStore(store);
         return store;
     }
 
-     //@Before
-    public void createBlock() throws Exception {
-        System.out.println("-------------------- create block started -------------------------");
+    // create simple linear blcoks
+    // each block point to genesis and prev block
+    @Before
+    public void setup() throws Exception {
+        super.setUp();
         final int UNDOABLE_BLOCKS_STORED = 10;
         store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
-        resetStore(store);
 
         blockgraph = new FullPrunedBlockGraph(PARAMS, store);
-        ECKey outKey = new ECKey();
-        int height = 1;
+    }
+
+    public void createLinearBlock() throws Exception {
 
         Block rollingBlock1 = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS,
                 outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
@@ -80,17 +79,20 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
         System.out.println("create block, hash : " + rollingBlock1.getHashAsString());
 
         Block rollingBlock = rollingBlock1;
-        for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
+        for (int i = 1; i < 5; i++) {
             rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                     height++, PARAMS.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
             System.out.println("create block, hash : " + rollingBlock.getHashAsString());
         }
+    }
 
-        Block b0 = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,
-                PARAMS.getGenesisBlock().getHash());
+    public List<Block> createBlock() throws Exception {
+
+        Block b0 = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+                height++, PARAMS.getGenesisBlock().getHash());
         Block b1 = b0.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,
-                rollingBlock.getHash());
+                PARAMS.getGenesisBlock().getHash());
         Block b2 = b1.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,
                 b0.getHash());
         Block b3 = b1.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,
@@ -106,27 +108,27 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
         blocks.add(b3);
         blocks.add(b4);
         blocks.add(b5);
+        int i = 0;
         for (Block block : blocks) {
             this.blockgraph.add(block);
-            System.out.println("create block, hash : " + block.getHashAsString());
+            System.out.println("create  " + i + " block:" + block.getHashAsString());
+            i++;
+
         }
+        return blocks;
+    }
 
-        // Map<Sha256Hash, Set<Sha256Hash>> blockRatings1 = new
-        // HashMap<Sha256Hash, Set<Sha256Hash>>();
-        // tipsManager.updateHashRatings(b2.getHash(), blockRatings1, new
-        // HashSet<>());
-        //
-        // for (Sha256Hash sha256Hash : blockRatings1.get(b2.getHash())) {
-        // System.out.println("hash : " + sha256Hash.toString());
-        // }
-
-        Map<Sha256Hash, Set<Sha256Hash>> blockRatings1 = new HashMap<Sha256Hash, Set<Sha256Hash>>();
-        tipsManager.updateHashRatings(b0.getHash(), blockRatings1, new HashSet<>());
-
-        for (Sha256Hash sha256Hash : blockRatings1.get(b0.getHash())) {
-            System.out.println("hash : " + sha256Hash.toString());
+    @Test
+    public void cumulativweigth() throws Exception {
+        List<Block> re = createBlock();
+        Map<Sha256Hash, Long> cumulativweigths = new HashMap<Sha256Hash, Long>();
+        tipsManager.recursiveUpdateRatings(re.get(0).getHash(), cumulativweigths, new HashSet<>());
+        int i = 0;
+        for (Block block : re) {
+            System.out.println("  " + i + " block:" + block.getHashAsString() + " cumulativweigth : "
+                    + cumulativweigths.get(re.get(i).getHash()));
+            i++;
         }
-        System.out.println("-------------------- create block end -------------------------");
     }
 
     @Test
@@ -159,19 +161,20 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
         System.out.println("b0Sha256Hash : " + b0Sha256Hash.toString());
         System.out.println("b1Sha256Hash : " + b1Sha256Hash.toString());
     }
+
     @Test
     public void getBlockToApproveTest2() throws Exception {
-         createBlock();
+        createBlock();
         ECKey outKey = new ECKey();
         int height = 1;
 
         for (int i = 1; i < 20; i++) {
             Block r1 = blockService.getBlock(getNextBlockToApprove());
             Block r2 = blockService.getBlock(getNextBlockToApprove());
-            Block rollingBlock = r2.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,
-                    r1.getHash());
+            Block rollingBlock = r2.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+                    height++, r1.getHash());
             blockgraph.add(rollingBlock);
-            System.out.println("create block  : "+ i + " " + rollingBlock);
+            System.out.println("create block  : " + i + " " + rollingBlock);
         }
 
     }
