@@ -178,6 +178,9 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
             System.out.println(
                     "  " + i + " block:" + block.getHashAsString() + " depth : " + depths.get(re.get(i).getHash()));
             i++;
+            Sha256Hash blockhash = block.getHash();
+            Long depth = depths.get(re.get(i).getHash());
+            this.store.updateBlockEvaluationDepth(blockhash, depth.intValue());
         }
     }
 
@@ -188,11 +191,14 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
         tipsManager.updateHashCumulativeweights(PARAMS.getGenesisBlock().getHash(), blockCumulativeweights1,
                 new HashSet<>());
 
-        Iterator it = blockCumulativeweights1.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<Sha256Hash, Set<Sha256Hash>> pair = (Map.Entry<Sha256Hash, Set<Sha256Hash>>) it.next();
+        Iterator<Map.Entry<Sha256Hash, Set<Sha256Hash>>> iterator = blockCumulativeweights1.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Sha256Hash, Set<Sha256Hash>> pair = (Map.Entry<Sha256Hash, Set<Sha256Hash>>) iterator.next();
             System.out.println(
                     "hash : " + pair.getKey() + " \n  size " + pair.getValue().size() + "-> " + pair.getValue());
+            Sha256Hash blockhash = pair.getKey();
+            int cumulativeweight = pair.getValue().size();
+            this.store.updateBlockEvaluationCumulativeweight(blockhash, cumulativeweight);
         }
 
     }
