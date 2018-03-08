@@ -12,12 +12,17 @@ import java.util.Map;
 
 import org.bitcoinj.core.ECKey;
 import org.junit.Test;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.jayway.restassured.RestAssured;
-
-public class APIIntegrationTests {
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+ 
+public class APIIntegrationTests extends AbstractIntegrationTest{
 
     private static final Gson gson = new GsonBuilder().create();
 
@@ -170,9 +175,10 @@ public class APIIntegrationTests {
      * application/json' \ -d '{"command": "getBalances", "addresses":
      * ["HBBYKAKTILIPVUKFOTSLHGENPTXYBNKXZFQFR9VQFWNBMTQNRVOUKPVPRNBSZVVILMAFBKOTBLGLWLOHQ"],
      * "threshold": 100}'
+     * @throws Exception 
      */
     @Test
-    public void shouldTestGetBalances() {
+    public void shouldTestGetBalances() throws Exception {
         ECKey key = new ECKey();
         String addr = "030d8952f6c079f60cd26eb3ba83cf16a81c51fc8e47b767721fa38b5e20092a75";
         final Map<String, Object> request = new HashMap<>();
@@ -180,9 +186,13 @@ public class APIIntegrationTests {
         request.put("addresses", new String[] { addr });
         request.put("threshold", 100);
 
-        given().contentType("application/json").header("X-IOTA-API-Version", 1).body(gson.toJson(request)).when()
-                .post("/").then().body(containsString("milestone")).body(containsString("milestoneIndex"))
-                .statusCode(200);
+ 
+        MockHttpServletRequestBuilder httprequest = post(contextRoot).content(gson.toJson(request));
+       MvcResult s = getMockMvc().perform(httprequest)
+        .andExpect(status().isOk())
+      //  .andExpect(jsonPath("$._links.self.href", CoreMatchers.is(expectedLink)))
+        .andReturn();      
+       System.out.println(s.getResponse().getContentAsString());
     }
 
     /**
