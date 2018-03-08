@@ -36,11 +36,7 @@ dependencies {
 	compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version:ver.bcprov_jdk15on
 	
     compile group: 'commons-io', name: 'commons-io', version:ver.commons_io
-   
-    compile group: 'com.google.code.gson', name: 'gson', version:ver.gson
-   
-    compile group: 'com.jayway.restassured', name: 'rest-assured', version:ver.rest_assured
-   
+     
     compile project(':bignetcoin-core')
             
     /**

@@ -36,7 +36,11 @@ public class MySQLDBStoreConfiguration {
 
         try {
             MySQLFullPrunedBlockStore store = new MySQLFullPrunedBlockStore(params, fullStoreDepth, hostname+ ":"+ port, dbName, username, password);
+            try {
             store.initFromDatabase();
+            }catch (Exception e) {
+                // TODO: handle exception
+            }
             return store;
                      
         } catch (Exception e) {

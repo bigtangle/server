@@ -27,25 +27,25 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = { })
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {})
 
-//TODO Fix for incompatible mockito version. We use 2+ but spring 1.4.2 only supports 1.X.
-//ResetMocksTestExecutionListener would be loaded by default and crashes on runtime.
-//So we have to define our TestExecutionListeners manually.
-//Remove this as soon as we have Spring >= 1.5.0
-@TestExecutionListeners(value = {
-        DependencyInjectionTestExecutionListener.class,
-        MockitoTestExecutionListener.class,
+// TODO Fix for incompatible mockito version. We use 2+ but spring 1.4.2 only
+// supports 1.X.
+// ResetMocksTestExecutionListener would be loaded by default and crashes on
+// runtime.
+// So we have to define our TestExecutionListeners manually.
+// Remove this as soon as we have Spring >= 1.5.0
+@TestExecutionListeners(value = { DependencyInjectionTestExecutionListener.class, MockitoTestExecutionListener.class,
         DirtiesContextTestExecutionListener.class
 
 })
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-public   class AbstractIntegrationTest extends MySQLFullPrunedBlockChainTest {
- 
+public class AbstractIntegrationTest extends MySQLFullPrunedBlockChainTest {
+
     private static final String CONTEXT_ROOT_TEMPLATE = "http://localhost:%s/";
-    
+
     public String contextRoot;
-    
+
     private MockMvc mockMvc;
     private static ObjectMapper objectMapper;
 
@@ -57,27 +57,25 @@ public   class AbstractIntegrationTest extends MySQLFullPrunedBlockChainTest {
     @Autowired
     private GlobalConfigurationProperties globalConfigurationProperties;
 
-    
     @Autowired
     public void prepareContextRoot(@Value("${local.server.port}") int port) {
         contextRoot = String.format(CONTEXT_ROOT_TEMPLATE, port);
-         
+
     }
-    
-  
+
     @Before
     public void setUp() throws Exception {
         mockMvc = MockMvcBuilders.webAppContextSetup(webContext).build();
-       // objectMapper = new ObjectMapper().registerModule(new Jackson2HalModule());
+        objectMapper = new ObjectMapper();
+        // registerModule(new Jackson2HalModule());
         final int UNDOABLE_BLOCKS_STORED = 10;
         store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
 
         blockgraph = new FullPrunedBlockGraph(PARAMS, store);
     }
 
- 
     public String toJson(Object object) throws JsonProcessingException {
-            return getMapper().writeValueAsString(object);
+        return getMapper().writeValueAsString(object);
     }
 
     public static ObjectMapper getMapper() {
@@ -87,8 +85,6 @@ public   class AbstractIntegrationTest extends MySQLFullPrunedBlockChainTest {
     public String getContextRoot() {
         return contextRoot;
     }
-
-  
 
     public ConfigurableApplicationContext getApplicationContext() {
         return applicationContext;
