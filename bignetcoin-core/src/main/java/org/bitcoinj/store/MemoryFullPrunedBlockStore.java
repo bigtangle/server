@@ -420,7 +420,6 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
 
     @Override
     public List<StoredBlock> getApproverBlocks(Sha256Hash hash) throws BlockStoreException {
-        // TODO Auto-generated method stub
         return null;
     }
 
@@ -431,7 +430,19 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
 
     @Override
     public List<Sha256Hash> getApproverBlockHash(Sha256Hash hash) throws BlockStoreException {
-        // TODO Auto-generated method stub
         return null;
+    }
+
+    @Override
+    public void saveBlockEvaluation(Sha256Hash blockhash, int rating, int depth, int cumulativeweight, boolean solid)
+            throws BlockStoreException {
+    }
+
+    @Override
+    public void saveBlockEvaluation(BlockEvaluation blockEvaluation) throws BlockStoreException {
+    }
+
+    @Override
+    public void removeBlockEvaluation(Sha256Hash hash) throws BlockStoreException {
     }
 }

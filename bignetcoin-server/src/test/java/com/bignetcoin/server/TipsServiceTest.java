@@ -1,7 +1,6 @@
 package com.bignetcoin.server;
 
 import java.security.SecureRandom;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.bitcoinj.core.Block;
+import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.FullPrunedBlockGraph;
 import org.bitcoinj.core.MySQLFullPrunedBlockChainTest;
@@ -33,6 +33,27 @@ import com.bignetcoin.server.service.TipsService;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
+    
+    @Test
+    public void testBlockEvaluationDb() throws Exception {
+        List<Block> blocks = this.createBlock();
+        for (Block block : blocks) {
+            BlockEvaluation blockEvaluation = new BlockEvaluation();
+            blockEvaluation.setBlockhash(block.getHash());
+            blockEvaluation.setCumulativeweight(100);
+            blockEvaluation.setDepth(99);
+            blockEvaluation.setRating(98);
+            blockEvaluation.setSolid(true);
+            this.store.saveBlockEvaluation(blockEvaluation);
+        }
+        int i = 0;
+        for (Block block : blocks) {
+            if (i % 2 == 0) {
+                this.store.removeBlockEvaluation(block.getHash());
+            }
+            i ++;
+        }
+    }
 
     @Autowired
     private TipsService tipsManager;
