@@ -7,6 +7,18 @@ import org.bitcoinj.core.Sha256Hash;
  */
 public class BlockEvaluation {
 
+    public BlockEvaluation() {
+    }
+    
+    public static BlockEvaluation build(Sha256Hash blockhash, int rating, int depth, int cumulativeweight) {
+        BlockEvaluation blockEvaluation = new BlockEvaluation();
+        blockEvaluation.setBlockhash(blockhash);
+        blockEvaluation.setRating(rating);
+        blockEvaluation.setDepth(depth);
+        blockEvaluation.setCumulativeweight(cumulativeweight);
+        return blockEvaluation;
+    }
+
     public Sha256Hash blockhash;
     public int rating;
     public int depth;

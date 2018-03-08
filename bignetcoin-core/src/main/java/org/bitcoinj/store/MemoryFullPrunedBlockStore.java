@@ -445,4 +445,13 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     @Override
     public void removeBlockEvaluation(Sha256Hash hash) throws BlockStoreException {
     }
+
+    @Override
+    public void updateBlockEvaluationDepth(Sha256Hash blockhash, int depth) throws BlockStoreException {
+    }
+
+    @Override
+    public void updateBlockEvaluationCumulativeweight(Sha256Hash blockhash, int cumulativeweight)
+            throws BlockStoreException {
+    }
 }

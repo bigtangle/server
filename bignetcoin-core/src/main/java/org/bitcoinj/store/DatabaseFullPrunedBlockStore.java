@@ -246,7 +246,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     private static final String SELECT_BLOCKEVALUATION_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid FROM blockevaluation WHERE blockhash = ?";
     private static final String DELETE_BLOCKEVALUATION_SQL = "DELETE FROM blockevaluation WHERE blockhash = ?";
-    private static final String UPDATE_BLOCKEVALUATION_SQL = "";
+    private static final String UPDATE_BLOCKEVALUATION_DEPTH_SQL = "UPDATE blockevaluation SET depth = ? WHERE blockhash = ?";
+    private static final String UPDATE_BLOCKEVALUATION_CUMULATIVEWEIGHT_SQL = "UPDATE blockevaluation SET cumulativeweight = ? WHERE blockhash = ?";
     private static final String INSERT_BLOCKEVALUATION_SQL = "INSERT INTO blockevaluation (blockhash, rating, depth, cumulativeweight, solid) VALUES (?, ?, ?, ?, ?);";
     
     protected Sha256Hash chainHeadHash;
@@ -1638,6 +1639,60 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             return blockEvaluation;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void updateBlockEvaluationDepth(Sha256Hash blockhash, int depth) throws BlockStoreException {
+        BlockEvaluation blockEvaluation = this.getBlockEvaluation(blockhash);
+        if (blockEvaluation == null) {
+            blockEvaluation = BlockEvaluation.build(blockhash, 0, depth, 0);
+            this.saveBlockEvaluation(blockEvaluation);
+            return;
+        }
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(UPDATE_BLOCKEVALUATION_DEPTH_SQL);
+            preparedStatement.setInt(1, depth);
+            preparedStatement.setBytes(2, blockhash.getBytes());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void updateBlockEvaluationCumulativeweight(Sha256Hash blockhash, int cumulativeweight) throws BlockStoreException {
+        BlockEvaluation blockEvaluation = this.getBlockEvaluation(blockhash);
+        if (blockEvaluation == null) {
+            blockEvaluation = BlockEvaluation.build(blockhash, 0, 0, cumulativeweight);
+            this.saveBlockEvaluation(blockEvaluation);
+            return;
+        }
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(UPDATE_BLOCKEVALUATION_CUMULATIVEWEIGHT_SQL);
+            preparedStatement.setInt(1, cumulativeweight);
+            preparedStatement.setBytes(2, blockhash.getBytes());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
         } finally {
             if (preparedStatement != null) {
                 try {
