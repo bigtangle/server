@@ -103,16 +103,14 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
                 outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock1);
         blocks.add(rollingBlock1);
-        // System.out.println("create block, hash : " +
-        // rollingBlock1.getHashAsString());
+         System.out.println("create block, hash : " + rollingBlock1.getHashAsString());
 
         Block rollingBlock = rollingBlock1;
         for (int i = 1; i < 5; i++) {
             rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                     height++, PARAMS.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
-            // System.out.println("create block, hash : " +
-            // rollingBlock.getHashAsString());
+            System.out.println("create block, hash : " + rollingBlock.getHashAsString());
             blocks.add(rollingBlock);
         }
         return blocks;
@@ -160,18 +158,18 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
                     + cumulativweigths.get(re.get(i).getHash()));
             i++;
         } 
-        Iterator it = cumulativweigths.entrySet().iterator();
+        Iterator<Map.Entry<Sha256Hash, Long>> it = cumulativweigths.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<Sha256Hash, Long> pair = (Map.Entry<Sha256Hash, Long>) it.next();
             System.out.println(
                     "hash : " + pair.getKey() +    " -> " + pair.getValue());
+            this.store.updateBlockEvaluationCumulativeweight(pair.getKey(), pair.getValue().intValue());
         }
-
     }
 
     @Test
     public void depth() throws Exception {
-        List<Block> re = createLinearBlock();
+        List<Block> re = createBlock();
         Map<Sha256Hash, Long> depths = new HashMap<Sha256Hash, Long>();
         tipsManager.recursiveUpdateDepth(re.get(0).getHash(), depths);
         int i = 0;
@@ -201,7 +199,6 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
             int cumulativeweight = pair.getValue().size();
             this.store.updateBlockEvaluationCumulativeweight(blockhash, cumulativeweight);
         }
-
     }
 
     @Test
