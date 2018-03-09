@@ -9,14 +9,20 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.bitcoinj.core.Address;
+import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.FullPrunedBlockGraph;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.UTXOProvider;
 import org.bitcoinj.core.UTXOProviderException;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.script.Script;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.wallet.CoinSelection;
 import org.bitcoinj.wallet.CoinSelector;
@@ -39,6 +45,8 @@ import com.google.common.collect.Lists;
 public class TransactionService {
     @Autowired
     protected FullPrunedBlockStore store;
+    @Autowired
+    protected FullPrunedBlockGraph blockgraph;
 
     protected CoinSelector coinSelector = new DefaultCoinSelector();
 
@@ -94,6 +102,41 @@ public class TransactionService {
 
         return candidates;
 
+    }
+
+    public void askTransaction(String pubkey, String toaddressPubkey, String amount) throws Exception {
+        ECKey myKey = ECKey.fromPublicOnly(Utils.parseAsHexOrBase58(pubkey));
+        ECKey toKey = ECKey.fromPublicOnly(Utils.parseAsHexOrBase58(toaddressPubkey));
+        Address myAddress = myKey.toAddress(networkParameters);
+        Address address = new Address(networkParameters, toKey.getPubKeyHash());
+
+        Coin coin = Coin.parseCoin(amount);
+        int height = 1;
+        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlockWithCoinbase(
+                Block.BLOCK_VERSION_GENESIS, myKey.getPubKey(), height++,
+                networkParameters.getGenesisBlock().getHash());
+        blockgraph.add(rollingBlock);
+        Transaction transaction = rollingBlock.getTransactions().get(0);
+        TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
+        byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
+        for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
+            rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, myKey.getPubKey(),
+                    height++, networkParameters.getGenesisBlock().getHash());
+            blockgraph.add(rollingBlock);
+        }
+        rollingBlock = rollingBlock.createNextBlock(null, networkParameters.getGenesisBlock().getHash());
+
+        Transaction t = new Transaction(networkParameters);
+        t.addOutput(new TransactionOutput(networkParameters, t, coin, toKey));
+        t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), myKey);
+
+        rollingBlock.addTransaction(t);
+        rollingBlock.solve();
+        blockgraph.add(rollingBlock);
+        try {
+            store.close();
+        } catch (Exception e) {
+        }
     }
 
     /**

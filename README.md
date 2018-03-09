@@ -163,7 +163,7 @@ return Block with the  transaction
 (API) 
 . 
 5) server get the block and goto 6a)
-
+(input Block, return true/false) save block, broadcast
 ? add block in two parts, 
 6a)when receiving blocks, only check static formal, save data in header table and broadcast to all server nodes. no update openoutputs)
 
@@ -224,3 +224,4 @@ dynamic discovery and swicht of Kafka cluster
 
 
 Performance Test
+
