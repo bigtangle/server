@@ -4,6 +4,8 @@
  *******************************************************************************/
 package com.bignetcoin.server.service;
 
+import java.nio.ByteBuffer;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -16,6 +18,7 @@ import org.bitcoinj.core.FullPrunedBlockGraph;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.UTXO;
@@ -48,7 +51,13 @@ public class TransactionService {
     @Autowired
     protected FullPrunedBlockGraph blockgraph;
 
+    @Autowired
+    private TipsService tipsManager;
+
     protected CoinSelector coinSelector = new DefaultCoinSelector();
+
+    @Autowired
+    private BlockService blockService;
 
     @Autowired
     protected NetworkParameters networkParameters;
@@ -104,7 +113,7 @@ public class TransactionService {
 
     }
 
-    public void askTransaction(String pubkey, String toaddressPubkey, String amount) throws Exception {
+    public Block askTransaction(String pubkey, String toaddressPubkey, String amount) throws Exception {
         ECKey myKey = ECKey.fromPublicOnly(Utils.parseAsHexOrBase58(pubkey));
         ECKey toKey = ECKey.fromPublicOnly(Utils.parseAsHexOrBase58(toaddressPubkey));
         Address myAddress = myKey.toAddress(networkParameters);
@@ -112,31 +121,43 @@ public class TransactionService {
 
         Coin coin = Coin.parseCoin(amount);
         int height = 1;
-        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlockWithCoinbase(
-                Block.BLOCK_VERSION_GENESIS, myKey.getPubKey(), height++,
-                networkParameters.getGenesisBlock().getHash());
-        blockgraph.add(rollingBlock);
+
+        Block r1 = blockService.getBlock(getNextBlockToApprove());
+        Block r2 = blockService.getBlock(getNextBlockToApprove());
+        Block rollingBlock = r2.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, myKey.getPubKey(), height++,
+                r1.getHash());
+
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
         byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
-        for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
-            rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, myKey.getPubKey(),
-                    height++, networkParameters.getGenesisBlock().getHash());
-            blockgraph.add(rollingBlock);
-        }
-        rollingBlock = rollingBlock.createNextBlock(null, networkParameters.getGenesisBlock().getHash());
 
         Transaction t = new Transaction(networkParameters);
         t.addOutput(new TransactionOutput(networkParameters, t, coin, toKey));
+        TransactionInput input = new TransactionInput(networkParameters, t, new byte[]{}, spendableOutput);
+        
+        // no signs first
         t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), myKey);
 
         rollingBlock.addTransaction(t);
-        rollingBlock.solve();
-        blockgraph.add(rollingBlock);
-        try {
-            store.close();
-        } catch (Exception e) {
-        }
+        // client rollingBlock.solve();
+        // blockgraph.add(rollingBlock);
+        return rollingBlock;
+    }
+
+    public boolean getBlock2saveBroadcast(String blockString) throws Exception {
+        byte[] bytes = Utils.HEX.decode(blockString);
+        Block block = (Block) networkParameters.getDefaultSerializer().deserialize(ByteBuffer.wrap(bytes));
+        return blockgraph.add(block);
+
+    }
+
+    public Sha256Hash getNextBlockToApprove() throws Exception {
+        final SecureRandom random = new SecureRandom();
+        return tipsManager.blockToApprove(networkParameters.getGenesisBlock().getHash(), null, 27, 27, random);
+        // Sha256Hash b1Sha256Hash =
+        // tipsManager.blockToApprove(PARAMS.getGenesisBlock().getHash(), null,
+        // 27, 27, random);
+
     }
 
     /**

@@ -225,3 +225,14 @@ dynamic discovery and swicht of Kafka cluster
 
 Performance Test
 
+mining rewards:
+
+time interval 10 Minutes:
+
+select number of  new blocks (rating > 75) pro miner in this interval,
+ coin= number * amount / total 
+add to block 
+
+
+
+
