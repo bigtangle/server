@@ -150,10 +150,11 @@ public class TransactionService {
 
     }
 
-    public void getBlock2sign(String blockString) throws Exception {
+    public Block getBlock2sign(String blockString) throws Exception {
         byte[] bytes = Utils.HEX.decode(blockString);
         Block block = (Block) networkParameters.getDefaultSerializer().deserialize(ByteBuffer.wrap(bytes));
-        block.solve();
+       
+        return block;
 
     }
 

@@ -10,14 +10,16 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.Utils;
 import org.bitcoinj.wallet.Wallet.BalanceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,7 +93,32 @@ public class API {
                 final int threshold = getParameterAsInt(request, "threshold");
                 return getBalancesStatement(addresses, tips, threshold);
             }
+            case "askTransaction": {
+                final String pubkey = (String) request.get("pubkey");
+                final String toaddressPubkey = (String) request.get("toaddressPubkey");
+                final String amount = (String) request.get("amount");
+                return askTransaction(pubkey, toaddressPubkey, amount);
+            }
+            case "saveBlock": {
+                final String blockString = (String) request.get("blockString");
+                List<String> list = new ArrayList<String>();
+                list.add(String.valueOf(transactionService.getBlock2save(blockString)));
+                return GetBalancesResponse.create(list, null, 0);
 
+            }
+            case "signBlock": {
+                final String blockString = (String) request.get("blockString");
+
+                Block block = transactionService.getBlock2sign(blockString);
+                block.solve();
+                for (Transaction t : block.getTransactions()) {
+                    t.addSigned(new ECKey());
+                }
+                List<String> list = new ArrayList<String>();
+                list.add(blockString);
+                return GetBalancesResponse.create(list, null, 0);
+
+            }
             default: {
                 /*
                  * AbstractResponse response = ixi.processCommand(command,
@@ -164,6 +191,19 @@ public class API {
                 .collect(Collectors.toCollection(LinkedList::new));
 
         return GetBalancesResponse.create(elements, null, 0);
+    }
+
+    private AbstractResponse askTransaction(String pubkey, String toaddressPubkey, String amount) {
+        try {
+            Block block = transactionService.askTransaction(pubkey, toaddressPubkey, amount);
+            List<String> list = new ArrayList<String>();
+            list.add(Utils.HEX.encode(block.bitcoinSerialize()));
+            return GetBalancesResponse.create(list, null, 0);
+        } catch (Exception e) {
+            log.equals(e);
+        }
+        return null;
+
     }
 
 }
