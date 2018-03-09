@@ -8,7 +8,6 @@ import static org.bitcoinj.core.Utils.HEX;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,7 +18,6 @@ import java.util.stream.Collectors;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.wallet.Wallet.BalanceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,15 +28,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bignetcoin.server.config.ServerConfiguration;
+import com.bignetcoin.server.response.AbstractResponse;
+import com.bignetcoin.server.response.ErrorResponse;
+import com.bignetcoin.server.response.ExceptionResponse;
+import com.bignetcoin.server.response.GetBalancesResponse;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.iota.iri.service.dto.AbstractResponse;
-import com.iota.iri.service.dto.ErrorResponse;
-import com.iota.iri.service.dto.ExceptionResponse;
-import com.iota.iri.service.dto.GetBalancesResponse;
-import com.iota.iri.service.dto.GetNodeInfoResponse;
-import com.iota.iri.service.dto.GetTransactionsToApproveResponse;
-import com.iota.iri.service.dto.wereAddressesSpentFrom;
 
 @RestController
 @RequestMapping("/")
@@ -51,11 +46,7 @@ public class API {
 
     private final Gson gson = new GsonBuilder().create();
     private final static int HASH_SIZE = 81;
-    private final static int TRYTES_SIZE = 2673;
 
-    private final static long MAX_TIMESTAMP_VALUE = (3 ^ 27 - 1) / 2;
-
-    private final static String overMaxErrorMessage = "Could not complete request";
     private final static String invalidParams = "Invalid parameters";
 
     @Autowired
@@ -93,13 +84,6 @@ public class API {
             }
             switch (command) {
 
-            case "askTransaction": {
-                final List<String> addresses = getParameterAsList(request, "addresses", HASH_SIZE);
-                final List<String> tips = request.containsKey("tips") ? getParameterAsList(request, "tips ", HASH_SIZE)
-                        : null;
-                final int threshold = getParameterAsInt(request, "threshold");
-                return getBalancesStatement(addresses, tips, threshold);
-            }
             case "getBalances": {
                 final List<String> addresses = getParameterAsList(request, "addresses", HASH_SIZE);
                 final List<String> tips = request.containsKey("tips") ? getParameterAsList(request, "tips ", HASH_SIZE)
@@ -108,56 +92,6 @@ public class API {
                 return getBalancesStatement(addresses, tips, threshold);
             }
 
-            case "getNodeInfo": {
-
-                return GetNodeInfoResponse.create("", "", Runtime.getRuntime().availableProcessors(),
-                        Runtime.getRuntime().freeMemory(), System.getProperty("java.version"),
-                        Runtime.getRuntime().maxMemory(), Runtime.getRuntime().totalMemory(),
-                        milestoneService.latestMilestone, milestoneService.latestMilestoneIndex,
-                        milestoneService.latestSolidSubtangleMilestone,
-                        milestoneService.latestSolidSubtangleMilestoneIndex, 0, 0, System.currentTimeMillis(), 0, 0);
-            }
-
-            case "getBlocksToApprove": {
-
-                final String reference = request.containsKey("reference")
-                        ? getParameterAsStringAndValidate(request, "reference", HASH_SIZE)
-                        : null;
-                final int depth = getParameterAsInt(request, "depth");
-                if (depth < 0 || (reference == null && depth == 0)) {
-                    return ErrorResponse.create("Invalid depth input");
-                }
-                int numWalks = request.containsKey("numWalks") ? getParameterAsInt(request, "numWalks") : 1;
-                if (numWalks < serverConfiguration.getMinRandomWalks()) {
-                    numWalks = serverConfiguration.getMinRandomWalks();
-                }
-                try {
-                    final List<Sha256Hash> tips = getBlockToApproveStatement(depth, reference, numWalks);
-                    if (tips == null) {
-                        return ErrorResponse.create("The subtangle is not solid");
-                    }
-                    return GetTransactionsToApproveResponse.create(tips.get(0), tips.get(1));
-                } catch (RuntimeException e) {
-                    log.info("Tip selection failed: " + e.getLocalizedMessage());
-                    return ErrorResponse.create(e.getLocalizedMessage());
-                }
-            }
-
-            case "storeTransactions": {
-                try {
-                    final List<String> trytes = getParameterAsList(request, "trytes", TRYTES_SIZE);
-                    storeTransactionStatement(trytes);
-                    return AbstractResponse.createEmptyResponse();
-                } catch (RuntimeException e) {
-                    // transaction not valid
-                    return ErrorResponse.create("Invalid trytes input");
-                }
-            }
-
-            case "wereAddressesSpentFrom": {
-                final List<String> addresses = getParameterAsList(request, "addresses", HASH_SIZE);
-                return wereAddressesSpentFromStatement(addresses);
-            }
             default: {
                 /*
                  * AbstractResponse response = ixi.processCommand(command,
@@ -175,43 +109,12 @@ public class API {
         }
     }
 
-    private List<Sha256Hash> getBlockToApproveStatement(int depth, String reference, int numWalks) throws Exception {
-        List<Sha256Hash> re = new ArrayList<Sha256Hash>();
-        final SecureRandom random = new SecureRandom();
-        re.add(tipsService.blockToApprove(null, null, depth, numWalks, random));
-        re.add(tipsService.blockToApprove(null, null, depth, numWalks, random));
-        return re;
-    }
-
-    private AbstractResponse wereAddressesSpentFromStatement(List<String> addressesStr) throws Exception {
-        final List<Sha256Hash> addresses = addressesStr.stream().map(Sha256Hash::new).collect(Collectors.toList());
-        final boolean[] states = new boolean[addresses.size()];
-        int index = 0;
-
-        for (Sha256Hash address : addresses) {
-            states[index++] = wasAddressSpentFrom(address);
-        }
-        return wereAddressesSpentFrom.create(states);
-    }
-
-    private boolean wasAddressSpentFrom(Sha256Hash address) throws Exception {
-
-        return false;
-    }
-
     private int getParameterAsInt(Map<String, Object> request, String paramName) {
         validateParamExists(request, paramName);
         final int result;
 
         result = ((Double) request.get(paramName)).intValue();
 
-        return result;
-    }
-
-    private String getParameterAsStringAndValidate(Map<String, Object> request, String paramName, int size) {
-        validateParamExists(request, paramName);
-        String result = (String) request.get(paramName);
-        // validateTrytes(paramName, size, result);
         return result;
     }
 
@@ -236,23 +139,6 @@ public class API {
 
     }
 
-    public void storeTransactionStatement(final List<String> trys) throws Exception {
-
-    }
-
-    // private AbstractResponse askTransaction(String pubkey,String address,Long
-    // coinvalue) {
-    //
-    // }
-
-    private HashSet<String> getParameterAsSet(Map<String, Object> request, String paramName, int size) {
-
-        HashSet<String> result = getParameterAsList(request, paramName, size).stream()
-                .collect(Collectors.toCollection(HashSet::new));
-
-        return result;
-    }
-
     private AbstractResponse getBalancesStatement(final List<String> addrss, final List<String> tips,
             final int threshold) throws Exception {
 
@@ -269,7 +155,7 @@ public class API {
             ECKey key = ECKey.fromPublicOnly(bytes);
             System.out.println("bytes:" + key.getPubKeyHash().length);
             l.add(key.getPubKeyHash());
-            Coin value = transactionService.getBalance(BalanceType.ESTIMATED,l);
+            Coin value = transactionService.getBalance(BalanceType.ESTIMATED, l);
             System.out.println(value.value);
             balances.put(address, value);
         }

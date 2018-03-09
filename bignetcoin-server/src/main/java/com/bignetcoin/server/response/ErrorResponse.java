@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package com.iota.iri.service.dto;
+package com.bignetcoin.server.response;
 
 public class ErrorResponse extends AbstractResponse {
 	

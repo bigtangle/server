@@ -35,8 +35,15 @@ public class MySQLDBStoreConfiguration {
         NetworkParameters params = UnitTestParams.get();
 
         try {
-            return new MySQLFullPrunedBlockStore(params, fullStoreDepth, hostname+ ":"+ port, dbName, username, password);
-        } catch (BlockStoreException e) {
+            MySQLFullPrunedBlockStore store = new MySQLFullPrunedBlockStore(params, fullStoreDepth, hostname+ ":"+ port, dbName, username, password);
+            try {
+            store.initFromDatabase();
+            }catch (Exception e) {
+                // TODO: handle exception
+            }
+            return store;
+                     
+        } catch (Exception e) {
             throw new DBException(e);
         }
     }
