@@ -255,7 +255,7 @@ public class FakeTxBuilder {
         try {
             Block previousBlock = previousStoredBlock.getHeader();
             Address to = new ECKey().toAddress(previousBlock.getParams());
-            Block b = previousBlock.createNextBlock(to, version, timeSeconds, height, previousBlock.getHash());
+            Block b = BlockForTest.createNextBlock(previousBlock,to, version, timeSeconds, height, previousBlock.getHash());
             // Coinbase tx was already added.
             for (Transaction tx : transactions) {
                 tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
@@ -303,7 +303,7 @@ public class FakeTxBuilder {
     }
 
     public static Block makeSolvedTestBlock(BlockStore blockStore, Address coinsTo) throws BlockStoreException {
-        Block b = blockStore.getChainHead().getHeader().createNextBlock(coinsTo,
+        Block b = BlockForTest.createNextBlock(blockStore.getChainHead().getHeader(),coinsTo,
                 blockStore.getChainHead().getHeader().getHash());
         b.solve();
         return b;
@@ -311,7 +311,7 @@ public class FakeTxBuilder {
 
     public static Block makeSolvedTestBlock(Block prev, Transaction... transactions) throws BlockStoreException {
         Address to = new ECKey().toAddress(prev.getParams());
-        Block b = prev.createNextBlock(to, prev.getHash());
+        Block b = BlockForTest.createNextBlock(prev,to, prev.getHash());
         // Coinbase tx already exists.
         for (Transaction tx : transactions) {
             b.addTransaction(tx);
@@ -322,7 +322,7 @@ public class FakeTxBuilder {
 
     public static Block makeSolvedTestBlock(Block prev, Address to, Transaction... transactions)
             throws BlockStoreException {
-        Block b = prev.createNextBlock(to, prev.getHash());
+        Block b = BlockForTest.createNextBlock(prev,to, prev.getHash());
         // Coinbase tx already exists.
         for (Transaction tx : transactions) {
             b.addTransaction(tx);

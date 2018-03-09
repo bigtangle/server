@@ -148,7 +148,7 @@ public class BlockTest {
     @Test
     public void testUpdateLength() {
         NetworkParameters params = UnitTestParams.get();
-        Block block = params.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS,
+        Block block = BlockForTest.createNextBlockWithCoinbase(params.getGenesisBlock(),Block.BLOCK_VERSION_GENESIS,
                 new ECKey().getPubKey(), Block.BLOCK_HEIGHT_GENESIS, params.getGenesisBlock().getHash());
        // assertEquals(block.bitcoinSerialize().length, block.length);
         final int origBlockLen = block.length;

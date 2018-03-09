@@ -68,7 +68,7 @@ public class Block extends Message {
      * How many bytes are required to represent a block header WITHOUT the
      * trailing 00 length byte.
      */
-    public static final int HEADER_SIZE = 80 + 32 +20+4;
+    public static final int HEADER_SIZE = 80 + 32 + 20 + 4;
 
     static final long ALLOWED_TIME_DRIFT = 2 * 60 * 60; // Same value as Bitcoin
                                                         // Core.
@@ -119,9 +119,9 @@ public class Block extends Message {
 
     private Sha256Hash merkleRoot;
     private long time;
-  //  private long difficultyTarget; // "nBits"
+    // private long difficultyTarget; // "nBits"
     private long nonce;
-    //Utils.sha256hash160
+    // Utils.sha256hash160
     private byte[] mineraddress = new byte[20];
     private long tokenid;
     private long blocktype;
@@ -154,7 +154,7 @@ public class Block extends Message {
         super(params);
         // Set up a few basic things. We are not complete after this though.
         version = setVersion;
-      //  difficultyTarget = EASIEST_DIFFICULTY_TARGET;
+        // difficultyTarget = EASIEST_DIFFICULTY_TARGET;
         time = System.currentTimeMillis() / 1000;
         prevBlockHash = Sha256Hash.ZERO_HASH;
         prevBranchBlockHash = Sha256Hash.ZERO_HASH;
@@ -277,7 +277,7 @@ public class Block extends Message {
         this.prevBranchBlockHash = prevBranchBlockHash;
         this.merkleRoot = merkleRoot;
         this.time = time;
-      //  this.difficultyTarget = difficultyTarget;
+        // this.difficultyTarget = difficultyTarget;
         this.nonce = nonce;
         this.transactions = new LinkedList<Transaction>();
         this.transactions.addAll(transactions);
@@ -343,7 +343,7 @@ public class Block extends Message {
         prevBranchBlockHash = readHash();
         merkleRoot = readHash();
         time = readUint32();
-       // difficultyTarget = readUint32();
+        // difficultyTarget = readUint32();
         nonce = readUint32();
         mineraddress = readBytes(20);
         tokenid = readUint32();
@@ -378,7 +378,7 @@ public class Block extends Message {
         stream.write(prevBranchBlockHash.getReversedBytes());
         stream.write(getMerkleRoot().getReversedBytes());
         Utils.uint32ToByteStreamLE(time, stream);
-      //  Utils.uint32ToByteStreamLE(difficultyTarget, stream);
+        // Utils.uint32ToByteStreamLE(difficultyTarget, stream);
         Utils.uint32ToByteStreamLE(nonce, stream);
         stream.write(mineraddress);
         Utils.uint32ToByteStreamLE(tokenid, stream);
@@ -570,7 +570,7 @@ public class Block extends Message {
         block.merkleRoot = getMerkleRoot();
         block.version = version;
         block.time = time;
-      //  block.difficultyTarget = difficultyTarget
+        // block.difficultyTarget = difficultyTarget
         block.mineraddress = mineraddress;
         block.tokenid = tokenid;
         block.blocktype = blocktype;
@@ -597,7 +597,8 @@ public class Block extends Message {
         s.append("   previous branch block: ").append(getPrevBranchBlockHash()).append("\n");
         s.append("   merkle root: ").append(getMerkleRoot()).append("\n");
         s.append("   time: ").append(time).append(" (").append(Utils.dateTimeFormat(time * 1000)).append(")\n");
-      //  s.append("   difficulty target (nBits): ").append(difficultyTarget).append("\n");
+        // s.append(" difficulty target (nBits):
+        // ").append(difficultyTarget).append("\n");
         s.append("   nonce: ").append(nonce).append("\n");
         s.append("   mineraddress: ").append(mineraddress).append("\n");
         s.append("   tokenid: ").append(tokenid).append("\n");
@@ -996,7 +997,6 @@ public class Block extends Message {
         this.hash = null;
     }
 
-
     /**
      * Returns the nonce, an arbitrary value that exists only to make the hash
      * of the block header fall below the difficulty target.
@@ -1067,15 +1067,6 @@ public class Block extends Message {
     // It's pretty weak to have this around at runtime: fix later.
     private static final byte[] pubkeyForTesting = new ECKey().getPubKey();
 
-    /**
-     * Returns a solved block that builds on top of this one. This exists for
-     * unit tests.
-     */
-    @VisibleForTesting
-    public Block createNextBlock(Address to, long version, long time, int blockHeight, Sha256Hash prevBranchBlockHash) {
-        return createNextBlock(to, version, null, time, pubkeyForTesting, FIFTY_COINS, blockHeight,
-                prevBranchBlockHash);
-    }
 
     /**
      * Returns a solved block that builds on top of this one. This exists for
@@ -1089,7 +1080,7 @@ public class Block extends Message {
             final long time, final byte[] pubKey, final Coin coinbaseValue, final int height,
             Sha256Hash prevBranchBlockHash) {
         Block b = new Block(params, version);
-      //  b.setDifficultyTarget(difficultyTarget);
+        // b.setDifficultyTarget(difficultyTarget);
         b.addCoinbaseTransaction(pubKey, coinbaseValue, height);
 
         if (to != null) {
@@ -1133,40 +1124,6 @@ public class Block extends Message {
             throw new RuntimeException();
         }
         return b;
-    }
-
-    @VisibleForTesting
-    public Block createNextBlock(@Nullable Address to, TransactionOutPoint prevOut, Sha256Hash prevBranchBlockHash) {
-        return createNextBlock(to, BLOCK_VERSION_GENESIS, prevOut, getTimeSeconds() + 5, pubkeyForTesting, FIFTY_COINS,
-                BLOCK_HEIGHT_UNKNOWN, prevBranchBlockHash);
-    }
-
-    @VisibleForTesting
-    public Block createNextBlock(@Nullable Address to, Coin value, Sha256Hash prevBranchBlockHash) {
-        return createNextBlock(to, BLOCK_VERSION_GENESIS, null, getTimeSeconds() + 5, pubkeyForTesting, value,
-                BLOCK_HEIGHT_UNKNOWN, prevBranchBlockHash);
-    }
-
-    @VisibleForTesting
-    public Block createNextBlock(@Nullable Address to, Sha256Hash prevBranchBlockHash) {
-        return createNextBlock(to, FIFTY_COINS, prevBranchBlockHash);
-    }
-
-    @VisibleForTesting
-    public Block createNextBlockWithCoinbase(long version, byte[] pubKey, Coin coinbaseValue, final int height,
-            Sha256Hash prevBranchBlockHash) {
-        return createNextBlock(null, version, (TransactionOutPoint) null, Utils.currentTimeSeconds(), pubKey,
-                coinbaseValue, height, prevBranchBlockHash);
-    }
-
-    /**
-     * Create a block sending 50BTC as a coinbase transaction to the public key
-     * specified. This method is intended for test use only.
-     */
-    @VisibleForTesting
-    public Block createNextBlockWithCoinbase(long version, byte[] pubKey, final int height, Sha256Hash prevBranchBlockHash) {
-        return createNextBlock(null, version, (TransactionOutPoint) null, Utils.currentTimeSeconds(), pubKey,
-                FIFTY_COINS, height, prevBranchBlockHash);
     }
 
     @VisibleForTesting
@@ -1216,14 +1173,12 @@ public class Block extends Message {
         return version >= BLOCK_VERSION_BIP65;
     }
 
- 
-
     public byte[] getMineraddress() {
         return mineraddress;
     }
 
     public void setMineraddress(byte[] mineraddress) {
-        unCacheHeader(); 
+        unCacheHeader();
         this.mineraddress = mineraddress;
         this.hash = null;
     }
@@ -1233,7 +1188,7 @@ public class Block extends Message {
     }
 
     public void setTokenid(long tokenid) {
-        unCacheHeader(); 
+        unCacheHeader();
         this.tokenid = tokenid;
         this.hash = null;
     }
@@ -1243,7 +1198,7 @@ public class Block extends Message {
     }
 
     public void setBlocktype(long blocktype) {
-        unCacheHeader(); 
+        unCacheHeader();
         this.blocktype = blocktype;
         this.hash = null;
     }

@@ -376,7 +376,7 @@ public class TransactionTest {
     @Test
     public void testHashForSignatureThreadSafety() {
         Block genesis = UnitTestParams.get().getGenesisBlock();
-        Block block1 = genesis.createNextBlock(new ECKey().toAddress(UnitTestParams.get()),
+        Block block1 = BlockForTest.createNextBlock(genesis,new ECKey().toAddress(UnitTestParams.get()),
                 genesis.getTransactions().get(0).getOutput(0).getOutPointFor(), genesis.getHash());
 
         final Transaction tx = block1.getTransactions().get(1);

@@ -123,9 +123,9 @@ public class BlockChainTest {
 
     //TODO @Test
     public void unconnectedBlocks() throws Exception {
-        Block b1 = PARAMS.getGenesisBlock().createNextBlock(coinbaseTo, PARAMS.getGenesisBlock().getHash());
-        Block b2 = b1.createNextBlock(coinbaseTo, PARAMS.getGenesisBlock().getHash());
-        Block b3 = b2.createNextBlock(coinbaseTo, b1.getHash());
+        Block b1 = BlockForTest.createNextBlock(PARAMS.getGenesisBlock(),coinbaseTo, PARAMS.getGenesisBlock().getHash());
+        Block b2 = BlockForTest.createNextBlock(b1,coinbaseTo, PARAMS.getGenesisBlock().getHash());
+        Block b3 = BlockForTest.createNextBlock(b2,coinbaseTo, b1.getHash());
         // Connected.
         assertTrue(chain.add(b1));
         // Unconnected but stored. The head of the chain is still b1.
@@ -236,9 +236,9 @@ public class BlockChainTest {
     public void duplicates() throws Exception {
         // Adding a block twice should not have any effect, in particular it
         // should not send the block to the wallet.
-        Block b1 = PARAMS.getGenesisBlock().createNextBlock(coinbaseTo, PARAMS.getGenesisBlock().getHash());
-        Block b2 = b1.createNextBlock(coinbaseTo, PARAMS.getGenesisBlock().getHash());
-        Block b3 = b2.createNextBlock(coinbaseTo, b1.getHash());
+        Block b1 = BlockForTest.createNextBlock(PARAMS.getGenesisBlock(),coinbaseTo, PARAMS.getGenesisBlock().getHash());
+        Block b2 = BlockForTest.createNextBlock(b1,coinbaseTo, PARAMS.getGenesisBlock().getHash());
+        Block b3 = BlockForTest.createNextBlock(b2,coinbaseTo, b1.getHash());
         assertTrue(chain.add(b1));
         assertEquals(b1, block[0].getHeader());
         assertTrue(chain.add(b2));
@@ -259,7 +259,7 @@ public class BlockChainTest {
         // inside a block were not always being
         // considered relevant.
         Address somebodyElse = new ECKey().toAddress(PARAMS);
-        Block b1 = PARAMS.getGenesisBlock().createNextBlock(somebodyElse, PARAMS.getGenesisBlock().getHash());
+        Block b1 = BlockForTest.createNextBlock(PARAMS.getGenesisBlock(),somebodyElse, PARAMS.getGenesisBlock().getHash());
         ECKey key = wallet.freshReceiveKey();
         Address addr = key.toAddress(PARAMS);
         // Create a tx that gives us some coins, and another that spends it to
@@ -290,7 +290,7 @@ public class BlockChainTest {
 
         // Create a block, sending the coinbase to the coinbaseTo address (which
         // is in the wallet).
-        Block b1 = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS,
+        Block b1 = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(),Block.BLOCK_VERSION_GENESIS,
                 wallet.currentReceiveKey().getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
         chain.add(b1);
 
@@ -435,8 +435,8 @@ public class BlockChainTest {
         // This test simulates an issue on Android, that causes the VM to crash
         // while receiving a block, so that the
         // block store is persisted but the wallet is not.
-        Block b1 = PARAMS.getGenesisBlock().createNextBlock(coinbaseTo, PARAMS.getGenesisBlock().getHash());
-        Block b2 = b1.createNextBlock(coinbaseTo, PARAMS.getGenesisBlock().getHash());
+        Block b1 = BlockForTest.createNextBlock(PARAMS.getGenesisBlock(),coinbaseTo, PARAMS.getGenesisBlock().getHash());
+        Block b2 = BlockForTest.createNextBlock(b1,coinbaseTo, PARAMS.getGenesisBlock().getHash());
         // Add block 1, no frills.
         assertTrue(chain.add(b1));
         assertEquals(b1.cloneAsHeader(), chain.getChainHead().getHeader());

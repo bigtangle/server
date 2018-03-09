@@ -12,6 +12,7 @@ import java.util.List;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
+import org.bitcoinj.core.BlockForTest;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.FullPrunedBlockGraph;
@@ -47,8 +48,7 @@ import com.google.common.collect.Lists;
 public class TransactionService {
     @Autowired
     protected FullPrunedBlockStore store;
-    @Autowired
-    protected FullPrunedBlockGraph blockgraph;
+ 
 
     @Autowired
     private TipsService tipsManager;
@@ -123,7 +123,7 @@ public class TransactionService {
 
         Block r1 = blockService.getBlock(getNextBlockToApprove());
         Block r2 = blockService.getBlock(getNextBlockToApprove());
-        Block rollingBlock = r2.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, myKey.getPubKey(), height++,
+        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(r2,Block.BLOCK_VERSION_GENESIS, myKey.getPubKey(), height++,
                 r1.getHash());
 
         Transaction transaction = rollingBlock.getTransactions().get(0);
@@ -146,6 +146,7 @@ public class TransactionService {
     public boolean getBlock2save(String blockString) throws Exception {
         byte[] bytes = Utils.HEX.decode(blockString);
         Block block = (Block) networkParameters.getDefaultSerializer().deserialize(ByteBuffer.wrap(bytes));
+        FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
         return blockgraph.add(block);
 
     }

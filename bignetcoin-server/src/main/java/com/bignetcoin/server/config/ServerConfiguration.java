@@ -36,6 +36,7 @@ public class ServerConfiguration {
 
     private long remote_limit_api;
     private String mineraddress;
+    
     @Value("${minRandomWalks:5}")
     private   int minRandomWalks;
     @Value("${maxRandomWalks:27}")

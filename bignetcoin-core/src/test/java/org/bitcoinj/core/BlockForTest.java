@@ -32,7 +32,7 @@ public class BlockForTest {
         return createNextBlock(block, to, FIFTY_COINS, prevBranchBlockHash);
     }
 
-    public static Block createNextBlockWithCoinbase1(Block block, long version, byte[] pubKey, Coin coinbaseValue,
+    public static Block createNextBlockWithCoinbase(Block block, long version, byte[] pubKey, Coin coinbaseValue,
             final int height, Sha256Hash prevBranchBlockHash) {
         return block.createNextBlock(null, version, (TransactionOutPoint) null, Utils.currentTimeSeconds(), pubKey,
                 coinbaseValue, height, prevBranchBlockHash);
@@ -54,5 +54,7 @@ public class BlockForTest {
         return block.createNextBlock(null, version, (TransactionOutPoint) null, Utils.currentTimeSeconds(), pubKey,
                 FIFTY_COINS, height, prevBranchBlockHash);
     }
+   
+
 
 }

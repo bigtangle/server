@@ -195,13 +195,13 @@ public class FullBlockTestGenerator {
         Queue<TransactionOutPointWithValue> spendableOutputs = new LinkedList<TransactionOutPointWithValue>();
 
         int chainHeadHeight = 1;
-        Block chainHead = params.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey, chainHeadHeight,params.getGenesisBlock().getHash());
+        Block chainHead =BlockForTest.createNextBlockWithCoinbase( params.getGenesisBlock(),Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey, chainHeadHeight,params.getGenesisBlock().getHash());
         blocks.add(new BlockAndValidity(chainHead, true, false, chainHead.getHash(), 1, "Initial Block"));
         spendableOutputs.offer(new TransactionOutPointWithValue(
                 new TransactionOutPoint(params, 0, chainHead.getTransactions().get(0).getHash()),
                 FIFTY_COINS, chainHead.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
         for (int i = 1; i < params.getSpendableCoinbaseDepth(); i++) {
-            chainHead = chainHead.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey, chainHeadHeight,params.getGenesisBlock().getHash());
+            chainHead = BlockForTest.createNextBlockWithCoinbase(chainHead,Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey, chainHeadHeight,params.getGenesisBlock().getHash());
             chainHeadHeight++;
             blocks.add(new BlockAndValidity(chainHead, true, false, chainHead.getHash(), i+1, "Initial Block chain output generation"));
             spendableOutputs.offer(new TransactionOutPointWithValue(
@@ -1786,7 +1786,7 @@ public class FullBlockTestGenerator {
         Coin coinbaseValue = FIFTY_COINS.shiftRight(nextBlockHeight / params.getSubsidyDecreaseBlockCount())
                 .add((prevOut != null ? prevOut.value.subtract(SATOSHI) : ZERO))
                 .add(additionalCoinbaseValue == null ? ZERO : additionalCoinbaseValue);
-        Block block = baseBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey, coinbaseValue, nextBlockHeight,params.getGenesisBlock().getHash());
+        Block block = BlockForTest.createNextBlockWithCoinbase(baseBlock,Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey, coinbaseValue, nextBlockHeight,params.getGenesisBlock().getHash());
         Transaction t = new Transaction(params);
         if (prevOut != null) {
             // Entirely invalid scriptPubKey to ensure we aren't pre-verifying too much
