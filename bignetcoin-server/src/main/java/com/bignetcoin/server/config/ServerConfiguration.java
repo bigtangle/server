@@ -35,7 +35,7 @@ public class ServerConfiguration {
     private String remote_auth;
 
     private long remote_limit_api;
-   
+    private String mineraddress;
     @Value("${minRandomWalks:5}")
     private   int minRandomWalks;
     @Value("${maxRandomWalks:27}")
@@ -147,6 +147,14 @@ public class ServerConfiguration {
 
     public void setMaxRequestList(int maxRequestList) {
         this.maxRequestList = maxRequestList;
+    }
+
+    public String getMineraddress() {
+        return mineraddress;
+    }
+
+    public void setMineraddress(String mineraddress) {
+        this.mineraddress = mineraddress;
     }
 
     
