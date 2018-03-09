@@ -1,5 +1,5 @@
 # Iota Visual Simulation
-This is a visualization aid for those interested in the Iota data structure, the _tangle_. It is written using React and D3.js.
+This is a visualization aid for those interested in the  data structure, the _tangle_. It is written using React and D3.js.
 
 ## Setting up
 After cloning the repo, run:
