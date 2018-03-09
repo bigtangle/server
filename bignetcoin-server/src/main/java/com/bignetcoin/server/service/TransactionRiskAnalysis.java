@@ -9,8 +9,6 @@ import static com.google.common.base.Preconditions.checkState;
 
 import java.util.List;
 
-import javax.annotation.Nullable;
-
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.ECKey.ECDSASignature;
@@ -75,7 +73,7 @@ public class TransactionRiskAnalysis {
         return analyzeIsStandard();
     }
 
-    @Nullable
+   
     private Result analyzeIsFinal(int height, long time ) {
         // Transactions we create ourselves are, by definition, not at risk of
         // double spending against us.
@@ -232,13 +230,13 @@ public class TransactionRiskAnalysis {
     }
 
     /** Returns the transaction that was found to be non-standard, or null. */
-    @Nullable
+    
     public Transaction getNonStandard() {
         return nonStandard;
     }
 
     /** Returns the transaction that was found to be non-final, or null. */
-    @Nullable
+ 
     public Transaction getNonFinal() {
         return nonFinal;
     }
