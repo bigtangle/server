@@ -39,10 +39,7 @@ public class BlockImporter {
             params = MainNetParams.get();
         
         BlockStore store;
-        if (args[1].equals("H2")) {
-            Preconditions.checkArgument(args.length == 3);
-            store = new H2FullPrunedBlockStore(params, args[2], 100);
-        } else if (args[1].equals("MemFull")) {
+        if (args[1].equals("MemFull")) {
             Preconditions.checkArgument(args.length == 2);
             store = new MemoryFullPrunedBlockStore(params, 100);
         } else if (args[1].equals("Mem")) {
