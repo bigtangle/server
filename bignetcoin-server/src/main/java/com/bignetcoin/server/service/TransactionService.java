@@ -25,7 +25,6 @@ import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.UTXOProvider;
 import org.bitcoinj.core.UTXOProviderException;
 import org.bitcoinj.core.Utils;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.wallet.CoinSelection;
 import org.bitcoinj.wallet.CoinSelector;
@@ -133,10 +132,10 @@ public class TransactionService {
 
         Transaction t = new Transaction(networkParameters);
         t.addOutput(new TransactionOutput(networkParameters, t, coin, toKey));
-        TransactionInput input = new TransactionInput(networkParameters, t, new byte[]{}, spendableOutput);
-        
+        TransactionInput input = new TransactionInput(networkParameters, t, new byte[] {}, spendableOutput);
+
         // no signs first
-        t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), myKey);
+        t.addInput(input);
 
         rollingBlock.addTransaction(t);
         // client rollingBlock.solve();
@@ -144,10 +143,17 @@ public class TransactionService {
         return rollingBlock;
     }
 
-    public boolean getBlock2saveBroadcast(String blockString) throws Exception {
+    public boolean getBlock2save(String blockString) throws Exception {
         byte[] bytes = Utils.HEX.decode(blockString);
         Block block = (Block) networkParameters.getDefaultSerializer().deserialize(ByteBuffer.wrap(bytes));
         return blockgraph.add(block);
+
+    }
+
+    public void getBlock2sign(String blockString) throws Exception {
+        byte[] bytes = Utils.HEX.decode(blockString);
+        Block block = (Block) networkParameters.getDefaultSerializer().deserialize(ByteBuffer.wrap(bytes));
+        block.solve();
 
     }
 

@@ -160,7 +160,7 @@ return Block with the  transaction
 
 
 4)client node must compute the nonce of the transaction block as proof of work and signs the transaction
-(API) 
+
 . 
 5) server get the block and goto 6a)
 (input Block, return true/false) save block, broadcast
