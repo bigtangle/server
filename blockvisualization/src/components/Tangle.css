@@ -1,0 +1,150 @@
+.unselectable {
+  -webkit-user-select:none;
+  -khtml-user-select:none;
+  -moz-user-select:none;
+  -ms-user-select:none;
+  -o-user-select:none;
+  user-select:none;
+}
+
+.approved rect {
+  fill: red;
+}
+
+.approved text {
+  fill: white;
+}
+
+.approving rect {
+  fill: blue;
+}
+
+.approving text {
+  fill: white;
+}
+
+path.links  {
+  stroke: black;
+  stroke-width: 1px;
+  stroke-dasharray: 4,2;
+}
+
+path.links.approved {
+  stroke-dasharray: none;
+  stroke: red;
+}
+
+path.links.approving {
+  stroke-dasharray: none;
+  stroke: blue;
+}
+
+.tip rect {
+  fill: lightgray;
+}
+
+.tip text {
+  fill: black;
+}
+
+.top-bar-container {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  padding-bottom: 5px;
+  border-right: 1px solid black;
+  border-left: 1px solid black;
+  border-top: 1px solid black;
+}
+
+.top-bar-row {
+  position: relative;
+  width: 100%;
+  display: table;
+}
+
+.left-cell, .slider-title {
+  width: 160px;
+}
+
+.left-cell {
+  position: absolute;
+  height: 100%;
+  padding-left: 10px;
+  border-right: 1px solid black;
+}
+
+.slider-title {
+  display: table-cell;
+  text-align: right;
+  font-size: 11px;
+}
+
+.slider-container {
+  display: table-cell;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.left-slider-value, .right-slider-value {
+  font-size: 10px;
+  display: table-cell;
+  width: 35px;
+}
+
+.left-slider-value {
+  text-align: right;
+  padding-right: 10px;
+}
+
+.right-slider-value {
+  padding-left: 10px;
+}
+
+.right-cell, .tip-algo-label {
+  width: 170px;
+}
+
+.right-cell {
+  position: absolute;
+  right: 0;
+  height: 100%;
+  padding-right: 10px;
+  border-left: 1px solid black;
+}
+
+.tip-algo-label {
+  display: table-cell;
+  position: relative;
+  top: 3px;
+}
+
+.axis text {
+  fill: black;
+  stroke: none;
+  font-size: 15;
+  text-anchor: middle;
+}
+
+/* Override radio-button.css */
+.container {
+  padding-left: 15px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  font-size: 22px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.container > div {
+  float: left;
+}
+
+.checkmark {
+  width: 10px;
+  height: 10px;
+}
