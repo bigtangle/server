@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+  <script type="text/javascript" src="bundle.js" async></script>
+  <link href="https://fonts.googleapis.com/css?family=Lato|Play" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="css/style.css">
+  <title>IOTA visualization</title>
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <!-- This site does not use cookies -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113325485-1"></script>
+  <script async src="https://cdn.jsdelivr.net/npm/fingerprintjs2@1.5.1/dist/fingerprint2.min.js"></script>
+  <script>
+    window.addEventListener('load', function() { 
+      window.dataLayer = window.dataLayer || [];
+
+      new Fingerprint2({detectScreenOrientation:false}).get(function(result){
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-113325485-1', {'storage': 'none', 'clientId':result});
+        gtag('set', 'anonymizeIp', true);
+        gtag('send', 'pageview');
+      });
+    });
+  </script>
+</head>
+<body>
+  <div id="container"></div>
+</body>
+
+</html>
