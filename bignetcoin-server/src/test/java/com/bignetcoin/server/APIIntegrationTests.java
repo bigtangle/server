@@ -12,10 +12,14 @@ import java.util.Map;
 
 import org.bitcoinj.core.ECKey;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 public class APIIntegrationTests extends AbstractIntegrationTest {
+
+    private static final Logger log = LoggerFactory.getLogger(TipsServiceTest.class);
 
     /**
      * curl http://localhost:14265 \ -X POST \ -H 'Content-Type:
@@ -39,7 +43,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 // .andExpect(jsonPath("$._links.self.href",
                 // CoreMatchers.is(expectedLink)))
                 .andReturn();
-        System.out.println(s.getResponse().getContentAsString());
+        log.debug(s.getResponse().getContentAsString());
     }
 
 }

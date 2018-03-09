@@ -23,6 +23,8 @@ import org.bitcoinj.store.MySQLFullPrunedBlockStore;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -34,7 +36,7 @@ import com.bignetcoin.server.service.TipsService;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
-
+    private static final Logger log = LoggerFactory.getLogger(TipsServiceTest.class);
     @Test
     public void testBlockEvaluationDb() throws Exception {
         List<Block> blocks = this.createBlock();
@@ -80,7 +82,7 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
             // delete + create +initFromDatabase
             ((MySQLFullPrunedBlockStore) store).resetStore();
         } catch (Exception e) {
-            System.out.println(e);
+           log.debug("", e);
         }
         // reset pro @test
 
@@ -104,14 +106,14 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
                 Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock1);
         blocks.add(rollingBlock1);
-        System.out.println("create block, hash : " + rollingBlock1.getHashAsString());
+       //log.debug("create block, hash : " + rollingBlock1.getHashAsString());
 
         Block rollingBlock = rollingBlock1;
         for (int i = 1; i < 5; i++) {
             rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
                     outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
-            System.out.println("create block, hash : " + rollingBlock.getHashAsString());
+           log.debug("create block, hash : " + rollingBlock.getHashAsString());
             blocks.add(rollingBlock);
         }
         return blocks;
@@ -141,7 +143,7 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
         int i = 0;
         for (Block block : blocks) {
             this.blockgraph.add(block);
-            System.out.println("create  " + i + " block:" + block.getHashAsString());
+           log.debug("create  " + i + " block:" + block.getHashAsString());
             i++;
 
         }
@@ -155,14 +157,14 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
         tipsManager.recursiveUpdateCumulativeweights(re.get(0).getHash(), cumulativweigths, new HashSet<>());
         int i = 0;
         for (Block block : re) {
-            System.out.println("  " + i + " block:" + block.getHashAsString() + " cumulativweigth : "
+           log.debug("  " + i + " block:" + block.getHashAsString() + " cumulativweigth : "
                     + cumulativweigths.get(re.get(i).getHash()));
             i++;
         }
         Iterator<Map.Entry<Sha256Hash, Long>> it = cumulativweigths.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<Sha256Hash, Long> pair = (Map.Entry<Sha256Hash, Long>) it.next();
-            System.out.println("hash : " + pair.getKey() + " -> " + pair.getValue());
+           log.debug("hash : " + pair.getKey() + " -> " + pair.getValue());
             this.store.updateBlockEvaluationCumulativeweight(pair.getKey(), pair.getValue().intValue());
         }
     }
@@ -174,7 +176,7 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
         tipsManager.recursiveUpdateDepth(re.get(0).getHash(), depths);
         int i = 0;
         for (Block block : re) {
-            System.out.println(
+           log.debug(
                     "  " + i + " block:" + block.getHashAsString() + " depth : " + depths.get(re.get(i).getHash()));
             Sha256Hash blockhash = block.getHash();
             Long depth = depths.get(re.get(i).getHash());
@@ -193,7 +195,7 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
         Iterator<Map.Entry<Sha256Hash, Set<Sha256Hash>>> iterator = blockCumulativeweights1.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<Sha256Hash, Set<Sha256Hash>> pair = (Map.Entry<Sha256Hash, Set<Sha256Hash>>) iterator.next();
-            System.out.println(
+           log.debug(
                     "hash : " + pair.getKey() + " \n  size " + pair.getValue().size() + "-> " + pair.getValue());
             Sha256Hash blockhash = pair.getKey();
             int cumulativeweight = pair.getValue().size();
@@ -209,8 +211,8 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
                     random);
             Sha256Hash b1Sha256Hash = tipsManager.blockToApprove(PARAMS.getGenesisBlock().getHash(), null, 27, 27,
                     random);
-            System.out.println("b0Sha256Hash : " + b0Sha256Hash.toString());
-            System.out.println("b1Sha256Hash : " + b1Sha256Hash.toString());
+           log.debug("b0Sha256Hash : " + b0Sha256Hash.toString());
+           log.debug("b1Sha256Hash : " + b1Sha256Hash.toString());
         }
     }
 
@@ -226,7 +228,7 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
             Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(r2, Block.BLOCK_VERSION_GENESIS,
                     outKey.getPubKey(), height++, r1.getHash());
             blockgraph.add(rollingBlock);
-            System.out.println("create block  : " + i + " " + rollingBlock);
+           log.debug("create block  : " + i + " " + rollingBlock);
         }
 
     }

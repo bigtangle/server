@@ -1078,11 +1078,11 @@ public class Block extends Message {
      */
     Block createNextBlock(@Nullable final Address to, final long version, @Nullable TransactionOutPoint prevOut,
             final long time, final byte[] pubKey, final Coin coinbaseValue, final int height,
-            Sha256Hash prevBranchBlockHash) {
+            Sha256Hash prevBranchBlockHash, byte[] mineraddress) {
         Block b = new Block(params, version);
         // b.setDifficultyTarget(difficultyTarget);
         b.addCoinbaseTransaction(pubKey, coinbaseValue, height);
-
+        b.setMineraddress(mineraddress);
         if (to != null) {
             // Add a transaction paying 50 coins to the "to" address.
             Transaction t = new Transaction(params);

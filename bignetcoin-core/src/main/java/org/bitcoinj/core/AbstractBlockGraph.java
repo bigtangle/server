@@ -139,7 +139,7 @@ public abstract class AbstractBlockGraph {
                               BlockStore blockStore) throws BlockStoreException {
         this.blockStore = blockStore;
         chainHead = blockStore.getChainHead();
-        log.info("chain head is at height {}:\n{}", chainHead.getHeight(), chainHead.getHeader());
+        log.info("chain head is at height {}:\n{}", chainHead.getHeight(), chainHead.getHeader().getHash());
         this.params = context.getParams();
 
         this.newBestBlockListeners = new CopyOnWriteArrayList<ListenerRegistration<NewBestBlockListener>>();

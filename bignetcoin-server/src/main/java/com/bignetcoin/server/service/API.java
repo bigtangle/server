@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Json;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.wallet.Wallet.BalanceType;
@@ -34,19 +35,13 @@ import com.bignetcoin.server.response.AbstractResponse;
 import com.bignetcoin.server.response.ErrorResponse;
 import com.bignetcoin.server.response.ExceptionResponse;
 import com.bignetcoin.server.response.GetBalancesResponse;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 @RestController
 @RequestMapping("/")
 public class API {
 
     private static final Logger log = LoggerFactory.getLogger(API.class);
-    public static final String REFERENCE_TRANSACTION_NOT_FOUND = "reference transaction not found";
-    public static final String REFERENCE_TRANSACTION_TOO_OLD = "reference transaction is too old";
-    // private static final Logger log = LoggerFactory.getLogger(API.class);
 
-    private final Gson gson = new GsonBuilder().create();
     private final static int HASH_SIZE = 81;
 
     private final static String invalidParams = "Invalid parameters";
@@ -63,8 +58,8 @@ public class API {
     private TipsService tipsService;
 
     @RequestMapping(method = { RequestMethod.POST, RequestMethod.GET })
-    public AbstractResponse process(@RequestBody byte[] vdvAnfrageBytes) throws UnsupportedEncodingException {
-        String body = new String(vdvAnfrageBytes, Charset.forName("UTF-8"));
+    public AbstractResponse process(@RequestBody byte[] bodyByte) throws UnsupportedEncodingException {
+        String body = new String(bodyByte, Charset.forName("UTF-8"));
         log.debug(" requestString ", body);
 
         return process(body);
@@ -75,7 +70,7 @@ public class API {
 
         try {
 
-            final Map<String, Object> request = gson.fromJson(requestString, Map.class);
+            final Map<String, Object> request = Json.jsonmapper().readValue(requestString, Map.class);
             if (request == null) {
                 return ExceptionResponse.create("Invalid request payload: '" + requestString + "'");
             }
@@ -140,7 +135,7 @@ public class API {
         validateParamExists(request, paramName);
         final int result;
 
-        result = ((Double) request.get(paramName)).intValue();
+        result = ((Integer) request.get(paramName)).intValue();
 
         return result;
     }
@@ -177,13 +172,13 @@ public class API {
 
         for (final String address : addrss) {
             List<byte[]> l = new ArrayList<byte[]>();
-            System.out.println("addr:" + address);
+            log.debug("addr:" + address);
             byte[] bytes = HEX.decode(address);
             ECKey key = ECKey.fromPublicOnly(bytes);
-            System.out.println("bytes:" + key.getPubKeyHash().length);
+            log.debug("bytes:" + key.getPubKeyHash().length);
             l.add(key.getPubKeyHash());
             Coin value = transactionService.getBalance(BalanceType.ESTIMATED, l);
-            System.out.println(value.value);
+
             balances.put(address, value);
         }
 
@@ -193,16 +188,12 @@ public class API {
         return GetBalancesResponse.create(elements, null, 0);
     }
 
-    private AbstractResponse askTransaction(String pubkey, String toaddressPubkey, String amount) {
-        try {
-            Block block = transactionService.askTransaction(pubkey, toaddressPubkey, amount);
-            List<String> list = new ArrayList<String>();
-            list.add(Utils.HEX.encode(block.bitcoinSerialize()));
-            return GetBalancesResponse.create(list, null, 0);
-        } catch (Exception e) {
-            log.equals(e);
-        }
-        return null;
+    private AbstractResponse askTransaction(String pubkey, String toaddressPubkey, String amount) throws Exception {
+
+        Block block = transactionService.askTransaction(pubkey, toaddressPubkey, amount);
+        List<String> list = new ArrayList<String>();
+        list.add(Utils.HEX.encode(block.bitcoinSerialize()));
+        return GetBalancesResponse.create(list, null, 0);
 
     }
 

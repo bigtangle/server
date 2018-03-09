@@ -40,15 +40,15 @@ dependencies {
  
     compile group: 'com.google.code.findbugs', name: 'jsr305', version:ver.jsr305
 	    compile group: 'com.madgag.spongycastle', name: 'core', version:ver.spongycastlecore
-    compile group: 'com.h2database', name: 'h2', version:ver.h2
+
  
      compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:ver.jackson_databind
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:ver.jackson_databind
     compile group: 'net.jcip', name: 'jcip-annotations', version:ver.jcip_annotations
     compile group: 'com.lambdaworks', name: 'scrypt', version:ver.scrypt
-    compile group: 'postgresql', name: 'postgresql', version:ver.postgresql
+  //  compile group: 'postgresql', name: 'postgresql', version:ver.postgresql
     compile group: 'mysql', name: 'mysql-connector-java', version:ver.mysql_connector_java
-     compile group: 'org.fusesource.leveldbjni', name: 'leveldbjni-all', version:ver.leveldbjni_all
+  //   compile group: 'org.fusesource.leveldbjni', name: 'leveldbjni-all', version:ver.leveldbjni_all
      compile group: 'com.squareup.okhttp', name: 'okhttp', version:ver.okhttp
      compile group: 'mysql', name: 'mysql-connector-java', version:ver.mysql_connector_java
     compile project(':bignetcoin-orchid')
@@ -60,14 +60,9 @@ dependencies {
     testCompile group: 'org.easymock', name: 'easymock', version:  ver.easymock
   	testCompile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-avro', version:ver.jackson_dataformat_avro
   
-  
-  
-  /**
-     * test dependencies
-     */
     testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
     testCompile group: 'junit', name: 'junit',  version:ver.junit
-    testCompile group: 'com.google.code.gson', name: 'gson', version:ver.gson
+   
 
 
 }

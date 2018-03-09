@@ -1545,7 +1545,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 size, count, (double) size / count, (double) scriptSize / count, count * 8);
 
         totalSize += size;
-        System.out.println("Total Size: " + totalSize);
+        log.debug ("Total Size: " + totalSize);
 
         s.close();
     }

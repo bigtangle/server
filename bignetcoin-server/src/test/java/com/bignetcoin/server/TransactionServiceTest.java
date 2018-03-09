@@ -21,16 +21,21 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.Wallet.BalanceType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.bignetcoin.server.service.API;
 import com.bignetcoin.server.service.TransactionService;
 import com.google.common.collect.Lists;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TransactionServiceTest extends MySQLFullPrunedBlockChainTest {
+
+    private static final Logger log = LoggerFactory.getLogger(TransactionServiceTest.class);
 
     @Autowired
     private TransactionService transactionService;
@@ -46,21 +51,21 @@ public class TransactionServiceTest extends MySQLFullPrunedBlockChainTest {
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
         ECKey outKey = new ECKey();
         int height = 1;
-        System.out.println(outKey.getPublicKeyAsHex());
+        log.debug(outKey.getPublicKeyAsHex());
 
         // Build some blocks on genesis block to create a spendable output
-        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(),Block.BLOCK_VERSION_GENESIS,
-                outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
+        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(),
+                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock);
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, transaction.getHash());
         byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
-            rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock,Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                    height++, PARAMS.getGenesisBlock().getHash());
+            rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
+                    outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
         }
-        rollingBlock = BlockForTest.createNextBlock(rollingBlock,null, PARAMS.getGenesisBlock().getHash());
+        rollingBlock = BlockForTest.createNextBlock(rollingBlock, null, PARAMS.getGenesisBlock().getHash());
 
         // Create bitcoin spend of 1 BTC.
         ECKey toKey = new ECKey();
@@ -84,8 +89,8 @@ public class TransactionServiceTest extends MySQLFullPrunedBlockChainTest {
         assertEquals("The amount is not equal", totalAmount, output.getValue());
         List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
         pubKeyHashs.add(outKey.getPubKeyHash());
-       Coin coin= transactionService.getBalance(BalanceType.ESTIMATED,pubKeyHashs);
-       System.out.println("coin value:"+coin.value);
+        Coin coin = transactionService.getBalance(BalanceType.ESTIMATED, pubKeyHashs);
+        log.debug("coin value:" + coin.value);
         outputs = null;
         output = null;
         try {
@@ -106,18 +111,18 @@ public class TransactionServiceTest extends MySQLFullPrunedBlockChainTest {
         int height = 1;
 
         // Build some blocks on genesis block to create a spendable output.
-        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(),Block.BLOCK_VERSION_GENESIS,
-                outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
+        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(),
+                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock);
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, transaction.getHash());
         byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
-            rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock,Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                    height++, PARAMS.getGenesisBlock().getHash());
+            rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
+                    outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
         }
-        rollingBlock = BlockForTest.createNextBlock(rollingBlock,null, PARAMS.getGenesisBlock().getHash());
+        rollingBlock = BlockForTest.createNextBlock(rollingBlock, null, PARAMS.getGenesisBlock().getHash());
 
         // Create 1 BTC spend to a key in this wallet (to ourselves).
         // Wallet wallet = new Wallet(PARAMS);
@@ -125,8 +130,8 @@ public class TransactionServiceTest extends MySQLFullPrunedBlockChainTest {
         // wallet.getBalance(Wallet.BalanceType.AVAILABLE));
         List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
         pubKeyHashs.add(outKey.getPubKeyHash());
-       Coin coin= transactionService.getBalance(pubKeyHashs);
-       System.out.println(coin.value);
+        Coin coin = transactionService.getBalance(pubKeyHashs);
+        log.debug("coin: ", coin.toString());
     }
 
 }

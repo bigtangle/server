@@ -9,7 +9,7 @@ import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.store.MySQLFullPrunedBlockStore;
-import org.iq80.leveldb.DBException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,24 +27,22 @@ public class MySQLDBStoreConfiguration {
     private String password;
     @Value("${db.port:3306}")
     private String port;
-    
+
     private int fullStoreDepth = 10;
+    @Autowired
+    NetworkParameters networkParameters;
 
     @Bean
-    public FullPrunedBlockStore store() {
-        NetworkParameters params = UnitTestParams.get();
+    public FullPrunedBlockStore store() throws BlockStoreException {
 
+        MySQLFullPrunedBlockStore store = new MySQLFullPrunedBlockStore(networkParameters, fullStoreDepth,
+                hostname + ":" + port, dbName, username, password);
         try {
-            MySQLFullPrunedBlockStore store = new MySQLFullPrunedBlockStore(params, fullStoreDepth, hostname+ ":"+ port, dbName, username, password);
-            try {
             store.initFromDatabase();
-            }catch (Exception e) {
-                // TODO: handle exception
-            }
-            return store;
-                     
         } catch (Exception e) {
-            throw new DBException(e);
+            // TODO: handle exception
         }
+        return store;
+
     }
 }
