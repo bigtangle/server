@@ -164,15 +164,7 @@ public class Block extends Message {
         length = HEADER_SIZE;
     }
 
-    /**
-     * Constructs a block object from the Bitcoin wire format.
-     * 
-     * @deprecated Use {@link BitcoinSerializer#makeBlock(byte[])} instead.
-     */
-    @Deprecated
-    public Block(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
-        super(params, payloadBytes, 0, params.getDefaultSerializer(), payloadBytes.length);
-    }
+     
 
     /**
      * Construct a block object from the Bitcoin wire format.
@@ -1034,10 +1026,10 @@ public class Block extends Message {
      *            block height, if known, or -1 otherwise.
      */
     @VisibleForTesting
-    void addCoinbaseTransaction(byte[] pubKeyTo, Coin value, final int height) {
+    void addCoinbaseTransaction(byte[] pubKeyTo, Coin value, final int height, long tokenid) {
         unCacheTransactions();
         transactions = new ArrayList<Transaction>();
-        Transaction coinbase = new Transaction(params);
+        Transaction coinbase = new Transaction(params,tokenid);
         final ScriptBuilder inputBuilder = new ScriptBuilder();
 
         if (height >= Block.BLOCK_HEIGHT_GENESIS) {
@@ -1078,14 +1070,14 @@ public class Block extends Message {
      */
     Block createNextBlock(@Nullable final Address to, final long version, @Nullable TransactionOutPoint prevOut,
             final long time, final byte[] pubKey, final Coin coinbaseValue, final int height,
-            Sha256Hash prevBranchBlockHash, byte[] mineraddress) {
+            Sha256Hash prevBranchBlockHash, byte[] mineraddress, long tokenid) {
         Block b = new Block(params, version);
         // b.setDifficultyTarget(difficultyTarget);
-        b.addCoinbaseTransaction(pubKey, coinbaseValue, height);
+        b.addCoinbaseTransaction(pubKey, coinbaseValue, height, tokenid);
         b.setMineraddress(mineraddress);
         if (to != null) {
             // Add a transaction paying 50 coins to the "to" address.
-            Transaction t = new Transaction(params);
+            Transaction t = new Transaction(params,tokenid);
             t.addOutput(new TransactionOutput(params, t, FIFTY_COINS, to));
             // The input does not really need to be a valid signature, as long
             // as it has the right general form.
@@ -1101,7 +1093,7 @@ public class Block extends Message {
                 counter[1] = (byte) (txCounter++ >> 8);
                 input.getOutpoint().setHash(Sha256Hash.wrap(counter));
             } else {
-                input = new TransactionInput(params, t, Script.createInputScript(EMPTY_BYTES, EMPTY_BYTES), prevOut);
+                input = new TransactionInput(params, t, Script.createInputScript(EMPTY_BYTES, EMPTY_BYTES));
             }
             t.addInput(input);
             b.addTransaction(t);

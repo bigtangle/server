@@ -1492,12 +1492,12 @@ public class Wallet extends BaseTaggableObject
      * @param file the wallet file to read
      * @param walletExtensions extensions possibly added to the wallet.
      */
-    public static Wallet loadFromFile(File file, @Nullable WalletExtension... walletExtensions) throws UnreadableWalletException {
+    public static Wallet loadFromFile(File file,long tokenid, @Nullable WalletExtension... walletExtensions) throws UnreadableWalletException {
         try {
             FileInputStream stream = null;
             try {
                 stream = new FileInputStream(file);
-                return loadFromFileStream(stream, walletExtensions);
+                return loadFromFileStream(stream,tokenid, walletExtensions);
             } finally {
                 if (stream != null) stream.close();
             }
@@ -1590,8 +1590,8 @@ public class Wallet extends BaseTaggableObject
     }
 
     /** Returns a wallet deserialized from the given input stream and wallet extensions. */
-    public static Wallet loadFromFileStream(InputStream stream, @Nullable WalletExtension... walletExtensions) throws UnreadableWalletException {
-        Wallet wallet = new WalletProtobufSerializer().readWallet(stream, walletExtensions);
+    public static Wallet loadFromFileStream(InputStream stream,long tokenid, @Nullable WalletExtension... walletExtensions) throws UnreadableWalletException {
+        Wallet wallet = new WalletProtobufSerializer().readWallet(stream,  tokenid ,walletExtensions);
         if (!wallet.isConsistent()) {
             log.error("Loaded an inconsistent wallet");
         }
@@ -3727,8 +3727,8 @@ public class Wallet extends BaseTaggableObject
      * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process.
      * @throws MultipleOpReturnRequested if there is more than one OP_RETURN output for the resultant transaction.
      */
-    public Transaction createSend(Address address, Coin value) throws InsufficientMoneyException {
-        SendRequest req = SendRequest.to(address, value);
+    public Transaction createSend(Address address, Coin value, long tokenid) throws InsufficientMoneyException {
+        SendRequest req = SendRequest.to(address, value,tokenid);
         if (params.getId().equals(NetworkParameters.ID_UNITTESTNET))
             req.shuffleOutputs = false;
         completeTx(req);
@@ -3786,8 +3786,8 @@ public class Wallet extends BaseTaggableObject
      * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process.
      * @throws MultipleOpReturnRequested if there is more than one OP_RETURN output for the resultant transaction.
      */
-    public SendResult sendCoins(TransactionBroadcaster broadcaster, Address to, Coin value) throws InsufficientMoneyException {
-        SendRequest request = SendRequest.to(to, value);
+    public SendResult sendCoins(TransactionBroadcaster broadcaster, Address to, Coin value, long tokenid) throws InsufficientMoneyException {
+        SendRequest request = SendRequest.to(to, value,tokenid);
         return sendCoins(broadcaster, request);
     }
 
@@ -5109,11 +5109,7 @@ public class Wallet extends BaseTaggableObject
         return time != 0 && key.getCreationTimeSeconds() < time;
     }
 
-    /** @deprecated Renamed to doMaintenance */
-    @Deprecated
-    public ListenableFuture<List<Transaction>> maybeDoMaintenance(@Nullable KeyParameter aesKey, boolean andSend) throws DeterministicUpgradeRequiresPassword {
-        return doMaintenance(aesKey, andSend);
-    }
+ 
 
     /**
      * A wallet app should call this from time to time in order to let the wallet craft and send transactions needed
@@ -5129,12 +5125,12 @@ public class Wallet extends BaseTaggableObject
      * @return A list of transactions that the wallet just made/will make for internal maintenance. Might be empty.
      * @throws org.bitcoinj.wallet.DeterministicUpgradeRequiresPassword if key rotation requires the users password.
      */
-    public ListenableFuture<List<Transaction>> doMaintenance(@Nullable KeyParameter aesKey, boolean signAndSend) throws DeterministicUpgradeRequiresPassword {
+    public ListenableFuture<List<Transaction>> doMaintenance(@Nullable KeyParameter aesKey, boolean signAndSend, long tokenid) throws DeterministicUpgradeRequiresPassword {
         List<Transaction> txns;
         lock.lock();
         keyChainGroupLock.lock();
         try {
-            txns = maybeRotateKeys(aesKey, signAndSend);
+            txns = maybeRotateKeys(aesKey, signAndSend,tokenid);
             if (!signAndSend)
                 return Futures.immediateFuture(txns);
         } finally {
@@ -5168,7 +5164,7 @@ public class Wallet extends BaseTaggableObject
 
     // Checks to see if any coins are controlled by rotating keys and if so, spends them.
     @GuardedBy("keyChainGroupLock")
-    private List<Transaction> maybeRotateKeys(@Nullable KeyParameter aesKey, boolean sign) throws DeterministicUpgradeRequiresPassword {
+    private List<Transaction> maybeRotateKeys(@Nullable KeyParameter aesKey, boolean sign,long tokenid) throws DeterministicUpgradeRequiresPassword {
         checkState(lock.isHeldByCurrentThread());
         checkState(keyChainGroupLock.isHeldByCurrentThread());
         List<Transaction> results = Lists.newLinkedList();
@@ -5206,14 +5202,14 @@ public class Wallet extends BaseTaggableObject
         // fully done, at least for now (we may still get more transactions later and this method will be reinvoked).
         Transaction tx;
         do {
-            tx = rekeyOneBatch(keyRotationTimestamp, aesKey, results, sign);
+            tx = rekeyOneBatch(keyRotationTimestamp, aesKey, results, sign,tokenid);
             if (tx != null) results.add(tx);
         } while (tx != null && tx.getInputs().size() == KeyTimeCoinSelector.MAX_SIMULTANEOUS_INPUTS);
         return results;
     }
 
     @Nullable
-    private Transaction rekeyOneBatch(long timeSecs, @Nullable KeyParameter aesKey, List<Transaction> others, boolean sign) {
+    private Transaction rekeyOneBatch(long timeSecs, @Nullable KeyParameter aesKey, List<Transaction> others, boolean sign,long tokenid) {
         lock.lock();
         try {
             // Build the transaction using some custom logic for our special needs. Last parameter to
@@ -5232,7 +5228,7 @@ public class Wallet extends BaseTaggableObject
             CoinSelection toMove = selector.select(Coin.ZERO, calculateAllSpendCandidates());
             if (toMove.valueGathered.equals(Coin.ZERO)) return null;  // Nothing to do.
             maybeUpgradeToHD(aesKey);
-            Transaction rekeyTx = new Transaction(params);
+            Transaction rekeyTx = new Transaction(params,tokenid);
             for (TransactionOutput output : toMove.gathered) {
                 rekeyTx.addInput(output);
             }

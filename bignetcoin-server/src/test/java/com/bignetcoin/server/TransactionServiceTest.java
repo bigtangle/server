@@ -13,6 +13,7 @@ import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.FullPrunedBlockGraph;
 import org.bitcoinj.core.MySQLFullPrunedBlockChainTest;
+import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
@@ -73,7 +74,7 @@ public class TransactionServiceTest extends MySQLFullPrunedBlockChainTest {
         Address address = new Address(PARAMS, toKey.getPubKeyHash());
         Coin totalAmount = Coin.ZERO;
 
-        Transaction t = new Transaction(PARAMS);
+        Transaction t = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);
         t.addOutput(new TransactionOutput(PARAMS, t, amount, toKey));
         t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
         rollingBlock.addTransaction(t);

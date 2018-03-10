@@ -92,7 +92,8 @@ public class API {
                 final String pubkey = (String) request.get("pubkey");
                 final String toaddressPubkey = (String) request.get("toaddressPubkey");
                 final String amount = (String) request.get("amount");
-                return askTransaction(pubkey, toaddressPubkey, amount);
+                final long tokenid = getParameterAsInt( request,  "tokenid");
+                return askTransaction(pubkey, toaddressPubkey, amount, tokenid);
             }
             case "saveBlock": {
                 final String blockString = (String) request.get("blockString");
@@ -188,9 +189,9 @@ public class API {
         return GetBalancesResponse.create(elements, null, 0);
     }
 
-    private AbstractResponse askTransaction(String pubkey, String toaddressPubkey, String amount) throws Exception {
+    private AbstractResponse askTransaction(String pubkey, String toaddressPubkey, String amount, long tokenid) throws Exception {
 
-        Block block = transactionService.askTransaction(pubkey, toaddressPubkey, amount);
+        Block block = transactionService.askTransaction(pubkey, toaddressPubkey, amount, tokenid);
         List<String> list = new ArrayList<String>();
         list.add(Utils.HEX.encode(block.bitcoinSerialize()));
         return GetBalancesResponse.create(list, null, 0);

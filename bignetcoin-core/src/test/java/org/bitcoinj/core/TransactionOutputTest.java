@@ -53,7 +53,7 @@ public class TransactionOutputTest extends TestWithWallet {
         ECKey otherKey = new ECKey();
 
         // Create multi-sig transaction
-        Transaction multiSigTransaction = new Transaction(PARAMS);
+        Transaction multiSigTransaction = new Transaction(PARAMS,  NetworkParameters.BIGNETCOIN_TOKENID);
         ImmutableList<ECKey> keys = ImmutableList.of(myKey, otherKey);
 
         Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, keys);
@@ -71,14 +71,14 @@ public class TransactionOutputTest extends TestWithWallet {
         String P2SHAddressString = "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU";
         Address P2SHAddress = Address.fromBase58(MainNetParams.get(), P2SHAddressString);
         Script script = ScriptBuilder.createOutputScript(P2SHAddress);
-        Transaction tx = new Transaction(MainNetParams.get());
+        Transaction tx = new Transaction(MainNetParams.get(),  NetworkParameters.BIGNETCOIN_TOKENID);
         tx.addOutput(Coin.COIN, script);
         assertEquals(P2SHAddressString, tx.getOutput(0).getAddressFromP2SH(MainNetParams.get()).toString());
     }
 
     @Test
     public void getAddressTests() throws Exception {
-        Transaction tx = new Transaction(MainNetParams.get());
+        Transaction tx = new Transaction(MainNetParams.get(),  NetworkParameters.BIGNETCOIN_TOKENID);
         tx.addOutput(Coin.CENT, ScriptBuilder.createOpReturnScript("hello world!".getBytes()));
         assertNull(tx.getOutput(0).getAddressFromP2SH(PARAMS));
         assertNull(tx.getOutput(0).getAddressFromP2PKHScript(PARAMS));

@@ -145,11 +145,11 @@ public class SendRequest {
      * <p>Be very careful when value is smaller than {@link Transaction#MIN_NONDUST_OUTPUT} as the transaction will
      * likely be rejected by the network in this case.</p>
      */
-    public static SendRequest to(Address destination, Coin value) {
+    public static SendRequest to(Address destination, Coin value, long tokenid) {
         SendRequest req = new SendRequest();
         final NetworkParameters parameters = destination.getParameters();
         checkNotNull(parameters, "Address is for an unknown network");
-        req.tx = new Transaction(parameters);
+        req.tx = new Transaction(parameters, tokenid);
         req.tx.addOutput(value, destination);
         return req;
     }
@@ -162,9 +162,9 @@ public class SendRequest {
      * rejected by the network. Note that using {@link SendRequest#to(Address, Coin)} will result
      * in a smaller output, and thus the ability to use a smaller output value without rejection.</p>
      */
-    public static SendRequest to(NetworkParameters params, ECKey destination, Coin value) {
+    public static SendRequest to(NetworkParameters params, ECKey destination, Coin value,long tokenid) {
         SendRequest req = new SendRequest();
-        req.tx = new Transaction(params);
+        req.tx = new Transaction(params,tokenid);
         req.tx.addOutput(value, destination);
         return req;
     }
@@ -176,11 +176,11 @@ public class SendRequest {
         return req;
     }
 
-    public static SendRequest emptyWallet(Address destination) {
+    public static SendRequest emptyWallet(Address destination,long tokenid) {
         SendRequest req = new SendRequest();
         final NetworkParameters parameters = destination.getParameters();
         checkNotNull(parameters, "Address is for an unknown network");
-        req.tx = new Transaction(parameters);
+        req.tx = new Transaction(parameters,tokenid);
         req.tx.addOutput(Coin.ZERO, destination);
         req.emptyWallet = true;
         return req;
@@ -191,7 +191,7 @@ public class SendRequest {
      * completed, so you should directly proceed to signing and broadcasting/committing the transaction. CPFP is
      * currently only supported by a few miners, so use with care.
      */
-    public static SendRequest childPaysForParent(Wallet wallet, Transaction parentTransaction, Coin feeRaise) {
+    public static SendRequest childPaysForParent(Wallet wallet, Transaction parentTransaction, Coin feeRaise,long tokenid) {
         TransactionOutput outputToSpend = null;
         for (final TransactionOutput output : parentTransaction.getOutputs()) {
             if (output.isMine(wallet) && output.isAvailableForSpending()
@@ -203,7 +203,7 @@ public class SendRequest {
         // TODO spend another confirmed output of own wallet if needed
         checkNotNull(outputToSpend, "Can't find adequately sized output that spends to us");
 
-        final Transaction tx = new Transaction(parentTransaction.getParams());
+        final Transaction tx = new Transaction(parentTransaction.getParams(),tokenid);
         tx.addInput(outputToSpend);
         tx.addOutput(outputToSpend.getValue().subtract(feeRaise), wallet.freshAddress(KeyPurpose.CHANGE));
         tx.setPurpose(Transaction.Purpose.RAISE_FEE);
@@ -212,21 +212,21 @@ public class SendRequest {
         return req;
     }
 
-    public static SendRequest toCLTVPaymentChannel(NetworkParameters params, Date releaseTime, ECKey from, ECKey to, Coin value) {
+    public static SendRequest toCLTVPaymentChannel(NetworkParameters params, Date releaseTime, ECKey from, ECKey to, Coin value,long tokenid) {
         long time = releaseTime.getTime() / 1000L;
         checkArgument(time >= Transaction.LOCKTIME_THRESHOLD, "Release time was too small");
-        return toCLTVPaymentChannel(params, BigInteger.valueOf(time), from, to, value);
+        return toCLTVPaymentChannel(params, BigInteger.valueOf(time), from, to, value,tokenid);
     }
 
-    public static SendRequest toCLTVPaymentChannel(NetworkParameters params, int releaseBlock, ECKey from, ECKey to, Coin value) {
+    public static SendRequest toCLTVPaymentChannel(NetworkParameters params, int releaseBlock, ECKey from, ECKey to, Coin value,long tokenid) {
         checkArgument(0 <= releaseBlock && releaseBlock < Transaction.LOCKTIME_THRESHOLD, "Block number was too large");
-        return toCLTVPaymentChannel(params, BigInteger.valueOf(releaseBlock), from, to, value);
+        return toCLTVPaymentChannel(params, BigInteger.valueOf(releaseBlock), from, to, value,tokenid);
     }
 
-    public static SendRequest toCLTVPaymentChannel(NetworkParameters params, BigInteger time, ECKey from, ECKey to, Coin value) {
+    public static SendRequest toCLTVPaymentChannel(NetworkParameters params, BigInteger time, ECKey from, ECKey to, Coin value,long tokenid) {
         SendRequest req = new SendRequest();
         Script output = ScriptBuilder.createCLTVPaymentChannelOutput(time, from, to);
-        req.tx = new Transaction(params);
+        req.tx = new Transaction(params,tokenid);
         req.tx.addOutput(value, output);
         return req;
     }

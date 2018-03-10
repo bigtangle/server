@@ -95,9 +95,9 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
     public void setup() throws Exception {
         super.setUp();
         final int UNDOABLE_BLOCKS_STORED = 10;
-        store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
+        store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);blockgraph = new FullPrunedBlockGraph(PARAMS, store);
 
-        blockgraph = new FullPrunedBlockGraph(PARAMS, store);
+        
     }
 
     public List<Block> createLinearBlock() throws Exception {

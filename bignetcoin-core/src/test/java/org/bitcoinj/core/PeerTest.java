@@ -425,7 +425,7 @@ public class PeerTest extends TestWithNetworkConnections {
         Block b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).block;
         blockChain.add(b1);
         Block b2 = makeSolvedTestBlock(b1);
-        Transaction t = new Transaction(PARAMS);
+        Transaction t = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);
         t.addInput(b1.getTransactions().get(0).getOutput(0));
         t.addOutput(new TransactionOutput(PARAMS, t, Coin.ZERO, new byte[Block.MAX_BLOCK_SIZE - 1000]));
         b2.addTransaction(t);
@@ -571,10 +571,10 @@ public class PeerTest extends TestWithNetworkConnections {
         Transaction t4 = FakeTxBuilder.createFakeTx(PARAMS, COIN, new ECKey());
         Sha256Hash t6hash = t4.getInput(0).getOutpoint().getHash();
         t4.addOutput(COIN, new ECKey());
-        Transaction t3 = new Transaction(PARAMS);
+        Transaction t3 = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);
         t3.addInput(t4.getOutput(0));
         t3.addOutput(COIN, new ECKey());
-        Transaction t1 = new Transaction(PARAMS);
+        Transaction t1 = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);
         t1.addInput(t2.getOutput(0));
         t1.addInput(t3.getOutput(0));
         Sha256Hash t7hash = Sha256Hash.wrap("2b801dd82f01d17bbde881687bf72bc62e2faa8ab8133d36fcb8c3abe7459da6");

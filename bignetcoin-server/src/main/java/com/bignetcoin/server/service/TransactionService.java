@@ -112,7 +112,7 @@ public class TransactionService {
 
     }
 
-    public Block askTransaction(String pubkey, String toaddressPubkey, String amount) throws Exception {
+    public Block askTransaction(String pubkey, String toaddressPubkey, String amount, long tokenid) throws Exception {
         ECKey myKey = ECKey.fromPublicOnly(Utils.parseAsHexOrBase58(pubkey));
         ECKey toKey = ECKey.fromPublicOnly(Utils.parseAsHexOrBase58(toaddressPubkey));
         Address myAddress = myKey.toAddress(networkParameters);
@@ -130,7 +130,7 @@ public class TransactionService {
         TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
         byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
 
-        Transaction t = new Transaction(networkParameters);
+        Transaction t = new Transaction(networkParameters,tokenid);
         t.addOutput(new TransactionOutput(networkParameters, t, coin, toKey));
         TransactionInput input = new TransactionInput(networkParameters, t, new byte[] {}, spendableOutput);
 

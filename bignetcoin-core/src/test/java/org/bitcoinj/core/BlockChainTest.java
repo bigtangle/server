@@ -265,7 +265,7 @@ public class BlockChainTest {
         // Create a tx that gives us some coins, and another that spends it to
         // someone else in the same block.
         Transaction t1 = FakeTxBuilder.createFakeTx(PARAMS, COIN, addr);
-        Transaction t2 = new Transaction(PARAMS);
+        Transaction t2 = new Transaction(PARAMS,  NetworkParameters.BIGNETCOIN_TOKENID);
         t2.addInput(t1.getOutputs().get(0));
         t2.addOutput(valueOf(2, 0), somebodyElse);
         b1.addTransaction(t1);
@@ -305,7 +305,7 @@ public class BlockChainTest {
         // Attempt to spend the coinbase - this should fail as the coinbase is
         // not mature yet.
         try {
-            wallet.createSend(addressToSendTo, valueOf(49, 0));
+            wallet.createSend(addressToSendTo, valueOf(49, 0), NetworkParameters.BIGNETCOIN_TOKENID);
             fail();
         } catch (InsufficientMoneyException e) {
         }
@@ -329,7 +329,7 @@ public class BlockChainTest {
 
             // Attempt to spend the coinbase - this should fail.
             try {
-                wallet.createSend(addressToSendTo, valueOf(49, 0));
+                wallet.createSend(addressToSendTo, valueOf(49, 0), NetworkParameters.BIGNETCOIN_TOKENID);
                 fail();
             } catch (InsufficientMoneyException e) {
             }
@@ -348,7 +348,7 @@ public class BlockChainTest {
 
         // Create a spend with the coinbase BTC to the address in the second
         // wallet - this should now succeed.
-        Transaction coinbaseSend2 = wallet.createSend(addressToSendTo, valueOf(49, 0));
+        Transaction coinbaseSend2 = wallet.createSend(addressToSendTo, valueOf(49, 0), NetworkParameters.BIGNETCOIN_TOKENID);
         assertNotNull(coinbaseSend2);
 
         // Commit the coinbaseSpend to the first wallet and check the balances

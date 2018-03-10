@@ -152,7 +152,7 @@ public class BlockTest {
                 new ECKey().getPubKey(), Block.BLOCK_HEIGHT_GENESIS, params.getGenesisBlock().getHash());
        // assertEquals(block.bitcoinSerialize().length, block.length);
         final int origBlockLen = block.length;
-        Transaction tx = new Transaction(params);
+        Transaction tx = new Transaction(params,  NetworkParameters.BIGNETCOIN_TOKENID);
         // this is broken until the transaction has > 1 input + output (which is
         // required anyway...)
         // assertTrue(tx.length == tx.bitcoinSerialize().length && tx.length ==
@@ -161,7 +161,7 @@ public class BlockTest {
         Arrays.fill(outputScript, (byte) ScriptOpCodes.OP_FALSE);
         tx.addOutput(new TransactionOutput(params, null, Coin.SATOSHI, outputScript));
         tx.addInput(new TransactionInput(params, null, new byte[] { (byte) ScriptOpCodes.OP_FALSE },
-                new TransactionOutPoint(params, 0, Sha256Hash.of(new byte[] { 1 }))));
+                new TransactionOutPoint(params, 0, Sha256Hash.of(new byte[] { 1 })) ));
         int origTxLength = 8 + 2 + 8 + 1 + 10 + 40 + 1 + 1;
         assertEquals(tx.unsafeBitcoinSerialize().length, tx.length);
         assertEquals(origTxLength, tx.length);

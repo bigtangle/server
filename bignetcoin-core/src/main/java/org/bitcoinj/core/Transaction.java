@@ -242,14 +242,17 @@ public class Transaction extends ChildMessage {
     @Nullable
     private String memo;
 
-    public Transaction(NetworkParameters params) {
+    private long tokenid;
+    
+    public Transaction(NetworkParameters params,       long tokenid ) {
         super(params);
         version = 1;
         inputs = new ArrayList<TransactionInput>();
         outputs = new ArrayList<TransactionOutput>();
         // We don't initialize appearsIn deliberately as it's only useful for
         // transactions stored in the wallet.
-        length = 8; // 8 for std fields
+        length = 8+4; // 8 for std fields
+        tokenid=tokenid;
     }
 
     /**
