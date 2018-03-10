@@ -54,7 +54,7 @@ public class SendMoneyController {
         checkState(!balance.isZero());
         new BitcoinAddressValidator(Main.params, address, sendBtn);
         new TextFieldValidator(amountEdit, text ->
-                !WTUtils.didThrow(() -> checkState(Coin.parseCoin(text).compareTo(balance) <= 0)));
+                !WTUtils.didThrow(() -> checkState(Coin.parseCoin(text,NetworkParameters.BIGNETCOIN_TOKENID).compareTo(balance) <= 0)));
         amountEdit.setText(balance.toPlainString());
     }
 
@@ -65,7 +65,7 @@ public class SendMoneyController {
     public void send(ActionEvent event) {
         // Address exception cannot happen as we validated it beforehand.
         try {
-            Coin amount = Coin.parseCoin(amountEdit.getText());
+            Coin amount = Coin.parseCoin(amountEdit.getText(),NetworkParameters.BIGNETCOIN_TOKENID);
             Address destination = Address.fromBase58(Main.params, address.getText());
             SendRequest req;
             if (amount.equals(Main.bitcoin.wallet().getBalance()))

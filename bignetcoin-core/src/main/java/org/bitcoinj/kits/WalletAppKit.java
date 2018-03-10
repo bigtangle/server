@@ -477,7 +477,7 @@ public class WalletAppKit extends AbstractIdleService {
                 serializer = new WalletProtobufSerializer(walletFactory);
             else
                 serializer = new WalletProtobufSerializer();
-            wallet = serializer.readWallet(params, NetworkParameters.BIGNETCOIN_TOKENID, extArray, proto);
+            wallet = serializer.readWallet(params, extArray, proto);
             if (shouldReplayWallet)
                 wallet.reset();
         } finally {

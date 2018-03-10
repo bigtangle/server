@@ -17,56 +17,14 @@
 
 package org.bitcoinj.tools;
 
-import org.bitcoinj.core.*;
-import org.bitcoinj.crypto.*;
-import org.bitcoinj.net.discovery.DnsDiscovery;
-import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.params.RegTestParams;
-import org.bitcoinj.params.TestNet3Params;
-import org.bitcoinj.protocols.payments.PaymentProtocol;
-import org.bitcoinj.protocols.payments.PaymentProtocolException;
-import org.bitcoinj.protocols.payments.PaymentSession;
-import org.bitcoinj.script.ScriptBuilder;
-import org.bitcoinj.store.*;
-import org.bitcoinj.uri.BitcoinURI;
-import org.bitcoinj.uri.BitcoinURIParseException;
-import org.bitcoinj.utils.BriefLogFormatter;
-import org.bitcoinj.wallet.DeterministicSeed;
-import org.bitcoinj.wallet.DeterministicUpgradeRequiredException;
-import org.bitcoinj.wallet.DeterministicUpgradeRequiresPassword;
-import com.google.common.base.Charsets;
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
-import com.google.common.io.Resources;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ByteString;
-import com.subgraph.orchid.TorClient;
-import joptsimple.OptionParser;
-import joptsimple.OptionSet;
-import joptsimple.OptionSpec;
-import joptsimple.util.DateConverter;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.bitcoinj.core.Coin.parseCoin;
 
-import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
-import org.bitcoinj.core.listeners.DownloadProgressTracker;
-import org.bitcoinj.wallet.MarriedKeyChain;
-import org.bitcoinj.wallet.Protos;
-import org.bitcoinj.wallet.SendRequest;
-import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.WalletExtension;
-import org.bitcoinj.wallet.WalletProtobufSerializer;
-import org.bitcoinj.wallet.Wallet.BalanceType;
-import org.bitcoinj.wallet.listeners.WalletChangeEventListener;
-import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
-import org.bitcoinj.wallet.listeners.WalletCoinsSentEventListener;
-import org.bitcoinj.wallet.listeners.WalletReorganizeEventListener;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
-import org.spongycastle.util.encoders.Hex;
-
-import javax.annotation.Nullable;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -83,8 +41,84 @@ import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 
-import static org.bitcoinj.core.Coin.parseCoin;
-import static com.google.common.base.Preconditions.checkNotNull;
+import javax.annotation.Nullable;
+
+import org.bitcoinj.core.AbstractBlockGraph;
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.AddressFormatException;
+import org.bitcoinj.core.Block;
+import org.bitcoinj.core.BlockGraph;
+import org.bitcoinj.core.CheckpointManager;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.Context;
+import org.bitcoinj.core.DumpedPrivateKey;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.FilteredBlock;
+import org.bitcoinj.core.InsufficientMoneyException;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Peer;
+import org.bitcoinj.core.PeerAddress;
+import org.bitcoinj.core.PeerGroup;
+import org.bitcoinj.core.ScriptException;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.StoredBlock;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.VerificationException;
+import org.bitcoinj.core.WrongNetworkException;
+import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
+import org.bitcoinj.core.listeners.DownloadProgressTracker;
+import org.bitcoinj.crypto.DeterministicKey;
+import org.bitcoinj.crypto.KeyCrypterException;
+import org.bitcoinj.crypto.MnemonicCode;
+import org.bitcoinj.crypto.MnemonicException;
+import org.bitcoinj.crypto.TransactionSignature;
+import org.bitcoinj.net.discovery.DnsDiscovery;
+import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.params.RegTestParams;
+import org.bitcoinj.params.TestNet3Params;
+ 
+import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.store.BlockStore;
+import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.store.SPVBlockStore;
+import org.bitcoinj.uri.BitcoinURI;
+import org.bitcoinj.uri.BitcoinURIParseException;
+import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.wallet.DeterministicSeed;
+import org.bitcoinj.wallet.DeterministicUpgradeRequiredException;
+import org.bitcoinj.wallet.DeterministicUpgradeRequiresPassword;
+import org.bitcoinj.wallet.MarriedKeyChain;
+import org.bitcoinj.wallet.Protos;
+import org.bitcoinj.wallet.SendRequest;
+import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.Wallet.BalanceType;
+import org.bitcoinj.wallet.WalletExtension;
+import org.bitcoinj.wallet.WalletProtobufSerializer;
+import org.bitcoinj.wallet.listeners.WalletChangeEventListener;
+import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
+import org.bitcoinj.wallet.listeners.WalletCoinsSentEventListener;
+import org.bitcoinj.wallet.listeners.WalletReorganizeEventListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
+import org.spongycastle.util.encoders.Hex;
+
+import com.google.common.base.Charsets;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
+import com.google.common.io.Resources;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.protobuf.ByteString;
+import com.subgraph.orchid.TorClient;
+
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
+import joptsimple.OptionSpec;
+import joptsimple.util.DateConverter;
 
 /**
  * A command line tool for manipulating wallets and working with Bitcoin.
@@ -147,7 +181,7 @@ public class WalletTool {
 
         public boolean matchBitcoins(Coin comparison) {
             try {
-                Coin units = parseCoin(value);
+                Coin units = parseCoin(value,NetworkParameters.BIGNETCOIN_TOKENID);
                 switch (type) {
                     case LT: return comparison.compareTo(units) < 0;
                     case GT: return comparison.compareTo(units) > 0;
@@ -363,7 +397,7 @@ public class WalletTool {
                 } else if (options.has(outputFlag)) {
                     Coin feePerKb = null;
                     if (options.has(feePerKbOption))
-                        feePerKb = parseCoin((String) options.valueOf(feePerKbOption));
+                        feePerKb = parseCoin((String) options.valueOf(feePerKbOption),NetworkParameters.BIGNETCOIN_TOKENID);
                     String lockTime = null;
                     if (options.has("locktime")) {
                         lockTime = (String) options.valueOf("locktime");
@@ -371,7 +405,7 @@ public class WalletTool {
                     boolean allowUnconfirmed = options.has("allow-unconfirmed");
                     send(outputFlag.values(options), feePerKb, lockTime, allowUnconfirmed);
                 } else if (options.has(paymentRequestLocation)) {
-                    sendPaymentRequest(paymentRequestLocation.value(options), !options.has("no-pki"));
+                 //   sendPaymentRequest(paymentRequestLocation.value(options), !options.has("no-pki"));
                 } else {
                     System.err.println("You must specify a --payment-request or at least one --output=addr:value.");
                     return;
@@ -384,7 +418,7 @@ public class WalletTool {
                 }
                 Coin feePerKb = null;
                 if (options.has(feePerKbOption))
-                    feePerKb = parseCoin((String) options.valueOf(feePerKbOption));
+                    feePerKb = parseCoin((String) options.valueOf(feePerKbOption),NetworkParameters.BIGNETCOIN_TOKENID);
                 if (!options.has("locktime")) {
                     System.err.println("You must specify a --locktime");
                     return;
@@ -404,7 +438,7 @@ public class WalletTool {
                 }
                 Coin feePerKb = null;
                 if (options.has(feePerKbOption))
-                    feePerKb = parseCoin((String) options.valueOf(feePerKbOption));
+                    feePerKb = parseCoin((String) options.valueOf(feePerKbOption),NetworkParameters.BIGNETCOIN_TOKENID);
                 boolean allowUnconfirmed = options.has("allow-unconfirmed");
                 if (!options.has(txHashFlag)) {
                     System.err.println("You must specify the transaction to spend: --txhash=tx-hash");
@@ -419,7 +453,7 @@ public class WalletTool {
                 }
                 Coin feePerKb = null;
                 if (options.has(feePerKbOption))
-                    feePerKb = parseCoin((String) options.valueOf(feePerKbOption));
+                    feePerKb = parseCoin((String) options.valueOf(feePerKbOption),NetworkParameters.BIGNETCOIN_TOKENID);
                 boolean allowUnconfirmed = options.has("allow-unconfirmed");
                 if (!options.has(txHashFlag)) {
                     System.err.println("You must specify the transaction to spend: --txhash=tx-hash");
@@ -670,7 +704,7 @@ public class WalletTool {
             if ("ALL".equalsIgnoreCase(parts[1]))
                 value = wallet.getBalance(BalanceType.ESTIMATED);
             else
-                value = parseCoin(parts[1]);
+                value = parseCoin(parts[1],NetworkParameters.BIGNETCOIN_TOKENID);
             if (destination.startsWith("0")) {
                 // Treat as a raw public key.
                 byte[] pubKey = new BigInteger(destination, 16).toByteArray();
@@ -993,115 +1027,7 @@ public class WalletTool {
         return Long.parseLong(lockTimeStr);
     }
 
-    private static void sendPaymentRequest(String location, boolean verifyPki) {
-        if (location.startsWith("http") || location.startsWith("bitcoin")) {
-            try {
-                ListenableFuture<PaymentSession> future;
-                if (location.startsWith("http")) {
-                    future = PaymentSession.createFromUrl(location, verifyPki);
-                } else {
-                    BitcoinURI paymentRequestURI = new BitcoinURI(location);
-                    future = PaymentSession.createFromBitcoinUri(paymentRequestURI, verifyPki);
-                }
-                PaymentSession session = future.get();
-                if (session != null) {
-                    send(session);
-                } else {
-                    System.err.println("Server returned null session");
-                    System.exit(1);
-                }
-            } catch (PaymentProtocolException e) {
-                System.err.println("Error creating payment session " + e.getMessage());
-                System.exit(1);
-            } catch (BitcoinURIParseException e) {
-                System.err.println("Invalid bitcoin uri: " + e.getMessage());
-                System.exit(1);
-            } catch (InterruptedException e) {
-                // Ignore.
-            } catch (ExecutionException e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            // Try to open the payment request as a file.
-            FileInputStream stream = null;
-            try {
-                File paymentRequestFile = new File(location);
-                stream = new FileInputStream(paymentRequestFile);
-            } catch (Exception e) {
-                System.err.println("Failed to open file: " + e.getMessage());
-                System.exit(1);
-            }
-            try {
-                paymentRequest = org.bitcoin.protocols.payments.Protos.PaymentRequest.newBuilder().mergeFrom(stream).build();
-            } catch(IOException e) {
-                System.err.println("Failed to parse payment request from file " + e.getMessage());
-                System.exit(1);
-            }
-            PaymentSession session = null;
-            try {
-                session = new PaymentSession(paymentRequest, verifyPki);
-            } catch (PaymentProtocolException e) {
-                System.err.println("Error creating payment session " + e.getMessage());
-                System.exit(1);
-            }
-            send(session);
-        }
-    }
-
-    private static void send(PaymentSession session) {
-        try {
-            System.out.println("Payment Request");
-            System.out.println("Coin: " + session.getValue().toFriendlyString());
-            System.out.println("Date: " + session.getDate());
-            System.out.println("Memo: " + session.getMemo());
-            if (session.pkiVerificationData != null) {
-                System.out.println("Pki-Verified Name: " + session.pkiVerificationData.displayName);
-                System.out.println("PKI data verified by: " + session.pkiVerificationData.rootAuthorityName);
-            }
-            final SendRequest req = session.getSendRequest();
-            if (password != null) {
-                req.aesKey = passwordToKey(true);
-                if (req.aesKey == null)
-                    return;   // Error message already printed.
-            }
-            wallet.completeTx(req);  // may throw InsufficientMoneyException.
-            if (options.has("offline")) {
-                wallet.commitTx(req.tx);
-                return;
-            }
-            setup();
-            // No refund address specified, no user-specified memo field.
-            ListenableFuture<PaymentProtocol.Ack> future = session.sendPayment(ImmutableList.of(req.tx), null, null);
-            if (future == null) {
-                // No payment_url for submission so, broadcast and wait.
-                peers.start();
-                peers.broadcastTransaction(req.tx).future().get();
-            } else {
-                PaymentProtocol.Ack ack = future.get();
-                wallet.commitTx(req.tx);
-                System.out.println("Memo from server: " + ack.getMemo());
-            }
-        } catch (PaymentProtocolException e) {
-            System.err.println("Failed to send payment " + e.getMessage());
-            System.exit(1);
-        } catch (VerificationException e) {
-            System.err.println("Failed to send payment " + e.getMessage());
-            System.exit(1);
-        } catch (ExecutionException e) {
-            System.err.println("Failed to send payment " + e.getMessage());
-            System.exit(1);
-        } catch (IOException e) {
-            System.err.println("Invalid payment " + e.getMessage());
-            System.exit(1);
-        } catch (InterruptedException e1) {
-            // Ignore.
-        } catch (InsufficientMoneyException e) {
-            System.err.println("Insufficient funds: have " + wallet.getBalance().toFriendlyString());
-        } catch (BlockStoreException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
+     
     private static void wait(WaitForEnum waitFor) throws BlockStoreException {
         final CountDownLatch latch = new CountDownLatch(1);
         setup();

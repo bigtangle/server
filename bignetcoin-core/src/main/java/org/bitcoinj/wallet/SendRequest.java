@@ -212,18 +212,18 @@ public class SendRequest {
         return req;
     }
 
-    public static SendRequest toCLTVPaymentChannel(NetworkParameters params, Date releaseTime, ECKey from, ECKey to, Coin value,long tokenid) {
+    public static SendRequest toCLTVPaymentChannel(NetworkParameters params, Date releaseTime, ECKey from, ECKey to, Coin value) {
         long time = releaseTime.getTime() / 1000L;
         checkArgument(time >= Transaction.LOCKTIME_THRESHOLD, "Release time was too small");
-        return toCLTVPaymentChannel(params, BigInteger.valueOf(time), from, to, value,tokenid);
+        return toCLTVPaymentChannel(params, BigInteger.valueOf(time), from, to, value);
     }
 
-    public static SendRequest toCLTVPaymentChannel(NetworkParameters params, int releaseBlock, ECKey from, ECKey to, Coin value,long tokenid) {
+    public static SendRequest toCLTVPaymentChannel(NetworkParameters params, int releaseBlock, ECKey from, ECKey to, Coin value) {
         checkArgument(0 <= releaseBlock && releaseBlock < Transaction.LOCKTIME_THRESHOLD, "Block number was too large");
-        return toCLTVPaymentChannel(params, BigInteger.valueOf(releaseBlock), from, to, value,tokenid);
+        return toCLTVPaymentChannel(params, BigInteger.valueOf(releaseBlock), from, to, value);
     }
 
-    public static SendRequest toCLTVPaymentChannel(NetworkParameters params, BigInteger time, ECKey from, ECKey to, Coin value,long tokenid) {
+    public static SendRequest toCLTVPaymentChannel(NetworkParameters params, BigInteger time, ECKey from, ECKey to, Coin value) {
         SendRequest req = new SendRequest();
         Script output = ScriptBuilder.createCLTVPaymentChannelOutput(time, from, to);
         req.tx = new Transaction(params);

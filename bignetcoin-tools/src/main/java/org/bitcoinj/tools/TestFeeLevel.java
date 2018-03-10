@@ -41,7 +41,7 @@ public class TestFeeLevel {
             return;
         }
 
-        Coin feeToTest = Coin.valueOf(Long.parseLong(args[0]));
+        Coin feeToTest = Coin.valueOf(Long.parseLong(args[0]),NetworkParameters.BIGNETCOIN_TOKENID);
         System.out.println("Fee to test is " + feeToTest.toFriendlyString());
 
         kit = new WalletAppKit(PARAMS, new File("."), "testfeelevel");
