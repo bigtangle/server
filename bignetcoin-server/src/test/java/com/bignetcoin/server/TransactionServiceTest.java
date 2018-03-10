@@ -11,8 +11,6 @@ import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockForTest;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.FullPrunedBlockGraph;
-import org.bitcoinj.core.MySQLFullPrunedBlockChainTest;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutPoint;
@@ -28,13 +26,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import com.bignetcoin.server.service.API;
 import com.bignetcoin.server.service.TransactionService;
 import com.google.common.collect.Lists;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class TransactionServiceTest extends MySQLFullPrunedBlockChainTest {
+public class TransactionServiceTest extends AbstractIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(TransactionServiceTest.class);
 
@@ -43,11 +40,6 @@ public class TransactionServiceTest extends MySQLFullPrunedBlockChainTest {
 
     @Test
     public void getBalance() throws Exception {
-        final int UNDOABLE_BLOCKS_STORED = 10;
-        store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
-        resetStore(store);
-        blockgraph = new FullPrunedBlockGraph(PARAMS, store);
-
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
         ECKey outKey = new ECKey();
@@ -102,10 +94,6 @@ public class TransactionServiceTest extends MySQLFullPrunedBlockChainTest {
 
     @Test
     public void testUTXOProviderWithWallet() throws Exception {
-        final int UNDOABLE_BLOCKS_STORED = 1000;
-        store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
-        blockgraph = new FullPrunedBlockGraph(PARAMS, store);
-
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
         ECKey outKey = new ECKey();

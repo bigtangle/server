@@ -31,47 +31,9 @@ import com.bignetcoin.server.service.TipsService;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class InitTest extends MySQLFullPrunedBlockChainTest {
+public class InitTest extends AbstractIntegrationTest {
 
-    @Autowired
-    private TipsService tipsManager;
-
-    @Autowired
-    private BlockService blockService;
-
-    ECKey outKey = new ECKey();
-    int height = 1;
-
-    @Autowired
-    private GlobalConfigurationProperties globalConfigurationProperties;
-
-    @Override
-    public FullPrunedBlockStore createStore(NetworkParameters params, int blockCount) throws BlockStoreException {
-        try {
-            String DB_HOSTNAME = globalConfigurationProperties.getHostname();
-            String DB_NAME = globalConfigurationProperties.getDbName();
-            String DB_USERNAME = globalConfigurationProperties.getUsername();
-            String DB_PASSWORD = globalConfigurationProperties.getPassword();
-            store = new MySQLFullPrunedBlockStore(params, blockCount, DB_HOSTNAME, DB_NAME, DB_USERNAME, DB_PASSWORD);
-        } catch (RuntimeException e) {
-        }
-        // reset pro @test
-         resetStore(store);
-        return store;
-    }
-
-    // create simple linear blcoks
-    // each block point to genesis and prev block
-    @Before
-    public void setup() throws Exception {
-        super.setUp();
-        final int UNDOABLE_BLOCKS_STORED = 10;
-        store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
-
-        blockgraph = new FullPrunedBlockGraph(PARAMS, store);
-    }
  
-
     @Test
     public void init() throws Exception { }
 

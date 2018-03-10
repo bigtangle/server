@@ -35,7 +35,7 @@ import com.bignetcoin.server.service.TipsService;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
+public class TipsServiceTest extends AbstractIntegrationTest {
     private static final Logger log = LoggerFactory.getLogger(TipsServiceTest.class);
     @Test
     public void testBlockEvaluationDb() throws Exception {
@@ -66,40 +66,7 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
 
     ECKey outKey = new ECKey();
     int height = 1;
-
-    @Autowired
-    private GlobalConfigurationProperties globalConfigurationProperties;
-
-    @Override
-    public FullPrunedBlockStore createStore(NetworkParameters params, int blockCount) throws BlockStoreException {
-        try {
-            String DB_HOSTNAME = globalConfigurationProperties.getHostname();
-            String DB_NAME = globalConfigurationProperties.getDbName();
-            String DB_USERNAME = globalConfigurationProperties.getUsername();
-            String DB_PASSWORD = globalConfigurationProperties.getPassword();
-            store = new MySQLFullPrunedBlockStore(params, blockCount, DB_HOSTNAME, DB_NAME, DB_USERNAME, DB_PASSWORD);
-            // ((MySQLFullPrunedBlockStore)store).initFromDatabase();
-            // delete + create +initFromDatabase
-            ((MySQLFullPrunedBlockStore) store).resetStore();
-        } catch (Exception e) {
-           log.debug("", e);
-        }
-        // reset pro @test
-
-        return store;
-    }
-
-    // create simple linear blocks
-    // each block point to genesis and prev block
-    @Before
-    public void setup() throws Exception {
-        super.setUp();
-        final int UNDOABLE_BLOCKS_STORED = 10;
-        store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);blockgraph = new FullPrunedBlockGraph(PARAMS, store);
-
-        
-    }
-
+ 
     public List<Block> createLinearBlock() throws Exception {
         List<Block> blocks = new ArrayList<Block>();
         Block rollingBlock1 = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(),

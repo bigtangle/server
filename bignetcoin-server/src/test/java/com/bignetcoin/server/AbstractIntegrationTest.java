@@ -1,13 +1,15 @@
 package com.bignetcoin.server;
 
 import org.bitcoinj.core.FullPrunedBlockGraph;
-import org.bitcoinj.core.MySQLFullPrunedBlockChainTest;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.store.MySQLFullPrunedBlockStore;
 import org.junit.Before;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -40,10 +42,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 })
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-public class AbstractIntegrationTest extends MySQLFullPrunedBlockChainTest {
+public abstract class AbstractIntegrationTest   {
 
     private static final String CONTEXT_ROOT_TEMPLATE = "http://localhost:%s/";
-
+    private static final Logger log = LoggerFactory.getLogger(TipsServiceTest.class);
     public String contextRoot;
 
     private MockMvc mockMvc;
@@ -54,15 +56,40 @@ public class AbstractIntegrationTest extends MySQLFullPrunedBlockChainTest {
 
     @Autowired
     private ConfigurableApplicationContext applicationContext;
-    @Autowired
-    private GlobalConfigurationProperties globalConfigurationProperties;
-
+    
     @Autowired
     public void prepareContextRoot(@Value("${local.server.port}") int port) {
         contextRoot = String.format(CONTEXT_ROOT_TEMPLATE, port);
 
     }
 
+    @Autowired
+    private GlobalConfigurationProperties globalConfigurationProperties;
+
+    protected FullPrunedBlockGraph blockgraph;
+    protected FullPrunedBlockStore store;
+    public FullPrunedBlockStore createStore(NetworkParameters params, int blockCount) throws BlockStoreException {
+        try {
+            String DB_HOSTNAME = globalConfigurationProperties.getHostname();
+            String DB_NAME = globalConfigurationProperties.getDbName();
+            String DB_USERNAME = globalConfigurationProperties.getUsername();
+            String DB_PASSWORD = globalConfigurationProperties.getPassword();
+            store = new MySQLFullPrunedBlockStore(params, blockCount, DB_HOSTNAME, DB_NAME, DB_USERNAME, DB_PASSWORD);
+            // ((MySQLFullPrunedBlockStore)store).initFromDatabase();
+            // delete + create +initFromDatabase
+            ((MySQLFullPrunedBlockStore) store).resetStore();
+        } catch (Exception e) {
+           log.debug("", e);
+        }
+        // reset pro @test
+
+        return store;
+    }
+    protected static final NetworkParameters PARAMS = new UnitTestParams() {
+        @Override public int getInterval() {
+            return 10000;
+        }
+    };
     @Before
     public void setUp() throws Exception {
         mockMvc = MockMvcBuilders.webAppContextSetup(webContext).build();
