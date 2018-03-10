@@ -54,7 +54,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
     @Test
     public void fourPeers() throws Exception {
         InboundMessageQueuer[] channels = { connectPeer(1), connectPeer(2), connectPeer(3), connectPeer(4) };
-        Transaction tx = new Transaction(PARAMS);
+        Transaction tx = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);;
         tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
         TransactionBroadcast broadcast = new TransactionBroadcast(peerGroup, tx);
         final AtomicDouble lastProgress = new AtomicDouble();
@@ -115,7 +115,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
     @Test
     public void rejectHandling() throws Exception {
         InboundMessageQueuer[] channels = { connectPeer(0), connectPeer(1), connectPeer(2), connectPeer(3), connectPeer(4) };
-        Transaction tx = new Transaction(PARAMS);
+        Transaction tx = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);;
         TransactionBroadcast broadcast = new TransactionBroadcast(peerGroup, tx);
         ListenableFuture<Transaction> future = broadcast.broadcast();
         // 0 and 3 are randomly selected to receive the broadcast.
@@ -148,7 +148,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
 
         // Now create a spend, and expect the announcement on p1.
         Address dest = new ECKey().toAddress(PARAMS);
-        Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, dest, COIN);
+        Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, dest, COIN, NetworkParameters.BIGNETCOIN_TOKENID);
         assertFalse(sendResult.broadcastComplete.isDone());
         Transaction t1;
         {
@@ -197,7 +197,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
 
         // Now create a spend, and expect the announcement on p1.
         Address dest = new ECKey().toAddress(PARAMS);
-        Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, dest, COIN);
+        Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, dest, COIN, NetworkParameters.BIGNETCOIN_TOKENID);
         assertNotNull(sendResult.tx);
         Threading.waitForUserCode();
         assertFalse(sendResult.broadcastComplete.isDone());
@@ -233,7 +233,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
 
         // Do the same thing with an offline transaction.
         peerGroup.removeWallet(wallet);
-        SendRequest req = SendRequest.to(dest, valueOf(2, 0));
+        SendRequest req = SendRequest.to(dest, valueOf(2, 0), NetworkParameters.BIGNETCOIN_TOKENID);
         Transaction t3 = checkNotNull(wallet.sendCoinsOffline(req));
         assertNull(outbound(p1));  // Nothing sent.
         // Add the wallet to the peer group (simulate initialization). Transactions should be announced.

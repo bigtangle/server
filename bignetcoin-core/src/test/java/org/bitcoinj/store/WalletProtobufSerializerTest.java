@@ -289,7 +289,7 @@ public class WalletProtobufSerializerTest {
         ByteArrayInputStream test = new ByteArrayInputStream(output.toByteArray());
         assertTrue(WalletProtobufSerializer.isWallet(test));
         ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
-        return new WalletProtobufSerializer().readWallet(input);
+        return new WalletProtobufSerializer().readWallet(input, NetworkParameters.BIGNETCOIN_TOKENID);
     }
 
     @Test
@@ -384,21 +384,21 @@ public class WalletProtobufSerializerTest {
         Protos.Wallet proto = new WalletProtobufSerializer().walletToProto(myWallet);
         // Initial extension is mandatory: try to read it back into a wallet that doesn't know about it.
         try {
-            new WalletProtobufSerializer().readWallet(PARAMS, null, proto);
+            new WalletProtobufSerializer().readWallet(PARAMS, null, proto, NetworkParameters.BIGNETCOIN_TOKENID);
             fail();
         } catch (UnreadableWalletException e) {
             assertTrue(e.getMessage().contains("mandatory"));
         }
         Wallet wallet = new WalletProtobufSerializer().readWallet(PARAMS,
                 new WalletExtension[]{ new FooWalletExtension("com.whatever.required", true) },
-                proto);
+                proto, NetworkParameters.BIGNETCOIN_TOKENID);
         assertTrue(wallet.getExtensions().containsKey("com.whatever.required"));
 
         // Non-mandatory extensions are ignored if the wallet doesn't know how to read them.
         Wallet wallet2 = new Wallet(PARAMS);
         wallet2.addExtension(new FooWalletExtension("com.whatever.optional", false));
         Protos.Wallet proto2 = new WalletProtobufSerializer().walletToProto(wallet2);
-        Wallet wallet5 = new WalletProtobufSerializer().readWallet(PARAMS, null, proto2);
+        Wallet wallet5 = new WalletProtobufSerializer().readWallet(PARAMS, null, proto2, NetworkParameters.BIGNETCOIN_TOKENID);
         assertEquals(0, wallet5.getExtensions().size());
     }
 
@@ -427,7 +427,7 @@ public class WalletProtobufSerializerTest {
         };
         myWallet.addExtension(extension);
         Protos.Wallet proto = new WalletProtobufSerializer().walletToProto(myWallet);
-        Wallet wallet = new WalletProtobufSerializer().readWallet(PARAMS, new WalletExtension[]{extension}, proto);
+        Wallet wallet = new WalletProtobufSerializer().readWallet(PARAMS, new WalletExtension[]{extension}, proto, NetworkParameters.BIGNETCOIN_TOKENID);
         assertEquals(0, wallet.getExtensions().size());
     }
 
@@ -435,6 +435,6 @@ public class WalletProtobufSerializerTest {
     public void versions() throws Exception {
         Protos.Wallet.Builder proto = Protos.Wallet.newBuilder(new WalletProtobufSerializer().walletToProto(myWallet));
         proto.setVersion(2);
-        new WalletProtobufSerializer().readWallet(PARAMS, null, proto.build());
+        new WalletProtobufSerializer().readWallet(PARAMS, null, proto.build(), NetworkParameters.BIGNETCOIN_TOKENID);
     }
 }

@@ -131,7 +131,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         }
 
         rollingBlock = BlockForTest.createNextBlock(rollingBlock,null,PARAMS.getGenesisBlock().getHash());
-        Transaction t = new Transaction(PARAMS);
+        Transaction t = new Transaction(PARAMS,  NetworkParameters.BIGNETCOIN_TOKENID);
         t.addOutput(new TransactionOutput(PARAMS, t, FIFTY_COINS, new byte[] {}));
         TransactionInput input = t.addInput(spendableOutput);
         // Invalid script.
@@ -175,7 +175,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
                                        (store.getTransactionOutput(spendableOutput.getHash(), spendableOutput.getIndex()));
         rollingBlock = BlockForTest.createNextBlock(rollingBlock,null,PARAMS.getGenesisBlock().getHash());
         
-        Transaction t = new Transaction(PARAMS);
+        Transaction t = new Transaction(PARAMS,  NetworkParameters.BIGNETCOIN_TOKENID);
         // Entirely invalid scriptPubKey
         t.addOutput(new TransactionOutput(PARAMS, t, FIFTY_COINS, new byte[]{}));
         t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
@@ -258,7 +258,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         Address address = new Address(PARAMS, toKey.getPubKeyHash());
         Coin totalAmount = Coin.ZERO;
 
-        Transaction t = new Transaction(PARAMS);
+        Transaction t = new Transaction(PARAMS,  NetworkParameters.BIGNETCOIN_TOKENID);
         t.addOutput(new TransactionOutput(PARAMS, t, amount, toKey));
         t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
         rollingBlock.addTransaction(t);
@@ -312,7 +312,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         ECKey toKey = wallet.freshReceiveKey();
         Coin amount = Coin.valueOf(100000000);
 
-        Transaction t = new Transaction(PARAMS);
+        Transaction t = new Transaction(PARAMS,  NetworkParameters.BIGNETCOIN_TOKENID);
         t.addOutput(new TransactionOutput(PARAMS, t, amount, toKey));
         t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
         
@@ -324,7 +324,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         ECKey toKey2 = new ECKey();
         Coin amount2 = amount.divide(2);
         Address address2 = new Address(PARAMS, toKey2.getPubKeyHash());
-        SendRequest req = SendRequest.to(address2, amount2);
+        SendRequest req = SendRequest.to(address2, amount2,  NetworkParameters.BIGNETCOIN_TOKENID);
         wallet.completeTx(req);
         wallet.commitTx(req.tx);
         Coin fee = Coin.ZERO;

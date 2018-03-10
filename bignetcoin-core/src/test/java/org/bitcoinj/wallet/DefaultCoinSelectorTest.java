@@ -36,7 +36,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
     @Test
     public void selectable() throws Exception {
         Transaction t;
-        t = new Transaction(PARAMS);
+        t = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);;
         t.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.PENDING);
         assertFalse(DefaultCoinSelector.isSelectable(t));
         t.getConfidence().setSource(TransactionConfidence.Source.SELF);
@@ -45,7 +45,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         assertFalse(DefaultCoinSelector.isSelectable(t));
         t.getConfidence().markBroadcastBy(new PeerAddress(PARAMS, InetAddress.getByName("5.6.7.8")));
         assertTrue(DefaultCoinSelector.isSelectable(t));
-        t = new Transaction(PARAMS);
+        t = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);;
         t.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.BUILDING);
         assertTrue(DefaultCoinSelector.isSelectable(t));
         t = new Transaction(RegTestParams.get());
@@ -100,7 +100,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
     @Test
     public void identicalInputs() throws Exception {
         // Add four outputs to a transaction with same value and destination. Select them all.
-        Transaction t = new Transaction(PARAMS);
+        Transaction t = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);;
         java.util.List<TransactionOutput> outputs = Arrays.asList(
             new TransactionOutput(PARAMS, t, Coin.valueOf(30302787), myAddress),
             new TransactionOutput(PARAMS, t, Coin.valueOf(30302787), myAddress),

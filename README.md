@@ -229,9 +229,14 @@ mining rewards:
 
 time interval 10 Minutes:
 
+update block evaluation:
+
 select number of   blocks pro miner with condition the block is not used for last reward and good rating
 1) select last reward block and get the last height
-2) select all blocks with height > last height + all blocks in block 
+2) select all blocks with height > last height + all blocks in block evaluation with rating < 75 
+3) calculation all block 
+
+
  coin= number * amount / total 
 add to block with coinbase transaction and the height in the block.
  

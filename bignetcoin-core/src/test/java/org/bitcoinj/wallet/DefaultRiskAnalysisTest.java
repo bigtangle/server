@@ -45,7 +45,7 @@ public class DefaultRiskAnalysisTest {
 
     @Test(expected = IllegalStateException.class)
     public void analysisCantBeUsedTwice() {
-        Transaction tx = new Transaction(PARAMS);
+        Transaction tx = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);;
         DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
         assertEquals(RiskAnalysis.Result.OK, analysis.analyze());
         assertNull(analysis.getNonFinal());
@@ -56,7 +56,7 @@ public class DefaultRiskAnalysisTest {
     @Test
     public void nonFinal() throws Exception {
         // Verify that just having a lock time in the future is not enough to be considered risky (it's still final).
-        Transaction tx = new Transaction(PARAMS);
+        Transaction tx = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);;
         TransactionInput input = tx.addInput(PARAMS.getGenesisBlock().getTransactions().get(0).getOutput(0));
         tx.addOutput(COIN, key1);
         tx.setLockTime(TIMESTAMP + 86400);
@@ -78,7 +78,7 @@ public class DefaultRiskAnalysisTest {
 
     @Test
     public void selfCreatedAreNotRisky() {
-        Transaction tx = new Transaction(PARAMS);
+        Transaction tx = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);;
         tx.addInput(PARAMS.getGenesisBlock().getTransactions().get(0).getOutput(0)).setSequenceNumber(1);
         tx.addOutput(COIN, key1);
         tx.setLockTime(TIMESTAMP + 86400);
@@ -99,11 +99,11 @@ public class DefaultRiskAnalysisTest {
     @Test
     public void nonFinalDependency() {
         // Final tx has a dependency that is non-final.
-        Transaction tx1 = new Transaction(PARAMS);
+        Transaction tx1 = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);;
         tx1.addInput(PARAMS.getGenesisBlock().getTransactions().get(0).getOutput(0)).setSequenceNumber(1);
         TransactionOutput output = tx1.addOutput(COIN, key1);
         tx1.setLockTime(TIMESTAMP + 86400);
-        Transaction tx2 = new Transaction(PARAMS);
+        Transaction tx2 = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);;
         tx2.addInput(output);
         tx2.addOutput(COIN, new ECKey());
 
@@ -114,17 +114,17 @@ public class DefaultRiskAnalysisTest {
 
     @Test
     public void nonStandardDust() {
-        Transaction standardTx = new Transaction(PARAMS);
+        Transaction standardTx = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);;
         standardTx.addInput(PARAMS.getGenesisBlock().getTransactions().get(0).getOutput(0));
         standardTx.addOutput(COIN, key1);
         assertEquals(RiskAnalysis.Result.OK, DefaultRiskAnalysis.FACTORY.create(wallet, standardTx, NO_DEPS).analyze());
 
-        Transaction dustTx = new Transaction(PARAMS);
+        Transaction dustTx = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);;
         dustTx.addInput(PARAMS.getGenesisBlock().getTransactions().get(0).getOutput(0));
         dustTx.addOutput(Coin.SATOSHI, key1); // 1 Satoshi
         assertEquals(RiskAnalysis.Result.NON_STANDARD, DefaultRiskAnalysis.FACTORY.create(wallet, dustTx, NO_DEPS).analyze());
 
-        Transaction edgeCaseTx = new Transaction(PARAMS);
+        Transaction edgeCaseTx = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);;
         edgeCaseTx.addInput(PARAMS.getGenesisBlock().getTransactions().get(0).getOutput(0));
         edgeCaseTx.addOutput(DefaultRiskAnalysis.MIN_ANALYSIS_NONDUST_OUTPUT, key1); // Dust threshold
         assertEquals(RiskAnalysis.Result.OK, DefaultRiskAnalysis.FACTORY.create(wallet, edgeCaseTx, NO_DEPS).analyze());
@@ -135,7 +135,7 @@ public class DefaultRiskAnalysisTest {
         ScriptChunk nonStandardChunk = new ScriptChunk(OP_PUSHDATA1, new byte[75]);
         byte[] nonStandardScript = new ScriptBuilder().addChunk(nonStandardChunk).build().getProgram();
         // Test non-standard script as an input.
-        Transaction tx = new Transaction(PARAMS);
+        Transaction tx = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);;
         assertEquals(DefaultRiskAnalysis.RuleViolation.NONE, DefaultRiskAnalysis.isStandard(tx));
         tx.addInput(new TransactionInput(PARAMS, null, nonStandardScript));
         assertEquals(DefaultRiskAnalysis.RuleViolation.SHORTEST_POSSIBLE_PUSHDATA, DefaultRiskAnalysis.isStandard(tx));
@@ -192,7 +192,7 @@ public class DefaultRiskAnalysisTest {
 
     @Test
     public void standardOutputs() throws Exception {
-        Transaction tx = new Transaction(PARAMS);
+        Transaction tx = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);;
         tx.addInput(PARAMS.getGenesisBlock().getTransactions().get(0).getOutput(0));
         // A pay to address output
         tx.addOutput(Coin.CENT, ScriptBuilder.createOutputScript(key1.toAddress(PARAMS)));

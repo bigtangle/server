@@ -652,15 +652,15 @@ public class PeerTest extends TestWithNetworkConnections {
         //   t1 -> t2 -> t3 -> [t4]
         // The ones in brackets are assumed to be in the chain and are represented only by hashes.
         Sha256Hash t4hash = Sha256Hash.wrap("2b801dd82f01d17bbde881687bf72bc62e2faa8ab8133d36fcb8c3abe7459da6");
-        Transaction t3 = new Transaction(PARAMS);
+        Transaction t3 = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);;
         t3.addInput(new TransactionInput(PARAMS, t3, new byte[]{}, new TransactionOutPoint(PARAMS, 0, t4hash)));
         t3.addOutput(COIN, new ECKey());
         t3 = FakeTxBuilder.roundTripTransaction(PARAMS, t3);
-        Transaction t2 = new Transaction(PARAMS);
+        Transaction t2 = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);;
         t2.addInput(t3.getOutput(0));
         t2.addOutput(COIN, new ECKey());
         t2 = FakeTxBuilder.roundTripTransaction(PARAMS, t2);
-        Transaction t1 = new Transaction(PARAMS);
+        Transaction t1 = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);
         t1.addInput(t2.getOutput(0));
         t1.addOutput(COIN, new ECKey());
         t1 = FakeTxBuilder.roundTripTransaction(PARAMS, t1);
@@ -762,14 +762,14 @@ public class PeerTest extends TestWithNetworkConnections {
             }
         });
         // t1 -> t2 [locked] -> t3 (not available)
-        Transaction t2 = new Transaction(PARAMS);
+        Transaction t2 = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);;
         t2.setLockTime(999999);
         // Add a fake input to t3 that goes nowhere.
         Sha256Hash t3 = Sha256Hash.of("abc".getBytes(Charset.forName("UTF-8")));
         t2.addInput(new TransactionInput(PARAMS, t2, new byte[]{}, new TransactionOutPoint(PARAMS, 0, t3)));
         t2.getInput(0).setSequenceNumber(0xDEADBEEF);
         t2.addOutput(COIN, new ECKey());
-        Transaction t1 = new Transaction(PARAMS);
+        Transaction t1 = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);;
         t1.addInput(t2.getOutput(0));
         t1.addOutput(COIN, key);  // Make it relevant.
         // Announce t1.
@@ -859,10 +859,10 @@ public class PeerTest extends TestWithNetworkConnections {
             }
         });
         connect();
-        Transaction t1 = new Transaction(PARAMS);
+        Transaction t1 = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);;
         t1.addInput(new TransactionInput(PARAMS, t1, new byte[]{}));
         t1.addOutput(COIN, new ECKey().toAddress(PARAMS));
-        Transaction t2 = new Transaction(PARAMS);
+        Transaction t2 = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);;
         t2.addInput(t1.getOutput(0));
         t2.addOutput(COIN, wallet.currentChangeAddress());
         inbound(writeTarget, t2);
