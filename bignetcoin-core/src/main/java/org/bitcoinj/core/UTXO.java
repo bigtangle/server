@@ -29,7 +29,6 @@ public class UTXO {
     private boolean coinbase;
     private String address;
     private Sha256Hash blockhash;
-    private long tokenid;
     private String fromaddress;
     private String description;
 
@@ -50,7 +49,7 @@ public class UTXO {
      *            The address.
      */
     public UTXO(Sha256Hash hash, long index, Coin value, int height, boolean coinbase, Script script, String address,
-            Sha256Hash blockhash, long tokenid, String fromaddress, String description) {
+            Sha256Hash blockhash,  String fromaddress, String description) {
         this.hash = hash;
         this.index = index;
         this.value = value;
@@ -59,7 +58,7 @@ public class UTXO {
         this.coinbase = coinbase;
 
         this.blockhash = blockhash;
-        this.tokenid = tokenid;
+  
         this.fromaddress = fromaddress;
         this.description = description;
         this.address = address;
@@ -69,7 +68,7 @@ public class UTXO {
         byte[] valueBytes = new byte[8];
         if (in.read(valueBytes, 0, 8) != 8)
             throw new EOFException();
-        value = Coin.valueOf(Utils.readInt64(valueBytes, 0));
+        value = Coin.valueOf(Utils.readInt64(valueBytes, 0),Utils.readInt64(valueBytes, 0) );
 
         int scriptBytesLength = ((in.read() & 0xFF)) | ((in.read() & 0xFF) << 8) | ((in.read() & 0xFF) << 16)
                 | ((in.read() & 0xFF) << 24);
@@ -186,13 +185,7 @@ public class UTXO {
         this.blockhash = blockhash;
     }
 
-    public long getTokenid() {
-        return tokenid;
-    }
-
-    public void setTokenid(long tokenid) {
-        this.tokenid = tokenid;
-    }
+    
 
     public String getFromaddress() {
         return fromaddress;

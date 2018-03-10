@@ -152,7 +152,7 @@ public class BlockTest {
                 new ECKey().getPubKey(), Block.BLOCK_HEIGHT_GENESIS, params.getGenesisBlock().getHash());
        // assertEquals(block.bitcoinSerialize().length, block.length);
         final int origBlockLen = block.length;
-        Transaction tx = new Transaction(params,  NetworkParameters.BIGNETCOIN_TOKENID);
+        Transaction tx = new Transaction(params);
         // this is broken until the transaction has > 1 input + output (which is
         // required anyway...)
         // assertTrue(tx.length == tx.bitcoinSerialize().length && tx.length ==
@@ -225,7 +225,7 @@ public class BlockTest {
         final String MINING_PRIVATE_KEY = "5JDxPrBRghF1EvSBjDigywqfmAjpHPmTJxYtQTYJxJRHLLQA4mG";
 
         final long BLOCK_NONCE = 3973947400L;
-        final Coin BALANCE_AFTER_BLOCK = Coin.valueOf(22223642);
+        final Coin BALANCE_AFTER_BLOCK = Coin.valueOf(22223642,NetworkParameters.BIGNETCOIN_TOKENID);
         final NetworkParameters PARAMS = MainNetParams.get();
 
         Block block169482 = PARAMS.getDefaultSerializer()

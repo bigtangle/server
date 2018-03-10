@@ -606,7 +606,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         InboundMessageQueuer p2 = connectPeer(2);
         // Create a pay to pubkey tx.
         Transaction tx = FakeTxBuilder.createFakeTx(PARAMS, COIN, key);
-        Transaction tx2 = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);;
+        Transaction tx2 = new Transaction(PARAMS);;
         tx2.addInput(tx.getOutput(0));
         TransactionOutPoint outpoint = tx2.getInput(0).getOutpoint();
         assertTrue(p1.lastReceivedFilter.contains(key.getPubKey()));

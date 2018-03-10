@@ -21,13 +21,13 @@ public class BlockForTest {
             Sha256Hash prevBranchBlockHash) {
         return block.createNextBlock(to, Block.BLOCK_VERSION_GENESIS, prevOut, block.getTimeSeconds() + 5,
                 keyForTesting.getPubKey(), FIFTY_COINS, Block.BLOCK_HEIGHT_UNKNOWN, prevBranchBlockHash.ZERO_HASH,
-                keyForTesting.getPubKeyHash(), NetworkParameters.BIGNETCOIN_TOKENID);
+                keyForTesting.getPubKeyHash());
     }
 
     public static Block createNextBlock(Block block, @Nullable Address to, Coin value, Sha256Hash prevBranchBlockHash) {
         return block.createNextBlock(to, Block.BLOCK_VERSION_GENESIS, null, block.getTimeSeconds() + 5,
                 keyForTesting.getPubKey(), value, Block.BLOCK_HEIGHT_UNKNOWN, prevBranchBlockHash,
-                keyForTesting.getPubKeyHash(), NetworkParameters.BIGNETCOIN_TOKENID);
+                keyForTesting.getPubKeyHash());
     }
 
     @VisibleForTesting
@@ -38,14 +38,14 @@ public class BlockForTest {
     public static Block createNextBlockWithCoinbase(Block block, long version, byte[] pubKey, Coin coinbaseValue,
             final int height, Sha256Hash prevBranchBlockHash) {
         return block.createNextBlock(null, version, (TransactionOutPoint) null, Utils.currentTimeSeconds(), pubKey,
-                coinbaseValue, height, prevBranchBlockHash, keyForTesting.getPubKeyHash(),
-                NetworkParameters.BIGNETCOIN_TOKENID);
+                coinbaseValue, height, prevBranchBlockHash, keyForTesting.getPubKeyHash()
+                );
     }
 
     public static Block createNextBlock(Block block, Address to, long version, long time, int blockHeight,
             Sha256Hash prevBranchBlockHash) {
         return block.createNextBlock(to, version, null, time, keyForTesting.getPubKey(), FIFTY_COINS, blockHeight,
-                prevBranchBlockHash, keyForTesting.getPubKeyHash(), NetworkParameters.BIGNETCOIN_TOKENID);
+                prevBranchBlockHash, keyForTesting.getPubKeyHash());
     }
 
     /**
@@ -56,8 +56,8 @@ public class BlockForTest {
     public static Block createNextBlockWithCoinbase(Block block, long version, byte[] pubKey, final int height,
             Sha256Hash prevBranchBlockHash) {
         return block.createNextBlock(null, version, (TransactionOutPoint) null, Utils.currentTimeSeconds(), pubKey,
-                FIFTY_COINS, height, prevBranchBlockHash, keyForTesting.getPubKeyHash(),
-                NetworkParameters.BIGNETCOIN_TOKENID);
+                FIFTY_COINS, height, prevBranchBlockHash, keyForTesting.getPubKeyHash() 
+                );
     }
 
 }

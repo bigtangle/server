@@ -1026,10 +1026,10 @@ public class Block extends Message {
      *            block height, if known, or -1 otherwise.
      */
     @VisibleForTesting
-    void addCoinbaseTransaction(byte[] pubKeyTo, Coin value, final int height, long tokenid) {
+    void addCoinbaseTransaction(byte[] pubKeyTo, Coin value, final int height) {
         unCacheTransactions();
         transactions = new ArrayList<Transaction>();
-        Transaction coinbase = new Transaction(params,tokenid);
+        Transaction coinbase = new Transaction(params);
         final ScriptBuilder inputBuilder = new ScriptBuilder();
 
         if (height >= Block.BLOCK_HEIGHT_GENESIS) {
@@ -1070,14 +1070,14 @@ public class Block extends Message {
      */
     Block createNextBlock(@Nullable final Address to, final long version, @Nullable TransactionOutPoint prevOut,
             final long time, final byte[] pubKey, final Coin coinbaseValue, final int height,
-            Sha256Hash prevBranchBlockHash, byte[] mineraddress, long tokenid) {
+            Sha256Hash prevBranchBlockHash, byte[] mineraddress) {
         Block b = new Block(params, version);
         // b.setDifficultyTarget(difficultyTarget);
-        b.addCoinbaseTransaction(pubKey, coinbaseValue, height, tokenid);
+        b.addCoinbaseTransaction(pubKey, coinbaseValue, height);
         b.setMineraddress(mineraddress);
         if (to != null) {
             // Add a transaction paying 50 coins to the "to" address.
-            Transaction t = new Transaction(params,tokenid);
+            Transaction t = new Transaction(params);
             t.addOutput(new TransactionOutput(params, t, FIFTY_COINS, to));
             // The input does not really need to be a valid signature, as long
             // as it has the right general form.

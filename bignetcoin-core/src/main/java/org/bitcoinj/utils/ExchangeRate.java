@@ -11,6 +11,7 @@ import java.io.Serializable;
 import java.math.BigInteger;
 
 import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.NetworkParameters;
 
 import com.google.common.base.Objects;
 
@@ -64,7 +65,7 @@ public class ExchangeRate implements Serializable {
                 || converted.compareTo(BigInteger.valueOf(Long.MIN_VALUE)) < 0)
             throw new ArithmeticException("Overflow");
         try {
-            return Coin.valueOf(converted.longValue());
+            return Coin.valueOf(converted.longValue(), NetworkParameters.BIGNETCOIN_TOKENID);
         } catch (IllegalArgumentException x) {
             throw new ArithmeticException("Overflow: " + x.getMessage());
         }

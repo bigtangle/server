@@ -70,11 +70,11 @@ public class TransactionServiceTest extends MySQLFullPrunedBlockChainTest {
 
         // Create bitcoin spend of 1 BTC.
         ECKey toKey = new ECKey();
-        Coin amount = Coin.valueOf(100000000);
+        Coin amount = Coin.valueOf(11123, NetworkParameters.BIGNETCOIN_TOKENID);
         Address address = new Address(PARAMS, toKey.getPubKeyHash());
         Coin totalAmount = Coin.ZERO;
 
-        Transaction t = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);
+        Transaction t = new Transaction(PARAMS);
         t.addOutput(new TransactionOutput(PARAMS, t, amount, toKey));
         t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
         rollingBlock.addTransaction(t);

@@ -5901,6 +5901,7 @@ public final class Protos {
     private int bitField0_;
     public static final int VALUE_FIELD_NUMBER = 1;
     private long value_;
+    private long tokenid_;
     /**
      * <code>required int64 value = 1;</code>
      */
@@ -5913,7 +5914,9 @@ public final class Protos {
     public long getValue() {
       return value_;
     }
-
+    public long getTokenid() {
+        return tokenid_;
+      }
     public static final int SCRIPT_BYTES_FIELD_NUMBER = 2;
     private com.google.protobuf.ByteString scriptBytes_;
     /**
@@ -5985,6 +5988,7 @@ public final class Protos {
 
     private void initFields() {
       value_ = 0L;
+      tokenid_ = 0L;
       scriptBytes_ = com.google.protobuf.ByteString.EMPTY;
       spentByTransactionHash_ = com.google.protobuf.ByteString.EMPTY;
       spentByTransactionIndex_ = 0;
@@ -6013,14 +6017,17 @@ public final class Protos {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         output.writeInt64(1, value_);
       }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeBytes(2, scriptBytes_);
+      if (((bitField0_ & 0x00000002) == 0x00000001)) {
+          output.writeInt64(2, tokenid_);
+        }
+      if (((bitField0_ & 0x00000003) == 0x00000002)) {
+        output.writeBytes(3, scriptBytes_);
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeBytes(3, spentByTransactionHash_);
+        output.writeBytes(4, spentByTransactionHash_);
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        output.writeInt32(4, spentByTransactionIndex_);
+        output.writeInt32(5, spentByTransactionIndex_);
       }
       getUnknownFields().writeTo(output);
     }

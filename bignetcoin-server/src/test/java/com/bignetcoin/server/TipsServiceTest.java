@@ -168,7 +168,24 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
             this.store.updateBlockEvaluationCumulativeweight(pair.getKey(), pair.getValue().intValue());
         }
     }
-
+    @Test
+    public void cumulativweigthLinearBlock() throws Exception {
+        List<Block> re = createLinearBlock ();
+        Map<Sha256Hash, Long> cumulativweigths = new HashMap<Sha256Hash, Long>();
+        tipsManager.recursiveUpdateCumulativeweights(re.get(0).getHash(), cumulativweigths, new HashSet<>());
+        int i = 0;
+        for (Block block : re) {
+           log.debug("  " + i + " block:" + block.getHashAsString() + " cumulativweigth : "
+                    + cumulativweigths.get(re.get(i).getHash()));
+            i++;
+        }
+        Iterator<Map.Entry<Sha256Hash, Long>> it = cumulativweigths.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<Sha256Hash, Long> pair = (Map.Entry<Sha256Hash, Long>) it.next();
+           log.debug("hash : " + pair.getKey() + " -> " + pair.getValue());
+            this.store.updateBlockEvaluationCumulativeweight(pair.getKey(), pair.getValue().intValue());
+        }
+    }
     @Test
     public void depth() throws Exception {
         List<Block> re = createBlock();
@@ -185,6 +202,21 @@ public class TipsServiceTest extends MySQLFullPrunedBlockChainTest {
         }
     }
 
+    @Test
+    public void depth1() throws Exception {
+        List<Block> re = createLinearBlock();
+        Map<Sha256Hash, Long> depths = new HashMap<Sha256Hash, Long>();
+        tipsManager.recursiveUpdateDepth(re.get(0).getHash(), depths);
+        int i = 0;
+        for (Block block : re) {
+           log.debug(
+                    "  " + i + " block:" + block.getHashAsString() + " depth : " + depths.get(re.get(i).getHash()));
+            Sha256Hash blockhash = block.getHash();
+            Long depth = depths.get(re.get(i).getHash());
+            this.store.updateBlockEvaluationDepth(blockhash, depth.intValue());
+            i++;
+        }
+    }
     @Test
     public void updateLinearCumulativeweightsTestWorks() throws Exception {
         createLinearBlock();

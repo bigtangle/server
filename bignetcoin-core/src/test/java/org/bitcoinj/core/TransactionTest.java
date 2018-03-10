@@ -120,7 +120,7 @@ public class TransactionTest {
 
     @Test
     public void testOptimalEncodingMessageSize() {
-        Transaction tx = new Transaction(PARAMS,  NetworkParameters.BIGNETCOIN_TOKENID);
+        Transaction tx = new Transaction(PARAMS);
 
         int length = tx.length;
 
@@ -164,7 +164,7 @@ public class TransactionTest {
         ECKey from = new ECKey(), to = new ECKey(), incorrect = new ECKey();
         Script outputScript = ScriptBuilder.createCLTVPaymentChannelOutput(time, from, to);
 
-        Transaction tx = new Transaction(PARAMS,  NetworkParameters.BIGNETCOIN_TOKENID);
+        Transaction tx = new Transaction(PARAMS);
         tx.addInput(new TransactionInput(PARAMS, tx, new byte[] {}));
         tx.getInput(0).setSequenceNumber(0);
         tx.setLockTime(time.subtract(BigInteger.ONE).longValue());
@@ -208,7 +208,7 @@ public class TransactionTest {
         ECKey from = new ECKey(), to = new ECKey(), incorrect = new ECKey();
         Script outputScript = ScriptBuilder.createCLTVPaymentChannelOutput(time, from, to);
 
-        Transaction tx = new Transaction(PARAMS,  NetworkParameters.BIGNETCOIN_TOKENID);
+        Transaction tx = new Transaction(PARAMS);
         tx.addInput(new TransactionInput(PARAMS, tx, new byte[] {}));
         tx.getInput(0).setSequenceNumber(0);
         tx.setLockTime(time.add(BigInteger.ONE).longValue());
@@ -272,7 +272,7 @@ public class TransactionTest {
 
     @Test
     public void testToStringWhenThereAreZeroInputs() {
-        Transaction tx = new Transaction(PARAMS,  NetworkParameters.BIGNETCOIN_TOKENID);
+        Transaction tx = new Transaction(PARAMS);
         assertEquals(tx.toString().contains("No inputs!"), true);
     }
 
@@ -310,7 +310,7 @@ public class TransactionTest {
         Address addr = key.toAddress(PARAMS);
         Transaction fakeTx = FakeTxBuilder.createFakeTx(PARAMS, Coin.COIN, addr);
 
-        Transaction tx = new Transaction(PARAMS,  NetworkParameters.BIGNETCOIN_TOKENID);
+        Transaction tx = new Transaction(PARAMS);
         tx.addOutput(fakeTx.getOutput(0));
 
         Script script = ScriptBuilder.createOpReturnScript(new byte[0]);

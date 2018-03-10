@@ -115,10 +115,8 @@ public class TransactionService {
     public Block askTransaction(String pubkey, String toaddressPubkey, String amount, long tokenid) throws Exception {
         ECKey myKey = ECKey.fromPublicOnly(Utils.parseAsHexOrBase58(pubkey));
         ECKey toKey = ECKey.fromPublicOnly(Utils.parseAsHexOrBase58(toaddressPubkey));
-        Address myAddress = myKey.toAddress(networkParameters);
-        Address address = new Address(networkParameters, toKey.getPubKeyHash());
-
-        Coin coin = Coin.parseCoin(amount);
+      
+        Coin coin = Coin.parseCoin(amount,tokenid);
         int height = 1;
 
         Block r1 = blockService.getBlock(getNextBlockToApprove());
@@ -128,9 +126,8 @@ public class TransactionService {
 
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
-        byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
-
-        Transaction t = new Transaction(networkParameters,tokenid);
+       
+        Transaction t = new Transaction(networkParameters);
         t.addOutput(new TransactionOutput(networkParameters, t, coin, toKey));
         TransactionInput input = new TransactionInput(networkParameters, t, new byte[] {}, spendableOutput);
 

@@ -26,7 +26,7 @@ public class TransactionOutput extends ChildMessage {
     private static final Logger log = LoggerFactory.getLogger(TransactionOutput.class);
 
     // The output's value is kept as a native type in order to save class instances.
-    private long value;
+    private Coin value;
 
     // A transaction output has a script used for authenticating that the redeemer is allowed to spend
     // this output.
@@ -45,7 +45,7 @@ public class TransactionOutput extends ChildMessage {
     private int scriptLen;
 
     
-    private long tokenid;
+   
     private String fromaddress;
     private String description;
     
@@ -98,11 +98,11 @@ public class TransactionOutput extends ChildMessage {
         // SIGHASH_SINGLE signatures, so unfortunately we have to allow that here.
         checkArgument(value.signum() >= 0 || value.equals(Coin.NEGATIVE_SATOSHI), "Negative values not allowed");
         checkArgument(!params.hasMaxMoney() || value.compareTo(params.getMaxMoney()) <= 0, "Values larger than MAX_MONEY not allowed");
-        this.value = value.value;
+        this.value = value;
         this.scriptBytes = scriptBytes;
         setParent(parent);
         availableForSpending = true;
-        length = 8 + VarInt.sizeOf(scriptBytes.length) + scriptBytes.length;
+        length = 8 +8 + VarInt.sizeOf(scriptBytes.length) + scriptBytes.length;
     }
 
     public Script getScriptPubKey() throws ScriptException {
@@ -151,16 +151,22 @@ public class TransactionOutput extends ChildMessage {
 
     @Override
     protected void parse() throws ProtocolException {
-        value = readInt64();
+       
+        
+        value =  Coin.valueOf(readInt64(),readInt64());
         scriptLen = (int) readVarInt();
         length = cursor - offset + scriptLen;
+        
         scriptBytes = readBytes(scriptLen);
+       
     }
 
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+    
         checkNotNull(scriptBytes);
-        Utils.int64ToByteStreamLE(value, stream);
+        Utils.int64ToByteStreamLE(value.value, stream);
+        Utils.int64ToByteStreamLE(value.tokenid, stream);
         // TODO: Move script serialization into the Script class, where it belongs.
         stream.write(new VarInt(scriptBytes.length).encode());
         stream.write(scriptBytes);
@@ -171,11 +177,8 @@ public class TransactionOutput extends ChildMessage {
      * receives.
      */
     public Coin getValue() {
-        try {
-            return Coin.valueOf(value);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalStateException(e.getMessage(), e);
-        }
+       return  value ;
+       
     }
 
     /**
@@ -184,7 +187,7 @@ public class TransactionOutput extends ChildMessage {
     public void setValue(Coin value) {
         checkNotNull(value);
         unCache();
-        this.value = value.value;
+        this.value =  value;
     }
 
     /**
@@ -338,7 +341,7 @@ public class TransactionOutput extends ChildMessage {
         try {
             Script script = getScriptPubKey();
             StringBuilder buf = new StringBuilder("TxOut of ");
-            buf.append(Coin.valueOf(value).toFriendlyString());
+            buf.append(value.toFriendlyString());
             if (script.isSentToAddress() || script.isPayToScriptHash())
                 buf.append(" to ").append(script.getToAddress(params));
             else if (script.isSentToRawPubKey())
@@ -405,7 +408,7 @@ public class TransactionOutput extends ChildMessage {
 
     /** Returns a copy of the output detached from its containing transaction, if need be. */
     public TransactionOutput duplicateDetached() {
-        return new TransactionOutput(params, null, Coin.valueOf(value), org.spongycastle.util.Arrays.clone(scriptBytes));
+        return new TransactionOutput(params, null, value, org.spongycastle.util.Arrays.clone(scriptBytes));
     }
 
     @Override
@@ -422,13 +425,7 @@ public class TransactionOutput extends ChildMessage {
         return Objects.hashCode(value, parent, Arrays.hashCode(scriptBytes));
     }
 
-    public long getTokenid() {
-        return tokenid;
-    }
-
-    public void setTokenid(long tokenid) {
-        this.tokenid = tokenid;
-    }
+    
 
     public String getFromaddress() {
         return fromaddress;

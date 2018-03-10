@@ -20,8 +20,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 public final class Coin implements Monetary, Comparable<Coin>, Serializable {
 
     /**
-     * Number of decimals for one Bitcoin. This constant is useful for quick adapting to other coins because a lot of
-     * constants derive from it.
+     * Number of decimals for one Bitcoin. This constant is useful for quick
+     * adapting to other coins because a lot of constants derive from it.
      */
     public static final int SMALLEST_UNIT_EXPONENT = 8;
 
@@ -33,12 +33,12 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     /**
      * Zero Bitcoins.
      */
-    public static final Coin ZERO = Coin.valueOf(0);
+    public static final Coin ZERO = Coin.valueOf(0, NetworkParameters.BIGNETCOIN_TOKENID);
 
     /**
      * One Bitcoin.
      */
-    public static final Coin COIN = Coin.valueOf(COIN_VALUE);
+    public static final Coin COIN = Coin.valueOf(COIN_VALUE, NetworkParameters.BIGNETCOIN_TOKENID);
 
     /**
      * 0.01 Bitcoins. This unit is not really used much.
@@ -56,28 +56,31 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     public static final Coin MICROCOIN = MILLICOIN.divide(1000);
 
     /**
-     * A satoshi is the smallest unit that can be transferred. 100 million of them fit into a Bitcoin.
+     * A satoshi is the smallest unit that can be transferred. 100 million of
+     * them fit into a Bitcoin.
      */
-    public static final Coin SATOSHI = Coin.valueOf(1);
+    public static final Coin SATOSHI = Coin.valueOf(1, NetworkParameters.BIGNETCOIN_TOKENID);
 
     public static final Coin FIFTY_COINS = COIN.multiply(50);
 
     /**
      * Represents a monetary value of minus one satoshi.
      */
-    public static final Coin NEGATIVE_SATOSHI = Coin.valueOf(-1);
+    public static final Coin NEGATIVE_SATOSHI = Coin.valueOf(-1, NetworkParameters.BIGNETCOIN_TOKENID);
 
     /**
      * The number of satoshis of this monetary value.
      */
     public final long value;
+    public final long tokenid;
 
-    private Coin(final long satoshis) {
+    private Coin(final long satoshis, final long tokenid) {
         this.value = satoshis;
+        this.tokenid = tokenid;
     }
 
-    public static Coin valueOf(final long satoshis) {
-        return new Coin(satoshis);
+    public static Coin valueOf(final long satoshis, long tokenid) {
+        return new Coin(satoshis, tokenid);
     }
 
     @Override
@@ -105,24 +108,32 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     /**
-     * Parses an amount expressed in the way humans are used to.<p>
+     * Parses an amount expressed in the way humans are used to.
+     * <p>
      * <p/>
-     * This takes string in a format understood by {@link BigDecimal#BigDecimal(String)},
-     * for example "0", "1", "0.10", "1.23E3", "1234.5E-5".
+     * This takes string in a format understood by
+     * {@link BigDecimal#BigDecimal(String)}, for example "0", "1", "0.10",
+     * "1.23E3", "1234.5E-5".
      *
-     * @throws IllegalArgumentException if you try to specify fractional satoshis, or a value out of range.
+     * @throws IllegalArgumentException
+     *             if you try to specify fractional satoshis, or a value out of
+     *             range.
      */
-    public static Coin parseCoin(final String str) {
+    public static Coin parseCoin(final String str, long tokenid) {
         try {
             long satoshis = new BigDecimal(str).movePointRight(SMALLEST_UNIT_EXPONENT).toBigIntegerExact().longValue();
-            return Coin.valueOf(satoshis);
+            return Coin.valueOf(satoshis, tokenid);
         } catch (ArithmeticException e) {
-            throw new IllegalArgumentException(e); // Repackage exception to honor method contract
+            throw new IllegalArgumentException(e); // Repackage exception to
+                                                   // honor method contract
         }
     }
 
     public Coin add(final Coin value) {
-        return new Coin(LongMath.checkedAdd(this.value, value.value));
+        if (this.tokenid != value.tokenid) {
+            throw new IllegalArgumentException("");
+        }
+        return new Coin(LongMath.checkedAdd(this.value, value.value), value.tokenid);
     }
 
     /** Alias for add */
@@ -131,7 +142,10 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin subtract(final Coin value) {
-        return new Coin(LongMath.checkedSubtract(this.value, value.value));
+        if (this.tokenid != value.tokenid) {
+            throw new IllegalArgumentException("");
+        }
+        return new Coin(LongMath.checkedSubtract(this.value, value.value), value.tokenid);
     }
 
     /** Alias for subtract */
@@ -140,7 +154,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin multiply(final long factor) {
-        return new Coin(LongMath.checkedMultiply(this.value, factor));
+        return new Coin(LongMath.checkedMultiply(this.value, factor), this.tokenid);
     }
 
     /** Alias for multiply */
@@ -154,7 +168,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin divide(final long divisor) {
-        return new Coin(this.value / divisor);
+        return new Coin(this.value / divisor, this.tokenid);
     }
 
     /** Alias for divide */
@@ -168,7 +182,8 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin[] divideAndRemainder(final long divisor) {
-        return new Coin[] { new Coin(this.value / divisor), new Coin(this.value % divisor) };
+        return new Coin[] { new Coin(this.value / divisor, this.tokenid),
+                new Coin(this.value % divisor, this.tokenid) };
     }
 
     public long divide(final Coin divisor) {
@@ -176,16 +191,16 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     /**
-     * Returns true if and only if this instance represents a monetary value greater than zero,
-     * otherwise false.
+     * Returns true if and only if this instance represents a monetary value
+     * greater than zero, otherwise false.
      */
     public boolean isPositive() {
         return signum() == 1;
     }
 
     /**
-     * Returns true if and only if this instance represents a monetary value less than zero,
-     * otherwise false.
+     * Returns true if and only if this instance represents a monetary value
+     * less than zero, otherwise false.
      */
     public boolean isNegative() {
         return signum() == -1;
@@ -200,27 +215,27 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     /**
-     * Returns true if the monetary value represented by this instance is greater than that
-     * of the given other Coin, otherwise false.
+     * Returns true if the monetary value represented by this instance is
+     * greater than that of the given other Coin, otherwise false.
      */
     public boolean isGreaterThan(Coin other) {
         return compareTo(other) > 0;
     }
 
     /**
-     * Returns true if the monetary value represented by this instance is less than that
-     * of the given other Coin, otherwise false.
+     * Returns true if the monetary value represented by this instance is less
+     * than that of the given other Coin, otherwise false.
      */
     public boolean isLessThan(Coin other) {
         return compareTo(other) < 0;
     }
 
     public Coin shiftLeft(final int n) {
-        return new Coin(this.value << n);
+        return new Coin(this.value << n, this.tokenid);
     }
 
     public Coin shiftRight(final int n) {
-        return new Coin(this.value >> n);
+        return new Coin(this.value >> n, this.tokenid);
     }
 
     @Override
@@ -231,34 +246,36 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin negate() {
-        return new Coin(-this.value);
+        return new Coin(-this.value, this.tokenid);
     }
 
     /**
-     * Returns the number of satoshis of this monetary value. It's deprecated in favour of accessing {@link #value}
-     * directly.
+     * Returns the number of satoshis of this monetary value. It's deprecated in
+     * favour of accessing {@link #value} directly.
      */
     public long longValue() {
         return this.value;
     }
 
-    private static final MonetaryFormat FRIENDLY_FORMAT = MonetaryFormat.BTC.minDecimals(2).repeatOptionalDecimals(1, 6).postfixCode();
+    private static final MonetaryFormat FRIENDLY_FORMAT = MonetaryFormat.BTC.minDecimals(2).repeatOptionalDecimals(1, 6)
+            .postfixCode();
 
     /**
-     * Returns the value as a 0.12 type string. More digits after the decimal place will be used
-     * if necessary, but two will always be present.
+     * Returns the value as a 0.12 type string. More digits after the decimal
+     * place will be used if necessary, but two will always be present.
      */
     public String toFriendlyString() {
         return FRIENDLY_FORMAT.format(this).toString();
     }
 
-    private static final MonetaryFormat PLAIN_FORMAT = MonetaryFormat.BTC.minDecimals(0).repeatOptionalDecimals(1, 8).noCode();
+    private static final MonetaryFormat PLAIN_FORMAT = MonetaryFormat.BTC.minDecimals(0).repeatOptionalDecimals(1, 8)
+            .noCode();
 
     /**
      * <p>
-     * Returns the value as a plain string denominated in BTC.
-     * The result is unformatted with no trailing zeroes.
-     * For instance, a value of 150000 satoshis gives an output string of "0.0015" BTC
+     * Returns the value as a plain string denominated in BTC. The result is
+     * unformatted with no trailing zeroes. For instance, a value of 150000
+     * satoshis gives an output string of "0.0015" BTC
      * </p>
      */
     public String toPlainString() {
@@ -272,9 +289,11 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        return this.value == ((Coin)o).value;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        return this.value == ((Coin) o).value;
     }
 
     @Override

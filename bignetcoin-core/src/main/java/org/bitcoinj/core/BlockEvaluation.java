@@ -26,8 +26,11 @@ public class BlockEvaluation {
  
     //no broken block in the graph
     public boolean solid = false;  
-    
-
+    //rating >= 75 && depth > MINDEPTH && no conflict set to true
+    // if set to true for older than 7 days, remove it from this table
+    public boolean milestone = false;  
+    //Timestamp for entry into milestone as true, reset if flip to false
+    private long milestonelasttruetime;
 
     public Sha256Hash getBlockhash() {
         return blockhash;

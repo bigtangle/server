@@ -278,7 +278,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                             out.getValue(),
                             height, isCoinBase,
                             script,
-                            getScriptAddress(script), block.getHash(),out.getTokenid(), out.getFromaddress(),out.getDescription() );
+                            getScriptAddress(script), block.getHash(), out.getFromaddress(),out.getDescription() );
                     blockStore.addUnspentTransactionOutput(newOut);
                     txOutsCreated.add(newOut);
                 }
@@ -409,7 +409,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                                 newBlock.getHeight(),
                                 isCoinBase,
                                 script,
-                                getScriptAddress(script), block.getHash(),out.getTokenid(), out.getFromaddress(),out.getDescription());
+                                getScriptAddress(script), block.getHash(), out.getFromaddress(),out.getDescription());
                         blockStore.addUnspentTransactionOutput(newOut);
                         txOutsCreated.add(newOut);
                     }

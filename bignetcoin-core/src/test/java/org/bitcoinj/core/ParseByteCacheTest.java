@@ -81,7 +81,7 @@ public class ParseByteCacheTest {
                 wallet.currentReceiveKey().toAddress(PARAMS));
         
         // add a second input so can test granularity of byte cache.
-        Transaction prevTx = new Transaction(PARAMS, NetworkParameters.BIGNETCOIN_TOKENID);;
+        Transaction prevTx = new Transaction(PARAMS);;
         TransactionOutput prevOut = new TransactionOutput(PARAMS, prevTx, COIN, wallet.currentReceiveKey().toAddress(PARAMS));
         prevTx.addOutput(prevOut);
         // Connect it.

@@ -20,12 +20,12 @@ public class CoinTest {
     @Test
     public void testParseCoin() {
         // String version
-        assertEquals(CENT, parseCoin("0.01"));
-        assertEquals(CENT, parseCoin("1E-2"));
-        assertEquals(COIN.add(CENT), parseCoin("1.01"));
-        assertEquals(COIN.negate(), parseCoin("-1"));
+        assertEquals(CENT, parseCoin("0.01", NetworkParameters.BIGNETCOIN_TOKENID));
+        assertEquals(CENT, parseCoin("1E-2", NetworkParameters.BIGNETCOIN_TOKENID));
+        assertEquals(COIN.add(CENT), parseCoin("1.01", NetworkParameters.BIGNETCOIN_TOKENID));
+        assertEquals(COIN.negate(), parseCoin("-1", NetworkParameters.BIGNETCOIN_TOKENID));
         try {
-            parseCoin("2E-20");
+            parseCoin("2E-20", NetworkParameters.BIGNETCOIN_TOKENID);
             org.junit.Assert.fail("should not have accepted fractional satoshis");
         } catch (IllegalArgumentException expected) {
         } catch (Exception e) {
@@ -36,24 +36,27 @@ public class CoinTest {
     @Test
     public void testValueOf() {
         // int version
-        assertEquals(CENT, valueOf(0, 1));
-        assertEquals(SATOSHI, valueOf(1));
-        assertEquals(NEGATIVE_SATOSHI, valueOf(-1));
-        assertEquals(MAX_MONEY, valueOf(MAX_MONEY.value));
-        assertEquals(MAX_MONEY.negate(), valueOf(MAX_MONEY.value * -1));
-        valueOf(MAX_MONEY.value + 1);
-        valueOf((MAX_MONEY.value * -1) - 1);
-        valueOf(Long.MAX_VALUE);
-        valueOf(Long.MIN_VALUE);
+        // assertEquals(CENT, valueOf(0,
+        // 1,NetworkParameters.BIGNETCOIN_TOKENID));
+        assertEquals(SATOSHI, valueOf(1, NetworkParameters.BIGNETCOIN_TOKENID));
+        assertEquals(NEGATIVE_SATOSHI, valueOf(-1, NetworkParameters.BIGNETCOIN_TOKENID));
+        assertEquals(MAX_MONEY, valueOf(MAX_MONEY.value, NetworkParameters.BIGNETCOIN_TOKENID));
+        assertEquals(MAX_MONEY.negate(), valueOf(MAX_MONEY.value * -1, NetworkParameters.BIGNETCOIN_TOKENID));
+        valueOf(MAX_MONEY.value + 1, NetworkParameters.BIGNETCOIN_TOKENID);
+        valueOf((MAX_MONEY.value * -1) - 1, NetworkParameters.BIGNETCOIN_TOKENID);
+        valueOf(Long.MAX_VALUE, NetworkParameters.BIGNETCOIN_TOKENID);
+        valueOf(Long.MIN_VALUE, NetworkParameters.BIGNETCOIN_TOKENID);
 
         try {
             valueOf(1, -1);
             fail();
-        } catch (IllegalArgumentException e) {}
+        } catch (IllegalArgumentException e) {
+        }
         try {
             valueOf(-1, 0);
             fail();
-        } catch (IllegalArgumentException e) {}
+        } catch (IllegalArgumentException e) {
+        }
     }
 
     @Test
@@ -68,32 +71,38 @@ public class CoinTest {
         assertFalse(ZERO.isNegative());
         assertTrue(ZERO.isZero());
 
-        assertTrue(valueOf(2).isGreaterThan(valueOf(1)));
-        assertFalse(valueOf(2).isGreaterThan(valueOf(2)));
-        assertFalse(valueOf(1).isGreaterThan(valueOf(2)));
-        assertTrue(valueOf(1).isLessThan(valueOf(2)));
-        assertFalse(valueOf(2).isLessThan(valueOf(2)));
-        assertFalse(valueOf(2).isLessThan(valueOf(1)));
+        assertTrue(valueOf(2, NetworkParameters.BIGNETCOIN_TOKENID)
+                .isGreaterThan(valueOf(1, NetworkParameters.BIGNETCOIN_TOKENID)));
+        assertFalse(valueOf(2, NetworkParameters.BIGNETCOIN_TOKENID)
+                .isGreaterThan(valueOf(2, NetworkParameters.BIGNETCOIN_TOKENID)));
+        assertFalse(valueOf(1, NetworkParameters.BIGNETCOIN_TOKENID)
+                .isGreaterThan(valueOf(2, NetworkParameters.BIGNETCOIN_TOKENID)));
+        assertTrue(valueOf(1, NetworkParameters.BIGNETCOIN_TOKENID)
+                .isLessThan(valueOf(2, NetworkParameters.BIGNETCOIN_TOKENID)));
+        assertFalse(valueOf(2, NetworkParameters.BIGNETCOIN_TOKENID)
+                .isLessThan(valueOf(2, NetworkParameters.BIGNETCOIN_TOKENID)));
+        assertFalse(valueOf(2, NetworkParameters.BIGNETCOIN_TOKENID)
+                .isLessThan(valueOf(1, NetworkParameters.BIGNETCOIN_TOKENID)));
     }
 
     @Test(expected = ArithmeticException.class)
     public void testMultiplicationOverflow() {
-        Coin.valueOf(Long.MAX_VALUE).multiply(2);
+        Coin.valueOf(Long.MAX_VALUE, NetworkParameters.BIGNETCOIN_TOKENID).multiply(2);
     }
 
     @Test(expected = ArithmeticException.class)
     public void testMultiplicationUnderflow() {
-        Coin.valueOf(Long.MIN_VALUE).multiply(2);
+        Coin.valueOf(Long.MIN_VALUE, NetworkParameters.BIGNETCOIN_TOKENID).multiply(2);
     }
 
     @Test(expected = ArithmeticException.class)
     public void testAdditionOverflow() {
-        Coin.valueOf(Long.MAX_VALUE).add(Coin.SATOSHI);
+        Coin.valueOf(Long.MAX_VALUE, NetworkParameters.BIGNETCOIN_TOKENID).add(Coin.SATOSHI);
     }
 
     @Test(expected = ArithmeticException.class)
     public void testSubstractionUnderflow() {
-        Coin.valueOf(Long.MIN_VALUE).subtract(Coin.SATOSHI);
+        Coin.valueOf(Long.MIN_VALUE, NetworkParameters.BIGNETCOIN_TOKENID).subtract(Coin.SATOSHI);
     }
 
     @Test
@@ -109,27 +118,29 @@ public class CoinTest {
      */
     @Test
     public void testToPlainString() {
-        assertEquals("0.0015", Coin.valueOf(150000).toPlainString());
-        assertEquals("1.23", parseCoin("1.23").toPlainString());
+        assertEquals("0.0015", Coin.valueOf(150000, NetworkParameters.BIGNETCOIN_TOKENID).toPlainString());
+        assertEquals("1.23", parseCoin("1.23", NetworkParameters.BIGNETCOIN_TOKENID).toPlainString());
 
-        assertEquals("0.1", parseCoin("0.1").toPlainString());
-        assertEquals("1.1", parseCoin("1.1").toPlainString());
-        assertEquals("21.12", parseCoin("21.12").toPlainString());
-        assertEquals("321.123", parseCoin("321.123").toPlainString());
-        assertEquals("4321.1234", parseCoin("4321.1234").toPlainString());
-        assertEquals("54321.12345", parseCoin("54321.12345").toPlainString());
-        assertEquals("654321.123456", parseCoin("654321.123456").toPlainString());
-        assertEquals("7654321.1234567", parseCoin("7654321.1234567").toPlainString());
-        assertEquals("87654321.12345678", parseCoin("87654321.12345678").toPlainString());
+        assertEquals("0.1", parseCoin("0.1", NetworkParameters.BIGNETCOIN_TOKENID).toPlainString());
+        assertEquals("1.1", parseCoin("1.1", NetworkParameters.BIGNETCOIN_TOKENID).toPlainString());
+        assertEquals("21.12", parseCoin("21.12", NetworkParameters.BIGNETCOIN_TOKENID).toPlainString());
+        assertEquals("321.123", parseCoin("321.123", NetworkParameters.BIGNETCOIN_TOKENID).toPlainString());
+        assertEquals("4321.1234", parseCoin("4321.1234", NetworkParameters.BIGNETCOIN_TOKENID).toPlainString());
+        assertEquals("54321.12345", parseCoin("54321.12345", NetworkParameters.BIGNETCOIN_TOKENID).toPlainString());
+        assertEquals("654321.123456", parseCoin("654321.123456", NetworkParameters.BIGNETCOIN_TOKENID).toPlainString());
+        assertEquals("7654321.1234567",
+                parseCoin("7654321.1234567", NetworkParameters.BIGNETCOIN_TOKENID).toPlainString());
+        assertEquals("87654321.12345678",
+                parseCoin("87654321.12345678", NetworkParameters.BIGNETCOIN_TOKENID).toPlainString());
 
         // check there are no trailing zeros
-        assertEquals("1", parseCoin("1.0").toPlainString());
-        assertEquals("2", parseCoin("2.00").toPlainString());
-        assertEquals("3", parseCoin("3.000").toPlainString());
-        assertEquals("4", parseCoin("4.0000").toPlainString());
-        assertEquals("5", parseCoin("5.00000").toPlainString());
-        assertEquals("6", parseCoin("6.000000").toPlainString());
-        assertEquals("7", parseCoin("7.0000000").toPlainString());
-        assertEquals("8", parseCoin("8.00000000").toPlainString());
+        assertEquals("1", parseCoin("1.0", NetworkParameters.BIGNETCOIN_TOKENID).toPlainString());
+        assertEquals("2", parseCoin("2.00", NetworkParameters.BIGNETCOIN_TOKENID).toPlainString());
+        assertEquals("3", parseCoin("3.000", NetworkParameters.BIGNETCOIN_TOKENID).toPlainString());
+        assertEquals("4", parseCoin("4.0000", NetworkParameters.BIGNETCOIN_TOKENID).toPlainString());
+        assertEquals("5", parseCoin("5.00000", NetworkParameters.BIGNETCOIN_TOKENID).toPlainString());
+        assertEquals("6", parseCoin("6.000000", NetworkParameters.BIGNETCOIN_TOKENID).toPlainString());
+        assertEquals("7", parseCoin("7.0000000", NetworkParameters.BIGNETCOIN_TOKENID).toPlainString());
+        assertEquals("8", parseCoin("8.00000000", NetworkParameters.BIGNETCOIN_TOKENID).toPlainString());
     }
 }

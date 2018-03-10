@@ -249,7 +249,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private static final String UPDATE_BLOCKEVALUATION_DEPTH_SQL = "UPDATE blockevaluation SET depth = ? WHERE blockhash = ?";
     private static final String UPDATE_BLOCKEVALUATION_CUMULATIVEWEIGHT_SQL = "UPDATE blockevaluation SET cumulativeweight = ? WHERE blockhash = ?";
     private static final String INSERT_BLOCKEVALUATION_SQL = "INSERT INTO blockevaluation (blockhash, rating, depth, cumulativeweight, solid) VALUES (?, ?, ?, ?, ?);";
-    
+
     protected Sha256Hash chainHeadHash;
     protected StoredBlock chainHeadBlock;
     protected Sha256Hash verifiedChainHeadHash;
@@ -1175,16 +1175,16 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
             // Parse it.
             int height = results.getInt(1);
-            Coin value = Coin.valueOf(results.getLong(2));
+            Coin value = Coin.valueOf(results.getLong(2), results.getLong(8));
             byte[] scriptBytes = results.getBytes(3);
             boolean coinbase = results.getBoolean(4);
             String address = results.getString(5);
             Sha256Hash blockhash = Sha256Hash.wrap(results.getBytes(7));
-            long tokenid = results.getLong(8);
+
             String fromaddress = results.getString(9);
             String description = results.getString(10);
             UTXO txout = new UTXO(hash, index, value, height, coinbase, new Script(scriptBytes), address, blockhash,
-                    tokenid, fromaddress, description);
+                    fromaddress, description);
             return txout;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
@@ -1215,7 +1215,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setInt(7, out.getScript().getScriptType().ordinal());
             s.setBoolean(8, out.isCoinbase());
             s.setBytes(9, out.getBlockhash().getBytes());
-            s.setLong(10, out.getTokenid());
+            s.setLong(10, out.getValue().tokenid);
             s.setString(11, out.getFromaddress());
             s.setString(12, out.getDescription());
             s.executeUpdate();
@@ -1436,7 +1436,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 ResultSet rs = s.executeQuery();
                 while (rs.next()) {
                     Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));
-                    Coin amount = Coin.valueOf(rs.getLong(2));
+                    Coin amount = Coin.valueOf(rs.getLong(2), rs.getLong(10));
                     byte[] scriptBytes = rs.getBytes(3);
                     int height = rs.getInt(4);
                     int index = rs.getInt(5);
@@ -1444,13 +1444,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     String toAddress = rs.getString(7);
                     // addresstargetable =rs.getBytes(8);
                     Sha256Hash blockhash = Sha256Hash.wrap(rs.getBytes(9));
-                    long tokenid = rs.getLong(10);
+
                     String fromaddress = rs.getString(11);
                     String description = rs.getString(12);
-                    ;
-
                     UTXO output = new UTXO(hash, index, amount, height, coinbase, new Script(scriptBytes), toAddress,
-                            blockhash, tokenid, fromaddress, description);
+                            blockhash, fromaddress, description);
                     outputs.add(output);
                 }
             }
@@ -1545,7 +1543,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 size, count, (double) size / count, (double) scriptSize / count, count * 8);
 
         totalSize += size;
-        log.debug ("Total Size: " + totalSize);
+        log.debug("Total Size: " + totalSize);
 
         s.close();
     }
@@ -1678,7 +1676,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void updateBlockEvaluationCumulativeweight(Sha256Hash blockhash, int cumulativeweight) throws BlockStoreException {
+    public void updateBlockEvaluationCumulativeweight(Sha256Hash blockhash, int cumulativeweight)
+            throws BlockStoreException {
         BlockEvaluation blockEvaluation = this.getBlockEvaluation(blockhash);
         if (blockEvaluation == null) {
             blockEvaluation = BlockEvaluation.build(blockhash, 0, 0, cumulativeweight);

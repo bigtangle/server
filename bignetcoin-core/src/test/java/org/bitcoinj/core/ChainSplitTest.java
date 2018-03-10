@@ -183,7 +183,7 @@ public class ChainSplitTest {
         chain.add(b1);
         assertEquals(FIFTY_COINS, wallet.getBalance());
         Address dest = new ECKey().toAddress(PARAMS);
-        Transaction spend = wallet.createSend(dest, valueOf(10, 0), NetworkParameters.BIGNETCOIN_TOKENID);
+        Transaction spend = wallet.createSend(dest, valueOf(10, 0));
         wallet.commitTx(spend);
         // Waiting for confirmation ... make it eligible for selection.
         assertEquals(Coin.ZERO, wallet.getBalance());
@@ -221,7 +221,7 @@ public class ChainSplitTest {
         chain.add(b1);
         assertEquals(FIFTY_COINS, wallet.getBalance());
         Address dest = new ECKey().toAddress(PARAMS);
-        Transaction spend = wallet.createSend(dest, FIFTY_COINS, NetworkParameters.BIGNETCOIN_TOKENID);
+        Transaction spend = wallet.createSend(dest, FIFTY_COINS);
         // We do NOT confirm the spend here. That means it's not considered to
         // be pending because createSend is
         // stateless. For our purposes it is as if some other program with our
@@ -316,9 +316,9 @@ public class ChainSplitTest {
         Block b1 = BlockForTest.createNextBlock(PARAMS.getGenesisBlock(), coinsTo, PARAMS.getGenesisBlock().getHash());
         chain.add(b1);
 
-        Transaction t1 = wallet.createSend(someOtherGuy, valueOf(10, 0), NetworkParameters.BIGNETCOIN_TOKENID);
+        Transaction t1 = wallet.createSend(someOtherGuy, valueOf(10, 0));
         Address yetAnotherGuy = new ECKey().toAddress(PARAMS);
-        Transaction t2 = wallet.createSend(yetAnotherGuy, valueOf(20, 0), NetworkParameters.BIGNETCOIN_TOKENID);
+        Transaction t2 = wallet.createSend(yetAnotherGuy, valueOf(20, 0));
         wallet.commitTx(t1);
         // Receive t1 as confirmed by the network.
         Block b2 = BlockForTest.createNextBlock(b1, new ECKey().toAddress(PARAMS), PARAMS.getGenesisBlock().getHash());
@@ -361,10 +361,10 @@ public class ChainSplitTest {
         chain.add(b1);
 
         Transaction t1 = checkNotNull(
-                wallet.createSend(someOtherGuy, valueOf(10, 0), NetworkParameters.BIGNETCOIN_TOKENID));
+                wallet.createSend(someOtherGuy, valueOf(10, 0)));
         Address yetAnotherGuy = new ECKey().toAddress(PARAMS);
         Transaction t2 = checkNotNull(
-                wallet.createSend(yetAnotherGuy, valueOf(20, 0), NetworkParameters.BIGNETCOIN_TOKENID));
+                wallet.createSend(yetAnotherGuy, valueOf(20, 0)));
         wallet.commitTx(t1);
         // t1 is still pending ...
         Block b2 = BlockForTest.createNextBlock(b1, new ECKey().toAddress(PARAMS), PARAMS.getGenesisBlock().getHash());
@@ -550,10 +550,10 @@ public class ChainSplitTest {
         // on the change output of the first).
         wallet.allowSpendingUnconfirmedTransactions();
         Transaction t2 = checkNotNull(
-                wallet.createSend(new ECKey().toAddress(PARAMS), CENT, NetworkParameters.BIGNETCOIN_TOKENID));
+                wallet.createSend(new ECKey().toAddress(PARAMS), CENT));
         wallet.commitTx(t2);
         Transaction t3 = checkNotNull(
-                wallet.createSend(new ECKey().toAddress(PARAMS), CENT, NetworkParameters.BIGNETCOIN_TOKENID));
+                wallet.createSend(new ECKey().toAddress(PARAMS), CENT));
         wallet.commitTx(t3);
         chain.add(FakeTxBuilder.makeSolvedTestBlock(b1, t2, t3));
 
@@ -563,8 +563,7 @@ public class ChainSplitTest {
         // Now round trip the wallet and force a re-org.
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         wallet.saveToFileStream(bos);
-        wallet = Wallet.loadFromFileStream(new ByteArrayInputStream(bos.toByteArray()),
-                NetworkParameters.BIGNETCOIN_TOKENID);
+        wallet = Wallet.loadFromFileStream(new ByteArrayInputStream(bos.toByteArray()));
         final Block b2 = FakeTxBuilder.makeSolvedTestBlock(b1, t2, t3);
         final Block b3 = FakeTxBuilder.makeSolvedTestBlock(b2);
         chain.add(b2);
@@ -629,8 +628,7 @@ public class ChainSplitTest {
             chain.add(firstTip);
         }
         // ... and spend.
-        Transaction fodder = wallet.createSend(new ECKey().toAddress(PARAMS), FIFTY_COINS,
-                NetworkParameters.BIGNETCOIN_TOKENID);
+        Transaction fodder = wallet.createSend(new ECKey().toAddress(PARAMS), FIFTY_COINS );
         wallet.commitTx(fodder);
         final AtomicBoolean fodderIsDead = new AtomicBoolean(false);
         fodder.getConfidence().addEventListener(Threading.SAME_THREAD, new TransactionConfidence.Listener() {
