@@ -1,6 +1,8 @@
 test of client needs the server to be started
- ServerStart --spring.profiles.active=testnet
-
+ ServerStart
+without arg is the default regnet for unit test
+ --spring.profiles.active=testnet
+--spring.profiles.active=mainnet
 #Design
 The application is based on spring boot and using the following components and service
 The Transaction and block are from bitcoinj project for the  security and scripting.
@@ -239,11 +241,13 @@ select number of   blocks pro miner with condition the block is not used for las
 max height from list (select   from block evaluation where milestone = true and blocktype = reward)
 
 2) select all blocks with height > last height + all blocks in block evaluation with rating < 75 
-3) calculation all block 
+
+3) calculation of those  blocks  with:
+coin= number * amount / total
+  
+create block with coinbase transaction for each miner coin
 
 
- coin= number * amount / total 
-add to block with coinbase transaction and the height in the block.
  validation of reward block number* > 
  
  

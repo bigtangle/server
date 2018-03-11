@@ -274,24 +274,38 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         return PLAIN_FORMAT.format(this).toString();
     }
 
+  
     @Override
     public String toString() {
-        return Long.toString(value);
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        return this.value == ((Coin) o).value;
+        return "Coin [value=" + value + ", tokenid=" + tokenid + "]";
     }
 
     @Override
     public int hashCode() {
-        return (int) this.value;
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + (int) (tokenid ^ (tokenid >>> 32));
+        result = prime * result + (int) (value ^ (value >>> 32));
+        return result;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Coin other = (Coin) obj;
+        if (tokenid != other.tokenid)
+            return false;
+        if (value != other.value)
+            return false;
+        return true;
+    }
+
+  
 
     @Override
     public int compareTo(final Coin other) {
