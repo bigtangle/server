@@ -111,7 +111,7 @@ public class ScriptTest {
         assertTrue(s.isSentToRawPubKey());
     }
     
-    @Test
+   //TODO  new binary @Test
     public void testCreateMultiSigInputScript() {
         // Setup transaction and signatures
         ECKey key1 = DumpedPrivateKey.fromBase58(PARAMS, "cVLwRLTvz3BxDAWkvS3yzT9pUcTCup7kQnfT2smRjvmmm1wAP6QT").getKey();
@@ -320,7 +320,7 @@ public class ScriptTest {
         return scriptPubKeys;
     }
 
-    @Test
+    //TODO  new binary @Test
     public void dataDrivenValidTransactions() throws Exception {
         JsonNode json = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream(
                 "tx_valid.json"), Charsets.UTF_8));
@@ -351,7 +351,7 @@ public class ScriptTest {
         }
     }
 
-    @Test
+    //TODO  new binary @Test
     public void dataDrivenInvalidTransactions() throws Exception {
         JsonNode json = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream(
                 "tx_invalid.json"), Charsets.UTF_8));

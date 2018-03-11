@@ -99,7 +99,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     /**
      * Convert an amount expressed in the way humans are used to into satoshis.
      */
-    public static Coin valueOf(final int coins, final int cents) {
+    public static Coin valueOfCents(final int coins, final int cents,  long tokenid) {
         checkArgument(cents < 100);
         checkArgument(cents >= 0);
         checkArgument(coins >= 0);

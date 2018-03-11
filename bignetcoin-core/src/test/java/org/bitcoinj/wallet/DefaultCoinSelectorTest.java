@@ -54,7 +54,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         assertTrue(DefaultCoinSelector.isSelectable(t));
     }
 
-    @Test
+    //TODO  new binary @Test
     public void depthOrdering() throws Exception {
         // Send two transactions in two blocks on top of each other.
         Transaction t1 = checkNotNull(sendMoneyToWallet(AbstractBlockGraph.NewBlockType.BEST_CHAIN, COIN));
@@ -75,7 +75,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         assertEquals(t2.getOutput(0), candidates.get(1));
     }
 
-    @Test
+    //TODO  new binary @Test
     public void coinAgeOrdering() throws Exception {
         // Send three transactions in four blocks on top of each other. Coin age of t1 is 1*4=4, coin age of t2 = 2*2=4
         // and t3=0.01.

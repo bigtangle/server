@@ -183,7 +183,7 @@ public class ChainSplitTest {
         chain.add(b1);
         assertEquals(FIFTY_COINS, wallet.getBalance());
         Address dest = new ECKey().toAddress(PARAMS);
-        Transaction spend = wallet.createSend(dest, valueOf(10, 0));
+        Transaction spend = wallet.createSend(dest, valueOf(10, NetworkParameters.BIGNETCOIN_TOKENID));
         wallet.commitTx(spend);
         // Waiting for confirmation ... make it eligible for selection.
         assertEquals(Coin.ZERO, wallet.getBalance());
@@ -361,10 +361,10 @@ public class ChainSplitTest {
         chain.add(b1);
 
         Transaction t1 = checkNotNull(
-                wallet.createSend(someOtherGuy, valueOf(10, 0)));
+                wallet.createSend(someOtherGuy, valueOf(10, NetworkParameters.BIGNETCOIN_TOKENID)));
         Address yetAnotherGuy = new ECKey().toAddress(PARAMS);
         Transaction t2 = checkNotNull(
-                wallet.createSend(yetAnotherGuy, valueOf(20, 0)));
+                wallet.createSend(yetAnotherGuy, valueOf(20, NetworkParameters.BIGNETCOIN_TOKENID)));
         wallet.commitTx(t1);
         // t1 is still pending ...
         Block b2 = BlockForTest.createNextBlock(b1, new ECKey().toAddress(PARAMS), PARAMS.getGenesisBlock().getHash());
@@ -387,7 +387,7 @@ public class ChainSplitTest {
         // \-> b3 (t2) -> b4
         assertEquals(t1, eventDead[0]);
         assertEquals(t2, eventReplacement[0]);
-        assertEquals(valueOf(30, 0), wallet.getBalance());
+        assertEquals(valueOf(30, NetworkParameters.BIGNETCOIN_TOKENID), wallet.getBalance());
 
         // ... and back to our own parallel universe.
         Block b5 = BlockForTest.createNextBlock(b2, new ECKey().toAddress(PARAMS), PARAMS.getGenesisBlock().getHash());
