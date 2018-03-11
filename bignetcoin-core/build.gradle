@@ -1,7 +1,8 @@
 
 
 dependencies {
-   compile group: 'org.slf4j', name: 'slf4j-jdk14', version:ver.slf4j_api
+  // compile group: 'org.slf4j', name: 'slf4j-jdk14', version:ver.slf4j_api
+      compile group: 'org.springframework.boot', name: 'spring-boot-starter-web', version:  ver.spring_boot
     compile group: 'com.google.guava', name: 'guava', version:ver.guava
     compile group: 'com.google.protobuf', name: 'protobuf-java', version:ver.protobuf_java
 	compile group: 'com.madgag.spongycastle', name: 'core', version:ver.spongycastlecore
