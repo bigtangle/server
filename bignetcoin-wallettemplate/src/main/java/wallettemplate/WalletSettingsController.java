@@ -14,9 +14,13 @@
 
 package wallettemplate;
 
+import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.MnemonicCode;
+import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.wallet.DeterministicSeed;
+import org.bitcoinj.wallet.KeyChainGroup;
+
 import com.google.common.base.Splitter;
 import com.google.common.util.concurrent.Service;
 import javafx.application.Platform;
@@ -59,7 +63,7 @@ public class WalletSettingsController {
 
     // Note: NOT called by FXMLLoader!
     public void initialize(@Nullable KeyParameter aesKey) {
-        DeterministicSeed seed = Main.bitcoin.wallet().getKeyChainSeed();
+        DeterministicSeed seed = getKeyChainSeed();//Main.bitcoin.wallet().getKeyChainSeed();
         if (aesKey == null) {
             if (seed.isEncrypted()) {
                 log.info("Wallet is encrypted, requesting password first.");
@@ -189,5 +193,14 @@ public class WalletSettingsController {
             passwordButton.setText("Set password");
             aesKey = null;
         }
+    }
+    public DeterministicSeed getKeyChainSeed() {
+        
+        KeyChainGroup  keyChainGroup=     new KeyChainGroup( MainNetParams.get());
+            DeterministicSeed seed = keyChainGroup.getActiveKeyChain().getSeed();
+            if (seed == null)
+                throw new ECKey.MissingPrivateKeyException();
+            return seed;
+        
     }
 }

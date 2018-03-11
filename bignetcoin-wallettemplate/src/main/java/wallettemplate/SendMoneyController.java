@@ -123,12 +123,13 @@ public class SendMoneyController {
             Coin amount = Coin.parseCoin(amountEdit.getText(), NetworkParameters.BIGNETCOIN_TOKENID);
             Address destination = Address.fromBase58(Main.params, address.getText());
             
-            
-            sendBtn.setDisable(true);
-            address.setDisable(true);
-            ((HBox) amountEdit.getParent()).getChildren().remove(amountEdit);
-            ((HBox) btcLabel.getParent()).getChildren().remove(btcLabel);
-            updateTitleForBroadcast();
+            checkGuiThread();
+            overlayUI.done();
+           // sendBtn.setDisable(true);
+           // address.setDisable(true);
+           // ((HBox) amountEdit.getParent()).getChildren().remove(amountEdit);
+           // ((HBox) btcLabel.getParent()).getChildren().remove(btcLabel);
+          //  updateTitleForBroadcast();
       
     }
 
