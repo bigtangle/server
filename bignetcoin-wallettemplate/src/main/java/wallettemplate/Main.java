@@ -105,51 +105,20 @@ public class Main extends Application {
         Threading.USER_THREAD = Platform::runLater;
         // Create the app kit. It won't do any heavyweight initialization until after we start it.
         setupWalletKit(null);
-
-        if (bitcoin.isChainFileLocked()) {
-            informationalAlert("Already running", "This application is already running and cannot be started twice.");
-            Platform.exit();
-            return;
-        }
+ 
 
         mainWindow.show();
 
         WalletSetPasswordController.estimateKeyDerivationTimeMsec();
 
-        bitcoin.addListener(new Service.Listener() {
-            @Override
-            public void failed(Service.State from, Throwable failure) {
-                GuiUtils.crashAlert(failure);
-            }
-        }, Platform::runLater);
-        bitcoin.startAsync();
+        
 
         scene.getAccelerators().put(KeyCombination.valueOf("Shortcut+F"), () -> bitcoin.peerGroup().getDownloadPeer().close());
     }
 
     public void setupWalletKit(@Nullable DeterministicSeed seed) {
         // If seed is non-null it means we are restoring from backup.
-        bitcoin = new WalletAppKit(params, new File("."), WALLET_FILE_NAME) {
-            @Override
-            protected void onSetupCompleted() {
-                // Don't make the user wait for confirmations for now, as the intention is they're sending it
-                // their own money!
-                bitcoin.wallet().allowSpendingUnconfirmedTransactions();
-                Platform.runLater(controller::onBitcoinSetup);
-            }
-        };
-        // Now configure and start the appkit. This will take a second or two - we could show a temporary splash screen
-        // or progress widget to keep the user engaged whilst we initialise, but we don't.
-        if (params == RegTestParams.get()) {
-            bitcoin.connectToLocalHost();   // You should run a regtest mode bitcoind locally.
-        } else if (params == TestNet3Params.get()) {
-            // As an example!
-            bitcoin.useTor();
-            // bitcoin.setDiscovery(new HttpDiscovery(params, URI.create("http://localhost:8080/peers"), ECKey.fromPublicOnly(BaseEncoding.base16().decode("02cba68cfd0679d10b186288b75a59f9132b1b3e222f6332717cb8c4eb2040f940".toUpperCase()))));
-        }
-        bitcoin.setDownloadListener(controller.progressBarUpdater())
-               .setBlockingStartup(false)
-               .setUserAgent(APP_NAME, "1.0");
+  
         if (seed != null)
             bitcoin.restoreWalletFromSeed(seed);
     }
@@ -243,14 +212,7 @@ public class Main extends Application {
         }
     }
 
-    @Override
-    public void stop() throws Exception {
-        bitcoin.stopAsync();
-        bitcoin.awaitTerminated();
-        // Forcibly terminate the JVM because Orchid likes to spew non-daemon threads everywhere.
-        Runtime.getRuntime().exit(0);
-    }
-
+ 
     public static void main(String[] args) {
         launch(args);
     }
