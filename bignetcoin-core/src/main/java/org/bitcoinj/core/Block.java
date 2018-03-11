@@ -1068,7 +1068,7 @@ public class Block extends Message {
      * @param height
      *            block height, if known, or -1 otherwise.
      */
-    Block createNextBlock(@Nullable final Address to, final long version, @Nullable TransactionOutPoint prevOut,
+    public Block createNextBlock(@Nullable final Address to, final long version, @Nullable TransactionOutPoint prevOut,
             final long time, final byte[] pubKey, final Coin coinbaseValue, final int height,
             Sha256Hash prevBranchBlockHash, byte[] mineraddress) {
         Block b = new Block(params, version);

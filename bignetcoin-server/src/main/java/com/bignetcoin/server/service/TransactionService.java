@@ -4,6 +4,8 @@
  *******************************************************************************/
 package com.bignetcoin.server.service;
 
+import static org.bitcoinj.core.Coin.FIFTY_COINS;
+
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -12,7 +14,6 @@ import java.util.List;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
-import org.bitcoinj.core.BlockForTest;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.FullPrunedBlockGraph;
@@ -121,9 +122,11 @@ public class TransactionService {
 
         Block r1 = blockService.getBlock(getNextBlockToApprove());
         Block r2 = blockService.getBlock(getNextBlockToApprove());
-        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(r2,Block.BLOCK_VERSION_GENESIS, myKey.getPubKey(), height++,
-                r1.getHash());
-
+        Block rollingBlock = 
+                r2.createNextBlock(null, Block.BLOCK_VERSION_GENESIS, (TransactionOutPoint) null, Utils.currentTimeSeconds(), myKey.getPubKey(),
+                        FIFTY_COINS, height, r1.getHash(),  toKey.getPubKey() 
+                        );
+               
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
        

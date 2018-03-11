@@ -1,45 +1,12 @@
-buildscript {
-    ext {
-        springBootVersion = '1.5.9.RELEASE'
-    }
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
-    }
-}
-
-plugins {
-    id 'org.sonarqube' version '2.2'
-    id 'jacoco'
-    id 'com.github.ksoichiro.build.info' version '0.1.5'
-}
-
-apply plugin: 'java'
-apply plugin: 'idea'
-
-
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-repositories {
-    mavenCentral()
-}
 
 
 dependencies {
-    compile group: 'org.springframework.boot', name: 'spring-boot-starter-web', version:  '1.5.9.RELEASE'
-    compile group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version:  '1.5.9.RELEASE'
-    compile group: 'org.springframework.boot', name: 'spring-boot-configuration-processor', version:  '1.5.9.RELEASE'
-  
-    compile group: 'org.aspectj', name: 'aspectjrt',   version:ver.aspectjrt
-    compile group: 'org.aspectj', name: 'aspectjweaver', version:ver.aspectjweaver
+   compile group: 'org.slf4j', name: 'slf4j-jdk14', version:ver.slf4j_api
     compile group: 'com.google.guava', name: 'guava', version:ver.guava
     compile group: 'com.google.protobuf', name: 'protobuf-java', version:ver.protobuf_java
 	compile group: 'com.madgag.spongycastle', name: 'core', version:ver.spongycastlecore
 
- 
+   compile group: 'com.google.code.findbugs', name: 'jsr305', version:ver.jsr305
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:ver.jackson_databind
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:ver.jackson_databind
     compile group: 'net.jcip', name: 'jcip-annotations', version:ver.jcip_annotations
@@ -60,23 +27,5 @@ dependencies {
 
 }
 
-test {
-   // useTestNG()
-
-    testLogging.showStandardStreams = true
-}
-
-
-sonarqube {
-    properties customSonarProperties
-}
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-        }
-    }
-}
 
  
