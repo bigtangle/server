@@ -89,7 +89,7 @@ public class ChainSplitTest {
         assertFalse(reorgHappened.get());
         assertEquals(2, walletChanged.get());
         // We got two blocks which sent 50 coins each to us.
-        assertEquals(Coin.valueOf(100, 0), wallet.getBalance());
+        assertEquals(Coin.valueOf(Coin.COIN_VALUE*100, NetworkParameters.BIGNETCOIN_TOKENID), wallet.getBalance());
         // We now have the following chain:
         // genesis -> b1 -> b2
         //
@@ -105,7 +105,7 @@ public class ChainSplitTest {
         Threading.waitForUserCode();
         assertFalse(reorgHappened.get()); // No re-org took place.
         assertEquals(2, walletChanged.get());
-        assertEquals(Coin.valueOf(100, 0), wallet.getBalance());
+        assertEquals(Coin.valueOf(Coin.COIN_VALUE*100, NetworkParameters.BIGNETCOIN_TOKENID), wallet.getBalance());
         // Check we can handle multi-way splits: this is almost certainly going
         // to be extremely rare, but we have to
         // handle it anyway. The same transaction appears in b7/b8 (side chain)
@@ -126,7 +126,7 @@ public class ChainSplitTest {
         assertEquals(2, wallet.getTransaction(tHash).getAppearsInHashes().size());
         assertFalse(reorgHappened.get()); // No re-org took place.
         assertEquals(5, walletChanged.get());
-        assertEquals(Coin.valueOf(100, 0), wallet.getBalance());
+        assertEquals(Coin.valueOf(Coin.COIN_VALUE*100, NetworkParameters.BIGNETCOIN_TOKENID), wallet.getBalance());
         // Now we add another block to make the alternative chain longer.
         // assertTrue(chain.add(BlockForTest.createNextBlock(b3,someOtherGuy)));
         Threading.waitForUserCode();
@@ -152,7 +152,7 @@ public class ChainSplitTest {
         Threading.waitForUserCode();
         assertTrue(reorgHappened.get());
         assertEquals(9, walletChanged.get());
-        assertEquals(Coin.valueOf(200, 0), wallet.getBalance());
+        assertEquals(Coin.valueOf(Coin.COIN_VALUE*200, NetworkParameters.BIGNETCOIN_TOKENID), wallet.getBalance());
     }
 
     @Test
@@ -183,7 +183,7 @@ public class ChainSplitTest {
         chain.add(b1);
         assertEquals(FIFTY_COINS, wallet.getBalance());
         Address dest = new ECKey().toAddress(PARAMS);
-        Transaction spend = wallet.createSend(dest, valueOf(10, NetworkParameters.BIGNETCOIN_TOKENID));
+        Transaction spend = wallet.createSend(dest, valueOf(Coin.COIN_VALUE*10, NetworkParameters.BIGNETCOIN_TOKENID));
         wallet.commitTx(spend);
         // Waiting for confirmation ... make it eligible for selection.
         assertEquals(Coin.ZERO, wallet.getBalance());
@@ -192,7 +192,7 @@ public class ChainSplitTest {
         spend.getConfidence()
                 .markBroadcastBy(new PeerAddress(PARAMS, InetAddress.getByAddress(new byte[] { 5, 6, 7, 8 })));
         assertEquals(ConfidenceType.PENDING, spend.getConfidence().getConfidenceType());
-        assertEquals(valueOf(40, 0), wallet.getBalance());
+        assertEquals(valueOf(Coin.COIN_VALUE*40, NetworkParameters.BIGNETCOIN_TOKENID), wallet.getBalance());
         Block b2 = BlockForTest.createNextBlock(b1, someOtherGuy, PARAMS.getGenesisBlock().getHash());
         b2.addTransaction(spend);
         b2.solve();
@@ -206,7 +206,7 @@ public class ChainSplitTest {
         chain.add(b3);
         chain.add(b4);
         // b4 causes a re-org that should make our spend go pending again.
-        assertEquals(valueOf(40, 0), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        assertEquals(valueOf(Coin.COIN_VALUE*40, NetworkParameters.BIGNETCOIN_TOKENID), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
         assertEquals(ConfidenceType.PENDING, spend.getConfidence().getConfidenceType());
     }
 
@@ -316,9 +316,9 @@ public class ChainSplitTest {
         Block b1 = BlockForTest.createNextBlock(PARAMS.getGenesisBlock(), coinsTo, PARAMS.getGenesisBlock().getHash());
         chain.add(b1);
 
-        Transaction t1 = wallet.createSend(someOtherGuy, valueOf(10, 0));
+        Transaction t1 = wallet.createSend(someOtherGuy, valueOf(Coin.COIN_VALUE*10, NetworkParameters.BIGNETCOIN_TOKENID));
         Address yetAnotherGuy = new ECKey().toAddress(PARAMS);
-        Transaction t2 = wallet.createSend(yetAnotherGuy, valueOf(20, 0));
+        Transaction t2 = wallet.createSend(yetAnotherGuy, valueOf(Coin.COIN_VALUE*20, NetworkParameters.BIGNETCOIN_TOKENID));
         wallet.commitTx(t1);
         // Receive t1 as confirmed by the network.
         Block b2 = BlockForTest.createNextBlock(b1, new ECKey().toAddress(PARAMS), PARAMS.getGenesisBlock().getHash());
@@ -336,7 +336,7 @@ public class ChainSplitTest {
         Threading.waitForUserCode();
         // Should have seen a double spend.
         assertTrue(eventCalled[0]);
-        assertEquals(valueOf(30, 0), wallet.getBalance());
+        assertEquals(valueOf(Coin.COIN_VALUE*30, NetworkParameters.BIGNETCOIN_TOKENID), wallet.getBalance());
     }
 
     @Test
@@ -361,16 +361,16 @@ public class ChainSplitTest {
         chain.add(b1);
 
         Transaction t1 = checkNotNull(
-                wallet.createSend(someOtherGuy, valueOf(10, NetworkParameters.BIGNETCOIN_TOKENID)));
+                wallet.createSend(someOtherGuy, valueOf(Coin.COIN_VALUE*10, NetworkParameters.BIGNETCOIN_TOKENID)));
         Address yetAnotherGuy = new ECKey().toAddress(PARAMS);
         Transaction t2 = checkNotNull(
-                wallet.createSend(yetAnotherGuy, valueOf(20, NetworkParameters.BIGNETCOIN_TOKENID)));
+                wallet.createSend(yetAnotherGuy, valueOf(Coin.COIN_VALUE*20, NetworkParameters.BIGNETCOIN_TOKENID)));
         wallet.commitTx(t1);
         // t1 is still pending ...
         Block b2 = BlockForTest.createNextBlock(b1, new ECKey().toAddress(PARAMS), PARAMS.getGenesisBlock().getHash());
         chain.add(b2);
         assertEquals(ZERO, wallet.getBalance());
-        assertEquals(valueOf(40, 0), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        assertEquals(valueOf(Coin.COIN_VALUE*40 , NetworkParameters.BIGNETCOIN_TOKENID), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
 
         // Now we make a double spend become active after a re-org.
         // genesis -> b1 -> b2 [t1 pending]
@@ -387,7 +387,7 @@ public class ChainSplitTest {
         // \-> b3 (t2) -> b4
         assertEquals(t1, eventDead[0]);
         assertEquals(t2, eventReplacement[0]);
-        assertEquals(valueOf(30, NetworkParameters.BIGNETCOIN_TOKENID), wallet.getBalance());
+        assertEquals(valueOf(Coin.COIN_VALUE*30, NetworkParameters.BIGNETCOIN_TOKENID), wallet.getBalance());
 
         // ... and back to our own parallel universe.
         Block b5 = BlockForTest.createNextBlock(b2, new ECKey().toAddress(PARAMS), PARAMS.getGenesisBlock().getHash());
@@ -521,7 +521,7 @@ public class ChainSplitTest {
         assertEquals(4, txns.get(1).getConfidence().getDepthInBlocks());
         assertEquals(3, txns.get(2).getConfidence().getDepthInBlocks());
 
-        assertEquals(Coin.valueOf(250, 0), wallet.getBalance());
+        assertEquals(Coin.valueOf(Coin.COIN_VALUE*250, NetworkParameters.BIGNETCOIN_TOKENID), wallet.getBalance());
 
         // Now add two more blocks that don't send coins to us. Despite being
         // irrelevant the wallet should still update.
@@ -535,7 +535,7 @@ public class ChainSplitTest {
         assertEquals(5, txns.get(2).getConfidence().getDepthInBlocks());
     }
 
-    @Test
+   //TODO no protobuf  @Test
     public void orderingInsideBlock() throws Exception {
         // Test that transactions received in the same block have their ordering
         // preserved when reorganising.

@@ -215,7 +215,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         }
         assertNotNull(t1);
         // 49 BTC in change.
-        assertEquals(valueOf(49, 0), t1.getValueSentToMe(wallet));
+        assertEquals(valueOf(49, NetworkParameters.BIGNETCOIN_TOKENID), t1.getValueSentToMe(wallet));
         // The future won't complete until it's heard back from the network on p2.
         InventoryMessage inv = new InventoryMessage(PARAMS);
         inv.addTransaction(t1);
@@ -233,7 +233,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
 
         // Do the same thing with an offline transaction.
         peerGroup.removeWallet(wallet);
-        SendRequest req = SendRequest.to(dest, valueOf(2, 0));
+        SendRequest req = SendRequest.to(dest, valueOf(2, NetworkParameters.BIGNETCOIN_TOKENID));
         Transaction t3 = checkNotNull(wallet.sendCoinsOffline(req));
         assertNull(outbound(p1));  // Nothing sent.
         // Add the wallet to the peer group (simulate initialization). Transactions should be announced.

@@ -28,7 +28,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     /**
      * The number of satoshis equal to one bitcoin.
      */
-    private static final long COIN_VALUE = LongMath.pow(10, SMALLEST_UNIT_EXPONENT);
+    public static final long COIN_VALUE = LongMath.pow(10, SMALLEST_UNIT_EXPONENT);
 
     /**
      * Zero Bitcoins.
@@ -96,16 +96,8 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         return value;
     }
 
-    /**
-     * Convert an amount expressed in the way humans are used to into satoshis.
-     */
-    public static Coin valueOfCents(final int coins, final int cents,  long tokenid) {
-        checkArgument(cents < 100);
-        checkArgument(cents >= 0);
-        checkArgument(coins >= 0);
-        final Coin coin = COIN.multiply(coins).add(CENT.multiply(cents));
-        return coin;
-    }
+    
+
 
     /**
      * Parses an amount expressed in the way humans are used to.

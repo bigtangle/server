@@ -689,7 +689,7 @@ public class Transaction extends ChildMessage {
         for (long i = 0; i < numOutputs; i++) {
             TransactionOutput output = new TransactionOutput(params, this, payload, cursor, serializer);
             outputs.add(output);
-            long scriptLen = readVarInt(8);
+            long scriptLen = readVarInt(16);
             optimalEncodingMessageSize += 8 +8+ VarInt.sizeOf(scriptLen) + scriptLen;
             cursor += scriptLen;
         }

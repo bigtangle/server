@@ -353,7 +353,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         InboundMessageQueuer p2 = connectPeer(2);
         InboundMessageQueuer p3 = connectPeer(3);
 
-        Transaction tx = FakeTxBuilder.createFakeTx(PARAMS, valueOf(20, 0), address);
+        Transaction tx = FakeTxBuilder.createFakeTx(PARAMS, valueOf(20, NetworkParameters.BIGNETCOIN_TOKENID), address);
         InventoryMessage inv = new InventoryMessage(PARAMS);
         inv.addTransaction(tx);
 

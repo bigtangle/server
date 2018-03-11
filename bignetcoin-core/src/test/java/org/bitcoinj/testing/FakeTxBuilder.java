@@ -59,7 +59,7 @@ public class FakeTxBuilder {
         Transaction t = new Transaction(params);
         TransactionOutput outputToMe = new TransactionOutput(params, t, value, to);
         t.addOutput(outputToMe);
-        TransactionOutput change = new TransactionOutput(params, t, valueOf(1, 11), changeOutput);
+        TransactionOutput change = new TransactionOutput(params, t, valueOf(Coin.COIN_VALUE*1+ 11, NetworkParameters.BIGNETCOIN_TOKENID), changeOutput);
         t.addOutput(change);
         // Make a previous tx simply to send us sufficient coins. This prev tx
         // is not really valid but it doesn't
@@ -137,7 +137,7 @@ public class FakeTxBuilder {
         Transaction t = new Transaction(params);
         TransactionOutput outputToMe = new TransactionOutput(params, t, value, to);
         t.addOutput(outputToMe);
-        TransactionOutput change = new TransactionOutput(params, t, valueOf(1, 11), new ECKey());
+        TransactionOutput change = new TransactionOutput(params, t, valueOf(Coin.COIN_VALUE*1+ 11, NetworkParameters.BIGNETCOIN_TOKENID), new ECKey());
         t.addOutput(change);
         // Make a previous tx simply to send us sufficient coins. This prev tx
         // is not really valid but it doesn't
@@ -163,7 +163,7 @@ public class FakeTxBuilder {
         Transaction t = new Transaction(params);
         TransactionOutput outputToMe = new TransactionOutput(params, t, value, to);
         t.addOutput(outputToMe);
-        TransactionOutput change = new TransactionOutput(params, t, valueOf(1, 11), new ECKey().toAddress(params));
+        TransactionOutput change = new TransactionOutput(params, t, valueOf(Coin.COIN_VALUE*1+ 11, NetworkParameters.BIGNETCOIN_TOKENID), new ECKey().toAddress(params));
         t.addOutput(change);
         // Make a feeder tx that sends to the from address specified. This
         // feeder tx is not really valid but it doesn't

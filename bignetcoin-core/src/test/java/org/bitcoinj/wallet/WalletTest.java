@@ -12,6 +12,7 @@ import static org.bitcoinj.core.Coin.MILLICOIN;
 import static org.bitcoinj.core.Coin.SATOSHI;
 import static org.bitcoinj.core.Coin.ZERO;
 import static org.bitcoinj.core.Coin.valueOf;
+
 import static org.bitcoinj.core.Utils.HEX;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeBlock;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
@@ -248,7 +249,7 @@ public class WalletTest extends TestWithWallet {
     private Transaction cleanupCommon(Address destination) throws Exception {
         receiveATransaction(wallet, myAddress);
 
-        Coin v2 = valueOf(0, 50);
+        Coin v2 = valueOf( 50, NetworkParameters.BIGNETCOIN_TOKENID);
         SendRequest req = SendRequest.to(destination, v2);
         wallet.completeTx(req);
 
@@ -259,14 +260,14 @@ public class WalletTest extends TestWithWallet {
 
         // At this point we have one pending and one spent
 
-        Coin v1 = valueOf(0, 10);
+        Coin v1 = valueOf( 10, NetworkParameters.BIGNETCOIN_TOKENID);
         Transaction t = sendMoneyToWallet(null, v1, myAddress);
         Threading.waitForUserCode();
         sendMoneyToWallet(null, t);
         assertEquals("Wrong number of PENDING", 2, wallet.getPoolSize(Pool.PENDING));
         assertEquals("Wrong number of UNSPENT", 0, wallet.getPoolSize(Pool.UNSPENT));
         assertEquals("Wrong number of ALL", 3, wallet.getTransactions(true).size());
-        assertEquals(valueOf(0, 60), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        assertEquals(valueOf( 60, NetworkParameters.BIGNETCOIN_TOKENID), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
 
         // Now we have another incoming pending
         return t;
@@ -284,7 +285,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals("Wrong number of PENDING", 1, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
         assertEquals("Wrong number of UNSPENT", 0, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
         assertEquals("Wrong number of ALL", 2, wallet.getTransactions(true).size());
-        assertEquals(valueOf(0, 50), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        assertEquals(valueOf( 50, NetworkParameters.BIGNETCOIN_TOKENID), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
     }
 
     @Test
@@ -292,7 +293,7 @@ public class WalletTest extends TestWithWallet {
         Transaction t = cleanupCommon(OTHER_ADDRESS);
 
         // Now we have another incoming pending.  Spend everything.
-        Coin v3 = valueOf(0, 60);
+        Coin v3 = valueOf( 60, NetworkParameters.BIGNETCOIN_TOKENID);
         SendRequest req = SendRequest.to(OTHER_ADDRESS, v3);
 
         // Force selection of the incoming coin so that we can spend it
@@ -327,17 +328,17 @@ public class WalletTest extends TestWithWallet {
         receiveATransaction(wallet, toAddress);
 
         // Try to send too much and fail.
-        Coin vHuge = valueOf(10, 0);
+        Coin vHuge = valueOf(10, NetworkParameters.BIGNETCOIN_TOKENID);
         SendRequest req = SendRequest.to(destination, vHuge);
         try {
             wallet.completeTx(req);
             fail();
         } catch (InsufficientMoneyException e) {
-            assertEquals(valueOf(9, 0), e.missing);
+            assertEquals(valueOf(9, NetworkParameters.BIGNETCOIN_TOKENID), e.missing);
         }
 
         // Prepare to send.
-        Coin v2 = valueOf(0, 50);
+        Coin v2 = valueOf( 50, NetworkParameters.BIGNETCOIN_TOKENID);
         req = SendRequest.to(destination, v2);
 
         if (encryptedWallet != null) {
@@ -437,7 +438,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals("Wrong number of tx outputs",2, t.getOutputs().size());
         assertEquals(destination, t.getOutput(0).getScriptPubKey().getToAddress(PARAMS));
         assertEquals(wallet.currentChangeAddress(), t.getOutputs().get(1).getScriptPubKey().getToAddress(PARAMS));
-        assertEquals(valueOf(0, 50), t.getOutputs().get(1).getValue());
+        assertEquals(valueOf( 50, NetworkParameters.BIGNETCOIN_TOKENID), t.getOutputs().get(1).getValue());
         // Check the script runs and signatures verify.
         t.getInputs().get(0).verify();
     }
@@ -465,7 +466,7 @@ public class WalletTest extends TestWithWallet {
     private Wallet spendUnconfirmedChange(Wallet wallet, Transaction t2, KeyParameter aesKey) throws Exception {
         if (wallet.getTransactionSigners().size() == 1)   // don't bother reconfiguring the p2sh wallet
             wallet = roundTrip(wallet);
-        Coin v3 = valueOf(0, 50);
+        Coin v3 = valueOf( 50, NetworkParameters.BIGNETCOIN_TOKENID);
         assertEquals(v3, wallet.getBalance());
         SendRequest req = SendRequest.to(OTHER_ADDRESS, valueOf(0, 48));
         req.aesKey = aesKey;
@@ -494,7 +495,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
         assertEquals(1, wallet.getTransactions(true).size());
 
-        Coin v2 = valueOf(0, 50);
+        Coin v2 = valueOf( 50, NetworkParameters.BIGNETCOIN_TOKENID);
         Coin v3 = valueOf(0, 75);
         Coin v4 = valueOf(1, 25);
 
@@ -527,7 +528,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
         assertEquals(1, wallet.getTransactions(true).size());
 
-        Coin v2 = valueOf(0, 50);
+        Coin v2 = valueOf( 50, NetworkParameters.BIGNETCOIN_TOKENID);
         sendMoneyToWallet(AbstractBlockGraph.NewBlockType.SIDE_CHAIN, v2);
         assertEquals(2, wallet.getTransactions(true).size());
         assertEquals(v1, wallet.getBalance());
@@ -537,9 +538,9 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void balance() throws Exception {
         // Receive 5 coins then half a coin.
-        Coin v1 = valueOf(5, 0);
-        Coin v2 = valueOf(0, 50);
-        Coin expected = valueOf(5, 50);
+        Coin v1 = valueOf(Coin.COIN_VALUE*5+ 0, NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin v2 = valueOf( 50, NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin expected = valueOf(Coin.COIN_VALUE*5+ 50, NetworkParameters.BIGNETCOIN_TOKENID);
         assertEquals(0, wallet.getTransactions(true).size());
         sendMoneyToWallet(AbstractBlockGraph.NewBlockType.BEST_CHAIN, v1);
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
@@ -555,7 +556,7 @@ public class WalletTest extends TestWithWallet {
 
         // Available and estimated balances should not be the same. We don't check the exact available balance here
         // because it depends on the coin selection algorithm.
-        assertEquals(valueOf(4, 50), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        assertEquals(valueOf(Coin.COIN_VALUE*4+ 50, NetworkParameters.BIGNETCOIN_TOKENID), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
         assertFalse(wallet.getBalance(Wallet.BalanceType.AVAILABLE).equals(
                     wallet.getBalance(Wallet.BalanceType.ESTIMATED)));
 
@@ -563,7 +564,7 @@ public class WalletTest extends TestWithWallet {
         sendMoneyToWallet(BlockGraph.NewBlockType.BEST_CHAIN, spend);
 
         // Change is confirmed. We started with 5.50 so we should have 4.50 left.
-        Coin v4 = valueOf(4, 50);
+        Coin v4 = valueOf(Coin.COIN_VALUE*4+ 50, NetworkParameters.BIGNETCOIN_TOKENID);
         assertEquals(v4, wallet.getBalance(Wallet.BalanceType.AVAILABLE));
     }
 
@@ -625,7 +626,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(TransactionConfidence.ConfidenceType.BUILDING, tx1.getConfidence().getConfidenceType());
         assertEquals(1, tx1.getConfidence().getAppearedAtChainHeight());
         // Send 0.10 to somebody else.
-        Transaction send1 = wallet.createSend(OTHER_ADDRESS, valueOf(0, 10));
+        Transaction send1 = wallet.createSend(OTHER_ADDRESS, valueOf( 10, NetworkParameters.BIGNETCOIN_TOKENID));
         // Pretend it makes it into the block chain, our wallet state is cleared but we still have the keys, and we
         // want to get back to our previous state. We can do this by just not confirming the transaction as
         // createSend is stateless.
@@ -633,18 +634,18 @@ public class WalletTest extends TestWithWallet {
         confTxns.clear();
         sendMoneyToWallet(AbstractBlockGraph.NewBlockType.BEST_CHAIN, send1);
         Threading.waitForUserCode();
-        assertEquals(Coin.valueOf(0, 90), wallet.getBalance());
+        assertEquals(Coin.valueOf( 90, NetworkParameters.BIGNETCOIN_TOKENID), wallet.getBalance());
         assertEquals(null, txn[0]);
         assertEquals(2, confTxns.size());
         assertEquals(txn[1].getHash(), send1.getHash());
         assertEquals(Coin.COIN, bigints[2]);
-        assertEquals(Coin.valueOf(0, 90), bigints[3]);
+        assertEquals(Coin.valueOf( 90, NetworkParameters.BIGNETCOIN_TOKENID), bigints[3]);
         // And we do it again after the catchup.
-        Transaction send2 = wallet.createSend(OTHER_ADDRESS, valueOf(0, 10));
+        Transaction send2 = wallet.createSend(OTHER_ADDRESS, valueOf( 10, NetworkParameters.BIGNETCOIN_TOKENID));
         // What we'd really like to do is prove Bitcoin Core would accept it .... no such luck unfortunately.
         wallet.commitTx(send2);
         sendMoneyToWallet(AbstractBlockGraph.NewBlockType.BEST_CHAIN, send2);
-        assertEquals(Coin.valueOf(0, 80), wallet.getBalance());
+        assertEquals(Coin.valueOf( 80, NetworkParameters.BIGNETCOIN_TOKENID), wallet.getBalance());
         Threading.waitForUserCode();
         FakeTxBuilder.BlockPair b4 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS);
         confTxns.clear();
@@ -660,11 +661,11 @@ public class WalletTest extends TestWithWallet {
         assertEquals(nanos, tx1.getValueSentToMe(wallet));
         assertTrue(tx1.getWalletOutputs(wallet).size() >= 1);
         // Send 0.10 to somebody else.
-        Transaction send1 = wallet.createSend(OTHER_ADDRESS, valueOf(0, 10));
+        Transaction send1 = wallet.createSend(OTHER_ADDRESS, valueOf( 10, NetworkParameters.BIGNETCOIN_TOKENID));
         // Reserialize.
         Transaction send2 = PARAMS.getDefaultSerializer().makeTransaction(send1.bitcoinSerialize());
         assertEquals(nanos, send2.getValueSentFromMe(wallet));
-        assertEquals(ZERO.subtract(valueOf(0, 10)), send2.getValue(wallet));
+        assertEquals(ZERO.subtract(valueOf( 10, NetworkParameters.BIGNETCOIN_TOKENID)), send2.getValue(wallet));
     }
 
     @Test
@@ -672,7 +673,7 @@ public class WalletTest extends TestWithWallet {
         // This test ensures that isConsistent catches duplicate transactions, eg, because we submitted the same block
         // twice (this is not allowed).
         Transaction tx = createFakeTx(PARAMS, COIN, myAddress);
-        TransactionOutput output = new TransactionOutput(PARAMS, tx, valueOf(0, 5), OTHER_ADDRESS);
+        TransactionOutput output = new TransactionOutput(PARAMS, tx, valueOf( 5, NetworkParameters.BIGNETCOIN_TOKENID), OTHER_ADDRESS);
         tx.addOutput(output);
         wallet.receiveFromBlock(tx, null, BlockGraph.NewBlockType.BEST_CHAIN, 0);
 
@@ -772,7 +773,7 @@ public class WalletTest extends TestWithWallet {
         sendMoneyToWallet(AbstractBlockGraph.NewBlockType.BEST_CHAIN, coin1);
         // Send half to some other guy. Sending only half then waiting for a confirm is important to ensure the tx is
         // in the unspent pool, not pending or spent.
-        Coin coinHalf = valueOf(0, 50);
+        Coin coinHalf = valueOf( 50, NetworkParameters.BIGNETCOIN_TOKENID);
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
         assertEquals(1, wallet.getTransactions(true).size());
         Transaction outbound1 = wallet.createSend(OTHER_ADDRESS, coinHalf);
@@ -892,10 +893,10 @@ public class WalletTest extends TestWithWallet {
         sendMoneyToWallet(AbstractBlockGraph.NewBlockType.BEST_CHAIN, nanos);
         Transaction received = wallet.getTransactions(false).iterator().next();
         // Create a send to a merchant.
-        Transaction send1 = wallet.createSend(OTHER_ADDRESS, valueOf(0, 50));
+        Transaction send1 = wallet.createSend(OTHER_ADDRESS, valueOf( 50, NetworkParameters.BIGNETCOIN_TOKENID));
         // Create a double spend.
         Address BAD_GUY = new ECKey().toAddress(PARAMS);
-        Transaction send2 = wallet.createSend(BAD_GUY, valueOf(0, 50));
+        Transaction send2 = wallet.createSend(BAD_GUY, valueOf( 50, NetworkParameters.BIGNETCOIN_TOKENID));
         send2 = PARAMS.getDefaultSerializer().makeTransaction(send2.bitcoinSerialize());
         // Broadcast send1.
         wallet.commitTx(send1);
@@ -978,13 +979,13 @@ public class WalletTest extends TestWithWallet {
             wallet.commitTx(txB1);
             wallet.commitTx(txB2);
 
-            SendRequest c1Req = SendRequest.to(OTHER_ADDRESS, valueOf(0, 10));
+            SendRequest c1Req = SendRequest.to(OTHER_ADDRESS, valueOf( 10, NetworkParameters.BIGNETCOIN_TOKENID));
             c1Req.tx.addInput(txA1.getOutput(1));
             c1Req.tx.addInput(txB1.getOutput(1));
             c1Req.shuffleOutputs = false;
             wallet.completeTx(c1Req);
             Transaction txC1 = c1Req.tx;
-            SendRequest c2Req = SendRequest.to(OTHER_ADDRESS, valueOf(0, 20));
+            SendRequest c2Req = SendRequest.to(OTHER_ADDRESS, valueOf( 20, NetworkParameters.BIGNETCOIN_TOKENID));
             c2Req.tx.addInput(txA2.getOutput(1));
             c2Req.tx.addInput(txB2.getOutput(1));
             c2Req.shuffleOutputs = false;
@@ -1122,7 +1123,7 @@ public class WalletTest extends TestWithWallet {
         // doubleSpends.t1 spends to our wallet. doubleSpends.t2 double spends somewhere else.
 
         Transaction t1b = new Transaction(PARAMS);;
-        TransactionOutput t1bo = new TransactionOutput(PARAMS, t1b, valueOf(0, 50), OTHER_ADDRESS);
+        TransactionOutput t1bo = new TransactionOutput(PARAMS, t1b, valueOf( 50, NetworkParameters.BIGNETCOIN_TOKENID), OTHER_ADDRESS);
         t1b.addOutput(t1bo);
         t1b.addInput(doubleSpends.t1.getOutput(0));
 
@@ -1187,7 +1188,7 @@ public class WalletTest extends TestWithWallet {
             Transaction send2 = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf(1, 20)));
             wallet.commitTx(send1);
             assertPending(send1);
-            Transaction send1b = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf(0, 50)));
+            Transaction send1b = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf( 50, NetworkParameters.BIGNETCOIN_TOKENID)));
 
             sendMoneyToWallet(AbstractBlockGraph.NewBlockType.BEST_CHAIN, send2);
             assertDead(send1);
@@ -1237,9 +1238,9 @@ public class WalletTest extends TestWithWallet {
             Transaction send1 = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf(1, 0)));
             Transaction send2 = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf(1, 20)));
             wallet.commitTx(send1);
-            Transaction send1b = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf(0, 50)));
+            Transaction send1b = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf( 50, NetworkParameters.BIGNETCOIN_TOKENID)));
             wallet.commitTx(send1b);
-            Transaction send1c = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf(0, 25)));
+            Transaction send1c = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf( 25, NetworkParameters.BIGNETCOIN_TOKENID)));
             wallet.commitTx(send1c);
             wallet.commitTx(send2);
             Set<Transaction> txns = new HashSet<Transaction>();
@@ -1262,9 +1263,9 @@ public class WalletTest extends TestWithWallet {
             Transaction send1 = sendMoneyToWallet(AbstractBlockGraph.NewBlockType.BEST_CHAIN, valueOf(2, 0));
             Transaction send1a = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf(1, 0)));
             wallet.commitTx(send1a);
-            Transaction send1b = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf(0, 50)));
+            Transaction send1b = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf( 50, NetworkParameters.BIGNETCOIN_TOKENID)));
             wallet.commitTx(send1b);
-            Transaction send1c = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf(0, 25)));
+            Transaction send1c = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf( 25, NetworkParameters.BIGNETCOIN_TOKENID)));
             wallet.commitTx(send1c);
             Transaction send1d = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf(0, 12)));
             wallet.commitTx(send1d);
@@ -1407,7 +1408,7 @@ public class WalletTest extends TestWithWallet {
         sendMoneyToWallet(AbstractBlockGraph.NewBlockType.BEST_CHAIN, nanos);
         // Create a spend with them, but don't commit it (ie it's from somewhere else but using our keys). This TX
         // will have change as we don't spend our entire balance.
-        Coin halfNanos = valueOf(0, 50);
+        Coin halfNanos = valueOf( 50, NetworkParameters.BIGNETCOIN_TOKENID);
         Transaction t2 = wallet.createSend(OTHER_ADDRESS, halfNanos);
         // Now receive it as pending.
         if (wallet.isPendingTransactionRelevant(t2))
@@ -1543,7 +1544,7 @@ public class WalletTest extends TestWithWallet {
         // It should appear in the wallet and confirm.
         // This is a bit of a silly thing to do in the real world as all it does is burn a fee but it is perfectly valid.
         Coin coin1 = COIN;
-        Coin coinHalf = valueOf(0, 50);
+        Coin coinHalf = valueOf( 50, NetworkParameters.BIGNETCOIN_TOKENID);
         // Start by giving us 1 coin.
         sendMoneyToWallet(AbstractBlockGraph.NewBlockType.BEST_CHAIN, coin1);
         // Send half to ourselves. We should then have a balance available to spend of zero.
@@ -1560,9 +1561,9 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void lastBlockSeen() throws Exception {
-        Coin v1 = valueOf(5, 0);
-        Coin v2 = valueOf(0, 50);
-        Coin v3 = valueOf(0, 25);
+        Coin v1 = valueOf(5,  NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin v2 = valueOf( 50, NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin v3 = valueOf( 25, NetworkParameters.BIGNETCOIN_TOKENID);
         Transaction t1 = createFakeTx(PARAMS, v1, myAddress);
         Transaction t2 = createFakeTx(PARAMS, v2, myAddress);
         Transaction t3 = createFakeTx(PARAMS, v3, myAddress);
@@ -1593,7 +1594,7 @@ public class WalletTest extends TestWithWallet {
     public void pubkeyOnlyScripts() throws Exception {
         // Verify that we support outputs like OP_PUBKEY and the corresponding inputs.
         ECKey key1 = wallet.freshReceiveKey();
-        Coin value = valueOf(5, 0);
+        Coin value = valueOf(5,  NetworkParameters.BIGNETCOIN_TOKENID);
         Transaction t1 = createFakeTx(PARAMS, value, key1);
         if (wallet.isPendingTransactionRelevant(t1))
             wallet.receivePending(t1, null);
@@ -1668,7 +1669,7 @@ public class WalletTest extends TestWithWallet {
         // Verify that pending transactions to watched addresses are relevant
         Address watchedAddress = new ECKey().toAddress(PARAMS);
         wallet.addWatchedAddress(watchedAddress);
-        Coin value = valueOf(5, 0);
+        Coin value = valueOf(5,  NetworkParameters.BIGNETCOIN_TOKENID);
         Transaction t1 = createFakeTx(PARAMS, value, watchedAddress);
         assertTrue(t1.getWalletOutputs(wallet).size() >= 1);
         assertTrue(wallet.isPendingTransactionRelevant(t1));
@@ -1808,7 +1809,7 @@ public class WalletTest extends TestWithWallet {
         Sha256Hash hash2 = Sha256Hash.of(f);
         assertFalse("Wallet not saved after generating fresh key", hash1.equals(hash2));  // File has changed.
 
-        Transaction t1 = createFakeTx(PARAMS, valueOf(5, 0), key);
+        Transaction t1 = createFakeTx(PARAMS, valueOf(5, NetworkParameters.BIGNETCOIN_TOKENID), key);
         if (wallet.isPendingTransactionRelevant(t1))
             wallet.receivePending(t1, null);
         Sha256Hash hash3 = Sha256Hash.of(f);
@@ -1851,7 +1852,7 @@ public class WalletTest extends TestWithWallet {
         assertNull(results[0]);
         assertNull(results[1]);
 
-        sendMoneyToWallet(BlockGraph.NewBlockType.BEST_CHAIN, valueOf(5, 0), key);
+        sendMoneyToWallet(BlockGraph.NewBlockType.BEST_CHAIN, valueOf(5, NetworkParameters.BIGNETCOIN_TOKENID), key);
         Sha256Hash hash4 = Sha256Hash.of(f);
         assertFalse(hash3.equals(hash4));  // File HAS changed.
         results[0] = results[1] = null;
@@ -1875,7 +1876,7 @@ public class WalletTest extends TestWithWallet {
         ECKey key2 = new ECKey();
         wallet.importKey(key2);
         assertEquals(hash5, Sha256Hash.of(f)); // File has NOT changed.
-        sendMoneyToWallet(BlockGraph.NewBlockType.BEST_CHAIN, valueOf(5, 0), key2);
+        sendMoneyToWallet(BlockGraph.NewBlockType.BEST_CHAIN, valueOf(5, NetworkParameters.BIGNETCOIN_TOKENID), key2);
         Thread.sleep(2000); // Wait longer than autosave delay. TODO Fix the racyness.
         assertEquals(hash5, Sha256Hash.of(f)); // File has still NOT changed.
         assertNull(results[0]);
@@ -1889,7 +1890,7 @@ public class WalletTest extends TestWithWallet {
         sendMoneyToWallet(AbstractBlockGraph.NewBlockType.BEST_CHAIN, v1);
         // First create our current transaction
         ECKey k2 = wallet.freshReceiveKey();
-        Coin v2 = valueOf(0, 50);
+        Coin v2 = Coin.valueOf( 50, NetworkParameters.BIGNETCOIN_TOKENID);
         Transaction t2 = new Transaction(PARAMS);;
         TransactionOutput o2 = new TransactionOutput(PARAMS, t2, v2, k2.toAddress(PARAMS));
         t2.addOutput(o2);
@@ -1904,7 +1905,7 @@ public class WalletTest extends TestWithWallet {
 
         // Now try to the spend the output.
         ECKey k3 = new ECKey();
-        Coin v3 = valueOf(0, 25);
+        Coin v3 = Coin.valueOf( 25, NetworkParameters.BIGNETCOIN_TOKENID);
         Transaction t3 = new Transaction(PARAMS);;
         t3.addOutput(v3, k3.toAddress(PARAMS));
         t3.addInput(o2);

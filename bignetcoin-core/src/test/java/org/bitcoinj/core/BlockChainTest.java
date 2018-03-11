@@ -267,7 +267,7 @@ public class BlockChainTest {
         Transaction t1 = FakeTxBuilder.createFakeTx(PARAMS, COIN, addr);
         Transaction t2 = new Transaction(PARAMS);
         t2.addInput(t1.getOutputs().get(0));
-        t2.addOutput(valueOf(2, 0), somebodyElse);
+        t2.addOutput(valueOf(2, NetworkParameters.BIGNETCOIN_TOKENID), somebodyElse);
         b1.addTransaction(t1);
         b1.addTransaction(t2);
         b1.solve();
@@ -305,7 +305,7 @@ public class BlockChainTest {
         // Attempt to spend the coinbase - this should fail as the coinbase is
         // not mature yet.
         try {
-            wallet.createSend(addressToSendTo, valueOf(49, 0));
+            wallet.createSend(addressToSendTo, valueOf(49, NetworkParameters.BIGNETCOIN_TOKENID));
             fail();
         } catch (InsufficientMoneyException e) {
         }

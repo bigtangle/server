@@ -81,7 +81,7 @@ public class ParseByteCacheTest {
         resetBlockStore();
         
         Transaction tx1 = createFakeTx(PARAMS,
-                valueOf(2, 0),
+                valueOf(2, NetworkParameters.BIGNETCOIN_TOKENID),
                 wallet.currentReceiveKey().toAddress(PARAMS));
         
         // add a second input so can test granularity of byte cache.

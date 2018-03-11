@@ -719,7 +719,7 @@ public class PeerTest extends TestWithNetworkConnections {
         assertNotNull(vtx[0]);
         vtx[0] = null;
         // Send a timelocked transaction, nothing happens.
-        Transaction t2 = FakeTxBuilder.createFakeTx(PARAMS, valueOf(2, 0), key);
+        Transaction t2 = FakeTxBuilder.createFakeTx(PARAMS, valueOf(2, NetworkParameters.BIGNETCOIN_TOKENID), key);
         t2.setLockTime(999999);
         inbound(writeTarget, t2);
         Threading.waitForUserCode();
