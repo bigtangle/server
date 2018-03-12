@@ -7,6 +7,7 @@ package com.bignetcoin.server.service;
 import static org.bitcoinj.core.Utils.HEX;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,6 +20,7 @@ import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Json;
+import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.wallet.Wallet.BalanceType;
@@ -32,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.bignetcoin.server.config.ServerConfiguration;
 import com.bignetcoin.server.response.AbstractResponse;
+import com.bignetcoin.server.response.AskTransactionResponse;
 import com.bignetcoin.server.response.ErrorResponse;
 import com.bignetcoin.server.response.ExceptionResponse;
 import com.bignetcoin.server.response.GetBalancesResponse;
@@ -188,14 +191,17 @@ public class API {
 
         return GetBalancesResponse.create(elements, null, 0);
     }
+    
+    @Autowired
+    private NetworkParameters networkParameters;
 
     private AbstractResponse askTransaction(String pubkey, String toaddressPubkey, String amount, long tokenid) throws Exception {
-
         Block block = transactionService.askTransaction(pubkey, toaddressPubkey, amount, tokenid);
-        List<String> list = new ArrayList<String>();
-        list.add(Utils.HEX.encode(block.bitcoinSerialize()));
-        return GetBalancesResponse.create(list, null, 0);
-
+        
+//        Block block00 = (Block) networkParameters.getDefaultSerializer().deserialize(ByteBuffer.wrap(block.bitcoinSerialize()));
+//        Block b = networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize());
+        
+        return AskTransactionResponse.create(block);
     }
 
 }
