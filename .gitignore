@@ -7,3 +7,4 @@ target
 *.chain
 *.spvchain
 /.gradle/
+/bin/

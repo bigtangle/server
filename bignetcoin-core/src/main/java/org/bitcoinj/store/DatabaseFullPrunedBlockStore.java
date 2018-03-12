@@ -1579,9 +1579,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             preparedStatement = conn.get().prepareStatement(INSERT_BLOCKEVALUATION_SQL);
             preparedStatement.setBytes(1, blockEvaluation.getBlockhash().getBytes());
-            preparedStatement.setInt(2, blockEvaluation.getRating());
-            preparedStatement.setInt(3, blockEvaluation.getDepth());
-            preparedStatement.setInt(4, blockEvaluation.getCumulativeweight());
+            preparedStatement.setLong(2, blockEvaluation.getRating()); //TODO add height
+            preparedStatement.setLong(3, blockEvaluation.getDepth());
+            preparedStatement.setLong(4, blockEvaluation.getCumulativeweight());
             preparedStatement.setBoolean(5, blockEvaluation.isSolid());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {

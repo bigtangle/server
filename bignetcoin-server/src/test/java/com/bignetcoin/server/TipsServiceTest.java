@@ -37,6 +37,7 @@ import com.bignetcoin.server.service.TipsService;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TipsServiceTest extends AbstractIntegrationTest {
     private static final Logger log = LoggerFactory.getLogger(TipsServiceTest.class);
+    
     @Test
     public void testBlockEvaluationDb() throws Exception {
         List<Block> blocks = this.createBlock();

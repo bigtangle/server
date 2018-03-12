@@ -68,8 +68,41 @@ public class BlockService {
     }
 
     public void updateSolidBlocks(Set<Sha256Hash> analyzedHashes) {
+		// TODO 
     }
 
+	public List<BlockEvaluation> getTips() {
+		// TODO get all current tips
+		return null;
+	}
+
     public void updateSolid(BlockEvaluation blockEvaluation, boolean b) {
+		blockEvaluation.setSolid(b);
+		// TODO set blockEvaluation.solid in database for now
     }
+
+	public void updateHeight(BlockEvaluation blockEvaluation, long i) {
+		blockEvaluation.setHeight(i);
+		// TODO set blockEvaluation.height in database for now
+	}
+
+	public void updateCumulativeWeight(BlockEvaluation blockEvaluation, long i) {
+		blockEvaluation.setCumulativeweight(i);
+		// TODO set blockEvaluation.cumulativeWeight in database for now
+	}
+
+	public void updateDepth(BlockEvaluation blockEvaluation, long i) {
+		blockEvaluation.setDepth(i);
+		// TODO set blockEvaluation.cumulativeWeight in database for now
+	}
+
+	public void updateRating(BlockEvaluation blockEvaluation, long i) {
+		blockEvaluation.setRating(i);
+		// TODO set blockEvaluation.rating in database for now
+	}
+	
+	public long getHeightMax() {
+		// TODO get max(height) over all block evaluations
+		return 0;
+	}
 }

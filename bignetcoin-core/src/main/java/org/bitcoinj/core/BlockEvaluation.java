@@ -20,9 +20,10 @@ public class BlockEvaluation {
     }
 
     public Sha256Hash blockhash;
-    public int rating;
-    public int depth;
-    public int cumulativeweight;
+    public long rating;
+    public long height;
+    public long depth;
+    public long cumulativeweight;
  
     //no broken block in the graph
     public boolean solid = false;  
@@ -30,7 +31,7 @@ public class BlockEvaluation {
     // if set to true for older than 7 days, remove it from this table
     public boolean milestone = false;  
     //Timestamp for entry into milestone as true, reset if flip to false
-    private long milestonelasttruetime;
+    private long milestoneLastUpdateTime;
 
     public Sha256Hash getBlockhash() {
         return blockhash;
@@ -38,22 +39,22 @@ public class BlockEvaluation {
     public void setBlockhash(Sha256Hash blockhash) {
         this.blockhash = blockhash;
     }
-    public int getRating() {
+    public long getRating() {
         return rating;
     }
-    public void setRating(int rating) {
+    public void setRating(long rating) {
         this.rating = rating;
     }
-    public int getDepth() {
+    public long getDepth() {
         return depth;
     }
-    public void setDepth(int depth) {
+    public void setDepth(long depth) {
         this.depth = depth;
     }
-    public int getCumulativeweight() {
+    public long getCumulativeweight() {
         return cumulativeweight;
     }
-    public void setCumulativeweight(int cumulativeweight) {
+    public void setCumulativeweight(long cumulativeweight) {
         this.cumulativeweight = cumulativeweight;
     }
     public boolean isSolid() {
@@ -62,7 +63,10 @@ public class BlockEvaluation {
     public void setSolid(boolean solid) {
         this.solid = solid;
     }
-    
-    
-    
+	public long getHeight() {
+		return height;
+	}
+	public void setHeight(long height) {
+		this.height = height;
+	}
 }
