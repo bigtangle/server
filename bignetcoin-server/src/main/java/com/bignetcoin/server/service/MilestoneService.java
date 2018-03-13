@@ -5,6 +5,7 @@
 package com.bignetcoin.server.service;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,6 +24,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cglib.core.CollectionUtils;
 import org.springframework.stereotype.Service;
+
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Multiset;
 
 /*
  *  check the valuation of block and trigger an update of openoutputs
@@ -69,10 +73,6 @@ public class MilestoneService {
 	/*****************************************************
 	 * Experimental update methods *
 	 ******************************************************/
-
-	// TODO inefficient due to repeated database queries, fix: merge block and
-	// blockevaluation tables, batch updates
-
 	// Sorts blocks by descending height
 	private Comparator<BlockEvaluation> sortBlocksByDescendingHeight = new Comparator<BlockEvaluation>() {
 		@Override
@@ -86,12 +86,21 @@ public class MilestoneService {
 		}
 	};
 
+	private PriorityQueue<BlockEvaluation> getSolidTipsDescending() {
+		List<BlockEvaluation> solidTips = blockService.getLastSolidTips();
+		CollectionUtils.filter(solidTips, e -> ((BlockEvaluation) e).isSolid());
+		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = new PriorityQueue<BlockEvaluation>(solidTips.size(),
+				sortBlocksByDescendingHeight);
+		blocksByDescendingHeight.addAll(solidTips);
+		return blocksByDescendingHeight;
+	}
+
 	/*
 	 * Update solid true if all directly or indirectly approved blocks exist Update
 	 * height to be the sum of previous heights
 	 */
 	public void updateSolidityAndHeight() throws Exception {
-		List<BlockEvaluation> tips = blockService.getTips();
+		List<BlockEvaluation> tips = blockService.getAllTips();
 		for (BlockEvaluation tip : tips)
 			updateSolidityAndHeightRecursive(tip);
 	}
@@ -102,7 +111,7 @@ public class MilestoneService {
 			return true;
 		}
 
-		// Missing blocks -> not solid, request
+		// Missing blocks -> not solid, request from network
 		Block block = blockService.getBlock(blockEvaluation.getBlockhash());
 		if (block == null) {
 			// TODO broken graph, download the missing remote block needed
@@ -113,7 +122,7 @@ public class MilestoneService {
 		boolean prevBlockSolid = false;
 		boolean prevBranchBlockSolid = false;
 
-		// Check previous trunk block
+		// Check previous trunk block exists and is solid
 		BlockEvaluation prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
 		if (prevBlockEvaluation == null) {
 			// TODO broken graph, download the missing remote block needed
@@ -121,7 +130,7 @@ public class MilestoneService {
 			prevBlockSolid = updateSolidityAndHeightRecursive(prevBlockEvaluation);
 		}
 
-		// Check previous branch block
+		// Check previous branch block exists and is solid
 		BlockEvaluation prevBranchBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
 		if (prevBranchBlockEvaluation == null) {
 			// TODO broken graph, download the missing remote block needed
@@ -129,12 +138,10 @@ public class MilestoneService {
 			prevBranchBlockSolid = updateSolidityAndHeightRecursive(prevBlockEvaluation);
 		}
 
-		// Check if all referenced blocks are solid (and therefore exist)
+		// If both previous blocks are solid, our block is solid and should be
+		// solidified
 		if (prevBlockSolid && prevBranchBlockSolid) {
-			// On success, also set height since it can now be calculated
-			blockService.updateHeight(blockEvaluation,
-					Math.max(prevBlockEvaluation.getHeight() + 1, prevBranchBlockEvaluation.getHeight() + 1));
-			blockService.updateSolid(blockEvaluation, true);
+			solidifyBlock(blockEvaluation, prevBlockEvaluation, prevBranchBlockEvaluation);
 			return true;
 		} else {
 			blockService.updateSolid(blockEvaluation, false);
@@ -142,51 +149,82 @@ public class MilestoneService {
 		}
 	}
 
+	private void solidifyBlock(BlockEvaluation blockEvaluation, BlockEvaluation prevBlockEvaluation,
+			BlockEvaluation prevBranchBlockEvaluation) {
+		blockService.updateHeight(blockEvaluation,
+				Math.max(prevBlockEvaluation.getHeight() + 1, prevBranchBlockEvaluation.getHeight() + 1));
+		blockService.updateSolid(blockEvaluation, true);
+	}
+
 	/*
 	 * Update depth, the length of the longest reverse-oriented path to some tip.
-	 * Update cumulative weight, the amount of direct or indirect approvers of the
-	 * block TODO batch database queries by heights
 	 */
-	public void updateDepthsAndCumulativeWeights() throws BlockStoreException {
+	public void updateDepths() throws BlockStoreException {
 		// Select solid tips to begin from
-		List<BlockEvaluation> solidTips = blockService.getTips();
-		CollectionUtils.filter(solidTips, e -> ((BlockEvaluation) e).isSolid());
-		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = new PriorityQueue<BlockEvaluation>(solidTips.size(),
-				sortBlocksByDescendingHeight);
-		blocksByDescendingHeight.addAll(solidTips);
+		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = getSolidTipsDescending();
 
-		// Initialize tips with weight 1 and depth 0
+		// Initialize tips with depth 0
 		for (BlockEvaluation blockEvaluation : blocksByDescendingHeight) {
-			blockService.updateCumulativeWeight(blockEvaluation, 1);
 			blockService.updateDepth(blockEvaluation, 0);
 		}
 
-		// Add the current cumulative weight to the approved blocks and update their
-		// depth
+		// Update the depth going backwards
 		BlockEvaluation currentBlockEvaluation;
 		while ((currentBlockEvaluation = blocksByDescendingHeight.poll()) != null) {
 			Block block = blockService.getBlock(currentBlockEvaluation.getBlockhash());
 			BlockEvaluation prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
 			BlockEvaluation prevBranchBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
 
-			// If previous blocks are unpruned, update their cumulative weight and depth and
-			// add them to the priority queue
+			// If previous blocks are unpruned / maintained, update their depth if the
+			// newfound depth is greater than previously and add them to the queue
 			if (prevBlockEvaluation != null) {
-				blockService.updateCumulativeWeight(prevBlockEvaluation,
-						prevBlockEvaluation.getCumulativeweight() + currentBlockEvaluation.getCumulativeweight());
-				blockService.updateDepth(prevBlockEvaluation,
-						Math.max(currentBlockEvaluation.getDepth() + 1, prevBlockEvaluation.getDepth()));
-				blocksByDescendingHeight.offer(prevBlockEvaluation);
+				if (prevBlockEvaluation.getDepth() < currentBlockEvaluation.getDepth() + 1) {
+					blockService.updateDepth(prevBlockEvaluation, currentBlockEvaluation.getDepth() + 1);
+					blocksByDescendingHeight.offer(prevBlockEvaluation);
+				}
 			}
+			
 			if (prevBranchBlockEvaluation != null) {
-				blockService.updateCumulativeWeight(prevBranchBlockEvaluation,
-						prevBranchBlockEvaluation.getCumulativeweight() + currentBlockEvaluation.getCumulativeweight());
-				blockService.updateDepth(prevBranchBlockEvaluation,
-						Math.max(currentBlockEvaluation.getDepth() + 1, prevBranchBlockEvaluation.getDepth()));
-				blocksByDescendingHeight.offer(prevBranchBlockEvaluation);
+				if (prevBranchBlockEvaluation.getDepth() < currentBlockEvaluation.getDepth() + 1) {
+					blockService.updateDepth(prevBranchBlockEvaluation, currentBlockEvaluation.getDepth() + 1);
+					blocksByDescendingHeight.offer(prevBranchBlockEvaluation);
+				}
+			}
+		}
+	}
+
+	/*
+	 * Update cumulative weight, the amount of blocks a block is approved by
+	 */
+	public void updateCumulativeWeights() throws BlockStoreException {
+		// Begin from the highest solid height tips and go backwards from there
+		long currentHeight = blockService.getMaxSolidHeight();
+		HashMap<Sha256Hash, HashSet<Sha256Hash>> currentHeightBlocks = null, nextHeightBlocks = null;
+
+		while (currentHeight >= 0) {
+			// Initialize results of current height
+			currentHeightBlocks = new HashMap<>();
+
+			for (BlockEvaluation blockEvaluation : blockService.getSolidBlocksOfHeight(currentHeight)) {
+				// Add your own hash as reference
+				HashSet<Sha256Hash> blockReferences = new HashSet<Sha256Hash>();
+				blockReferences.add(blockEvaluation.getBlockhash());
+
+				// Add all references of all approvers
+				for (Sha256Hash approverHash : blockService.getApproverBlockHash(blockEvaluation.getBlockhash())) {
+					blockReferences.addAll(nextHeightBlocks.get(approverHash));
+				}
+
+				// Save it to current height's hash sets
+				currentHeightBlocks.put(blockEvaluation.getBlockhash(), blockReferences);
+
+				// Update your cumulative weight
+				blockEvaluation.setCumulativeweight(blockReferences.size());
 			}
 
-	        //log.debug("hash : " + currentBlockEvaluation.getBlockhash() + " -> " + currentBlockEvaluation.getCumulativeweight());
+			// Move up to next height
+			nextHeightBlocks = currentHeightBlocks;
+			currentHeight--;
 		}
 	}
 
@@ -194,31 +232,50 @@ public class MilestoneService {
 	 * Update the percentage of times that tips selected by MCMC approve a block
 	 */
 	public void updateRating() throws Exception {
-		// Select 100 solid tips via MCMC
+		// Select #tipCount solid tips via MCMC
 		int tipCount = 100;
-		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = new PriorityQueue<BlockEvaluation>(tipCount,
-				sortBlocksByDescendingHeight);
+		List<BlockEvaluation> selectedTips = new ArrayList<BlockEvaluation>(tipCount);
 		Random random = new SecureRandom();
 		for (int i = 0; i < tipCount; i++)
-			blocksByDescendingHeight
-					.offer(blockService.getBlockEvaluation(tipsService.blockToApprove(null, null, 27, 27, random)));
+			selectedTips.add(blockService.getBlockEvaluation(tipsService.blockToApprove(null, null, 27, 27, random)));
 
-		// Begin from the highest height blocks and go backwards
-		long height = blockService.getHeightMax();
-		HashMap<Sha256Hash, BlockEvaluation> nextHeightBlocks = null;
-		HashMap<Sha256Hash, BlockEvaluation> currentHeightBlocks = null; // TODO get currentHeightBlocks
-		while (height >= 0) {
-			for (BlockEvaluation blockEvaluation : currentHeightBlocks.values()) {
-				blockEvaluation.setRating(0);
-				for (Sha256Hash approverHash : blockService.getApproverBlockHash(blockEvaluation.getBlockhash())) {
-					// TODO preload blocks too, fixes itself when merging blockevaluation and undoableblocks
-					blockService.updateRating(blockEvaluation, blockEvaluation.getRating() + nextHeightBlocks.get(approverHash).getRating());
+		// Begin from the highest solid height tips and go backwards from there
+		long currentHeight = blockService.getMaxSolidHeight();
+		HashMap<Sha256Hash, HashMultiset<Sha256Hash>> currentHeightBlocks = null, nextHeightBlocks = null;
+
+		while (currentHeight >= 0) {
+			// Initialize results of current height
+			currentHeightBlocks = new HashMap<>();
+
+			for (BlockEvaluation blockEvaluation : blockService.getSolidBlocksOfHeight(currentHeight)) {
+				// Add your own hashes as reference if you are one of the selected tips
+				HashMultiset<Sha256Hash> selectedTipReferences = HashMultiset.create(tipCount);
+				for (BlockEvaluation tip : selectedTips) {
+					if (tip.getBlockhash() == blockEvaluation.getBlockhash()) {
+						selectedTipReferences.add(tip.getBlockhash());
+					}
 				}
-				//TODO add count of this block in blocksByDescendingHeight
+
+				// Add all selected tip references of all approvers
+				for (Sha256Hash approverHash : blockService.getApproverBlockHash(blockEvaluation.getBlockhash())) {
+					selectedTipReferences.addAll(nextHeightBlocks.get(approverHash));
+				}
+
+				// Save it to current height's results
+				currentHeightBlocks.put(blockEvaluation.getBlockhash(), selectedTipReferences);
+
+				// Update your rating
+				blockEvaluation.setRating(selectedTipReferences.size());
 			}
+
+			// Move up to next height
 			nextHeightBlocks = currentHeightBlocks;
-			// TODO get currentHeightBlocks
-			height--;
+			currentHeight--;
 		}
 	}
+
+	public void updateMilestone() {
+
+	}
+
 }

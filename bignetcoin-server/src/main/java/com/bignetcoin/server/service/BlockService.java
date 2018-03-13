@@ -4,6 +4,7 @@
  *******************************************************************************/
 package com.bignetcoin.server.service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -71,8 +72,8 @@ public class BlockService {
 		// TODO 
     }
 
-	public List<BlockEvaluation> getTips() {
-		// TODO get all current tips
+	public List<BlockEvaluation> getAllTips() {
+		// TODO get all current tips including nonsolid ones
 		return null;
 	}
 
@@ -101,8 +102,18 @@ public class BlockService {
 		// TODO set blockEvaluation.rating in database for now
 	}
 	
-	public long getHeightMax() {
+	public long getMaxSolidHeight() {
 		// TODO get max(height) over all block evaluations
 		return 0;
+	}
+
+	public List<BlockEvaluation> getSolidBlocksOfHeight(long currentHeight) {
+		// TODO get all blocks where height == currentHeight
+		return null;
+	}
+
+	public List<BlockEvaluation> getLastSolidTips() {
+		// TODO get tips from last solidity update, can include tips that are not actually tips anymore
+		return null;
 	}
 }
