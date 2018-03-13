@@ -15,56 +15,37 @@
 package wallettemplate;
 
 import static com.google.common.base.Preconditions.checkState;
-
 import static wallettemplate.utils.GuiUtils.checkGuiThread;
-import static wallettemplate.utils.GuiUtils.crashAlert;
-import static wallettemplate.utils.GuiUtils.informationalAlert;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.annotation.Nullable;
-
 import org.bitcoinj.core.Address;
+import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.Json;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionConfidence;
-import org.bitcoinj.wallet.SendRequest;
+import org.bitcoinj.core.Utils;
 import org.bitcoinj.wallet.Wallet;
 import org.spongycastle.crypto.params.KeyParameter;
- 
+
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.squareup.okhttp.Call;
-import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.OkHttpClient;
-
-import javafx.event.ActionEvent;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.HBox;
-import wallettemplate.controls.BitcoinAddressValidator;
-import wallettemplate.utils.TextFieldValidator;
-import wallettemplate.utils.WTUtils;
-
-import java.io.IOException;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
+
+import javafx.event.ActionEvent;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import wallettemplate.controls.BitcoinAddressValidator;
+import wallettemplate.utils.TextFieldValidator;
+import wallettemplate.utils.WTUtils;
 
 public class SendMoneyController {
     public Button sendBtn;
@@ -91,12 +72,10 @@ public class SendMoneyController {
         request.put("command", "getBalances");
         request.put("addresses", new String[] { addr });
         request.put("threshold", 100);
- 
-        String response =  post("http://localhost:14265", Json.jsonmapper().writeValueAsString( request));
+
+        String response = post("http://localhost:14265", Json.jsonmapper().writeValueAsString(request));
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-        
-        
-        
+
         Coin balance = Coin.valueOf(10000, NetworkParameters.BIGNETCOIN_TOKENID);
         // Main.bitcoin.wallet().getBalance();
         checkState(!balance.isZero());
@@ -109,28 +88,64 @@ public class SendMoneyController {
     String post(String url, String json) throws IOException {
         RequestBody body = RequestBody.create(JSON, json);
         Request request = new Request.Builder().url(url).post(body).build();
-          Response response = client.newCall(request).execute();
-          return response.body().string();
+        Response response = client.newCall(request).execute();
+        return response.body().string();
     }
 
     public void cancel(ActionEvent event) {
         overlayUI.done();
     }
 
-    public void send(ActionEvent event) {
+    public void send(ActionEvent event) throws Exception {
         // Address exception cannot happen as we validated it beforehand.
-       
-            Coin amount = Coin.parseCoin(amountEdit.getText(), NetworkParameters.BIGNETCOIN_TOKENID);
-            Address destination = Address.fromBase58(Main.params, address.getText());
-            
-            checkGuiThread();
-            overlayUI.done();
-           // sendBtn.setDisable(true);
-           // address.setDisable(true);
-           // ((HBox) amountEdit.getParent()).getChildren().remove(amountEdit);
-           // ((HBox) btcLabel.getParent()).getChildren().remove(btcLabel);
-          //  updateTitleForBroadcast();
-      
+
+        Coin amount = Coin.parseCoin(amountEdit.getText(), NetworkParameters.BIGNETCOIN_TOKENID);
+        Address destination = Address.fromBase58(Main.params, address.getText());
+
+        ECKey outKey = new ECKey();
+
+        final Map<String, Object> reqParam0 = new HashMap<>();
+        reqParam0.put("command", "askTransaction");
+        reqParam0.put("pubkey", Utils.HEX.encode(outKey.getPubKey()));
+        reqParam0.put("toaddress", Utils.HEX.encode(destination.getHash160()));
+        reqParam0.put("amount", amountEdit.getText());
+        reqParam0.put("tokenid", NetworkParameters.BIGNETCOIN_TOKENID);
+
+        String response = post("http://localhost:14265", Json.jsonmapper().writeValueAsString(reqParam0));
+        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+
+        // final Map<String, Object> request = new HashMap<>();
+        // request.put("command", "signBlock");
+        // request.put("blockString", (String) data.get("blockHex"));
+        // response = post("http://localhost:14265",
+        // Json.jsonmapper().writeValueAsString(request));
+
+        String blockHex = (String) data.get("blockHex");
+        byte[] bytes = Utils.HEX.decode(blockHex);
+        // Block block = (Block)
+        // networkParameters.getDefaultSerializer().makeBlock(bytes);
+        // byte[] bytes = rollingBlock.bitcoinSerialize();
+        Block block = (Block) Main.params.getDefaultSerializer().makeBlock(bytes);
+        // 交易签名
+        for (Transaction t : block.getTransactions()) {
+            t.addSigned(outKey);
+        }
+        // 解谜
+        block.solve();
+
+        final Map<String, Object> reqParam1 = new HashMap<>();
+        reqParam1.put("command", "saveBlock");
+        reqParam1.put("blockString", Utils.HEX.encode(block.bitcoinSerialize()));
+        response = post("http://localhost:14265", Json.jsonmapper().writeValueAsString(reqParam0));
+
+        checkGuiThread();
+        overlayUI.done();
+        // sendBtn.setDisable(true);
+        // address.setDisable(true);
+        // ((HBox) amountEdit.getParent()).getChildren().remove(amountEdit);
+        // ((HBox) btcLabel.getParent()).getChildren().remove(btcLabel);
+        // updateTitleForBroadcast();
+
     }
 
     private void askForPasswordAndRetry() {
@@ -147,7 +162,12 @@ public class SendMoneyController {
             screen.controller.aesKey = cur;
             screen.controller.address.setText(addressStr);
             screen.controller.amountEdit.setText(amountStr);
-            screen.controller.send(null);
+            try {
+                screen.controller.send(null);
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         });
     }
 
