@@ -126,11 +126,11 @@ public class SendMoneyController {
         // networkParameters.getDefaultSerializer().makeBlock(bytes);
         // byte[] bytes = rollingBlock.bitcoinSerialize();
         Block block = (Block) Main.params.getDefaultSerializer().makeBlock(bytes);
-        // 交易签名
+        // sign transaction
         for (Transaction t : block.getTransactions()) {
             t.addSigned(outKey);
         }
-        // 解谜
+        //proof nonce
         block.solve();
 
         final Map<String, Object> reqParam1 = new HashMap<>();
