@@ -49,7 +49,6 @@ import com.google.common.collect.Lists;
 public class TransactionService {
     @Autowired
     protected FullPrunedBlockStore store;
- 
 
     @Autowired
     private TipsService tipsManager;
@@ -116,21 +115,48 @@ public class TransactionService {
     public Block askTransaction(String pubkey, String toaddressPubkey, String amount, long tokenid) throws Exception {
         ECKey myKey = ECKey.fromPublicOnly(Utils.parseAsHexOrBase58(pubkey));
         ECKey toKey = ECKey.fromPublicOnly(Utils.parseAsHexOrBase58(toaddressPubkey));
-      
-        Coin coin = Coin.parseCoin(amount,tokenid);
+
+        Coin coin = Coin.parseCoin(amount, tokenid);
         int height = 1;
 
         Block r1 = blockService.getBlock(getNextBlockToApprove());
         Block r2 = blockService.getBlock(getNextBlockToApprove());
-        Block rollingBlock = 
-                r2.createNextBlock(null, Block.BLOCK_VERSION_GENESIS, (TransactionOutPoint) null, Utils.currentTimeSeconds(), myKey.getPubKey(),
-                        FIFTY_COINS, height, r1.getHash(),  toKey.getPubKey() 
-                        );
-               
+        Block rollingBlock = r2.createNextBlock(null, Block.BLOCK_VERSION_GENESIS, (TransactionOutPoint) null,
+                Utils.currentTimeSeconds(), myKey.getPubKey(), FIFTY_COINS, height, r1.getHash(), toKey.getPubKey());
+
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
-       
+
         Transaction t = new Transaction(networkParameters);
+        t.addOutput(new TransactionOutput(networkParameters, t, coin, toKey));
+        TransactionInput input = new TransactionInput(networkParameters, t, new byte[] {}, spendableOutput);
+
+        // no signs first
+        t.addInput(input);
+
+        rollingBlock.addTransaction(t);
+        // client rollingBlock.solve();
+        // blockgraph.add(rollingBlock);
+        return rollingBlock;
+    }
+
+    public Block askTransaction4address(String pubkey, String toaddress, String amount, long tokenid) throws Exception {
+        ECKey myKey = ECKey.fromPublicOnly(Utils.parseAsHexOrBase58(pubkey));
+       
+        Address address = Address.fromBase58(networkParameters, toaddress);
+        Coin coin = Coin.parseCoin(amount, tokenid);
+        int height = 1;
+
+        Block r1 = blockService.getBlock(getNextBlockToApprove());
+        Block r2 = blockService.getBlock(getNextBlockToApprove());
+        Block rollingBlock = r2.createNextBlock(null, Block.BLOCK_VERSION_GENESIS, (TransactionOutPoint) null,
+                Utils.currentTimeSeconds(), myKey.getPubKey(), FIFTY_COINS, height, r1.getHash(), address.getHash160());
+
+        Transaction transaction = rollingBlock.getTransactions().get(0);
+        TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
+
+        Transaction t = new Transaction(networkParameters);
+        ECKey toKey = ECKey.fromPublicOnly(address.getHash160());
         t.addOutput(new TransactionOutput(networkParameters, t, coin, toKey));
         TransactionInput input = new TransactionInput(networkParameters, t, new byte[] {}, spendableOutput);
 
@@ -154,7 +180,7 @@ public class TransactionService {
     public Block getBlock2sign(String blockString) throws Exception {
         byte[] bytes = Utils.HEX.decode(blockString);
         Block block = (Block) networkParameters.getDefaultSerializer().deserialize(ByteBuffer.wrap(bytes));
-       
+
         return block;
 
     }
