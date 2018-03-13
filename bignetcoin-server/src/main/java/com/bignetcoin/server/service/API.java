@@ -98,7 +98,7 @@ public class API {
             }
             case "askTransaction4address": {
                 final String pubkey = (String) request.get("pubkey");
-                final String toaddressPubkey = (String) request.get("toaddressPubkey");
+                final String toaddressPubkey = (String) request.get("toaddress");
                 final String amount = (String) request.get("amount");
                 final long tokenid = getParameterAsInt(request, "tokenid");
                 return askTransaction4address(pubkey, toaddressPubkey, amount, tokenid);
