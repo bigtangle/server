@@ -23,7 +23,6 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.store.BlockStoreException;
-import org.bitcoinj.store.FullPrunedBlockStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cglib.core.CollectionUtils;
 import org.springframework.stereotype.Service;
@@ -58,16 +57,6 @@ public class MilestoneService {
 
 	public int latestMilestoneIndex = MILESTONE_START_INDEX;
 	public int latestSolidSubtangleMilestoneIndex = MILESTONE_START_INDEX;
-
-	private final Set<Sha256Hash> analyzedMilestoneCandidates = new HashSet<>();
-
-	private Validity validateMilestone(Block block) throws Exception {
-		return Validity.VALID;
-	}
-
-	void updateLatestSolidSubtangleMilestone() throws Exception {
-
-	}
 
 	/*****************************************************
 	 * Experimental update methods *
