@@ -255,3 +255,13 @@ create block with coinbase transaction for each miner coin
 
 
 
+ 1) coin balance overview client
+ list of all balance per token
+ 2) transfer of coin
+ transfer X coins from account A to account B
+ 3) create genesis block for new token 
+ as example: IPO for new stock: Genesis Block of Stocks: XXX as token with number Y 
+ 4) transaction between token and coin
+ Account A  buy stock YY with price XX  from  account B 
+
+
