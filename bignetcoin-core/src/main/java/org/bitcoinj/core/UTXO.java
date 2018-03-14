@@ -31,7 +31,7 @@ public class UTXO {
     private Sha256Hash blockhash;
     private String fromaddress;
     private String description;
-
+    private boolean spent;
     /**
      * Creates a stored transaction output.
      *
@@ -49,7 +49,7 @@ public class UTXO {
      *            The address.
      */
     public UTXO(Sha256Hash hash, long index, Coin value, int height, boolean coinbase, Script script, String address,
-            Sha256Hash blockhash,  String fromaddress, String description) {
+            Sha256Hash blockhash,  String fromaddress, String description, boolean spent) {
         this.hash = hash;
         this.index = index;
         this.value = value;
@@ -62,6 +62,7 @@ public class UTXO {
         this.fromaddress = fromaddress;
         this.description = description;
         this.address = address;
+        this.spent = spent;
     }
 
     public UTXO(InputStream in) throws IOException {
@@ -202,6 +203,14 @@ public class UTXO {
     public void setDescription(String description) {
         this.description = description;
     }
+
+	public boolean isSpent() {
+		return spent;
+	}
+
+	public void setSpent(boolean spent) {
+		this.spent = spent;
+	}
     
     
 }

@@ -132,7 +132,7 @@ import com.google.common.collect.Lists;
  *
  * <p>
  * <br/>
- * <b>openoutputs</b> table
+ * <b>outputs</b> table
  * <table>
  * <tr>
  * <th>Field Name</th>
@@ -201,7 +201,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private static final String DROP_SETTINGS_TABLE = "DROP TABLE settings";
     private static final String DROP_HEADERS_TABLE = "DROP TABLE headers";
     private static final String DROP_UNDOABLE_TABLE = "DROP TABLE undoableblocks";
-    private static final String DROP_OPEN_OUTPUT_TABLE = "DROP TABLE openoutputs";
+    private static final String DROP_OPEN_OUTPUT_TABLE = "DROP TABLE outputs";
     private static final String DROP_TIPS_TABLE = "DROP TABLE tips";
     private static final String DROP_BLOCKEVALUATION_TABLE = "DROP TABLE blockevaluation";
 
@@ -222,33 +222,33 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private static final String UPDATE_UNDOABLEBLOCKS_SQL = "UPDATE undoableblocks SET txoutchanges=?, transactions=? WHERE hash = ?";
     private static final String DELETE_UNDOABLEBLOCKS_SQL = "DELETE FROM undoableblocks WHERE height <= ?";
 
-    private static final String SELECT_OPENOUTPUTS_COUNT_SQL = "SELECT COUNT(*) FROM openoutputs WHERE hash = ?";
-    private static final String INSERT_OPENOUTPUTS_SQL = "INSERT INTO openoutputs (hash, `index`, height, value, scriptbytes, toaddress, addresstargetable, coinbase, blockhash,tokenid,fromaddress, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?)";
-    private static final String SELECT_OPENOUTPUTS_SQL = "SELECT height, value, scriptbytes, coinbase, toaddress, addresstargetable,blockhash,tokenid,fromaddress, description FROM openoutputs WHERE hash = ? AND `index` = ?";
-    private static final String DELETE_OPENOUTPUTS_SQL = "DELETE FROM openoutputs WHERE hash = ? AND `index`= ?";
+    private static final String SELECT_OUTPUTS_COUNT_SQL = "SELECT COUNT(*) FROM outputs WHERE hash = ?";
+    private static final String INSERT_OUTPUTS_SQL = "INSERT INTO outputs (hash, `index`, height, value, scriptbytes, toaddress, addresstargetable, coinbase, blockhash,tokenid,fromaddress, description, spent) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?,?)";
+    private static final String SELECT_OUTPUTS_SQL = "SELECT height, value, scriptbytes, coinbase, toaddress, addresstargetable,blockhash,tokenid,fromaddress, description,spent FROM outputs WHERE hash = ? AND `index` = ?";
+    private static final String DELETE_OUTPUTS_SQL = "DELETE FROM outputs WHERE hash = ? AND `index`= ?";
 
-    private static final String SELECT_TRANSACTION_OUTPUTS_SQL = "SELECT hash, value, scriptbytes, height, `index`, coinbase, toaddress, addresstargetable, blockhash,tokenid,fromaddress, description FROM openoutputs where toaddress = ?";
+    private static final String SELECT_TRANSACTION_OUTPUTS_SQL = "SELECT hash, value, scriptbytes, height, `index`, coinbase, toaddress, addresstargetable, blockhash,tokenid,fromaddress, description,spent FROM outputs where toaddress = ?";
 
     // Dump table SQL (this is just for data sizing statistics).
     private static final String SELECT_DUMP_SETTINGS_SQL = "SELECT name, value FROM settings";
     private static final String SELECT_DUMP_HEADERS_SQL = "SELECT chainwork, header FROM headers";
     private static final String SELECT_DUMP_UNDOABLEBLOCKS_SQL = "SELECT txoutchanges, transactions FROM undoableblocks";
-    private static final String SELECT_DUMP_OPENOUTPUTS_SQL = "SELECT value, scriptbytes FROM openoutputs";
+    private static final String SELECT_DUMP_OUTPUTS_SQL = "SELECT value, scriptbytes FROM outputs";
 
     // Select the balance of an address SQL.
-    private static final String SELECT_BALANCE_SQL = "select sum(value) from openoutputs where toaddress = ?";
+    private static final String SELECT_BALANCE_SQL = "select sum(value) from outputs where toaddress = ?";
 
     // Tables exist SQL.
     private static final String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM settings WHERE 1 = 2";
 
     // Compatibility SQL.
-    private static final String SELECT_COMPATIBILITY_COINBASE_SQL = "SELECT coinbase FROM openoutputs WHERE 1 = 2";
+   // private static final String SELECT_COMPATIBILITY_COINBASE_SQL = "SELECT coinbase FROM outputs WHERE 1 = 2";
 
-    private static final String SELECT_BLOCKEVALUATION_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid FROM blockevaluation WHERE blockhash = ?";
+    private static final String SELECT_BLOCKEVALUATION_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height FROM blockevaluation WHERE blockhash = ?";
     private static final String DELETE_BLOCKEVALUATION_SQL = "DELETE FROM blockevaluation WHERE blockhash = ?";
     private static final String UPDATE_BLOCKEVALUATION_DEPTH_SQL = "UPDATE blockevaluation SET depth = ? WHERE blockhash = ?";
     private static final String UPDATE_BLOCKEVALUATION_CUMULATIVEWEIGHT_SQL = "UPDATE blockevaluation SET cumulativeweight = ? WHERE blockhash = ?";
-    private static final String INSERT_BLOCKEVALUATION_SQL = "INSERT INTO blockevaluation (blockhash, rating, depth, cumulativeweight, solid) VALUES (?, ?, ?, ?, ?);";
+    private static final String INSERT_BLOCKEVALUATION_SQL = "INSERT INTO blockevaluation (blockhash, rating, depth, cumulativeweight, solid, height) VALUES (?, ?, ?, ?, ?,?);";
 
     protected Sha256Hash chainHeadHash;
     protected StoredBlock chainHeadBlock;
@@ -317,9 +317,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             // Create tables if needed
             if (!tablesExists()) {
                 createTables();
-            } else {
-                checkCompatibility();
-            }
+            } 
             // initFromDatabase();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -386,17 +384,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         return SELECT_CHECK_TABLES_EXIST_SQL;
     }
 
-    /**
-     * Get the SQL statements to check if the database is compatible.
-     * 
-     * @return The SQL prepared statements.
-     */
-    protected List<String> getCompatibilitySQL() {
-        List<String> sqlStatements = new ArrayList<String>();
-        sqlStatements.add(SELECT_COMPATIBILITY_COINBASE_SQL);
-        return sqlStatements;
-    }
-
+ 
     /**
      * Get the SQL to select the transaction outputs for a given address.
      * 
@@ -513,39 +501,39 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     /**
-     * Get the SQL to select a openoutputs record.
+     * Get the SQL to select a outputs record.
      * 
      * @return The SQL select statement.
      */
     protected String getSelectOpenoutputsSQL() {
-        return SELECT_OPENOUTPUTS_SQL;
+        return SELECT_OUTPUTS_SQL;
     }
 
     /**
-     * Get the SQL to select count of openoutputs.
+     * Get the SQL to select count of outputs.
      * 
      * @return The SQL select statement.
      */
     protected String getSelectOpenoutputsCountSQL() {
-        return SELECT_OPENOUTPUTS_COUNT_SQL;
+        return SELECT_OUTPUTS_COUNT_SQL;
     }
 
     /**
-     * Get the SQL to insert a openoutputs record.
+     * Get the SQL to insert a outputs record.
      * 
      * @return The SQL insert statement.
      */
     protected String getInsertOpenoutputsSQL() {
-        return INSERT_OPENOUTPUTS_SQL;
+        return INSERT_OUTPUTS_SQL;
     }
 
     /**
-     * Get the SQL to delete a openoutputs record.
+     * Get the SQL to delete a outputs record.
      * 
      * @return The SQL delete statement.
      */
     protected String getDeleteOpenoutputsSQL() {
-        return DELETE_OPENOUTPUTS_SQL;
+        return DELETE_OUTPUTS_SQL;
     }
 
     /**
@@ -582,7 +570,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * @return The SQL select statement.
      */
     protected String getSelectopenoutputsDumpSQL() {
-        return SELECT_DUMP_OPENOUTPUTS_SQL;
+        return SELECT_DUMP_OUTPUTS_SQL;
     }
 
     /**
@@ -673,31 +661,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    /**
-     * Check that the database is compatible with this version of the
-     * {@link DatabaseFullPrunedBlockStore}.
-     * 
-     * @throws BlockStoreException
-     *             If the database is not compatible.
-     */
-    private void checkCompatibility() throws SQLException, BlockStoreException {
-        for (String sql : getCompatibilitySQL()) {
-            PreparedStatement ps = null;
-            try {
-                ps = conn.get().prepareStatement(sql);
-                ResultSet results = ps.executeQuery();
-                results.close();
-            } catch (SQLException ex) {
-                throw new BlockStoreException("Database block store is not compatible with the current release.  "
-                        + "See bitcoinj release notes for further information: " + ex.getMessage());
-            } finally {
-                if (ps != null && !ps.isClosed()) {
-                    ps.close();
-                }
-            }
-        }
-    }
-
+ 
     /**
      * Create the tables/block store in the database and
      * 
@@ -1183,8 +1147,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
             String fromaddress = results.getString(9);
             String description = results.getString(10);
+            boolean spent = results.getBoolean(11);
             UTXO txout = new UTXO(hash, index, value, height, coinbase, new Script(scriptBytes), address, blockhash,
-                    fromaddress, description);
+                    fromaddress, description,spent );
             return txout;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
@@ -1218,6 +1183,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setLong(10, out.getValue().tokenid);
             s.setString(11, out.getFromaddress());
             s.setString(12, out.getDescription());
+            s.setBoolean(13, out.isSpent());
             s.executeUpdate();
             s.close();
         } catch (SQLException e) {
@@ -1387,7 +1353,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * <p>
      * The balance
      * {@link org.bitcoinj.store.DatabaseFullPrunedBlockStore#getBalanceSelectSQL()}
-     * returns the all the openoutputs as stored in the DB (binary), then use
+     * returns the all the outputs as stored in the DB (binary), then use
      * calculateClientSide=true
      * </p>
      *
@@ -1447,8 +1413,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
                     String fromaddress = rs.getString(11);
                     String description = rs.getString(12);
+                    boolean spent = rs.getBoolean(13);
                     UTXO output = new UTXO(hash, index, amount, height, coinbase, new Script(scriptBytes), toAddress,
-                            blockhash, fromaddress, description);
+                            blockhash, fromaddress, description, spent);
                     outputs.add(output);
                 }
             }

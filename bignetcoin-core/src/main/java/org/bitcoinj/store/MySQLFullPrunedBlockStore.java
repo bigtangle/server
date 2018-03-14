@@ -50,7 +50,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    CONSTRAINT undoableblocks_pk PRIMARY KEY (hash) USING BTREE \n" +
             ")\n";
 
-    private static final String CREATE_OPEN_OUTPUT_TABLE = "CREATE TABLE openoutputs (\n" +
+    private static final String CREATE_OPEN_OUTPUT_TABLE = "CREATE TABLE outputs (\n" +
             "    hash varbinary(32) NOT NULL,\n" +
             "    `index` integer NOT NULL,\n" +
             "    height integer NOT NULL,\n" +
@@ -63,7 +63,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    tokenid bigint,\n" +
             "    fromaddress varchar(35),\n" +
             "    description varchar(80),\n" +
-            "    CONSTRAINT openoutputs_pk PRIMARY KEY (hash, `index`) USING BTREE \n" +
+            "    spent tinyint(1) NOT NULL,\n" +
+            "    CONSTRAINT outputs_pk PRIMARY KEY (hash, `index`) USING BTREE \n" +
             ")\n";
     
     private static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" +
@@ -73,20 +74,21 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
  
     private static final String CREATE_BLOCKEVALUATION_TABLE = "CREATE TABLE blockevaluation (\n" +
             "    blockhash varbinary(32) NOT NULL,\n" +
-            "    rating integer NOT NULL,\n" +
-            "    depth integer,\n" +
-            "    cumulativeweight  integer ,\n" +
+            "    rating bigint ,\n" +
+            "    depth bigint,\n" +
+            "    cumulativeweight  bigint ,\n" +
             "    solid tinyint(1) NOT NULL,\n" +
+            "    height bigint,\n" +
             "    CONSTRAINT blockevaluation_pk PRIMARY KEY (blockhash) )\n";
 
     // Some indexes to speed up inserts
-    private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX              = "CREATE INDEX openoutputs_hash_index_height_toaddress_idx ON openoutputs (hash, `index`, height, toaddress) USING btree";
-    private static final String CREATE_OUTPUTS_TOADDRESS_INDEX                  = "CREATE INDEX openoutputs_toaddress_idx ON openoutputs (toaddress) USING btree";
-    private static final String CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX          = "CREATE INDEX openoutputs_addresstargetable_idx ON openoutputs (addresstargetable) USING btree";
-    private static final String CREATE_OUTPUTS_HASH_INDEX                       = "CREATE INDEX openoutputs_hash_idx ON openoutputs (hash) USING btree";
+    private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX              = "CREATE INDEX outputs_hash_index_height_toaddress_idx ON outputs (hash, `index`, height, toaddress) USING btree";
+    private static final String CREATE_OUTPUTS_TOADDRESS_INDEX                  = "CREATE INDEX outputs_toaddress_idx ON outputs (toaddress) USING btree";
+    private static final String CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX          = "CREATE INDEX outputs_addresstargetable_idx ON outputs (addresstargetable) USING btree";
+    private static final String CREATE_OUTPUTS_HASH_INDEX                       = "CREATE INDEX outputs_hash_idx ON outputs (hash) USING btree";
     private static final String CREATE_UNDOABLE_TABLE_INDEX                     = "CREATE INDEX undoableblocks_height_idx ON undoableblocks (height) USING btree";
 
-    // SQL involving index column (table openOutputs) overridden as it is a reserved word and must be back ticked in MySQL.
+    // SQL involving index column (table outputs) overridden as it is a reserved word and must be back ticked in MySQL.
       public MySQLFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
                                      String username, String password) throws BlockStoreException {
         super(params, DATABASE_CONNECTION_URL_PREFIX + hostname + "/" + dbName, fullStoreDepth, username, password, null);
