@@ -50,7 +50,7 @@ public class DispatcherController {
             String body = new String(bodyByte, Charset.forName("UTF-8"));
             @SuppressWarnings("unchecked") final Map<String, Object> request = Json.jsonmapper().readValue(body, Map.class);
             final List<String> addresses = HttpRequestParamUtil.getParameterAsList(request, "addresses");
-            return getBalancesStatement(addresses);
+//            return getBalancesStatement(addresses);
             break;
 
         case askTransaction:
