@@ -15,6 +15,7 @@ import java.util.List;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
+import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.FullPrunedBlockGraph;
@@ -291,4 +292,26 @@ public class TransactionService {
             return output.getHash();
         }
     }
+
+	public void addTXO(TransactionOutput txout) {
+		// TODO add UTXO to output db 
+	}
+
+	public void updateTXOSpent(TransactionOutput txout, boolean b) {
+		// TODO set 'spent' field of UTXO in output db
+	}
+
+	public void removeTXO(TransactionOutput txout) {
+		// TODO remove UTXO from output db 
+	}
+
+	public boolean getTXOSpent(TransactionOutput txout) {
+		// TODO return 'spent' field of UTXO in output db
+		return false;
+	}
+
+	public BlockEvaluation getTXOSpender(TransactionOutput txout) {
+		// TODO return the block that spent this txout
+		return null;
+	}
 }

@@ -4,6 +4,7 @@
  *******************************************************************************/
 package com.bignetcoin.server.service;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -67,8 +68,13 @@ public class BlockService {
         return blockEvaluation;
     }
 
+	public List<BlockEvaluation> getBlockEvaluations(List<Sha256Hash> approverBlocks) {
+		// TODO same as getBlockEvaluation above but multiple
+		return null;
+	}
+
     public void updateSolidBlocks(Set<Sha256Hash> analyzedHashes) {
-		// TODO 
+		// TODO ?
     }
 
 	public List<BlockEvaluation> getAllTips() {
@@ -78,27 +84,27 @@ public class BlockService {
 
     public void updateSolid(BlockEvaluation blockEvaluation, boolean b) {
 		blockEvaluation.setSolid(b);
-		// TODO set blockEvaluation.solid in database for now
+		// TODO set blockEvaluation.solid in database
     }
 
 	public void updateHeight(BlockEvaluation blockEvaluation, long i) {
 		blockEvaluation.setHeight(i);
-		// TODO set blockEvaluation.height in database for now
+		// TODO set blockEvaluation.height in database
 	}
 
 	public void updateCumulativeWeight(BlockEvaluation blockEvaluation, long i) {
 		blockEvaluation.setCumulativeweight(i);
-		// TODO set blockEvaluation.cumulativeWeight in database for now
+		// TODO set blockEvaluation.cumulativeWeight in database
 	}
 
 	public void updateDepth(BlockEvaluation blockEvaluation, long i) {
 		blockEvaluation.setDepth(i);
-		// TODO set blockEvaluation.cumulativeWeight in database for now
+		// TODO set blockEvaluation.cumulativeWeight in database
 	}
 
 	public void updateRating(BlockEvaluation blockEvaluation, long i) {
 		blockEvaluation.setRating(i);
-		// TODO set blockEvaluation.rating in database for now
+		// TODO set blockEvaluation.rating in database
 	}
 	
 	public long getMaxSolidHeight() {
@@ -112,7 +118,21 @@ public class BlockService {
 	}
 
 	public List<BlockEvaluation> getLastSolidTips() {
-		// TODO get tips from last solidity update, can include tips that are not actually tips anymore
+		// TODO get solid tips, can include tips that are not actually tips anymore if they are referenced by non-solid new blocks
 		return null;
+	}
+
+	public Collection<BlockEvaluation> getBlocksToRemoveFromMilestone() {
+		// TODO Select from blockevaluation where (solid && milestone && rating < 50)
+		return null;
+	}
+
+	public Collection<BlockEvaluation> getBlocksToAddToMilestone() {
+		// TODO select from blockevaluation where (solid && not milestone && rating >= 75 && depth > MINDEPTH) 
+		return null;
+	}
+
+	public void updateMilestone(BlockEvaluation block, boolean b) {
+		// TODO Set milestone to specified parameter and update latestMilestoneUpdateTime to current local time
 	}
 }

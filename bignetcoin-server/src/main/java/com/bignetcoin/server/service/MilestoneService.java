@@ -6,6 +6,7 @@ package com.bignetcoin.server.service;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,6 +18,10 @@ import java.util.Set;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.StoredBlock;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,15 +35,14 @@ import com.google.common.collect.HashMultiset;
  */
 @Service
 public class MilestoneService {
-
-	@Autowired
-	protected FullPrunedBlockStore store;
-
 	@Autowired
 	private BlockService blockService;
 
 	@Autowired
 	private TipsService tipsService;
+
+	@Autowired
+	private TransactionService transactionService;
 
 	enum Validity {
 		VALID, INVALID, INCOMPLETE
@@ -68,31 +72,19 @@ public class MilestoneService {
 	/*****************************************************
 	 * Experimental update methods *
 	 ******************************************************/
-	// Sorts blocks by descending height
-	private Comparator<BlockEvaluation> sortBlocksByDescendingHeight = new Comparator<BlockEvaluation>() {
-		@Override
-		public int compare(BlockEvaluation arg0, BlockEvaluation arg1) {
-			long res = (arg1.getHeight() - arg0.getHeight());
-			if (res > 0)
-				return 1;
-			if (res < 0)
-				return -1;
-			return 0;
-		}
-	};
-
-	private PriorityQueue<BlockEvaluation> getSolidTipsDescending() {
-		List<BlockEvaluation> solidTips = blockService.getLastSolidTips();
-		CollectionUtils.filter(solidTips, e -> ((BlockEvaluation) e).isSolid());
-		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = new PriorityQueue<BlockEvaluation>(solidTips.size(),
-				sortBlocksByDescendingHeight);
-		blocksByDescendingHeight.addAll(solidTips);
-		return blocksByDescendingHeight;
+	public void update() throws Exception {
+		updateSolidityAndHeight();
+		updateDepth();
+		updateCumulativeWeight();
+		updateRating();
+		// Optional: Trigger batched tip pair selection here
 	}
 
-	/*
-	 * Update solid true if all directly or indirectly approved blocks exist Update
+	/**
+	 * Update solid, true if all directly or indirectly approved blocks exist. Update
 	 * height to be the sum of previous heights
+	 * 
+	 * @throws Exception
 	 */
 	public void updateSolidityAndHeight() throws Exception {
 		List<BlockEvaluation> tips = blockService.getAllTips();
@@ -151,10 +143,12 @@ public class MilestoneService {
 		blockService.updateSolid(blockEvaluation, true);
 	}
 
-	/*
+	/**
 	 * Update depth, the length of the longest reverse-oriented path to some tip.
+	 * 
+	 * @throws BlockStoreException
 	 */
-	public void updateDepths() throws BlockStoreException {
+	public void updateDepth() throws BlockStoreException {
 		// Select solid tips to begin from
 		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = getSolidTipsDescending();
 
@@ -178,7 +172,7 @@ public class MilestoneService {
 					blocksByDescendingHeight.offer(prevBlockEvaluation);
 				}
 			}
-			
+
 			if (prevBranchBlockEvaluation != null) {
 				if (prevBranchBlockEvaluation.getDepth() < currentBlockEvaluation.getDepth() + 1) {
 					blockService.updateDepth(prevBranchBlockEvaluation, currentBlockEvaluation.getDepth() + 1);
@@ -188,10 +182,12 @@ public class MilestoneService {
 		}
 	}
 
-	/*
+	/**
 	 * Update cumulative weight, the amount of blocks a block is approved by
+	 * 
+	 * @throws BlockStoreException
 	 */
-	public void updateCumulativeWeights() throws BlockStoreException {
+	public void updateCumulativeWeight() throws BlockStoreException {
 		// Begin from the highest solid height tips and go backwards from there
 		long currentHeight = blockService.getMaxSolidHeight();
 		HashMap<Sha256Hash, HashSet<Sha256Hash>> currentHeightBlocks = null, nextHeightBlocks = null;
@@ -223,8 +219,10 @@ public class MilestoneService {
 		}
 	}
 
-	/*
+	/**
 	 * Update the percentage of times that tips selected by MCMC approve a block
+	 * 
+	 * @throws Exception
 	 */
 	public void updateRating() throws Exception {
 		// Select #tipCount solid tips via MCMC
@@ -269,11 +267,144 @@ public class MilestoneService {
 		}
 	}
 
-	/*
-	 * Updates milestone field in block evaluation and changes output table correspondingly
+	/**
+	 * Updates milestone field in block evaluation and changes output table
+	 * correspondingly
+	 * 
+	 * @throws BlockStoreException
 	 */
-	public void updateMilestone() {
+	public void updateMilestone() throws BlockStoreException {
+		// First remove any blocks that should no longer be in the milestone
+		Collection<BlockEvaluation> blocksToRemove = blockService.getBlocksToRemoveFromMilestone();
+		for (BlockEvaluation block : blocksToRemove) {
+			disconnect(block);
+		}
 
+		while (true) {
+			// Try to find blocks that can be added to the milestone
+			Collection<BlockEvaluation> blocksToAdd = blockService.getBlocksToAddToMilestone();
+			// TODO remove blocks from blocksToAdd that have at least one transaction input
+			// with its
+			// corresponding output not found in the outputs table and remove their
+			// approvers recursively too
+
+			// TODO resolve irreversible conflicts
+			// TODO resolve reversible conflicts
+
+			// Exit condition: there are no more blocks to add
+			if (blocksToAdd.isEmpty())
+				break;
+
+			// Finally add the found new milestone blocks to the milestone
+			for (BlockEvaluation block : blocksToAdd) {
+				connect(block);
+			}
+		}
 	}
 
+	/**
+	 * Adds the specified block and all approved blocks to the milestone. This will
+	 * connect all transactions of the block by marking used UTXOs spent and adding
+	 * new UTXOs to the db.
+	 * 
+	 * @param blockEvaluation
+	 * @throws BlockStoreException
+	 */
+	private void connect(BlockEvaluation blockEvaluation) throws BlockStoreException {
+		Block block = blockService.getBlock(blockEvaluation.getBlockhash());
+
+		// If already connected, return
+		if (blockEvaluation.milestone)
+			return;
+
+		// Connect all approver blocks first (not actually needed)
+		for (StoredBlock approver : blockService.getApproverBlocks(blockEvaluation.getBlockhash())) {
+			disconnect(blockService.getBlockEvaluation(approver.getHeader().getHash()));
+		}
+
+		// Connect all transactions in block
+		for (Transaction tx : block.getTransactions()) {
+			// Mark all outputs used by tx input as spent
+			for (TransactionInput txin : tx.getInputs()) {
+				TransactionOutput connectedOutput = txin.getConnectedOutput();
+				transactionService.updateTXOSpent(connectedOutput, true);
+			}
+
+			// Add all tx outputs as new open outputs
+			for (TransactionOutput txout : tx.getOutputs()) {
+				transactionService.addTXO(txout);
+			}
+		}
+
+		// Set milestone true and update latestMilestoneUpdateTime
+		blockService.updateMilestone(blockEvaluation, true);
+	}
+
+	/**
+	 * Removes the specified block and all its output spenders and approvers from
+	 * the milestone. This will disconnect all transactions of the block by marking
+	 * used UTXOs unspent and removing UTXOs of the block from the db.
+	 * 
+	 * @param blockEvaluation
+	 * @throws BlockStoreException
+	 */
+	private void disconnect(BlockEvaluation blockEvaluation) throws BlockStoreException {
+		Block block = blockService.getBlock(blockEvaluation.getBlockhash());
+
+		// If already disconnected, return
+		if (blockEvaluation.milestone)
+			return;
+
+		// Disconnect all approver blocks first
+		for (StoredBlock approver : blockService.getApproverBlocks(blockEvaluation.getBlockhash())) {
+			disconnect(blockService.getBlockEvaluation(approver.getHeader().getHash()));
+		}
+
+		// Disconnect all transactions in block
+		for (Transaction tx : block.getTransactions()) {
+			// Mark all outputs used by tx input as unspent
+			for (TransactionInput txin : tx.getInputs()) {
+				TransactionOutput connectedOutput = txin.getConnectedOutput();
+				transactionService.updateTXOSpent(connectedOutput, false);
+			}
+
+			// Remove tx outputs from output db and disconnect spending txs
+			for (TransactionOutput txout : tx.getOutputs()) {
+				if (transactionService.getTXOSpent(txout)) {
+					disconnect(transactionService.getTXOSpender(txout));
+				}
+				transactionService.removeTXO(txout);
+			}
+		}
+
+		// Set milestone false and update latestMilestoneUpdateTime
+		blockService.updateMilestone(blockEvaluation, false);
+	}
+
+	// Comparator to sort blocks by descending height
+	private Comparator<BlockEvaluation> sortBlocksByDescendingHeight = new Comparator<BlockEvaluation>() {
+		@Override
+		public int compare(BlockEvaluation arg0, BlockEvaluation arg1) {
+			long res = (arg1.getHeight() - arg0.getHeight());
+			if (res > 0)
+				return 1;
+			if (res < 0)
+				return -1;
+			return 0;
+		}
+	};
+
+	/**
+	 * Gets all solid tips ordered by descending height
+	 * 
+	 * @return solid tips by ordered by descending height
+	 */
+	private PriorityQueue<BlockEvaluation> getSolidTipsDescending() {
+		List<BlockEvaluation> solidTips = blockService.getLastSolidTips();
+		CollectionUtils.filter(solidTips, e -> ((BlockEvaluation) e).isSolid());
+		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = new PriorityQueue<BlockEvaluation>(solidTips.size(),
+				sortBlocksByDescendingHeight);
+		blocksByDescendingHeight.addAll(solidTips);
+		return blocksByDescendingHeight;
+	}
 }
