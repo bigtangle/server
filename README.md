@@ -263,5 +263,7 @@ create block with coinbase transaction for each miner coin
  as example: IPO for new stock: Genesis Block of Stocks: XXX as token with number Y 
  4) transaction between token and coin
  Account A  buy stock YY with price XX  from  account B 
+ Account A  tranfer  YY to   account B
+ Account B tranfer  XX price to   account A
 
 
