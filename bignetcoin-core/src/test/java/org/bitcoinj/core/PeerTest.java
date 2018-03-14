@@ -47,7 +47,7 @@ import static org.bitcoinj.testing.FakeTxBuilder.*;
 import static org.junit.Assert.*;
 
 @RunWith(value = Parameterized.class)
-@Ignore
+// @Ignore
 public class PeerTest extends TestWithNetworkConnections {
     private Peer peer;
     private InboundMessageQueuer writeTarget;

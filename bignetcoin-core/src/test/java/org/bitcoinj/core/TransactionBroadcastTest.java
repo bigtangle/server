@@ -97,6 +97,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         // immediately with the latest state. This avoids API users writing accidentally racy code when they use
         // a convenience method like peerGroup.broadcastTransaction.
         InboundMessageQueuer[] channels = { connectPeer(1), connectPeer(2), connectPeer(3), connectPeer(4) };
+        // TODO : Jiang find tx
         Transaction tx = FakeTxBuilder.createFakeTx(PARAMS, CENT, address);
         tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
         TransactionBroadcast broadcast = peerGroup.broadcastTransaction(tx);
@@ -116,6 +117,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
     public void rejectHandling() throws Exception {
         InboundMessageQueuer[] channels = { connectPeer(0), connectPeer(1), connectPeer(2), connectPeer(3), connectPeer(4) };
         Transaction tx = new Transaction(PARAMS);;
+        // TODO Jiang find tx broadcast and outbound
         TransactionBroadcast broadcast = new TransactionBroadcast(peerGroup, tx);
         ListenableFuture<Transaction> future = broadcast.broadcast();
         // 0 and 3 are randomly selected to receive the broadcast.
@@ -139,7 +141,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         // the tx should be broadcast again.
         InboundMessageQueuer p1 = connectPeer(1);
         connectPeer(2);
-
+        // TODO : Jiang find
         // Send ourselves a bit of money.
         Block b1 = FakeTxBuilder.makeSolvedTestBlock(blockStore, address);
         inbound(p1, b1);

@@ -4,39 +4,45 @@
  *******************************************************************************/
 package com.bignetcoin.server.response;
 
+import java.util.HashMap;
+
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Utils;
 
 public class AskTransactionResponse extends AbstractResponse {
 
-    private String blockHex;
+    private String r1Hex;
+    
+    private String r2Hex;
+    
+    public static AbstractResponse create(HashMap<String, Block> result) {
+        AskTransactionResponse res = new AskTransactionResponse();
+        Block b1 = result.get("r1");
+        Block b2 = result.get("r2");
+        res.r1Hex = Utils.HEX.encode(b1.bitcoinSerialize());
+        res.r2Hex = Utils.HEX.encode(b2.bitcoinSerialize());
+        res.setDuration(0);
+        return res;
+    }
 
-    public static AbstractResponse create(String blockHex) {
-        AskTransactionResponse res = new AskTransactionResponse();
-        res.blockHex = blockHex;
-        res.setDuration(0);
-        return res;
+    public String getR1Hex() {
+        return r1Hex;
     }
-    
-    public static AbstractResponse create(byte[] data) {
-        AskTransactionResponse res = new AskTransactionResponse();
-        res.blockHex = Utils.HEX.encode(data);
-        res.setDuration(0);
-        return res;
+
+    public void setR1Hex(String r1Hex) {
+        this.r1Hex = r1Hex;
     }
-    
+
+    public String getR2Hex() {
+        return r2Hex;
+    }
+
+    public void setR2Hex(String r2Hex) {
+        this.r2Hex = r2Hex;
+    }
+
     public static AbstractResponse create(Block block) {
-        AskTransactionResponse res = new AskTransactionResponse();
-        res.blockHex = Utils.HEX.encode(block.bitcoinSerialize());
-        res.setDuration(0);
-        return res;
+        return null;
     }
 
-    public String getBlockHex() {
-        return blockHex;
-    }
-
-    public void setBlockHex(String blockHex) {
-        this.blockHex = blockHex;
-    }
 }

@@ -5,7 +5,6 @@
 package com.bignetcoin.server.config;
 
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.store.MySQLFullPrunedBlockStore;
@@ -19,12 +18,16 @@ public class MySQLDBStoreConfiguration {
 
     @Value("${db.hostname:localhost}")
     private String hostname;
+    
     @Value("${db.dbName:bitcoinj_test}")
     private String dbName = "bitcoinj_test";
+    
     @Value("${db.username:root}")
     private String username = "root";
+    
     @Value("${db.password:adminroot}")
     private String password;
+    
     @Value("${db.port:3306}")
     private String port;
 
@@ -34,15 +37,12 @@ public class MySQLDBStoreConfiguration {
 
     @Bean
     public FullPrunedBlockStore store() throws BlockStoreException {
-
-        MySQLFullPrunedBlockStore store = new MySQLFullPrunedBlockStore(networkParameters, fullStoreDepth,
-                hostname + ":" + port, dbName, username, password);
+        MySQLFullPrunedBlockStore store = new MySQLFullPrunedBlockStore(networkParameters, fullStoreDepth, hostname
+                + ":" + port, dbName, username, password);
         try {
             store.initFromDatabase();
         } catch (Exception e) {
-            // TODO: handle exception
         }
         return store;
-
     }
 }

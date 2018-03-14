@@ -29,6 +29,8 @@ import org.bitcoinj.core.Json;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Utils;
+import org.bitcoinj.wallet.DecryptingKeyBag;
+import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.Wallet;
 import org.spongycastle.crypto.params.KeyParameter;
 
@@ -101,12 +103,12 @@ public class SendMoneyController {
 
         Coin amount = Coin.parseCoin(amountEdit.getText(), NetworkParameters.BIGNETCOIN_TOKENID);
         Address destination = Address.fromBase58(Main.params, address.getText());
-
-        ECKey outKey = new ECKey();
-
+        KeyBag maybeDecryptingKeyBag = new DecryptingKeyBag( Main.bitcoin.wallet(), aesKey);
+        ECKey outKey = maybeDecryptingKeyBag.findKeyFromPubHash(destination.getHash160());
+       
         final Map<String, Object> reqParam0 = new HashMap<>();
         reqParam0.put("command", "askTransaction");
-        reqParam0.put("pubkey", Utils.HEX.encode(outKey.getPubKey()));
+       // reqParam0.put("pubkey", Utils.HEX.encode(maybeDecryptingKeyBag.));
         reqParam0.put("toaddress", Utils.HEX.encode(destination.getHash160()));
         reqParam0.put("amount", amountEdit.getText());
         reqParam0.put("tokenid", NetworkParameters.BIGNETCOIN_TOKENID);
@@ -130,7 +132,7 @@ public class SendMoneyController {
         for (Transaction t : block.getTransactions()) {
             t.addSigned(outKey);
         }
-        //proof nonce
+        // proof nonce
         block.solve();
 
         final Map<String, Object> reqParam1 = new HashMap<>();

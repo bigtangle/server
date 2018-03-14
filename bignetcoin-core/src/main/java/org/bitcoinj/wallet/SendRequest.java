@@ -135,7 +135,7 @@ public class SendRequest {
     public String memo = null;
 
     // Tracks if this has been passed to wallet.completeTx already: just a safety check.
-    boolean completed;
+   public  boolean completed;
 
     private SendRequest() {}
 
