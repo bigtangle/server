@@ -9,6 +9,7 @@ import static org.bitcoinj.core.Coin.FIFTY_COINS;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -34,8 +35,10 @@ import org.bitcoinj.wallet.DefaultCoinSelector;
 import org.bitcoinj.wallet.Wallet.BalanceType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor;
 
 import com.google.common.collect.Lists;
+import ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy;
 
 /**
  * <p>
@@ -112,32 +115,13 @@ public class TransactionService {
 
     }
 
-    public Block askTransaction(String pubkey, String toaddressPubkey, String amount, long tokenid) throws Exception {
-        ECKey myKey = ECKey.fromPublicOnly(Utils.parseAsHexOrBase58(pubkey));
-        ECKey toKey = ECKey.fromPublicOnly(Utils.parseAsHexOrBase58(toaddressPubkey));
-
-        Coin coin = Coin.parseCoin(amount, tokenid);
-        int height = 1;
-
+    public HashMap<String, Block> askTransaction(String pubkey, String toaddressPubkey, String amount, long tokenid) throws Exception {
         Block r1 = blockService.getBlock(getNextBlockToApprove());
         Block r2 = blockService.getBlock(getNextBlockToApprove());
-        Block rollingBlock = r2.createNextBlock(null, Block.BLOCK_VERSION_GENESIS, (TransactionOutPoint) null,
-                Utils.currentTimeSeconds(), myKey.getPubKey(), FIFTY_COINS, height, r1.getHash(), toKey.getPubKey());
-
-        Transaction transaction = rollingBlock.getTransactions().get(0);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
-
-        Transaction t = new Transaction(networkParameters);
-        t.addOutput(new TransactionOutput(networkParameters, t, coin, toKey));
-        TransactionInput input = new TransactionInput(networkParameters, t, new byte[] {}, spendableOutput);
-
-        // no signs first
-        t.addInput(input);
-
-        rollingBlock.addTransaction(t);
-        // client rollingBlock.solve();
-        // blockgraph.add(rollingBlock);
-        return rollingBlock;
+        HashMap<String, Block> result = new HashMap<String, Block>();
+        result.put("r1", r1);
+        result.put("r2", r2);
+        return result;
     }
 
     public Block askTransaction4address(String pubkey, String toaddress, String amount, long tokenid) throws Exception {

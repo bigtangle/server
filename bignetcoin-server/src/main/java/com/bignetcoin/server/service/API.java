@@ -202,14 +202,8 @@ public class API {
 
     private AbstractResponse askTransaction(String pubkey, String toaddressPubkey, String amount, long tokenid)
             throws Exception {
-        Block block = transactionService.askTransaction(pubkey, toaddressPubkey, amount, tokenid);
-
-        // Block block00 = (Block)
-        // networkParameters.getDefaultSerializer().deserialize(ByteBuffer.wrap(block.bitcoinSerialize()));
-        // Block b =
-        // networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize());
-
-        return AskTransactionResponse.create(block);
+        HashMap<String, Block> result = transactionService.askTransaction(pubkey, toaddressPubkey, amount, tokenid);
+        return AskTransactionResponse.create(result);
     }
 
     private AbstractResponse askTransaction4address(String pubkey, String toaddress, String amount, long tokenid)
