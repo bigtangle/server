@@ -17,6 +17,7 @@ import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.Utils;
+import org.bitcoinj.script.Script;
 import org.bitcoinj.store.BlockStoreException;
 import org.json.JSONObject;
 import org.junit.Test;
@@ -122,23 +123,30 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         MockHttpServletRequestBuilder httpRequest0 = post(contextRoot).content(toJson(reqParam0));
         MvcResult result0 = getMockMvc().perform(httpRequest0).andExpect(status().isOk()).andReturn();
         String jsonString0 = result0.getResponse().getContentAsString();
-        logger.debug("接收askTransaction数据 : " + jsonString0);
+        logger.debug("resp askTransaction result : " + jsonString0);
         
         JSONObject jsonObject = new JSONObject(jsonString0);
-        String blockHex = jsonObject.getString("blockHex");
-        logger.debug("blockHex : " + blockHex);
-        
-        blockHex = "010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000050ce07c376a79786c69e8faddc238fcd973d0ea3fb5b07442b16769e4bf26dab29ab5f4902000000000000000000000000000000000000000000000001000000010000000201000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4d04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73ffffffff0100f2052a010000000100000000000000434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac00000000010000000145c321ad6cc4d96d37ac8d81f085b670c308b179630e9650254eb74233b1b6b80000000000ffffffff0100e40b5402000000ffffffffffffffff232102d05d62ee5ba407f2a7a4f38e19bec17966e24186be61ab271c3c387874c3f82cac00000000";
-        byte[] bytes = Utils.HEX.decode(blockHex);
-//        Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bytes);
-        
-//        byte[] bytes = rollingBlock.bitcoinSerialize();
-        Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bytes);
-        
+        String r1Hex = jsonObject.getString("r1");
+        String r2Hex = jsonObject.getString("r2");
+        logger.debug("r1Hex : " + r1Hex);
+        logger.debug("r2Hex : " + r2Hex);
+
+        Block r1 = (Block) networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(r1Hex));
+        Block r2 = (Block) networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(r2Hex));
+        int height = 1;
+        Block block = r2.createNextBlock(null, Block.BLOCK_VERSION_GENESIS, (TransactionOutPoint) null,
+                Utils.currentTimeSeconds(), outKey.getPubKey(), FIFTY_COINS, height, r1.getHash(), outKey.getPubKey());
+
+        Transaction transaction = block.getTransactions().get(0);
+        TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
+
+        Coin coin = Coin.parseCoin(String.valueOf(100), NetworkParameters.BIGNETCOIN_TOKENID);
+        Transaction t = new Transaction(networkParameters);
+        t.addOutput(new TransactionOutput(networkParameters, t, coin, outKey));
+        byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
         // 交易签名
-        for (Transaction t : block.getTransactions()) {
-            t.addSigned(outKey);
-        }
+        t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
+        block.addTransaction(t);
         // 解谜
         block.solve();
         
