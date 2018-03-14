@@ -274,6 +274,9 @@ public class MilestoneService {
 		}
 	}
 
+	/*
+	 * Updates milestone field in block evaluation and changes output table correspondingly
+	 */
 	public void updateMilestone() {
 
 	}
