@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Profile;
 @Configuration
 @Profile("testnet")
 public class TestnetConfiguration {
+
     @Bean
     public NetworkParameters networkParameters() {
         return new TestNet3Params();

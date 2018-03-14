@@ -4070,7 +4070,7 @@ public class Wallet extends BaseTaggableObject
     }
 
     /** Reduce the value of the first output of a transaction to pay the given feePerKb as appropriate for its size. */
-    private boolean adjustOutputDownwardsForFee(Transaction tx, CoinSelection coinSelection, Coin feePerKb,
+    protected boolean adjustOutputDownwardsForFee(Transaction tx, CoinSelection coinSelection, Coin feePerKb,
             boolean ensureMinRequiredFee) {
         final int size = tx.unsafeBitcoinSerialize().length + estimateBytesForSigning(coinSelection);
         Coin fee = feePerKb.multiply(size).divide(1000);
@@ -4794,7 +4794,7 @@ public class Wallet extends BaseTaggableObject
 
     /******************************************************************************************************************/
 
-    private static class FeeCalculation {
+    protected static class FeeCalculation {
         public CoinSelection bestCoinSelection;
         public TransactionOutput bestChangeOutput;
     }

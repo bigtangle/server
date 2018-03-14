@@ -13,8 +13,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.Sha256Hash;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +20,6 @@ import com.bignetcoin.server.model.TipsViewModel;
 
 @Service
 public class BlockValidator {
-    private final Logger log = LoggerFactory.getLogger(BlockValidator.class);
     @Autowired
     private   MilestoneService milestoneSevice;
 

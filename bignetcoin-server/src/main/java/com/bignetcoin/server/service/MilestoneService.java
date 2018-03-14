@@ -19,14 +19,11 @@ import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cglib.core.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Multiset;
 
 /*
  *  check the valuation of block and trigger an update of openoutputs
@@ -46,8 +43,6 @@ public class MilestoneService {
 	enum Validity {
 		VALID, INVALID, INCOMPLETE
 	}
-
-	private final Logger log = LoggerFactory.getLogger(MilestoneService.class);
 
 	public Snapshot latestSnapshot;
 

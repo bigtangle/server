@@ -11,7 +11,8 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 
 public abstract class AbstractResponse {
 
-	private static class Emptyness extends AbstractResponse {}
+    private static class Emptyness extends AbstractResponse {
+    }
 
     private Integer duration;
 
@@ -31,15 +32,14 @@ public abstract class AbstractResponse {
     }
 
     public Integer getDuration() {
-        return duration;
+        return duration == null ? 0 : this.duration;
     }
 
     public void setDuration(Integer duration) {
-		this.duration = duration;
-	}
-
-    public static AbstractResponse createEmptyResponse() {
-    	return new Emptyness();
+        this.duration = duration;
     }
 
+    public static AbstractResponse createEmptyResponse() {
+        return new Emptyness();
+    }
 }
