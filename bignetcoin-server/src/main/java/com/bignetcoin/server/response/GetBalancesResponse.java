@@ -4,31 +4,30 @@
  *******************************************************************************/
 package com.bignetcoin.server.response;
 
+import java.util.HashMap;
 import java.util.List;
 
-public class GetBalancesResponse extends AbstractResponse {
-	
-	private List<String> balances;
-	private List<String> references;
-	private int milestoneIndex;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.UTXO;
 
-	public static AbstractResponse create(List<String> elements, List<String> references, int milestoneIndex) {
-		GetBalancesResponse res = new GetBalancesResponse();
-		res.balances = elements;
-		res.references = references;
-		res.milestoneIndex = milestoneIndex;
-		return res;
-	}
-	
-	public List<String> getReferences() {
-		return references;
-	}
-	
-	public int getMilestoneIndex() {
-		return milestoneIndex;
-	}
-	
-	public List<String> getBalances() {
-		return balances;
-	}
+public class GetBalancesResponse extends AbstractResponse {
+
+    private List<UTXO> outputs;
+    
+    private HashMap<Long, Coin> tokens;
+    
+    public static AbstractResponse create(HashMap<Long, Coin> tokens, List<UTXO> outputs) {
+        GetBalancesResponse res = new GetBalancesResponse();
+        res.outputs = outputs;
+        res.tokens = tokens;
+        return res;
+    }
+
+    public List<UTXO> getOutputs() {
+        return outputs;
+    }
+
+    public HashMap<Long, Coin> getTokens() {
+        return tokens;
+    }
 }

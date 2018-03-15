@@ -6,141 +6,124 @@
 package com.bignetcoin.server.service;
 
  
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
-
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
+import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.InsufficientMoneyException;
+import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionConfidence;
-import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.core.UTXO;
+import org.bitcoinj.core.UTXOProviderException;
+import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.wallet.CoinSelection;
 import org.bitcoinj.wallet.CoinSelector;
+import org.bitcoinj.wallet.DefaultCoinSelector;
+import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
- 
-public class WalletService extends Wallet {
- 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
-    public WalletService(NetworkParameters params) {
-        super(params);
-        // TODO Auto-generated constructor stub
+import com.bignetcoin.server.response.AbstractResponse;
+import com.bignetcoin.server.response.GetBalancesResponse;
+import com.bignetcoin.server.transaction.FreeStandingTransactionOutput;
+import com.google.common.collect.Lists;
+ 
+@Service
+public class WalletService {
+    
+    public AbstractResponse getAccountBalanceInfo(List<byte[]> pubKeyHashs) {
+        List<UTXO> outputs = new ArrayList<UTXO>();
+        List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs, true);
+        for (TransactionOutput transactionOutput : transactionOutputs) {
+            FreeStandingTransactionOutput freeStandingTransactionOutput = (FreeStandingTransactionOutput) transactionOutput;
+            outputs.add(freeStandingTransactionOutput.getUTXO());
+        }
+
+        HashMap<Long, Coin> tokens = new HashMap<Long, Coin>();
+        long[] tokenIds = { NetworkParameters.BIGNETCOIN_TOKENID };
+        for (long tokenid : tokenIds) {
+            List<TransactionOutput> tmpTransactionOutputs = new ArrayList<>(transactionOutputs);
+            filter(tmpTransactionOutputs, tokenid);
+            CoinSelection selection = coinSelector.select(NetworkParameters.MAX_MONEY, tmpTransactionOutputs);
+            Coin value = selection.valueGathered;
+            tokens.put(tokenid, value);
+        }
+        
+        return GetBalancesResponse.create(tokens, outputs);
     }
-
-    private static final Logger log = LoggerFactory.getLogger(WalletService.class);  
     
-    
-    public void completeTx(SendRequest req) throws InsufficientMoneyException {
-        lock.lock();
-        try {
-            checkArgument(!req.completed, "Given SendRequest has already been completed.");
-            // Calculate the amount of value we need to import.
-            Coin value = Coin.ZERO;
-            for (TransactionOutput output : req.tx.getOutputs()) {
-                value = value.add(output.getValue());
+    private void filter(List<TransactionOutput> candidates, long tokenid) {
+        for (Iterator<TransactionOutput> iterator = candidates.iterator(); iterator.hasNext();) {
+            TransactionOutput transactionOutput = iterator.next();
+            FreeStandingTransactionOutput freeStandingTransactionOutput = (FreeStandingTransactionOutput) transactionOutput;
+            if (freeStandingTransactionOutput.getUTXO().getTokenid() != tokenid) {
+                iterator.remove();
             }
-
-            log.info("Completing send tx with {} outputs totalling {} and a fee of {}/kB", req.tx.getOutputs().size(),
-                    value.toFriendlyString(), req.feePerKb.toFriendlyString());
-
-            // If any inputs have already been added, we don't need to get their value from wallet
-            Coin totalInput = Coin.ZERO;
-            for (TransactionInput input : req.tx.getInputs())
-                if (input.getConnectedOutput() != null)
-                    totalInput = totalInput.add(input.getConnectedOutput().getValue());
-                else
-                    log.warn("SendRequest transaction already has inputs but we don't know how much they are worth - they will be added to fee.");
-            value = value.subtract(totalInput);
-
-            List<TransactionInput> originalInputs = new ArrayList<TransactionInput>(req.tx.getInputs());
-
-            // Check for dusty sends and the OP_RETURN limit.
-            if (req.ensureMinRequiredFee && !req.emptyWallet) { // Min fee checking is handled later for emptyWallet.
-                int opReturnCount = 0;
-                for (TransactionOutput output : req.tx.getOutputs()) {
-                    if (output.isDust())
-                        throw new DustySendRequested();
-                    if (output.getScriptPubKey().isOpReturn())
-                        ++opReturnCount;
-                }
-                if (opReturnCount > 1) // Only 1 OP_RETURN per transaction allowed.
-                    throw new MultipleOpReturnRequested();
-            }
-
-            // Calculate a list of ALL potential candidates for spending and then ask a coin selector to provide us
-            // with the actual outputs that'll be used to gather the required amount of value. In this way, users
-            // can customize coin selection policies. The call below will ignore immature coinbases and outputs
-            // we don't have the keys for.
-            List<TransactionOutput> candidates = calculateAllSpendCandidates(true, req.missingSigsMode == MissingSigsMode.THROW);
-
-            CoinSelection bestCoinSelection;
-            TransactionOutput bestChangeOutput = null;
-            if (!req.emptyWallet) {
-                // This can throw InsufficientMoneyException.
-                FeeCalculation feeCalculation = calculateFee(req, value, originalInputs, req.ensureMinRequiredFee, candidates);
-                bestCoinSelection = feeCalculation.bestCoinSelection;
-                bestChangeOutput = feeCalculation.bestChangeOutput;
-            } else {
-                // We're being asked to empty the wallet. What this means is ensuring "tx" has only a single output
-                // of the total value we can currently spend as determined by the selector, and then subtracting the fee.
-                checkState(req.tx.getOutputs().size() == 1, "Empty wallet TX must have a single output only.");
-                CoinSelector selector = req.coinSelector == null ? coinSelector : req.coinSelector;
-                bestCoinSelection = selector.select(params.getMaxMoney(), candidates);
-                candidates = null;  // Selector took ownership and might have changed candidates. Don't access again.
-                req.tx.getOutput(0).setValue(bestCoinSelection.valueGathered);
-                log.info("  emptying {}", bestCoinSelection.valueGathered.toFriendlyString());
-            }
-
-            for (TransactionOutput output : bestCoinSelection.gathered)
-                req.tx.addInput(output);
-
-            if (req.emptyWallet) {
-                final Coin feePerKb = req.feePerKb == null ? Coin.ZERO : req.feePerKb;
-                if (!adjustOutputDownwardsForFee(req.tx, bestCoinSelection, feePerKb, req.ensureMinRequiredFee))
-                    throw new CouldNotAdjustDownwards();
-            }
-
-            if (bestChangeOutput != null) {
-                req.tx.addOutput(bestChangeOutput);
-                log.info("  with {} change", bestChangeOutput.getValue().toFriendlyString());
-            }
-
-            // Now shuffle the outputs to obfuscate which is the change.
-            if (req.shuffleOutputs)
-                req.tx.shuffleOutputs();
-
-            // Now sign the inputs, thus proving that we are entitled to redeem the connected outputs.
-            if (req.signInputs)
-                signTransaction(req);
-
-            // Check size.
-            final int size = req.tx.unsafeBitcoinSerialize().length;
-            if (size > Transaction.MAX_STANDARD_TX_SIZE)
-                throw new ExceededMaxTransactionSize();
-
-            // Label the transaction as being self created. We can use this later to spend its change output even before
-            // the transaction is confirmed. We deliberately won't bother notifying listeners here as there's not much
-            // point - the user isn't interested in a confidence transition they made themselves.
-            req.tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
-            // Label the transaction as being a user requested payment. This can be used to render GUI wallet
-            // transaction lists more appropriately, especially when the wallet starts to generate transactions itself
-            // for internal purposes.
-            req.tx.setPurpose(Transaction.Purpose.USER_PAYMENT);
-            // Record the exchange rate that was valid when the transaction was completed.
-            req.tx.setExchangeRate(req.exchangeRate);
-            req.tx.setMemo(req.memo);
-            req.completed = true;
-            log.info("  completed: {}", req.tx);
-        } finally {
-            lock.unlock();
         }
     }
 
+    public Wallet makeWallat(ECKey ecKey) {
+        KeyChainGroup group = new KeyChainGroup(networkParameters);
+        group.importKeys(ecKey);
+        return new Wallet(networkParameters, group);
+    }
+    
+    public void transactionCommit(ECKey fromKey, ECKey toKey, Coin amount) throws Exception {
+        Wallet wallet = this.makeWallat(fromKey);
+        Address address2 = new Address(networkParameters, toKey.getPubKeyHash());
+        SendRequest req = SendRequest.to(address2, amount);
+        wallet.completeTx(req);
+        wallet.commitTx(req.tx);
+    }
+    
+    @Autowired
+    private NetworkParameters networkParameters;
+    
+    @Autowired
+    protected FullPrunedBlockStore store;
+    
+    protected CoinSelector coinSelector = new DefaultCoinSelector();
+
+    public LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(List<byte[]> pubKeyHashs,
+            boolean excludeImmatureCoinbases) {
+        LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
+        try {
+            int chainHeight = store.getChainHeadHeight();
+            for (UTXO output : getStoredOutputsFromUTXOProvider(pubKeyHashs)) {
+                boolean coinbase = output.isCoinbase();
+                int depth = chainHeight - output.getHeight() + 1; // the current
+                                                                  // depth of
+                                                                  // the output
+                                                                  // (1 = same
+                                                                  // as head).
+                // Do not try and spend coinbases that were mined too recently,
+                // the protocol forbids it.
+                if (!excludeImmatureCoinbases || !coinbase || depth >= networkParameters.getSpendableCoinbaseDepth()) {
+                    candidates.add(new FreeStandingTransactionOutput(networkParameters, output, chainHeight));
+                }
+            }
+        } catch (UTXOProviderException e) {
+            throw new RuntimeException("UTXO provider error", e);
+        }
+        return candidates;
+    }
+
+    private List<UTXO> getStoredOutputsFromUTXOProvider(List<byte[]> pubKeyHashs) throws UTXOProviderException {
+        List<Address> addresses = new ArrayList<Address>();
+        for (byte[] key : pubKeyHashs) {
+            Address address = new Address(networkParameters, key);
+            addresses.add(address);
+        }
+        return store.getOpenTransactionOutputs(addresses);
+    }
+
+    public Coin getRealBalance(List<byte[]> pubKeyHashs) {
+        return Coin.ZERO;
+    }
 }

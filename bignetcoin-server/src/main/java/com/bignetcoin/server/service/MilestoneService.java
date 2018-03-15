@@ -13,7 +13,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Random;
-import java.util.Set;
 
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockEvaluation;

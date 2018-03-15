@@ -1148,8 +1148,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             String fromaddress = results.getString(9);
             String description = results.getString(10);
             boolean spent = results.getBoolean(11);
+            long tokenid = results.getLong("tokenid");
             UTXO txout = new UTXO(hash, index, value, height, coinbase, new Script(scriptBytes), address, blockhash,
-                    fromaddress, description,spent );
+                    fromaddress, description, tokenid, spent);
             return txout;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
@@ -1414,8 +1415,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     String fromaddress = rs.getString(11);
                     String description = rs.getString(12);
                     boolean spent = rs.getBoolean(13);
+                    long tokenid = rs.getLong("tokenid");
                     UTXO output = new UTXO(hash, index, amount, height, coinbase, new Script(scriptBytes), toAddress,
-                            blockhash, fromaddress, description, spent);
+                            blockhash, fromaddress, description, tokenid, spent);
                     outputs.add(output);
                 }
             }
