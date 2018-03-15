@@ -434,7 +434,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     }
 
     @Override
-    public void saveBlockEvaluation(Sha256Hash blockhash, int rating, int depth, int cumulativeweight, boolean solid)
+    public void saveBlockEvaluation(Sha256Hash blockhash, long rating, long depth, long cumulativeweight, boolean solid)
             throws BlockStoreException {
     }
 
@@ -446,12 +446,62 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     public void removeBlockEvaluation(Sha256Hash hash) throws BlockStoreException {
     }
 
-    @Override
-    public void updateBlockEvaluationDepth(Sha256Hash blockhash, int depth) throws BlockStoreException {
-    }
+	@Override
+	public long getMaxSolidHeight() throws BlockStoreException {
+		return 0;
+	}
 
-    @Override
-    public void updateBlockEvaluationCumulativeweight(Sha256Hash blockhash, int cumulativeweight)
-            throws BlockStoreException {
-    }
+	@Override
+	public List<BlockEvaluation> getNonSolidBlocks() {
+		return null;
+	}
+
+	@Override
+	public List<BlockEvaluation> getSolidBlocksOfHeight(long currentHeight) {
+		return null;
+	}
+
+	@Override
+	public List<BlockEvaluation> getSolidTips() {
+		return null;
+	}
+
+	@Override
+	public Collection<BlockEvaluation> getBlocksToRemoveFromMilestone() {
+		return null;
+	}
+
+	@Override
+	public Collection<BlockEvaluation> getBlocksToAddToMilestone(long i) {
+		return null;
+	}
+
+	@Override
+	public void updateBlockEvaluationSolid(Sha256Hash blockhash, boolean b) {
+	}
+
+	@Override
+	public void updateBlockEvaluationHeight(Sha256Hash blockhash, long i) {
+	}
+
+	@Override
+	public void updateBlockEvaluationCumulativeweight(Sha256Hash blockhash, long i) {
+	}
+
+	@Override
+	public void updateBlockEvaluationDepth(Sha256Hash blockhash, long i) {
+	}
+
+	@Override
+	public void updateBlockEvaluationRating(Sha256Hash blockhash, long i) {
+	}
+
+	@Override
+	public void updateBlockEvaluationMilestone(Sha256Hash blockhash, boolean b) {
+	}
+
+	@Override
+	public void updateBlockEvaluationMilestoneLastUpdateTime(Sha256Hash blockhash, long now)
+			throws BlockStoreException {
+	}
 }

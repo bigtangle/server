@@ -44,7 +44,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         for (Block block : blocks) {
             BlockEvaluation blockEvaluation = new BlockEvaluation();
             blockEvaluation.setBlockhash(block.getHash());
-            blockEvaluation.setCumulativeweight(100);
+            blockEvaluation.setCumulativeWeight(100);
             blockEvaluation.setDepth(99);
             blockEvaluation.setRating(98);
             blockEvaluation.setSolid(true);
