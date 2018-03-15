@@ -5,6 +5,7 @@
 package com.bignetcoin.server.service;
 
 import static org.bitcoinj.core.Coin.FIFTY_COINS;
+import static org.bitcoinj.core.Utils.HEX;
 
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
@@ -12,6 +13,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
@@ -36,10 +39,10 @@ import org.bitcoinj.wallet.DefaultCoinSelector;
 import org.bitcoinj.wallet.Wallet.BalanceType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor;
 
+import com.bignetcoin.server.response.AbstractResponse;
+import com.bignetcoin.server.response.GetBalancesResponse;
 import com.google.common.collect.Lists;
-import ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy;
 
 /**
  * <p>
@@ -69,10 +72,6 @@ public class TransactionService {
         return getBalance(BalanceType.AVAILABLE, pubKeyHashs);
     }
 
-    /**
-     * Returns the balance of this wallet as calculated by the provided
-     * balanceType.
-     */
     public Coin getBalance(BalanceType balanceType, List<byte[]> pubKeyHashs) {
 
         if (balanceType == BalanceType.AVAILABLE || balanceType == BalanceType.AVAILABLE_SPENDABLE) {
@@ -90,7 +89,24 @@ public class TransactionService {
         } else {
             throw new AssertionError("Unknown balance type"); // Unreachable.
         }
-
+    }
+    
+    public Coin getRealBalance(String address) {
+        List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
+        ECKey key = ECKey.fromPublicOnly(HEX.decode(address));
+        pubKeyHashs.add(key.getPubKeyHash());
+        return this.getBalance(BalanceType.AVAILABLE, pubKeyHashs);
+    }
+    
+    public AbstractResponse getRealBalanceCoin(List<String> addresses) {
+        final Map<String, Coin> balances = new HashMap<String, Coin>();
+        for (final String address : addresses) {
+            Coin value = this.getRealBalance(address);
+            balances.put(address, value);
+        }
+        final List<String> elements = addresses.stream()
+                .map(address -> balances.get(address).toString()).collect(Collectors.toCollection(LinkedList::new));
+        return GetBalancesResponse.create(elements, null, 0);
     }
 
     /**
@@ -116,13 +132,18 @@ public class TransactionService {
 
     }
 
-    public HashMap<String, Block> askTransaction(String pubkey, String toaddressPubkey, String amount, long tokenid) throws Exception {
+    public ByteBuffer askTransaction() throws Exception {
         Block r1 = blockService.getBlock(getNextBlockToApprove());
         Block r2 = blockService.getBlock(getNextBlockToApprove());
-        HashMap<String, Block> result = new HashMap<String, Block>();
-        result.put("r1", r1);
-        result.put("r2", r2);
-        return result;
+        byte[] r1Data = r1.bitcoinSerialize();
+        byte[] r2Data = r2.bitcoinSerialize();
+        
+        ByteBuffer byteBuffer = ByteBuffer.allocate(4 + r1Data.length + 4 + r2Data.length);
+        byteBuffer.putInt(r1Data.length);
+        byteBuffer.put(r1Data);
+        byteBuffer.putInt(r2Data.length);
+        byteBuffer.put(r2Data);
+        return byteBuffer;
     }
 
     public Block askTransaction4address(String pubkey, String toaddress, String amount, long tokenid) throws Exception {
