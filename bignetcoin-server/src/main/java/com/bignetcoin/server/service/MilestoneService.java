@@ -111,7 +111,7 @@ public class MilestoneService {
 		if (prevBranchBlockEvaluation == null) {
 			// TODO broken graph, download the missing remote block needed
 		} else {
-			prevBranchBlockSolid = updateSolidityAndHeightRecursive(prevBlockEvaluation);
+			prevBranchBlockSolid = updateSolidityAndHeightRecursive(prevBranchBlockEvaluation);
 		}
 
 		// If both previous blocks are solid, our block is solid and should be
