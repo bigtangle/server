@@ -249,11 +249,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                         // Coinbases can't be spent until they mature, to avoid re-orgs destroying entire transaction
                         // chains. The assumption is there will ~never be re-orgs deeper than the spendable coinbase
                         // chain depth.
-                        if (prevOut.isCoinbase()) {
-                            if (height - prevOut.getHeight() < params.getSpendableCoinbaseDepth()) {
-                                throw new VerificationException("Tried to spend coinbase at depth " + (height - prevOut.getHeight()));
-                            }
-                        }
+                        // TODO jiang update
+//                        if (prevOut.isCoinbase()) {
+//                            if (height - prevOut.getHeight() < params.getSpendableCoinbaseDepth()) {
+//                                throw new VerificationException("Tried to spend coinbase at depth " + (height - prevOut.getHeight()));
+//                            }
+//                        }
                         // TODO: Check we're not spending the genesis transaction here. Bitcoin Core won't allow it.
                         valueIn = valueIn.add(prevOut.getValue());
                         if (verifyFlags.contains(VerifyFlag.P2SH)) {

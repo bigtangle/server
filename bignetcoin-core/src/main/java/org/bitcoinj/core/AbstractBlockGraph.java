@@ -327,6 +327,7 @@ public abstract class AbstractBlockGraph {
             // TODO: Figure out a better way to propagate this exception to the user.
             throw new RuntimeException(e);
         } catch (VerificationException e) {
+            e.printStackTrace();
             try {
                 notSettingChainHead();
             } catch (BlockStoreException e1) {

@@ -35,7 +35,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    wasundoable tinyint(1) NOT NULL,\n" +
             "    prevblockhash  varbinary(32) NOT NULL,\n" +
             "    prevbranchblockhash  varbinary(32) NOT NULL,\n" +
-            "    mineraddress varbinary(20),\n" +
+            "    mineraddress varbinary(255),\n" +
             "    tokenid bigint,\n" +
             "    blocktype bigint NOT NULL,\n" +
             "    CONSTRAINT headers_pk PRIMARY KEY (hash) USING BTREE \n" +
