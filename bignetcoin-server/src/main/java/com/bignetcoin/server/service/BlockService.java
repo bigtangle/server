@@ -5,7 +5,9 @@
 package com.bignetcoin.server.service;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -40,31 +42,19 @@ public class BlockService {
 	@Autowired
 	protected NetworkParameters networkParameters;
 
-	/**
-	 * @param blockhash
-	 * @return
-	 * @throws BlockStoreException
-	 */
 	public Block getBlock(Sha256Hash blockhash) throws BlockStoreException {
 		// Genesis Block is hardcoded is not saved in database
 		if (networkParameters.getGenesisBlock().getHash().equals(blockhash))
 			return networkParameters.getGenesisBlock();
 		return store.get(blockhash).getHeader();
 	}
-
-	/**
-	 * @param prevblockhash
-	 * @return
-	 * @return
-	 * @throws BlockStoreException
-	 */
-
-	public List<StoredBlock> getApproverBlocks(Sha256Hash blockhash) throws BlockStoreException {
-		return store.getApproverBlocks(blockhash);
-	}
-
-	public List<Sha256Hash> getApproverBlockHash(Sha256Hash blockhash) throws BlockStoreException {
-		return store.getApproverBlockHash(blockhash);
+	
+	public List<Block> getBlocks(List<Sha256Hash> hashes) throws BlockStoreException {
+		List<Block> blocks = new ArrayList<Block>();
+		for (Sha256Hash hash : hashes) {
+			blocks.add(getBlock(hash));
+		}
+		return blocks;
 	}
 
 	public BlockEvaluation getBlockEvaluation(Sha256Hash hash) throws BlockStoreException {
@@ -72,14 +62,19 @@ public class BlockService {
 	}
 
 	public List<BlockEvaluation> getBlockEvaluations(List<Sha256Hash> hashes) throws BlockStoreException {
-		// TODO remove this when block and blockevaluation are merged
-		return hashes.stream().map(hash -> {
-			try {
-				return store.getBlockEvaluation(hash);
-			} catch (BlockStoreException e) {
-				throw new RuntimeException(e);
-			}
-		}).collect(Collectors.toList());
+		List<BlockEvaluation> blocks = new ArrayList<BlockEvaluation>();
+		for (Sha256Hash hash : hashes) {
+			blocks.add(getBlockEvaluation(hash));
+		}
+		return blocks;
+	}
+	
+	public List<StoredBlock> getApproverBlocks(Sha256Hash blockhash) throws BlockStoreException {
+		return store.getApproverBlocks(blockhash);
+	}
+
+	public List<Sha256Hash> getApproverBlockHashes(Sha256Hash blockhash) throws BlockStoreException {
+		return store.getApproverBlockHash(blockhash);
 	}
 
 	public long getMaxSolidHeight() throws BlockStoreException {
@@ -88,7 +83,6 @@ public class BlockService {
 
 	public List<BlockEvaluation> getNonSolidBlocks() throws BlockStoreException {
 		return store.getNonSolidBlocks();
-		// TODO get all nonsolid blocks
 	}
 
 	public List<BlockEvaluation> getSolidBlocksOfHeight(long currentHeight) throws BlockStoreException {
@@ -99,11 +93,11 @@ public class BlockService {
 		return store.getSolidTips();
 	}
 
-	public Collection<BlockEvaluation> getBlocksToRemoveFromMilestone() throws BlockStoreException {
+	public HashSet<BlockEvaluation> getBlocksToRemoveFromMilestone() throws BlockStoreException {
 		return store.getBlocksToRemoveFromMilestone();
 	}
 
-	public Collection<BlockEvaluation> getBlocksToAddToMilestone() throws BlockStoreException {
+	public HashSet<BlockEvaluation> getBlocksToAddToMilestone() throws BlockStoreException {
 		return store.getBlocksToAddToMilestone(27);
 	}
 

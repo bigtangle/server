@@ -18,6 +18,7 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -1638,7 +1639,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 			if (!resultSet.next()) {
 				return 0;
 			}
-			return resultSet.getLong(0);
+			return resultSet.getLong(1);
 		} catch (SQLException ex) {
 			throw new BlockStoreException(ex);
 		} finally {
@@ -1684,8 +1685,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	}
 
 	@Override
-	public Collection<BlockEvaluation> getBlocksToAddToMilestone(long minDepth) throws BlockStoreException {
-		List<BlockEvaluation> storedBlockHashes = new ArrayList<BlockEvaluation>();
+	public HashSet<BlockEvaluation> getBlocksToAddToMilestone(long minDepth) throws BlockStoreException {
+		HashSet<BlockEvaluation> storedBlockHashes = new HashSet<BlockEvaluation>();
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
 		try {
@@ -1716,8 +1717,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	}
 
 	@Override
-	public Collection<BlockEvaluation> getBlocksToRemoveFromMilestone() throws BlockStoreException {
-		List<BlockEvaluation> storedBlockHashes = new ArrayList<BlockEvaluation>();
+	public HashSet<BlockEvaluation> getBlocksToRemoveFromMilestone() throws BlockStoreException {
+		HashSet<BlockEvaluation> storedBlockHashes = new HashSet<BlockEvaluation>();
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
 		try {

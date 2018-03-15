@@ -6,6 +6,7 @@
 package org.bitcoinj.store;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 import org.bitcoinj.core.BlockEvaluation;
@@ -203,9 +204,9 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
 	public List<BlockEvaluation> getSolidTips() throws BlockStoreException;
 
-	public Collection<BlockEvaluation> getBlocksToRemoveFromMilestone() throws BlockStoreException;
+	public HashSet<BlockEvaluation> getBlocksToRemoveFromMilestone() throws BlockStoreException;
 
-	public Collection<BlockEvaluation> getBlocksToAddToMilestone(long minDepth) throws BlockStoreException;
+	public HashSet<BlockEvaluation> getBlocksToAddToMilestone(long minDepth) throws BlockStoreException;
 
 	public void updateBlockEvaluationSolid(Sha256Hash blockhash, boolean b) throws BlockStoreException;
 

@@ -5,15 +5,30 @@
 
 package org.bitcoinj.store;
 
-import org.bitcoinj.core.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.annotation.Nullable;
+
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.BlockEvaluation;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.StoredBlock;
+import org.bitcoinj.core.StoredUndoableBlock;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionOutPoint;
+import org.bitcoinj.core.UTXO;
+import org.bitcoinj.core.UTXOProviderException;
+import org.bitcoinj.core.VerificationException;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-
-import javax.annotation.Nullable;
-
-import java.util.*;
 
 /**
  * Used as a key for memory map (to avoid having to think about NetworkParameters,
@@ -467,12 +482,12 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
 	}
 
 	@Override
-	public Collection<BlockEvaluation> getBlocksToRemoveFromMilestone() {
+	public HashSet<BlockEvaluation> getBlocksToRemoveFromMilestone() {
 		return null;
 	}
 
 	@Override
-	public Collection<BlockEvaluation> getBlocksToAddToMilestone(long i) {
+	public HashSet<BlockEvaluation> getBlocksToAddToMilestone(long i) {
 		return null;
 	}
 

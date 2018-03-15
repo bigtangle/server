@@ -150,7 +150,7 @@ public class TipsService {
 
         while (tip != null) {
 
-            List<Sha256Hash> approvers = blockService.getApproverBlockHash(tip);
+            List<Sha256Hash> approvers = blockService.getApproverBlockHashes(tip);
             if (belowMaxDepth(tip, maxDepth, maxDepthOk)) {
                 log.info("Reason to stop: belowMaxDepth" + tip);
                 break;
@@ -208,7 +208,7 @@ public class TipsService {
         boolean addedBack;
         while (!hashesToRate.empty()) {
             currentHash = hashesToRate.pop();
-            List<Sha256Hash> approvers = blockService.getApproverBlockHash(txHash);
+            List<Sha256Hash> approvers = blockService.getApproverBlockHashes(txHash);
             addedBack = false;
             for (Sha256Hash approver : approvers) {
                 if (cumulativeweights.get(approver) == null && !approver.equals(currentHash)) {
@@ -231,7 +231,7 @@ public class TipsService {
             Map<Sha256Hash, Set<Sha256Hash>> cumulativeweights, Set<Sha256Hash> analyzedTips) throws Exception {
         Set<Sha256Hash> cumulativeweight;
         if (analyzedTips.add(txHash)) {
-            List<Sha256Hash> approvers = blockService.getApproverBlockHash(txHash);
+            List<Sha256Hash> approvers = blockService.getApproverBlockHashes(txHash);
             cumulativeweight = new HashSet<>(Collections.singleton(txHash));
             for (Sha256Hash approver : approvers) {
                 cumulativeweight.addAll(updateHashCumulativeweights(approver, cumulativeweights, analyzedTips));
@@ -257,7 +257,7 @@ public class TipsService {
         long cumulativeweight = 1;
         if (analyzedTips.add(txHash)) {
 
-            List<Sha256Hash> approvers = blockService.getApproverBlockHash(txHash);
+            List<Sha256Hash> approvers = blockService.getApproverBlockHashes(txHash);
 
             for (Sha256Hash approver : approvers) {
                 cumulativeweight = capSum(cumulativeweight,

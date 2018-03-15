@@ -1,6 +1,10 @@
 package org.bitcoinj.core;
 
+import java.util.Arrays;
+
 import org.bitcoinj.core.Sha256Hash;
+
+import com.google.common.primitives.Ints;
 
 /*
  * Evaluation of block, variable can change in time and graph
@@ -100,4 +104,16 @@ public class BlockEvaluation {
 	public void setMilestoneLastUpdateTime(long milestoneLastUpdateTime) {
 		this.milestoneLastUpdateTime = milestoneLastUpdateTime;
 	}
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        return getBlockhash().equals(((BlockEvaluation)o).getBlockhash());
+    }
+
+    @Override
+    public int hashCode() {
+        return getBlockhash().hashCode();
+    }
 }

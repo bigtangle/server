@@ -103,7 +103,7 @@ public class TransactionService {
         return tipsManager.blockToApprove(networkParameters.getGenesisBlock().getHash(), null, 27, 27, random);
     }
 
-	public void addTransactionOutput(TransactionOutput out) {
+	public void addUTXO(TransactionOutput out) {
 		// TODO add UTXO to output db 
 //        Script script = getScript(out.getScriptBytes());
 //        UTXO newOut = new UTXO(out.getParentTransactionHash(),
@@ -115,23 +115,28 @@ public class TransactionService {
 //		store.addUnspentTransactionOutput(out);
 	}
 
-	public void updateTransactionOutputSpent(TransactionOutput txout, boolean b) {
+	public void updateUTXOSpent(TransactionOutPoint txout, boolean b) {
 		// TODO set 'spent' field of UTXO in output db
 		//store.updateTransactionOutputSpent(txout, b);
 	}
 
-	public void removeTransactionOutput(TransactionOutput txout) {
+	public void removeUTXO(TransactionOutPoint txout) {
 		// TODO remove UTXO from output db 
 		//store.removeUnspentTransactionOutput(txout);;
 	}
 
-	public boolean getTransactionOutputSpent(TransactionOutput txout) {
+	public boolean getUTXOSpent(TransactionOutPoint txout) {
 		// TODO return 'spent' field of UTXO in output db
 		return false;
 	}
 
-	public BlockEvaluation getTransactionOutputSpender(TransactionOutput txout) {
-		// TODO return the block that spent this txout
+	public BlockEvaluation getUTXOSpender(TransactionOutPoint txout) {
+		// TODO return the block that spent this txout or null if it is not found
+		return null;
+	}
+
+	public UTXO getUTXO(TransactionOutPoint out) {
+		// TODO Auto-generated method stub
 		return null;
 	}
 }

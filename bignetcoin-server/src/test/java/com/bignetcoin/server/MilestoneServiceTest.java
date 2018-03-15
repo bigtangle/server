@@ -100,9 +100,9 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void cumulativweigth() throws Exception {
+    public void test() throws Exception {
         List<Block> re = createTestTangle1();
-        milestoneService.updateSolidityAndHeight();
+        milestoneService.update();
     }
     
 //    @Test
