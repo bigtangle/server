@@ -5,6 +5,7 @@
 
 package org.bitcoinj.store;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.bitcoinj.core.BlockEvaluation;
@@ -197,4 +198,28 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void updateBlockEvaluationDepth(Sha256Hash blockhash, int depth) throws BlockStoreException;
     
     public void updateBlockEvaluationCumulativeweight(Sha256Hash blockhash, int cumulativeweight) throws BlockStoreException;
+
+	public long getMaxSolidHeight() throws BlockStoreException;
+
+	public List<BlockEvaluation> getNonSolidBlocks() throws BlockStoreException;
+
+	public List<BlockEvaluation> getSolidBlocksOfHeight(long currentHeight) throws BlockStoreException;
+
+	public List<BlockEvaluation> getLastSolidTips() throws BlockStoreException;
+
+	public Collection<BlockEvaluation> getBlocksToRemoveFromMilestone() throws BlockStoreException;
+
+	public Collection<BlockEvaluation> getBlocksToAddToMilestone() throws BlockStoreException;
+
+	public void updateBlockEvaluationSolid(Sha256Hash blockhash, boolean b) throws BlockStoreException;
+
+	public void updateBlockEvaluationHeight(Sha256Hash blockhash, long i) throws BlockStoreException;
+
+	public void updateBlockEvaluationCumulativeweight(Sha256Hash blockhash, long i) throws BlockStoreException;
+
+	public void updateBlockEvaluationDepth(Sha256Hash blockhash, long i) throws BlockStoreException;
+
+	public void updateBlockEvaluationRating(Sha256Hash blockhash, long i) throws BlockStoreException;
+
+	public void updateBlockEvaluationMilestone(Sha256Hash blockhash, boolean b) throws BlockStoreException;
 }

@@ -75,7 +75,7 @@ public class MilestoneService {
 	 * @throws Exception
 	 */
 	public void updateSolidityAndHeight() throws Exception {
-		List<BlockEvaluation> tips = blockService.getAllTips();
+		List<BlockEvaluation> tips = blockService.getNonSolidBlocks();
 		for (BlockEvaluation tip : tips)
 			updateSolidityAndHeightRecursive(tip);
 	}
@@ -125,10 +125,11 @@ public class MilestoneService {
 	}
 
 	private void solidifyBlock(BlockEvaluation blockEvaluation, BlockEvaluation prevBlockEvaluation,
-			BlockEvaluation prevBranchBlockEvaluation) {
+			BlockEvaluation prevBranchBlockEvaluation) throws BlockStoreException {
 		blockService.updateHeight(blockEvaluation,
 				Math.max(prevBlockEvaluation.getHeight() + 1, prevBranchBlockEvaluation.getHeight() + 1));
 		blockService.updateSolid(blockEvaluation, true);
+		//TODO update solid tips table
 	}
 
 	/**
@@ -385,8 +386,9 @@ public class MilestoneService {
 	 * Gets all solid tips ordered by descending height
 	 * 
 	 * @return solid tips by ordered by descending height
+	 * @throws BlockStoreException 
 	 */
-	private PriorityQueue<BlockEvaluation> getSolidTipsDescending() {
+	private PriorityQueue<BlockEvaluation> getSolidTipsDescending() throws BlockStoreException {
 		List<BlockEvaluation> solidTips = blockService.getLastSolidTips();
 		CollectionUtils.filter(solidTips, e -> ((BlockEvaluation) e).isSolid());
 		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = new PriorityQueue<BlockEvaluation>(solidTips.size(),

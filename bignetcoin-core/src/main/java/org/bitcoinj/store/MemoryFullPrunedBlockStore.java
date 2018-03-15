@@ -454,4 +454,58 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     public void updateBlockEvaluationCumulativeweight(Sha256Hash blockhash, int cumulativeweight)
             throws BlockStoreException {
     }
+
+	@Override
+	public long getMaxSolidHeight() throws BlockStoreException {
+		return 0;
+	}
+
+	@Override
+	public List<BlockEvaluation> getNonSolidBlocks() {
+		return null;
+	}
+
+	@Override
+	public List<BlockEvaluation> getSolidBlocksOfHeight(long currentHeight) {
+		return null;
+	}
+
+	@Override
+	public List<BlockEvaluation> getLastSolidTips() {
+		return null;
+	}
+
+	@Override
+	public Collection<BlockEvaluation> getBlocksToRemoveFromMilestone() {
+		return null;
+	}
+
+	@Override
+	public Collection<BlockEvaluation> getBlocksToAddToMilestone() {
+		return null;
+	}
+
+	@Override
+	public void updateBlockEvaluationSolid(Sha256Hash blockhash, boolean b) {
+	}
+
+	@Override
+	public void updateBlockEvaluationHeight(Sha256Hash blockhash, long i) {
+	}
+
+	@Override
+	public void updateBlockEvaluationCumulativeweight(Sha256Hash blockhash, long i) {
+	}
+
+	@Override
+	public void updateBlockEvaluationDepth(Sha256Hash blockhash, long i) {
+	}
+
+	@Override
+	public void updateBlockEvaluationRating(Sha256Hash blockhash, long i) {
+	}
+
+	@Override
+	public void updateBlockEvaluationMilestone(Sha256Hash blockhash, boolean b) {
+	}
 }
