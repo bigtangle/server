@@ -434,7 +434,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     }
 
     @Override
-    public void saveBlockEvaluation(Sha256Hash blockhash, int rating, int depth, int cumulativeweight, boolean solid)
+    public void saveBlockEvaluation(Sha256Hash blockhash, long rating, long depth, long cumulativeweight, boolean solid)
             throws BlockStoreException {
     }
 
@@ -444,15 +444,6 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
 
     @Override
     public void removeBlockEvaluation(Sha256Hash hash) throws BlockStoreException {
-    }
-
-    @Override
-    public void updateBlockEvaluationDepth(Sha256Hash blockhash, int depth) throws BlockStoreException {
-    }
-
-    @Override
-    public void updateBlockEvaluationCumulativeweight(Sha256Hash blockhash, int cumulativeweight)
-            throws BlockStoreException {
     }
 
 	@Override
@@ -471,7 +462,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
 	}
 
 	@Override
-	public List<BlockEvaluation> getLastSolidTips() {
+	public List<BlockEvaluation> getSolidTips() {
 		return null;
 	}
 
@@ -481,7 +472,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
 	}
 
 	@Override
-	public Collection<BlockEvaluation> getBlocksToAddToMilestone() {
+	public Collection<BlockEvaluation> getBlocksToAddToMilestone(long i) {
 		return null;
 	}
 
@@ -507,5 +498,10 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
 
 	@Override
 	public void updateBlockEvaluationMilestone(Sha256Hash blockhash, boolean b) {
+	}
+
+	@Override
+	public void updateBlockEvaluationMilestoneLastUpdateTime(Sha256Hash blockhash, long now)
+			throws BlockStoreException {
 	}
 }

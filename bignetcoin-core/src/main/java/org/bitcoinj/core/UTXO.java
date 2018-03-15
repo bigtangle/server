@@ -59,7 +59,8 @@ public class UTXO {
      *            The address.
      */
     public UTXO(Sha256Hash hash, long index, Coin value, int height, boolean coinbase, Script script, String address,
-            Sha256Hash blockhash,  String fromaddress, String description, long tokenid, boolean spent) {
+            Sha256Hash blockhash,  String fromaddress, String description, long tokenid, boolean spent) { 
+    	//TODO remove coinbase and height from UTXO
         this.hash = hash;
         this.index = index;
         this.value = value;

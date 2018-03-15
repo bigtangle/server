@@ -189,27 +189,23 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public BlockEvaluation getBlockEvaluation(Sha256Hash hash) throws BlockStoreException;
 
-    public void saveBlockEvaluation(Sha256Hash blockhash, int rating, int depth, int cumulativeweight, boolean solid) throws BlockStoreException;
+    public void saveBlockEvaluation(Sha256Hash blockhash, long rating, long depth, long cumulativeweight, boolean solid) throws BlockStoreException;
 
     public void saveBlockEvaluation(BlockEvaluation blockEvaluation) throws BlockStoreException;
     
     public void removeBlockEvaluation(Sha256Hash hash) throws BlockStoreException;
-    
-    public void updateBlockEvaluationDepth(Sha256Hash blockhash, int depth) throws BlockStoreException;
-    
-    public void updateBlockEvaluationCumulativeweight(Sha256Hash blockhash, int cumulativeweight) throws BlockStoreException;
 
 	public long getMaxSolidHeight() throws BlockStoreException;
 
 	public List<BlockEvaluation> getNonSolidBlocks() throws BlockStoreException;
 
-	public List<BlockEvaluation> getSolidBlocksOfHeight(long currentHeight) throws BlockStoreException;
+	public List<BlockEvaluation> getSolidBlocksOfHeight(long height) throws BlockStoreException;
 
-	public List<BlockEvaluation> getLastSolidTips() throws BlockStoreException;
+	public List<BlockEvaluation> getSolidTips() throws BlockStoreException;
 
 	public Collection<BlockEvaluation> getBlocksToRemoveFromMilestone() throws BlockStoreException;
 
-	public Collection<BlockEvaluation> getBlocksToAddToMilestone() throws BlockStoreException;
+	public Collection<BlockEvaluation> getBlocksToAddToMilestone(long minDepth) throws BlockStoreException;
 
 	public void updateBlockEvaluationSolid(Sha256Hash blockhash, boolean b) throws BlockStoreException;
 
@@ -222,4 +218,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 	public void updateBlockEvaluationRating(Sha256Hash blockhash, long i) throws BlockStoreException;
 
 	public void updateBlockEvaluationMilestone(Sha256Hash blockhash, boolean b) throws BlockStoreException;
+
+	public void updateBlockEvaluationMilestoneLastUpdateTime(Sha256Hash blockhash, long now) throws BlockStoreException;
 }

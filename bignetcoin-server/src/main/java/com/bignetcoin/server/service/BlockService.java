@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.tomcat.jni.Time;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.FullPrunedBlockGraph;
@@ -92,24 +93,18 @@ public class BlockService {
 
 	public List<BlockEvaluation> getSolidBlocksOfHeight(long currentHeight) throws BlockStoreException {
 		return store.getSolidBlocksOfHeight(currentHeight);
-		// TODO get all blocks where height == currentHeight and solid
 	}
 
-	public List<BlockEvaluation> getLastSolidTips() throws BlockStoreException {
-		return store.getLastSolidTips();
-		// TODO get solid tips, can include tips that are not actually tips anymore if
-		// they are referenced by non-solid new blocks
+	public List<BlockEvaluation> getSolidTips() throws BlockStoreException {
+		return store.getSolidTips();
 	}
 
 	public Collection<BlockEvaluation> getBlocksToRemoveFromMilestone() throws BlockStoreException {
-		// TODO Select from blockevaluation where (solid && milestone && rating < 50)
 		return store.getBlocksToRemoveFromMilestone();
 	}
 
 	public Collection<BlockEvaluation> getBlocksToAddToMilestone() throws BlockStoreException {
-		// TODO select from blockevaluation where (solid && not milestone && rating >=
-		// 75 && depth > MINDEPTH)
-		return store.getBlocksToAddToMilestone();
+		return store.getBlocksToAddToMilestone(27);
 	}
 
 	public void updateSolidBlocks(Set<Sha256Hash> analyzedHashes) throws BlockStoreException {
@@ -118,39 +113,36 @@ public class BlockService {
 
 	public void updateSolid(BlockEvaluation blockEvaluation, boolean b) throws BlockStoreException {
 		blockEvaluation.setSolid(b);
-		// TODO set blockEvaluation.solid in database
 		store.updateBlockEvaluationSolid(blockEvaluation.getBlockhash(), b);
 	}
 
 	public void updateHeight(BlockEvaluation blockEvaluation, long i) throws BlockStoreException {
 		blockEvaluation.setHeight(i);
-		// TODO set blockEvaluation.height in database
 		store.updateBlockEvaluationHeight(blockEvaluation.getBlockhash(), i);
 	}
 
 	public void updateCumulativeWeight(BlockEvaluation blockEvaluation, long i) throws BlockStoreException {
-		blockEvaluation.setCumulativeweight(i);
-		// TODO set blockEvaluation.cumulativeWeight in database
+		blockEvaluation.setCumulativeWeight(i);
 		store.updateBlockEvaluationCumulativeweight(blockEvaluation.getBlockhash(), i);
 	}
 
 	public void updateDepth(BlockEvaluation blockEvaluation, long i) throws BlockStoreException {
 		blockEvaluation.setDepth(i);
-		// TODO set blockEvaluation.cumulativeWeight in database
 		store.updateBlockEvaluationDepth(blockEvaluation.getBlockhash(), i);
 	}
 
 	public void updateRating(BlockEvaluation blockEvaluation, long i) throws BlockStoreException {
 		blockEvaluation.setRating(i);
-		// TODO set blockEvaluation.rating in database
 		store.updateBlockEvaluationRating(blockEvaluation.getBlockhash(), i);
 	}
 
 	public void updateMilestone(BlockEvaluation blockEvaluation, boolean b) throws BlockStoreException {
 		blockEvaluation.setMilestone(b);
-		// TODO Set milestone to specified parameter and update
-		// latestMilestoneUpdateTime to current local time
 		store.updateBlockEvaluationMilestone(blockEvaluation.getBlockhash(), b);
+
+		long now = Time.now();
+		blockEvaluation.setMilestoneLastUpdateTime(now);
+		store.updateBlockEvaluationMilestoneLastUpdateTime(blockEvaluation.getBlockhash(), now);
 	}
 
 	public void saveBinaryArrayToBlock(byte[] bytes) throws Exception {

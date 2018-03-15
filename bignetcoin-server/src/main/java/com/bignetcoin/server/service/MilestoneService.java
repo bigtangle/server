@@ -199,7 +199,7 @@ public class MilestoneService {
 				currentHeightBlocks.put(blockEvaluation.getBlockhash(), blockReferences);
 
 				// Update your cumulative weight
-				blockEvaluation.setCumulativeweight(blockReferences.size());
+				blockEvaluation.setCumulativeWeight(blockReferences.size());
 			}
 
 			// Move up to next height
@@ -299,6 +299,7 @@ public class MilestoneService {
 	 * @param blockEvaluation
 	 * @throws BlockStoreException
 	 */
+	//TODO copy fullprunedblockgraph.connect to here
 	private void connect(BlockEvaluation blockEvaluation) throws BlockStoreException {
 		Block block = blockService.getBlock(blockEvaluation.getBlockhash());
 
@@ -318,12 +319,12 @@ public class MilestoneService {
 			// Mark all outputs used by tx input as spent
 			for (TransactionInput txin : tx.getInputs()) {
 				TransactionOutput connectedOutput = txin.getConnectedOutput();
-				transactionService.updateTXOSpent(connectedOutput, true);
+				transactionService.updateTransactionOutputSpent(connectedOutput, true);
 			}
 
 			// Add all tx outputs as new open outputs
 			for (TransactionOutput txout : tx.getOutputs()) {
-				transactionService.addTXO(txout);
+				transactionService.addTransactionOutput(txout);
 			}
 		}
 	}
@@ -336,6 +337,7 @@ public class MilestoneService {
 	 * @param blockEvaluation
 	 * @throws BlockStoreException
 	 */
+	//TODO copy fullprunedblockgraph.disconnect to here
 	private void disconnect(BlockEvaluation blockEvaluation) throws BlockStoreException {
 		Block block = blockService.getBlock(blockEvaluation.getBlockhash());
 
@@ -356,15 +358,15 @@ public class MilestoneService {
 			// Mark all outputs used by tx input as unspent
 			for (TransactionInput txin : tx.getInputs()) {
 				TransactionOutput connectedOutput = txin.getConnectedOutput();
-				transactionService.updateTXOSpent(connectedOutput, false);
+				transactionService.updateTransactionOutputSpent(connectedOutput, false);
 			}
 
 			// Remove tx outputs from output db and disconnect spending txs
 			for (TransactionOutput txout : tx.getOutputs()) {
-				if (transactionService.getTXOSpent(txout)) {
-					disconnect(transactionService.getTXOSpender(txout));
+				if (transactionService.getTransactionOutputSpent(txout)) {
+					disconnect(transactionService.getTransactionOutputSpender(txout));
 				}
-				transactionService.removeTXO(txout);
+				transactionService.removeTransactionOutput(txout);
 			}
 		}
 	}
@@ -389,7 +391,7 @@ public class MilestoneService {
 	 * @throws BlockStoreException 
 	 */
 	private PriorityQueue<BlockEvaluation> getSolidTipsDescending() throws BlockStoreException {
-		List<BlockEvaluation> solidTips = blockService.getLastSolidTips();
+		List<BlockEvaluation> solidTips = blockService.getSolidTips();
 		CollectionUtils.filter(solidTips, e -> ((BlockEvaluation) e).isSolid());
 		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = new PriorityQueue<BlockEvaluation>(solidTips.size(),
 				sortBlocksByDescendingHeight);

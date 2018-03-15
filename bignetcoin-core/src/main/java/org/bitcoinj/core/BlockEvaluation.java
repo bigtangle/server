@@ -11,13 +11,13 @@ public class BlockEvaluation {
 		//TODO make constructor private and check if all fields are correctly set
 	}
 
-	public static BlockEvaluation build(Sha256Hash blockhash, int rating, int depth, int cumulativeweight) {
+	public static BlockEvaluation build(Sha256Hash blockhash, long rating, long depth, long cumulativeweight) {
 		//TODO add missing fields
 		BlockEvaluation blockEvaluation = new BlockEvaluation();
 		blockEvaluation.setBlockhash(blockhash);
 		blockEvaluation.setRating(rating);
 		blockEvaluation.setDepth(depth);
-		blockEvaluation.setCumulativeweight(cumulativeweight);
+		blockEvaluation.setCumulativeWeight(cumulativeweight);
 		return blockEvaluation;
 	}
 
@@ -25,7 +25,7 @@ public class BlockEvaluation {
 	public long rating;
 	public long height;
 	public long depth;
-	public long cumulativeweight;
+	public long cumulativeWeight;
 
 	// no broken block in the graph
 	public boolean solid = false;
@@ -61,12 +61,12 @@ public class BlockEvaluation {
 		this.depth = depth;
 	}
 
-	public long getCumulativeweight() {
-		return cumulativeweight;
+	public long getCumulativeWeight() {
+		return cumulativeWeight;
 	}
 
-	public void setCumulativeweight(long cumulativeweight) {
-		this.cumulativeweight = cumulativeweight;
+	public void setCumulativeWeight(long cumulativeWeight) {
+		this.cumulativeWeight = cumulativeWeight;
 	}
 
 	public boolean isSolid() {
