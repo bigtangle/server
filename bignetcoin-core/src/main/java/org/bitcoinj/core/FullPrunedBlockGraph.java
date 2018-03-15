@@ -195,7 +195,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     @Override
-    protected TransactionOutputChanges connectTransactions(int height, Block block)
+    public TransactionOutputChanges connectTransactions(int height, Block block)
             throws VerificationException, BlockStoreException {
         checkState(lock.isHeldByCurrentThread());
         if (block.transactions == null)
@@ -480,7 +480,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * must be checkpointed.
      */
     @Override
-    protected void disconnectTransactions(StoredBlock oldBlock) throws PrunedException, BlockStoreException {
+    public void disconnectTransactions(StoredBlock oldBlock) throws PrunedException, BlockStoreException {
         checkState(lock.isHeldByCurrentThread());
         blockStore.beginDatabaseBatchWrite();
         try {

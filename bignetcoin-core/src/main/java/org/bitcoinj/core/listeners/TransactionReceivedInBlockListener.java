@@ -5,6 +5,7 @@
 
 package org.bitcoinj.core.listeners;
 
+import org.bitcoinj.core.AbstractBlockGraph.NewBlockType;
 import org.bitcoinj.core.BlockGraph;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
@@ -30,7 +31,7 @@ public interface TransactionReceivedInBlockListener {
      * rather exists only to order the transaction relative to the others.</p>
      */
     void receiveFromBlock(Transaction tx, StoredBlock block,
-                          BlockGraph.NewBlockType blockType,
+                          NewBlockType blockType,
                           int relativityOffset) throws VerificationException;
     /**
      * <p>Called by the {@link BlockGraph} when we receive a new {@link FilteredBlock} that contains the given
@@ -51,6 +52,6 @@ public interface TransactionReceivedInBlockListener {
      * @return whether the transaction is known about i.e. was considered relevant previously.
      */
     boolean notifyTransactionIsInBlock(Sha256Hash txHash, StoredBlock block,
-                                       BlockGraph.NewBlockType blockType,
+                                       NewBlockType blockType,
                                        int relativityOffset) throws VerificationException;
 }

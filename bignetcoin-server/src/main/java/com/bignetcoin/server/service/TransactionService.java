@@ -117,10 +117,12 @@ public class TransactionService {
 
 	public void updateTransactionOutputSpent(TransactionOutput txout, boolean b) {
 		// TODO set 'spent' field of UTXO in output db
+		store.updateTransactionOutputSpent(txout, b);
 	}
 
 	public void removeTransactionOutput(TransactionOutput txout) {
 		// TODO remove UTXO from output db 
+		store.removeUnspentTransactionOutput(txout);;
 	}
 
 	public boolean getTransactionOutputSpent(TransactionOutput txout) {

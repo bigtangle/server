@@ -90,6 +90,7 @@ public abstract class AbstractIntegrationTest   {
             return 10000;
         }
     };
+    
     @Before
     public void setUp() throws Exception {
         mockMvc = MockMvcBuilders.webAppContextSetup(webContext).build();

@@ -21,7 +21,9 @@ import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.store.FullPrunedBlockStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cglib.core.CollectionUtils;
 import org.springframework.stereotype.Service;
@@ -33,6 +35,9 @@ import com.google.common.collect.HashMultiset;
  */
 @Service
 public class MilestoneService {
+	@Autowired
+	protected FullPrunedBlockStore store;
+	
 	@Autowired
 	private BlockService blockService;
 
@@ -315,18 +320,19 @@ public class MilestoneService {
 		connect(blockService.getBlockEvaluation(block.getPrevBranchBlockHash()));
 
 		// Connect all transactions in block
-		for (Transaction tx : block.getTransactions()) {
-			// Mark all outputs used by tx input as spent
-			for (TransactionInput txin : tx.getInputs()) {
-				TransactionOutput connectedOutput = txin.getConnectedOutput();
-				transactionService.updateTransactionOutputSpent(connectedOutput, true);
-			}
-
-			// Add all tx outputs as new open outputs
-			for (TransactionOutput txout : tx.getOutputs()) {
-				transactionService.addTransactionOutput(txout);
-			}
-		}
+//		for (Transaction tx : block.getTransactions()) {
+//			// Mark all outputs used by tx input as spent
+//			for (TransactionInput txin : tx.getInputs()) {
+//				TransactionOutput connectedOutput = txin.getConnectedOutput();
+//				transactionService.updateTransactionOutputSpent(connectedOutput, true);
+//			}
+//
+//			// Add all tx outputs as new open outputs
+//			for (TransactionOutput txout : tx.getOutputs()) {
+//				transactionService.addTransactionOutput(txout);
+//			}
+//		}
+		//TODO call fullprunedblockgraph.connect()
 	}
 
 	/**
@@ -354,21 +360,22 @@ public class MilestoneService {
 		}
 
 		// Disconnect all transactions in block
-		for (Transaction tx : block.getTransactions()) {
-			// Mark all outputs used by tx input as unspent
-			for (TransactionInput txin : tx.getInputs()) {
-				TransactionOutput connectedOutput = txin.getConnectedOutput();
-				transactionService.updateTransactionOutputSpent(connectedOutput, false);
-			}
-
-			// Remove tx outputs from output db and disconnect spending txs
-			for (TransactionOutput txout : tx.getOutputs()) {
-				if (transactionService.getTransactionOutputSpent(txout)) {
-					disconnect(transactionService.getTransactionOutputSpender(txout));
-				}
-				transactionService.removeTransactionOutput(txout);
-			}
-		}
+//		for (Transaction tx : block.getTransactions()) {
+//			// Mark all outputs used by tx input as unspent
+//			for (TransactionInput txin : tx.getInputs()) {
+//				TransactionOutput connectedOutput = txin.getConnectedOutput();
+//				transactionService.updateTransactionOutputSpent(connectedOutput, false);
+//			}
+//
+//			// Remove tx outputs from output db and disconnect spending txs
+//			for (TransactionOutput txout : tx.getOutputs()) {
+//				if (transactionService.getTransactionOutputSpent(txout)) {
+//					disconnect(transactionService.getTransactionOutputSpender(txout));
+//				}
+//				transactionService.removeTransactionOutput(txout);
+//			}
+//		}
+		//TODO call fullprunedblockgraph.disconnect()
 	}
 
 	// Comparator to sort blocks by descending height
