@@ -9,6 +9,7 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 
 import org.bitcoinj.core.Json;
+import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +65,10 @@ public class DispatcherController {
             case saveBlock: {
                    blockService.saveBinaryArrayToBlock(bodyByte);
                     this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
+                }
+                break;
+            case calculateAllSpendCandidates : {
+                    List<UTXO> outputs = this.walletService0.get
                 }
                 break;
             }

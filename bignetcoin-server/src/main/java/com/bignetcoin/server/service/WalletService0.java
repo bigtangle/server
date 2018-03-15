@@ -10,6 +10,7 @@ import static org.bitcoinj.core.Utils.HEX;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,36 @@ import com.google.common.collect.Lists;
 @Service
 public class WalletService0 {
     
+    public List<UTXO> getAllSpendTransactionOutputList(List<byte[]> pubKeyHashs) {
+        List<UTXO> outputs = new ArrayList<UTXO>();
+        for (TransactionOutput transactionOutput : this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs, true)) {
+            FreeStandingTransactionOutput freeStandingTransactionOutput = (FreeStandingTransactionOutput) transactionOutput;
+            outputs.add(freeStandingTransactionOutput.getUTXO());
+        }
+        return outputs;
+    }
+    
+    public HashMap<Long, Coin> getRealBalanceFromCoinResult(List<byte[]> pubKeyHashs) {
+        HashMap<Long, Coin> result = new HashMap<Long, Coin>();
+        long[] tokenIds = { NetworkParameters.BIGNETCOIN_TOKENID };
+        for (long tokenId : tokenIds) {
+            Coin value = this.getRealBalance(pubKeyHashs, tokenId);
+            result.put(tokenId, value);
+        }
+        return result;
+    }
+    
+    private Coin getRealBalance(List<byte[]> pubKeyHashs, long tokenId) {
+        List<TransactionOutput> candidates = calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs, true);
+        for (Iterator<TransactionOutput> iterator = candidates.iterator(); iterator.hasNext();) {
+            TransactionOutput transactionOutput = iterator.next();
+            FreeStandingTransactionOutput freeStandingTransactionOutput = (FreeStandingTransactionOutput) transactionOutput;
+            
+        }
+        CoinSelection selection = coinSelector.select(NetworkParameters.MAX_MONEY, candidates);
+        return selection.valueGathered;
+    }
+
     public Wallet makeWallat(ECKey ecKey) {
         KeyChainGroup group = new KeyChainGroup(networkParameters);
         group.importKeys(ecKey);
@@ -78,13 +109,11 @@ public class WalletService0 {
         List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
         ECKey key = ECKey.fromPublicOnly(HEX.decode(address));
         pubKeyHashs.add(key.getPubKeyHash());
-        return this.getRealBalance(pubKeyHashs);
+        return this.getRealSystemTokenCoinBalanceByHash(pubKeyHashs);
     }
     
-    public Coin getRealBalance(List<byte[]> pubKeyHashs) {
-        List<TransactionOutput> candidates = calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs, true);
-        CoinSelection selection = coinSelector.select(NetworkParameters.MAX_MONEY, candidates);
-        return selection.valueGathered;
+    public Coin getRealSystemTokenCoinBalanceByHash(List<byte[]> pubKeyHashs) {
+        return this.getRealBalance(pubKeyHashs, NetworkParameters.BIGNETCOIN_TOKENID);
     }
 
     /**
@@ -93,11 +122,8 @@ public class WalletService0 {
      * 
      * @return The list of candidates.
      */
-    protected LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(List<byte[]> pubKeyHashs,
+    public LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(List<byte[]> pubKeyHashs,
             boolean excludeImmatureCoinbases) {
-
-        // UTXOProvider utxoProvider = checkNotNull(vUTXOProvider, "No UTXO
-        // provider has been set");
         LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
         try {
             int chainHeight = store.getChainHeadHeight();
@@ -117,20 +143,10 @@ public class WalletService0 {
         } catch (UTXOProviderException e) {
             throw new RuntimeException("UTXO provider error", e);
         }
-        // We need to handle the pending transactions that we know about.
-        /*
-         * for (Transaction tx : pending.values()) { // Remove the spent
-         * outputs. for (TransactionInput input : tx.getInputs()) { if
-         * (input.getConnectedOutput().isMine(this)) {
-         * candidates.remove(input.getConnectedOutput()); } } // Add change
-         * outputs. Do not try and spend coinbases that were mined too recently,
-         * the protocol forbids it. if (!excludeImmatureCoinbases ||
-         * tx.isMature()) { for (TransactionOutput output : tx.getOutputs()) {
-         * if (output.isAvailableForSpending() && output.isMine(this)) {
-         * candidates.add(output); } } } }
-         */
         return candidates;
     }
+    
+    public List<UTXO>
     
 
     /**
