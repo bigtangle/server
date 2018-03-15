@@ -47,12 +47,10 @@ public class WalletService0 {
         return new Wallet(networkParameters, group);
     }
     
-    public void transactionCommit(ECKey ecKey, ECKey toKey, Coin amount) throws Exception {
-        Wallet wallet = this.makeWallat(ecKey);
-        ECKey toKey2 = new ECKey();
-        Coin amount2 = amount.divide(2);
-        Address address2 = new Address(networkParameters, toKey2.getPubKeyHash());
-        SendRequest req = SendRequest.to(address2, amount2);
+    public void transactionCommit(ECKey fromKey, ECKey toKey, Coin amount) throws Exception {
+        Wallet wallet = this.makeWallat(fromKey);
+        Address address2 = new Address(networkParameters, toKey.getPubKeyHash());
+        SendRequest req = SendRequest.to(address2, amount);
         wallet.completeTx(req);
         wallet.commitTx(req.tx);
     }
