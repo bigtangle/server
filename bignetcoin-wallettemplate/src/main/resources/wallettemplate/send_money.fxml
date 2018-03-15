@@ -24,6 +24,7 @@
                         <Font size="24.0" />
                      </font>
                   </Label>
+                  <ChoiceBox fx:id="tokenid" prefWidth="150.0" />
                </children>
             </HBox>
             <HBox alignment="CENTER_LEFT" spacing="15.0">
