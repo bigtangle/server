@@ -27,6 +27,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.bignetcoin.server.service.TransactionService;
+import com.bignetcoin.server.service.WalletService0;
 import com.google.common.collect.Lists;
 
 @RunWith(SpringRunner.class)
@@ -36,7 +37,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
     private static final Logger log = LoggerFactory.getLogger(TransactionServiceTest.class);
 
     @Autowired
-    private TransactionService transactionService;
+    private WalletService0 walletService0;
 
     @Test
     public void getBalance() throws Exception {
@@ -82,7 +83,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         assertEquals("The amount is not equal", totalAmount, output.getValue());
         List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
         pubKeyHashs.add(outKey.getPubKeyHash());
-        Coin coin = transactionService.getBalance(BalanceType.ESTIMATED, pubKeyHashs);
+        Coin coin = walletService0.getRealBalance(pubKeyHashs);
         log.debug("coin value:" + coin.value);
         outputs = null;
         output = null;
@@ -119,7 +120,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         // wallet.getBalance(Wallet.BalanceType.AVAILABLE));
         List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
         pubKeyHashs.add(outKey.getPubKeyHash());
-        Coin coin = transactionService.getBalance(pubKeyHashs);
+        Coin coin = walletService0.getRealBalance(pubKeyHashs);
         log.debug("coin: ", coin.toString());
     }
 

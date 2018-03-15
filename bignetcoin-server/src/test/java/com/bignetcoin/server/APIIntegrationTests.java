@@ -33,7 +33,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class APIIntegrationTests extends AbstractIntegrationTest {
-    
+
     @Test
     public void testCreateTransaction() throws Exception {
         byte[] data = getAskTransactionBlock();

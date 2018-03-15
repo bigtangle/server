@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.bignetcoin.server.response.AbstractResponse;
 import com.bignetcoin.server.service.BlockService;
 import com.bignetcoin.server.service.TransactionService;
+import com.bignetcoin.server.service.WalletService0;
 import com.bignetcoin.server.utils.HttpRequestParamUtil;
 
 @RestController
@@ -30,6 +31,9 @@ public class DispatcherController {
     
     @Autowired
     private TransactionService transactionService;
+    
+    @Autowired
+    private WalletService0 walletService0;
     
     @Autowired
     private BlockService blockService;
@@ -46,7 +50,7 @@ public class DispatcherController {
                     @SuppressWarnings("unchecked") final Map<String, Object> request = Json.jsonmapper()
                             .readValue(body, Map.class);
                     final List<String> addresses = HttpRequestParamUtil.getParameterAsList(request, "addresses");
-                    AbstractResponse response =  transactionService.getRealBalanceCoin(addresses);
+                    AbstractResponse response =  walletService0.getRealBalanceCoin(addresses);
                     this.outPrintJSONString(httpServletResponse, response);
                 }
                 break;
