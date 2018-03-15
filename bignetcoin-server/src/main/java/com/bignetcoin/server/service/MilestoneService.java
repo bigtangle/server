@@ -305,10 +305,12 @@ public class MilestoneService {
 		if (blockEvaluation.milestone)
 			return;
 
-		// Connect all approver blocks first (not actually needed)
-		for (StoredBlock approver : blockService.getApproverBlocks(blockEvaluation.getBlockhash())) {
-			disconnect(blockService.getBlockEvaluation(approver.getHeader().getHash()));
-		}
+		// Set milestone true and update latestMilestoneUpdateTime first to stop infinite recursions
+		blockService.updateMilestone(blockEvaluation, true);
+
+		// Connect all approved blocks first (not actually needed)
+		connect(blockService.getBlockEvaluation(block.getPrevBlockHash()));
+		connect(blockService.getBlockEvaluation(block.getPrevBranchBlockHash()));
 
 		// Connect all transactions in block
 		for (Transaction tx : block.getTransactions()) {
@@ -323,9 +325,6 @@ public class MilestoneService {
 				transactionService.addTXO(txout);
 			}
 		}
-
-		// Set milestone true and update latestMilestoneUpdateTime
-		blockService.updateMilestone(blockEvaluation, true);
 	}
 
 	/**
@@ -342,6 +341,9 @@ public class MilestoneService {
 		// If already disconnected, return
 		if (blockEvaluation.milestone)
 			return;
+
+		// Set milestone false and update latestMilestoneUpdateTime to stop infinite recursions
+		blockService.updateMilestone(blockEvaluation, false);
 
 		// Disconnect all approver blocks first
 		for (StoredBlock approver : blockService.getApproverBlocks(blockEvaluation.getBlockhash())) {
@@ -364,9 +366,6 @@ public class MilestoneService {
 				transactionService.removeTXO(txout);
 			}
 		}
-
-		// Set milestone false and update latestMilestoneUpdateTime
-		blockService.updateMilestone(blockEvaluation, false);
 	}
 
 	// Comparator to sort blocks by descending height
