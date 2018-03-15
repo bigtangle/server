@@ -67,7 +67,10 @@ public abstract class AbstractIntegrationTest   {
     private GlobalConfigurationProperties globalConfigurationProperties;
 
     protected FullPrunedBlockGraph blockgraph;
+    
+    @Autowired
     protected FullPrunedBlockStore store;
+    
     public FullPrunedBlockStore createStore(NetworkParameters params, int blockCount) throws BlockStoreException {
         try {
             String DB_HOSTNAME = globalConfigurationProperties.getHostname();
@@ -90,17 +93,19 @@ public abstract class AbstractIntegrationTest   {
             return 10000;
         }
     };
-    
     @Before
     public void setUp() throws Exception {
         mockMvc = MockMvcBuilders.webAppContextSetup(webContext).build();
         objectMapper = new ObjectMapper();
         // registerModule(new Jackson2HalModule());
         final int UNDOABLE_BLOCKS_STORED = 10;
-        store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
+        store = createStore(networkParameters, UNDOABLE_BLOCKS_STORED);
 
-        blockgraph = new FullPrunedBlockGraph(PARAMS, store);
+        blockgraph = new FullPrunedBlockGraph(networkParameters, store);
     }
+    
+    @Autowired
+    private NetworkParameters networkParameters;
 
     public String toJson(Object object) throws JsonProcessingException {
         return getMapper().writeValueAsString(object);

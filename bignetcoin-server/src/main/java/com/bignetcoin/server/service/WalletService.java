@@ -54,7 +54,7 @@ public class WalletService {
             Coin value = selection.valueGathered;
             tokens.put(tokenid, value);
         }
-        
+        System.out.println("cal : " + tokens);
         return GetBalancesResponse.create(tokens, outputs);
     }
     
@@ -106,6 +106,7 @@ public class WalletService {
                 // the protocol forbids it.
                 if (!excludeImmatureCoinbases || !coinbase || depth >= networkParameters.getSpendableCoinbaseDepth()) {
                     candidates.add(new FreeStandingTransactionOutput(networkParameters, output, chainHeight));
+                    System.out.println(output.getHeight());
                 }
             }
         } catch (UTXOProviderException e) {
@@ -120,7 +121,8 @@ public class WalletService {
             Address address = new Address(networkParameters, key);
             addresses.add(address);
         }
-        return store.getOpenTransactionOutputs(addresses);
+        List<UTXO> list = store.getOpenTransactionOutputs(addresses);
+        return list;
     }
 
     public Coin getRealBalance(List<byte[]> pubKeyHashs) {
