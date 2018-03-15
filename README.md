@@ -257,7 +257,7 @@ create block with coinbase transaction for each miner coin
 
  1) coin balance overview client
  list of all balance per token
- API:input key(prikey or other string),return lists: per token list and utxo list
+ API:input key(prikey or other string),return lists(map:key tokenid,value): per token list and utxo list
  2) transfer of coin
  transfer X coins from account A to account B
  3) create genesis block for new token 

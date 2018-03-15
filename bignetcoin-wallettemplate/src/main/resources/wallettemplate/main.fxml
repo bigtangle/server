@@ -56,6 +56,27 @@
     <StackPane layoutX="14.0" layoutY="81.0" prefHeight="249.0" prefWidth="572.0" style="-fx-border-color: lightgrey; -fx-border-style: dashed" AnchorPane.bottomAnchor="70.0" AnchorPane.leftAnchor="15.0" AnchorPane.rightAnchor="15.0" AnchorPane.topAnchor="81.0">
       <children>
         <Label text="Your content goes here" />
+            <HBox prefHeight="100.0" prefWidth="200.0">
+               <children>
+                  <HBox prefHeight="100.0" prefWidth="200.0">
+                     <children>
+                        <TableView fx:id="coinTable" prefHeight="298.0" prefWidth="211.0">
+                          <columns>
+                            <TableColumn fx:id="valueColumn" prefWidth="124.0" text="amount" />
+                            <TableColumn fx:id="tokenidColumn" prefWidth="75.0" text="tokenid" />
+                          </columns>
+                        </TableView>
+                     </children>
+                  </HBox>
+                  <HBox prefHeight="100.0" prefWidth="200.0" />
+                  <TableView prefHeight="200.0" prefWidth="200.0">
+                    <columns>
+                      <TableColumn prefWidth="127.0" text="balance" />
+                      <TableColumn prefWidth="72.0" text="tokenid" />
+                    </columns>
+                  </TableView>
+               </children>
+            </HBox>
       </children>
     </StackPane>
     <HBox spacing="20" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="17.0">

@@ -14,52 +14,71 @@
 
 package wallettemplate;
 
-import org.bitcoinj.core.listeners.DownloadProgressTracker;
+import static wallettemplate.Main.bitcoin;
+
 import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.utils.MonetaryFormat;
+import org.fxmisc.easybind.EasyBind;
+
 import com.subgraph.orchid.TorClient;
 import com.subgraph.orchid.TorInitializationListener;
+
 import javafx.animation.FadeTransition;
 import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.layout.HBox;
 import javafx.util.Duration;
-import org.fxmisc.easybind.EasyBind;
 import wallettemplate.controls.ClickableBitcoinAddress;
 import wallettemplate.controls.NotificationBarPane;
 import wallettemplate.utils.BitcoinUIModel;
 import wallettemplate.utils.easing.EasingMode;
 import wallettemplate.utils.easing.ElasticInterpolator;
 
-import static wallettemplate.Main.bitcoin;
-
 /**
- * Gets created auto-magically by FXMLLoader via reflection. The widget fields are set to the GUI controls they're named
- * after. This class handles all the updates and event handling for the main UI.
+ * Gets created auto-magically by FXMLLoader via reflection. The widget fields
+ * are set to the GUI controls they're named after. This class handles all the
+ * updates and event handling for the main UI.
  */
 public class MainController {
     public HBox controlsBox;
     public Label balance;
     public Button sendMoneyOutBtn;
     public ClickableBitcoinAddress addressControl;
+    @FXML
+    public TableView<CoinModel> coinTable;
+    @FXML
+    public TableColumn<CoinModel, Number> valueColumn;
+    @FXML
+    public TableColumn<CoinModel, Number> tokenidColumn;
 
     private BitcoinUIModel model = new BitcoinUIModel();
     private NotificationBarPane.Item syncItem;
+    private Main mainApp;
 
     // Called by FXMLLoader.
+    @FXML
     public void initialize() {
+        coinTable.setItems(Main.instance.getCoinData());
+        valueColumn.setCellValueFactory(cellData -> cellData.getValue().value());
+        tokenidColumn.setCellValueFactory(cellData -> cellData.getValue().value());
+
         addressControl.setOpacity(0.0);
     }
 
     public void onBitcoinSetup() {
         model.setWallet(bitcoin.wallet());
         addressControl.addressProperty().bind(model.addressProperty());
-        balance.textProperty().bind(EasyBind.map(model.balanceProperty(), coin -> MonetaryFormat.BTC.noCode().format(coin).toString()));
+        balance.textProperty().bind(
+                EasyBind.map(model.balanceProperty(), coin -> MonetaryFormat.BTC.noCode().format(coin).toString()));
         // Don't let the user click send money when the wallet is empty.
         sendMoneyOutBtn.disableProperty().bind(model.balanceProperty().isEqualTo(Coin.ZERO));
 
@@ -102,11 +121,13 @@ public class MainController {
     }
 
     private void showBitcoinSyncMessage() {
-        syncItem = Main.instance.notificationBar.pushItem("Synchronising with the Bitcoin network", model.syncProgressProperty());
+        syncItem = Main.instance.notificationBar.pushItem("Synchronising with the Bitcoin network",
+                model.syncProgressProperty());
     }
 
     public void sendMoneyOut(ActionEvent event) {
-        // Hide this UI and show the send money UI. This UI won't be clickable until the user dismisses send_money.
+        // Hide this UI and show the send money UI. This UI won't be clickable
+        // until the user dismisses send_money.
         Main.instance.overlayUI("send_money.fxml");
     }
 
@@ -138,4 +159,5 @@ public class MainController {
     public DownloadProgressTracker progressBarUpdater() {
         return model.getDownloadProgressTracker();
     }
+
 }
