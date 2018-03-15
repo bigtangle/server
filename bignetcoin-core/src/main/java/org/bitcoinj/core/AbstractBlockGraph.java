@@ -509,7 +509,7 @@ public abstract class AbstractBlockGraph {
             // This block connects to the best known block, it is a normal continuation of the system.
             TransactionOutputChanges txOutChanges = null;
 //            if (shouldVerifyTransactions())
-//                txOutChanges = connectTransactions(Math.max( storedPrev.getHeight(),storedPrevBranch.getHeight()) + 1, block);
+                txOutChanges = connectTransactions(Math.max( storedPrev.getHeight(),storedPrevBranch.getHeight()) + 1, block);
             StoredBlock newStoredBlock = addToBlockStore(storedPrev,storedPrevBranch,
                     block.transactions == null ? block : block.cloneAsHeader(), txOutChanges);
             versionTally.add(block.getVersion());
