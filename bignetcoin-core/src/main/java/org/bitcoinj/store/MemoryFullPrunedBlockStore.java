@@ -514,4 +514,12 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
 	public void updateBlockEvaluationMilestoneLastUpdateTime(Sha256Hash blockhash, long now)
 			throws BlockStoreException {
 	}
+
+	@Override
+	public void deleteTip(Sha256Hash prevBlockHash) throws BlockStoreException {
+	}
+
+	@Override
+	public void insertTip(Sha256Hash blockhash) throws BlockStoreException {		
+	}
 }

@@ -249,6 +249,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	// Compatibility SQL.
 	// private static final String SELECT_COMPATIBILITY_COINBASE_SQL = "SELECT
 	// coinbase FROM outputs WHERE 1 = 2";
+	
+	private static final String DELETE_TIP_SQL = "DELETE FROM tips WHERE hash = ?";
+	private static final String INSERT_TIP_SQL = "INSERT INTO tips (hash) VALUES (?);";
 
 	private static final String SELECT_BLOCKEVALUATION_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate FROM blockevaluation WHERE blockhash = ?";
 	private static final String DELETE_BLOCKEVALUATION_SQL = "DELETE FROM blockevaluation WHERE blockhash = ?";
@@ -1953,5 +1956,45 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 			}
 		}
 		
+	}
+	
+	@Override
+	public void deleteTip(Sha256Hash blockhash) throws BlockStoreException {
+		PreparedStatement preparedStatement = null;
+		try {
+			preparedStatement = conn.get().prepareStatement(DELETE_TIP_SQL);
+			preparedStatement.setBytes(1, blockhash.getBytes());
+			preparedStatement.executeUpdate();
+		} catch (SQLException e) {
+			throw new BlockStoreException(e);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
+	}
+	
+	@Override
+	public void insertTip(Sha256Hash blockhash) throws BlockStoreException {
+		PreparedStatement preparedStatement = null;
+		try {
+			preparedStatement = conn.get().prepareStatement(INSERT_TIP_SQL);
+			preparedStatement.setBytes(1, blockhash.getBytes());
+			preparedStatement.executeUpdate();
+		} catch (SQLException e) {
+			throw new BlockStoreException(e);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
 	}
 }

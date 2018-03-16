@@ -22,6 +22,8 @@ import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
+import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.store.FullPrunedBlockStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +38,8 @@ public class TipsService {
     @Autowired
     private MilestoneService milestone;
 
+	@Autowired
+	protected FullPrunedBlockStore store;
     @Autowired
     private BlockService blockService;
     @Autowired
@@ -345,4 +349,11 @@ public class TipsService {
         maxDepthOk.add(tip);
         return false;
     }
+
+	public void addTip(Sha256Hash blockhash) throws BlockStoreException {
+		StoredBlock block = store.get(blockhash);
+		store.deleteTip(block.getHeader().getPrevBlockHash());
+		store.deleteTip(block.getHeader().getPrevBranchBlockHash());
+		store.insertTip(blockhash);
+	}
 }

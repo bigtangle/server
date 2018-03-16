@@ -24,6 +24,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockEvaluation;
+import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.TransactionInput;
@@ -81,14 +82,14 @@ public class MilestoneService {
 
 	/**
 	 * Update solid, true if all directly or indirectly approved blocks exist.
-	 * Update height to be the sum of previous heights
+	 * If solid, update height to be the max of previous heights + 1
 	 * 
 	 * @throws Exception
 	 */
 	public void updateSolidityAndHeight() throws Exception {
-		List<BlockEvaluation> tips = blockService.getNonSolidBlocks();
-		for (BlockEvaluation tip : tips)
-			updateSolidityAndHeightRecursive(tip);
+		List<BlockEvaluation> nonSolidBlocks = blockService.getNonSolidBlocks();
+		for (BlockEvaluation nonSolidBlock : nonSolidBlocks)
+			updateSolidityAndHeightRecursive(nonSolidBlock);
 	}
 
 	private boolean updateSolidityAndHeightRecursive(BlockEvaluation blockEvaluation) throws BlockStoreException {
@@ -111,6 +112,7 @@ public class MilestoneService {
 		// Check previous trunk block exists and is solid
 		BlockEvaluation prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
 		if (prevBlockEvaluation == null) {
+			// TODO if genesis assume solid? or put genesis into database? for now assume solid
 			// TODO broken graph, download the missing remote block needed
 		} else {
 			prevBlockSolid = updateSolidityAndHeightRecursive(prevBlockEvaluation);
@@ -119,13 +121,13 @@ public class MilestoneService {
 		// Check previous branch block exists and is solid
 		BlockEvaluation prevBranchBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
 		if (prevBranchBlockEvaluation == null) {
+			// TODO if genesis assume solid? or put genesis into database? for now assume solid
 			// TODO broken graph, download the missing remote block needed
 		} else {
 			prevBranchBlockSolid = updateSolidityAndHeightRecursive(prevBranchBlockEvaluation);
 		}
 
-		// If both previous blocks are solid, our block is solid and should be
-		// solidified
+		// If both previous blocks are solid, our block should be solidified
 		if (prevBlockSolid && prevBranchBlockSolid) {
 			solidifyBlock(blockEvaluation, prevBlockEvaluation, prevBranchBlockEvaluation);
 			return true;
@@ -140,8 +142,7 @@ public class MilestoneService {
 		blockService.updateHeight(blockEvaluation,
 				Math.max(prevBlockEvaluation.getHeight() + 1, prevBranchBlockEvaluation.getHeight() + 1));
 		blockService.updateSolid(blockEvaluation, true);
-		// TODO update solid tips table by tossing out approved blocks and adding in the
-		// new tip
+		tipsService.addTip(blockEvaluation.getBlockhash());
 	}
 
 	/**
