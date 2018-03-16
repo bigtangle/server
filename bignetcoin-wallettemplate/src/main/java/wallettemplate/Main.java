@@ -24,6 +24,7 @@ import static wallettemplate.utils.GuiUtils.zoomIn;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Map;
 
 import javax.annotation.Nullable;
 
@@ -77,8 +78,10 @@ public class Main extends Application {
     }
 
     public Main() {
+
         coinData.add(new CoinModel(1, 1));
         coinData.add(new CoinModel(2, 2));
+
     }
 
     private void realStart(Stage mainWindow) throws IOException {

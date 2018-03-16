@@ -5,31 +5,50 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane prefHeight="555.0" prefWidth="569.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="wallettemplate.StockController">
-   <children>
-      <GridPane layoutX="50.0" layoutY="79.0" prefHeight="424.0" prefWidth="485.0">
-        <columnConstraints>
-          <ColumnConstraints halignment="LEFT" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-        </columnConstraints>
-        <rowConstraints>
-            <RowConstraints maxHeight="90.0" minHeight="10.0" prefHeight="43.0" valignment="TOP" vgrow="SOMETIMES" />
-          <RowConstraints maxHeight="90.0" minHeight="10.0" prefHeight="55.0" valignment="TOP" vgrow="SOMETIMES" />
-          <RowConstraints maxHeight="160.0" minHeight="0.0" prefHeight="53.0" valignment="TOP" vgrow="SOMETIMES" />
-          <RowConstraints maxHeight="351.0" minHeight="10.0" prefHeight="223.0" valignment="TOP" vgrow="SOMETIMES" />
-            <RowConstraints maxHeight="203.0" minHeight="10.0" prefHeight="52.0" valignment="TOP" vgrow="SOMETIMES" />
-        </rowConstraints>
-         <children>
-            <Label prefHeight="15.0" prefWidth="85.0" text="stock code" GridPane.rowIndex="1" />
-            <Label prefHeight="15.0" prefWidth="90.0" text="stock number" GridPane.rowIndex="2" />
-            <Label prefHeight="0.0" prefWidth="137.0" text="stock name" />
-            <Label prefHeight="15.0" prefWidth="145.0" text="stock description" GridPane.rowIndex="3" />
-            <TextField fx:id="stockName" GridPane.columnIndex="1" />
-            <TextField fx:id="stockCode" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-            <TextField fx:id="stockNumber" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-            <TextArea fx:id="stockDescription" prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-            <Button fx:id="save" mnemonicParsing="false" onAction="#saveStock" text="publish" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-         </children>
-      </GridPane>
-   </children>
+<AnchorPane prefHeight="555.0" prefWidth="569.0"
+	xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+	fx:controller="wallettemplate.StockController">
+	<children>
+		<GridPane layoutX="50.0" layoutY="79.0" prefHeight="424.0"
+			prefWidth="485.0">
+			<columnConstraints>
+				<ColumnConstraints halignment="LEFT" hgrow="SOMETIMES"
+					minWidth="10.0" prefWidth="100.0" />
+				<ColumnConstraints hgrow="SOMETIMES" minWidth="10.0"
+					prefWidth="100.0" />
+			</columnConstraints>
+			<rowConstraints>
+				<RowConstraints maxHeight="90.0" minHeight="10.0"
+					prefHeight="43.0" valignment="TOP" vgrow="SOMETIMES" />
+				<RowConstraints maxHeight="90.0" minHeight="10.0"
+					prefHeight="55.0" valignment="TOP" vgrow="SOMETIMES" />
+				<RowConstraints maxHeight="160.0" minHeight="0.0"
+					prefHeight="53.0" valignment="TOP" vgrow="SOMETIMES" />
+				<RowConstraints maxHeight="351.0" minHeight="10.0"
+					prefHeight="223.0" valignment="TOP" vgrow="SOMETIMES" />
+				<RowConstraints maxHeight="203.0" minHeight="10.0"
+					prefHeight="52.0" valignment="TOP" vgrow="SOMETIMES" />
+			</rowConstraints>
+			<children>
+				<Label prefHeight="15.0" prefWidth="85.0" text="stock code"
+					GridPane.rowIndex="1" />
+				<Label prefHeight="15.0" prefWidth="90.0" text="stock number"
+					GridPane.rowIndex="2" />
+				<Label prefHeight="0.0" prefWidth="137.0" text="stock name" />
+				<Label prefHeight="15.0" prefWidth="145.0" text="stock description"
+					GridPane.rowIndex="3" />
+				<TextField fx:id="stockName" GridPane.columnIndex="1" />
+				<TextField fx:id="stockCode" GridPane.columnIndex="1"
+					GridPane.rowIndex="1" />
+				<TextField fx:id="stockNumber" GridPane.columnIndex="1"
+					GridPane.rowIndex="2" />
+				<TextArea fx:id="stockDescription" prefHeight="200.0"
+					prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+				<Button fx:id="save" mnemonicParsing="false" onAction="#saveStock"
+					text="publish" GridPane.rowIndex="4" />
+				<Button fx:id="closeButton" mnemonicParsing="false" onAction="#closeStock"
+					text="close" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+			</children>
+		</GridPane>
+	</children>
 </AnchorPane>

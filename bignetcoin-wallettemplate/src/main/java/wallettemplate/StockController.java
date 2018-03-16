@@ -10,9 +10,13 @@ public class StockController {
     public TextField stockNumber;
     public TextArea stockDescription;
     
+    public Main.OverlayUI overlayUI;
     
     public void saveStock(ActionEvent event) {
 
+    }
+    public void closeStock(ActionEvent event) {
+        overlayUI.done();
     }
 
 }
