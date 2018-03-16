@@ -22,9 +22,9 @@ import static wallettemplate.utils.GuiUtils.fadeIn;
 import static wallettemplate.utils.GuiUtils.fadeOutAndRemove;
 import static wallettemplate.utils.GuiUtils.zoomIn;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Map;
 
 import javax.annotation.Nullable;
 
@@ -56,7 +56,7 @@ public class Main extends Application {
     private static final String WALLET_FILE_NAME = APP_NAME.replaceAll("[^a-zA-Z0-9.-]", "_") + "-"
             + params.getPaymentProtocolId();
 
-    public static WalletAppKit bitcoin;
+    public static WalletAppKit bitcoin = new WalletAppKit(params, new File("."), "doublespend");;
     public static Main instance;
 
     private StackPane uiStack;
@@ -145,7 +145,7 @@ public class Main extends Application {
 
     public void setupWalletKit(@Nullable DeterministicSeed seed) {
         // If seed is non-null it means we are restoring from backup.
-
+        bitcoin.startAsync();
         if (seed != null)
             bitcoin.restoreWalletFromSeed(seed);
     }
