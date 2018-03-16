@@ -97,7 +97,7 @@ public class WalletService {
             int chainHeight = store.getChainHeadHeight();
             for (UTXO output : getStoredOutputsFromUTXOProvider(pubKeyHashs)) {
                 boolean coinbase = output.isCoinbase();
-                int depth = chainHeight - output.getHeight() + 1; // the current
+                long depth = chainHeight - output.getHeight() + 1; // the current
                                                                   // depth of
                                                                   // the output
                                                                   // (1 = same

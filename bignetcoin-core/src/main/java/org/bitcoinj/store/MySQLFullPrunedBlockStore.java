@@ -53,7 +53,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" +
             "    hash varbinary(32) NOT NULL,\n" +
             "    `index` integer NOT NULL,\n" +
-            "    height integer NOT NULL,\n" +
+            "    height bigint NOT NULL,\n" +
             "    value bigint NOT NULL,\n" +
             "    scriptbytes mediumblob NOT NULL,\n" +
             "    toaddress varchar(35),\n" +

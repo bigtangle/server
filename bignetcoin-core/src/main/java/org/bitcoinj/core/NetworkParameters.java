@@ -120,7 +120,7 @@ public abstract class NetworkParameters {
     protected String[] dnsSeeds;
     protected int[] addrSeeds;
     protected HttpDiscovery.Details[] httpSeeds = {};
-    protected Map<Integer, Sha256Hash> checkpoints = new HashMap<Integer, Sha256Hash>();
+    protected Map<Long, Sha256Hash> checkpoints = new HashMap<Long, Sha256Hash>();
     protected transient MessageSerializer defaultSerializer = null;
 
     protected NetworkParameters() {
@@ -293,7 +293,7 @@ public abstract class NetworkParameters {
      * Returns true if the block height is either not a checkpoint, or is a
      * checkpoint and the hash matches.
      */
-    public boolean passesCheckpoint(int height, Sha256Hash hash) {
+    public boolean passesCheckpoint(long height, Sha256Hash hash) {
         Sha256Hash checkpointHash = checkpoints.get(height);
         return checkpointHash == null || checkpointHash.equals(hash);
     }
@@ -301,7 +301,7 @@ public abstract class NetworkParameters {
     /**
      * Returns true if the given height has a recorded checkpoint.
      */
-    public boolean isCheckpoint(int height) {
+    public boolean isCheckpoint(long height) {
         Sha256Hash checkpointHash = checkpoints.get(height);
         return checkpointHash != null;
     }
@@ -576,7 +576,7 @@ public abstract class NetworkParameters {
      *            should be a safe subset if block height is unknown.
      */
     public EnumSet<Script.VerifyFlag> getTransactionVerificationFlags(final Block block, final Transaction transaction,
-            final VersionTally tally, final Integer height) {
+            final VersionTally tally) {
         final EnumSet<Script.VerifyFlag> verifyFlags = EnumSet.noneOf(Script.VerifyFlag.class);
         if (block.getTimeSeconds() >= NetworkParameters.BIP16_ENFORCE_TIME)
             verifyFlags.add(Script.VerifyFlag.P2SH);

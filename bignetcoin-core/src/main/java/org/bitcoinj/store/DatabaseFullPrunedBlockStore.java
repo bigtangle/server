@@ -1194,7 +1194,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 			s.setBytes(1, out.getHash().getBytes());
 			// index is actually an unsigned int
 			s.setInt(2, (int) out.getIndex());
-			s.setInt(3, out.getHeight());
+			s.setLong(3, out.getHeight());
 			s.setLong(4, out.getValue().value);
 			s.setBytes(5, out.getScript().getProgram());
 			s.setString(6, out.getAddress());

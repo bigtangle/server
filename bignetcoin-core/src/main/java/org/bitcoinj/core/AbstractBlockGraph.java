@@ -382,7 +382,7 @@ public abstract class AbstractBlockGraph {
      * @throws BlockStoreException if the block store had an underlying error.
      * @return The full set of all changes made to the set of open transaction outputs.
      */
-    protected abstract TransactionOutputChanges connectTransactions(int height, Block block) throws VerificationException, BlockStoreException;
+    protected abstract TransactionOutputChanges connectTransactions(long height, Block block) throws VerificationException, BlockStoreException;
 
     /**
      * Load newBlock from BlockStore and connect its transactions, returning changes to the set of unspent transactions.
@@ -689,75 +689,75 @@ public abstract class AbstractBlockGraph {
      */
     private void handleNewBestChain(StoredBlock storedPrev, StoredBlock storedPrevBranch, StoredBlock newChainHead, Block block, boolean expensiveChecks)
             throws BlockStoreException, VerificationException, PrunedException {
-//        checkState(lock.isHeldByCurrentThread());
-//        // This chain has overtaken the one we currently believe is best. Reorganize is required.
-//        //
-//        // Firstly, calculate the block at which the chain diverged. We only need to examine the
-//        // chain from beyond this block to find differences.
-//        StoredBlock head = getChainHead();
-//        final StoredBlock splitPoint = findSplit(newChainHead, head, blockStore);
-//        log.info("Re-organize after split at height {}", splitPoint.getHeight());
-//        log.info("Old chain head: {}", head.getHeader().getHashAsString());
-//        log.info("New chain head: {}", newChainHead.getHeader().getHashAsString());
-//        log.info("Split at block: {}", splitPoint.getHeader().getHashAsString());
-//        // Then build a list of all blocks in the old part of the chain and the new part.
-//        final LinkedList<StoredBlock> oldBlocks = getPartialChain(head, splitPoint, blockStore);
-//        final LinkedList<StoredBlock> newBlocks = getPartialChain(newChainHead, splitPoint, blockStore);
-//        // Disconnect each transaction in the previous main chain that is no longer in the new main chain
-//        StoredBlock storedNewHead = splitPoint;
-//        if (shouldVerifyTransactions()) {
-//            for (StoredBlock oldBlock : oldBlocks) {
-//                try {
-//                    disconnectTransactions(oldBlock);
-//                } catch (PrunedException e) {
-//                    // We threw away the data we need to re-org this deep! We need to go back to a peer with full
-//                    // block contents and ask them for the relevant data then rebuild the indexs. Or we could just
-//                    // give up and ask the human operator to help get us unstuck (eg, rescan from the genesis block).
-//                    // TODO: Retry adding this block when we get a block with hash e.getHash()
-//                    throw e;
-//                }
-//            }
-//            StoredBlock cursor;
-//            // Walk in ascending chronological order.
-//            for (Iterator<StoredBlock> it = newBlocks.descendingIterator(); it.hasNext();) {
-//                cursor = it.next();
-//                Block cursorBlock = cursor.getHeader();
-//                if (expensiveChecks && cursorBlock.getTimeSeconds() <= getMedianTimestampOfRecentBlocks(cursor.getPrev(blockStore), blockStore))
-//                    throw new VerificationException("Block's timestamp is too early during reorg");
-//                TransactionOutputChanges txOutChanges;
-//                if (cursor != newChainHead || block == null)
-//                    txOutChanges = connectTransactions(cursor);
-//                else
-//                    txOutChanges = connectTransactions(newChainHead.getHeight(), block);
-//                storedNewHead = addToBlockStore(storedNewHead, storedPrevBranch,cursorBlock.cloneAsHeader(), txOutChanges);
-//            }
-//        } else {
-//            // (Finally) write block to block store
-//            storedNewHead = addToBlockStore(storedPrev, storedPrevBranch, newChainHead.getHeader());
-//        }
-//        // Now inform the listeners. This is necessary so the set of currently active transactions (that we can spend)
-//        // can be updated to take into account the re-organize. We might also have received new coins we didn't have
-//        // before and our previous spends might have been undone.
-//        for (final ListenerRegistration<ReorganizeListener> registration : reorganizeListeners) {
-//            if (registration.executor == Threading.SAME_THREAD) {
-//                // Short circuit the executor so we can propagate any exceptions.
-//                // TODO: Do we really need to do this or should it be irrelevant?
-//                registration.listener.reorganize(splitPoint, oldBlocks, newBlocks);
-//            } else {
-//                registration.executor.execute(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        try {
-//                            registration.listener.reorganize(splitPoint, oldBlocks, newBlocks);
-//                        } catch (VerificationException e) {
-//                            log.error("Block chain listener threw exception during reorg", e);
-//                        }
-//                    }
-//                });
-//            }
-//        }
-//        // Update the pointer to the best known block.
-//        setChainHead(storedNewHead);
+        checkState(lock.isHeldByCurrentThread());
+        // This chain has overtaken the one we currently believe is best. Reorganize is required.
+        //
+        // Firstly, calculate the block at which the chain diverged. We only need to examine the
+        // chain from beyond this block to find differences.
+        StoredBlock head = getChainHead();
+        final StoredBlock splitPoint = findSplit(newChainHead, head, blockStore);
+        log.info("Re-organize after split at height {}", splitPoint.getHeight());
+        log.info("Old chain head: {}", head.getHeader().getHashAsString());
+        log.info("New chain head: {}", newChainHead.getHeader().getHashAsString());
+        log.info("Split at block: {}", splitPoint.getHeader().getHashAsString());
+        // Then build a list of all blocks in the old part of the chain and the new part.
+        final LinkedList<StoredBlock> oldBlocks = getPartialChain(head, splitPoint, blockStore);
+        final LinkedList<StoredBlock> newBlocks = getPartialChain(newChainHead, splitPoint, blockStore);
+        // Disconnect each transaction in the previous main chain that is no longer in the new main chain
+        StoredBlock storedNewHead = splitPoint;
+        if (shouldVerifyTransactions()) {
+            for (StoredBlock oldBlock : oldBlocks) {
+                try {
+                    disconnectTransactions(oldBlock);
+                } catch (PrunedException e) {
+                    // We threw away the data we need to re-org this deep! We need to go back to a peer with full
+                    // block contents and ask them for the relevant data then rebuild the indexs. Or we could just
+                    // give up and ask the human operator to help get us unstuck (eg, rescan from the genesis block).
+                    // TODO: Retry adding this block when we get a block with hash e.getHash()
+                    throw e;
+                }
+            }
+            StoredBlock cursor;
+            // Walk in ascending chronological order.
+            for (Iterator<StoredBlock> it = newBlocks.descendingIterator(); it.hasNext();) {
+                cursor = it.next();
+                Block cursorBlock = cursor.getHeader();
+                if (expensiveChecks && cursorBlock.getTimeSeconds() <= getMedianTimestampOfRecentBlocks(cursor.getPrev(blockStore), blockStore))
+                    throw new VerificationException("Block's timestamp is too early during reorg");
+                TransactionOutputChanges txOutChanges;
+                if (cursor != newChainHead || block == null)
+                    txOutChanges = connectTransactions(cursor);
+                else
+                    txOutChanges = connectTransactions(newChainHead.getHeight(), block);
+                storedNewHead = addToBlockStore(storedNewHead, storedPrevBranch,cursorBlock.cloneAsHeader(), txOutChanges);
+            }
+        } else {
+            // (Finally) write block to block store
+            storedNewHead = addToBlockStore(storedPrev, storedPrevBranch, newChainHead.getHeader());
+        }
+        // Now inform the listeners. This is necessary so the set of currently active transactions (that we can spend)
+        // can be updated to take into account the re-organize. We might also have received new coins we didn't have
+        // before and our previous spends might have been undone.
+        for (final ListenerRegistration<ReorganizeListener> registration : reorganizeListeners) {
+            if (registration.executor == Threading.SAME_THREAD) {
+                // Short circuit the executor so we can propagate any exceptions.
+                // TODO: Do we really need to do this or should it be irrelevant?
+                registration.listener.reorganize(splitPoint, oldBlocks, newBlocks);
+            } else {
+                registration.executor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            registration.listener.reorganize(splitPoint, oldBlocks, newBlocks);
+                        } catch (VerificationException e) {
+                            log.error("Block chain listener threw exception during reorg", e);
+                        }
+                    }
+                });
+            }
+        }
+        // Update the pointer to the best known block.
+        setChainHead(storedNewHead);
     }
 
     /**

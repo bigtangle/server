@@ -4175,7 +4175,7 @@ public class Wallet extends BaseTaggableObject
             int chainHeight = utxoProvider.getChainHeadHeight();
             for (UTXO output : getStoredOutputsFromUTXOProvider()) {
                 boolean coinbase = output.isCoinbase();
-                int depth = chainHeight - output.getHeight() + 1; // the current depth of the output (1 = same as head).
+                long depth = chainHeight - output.getHeight() + 1; // the current depth of the output (1 = same as head).
                 // Do not try and spend coinbases that were mined too recently, the protocol forbids it.
                 if (!excludeImmatureCoinbases || !coinbase || depth >= params.getSpendableCoinbaseDepth()) {
                     candidates.add(new FreeStandingTransactionOutput(params, output, chainHeight));
@@ -4327,7 +4327,7 @@ public class Wallet extends BaseTaggableObject
          * @return The depth.
          */
         @Override
-        public int getParentTransactionDepthInBlocks() {
+        public long getParentTransactionDepthInBlocks() {
             return chainHeight - output.getHeight() + 1;
         }
 

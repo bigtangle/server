@@ -117,7 +117,7 @@ public class BlockGraph extends AbstractBlockGraph {
     }
 
     @Override
-    protected TransactionOutputChanges connectTransactions(int height, Block block) {
+    protected TransactionOutputChanges connectTransactions(long height, Block block) {
         // Don't have to do anything as this is only called if(shouldVerifyTransactions())
         throw new UnsupportedOperationException();
     }

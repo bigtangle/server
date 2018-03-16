@@ -78,8 +78,8 @@ public class DefaultCoinSelector implements CoinSelector {
         Collections.sort(outputs, new Comparator<TransactionOutput>() {
             @Override
             public int compare(TransactionOutput a, TransactionOutput b) {
-                int depth1 = a.getParentTransactionDepthInBlocks();
-                int depth2 = b.getParentTransactionDepthInBlocks();
+            	long depth1 = a.getParentTransactionDepthInBlocks();
+            	long depth2 = b.getParentTransactionDepthInBlocks();
                 Coin aValue = a.getValue();
                 Coin bValue = b.getValue();
                 BigInteger aCoinDepth = BigInteger.valueOf(aValue.value).multiply(BigInteger.valueOf(depth1));

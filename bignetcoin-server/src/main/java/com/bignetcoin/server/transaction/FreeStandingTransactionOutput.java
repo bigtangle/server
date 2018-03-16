@@ -40,7 +40,7 @@ public class FreeStandingTransactionOutput extends TransactionOutput {
      * @return The depth.
      */
     @Override
-    public int getParentTransactionDepthInBlocks() {
+    public long getParentTransactionDepthInBlocks() {
         return chainHeight - output.getHeight() + 1;
     }
 

@@ -27,7 +27,7 @@ public class UTXO {
     private Script script;
     private Sha256Hash hash;
     private long index;
-    private int height;
+    private long height;
     private boolean coinbase;
     private String address;
     private Sha256Hash blockhash;
@@ -60,9 +60,8 @@ public class UTXO {
      * @param address
      *            The address.
      */
-    public UTXO(Sha256Hash hash, long index, Coin value, int height, boolean coinbase, Script script, String address,
+    public UTXO(Sha256Hash hash, long index, Coin value, long height, boolean coinbase, Script script, String address,
             Sha256Hash blockhash,  String fromaddress, String description, long tokenid, boolean spent) { 
-    	//TODO remove coinbase and height from UTXO
         this.hash = hash;
         this.index = index;
         this.value = value;
@@ -138,7 +137,7 @@ public class UTXO {
     }
 
     /** Gets the height of the block that created this output. */
-    public int getHeight() {
+    public long getHeight() {
         return height;
     }
 
@@ -188,10 +187,10 @@ public class UTXO {
         bos.write(hash.getBytes());
         Utils.uint32ToByteStreamLE(index, bos);
 
-        bos.write(0xFF & (height));
-        bos.write(0xFF & (height >> 8));
-        bos.write(0xFF & (height >> 16));
-        bos.write(0xFF & (height >> 24));
+        bos.write((int) (0xFF & (height)));
+        bos.write((int) (0xFF & (height >> 8)));
+        bos.write((int) (0xFF & (height >> 16)));
+        bos.write((int) (0xFF & (height >> 24)));
 
         bos.write(new byte[] { (byte) (coinbase ? 1 : 0) });
     }

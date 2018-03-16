@@ -24,6 +24,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockEvaluation;
+import org.bitcoinj.core.FullPrunedBlockGraph;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
@@ -53,6 +54,7 @@ public class MilestoneService {
 
 	@Autowired
 	private TransactionService transactionService;
+	
 
 	enum Validity {
 		VALID, INVALID, INCOMPLETE
@@ -560,7 +562,7 @@ public class MilestoneService {
 		connect(blockService.getBlockEvaluation(block.getPrevBlockHash()));
 		connect(blockService.getBlockEvaluation(block.getPrevBranchBlockHash()));
 
-		// Connect all transactions in block
+		// What should happen: Connect all transactions in block
 		// for (Transaction tx : block.getTransactions()) {
 		// // Mark all outputs used by tx input as spent
 		// for (TransactionInput txin : tx.getInputs()) {
@@ -574,7 +576,8 @@ public class MilestoneService {
 		// }
 		// }
 
-		// TODO call fullprunedblockgraph.connect() and add logic to it
+		// TODO call fullprunedblockgraph.connect()
+		//blockGraph.connectTransactions(blockEvaluation.getHeight(), block);
 	}
 
 	/**
@@ -601,7 +604,7 @@ public class MilestoneService {
 			disconnect(blockService.getBlockEvaluation(approver.getHeader().getHash()));
 		}
 
-		// Disconnect all transactions in block
+		// What should happen: Disconnect all transactions in block
 		// for (Transaction tx : block.getTransactions()) {
 		// // Mark all outputs used by tx input as unspent
 		// for (TransactionInput txin : tx.getInputs()) {
@@ -618,7 +621,8 @@ public class MilestoneService {
 		// }
 		// }
 
-		// TODO call fullprunedblockgraph.disconnect() and add logic to it
+		// TODO call fullprunedblockgraph.disconnect() and add above logic to it
+		//blockGraph.disconnectTransactions(blockEvaluation.getHeight(), block);
 	}
 
 	/**

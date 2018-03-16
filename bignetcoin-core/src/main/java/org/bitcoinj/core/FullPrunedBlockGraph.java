@@ -195,7 +195,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     @Override
-    public TransactionOutputChanges connectTransactions(int height, Block block)
+    public TransactionOutputChanges connectTransactions(long height, Block block)
             throws VerificationException, BlockStoreException {
         checkState(lock.isHeldByCurrentThread());
         if (block.transactions == null)
@@ -219,7 +219,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 // checkpoints list and we therefore only check non-checkpoints for duplicated transactions here. See the
                 // BIP30 document for more details on this: https://github.com/bitcoin/bips/blob/master/bip-0030.mediawiki
                 for (Transaction tx : block.transactions) {
-                    final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx, getVersionTally(), height);
+                    final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx, getVersionTally());
                     Sha256Hash hash = tx.getHash();
                     // If we already have unspent outputs for this hash, we saw the tx already. Either the block is
                     // being added twice (bug) or the block is a BIP30 violator.
@@ -236,7 +236,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 Coin valueIn = Coin.ZERO;
                 Coin valueOut = Coin.ZERO;
                 final List<Script> prevOutScripts = new LinkedList<Script>();
-                final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx, getVersionTally(), height);
+                final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx, getVersionTally());
                 if (!isCoinBase) {
                     // For each input of the transaction remove the corresponding output from the set of unspent
                     // outputs.
@@ -368,7 +368,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 List<Future<VerificationException>> listScriptVerificationResults = new ArrayList<Future<VerificationException>>(transactions.size());
                 for (final Transaction tx : transactions) {
                     final Set<VerifyFlag> verifyFlags =
-                        params.getTransactionVerificationFlags(newBlock.getHeader(), tx, getVersionTally(), Integer.SIZE);
+                        params.getTransactionVerificationFlags(newBlock.getHeader(), tx, getVersionTally());
                     boolean isCoinBase = tx.isCoinBase();
                     Coin valueIn = Coin.ZERO;
                     Coin valueOut = Coin.ZERO;

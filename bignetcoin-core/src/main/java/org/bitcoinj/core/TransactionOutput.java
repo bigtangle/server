@@ -388,7 +388,7 @@ public class TransactionOutput extends ChildMessage {
      * then -1.</p>
      * @return The tx depth or -1.
      */
-    public int getParentTransactionDepthInBlocks() {
+    public long getParentTransactionDepthInBlocks() {
         if (getParentTransaction() != null) {
             TransactionConfidence confidence = getParentTransaction().getConfidence();
             if (confidence.getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING) {
