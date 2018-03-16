@@ -50,7 +50,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    CONSTRAINT undoableblocks_pk PRIMARY KEY (hash) USING BTREE \n" +
             ")\n";
 
-    private static final String CREATE_OPEN_OUTPUT_TABLE = "CREATE TABLE outputs (\n" +
+    private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" +
             "    hash varbinary(32) NOT NULL,\n" +
             "    `index` integer NOT NULL,\n" +
             "    height integer NOT NULL,\n" +
@@ -79,6 +79,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    cumulativeweight  bigint ,\n" +
             "    solid tinyint(1) NOT NULL,\n" +
             "    height bigint,\n" +
+            "    milestone tinyint(1),\n" +
+            "    milestonelastupdate bigint,\n" +
             "    CONSTRAINT blockevaluation_pk PRIMARY KEY (blockhash) )\n";
 
     // Some indexes to speed up inserts
@@ -107,7 +109,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_SETTINGS_TABLE);
         sqlStatements.add(CREATE_HEADERS_TABLE);
         sqlStatements.add(CREATE_UNDOABLE_TABLE);
-        sqlStatements.add(CREATE_OPEN_OUTPUT_TABLE);
+        sqlStatements.add(CREATE_OUTPUT_TABLE);
         sqlStatements.add(CREATE_TIPS_TABLE);
         sqlStatements.add(CREATE_BLOCKEVALUATION_TABLE);
         return sqlStatements;

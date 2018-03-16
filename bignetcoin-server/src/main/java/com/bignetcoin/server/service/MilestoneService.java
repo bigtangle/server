@@ -7,10 +7,12 @@ package com.bignetcoin.server.service;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -22,6 +24,7 @@ import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -279,6 +282,9 @@ public class MilestoneService {
 			// Now try to find blocks that can be added to the milestone
 			HashSet<BlockEvaluation> blocksToAdd = blockService.getBlocksToAddToMilestone();
 
+			// Optionally, we can already filter unspent UTXO here to lower computational
+			// cost
+
 			// Resolve conflicting UTXO spends that have been approved by the network
 			// (improbable to occur)
 			resolveConflicts(blocksToAdd);
@@ -367,26 +373,46 @@ public class MilestoneService {
 		// For resolvable conflicts, we first find conflicts between the current
 		// milestone and blocksToAdd
 		// Create tuples (block, transactioninput) of blocks to add
-		Stream<Pair<Block, TransactionInput>> blockInputTuples = blocks.stream().flatMap(
-				b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream()).map(in -> Pair.of(b, in)));
+		Stream<Pair<Block, TransactionOutPoint>> blockInputTuples = blocks.stream().flatMap(b -> b.getTransactions()
+				.stream().flatMap(t -> t.getInputs().stream()).map(in -> Pair.of(b, in.getOutpoint())));
 
 		// Now filter to only contain inputs that were already spent in the milestone by
-		// unpruned blocks and group by UTXO
-		Stream<Pair<Block, TransactionInput>> resolvableConflictsInMilestoneAndCandidates = blockInputTuples
-				.filter(pair -> transactionService.getUTXOSpent(pair.getRight().getOutpoint())
-						&& transactionService.getUTXOSpender(pair.getRight().getOutpoint()) != null); // TODO
+		// unpruned blocks, add in the corresponding milestone blocks with their inputs
+		// and distinct group by UTXO ordered by descending rating + cumulative weight
+		Stream<Pair<Block, TransactionOutPoint>> candidatesConflictingWithMilestone = blockInputTuples
+				.filter(pair -> transactionService.getUTXOSpent(pair.getRight())
+						&& transactionService.getUTXOSpender(pair.getRight()) != null); // TODO
 
-		// Do the same again but check for conflicts in blocksToAdd itself and group by
-		// UTXO
-		blockInputTuples = blocks.stream().flatMap(
-				b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream()).map(in -> Pair.of(b, in)));
-		Stream<Pair<Block, TransactionInput>> resolvableConflictsInCandidates = blockInputTuples
-				.filter(pair -> transactionService.getUTXOSpent(pair.getRight().getOutpoint())
-						&& transactionService.getUTXOSpender(pair.getRight().getOutpoint()) == null);// TODO
+		List<Pair<BlockEvaluation, TransactionOutPoint>> milestoneCandidateConflicts = new ArrayList<Pair<BlockEvaluation, TransactionOutPoint>>();
+		for (Pair<Block, TransactionOutPoint> pair : candidatesConflictingWithMilestone.collect(Collectors.toList())) {
+			BlockEvaluation spenderEvaluation = transactionService.getUTXOSpender(pair.getRight());
+			milestoneCandidateConflicts
+					.add(Pair.of(blockService.getBlockEvaluation(pair.getLeft().getHash()), pair.getRight()));
+			milestoneCandidateConflicts.add(Pair.of(spenderEvaluation, pair.getRight()));
+		}
 
-		// Join both streams and resolve conflicts ordered by descending rating +
-		// cumulative weight
+		Collection<HashSet<Pair<BlockEvaluation, TransactionOutPoint>>> conflicts = milestoneCandidateConflicts
+				.stream().
+				collect(Collectors.groupingBy(Pair::getRight, Collectors.toCollection(HashSet::new))).values();
+
+		// Do the same again but check for conflicts in blocksToAdd itself
+//		blockInputTuples = blocks.stream().flatMap(
+//				b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream()).map(in -> Pair.of(b, in)));
+//		Stream<Pair<Block, TransactionInput>> resolvableConflictsAmongCandidates = blockInputTuples
+//				.filter(pair -> transactionService.getUTXOSpent(pair.getRight().getOutpoint())
+//						&& transactionService.getUTXOSpender(pair.getRight().getOutpoint()) == null);// TODO
+
+		// Resolve conflicts in order by removing all but the first place
 		// TODO
+//		List<HashSet<Pair<BlockEvaluation, TransactionOutPoint>>> sortedConflicts = new ArrayList<HashSet<Pair<BlockEvaluation, TransactionOutPoint>>>(conflicts);
+//		conflictsByMaxRating = conflicts.stream().map(set -> Pair.of(set.stream().map(pair -> pair.getRight()), right))
+//		Collections.sort(sortedConflicts, new Comparator<HashSet<Pair<BlockEvaluation, TransactionOutPoint>>>() {
+//			@Override
+//			public int compare(HashSet<Pair<BlockEvaluation, TransactionOutPoint>> o1,
+//					HashSet<Pair<BlockEvaluation, TransactionOutPoint>> o2) {
+//				return o1.stream().collect(collector);
+//			}
+//		});
 
 		// For milestone blocks, call disconnect procedure
 		// TODO
@@ -401,7 +427,7 @@ public class MilestoneService {
 
 	/**
 	 * Recursively removes the specified block and its approvers from the collection
-	 * if it is contained in it.
+	 * if this block is contained in the collection.
 	 * 
 	 * @param blocksToAdd
 	 * @param blockEvaluation
@@ -434,7 +460,7 @@ public class MilestoneService {
 		Block block = blockService.getBlock(blockEvaluation.getBlockhash());
 
 		// If already connected, return
-		if (blockEvaluation.milestone)
+		if (blockEvaluation.isMilestone())
 			return;
 
 		// Set milestone true and update latestMilestoneUpdateTime first to stop
@@ -474,7 +500,7 @@ public class MilestoneService {
 		Block block = blockService.getBlock(blockEvaluation.getBlockhash());
 
 		// If already disconnected, return
-		if (blockEvaluation.milestone)
+		if (blockEvaluation.isMilestone())
 			return;
 
 		// Set milestone false and update latestMilestoneUpdateTime to stop infinite

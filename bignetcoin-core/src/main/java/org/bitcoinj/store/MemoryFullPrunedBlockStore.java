@@ -449,12 +449,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     }
 
     @Override
-    public void saveBlockEvaluation(Sha256Hash blockhash, long rating, long depth, long cumulativeweight, boolean solid)
-            throws BlockStoreException {
-    }
-
-    @Override
-    public void saveBlockEvaluation(BlockEvaluation blockEvaluation) throws BlockStoreException {
+    public void insertBlockEvaluation(BlockEvaluation blockEvaluation) throws BlockStoreException {
     }
 
     @Override

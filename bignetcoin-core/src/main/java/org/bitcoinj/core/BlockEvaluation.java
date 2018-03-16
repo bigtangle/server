@@ -1,42 +1,52 @@
 package org.bitcoinj.core;
 
-import java.util.Arrays;
-
-import org.bitcoinj.core.Sha256Hash;
-
-import com.google.common.primitives.Ints;
-
 /*
- * Evaluation of block, variable can change in time and graph
+ * Evaluation of block, variable in time
  */
 public class BlockEvaluation {
 
-	public BlockEvaluation() { 
-		//TODO make constructor private and check if all fields are correctly set
+	private BlockEvaluation() { 
 	}
 
-	public static BlockEvaluation build(Sha256Hash blockhash, long rating, long depth, long cumulativeweight) {
-		//TODO add missing fields
+	public static BlockEvaluation buildInitial(Sha256Hash blockhash) {
+		return BlockEvaluation.build(blockhash, 
+				0, 0, 1, false, 0, false, System.currentTimeMillis());
+	}
+
+	public static BlockEvaluation build(Sha256Hash blockhash, long rating, long depth, long cumulativeWeight, boolean solid, long height, boolean milestone, long milestoneLastUpdateTime) {
 		BlockEvaluation blockEvaluation = new BlockEvaluation();
 		blockEvaluation.setBlockhash(blockhash);
 		blockEvaluation.setRating(rating);
 		blockEvaluation.setDepth(depth);
-		blockEvaluation.setCumulativeWeight(cumulativeweight);
+		blockEvaluation.setCumulativeWeight(cumulativeWeight);
+		blockEvaluation.setSolid(solid);
+		blockEvaluation.setHeight(height);
+		blockEvaluation.setMilestone(milestone);
+		blockEvaluation.setMilestoneLastUpdateTime(milestoneLastUpdateTime);	
 		return blockEvaluation;
 	}
 
-	public Sha256Hash blockhash;
-	public long rating;
-	public long height;
-	public long depth;
-	public long cumulativeWeight;
+	// hash of corresponding block
+	private Sha256Hash blockhash;
+	
+	// percentage of MCMC selected tips approving this block
+	private long rating;
+	
+	// longest path to tip
+	private long depth;
+	
+	// count of indirect approver blocks
+	private long cumulativeWeight;
 
-	// no broken block in the graph
-	public boolean solid = false;
+	// all approved blocks exist and are solid
+	private boolean solid = false;
+	
+	// longest path to genesis block
+	private long height;
 
 	// rating >= 75 && depth > MINDEPTH && no conflict set to true
 	// if set to true for older than 7 days, remove it from this table
-	public boolean milestone = false;
+	private boolean milestone = false;
 
 	// Timestamp for entry into milestone as true, reset if flip to false
 	private long milestoneLastUpdateTime;

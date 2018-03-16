@@ -1,5 +1,7 @@
 package com.bignetcoin.server;
 
+import static org.junit.Assert.assertEquals;
+
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,18 +11,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.tomcat.jni.Time;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.BlockForTest;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.FullPrunedBlockGraph;
-import org.bitcoinj.core.MySQLFullPrunedBlockChainTest;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.store.BlockStoreException;
-import org.bitcoinj.store.FullPrunedBlockStore;
-import org.bitcoinj.store.MySQLFullPrunedBlockStore;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -29,7 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import com.bignetcoin.server.config.GlobalConfigurationProperties;
 import com.bignetcoin.server.service.BlockService;
 import com.bignetcoin.server.service.TipsService;
 
@@ -42,13 +37,15 @@ public class TipsServiceTest extends AbstractIntegrationTest {
     public void testBlockEvaluationDb() throws Exception {
         List<Block> blocks = this.createBlock();
         for (Block block : blocks) {
-            BlockEvaluation blockEvaluation = new BlockEvaluation();
-            blockEvaluation.setBlockhash(block.getHash());
-            blockEvaluation.setCumulativeWeight(100);
-            blockEvaluation.setDepth(99);
-            blockEvaluation.setRating(98);
-            blockEvaluation.setSolid(true);
-            this.store.saveBlockEvaluation(blockEvaluation);
+            BlockEvaluation blockEvaluation1 = BlockEvaluation.buildInitial(block.getHash());
+            BlockEvaluation blockEvaluation2 = this.store.getBlockEvaluation(block.getHash());
+            assertEquals(blockEvaluation1.getBlockhash(), blockEvaluation2.getBlockhash());
+            assertEquals(blockEvaluation1.getCumulativeWeight(), blockEvaluation2.getCumulativeWeight());
+            assertEquals(blockEvaluation1.getDepth(), blockEvaluation2.getDepth());
+            assertEquals(blockEvaluation1.getHeight(), blockEvaluation2.getHeight());
+            assertEquals(blockEvaluation1.getRating(), blockEvaluation2.getRating());
+            assertEquals(blockEvaluation1.isMilestone(), blockEvaluation2.isMilestone());
+            assertEquals(blockEvaluation1.isSolid(), blockEvaluation2.isSolid());
         }
         int i = 0;
         for (Block block : blocks) {
