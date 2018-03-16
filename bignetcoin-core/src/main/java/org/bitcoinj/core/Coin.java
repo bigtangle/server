@@ -5,21 +5,21 @@
 
 package org.bitcoinj.core;
 
+import java.beans.Transient;
+import java.io.Serializable;
+import java.math.BigDecimal;
+
 import org.bitcoinj.utils.MonetaryFormat;
 
 import com.google.common.math.LongMath;
 import com.google.common.primitives.Longs;
 
-import java.beans.Transient;
-import java.io.Serializable;
-import java.math.BigDecimal;
-
-import static com.google.common.base.Preconditions.checkArgument;
-
 /**
  * Represents a monetary Bitcoin value. This class is immutable.
  */
 public final class Coin implements Monetary, Comparable<Coin>, Serializable {
+
+    private static final long serialVersionUID = 551802452657362699L;
 
     /**
      * Number of decimals for one Bitcoin. This constant is useful for quick

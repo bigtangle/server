@@ -9,8 +9,6 @@ import static org.bitcoinj.core.Coin.FIFTY_COINS;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 
-import javax.annotation.Nullable;
-
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockEvaluation;
@@ -24,7 +22,6 @@ import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.Utils;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.wallet.CoinSelector;
 import org.bitcoinj.wallet.DefaultCoinSelector;

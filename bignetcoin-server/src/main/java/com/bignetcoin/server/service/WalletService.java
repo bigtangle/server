@@ -54,7 +54,7 @@ public class WalletService {
             Coin value = selection.valueGathered;
             tokens.put(tokenid, value);
         }
-        System.out.println("cal : " + tokens);
+//        System.out.println("cal : " + tokens);
         return GetBalancesResponse.create(tokens, outputs);
     }
     

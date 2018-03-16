@@ -4,7 +4,6 @@
  *******************************************************************************/
 package com.bignetcoin.server;
 
-import static org.bitcoinj.core.Coin.FIFTY_COINS;
 import static org.junit.Assert.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -29,7 +28,6 @@ import org.bitcoinj.core.Utils;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.WalletTransaction;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -136,7 +134,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     }
     
     @Test
-    public void testGetBalances() throws Exception {
+    public void testTransactionAndGetBalances() throws Exception {
         ECKey outKey = new ECKey();
         Block rollingBlock = this.getRollingBlock(outKey);
         
@@ -148,6 +146,9 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         
         Wallet wallet = new Wallet(networkParameters);
         wallet.setUTXOProvider(store);
+        System.out.println(wallet.getBalance(Wallet.BalanceType.AVAILABLE));
+        System.out.println(wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        
         ECKey toKey = wallet.freshReceiveKey();
         Coin amount = Coin.valueOf(1000000, NetworkParameters.BIGNETCOIN_TOKENID);
 
@@ -172,13 +173,28 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     private NetworkParameters networkParameters;
     
     @Test
+    public void testSpringBootGetBalances() throws Exception {
+        ECKey ecKey = new ECKey();
+        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name()).content(ecKey.getPubKeyHash());
+        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
+        String data = mvcResult.getResponse().getContentAsString();
+        logger.info("testGetBalances resp : " + data);
+    }
+    
+    @Test
     @SuppressWarnings("unused")
-    public void testReqAskTransaction() throws Exception {
+    public void testSpringBootAskTransaction() throws Exception {
         byte[] data = getAskTransactionBlock();
         
         ByteBuffer byteBuffer = ByteBuffer.wrap(data);
         Block r1 = nextBlockSerializer(byteBuffer);
         Block r2 = nextBlockSerializer(byteBuffer);
+    }
+    
+    @Test
+    public void testSpringBootSaveBlock() throws Exception {
+        Block block = networkParameters.getGenesisBlock();
+        reqCmdSaveBlock(block);
     }
 
     public Block nextBlockSerializer(ByteBuffer byteBuffer) {
@@ -196,11 +212,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         return data;
     }
     
-    @Test
-    public void testReqSaveBlock() throws Exception {
-        Block block = networkParameters.getGenesisBlock();
-        reqCmdSaveBlock(block);
-    }
+
 
     public void reqCmdSaveBlock(Block block) throws Exception, UnsupportedEncodingException {
         MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.saveBlock.name()).content(block.bitcoinSerialize());
