@@ -6,8 +6,10 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.script.*;
+
 import com.google.common.base.Objects;
 
+import java.beans.Transient;
 import java.io.*;
 import java.math.*;
 import java.util.Locale;
@@ -115,13 +117,19 @@ public class UTXO {
      * The Script object which you can use to get address, script bytes or
      * script type.
      */
+    @Transient
     public Script getScript() {
         return script;
     }
 
     /** The hash of the transaction which holds this output. */
+    @Transient
     public Sha256Hash getHash() {
         return hash;
+    }
+    
+    public String getHashHex() {
+        return Utils.HEX.encode(hash.getBytes());
     }
 
     /** The index of this output in the transaction which holds it. */
@@ -188,8 +196,13 @@ public class UTXO {
         bos.write(new byte[] { (byte) (coinbase ? 1 : 0) });
     }
 
+    @Transient
     public Sha256Hash getBlockhash() {
         return blockhash;
+    }
+
+    public String getBlockHashHex() {
+        return Utils.HEX.encode(this.blockhash.getBytes());
     }
 
     public void setBlockhash(Sha256Hash blockhash) {

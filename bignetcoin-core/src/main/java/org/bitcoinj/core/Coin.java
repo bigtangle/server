@@ -6,9 +6,11 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.utils.MonetaryFormat;
+
 import com.google.common.math.LongMath;
 import com.google.common.primitives.Longs;
 
+import java.beans.Transient;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
@@ -186,6 +188,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      * Returns true if and only if this instance represents a monetary value
      * greater than zero, otherwise false.
      */
+    @Transient
     public boolean isPositive() {
         return signum() == 1;
     }
@@ -194,6 +197,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      * Returns true if and only if this instance represents a monetary value
      * less than zero, otherwise false.
      */
+    @Transient
     public boolean isNegative() {
         return signum() == -1;
     }
@@ -202,6 +206,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      * Returns true if and only if this instance represents zero monetary value,
      * otherwise false.
      */
+    @Transient
     public boolean isZero() {
         return signum() == 0;
     }
