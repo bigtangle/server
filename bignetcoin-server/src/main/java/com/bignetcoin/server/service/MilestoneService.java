@@ -13,8 +13,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Random;
+import java.util.TreeSet;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -282,17 +285,18 @@ public class MilestoneService {
 			// Now try to find blocks that can be added to the milestone
 			HashSet<BlockEvaluation> blocksToAdd = blockService.getBlocksToAddToMilestone();
 
-			// Optionally, we can already filter unspent UTXO here to lower computational
-			// cost
+			// Optional to lower computational cost
+			removeWhereUTXONotFound(blocksToAdd);
 
 			// Resolve conflicting UTXO spends that have been approved by the network
 			// (improbable to occur)
-			resolveConflicts(blocksToAdd);
+			resolveUnundoableConflicts(blocksToAdd);
+			resolveUndoableConflicts(blocksToAdd);
 
 			// Remove blocks from blocksToAdd that have at least one transaction input with
 			// its corresponding output not found in the outputs table and remove their
 			// approvers recursively too
-			filterHasUnspentUTXOs(blocksToAdd);
+			removeWhereUTXONotFound(blocksToAdd);
 
 			// Exit condition: there are no more blocks to add
 			if (blocksToAdd.isEmpty())
@@ -313,7 +317,7 @@ public class MilestoneService {
 	 * @param blocksToAdd
 	 * @throws BlockStoreException
 	 */
-	private void filterHasUnspentUTXOs(HashSet<BlockEvaluation> blocksToAdd) throws BlockStoreException {
+	private void removeWhereUTXONotFound(HashSet<BlockEvaluation> blocksToAdd) throws BlockStoreException {
 		for (BlockEvaluation e : new HashSet<BlockEvaluation>(blocksToAdd)) {
 			Block block = blockService.getBlock(e.getBlockhash());
 			for (TransactionInput in : block.getTransactions().stream().flatMap(t -> t.getInputs().stream())
@@ -322,11 +326,6 @@ public class MilestoneService {
 					removeBlockAndApproversFrom(blocksToAdd, e);
 			}
 		}
-	}
-
-	private void resolveConflicts(HashSet<BlockEvaluation> blocksToAdd) throws BlockStoreException {
-		resolveUnundoableConflicts(blocksToAdd);
-		resolveUndoableConflicts(blocksToAdd);
 	}
 
 	/**
@@ -342,7 +341,7 @@ public class MilestoneService {
 				.getBlocks(blocksToAdd.stream().map(e -> e.getBlockhash()).collect(Collectors.toList()));
 
 		// To check for unundoable conflicts, we do the following:
-		// Create tuples (block, txin) of blocks to add
+		// Create tuples (block, txinput) of all blocksToAdd
 		Stream<Pair<Block, TransactionInput>> blockInputTuples = blocks.stream().flatMap(
 				b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream()).map(in -> Pair.of(b, in)));
 
@@ -362,67 +361,156 @@ public class MilestoneService {
 	 * Resolves conflicts between milestone blocks and milestone candidates as well
 	 * as conflicts among milestone candidates.
 	 * 
-	 * @param blocksToAdd
+	 * @param blockEvaluationsToAdd
 	 * @throws BlockStoreException
 	 */
-	private void resolveUndoableConflicts(HashSet<BlockEvaluation> blocksToAdd) throws BlockStoreException {
-		// Get the blocks to add as blocks from blockservice
-		List<Block> blocks = blockService
-				.getBlocks(blocksToAdd.stream().map(e -> e.getBlockhash()).collect(Collectors.toList()));
+	private void resolveUndoableConflicts(HashSet<BlockEvaluation> blockEvaluationsToAdd) throws BlockStoreException {
+		HashSet<Pair<BlockEvaluation, TransactionOutPoint>> conflictingOutPoints = new HashSet<Pair<BlockEvaluation, TransactionOutPoint>>();
+		HashSet<BlockEvaluation> conflictingMilestoneBlocks = new HashSet<BlockEvaluation>();
+		List<Block> blocksToAdd = blockService
+				.getBlocks(blockEvaluationsToAdd.stream().map(e -> e.getBlockhash()).collect(Collectors.toList()));
 
-		// For resolvable conflicts, we first find conflicts between the current
-		// milestone and blocksToAdd
-		// Create tuples (block, transactioninput) of blocks to add
-		Stream<Pair<Block, TransactionOutPoint>> blockInputTuples = blocks.stream().flatMap(b -> b.getTransactions()
-				.stream().flatMap(t -> t.getInputs().stream()).map(in -> Pair.of(b, in.getOutpoint())));
+		// Find all conflicts between milestone and candidates themselves
+		findMilestoneCandidateConflicts(blocksToAdd, conflictingOutPoints, conflictingMilestoneBlocks);
+		findCandidateCandidateConflicts(blocksToAdd, conflictingOutPoints);
 
-		// Now filter to only contain inputs that were already spent in the milestone by
-		// unpruned blocks, add in the corresponding milestone blocks with their inputs
-		// and distinct group by UTXO ordered by descending rating + cumulative weight
-		Stream<Pair<Block, TransactionOutPoint>> candidatesConflictingWithMilestone = blockInputTuples
-				.filter(pair -> transactionService.getUTXOSpent(pair.getRight())
-						&& transactionService.getUTXOSpender(pair.getRight()) != null); // TODO
+		// Resolve all conflicts by grouping by UTXO ordered by descending rating
+		HashSet<BlockEvaluation> winningBlocks = resolveConflictsByDescendingRating(blockEvaluationsToAdd,
+				conflictingOutPoints, conflictingMilestoneBlocks);
 
-		List<Pair<BlockEvaluation, TransactionOutPoint>> milestoneCandidateConflicts = new ArrayList<Pair<BlockEvaluation, TransactionOutPoint>>();
-		for (Pair<Block, TransactionOutPoint> pair : candidatesConflictingWithMilestone.collect(Collectors.toList())) {
-			BlockEvaluation spenderEvaluation = transactionService.getUTXOSpender(pair.getRight());
-			milestoneCandidateConflicts
-					.add(Pair.of(blockService.getBlockEvaluation(pair.getLeft().getHash()), pair.getRight()));
-			milestoneCandidateConflicts.add(Pair.of(spenderEvaluation, pair.getRight()));
+		// For milestone blocks that have been eliminated (conflictingMilestone \
+		// winningBlocks) call disconnect procedure
+		for (BlockEvaluation b : conflictingMilestoneBlocks.stream().filter(b -> !winningBlocks.contains(b))
+				.collect(Collectors.toList())) {
+			disconnect(b);
 		}
 
-		Collection<HashSet<Pair<BlockEvaluation, TransactionOutPoint>>> conflicts = milestoneCandidateConflicts
-				.stream().
-				collect(Collectors.groupingBy(Pair::getRight, Collectors.toCollection(HashSet::new))).values();
+		// For candidates that have been eliminated (blockEvaluationsToAdd \
+		// winningBlocks) remove them from blocksToAdd
+		for (BlockEvaluation b : blockEvaluationsToAdd.stream().filter(b -> !winningBlocks.contains(b))
+				.collect(Collectors.toList())) {
+			blockEvaluationsToAdd.remove(b);
+		}
+	}
 
-		// Do the same again but check for conflicts in blocksToAdd itself
-//		blockInputTuples = blocks.stream().flatMap(
-//				b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream()).map(in -> Pair.of(b, in)));
-//		Stream<Pair<Block, TransactionInput>> resolvableConflictsAmongCandidates = blockInputTuples
-//				.filter(pair -> transactionService.getUTXOSpent(pair.getRight().getOutpoint())
-//						&& transactionService.getUTXOSpender(pair.getRight().getOutpoint()) == null);// TODO
+	/**
+	 * Resolve all conflicts by grouping by UTXO ordered by descending rating.
+	 * 
+	 * @param blockEvaluationsToAdd
+	 * @param conflictingOutPoints
+	 * @param conflictingMilestoneBlocks
+	 * @return
+	 * @throws BlockStoreException
+	 */
+	private HashSet<BlockEvaluation> resolveConflictsByDescendingRating(HashSet<BlockEvaluation> blockEvaluationsToAdd,
+			HashSet<Pair<BlockEvaluation, TransactionOutPoint>> conflictingOutPoints,
+			HashSet<BlockEvaluation> conflictingMilestoneBlocks) throws BlockStoreException {
+		// Initialize blocks that will survive the conflict resolution
+		HashSet<BlockEvaluation> winningBlocks = new HashSet<BlockEvaluation>(blockEvaluationsToAdd);
+		winningBlocks.addAll(conflictingMilestoneBlocks);
 
-		// Resolve conflicts in order by removing all but the first place
-		// TODO
-//		List<HashSet<Pair<BlockEvaluation, TransactionOutPoint>>> sortedConflicts = new ArrayList<HashSet<Pair<BlockEvaluation, TransactionOutPoint>>>(conflicts);
-//		conflictsByMaxRating = conflicts.stream().map(set -> Pair.of(set.stream().map(pair -> pair.getRight()), right))
-//		Collections.sort(sortedConflicts, new Comparator<HashSet<Pair<BlockEvaluation, TransactionOutPoint>>>() {
-//			@Override
-//			public int compare(HashSet<Pair<BlockEvaluation, TransactionOutPoint>> o1,
-//					HashSet<Pair<BlockEvaluation, TransactionOutPoint>> o2) {
-//				return o1.stream().collect(collector);
-//			}
-//		});
+		// Sort conflicts internally by descending rating
+		Comparator<Pair<BlockEvaluation, TransactionOutPoint>> byDescendingRating = Comparator
+				.comparingLong((Pair<BlockEvaluation, TransactionOutPoint> e) -> e.getLeft().getRating()).reversed();
 
-		// For milestone blocks, call disconnect procedure
-		// TODO
+		Supplier<TreeSet<Pair<BlockEvaluation, TransactionOutPoint>>> conflictTreeSetSupplier = () -> new TreeSet<Pair<BlockEvaluation, TransactionOutPoint>>(
+				byDescendingRating);
 
-		// For candidates, remove them from blocksToAdd
-		// for (Pair<Block, TransactionInput> p :
-		// irresolvableConflicts.collect(Collectors.toList())) {
-		// removeBlockAndApproversFrom(blocksToAdd,
-		// blockService.getBlockEvaluation(p.getLeft().getHash()));
-		// }
+		Map<Object, TreeSet<Pair<BlockEvaluation, TransactionOutPoint>>> conflicts = conflictingOutPoints.stream()
+				.collect(Collectors.groupingBy(Pair::getRight, Collectors.toCollection(conflictTreeSetSupplier)));
+
+		// Sort conflicts among each other by descending max(rating)
+		Comparator<TreeSet<Pair<BlockEvaluation, TransactionOutPoint>>> byDescendingSetRating = Comparator
+				.comparingLong(
+						(TreeSet<Pair<BlockEvaluation, TransactionOutPoint>> s) -> s.first().getLeft().getRating())
+				.reversed();
+
+		Supplier<TreeSet<TreeSet<Pair<BlockEvaluation, TransactionOutPoint>>>> conflictsTreeSetSupplier = () -> new TreeSet<TreeSet<Pair<BlockEvaluation, TransactionOutPoint>>>(
+				byDescendingSetRating);
+
+		TreeSet<TreeSet<Pair<BlockEvaluation, TransactionOutPoint>>> sortedConflicts = conflicts.values().stream()
+				.collect(Collectors.toCollection(conflictsTreeSetSupplier));
+
+		// Now handle conflicts by descending max(rating)
+		for (TreeSet<Pair<BlockEvaluation, TransactionOutPoint>> conflict : sortedConflicts) {
+			// Take the block with the maximum rating in this conflict that is still in
+			// winning Blocks
+			Pair<BlockEvaluation, TransactionOutPoint> maxRatingPair = conflict.stream()
+					.filter(pair -> winningBlocks.contains(pair.getLeft()))
+					.max(new Comparator<Pair<BlockEvaluation, TransactionOutPoint>>() {
+						@Override
+						public int compare(Pair<BlockEvaluation, TransactionOutPoint> o1,
+								Pair<BlockEvaluation, TransactionOutPoint> o2) {
+							return Long.compare(o1.getLeft().getRating(), o2.getLeft().getRating());
+						}
+					}).orElse(null);
+
+			// If such a block exists, this conflict is resolved by eliminating all other
+			// blocks from winning Blocks
+			if (maxRatingPair != null) {
+				for (Pair<BlockEvaluation, TransactionOutPoint> pair : conflict) {
+					if (!pair.getLeft().equals(maxRatingPair.getLeft())) {
+						removeBlockAndApproversFrom(winningBlocks, pair.getLeft());
+					}
+				}
+			}
+		}
+
+		return winningBlocks;
+	}
+
+	/**
+	 * Finds conflicts among blocks to add
+	 * 
+	 * @param blocksToAdd
+	 * @param conflictingOutPoints
+	 * @throws BlockStoreException
+	 */
+	private void findCandidateCandidateConflicts(List<Block> blocksToAdd,
+			HashSet<Pair<BlockEvaluation, TransactionOutPoint>> conflictingOutPoints) throws BlockStoreException {
+		//
+		Stream<Pair<Block, TransactionOutPoint>> outPoints = blocksToAdd.stream().flatMap(b -> b.getTransactions()
+				.stream().flatMap(t -> t.getInputs().stream()).map(in -> Pair.of(b, in.getOutpoint())));
+
+		List<Pair<Block, TransactionOutPoint>> candidateCandidateConflicts = outPoints
+				.collect(Collectors.groupingBy(Pair::getRight)).values().stream().filter(l -> l.size() > 1)
+				.flatMap(l -> l.stream()).collect(Collectors.toList());
+
+		for (Pair<Block, TransactionOutPoint> pair : candidateCandidateConflicts) {
+			BlockEvaluation toAddEvaluation = blockService.getBlockEvaluation(pair.getLeft().getHash());
+			conflictingOutPoints.add(Pair.of(toAddEvaluation, pair.getRight()));
+		}
+	}
+
+	/**
+	 * Finds conflicts between current milestone and blocksToAdd
+	 * 
+	 * @param blocksToAdd
+	 * @param conflictingOutPoints
+	 * @throws BlockStoreException
+	 */
+	private void findMilestoneCandidateConflicts(List<Block> blocksToAdd,
+			HashSet<Pair<BlockEvaluation, TransactionOutPoint>> conflictingOutPoints,
+			HashSet<BlockEvaluation> conflictingMilestoneBlocks) throws BlockStoreException {
+		// Create pairs of blocks and used utxos from blocksToAdd
+		Stream<Pair<Block, TransactionOutPoint>> outPoints = blocksToAdd.stream().flatMap(b -> b.getTransactions()
+				.stream().flatMap(t -> t.getInputs().stream()).map(in -> Pair.of(b, in.getOutpoint())));
+
+		// Filter to only contain inputs that were already spent by the milestone
+		List<Pair<Block, TransactionOutPoint>> candidatesConflictingWithMilestone = outPoints
+				.filter(pair -> transactionService.getUTXOSpent(pair.getRight())
+						&& transactionService.getUTXOSpender(pair.getRight()) != null)
+				.collect(Collectors.toList());
+
+		// Add the conflicting milestone blocks and remember them (Flatmap)
+
+		for (Pair<Block, TransactionOutPoint> pair : candidatesConflictingWithMilestone) {
+			BlockEvaluation spenderEvaluation = transactionService.getUTXOSpender(pair.getRight());
+			BlockEvaluation toAddEvaluation = blockService.getBlockEvaluation(pair.getLeft().getHash());
+			conflictingOutPoints.add(Pair.of(toAddEvaluation, pair.getRight()));
+			conflictingOutPoints.add(Pair.of(spenderEvaluation, pair.getRight()));
+			conflictingMilestoneBlocks.add(spenderEvaluation);
+		}
 	}
 
 	/**
@@ -532,19 +620,6 @@ public class MilestoneService {
 		// TODO call fullprunedblockgraph.disconnect() and add logic to it
 	}
 
-	// Comparator to sort blocks by descending height
-	private Comparator<BlockEvaluation> sortBlocksByDescendingHeight = new Comparator<BlockEvaluation>() {
-		@Override
-		public int compare(BlockEvaluation arg0, BlockEvaluation arg1) {
-			long res = (arg1.getHeight() - arg0.getHeight());
-			if (res > 0)
-				return 1;
-			if (res < 0)
-				return -1;
-			return 0;
-		}
-	};
-
 	/**
 	 * Gets all solid tips ordered by descending height
 	 * 
@@ -555,7 +630,7 @@ public class MilestoneService {
 		List<BlockEvaluation> solidTips = blockService.getSolidTips();
 		CollectionUtils.filter(solidTips, e -> ((BlockEvaluation) e).isSolid());
 		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = new PriorityQueue<BlockEvaluation>(
-				solidTips.size() + 1, sortBlocksByDescendingHeight);
+				solidTips.size() + 1, Comparator.comparingLong(BlockEvaluation::getHeight).reversed());
 		blocksByDescendingHeight.addAll(solidTips);
 		return blocksByDescendingHeight;
 	}
