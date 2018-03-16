@@ -131,6 +131,16 @@ public class MainController {
         Main.instance.overlayUI("send_money.fxml");
     }
 
+    public void stockPublish(ActionEvent event) {
+
+        Main.instance.overlayUI("stock.fxml");
+    }
+
+    public void exchangeCoin(ActionEvent event) {
+
+        Main.instance.overlayUI("exchange.fxml");
+    }
+
     public void settingsClicked(ActionEvent event) {
         Main.OverlayUI<WalletSettingsController> screen = Main.instance.overlayUI("wallet_settings.fxml");
         screen.controller.initialize(null);
