@@ -32,6 +32,16 @@ public class UTXO {
     private String fromaddress;
     private String description;
     private boolean spent;
+    private long tokenid;
+    
+    public long getTokenid() {
+        return tokenid;
+    }
+
+    public void setTokenid(long tokenid) {
+        this.tokenid = tokenid;
+    }
+
     /**
      * Creates a stored transaction output.
      *
@@ -49,20 +59,20 @@ public class UTXO {
      *            The address.
      */
     public UTXO(Sha256Hash hash, long index, Coin value, int height, boolean coinbase, Script script, String address,
-            Sha256Hash blockhash,  String fromaddress, String description, boolean spent) {
+            Sha256Hash blockhash,  String fromaddress, String description, long tokenid, boolean spent) { 
+    	//TODO remove coinbase and height from UTXO
         this.hash = hash;
         this.index = index;
         this.value = value;
         this.height = height;
         this.script = script;
         this.coinbase = coinbase;
-
         this.blockhash = blockhash;
-  
         this.fromaddress = fromaddress;
         this.description = description;
         this.address = address;
         this.spent = spent;
+        this.tokenid = tokenid;
     }
 
     public UTXO(InputStream in) throws IOException {

@@ -195,7 +195,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     @Override
-    protected TransactionOutputChanges connectTransactions(int height, Block block)
+    public TransactionOutputChanges connectTransactions(int height, Block block)
             throws VerificationException, BlockStoreException {
         checkState(lock.isHeldByCurrentThread());
         if (block.transactions == null)
@@ -249,11 +249,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                         // Coinbases can't be spent until they mature, to avoid re-orgs destroying entire transaction
                         // chains. The assumption is there will ~never be re-orgs deeper than the spendable coinbase
                         // chain depth.
-                        if (prevOut.isCoinbase()) {
-                            if (height - prevOut.getHeight() < params.getSpendableCoinbaseDepth()) {
-                                throw new VerificationException("Tried to spend coinbase at depth " + (height - prevOut.getHeight()));
-                            }
-                        }
+//                        if (prevOut.isCoinbase()) {
+//                            if (height - prevOut.getHeight() < params.getSpendableCoinbaseDepth()) {
+//                                throw new VerificationException("Tried to spend coinbase at depth " + (height - prevOut.getHeight()));
+//                            }
+//                        }
                         // TODO: Check we're not spending the genesis transaction here. Bitcoin Core won't allow it.
                         valueIn = valueIn.add(prevOut.getValue());
                         if (verifyFlags.contains(VerifyFlag.P2SH)) {
@@ -278,7 +278,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                             out.getValue(),
                             height, isCoinBase,
                             script,
-                            getScriptAddress(script), block.getHash(), out.getFromaddress(),out.getDescription() ,true);
+                            getScriptAddress(script), block.getHash(), out.getFromaddress(),out.getDescription(), block.getTokenid() ,true);
                     blockStore.addUnspentTransactionOutput(newOut);
                     txOutsCreated.add(newOut);
                 }
@@ -409,7 +409,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                                 newBlock.getHeight(),
                                 isCoinBase,
                                 script,
-                                getScriptAddress(script), block.getHash(), out.getFromaddress(),out.getDescription(),true);
+                                getScriptAddress(script), 
+                                block.getHash(), out.getFromaddress(),out.getDescription(), newBlock.getHeader().getTokenid(), true);
                         blockStore.addUnspentTransactionOutput(newOut);
                         txOutsCreated.add(newOut);
                     }
@@ -479,7 +480,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * must be checkpointed.
      */
     @Override
-    protected void disconnectTransactions(StoredBlock oldBlock) throws PrunedException, BlockStoreException {
+    public void disconnectTransactions(StoredBlock oldBlock) throws PrunedException, BlockStoreException {
         checkState(lock.isHeldByCurrentThread());
         blockStore.beginDatabaseBatchWrite();
         try {

@@ -9,6 +9,8 @@ import static org.bitcoinj.core.Coin.FIFTY_COINS;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 
+import javax.annotation.Nullable;
+
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockEvaluation;
@@ -20,7 +22,9 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.Utils;
+import org.bitcoinj.script.Script;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.wallet.CoinSelector;
 import org.bitcoinj.wallet.DefaultCoinSelector;
@@ -99,25 +103,40 @@ public class TransactionService {
         return tipsManager.blockToApprove(networkParameters.getGenesisBlock().getHash(), null, 27, 27, random);
     }
 
-	public void addTXO(TransactionOutput txout) {
+	public void addUTXO(TransactionOutput out) {
 		// TODO add UTXO to output db 
+//        Script script = getScript(out.getScriptBytes());
+//        UTXO newOut = new UTXO(out.getParentTransactionHash(),
+//                out.getIndex(),
+//                out.getValue(),
+//                0, false,
+//                script,
+//                getScriptAddress(script), out.getHash(), out.getFromaddress(),out.getDescription(), block.getTokenid() ,true);
+//		store.addUnspentTransactionOutput(out);
 	}
 
-	public void updateTXOSpent(TransactionOutput txout, boolean b) {
+	public void updateUTXOSpent(TransactionOutPoint txout, boolean b) {
 		// TODO set 'spent' field of UTXO in output db
+		//store.updateTransactionOutputSpent(txout, b);
 	}
 
-	public void removeTXO(TransactionOutput txout) {
+	public void removeUTXO(TransactionOutPoint txout) {
 		// TODO remove UTXO from output db 
+		//store.removeUnspentTransactionOutput(txout);;
 	}
 
-	public boolean getTXOSpent(TransactionOutput txout) {
+	public boolean getUTXOSpent(TransactionOutPoint txout) {
 		// TODO return 'spent' field of UTXO in output db
 		return false;
 	}
 
-	public BlockEvaluation getTXOSpender(TransactionOutput txout) {
-		// TODO return the block that spent this txout
+	public BlockEvaluation getUTXOSpender(TransactionOutPoint txout) {
+		// TODO return the block that spent this txout or null if it is not found
+		return null;
+	}
+
+	public UTXO getUTXO(TransactionOutPoint out) {
+		// TODO Auto-generated method stub
 		return null;
 	}
 }

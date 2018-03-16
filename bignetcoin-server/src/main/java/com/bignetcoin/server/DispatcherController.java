@@ -1,9 +1,8 @@
 package com.bignetcoin.server;
 
 import java.io.PrintWriter;
-import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
@@ -22,8 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.bignetcoin.server.response.AbstractResponse;
 import com.bignetcoin.server.service.BlockService;
 import com.bignetcoin.server.service.TransactionService;
-import com.bignetcoin.server.service.WalletService0;
-import com.bignetcoin.server.utils.HttpRequestParamUtil;
+import com.bignetcoin.server.service.WalletService;
 
 @RestController
 @RequestMapping("/")
@@ -33,7 +31,7 @@ public class DispatcherController {
     private TransactionService transactionService;
     
     @Autowired
-    private WalletService0 walletService0;
+    private WalletService walletService;
     
     @Autowired
     private BlockService blockService;
@@ -46,11 +44,9 @@ public class DispatcherController {
             ReqCmd reqCmd0000  = ReqCmd.valueOf(reqCmd);
             switch (reqCmd0000) {
             case getBalances: {
-                    String body = new String(bodyByte, Charset.forName("UTF-8"));
-                    @SuppressWarnings("unchecked") final Map<String, Object> request = Json.jsonmapper()
-                            .readValue(body, Map.class);
-                    final List<String> addresses = HttpRequestParamUtil.getParameterAsList(request, "addresses");
-                    AbstractResponse response =  walletService0.getRealBalanceCoin(addresses);
+                    List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
+                    pubKeyHashs.add(bodyByte);
+                    AbstractResponse response =  walletService.getAccountBalanceInfo(pubKeyHashs);
                     this.outPrintJSONString(httpServletResponse, response);
                 }
                 break;

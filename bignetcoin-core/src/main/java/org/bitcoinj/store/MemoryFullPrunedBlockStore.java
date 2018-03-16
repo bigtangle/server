@@ -5,15 +5,30 @@
 
 package org.bitcoinj.store;
 
-import org.bitcoinj.core.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.annotation.Nullable;
+
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.BlockEvaluation;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.StoredBlock;
+import org.bitcoinj.core.StoredUndoableBlock;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionOutPoint;
+import org.bitcoinj.core.UTXO;
+import org.bitcoinj.core.UTXOProviderException;
+import org.bitcoinj.core.VerificationException;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-
-import javax.annotation.Nullable;
-
-import java.util.*;
 
 /**
  * Used as a key for memory map (to avoid having to think about NetworkParameters,
@@ -434,7 +449,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     }
 
     @Override
-    public void saveBlockEvaluation(Sha256Hash blockhash, int rating, int depth, int cumulativeweight, boolean solid)
+    public void saveBlockEvaluation(Sha256Hash blockhash, long rating, long depth, long cumulativeweight, boolean solid)
             throws BlockStoreException {
     }
 
@@ -446,12 +461,62 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     public void removeBlockEvaluation(Sha256Hash hash) throws BlockStoreException {
     }
 
-    @Override
-    public void updateBlockEvaluationDepth(Sha256Hash blockhash, int depth) throws BlockStoreException {
-    }
+	@Override
+	public long getMaxSolidHeight() throws BlockStoreException {
+		return 0;
+	}
 
-    @Override
-    public void updateBlockEvaluationCumulativeweight(Sha256Hash blockhash, int cumulativeweight)
-            throws BlockStoreException {
-    }
+	@Override
+	public List<BlockEvaluation> getNonSolidBlocks() {
+		return null;
+	}
+
+	@Override
+	public List<BlockEvaluation> getSolidBlocksOfHeight(long currentHeight) {
+		return null;
+	}
+
+	@Override
+	public List<BlockEvaluation> getSolidTips() {
+		return null;
+	}
+
+	@Override
+	public HashSet<BlockEvaluation> getBlocksToRemoveFromMilestone() {
+		return null;
+	}
+
+	@Override
+	public HashSet<BlockEvaluation> getBlocksToAddToMilestone(long i) {
+		return null;
+	}
+
+	@Override
+	public void updateBlockEvaluationSolid(Sha256Hash blockhash, boolean b) {
+	}
+
+	@Override
+	public void updateBlockEvaluationHeight(Sha256Hash blockhash, long i) {
+	}
+
+	@Override
+	public void updateBlockEvaluationCumulativeweight(Sha256Hash blockhash, long i) {
+	}
+
+	@Override
+	public void updateBlockEvaluationDepth(Sha256Hash blockhash, long i) {
+	}
+
+	@Override
+	public void updateBlockEvaluationRating(Sha256Hash blockhash, long i) {
+	}
+
+	@Override
+	public void updateBlockEvaluationMilestone(Sha256Hash blockhash, boolean b) {
+	}
+
+	@Override
+	public void updateBlockEvaluationMilestoneLastUpdateTime(Sha256Hash blockhash, long now)
+			throws BlockStoreException {
+	}
 }

@@ -99,12 +99,12 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         return blocks;
     }
 
-//    @Test
-//    public void cumulativweigth() throws Exception {
-//        List<Block> re = createBlock();
-//        milestoneService.updateDepthsAndCumulativeWeights();
-//    }
-//    
+    @Test
+    public void test() throws Exception {
+        List<Block> re = createTestTangle1();
+        milestoneService.update();
+    }
+    
 //    @Test
 //    public void cumulativweigthLinearBlock() throws Exception {
 //        List<Block> re = createLinearBlock ();
