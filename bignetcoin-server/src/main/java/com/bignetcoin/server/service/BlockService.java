@@ -41,7 +41,9 @@ public class BlockService {
 
 	@Autowired
 	protected NetworkParameters networkParameters;
-
+	@Autowired
+	BlockGraphService blockGraphService;
+	
 	public Block getBlock(Sha256Hash blockhash) throws BlockStoreException {
 		// Genesis Block is hardcoded is not saved in database
 		if (networkParameters.getGenesisBlock().getHash().equals(blockhash))
@@ -98,8 +100,7 @@ public class BlockService {
 	}
 
 	public HashSet<BlockEvaluation> getBlocksToAddToMilestone() throws BlockStoreException {
-		return store.getBlocksToAddToMilestone(3);
-		//TODO set depth to good value
+		return store.getBlocksToAddToMilestone(0);
 	}
 
 	public void updateSolidBlocks(Set<Sha256Hash> analyzedHashes) throws BlockStoreException {
@@ -154,7 +155,7 @@ public class BlockService {
 	 * @param blockEvaluation
 	 * @throws BlockStoreException
 	 */
-	public void connect(BlockEvaluation blockEvaluation) throws BlockStoreException {
+	public void connect(BlockEvaluation blockEvaluation ) throws BlockStoreException {
 		Block block = getBlock(blockEvaluation.getBlockhash());
 
 		// If already connected, return
@@ -184,7 +185,7 @@ public class BlockService {
 		// }
 
 		// TODO call fullprunedblockgraph.connect()
-		//blockGraph.connectTransactions(blockEvaluation.getHeight(), block);
+		blockGraphService.connectTransactions(blockEvaluation.getHeight(), block);
 	}
 
 	/**
@@ -229,6 +230,6 @@ public class BlockService {
 		// }
 
 		// TODO call fullprunedblockgraph.disconnect() and add above logic to it
-		//blockGraph.disconnectTransactions(blockEvaluation.getHeight(), block);
+		//blockGraphService.disconnectTransactions(blockEvaluation.getHeight(), block);
 	}
 }

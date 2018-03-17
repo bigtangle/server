@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.bignetcoin.server.service.MilestoneService;
 import com.bignetcoin.server.service.WalletService;
 import com.google.common.collect.Lists;
 
@@ -36,6 +37,9 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
 
     @Autowired
     private WalletService walletService;
+
+    @Autowired
+    private MilestoneService milestoneService;
 
     @Test
     public void getBalance() throws Exception {
@@ -73,6 +77,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         blockgraph.add(rollingBlock);
         totalAmount = totalAmount.add(amount);
 
+        milestoneService.update(); // TODO
         List<UTXO> outputs = store.getOpenTransactionOutputs(Lists.newArrayList(address));
         assertNotNull(outputs);
         assertEquals("Wrong Number of Outputs", 1, outputs.size());

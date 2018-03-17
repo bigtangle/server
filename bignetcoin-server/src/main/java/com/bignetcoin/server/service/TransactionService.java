@@ -117,6 +117,8 @@ public class TransactionService {
 		// TODO set 'spent' field of UTXO in output db
 		//store.updateTransactionOutputSpent(txout, b);
 	}
+    // TODO verify transaction: add valuein valueout equal zero
+    // TODO Add tipsvalidator
 
 	public void removeUTXO(TransactionOutPoint txout) {
 		// TODO remove UTXO from output db 
