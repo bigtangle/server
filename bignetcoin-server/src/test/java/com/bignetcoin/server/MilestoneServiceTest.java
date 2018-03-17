@@ -50,26 +50,14 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
     ECKey outKey = new ECKey();
     int height = 1;
- 
-    public List<Block> createLinearTangle() throws Exception {
-        List<Block> blocks = new ArrayList<Block>();
-        Block firstBlockAfterGenesis = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
-        blockgraph.add(firstBlockAfterGenesis);
-        blocks.add(firstBlockAfterGenesis);
-
-        Block rollingBlock = firstBlockAfterGenesis;
-        for (int i = 1; i < 5; i++) {
-            rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
-                    outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
-            blockgraph.add(rollingBlock);
-           log.debug("create block, hash : " + rollingBlock.getHashAsString());
-            blocks.add(rollingBlock);
-        }
-        return blocks;
-    }
 
     public List<Block> createTestTangle1() throws Exception {
+
+        blockgraph.add(PARAMS.getGenesisBlock());
+        BlockEvaluation genesisEvaluation = blockService.getBlockEvaluation(PARAMS.getGenesisBlock().getHash());
+        blockService.updateMilestone(genesisEvaluation, true);
+        blockService.updateSolid(genesisEvaluation, true);
+    	
         Block b0 = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
                 outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
         Block b1 = BlockForTest.createNextBlockWithCoinbase(b0, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),

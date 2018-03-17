@@ -81,7 +81,7 @@ public class BlockService {
 		return store.getMaxSolidHeight();
 	}
 
-	public List<BlockEvaluation> getNonSolidBlocks() throws BlockStoreException {
+	public List<Sha256Hash> getNonSolidBlocks() throws BlockStoreException {
 		return store.getNonSolidBlocks();
 	}
 
@@ -98,7 +98,8 @@ public class BlockService {
 	}
 
 	public HashSet<BlockEvaluation> getBlocksToAddToMilestone() throws BlockStoreException {
-		return store.getBlocksToAddToMilestone(27);
+		return store.getBlocksToAddToMilestone(3);
+		//TODO set depth to good value
 	}
 
 	public void updateSolidBlocks(Set<Sha256Hash> analyzedHashes) throws BlockStoreException {
@@ -134,7 +135,7 @@ public class BlockService {
 		blockEvaluation.setMilestone(b);
 		store.updateBlockEvaluationMilestone(blockEvaluation.getBlockhash(), b);
 
-		long now = Time.now();
+		long now = System.currentTimeMillis();
 		blockEvaluation.setMilestoneLastUpdateTime(now);
 		store.updateBlockEvaluationMilestoneLastUpdateTime(blockEvaluation.getBlockhash(), now);
 	}
@@ -198,7 +199,7 @@ public class BlockService {
 		Block block = getBlock(blockEvaluation.getBlockhash());
 
 		// If already disconnected, return
-		if (blockEvaluation.isMilestone())
+		if (!blockEvaluation.isMilestone())
 			return;
 
 		// Set milestone false and update latestMilestoneUpdateTime to stop infinite

@@ -155,10 +155,10 @@ public class TipsService {
         while (tip != null) {
 
             List<Sha256Hash> approvers = blockService.getApproverBlockHashes(tip);
-            if (belowMaxDepth(tip, maxDepth, maxDepthOk)) {
-                log.info("Reason to stop: belowMaxDepth" + tip);
-                break;
-            }
+//            if (belowMaxDepth(tip, maxDepth, maxDepthOk)) {
+//                log.info("Reason to stop: belowMaxDepth" + tip);
+//                break;
+//            }
             if (approvers.size() == 0) { // TODO check solidity
                 log.info("Reason to stop:  is a tip =" + tip);
                 break;

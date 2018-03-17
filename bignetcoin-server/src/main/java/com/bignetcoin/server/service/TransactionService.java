@@ -40,7 +40,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class TransactionService {
     @Autowired
-    protected FullPrunedBlockStore store;
+    protected FullPrunedBlockStore blockStore;
 
     @Autowired
     private TipsService tipsManager;
@@ -123,9 +123,11 @@ public class TransactionService {
 		//store.removeUnspentTransactionOutput(txout);;
 	}
 
-	public boolean getUTXOSpent(TransactionOutPoint txout) {
+	public boolean getUTXOSpent(TransactionInput txinput) {
 		try {
-			return store.getTransactionOutput(txout.getHash(), txout.getIndex()).isSpent();
+			if (txinput.isCoinBase())
+				return false;
+			return blockStore.getTransactionOutput(txinput.getOutpoint().getHash(), txinput.getOutpoint().getIndex()).isSpent();
 		} catch (BlockStoreException e) {
 			e.printStackTrace();
 		}
@@ -134,7 +136,7 @@ public class TransactionService {
 
 	public BlockEvaluation getUTXOSpender(TransactionOutPoint txout) {
 		try {
-			return store.getTransactionOutputSpender(txout);
+			return blockStore.getTransactionOutputSpender(txout);
 		} catch (BlockStoreException e) {
 			e.printStackTrace();
 		}
@@ -142,9 +144,6 @@ public class TransactionService {
 	}
 
 	public UTXO getUTXO(TransactionOutPoint out) throws BlockStoreException {
-		// TODO Auto-generated method stub
-		return null;
+		return blockStore.getTransactionOutput(out.getHash(), out.getIndex());
 	}
-	
-	//TODO copy connectTx and disconnectTx here, put connectBlock disconnectBlock in blockService
 }

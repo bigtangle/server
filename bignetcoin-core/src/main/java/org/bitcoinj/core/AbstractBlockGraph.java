@@ -490,6 +490,7 @@ public abstract class AbstractBlockGraph {
                         block.getHashAsString(), filteredTxHashList.size(), filteredTxn.size());
                 for (Sha256Hash hash : filteredTxHashList) log.debug("  matched tx {}", hash);
             }
+            //TODO change check to previous two blocks
             if (expensiveChecks && block.getTimeSeconds() <= getMedianTimestampOfRecentBlocks(head, blockStore))
                 throw new VerificationException("Block's timestamp is too early");
 
@@ -509,11 +510,13 @@ public abstract class AbstractBlockGraph {
             // This block connects to the best known block, it is a normal continuation of the system.
             TransactionOutputChanges txOutChanges = null;
 //            if (shouldVerifyTransactions())
-                txOutChanges = connectTransactions(Math.max( storedPrev.getHeight(),storedPrevBranch.getHeight()) + 1, block);
+//                txOutChanges = connectTransactions(Math.max( storedPrev.getHeight(),storedPrevBranch.getHeight()) + 1, block);
+//            StoredBlock newStoredBlock = addToBlockStore(storedPrev,storedPrevBranch,
+//                    block.transactions == null ? block : block.cloneAsHeader(), txOutChanges);
             StoredBlock newStoredBlock = addToBlockStore(storedPrev,storedPrevBranch,
-                    block.transactions == null ? block : block.cloneAsHeader(), txOutChanges);
+            block, txOutChanges);
             versionTally.add(block.getVersion());
-            setChainHead(newStoredBlock);
+            //setChainHead(newStoredBlock);
             log.debug("Chain is now {} blocks high, running listeners", newStoredBlock.getHeight());
             informListenersForNewBlock(block, NewBlockType.BEST_CHAIN, filteredTxHashList, filteredTxn, newStoredBlock);
         } else {

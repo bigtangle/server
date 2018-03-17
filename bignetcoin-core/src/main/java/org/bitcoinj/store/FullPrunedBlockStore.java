@@ -198,7 +198,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
 	public long getMaxSolidHeight() throws BlockStoreException;
 
-	public List<BlockEvaluation> getNonSolidBlocks() throws BlockStoreException;
+	public List<Sha256Hash> getNonSolidBlocks() throws BlockStoreException;
 
 	public List<BlockEvaluation> getSolidBlocksOfHeight(long height) throws BlockStoreException;
 

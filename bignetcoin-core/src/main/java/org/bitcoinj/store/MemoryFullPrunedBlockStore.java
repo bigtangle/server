@@ -462,7 +462,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
 	}
 
 	@Override
-	public List<BlockEvaluation> getNonSolidBlocks() {
+	public List<Sha256Hash> getNonSolidBlocks() {
 		return null;
 	}
 

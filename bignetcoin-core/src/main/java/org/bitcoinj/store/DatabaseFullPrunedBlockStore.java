@@ -793,7 +793,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
 			s.setBytes(1, storedBlock.getHeader().getHash().getBytes());
 			s.setInt(2, storedBlock.getHeight());
-			s.setBytes(3, storedBlock.getHeader().cloneAsHeader().unsafeBitcoinSerialize());
+			s.setBytes(3, storedBlock.getHeader().unsafeBitcoinSerialize()); //changed to write full block to db
 			s.setBoolean(4, wasUndoable);
 			s.setBytes(5, storedBlock.getHeader().getPrevBlockHash().getBytes());
 			s.setBytes(6, storedBlock.getHeader().getPrevBranchBlockHash().getBytes());
@@ -835,72 +835,72 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 		// 4 0-bytes
 
 		int height = storedBlock.getHeight();
-		byte[] transactions = null;
-		byte[] txOutChanges = null;
-		try {
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			if (undoableBlock.getTxOutChanges() != null) {
-				undoableBlock.getTxOutChanges().serializeToStream(bos);
-				txOutChanges = bos.toByteArray();
-			} else {
-				int numTxn = undoableBlock.getTransactions().size();
-				bos.write(0xFF & numTxn);
-				bos.write(0xFF & (numTxn >> 8));
-				bos.write(0xFF & (numTxn >> 16));
-				bos.write(0xFF & (numTxn >> 24));
-				for (Transaction tx : undoableBlock.getTransactions())
-					tx.bitcoinSerialize(bos);
-				transactions = bos.toByteArray();
-			}
-			bos.close();
-		} catch (IOException e) {
-			throw new BlockStoreException(e);
-		}
+//		byte[] transactions = null;
+//		byte[] txOutChanges = null;
+//		try {
+//			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+//			if (undoableBlock.getTxOutChanges() != null) {
+//				undoableBlock.getTxOutChanges().serializeToStream(bos);
+//				txOutChanges = bos.toByteArray();
+//			} else {
+//				int numTxn = undoableBlock.getTransactions().size();
+//				bos.write(0xFF & numTxn);
+//				bos.write(0xFF & (numTxn >> 8));
+//				bos.write(0xFF & (numTxn >> 16));
+//				bos.write(0xFF & (numTxn >> 24));
+//				for (Transaction tx : undoableBlock.getTransactions())
+//					tx.bitcoinSerialize(bos);
+//				transactions = bos.toByteArray();
+//			}
+//			bos.close();
+//		} catch (IOException e) {
+//			throw new BlockStoreException(e);
+//		}
 
-		try {
-			try {
-				PreparedStatement s = conn.get().prepareStatement(getInsertUndoableBlocksSQL());
-				s.setBytes(1, storedBlock.getHeader().getHash().getBytes());
-				s.setInt(2, height);
-				if (transactions == null) {
-					s.setBytes(3, txOutChanges);
-					s.setNull(4, Types.BINARY);
-				} else {
-					s.setNull(3, Types.BINARY);
-					s.setBytes(4, transactions);
-				}
-				s.executeUpdate();
-				s.close();
+//		try {
+//			try {
+//				PreparedStatement s = conn.get().prepareStatement(getInsertUndoableBlocksSQL());
+//				s.setBytes(1, storedBlock.getHeader().getHash().getBytes());
+//				s.setInt(2, height);
+//				if (transactions == null) {
+//					s.setBytes(3, txOutChanges);
+//					s.setNull(4, Types.BINARY);
+//				} else {
+//					s.setNull(3, Types.BINARY);
+//					s.setBytes(4, transactions);
+//				}
+//				s.executeUpdate();
+//				s.close();
 				try {
 					putUpdateStoredBlock(storedBlock, true);
 				} catch (SQLException e) {
 					throw new BlockStoreException(e);
 				}
-			} catch (SQLException e) {
-				if (!e.getSQLState().equals(getDuplicateKeyErrorCode()))
-					throw new BlockStoreException(e);
-
-				// There is probably an update-or-insert statement, but it
-				// wasn't obvious from the docs
-				PreparedStatement s = conn.get().prepareStatement(getUpdateUndoableBlocksSQL());
-				s.setBytes(3, storedBlock.getHeader().getHash().getBytes());
-				if (transactions == null) {
-					s.setBytes(1, txOutChanges);
-					s.setNull(2, Types.BINARY);
-				} else {
-					s.setNull(1, Types.BINARY);
-					s.setBytes(2, transactions);
-				}
-				s.executeUpdate();
-				s.close();
-			}
+//			} catch (SQLException e) {
+//				if (!e.getSQLState().equals(getDuplicateKeyErrorCode()))
+//					throw new BlockStoreException(e);
+//
+//				// There is probably an update-or-insert statement, but it
+//				// wasn't obvious from the docs
+//				PreparedStatement s = conn.get().prepareStatement(getUpdateUndoableBlocksSQL());
+//				s.setBytes(3, storedBlock.getHeader().getHash().getBytes());
+//				if (transactions == null) {
+//					s.setBytes(1, txOutChanges);
+//					s.setNull(2, Types.BINARY);
+//				} else {
+//					s.setNull(1, Types.BINARY);
+//					s.setBytes(2, transactions);
+//				}
+//				s.executeUpdate();
+//				s.close();
+//			}
 			
 			// Initial blockevaluation
 			insertBlockEvaluation(BlockEvaluation.buildInitial(undoableBlock.getHash()));
 			
-		} catch (SQLException ex) {
-			throw new BlockStoreException(ex);
-		}
+//		} catch (SQLException ex) {
+//			throw new BlockStoreException(ex);
+//		}
 	}
 
 	public StoredBlock get(Sha256Hash hash, boolean wasUndoableOnly) throws BlockStoreException {
@@ -1636,18 +1636,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	}
 
 	@Override
-	public List<BlockEvaluation> getNonSolidBlocks() throws BlockStoreException {
-		List<BlockEvaluation> storedBlockHashes = new ArrayList<BlockEvaluation>();
+	public List<Sha256Hash> getNonSolidBlocks() throws BlockStoreException {
+		List<Sha256Hash> storedBlockHashes = new ArrayList<Sha256Hash>();
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = conn.get().prepareStatement(SELECT_NONSOLID_BLOCKS);
 			ResultSet resultSet = preparedStatement.executeQuery();
 			while (resultSet.next()) {
-				BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)), 
-						resultSet.getLong(2), resultSet.getLong(3), resultSet.getLong(4), resultSet.getBoolean(5), 
-						resultSet.getLong(6), resultSet.getBoolean(7), resultSet.getLong(8));
-				storedBlockHashes.add(blockEvaluation);
+				storedBlockHashes.add(Sha256Hash.wrap(resultSet.getBytes(1)));
 			}
 			return storedBlockHashes;
 		} catch (SQLException ex) {
