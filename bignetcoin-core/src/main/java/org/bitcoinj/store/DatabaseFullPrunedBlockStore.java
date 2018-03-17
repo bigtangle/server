@@ -36,6 +36,7 @@ import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.StoredUndoableBlock;
 import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutputChanges;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.UTXOProviderException;
@@ -1996,5 +1997,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 				}
 			}
 		}
+	}
+	
+	@Override
+	public BlockEvaluation getTransactionOutputSpender(TransactionOutPoint txout) throws BlockStoreException {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

@@ -522,4 +522,9 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
 	@Override
 	public void insertTip(Sha256Hash blockhash) throws BlockStoreException {		
 	}
+
+	@Override
+	public BlockEvaluation getTransactionOutputSpender(TransactionOutPoint txout) throws BlockStoreException {
+		return null;
+	}
 }
