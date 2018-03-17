@@ -10,7 +10,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.bitcoinj.core.Address;
@@ -20,14 +22,19 @@ import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.FullPrunedBlockGraph;
+import org.bitcoinj.core.Json;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.PrunedException;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.utils.MapToBeanMapperUtil;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.WalletWrapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -39,6 +46,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -102,12 +110,12 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
       //  rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock,null,PARAMS.getGenesisBlock().getHash());
 
         // Create 1 BTC spend to a key in this wallet (to ourselves).
-        Wallet wallet = new Wallet(networkParameters);
-        assertEquals("Available balance is incorrect", Coin.ZERO, wallet.getBalance(Wallet.BalanceType.AVAILABLE));
-        assertEquals("Estimated balance is incorrect", Coin.ZERO, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        WalletWrapper walletWrapper = new WalletWrapper(networkParameters);
+        assertEquals("Available balance is incorrect", Coin.ZERO, walletWrapper.getBalance(Wallet.BalanceType.AVAILABLE));
+        assertEquals("Estimated balance is incorrect", Coin.ZERO, walletWrapper.getBalance(Wallet.BalanceType.ESTIMATED));
 
-        wallet.setUTXOProvider(store);
-        ECKey toKey = wallet.freshReceiveKey();
+        walletWrapper.setUTXOProvider(store);
+        ECKey toKey = walletWrapper.freshReceiveKey();
         Coin amount = Coin.valueOf(1000000, NetworkParameters.BIGNETCOIN_TOKENID);
 
         Transaction t = new Transaction(networkParameters);
@@ -118,15 +126,15 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         rollingBlock.solve();
         blockgraph.add(rollingBlock);
         
-        System.out.println(wallet.getBalance(Wallet.BalanceType.AVAILABLE));
-        System.out.println(wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        System.out.println(walletWrapper.getBalance(Wallet.BalanceType.AVAILABLE));
+        System.out.println(walletWrapper.getBalance(Wallet.BalanceType.ESTIMATED));
         
         ECKey toKey2 = new ECKey();
         Coin amount2 = amount.divide(2);
         Address address2 = new Address(PARAMS, toKey2.getPubKeyHash());
         SendRequest req = SendRequest.to(address2, amount2);
-        wallet.completeTx(req);
-        wallet.commitTx(req.tx);
+        walletWrapper.completeTx(req);
+        walletWrapper.commitTx(req.tx);
 
         try {
             store.close();
@@ -135,6 +143,44 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     
     @Test
     public void testTransactionAndGetBalances() throws Exception {
+        ECKey toKey = createWalletAndAddCoin();
+        
+        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name()).content(toKey.getPubKeyHash());
+        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
+        String response = mvcResult.getResponse().getContentAsString();
+        logger.info("testGetBalances resp : " + response);
+        
+        @SuppressWarnings("unchecked")
+        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+        
+        @SuppressWarnings("unchecked")
+//        List<UTXO> outputs = (List<UTXO>) data.get("outputs");
+        List<UTXO> outputs =
+                Json.jsonmapper().readValue(response, new TypeReference<List<UTXO>>(){});
+    }
+    
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testTransactionAndGetOutputs() throws Exception {
+        ECKey toKey = createWalletAndAddCoin();
+        
+        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getOutputs.name()).content(toKey.getPubKeyHash());
+        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
+        String response = mvcResult.getResponse().getContentAsString();
+        logger.info("testGetBalances resp : " + response);
+        
+        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+        List<Map<String, Object>> outputs0 = (List<Map<String, Object>>) data.get("outputs");
+        List<UTXO> outputs = new ArrayList<UTXO>();
+        for (Map<String, Object> map : outputs0) {
+            UTXO utxo = MapToBeanMapperUtil.parseUTXO(map);
+            outputs.add(utxo);
+        }
+        
+        System.out.println(outputs.get(0).getValue());
+    }
+
+    public ECKey createWalletAndAddCoin() throws Exception, PrunedException {
         ECKey outKey = new ECKey();
         Block rollingBlock = this.getRollingBlock(outKey);
         
@@ -162,11 +208,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         
         System.out.println(wallet.getBalance(Wallet.BalanceType.AVAILABLE));
         System.out.println(wallet.getBalance(Wallet.BalanceType.ESTIMATED));
-        
-        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name()).content(toKey.getPubKeyHash());
-        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
-        String data = mvcResult.getResponse().getContentAsString();
-        logger.info("testGetBalances resp : " + data);
+        return toKey;
     }
     
     @Autowired

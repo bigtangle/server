@@ -44,24 +44,32 @@ public class DispatcherController {
             ReqCmd reqCmd0000  = ReqCmd.valueOf(reqCmd);
             switch (reqCmd0000) {
             case getBalances: {
-                    List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
-                    pubKeyHashs.add(bodyByte);
-                    AbstractResponse response =  walletService.getAccountBalanceInfo(pubKeyHashs);
-                    this.outPrintJSONString(httpServletResponse, response);
-                }
-                break;
+                List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
+                pubKeyHashs.add(bodyByte);
+                AbstractResponse response = walletService.getAccountBalanceInfo(pubKeyHashs);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+            break;
 
             case askTransaction: {
-                    byte[] data = transactionService.askTransaction().array();
-                    this.outPointBinaryArray(httpServletResponse, data);
-                }
-                break;
+                byte[] data = transactionService.askTransaction().array();
+                this.outPointBinaryArray(httpServletResponse, data);
+            }
+            break;
 
             case saveBlock: {
-                   blockService.saveBinaryArrayToBlock(bodyByte);
-                    this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
-                }
-                break;
+                blockService.saveBinaryArrayToBlock(bodyByte);
+                this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
+            }
+            break;
+            
+            case getOutputs: {
+                List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
+                pubKeyHashs.add(bodyByte);
+                AbstractResponse response = walletService.getAccountOutputs(pubKeyHashs);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+            break;
             }
         } catch (Exception exception) {
             logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, Utils.HEX.encode(bodyByte), exception);

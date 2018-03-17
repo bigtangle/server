@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 
 import com.bignetcoin.server.response.AbstractResponse;
 import com.bignetcoin.server.response.GetBalancesResponse;
+import com.bignetcoin.server.response.GetOutputsResponse;
 import com.bignetcoin.server.transaction.FreeStandingTransactionOutput;
 import com.google.common.collect.Lists;
  
@@ -44,7 +45,6 @@ public class WalletService {
             FreeStandingTransactionOutput freeStandingTransactionOutput = (FreeStandingTransactionOutput) transactionOutput;
             outputs.add(freeStandingTransactionOutput.getUTXO());
         }
-
         HashMap<Long, Coin> tokens = new HashMap<Long, Coin>();
         long[] tokenIds = { NetworkParameters.BIGNETCOIN_TOKENID };
         for (long tokenid : tokenIds) {
@@ -127,5 +127,15 @@ public class WalletService {
 
     public Coin getRealBalance(List<byte[]> pubKeyHashs) {
         return Coin.ZERO;
+    }
+
+    public AbstractResponse getAccountOutputs(List<byte[]> pubKeyHashs) {
+        List<UTXO> outputs = new ArrayList<UTXO>();
+        List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs, true);
+        for (TransactionOutput transactionOutput : transactionOutputs) {
+            FreeStandingTransactionOutput freeStandingTransactionOutput = (FreeStandingTransactionOutput) transactionOutput;
+            outputs.add(freeStandingTransactionOutput.getUTXO());
+        }
+        return GetOutputsResponse.create(outputs);
     }
 }

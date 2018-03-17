@@ -5,18 +5,20 @@
 
 package org.bitcoinj.wallet;
  
-import static com.google.common.base.Preconditions.checkState;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.InsufficientMoneyException;
+import org.bitcoinj.core.Json;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
-import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.core.UTXO;
+import org.bitcoinj.utils.MapToBeanMapperUtil;
+import org.bitcoinj.utils.OkHttp3Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
  
@@ -28,12 +30,27 @@ public class WalletWrapper extends Wallet {
 
     private static final Logger log = LoggerFactory.getLogger(WalletWrapper.class);  
     
+    @SuppressWarnings("unchecked")
     @Override
     public List<TransactionOutput> calculateAllSpendCandidates() {
         lock.lock();
         try {
+            ECKey toKey = this.currentReceiveKey();
+            String response = OkHttp3Util.post("http://localhost:14265/getOutputs", toKey.getPubKeyHash());
+            final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+            List<UTXO> outputs = new ArrayList<UTXO>();
+            for (Map<String, Object> map : (List<Map<String, Object>>) data.get("outputs")) {
+                UTXO utxo = MapToBeanMapperUtil.parseUTXO(map);
+                outputs.add(utxo);
+            }
             List<TransactionOutput> candidates = new ArrayList<TransactionOutput>();
+            for (UTXO output : outputs) {
+                candidates.add(new FreeStandingTransactionOutput(this.params, output, 0)); // TODO jiang unkown
+            }
             return candidates;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<TransactionOutput>();
         } finally {
             lock.unlock();
         }

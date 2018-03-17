@@ -120,6 +120,10 @@ public class UTXO {
     public Script getScript() {
         return script;
     }
+    
+    public String getScriptHex() {
+        return Utils.HEX.encode(this.script.getProgram());
+    }
 
     /** The hash of the transaction which holds this output. */
     @Transient

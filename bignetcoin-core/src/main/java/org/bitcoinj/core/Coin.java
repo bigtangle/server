@@ -309,9 +309,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
             return false;
         return true;
     }
-
-  
-
+    
     @Override
     public int compareTo(final Coin other) {
         return Longs.compare(this.value, other.value);
