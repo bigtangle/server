@@ -144,4 +144,90 @@ public class BlockService {
 		FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
 		blockgraph.add(block);
 	}
+
+	/**
+	 * Adds the specified block and all approved blocks to the milestone. This will
+	 * connect all transactions of the block by marking used UTXOs spent and adding
+	 * new UTXOs to the db.
+	 * 
+	 * @param blockEvaluation
+	 * @throws BlockStoreException
+	 */
+	public void connect(BlockEvaluation blockEvaluation) throws BlockStoreException {
+		Block block = getBlock(blockEvaluation.getBlockhash());
+
+		// If already connected, return
+		if (blockEvaluation.isMilestone())
+			return;
+
+		// Set milestone true and update latestMilestoneUpdateTime first to stop
+		// infinite recursions
+		updateMilestone(blockEvaluation, true);
+
+		// Connect all approved blocks first (not actually needed)
+		connect(getBlockEvaluation(block.getPrevBlockHash()));
+		connect(getBlockEvaluation(block.getPrevBranchBlockHash()));
+
+		// What should happen: Connect all transactions in block
+		// for (Transaction tx : block.getTransactions()) {
+		// // Mark all outputs used by tx input as spent
+		// for (TransactionInput txin : tx.getInputs()) {
+		// TransactionOutput connectedOutput = txin.getConnectedOutput();
+		// transactionService.updateTransactionOutputSpent(connectedOutput, true);
+		// }
+		//
+		// // Add all tx outputs as new open outputs
+		// for (TransactionOutput txout : tx.getOutputs()) {
+		// transactionService.addTransactionOutput(txout);
+		// }
+		// }
+
+		// TODO call fullprunedblockgraph.connect()
+		//blockGraph.connectTransactions(blockEvaluation.getHeight(), block);
+	}
+
+	/**
+	 * Removes the specified block and all its output spenders and approvers from
+	 * the milestone. This will disconnect all transactions of the block by marking
+	 * used UTXOs unspent and removing UTXOs of the block from the db.
+	 * 
+	 * @param blockEvaluation
+	 * @throws BlockStoreException
+	 */
+	public void disconnect(BlockEvaluation blockEvaluation) throws BlockStoreException {
+		Block block = getBlock(blockEvaluation.getBlockhash());
+
+		// If already disconnected, return
+		if (blockEvaluation.isMilestone())
+			return;
+
+		// Set milestone false and update latestMilestoneUpdateTime to stop infinite
+		// recursions
+		updateMilestone(blockEvaluation, false);
+
+		// Disconnect all approver blocks first
+		for (StoredBlock approver : getApproverBlocks(blockEvaluation.getBlockhash())) {
+			disconnect(getBlockEvaluation(approver.getHeader().getHash()));
+		}
+
+		// What should happen: Disconnect all transactions in block
+		// for (Transaction tx : block.getTransactions()) {
+		// // Mark all outputs used by tx input as unspent
+		// for (TransactionInput txin : tx.getInputs()) {
+		// TransactionOutput connectedOutput = txin.getConnectedOutput();
+		// transactionService.updateTransactionOutputSpent(connectedOutput, false);
+		// }
+		//
+		// // Remove tx outputs from output db and disconnect spending txs
+		// for (TransactionOutput txout : tx.getOutputs()) {
+		// if (transactionService.getTransactionOutputSpent(txout)) {
+		// disconnect(transactionService.getTransactionOutputSpender(txout));
+		// }
+		// transactionService.removeTransactionOutput(txout);
+		// }
+		// }
+
+		// TODO call fullprunedblockgraph.disconnect() and add above logic to it
+		//blockGraph.disconnectTransactions(blockEvaluation.getHeight(), block);
+	}
 }
