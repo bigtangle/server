@@ -13,6 +13,7 @@ import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.StoredUndoableBlock;
+import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.UTXOProvider;
 
@@ -224,4 +225,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 	public void deleteTip(Sha256Hash blockhash) throws BlockStoreException;
 
 	public void insertTip(Sha256Hash blockhash) throws BlockStoreException;
+
+	public BlockEvaluation getTransactionOutputSpender(TransactionOutPoint txout) throws BlockStoreException;
 }

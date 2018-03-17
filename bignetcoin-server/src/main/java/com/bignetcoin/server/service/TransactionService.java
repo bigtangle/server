@@ -22,6 +22,7 @@ import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.Utils;
+import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.wallet.CoinSelector;
 import org.bitcoinj.wallet.DefaultCoinSelector;
@@ -100,7 +101,7 @@ public class TransactionService {
         return tipsManager.blockToApprove(networkParameters.getGenesisBlock().getHash(), null, 27, 27, random);
     }
 
-	public void addUTXO(TransactionOutput out) {
+	public void addUTXO(TransactionOutput out)  throws BlockStoreException{
 		// TODO add UTXO to output db 
 //        Script script = getScript(out.getScriptBytes());
 //        UTXO newOut = new UTXO(out.getParentTransactionHash(),
@@ -123,17 +124,27 @@ public class TransactionService {
 	}
 
 	public boolean getUTXOSpent(TransactionOutPoint txout) {
-		// TODO return 'spent' field of UTXO in output db
-		return false;
+		try {
+			return store.getTransactionOutput(txout.getHash(), txout.getIndex()).isSpent();
+		} catch (BlockStoreException e) {
+			e.printStackTrace();
+		}
+		return true;
 	}
 
 	public BlockEvaluation getUTXOSpender(TransactionOutPoint txout) {
-		// TODO return the block that spent this txout or null if it is not found
+		try {
+			return store.getTransactionOutputSpender(txout);
+		} catch (BlockStoreException e) {
+			e.printStackTrace();
+		}
 		return null;
 	}
 
-	public UTXO getUTXO(TransactionOutPoint out) {
+	public UTXO getUTXO(TransactionOutPoint out) throws BlockStoreException {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	//TODO copy connectTx and disconnectTx here, put connectBlock disconnectBlock in blockService
 }
