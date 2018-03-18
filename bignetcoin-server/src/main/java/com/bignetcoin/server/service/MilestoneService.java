@@ -389,11 +389,11 @@ public class MilestoneService {
 			blockService.disconnect(b);
 		}
 
-		// For candidates that have been eliminated (blockEvaluationsToAdd \
+		// For candidates that have been eliminated (conflictingOutPoints in blocksToAdd \
 		// winningBlocks) remove them from blocksToAdd
-		for (BlockEvaluation b : blockEvaluationsToAdd.stream().filter(b -> !winningBlocks.contains(b))
+		for (Pair<BlockEvaluation, TransactionOutPoint> b : conflictingOutPoints.stream().filter(b -> blockEvaluationsToAdd.contains(b.getLeft()) && !winningBlocks.contains(b.getLeft()))
 				.collect(Collectors.toList())) {
-			blockEvaluationsToAdd.remove(b);
+			blockEvaluationsToAdd.remove(b.getLeft());
 		}
 	}
 

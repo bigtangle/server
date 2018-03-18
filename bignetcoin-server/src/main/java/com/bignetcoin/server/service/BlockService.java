@@ -17,6 +17,7 @@ import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.FullPrunedBlockGraph;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.PrunedException;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.store.BlockStoreException;
@@ -45,7 +46,7 @@ public class BlockService {
 	BlockGraphService blockGraphService;
 	
 	public Block getBlock(Sha256Hash blockhash) throws BlockStoreException {
-		// Genesis Block is hardcoded is not saved in database
+		// TODO Genesis Block is not in store for now
 		if (networkParameters.getGenesisBlock().getHash().equals(blockhash))
 			return networkParameters.getGenesisBlock();
 		return store.get(blockhash).getHeader();
@@ -156,38 +157,9 @@ public class BlockService {
 	 * @throws BlockStoreException
 	 */
 	public void connect(BlockEvaluation blockEvaluation ) throws BlockStoreException {
-		Block block = getBlock(blockEvaluation.getBlockhash());
-
-		// If already connected, return
-		if (blockEvaluation.isMilestone())
-			return;
-
-		// Set milestone true and update latestMilestoneUpdateTime first to stop
-		// infinite recursions
-		updateMilestone(blockEvaluation, true);
-
-		// Connect all approved blocks first (not actually needed)
-		connect(getBlockEvaluation(block.getPrevBlockHash()));
-		connect(getBlockEvaluation(block.getPrevBranchBlockHash()));
-
-		// What should happen: Connect all transactions in block
-		// for (Transaction tx : block.getTransactions()) {
-		// // Mark all outputs used by tx input as spent
-		// for (TransactionInput txin : tx.getInputs()) {
-		// TransactionOutput connectedOutput = txin.getConnectedOutput();
-		// transactionService.updateTransactionOutputSpent(connectedOutput, true);
-		// }
-		//
-		// // Add all tx outputs as new open outputs
-		// for (TransactionOutput txout : tx.getOutputs()) {
-		// transactionService.addTransactionOutput(txout);
-		// }
-		// }
-
-		// TODO call fullprunedblockgraph.connect()
-		blockGraphService.connectTransactions(blockEvaluation.getHeight(), block);
+		blockGraphService.connectBlock(blockEvaluation);
 	}
-
+	
 	/**
 	 * Removes the specified block and all its output spenders and approvers from
 	 * the milestone. This will disconnect all transactions of the block by marking
@@ -197,39 +169,6 @@ public class BlockService {
 	 * @throws BlockStoreException
 	 */
 	public void disconnect(BlockEvaluation blockEvaluation) throws BlockStoreException {
-		Block block = getBlock(blockEvaluation.getBlockhash());
-
-		// If already disconnected, return
-		if (!blockEvaluation.isMilestone())
-			return;
-
-		// Set milestone false and update latestMilestoneUpdateTime to stop infinite
-		// recursions
-		updateMilestone(blockEvaluation, false);
-
-		// Disconnect all approver blocks first
-		for (StoredBlock approver : getApproverBlocks(blockEvaluation.getBlockhash())) {
-			disconnect(getBlockEvaluation(approver.getHeader().getHash()));
-		}
-
-		// What should happen: Disconnect all transactions in block
-		// for (Transaction tx : block.getTransactions()) {
-		// // Mark all outputs used by tx input as unspent
-		// for (TransactionInput txin : tx.getInputs()) {
-		// TransactionOutput connectedOutput = txin.getConnectedOutput();
-		// transactionService.updateTransactionOutputSpent(connectedOutput, false);
-		// }
-		//
-		// // Remove tx outputs from output db and disconnect spending txs
-		// for (TransactionOutput txout : tx.getOutputs()) {
-		// if (transactionService.getTransactionOutputSpent(txout)) {
-		// disconnect(transactionService.getTransactionOutputSpender(txout));
-		// }
-		// transactionService.removeTransactionOutput(txout);
-		// }
-		// }
-
-		// TODO call fullprunedblockgraph.disconnect() and add above logic to it
-		//blockGraphService.disconnectTransactions(blockEvaluation.getHeight(), block);
+		blockGraphService.disconnectBlock(blockEvaluation);
 	}
 }

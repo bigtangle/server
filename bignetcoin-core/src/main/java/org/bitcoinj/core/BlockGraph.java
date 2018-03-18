@@ -122,14 +122,14 @@ public class BlockGraph extends AbstractBlockGraph {
         throw new UnsupportedOperationException();
     }
 
-    @Override
-    protected TransactionOutputChanges connectTransactions(StoredBlock newBlock) {
-        // Don't have to do anything as this is only called if(shouldVerifyTransactions())
-        throw new UnsupportedOperationException();
-    }
+//    @Override
+//    protected TransactionOutputChanges connectTransactions(StoredBlock newBlock) {
+//        // Don't have to do anything as this is only called if(shouldVerifyTransactions())
+//        throw new UnsupportedOperationException();
+//    }
 
     @Override
-    protected void disconnectTransactions(StoredBlock block) {
+    protected void disconnectTransactions(Block block) {
         // Don't have to do anything as this is only called if(shouldVerifyTransactions())
         throw new UnsupportedOperationException();
     }

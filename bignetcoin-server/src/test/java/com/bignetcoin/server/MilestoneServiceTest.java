@@ -57,6 +57,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         BlockEvaluation genesisEvaluation = blockService.getBlockEvaluation(PARAMS.getGenesisBlock().getHash());
         blockService.updateMilestone(genesisEvaluation, true);
         blockService.updateSolid(genesisEvaluation, true);
+        //TODO connectTransactions of genesisblock too 
     	
         Block b0 = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
                 outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());

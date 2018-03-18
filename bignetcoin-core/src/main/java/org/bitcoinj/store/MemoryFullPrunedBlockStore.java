@@ -246,7 +246,6 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     }
     private TransactionalHashMap<Sha256Hash, StoredBlockAndWasUndoableFlag> blockMap;
     private TransactionalMultiKeyHashMap<Sha256Hash, Integer, StoredUndoableBlock> fullBlockMap;
-    //TODO: Use something more suited to remove-heavy use?
     private TransactionalHashMap<StoredTransactionOutPoint, UTXO> transactionOutputMap;
     private StoredBlock chainHead;
     private StoredBlock verifiedChainHead;
@@ -367,12 +366,12 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
         transactionOutputMap.put(new StoredTransactionOutPoint(out), out);
     }
 
-    @Override
-    public synchronized void removeUnspentTransactionOutput(UTXO out) throws BlockStoreException {
-        Preconditions.checkNotNull(transactionOutputMap, "MemoryFullPrunedBlockStore is closed");
-        if (transactionOutputMap.remove(new StoredTransactionOutPoint(out)) == null)
-            throw new BlockStoreException("Tried to remove a UTXO from MemoryFullPrunedBlockStore that it didn't have!");
-    }
+//    @Override
+//    public synchronized void removeUnspentTransactionOutput(UTXO out) throws BlockStoreException {
+//        Preconditions.checkNotNull(transactionOutputMap, "MemoryFullPrunedBlockStore is closed");
+//        if (transactionOutputMap.remove(new StoredTransactionOutPoint(out)) == null)
+//            throw new BlockStoreException("Tried to remove a UTXO from MemoryFullPrunedBlockStore that it didn't have!");
+//    }
 
     @Override
     public synchronized void beginDatabaseBatchWrite() throws BlockStoreException {
@@ -524,7 +523,22 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
 	}
 
 	@Override
-	public BlockEvaluation getTransactionOutputSpender(TransactionOutPoint txout) throws BlockStoreException {
+	public void removeUnspentTransactionOutput(Sha256Hash prevTxHash, long index) throws BlockStoreException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public BlockEvaluation getTransactionOutputSpender(Sha256Hash prevBlockHash, long index)
+			throws BlockStoreException {
+		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, long index, boolean b)
+			throws BlockStoreException {
+		// TODO Auto-generated method stub
+		
 	}
 }

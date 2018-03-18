@@ -101,30 +101,6 @@ public class TransactionService {
         return tipsManager.blockToApprove(networkParameters.getGenesisBlock().getHash(), null, 27, 27, random);
     }
 
-	public void addUTXO(TransactionOutput out)  throws BlockStoreException{
-		// TODO add UTXO to output db 
-//        Script script = getScript(out.getScriptBytes());
-//        UTXO newOut = new UTXO(out.getParentTransactionHash(),
-//                out.getIndex(),
-//                out.getValue(),
-//                0, false,
-//                script,
-//                getScriptAddress(script), out.getHash(), out.getFromaddress(),out.getDescription(), block.getTokenid() ,true);
-//		store.addUnspentTransactionOutput(out);
-	}
-
-	public void updateUTXOSpent(TransactionOutPoint txout, boolean b) {
-		// TODO set 'spent' field of UTXO in output db
-		//store.updateTransactionOutputSpent(txout, b);
-	}
-    // TODO verify transaction: add valuein valueout equal zero
-    // TODO Add tipsvalidator
-
-	public void removeUTXO(TransactionOutPoint txout) {
-		// TODO remove UTXO from output db 
-		//store.removeUnspentTransactionOutput(txout);;
-	}
-
 	public boolean getUTXOSpent(TransactionInput txinput) {
 		try {
 			if (txinput.isCoinBase())
@@ -138,7 +114,7 @@ public class TransactionService {
 
 	public BlockEvaluation getUTXOSpender(TransactionOutPoint txout) {
 		try {
-			return blockStore.getTransactionOutputSpender(txout);
+			return blockStore.getTransactionOutputSpender(txout.getHash(), txout.getIndex());
 		} catch (BlockStoreException e) {
 			e.printStackTrace();
 		}

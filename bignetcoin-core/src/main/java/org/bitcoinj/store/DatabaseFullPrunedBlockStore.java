@@ -229,6 +229,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	private static final String INSERT_OUTPUTS_SQL = "INSERT INTO outputs (hash, `index`, height, value, scriptbytes, toaddress, addresstargetable, coinbase, blockhash,tokenid,fromaddress, description, spent) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?,?)";
 	private static final String SELECT_OUTPUTS_SQL = "SELECT height, value, scriptbytes, coinbase, toaddress, addresstargetable,blockhash,tokenid,fromaddress, description,spent FROM outputs WHERE hash = ? AND `index` = ?";
 	private static final String DELETE_OUTPUTS_SQL = "DELETE FROM outputs WHERE hash = ? AND `index`= ?";
+	private static final String UPDATE_OUTPUTS_SPENT_SQL = "UPDATE outputs SET spent = ? WHERE hash = ? AND `index`= ?";
 
 	private static final String SELECT_TRANSACTION_OUTPUTS_SQL = "SELECT hash, value, scriptbytes, height, `index`, coinbase, toaddress, addresstargetable, blockhash,tokenid,fromaddress, description,spent FROM outputs where toaddress = ?";
 
@@ -266,11 +267,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	private static final String UPDATE_BLOCKEVALUATION_RATING_SQL = "UPDATE blockevaluation SET rating = ? WHERE blockhash = ?";
 	private static final String UPDATE_BLOCKEVALUATION_SOLID_SQL = "UPDATE blockevaluation SET solid = ? WHERE blockhash = ?";
 	
-	private static final String SELECT_NONSOLID_BLOCKS = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate FROM blockevaluation WHERE solid = 0";
-	private static final String SELECT_BLOCKS_TO_ADD_TO_MILESTONE = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate FROM blockevaluation WHERE solid = 1 AND milestone = 0 AND rating >= 75 AND depth > ?";
-	private static final String SELECT_BLOCKS_TO_REMOVE_FROM_MILESTONE = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate FROM blockevaluation WHERE solid = 1 AND milestone = 1 AND rating <= 50";
-	private static final String SELECT_SOLID_TIPS = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate FROM blockevaluation INNER JOIN tips ON tips.hash=blockevaluation.blockhash WHERE solid = 1";
-	private static final String SELECT_SOLID_BLOCKS_OF_HEIGHT = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate FROM blockevaluation WHERE solid = 1 && height = ?";
+	private static final String SELECT_NONSOLID_BLOCKS_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate FROM blockevaluation WHERE solid = 0";
+	private static final String SELECT_BLOCKS_TO_ADD_TO_MILESTONE_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate FROM blockevaluation WHERE solid = 1 AND milestone = 0 AND rating >= 75 AND depth >= ?";
+	private static final String SELECT_BLOCKS_TO_REMOVE_FROM_MILESTONE_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate FROM blockevaluation WHERE solid = 1 AND milestone = 1 AND rating <= 50";
+	private static final String SELECT_SOLID_TIPS_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate FROM blockevaluation INNER JOIN tips ON tips.hash=blockevaluation.blockhash WHERE solid = 1";
+	private static final String SELECT_SOLID_BLOCKS_OF_HEIGHT_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate FROM blockevaluation WHERE solid = 1 && height = ?";
+
+	private static final String SELECT_OUTPUT_SPENDER_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate FROM blockevaluation INNER JOIN outputs ON outputs.blockhash=blockevaluation.blockhash WHERE solid = 1";
 
 	protected Sha256Hash chainHeadHash;
 	protected StoredBlock chainHeadBlock;
@@ -1223,17 +1226,16 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	}
 
 	@Override
-	public void removeUnspentTransactionOutput(UTXO out) throws BlockStoreException {
+	public void removeUnspentTransactionOutput(Sha256Hash prevTxHash, long index) throws BlockStoreException {
 		maybeConnect();
-		// TODO: This should only need one query (maybe a stored procedure)
-		if (getTransactionOutput(out.getHash(), out.getIndex()) == null)
+		if (getTransactionOutput(prevTxHash, index) == null)
 			throw new BlockStoreException(
 					"Tried to remove a UTXO from DatabaseFullPrunedBlockStore that it didn't have!");
 		try {
 			PreparedStatement s = conn.get().prepareStatement(getDeleteOpenoutputsSQL());
-			s.setBytes(1, out.getHash().getBytes());
+			s.setBytes(1, prevTxHash.getBytes());
 			// index is actually an unsigned int
-			s.setInt(2, (int) out.getIndex());
+			s.setInt(2, (int) index);
 			s.executeUpdate();
 			s.close();
 		} catch (SQLException e) {
@@ -1459,7 +1461,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	/**
 	 * Dumps information about the size of actual data in the database to standard
 	 * output The only truly useless data counted is printed in the form "N in id
-	 * indexes" This does not take database indexes into account. TODO correct
+	 * indexes" This does not take database indexes into account. 
 	 */
 	public void dumpSizes() throws SQLException, BlockStoreException {
 		maybeConnect();
@@ -1641,7 +1643,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
 		try {
-			preparedStatement = conn.get().prepareStatement(SELECT_NONSOLID_BLOCKS);
+			preparedStatement = conn.get().prepareStatement(SELECT_NONSOLID_BLOCKS_SQL);
 			ResultSet resultSet = preparedStatement.executeQuery();
 			while (resultSet.next()) {
 				storedBlockHashes.add(Sha256Hash.wrap(resultSet.getBytes(1)));
@@ -1666,7 +1668,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
 		try {
-			preparedStatement = conn.get().prepareStatement(SELECT_BLOCKS_TO_ADD_TO_MILESTONE);
+			preparedStatement = conn.get().prepareStatement(SELECT_BLOCKS_TO_ADD_TO_MILESTONE_SQL);
 			preparedStatement.setLong(1, minDepth);
 			ResultSet resultSet = preparedStatement.executeQuery();
 			while (resultSet.next()) {
@@ -1695,7 +1697,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
 		try {
-			preparedStatement = conn.get().prepareStatement(SELECT_BLOCKS_TO_REMOVE_FROM_MILESTONE);
+			preparedStatement = conn.get().prepareStatement(SELECT_BLOCKS_TO_REMOVE_FROM_MILESTONE_SQL);
 			ResultSet resultSet = preparedStatement.executeQuery();
 			while (resultSet.next()) {
 				BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)), 
@@ -1723,7 +1725,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
 		try {
-			preparedStatement = conn.get().prepareStatement(SELECT_SOLID_TIPS);
+			preparedStatement = conn.get().prepareStatement(SELECT_SOLID_TIPS_SQL);
 			ResultSet resultSet = preparedStatement.executeQuery();
 			while (resultSet.next()) {
 				BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)), 
@@ -1751,7 +1753,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
 		try {
-			preparedStatement = conn.get().prepareStatement(SELECT_SOLID_BLOCKS_OF_HEIGHT);
+			preparedStatement = conn.get().prepareStatement(SELECT_SOLID_BLOCKS_OF_HEIGHT_SQL);
 			preparedStatement.setLong(1, currentHeight);
 			ResultSet resultSet = preparedStatement.executeQuery();
 			while (resultSet.next()) {
@@ -1997,8 +1999,58 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	}
 	
 	@Override
-	public BlockEvaluation getTransactionOutputSpender(TransactionOutPoint txout) throws BlockStoreException {
-		// TODO Auto-generated method stub
-		return null;
+	public BlockEvaluation getTransactionOutputSpender(Sha256Hash prevTxHash, long index) throws BlockStoreException {
+		PreparedStatement preparedStatement = null;
+		try {
+			preparedStatement = conn.get().prepareStatement(SELECT_OUTPUT_SPENDER_SQL);
+			preparedStatement.setBytes(1, prevTxHash.getBytes());
+			preparedStatement.setLong(2, index);
+			
+			ResultSet resultSet = preparedStatement.executeQuery();
+			if (!resultSet.next()) {
+				return null;
+			}
+			BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)), 
+					resultSet.getLong(2), resultSet.getLong(3), resultSet.getLong(4), resultSet.getBoolean(5), 
+					resultSet.getLong(6), resultSet.getBoolean(7), resultSet.getLong(8));
+			return blockEvaluation;
+		} catch (SQLException e) {
+			throw new BlockStoreException(e);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
+	}
+	
+	@Override
+	public void updateTransactionOutputSpent(Sha256Hash prevTxHash, long index, boolean b) throws BlockStoreException {
+		UTXO prev = this.getTransactionOutput(prevTxHash, index);
+		if (prev == null) {
+			throw new BlockStoreException("Could not find UTXO to update");
+		}
+		PreparedStatement preparedStatement = null;
+		try {
+			preparedStatement = conn.get().prepareStatement(UPDATE_OUTPUTS_SPENT_SQL);
+			preparedStatement.setBoolean(1, b);
+			preparedStatement.setBytes(2, prevTxHash.getBytes());
+			preparedStatement.setLong(3, index);
+			preparedStatement.executeUpdate();
+		} catch (SQLException e) {
+			throw new BlockStoreException(e);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
+		
 	}
 }

@@ -123,7 +123,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
      *             if there is an underlying storage issue, or out was not in
      *             the list.
      */
-    void removeUnspentTransactionOutput(UTXO out) throws BlockStoreException;
+    void removeUnspentTransactionOutput(Sha256Hash prevTxHash, long index) throws BlockStoreException;
 
     /**
      * True if this store has any unspent outputs from a transaction with a hash
@@ -226,5 +226,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
 	public void insertTip(Sha256Hash blockhash) throws BlockStoreException;
 
-	public BlockEvaluation getTransactionOutputSpender(TransactionOutPoint txout) throws BlockStoreException;
+	public BlockEvaluation getTransactionOutputSpender(Sha256Hash prevBlockHash, long index) throws BlockStoreException;
+
+	public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, long index, boolean b) throws BlockStoreException;
 }

@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
+import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.BlockForTest;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
@@ -25,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.bignetcoin.server.service.BlockService;
 import com.bignetcoin.server.service.MilestoneService;
 import com.bignetcoin.server.service.WalletService;
 import com.google.common.collect.Lists;
@@ -41,6 +43,9 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
     @Autowired
     private MilestoneService milestoneService;
 
+    @Autowired
+    private BlockService blockService;
+
     @Test
     public void getBalance() throws Exception {
         // Check that we aren't accidentally leaving any references
@@ -48,6 +53,12 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         ECKey outKey = new ECKey();
         int height = 1;
         log.debug(outKey.getPublicKeyAsHex());
+
+        // Add genesis block
+        blockgraph.add(PARAMS.getGenesisBlock());
+        BlockEvaluation genesisEvaluation = blockService.getBlockEvaluation(PARAMS.getGenesisBlock().getHash());
+        blockService.updateMilestone(genesisEvaluation, true);
+        blockService.updateSolid(genesisEvaluation, true);
 
         // Build some blocks on genesis block to create a spendable output
         Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(),
@@ -77,7 +88,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         blockgraph.add(rollingBlock);
         totalAmount = totalAmount.add(amount);
 
-        milestoneService.update(); // TODO
+        milestoneService.update(); //ADDED
         List<UTXO> outputs = store.getOpenTransactionOutputs(Lists.newArrayList(address));
         assertNotNull(outputs);
         assertEquals("Wrong Number of Outputs", 1, outputs.size());
