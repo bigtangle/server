@@ -138,8 +138,6 @@ public abstract class AbstractBlockGraph {
     public AbstractBlockGraph(Context context, List<? extends Wallet> wallets,
                               BlockStore blockStore) throws BlockStoreException {
         this.blockStore = blockStore;
-        chainHead = blockStore.getChainHead();
-        log.info("chain head is at height {}:\n{}", chainHead.getHeight(), chainHead.getHeader().getHash());
         this.params = context.getParams();
 
         this.newBestBlockListeners = new CopyOnWriteArrayList<ListenerRegistration<NewBestBlockListener>>();
@@ -150,7 +148,7 @@ public abstract class AbstractBlockGraph {
         for (TransactionReceivedInBlockListener l : wallets) addTransactionReceivedListener(Threading.SAME_THREAD, l);
 
         this.versionTally = new VersionTally(context.getParams());
-        this.versionTally.initialize(blockStore, chainHead);
+        //this.versionTally.initialize(blockStore, chainHead);
     }
 
     /**

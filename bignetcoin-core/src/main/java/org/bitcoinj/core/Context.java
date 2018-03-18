@@ -137,7 +137,8 @@ public class Context {
             context = new Context(params);
             return context;
         }
-        if (context.getParams() != params)
+        //FIXME cui is check single intsance correct?
+        if (context.getParams().getId() != params.getId())
             throw new IllegalStateException("Context does not match implicit network params: " + context.getParams() + " vs " + params);
         return context;
     }
