@@ -110,43 +110,32 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         // Build some blocks on genesis block to create a spendable output.
         Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,networkParameters.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock);
-        Transaction transaction = rollingBlock.getTransactions().get(0);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
-        byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
         for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock,Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,networkParameters.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
         }
-        // update block update
+        // cal block update
         milestoneService.update();
-      //  rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock,null,networkParameters.getGenesisBlock().getHash());
+        rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock,Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,networkParameters.getGenesisBlock().getHash());
 
-        // Create 1 BTC spend to a key in this wallet (to ourselves).
         WalletWrapper wallet = new WalletWrapper(networkParameters, contextRoot);
-        assertEquals("Available balance is incorrect", Coin.ZERO, wallet.getBalance(Wallet.BalanceType.AVAILABLE));
-        assertEquals("Estimated balance is incorrect", Coin.ZERO, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        logger.info("AVAILABLE : " + wallet.getBalance(Wallet.BalanceType.AVAILABLE) + "ESTIMATED : " + wallet.getBalance(Wallet.BalanceType.ESTIMATED));
 
         wallet.setUTXOProvider(store);
-        ECKey toKey = wallet.freshReceiveKey();
         Coin amount = Coin.valueOf(1000, NetworkParameters.BIGNETCOIN_TOKENID);
 
-        Transaction t = new Transaction(networkParameters);
-        t.addOutput(new TransactionOutput(networkParameters, t, amount, toKey));
-        t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
-        
-        rollingBlock.addTransaction(t);
+        ECKey toKey = new ECKey();
+        Address address = new Address(networkParameters, toKey.getPubKeyHash());
+        SendRequest request = SendRequest.to(address, amount);
+        wallet.completeTx(request);
+
+        rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
         blockgraph.add(rollingBlock);
-
-        // Create another spend of 1/2 the value of BTC we have available using the wallet (store coin selector).
-        ECKey toKey2 = new ECKey();
-        Coin amount2 = amount.divide(2);
-        Address address2 = new Address(networkParameters, toKey2.getPubKeyHash());
-        SendRequest req = SendRequest.to(address2, amount2);
-        wallet.completeTx(req);
-//        wallet.commitTx(req.tx);
         
-        
+        // cal block update
+        milestoneService.update();
+        logger.info("AVAILABLE : " + wallet.getBalance(Wallet.BalanceType.AVAILABLE) + "ESTIMATED : " + wallet.getBalance(Wallet.BalanceType.ESTIMATED));
     }
     
     @Test
