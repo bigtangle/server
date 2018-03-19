@@ -46,13 +46,23 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class APIIntegrationTests extends AbstractIntegrationTest {
 
     private int height = 1;
+    
+    @Test
+    public void createECKey() {
+        ECKey ecKey = new ECKey();
+        logger.info("pubKey : " + Utils.HEX.encode(ecKey.getPubKey()));
+        logger.info("pubKeyHash : " + Utils.HEX.encode(ecKey.getPubKeyHash()));
+        //pubKey = 032f46420523938d355d1a539e849cf2903a314dce13c32562c0dec456757c9dce
+        ECKey toKey =ECKey.fromPublicOnly(ecKey.getPubKey());
+        logger.info("pubKey : " + Utils.HEX.encode(ecKey.getPubKey()));
+        logger.info("pubKeyHash : " + Utils.HEX.encode(toKey.getPubKeyHash()));
+    }
     
 //    @Before
     public Block getRollingBlock(ECKey outKey) throws Exception {
@@ -144,19 +154,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     @Test
     public void testTransactionAndGetBalances() throws Exception {
         ECKey toKey = createWalletAndAddCoin();
-        
         MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name()).content(toKey.getPubKeyHash());
         MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
         String response = mvcResult.getResponse().getContentAsString();
         logger.info("testGetBalances resp : " + response);
-        
-        @SuppressWarnings("unchecked")
-        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-        
-        @SuppressWarnings("unchecked")
-//        List<UTXO> outputs = (List<UTXO>) data.get("outputs");
-        List<UTXO> outputs =
-                Json.jsonmapper().readValue(response, new TypeReference<List<UTXO>>(){});
     }
     
     @SuppressWarnings("unchecked")
