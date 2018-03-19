@@ -34,6 +34,7 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.MapToBeanMapperUtil;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.WalletTransaction;
 import org.bitcoinj.wallet.WalletWrapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -97,36 +98,31 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     
     @Test
     public void testUTXOProviderWithWallet() throws Exception {
-        Context.propagate(new Context(networkParameters));
-        final int UNDOABLE_BLOCKS_STORED = 1000;
-        store = createStore(networkParameters, UNDOABLE_BLOCKS_STORED);
-        blockgraph = new FullPrunedBlockGraph(networkParameters, store);
-
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
         ECKey outKey = new ECKey();
         int height = 1;
 
         // Build some blocks on genesis block to create a spendable output.
-        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height,networkParameters.getGenesisBlock().getHash());
+        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,networkParameters.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock);
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
         byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
-        for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
+        for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock,Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,networkParameters.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
         }
-      //  rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock,null,PARAMS.getGenesisBlock().getHash());
+      //  rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock,null,networkParameters.getGenesisBlock().getHash());
 
         // Create 1 BTC spend to a key in this wallet (to ourselves).
-        WalletWrapper walletWrapper = new WalletWrapper(networkParameters);
-        assertEquals("Available balance is incorrect", Coin.ZERO, walletWrapper.getBalance(Wallet.BalanceType.AVAILABLE));
-        assertEquals("Estimated balance is incorrect", Coin.ZERO, walletWrapper.getBalance(Wallet.BalanceType.ESTIMATED));
+        WalletWrapper wallet = new WalletWrapper(networkParameters);
+        assertEquals("Available balance is incorrect", Coin.ZERO, wallet.getBalance(Wallet.BalanceType.AVAILABLE));
+        assertEquals("Estimated balance is incorrect", Coin.ZERO, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
 
-        walletWrapper.setUTXOProvider(store);
-        ECKey toKey = walletWrapper.freshReceiveKey();
-        Coin amount = Coin.valueOf(1000000, NetworkParameters.BIGNETCOIN_TOKENID);
+        wallet.setUTXOProvider(store);
+        ECKey toKey = wallet.freshReceiveKey();
+        Coin amount = Coin.valueOf(1000, NetworkParameters.BIGNETCOIN_TOKENID);
 
         Transaction t = new Transaction(networkParameters);
         t.addOutput(new TransactionOutput(networkParameters, t, amount, toKey));
@@ -135,20 +131,14 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
         blockgraph.add(rollingBlock);
-        
-        System.out.println(walletWrapper.getBalance(Wallet.BalanceType.AVAILABLE));
-        System.out.println(walletWrapper.getBalance(Wallet.BalanceType.ESTIMATED));
-        
+
+        // Create another spend of 1/2 the value of BTC we have available using the wallet (store coin selector).
         ECKey toKey2 = new ECKey();
         Coin amount2 = amount.divide(2);
-        Address address2 = new Address(PARAMS, toKey2.getPubKeyHash());
+        Address address2 = new Address(networkParameters, toKey2.getPubKeyHash());
         SendRequest req = SendRequest.to(address2, amount2);
-        walletWrapper.completeTx(req);
-        walletWrapper.commitTx(req.tx);
-
-        try {
-            store.close();
-        } catch (Exception e) {}
+        wallet.completeTx(req);
+//        wallet.commitTx(req.tx);
     }
     
     @Test
