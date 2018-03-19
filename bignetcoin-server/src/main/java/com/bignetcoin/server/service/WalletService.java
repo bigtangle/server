@@ -5,9 +5,8 @@
 
 package com.bignetcoin.server.service;
 
- 
+
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -45,14 +44,14 @@ public class WalletService {
             FreeStandingTransactionOutput freeStandingTransactionOutput = (FreeStandingTransactionOutput) transactionOutput;
             outputs.add(freeStandingTransactionOutput.getUTXO());
         }
-        HashMap<Long, Coin> tokens = new HashMap<Long, Coin>();
+        List<Coin> tokens = new ArrayList<Coin>();
         long[] tokenIds = { NetworkParameters.BIGNETCOIN_TOKENID };
         for (long tokenid : tokenIds) {
             List<TransactionOutput> tmpTransactionOutputs = new ArrayList<>(transactionOutputs);
             filter(tmpTransactionOutputs, tokenid);
             CoinSelection selection = coinSelector.select(NetworkParameters.MAX_MONEY, tmpTransactionOutputs);
-            Coin value = selection.valueGathered;
-            tokens.put(tokenid, value);
+            Coin coin = selection.valueGathered;
+            tokens.add(coin);
         }
 //        System.out.println("cal : " + tokens);
         return GetBalancesResponse.create(tokens, outputs);

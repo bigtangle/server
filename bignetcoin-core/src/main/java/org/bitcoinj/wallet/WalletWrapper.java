@@ -34,6 +34,16 @@ public class WalletWrapper extends Wallet {
         this.contextRoot = contextRoot;
     }
     
+    public WalletWrapper(NetworkParameters params, KeyChainGroup group, String contextRoot) {
+        super(params, group);
+        this.contextRoot = contextRoot;
+    }
+    
+
+    public void setContextRoot(String contextRoot) {
+        this.contextRoot = contextRoot;
+    }
+
     private String contextRoot;
 
     private static final Logger log = LoggerFactory.getLogger(WalletWrapper.class);  

@@ -7,10 +7,6 @@ import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 
 public class OkHttp3Util {
-
-    public static String post(String url, String s) throws Exception {
-        return post(url, s.getBytes());
-    }
     
     public static String post(String url, byte[] b) throws Exception {
         OkHttpClient client = new OkHttpClient();
@@ -18,5 +14,13 @@ public class OkHttp3Util {
         Request request = new Request.Builder().url(url).post(body).build();
         Response response = client.newCall(request).execute();
         return response.body().string();
+    }
+    
+    public static byte[] post(String url, String s) throws Exception {
+        OkHttpClient client = new OkHttpClient();
+        RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), s);
+        Request request = new Request.Builder().url(url).post(body).build();
+        Response response = client.newCall(request).execute();
+        return response.body().bytes();
     }
 }

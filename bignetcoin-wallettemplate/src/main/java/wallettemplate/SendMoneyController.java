@@ -17,8 +17,10 @@ package wallettemplate;
 import static com.google.common.base.Preconditions.checkState;
 import static wallettemplate.utils.GuiUtils.checkGuiThread;
 
-import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.bitcoinj.core.Address;
@@ -27,19 +29,20 @@ import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Json;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionOutPoint;
+import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.Utils;
+import org.bitcoinj.utils.MapToBeanMapperUtil;
+import org.bitcoinj.utils.OkHttp3Util;
 import org.bitcoinj.wallet.DecryptingKeyBag;
 import org.bitcoinj.wallet.KeyBag;
+import org.bitcoinj.wallet.KeyChainGroup;
+import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.WalletWrapper;
 import org.spongycastle.crypto.params.KeyParameter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
-import com.squareup.okhttp.Response;
 
 import javafx.event.ActionEvent;
 import javafx.scene.control.Button;
@@ -57,27 +60,32 @@ public class SendMoneyController {
     public TextField amountEdit;
     public Label btcLabel;
 
-    public Main.OverlayUI overlayUI;
+    public Main.OverlayUI<?> overlayUI;
 
     private Wallet.SendResult sendResult;
     private KeyParameter aesKey;
 
-    public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-
     OkHttpClient client = new OkHttpClient();
 
     // Called by FXMLLoader
-    public void initialize() throws JsonProcessingException, IOException {
-
-        String addr = "030d8952f6c079f60cd26eb3ba83cf16a81c51fc8e47b767721fa38b5e20092a75";
-        final Map<String, Object> request = new HashMap<>();
-        request.put("command", "getBalances");
-        request.put("addresses", new String[] { addr });
-        request.put("threshold", 100);
-
-        String response = post("http://localhost:14265", Json.jsonmapper().writeValueAsString(request));
+    @SuppressWarnings({ "unchecked" })
+    public void initialize() throws Exception {
+        ECKey ecKey = new ECKey();
+        String response = OkHttp3Util.post(CONTEXT_ROOT + "getBalances", ecKey.getPubKeyHash());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-
+        List<Map<String, Object>> outputs0 = (List<Map<String, Object>>) data.get("outputs");
+        List<UTXO> outputs = new ArrayList<UTXO>();
+        for (Map<String, Object> map : outputs0) {
+            UTXO utxo = MapToBeanMapperUtil.parseUTXO(map);
+            outputs.add(utxo);
+        }
+        List<Map<String, Object>> tokens0 = (List<Map<String, Object>>) data.get("tokens");
+        List<Coin> tokens = new ArrayList<Coin>();
+        for (Map<String, Object> map : tokens0) {
+            Coin coin = MapToBeanMapperUtil.parseCoin(map);
+            tokens.add(coin);
+        }
+        // TODO xiaomi change ui
         Coin balance = Coin.valueOf(10000, NetworkParameters.BIGNETCOIN_TOKENID);
         // Main.bitcoin.wallet().getBalance();
         checkState(!balance.isZero());
@@ -87,59 +95,42 @@ public class SendMoneyController {
         amountEdit.setText(balance.toPlainString());
     }
 
-    String post(String url, String json) throws IOException {
-        RequestBody body = RequestBody.create(JSON, json);
-        Request request = new Request.Builder().url(url).post(body).build();
-        Response response = client.newCall(request).execute();
-        return response.body().string();
-    }
-
     public void cancel(ActionEvent event) {
         overlayUI.done();
     }
+    
+    public WalletWrapper createWalletWrapper() {
+        List<ECKey> keys = new ArrayList<ECKey>();
+        KeyChainGroup group = new KeyChainGroup(Main.params);
+        group.importKeys(keys);
+        return new WalletWrapper(Main.params, group, CONTEXT_ROOT);
+    }
+    
+    private String CONTEXT_ROOT = "http://localhost:14265/";
 
     public void send(ActionEvent event) throws Exception {
-        // Address exception cannot happen as we validated it beforehand.
-
         Coin amount = Coin.parseCoin(amountEdit.getText(), NetworkParameters.BIGNETCOIN_TOKENID);
         Address destination = Address.fromBase58(Main.params, address.getText());
         KeyBag maybeDecryptingKeyBag = new DecryptingKeyBag( Main.bitcoin.wallet(), aesKey);
         ECKey outKey = maybeDecryptingKeyBag.findKeyFromPubHash(destination.getHash160());
-       
-        final Map<String, Object> reqParam0 = new HashMap<>();
-        reqParam0.put("command", "askTransaction");
-       // reqParam0.put("pubkey", Utils.HEX.encode(maybeDecryptingKeyBag.));
-        reqParam0.put("toaddress", Utils.HEX.encode(destination.getHash160()));
-        reqParam0.put("amount", amountEdit.getText());
-        reqParam0.put("tokenid", NetworkParameters.BIGNETCOIN_TOKENID);
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+        ByteBuffer byteBuffer = ByteBuffer.wrap(data);
+        Block r1 = nextBlockSerializer(byteBuffer);
+        Block r2 = nextBlockSerializer(byteBuffer);
+        Block block = r1.createNextBlock(destination, Block.BLOCK_VERSION_GENESIS, (TransactionOutPoint) null, Utils.currentTimeSeconds(), 
+                outKey.getPubKey(), Coin.ZERO, 1, r2.getHash(), outKey.getPubKey());
+        
+        WalletWrapper wallet = (WalletWrapper) Main.bitcoin.wallet();
+        wallet.setContextRoot(CONTEXT_ROOT);
+        SendRequest sendRequest = SendRequest.to(destination, amount);
+        wallet.completeTx(sendRequest);
 
-        String response = post("http://localhost:14265", Json.jsonmapper().writeValueAsString(reqParam0));
-        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-
-        // final Map<String, Object> request = new HashMap<>();
-        // request.put("command", "signBlock");
-        // request.put("blockString", (String) data.get("blockHex"));
-        // response = post("http://localhost:14265",
-        // Json.jsonmapper().writeValueAsString(request));
-
-        String blockHex = (String) data.get("blockHex");
-        byte[] bytes = Utils.HEX.decode(blockHex);
-        // Block block = (Block)
-        // networkParameters.getDefaultSerializer().makeBlock(bytes);
-        // byte[] bytes = rollingBlock.bitcoinSerialize();
-        Block block = (Block) Main.params.getDefaultSerializer().makeBlock(bytes);
-        // sign transaction
-        for (Transaction t : block.getTransactions()) {
-            t.addSigned(outKey);
-        }
-        // proof nonce
+        block.addTransaction(sendRequest.tx);
         block.solve();
+        OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", block.bitcoinSerialize());
 
-        final Map<String, Object> reqParam1 = new HashMap<>();
-        reqParam1.put("command", "saveBlock");
-        reqParam1.put("blockString", Utils.HEX.encode(block.bitcoinSerialize()));
-        response = post("http://localhost:14265", Json.jsonmapper().writeValueAsString(reqParam0));
-
+        // TODO xiaomi change ui
         checkGuiThread();
         overlayUI.done();
         // sendBtn.setDisable(true);
@@ -147,9 +138,16 @@ public class SendMoneyController {
         // ((HBox) amountEdit.getParent()).getChildren().remove(amountEdit);
         // ((HBox) btcLabel.getParent()).getChildren().remove(btcLabel);
         // updateTitleForBroadcast();
-
     }
 
+    private Block nextBlockSerializer(ByteBuffer byteBuffer) {
+        byte[] data = new byte[byteBuffer.getInt()];
+        byteBuffer.get(data);
+        Block r1 = (Block) Main.params.getDefaultSerializer().makeBlock(data);
+        return r1;
+    }
+
+    @SuppressWarnings("unused")
     private void askForPasswordAndRetry() {
         Main.OverlayUI<WalletPasswordController> pwd = Main.instance.overlayUI("wallet_password.fxml");
         final String addressStr = address.getText();
@@ -167,12 +165,12 @@ public class SendMoneyController {
             try {
                 screen.controller.send(null);
             } catch (Exception e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         });
     }
 
+    @SuppressWarnings("unused")
     private void updateTitleForBroadcast() {
         final int peers = sendResult.tx.getConfidence().numBroadcastPeers();
         titleLabel.setText(String.format("Broadcasting ... seen by %d peers", peers));
