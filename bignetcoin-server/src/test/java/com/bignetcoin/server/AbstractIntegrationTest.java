@@ -60,7 +60,6 @@ public abstract class AbstractIntegrationTest   {
     @Autowired
     public void prepareContextRoot(@Value("${local.server.port}") int port) {
         contextRoot = String.format(CONTEXT_ROOT_TEMPLATE, port);
-
     }
 
     @Autowired

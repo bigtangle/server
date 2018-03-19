@@ -46,6 +46,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import com.bignetcoin.server.service.MilestoneService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 @RunWith(SpringRunner.class)
@@ -96,6 +97,9 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
     private static final Logger logger = LoggerFactory.getLogger(APIIntegrationTests.class);
     
+    @Autowired
+    private MilestoneService milestoneService;
+    
     @Test
     public void testUTXOProviderWithWallet() throws Exception {
         // Check that we aren't accidentally leaving any references
@@ -113,10 +117,12 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock,Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,networkParameters.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
         }
+        // update block update
+        milestoneService.update();
       //  rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock,null,networkParameters.getGenesisBlock().getHash());
 
         // Create 1 BTC spend to a key in this wallet (to ourselves).
-        WalletWrapper wallet = new WalletWrapper(networkParameters);
+        WalletWrapper wallet = new WalletWrapper(networkParameters, contextRoot);
         assertEquals("Available balance is incorrect", Coin.ZERO, wallet.getBalance(Wallet.BalanceType.AVAILABLE));
         assertEquals("Estimated balance is incorrect", Coin.ZERO, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
 
@@ -139,6 +145,8 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         SendRequest req = SendRequest.to(address2, amount2);
         wallet.completeTx(req);
 //        wallet.commitTx(req.tx);
+        
+        
     }
     
     @Test

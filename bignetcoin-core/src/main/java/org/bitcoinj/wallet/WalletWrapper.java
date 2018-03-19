@@ -29,9 +29,12 @@ import org.slf4j.LoggerFactory;
  
 public class WalletWrapper extends Wallet {
 
-    public WalletWrapper(NetworkParameters params) {
+    public WalletWrapper(NetworkParameters params, String contextRoot) {
         super(params);
+        this.contextRoot = contextRoot;
     }
+    
+    private String contextRoot;
 
     private static final Logger log = LoggerFactory.getLogger(WalletWrapper.class);  
     
@@ -41,7 +44,7 @@ public class WalletWrapper extends Wallet {
         lock.lock();
         try {
             ECKey toKey = this.currentReceiveKey();
-            String response = OkHttp3Util.post("http://localhost:12578/getOutputs", toKey.getPubKeyHash());
+            String response = OkHttp3Util.post(this.contextRoot + "getOutputs", toKey.getPubKeyHash());
             final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
             List<UTXO> outputs = new ArrayList<UTXO>();
             for (Map<String, Object> map : (List<Map<String, Object>>) data.get("outputs")) {
