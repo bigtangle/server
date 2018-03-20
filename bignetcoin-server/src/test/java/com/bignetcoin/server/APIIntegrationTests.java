@@ -180,7 +180,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         ECKey toKey = new ECKey();
         Address address = new Address(networkParameters, toKey.getPubKeyHash());
         SendRequest request = SendRequest.to(address, amount);
-        request.changeAddress = new Address(networkParameters, myKey.getPubKeyHash());
+//        request.changeAddress = new Address(networkParameters, myKey.getPubKeyHash());
         wallet.completeTx(request);
 
         rollingBlock.addTransaction(request.tx);
