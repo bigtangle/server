@@ -4,7 +4,6 @@
  *******************************************************************************/
 package com.bignetcoin.server;
 
-import static org.junit.Assert.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -17,11 +16,11 @@ import java.util.Map;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
+import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.BlockForTest;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.FullPrunedBlockGraph;
 import org.bitcoinj.core.Json;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PrunedException;
@@ -32,9 +31,9 @@ import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.MapToBeanMapperUtil;
+import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.WalletTransaction;
 import org.bitcoinj.wallet.WalletWrapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,6 +45,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import com.bignetcoin.server.service.BlockService;
 import com.bignetcoin.server.service.MilestoneService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -100,32 +100,64 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     @Autowired
     private MilestoneService milestoneService;
     
+    @Autowired
+    private BlockService blockService;
+    
     @Test
     public void testUTXOProviderWithWallet() throws Exception {
-        // Check that we aren't accidentally leaving any references
-        // to the full StoredUndoableBlock's lying around (ie memory leaks)
         ECKey outKey = new ECKey();
         int height = 1;
 
-        // Build some blocks on genesis block to create a spendable output.
-        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,networkParameters.getGenesisBlock().getHash());
+        // Add genesis block
+        blockgraph.add(PARAMS.getGenesisBlock());
+        BlockEvaluation genesisEvaluation = blockService.getBlockEvaluation(PARAMS.getGenesisBlock().getHash());
+        blockService.updateMilestone(genesisEvaluation, true);
+        blockService.updateSolid(genesisEvaluation, true);
+
+        // Build some blocks on genesis block to create a spendable output
+        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(),
+                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock);
-        for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
-            rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock,Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,networkParameters.getGenesisBlock().getHash());
+
+        Transaction transaction = rollingBlock.getTransactions().get(0);
+        TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, transaction.getHash());
+        byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
+        
+        for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
+            rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
+                    outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
         }
-        // cal block update
         milestoneService.update();
-        rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock,Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,networkParameters.getGenesisBlock().getHash());
+        
+        rollingBlock = BlockForTest.createNextBlock(rollingBlock, null, PARAMS.getGenesisBlock().getHash());
 
-        WalletWrapper wallet = new WalletWrapper(networkParameters, contextRoot);
-        logger.info("AVAILABLE : " + wallet.getBalance(Wallet.BalanceType.AVAILABLE) + "ESTIMATED : " + wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        // Create bitcoin spend of 1 BTC.
+        ECKey toKey = new ECKey();
+        Coin amount = Coin.valueOf(11123, NetworkParameters.BIGNETCOIN_TOKENID);
+//        Address address = new Address(PARAMS, toKey.getPubKeyHash());
+        Coin totalAmount = Coin.ZERO;
+
+        Transaction t = new Transaction(PARAMS);
+        t.addOutput(new TransactionOutput(PARAMS, t, amount, toKey));
+        t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
+        rollingBlock.addTransaction(t);
+        rollingBlock.solve();
+        blockgraph.add(rollingBlock);
+        totalAmount = totalAmount.add(amount);
+        
+        milestoneService.update(); //ADDED
+        
+        KeyChainGroup group = new KeyChainGroup(networkParameters);
+        group.importKeys(toKey);
+        WalletWrapper wallet = new WalletWrapper(networkParameters, group, contextRoot);
+        logger.info("AVAILABLE : " + wallet.getBalance(Wallet.BalanceType.AVAILABLE) + ", ESTIMATED : " + wallet.getBalance(Wallet.BalanceType.ESTIMATED));
 
         wallet.setUTXOProvider(store);
-        Coin amount = Coin.valueOf(1000, NetworkParameters.BIGNETCOIN_TOKENID);
+        amount = Coin.valueOf(1000, NetworkParameters.BIGNETCOIN_TOKENID);
 
-        ECKey toKey = new ECKey();
-        Address address = new Address(networkParameters, toKey.getPubKeyHash());
+        ECKey toKey0 = new ECKey();
+        Address address = new Address(networkParameters, toKey0.getPubKeyHash());
         SendRequest request = SendRequest.to(address, amount);
         wallet.completeTx(request);
 
@@ -135,7 +167,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         
         // cal block update
         milestoneService.update();
-        logger.info("AVAILABLE : " + wallet.getBalance(Wallet.BalanceType.AVAILABLE) + "ESTIMATED : " + wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        logger.info("AVAILABLE : " + wallet.getBalance(Wallet.BalanceType.AVAILABLE) + ", ESTIMATED : " + wallet.getBalance(Wallet.BalanceType.ESTIMATED));
     }
     
     @Test
