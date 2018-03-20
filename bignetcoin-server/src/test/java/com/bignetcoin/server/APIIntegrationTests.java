@@ -148,7 +148,12 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         
         milestoneService.update(); //ADDED
         
-        KeyChainGroup group = new KeyChainGroup(networkParameters);
+        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name()).content(toKey.getPubKeyHash());
+        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
+        String response = mvcResult.getResponse().getContentAsString();
+        logger.info("testGetBalances resp : " + response);
+        
+        /* KeyChainGroup group = new KeyChainGroup(networkParameters);
         group.importKeys(toKey);
         WalletWrapper wallet = new WalletWrapper(networkParameters, group, contextRoot);
         logger.info("AVAILABLE : " + wallet.getBalance(Wallet.BalanceType.AVAILABLE) + ", ESTIMATED : " + wallet.getBalance(Wallet.BalanceType.ESTIMATED));
@@ -167,7 +172,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         
         // cal block update
         milestoneService.update();
-        logger.info("AVAILABLE : " + wallet.getBalance(Wallet.BalanceType.AVAILABLE) + ", ESTIMATED : " + wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        logger.info("AVAILABLE : " + wallet.getBalance(Wallet.BalanceType.AVAILABLE) + ", ESTIMATED : " + wallet.getBalance(Wallet.BalanceType.ESTIMATED)); */
     }
     
     @Test
