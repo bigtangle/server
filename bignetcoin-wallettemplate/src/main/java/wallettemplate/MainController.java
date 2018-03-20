@@ -125,13 +125,7 @@ public class MainController {
                     Main.instance.getUtxoData().add(new UTXOModel(0, tokenid, address));
                 }
             }
-            Map map = (Map) data.get("tokens");
-            if (map != null && !map.isEmpty()) {
-                for (Object object : map.values()) {
-                    Map coins = (Map) object;
-
-                }
-            }
+            
         }
         utxoTable.setItems(Main.instance.getUtxoData());
         coinTable.setItems(Main.instance.getCoinData());
