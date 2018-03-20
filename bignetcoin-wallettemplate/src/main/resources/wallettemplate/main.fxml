@@ -21,19 +21,6 @@
         <Font name="System Bold" size="25.0" fx:id="x1" />
       </font>
     </Label>
-    <HBox alignment="CENTER_LEFT" prefHeight="30.0" prefWidth="305.0" AnchorPane.leftAnchor="143.0" AnchorPane.rightAnchor="152.0" AnchorPane.topAnchor="14.0">
-      <children>
-        <Label fx:id="balance" text="0.00" underline="false">
-          <font>
-            <Font size="25.0" />
-          </font>
-          <textFill>
-            <Color blue="0.750" green="0.750" red="0.750" fx:id="x2" />
-          </textFill>
-        </Label>
-        <Label font="$x1" text="BTC" textFill="$x2" />
-      </children>
-    </HBox>
     <HBox fx:id="controlsBox" alignment="TOP_LEFT" fillHeight="true" layoutX="14.0" layoutY="347.0" minHeight="16.0" prefHeight="36.0" prefWidth="243.0" spacing="10.0" translateY="60.0" visible="true" AnchorPane.bottomAnchor="17.0">
       <children>
         <Button defaultButton="true" mnemonicParsing="false" styleClass="fat-button" text="Primary" />
@@ -58,34 +45,39 @@
         <Label text="Your content goes here" />
             <HBox prefHeight="100.0" prefWidth="200.0">
                <children>
-                  <HBox prefHeight="100.0" prefWidth="200.0">
+                  <HBox prefHeight="298.0" prefWidth="780.0">
                      <children>
-                        <TableView fx:id="coinTable" prefHeight="298.0" prefWidth="211.0">
+                        <TableView fx:id="utxoTable" prefHeight="298.0" prefWidth="598.0">
+                          <columns>
+                            <TableColumn fx:id="balanceColumn" prefWidth="127.0" text="balance" />
+                            <TableColumn fx:id="tokentypeColumnA" prefWidth="72.0" text="tokentype" />
+                              <TableColumn fx:id="addressColumn" prefWidth="366.0" text="address" />
+                          </columns>
+                        </TableView>
+                        <TableView fx:id="coinTable" prefHeight="298.0" prefWidth="235.0">
                           <columns>
                             <TableColumn fx:id="valueColumn" prefWidth="124.0" text="amount" />
-                            <TableColumn fx:id="tokenidColumn" prefWidth="75.0" text="tokenid" />
+                            <TableColumn fx:id="tokentypeColumn" prefWidth="75.0" text="tokentype" />
                           </columns>
                         </TableView>
                      </children>
                   </HBox>
-                  <HBox prefHeight="100.0" prefWidth="200.0" />
-                  <TableView prefHeight="200.0" prefWidth="200.0">
-                    <columns>
-                      <TableColumn prefWidth="127.0" text="balance" />
-                      <TableColumn prefWidth="72.0" text="tokenid" />
-                    </columns>
-                  </TableView>
                </children>
             </HBox>
       </children>
     </StackPane>
-    <HBox spacing="20" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="17.0">
+    <HBox prefHeight="23.0" prefWidth="619.0" spacing="20" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="17.0">
        <children>
            <Button onAction="#settingsClicked" style="-fx-base: white;" styleClass="fat-button" text="Settings" />
            <Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" alignment="CENTER" mnemonicParsing="false" onAction="#sendMoneyOut" style="-fx-base: lightgreen; -fx-font-weight: bold" styleClass="fat-button" text="Send money out" />
+            <Button fx:id="stock" onAction="#stockPublish" styleClass="fat-button" text="token publish" />
+            <Button fx:id="exchange" mnemonicParsing="false" onAction="#exchangeCoin" styleClass="fat-button" text="exchange" />
+            <Button fx:id="connectButton" mnemonicParsing="false" styleClass="fat-button" text="connect" />
        </children>
     </HBox>
-      <Button fx:id="stock" layoutX="15.0" layoutY="399.0" mnemonicParsing="false" onAction="#stockPublish" text="stock publish" />
-      <Button fx:id="exchange" layoutX="116.0" layoutY="399.0" mnemonicParsing="false" onAction="#exchangeCoin" text="exchange" />
+      <TextField fx:id="IPAdress" layoutX="328.0" layoutY="52.0" prefHeight="23.0" prefWidth="203.0" />
+      <TextField fx:id="IPPort" layoutX="591.0" layoutY="52.0" prefHeight="23.0" prefWidth="63.0" />
+      <Label layoutX="214.0" layoutY="56.0" prefHeight="15.0" prefWidth="62.0" text="IPAddress" />
+      <Label layoutX="549.0" layoutY="56.0" text="port" />
   </children>
 </AnchorPane>

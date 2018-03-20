@@ -16,11 +16,23 @@ package wallettemplate;
 
 import static wallettemplate.Main.bitcoin;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.Json;
+import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.utils.MonetaryFormat;
 import org.fxmisc.easybind.EasyBind;
 
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
+import com.squareup.okhttp.Response;
 import com.subgraph.orchid.TorClient;
 import com.subgraph.orchid.TorInitializationListener;
 
@@ -29,18 +41,19 @@ import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.util.Duration;
 import wallettemplate.controls.ClickableBitcoinAddress;
 import wallettemplate.controls.NotificationBarPane;
 import wallettemplate.utils.BitcoinUIModel;
-import wallettemplate.utils.GuiUtils;
 import wallettemplate.utils.easing.EasingMode;
 import wallettemplate.utils.easing.ElasticInterpolator;
 
@@ -59,19 +72,77 @@ public class MainController {
     @FXML
     public TableColumn<CoinModel, Number> valueColumn;
     @FXML
-    public TableColumn<CoinModel, Number> tokenidColumn;
+    public TableColumn<CoinModel, String> tokentypeColumn;
+
+    @FXML
+    public TableView<UTXOModel> utxoTable;
+    @FXML
+    public TableColumn<UTXOModel, Number> balanceColumn;
+    @FXML
+    public TableColumn<UTXOModel, String> tokentypeColumnA;
+    @FXML
+    public TableColumn<UTXOModel, String> addressColumn;
+
+    @FXML
+    public TextField IPAdress;
+    @FXML
+    public TextField IPPort;
 
     private BitcoinUIModel model = new BitcoinUIModel();
     private NotificationBarPane.Item syncItem;
     private Main mainApp;
+    public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+
+    OkHttpClient client = new OkHttpClient();
+
+    String post(String url, String json) throws IOException {
+        RequestBody body = RequestBody.create(JSON, json);
+        Request request = new Request.Builder().url(url).post(body).build();
+        Response response = client.newCall(request).execute();
+        return response.body().string();
+    }
 
     // Called by FXMLLoader.
     @FXML
-    public void initialize() {
-        coinTable.setItems(Main.instance.getCoinData());
-        valueColumn.setCellValueFactory(cellData -> cellData.getValue().value());
-        tokenidColumn.setCellValueFactory(cellData -> cellData.getValue().value());
+    public void initialize() throws Exception {
+        String addr = "030d8952f6c079f60cd26eb3ba83cf16a81c51fc8e47b767721fa38b5e20092a75";
+        final Map<String, Object> request = new HashMap<>();
+        request.put("command", "getBalances");
+        request.put("addresses", new String[] { addr });
+        request.put("threshold", 100);
 
+        String response = post("http://localhost:14265", Json.jsonmapper().writeValueAsString(request));
+        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+
+        if (data != null && !data.isEmpty()) {
+            List list = (List) data.get("outputs");
+            if (list != null && !list.isEmpty()) {
+                for (Object object : list) {
+                    Map<String, Object> utxo = (Map<String, Object>) object;
+                    double balance = ((Coin) utxo.get("value")).getValue();
+                    int tokenid = (int) (utxo.get("tokenid"));
+                    String address = (String) (utxo.get("address"));
+                    Main.instance.getUtxoData().add(new UTXOModel(0, tokenid, address));
+                }
+            }
+            Map map = (Map) data.get("tokens");
+            if (map != null && !map.isEmpty()) {
+                for (Object object : map.values()) {
+                    Map coins = (Map) object;
+
+                }
+            }
+        }
+        utxoTable.setItems(Main.instance.getUtxoData());
+        coinTable.setItems(Main.instance.getCoinData());
+
+        balanceColumn.setCellValueFactory(cellData -> cellData.getValue().balance());
+        tokentypeColumnA.setCellValueFactory(cellData -> cellData.getValue().tokentype());
+        addressColumn.setCellValueFactory(cellData -> cellData.getValue().address());
+
+        valueColumn.setCellValueFactory(cellData -> cellData.getValue().value());
+        tokentypeColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
+                cellData.getValue().getTokenid() == NetworkParameters.BIGNETCOIN_TOKENID ? "bignetcoin" : "other"));
         addressControl.setOpacity(0.0);
     }
 

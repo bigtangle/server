@@ -65,6 +65,7 @@ public class Main extends Application {
     public NotificationBarPane notificationBar;
     public Stage mainWindow;
     private ObservableList<CoinModel> coinData = FXCollections.observableArrayList();
+    private ObservableList<UTXOModel> utxoData = FXCollections.observableArrayList();
 
     @Override
     public void start(Stage mainWindow) throws Exception {
@@ -75,13 +76,6 @@ public class Main extends Application {
             GuiUtils.crashAlert(e);
             throw e;
         }
-    }
-
-    public Main() {
-
-        coinData.add(new CoinModel(1, 1));
-        coinData.add(new CoinModel(2, 2));
-
     }
 
     private void realStart(Stage mainWindow) throws IOException {
@@ -256,5 +250,13 @@ public class Main extends Application {
 
     public void setCoinData(ObservableList<CoinModel> coinData) {
         this.coinData = coinData;
+    }
+
+    public ObservableList<UTXOModel> getUtxoData() {
+        return utxoData;
+    }
+
+    public void setUtxoData(ObservableList<UTXOModel> utxoData) {
+        this.utxoData = utxoData;
     }
 }

@@ -9,7 +9,7 @@
 	<children>
 		<AnchorPane prefHeight="416.0" prefWidth="567.0">
 			<children>
-				<GridPane layoutX="6.0" prefHeight="483.0" prefWidth="676.0">
+				<GridPane layoutX="3.0" prefHeight="483.0" prefWidth="676.0">
 					<columnConstraints>
 						<ColumnConstraints hgrow="SOMETIMES" maxWidth="246.0" minWidth="10.0" prefWidth="52.0" />
 						<ColumnConstraints hgrow="SOMETIMES" maxWidth="449.0" minWidth="10.0" prefWidth="449.0" />
@@ -25,9 +25,9 @@
 						<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
 					</rowConstraints>
 					<children>
-						<Label text="stockAddress" />
-						<Label text="stockCode" GridPane.rowIndex="1" />
-						<Label text="stockNumber" GridPane.rowIndex="2" />
+						<Label text="tokenAddress" />
+						<Label text="tokenCode" GridPane.rowIndex="1" />
+						<Label text="tokenNumber" GridPane.rowIndex="2" />
 						<Label text="coinAddress" GridPane.rowIndex="3" />
 						<Label text="coinAmount" GridPane.rowIndex="4" />
 						<Label text="coinTokenid" GridPane.rowIndex="5" />
