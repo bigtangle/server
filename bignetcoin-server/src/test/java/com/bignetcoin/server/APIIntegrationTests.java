@@ -31,7 +31,6 @@ import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.MapToBeanMapperUtil;
-import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletWrapper;
@@ -64,6 +63,17 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         ECKey toKey =ECKey.fromPublicOnly(ecKey.getPubKey());
         logger.info("pubKey : " + Utils.HEX.encode(ecKey.getPubKey()));
         logger.info("pubKeyHash : " + Utils.HEX.encode(toKey.getPubKeyHash()));
+    }
+    
+    @Test
+    public void testWalletWrapperECKey() {
+        WalletWrapper wallet = new WalletWrapper(networkParameters, contextRoot);
+        for (int i = 0; i < 10; i ++) {
+            ECKey toKey = wallet.freshReceiveKey();
+            logger.info("a->eckey pubKeyHash : " + Utils.HEX.encode(toKey.getPubKeyHash()));
+            toKey = wallet.currentReceiveKey();
+            logger.info("c->eckey pubKeyHash : " + Utils.HEX.encode(toKey.getPubKeyHash()));
+        }
     }
     
 //    @Before
@@ -109,61 +119,68 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         int height = 1;
 
         // Add genesis block
-        blockgraph.add(PARAMS.getGenesisBlock());
-        BlockEvaluation genesisEvaluation = blockService.getBlockEvaluation(PARAMS.getGenesisBlock().getHash());
+        blockgraph.add(networkParameters.getGenesisBlock());
+        BlockEvaluation genesisEvaluation = blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash());
         blockService.updateMilestone(genesisEvaluation, true);
         blockService.updateSolid(genesisEvaluation, true);
 
         // Build some blocks on genesis block to create a spendable output
-        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
+        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
+                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock);
 
         Transaction transaction = rollingBlock.getTransactions().get(0);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, transaction.getHash());
+        TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
         byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
         
-        for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
+        for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
-                    outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
+                    outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
         }
         milestoneService.update();
         
-        rollingBlock = BlockForTest.createNextBlock(rollingBlock, null, PARAMS.getGenesisBlock().getHash());
+        rollingBlock = BlockForTest.createNextBlock(rollingBlock, null, networkParameters.getGenesisBlock().getHash());
 
         // Create bitcoin spend of 1 BTC.
-        ECKey toKey = new ECKey();
-        Coin amount = Coin.valueOf(11123, NetworkParameters.BIGNETCOIN_TOKENID);
+        WalletWrapper wallet = new WalletWrapper(networkParameters, contextRoot);
+        ECKey myKey = wallet.currentReceiveKey();
+        
+        Coin amount = Coin.valueOf(100000, NetworkParameters.BIGNETCOIN_TOKENID);
 //        Address address = new Address(PARAMS, toKey.getPubKeyHash());
-        Coin totalAmount = Coin.ZERO;
 
-        Transaction t = new Transaction(PARAMS);
-        t.addOutput(new TransactionOutput(PARAMS, t, amount, toKey));
+        Transaction t = new Transaction(networkParameters);
+        t.addOutput(new TransactionOutput(networkParameters, t, amount, myKey));
         t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
         blockgraph.add(rollingBlock);
-        totalAmount = totalAmount.add(amount);
         
         milestoneService.update(); //ADDED
         
-        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name()).content(toKey.getPubKeyHash());
+        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name()).content(myKey.getPubKeyHash());
         MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
         String response = mvcResult.getResponse().getContentAsString();
         logger.info("testGetBalances resp : " + response);
         
-        /* KeyChainGroup group = new KeyChainGroup(networkParameters);
-        group.importKeys(toKey);
-        WalletWrapper wallet = new WalletWrapper(networkParameters, group, contextRoot);
-        logger.info("AVAILABLE : " + wallet.getBalance(Wallet.BalanceType.AVAILABLE) + ", ESTIMATED : " + wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        rollingBlock = BlockForTest.createNextBlock(rollingBlock, null, networkParameters.getGenesisBlock().getHash());
+        
+//        DumpedPrivateKey privKey = DumpedPrivateKey.fromBase58(networkParameters, "5Kg1gnAjaLfKiwhhPpGS3QfRg2m6awQvaj98JCZBZQ5SuS2F15C");
+//        KeyChainGroup group = new KeyChainGroup(networkParameters);
+//        group.importKeys(ECKey.fromPublicOnly(privKey.getKey().getPubKeyPoint()), ECKey.fromPublicOnly(HEX.decode("03cb219f69f1b49468bd563239a86667e74a06fcba69ac50a08a5cbc42a5808e99")));
+        
+//        KeyChainGroup group = new KeyChainGroup(networkParameters);
+//        group.importKeys(toKey);
+//        WalletWrapper wallet = new WalletWrapper(networkParameters, contextRoot);
+//        logger.info("AVAILABLE : " + wallet.getBalance(Wallet.BalanceType.AVAILABLE) + ", ESTIMATED : " + wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        
+//        wallet.setUTXOProvider(store);
+        amount = Coin.valueOf(100, NetworkParameters.BIGNETCOIN_TOKENID);
 
-        wallet.setUTXOProvider(store);
-        amount = Coin.valueOf(1000, NetworkParameters.BIGNETCOIN_TOKENID);
-
-        ECKey toKey0 = new ECKey();
-        Address address = new Address(networkParameters, toKey0.getPubKeyHash());
+        ECKey toKey = new ECKey();
+        Address address = new Address(networkParameters, toKey.getPubKeyHash());
         SendRequest request = SendRequest.to(address, amount);
+        request.changeAddress = new Address(networkParameters, myKey.getPubKeyHash());
         wallet.completeTx(request);
 
         rollingBlock.addTransaction(request.tx);
@@ -172,7 +189,12 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         
         // cal block update
         milestoneService.update();
-        logger.info("AVAILABLE : " + wallet.getBalance(Wallet.BalanceType.AVAILABLE) + ", ESTIMATED : " + wallet.getBalance(Wallet.BalanceType.ESTIMATED)); */
+//        logger.info("AVAILABLE : " + wallet.getBalance(Wallet.BalanceType.AVAILABLE) + ", ESTIMATED : " + wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        
+        httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name()).content(myKey.getPubKeyHash());
+        mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
+        response = mvcResult.getResponse().getContentAsString();
+        logger.info("testGetBalances resp : " + response);
     }
     
     @Test

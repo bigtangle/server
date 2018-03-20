@@ -98,7 +98,7 @@ public class TipsService {
             // recursiveUpdateCumulativeweights(entryPointTipSha256Hash,
             // cumulativeweights,
             // analyzedTips);
-            System.out.println(cumulativeweights);
+//            System.out.println(cumulativeweights);
             analyzedTips.clear();
             return markovChainMonteCarlo(entryPointTipSha256Hash, extraTip, cumulativeweights, iterations,
                     milestone.latestSolidSubtangleMilestoneIndex - depth * 2, maxDepthOk, seed);
@@ -160,7 +160,7 @@ public class TipsService {
 //                break;
 //            }
             if (approvers.size() == 0) { // TODO check solidity
-                log.info("Reason to stop:  is a tip =" + tip);
+                //log.info("Reason to stop:  is a tip =" + tip);
                 break;
             } else if (approvers.size() == 1) {
                 tip = approvers.get(0);

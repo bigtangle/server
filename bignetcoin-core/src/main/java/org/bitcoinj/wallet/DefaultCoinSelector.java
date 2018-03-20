@@ -64,7 +64,7 @@ public class DefaultCoinSelector implements CoinSelector {
                 continue;
             if (target.tokenid == output.getValue().tokenid) {
                 selected.add(output);
-            total += output.getValue().value;
+                total += output.getValue().value;
             }
         }
         // Total may be lower than target here, if the given candidates were

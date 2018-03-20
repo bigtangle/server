@@ -41,8 +41,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Nullable;
 
-import net.jcip.annotations.GuardedBy;
-
 import org.bitcoinj.core.AbstractBlockGraph;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.BlockGraph;
@@ -122,6 +120,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
+
+import net.jcip.annotations.GuardedBy;
 
 // To do list:
 //

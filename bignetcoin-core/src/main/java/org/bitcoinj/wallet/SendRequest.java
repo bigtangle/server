@@ -77,7 +77,7 @@ public class SendRequest {
      * when choosing which transactions to add to a block. Note that, to keep this equivalent to Bitcoin Core
      * definition, a kilobyte is defined as 1000 bytes, not 1024.</p>
      */
-    public Coin feePerKb = Context.get().getFeePerKb();
+    public Coin feePerKb = Coin.valueOf(0, NetworkParameters.BIGNETCOIN_TOKENID);
 
     /**
      * <p>Requires that there be enough fee for a default Bitcoin Core to at least relay the transaction.

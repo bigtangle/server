@@ -120,6 +120,7 @@ public class WalletWrapper extends Wallet {
 
             CoinSelection bestCoinSelection;
             TransactionOutput bestChangeOutput = null;
+            req.ensureMinRequiredFee = false;
             if (!req.emptyWallet) {
                 // This can throw InsufficientMoneyException.
                 FeeCalculation feeCalculation = calculateFee(req, value, originalInputs, req.ensureMinRequiredFee, candidates);
