@@ -142,11 +142,15 @@ public class BlockService {
 		store.updateBlockEvaluationMilestoneLastUpdateTime(blockEvaluation.getBlockhash(), now);
 	}
 
-	public void saveBinaryArrayToBlock(byte[] bytes) throws Exception {
-		Block block = (Block) networkParameters.getDefaultSerializer().deserialize(ByteBuffer.wrap(bytes));
-		FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
-		blockgraph.add(block);
-	}
+    public void saveBinaryArrayToBlock(byte[] bytes) throws Exception {
+        Block block = (Block) networkParameters.getDefaultSerializer().deserialize(ByteBuffer.wrap(bytes));
+        FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
+        blockgraph.add(block);
+        milestoneService.update();
+    }
+
+    @Autowired
+    private MilestoneService milestoneService;
 
 	/**
 	 * Adds the specified block and all approved blocks to the milestone. This will

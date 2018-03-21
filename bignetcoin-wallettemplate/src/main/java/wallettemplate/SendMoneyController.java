@@ -70,7 +70,7 @@ public class SendMoneyController {
     // Called by FXMLLoader
     @SuppressWarnings({ "unchecked" })
     public void initialize() throws Exception {
-        ECKey ecKey = new ECKey();
+        ECKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getBalances", ecKey.getPubKeyHash());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> outputs0 = (List<Map<String, Object>>) data.get("outputs");
@@ -109,7 +109,6 @@ public class SendMoneyController {
     private String CONTEXT_ROOT = "http://localhost:14265/";
 
     public void send(ActionEvent event) throws Exception {
-        Coin amount = Coin.parseCoin(amountEdit.getText(), NetworkParameters.BIGNETCOIN_TOKENID);
         Address destination = Address.fromBase58(Main.params, address.getText());
         KeyBag maybeDecryptingKeyBag = new DecryptingKeyBag( Main.bitcoin.wallet(), aesKey);
         ECKey outKey = maybeDecryptingKeyBag.findKeyFromPubHash(destination.getHash160());
@@ -123,10 +122,13 @@ public class SendMoneyController {
         
         WalletWrapper wallet = (WalletWrapper) Main.bitcoin.wallet();
         wallet.setContextRoot(CONTEXT_ROOT);
-        SendRequest sendRequest = SendRequest.to(destination, amount);
-        wallet.completeTx(sendRequest);
-
-        block.addTransaction(sendRequest.tx);
+        
+        Coin amount = Coin.parseCoin(amountEdit.getText(), NetworkParameters.BIGNETCOIN_TOKENID);
+        ECKey toKey = new ECKey();
+        Address address = new Address(Main.params, toKey.getPubKeyHash());
+        SendRequest request = SendRequest.to(address, amount);
+        wallet.completeTx(request);
+        block.addTransaction(request.tx);
         block.solve();
         OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", block.bitcoinSerialize());
 
