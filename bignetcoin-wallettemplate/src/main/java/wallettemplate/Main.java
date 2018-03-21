@@ -30,7 +30,7 @@ import javax.annotation.Nullable;
 
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.kits.WalletAppKit;
-import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.DeterministicSeed;
@@ -51,7 +51,7 @@ import wallettemplate.utils.GuiUtils;
 import wallettemplate.utils.TextFieldValidator;
 
 public class Main extends Application {
-    public static NetworkParameters params = MainNetParams.get();
+    public static NetworkParameters params = UnitTestParams.get();
     public static final String APP_NAME = "WalletTemplate";
     private static final String WALLET_FILE_NAME = APP_NAME.replaceAll("[^a-zA-Z0-9.-]", "_") + "-"
             + params.getPaymentProtocolId();

@@ -15,3 +15,4 @@ src/main/ixi/
 /bin/
 /build/
 /test-leveldb/
+/doublespend.wallet

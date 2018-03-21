@@ -28,9 +28,7 @@ dependencies {
     compile group: 'org.aspectj', name: 'aspectjrt',   version:ver.aspectjrt
     compile group: 'org.aspectj', name: 'aspectjweaver', version:ver.aspectjweaver
    	compile group: 'org.apache.commons', name: 'commons-lang3', version:ver.commons_lang3
-
-	//compile group: 'org.springframework.data', name: 'spring-data-cassandra', version:ver.spring_data_cassandra
-
+ 
  	compile group: 'org.apache.kafka', name: 'kafka-streams', version:ver.kafka
  
 	compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version:ver.bcprov_jdk15on
@@ -45,15 +43,9 @@ dependencies {
     testCompile group: 'org.testng', name: 'testng', version: ver.testng
     testCompile group: 'org.mockito', name: 'mockito-all', version:  ver.mockito_all
     testCompile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-avro', version: ver.jackson_dataformat_avro
-  
-  /**
-     * test dependencies
-     */
     testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
     testCompile group: 'junit', name: 'junit',version:ver.junit
-    testCompile group: 'com.google.code.gson', name: 'gson', version:ver.gson
-   // testCompile group: 'org.springframework' name: 'spring-test', version: ver.spring
-      testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
+    testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
  
 }
 

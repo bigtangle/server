@@ -50,6 +50,7 @@ import org.bitcoinj.core.Context;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.FilteredBlock;
 import org.bitcoinj.core.InsufficientMoneyException;
+import org.bitcoinj.core.Json;
 import org.bitcoinj.core.Message;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
@@ -91,8 +92,15 @@ import org.bitcoinj.signers.MissingSigResolutionSigner;
 import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.utils.BaseTaggableObject;
 import org.bitcoinj.utils.ListenerRegistration;
+import org.bitcoinj.utils.MapToBeanMapperUtil;
+import org.bitcoinj.utils.OkHttp3Util;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
+import org.bitcoinj.wallet.Wallet.CouldNotAdjustDownwards;
+import org.bitcoinj.wallet.Wallet.ExceededMaxTransactionSize;
+import org.bitcoinj.wallet.Wallet.FeeCalculation;
+import org.bitcoinj.wallet.Wallet.FreeStandingTransactionOutput;
+import org.bitcoinj.wallet.Wallet.MultipleOpReturnRequested;
 import org.bitcoinj.wallet.WalletTransaction.Pool;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
 import org.bitcoinj.wallet.listeners.ScriptsChangeEventListener;
@@ -195,6 +203,8 @@ public class Wallet extends BaseTaggableObject
     private final Map<Sha256Hash, Transaction> spent;
     private final Map<Sha256Hash, Transaction> dead;
 
+    //server url
+    protected String serverurl  ;
     // All transactions together.
     protected final Map<Sha256Hash, Transaction> transactions;
 
@@ -296,16 +306,24 @@ public class Wallet extends BaseTaggableObject
     public Wallet(NetworkParameters params) {
         this(Context.getOrCreate(params));
     }
-
+    public Wallet(NetworkParameters params, String url) {
+        this(Context.getOrCreate(params), url);
+    }
     /**
      * Creates a new, empty wallet with a randomly chosen seed and no transactions. Make sure to provide for sufficient
      * backup! Any keys will be derived from the seed. If you want to restore a wallet from disk instead, see
      * {@link #loadFromFile}.
      */
+    //TODO remove this 
     public Wallet(Context context) {
-        this(context, new KeyChainGroup(context.getParams()));
+        this(context, new KeyChainGroup(context.getParams()),null);
     }
 
+    public Wallet(Context context, String url) {
+        this(context, new KeyChainGroup(context.getParams()),url);
+    }
+
+    
     public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed) {
         return new Wallet(params, new KeyChainGroup(params, seed));
     }
@@ -343,10 +361,10 @@ public class Wallet extends BaseTaggableObject
     }
 
     public Wallet(NetworkParameters params, KeyChainGroup keyChainGroup) {
-        this(Context.getOrCreate(params), keyChainGroup);
+        this(Context.getOrCreate(params), keyChainGroup,null);
     }
 
-    private Wallet(Context context, KeyChainGroup keyChainGroup) {
+    private Wallet(Context context, KeyChainGroup keyChainGroup, String url) {
         this.context = context;
         this.params = context.getParams();
         this.keyChainGroup = checkNotNull(keyChainGroup);
@@ -369,6 +387,7 @@ public class Wallet extends BaseTaggableObject
         signers = new ArrayList<TransactionSigner>();
         addTransactionSigner(new LocalTransactionSigner());
         createTransientState();
+        this.serverurl=url;
     }
 
     private void createTransientState() {
@@ -3958,7 +3977,7 @@ public class Wallet extends BaseTaggableObject
      * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process.
      * @throws MultipleOpReturnRequested if there is more than one OP_RETURN output for the resultant transaction.
      */
-    public void completeTx(SendRequest req) throws InsufficientMoneyException {
+  /*  public void completeTx(SendRequest req) throws InsufficientMoneyException {
         lock.lock();
         try {
             checkArgument(!req.completed, "Given SendRequest has already been completed.");
@@ -4063,7 +4082,7 @@ public class Wallet extends BaseTaggableObject
             lock.unlock();
         }
     }
-
+*/
     /**
      * <p>Given a send request containing transaction, attempts to sign it's inputs. This method expects transaction
      * to have all necessary inputs connected or they will be ignored.</p>
@@ -4136,10 +4155,10 @@ public class Wallet extends BaseTaggableObject
      * Returns a list of the outputs that can potentially be spent, i.e. that we have the keys for and are unspent
      * according to our knowledge of the block chain.
      */
-    public List<TransactionOutput> calculateAllSpendCandidates() {
+ /*   public List<TransactionOutput> calculateAllSpendCandidates() {
         return calculateAllSpendCandidates(true, true);
     }
-
+*/
     /** @deprecated Use {@link #calculateAllSpendCandidates(boolean, boolean)} or the zero-parameter form instead. */
     @Deprecated
     public List<TransactionOutput> calculateAllSpendCandidates(boolean excludeImmatureCoinbases) {
@@ -5305,4 +5324,146 @@ public class Wallet extends BaseTaggableObject
         }
     }
     //endregion
+    
+    // changes
+    
+
+    @SuppressWarnings("unchecked")
+    
+    public List<TransactionOutput> calculateAllSpendCandidates() {
+        lock.lock();
+        try {
+            ECKey toKey = this.currentReceiveKey();
+            String response = OkHttp3Util.post(this.serverurl + "getOutputs", toKey.getPubKeyHash());
+            final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+            List<UTXO> outputs = new ArrayList<UTXO>();
+            for (Map<String, Object> map : (List<Map<String, Object>>) data.get("outputs")) {
+                UTXO utxo = MapToBeanMapperUtil.parseUTXO(map);
+                outputs.add(utxo);
+            }
+            List<TransactionOutput> candidates = new ArrayList<TransactionOutput>();
+            for (UTXO output : outputs) {
+                candidates.add(new FreeStandingTransactionOutput(this.params, output, 0)); // TODO jiang unkown
+            }
+            return candidates;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<TransactionOutput>();
+        } finally {
+            lock.unlock();
+        }
+    }
+    
+   
+    public void completeTx(SendRequest req) throws InsufficientMoneyException {
+        lock.lock();
+        try {
+            checkArgument(!req.completed, "Given SendRequest has already been completed.");
+            // Calculate the amount of value we need to import.
+            Coin value = Coin.ZERO;
+            for (TransactionOutput output : req.tx.getOutputs()) {
+                value = value.add(output.getValue());
+            }
+
+            log.info("Completing send tx with {} outputs totalling {} and a fee of {}/kB", req.tx.getOutputs().size(),
+                    value.toFriendlyString(), req.feePerKb.toFriendlyString());
+
+            // If any inputs have already been added, we don't need to get their value from wallet
+            Coin totalInput = Coin.ZERO;
+            for (TransactionInput input : req.tx.getInputs())
+                if (input.getConnectedOutput() != null)
+                    totalInput = totalInput.add(input.getConnectedOutput().getValue());
+                else
+                    log.warn("SendRequest transaction already has inputs but we don't know how much they are worth - they will be added to fee.");
+            value = value.subtract(totalInput);
+
+            List<TransactionInput> originalInputs = new ArrayList<TransactionInput>(req.tx.getInputs());
+
+            // Check for dusty sends and the OP_RETURN limit.
+            if (req.ensureMinRequiredFee && !req.emptyWallet) { // Min fee checking is handled later for emptyWallet.
+                int opReturnCount = 0;
+                for (TransactionOutput output : req.tx.getOutputs()) {
+//                    if (output.isDust())
+//                        throw new DustySendRequested();
+                    if (output.getScriptPubKey().isOpReturn())
+                        ++opReturnCount;
+                }
+                if (opReturnCount > 1) // Only 1 OP_RETURN per transaction allowed.
+                    throw new MultipleOpReturnRequested();
+            }
+
+            // Calculate a list of ALL potential candidates for spending and then ask a coin selector to provide us
+            // with the actual outputs that'll be used to gather the required amount of value. In this way, users
+            // can customize coin selection policies. The call below will ignore immature coinbases and outputs
+            // we don't have the keys for.
+            List<TransactionOutput> candidates = calculateAllSpendCandidates();
+
+            CoinSelection bestCoinSelection;
+            TransactionOutput bestChangeOutput = null;
+            req.ensureMinRequiredFee = false;
+            if (!req.emptyWallet) {
+                // This can throw InsufficientMoneyException.
+                FeeCalculation feeCalculation = calculateFee(req, value, originalInputs, req.ensureMinRequiredFee, candidates);
+                bestCoinSelection = feeCalculation.bestCoinSelection;
+                bestChangeOutput = feeCalculation.bestChangeOutput;
+            } else {
+                // We're being asked to empty the wallet. What this means is ensuring "tx" has only a single output
+                // of the total value we can currently spend as determined by the selector, and then subtracting the fee.
+                checkState(req.tx.getOutputs().size() == 1, "Empty wallet TX must have a single output only.");
+                CoinSelector selector = req.coinSelector == null ? coinSelector : req.coinSelector;
+                bestCoinSelection = selector.select(params.getMaxMoney(), candidates);
+                candidates = null;  // Selector took ownership and might have changed candidates. Don't access again.
+                req.tx.getOutput(0).setValue(bestCoinSelection.valueGathered);
+                log.info("  emptying {}", bestCoinSelection.valueGathered.toFriendlyString());
+            }
+
+            for (TransactionOutput output : bestCoinSelection.gathered)
+                req.tx.addInput(output);
+
+            if (req.emptyWallet) {
+                final Coin feePerKb = req.feePerKb == null ? Coin.ZERO : req.feePerKb;
+                if (!adjustOutputDownwardsForFee(req.tx, bestCoinSelection, feePerKb, req.ensureMinRequiredFee))
+                    throw new CouldNotAdjustDownwards();
+            }
+
+            if (bestChangeOutput != null) {
+                req.tx.addOutput(bestChangeOutput);
+                log.info("  with {} change", bestChangeOutput.getValue().toFriendlyString());
+            }
+
+            // Now shuffle the outputs to obfuscate which is the change.
+            if (req.shuffleOutputs)
+                req.tx.shuffleOutputs();
+
+            // Now sign the inputs, thus proving that we are entitled to redeem the connected outputs.
+            if (req.signInputs)
+                signTransaction(req);
+
+            // Check size.
+            final int size = req.tx.unsafeBitcoinSerialize().length;
+            if (size > Transaction.MAX_STANDARD_TX_SIZE)
+                throw new ExceededMaxTransactionSize();
+
+            // Label the transaction as being self created. We can use this later to spend its change output even before
+            // the transaction is confirmed. We deliberately won't bother notifying listeners here as there's not much
+            // point - the user isn't interested in a confidence transition they made themselves.
+            req.tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
+            // Label the transaction as being a user requested payment. This can be used to render GUI wallet
+            // transaction lists more appropriately, especially when the wallet starts to generate transactions itself
+            // for internal purposes.
+            req.tx.setPurpose(Transaction.Purpose.USER_PAYMENT);
+            // Record the exchange rate that was valid when the transaction was completed.
+            req.tx.setExchangeRate(req.exchangeRate);
+            req.tx.setMemo(req.memo);
+            req.completed = true;
+            log.info("  completed: {}", req.tx);
+        } finally {
+            lock.unlock();
+        }
+    }
+    
+    public void setServerURL(String url ) {
+       this.serverurl= url;
+    }
+
 }
