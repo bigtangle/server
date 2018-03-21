@@ -119,13 +119,22 @@ public class MainController {
             if (list != null && !list.isEmpty()) {
                 for (Object object : list) {
                     Map<String, Object> utxo = (Map<String, Object>) object;
-                    double balance = ((Coin) utxo.get("value")).getValue();
-                    int tokenid = (int) (utxo.get("tokenid"));
+                    long balance = ((Coin) utxo.get("value")).getValue();
+                    long tokenid = (long) (utxo.get("tokenid"));
                     String address = (String) (utxo.get("address"));
                     Main.instance.getUtxoData().add(new UTXOModel(0, tokenid, address));
                 }
             }
-            
+            list = (List) data.get("tokens");
+            if (list != null && !list.isEmpty()) {
+                for (Object object : list) {
+                    Map<String, Object> utxo = (Map<String, Object>) object;
+                    long balance = ((Coin) utxo.get("value")).getValue();
+                    long tokenid = (long) (utxo.get("tokenid"));
+                    Main.instance.getCoinData().add(new CoinModel(balance, tokenid));
+                }
+            }
+
         }
         utxoTable.setItems(Main.instance.getUtxoData());
         coinTable.setItems(Main.instance.getCoinData());

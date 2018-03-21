@@ -2,21 +2,22 @@ package wallettemplate;
 
 import org.bitcoinj.core.NetworkParameters;
 
-import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 
 public class UTXOModel {
-    private SimpleDoubleProperty balance;
+    private SimpleLongProperty balance;
     private SimpleStringProperty tokentype;
     private SimpleStringProperty address;
 
-    public UTXOModel(double balance, int tokenid, String address) {
-        this.balance = new SimpleDoubleProperty(balance);
-        this.tokentype = new SimpleStringProperty(tokenid == NetworkParameters.BIGNETCOIN_TOKENID ? "bignetcoin" : "other");
+    public UTXOModel(long balance, long tokenid, String address) {
+        this.balance = new SimpleLongProperty(balance);
+        this.tokentype = new SimpleStringProperty(
+                tokenid == NetworkParameters.BIGNETCOIN_TOKENID ? "bignetcoin" : "other");
         this.address = new SimpleStringProperty(address);
     }
 
-    public SimpleDoubleProperty balance() {
+    public SimpleLongProperty balance() {
         return balance;
     }
 
@@ -28,11 +29,11 @@ public class UTXOModel {
         return address;
     }
 
-    public double getBalance() {
+    public long getBalance() {
         return balance.get();
     }
 
-    public void setBalance(double balance) {
+    public void setBalance(long balance) {
         this.balance.set(balance);
     }
 
