@@ -934,6 +934,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 			throw new BlockStoreException(ex);
 		} catch (ProtocolException e) {
 			// Corrupted database.
+		    e.printStackTrace();
 			throw new BlockStoreException(e);
 		} catch (VerificationException e) {
 			// Should not be able to happen unless the database contains bad

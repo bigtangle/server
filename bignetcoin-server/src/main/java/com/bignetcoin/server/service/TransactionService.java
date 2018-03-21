@@ -56,6 +56,9 @@ public class TransactionService {
     public ByteBuffer askTransaction() throws Exception {
         Block r1 = blockService.getBlock(getNextBlockToApprove());
         Block r2 = blockService.getBlock(getNextBlockToApprove());
+        
+        System.out.println("send, r1 : " + r1.getHashAsString() + ", r2 : " + r2.getHashAsString());
+        
         byte[] r1Data = r1.bitcoinSerialize();
         byte[] r2Data = r2.bitcoinSerialize();
         

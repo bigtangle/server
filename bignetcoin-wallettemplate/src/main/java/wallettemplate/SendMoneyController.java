@@ -116,10 +116,11 @@ public class SendMoneyController {
         ByteBuffer byteBuffer = ByteBuffer.wrap(data);
         Block r1 = nextBlockSerializer(byteBuffer);
         Block r2 = nextBlockSerializer(byteBuffer);
-
-        ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
-        Block block = r1.createNextBlock(destination, Block.BLOCK_VERSION_GENESIS, (TransactionOutPoint) null,
-                Utils.currentTimeSeconds(), outKey.getPubKey(), Coin.ZERO, 1, r2.getHash(), outKey.getPubKey());
+        
+//        ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
+//        r1.setNetworkParameters(Main.params);
+//        r2.setNetworkParameters(Main.params);
+        Block rollingBlock = BlockForTest.createNextBlock(r1, null, r2.getHash());
 
         WalletWrapper wallet = (WalletWrapper) Main.bitcoin.wallet();
         wallet.setContextRoot(CONTEXT_ROOT);
@@ -127,9 +128,9 @@ public class SendMoneyController {
         Coin amount = Coin.parseCoin(amountEdit.getText(), NetworkParameters.BIGNETCOIN_TOKENID);
         SendRequest request = SendRequest.to(destination, amount);
         wallet.completeTx(request);
-        block.addTransaction(request.tx);
-        block.solve();
-        OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", block.bitcoinSerialize());
+        rollingBlock.addTransaction(request.tx);
+        rollingBlock.solve();
+        OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
 
         // TODO xiaomi change ui
         checkGuiThread();
@@ -142,9 +143,11 @@ public class SendMoneyController {
     }
 
     private Block nextBlockSerializer(ByteBuffer byteBuffer) {
-        byte[] data = new byte[byteBuffer.getInt()];
+        int len = byteBuffer.getInt();
+        byte[] data = new byte[len];
         byteBuffer.get(data);
-        Block r1 = (Block) Main.params.getDefaultSerializer().makeBlock(data);
+        Block r1 = Main.params.getDefaultSerializer().makeBlock(data);
+        System.out.println("block len : " + len + " conv : " + r1.getHashAsString());
         return r1;
     }
 

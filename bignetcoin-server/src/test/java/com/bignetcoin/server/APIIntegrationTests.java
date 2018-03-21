@@ -92,6 +92,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public void testCreateTransaction() throws Exception {
         byte[] data = getAskTransactionBlock();
         
+        System.out.println("len : " + data.length);
         ByteBuffer byteBuffer = ByteBuffer.wrap(data);
         Block r1 = nextBlockSerializer(byteBuffer);
         Block r2 = nextBlockSerializer(byteBuffer);
@@ -141,6 +142,9 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         milestoneService.update();
         
         rollingBlock = BlockForTest.createNextBlock(rollingBlock, null, networkParameters.getGenesisBlock().getHash());
+        System.out.println("rollingBlock : " + rollingBlock.getHashAsString());
+        rollingBlock = networkParameters.getDefaultSerializer().makeBlock(rollingBlock.bitcoinSerialize());
+        System.out.println("rollingBlock : " + rollingBlock.getHashAsString());
 
         // Create bitcoin spend of 1 BTC.
         WalletWrapper wallet = new WalletWrapper(networkParameters, contextRoot);
@@ -157,25 +161,15 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         blockgraph.add(rollingBlock);
         
         milestoneService.update(); //ADDED
+
+//        byte[] data = getAskTransactionBlock();
+//        ByteBuffer byteBuffer = ByteBuffer.wrap(data);
+//        Block r1 = nextBlockSerializer(byteBuffer);
+//        Block r2 = nextBlockSerializer(byteBuffer);
         
-        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name()).content(myKey.getPubKeyHash());
-        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
-        String response = mvcResult.getResponse().getContentAsString();
-        logger.info("testGetBalances resp : " + response);
-        
-        rollingBlock = BlockForTest.createNextBlock(rollingBlock, null, networkParameters.getGenesisBlock().getHash());
-        
-//        DumpedPrivateKey privKey = DumpedPrivateKey.fromBase58(networkParameters, "5Kg1gnAjaLfKiwhhPpGS3QfRg2m6awQvaj98JCZBZQ5SuS2F15C");
-//        KeyChainGroup group = new KeyChainGroup(networkParameters);
-//        group.importKeys(ECKey.fromPublicOnly(privKey.getKey().getPubKeyPoint()), ECKey.fromPublicOnly(HEX.decode("03cb219f69f1b49468bd563239a86667e74a06fcba69ac50a08a5cbc42a5808e99")));
-        
-//        KeyChainGroup group = new KeyChainGroup(networkParameters);
-//        group.importKeys(toKey);
-//        WalletWrapper wallet = new WalletWrapper(networkParameters, contextRoot);
-//        logger.info("AVAILABLE : " + wallet.getBalance(Wallet.BalanceType.AVAILABLE) + ", ESTIMATED : " + wallet.getBalance(Wallet.BalanceType.ESTIMATED));
-        
-//        wallet.setUTXOProvider(store);
-        
+        rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
+                outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
+//        rollingBlock = BlockForTest.createNextBlock(r1, null, r2.getHash());
         
         amount = Coin.valueOf(100, NetworkParameters.BIGNETCOIN_TOKENID);
 
@@ -193,9 +187,9 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         milestoneService.update();
 //        logger.info("AVAILABLE : " + wallet.getBalance(Wallet.BalanceType.AVAILABLE) + ", ESTIMATED : " + wallet.getBalance(Wallet.BalanceType.ESTIMATED));
         
-        httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name()).content(myKey.getPubKeyHash());
-        mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
-        response = mvcResult.getResponse().getContentAsString();
+        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name()).content(myKey.getPubKeyHash());
+        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
+        String response = mvcResult.getResponse().getContentAsString();
         logger.info("testGetBalances resp : " + response);
     }
     
@@ -289,9 +283,11 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     }
 
     public Block nextBlockSerializer(ByteBuffer byteBuffer) {
-        byte[] data = new byte[byteBuffer.getInt()];
+        int len = byteBuffer.getInt();
+        byte[] data = new byte[len];
         byteBuffer.get(data);
-        Block r1 = (Block) networkParameters.getDefaultSerializer().makeBlock(data);
+        Block r1 = networkParameters.getDefaultSerializer().makeBlock(data);
+        System.out.println("block len : " + len + " conv : " + r1.getHashAsString());
         return r1;
     }
 
@@ -302,7 +298,6 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         byte[] data = mvcResult.getResponse().getContentAsByteArray();
         return data;
     }
-    
 
 
     public void reqCmdSaveBlock(Block block) throws Exception, UnsupportedEncodingException {
