@@ -120,7 +120,7 @@ public class MainController {
                     long balance = ((Coin) utxo.get("value")).getValue();
                     long tokenid = (long) (utxo.get("tokenid"));
                     String address = (String) (utxo.get("address"));
-                    Main.instance.getUtxoData().add(new UTXOModel(0, tokenid, address));
+                    Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address));
                 }
             }
             list = (List) data.get("tokens");
