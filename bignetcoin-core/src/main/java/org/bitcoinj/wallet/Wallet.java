@@ -5466,4 +5466,7 @@ public class Wallet extends BaseTaggableObject
        this.serverurl= url;
     }
 
+    public KeyChainGroup getKeyChainGroup() {
+    return this.keyChainGroup;
+    }
 }

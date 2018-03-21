@@ -268,3 +268,21 @@ create block with coinbase transaction for each miner coin
  Account B tranfer  XX price to   account A
 
 
+
+create genesis block for new token for amount x
+
+new api for client:  input amount for genesis  
+next free tokenid =1+  select max (tokenid) from header  where blocktype = NetworkParameters.BLOCKTYPE_GENESIS
+Add new Block with this new tokenid and Coinbase with this amount 
+
+see simalar method here 
+BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
+                    outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
+                    
+save this block and return the block to client                    
+
+
+
+select * from 
+
+
