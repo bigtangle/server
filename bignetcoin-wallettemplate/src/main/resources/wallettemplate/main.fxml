@@ -79,7 +79,7 @@
             <Label layoutY="3.0" prefHeight="15.0" prefWidth="62.0" text="IPAddress" />
             <TextField fx:id="IPAdress" layoutX="83.0" prefHeight="23.0" prefWidth="203.0" text="127.0.0.1" />
             <Label layoutX="313.0" layoutY="1.0" text="port" />
-            <TextField fx:id="IPPort" layoutX="352.0" prefHeight="23.0" prefWidth="146.0" text="80" />
+            <TextField fx:id="IPPort" layoutX="352.0" prefHeight="23.0" prefWidth="146.0" text="14265" />
             <Button fx:id="connectButton" layoutX="506.0" mnemonicParsing="false" onAction="#connectServer" styleClass="fat-button" text="connect" />
          </children>
       </AnchorPane>

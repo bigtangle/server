@@ -22,10 +22,12 @@ import java.util.List;
 import java.util.Map;
 
 import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Json;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.utils.MonetaryFormat;
+import org.bitcoinj.utils.OkHttp3Util;
 import org.fxmisc.easybind.EasyBind;
 
 import com.squareup.okhttp.MediaType;
@@ -105,13 +107,9 @@ public class MainController {
     // Called by FXMLLoader.
     @FXML
     public void initialize() throws Exception {
-        String addr = "030d8952f6c079f60cd26eb3ba83cf16a81c51fc8e47b767721fa38b5e20092a75";
-        final Map<String, Object> request = new HashMap<>();
-        request.put("command", "getBalances");
-        request.put("addresses", new String[] { addr });
-        request.put("threshold", 100);
-
-        String response = post("http://localhost:14265", Json.jsonmapper().writeValueAsString(request));
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        ECKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
+        String response = OkHttp3Util.post(CONTEXT_ROOT + "getBalances", ecKey.getPubKeyHash());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
 
         if (data != null && !data.isEmpty()) {
