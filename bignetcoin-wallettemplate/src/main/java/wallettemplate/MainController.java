@@ -216,6 +216,12 @@ public class MainController {
         Main.instance.overlayUI("exchange.fxml");
     }
 
+    public void connectServer(ActionEvent event) {
+
+        Main.IpAddress = IPAdress.getText();
+        Main.port = IPPort.getText();
+    }
+
     public void settingsClicked(ActionEvent event) {
         Main.OverlayUI<WalletSettingsController> screen = Main.instance.overlayUI("wallet_settings.fxml");
         screen.controller.initialize(null);

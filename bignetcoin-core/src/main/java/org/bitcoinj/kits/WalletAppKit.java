@@ -576,7 +576,7 @@ public class WalletAppKit extends AbstractIdleService {
     }
 
     public Wallet wallet() {
-        checkState(state() == State.STARTING || state() == State.RUNNING, "Cannot call until startup is complete");
+       // checkState(state() == State.STARTING || state() == State.RUNNING, "Cannot call until startup is complete");
         return vWallet;
     }
 

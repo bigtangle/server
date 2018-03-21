@@ -80,7 +80,7 @@
             <TextField fx:id="IPAdress" layoutX="83.0" prefHeight="23.0" prefWidth="203.0" text="127.0.0.1" />
             <Label layoutX="313.0" layoutY="1.0" text="port" />
             <TextField fx:id="IPPort" layoutX="352.0" prefHeight="23.0" prefWidth="146.0" text="80" />
-            <Button fx:id="connectButton" layoutX="506.0" mnemonicParsing="false" styleClass="fat-button" text="connect" />
+            <Button fx:id="connectButton" layoutX="506.0" mnemonicParsing="false" onAction="#connectServer" styleClass="fat-button" text="connect" />
          </children>
       </AnchorPane>
   </children>

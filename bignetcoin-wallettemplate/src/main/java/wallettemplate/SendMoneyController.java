@@ -34,8 +34,6 @@ import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.utils.MapToBeanMapperUtil;
 import org.bitcoinj.utils.OkHttp3Util;
-import org.bitcoinj.wallet.DecryptingKeyBag;
-import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
@@ -70,6 +68,7 @@ public class SendMoneyController {
     // Called by FXMLLoader
     @SuppressWarnings({ "unchecked" })
     public void initialize() throws Exception {
+
         ECKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getBalances", ecKey.getPubKeyHash());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
@@ -98,35 +97,34 @@ public class SendMoneyController {
     public void cancel(ActionEvent event) {
         overlayUI.done();
     }
-    
+
     public WalletWrapper createWalletWrapper() {
         List<ECKey> keys = new ArrayList<ECKey>();
         KeyChainGroup group = new KeyChainGroup(Main.params);
         group.importKeys(keys);
         return new WalletWrapper(Main.params, group, CONTEXT_ROOT);
     }
-    
+
     private String CONTEXT_ROOT = "http://localhost:14265/";
 
     public void send(ActionEvent event) throws Exception {
+        CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         Address destination = Address.fromBase58(Main.params, address.getText());
-        KeyBag maybeDecryptingKeyBag = new DecryptingKeyBag( Main.bitcoin.wallet(), aesKey);
-        ECKey outKey = maybeDecryptingKeyBag.findKeyFromPubHash(destination.getHash160());
+        ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
+                Json.jsonmapper().writeValueAsString(requestParam));
         ByteBuffer byteBuffer = ByteBuffer.wrap(data);
         Block r1 = nextBlockSerializer(byteBuffer);
         Block r2 = nextBlockSerializer(byteBuffer);
-        Block block = r1.createNextBlock(destination, Block.BLOCK_VERSION_GENESIS, (TransactionOutPoint) null, Utils.currentTimeSeconds(), 
-                outKey.getPubKey(), Coin.ZERO, 1, r2.getHash(), outKey.getPubKey());
-        
+        Block block = r1.createNextBlock(destination, Block.BLOCK_VERSION_GENESIS, (TransactionOutPoint) null,
+                Utils.currentTimeSeconds(), outKey.getPubKey(), Coin.ZERO, 1, r2.getHash(), outKey.getPubKey());
+
         WalletWrapper wallet = (WalletWrapper) Main.bitcoin.wallet();
         wallet.setContextRoot(CONTEXT_ROOT);
-        
+
         Coin amount = Coin.parseCoin(amountEdit.getText(), NetworkParameters.BIGNETCOIN_TOKENID);
-        ECKey toKey = new ECKey();
-        Address address = new Address(Main.params, toKey.getPubKeyHash());
-        SendRequest request = SendRequest.to(address, amount);
+        SendRequest request = SendRequest.to(destination, amount);
         wallet.completeTx(request);
         block.addTransaction(request.tx);
         block.solve();
