@@ -49,31 +49,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     @Autowired
     private TransactionService transactionService;
     
-    @Test
-    public void testBlockSerializer000() {
-        ECKey outKey = new ECKey();
-        Coin coin = Coin.parseCoin("100", -1);
-        
-        Block r1 = networkParameters.getGenesisBlock();
-        Block r2 = networkParameters.getGenesisBlock();
-        Block rollingBlock = 
-                r2.createNextBlock(null, Block.BLOCK_VERSION_GENESIS, (TransactionOutPoint) null, Utils.currentTimeSeconds(), outKey.getPubKey(),
-                        FIFTY_COINS, 1, r1.getHash(),  outKey.getPubKey() 
-                        );
-        
-//        Transaction transaction = rollingBlock.getTransactions().get(0);
-//        TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
-//       
-//        Transaction t = new Transaction(networkParameters);
-//        t.addOutput(new TransactionOutput(networkParameters, t, coin, outKey));
-//        TransactionInput input = new TransactionInput(networkParameters, t, new byte[] {}, spendableOutput);
-//
-//        t.addInput(input);
-//        rollingBlock.addTransaction(t);
-        
-        String hex = Utils.HEX.encode(rollingBlock.bitcoinSerialize());
-        Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(hex));
-    }
+     
     
     @Test
     public void testBlockSerializer() throws BlockStoreException, Exception {

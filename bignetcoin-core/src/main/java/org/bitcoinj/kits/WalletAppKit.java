@@ -332,13 +332,17 @@ public class WalletAppKit extends AbstractIdleService {
             }
         }
         log.info("Starting up with directory = {}", directory);
-        try {
-            File chainFile = new File(directory, filePrefix + ".spvchain");
-            boolean chainFileExists = chainFile.exists();
-            vWalletFile = new File(directory, filePrefix + ".wallet");
-            boolean shouldReplayWallet = (vWalletFile.exists() && !chainFileExists) || restoreFromSeed != null;
-            vWallet = createOrLoadWallet(shouldReplayWallet);
 
+        File chainFile = new File(directory, filePrefix + ".spvchain");
+        boolean chainFileExists = chainFile.exists();
+        vWalletFile = new File(directory, filePrefix + ".wallet");
+        boolean shouldReplayWallet = (vWalletFile.exists() && !chainFileExists) || restoreFromSeed != null;
+        vWallet = createOrLoadWallet(shouldReplayWallet);
+    }
+
+    protected void startUp(File chainFile) throws Exception {
+        boolean chainFileExists = chainFile.exists();
+        try {
             // Initiate Bitcoin network objects (block store, blockchain and
             // peer group)
             vStore = provideBlockStore(chainFile);
@@ -401,7 +405,7 @@ public class WalletAppKit extends AbstractIdleService {
                 vPeerGroup.start();
                 // Make sure we shut down cleanly.
                 installShutdownHook();
-             //   completeExtensionInitiations(vPeerGroup);
+                // completeExtensionInitiations(vPeerGroup);
 
                 // TODO: Be able to use the provided download listener when
                 // doing a blocking startup.
@@ -412,7 +416,7 @@ public class WalletAppKit extends AbstractIdleService {
                 Futures.addCallback(vPeerGroup.startAsync(), new FutureCallback() {
                     @Override
                     public void onSuccess(@Nullable Object result) {
-                   //     completeExtensionInitiations(vPeerGroup);
+                        // completeExtensionInitiations(vPeerGroup);
                         final DownloadProgressTracker l = downloadListener == null ? new DownloadProgressTracker()
                                 : downloadListener;
                         vPeerGroup.startBlockChainDownload(l);
@@ -517,8 +521,6 @@ public class WalletAppKit extends AbstractIdleService {
         }
     }
 
-     
-
     protected PeerGroup createPeerGroup() throws TimeoutException {
         if (useTor) {
             TorClient torClient = new TorClient();
@@ -576,7 +578,8 @@ public class WalletAppKit extends AbstractIdleService {
     }
 
     public Wallet wallet() {
-       // checkState(state() == State.STARTING || state() == State.RUNNING, "Cannot call until startup is complete");
+        // checkState(state() == State.STARTING || state() == State.RUNNING,
+        // "Cannot call until startup is complete");
         if (vWallet == null) {
             try {
                 this.startUp();
