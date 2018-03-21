@@ -26,6 +26,7 @@ import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Json;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
+import org.bitcoinj.utils.MapToBeanMapperUtil;
 import org.bitcoinj.utils.MonetaryFormat;
 import org.bitcoinj.utils.OkHttp3Util;
 import org.fxmisc.easybind.EasyBind;
@@ -105,6 +106,7 @@ public class MainController {
     }
 
     // Called by FXMLLoader.
+    @SuppressWarnings("unchecked")
     @FXML
     public void initialize() throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
@@ -113,9 +115,9 @@ public class MainController {
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
 
         if (data != null && !data.isEmpty()) {
-            List list = (List) data.get("outputs");
+            List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("outputs");
             if (list != null && !list.isEmpty()) {
-                for (Object object : list) {
+                for (Map<String, Object> object : list) {
                     Map<String, Object> utxo = (Map<String, Object>) object;
                     long balance = ((Coin) utxo.get("value")).getValue();
                     long tokenid = (long) (utxo.get("tokenid"));
@@ -123,16 +125,13 @@ public class MainController {
                     Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address));
                 }
             }
-            list = (List) data.get("tokens");
+            list = (List<Map<String, Object>>) data.get("tokens");
             if (list != null && !list.isEmpty()) {
-                for (Object object : list) {
-                    Map<String, Object> utxo = (Map<String, Object>) object;
-                    long balance = ((Coin) utxo.get("value")).getValue();
-                    long tokenid = (long) (utxo.get("tokenid"));
-                    Main.instance.getCoinData().add(new CoinModel(balance, tokenid));
+                for (Map<String, Object> map : list) {
+                    Coin coin2 = MapToBeanMapperUtil.parseCoin(map);
+                    Main.instance.getCoinData().add(new CoinModel(coin2.value, coin2.tokenid));
                 }
             }
-
         }
         utxoTable.setItems(Main.instance.getUtxoData());
         coinTable.setItems(Main.instance.getCoinData());

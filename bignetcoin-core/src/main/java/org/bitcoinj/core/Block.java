@@ -1106,7 +1106,7 @@ public class Block extends Message {
             b.setTime(getTimeSeconds() + 1);
         else
             b.setTime(time);
-        b.solve();
+            b.solve();
         try {
             b.verifyHeader();
         } catch (VerificationException e) {

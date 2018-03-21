@@ -175,12 +175,14 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 //        logger.info("AVAILABLE : " + wallet.getBalance(Wallet.BalanceType.AVAILABLE) + ", ESTIMATED : " + wallet.getBalance(Wallet.BalanceType.ESTIMATED));
         
 //        wallet.setUTXOProvider(store);
+        
+        
         amount = Coin.valueOf(100, NetworkParameters.BIGNETCOIN_TOKENID);
 
         ECKey toKey = new ECKey();
         Address address = new Address(networkParameters, toKey.getPubKeyHash());
         SendRequest request = SendRequest.to(address, amount);
-//        request.changeAddress = new Address(networkParameters, myKey.getPubKeyHash());
+        request.changeAddress = new Address(networkParameters, myKey.getPubKeyHash());
         wallet.completeTx(request);
 
         rollingBlock.addTransaction(request.tx);

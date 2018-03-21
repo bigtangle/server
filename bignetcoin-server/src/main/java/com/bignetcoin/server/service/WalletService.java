@@ -93,7 +93,7 @@ public class WalletService {
             boolean excludeImmatureCoinbases) {
         LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
         try {
-            int chainHeight = store.getChainHeadHeight();
+            int chainHeight = 10;
             for (UTXO output : getStoredOutputsFromUTXOProvider(pubKeyHashs)) {
                 boolean coinbase = output.isCoinbase();
                 long depth = chainHeight - output.getHeight() + 1; // the current

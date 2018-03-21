@@ -310,7 +310,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
         wallet.setUTXOProvider(store);
         ECKey toKey = wallet.freshReceiveKey();
-        Coin amount = Coin.valueOf(1000, NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin amount = Coin.valueOf(10000000, NetworkParameters.BIGNETCOIN_TOKENID);
 
         Transaction t = new Transaction(PARAMS);
         t.addOutput(new TransactionOutput(PARAMS, t, amount, toKey));

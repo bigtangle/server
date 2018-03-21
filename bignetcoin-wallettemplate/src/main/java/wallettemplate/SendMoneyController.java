@@ -25,6 +25,7 @@ import java.util.Map;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
+import org.bitcoinj.core.BlockForTest;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Json;
@@ -110,13 +111,13 @@ public class SendMoneyController {
     public void send(ActionEvent event) throws Exception {
         CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         Address destination = Address.fromBase58(Main.params, address.getText());
-        ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
-                Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
         ByteBuffer byteBuffer = ByteBuffer.wrap(data);
         Block r1 = nextBlockSerializer(byteBuffer);
         Block r2 = nextBlockSerializer(byteBuffer);
+
+        ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
         Block block = r1.createNextBlock(destination, Block.BLOCK_VERSION_GENESIS, (TransactionOutPoint) null,
                 Utils.currentTimeSeconds(), outKey.getPubKey(), Coin.ZERO, 1, r2.getHash(), outKey.getPubKey());
 
