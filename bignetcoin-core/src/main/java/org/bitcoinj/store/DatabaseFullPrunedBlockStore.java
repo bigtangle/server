@@ -2061,6 +2061,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public int getMaxTokenId() throws BlockStoreException {
+        maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(getSelectMaxTokenIdSQL());
