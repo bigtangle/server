@@ -154,6 +154,8 @@ public class Transaction extends ChildMessage {
     private ArrayList<TransactionOutput> outputs;
 
     private long lockTime;
+    
+    public long tokenid = NetworkParameters.BIGNETCOIN_TOKENID;
 
     // This is either the time the transaction was broadcast as measured from
     // the local clock, or the time from the
@@ -1503,8 +1505,8 @@ public class Transaction extends ChildMessage {
             throw new VerificationException.EmptyInputsOrOutputs();
         if (this.getMessageSize() > Block.MAX_BLOCK_SIZE)
             throw new VerificationException.LargerThanMaxBlockSize();
-
-        Coin valueOut = Coin.ZERO;
+        
+        Coin valueOut = Coin.valueOf(0, tokenid);
         HashSet<TransactionOutPoint> outpoints = new HashSet<TransactionOutPoint>();
         for (TransactionInput input : inputs) {
             if (outpoints.contains(input.getOutpoint()))

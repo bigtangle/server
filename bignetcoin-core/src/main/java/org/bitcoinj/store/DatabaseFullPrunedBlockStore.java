@@ -6,7 +6,6 @@
 package org.bitcoinj.store;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.sql.Connection;
@@ -17,7 +16,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,7 +34,6 @@ import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.StoredUndoableBlock;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutputChanges;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.UTXOProviderException;
@@ -274,6 +271,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	private static final String SELECT_SOLID_BLOCKS_OF_HEIGHT_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate FROM blockevaluation WHERE solid = 1 && height = ?";
 
 	private static final String SELECT_OUTPUT_SPENDER_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate FROM blockevaluation INNER JOIN outputs ON outputs.blockhash=blockevaluation.blockhash WHERE solid = 1";
+
+	private static final String SELECT_MAX_TOKENID_SQL = "select max(tokenid) from headers where blocktype = ?";
 
 	protected Sha256Hash chainHeadHash;
 	protected StoredBlock chainHeadBlock;
@@ -594,6 +593,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	protected String getSelectopenoutputsDumpSQL() {
 		return SELECT_DUMP_OUTPUTS_SQL;
 	}
+	
+    protected String getSelectMaxTokenIdSQL() {
+        return SELECT_MAX_TOKENID_SQL;
+    }
 
 	/**
 	 * <p>
@@ -2054,4 +2057,30 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 		}
 		
 	}
+	
+
+    @Override
+    public int getMaxTokenId() throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(getSelectMaxTokenIdSQL());
+            preparedStatement.setLong(1, NetworkParameters.BLOCKTYPE_TRANSFER);
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (!resultSet.next()) {
+                return 0;
+            }
+            return (int) resultSet.getLong(1);
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
 }

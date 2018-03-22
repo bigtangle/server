@@ -70,6 +70,12 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
             break;
+            
+            case createGenesisBlock: {
+                byte[] data = blockService.createGenesisBlock(bodyByte);
+                this.outPointBinaryArray(httpServletResponse, data);
+            }
+            break;
             }
         } catch (Exception exception) {
             logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, Utils.HEX.encode(bodyByte), exception);

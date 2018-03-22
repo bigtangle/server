@@ -6,20 +6,19 @@ package com.bignetcoin.server.service;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import org.apache.tomcat.jni.Time;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockEvaluation;
+import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.FullPrunedBlockGraph;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.PrunedException;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
+import org.bitcoinj.core.TransactionOutPoint;
+import org.bitcoinj.core.Utils;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.wallet.CoinSelector;
@@ -147,6 +146,29 @@ public class BlockService {
         FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
         blockgraph.add(block);
         milestoneService.update();
+    }
+    
+    public int getNextTokenId() throws BlockStoreException {
+        int maxTokenId = store.getMaxTokenId();
+        return maxTokenId + 1;
+    }
+
+    public byte[] createGenesisBlock(byte[] bytes) throws Exception {
+        ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
+        int amount = byteBuffer.getInt();
+        int len = byteBuffer.getInt();
+        byte[] pubKey = new byte[len];
+        byteBuffer.get(pubKey);
+
+        Coin coin = Coin.valueOf(amount, this.getNextTokenId());
+        Block block = networkParameters.getGenesisBlock().createNextBlock(null, Block.BLOCK_VERSION_GENESIS, (TransactionOutPoint) null,
+                Utils.currentTimeSeconds(), pubKey, coin, 1, networkParameters.getGenesisBlock().getHash(), pubKey);
+        
+        FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
+        blockgraph.add(block);
+        
+        milestoneService.update();
+        return block.bitcoinSerialize();
     }
 
     @Autowired

@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.bitcoinj.core.Address;
-import org.bitcoinj.core.Base58;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.BlockForTest;
@@ -25,13 +24,11 @@ import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Json;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PrunedException;
-import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.Utils;
-import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.MapToBeanMapperUtil;
 import org.bitcoinj.wallet.SendRequest;
@@ -277,6 +274,21 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         ByteBuffer byteBuffer = ByteBuffer.wrap(data);
         Block r1 = nextBlockSerializer(byteBuffer);
         Block r2 = nextBlockSerializer(byteBuffer);
+    }
+    
+    @Test
+    public void testSpringBootCreateGenesisBlock() throws Exception {
+        ECKey outKey = new ECKey();
+        byte[] pubKey = outKey.getPubKey();
+        ByteBuffer byteBuffer = ByteBuffer.allocate(4 + 4 + pubKey.length);
+        byteBuffer.putInt(100000000);
+        byteBuffer.putInt(pubKey.length);
+        byteBuffer.put(pubKey);
+        
+        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.createGenesisBlock.name()).content(byteBuffer.array());
+        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
+        byte[] data = mvcResult.getResponse().getContentAsByteArray();
+        logger.info("createGenesisBlock resp : " + Utils.HEX.encode(data));
     }
     
     @Test

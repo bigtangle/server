@@ -163,6 +163,11 @@ public class Block extends Message {
         mineraddress = new byte[20];
         length = HEADER_SIZE;
     }
+    
+    Block(NetworkParameters params, long setVersion, long tokenid) {
+        this(params, setVersion);
+        this.tokenid = tokenid;
+    }
 
      
 
@@ -1030,6 +1035,7 @@ public class Block extends Message {
         unCacheTransactions();
         transactions = new ArrayList<Transaction>();
         Transaction coinbase = new Transaction(params);
+        coinbase.tokenid = value.tokenid;
         final ScriptBuilder inputBuilder = new ScriptBuilder();
 
         if (height >= Block.BLOCK_HEIGHT_GENESIS) {
@@ -1071,7 +1077,7 @@ public class Block extends Message {
     public Block createNextBlock(@Nullable final Address to, final long version, @Nullable TransactionOutPoint prevOut,
             final long time, final byte[] pubKey, final Coin coinbaseValue, final int height,
             Sha256Hash prevBranchBlockHash, byte[] mineraddress) {
-        Block b = new Block(params, version);
+        Block b = new Block(params, version, coinbaseValue.tokenid);
         // b.setDifficultyTarget(difficultyTarget);
         b.addCoinbaseTransaction(pubKey, coinbaseValue, height);
         b.setMineraddress(mineraddress);

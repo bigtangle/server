@@ -5,7 +5,6 @@
 
 package org.bitcoinj.store;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
@@ -13,7 +12,6 @@ import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.StoredUndoableBlock;
-import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.UTXOProvider;
 
@@ -229,4 +227,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 	public BlockEvaluation getTransactionOutputSpender(Sha256Hash prevBlockHash, long index) throws BlockStoreException;
 
 	public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, long index, boolean b) throws BlockStoreException;
+
+    public int getMaxTokenId() throws BlockStoreException;
 }

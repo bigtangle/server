@@ -541,4 +541,9 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
 		// TODO Auto-generated method stub
 		
 	}
+
+    @Override
+    public int getMaxTokenId() {
+        return 0;
+    }
 }
