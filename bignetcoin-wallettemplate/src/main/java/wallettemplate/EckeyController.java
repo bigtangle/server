@@ -10,6 +10,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 
 public class EckeyController {
     @FXML
@@ -26,6 +27,11 @@ public class EckeyController {
     @FXML
     public TableColumn<EckeyModel, String> addressColumnA;
 
+    @FXML
+    public TextField keyFileDirTextField;
+    @FXML
+    public TextField keyFilePrefixTextField;
+
     private ObservableList<EckeyModel> issuedKeyData = FXCollections.observableArrayList();
     private ObservableList<EckeyModel> importedKeyData = FXCollections.observableArrayList();
 
@@ -33,6 +39,10 @@ public class EckeyController {
 
     @FXML
     public void initialize() throws Exception {
+        initEcKeyList();
+    }
+
+    public void initEcKeyList() {
         List<ECKey> issuedKeys = Main.bitcoin.wallet().getIssuedReceiveKeys();
         List<ECKey> importedKeys = Main.bitcoin.wallet().getImportedKeys();
         if (issuedKeys != null && !issuedKeys.isEmpty()) {
@@ -55,6 +65,12 @@ public class EckeyController {
 
     public void closeUI(ActionEvent event) {
         overlayUI.done();
+    }
+
+    public void selectFile(ActionEvent event) {
+        Main.keyFileDirectory = keyFileDirTextField.getText();
+        Main.keyFilePrefix = keyFilePrefixTextField.getText();
+        initEcKeyList();
     }
 
     public ObservableList<EckeyModel> getIssuedKeyData() {
