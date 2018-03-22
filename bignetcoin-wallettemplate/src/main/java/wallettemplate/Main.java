@@ -66,6 +66,8 @@ public class Main extends Application {
     public Stage mainWindow;
     private ObservableList<CoinModel> coinData = FXCollections.observableArrayList();
     private ObservableList<UTXOModel> utxoData = FXCollections.observableArrayList();
+    
+    
 
     public static String IpAddress = "localhost";
     public static String port = "14265";
