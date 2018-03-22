@@ -167,7 +167,7 @@ public class BlockService {
         FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
         blockgraph.add(block);
         
-        milestoneService.update();
+        // milestoneService.update();
         return block.bitcoinSerialize();
     }
 

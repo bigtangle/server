@@ -21,13 +21,13 @@
 			</rowConstraints>
 			<children>
 				<Label prefHeight="15.0" prefWidth="85.0" text="token code" GridPane.rowIndex="1" />
-				<Label prefHeight="15.0" prefWidth="90.0" text="token number" GridPane.rowIndex="2" />
+				<Label prefHeight="15.0" prefWidth="90.0" text="token amount" GridPane.rowIndex="2" />
 				<Label prefHeight="0.0" prefWidth="137.0" text="token name" />
 				<Label prefHeight="15.0" prefWidth="145.0" text="token description" GridPane.rowIndex="3" />
-				<TextField fx:id="stockName" GridPane.columnIndex="1" />
-				<TextField fx:id="stockCode" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-				<TextField fx:id="stockNumber" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-				<TextArea fx:id="stockDescription" prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+				<TextField fx:id="stockName" editable="false" GridPane.columnIndex="1" />
+				<TextField fx:id="stockCode" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+				<TextField fx:id="stockAmount" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+				<TextArea fx:id="stockDescription" editable="false" prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
 				<Button fx:id="save" mnemonicParsing="false" onAction="#saveStock" text="publish" GridPane.rowIndex="4" />
 				<Button fx:id="closeButton" mnemonicParsing="false" onAction="#closeStock" text="close" GridPane.columnIndex="1" GridPane.rowIndex="4" />
 			</children>

@@ -33,6 +33,8 @@ import org.bitcoinj.core.UTXO;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.utils.MapToBeanMapperUtil;
 import org.bitcoinj.utils.OkHttp3Util;
+import org.bitcoinj.wallet.DecryptingKeyBag;
+import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.spongycastle.crypto.params.KeyParameter;
@@ -64,7 +66,7 @@ public class SendMoneyController {
     // Called by FXMLLoader
     @SuppressWarnings({ "unchecked" })
     public void initialize() throws Exception {
-
+     //   KeyBag maybeDecryptingKeyBag = new DecryptingKeyBag(Main.bitcoin.wallet(), Main.aesKey);
         DeterministicKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getBalances", ecKey.getPubKeyHash());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
