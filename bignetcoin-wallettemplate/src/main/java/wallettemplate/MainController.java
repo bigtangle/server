@@ -52,6 +52,7 @@ import javafx.util.Duration;
 import wallettemplate.controls.ClickableBitcoinAddress;
 import wallettemplate.controls.NotificationBarPane;
 import wallettemplate.utils.BitcoinUIModel;
+import wallettemplate.utils.GuiUtils;
 import wallettemplate.utils.easing.EasingMode;
 import wallettemplate.utils.easing.ElasticInterpolator;
 
@@ -85,6 +86,11 @@ public class MainController {
     public TextField IPAdress;
     @FXML
     public TextField IPPort;
+
+    @FXML
+    public TextField keyFileDirectory;
+    @FXML
+    public TextField keyFilePrefix;
 
     private BitcoinUIModel model = new BitcoinUIModel();
     private NotificationBarPane.Item syncItem;
@@ -191,6 +197,12 @@ public class MainController {
         Main.instance.overlayUI("send_money.fxml");
     }
 
+    public void setKeyFilePath(ActionEvent event) {
+        Main.keyFileDirectory = keyFileDirectory.getText();
+        Main.keyFilePrefix = keyFilePrefix.getText();
+        GuiUtils.informationalAlert("set key file is ok", "", "");
+    }
+
     public void stockPublish(ActionEvent event) {
 
         Main.instance.overlayUI("stock.fxml");
@@ -205,6 +217,7 @@ public class MainController {
 
         Main.IpAddress = IPAdress.getText();
         Main.port = IPPort.getText();
+        GuiUtils.informationalAlert("set server info is ok", "", "");
     }
 
     public void settingsClicked(ActionEvent event) {

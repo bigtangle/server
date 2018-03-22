@@ -55,8 +55,9 @@ public class Main extends Application {
     public static final String APP_NAME = "WalletTemplate";
     private static final String WALLET_FILE_NAME = APP_NAME.replaceAll("[^a-zA-Z0-9.-]", "_") + "-"
             + params.getPaymentProtocolId();
-
-    public static WalletAppKit bitcoin = new WalletAppKit(params, new File("."), "doublespend");;
+    public static String keyFileDirectory = ".";
+    public static String keyFilePrefix = "mykey";
+    public static WalletAppKit bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);;
     public static Main instance;
 
     private StackPane uiStack;
@@ -66,8 +67,6 @@ public class Main extends Application {
     public Stage mainWindow;
     private ObservableList<CoinModel> coinData = FXCollections.observableArrayList();
     private ObservableList<UTXOModel> utxoData = FXCollections.observableArrayList();
-    
-    
 
     public static String IpAddress = "localhost";
     public static String port = "14265";

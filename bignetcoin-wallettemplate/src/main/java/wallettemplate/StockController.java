@@ -10,6 +10,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import wallettemplate.utils.GuiUtils;
 
 public class StockController {
     @FXML
@@ -35,9 +36,9 @@ public class StockController {
             byte[] blockByte = OkHttp3Util.postByte(CONTEXT_ROOT + "createGenesisBlock", byteBuffer.array());
             Block block = Main.params.getDefaultSerializer().makeBlock(blockByte);
             stockCode.setText(block.getTokenid() + "");
+            GuiUtils.informationalAlert("token publish is ok", "", "");
         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            GuiUtils.crashAlert(e);
         }
     }
 

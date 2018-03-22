@@ -33,8 +33,6 @@ import org.bitcoinj.core.UTXO;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.utils.MapToBeanMapperUtil;
 import org.bitcoinj.utils.OkHttp3Util;
-import org.bitcoinj.wallet.DecryptingKeyBag;
-import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.spongycastle.crypto.params.KeyParameter;
@@ -45,6 +43,7 @@ import javafx.event.ActionEvent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import wallettemplate.utils.GuiUtils;
 import wallettemplate.utils.TextFieldValidator;
 import wallettemplate.utils.WTUtils;
 
@@ -66,7 +65,8 @@ public class SendMoneyController {
     // Called by FXMLLoader
     @SuppressWarnings({ "unchecked" })
     public void initialize() throws Exception {
-     //   KeyBag maybeDecryptingKeyBag = new DecryptingKeyBag(Main.bitcoin.wallet(), Main.aesKey);
+        // KeyBag maybeDecryptingKeyBag = new
+        // DecryptingKeyBag(Main.bitcoin.wallet(), Main.aesKey);
         DeterministicKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getBalances", ecKey.getPubKeyHash());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
@@ -86,9 +86,9 @@ public class SendMoneyController {
         Coin balance = Coin.valueOf(10000, NetworkParameters.BIGNETCOIN_TOKENID);
         // Main.bitcoin.wallet().getBalance();
         checkState(!balance.isZero());
-       // new BitcoinAddressValidator(Main.params, address, sendBtn);
+        // new BitcoinAddressValidator(Main.params, address, sendBtn);
         address.setText(ecKey.toAddress(Main.params).toBase58());
-        
+
         new TextFieldValidator(amountEdit, text -> !WTUtils.didThrow(
                 () -> checkState(Coin.parseCoin(text, NetworkParameters.BIGNETCOIN_TOKENID).compareTo(balance) <= 0)));
         amountEdit.setText(balance.toPlainString());
@@ -98,42 +98,46 @@ public class SendMoneyController {
         overlayUI.done();
     }
 
-  
     private String CONTEXT_ROOT = "http://localhost:14265/";
 
-    public void send(ActionEvent event) throws Exception {
-        CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
-        Address destination = //Address.getParametersFromAddress(address)address.getText()
-                 Address.fromBase58(Main.params, address.getText());
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
-        ByteBuffer byteBuffer = ByteBuffer.wrap(data);
-        Block r1 = nextBlockSerializer(byteBuffer);
-        Block r2 = nextBlockSerializer(byteBuffer);
-        
-//        ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
-//        r1.setNetworkParameters(Main.params);
-//        r2.setNetworkParameters(Main.params);
-        Block rollingBlock = BlockForTest.createNextBlock(r1, null, r2.getHash());
+    public void send(ActionEvent event) {
+        try {
+            CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+            Address destination = // Address.getParametersFromAddress(address)address.getText()
+                    Address.fromBase58(Main.params, address.getText());
+            HashMap<String, String> requestParam = new HashMap<String, String>();
+            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
+                    Json.jsonmapper().writeValueAsString(requestParam));
+            ByteBuffer byteBuffer = ByteBuffer.wrap(data);
+            Block r1 = nextBlockSerializer(byteBuffer);
+            Block r2 = nextBlockSerializer(byteBuffer);
 
-        Wallet wallet =   Main.bitcoin.wallet();
-        wallet.setServerURL( CONTEXT_ROOT);
+            // ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
+            // r1.setNetworkParameters(Main.params);
+            // r2.setNetworkParameters(Main.params);
+            Block rollingBlock = BlockForTest.createNextBlock(r1, null, r2.getHash());
 
-        Coin amount = Coin.parseCoin(amountEdit.getText(), NetworkParameters.BIGNETCOIN_TOKENID);
-        SendRequest request = SendRequest.to(destination, amount);
-        wallet.completeTx(request);
-        rollingBlock.addTransaction(request.tx);
-        rollingBlock.solve();
-        OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
+            Wallet wallet = Main.bitcoin.wallet();
+            wallet.setServerURL(CONTEXT_ROOT);
 
-        // TODO xiaomi change ui
-        checkGuiThread();
-        overlayUI.done();
-        // sendBtn.setDisable(true);
-        // address.setDisable(true);
-        // ((HBox) amountEdit.getParent()).getChildren().remove(amountEdit);
-        // ((HBox) btcLabel.getParent()).getChildren().remove(btcLabel);
-        // updateTitleForBroadcast();
+            Coin amount = Coin.parseCoin(amountEdit.getText(), NetworkParameters.BIGNETCOIN_TOKENID);
+            SendRequest request = SendRequest.to(destination, amount);
+            wallet.completeTx(request);
+            rollingBlock.addTransaction(request.tx);
+            rollingBlock.solve();
+            OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
+
+            // TODO xiaomi change ui
+            checkGuiThread();
+            overlayUI.done();
+            // sendBtn.setDisable(true);
+            // address.setDisable(true);
+            // ((HBox) amountEdit.getParent()).getChildren().remove(amountEdit);
+            // ((HBox) btcLabel.getParent()).getChildren().remove(btcLabel);
+            // updateTitleForBroadcast();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
     }
 
     private Block nextBlockSerializer(ByteBuffer byteBuffer) {

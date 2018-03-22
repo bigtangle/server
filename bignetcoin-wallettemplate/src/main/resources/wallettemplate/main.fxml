@@ -40,7 +40,7 @@
       </image>
     </ImageView>
     <ClickableBitcoinAddress fx:id="addressControl" layoutY="45.0" prefHeight="21.0" prefWidth="391.0" AnchorPane.leftAnchor="14.0" AnchorPane.rightAnchor="195.0" />
-    <StackPane layoutX="14.0" layoutY="81.0" prefHeight="249.0" prefWidth="572.0" style="-fx-border-color: lightgrey; -fx-border-style: dashed" AnchorPane.bottomAnchor="70.0" AnchorPane.leftAnchor="15.0" AnchorPane.rightAnchor="15.0" AnchorPane.topAnchor="81.0">
+    <StackPane layoutX="15.0" layoutY="111.0" prefHeight="249.0" prefWidth="572.0" style="-fx-border-color: lightgrey; -fx-border-style: dashed" AnchorPane.bottomAnchor="40.0" AnchorPane.leftAnchor="15.0" AnchorPane.rightAnchor="15.0" AnchorPane.topAnchor="111.0">
       <children>
         <Label text="Your content goes here" />
             <HBox prefHeight="100.0" prefWidth="200.0">
@@ -66,7 +66,7 @@
             </HBox>
       </children>
     </StackPane>
-    <HBox layoutX="136.0" layoutY="45.0" prefHeight="23.0" prefWidth="619.0" spacing="20" AnchorPane.rightAnchor="45.0" AnchorPane.topAnchor="45.0">
+    <HBox layoutX="136.0" layoutY="77.0" prefHeight="23.0" prefWidth="619.0" spacing="20" AnchorPane.rightAnchor="45.0" AnchorPane.topAnchor="77.0">
        <children>
            <Button onAction="#settingsClicked" style="-fx-base: white;" styleClass="fat-button" text="Settings" />
            <Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" alignment="CENTER" mnemonicParsing="false" onAction="#sendMoneyOut" style="-fx-base: lightgreen; -fx-font-weight: bold" styleClass="fat-button" text="Send money out" />
@@ -80,7 +80,16 @@
             <TextField fx:id="IPAdress" layoutX="83.0" prefHeight="23.0" prefWidth="203.0" text="127.0.0.1" />
             <Label layoutX="313.0" layoutY="1.0" text="port" />
             <TextField fx:id="IPPort" layoutX="352.0" prefHeight="23.0" prefWidth="146.0" text="14265" />
-            <Button fx:id="connectButton" layoutX="506.0" mnemonicParsing="false" onAction="#connectServer" styleClass="fat-button" text="connect" />
+            <Button fx:id="connectButton" layoutX="506.0" layoutY="-2.0" mnemonicParsing="false" onAction="#connectServer" styleClass="fat-button" text="connect" />
+         </children>
+      </AnchorPane>
+      <AnchorPane layoutX="129.0" layoutY="46.0" prefHeight="30.0" prefWidth="591.0">
+         <children>
+            <Label layoutX="8.0" layoutY="7.0" text="Directory" />
+            <Label layoutX="305.0" layoutY="8.0" text="Prefix" />
+            <TextField fx:id="keyFileDirectory" layoutX="72.0" layoutY="3.0" prefHeight="23.0" prefWidth="224.0" />
+            <TextField fx:id="keyFilePrefix" layoutX="359.0" layoutY="3.0" prefHeight="23.0" prefWidth="153.0" />
+            <Button layoutX="522.0" layoutY="5.0" mnemonicParsing="false" onAction="#setKeyFilePath" styleClass="fat-button" text="setKeyFilePath" />
          </children>
       </AnchorPane>
   </children>
