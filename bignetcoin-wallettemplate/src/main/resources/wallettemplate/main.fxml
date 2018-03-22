@@ -14,7 +14,7 @@
 <?import javafx.scene.text.*?>
 <?import wallettemplate.controls.*?>
 
-<AnchorPane maxHeight="Infinity" maxWidth="Infinity" minHeight="200.0" minWidth="300.0" prefHeight="451.0" prefWidth="800.0" styleClass="root-pane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="wallettemplate.MainController">
+<AnchorPane maxHeight="Infinity" maxWidth="Infinity" minHeight="200.0" minWidth="300.0" prefHeight="542.0" prefWidth="800.0" styleClass="root-pane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="wallettemplate.MainController">
   <children>
     <Label layoutX="14.0" layoutY="14.0" text="Balance">
       <font>
@@ -40,14 +40,14 @@
       </image>
     </ImageView>
     <ClickableBitcoinAddress fx:id="addressControl" layoutY="45.0" prefHeight="21.0" prefWidth="391.0" AnchorPane.leftAnchor="14.0" AnchorPane.rightAnchor="195.0" />
-    <StackPane layoutX="15.0" layoutY="111.0" prefHeight="249.0" prefWidth="572.0" style="-fx-border-color: lightgrey; -fx-border-style: dashed" AnchorPane.bottomAnchor="40.0" AnchorPane.leftAnchor="15.0" AnchorPane.rightAnchor="15.0" AnchorPane.topAnchor="111.0">
+    <StackPane layoutX="15.0" layoutY="144.0" prefHeight="249.0" prefWidth="572.0" style="-fx-border-color: lightgrey; -fx-border-style: dashed" AnchorPane.bottomAnchor="7.0" AnchorPane.leftAnchor="15.0" AnchorPane.rightAnchor="15.0" AnchorPane.topAnchor="144.0">
       <children>
         <Label text="Your content goes here" />
             <HBox prefHeight="100.0" prefWidth="200.0">
                <children>
-                  <HBox prefHeight="341.0" prefWidth="776.0">
+                  <HBox prefHeight="366.0" prefWidth="768.0">
                      <children>
-                        <TableView fx:id="utxoTable" prefHeight="298.0" prefWidth="598.0">
+                        <TableView fx:id="utxoTable" prefHeight="364.0" prefWidth="542.0">
                           <columns>
                             <TableColumn fx:id="balanceColumn" prefWidth="127.0" text="balance" />
                             <TableColumn fx:id="tokentypeColumnA" prefWidth="72.0" text="tokentype" />
@@ -66,15 +66,16 @@
             </HBox>
       </children>
     </StackPane>
-    <HBox layoutX="136.0" layoutY="77.0" prefHeight="23.0" prefWidth="619.0" spacing="20" AnchorPane.rightAnchor="45.0" AnchorPane.topAnchor="77.0">
+    <HBox layoutX="44.0" layoutY="107.0" prefHeight="23.0" prefWidth="711.0" spacing="20" AnchorPane.rightAnchor="45.0" AnchorPane.topAnchor="107.0">
        <children>
            <Button onAction="#settingsClicked" style="-fx-base: white;" styleClass="fat-button" text="Settings" />
            <Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" alignment="CENTER" mnemonicParsing="false" onAction="#sendMoneyOut" style="-fx-base: lightgreen; -fx-font-weight: bold" styleClass="fat-button" text="Send money out" />
             <Button fx:id="stock" onAction="#stockPublish" styleClass="fat-button" text="token publish" />
             <Button fx:id="exchange" mnemonicParsing="false" onAction="#exchangeCoin" styleClass="fat-button" text="exchange" />
+            <Button mnemonicParsing="false" styleClass="fat-button" text="eckey list" />
        </children>
     </HBox>
-      <AnchorPane layoutX="140.0" layoutY="14.0" prefHeight="15.0" prefWidth="572.0">
+      <AnchorPane layoutX="140.0" layoutY="25.0" prefHeight="15.0" prefWidth="572.0">
          <children>
             <Label layoutY="3.0" prefHeight="15.0" prefWidth="62.0" text="IPAddress" />
             <TextField fx:id="IPAdress" layoutX="83.0" prefHeight="23.0" prefWidth="203.0" text="127.0.0.1" />
@@ -83,7 +84,7 @@
             <Button fx:id="connectButton" layoutX="506.0" layoutY="-2.0" mnemonicParsing="false" onAction="#connectServer" styleClass="fat-button" text="connect" />
          </children>
       </AnchorPane>
-      <AnchorPane layoutX="129.0" layoutY="46.0" prefHeight="30.0" prefWidth="591.0">
+      <AnchorPane layoutX="129.0" layoutY="65.0" prefHeight="30.0" prefWidth="591.0">
          <children>
             <Label layoutX="8.0" layoutY="7.0" text="Directory" />
             <Label layoutX="305.0" layoutY="8.0" text="Prefix" />
