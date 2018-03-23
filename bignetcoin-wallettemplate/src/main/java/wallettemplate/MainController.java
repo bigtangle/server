@@ -16,6 +16,7 @@ package wallettemplate;
 
 import static wallettemplate.Main.bitcoin;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +52,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.HBox;
+import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import wallettemplate.controls.ClickableBitcoinAddress;
 import wallettemplate.controls.NotificationBarPane;
@@ -92,8 +94,6 @@ public class MainController {
 
     @FXML
     public TextField keyFileDirectory;
-    @FXML
-    public TextField keyFilePrefix;
 
     private BitcoinUIModel model = new BitcoinUIModel();
     private NotificationBarPane.Item syncItem;
@@ -105,7 +105,18 @@ public class MainController {
     // Called by FXMLLoader.
     @SuppressWarnings("unchecked")
     @FXML
-    public void initialize() throws Exception {
+    public void initialize() {
+        try {
+            initTableView();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+        addressControl.setOpacity(1.0);
+    }
+
+    public void initTableView() throws Exception {
+        Main.instance.getUtxoData().clear();
+        Main.instance.getCoinData().clear();
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         // ECKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
 
@@ -171,7 +182,7 @@ public class MainController {
 
         valueColumn.setCellValueFactory(cellData -> cellData.getValue().value());
         tokentypeColumn.setCellValueFactory(cellData -> cellData.getValue().tokenid());
-        addressControl.setOpacity(1.0);
+
     }
 
     public void onBitcoinSetup() {
@@ -232,9 +243,28 @@ public class MainController {
     }
 
     public void setKeyFilePath(ActionEvent event) {
-        Main.keyFileDirectory = keyFileDirectory.getText();
-        Main.keyFilePrefix = keyFilePrefix.getText();
-        GuiUtils.informationalAlert("set key file is ok", "", "");
+        final FileChooser fileChooser = new FileChooser();
+        File file = fileChooser.showOpenDialog(null);
+        // final Desktop desktop = Desktop.getDesktop();
+        if (file != null) {
+            // try {
+            // desktop.open(file);
+            keyFileDirectory.setText(file.getAbsolutePath());
+            // } catch (IOException e) {
+
+            // GuiUtils.crashAlert(e);
+            // }
+
+            Main.keyFileDirectory = file.getParent();
+            String filename = file.getName();
+
+            Main.keyFilePrefix = filename.contains(".") ? filename.substring(0, filename.lastIndexOf(".")) : filename;
+
+            GuiUtils.informationalAlert("set key file is ok", "", "");
+            Main.instance.getUtxoData().clear();
+            Main.instance.getCoinData().clear();
+        }
+
     }
 
     public void stockPublish(ActionEvent event) {
@@ -253,10 +283,17 @@ public class MainController {
     }
 
     public void connectServer(ActionEvent event) {
-
+        Main.instance.getUtxoData().clear();
+        Main.instance.getCoinData().clear();
         Main.IpAddress = IPAdress.getText();
         Main.port = IPPort.getText();
-        GuiUtils.informationalAlert("set server info is ok", "", "");
+        try {
+            initTableView();
+            GuiUtils.informationalAlert("set server info is ok", "", "");
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+
     }
 
     public void settingsClicked(ActionEvent event) {

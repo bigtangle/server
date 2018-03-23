@@ -1,5 +1,6 @@
 package wallettemplate;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +16,8 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.stage.FileChooser;
+import wallettemplate.utils.GuiUtils;
 
 public class EckeyController {
     @FXML
@@ -47,17 +50,21 @@ public class EckeyController {
     }
 
     public void initEcKeyList() {
+        issuedKeyData.clear();
+        importedKeyData.clear();
         DecryptingKeyBag maybeDecryptingKeyBag = new DecryptingKeyBag(Main.bitcoin.wallet(), null);
         List<ECKey> issuedKeys = new ArrayList<>();
         for (ECKey key : Main.bitcoin.wallet().getImportedKeys()) {
             ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
-            System.out.println("realKey, pubKey : " + ecKey.getPublicKeyAsHex() + ", prvKey : " + ecKey.getPrivateKeyAsHex());
+            System.out.println(
+                    "realKey, pubKey : " + ecKey.getPublicKeyAsHex() + ", prvKey : " + ecKey.getPrivateKeyAsHex());
             issuedKeys.add(ecKey);
         }
         for (DeterministicKeyChain chain : Main.bitcoin.wallet().getKeyChainGroup().getDeterministicKeyChains()) {
             for (ECKey key : chain.getLeafKeys()) {
                 ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
-                System.out.println("realKey, pubKey : " + ecKey.getPublicKeyAsHex() + ", priKey : " + ecKey.getPrivateKeyAsHex());
+                System.out.println(
+                        "realKey, pubKey : " + ecKey.getPublicKeyAsHex() + ", priKey : " + ecKey.getPrivateKeyAsHex());
                 issuedKeys.add(ecKey);
             }
         }
@@ -90,8 +97,26 @@ public class EckeyController {
     }
 
     public void selectFile(ActionEvent event) {
-        Main.keyFileDirectory = keyFileDirTextField.getText();
-        Main.keyFilePrefix = keyFilePrefixTextField.getText();
+
+        final FileChooser fileChooser = new FileChooser();
+        File file = fileChooser.showOpenDialog(null);
+        // final Desktop desktop = Desktop.getDesktop();
+        if (file != null) {
+            // try {
+            // desktop.open(file);
+            keyFileDirTextField.setText(file.getAbsolutePath());
+            // } catch (IOException e) {
+
+            // GuiUtils.crashAlert(e);
+            // }
+        }
+        Main.keyFileDirectory = file.getParent();
+        String filename = file.getName();
+
+        Main.keyFilePrefix = filename.contains(".") ? filename.substring(0, filename.lastIndexOf(".")) : filename;
+
+        GuiUtils.informationalAlert("set key file is ok", "", "");
+
         initEcKeyList();
     }
 
