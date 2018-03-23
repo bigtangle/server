@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane prefHeight="590.0" prefWidth="803.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="wallettemplate.EckeyController">
+<AnchorPane prefHeight="590.0" prefWidth="803.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="wallettemplate.EckeyController">
    <children>
       <TableView fx:id="issuedReceiveKeysTable" editable="true" layoutX="30.0" layoutY="56.0" prefHeight="441.0" prefWidth="356.0">
         <columns>

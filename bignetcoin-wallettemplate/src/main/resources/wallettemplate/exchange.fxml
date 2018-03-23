@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<StackPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="wallettemplate.ExchangeController">
+<StackPane style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="wallettemplate.ExchangeController">
 	<children>
 		<AnchorPane prefHeight="416.0" prefWidth="567.0">
 			<children>

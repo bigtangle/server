@@ -168,7 +168,7 @@ public class MainController {
         valueColumn.setCellValueFactory(cellData -> cellData.getValue().value());
         tokentypeColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
                 cellData.getValue().getTokenid() == NetworkParameters.BIGNETCOIN_TOKENID ? "bignetcoin" : "other"));
-        addressControl.setOpacity(0.0);
+        addressControl.setOpacity(1.0);
     }
 
     public void onBitcoinSetup() {

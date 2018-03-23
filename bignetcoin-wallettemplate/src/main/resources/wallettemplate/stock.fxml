@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane prefHeight="555.0" prefWidth="569.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="wallettemplate.StockController">
+<AnchorPane style="-fx-background-color: white;" prefHeight="555.0" prefWidth="569.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="wallettemplate.StockController">
 	<children>
 		<GridPane layoutX="50.0" layoutY="79.0" prefHeight="424.0" prefWidth="485.0">
 			<columnConstraints>

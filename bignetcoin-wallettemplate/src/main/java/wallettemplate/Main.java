@@ -78,7 +78,7 @@ public class Main extends Application {
             realStart(mainWindow);
         } catch (Throwable e) {
             GuiUtils.crashAlert(e);
-            throw e;
+            // throw e;
         }
     }
 
@@ -166,6 +166,7 @@ public class Main extends Application {
                 uiStack.getChildren().add(ui);
                 blurOut(mainUI);
                 // darken(mainUI);
+                ui.setOpacity(1.0);
                 fadeIn(ui);
                 zoomIn(ui);
             } else {
@@ -176,7 +177,7 @@ public class Main extends Application {
                 explodeOut(currentOverlay.ui);
                 fadeOutAndRemove(uiStack, currentOverlay.ui);
                 uiStack.getChildren().add(ui);
-                ui.setOpacity(0.0);
+                ui.setOpacity(1.0);
                 fadeIn(ui, 100);
                 zoomIn(ui, 100);
             }
