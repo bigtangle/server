@@ -67,6 +67,9 @@ public class TransactionService {
         byteBuffer.put(r1Data);
         byteBuffer.putInt(r2Data.length);
         byteBuffer.put(r2Data);
+        
+        System.out.print(r1.toString());
+        
         return byteBuffer;
     }
 

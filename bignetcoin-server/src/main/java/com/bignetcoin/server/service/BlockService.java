@@ -142,7 +142,7 @@ public class BlockService {
 	}
 
     public void saveBinaryArrayToBlock(byte[] bytes) throws Exception {
-        Block block = (Block) networkParameters.getDefaultSerializer().deserialize(ByteBuffer.wrap(bytes));
+        Block block = (Block) networkParameters.getDefaultSerializer().makeBlock( bytes) ;
         FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
         blockgraph.add(block);
         milestoneService.update();

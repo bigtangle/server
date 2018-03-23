@@ -2065,11 +2065,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(getSelectMaxTokenIdSQL());
-            preparedStatement.setLong(1, NetworkParameters.BLOCKTYPE_TRANSFER);
+            preparedStatement.setLong(1, NetworkParameters.BLOCKTYPE_GENESIS);
 
             ResultSet resultSet = preparedStatement.executeQuery();
             if (!resultSet.next()) {
-                return 0;
+                return 1;
             }
             return (int) resultSet.getLong(1);
         } catch (SQLException e) {

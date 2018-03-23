@@ -354,6 +354,7 @@ public class TipsService {
 		StoredBlock block = store.get(blockhash);
 		store.deleteTip(block.getHeader().getPrevBlockHash());
 		store.deleteTip(block.getHeader().getPrevBranchBlockHash());
+		 store.deleteTip(blockhash); 
 		store.insertTip(blockhash);
 	}
 }

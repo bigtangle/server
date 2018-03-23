@@ -121,11 +121,12 @@ public class BlockChainTest {
         assertTrue(wallet.getBalance().signum() > 0);
     }
 
-    //TODO @Test
+    // TODO @Test
     public void unconnectedBlocks() throws Exception {
-        Block b1 = BlockForTest.createNextBlock(PARAMS.getGenesisBlock(),coinbaseTo, PARAMS.getGenesisBlock().getHash());
-        Block b2 = BlockForTest.createNextBlock(b1,coinbaseTo, PARAMS.getGenesisBlock().getHash());
-        Block b3 = BlockForTest.createNextBlock(b2,coinbaseTo, b1.getHash());
+        Block b1 = BlockForTest.createNextBlock(PARAMS.getGenesisBlock(), coinbaseTo,
+                PARAMS.getGenesisBlock().getHash());
+        Block b2 = BlockForTest.createNextBlock(b1, coinbaseTo, PARAMS.getGenesisBlock().getHash());
+        Block b3 = BlockForTest.createNextBlock(b2, coinbaseTo, b1.getHash());
         // Connected.
         assertTrue(chain.add(b1));
         // Unconnected but stored. The head of the chain is still b1.
@@ -141,7 +142,8 @@ public class BlockChainTest {
         assertTrue(testNetChain.add(getBlock1()));
         Block b2 = getBlock2();
         assertTrue(testNetChain.add(b2));
-        Block bad = new Block(testNet, Block.BLOCK_VERSION_GENESIS);
+        Block bad = new Block(testNet, Block.BLOCK_VERSION_GENESIS, NetworkParameters.BIGNETCOIN_TOKENID,
+                NetworkParameters.BLOCKTYPE_TRANSFER);
         // Merkle root can be anything here, doesn't matter.
         bad.setMerkleRoot(Sha256Hash.wrap("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
         // Nonce was just some number that made the hash < difficulty limit set
@@ -154,7 +156,7 @@ public class BlockChainTest {
         // bad difficulty target. Unfortunately the encoding mechanism means we
         // cannot make one that accepts all
         // solutions.
-       // bad.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
+        // bad.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
         try {
             testNetChain.add(bad);
             // The difficulty target above should be rejected on the grounds of
@@ -236,9 +238,10 @@ public class BlockChainTest {
     public void duplicates() throws Exception {
         // Adding a block twice should not have any effect, in particular it
         // should not send the block to the wallet.
-        Block b1 = BlockForTest.createNextBlock(PARAMS.getGenesisBlock(),coinbaseTo, PARAMS.getGenesisBlock().getHash());
-        Block b2 = BlockForTest.createNextBlock(b1,coinbaseTo, PARAMS.getGenesisBlock().getHash());
-        Block b3 = BlockForTest.createNextBlock(b2,coinbaseTo, b1.getHash());
+        Block b1 = BlockForTest.createNextBlock(PARAMS.getGenesisBlock(), coinbaseTo,
+                PARAMS.getGenesisBlock().getHash());
+        Block b2 = BlockForTest.createNextBlock(b1, coinbaseTo, PARAMS.getGenesisBlock().getHash());
+        Block b3 = BlockForTest.createNextBlock(b2, coinbaseTo, b1.getHash());
         assertTrue(chain.add(b1));
         assertEquals(b1, block[0].getHeader());
         assertTrue(chain.add(b2));
@@ -259,7 +262,8 @@ public class BlockChainTest {
         // inside a block were not always being
         // considered relevant.
         Address somebodyElse = new ECKey().toAddress(PARAMS);
-        Block b1 = BlockForTest.createNextBlock(PARAMS.getGenesisBlock(),somebodyElse, PARAMS.getGenesisBlock().getHash());
+        Block b1 = BlockForTest.createNextBlock(PARAMS.getGenesisBlock(), somebodyElse,
+                PARAMS.getGenesisBlock().getHash());
         ECKey key = wallet.freshReceiveKey();
         Address addr = key.toAddress(PARAMS);
         // Create a tx that gives us some coins, and another that spends it to
@@ -290,7 +294,7 @@ public class BlockChainTest {
 
         // Create a block, sending the coinbase to the coinbaseTo address (which
         // is in the wallet).
-        Block b1 = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(),Block.BLOCK_VERSION_GENESIS,
+        Block b1 = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
                 wallet.currentReceiveKey().getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
         chain.add(b1);
 
@@ -372,7 +376,8 @@ public class BlockChainTest {
 
     // Some blocks from the test net.
     private static Block getBlock2() throws Exception {
-        Block b2 = new Block(testNet, Block.BLOCK_VERSION_GENESIS);
+        Block b2 = new Block(testNet, Block.BLOCK_VERSION_GENESIS, NetworkParameters.BIGNETCOIN_TOKENID,
+                NetworkParameters.BLOCKTYPE_TRANSFER);
         b2.setMerkleRoot(Sha256Hash.wrap("addc858a17e21e68350f968ccd384d6439b64aafa6c193c8b9dd66320470838b"));
         b2.setNonce(2642058077L);
         b2.setTime(1296734343L);
@@ -383,7 +388,8 @@ public class BlockChainTest {
     }
 
     private static Block getBlock1() throws Exception {
-        Block b1 = new Block(testNet, Block.BLOCK_VERSION_GENESIS);
+        Block b1 = new Block(testNet, Block.BLOCK_VERSION_GENESIS, NetworkParameters.BIGNETCOIN_TOKENID,
+                NetworkParameters.BLOCKTYPE_TRANSFER);
         b1.setMerkleRoot(Sha256Hash.wrap("0e8e58ecdacaa7b3c6304a35ae4ffff964816d2b80b62b58558866ce4e648c10"));
         b1.setNonce(236038445);
         b1.setTime(1296734340);
@@ -435,8 +441,9 @@ public class BlockChainTest {
         // This test simulates an issue on Android, that causes the VM to crash
         // while receiving a block, so that the
         // block store is persisted but the wallet is not.
-        Block b1 = BlockForTest.createNextBlock(PARAMS.getGenesisBlock(),coinbaseTo, PARAMS.getGenesisBlock().getHash());
-        Block b2 = BlockForTest.createNextBlock(b1,coinbaseTo, PARAMS.getGenesisBlock().getHash());
+        Block b1 = BlockForTest.createNextBlock(PARAMS.getGenesisBlock(), coinbaseTo,
+                PARAMS.getGenesisBlock().getHash());
+        Block b2 = BlockForTest.createNextBlock(b1, coinbaseTo, PARAMS.getGenesisBlock().getHash());
         // Add block 1, no frills.
         assertTrue(chain.add(b1));
         assertEquals(b1.cloneAsHeader(), chain.getChainHead().getHeader());

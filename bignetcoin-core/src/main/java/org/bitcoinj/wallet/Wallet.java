@@ -96,11 +96,6 @@ import org.bitcoinj.utils.MapToBeanMapperUtil;
 import org.bitcoinj.utils.OkHttp3Util;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
-import org.bitcoinj.wallet.Wallet.CouldNotAdjustDownwards;
-import org.bitcoinj.wallet.Wallet.ExceededMaxTransactionSize;
-import org.bitcoinj.wallet.Wallet.FeeCalculation;
-import org.bitcoinj.wallet.Wallet.FreeStandingTransactionOutput;
-import org.bitcoinj.wallet.Wallet.MultipleOpReturnRequested;
 import org.bitcoinj.wallet.WalletTransaction.Pool;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
 import org.bitcoinj.wallet.listeners.ScriptsChangeEventListener;
@@ -4108,18 +4103,7 @@ public class Wallet extends BaseTaggableObject
                     continue;
                 }
 
-                try {
-                    // We assume if its already signed, its hopefully got a SIGHASH type that will not invalidate when
-                    // we sign missing pieces (to check this would require either assuming any signatures are signing
-                    // standard output types or a way to get processed signatures out of script execution)
-                    txIn.getScriptSig().correctlySpends(tx, i, txIn.getConnectedOutput().getScriptPubKey());
-                    log.warn("Input {} already correctly spends output, assuming SIGHASH type used will be safe and skipping signing.", i);
-                    continue;
-                } catch (ScriptException e) {
-                    log.debug("Input contained an incorrect signature", e);
-                    // Expected.
-                }
-
+                 
                 Script scriptPubKey = txIn.getConnectedOutput().getScriptPubKey();
                 RedeemData redeemData = txIn.getConnectedRedeemData(maybeDecryptingKeyBag);
                 checkNotNull(redeemData, "Transaction exists in wallet that we cannot redeem: %s", txIn.getOutpoint().getHash());
@@ -5333,17 +5317,38 @@ public class Wallet extends BaseTaggableObject
     public List<TransactionOutput> calculateAllSpendCandidates() {
         lock.lock();
         try {
-            ECKey toKey = this.currentReceiveKey();
-            String response = OkHttp3Util.post(this.serverurl + "getOutputs", toKey.getPubKeyHash());
+            DecryptingKeyBag maybeDecryptingKeyBag = new DecryptingKeyBag(this, null);
+            List<ECKey> keys = new ArrayList<ECKey>();
+            for (ECKey key : getImportedKeys()) {
+                ECKey ecKey =  maybeDecryptingKeyBag.maybeDecrypt(key);
+                // System.out.println("realKey, pubKey : " +
+                // ecKey.getPublicKeyAsHex() + ", prvKey : " +
+                // ecKey.getPrivateKeyAsHex());
+                keys.add(ecKey);
+            }
+            for (DeterministicKeyChain chain :  getKeyChainGroup().getDeterministicKeyChains()) {
+                for (ECKey key : chain.getLeafKeys()) {
+                    ECKey ecKey = maybeDecryptingKeyBag. maybeDecrypt(key);
+                    // System.out.println("realKey, pubKey : " +
+                    // ecKey.getPublicKeyAsHex() + ", priKey : " +
+                    // ecKey.getPrivateKeyAsHex());
+                    keys.add(ecKey);
+                }
+            }
+            List<TransactionOutput> candidates = new ArrayList<TransactionOutput>();
+            for (ECKey ecKey : keys) {
+
+            String response = OkHttp3Util.post(this.serverurl + "getOutputs", ecKey.getPubKeyHash());
             final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
             List<UTXO> outputs = new ArrayList<UTXO>();
             for (Map<String, Object> map : (List<Map<String, Object>>) data.get("outputs")) {
                 UTXO utxo = MapToBeanMapperUtil.parseUTXO(map);
                 outputs.add(utxo);
             }
-            List<TransactionOutput> candidates = new ArrayList<TransactionOutput>();
+           
             for (UTXO output : outputs) {
                 candidates.add(new FreeStandingTransactionOutput(this.params, output, 0)); // TODO jiang unkown
+            }
             }
             return candidates;
         } catch (Exception e) {

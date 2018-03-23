@@ -129,7 +129,7 @@ public abstract class NetworkParameters {
     }
 
     public static Block createGenesis(NetworkParameters n) {
-        Block genesisBlock = new Block(n, Block.BLOCK_VERSION_GENESIS);
+        Block genesisBlock = new Block(n, Block.BLOCK_VERSION_GENESIS, BIGNETCOIN_TOKENID, BLOCKTYPE_GENESIS);
         Transaction t = new Transaction(n);
         try {
             // A script containing the difficulty bits and the following

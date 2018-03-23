@@ -122,7 +122,7 @@ public class Block extends Message {
     // private long difficultyTarget; // "nBits"
     private long nonce;
     // Utils.sha256hash160
-    private byte[] mineraddress = new byte[20];
+    private byte[] mineraddress;
     private long tokenid;
     private long blocktype;
 
@@ -159,7 +159,21 @@ public class Block extends Message {
         mineraddress = new byte[20];
         length = HEADER_SIZE;
     }
-    
+
+    public Block(NetworkParameters params, long blockVersionGenesis, long bignetcoinTokenid,
+            long blocktypeTransfer) {
+        super(params);
+        version = Block.BLOCK_VERSION_GENESIS;
+        time = System.currentTimeMillis() / 1000;
+        prevBlockHash = Sha256Hash.ZERO_HASH;
+        prevBranchBlockHash = Sha256Hash.ZERO_HASH;
+        tokenid = NetworkParameters.BIGNETCOIN_TOKENID;
+        blocktype = NetworkParameters.BLOCKTYPE_TRANSFER;
+        mineraddress = new byte[20];
+        this.transactions = new LinkedList<Transaction>();
+        this.transactions.addAll(transactions);
+    }
+
     public Block(NetworkParameters params, Sha256Hash prevBlockHash, Sha256Hash prevBranchBlockHash, long tokenid) {
         super(params);
         // Set up a few basic things. We are not complete after this though.
@@ -864,7 +878,7 @@ public class Block extends Message {
             throw new VerificationException("Block had no transactions");
         if (this.getOptimalEncodingMessageSize() > MAX_BLOCK_SIZE)
             throw new VerificationException("Block larger than MAX_BLOCK_SIZE");
-        checkTransactions(height, flags);
+    //CUI    checkTransactions(height, flags);
         checkMerkleRoot();
         checkSigOps();
         for (Transaction transaction : transactions)
@@ -1093,7 +1107,7 @@ public class Block extends Message {
         if (to != null) {
             // Add a transaction paying 50 coins to the "to" address.
             Transaction t = new Transaction(params);
-            t.addOutput(new TransactionOutput(params, t, FIFTY_COINS, to));
+            t.addOutput(new TransactionOutput(params, t, coinbaseValue, to));
             // The input does not really need to be a valid signature, as long
             // as it has the right general form.
             TransactionInput input;
