@@ -16,6 +16,7 @@ package wallettemplate;
 
 import static wallettemplate.Main.bitcoin;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -23,10 +24,13 @@ import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Json;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.utils.MapToBeanMapperUtil;
 import org.bitcoinj.utils.MonetaryFormat;
 import org.bitcoinj.utils.OkHttp3Util;
+import org.bitcoinj.wallet.DecryptingKeyBag;
+import org.bitcoinj.wallet.DeterministicKeyChain;
 import org.fxmisc.easybind.EasyBind;
 
 import com.squareup.okhttp.MediaType;
@@ -105,7 +109,26 @@ public class MainController {
     @FXML
     public void initialize() throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
-        ECKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
+        // ECKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
+        
+
+        DecryptingKeyBag maybeDecryptingKeyBag = new DecryptingKeyBag(bitcoin.wallet(), null);
+        List<ECKey> keys = new ArrayList<ECKey>();
+        for (ECKey key : bitcoin.wallet().getImportedKeys()) {
+            ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
+            // System.out.println("realKey, pubKey : " + ecKey.getPublicKeyAsHex() + ", prvKey : " + ecKey.getPrivateKeyAsHex());
+            keys.add(ecKey);
+        }
+        for (DeterministicKeyChain chain : bitcoin.wallet().getKeyChainGroup().getDeterministicKeyChains()) {
+            for (ECKey key : chain.getLeafKeys()) {
+                ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
+                // System.out.println("realKey, pubKey : " + ecKey.getPublicKeyAsHex() + ", priKey : " + ecKey.getPrivateKeyAsHex());
+                keys.add(ecKey);
+            }
+        }
+        
+        for (ECKey ecKey : keys) {
+        
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getBalances", ecKey.getPubKeyHash());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
 
@@ -113,11 +136,15 @@ public class MainController {
             List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("outputs");
             if (list != null && !list.isEmpty()) {
                 for (Map<String, Object> object : list) {
-                    Map<String, Object> utxo = (Map<String, Object>) object;
-                    long balance = ((Coin) utxo.get("value")).getValue();
-                    long tokenid = (long) (utxo.get("tokenid"));
-                    String address = (String) (utxo.get("address"));
-                    Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address));
+                    UTXO u = MapToBeanMapperUtil.parseUTXO(object);
+                    Coin c = u.getValue();
+                    long balance = c.getValue();
+                    long tokenid = c.tokenid;
+                    String address = u.getAddress();
+                    if (!u.isSpent()) {
+                        Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address));
+                    }
+                    
                 }
             }
             list = (List<Map<String, Object>>) data.get("tokens");
@@ -127,6 +154,7 @@ public class MainController {
                     Main.instance.getCoinData().add(new CoinModel(coin2.value, coin2.tokenid));
                 }
             }
+        }
         }
         utxoTable.setItems(Main.instance.getUtxoData());
         coinTable.setItems(Main.instance.getCoinData());

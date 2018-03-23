@@ -145,11 +145,7 @@ public class Block extends Message {
     // of the size of the ideal encoding in addition to the actual message size
     // (which Message needs)
     protected int optimalEncodingMessageSize;
-
-    /**
-     * Special case constructor, used for the genesis node, cloneAsHeader and
-     * unit tests.
-     */
+    
     Block(NetworkParameters params, long setVersion) {
         super(params);
         // Set up a few basic things. We are not complete after this though.
@@ -162,6 +158,21 @@ public class Block extends Message {
         blocktype = NetworkParameters.BLOCKTYPE_TRANSFER;
         mineraddress = new byte[20];
         length = HEADER_SIZE;
+    }
+    
+    public Block(NetworkParameters params, Sha256Hash prevBlockHash, Sha256Hash prevBranchBlockHash, long tokenid) {
+        super(params);
+        // Set up a few basic things. We are not complete after this though.
+        version = Block.BLOCK_VERSION_GENESIS;
+        // difficultyTarget = EASIEST_DIFFICULTY_TARGET;
+        time = System.currentTimeMillis() / 1000;
+        this.prevBlockHash = prevBlockHash;
+        this.prevBranchBlockHash = prevBranchBlockHash;
+        this.tokenid = tokenid;
+        blocktype = NetworkParameters.BLOCKTYPE_TRANSFER;
+        mineraddress = new byte[20];
+        length = HEADER_SIZE;
+        this.transactions = new ArrayList<>();
     }
     
     Block(NetworkParameters params, long setVersion, long tokenid) {
@@ -711,6 +722,7 @@ public class Block extends Message {
 
     private Sha256Hash calculateMerkleRoot() {
         List<byte[]> tree = buildMerkleTree();
+        if(tree.isEmpty()) return Sha256Hash.ZERO_HASH;
         return Sha256Hash.wrap(tree.get(tree.size() - 1));
     }
 
@@ -928,11 +940,8 @@ public class Block extends Message {
             transactions = new ArrayList<Transaction>();
         }
         t.setParent(this);
-        if (runSanityChecks && transactions.size() == 0 && !t.isCoinBase())
-            throw new RuntimeException("Attempted to add a non-coinbase transaction as the first transaction: " + t);
-        else if (runSanityChecks && transactions.size() > 0 && t.isCoinBase())
-            throw new RuntimeException("Attempted to add a coinbase transaction when there already is one: " + t);
-        transactions.add(t);
+        //cui
+              transactions.add(t);
         adjustLength(transactions.size(), t.length);
         // Force a recalculation next time the values are needed.
         merkleRoot = null;
@@ -1123,7 +1132,8 @@ public class Block extends Message {
         }
         return b;
     }
-
+ 
+    
     @VisibleForTesting
     boolean isHeaderBytesValid() {
         return headerBytesValid;

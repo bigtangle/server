@@ -1,8 +1,11 @@
 package wallettemplate;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.wallet.DecryptingKeyBag;
+import org.bitcoinj.wallet.DeterministicKeyChain;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -44,7 +47,20 @@ public class EckeyController {
     }
 
     public void initEcKeyList() {
-        List<ECKey> issuedKeys = Main.bitcoin.wallet().getIssuedReceiveKeys();
+        DecryptingKeyBag maybeDecryptingKeyBag = new DecryptingKeyBag(Main.bitcoin.wallet(), null);
+        List<ECKey> issuedKeys = new ArrayList<>();
+        for (ECKey key : Main.bitcoin.wallet().getImportedKeys()) {
+            ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
+            System.out.println("realKey, pubKey : " + ecKey.getPublicKeyAsHex() + ", prvKey : " + ecKey.getPrivateKeyAsHex());
+            issuedKeys.add(ecKey);
+        }
+        for (DeterministicKeyChain chain : Main.bitcoin.wallet().getKeyChainGroup().getDeterministicKeyChains()) {
+            for (ECKey key : chain.getLeafKeys()) {
+                ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
+                System.out.println("realKey, pubKey : " + ecKey.getPublicKeyAsHex() + ", priKey : " + ecKey.getPrivateKeyAsHex());
+                issuedKeys.add(ecKey);
+            }
+        }
         List<ECKey> importedKeys = Main.bitcoin.wallet().getImportedKeys();
         if (issuedKeys != null && !issuedKeys.isEmpty()) {
             for (ECKey ecKey : issuedKeys) {

@@ -1,6 +1,8 @@
 package com.bignetcoin.server;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
@@ -25,6 +27,7 @@ public class KeyBagTest {
         KeyParameter aesKey = null;
         WalletAppKit bitcoin = new WalletAppKit(PARAMS, new File("."), "bignetcoin");
         DecryptingKeyBag maybeDecryptingKeyBag = new DecryptingKeyBag(bitcoin.wallet(), aesKey);
+        List<ECKey> keys = new ArrayList<ECKey>();
         for (ECKey key : bitcoin.wallet().getImportedKeys()) {
             ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
             System.out.println("realKey, pubKey : " + ecKey.getPublicKeyAsHex() + ", prvKey : " + ecKey.getPrivateKeyAsHex());
@@ -35,5 +38,8 @@ public class KeyBagTest {
                 System.out.println("realKey, pubKey : " + ecKey.getPublicKeyAsHex() + ", priKey : " + ecKey.getPrivateKeyAsHex());
             }
         }
+        
+        
+        
     }
 }

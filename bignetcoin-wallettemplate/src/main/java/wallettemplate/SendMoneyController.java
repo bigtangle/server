@@ -115,17 +115,22 @@ public class SendMoneyController {
             // ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
             // r1.setNetworkParameters(Main.params);
             // r2.setNetworkParameters(Main.params);
-            Block rollingBlock = BlockForTest.createNextBlock(r1, null, r2.getHash());
+            Block rollingBlock = new Block(Main.params, r1.getHash(), r2.getHash(), NetworkParameters.BIGNETCOIN_TOKENID);
+            rollingBlock.solve();
 
-            Wallet wallet = Main.bitcoin.wallet();
+            /*Wallet wallet = Main.bitcoin.wallet();
             wallet.setServerURL(CONTEXT_ROOT);
 
             Coin amount = Coin.parseCoin(amountEdit.getText(), NetworkParameters.BIGNETCOIN_TOKENID);
             SendRequest request = SendRequest.to(destination, amount);
             wallet.completeTx(request);
             rollingBlock.addTransaction(request.tx);
-            rollingBlock.solve();
-            OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
+            rollingBlock.solve();*/
+            
+            Block block = (Block) Main.params.getDefaultSerializer().deserialize(ByteBuffer.wrap(rollingBlock.bitcoinSerialize()));
+            
+            
+            //OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
 
             // TODO xiaomi change ui
             checkGuiThread();

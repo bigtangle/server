@@ -42,7 +42,9 @@ public class WalletService {
         List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs, true);
         for (TransactionOutput transactionOutput : transactionOutputs) {
             FreeStandingTransactionOutput freeStandingTransactionOutput = (FreeStandingTransactionOutput) transactionOutput;
-            outputs.add(freeStandingTransactionOutput.getUTXO());
+            if (!freeStandingTransactionOutput.getUTXO().isSpent()) {
+                outputs.add(freeStandingTransactionOutput.getUTXO());
+            }
         }
         List<Coin> tokens = new ArrayList<Coin>();
         long[] tokenIds = { NetworkParameters.BIGNETCOIN_TOKENID };
@@ -95,6 +97,7 @@ public class WalletService {
         try {
             int chainHeight = 10;
             for (UTXO output : getStoredOutputsFromUTXOProvider(pubKeyHashs)) {
+                if (output.isSpent()) continue;
                 boolean coinbase = output.isCoinbase();
                 long depth = chainHeight - output.getHeight() + 1; // the current
                                                                   // depth of
@@ -105,7 +108,7 @@ public class WalletService {
                 // the protocol forbids it.
                 if (!excludeImmatureCoinbases || !coinbase || depth >= networkParameters.getSpendableCoinbaseDepth()) {
                     candidates.add(new FreeStandingTransactionOutput(networkParameters, output, chainHeight));
-                    System.out.println(output.getHeight());
+                    //System.out.println(output.getHeight());
                 }
             }
         } catch (UTXOProviderException e) {

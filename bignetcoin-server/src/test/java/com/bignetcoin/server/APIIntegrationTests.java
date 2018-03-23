@@ -7,6 +7,7 @@ package com.bignetcoin.server;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -29,19 +30,24 @@ import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.Utils;
+import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.MapToBeanMapperUtil;
+import org.bitcoinj.wallet.DecryptingKeyBag;
+import org.bitcoinj.wallet.DeterministicKeyChain;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.testng.reporters.jq.Main;
 
 import com.bignetcoin.server.service.BlockService;
 import com.bignetcoin.server.service.MilestoneService;
@@ -115,6 +121,24 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     
     @Test
     public void testUTXOProviderWithWallet() throws Exception {
+        KeyParameter aesKey = null;
+        WalletAppKit bitcoin = new WalletAppKit(PARAMS, new File("."), "bignetcoin");
+        bitcoin.wallet().setServerURL(contextRoot);
+        
+        DecryptingKeyBag maybeDecryptingKeyBag = new DecryptingKeyBag(bitcoin.wallet(), aesKey);
+        List<ECKey> keys = new ArrayList<ECKey>();
+        for (ECKey key : bitcoin.wallet().getImportedKeys()) {
+            ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
+            System.out.println("realKey, pubKey : " + ecKey.getPublicKeyAsHex() + ", prvKey : " + ecKey.getPrivateKeyAsHex());
+            keys.add(ecKey);
+        }
+        for (DeterministicKeyChain chain : bitcoin.wallet().getKeyChainGroup().getDeterministicKeyChains()) {
+            for (ECKey key : chain.getLeafKeys()) {
+                ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
+                System.out.println("realKey, pubKey : " + ecKey.getPublicKeyAsHex() + ", priKey : " + ecKey.getPrivateKeyAsHex());
+                keys.add(ecKey);
+            }
+        }
         ECKey outKey = new ECKey();
         int height = 1;
 
@@ -146,8 +170,9 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         System.out.println("rollingBlock : " + rollingBlock.getHashAsString());
 
         // Create bitcoin spend of 1 BTC.
-        Wallet wallet = new Wallet(networkParameters, contextRoot);
-        ECKey myKey = wallet.currentReceiveKey();
+        Wallet wallet = bitcoin.wallet();
+        ECKey myKey = keys.get(0);
+        System.out.println("key " + myKey.getPublicKeyAsHex());
         
         Coin amount = Coin.valueOf(100000, NetworkParameters.BIGNETCOIN_TOKENID);
 //        Address address = new Address(PARAMS, toKey.getPubKeyHash());

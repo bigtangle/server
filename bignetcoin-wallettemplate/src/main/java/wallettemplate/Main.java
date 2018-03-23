@@ -56,7 +56,7 @@ public class Main extends Application {
     private static final String WALLET_FILE_NAME = APP_NAME.replaceAll("[^a-zA-Z0-9.-]", "_") + "-"
             + params.getPaymentProtocolId();
     public static String keyFileDirectory = ".";
-    public static String keyFilePrefix = "mykey";
+    public static String keyFilePrefix = "bignetcoin";
     public static WalletAppKit bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);;
     public static Main instance;
 
