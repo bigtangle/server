@@ -12,9 +12,9 @@ server:
 
 db:
   hostname: localhost
-  dbName: info
+  dbName: bitcoinj_test
   username: root
-  password: test1234
+  password: adminroot
 
 ---
 spring:
