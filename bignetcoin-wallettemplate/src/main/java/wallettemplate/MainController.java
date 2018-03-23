@@ -23,7 +23,6 @@ import java.util.Map;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Json;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.utils.MapToBeanMapperUtil;
@@ -43,7 +42,6 @@ import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -76,14 +74,14 @@ public class MainController {
     @FXML
     public TableColumn<CoinModel, Number> valueColumn;
     @FXML
-    public TableColumn<CoinModel, String> tokentypeColumn;
+    public TableColumn<CoinModel, Number> tokentypeColumn;
 
     @FXML
     public TableView<UTXOModel> utxoTable;
     @FXML
     public TableColumn<UTXOModel, Number> balanceColumn;
     @FXML
-    public TableColumn<UTXOModel, String> tokentypeColumnA;
+    public TableColumn<UTXOModel, Number> tokentypeColumnA;
     @FXML
     public TableColumn<UTXOModel, String> addressColumn;
 
@@ -110,64 +108,69 @@ public class MainController {
     public void initialize() throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         // ECKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
-        
 
         DecryptingKeyBag maybeDecryptingKeyBag = new DecryptingKeyBag(bitcoin.wallet(), null);
         List<ECKey> keys = new ArrayList<ECKey>();
         for (ECKey key : bitcoin.wallet().getImportedKeys()) {
             ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
-            // System.out.println("realKey, pubKey : " + ecKey.getPublicKeyAsHex() + ", prvKey : " + ecKey.getPrivateKeyAsHex());
+            // System.out.println("realKey, pubKey : " +
+            // ecKey.getPublicKeyAsHex() + ", prvKey : " +
+            // ecKey.getPrivateKeyAsHex());
             keys.add(ecKey);
         }
         for (DeterministicKeyChain chain : bitcoin.wallet().getKeyChainGroup().getDeterministicKeyChains()) {
             for (ECKey key : chain.getLeafKeys()) {
                 ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
-                // System.out.println("realKey, pubKey : " + ecKey.getPublicKeyAsHex() + ", priKey : " + ecKey.getPrivateKeyAsHex());
+                // System.out.println("realKey, pubKey : " +
+                // ecKey.getPublicKeyAsHex() + ", priKey : " +
+                // ecKey.getPrivateKeyAsHex());
                 keys.add(ecKey);
             }
         }
-        
-        for (ECKey ecKey : keys) {
-        
-        String response = OkHttp3Util.post(CONTEXT_ROOT + "getBalances", ecKey.getPubKeyHash());
-        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
 
-        if (data != null && !data.isEmpty()) {
-            List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("outputs");
-            if (list != null && !list.isEmpty()) {
-                for (Map<String, Object> object : list) {
-                    UTXO u = MapToBeanMapperUtil.parseUTXO(object);
-                    Coin c = u.getValue();
-                    long balance = c.getValue();
-                    long tokenid = c.tokenid;
-                    String address = u.getAddress();
-                    if (!u.isSpent()) {
-                        Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address));
+        for (ECKey ecKey : keys) {
+
+            String response = OkHttp3Util.post(CONTEXT_ROOT + "getBalances", ecKey.getPubKeyHash());
+            final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+
+            if (data != null && !data.isEmpty()) {
+                List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("outputs");
+                if (list != null && !list.isEmpty()) {
+                    for (Map<String, Object> object : list) {
+                        UTXO u = MapToBeanMapperUtil.parseUTXO(object);
+                        Coin c = u.getValue();
+                        long balance = c.getValue();
+                        long tokenid = c.tokenid;
+                        String address = u.getAddress();
+                        if (!u.isSpent()) {
+                            Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address));
+                        }
+
                     }
-                    
+                }
+                list = (List<Map<String, Object>>) data.get("tokens");
+                if (list != null && !list.isEmpty()) {
+                    for (Map<String, Object> map : list) {
+                        Coin coin2 = MapToBeanMapperUtil.parseCoin(map);
+                        if (!coin2.isZero()) {
+                            Main.instance.getCoinData().add(new CoinModel(coin2.value, coin2.tokenid));
+
+                        }
+                    }
                 }
             }
-            list = (List<Map<String, Object>>) data.get("tokens");
-            if (list != null && !list.isEmpty()) {
-                for (Map<String, Object> map : list) {
-                    Coin coin2 = MapToBeanMapperUtil.parseCoin(map);
-                    Main.instance.getCoinData().add(new CoinModel(coin2.value, coin2.tokenid));
-                }
-            }
-        }
         }
         utxoTable.setItems(Main.instance.getUtxoData());
         coinTable.setItems(Main.instance.getCoinData());
 
         balanceColumn.setCellValueFactory(cellData -> cellData.getValue().balance());
-        tokentypeColumnA.setCellValueFactory(cellData -> cellData.getValue().tokentype());
+        tokentypeColumnA.setCellValueFactory(cellData -> cellData.getValue().tokenid());
         addressColumn.setCellValueFactory(cellData -> cellData.getValue().address());
 
         addressColumn.setCellFactory(TextFieldTableCell.<UTXOModel>forTableColumn());
 
         valueColumn.setCellValueFactory(cellData -> cellData.getValue().value());
-        tokentypeColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
-                cellData.getValue().getTokenid() == NetworkParameters.BIGNETCOIN_TOKENID ? "bignetcoin" : "other"));
+        tokentypeColumn.setCellValueFactory(cellData -> cellData.getValue().tokenid());
         addressControl.setOpacity(1.0);
     }
 

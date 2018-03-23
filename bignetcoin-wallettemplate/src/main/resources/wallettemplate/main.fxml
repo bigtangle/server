@@ -49,15 +49,15 @@
                      <children>
                         <TableView fx:id="utxoTable" editable="true" prefHeight="364.0" prefWidth="542.0">
                           <columns>
-                            <TableColumn fx:id="balanceColumn" prefWidth="127.0" text="balance" />
-                            <TableColumn fx:id="tokentypeColumnA" prefWidth="72.0" text="tokentype" />
+                            <TableColumn fx:id="balanceColumn" prefWidth="127.0" text="amount" />
+                            <TableColumn fx:id="tokentypeColumnA" prefWidth="72.0" text="tokenid" />
                               <TableColumn fx:id="addressColumn" prefWidth="366.0" text="address" />
                           </columns>
                         </TableView>
                         <TableView fx:id="coinTable" prefHeight="298.0" prefWidth="235.0">
                           <columns>
                             <TableColumn fx:id="valueColumn" prefWidth="124.0" text="amount" />
-                            <TableColumn fx:id="tokentypeColumn" prefWidth="75.0" text="tokentype" />
+                            <TableColumn fx:id="tokentypeColumn" prefWidth="75.0" text="tokenid" />
                           </columns>
                         </TableView>
                      </children>
@@ -87,9 +87,7 @@
       <AnchorPane layoutX="129.0" layoutY="65.0" prefHeight="30.0" prefWidth="591.0">
          <children>
             <Label layoutX="8.0" layoutY="7.0" text="Directory" />
-            <Label layoutX="305.0" layoutY="8.0" text="Prefix" />
-            <TextField fx:id="keyFileDirectory" layoutX="72.0" layoutY="3.0" prefHeight="23.0" prefWidth="224.0" />
-            <TextField fx:id="keyFilePrefix" layoutX="359.0" layoutY="3.0" prefHeight="23.0" prefWidth="153.0" />
+            <TextField fx:id="keyFileDirectory" layoutX="72.0" layoutY="3.0" prefHeight="23.0" prefWidth="432.0" />
             <Button layoutX="522.0" layoutY="5.0" mnemonicParsing="false" onAction="#setKeyFilePath" styleClass="fat-button" text="setKeyFilePath" />
          </children>
       </AnchorPane>
