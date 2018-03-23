@@ -11,6 +11,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.cell.TextFieldTableCell;
 
 public class EckeyController {
     @FXML
@@ -52,6 +53,9 @@ public class EckeyController {
             issuedReceiveKeysTable.setItems(issuedKeyData);
             pubkeyColumn.setCellValueFactory(cellData -> cellData.getValue().pubkeyHex());
             addressColumn.setCellValueFactory(cellData -> cellData.getValue().addressHex());
+
+            pubkeyColumn.setCellFactory(TextFieldTableCell.<EckeyModel>forTableColumn());
+            pubkeyColumn.setCellFactory(TextFieldTableCell.<EckeyModel>forTableColumn());
         }
         if (importedKeys != null && !importedKeys.isEmpty()) {
             for (ECKey ecKey : importedKeys) {
@@ -60,6 +64,8 @@ public class EckeyController {
             importedKeysTable.setItems(importedKeyData);
             pubkeyColumnA.setCellValueFactory(cellData -> cellData.getValue().pubkeyHex());
             addressColumnA.setCellValueFactory(cellData -> cellData.getValue().addressHex());
+            pubkeyColumnA.setCellFactory(TextFieldTableCell.<EckeyModel>forTableColumn());
+            pubkeyColumnA.setCellFactory(TextFieldTableCell.<EckeyModel>forTableColumn());
         }
     }
 

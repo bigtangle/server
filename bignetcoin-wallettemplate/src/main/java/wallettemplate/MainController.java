@@ -47,6 +47,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.HBox;
 import javafx.util.Duration;
 import wallettemplate.controls.ClickableBitcoinAddress;
@@ -133,6 +134,8 @@ public class MainController {
         balanceColumn.setCellValueFactory(cellData -> cellData.getValue().balance());
         tokentypeColumnA.setCellValueFactory(cellData -> cellData.getValue().tokentype());
         addressColumn.setCellValueFactory(cellData -> cellData.getValue().address());
+
+        addressColumn.setCellFactory(TextFieldTableCell.<UTXOModel>forTableColumn());
 
         valueColumn.setCellValueFactory(cellData -> cellData.getValue().value());
         tokentypeColumn.setCellValueFactory(cellData -> new SimpleStringProperty(

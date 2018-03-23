@@ -47,7 +47,7 @@
                <children>
                   <HBox prefHeight="366.0" prefWidth="768.0">
                      <children>
-                        <TableView fx:id="utxoTable" prefHeight="364.0" prefWidth="542.0">
+                        <TableView fx:id="utxoTable" editable="true" prefHeight="364.0" prefWidth="542.0">
                           <columns>
                             <TableColumn fx:id="balanceColumn" prefWidth="127.0" text="balance" />
                             <TableColumn fx:id="tokentypeColumnA" prefWidth="72.0" text="tokentype" />
