@@ -72,7 +72,7 @@
            <Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" alignment="CENTER" mnemonicParsing="false" onAction="#sendMoneyOut" style="-fx-base: lightgreen; -fx-font-weight: bold" styleClass="fat-button" text="Send money out" />
             <Button fx:id="stock" onAction="#stockPublish" styleClass="fat-button" text="token publish" />
             <Button fx:id="exchange" mnemonicParsing="false" onAction="#exchangeCoin" styleClass="fat-button" text="exchange" />
-            <Button mnemonicParsing="false" styleClass="fat-button" text="eckey list" />
+            <Button mnemonicParsing="false" onAction="#eckeyList" styleClass="fat-button" text="eckey list" />
        </children>
     </HBox>
       <AnchorPane layoutX="140.0" layoutY="25.0" prefHeight="15.0" prefWidth="572.0">
