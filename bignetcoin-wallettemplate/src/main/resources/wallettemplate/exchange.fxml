@@ -26,8 +26,8 @@
 					</rowConstraints>
 					<children>
 						<Label text="tokenAddress" />
-						<Label text="tokenCode" GridPane.rowIndex="1" />
-						<Label text="tokenNumber" GridPane.rowIndex="2" />
+						<Label text="tokenid" GridPane.rowIndex="1" />
+						<Label text="tokenAmount" GridPane.rowIndex="2" />
 						<Label text="coinAddress" GridPane.rowIndex="3" />
 						<Label text="coinAmount" GridPane.rowIndex="4" />
 						<Label text="coinTokenid" GridPane.rowIndex="5" />
