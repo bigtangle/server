@@ -30,7 +30,7 @@ public class DecryptingKeyBag implements KeyBag {
     }
 
     @Nullable
-    private ECKey maybeDecrypt(ECKey key) {
+    public ECKey maybeDecrypt(ECKey key) {
         if (key == null)
             return null;
         else if (key.isEncrypted()) {
