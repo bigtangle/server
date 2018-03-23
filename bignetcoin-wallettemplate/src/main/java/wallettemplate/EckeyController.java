@@ -45,7 +45,7 @@ public class EckeyController {
     public Main.OverlayUI overlayUI;
 
     @FXML
-    public void initialize() throws Exception {
+    public void initialize() {
         initEcKeyList();
     }
 
@@ -110,7 +110,7 @@ public class EckeyController {
             // GuiUtils.crashAlert(e);
             // }
         }
-        Main.keyFileDirectory = file.getParent();
+        Main.keyFileDirectory = file.getParent()+"/";
         String filename = file.getName();
 
         Main.keyFilePrefix = filename.contains(".") ? filename.substring(0, filename.lastIndexOf(".")) : filename;

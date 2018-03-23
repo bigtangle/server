@@ -255,14 +255,20 @@ public class MainController {
             // GuiUtils.crashAlert(e);
             // }
 
-            Main.keyFileDirectory = file.getParent();
+            Main.keyFileDirectory = file.getParent()+"/";
             String filename = file.getName();
 
             Main.keyFilePrefix = filename.contains(".") ? filename.substring(0, filename.lastIndexOf(".")) : filename;
 
-            GuiUtils.informationalAlert("set key file is ok", "", "");
-            Main.instance.getUtxoData().clear();
-            Main.instance.getCoinData().clear();
+            try {
+                Main.instance.getUtxoData().clear();
+                Main.instance.getCoinData().clear();
+                initTableView();
+                GuiUtils.informationalAlert("set key file is ok", "", "");
+
+            } catch (Exception e) {
+                GuiUtils.crashAlert(e);
+            }
         }
 
     }
