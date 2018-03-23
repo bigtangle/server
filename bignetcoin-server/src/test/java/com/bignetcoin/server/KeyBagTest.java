@@ -6,8 +6,10 @@ import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.UnitTestParams;
+import org.bitcoinj.wallet.DecryptingKeyBag;
 import org.bitcoinj.wallet.DeterministicKeyChain;
 import org.junit.Test;
+import org.spongycastle.crypto.params.KeyParameter;
 
 public class KeyBagTest {
 
@@ -20,13 +22,17 @@ public class KeyBagTest {
 
     @Test
     public void testPubKey() throws Exception {
+        KeyParameter aesKey = null;
         WalletAppKit bitcoin = new WalletAppKit(PARAMS, new File("."), "bignetcoin");
-        for (ECKey realKey : bitcoin.wallet().getImportedKeys()) {
-            System.out.println("realKey, pubKey : " + realKey.getPublicKeyAsHex() + ", prvKey : " + realKey.getPrivateKeyAsHex());
+        DecryptingKeyBag maybeDecryptingKeyBag = new DecryptingKeyBag(bitcoin.wallet(), aesKey);
+        for (ECKey key : bitcoin.wallet().getImportedKeys()) {
+            ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
+            System.out.println("realKey, pubKey : " + ecKey.getPublicKeyAsHex() + ", prvKey : " + ecKey.getPrivateKeyAsHex());
         }
         for (DeterministicKeyChain chain : bitcoin.wallet().getKeyChainGroup().getDeterministicKeyChains()) {
-            for (ECKey realKey : chain.getLeafKeys()) {
-                System.out.println("realKey, pubKey : " + realKey.getPublicKeyAsHex() + ", priKey : " + realKey.getPrivateKeyAsHex());
+            for (ECKey key : chain.getLeafKeys()) {
+                ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
+                System.out.println("realKey, pubKey : " + ecKey.getPublicKeyAsHex() + ", priKey : " + ecKey.getPrivateKeyAsHex());
             }
         }
     }
