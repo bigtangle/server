@@ -447,14 +447,14 @@ public class PeerGroupTest extends TestWithPeerGroup {
         key1.setCreationTimeSeconds(now - 86400);  // One day ago.
         w2.importKey(key1);
         peerGroup.addWallet(w2);
-        peerGroup.waitForJobQueue();
+      //  peerGroup.waitForJobQueue();
         assertEquals(peerGroup.getFastCatchupTimeSecs(), now - 86400 - WEEK);
         // Adding a key to the wallet should update the fast catchup time, but asynchronously and in the background
         // due to the need to avoid complicated lock inversions.
         ECKey key2 = new ECKey();
         key2.setCreationTimeSeconds(now - 100000);
         w2.importKey(key2);
-        peerGroup.waitForJobQueue();
+    //    peerGroup.waitForJobQueue();
         assertEquals(peerGroup.getFastCatchupTimeSecs(), now - WEEK - 100000);
     }
 
@@ -654,7 +654,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         inbound(p1, new NotFoundMessage(PARAMS, ImmutableList.of(inv)));
         assertNull(outbound(p1));
         assertNull(outbound(p2));
-        peerGroup.waitForJobQueue();
+     //   peerGroup.waitForJobQueue();
         // Now we connect p3 and there is a new bloom filter sent, that DOES match the relevant outpoint.
         InboundMessageQueuer p3 = connectPeer(3);
         assertTrue(p3.lastReceivedFilter.contains(key.getPubKey()));
@@ -671,14 +671,14 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Create a couple of peers.
         InboundMessageQueuer p1 = connectPeer(1);
         InboundMessageQueuer p2 = connectPeer(2);
-        peerGroup.waitForJobQueue();
+     //   peerGroup.waitForJobQueue();
         BloomFilter f1 = p1.lastReceivedFilter;
         ECKey key = null;
         // We have to run ahead of the lookahead zone for this test. There should only be one bloom filter recalc.
         for (int i = 0; i < wallet.getKeyChainGroupLookaheadSize() + wallet.getKeyChainGroupLookaheadThreshold() + 1; i++) {
             key = wallet.freshReceiveKey();
         }
-        peerGroup.waitForJobQueue();
+      //  peerGroup.waitForJobQueue();
         BloomFilter bf, f2 = null;
         while ((bf = (BloomFilter) outbound(p1)) != null) {
             assertEquals(MemoryPoolMessage.class, outbound(p1).getClass());
@@ -848,7 +848,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertEquals(exhaustionPoint.getPrevBlockHash(), blockChain.getChainHead().getHeader().getHash());
 
         // Await the new filter.
-        peerGroup.waitForJobQueue();
+      // peerGroup.waitForJobQueue();
         BloomFilter newFilter = assertNextMessageIs(p1, BloomFilter.class);
         assertNotEquals(filter, newFilter);
         assertNextMessageIs(p1, MemoryPoolMessage.class);
@@ -864,7 +864,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertNextMessageIs(p1, Ping.class);
 
         // It happened again.
-        peerGroup.waitForJobQueue();
+     //   peerGroup.waitForJobQueue();
         newFilter = assertNextMessageIs(p1, BloomFilter.class);
         assertNextMessageIs(p1, MemoryPoolMessage.class);
         inbound(p1, new Pong(assertNextMessageIs(p1, Ping.class).getNonce()));

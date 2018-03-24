@@ -5,23 +5,9 @@
 
 package org.bitcoinj.testing;
 
-import org.bitcoinj.core.listeners.PeerDisconnectedEventListener;
-import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
-import org.bitcoinj.core.*;
-import org.bitcoinj.net.*;
-import org.bitcoinj.params.UnitTestParams;
-import org.bitcoinj.store.BlockGraph;
-import org.bitcoinj.store.BlockStore;
-import org.bitcoinj.store.MemoryBlockStore;
-import org.bitcoinj.store.Peer;
-import org.bitcoinj.utils.BriefLogFormatter;
-import org.bitcoinj.utils.Threading;
-import org.bitcoinj.wallet.Wallet;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 
-import com.google.common.util.concurrent.SettableFuture;
-
-import javax.annotation.Nullable;
-import javax.net.SocketFactory;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -30,8 +16,39 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import javax.annotation.Nullable;
+import javax.net.SocketFactory;
+
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.BlockStore;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.Context;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Message;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Ping;
+import org.bitcoinj.core.Pong;
+import org.bitcoinj.core.VersionAck;
+import org.bitcoinj.core.VersionMessage;
+import org.bitcoinj.core.listeners.PeerDisconnectedEventListener;
+import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
+import org.bitcoinj.net.BlockingClient;
+import org.bitcoinj.net.BlockingClientManager;
+import org.bitcoinj.net.ClientConnectionManager;
+import org.bitcoinj.net.NioClient;
+import org.bitcoinj.net.NioClientManager;
+import org.bitcoinj.net.NioServer;
+import org.bitcoinj.net.StreamConnection;
+import org.bitcoinj.net.StreamConnectionFactory;
+import org.bitcoinj.params.UnitTestParams;
+import org.bitcoinj.store.BlockGraph;
+import org.bitcoinj.store.MemoryBlockStore;
+import org.bitcoinj.store.Peer;
+import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.utils.Threading;
+import org.bitcoinj.wallet.Wallet;
+
+import com.google.common.util.concurrent.SettableFuture;
 
 /**
  * Utility class that makes it easy to work with mock NetworkConnections.

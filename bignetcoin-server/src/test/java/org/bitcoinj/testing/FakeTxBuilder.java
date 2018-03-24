@@ -5,19 +5,36 @@
 
 package org.bitcoinj.testing;
 
-import org.bitcoinj.core.*;
-import org.bitcoinj.crypto.TransactionSignature;
-import org.bitcoinj.script.ScriptBuilder;
-import org.bitcoinj.store.BlockStore;
-import org.bitcoinj.store.BlockStoreException;
+import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.core.Coin.COIN;
+import static org.bitcoinj.core.Coin.valueOf;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Random;
 
-import static org.bitcoinj.core.Coin.*;
-import static com.google.common.base.Preconditions.checkState;
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.Block;
+import org.bitcoinj.core.BlockForTest;
+import org.bitcoinj.core.BlockStore;
+import org.bitcoinj.core.BlockStoreException;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.MessageSerializer;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.ProtocolException;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.StoredBlock;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionConfidence;
+import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionOutPoint;
+import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.VerificationException;
+import org.bitcoinj.crypto.TransactionSignature;
+import org.bitcoinj.script.ScriptBuilder;
 
 public class FakeTxBuilder {
     /** Create a fake transaction, without change. */

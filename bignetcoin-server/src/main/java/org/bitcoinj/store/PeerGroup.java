@@ -1138,7 +1138,7 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     @VisibleForTesting
-    void waitForJobQueue() {
+   public void waitForJobQueue() {
         Futures.getUnchecked(executor.submit(Runnables.doNothing()));
     }
 

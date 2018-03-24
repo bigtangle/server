@@ -5,7 +5,11 @@
 
 package org.bitcoinj.testing;
 
-import org.bitcoinj.core.*;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.ReentrantLock;
+
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.store.TransactionBroadcast;
 import org.bitcoinj.store.TransactionBroadcaster;
 import org.bitcoinj.utils.Threading;
@@ -14,9 +18,6 @@ import org.bitcoinj.wallet.Wallet;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
-
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A mock transaction broadcaster can be used in unit tests as a stand-in for a PeerGroup. It catches any transactions
@@ -52,7 +53,7 @@ public class MockTransactionBroadcaster implements TransactionBroadcaster {
         lock.lock();
         try {
             this.wallet = wallet;
-            wallet.setTransactionBroadcaster(this);
+           // wallet.setTransactionBroadcaster(this);
             wallet.getPendingTransactions();
         } finally {
             lock.unlock();

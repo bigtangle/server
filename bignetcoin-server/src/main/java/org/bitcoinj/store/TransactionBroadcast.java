@@ -50,7 +50,7 @@ public class TransactionBroadcast {
     // Tracks which nodes sent us a reject message about this broadcast, if any. Useful for debugging.
     private Map<Peer, RejectMessage> rejects = Collections.synchronizedMap(new HashMap<Peer, RejectMessage>());
 
-    TransactionBroadcast(PeerGroup peerGroup, Transaction tx) {
+    public TransactionBroadcast(PeerGroup peerGroup, Transaction tx) {
         this.peerGroup = peerGroup;
         this.tx = tx;
         this.minConnections = Math.max(1, peerGroup.getMinBroadcastConnections());

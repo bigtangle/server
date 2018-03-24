@@ -5,19 +5,26 @@
 
 package org.bitcoinj.testing;
 
-import org.bitcoinj.core.*;
-import org.bitcoinj.params.UnitTestParams;
-import org.bitcoinj.store.AbstractBlockGraph;
-import org.bitcoinj.store.BlockGraph;
-import org.bitcoinj.store.BlockStore;
-import org.bitcoinj.store.MemoryBlockStore;
-import org.bitcoinj.utils.BriefLogFormatter;
-import org.bitcoinj.wallet.Wallet;
+import static org.bitcoinj.testing.FakeTxBuilder.createFakeBlock;
+import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
 
 import javax.annotation.Nullable;
 
-import static org.bitcoinj.testing.FakeTxBuilder.createFakeBlock;
-import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.Block;
+import org.bitcoinj.core.BlockStore;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.Context;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.VerificationException;
+import org.bitcoinj.params.UnitTestParams;
+import org.bitcoinj.store.AbstractBlockGraph;
+import org.bitcoinj.store.BlockGraph;
+import org.bitcoinj.store.MemoryBlockStore;
+import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.wallet.Wallet;
 
 // TODO: This needs to be somewhat rewritten - the "sendMoneyToWallet" methods aren't sending via the block chain object
 
@@ -56,13 +63,7 @@ public class TestWithWallet {
             for (Transaction tx : transactions)
                 if (wallet.isPendingTransactionRelevant(tx))
                     wallet.receivePending(tx, null);
-        } else {
-            FakeTxBuilder.BlockPair bp = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS, transactions);
-            for (Transaction tx : transactions)
-                wallet.receiveFromBlock(tx, bp.storedBlock, type, 0);
-            if (type == AbstractBlockGraph.NewBlockType.BEST_CHAIN)
-                wallet.notifyNewBestBlock(bp.storedBlock);
-        }
+        }      
         if (transactions.length == 1)
             return wallet.getTransaction(transactions[0].getHash());  // Can be null if tx is a double spend that's otherwise irrelevant.
         else
