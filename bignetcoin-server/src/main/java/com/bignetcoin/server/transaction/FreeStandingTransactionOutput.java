@@ -1,3 +1,7 @@
+/*******************************************************************************
+ *  Copyright   2018  Inasset GmbH. 
+ *  
+ *******************************************************************************/
 package com.bignetcoin.server.transaction;
 
 import org.bitcoinj.core.NetworkParameters;

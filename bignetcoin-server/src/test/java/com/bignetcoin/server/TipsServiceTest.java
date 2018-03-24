@@ -1,3 +1,7 @@
+/*******************************************************************************
+ *  Copyright   2018  Inasset GmbH. 
+ *  
+ *******************************************************************************/
 package com.bignetcoin.server;
 
 import static org.junit.Assert.assertEquals;

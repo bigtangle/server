@@ -1,3 +1,7 @@
+/*******************************************************************************
+ *  Copyright   2018  Inasset GmbH. 
+ *  
+ *******************************************************************************/
 package com.bignetcoin.server.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
