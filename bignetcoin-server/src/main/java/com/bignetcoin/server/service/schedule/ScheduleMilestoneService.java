@@ -17,7 +17,7 @@ public class ScheduleMilestoneService {
     @Scheduled(fixedRateString = "${service.milestoneschedule.rate:200000}")
     public void updateMilestoneService() {
         try {
-            logger.debug("updateMilestoneService" );
+          //  logger.debug("updateMilestoneService" );
             milestoneService.update();
         } catch (Exception e) {
         //    logger.warn("updateMilestoneService ", e);

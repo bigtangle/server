@@ -913,7 +913,7 @@ public class FullBlockTestGenerator {
         byte[] outScriptBytes = ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(coinbaseOutKeyPubKey)).getProgram();
         {
             //b44.setDifficultyTarget(b43.block.getDifficultyTarget());
-            b44.addCoinbaseTransaction(coinbaseOutKeyPubKey, ZERO, chainHeadHeight + 15);
+            b44.addCoinbaseTransaction(coinbaseOutKeyPubKey, ZERO);
 
             Transaction t = new Transaction(params);
             // Entirely invalid scriptPubKey to ensure we aren't pre-verifying too much

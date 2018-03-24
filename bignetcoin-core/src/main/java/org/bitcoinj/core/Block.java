@@ -167,8 +167,8 @@ public class Block extends Message {
         time = System.currentTimeMillis() / 1000;
         prevBlockHash = Sha256Hash.ZERO_HASH;
         prevBranchBlockHash = Sha256Hash.ZERO_HASH;
-        tokenid = NetworkParameters.BIGNETCOIN_TOKENID;
-        blocktype = NetworkParameters.BLOCKTYPE_TRANSFER;
+        tokenid = bignetcoinTokenid;
+        blocktype =blocktypeTransfer;
         mineraddress = new byte[20];
         this.transactions = new LinkedList<Transaction>();
         this.transactions.addAll(transactions);
@@ -622,7 +622,8 @@ public class Block extends Message {
         // s.append(" difficulty target (nBits):
         // ").append(difficultyTarget).append("\n");
         s.append("   nonce: ").append(nonce).append("\n");
-        s.append("   mineraddress: ").append(mineraddress).append("\n");
+        if(mineraddress!=null)
+        s.append("   mineraddress: ").append(new Address(params, mineraddress)).append("\n");
         s.append("   tokenid: ").append(tokenid).append("\n");
         s.append("   blocktype: ").append(blocktype).append("\n");
         if (transactions != null && transactions.size() > 0) {
@@ -955,7 +956,7 @@ public class Block extends Message {
         }
         t.setParent(this);
         //cui
-              transactions.add(t);
+        transactions.add(t);
         adjustLength(transactions.size(), t.length);
         // Force a recalculation next time the values are needed.
         merkleRoot = null;
@@ -1053,17 +1054,15 @@ public class Block extends Message {
      * @param height
      *            block height, if known, or -1 otherwise.
      */
-    @VisibleForTesting
-    void addCoinbaseTransaction(byte[] pubKeyTo, Coin value, final int height) {
+ 
+    public void addCoinbaseTransaction(byte[] pubKeyTo, Coin value) {
         unCacheTransactions();
         transactions = new ArrayList<Transaction>();
         Transaction coinbase = new Transaction(params);
         coinbase.tokenid = value.tokenid;
         final ScriptBuilder inputBuilder = new ScriptBuilder();
 
-        if (height >= Block.BLOCK_HEIGHT_GENESIS) {
-            inputBuilder.number(height);
-        }
+       
         inputBuilder.data(new byte[] { (byte) txCounter, (byte) (txCounter++ >> 8) });
 
         // A real coinbase transaction has some stuff in the scriptSig like the
@@ -1102,7 +1101,7 @@ public class Block extends Message {
             Sha256Hash prevBranchBlockHash, byte[] mineraddress) {
         Block b = new Block(params, version, coinbaseValue.tokenid);
         // b.setDifficultyTarget(difficultyTarget);
-        b.addCoinbaseTransaction(pubKey, coinbaseValue, height);
+        b.addCoinbaseTransaction(pubKey, coinbaseValue);
         b.setMineraddress(mineraddress);
         if (to != null) {
             // Add a transaction paying 50 coins to the "to" address.

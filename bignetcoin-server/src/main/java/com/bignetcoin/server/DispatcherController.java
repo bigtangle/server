@@ -72,7 +72,7 @@ public class DispatcherController {
             break;
             
             case createGenesisBlock: {
-                byte[] data = blockService.createGenesisBlock(bodyByte);
+                byte[] data = transactionService.createGenesisBlock(bodyByte);
                 this.outPointBinaryArray(httpServletResponse, data);
             }
             break;

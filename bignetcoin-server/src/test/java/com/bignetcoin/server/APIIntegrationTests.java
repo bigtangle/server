@@ -47,7 +47,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import org.testng.reporters.jq.Main;
 
 import com.bignetcoin.server.service.BlockService;
 import com.bignetcoin.server.service.MilestoneService;
@@ -59,7 +58,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
     private int height = 1;
     
-    @Test
+  // @Test
     public void createECKey() {
         ECKey ecKey = new ECKey();
         logger.info("pubKey : " + Utils.HEX.encode(ecKey.getPubKey()));
@@ -313,7 +312,9 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.createGenesisBlock.name()).content(byteBuffer.array());
         MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
         byte[] data = mvcResult.getResponse().getContentAsByteArray();
-        logger.info("createGenesisBlock resp : " + Utils.HEX.encode(data));
+        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+        
+        logger.info("createGenesisBlock resp : " + block);
     }
     
     @Test

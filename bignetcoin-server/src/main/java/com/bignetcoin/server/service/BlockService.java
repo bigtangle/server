@@ -153,23 +153,7 @@ public class BlockService {
         return maxTokenId + 1;
     }
 
-    public byte[] createGenesisBlock(byte[] bytes) throws Exception {
-        ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
-        int amount = byteBuffer.getInt();
-        int len = byteBuffer.getInt();
-        byte[] pubKey = new byte[len];
-        byteBuffer.get(pubKey);
-
-        Coin coin = Coin.valueOf(amount, this.getNextTokenId());
-        Block block = networkParameters.getGenesisBlock().createNextBlock(null, Block.BLOCK_VERSION_GENESIS, (TransactionOutPoint) null,
-                Utils.currentTimeSeconds(), pubKey, coin, 1, networkParameters.getGenesisBlock().getHash(), pubKey);
-        
-        FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
-        blockgraph.add(block);
-        
-        // milestoneService.update();
-        return block.bitcoinSerialize();
-    }
+    
 
     @Autowired
     private MilestoneService milestoneService;

@@ -105,9 +105,11 @@ public class ClickableBitcoinAddress extends AnchorPane {
         // User clicked icon or menu item.
         Clipboard clipboard = Clipboard.getSystemClipboard();
         ClipboardContent content = new ClipboardContent();
+        if(addressStr.get()!=null) {
         content.putString(addressStr.get());
         content.putHtml(String.format("<a href='%s'>%s</a>", uri(), addressStr.get()));
         clipboard.setContent(content);
+        }
     }
 
     @FXML
