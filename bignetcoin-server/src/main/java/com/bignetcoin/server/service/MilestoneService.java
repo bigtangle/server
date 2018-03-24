@@ -44,8 +44,8 @@ import com.lambdaworks.crypto.SCrypt;
 @Service
 public class MilestoneService {
 
-    private static final Logger log = LoggerFactory.getLogger(MilestoneService.class);
-    
+	private static final Logger log = LoggerFactory.getLogger(MilestoneService.class);
+
 	@Autowired
 	protected FullPrunedBlockStore store;
 
@@ -64,17 +64,17 @@ public class MilestoneService {
 	 * @throws Exception
 	 */
 	public void update() throws Exception {
-        final Stopwatch watch = Stopwatch.createStarted();
-        
+		final Stopwatch watch = Stopwatch.createStarted();
+
 		updateSolidityAndHeight();
 		updateDepth();
 		updateCumulativeWeight();
 		updateRating();
 		updateMilestone();
 		// Optional: Trigger batched tip pair selection here
-		
-        watch.stop();
-        log.info("Milestone update took {} .", watch);
+
+		watch.stop();
+		log.info("Milestone update took {} .", watch);
 	}
 
 	/**
@@ -189,36 +189,46 @@ public class MilestoneService {
 	 */
 	public void updateCumulativeWeight() throws BlockStoreException {
 		// Begin from the highest solid height tips and go backwards from there
-		long currentHeight = blockService.getMaxSolidHeight();
-		HashMap<Sha256Hash, HashSet<Sha256Hash>> currentHeightBlocks = null, nextHeightBlocks = new HashMap<>();
-		//TODO replace with PrioQ<HashSet> + HashMap<HashSet>, by descending height do yourself and add/update approved blocks
+		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = getSolidTipsDescending();
+		HashMap<Sha256Hash, HashSet<Sha256Hash>> approverHashSets = new HashMap<>();
+		for (BlockEvaluation tip : blockService.getSolidTips()) {
+			approverHashSets.put(tip.getBlockhash(), new HashSet<>());
+		}
 
-		while (currentHeight >= 0) {
-			// Initialize results of current height
-			currentHeightBlocks = new HashMap<>();
-
-			for (BlockEvaluation blockEvaluation : blockService.getSolidBlocksOfHeight(currentHeight)) {
-				// Add your own hash as reference
-				HashSet<Sha256Hash> blockReferences = new HashSet<Sha256Hash>();
-				blockReferences.add(blockEvaluation.getBlockhash());
-
-				// Add all references of all approvers
-				for (Sha256Hash approverHash : blockService.getSolidApproverBlockHashes(blockEvaluation.getBlockhash())) {
-					HashSet<Sha256Hash> c = nextHeightBlocks.get(approverHash);
-					if (c != null)
-						blockReferences.addAll(c);
+		BlockEvaluation currentBlock = null;
+		while ((currentBlock = blocksByDescendingHeight.poll()) != null) {
+			// Add your own hash to approver hashes of current approver hashes
+			HashSet<Sha256Hash> approverHashes = approverHashSets.get(currentBlock.getBlockhash());
+			approverHashes.add(currentBlock.getBlockhash());
+			
+			// Add all current references to both approved blocks (initialize if not yet initialized)
+			Block block = blockService.getBlock(currentBlock.getBlockhash());
+			
+			if (!approverHashSets.containsKey(block.getPrevBlockHash())) {
+				BlockEvaluation prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
+				if (prevBlockEvaluation != null) {
+					blocksByDescendingHeight.add(prevBlockEvaluation);
+					approverHashSets.put(prevBlockEvaluation.getBlockhash(), new HashSet<>());
 				}
-
-				// Save it to current height's hash sets
-				currentHeightBlocks.put(blockEvaluation.getBlockhash(), blockReferences);
-
-				// Update your cumulative weight
-				blockService.updateCumulativeWeight(blockEvaluation, blockReferences.size());
 			}
+			
+			if (!approverHashSets.containsKey(block.getPrevBranchBlockHash())) {
+				BlockEvaluation prevBranchBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
+				if (prevBranchBlockEvaluation != null) {
+					blocksByDescendingHeight.add(prevBranchBlockEvaluation);
+					approverHashSets.put(prevBranchBlockEvaluation.getBlockhash(), new HashSet<>());
+				}
+			}
+			
+			if (approverHashSets.containsKey(block.getPrevBlockHash()))
+				approverHashSets.get(block.getPrevBlockHash()).addAll(approverHashes);
+			
+			if (approverHashSets.containsKey(block.getPrevBranchBlockHash()))
+				approverHashSets.get(block.getPrevBranchBlockHash()).addAll(approverHashes);
 
-			// Move up to next height
-			nextHeightBlocks = currentHeightBlocks;
-			currentHeight--;
+			// Update your cumulative weight and dereference hashes
+			blockService.updateCumulativeWeight(currentBlock, approverHashes.size());
+			approverHashSets.remove(currentBlock.getBlockhash());
 		}
 	}
 
@@ -236,40 +246,50 @@ public class MilestoneService {
 			selectedTips.add(new EvaluationWrapper(blockService.getBlockEvaluation(tipsService.blockToApprove(27, random))));
 
 		// Begin from the highest solid height tips and go backwards from there
-		long currentHeight = blockService.getMaxSolidHeight();
-		HashMap<Sha256Hash, HashSet<EvaluationWrapper>> currentHeightBlocks = null, nextHeightBlocks = new HashMap<>();
-		//TODO replace with PrioQ + HashSet as above
+		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = getSolidTipsDescending();
+		HashMap<Sha256Hash, HashSet<EvaluationWrapper>> approverHashSets = new HashMap<>();
+		for (BlockEvaluation tip : blockService.getSolidTips()) {
+			approverHashSets.put(tip.getBlockhash(), new HashSet<>());
+		}
 
-		while (currentHeight >= 0) {
-			// Initialize results of current height
-			currentHeightBlocks = new HashMap<>();
-
-			for (BlockEvaluation blockEvaluation : blockService.getSolidBlocksOfHeight(currentHeight)) {
-				// Add your own hashes as reference if you are one of the selected tips
-				HashSet<EvaluationWrapper> selectedTipReferences = new HashSet<>(tipCount);
-				for (EvaluationWrapper tip : selectedTips) {
-					if (tip.blockEvaluation.getBlockhash().equals(blockEvaluation.getBlockhash())) {
-						selectedTipReferences.add(tip);
-					}
+		BlockEvaluation currentBlock = null;
+		while ((currentBlock = blocksByDescendingHeight.poll()) != null) {
+			// Add your own hashes as reference if current block is one of the selected tips
+			HashSet<EvaluationWrapper> approverHashes = approverHashSets.get(currentBlock.getBlockhash());
+			for (EvaluationWrapper tip : selectedTips) {
+				if (tip.blockEvaluation.getBlockhash().equals(currentBlock.getBlockhash())) {
+					approverHashes.add(tip);
 				}
-
-				// Add all selected tip references of all approvers
-				for (Sha256Hash approverHash : blockService.getSolidApproverBlockHashes(blockEvaluation.getBlockhash())) {
-					HashSet<EvaluationWrapper> c = nextHeightBlocks.get(approverHash);
-					if (c != null)
-						selectedTipReferences.addAll(c);
-				}
-
-				// Save it to current height's results
-				currentHeightBlocks.put(blockEvaluation.getBlockhash(), selectedTipReferences);
-
-				// Update your rating
-				blockService.updateRating(blockEvaluation, selectedTipReferences.size());
 			}
+			
+			// Add all current references to both approved blocks (initialize if not yet initialized)
+			Block block = blockService.getBlock(currentBlock.getBlockhash());
+			
+			if (!approverHashSets.containsKey(block.getPrevBlockHash())) {
+				BlockEvaluation prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
+				if (prevBlockEvaluation != null) {
+					blocksByDescendingHeight.add(prevBlockEvaluation);
+					approverHashSets.put(prevBlockEvaluation.getBlockhash(), new HashSet<>());
+				}
+			}
+			
+			if (!approverHashSets.containsKey(block.getPrevBranchBlockHash())) {
+				BlockEvaluation prevBranchBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
+				if (prevBranchBlockEvaluation != null) {
+					blocksByDescendingHeight.add(prevBranchBlockEvaluation);
+					approverHashSets.put(prevBranchBlockEvaluation.getBlockhash(), new HashSet<>());
+				}
+			}
+			
+			if (approverHashSets.containsKey(block.getPrevBlockHash()))
+				approverHashSets.get(block.getPrevBlockHash()).addAll(approverHashes);
+			
+			if (approverHashSets.containsKey(block.getPrevBranchBlockHash()))
+				approverHashSets.get(block.getPrevBranchBlockHash()).addAll(approverHashes);
 
-			// Move up to next height
-			nextHeightBlocks = currentHeightBlocks;
-			currentHeight--;
+			// Update your cumulative weight and dereference hashes
+			blockService.updateRating(currentBlock, approverHashes.size());
+			approverHashSets.remove(currentBlock.getBlockhash());
 		}
 	}
 
@@ -466,7 +486,8 @@ public class MilestoneService {
 		Stream<Pair<Block, TransactionOutPoint>> outPoints = blocksToAdd.stream()
 				.flatMap(b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream()).map(in -> Pair.of(b, in.getOutpoint())));
 
-		// Filter to only contain utxos that are spent more than once in the new milestone candidates
+		// Filter to only contain utxos that are spent more than once in the new
+		// milestone candidates
 		List<Pair<Block, TransactionOutPoint>> candidateCandidateConflicts = outPoints.collect(Collectors.groupingBy(Pair::getRight)).values().stream()
 				.filter(l -> l.size() > 1).flatMap(l -> l.stream()).collect(Collectors.toList());
 
@@ -495,7 +516,8 @@ public class MilestoneService {
 				.filter(pair -> transactionService.getUTXOSpent(pair.getRight()) && transactionService.getUTXOSpender(pair.getRight().getOutpoint()) != null)
 				.collect(Collectors.toList());
 
-		// Add the conflicting candidates, milestone blocks and their milestone approvers
+		// Add the conflicting candidates, milestone blocks and their milestone
+		// approvers
 		for (Pair<Block, TransactionInput> pair : candidatesConflictingWithMilestone) {
 			BlockEvaluation milestoneEvaluation = transactionService.getUTXOSpender(pair.getRight().getOutpoint());
 			BlockEvaluation toAddEvaluation = blockService.getBlockEvaluation(pair.getLeft().getHash());
@@ -506,8 +528,8 @@ public class MilestoneService {
 	}
 
 	/**
-	 * Recursively adds the specified block and its approvers to the collection
-	 * if the blocks are in the current milestone.
+	 * Recursively adds the specified block and its approvers to the collection if
+	 * the blocks are in the current milestone.
 	 * 
 	 * @param evaluations
 	 * @param milestoneEvaluation
@@ -557,7 +579,7 @@ public class MilestoneService {
 		blocksByDescendingHeight.addAll(solidTips);
 		return blocksByDescendingHeight;
 	}
-	
+
 	private class EvaluationWrapper {
 		public BlockEvaluation blockEvaluation;
 
