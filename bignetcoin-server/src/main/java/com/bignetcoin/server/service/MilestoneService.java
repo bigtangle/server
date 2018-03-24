@@ -191,7 +191,7 @@ public class MilestoneService {
 		// Begin from the highest solid height tips and go backwards from there
 		long currentHeight = blockService.getMaxSolidHeight();
 		HashMap<Sha256Hash, HashSet<Sha256Hash>> currentHeightBlocks = null, nextHeightBlocks = new HashMap<>();
-		//TODO replace with PrioQ
+		//TODO replace with PrioQ<HashSet> + HashMap<HashSet>, by descending height do yourself and add/update approved blocks
 
 		while (currentHeight >= 0) {
 			// Initialize results of current height
@@ -238,7 +238,7 @@ public class MilestoneService {
 		// Begin from the highest solid height tips and go backwards from there
 		long currentHeight = blockService.getMaxSolidHeight();
 		HashMap<Sha256Hash, HashSet<EvaluationWrapper>> currentHeightBlocks = null, nextHeightBlocks = new HashMap<>();
-		//TODO replace with PrioQ
+		//TODO replace with PrioQ + HashSet as above
 
 		while (currentHeight >= 0) {
 			// Initialize results of current height
@@ -462,12 +462,15 @@ public class MilestoneService {
 	 */
 	private void findCandidateCandidateConflicts(List<Block> blocksToAdd, HashSet<Pair<BlockEvaluation, TransactionOutPoint>> conflictingOutPoints)
 			throws BlockStoreException {
+		// Create pairs of blocks and used utxos from blocksToAdd
 		Stream<Pair<Block, TransactionOutPoint>> outPoints = blocksToAdd.stream()
 				.flatMap(b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream()).map(in -> Pair.of(b, in.getOutpoint())));
 
+		// Filter to only contain utxos that are spent more than once in the new milestone candidates
 		List<Pair<Block, TransactionOutPoint>> candidateCandidateConflicts = outPoints.collect(Collectors.groupingBy(Pair::getRight)).values().stream()
 				.filter(l -> l.size() > 1).flatMap(l -> l.stream()).collect(Collectors.toList());
 
+		// Add the conflicting candidates
 		for (Pair<Block, TransactionOutPoint> pair : candidateCandidateConflicts) {
 			BlockEvaluation toAddEvaluation = blockService.getBlockEvaluation(pair.getLeft().getHash());
 			conflictingOutPoints.add(Pair.of(toAddEvaluation, pair.getRight()));
@@ -487,13 +490,12 @@ public class MilestoneService {
 		Stream<Pair<Block, TransactionInput>> outPoints = blocksToAdd.stream()
 				.flatMap(b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream()).map(in -> Pair.of(b, in)));
 
-		// Filter to only contain non-coinbase inputs that were already spent by the
-		// milestone
+		// Filter to only contain utxos that were already spent by the milestone
 		List<Pair<Block, TransactionInput>> candidatesConflictingWithMilestone = outPoints
 				.filter(pair -> transactionService.getUTXOSpent(pair.getRight()) && transactionService.getUTXOSpender(pair.getRight().getOutpoint()) != null)
 				.collect(Collectors.toList());
 
-		// Add the conflicting milestone blocks and their milestone approvers
+		// Add the conflicting candidates, milestone blocks and their milestone approvers
 		for (Pair<Block, TransactionInput> pair : candidatesConflictingWithMilestone) {
 			BlockEvaluation milestoneEvaluation = transactionService.getUTXOSpender(pair.getRight().getOutpoint());
 			BlockEvaluation toAddEvaluation = blockService.getBlockEvaluation(pair.getLeft().getHash());
@@ -503,15 +505,22 @@ public class MilestoneService {
 		}
 	}
 
-	private void addMilestoneApprovers(HashSet<BlockEvaluation> conflictingMilestoneBlocks, BlockEvaluation milestoneEvaluation) throws BlockStoreException {
-		// Only add milestone blocks
+	/**
+	 * Recursively adds the specified block and its approvers to the collection
+	 * if the blocks are in the current milestone.
+	 * 
+	 * @param evaluations
+	 * @param milestoneEvaluation
+	 * @throws BlockStoreException
+	 */
+	private void addMilestoneApprovers(HashSet<BlockEvaluation> evaluations, BlockEvaluation milestoneEvaluation) throws BlockStoreException {
 		if (!milestoneEvaluation.isMilestone())
 			return;
-		conflictingMilestoneBlocks.add(milestoneEvaluation);
 
-		// Add all milestone approvers
+		// Add this block and add all of its milestone approvers
+		evaluations.add(milestoneEvaluation);
 		for (Sha256Hash approverHash : blockService.getSolidApproverBlockHashes(milestoneEvaluation.getBlockhash())) {
-			conflictingMilestoneBlocks.add(blockService.getBlockEvaluation(approverHash));
+			evaluations.add(blockService.getBlockEvaluation(approverHash));
 		}
 	}
 
@@ -519,26 +528,23 @@ public class MilestoneService {
 	 * Recursively removes the specified block and its approvers from the collection
 	 * if this block is contained in the collection.
 	 * 
-	 * @param blocksToAdd
+	 * @param evaluations
 	 * @param blockEvaluation
 	 * @throws BlockStoreException
 	 */
-	private void removeBlockAndApproversFrom(Collection<BlockEvaluation> blocksToAdd, BlockEvaluation blockEvaluation) throws BlockStoreException {
-		// If not contained, stop
-		if (!blocksToAdd.contains(blockEvaluation))
+	private void removeBlockAndApproversFrom(Collection<BlockEvaluation> evaluations, BlockEvaluation blockEvaluation) throws BlockStoreException {
+		if (!evaluations.contains(blockEvaluation))
 			return;
 
-		// Remove this block
-		blocksToAdd.remove(blockEvaluation);
-
-		// And remove its approvers
+		// Remove this block and remove its approvers
+		evaluations.remove(blockEvaluation);
 		for (Sha256Hash approver : blockService.getSolidApproverBlockHashes(blockEvaluation.getBlockhash())) {
-			removeBlockAndApproversFrom(blocksToAdd, blockService.getBlockEvaluation(approver));
+			removeBlockAndApproversFrom(evaluations, blockService.getBlockEvaluation(approver));
 		}
 	}
 
 	/**
-	 * Gets all solid tips ordered by descending height
+	 * Returns all solid tips ordered by descending height
 	 * 
 	 * @return solid tips by ordered by descending height
 	 * @throws BlockStoreException
