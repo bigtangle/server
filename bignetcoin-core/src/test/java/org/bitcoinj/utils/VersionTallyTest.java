@@ -5,11 +5,11 @@
 
 package org.bitcoinj.utils;
 
-import org.bitcoinj.core.BlockGraph;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.params.UnitTestParams;
+import org.bitcoinj.store.BlockGraph;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;

@@ -41,9 +41,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Nullable;
 
-import org.bitcoinj.core.AbstractBlockGraph;
 import org.bitcoinj.core.Address;
-import org.bitcoinj.core.BlockGraph;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Context;
@@ -90,6 +88,8 @@ import org.bitcoinj.script.ScriptChunk;
 import org.bitcoinj.signers.LocalTransactionSigner;
 import org.bitcoinj.signers.MissingSigResolutionSigner;
 import org.bitcoinj.signers.TransactionSigner;
+import org.bitcoinj.store.AbstractBlockGraph;
+import org.bitcoinj.store.BlockGraph;
 import org.bitcoinj.utils.BaseTaggableObject;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.MapToBeanMapperUtil;

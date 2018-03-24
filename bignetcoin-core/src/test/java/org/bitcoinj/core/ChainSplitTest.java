@@ -8,6 +8,7 @@ package org.bitcoinj.core;
 import org.bitcoinj.core.listeners.TransactionConfidenceEventListener;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.params.UnitTestParams;
+import org.bitcoinj.store.BlockGraph;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.utils.BriefLogFormatter;

@@ -10,6 +10,7 @@ import java.util.Locale;
 
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.store.CheckpointManager;
 
 import com.google.common.base.Objects;
 

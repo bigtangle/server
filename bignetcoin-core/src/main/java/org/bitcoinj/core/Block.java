@@ -23,6 +23,7 @@ import javax.annotation.Nullable;
 
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.store.BlockGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -130,7 +131,7 @@ public class Block extends Message {
     // unnecessary holdover from the Dalvik days.
     /** If null, it means this object holds only the headers. */
     @Nullable
-    List<Transaction> transactions;
+     List<Transaction> transactions;
 
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
     private Sha256Hash hash;

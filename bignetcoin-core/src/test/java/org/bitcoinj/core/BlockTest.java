@@ -17,12 +17,12 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
-import org.bitcoinj.core.AbstractBlockGraph.NewBlockType;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet2Params;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.ScriptOpCodes;
+import org.bitcoinj.store.AbstractBlockGraph.NewBlockType;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.Wallet.BalanceType;
 import org.junit.Before;

@@ -7,6 +7,7 @@ package org.bitcoinj.examples;
 
 import org.bitcoinj.core.*;
 import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.store.BlockGraph;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.wallet.Wallet;

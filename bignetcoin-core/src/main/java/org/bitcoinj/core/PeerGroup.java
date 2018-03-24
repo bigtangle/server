@@ -19,6 +19,7 @@ import org.bitcoinj.crypto.*;
 import org.bitcoinj.net.*;
 import org.bitcoinj.net.discovery.*;
 import org.bitcoinj.script.*;
+import org.bitcoinj.store.AbstractBlockGraph;
 import org.bitcoinj.utils.*;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;

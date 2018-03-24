@@ -10,6 +10,7 @@ import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.store.FullPrunedBlockGraph;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.utils.BlockFileLoader;
 import org.bitcoinj.utils.BriefLogFormatter;

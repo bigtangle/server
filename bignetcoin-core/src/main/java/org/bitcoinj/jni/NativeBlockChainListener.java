@@ -11,6 +11,7 @@ import java.util.List;
 import org.bitcoinj.core.listeners.NewBestBlockListener;
 import org.bitcoinj.core.listeners.ReorganizeListener;
 import org.bitcoinj.core.listeners.TransactionReceivedInBlockListener;
+import org.bitcoinj.store.BlockGraph;
 
 /**
  * An event listener that relays events to a native C++ object. A pointer to that object is stored in

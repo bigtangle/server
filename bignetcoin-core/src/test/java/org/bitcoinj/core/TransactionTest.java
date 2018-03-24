@@ -9,6 +9,7 @@ import org.bitcoinj.core.TransactionConfidence.*;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.params.*;
 import org.bitcoinj.script.*;
+import org.bitcoinj.store.BlockGraph;
 import org.bitcoinj.testing.*;
 import org.easymock.*;
 import org.junit.*;

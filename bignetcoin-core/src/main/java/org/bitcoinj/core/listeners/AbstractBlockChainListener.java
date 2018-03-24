@@ -19,6 +19,7 @@
 package org.bitcoinj.core.listeners;
 
 import org.bitcoinj.core.*;
+import org.bitcoinj.store.BlockGraph;
 
 import java.util.*;
 

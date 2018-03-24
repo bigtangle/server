@@ -5,12 +5,12 @@
 
 package org.bitcoinj.core.listeners;
 
-import org.bitcoinj.core.AbstractBlockGraph.NewBlockType;
-import org.bitcoinj.core.BlockGraph;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.VerificationException;
+import org.bitcoinj.store.BlockGraph;
+import org.bitcoinj.store.AbstractBlockGraph.NewBlockType;
 
 /**
  * Listener interface for when we receive a new block that contains a relevant

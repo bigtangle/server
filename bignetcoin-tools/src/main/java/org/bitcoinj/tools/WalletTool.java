@@ -43,7 +43,6 @@ import java.util.logging.LogManager;
 
 import javax.annotation.Nullable;
 
-import org.bitcoinj.core.AbstractBlockGraph;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.Block;
@@ -77,6 +76,7 @@ import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.store.AbstractBlockGraph;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.utils.BriefLogFormatter;

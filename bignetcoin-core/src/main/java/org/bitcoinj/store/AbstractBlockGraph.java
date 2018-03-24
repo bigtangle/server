@@ -3,7 +3,7 @@
  *  
  *******************************************************************************/
 
-package org.bitcoinj.core;
+package org.bitcoinj.store;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -24,11 +24,24 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Nullable;
 
+import org.bitcoinj.core.Block;
+import org.bitcoinj.core.Context;
+import org.bitcoinj.core.FilteredBlock;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.ProtocolException;
+import org.bitcoinj.core.PrunedException;
+import org.bitcoinj.core.ScriptException;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.StoredBlock;
+import org.bitcoinj.core.StoredUndoableBlock;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionOutputChanges;
+import org.bitcoinj.core.VerificationException;
+import org.bitcoinj.core.Block.VerifyFlag;
+import org.bitcoinj.core.VerificationException.BlockVersionOutOfDate;
 import org.bitcoinj.core.listeners.NewBestBlockListener;
 import org.bitcoinj.core.listeners.ReorganizeListener;
 import org.bitcoinj.core.listeners.TransactionReceivedInBlockListener;
-import org.bitcoinj.store.BlockStore;
-import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.utils.VersionTally;
@@ -369,7 +382,7 @@ public abstract class AbstractBlockGraph {
      * Whether or not we are maintaining a set of unspent outputs and are verifying all transactions.
      * Also indicates that all calls to add() should provide a block containing transactions
      */
-    protected abstract boolean shouldVerifyTransactions();
+     public abstract boolean shouldVerifyTransactions();
     
     /**
      * Connect each transaction in block.transactions, verifying them as we go and removing spent outputs
@@ -407,7 +420,7 @@ public abstract class AbstractBlockGraph {
             }
          
             // If we want to verify transactions (ie we are running with full blocks), verify that block has transactions
-            if (shouldVerifyTransactions() && block.transactions == null)
+            if (shouldVerifyTransactions() && block.getTransactions() == null)
                 throw new VerificationException("Got a block header while running in full-block mode");
 
             // Check for already-seen block, but only for full pruned mode, where the DB is
@@ -475,8 +488,8 @@ public abstract class AbstractBlockGraph {
                 Math.max( storedPrev.getHeight(),storedPrevBranch.getHeight()) + 1, block.getHash()))
             throw new VerificationException("Block failed checkpoint lockin at " + (storedPrev.getHeight() + 1));
         if (shouldVerifyTransactions()) {
-            checkNotNull(block.transactions);
-            for (Transaction tx : block.transactions)
+            checkNotNull(block.getTransactions());
+            for (Transaction tx : block.getTransactions())
                 if (!tx.isFinal(Math.max( storedPrev.getHeight(),storedPrevBranch.getHeight()) + 1, block.getTimeSeconds()))
                    throw new VerificationException("Block contains non-final transaction");
         }
@@ -551,7 +564,7 @@ public abstract class AbstractBlockGraph {
             // We may not have any transactions if we received only a header, which can happen during fast catchup.
             // If we do, send them to the wallet but state that they are on a side chain so it knows not to try and
             // spend them until they become activated.
-            if (block.transactions != null || filtered) {
+            if (block.getTransactions() != null || filtered) {
                 informListenersForNewBlock(block, NewBlockType.SIDE_CHAIN, filteredTxHashList, filteredTxn, newBlock);
             }
             
@@ -630,13 +643,13 @@ public abstract class AbstractBlockGraph {
                                                          StoredBlock newStoredBlock, boolean first,
                                                          TransactionReceivedInBlockListener listener,
                                                          Set<Sha256Hash> falsePositives) throws VerificationException {
-        if (block.transactions != null) {
+        if (block.getTransactions() != null) {
             // If this is not the first wallet, ask for the transactions to be duplicated before being given
             // to the wallet when relevant. This ensures that if we have two connected wallets and a tx that
             // is relevant to both of them, they don't end up accidentally sharing the same object (which can
             // result in temporary in-memory corruption during re-orgs). See bug 257. We only duplicate in
             // the case of multiple wallets to avoid an unnecessary efficiency hit in the common case.
-            sendTransactionsToListener(newStoredBlock, newBlockType, listener, 0, block.transactions,
+            sendTransactionsToListener(newStoredBlock, newBlockType, listener, 0, block.getTransactions(),
                     !first, falsePositives);
         } else if (filteredTxHashList != null) {
             checkNotNull(filteredTxn);
@@ -825,7 +838,7 @@ public abstract class AbstractBlockGraph {
             try {
                 falsePositives.remove(tx.getHash());
                 if (clone)
-                    tx = tx.params.getDefaultSerializer().makeTransaction(tx.bitcoinSerialize());
+                    tx = tx.getParams().getDefaultSerializer().makeTransaction(tx.bitcoinSerialize());
                 listener.receiveFromBlock(tx, block, blockType, relativityOffset++);
             } catch (ScriptException e) {
                 // We don't want scripts we don't understand to break the block chain so just note that this tx was
@@ -909,7 +922,7 @@ public abstract class AbstractBlockGraph {
      * count includes filtered transactions, transactions that were passed in and were relevant
      * and transactions that were false positives (i.e. includes all transactions in the block).
      */
-    protected void trackFilteredTransactions(int count) {
+    public void trackFilteredTransactions(int count) {
         // Track non-false-positives in batch.  Each non-false-positive counts as
         // 0.0 towards the estimate.
         //
@@ -936,7 +949,7 @@ public abstract class AbstractBlockGraph {
     }
 
     /* Irrelevant transactions were received.  Update false-positive estimate. */
-    void trackFalsePositives(int count) {
+   public void trackFalsePositives(int count) {
         // Track false positives in batch by adding alpha to the false positive estimate once per count.
         // Each false positive counts as 1.0 towards the estimate.
         falsePositiveRate += FP_ESTIMATOR_ALPHA * count;

@@ -4,9 +4,9 @@
  *******************************************************************************/
 package com.bignetcoin.server.service;
 
-import org.bitcoinj.core.FullPrunedBlockGraph;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.store.FullPrunedBlockGraph;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

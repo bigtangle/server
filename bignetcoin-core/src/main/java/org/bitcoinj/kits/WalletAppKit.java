@@ -22,7 +22,6 @@ import java.util.concurrent.TimeoutException;
 
 import javax.annotation.Nullable;
 
-import org.bitcoinj.core.BlockGraph;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerAddress;
@@ -30,6 +29,7 @@ import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.net.discovery.PeerDiscovery;
+import org.bitcoinj.store.BlockGraph;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.wallet.DeterministicSeed;

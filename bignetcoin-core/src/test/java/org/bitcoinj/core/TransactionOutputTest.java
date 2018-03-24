@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.store.AbstractBlockGraph;
 import org.bitcoinj.testing.TestWithWallet;
 import org.bitcoinj.wallet.SendRequest;
 import org.hamcrest.CoreMatchers;

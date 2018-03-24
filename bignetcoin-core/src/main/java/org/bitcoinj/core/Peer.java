@@ -9,6 +9,7 @@ import com.google.common.base.*;
 import com.google.common.base.Objects;
 import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.net.StreamConnection;
+import org.bitcoinj.store.AbstractBlockGraph;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.utils.ListenerRegistration;

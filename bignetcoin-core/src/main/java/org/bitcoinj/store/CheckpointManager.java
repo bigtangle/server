@@ -3,17 +3,22 @@
  *  
  *******************************************************************************/
 
-package org.bitcoinj.core;
+package org.bitcoinj.store;
 
-import org.bitcoinj.store.BlockStore;
-import org.bitcoinj.store.BlockStoreException;
-import org.bitcoinj.store.FullPrunedBlockStore;
 import com.google.common.base.Charsets;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.google.common.io.BaseEncoding;
 
+import org.bitcoinj.core.Block;
+import org.bitcoinj.core.Context;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.ProtocolException;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.StoredBlock;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.VerificationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

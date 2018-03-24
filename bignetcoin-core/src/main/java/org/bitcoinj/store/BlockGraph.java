@@ -3,12 +3,19 @@
  *  
  *******************************************************************************/
 
-package org.bitcoinj.core;
+package org.bitcoinj.store;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.bitcoinj.store.BlockStore;
-import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.core.Block;
+import org.bitcoinj.core.Context;
+import org.bitcoinj.core.FilteredBlock;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.PrunedException;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.StoredBlock;
+import org.bitcoinj.core.TransactionOutputChanges;
+import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.wallet.Wallet;
 
 import java.util.ArrayList;
@@ -112,7 +119,7 @@ public class BlockGraph extends AbstractBlockGraph {
     }
 
     @Override
-    protected boolean shouldVerifyTransactions() {
+    public boolean shouldVerifyTransactions() {
         return false;
     }
 

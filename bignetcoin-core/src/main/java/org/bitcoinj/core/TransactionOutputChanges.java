@@ -11,6 +11,8 @@ import java.io.OutputStream;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.bitcoinj.store.AbstractBlockGraph;
+
 /**
  * <p>TransactionOutputChanges represents a delta to the set of unspent outputs. It used as a return value for
  * {@link AbstractBlockGraph#connectTransactions(int, Block)}. It contains the full list of transaction outputs created
