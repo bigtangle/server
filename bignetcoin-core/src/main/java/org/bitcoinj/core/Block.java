@@ -23,7 +23,6 @@ import javax.annotation.Nullable;
 
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
-import org.bitcoinj.store.BlockGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

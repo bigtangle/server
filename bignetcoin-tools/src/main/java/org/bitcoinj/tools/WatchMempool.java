@@ -22,11 +22,11 @@ import java.util.Map;
 
 import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Peer;
-import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.store.Peer;
+import org.bitcoinj.store.PeerGroup;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.wallet.DefaultRiskAnalysis;
 import org.bitcoinj.wallet.RiskAnalysis.Result;

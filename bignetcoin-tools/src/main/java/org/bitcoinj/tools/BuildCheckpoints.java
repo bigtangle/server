@@ -17,22 +17,7 @@
 
 package org.bitcoinj.tools;
 
-import org.bitcoinj.core.listeners.NewBestBlockListener;
-import org.bitcoinj.core.*;
-import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.params.RegTestParams;
-import org.bitcoinj.params.TestNet3Params;
-import org.bitcoinj.store.BlockGraph;
-import org.bitcoinj.store.BlockStore;
-import org.bitcoinj.store.CheckpointManager;
-import org.bitcoinj.store.MemoryBlockStore;
-import org.bitcoinj.utils.BriefLogFormatter;
-import org.bitcoinj.utils.Threading;
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
-import joptsimple.OptionParser;
-import joptsimple.OptionSet;
-import joptsimple.OptionSpec;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -49,7 +34,30 @@ import java.security.MessageDigest;
 import java.util.Date;
 import java.util.TreeMap;
 
-import static com.google.common.base.Preconditions.checkState;
+import org.bitcoinj.core.BlockStore;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.PeerAddress;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.StoredBlock;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.VerificationException;
+import org.bitcoinj.core.listeners.NewBestBlockListener;
+import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.params.RegTestParams;
+import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.store.BlockGraph;
+import org.bitcoinj.store.CheckpointManager;
+import org.bitcoinj.store.MemoryBlockStore;
+import org.bitcoinj.store.PeerGroup;
+import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.utils.Threading;
+
+import com.google.common.base.Charsets;
+import com.google.common.io.Resources;
+
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
+import joptsimple.OptionSpec;
 
 /**
  * Downloads and verifies a full chain from your local peer, emitting checkpoints at each difficulty transition period

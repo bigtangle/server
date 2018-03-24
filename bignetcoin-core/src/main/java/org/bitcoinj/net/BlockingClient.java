@@ -5,25 +5,37 @@
 
 package org.bitcoinj.net;
 
-import com.google.common.util.concurrent.*;
-import org.bitcoinj.core.*;
-import org.slf4j.*;
+import static com.google.common.base.Preconditions.checkState;
 
-import javax.annotation.*;
-import javax.net.*;
-import java.io.*;
-import java.net.*;
-import java.nio.*;
-import java.util.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
+import java.util.Set;
 
-import static com.google.common.base.Preconditions.*;
+import javax.annotation.Nullable;
+import javax.net.SocketFactory;
+
+import org.bitcoinj.core.Context;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 
 /**
- * <p>Creates a simple connection to a server using a {@link StreamConnection} to process data.</p>
+ * <p>
+ * Creates a simple connection to a server using a {@link StreamConnection} to
+ * process data.
+ * </p>
  *
- * <p>Generally, using {@link NioClient} and {@link NioClientManager} should be preferred over {@link BlockingClient}
- * and {@link BlockingClientManager}, unless you wish to connect over a proxy or use some other network settings that
- * cannot be set using NIO.</p>
+ * <p>
+ * Generally, using {@link NioClient} and {@link NioClientManager} should be
+ * preferred over {@link BlockingClient} and {@link BlockingClientManager},
+ * unless you wish to connect over a proxy or use some other network settings
+ * that cannot be set using NIO.
+ * </p>
  */
 public class BlockingClient implements MessageWriteTarget {
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(BlockingClient.class);
@@ -36,22 +48,33 @@ public class BlockingClient implements MessageWriteTarget {
     private SettableFuture<SocketAddress> connectFuture;
 
     /**
-     * <p>Creates a new client to the given server address using the given {@link StreamConnection} to decode the data.
-     * The given connection <b>MUST</b> be unique to this object. This does not block while waiting for the connection to
-     * open, but will call either the {@link StreamConnection#connectionOpened()} or
-     * {@link StreamConnection#connectionClosed()} callback on the created network event processing thread.</p>
+     * <p>
+     * Creates a new client to the given server address using the given
+     * {@link StreamConnection} to decode the data. The given connection
+     * <b>MUST</b> be unique to this object. This does not block while waiting
+     * for the connection to open, but will call either the
+     * {@link StreamConnection#connectionOpened()} or
+     * {@link StreamConnection#connectionClosed()} callback on the created
+     * network event processing thread.
+     * </p>
      *
-     * @param connectTimeoutMillis The connect timeout set on the connection (in milliseconds). 0 is interpreted as no
-     *                             timeout.
-     * @param socketFactory An object that creates {@link Socket} objects on demand, which may be customised to control
-     *                      how this client connects to the internet. If not sure, use SocketFactory.getDefault()
-     * @param clientSet A set which this object will add itself to after initialization, and then remove itself from
+     * @param connectTimeoutMillis
+     *            The connect timeout set on the connection (in milliseconds). 0
+     *            is interpreted as no timeout.
+     * @param socketFactory
+     *            An object that creates {@link Socket} objects on demand, which
+     *            may be customised to control how this client connects to the
+     *            internet. If not sure, use SocketFactory.getDefault()
+     * @param clientSet
+     *            A set which this object will add itself to after
+     *            initialization, and then remove itself from
      */
     public BlockingClient(final SocketAddress serverAddress, final StreamConnection connection,
-                          final int connectTimeoutMillis, final SocketFactory socketFactory,
-                          @Nullable final Set<BlockingClient> clientSet) throws IOException {
+            final int connectTimeoutMillis, final SocketFactory socketFactory,
+            @Nullable final Set<BlockingClient> clientSet) throws IOException {
         connectFuture = SettableFuture.create();
-        // Try to fit at least one message in the network buffer, but place an upper and lower limit on its size to make
+        // Try to fit at least one message in the network buffer, but place an
+        // upper and lower limit on its size to make
         // sure it doesnt get too large or have to call read too often.
         connection.setWriteTarget(this);
         socket = socketFactory.createSocket();
@@ -77,7 +100,8 @@ public class BlockingClient implements MessageWriteTarget {
                     try {
                         socket.close();
                     } catch (IOException e1) {
-                        // At this point there isn't much we can do, and we can probably assume the channel is closed
+                        // At this point there isn't much we can do, and we can
+                        // probably assume the channel is closed
                     }
                     if (clientSet != null)
                         clientSet.remove(BlockingClient.this);
@@ -91,11 +115,13 @@ public class BlockingClient implements MessageWriteTarget {
     }
 
     /**
-     * A blocking call that never returns, except by throwing an exception. It reads bytes from the input stream
-     * and feeds them to the provided {@link StreamConnection}, for example, a {@link Peer}.
+     * A blocking call that never returns, except by throwing an exception. It
+     * reads bytes from the input stream and feeds them to the provided
+     * {@link StreamConnection}, for example, a {@link Peer}.
      */
     public static void runReadLoop(InputStream stream, StreamConnection connection) throws Exception {
-        ByteBuffer dbuf = ByteBuffer.allocateDirect(Math.min(Math.max(connection.getMaxMessageSize(), BUFFER_SIZE_LOWER_BOUND), BUFFER_SIZE_UPPER_BOUND));
+        ByteBuffer dbuf = ByteBuffer.allocateDirect(
+                Math.min(Math.max(connection.getMaxMessageSize(), BUFFER_SIZE_LOWER_BOUND), BUFFER_SIZE_UPPER_BOUND));
         byte[] readBuff = new byte[dbuf.capacity()];
         while (true) {
             // TODO Kill the message duplication here
@@ -104,25 +130,30 @@ public class BlockingClient implements MessageWriteTarget {
             if (read == -1)
                 return;
             dbuf.put(readBuff, 0, read);
-            // "flip" the buffer - setting the limit to the current position and setting position to 0
+            // "flip" the buffer - setting the limit to the current position and
+            // setting position to 0
             dbuf.flip();
-            // Use connection.receiveBytes's return value as a double-check that it stopped reading at the right
+            // Use connection.receiveBytes's return value as a double-check that
+            // it stopped reading at the right
             // location
             int bytesConsumed = connection.receiveBytes(dbuf);
             checkState(dbuf.position() == bytesConsumed);
-            // Now drop the bytes which were read by compacting dbuf (resetting limit and keeping relative
+            // Now drop the bytes which were read by compacting dbuf (resetting
+            // limit and keeping relative
             // position)
             dbuf.compact();
         }
     }
 
     /**
-     * Closes the connection to the server, triggering the {@link StreamConnection#connectionClosed()}
-     * event on the network-handling thread where all callbacks occur.
+     * Closes the connection to the server, triggering the
+     * {@link StreamConnection#connectionClosed()} event on the network-handling
+     * thread where all callbacks occur.
      */
     @Override
     public void closeConnection() {
-        // Closes the channel, triggering an exception in the network-handling thread triggering connectionClosed()
+        // Closes the channel, triggering an exception in the network-handling
+        // thread triggering connectionClosed()
         try {
             vCloseRequested = true;
             socket.close();
@@ -144,7 +175,10 @@ public class BlockingClient implements MessageWriteTarget {
         }
     }
 
-    /** Returns a future that completes once connection has occurred at the socket level or with an exception if failed to connect. */
+    /**
+     * Returns a future that completes once connection has occurred at the
+     * socket level or with an exception if failed to connect.
+     */
     public ListenableFuture<SocketAddress> getConnectFuture() {
         return connectFuture;
     }

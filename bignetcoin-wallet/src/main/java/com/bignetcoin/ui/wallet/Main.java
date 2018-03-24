@@ -141,9 +141,7 @@ public class Main extends Application {
         mainWindow.show();
 
         WalletSetPasswordController.estimateKeyDerivationTimeMsec();
-
-        scene.getAccelerators().put(KeyCombination.valueOf("Shortcut+F"),
-                () -> bitcoin.peerGroup().getDownloadPeer().close());
+ 
     }
 
     public void setupWalletKit(@Nullable DeterministicSeed seed) {

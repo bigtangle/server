@@ -46,6 +46,8 @@ import javax.annotation.Nullable;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.Block;
+import org.bitcoinj.core.BlockStore;
+import org.bitcoinj.core.BlockStoreException;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.DumpedPrivateKey;
@@ -53,9 +55,7 @@ import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.FilteredBlock;
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerAddress;
-import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.core.ScriptException;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
@@ -77,8 +77,8 @@ import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.store.AbstractBlockGraph;
-import org.bitcoinj.store.BlockStore;
-import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.store.Peer;
+import org.bitcoinj.store.PeerGroup;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.DeterministicUpgradeRequiredException;
@@ -549,7 +549,7 @@ public class WalletTool {
             if (aesKey == null)
                 return;
         }
-        Futures.getUnchecked(wallet.doMaintenance(aesKey, true));
+     //   Futures.getUnchecked(wallet.doMaintenance(aesKey, true));
     }
 
     private static void encrypt() {
@@ -1358,7 +1358,7 @@ public class WalletTool {
         // there just for the dump case.
         if (chainFileName.exists())
             setup();
-        System.out.println(wallet.toString(options.has("dump-privkeys"), true, true, chain));
+       // System.out.println(wallet.toString(options.has("dump-privkeys"), true, true, chain));
     }
 
     private static void setCreationTime() {

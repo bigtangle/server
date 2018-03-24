@@ -29,7 +29,6 @@ import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Json;
 import org.bitcoinj.core.UTXO;
-import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.utils.MapToBeanMapperUtil;
 import org.bitcoinj.utils.MonetaryFormat;
 import org.bitcoinj.utils.OkHttp3Util;
@@ -45,14 +44,10 @@ import com.bignetcoin.ui.wallet.utils.easing.EasingMode;
 import com.bignetcoin.ui.wallet.utils.easing.ElasticInterpolator;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
-import com.subgraph.orchid.TorClient;
-import com.subgraph.orchid.TorInitializationListener;
 
 import javafx.animation.FadeTransition;
 import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
-import javafx.application.Platform;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -111,7 +106,7 @@ public class MainController {
     @FXML
     public void initialize() {
         try {
-           
+
             initTableView();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
@@ -177,10 +172,11 @@ public class MainController {
             }
         }
     }
+
     public void initTableView() throws Exception {
         try {
-        initTable();
-        }catch (Exception e) {
+            initTable();
+        } catch (Exception e) {
             // TODO: handle exception
         }
         utxoTable.setItems(Main.instance.getUtxoData());
@@ -205,31 +201,8 @@ public class MainController {
         // Don't let the user click send money when the wallet is empty.
         sendMoneyOutBtn.disableProperty().bind(model.balanceProperty().isEqualTo(Coin.ZERO));
 
-        TorClient torClient = Main.bitcoin.peerGroup().getTorClient();
-        if (torClient != null) {
-            SimpleDoubleProperty torProgress = new SimpleDoubleProperty(-1);
-            String torMsg = "Initialising Tor";
-            syncItem = Main.instance.notificationBar.pushItem(torMsg, torProgress);
-            torClient.addInitializationListener(new TorInitializationListener() {
-                @Override
-                public void initializationProgress(String message, int percent) {
-                    Platform.runLater(() -> {
-                        syncItem.label.set(torMsg + ": " + message);
-                        torProgress.set(percent / 100.0);
-                    });
-                }
+        showBitcoinSyncMessage();
 
-                @Override
-                public void initializationCompleted() {
-                    Platform.runLater(() -> {
-                        syncItem.cancel();
-                        showBitcoinSyncMessage();
-                    });
-                }
-            });
-        } else {
-            showBitcoinSyncMessage();
-        }
         model.syncProgressProperty().addListener(x -> {
             if (model.syncProgressProperty().get() >= 1.0) {
                 readyToGoAnimation();
@@ -267,7 +240,7 @@ public class MainController {
             // GuiUtils.crashAlert(e);
             // }
 
-            Main.keyFileDirectory = file.getParent()+"/";
+            Main.keyFileDirectory = file.getParent() + "/";
             String filename = file.getName();
 
             Main.keyFilePrefix = filename.contains(".") ? filename.substring(0, filename.lastIndexOf(".")) : filename;
@@ -337,10 +310,6 @@ public class MainController {
         group.setDelay(NotificationBarPane.ANIM_OUT_DURATION);
         group.setCycleCount(1);
         group.play();
-    }
-
-    public DownloadProgressTracker progressBarUpdater() {
-        return model.getDownloadProgressTracker();
     }
 
 }

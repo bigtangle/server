@@ -11,8 +11,7 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
-
-import org.bitcoinj.store.FullPrunedBlockGraph;
+ 
 
 /**
  * <p>This command is supported only by <a href="http://github.com/bitcoinxt/bitcoinxt">Bitcoin XT</a> nodes, which

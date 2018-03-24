@@ -4,9 +4,9 @@
  *******************************************************************************/
 package com.bignetcoin.server;
 
+import org.bitcoinj.core.BlockStoreException;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.UnitTestParams;
-import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockGraph;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.store.MySQLFullPrunedBlockStore;

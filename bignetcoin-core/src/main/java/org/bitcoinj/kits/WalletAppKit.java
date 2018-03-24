@@ -18,20 +18,16 @@ import java.net.UnknownHostException;
 import java.nio.channels.FileLock;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import javax.annotation.Nullable;
 
+import org.bitcoinj.core.BlockStore;
+import org.bitcoinj.core.BlockStoreException;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerAddress;
-import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.core.Utils;
-import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.net.discovery.PeerDiscovery;
-import org.bitcoinj.store.BlockGraph;
-import org.bitcoinj.store.BlockStore;
-import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.Protos;
@@ -43,7 +39,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.subgraph.orchid.TorClient;
 
 /**
  * <p>
@@ -89,17 +84,16 @@ public class WalletAppKit extends AbstractIdleService {
 
     protected final String filePrefix;
     protected final NetworkParameters params;
-    protected volatile BlockGraph vChain;
+
     protected volatile BlockStore vStore;
     protected volatile Wallet vWallet;
-    protected volatile PeerGroup vPeerGroup;
 
     protected final File directory;
     protected volatile File vWalletFile;
 
     protected boolean useAutoSave = true;
     protected PeerAddress[] peerAddresses;
-    protected DownloadProgressTracker downloadListener;
+
     protected boolean autoStop = true;
     protected InputStream checkpoints;
     protected boolean blockingStartup = true;
@@ -160,17 +154,6 @@ public class WalletAppKit extends AbstractIdleService {
     public WalletAppKit setAutoSave(boolean value) {
         checkState(state() == State.NEW, "Cannot call after startup");
         useAutoSave = value;
-        return this;
-    }
-
-    /**
-     * If you want to learn about the sync process, you can provide a listener
-     * here. For instance, a {@link org.bitcoinj.core.DownloadProgressTracker}
-     * is a good choice. This has no effect unless setBlockingStartup(false) has
-     * been called too, due to some missing implementation code.
-     */
-    public WalletAppKit setDownloadListener(DownloadProgressTracker listener) {
-        this.downloadListener = listener;
         return this;
     }
 
@@ -273,7 +256,7 @@ public class WalletAppKit extends AbstractIdleService {
     protected List<WalletExtension> provideWalletExtensions() throws Exception {
         return ImmutableList.of();
     }
- 
+
     /**
      * This method is invoked on a background thread after all objects are
      * initialised, but before the peer group or block chain download is
@@ -326,8 +309,6 @@ public class WalletAppKit extends AbstractIdleService {
         boolean shouldReplayWallet = (vWalletFile.exists() && !chainFileExists) || restoreFromSeed != null;
         vWallet = createOrLoadWallet(shouldReplayWallet);
     }
-
- 
 
     private Wallet createOrLoadWallet(boolean shouldReplayWallet) throws Exception {
         Wallet wallet;
@@ -416,15 +397,6 @@ public class WalletAppKit extends AbstractIdleService {
         }
     }
 
-    protected PeerGroup createPeerGroup() throws TimeoutException {
-        if (useTor) {
-            TorClient torClient = new TorClient();
-            torClient.getConfig().setDataDirectory(directory);
-            return PeerGroup.newWithTor(params, vChain, torClient);
-        } else
-            return new PeerGroup(params, vChain);
-    }
-
     private void installShutdownHook() {
         if (autoStop)
             Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -445,14 +417,13 @@ public class WalletAppKit extends AbstractIdleService {
         // Runs in a separate thread.
         try {
             Context.propagate(context);
-            vPeerGroup.stop();
+
             vWallet.saveToFile(vWalletFile);
             vStore.close();
 
-            vPeerGroup = null;
             vWallet = null;
             vStore = null;
-            vChain = null;
+
         } catch (BlockStoreException e) {
             throw new IOException(e);
         }
@@ -460,11 +431,6 @@ public class WalletAppKit extends AbstractIdleService {
 
     public NetworkParameters params() {
         return params;
-    }
-
-    public BlockGraph chain() {
-        checkState(state() == State.STARTING || state() == State.RUNNING, "Cannot call until startup is complete");
-        return vChain;
     }
 
     public BlockStore store() {
@@ -483,11 +449,6 @@ public class WalletAppKit extends AbstractIdleService {
             }
         }
         return vWallet;
-    }
-
-    public PeerGroup peerGroup() {
-        checkState(state() == State.STARTING || state() == State.RUNNING, "Cannot call until startup is complete");
-        return vPeerGroup;
     }
 
     public File directory() {

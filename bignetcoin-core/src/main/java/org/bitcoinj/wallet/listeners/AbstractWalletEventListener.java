@@ -27,17 +27,8 @@ public abstract class AbstractWalletEventListener extends AbstractKeyChainEventL
     public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
         onChange();
     }
-
-    @Override
-    public void onReorganize(Wallet wallet) {
-        onChange();
-    }
-
-    @Override
-    public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
-        onChange();
-    }
-
+ 
+ 
     @Override
     public void onKeysAdded(List<ECKey> keys) {
         onChange();

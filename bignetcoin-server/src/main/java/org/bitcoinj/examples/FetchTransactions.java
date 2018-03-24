@@ -8,8 +8,9 @@ package org.bitcoinj.examples;
 import org.bitcoinj.core.*;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.store.BlockGraph;
-import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
+import org.bitcoinj.store.Peer;
+import org.bitcoinj.store.PeerGroup;
 import org.bitcoinj.utils.BriefLogFormatter;
 import com.google.common.util.concurrent.ListenableFuture;
 

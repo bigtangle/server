@@ -22,20 +22,14 @@ import static com.bignetcoin.ui.wallet.utils.GuiUtils.checkGuiThread;
 import static com.google.common.base.Preconditions.checkState;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
-import org.bitcoinj.core.BlockForTest;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Json;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.UTXO;
 import org.bitcoinj.crypto.DeterministicKey;
-import org.bitcoinj.utils.MapToBeanMapperUtil;
 import org.bitcoinj.utils.OkHttp3Util;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;

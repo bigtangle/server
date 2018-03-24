@@ -18,17 +18,22 @@
 
 package org.bitcoinj.examples;
 
-import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
-import org.bitcoinj.core.*;
-import org.bitcoinj.kits.WalletAppKit;
-import org.bitcoinj.params.RegTestParams;
-import org.bitcoinj.utils.BriefLogFormatter;
-import org.bitcoinj.utils.Threading;
-import org.bitcoinj.wallet.Wallet;
+import static org.bitcoinj.core.Coin.CENT;
+import static org.bitcoinj.core.Coin.COIN;
+import static org.bitcoinj.core.Coin.SATOSHI;
 
 import java.io.File;
 
-import static org.bitcoinj.core.Coin.*;
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.Message;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
+import org.bitcoinj.kits.WalletAppKit;
+import org.bitcoinj.params.RegTestParams;
+import org.bitcoinj.store.Peer;
+import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.utils.Threading;
+import org.bitcoinj.wallet.Wallet;
 
 /**
  * This is a little test app that waits for a coin on a local regtest node, then  generates two transactions that double
@@ -50,18 +55,8 @@ public class DoubleSpend {
         kit.wallet().getBalanceFuture(COIN, Wallet.BalanceType.AVAILABLE).get();
         Transaction tx1 = kit.wallet().createSend(Address.fromBase58(params, "muYPFNCv7KQEG2ZLM7Z3y96kJnNyXJ53wm"), CENT);
         Transaction tx2 = kit.wallet().createSend(Address.fromBase58(params, "muYPFNCv7KQEG2ZLM7Z3y96kJnNyXJ53wm"), CENT.add(SATOSHI.multiply(10)));
-        final Peer peer = kit.peerGroup().getConnectedPeers().get(0);
-        peer.addPreMessageReceivedEventListener(Threading.SAME_THREAD,
-            new PreMessageReceivedEventListener() {
-                @Override
-                public Message onPreMessageReceived(Peer peer, Message m) {
-                    System.err.println("Got a message!" + m.getClass().getSimpleName() + ": " + m);
-                    return m;
-                }
-            }
-        );
-        peer.sendMessage(tx1);
-        peer.sendMessage(tx2);
+  
+ 
 
         Thread.sleep(5000);
         kit.stopAsync();

@@ -14,14 +14,23 @@
 
 package org.bitcoinj.tools;
 
-import org.bitcoinj.core.*;
+import org.bitcoinj.core.Block;
+import org.bitcoinj.core.BlockStore;
+import org.bitcoinj.core.BlockStoreException;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.PrunedException;
+import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
-import org.bitcoinj.store.*;
+import org.bitcoinj.store.AbstractBlockGraph;
+import org.bitcoinj.store.BlockGraph;
+import org.bitcoinj.store.FullPrunedBlockGraph;
+import org.bitcoinj.store.FullPrunedBlockStore;
+import org.bitcoinj.store.MemoryBlockStore;
+import org.bitcoinj.store.MemoryFullPrunedBlockStore;
 import org.bitcoinj.utils.BlockFileLoader;
-import com.google.common.base.Preconditions;
 
-import java.io.File;
+import com.google.common.base.Preconditions;
 
 /** Very thin wrapper around {@link org.bitcoinj.utils.BlockFileLoader} */
 public class BlockImporter {

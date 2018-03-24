@@ -19,10 +19,10 @@ import java.util.Stack;
 
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockEvaluation;
+import org.bitcoinj.core.BlockStoreException;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
-import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

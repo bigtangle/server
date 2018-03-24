@@ -5,25 +5,14 @@
 
 package org.bitcoinj.params;
 
-import java.math.BigInteger;
-import java.util.concurrent.TimeUnit;
-
-import org.bitcoinj.core.Block;
+import org.bitcoinj.core.BitcoinSerializer;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.utils.MonetaryFormat;
-import org.bitcoinj.core.VerificationException;
-import org.bitcoinj.store.BlockStore;
-import org.bitcoinj.store.BlockStoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Stopwatch;
-
-import org.bitcoinj.core.BitcoinSerializer;
 
 /**
  * Parameters for Bitcoin-like networks.
@@ -51,10 +40,10 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
         return ((storedPrev.getHeight() + 1) % this.getInterval()) == 0;
     }
 
-    @Override
-    public void checkDifficultyTransitions(final StoredBlock storedPrev, final Block nextBlock,
-            final BlockStore blockStore) throws VerificationException, BlockStoreException {
-    }
+//    @Override
+//    public void checkDifficultyTransitions(final StoredBlock storedPrev, final Block nextBlock,
+//            final BlockStore blockStore) throws VerificationException, BlockStoreException {
+//    }
 
     @Override
     public Coin getMaxMoney() {

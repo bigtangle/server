@@ -18,18 +18,16 @@
 
 package com.bignetcoin.ui.wallet.utils;
 
-import org.bitcoinj.core.listeners.DownloadProgressTracker;
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.Coin;
 import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.listeners.AbstractWalletEventListener;
 import org.bitcoinj.wallet.listeners.WalletChangeEventListener;
-import org.bitcoinj.core.*;
+
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
-
-import java.util.Date;
 
 /**
  * A class that exposes relevant bitcoin stuff as JavaFX bindable properties.
@@ -38,7 +36,6 @@ public class BitcoinUIModel {
     private SimpleObjectProperty<Address> address = new SimpleObjectProperty<>();
     private SimpleObjectProperty<Coin> balance = new SimpleObjectProperty<>(Coin.ZERO);
     private SimpleDoubleProperty syncProgress = new SimpleDoubleProperty(-1);
-    private ProgressBarUpdater syncProgressUpdater = new ProgressBarUpdater();
 
     public BitcoinUIModel() {
     }
@@ -62,23 +59,9 @@ public class BitcoinUIModel {
         address.set(wallet.currentReceiveAddress());
     }
 
-    private class ProgressBarUpdater extends DownloadProgressTracker {
-        @Override
-        protected void progress(double pct, int blocksLeft, Date date) {
-            super.progress(pct, blocksLeft, date);
-            Platform.runLater(() -> syncProgress.set(pct / 100.0));
-        }
-
-        @Override
-        protected void doneDownload() {
-            super.doneDownload();
-            Platform.runLater(() -> syncProgress.set(1.0));
-        }
+    public ReadOnlyDoubleProperty syncProgressProperty() {
+        return syncProgress;
     }
-
-    public DownloadProgressTracker getDownloadProgressTracker() { return syncProgressUpdater; }
-
-    public ReadOnlyDoubleProperty syncProgressProperty() { return syncProgress; }
 
     public ReadOnlyObjectProperty<Address> addressProperty() {
         return address;

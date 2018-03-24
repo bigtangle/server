@@ -13,6 +13,7 @@ import java.util.Map;
 
 import org.apache.tomcat.jni.Local;
 import org.bitcoinj.core.Block;
+import org.bitcoinj.core.BlockStoreException;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
@@ -22,7 +23,6 @@ import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.store.BlockStoreException;
 import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;

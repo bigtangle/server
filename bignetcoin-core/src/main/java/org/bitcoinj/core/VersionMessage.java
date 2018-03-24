@@ -6,7 +6,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.Objects;
-import javax.annotation.Nullable;
+import javax.annotation.Nullable; 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;

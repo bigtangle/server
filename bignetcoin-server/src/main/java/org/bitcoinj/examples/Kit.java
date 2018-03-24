@@ -96,14 +96,7 @@ public class Kit {
             }
         });
 
-        kit.wallet().addTransactionConfidenceEventListener(new TransactionConfidenceEventListener() {
-            @Override
-            public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
-                System.out.println("-----> confidence changed: " + tx.getHashAsString());
-                TransactionConfidence confidence = tx.getConfidence();
-                System.out.println("new block depth: " + confidence.getDepthInBlocks());
-            }
-        });
+       
 
         // Ready to run. The kit syncs the blockchain and our wallet event listener gets notified when something happens.
         // To test everything we create and print a fresh receiving address. Send some coins to that address and see if everything works.
