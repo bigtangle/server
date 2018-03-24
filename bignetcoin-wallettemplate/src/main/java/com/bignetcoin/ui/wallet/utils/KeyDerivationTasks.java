@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-package wallettemplate.utils;
+package com.bignetcoin.ui.wallet.utils;
 
 import org.bitcoinj.crypto.KeyCrypterScrypt;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -23,10 +23,11 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import javax.annotation.*;
+
+import static com.bignetcoin.ui.wallet.utils.GuiUtils.checkGuiThread;
+
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
-
-import static wallettemplate.utils.GuiUtils.checkGuiThread;
 
 /**
  * Background tasks for pumping a progress meter and deriving an AES key using scrypt.

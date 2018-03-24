@@ -33,6 +33,12 @@ import org.bitcoinj.wallet.DecryptingKeyBag;
 import org.bitcoinj.wallet.DeterministicKeyChain;
 import org.fxmisc.easybind.EasyBind;
 
+import com.bignetcoin.ui.wallet.controls.ClickableBitcoinAddress;
+import com.bignetcoin.ui.wallet.controls.NotificationBarPane;
+import com.bignetcoin.ui.wallet.utils.BitcoinUIModel;
+import com.bignetcoin.ui.wallet.utils.GuiUtils;
+import com.bignetcoin.ui.wallet.utils.easing.EasingMode;
+import com.bignetcoin.ui.wallet.utils.easing.ElasticInterpolator;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.subgraph.orchid.TorClient;
@@ -54,12 +60,6 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
-import wallettemplate.controls.ClickableBitcoinAddress;
-import wallettemplate.controls.NotificationBarPane;
-import wallettemplate.utils.BitcoinUIModel;
-import wallettemplate.utils.GuiUtils;
-import wallettemplate.utils.easing.EasingMode;
-import wallettemplate.utils.easing.ElasticInterpolator;
 
 /**
  * Gets created auto-magically by FXMLLoader via reflection. The widget fields

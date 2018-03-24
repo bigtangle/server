@@ -14,13 +14,13 @@
 
 package wallettemplate;
 
-import static wallettemplate.utils.GuiUtils.blurIn;
-import static wallettemplate.utils.GuiUtils.blurOut;
-import static wallettemplate.utils.GuiUtils.checkGuiThread;
-import static wallettemplate.utils.GuiUtils.explodeOut;
-import static wallettemplate.utils.GuiUtils.fadeIn;
-import static wallettemplate.utils.GuiUtils.fadeOutAndRemove;
-import static wallettemplate.utils.GuiUtils.zoomIn;
+import static com.bignetcoin.ui.wallet.utils.GuiUtils.blurIn;
+import static com.bignetcoin.ui.wallet.utils.GuiUtils.blurOut;
+import static com.bignetcoin.ui.wallet.utils.GuiUtils.checkGuiThread;
+import static com.bignetcoin.ui.wallet.utils.GuiUtils.explodeOut;
+import static com.bignetcoin.ui.wallet.utils.GuiUtils.fadeIn;
+import static com.bignetcoin.ui.wallet.utils.GuiUtils.fadeOutAndRemove;
+import static com.bignetcoin.ui.wallet.utils.GuiUtils.zoomIn;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,6 +35,10 @@ import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.DeterministicSeed;
 
+import com.bignetcoin.ui.wallet.controls.NotificationBarPane;
+import com.bignetcoin.ui.wallet.utils.GuiUtils;
+import com.bignetcoin.ui.wallet.utils.TextFieldValidator;
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -46,9 +50,6 @@ import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
-import wallettemplate.controls.NotificationBarPane;
-import wallettemplate.utils.GuiUtils;
-import wallettemplate.utils.TextFieldValidator;
 
 public class Main extends Application {
     public static NetworkParameters params = UnitTestParams.get();

@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-package wallettemplate.utils;
+package com.bignetcoin.ui.wallet.utils;
 
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.wallet.Wallet;

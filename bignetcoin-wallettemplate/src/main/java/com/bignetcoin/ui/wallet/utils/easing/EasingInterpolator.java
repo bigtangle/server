@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-package wallettemplate.utils.easing;
+package com.bignetcoin.ui.wallet.utils.easing;
 
 import javafx.animation.Interpolator;
 import javafx.beans.property.ObjectProperty;

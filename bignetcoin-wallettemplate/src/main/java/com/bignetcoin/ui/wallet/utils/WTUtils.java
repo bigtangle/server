@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-package wallettemplate.utils;
+package com.bignetcoin.ui.wallet.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

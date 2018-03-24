@@ -12,10 +12,13 @@
  * limitations under the License.
  */
 
-package wallettemplate.controls;
+package com.bignetcoin.ui.wallet.controls;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.uri.BitcoinURI;
+
+import com.bignetcoin.ui.wallet.utils.GuiUtils;
+
 import de.jensd.fx.fontawesome.AwesomeDude;
 import de.jensd.fx.fontawesome.AwesomeIcon;
 import javafx.beans.binding.StringExpression;
@@ -39,7 +42,6 @@ import javafx.scene.layout.Pane;
 import net.glxn.qrgen.QRCode;
 import net.glxn.qrgen.image.ImageType;
 import wallettemplate.Main;
-import wallettemplate.utils.GuiUtils;
 
 import java.awt.*;
 import java.io.ByteArrayInputStream;

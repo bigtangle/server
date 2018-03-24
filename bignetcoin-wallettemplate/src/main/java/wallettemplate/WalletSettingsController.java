@@ -21,6 +21,7 @@ import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.KeyChainGroup;
 
+import com.bignetcoin.ui.wallet.utils.TextFieldValidator;
 import com.google.common.base.Splitter;
 import com.google.common.util.concurrent.Service;
 import javafx.application.Platform;
@@ -33,7 +34,6 @@ import javafx.scene.control.TextArea;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
-import wallettemplate.utils.TextFieldValidator;
 
 import javax.annotation.Nullable;
 import java.time.Instant;
@@ -42,12 +42,12 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 
+import static com.bignetcoin.ui.wallet.utils.GuiUtils.checkGuiThread;
+import static com.bignetcoin.ui.wallet.utils.GuiUtils.informationalAlert;
+import static com.bignetcoin.ui.wallet.utils.WTUtils.didThrow;
+import static com.bignetcoin.ui.wallet.utils.WTUtils.unchecked;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javafx.beans.binding.Bindings.*;
-import static wallettemplate.utils.GuiUtils.checkGuiThread;
-import static wallettemplate.utils.GuiUtils.informationalAlert;
-import static wallettemplate.utils.WTUtils.didThrow;
-import static wallettemplate.utils.WTUtils.unchecked;
 
 public class WalletSettingsController {
     private static final Logger log = LoggerFactory.getLogger(WalletSettingsController.class);

@@ -6,11 +6,12 @@ import org.bitcoinj.core.Block;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.utils.OkHttp3Util;
 
+import com.bignetcoin.ui.wallet.utils.GuiUtils;
+
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import wallettemplate.utils.GuiUtils;
 
 public class StockController {
     @FXML

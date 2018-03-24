@@ -12,14 +12,16 @@
  * limitations under the License.
  */
 
-package wallettemplate.controls;
+package com.bignetcoin.ui.wallet.controls;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.NetworkParameters;
+
+import com.bignetcoin.ui.wallet.utils.TextFieldValidator;
+
 import javafx.scene.Node;
 import javafx.scene.control.TextField;
-import wallettemplate.utils.TextFieldValidator;
 
 /**
  * Given a text field, some network params and optionally some nodes, will make the text field an angry red colour

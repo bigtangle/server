@@ -16,6 +16,8 @@ package wallettemplate;
 
 import javafx.application.Platform;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
+
+import com.bignetcoin.ui.wallet.utils.KeyDerivationTasks;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -31,12 +33,11 @@ import javafx.scene.layout.HBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
-import wallettemplate.utils.KeyDerivationTasks;
 
 import java.time.Duration;
 
+import static com.bignetcoin.ui.wallet.utils.GuiUtils.*;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static wallettemplate.utils.GuiUtils.*;
 
 /**
  * User interface for entering a password on demand, e.g. to send money. Also used when encrypting a wallet. Shows a

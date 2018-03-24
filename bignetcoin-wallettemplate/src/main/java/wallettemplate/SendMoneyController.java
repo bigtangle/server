@@ -14,8 +14,8 @@
 
 package wallettemplate;
 
+import static com.bignetcoin.ui.wallet.utils.GuiUtils.checkGuiThread;
 import static com.google.common.base.Preconditions.checkState;
-import static wallettemplate.utils.GuiUtils.checkGuiThread;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -37,15 +37,15 @@ import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.spongycastle.crypto.params.KeyParameter;
 
+import com.bignetcoin.ui.wallet.utils.GuiUtils;
+import com.bignetcoin.ui.wallet.utils.TextFieldValidator;
+import com.bignetcoin.ui.wallet.utils.WTUtils;
 import com.squareup.okhttp.OkHttpClient;
 
 import javafx.event.ActionEvent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import wallettemplate.utils.GuiUtils;
-import wallettemplate.utils.TextFieldValidator;
-import wallettemplate.utils.WTUtils;
 
 public class SendMoneyController {
     public Button sendBtn;

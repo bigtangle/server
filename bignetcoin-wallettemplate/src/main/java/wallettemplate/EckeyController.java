@@ -8,6 +8,8 @@ import org.bitcoinj.core.ECKey;
 import org.bitcoinj.wallet.DecryptingKeyBag;
 import org.bitcoinj.wallet.DeterministicKeyChain;
 
+import com.bignetcoin.ui.wallet.utils.GuiUtils;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -17,7 +19,6 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.stage.FileChooser;
-import wallettemplate.utils.GuiUtils;
 
 public class EckeyController {
     @FXML

@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-package wallettemplate.utils;
+package com.bignetcoin.ui.wallet.utils;
 
 import com.google.common.base.Throwables;
 import javafx.animation.*;
@@ -31,8 +31,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.function.BiConsumer;
 
+import static com.bignetcoin.ui.wallet.utils.WTUtils.unchecked;
 import static com.google.common.base.Preconditions.checkState;
-import static wallettemplate.utils.WTUtils.unchecked;
 
 public class GuiUtils {
     public static void runAlert(BiConsumer<Stage, AlertWindowController> setup) {

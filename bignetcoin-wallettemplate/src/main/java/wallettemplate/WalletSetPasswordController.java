@@ -14,6 +14,7 @@
 
 package wallettemplate;
 
+import com.bignetcoin.ui.wallet.utils.*;
 import com.google.protobuf.*;
 import javafx.application.*;
 import javafx.event.*;
@@ -24,12 +25,11 @@ import org.bitcoinj.crypto.*;
 import org.bitcoinj.wallet.*;
 import org.slf4j.*;
 import org.spongycastle.crypto.params.*;
-import wallettemplate.utils.*;
+
+import static com.bignetcoin.ui.wallet.utils.GuiUtils.*;
 
 import java.time.*;
 import java.util.concurrent.*;
-
-import static wallettemplate.utils.GuiUtils.*;
 
 public class WalletSetPasswordController {
     private static final Logger log = LoggerFactory.getLogger(WalletSetPasswordController.class);

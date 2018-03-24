@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-package wallettemplate.utils.easing;
+package com.bignetcoin.ui.wallet.utils.easing;
 
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;

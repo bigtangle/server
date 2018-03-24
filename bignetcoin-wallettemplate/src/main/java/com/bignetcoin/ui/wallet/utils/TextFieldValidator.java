@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-package wallettemplate.utils;
+package com.bignetcoin.ui.wallet.utils;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;

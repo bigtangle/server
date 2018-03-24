@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-package wallettemplate.utils.easing;
+package com.bignetcoin.ui.wallet.utils.easing;
 
 /**
  * Defines the three easing modes, ease-in, ease-out and ease-both.
