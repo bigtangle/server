@@ -9,11 +9,18 @@ server:
   remote_auth: 
   remote_limit_api: 5000
   mineraddress:  030d8952f6c079f60cd26eb3ba83cf16a81c51fc8e47b767721fa38b5e20092a75
+
 db:
   hostname: localhost
   dbName: info
   username: root
   password: test1234
+  
+service:
+  milestoneschedule:
+    rate: ${SERVICE_MILESTONE_RATE:500000}
+    retention-time-in-minutes: ${service_HOUSEKEEPING_RETENTION:1440} # 24*60 == 1 Tag
+    active: ${SERVICE_MILESTONE_ACTIVE:true}
 
 ---
 spring:
