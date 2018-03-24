@@ -20,7 +20,7 @@ public class BlockForTest {
     public static Block createNextBlock(Block block, @Nullable Address to, TransactionOutPoint prevOut,
             Sha256Hash prevBranchBlockHash) {
         return block.createNextBlock(to, Block.BLOCK_VERSION_GENESIS, prevOut, block.getTimeSeconds() + 5,
-                keyForTesting.getPubKey(), FIFTY_COINS, Block.BLOCK_HEIGHT_UNKNOWN, prevBranchBlockHash.ZERO_HASH,
+                keyForTesting.getPubKey(), FIFTY_COINS, Block.BLOCK_HEIGHT_UNKNOWN, prevBranchBlockHash,
                 keyForTesting.getPubKeyHash());
     }
 

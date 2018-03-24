@@ -26,18 +26,26 @@ import org.bitcoinj.core.BlockStoreException;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutPoint;
+import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.bitcoinj.store.FullPrunedBlockStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cglib.core.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashMultiset;
+import com.lambdaworks.crypto.SCrypt;
 
 /*
  *  check the valuation of block and trigger an update of openoutputs
  */
 @Service
 public class MilestoneService {
+
+    private static final Logger log = LoggerFactory.getLogger(MilestoneService.class);
+    
 	@Autowired
 	protected FullPrunedBlockStore store;
 
@@ -56,12 +64,17 @@ public class MilestoneService {
 	 * @throws Exception
 	 */
 	public void update() throws Exception {
+        final Stopwatch watch = Stopwatch.createStarted();
+        
 		updateSolidityAndHeight();
 		updateDepth();
 		updateCumulativeWeight();
 		updateRating();
 		updateMilestone();
 		// Optional: Trigger batched tip pair selection here
+		
+        watch.stop();
+        log.info("Milestone update took {} .", watch);
 	}
 
 	/**
@@ -217,14 +230,14 @@ public class MilestoneService {
 	public void updateRating() throws Exception {
 		// Select #tipCount solid tips via MCMC
 		int tipCount = 100;
-		List<BlockEvaluation> selectedTips = new ArrayList<BlockEvaluation>(tipCount);
+		List<EvaluationWrapper> selectedTips = new ArrayList<EvaluationWrapper>(tipCount);
 		Random random = new SecureRandom();
 		for (int i = 0; i < tipCount; i++)
-			selectedTips.add(blockService.getBlockEvaluation(tipsService.blockToApprove(27, random)));
+			selectedTips.add(new EvaluationWrapper(blockService.getBlockEvaluation(tipsService.blockToApprove(27, random))));
 
 		// Begin from the highest solid height tips and go backwards from there
 		long currentHeight = blockService.getMaxSolidHeight();
-		HashMap<Sha256Hash, HashMultiset<Sha256Hash>> currentHeightBlocks = null, nextHeightBlocks = new HashMap<>();
+		HashMap<Sha256Hash, HashSet<EvaluationWrapper>> currentHeightBlocks = null, nextHeightBlocks = new HashMap<>();
 		//TODO replace with PrioQ
 
 		while (currentHeight >= 0) {
@@ -233,16 +246,16 @@ public class MilestoneService {
 
 			for (BlockEvaluation blockEvaluation : blockService.getSolidBlocksOfHeight(currentHeight)) {
 				// Add your own hashes as reference if you are one of the selected tips
-				HashMultiset<Sha256Hash> selectedTipReferences = HashMultiset.create(tipCount);
-				for (BlockEvaluation tip : selectedTips) {
-					if (tip.getBlockhash().equals(blockEvaluation.getBlockhash())) {
-						selectedTipReferences.add(tip.getBlockhash());
+				HashSet<EvaluationWrapper> selectedTipReferences = new HashSet<>(tipCount);
+				for (EvaluationWrapper tip : selectedTips) {
+					if (tip.blockEvaluation.getBlockhash().equals(blockEvaluation.getBlockhash())) {
+						selectedTipReferences.add(tip);
 					}
 				}
 
 				// Add all selected tip references of all approvers
 				for (Sha256Hash approverHash : blockService.getSolidApproverBlockHashes(blockEvaluation.getBlockhash())) {
-					HashMultiset<Sha256Hash> c = nextHeightBlocks.get(approverHash);
+					HashSet<EvaluationWrapper> c = nextHeightBlocks.get(approverHash);
 					if (c != null)
 						selectedTipReferences.addAll(c);
 				}
@@ -537,5 +550,13 @@ public class MilestoneService {
 				Comparator.comparingLong(BlockEvaluation::getHeight).reversed());
 		blocksByDescendingHeight.addAll(solidTips);
 		return blocksByDescendingHeight;
+	}
+	
+	private class EvaluationWrapper {
+		public BlockEvaluation blockEvaluation;
+
+		public EvaluationWrapper(BlockEvaluation blockEvaluation) {
+			this.blockEvaluation = blockEvaluation;
+		}
 	}
 }
