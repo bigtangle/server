@@ -96,7 +96,7 @@ public class TransactionService {
 
     public Sha256Hash getNextBlockToApprove() throws Exception {
         final SecureRandom random = new SecureRandom();
-        return tipsManager.blockToApprove(networkParameters.getGenesisBlock().getHash(), null, 27, 27, random);
+        return tipsManager.blockToApprove(27, random);
     }
 
     public boolean getUTXOSpent(TransactionInput txinput) {

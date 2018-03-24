@@ -71,12 +71,12 @@ public class BlockService {
 		return blocks;
 	}
 	
-	public List<StoredBlock> getApproverBlocks(Sha256Hash blockhash) throws BlockStoreException {
-		return store.getApproverBlocks(blockhash);
+	public List<StoredBlock> getSolidApproverBlocks(Sha256Hash blockhash) throws BlockStoreException {
+		return store.getSolidApproverBlocks(blockhash);
 	}
 
-	public List<Sha256Hash> getApproverBlockHashes(Sha256Hash blockhash) throws BlockStoreException {
-		return store.getApproverBlockHash(blockhash);
+	public List<Sha256Hash> getSolidApproverBlockHashes(Sha256Hash blockhash) throws BlockStoreException {
+		return store.getSolidApproverBlockHashes(blockhash);
 	}
 
 	public long getMaxSolidHeight() throws BlockStoreException {
@@ -180,5 +180,9 @@ public class BlockService {
 	 */
 	public void disconnect(BlockEvaluation blockEvaluation) throws BlockStoreException {
 		blockGraphService.disconnectBlock(blockEvaluation);
+	}
+
+	public List<BlockEvaluation> getSolidBlockEvaluations() throws BlockStoreException {
+		return store.getSolidBlockEvaluations();
 	}
 }

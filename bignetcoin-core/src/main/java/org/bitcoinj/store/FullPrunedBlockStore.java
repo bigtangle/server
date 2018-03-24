@@ -7,10 +7,9 @@ package org.bitcoinj.store;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.bitcoinj.core.BlockEvaluation;
-import org.bitcoinj.core.BlockStore;
-import org.bitcoinj.core.BlockStoreException;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.StoredUndoableBlock;

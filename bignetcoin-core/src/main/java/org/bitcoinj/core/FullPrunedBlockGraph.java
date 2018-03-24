@@ -3,26 +3,11 @@
  *  
  *******************************************************************************/
 
-package org.bitcoinj.store;
+package org.bitcoinj.core;
 
-import org.bitcoinj.core.Block;
-import org.bitcoinj.core.BlockEvaluation;
-import org.bitcoinj.core.BlockStoreException;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.Context;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.StoredBlock;
-import org.bitcoinj.core.StoredUndoableBlock;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.core.TransactionOutputChanges;
-import org.bitcoinj.core.UTXO;
-import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.Script.VerifyFlag;
-import org.bitcoinj.core.BlockStoreException;
+import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.utils.*;
 import org.bitcoinj.wallet.Wallet;
@@ -132,7 +117,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 	protected StoredBlock addToBlockStore(StoredBlock storedPrev, StoredBlock storedPrevBranch, Block block)
 			throws BlockStoreException, VerificationException {
 		StoredBlock newBlock = storedPrev.build(block, storedPrevBranch);
-		blockStore.put(newBlock, new StoredUndoableBlock(newBlock.getHeader().getHash(), block.getTransactions()));
+		blockStore.put(newBlock, new StoredUndoableBlock(newBlock.getHeader().getHash(), block.transactions));
 		return newBlock;
 	}
 
@@ -142,7 +127,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 	}
 
 	@Override
-	public  boolean shouldVerifyTransactions() {
+	protected boolean shouldVerifyTransactions() {
 		return true;
 	}
 
@@ -229,7 +214,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 	public TransactionOutputChanges connectTransactions(long height, Block block)
 			throws VerificationException, BlockStoreException {
 		// TODO checkState(lock.isHeldByCurrentThread());
-		if (block.getTransactions() == null)
+		if (block.transactions == null)
 			throw new RuntimeException("connectTransactions called with Block that didn't have transactions!");
 		if (!params.passesCheckpoint(height, block.getHash()))
 			throw new VerificationException("Block failed checkpoint lockin at " + height);
@@ -244,7 +229,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 			scriptVerificationExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
 		List<Future<VerificationException>> listScriptVerificationResults = new ArrayList<Future<VerificationException>>(
-				block.getTransactions().size());
+				block.transactions.size());
 		try {
 			if (!params.isCheckpoint(height)) {
 				// BIP30 violator blocks are ones that contain a duplicated transaction. They
@@ -253,7 +238,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 				// transactions here. See the
 				// BIP30 document for more details on this:
 				// https://github.com/bitcoin/bips/blob/master/bip-0030.mediawiki
-				for (Transaction tx : block.getTransactions()) {
+				for (Transaction tx : block.transactions) {
 					final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx,
 							getVersionTally());
 					Sha256Hash hash = tx.getHash();
@@ -269,7 +254,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 			}
 			Coin totalFees = Coin.ZERO;
 			Coin coinbaseValue = null;
-			for (final Transaction tx : block.getTransactions()) {
+			for (final Transaction tx : block.transactions) {
 				boolean isCoinBase = tx.isCoinBase();
 				Coin valueIn = Coin.ZERO;
 				Coin valueOut = Coin.ZERO;

@@ -27,7 +27,6 @@ import javax.annotation.Nullable;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockEvaluation;
-import org.bitcoinj.core.BlockStoreException;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.ProtocolException;

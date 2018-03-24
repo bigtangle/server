@@ -47,10 +47,11 @@ public class BlockImporter {
         else
             params = MainNetParams.get();
         
-        BlockStore store;
+        BlockStore store = null;
         if (args[1].equals("MemFull")) {
             Preconditions.checkArgument(args.length == 2);
-            store = new MemoryFullPrunedBlockStore(params, 100);
+            //store = new MemoryFullPrunedBlockStore(params, 100);
+            System.out.println("ERROR: Not implemented");
         } else if (args[1].equals("Mem")) {
             Preconditions.checkArgument(args.length == 2);
             store = new MemoryBlockStore(params);

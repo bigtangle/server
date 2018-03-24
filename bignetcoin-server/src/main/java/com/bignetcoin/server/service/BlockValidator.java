@@ -110,7 +110,7 @@ public class BlockValidator {
 
     public void updateStatus( BlockEvaluation   blockEvaluation) throws Exception {
       //TODO remove from download list  transactionRequester.clearTransactionRequest(transactionViewModel.getHash());
-        if(blockService.getApproverBlocks(blockEvaluation.getBlockhash() ).size() == 0) {
+        if(blockService.getSolidApproverBlocks(blockEvaluation.getBlockhash() ).size() == 0) {
             tipsViewModel.addTipHash(blockEvaluation.getBlockhash());
         }
         Block block = blockService.getBlock(blockEvaluation.getBlockhash());
