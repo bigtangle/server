@@ -12,9 +12,9 @@
  * limitations under the License.
  */
 
-package wallettemplate;
+package com.bignetcoin.ui.wallet;
 
-import static wallettemplate.Main.bitcoin;
+import static com.bignetcoin.ui.wallet.Main.bitcoin;
 
 import java.io.File;
 import java.util.ArrayList;

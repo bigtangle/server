@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-package wallettemplate;
+package com.bignetcoin.ui.wallet;
 
 import javafx.application.Platform;
 import org.bitcoinj.crypto.KeyCrypterScrypt;

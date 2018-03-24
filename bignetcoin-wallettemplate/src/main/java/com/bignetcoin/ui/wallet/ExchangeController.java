@@ -1,4 +1,4 @@
-package wallettemplate;
+package com.bignetcoin.ui.wallet;
 
 import javafx.event.ActionEvent;
 import javafx.scene.control.TextField;

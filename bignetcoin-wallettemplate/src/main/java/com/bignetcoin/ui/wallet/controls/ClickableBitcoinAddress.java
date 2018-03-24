@@ -17,6 +17,7 @@ package com.bignetcoin.ui.wallet.controls;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.uri.BitcoinURI;
 
+import com.bignetcoin.ui.wallet.Main;
 import com.bignetcoin.ui.wallet.utils.GuiUtils;
 
 import de.jensd.fx.fontawesome.AwesomeDude;
@@ -41,7 +42,6 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import net.glxn.qrgen.QRCode;
 import net.glxn.qrgen.image.ImageType;
-import wallettemplate.Main;
 
 import java.awt.*;
 import java.io.ByteArrayInputStream;

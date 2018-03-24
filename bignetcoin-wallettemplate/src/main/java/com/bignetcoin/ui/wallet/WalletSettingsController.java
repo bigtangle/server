@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-package wallettemplate;
+package com.bignetcoin.ui.wallet;
 
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Utils;

@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-package wallettemplate;
+package com.bignetcoin.ui.wallet;
 
 import static com.bignetcoin.ui.wallet.utils.GuiUtils.checkGuiThread;
 import static com.google.common.base.Preconditions.checkState;

@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-package wallettemplate;
+package com.bignetcoin.ui.wallet;
 
 import com.bignetcoin.ui.wallet.utils.*;
 import com.google.protobuf.*;

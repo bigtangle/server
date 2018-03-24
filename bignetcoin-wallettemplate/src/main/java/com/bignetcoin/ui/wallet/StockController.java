@@ -1,4 +1,4 @@
-package wallettemplate;
+package com.bignetcoin.ui.wallet;
 
 import java.nio.ByteBuffer;
 

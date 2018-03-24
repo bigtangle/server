@@ -14,6 +14,7 @@
 
 package com.bignetcoin.ui.wallet.utils;
 
+import com.bignetcoin.ui.wallet.MainController;
 import com.google.common.base.Throwables;
 import javafx.animation.*;
 import javafx.application.Platform;
@@ -25,7 +26,6 @@ import javafx.scene.layout.Pane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import wallettemplate.MainController;
 
 import java.io.IOException;
 import java.net.URL;

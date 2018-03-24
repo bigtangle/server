@@ -1,4 +1,4 @@
-package wallettemplate;
+package com.bignetcoin.ui.wallet;
 
 import javafx.beans.property.SimpleStringProperty;
 
