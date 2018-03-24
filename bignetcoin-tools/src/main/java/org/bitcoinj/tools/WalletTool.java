@@ -47,8 +47,6 @@ import org.bitcoinj.core.AbstractBlockGraph;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.Block;
-import org.bitcoinj.core.BlockGraph;
-import org.bitcoinj.core.CheckpointManager;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.DumpedPrivateKey;
@@ -61,7 +59,6 @@ import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.core.ScriptException;
 import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutput;
@@ -79,13 +76,9 @@ import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.params.TestNet3Params;
- 
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
-import org.bitcoinj.store.SPVBlockStore;
-import org.bitcoinj.uri.BitcoinURI;
-import org.bitcoinj.uri.BitcoinURIParseException;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.DeterministicUpgradeRequiredException;
@@ -111,7 +104,6 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import com.subgraph.orchid.TorClient;
 
@@ -1106,21 +1098,7 @@ public class WalletTool {
             System.out.println("Chain file is missing so resetting the wallet.");
             reset();
         }
-        if (mode == ValidationMode.SPV) {
-            store = new SPVBlockStore(params, chainFileName);
-            chain = new BlockGraph(params, wallet, store);
-            if (reset) {
-                try {
-                    CheckpointManager.checkpoint(params, CheckpointManager.openStream(params), store,
-                            wallet.getEarliestKeyCreationTime());
-                    StoredBlock head = store.getChainHead();
-                    System.out.println("Skipped to checkpoint " + head.getHeight() + " at "
-                            + Utils.dateTimeFormat(head.getHeader().getTimeSeconds() * 1000));
-                } catch (IOException x) {
-                    System.out.println("Could not load checkpoints: " + x.getMessage());
-                }
-            }
-        } 
+     
         // This will ensure the wallet is saved when it changes.
         wallet.autosaveToFile(walletFile, 5, TimeUnit.SECONDS, null);
         if (options.has("tor")) {

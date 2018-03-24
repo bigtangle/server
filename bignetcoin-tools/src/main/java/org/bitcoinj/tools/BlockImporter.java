@@ -45,10 +45,7 @@ public class BlockImporter {
         } else if (args[1].equals("Mem")) {
             Preconditions.checkArgument(args.length == 2);
             store = new MemoryBlockStore(params);
-        } else if (args[1].equals("SPV")) {
-            Preconditions.checkArgument(args.length == 3);
-            store = new SPVBlockStore(params, new File(args[2]));
-        } else {
+             } else {
             System.err.println("Unknown store " + args[1]);
             return;
         }

@@ -18,15 +18,13 @@
 
 package org.bitcoinj.examples;
 
+import java.io.File;
+
+import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
-import org.bitcoinj.core.*;
-import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.params.TestNet3Params;
-import org.bitcoinj.store.SPVBlockStore;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.Wallet;
-
-import java.io.File;
 
 /**
  * The following example shows you how to restore a HD wallet from a previously generated deterministic seed.
@@ -61,14 +59,12 @@ public class RestoreFromSeed {
         }
 
         // Setting up the BlochChain, the BlocksStore and connecting to the network.
-        SPVBlockStore chainStore = new SPVBlockStore(params, chainFile);
-        BlockGraph chain = new BlockGraph(params, chainStore);
-        PeerGroup peers = new PeerGroup(params, chain);
-        peers.addPeerDiscovery(new DnsDiscovery(params));
+ 
+ 
+ 
 
         // Now we need to hook the wallet up to the blockchain and the peers. This registers event listeners that notify our wallet about new transactions.
-        chain.addWallet(wallet);
-        peers.addWallet(wallet);
+ 
 
         DownloadProgressTracker bListener = new DownloadProgressTracker() {
             @Override
@@ -77,16 +73,13 @@ public class RestoreFromSeed {
             }
         };
 
-        // Now we re-download the blockchain. This replays the chain into the wallet. Once this is completed our wallet should know of all its transactions and print the correct balance.
-        peers.start();
-        peers.startBlockChainDownload(bListener);
-
+ 
         bListener.await();
 
         // Print a debug message with the details about the wallet. The correct balance should now be displayed.
         System.out.println(wallet.toString());
 
         // shutting down again
-        peers.stop();
+       
     }
 }
