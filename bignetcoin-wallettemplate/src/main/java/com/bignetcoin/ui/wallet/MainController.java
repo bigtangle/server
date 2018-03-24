@@ -107,6 +107,7 @@ public class MainController {
     @FXML
     public void initialize() {
         try {
+           
             initTableView();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
@@ -114,7 +115,7 @@ public class MainController {
         addressControl.setOpacity(1.0);
     }
 
-    public void initTableView() throws Exception {
+    public void initTable() throws Exception {
         Main.instance.getUtxoData().clear();
         Main.instance.getCoinData().clear();
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
@@ -170,6 +171,13 @@ public class MainController {
                     }
                 }
             }
+        }
+    }
+    public void initTableView() throws Exception {
+        try {
+        initTable();
+        }catch (Exception e) {
+            // TODO: handle exception
         }
         utxoTable.setItems(Main.instance.getUtxoData());
         coinTable.setItems(Main.instance.getCoinData());
