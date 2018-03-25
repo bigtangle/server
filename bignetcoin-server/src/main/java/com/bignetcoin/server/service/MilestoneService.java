@@ -408,11 +408,10 @@ public class MilestoneService {
 		}
 
 		// For candidates that have been eliminated (conflictingOutPoints in blocksToAdd
-		// \
-		// winningBlocks) remove them from blocksToAdd
+		// \ winningBlocks) remove them from blocksToAdd
 		for (Pair<BlockEvaluation, TransactionOutPoint> b : conflictingOutPoints.stream()
 				.filter(b -> blockEvaluationsToAdd.contains(b.getLeft()) && !winningBlocks.contains(b.getLeft())).collect(Collectors.toList())) {
-			blockEvaluationsToAdd.remove(b.getLeft());
+			removeBlockAndApproversFrom(blockEvaluationsToAdd, b.getLeft());
 		}
 	}
 
@@ -465,7 +464,7 @@ public class MilestoneService {
 			if (maxRatingPair != null) {
 				for (Pair<BlockEvaluation, TransactionOutPoint> pair : conflict) {
 					if (!pair.getLeft().equals(maxRatingPair.getLeft())) {
-						removeBlockAndApproversFrom(winningBlocks, pair.getLeft());
+						winningBlocks.remove(pair.getLeft()); 
 					}
 				}
 			}

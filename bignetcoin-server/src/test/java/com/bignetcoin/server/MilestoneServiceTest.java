@@ -141,25 +141,29 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		Block b6 = createAndAddNextBlockCoinbase(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b3.getHash());
 		Block b7 = createAndAddNextBlockCoinbase(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b3.getHash());
 		Block b8 = createAndAddNextBlockWithTransaction(b6, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b7.getHash(), t);
+		Block b8link = createAndAddNextBlockCoinbase(b8, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8.getHash());
 		Block b9 = createAndAddNextBlockCoinbase(b5, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b6.getHash());
-		Block b10 = createAndAddNextBlockCoinbase(b9, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8.getHash());
-		Block b11 = createAndAddNextBlockCoinbase(b9, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8.getHash());
-		Block b12 = createAndAddNextBlockCoinbase(b5, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8.getHash());
-		Block b13 = createAndAddNextBlockCoinbase(b5, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8.getHash());
-		Block b14 = createAndAddNextBlockCoinbase(b5, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8.getHash());
-		Block bOrphan = createAndAddNextBlockCoinbase(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b1.getHash());
+		Block b10 = createAndAddNextBlockCoinbase(b9, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
+		Block b11 = createAndAddNextBlockCoinbase(b9, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
+		Block b12 = createAndAddNextBlockCoinbase(b5, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
+		Block b13 = createAndAddNextBlockCoinbase(b5, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
+		Block b14 = createAndAddNextBlockCoinbase(b5, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
+		Block bOrphan1 = createAndAddNextBlockCoinbase(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b1.getHash());
+		Block bOrphan5 = createAndAddNextBlockCoinbase(b5, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b5.getHash());
 		milestoneService.update();
 		assertTrue(blockService.getBlockEvaluation(b5.getHash()).isMilestone());
 		assertTrue(blockService.getBlockEvaluation(b6.getHash()).isMilestone());
 		assertTrue(blockService.getBlockEvaluation(b7.getHash()).isMilestone());
 		assertFalse(blockService.getBlockEvaluation(b8.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b8link.getHash()).isMilestone());
 		assertFalse(blockService.getBlockEvaluation(b9.getHash()).isMilestone());
 		assertFalse(blockService.getBlockEvaluation(b10.getHash()).isMilestone());
 		assertFalse(blockService.getBlockEvaluation(b11.getHash()).isMilestone());
 		assertFalse(blockService.getBlockEvaluation(b12.getHash()).isMilestone());
 		assertFalse(blockService.getBlockEvaluation(b13.getHash()).isMilestone());
 		assertFalse(blockService.getBlockEvaluation(b14.getHash()).isMilestone());
-		assertFalse(blockService.getBlockEvaluation(bOrphan.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(bOrphan1.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(bOrphan5.getHash()).isMilestone());
 	}
 
 	@Test

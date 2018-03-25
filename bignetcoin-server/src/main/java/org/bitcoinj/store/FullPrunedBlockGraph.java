@@ -547,7 +547,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 					}
 				}
 
-				// Remove tx outputs from output db and disconnect spending txs
+				// Remove tx outputs from output db and disconnect spending blocks
 				for (TransactionOutput txout : tx.getOutputs()) {
 					if (blockStore.getTransactionOutput(tx.getHash(), txout.getIndex()).isSpent()) {
 						disconnectBlock(blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()));
