@@ -394,15 +394,16 @@ public class MilestoneService {
 		List<Block> blocksToAdd = blockService.getBlocks(blockEvaluationsToAdd.stream().map(e -> e.getBlockhash()).collect(Collectors.toList()));
 
 		//TODO validate dynamic validity too and if not, try to reverse until no conflicts
-		// Find all conflicts between milestone and candidates themselves
+		
+		// Find all conflicts between milestone and candidates 
 		findMilestoneCandidateConflicts(blocksToAdd, conflictingOutPoints, conflictingMilestoneBlocks);
 		findCandidateCandidateConflicts(blocksToAdd, conflictingOutPoints);
 
 		// Resolve all conflicts by grouping by UTXO ordered by descending rating
 		HashSet<BlockEvaluation> winningBlocks = resolveConflictsByDescendingRating(conflictingOutPoints);
 
-		// For milestone blocks that have been eliminated (conflictingMilestone \
-		// winningBlocks) call disconnect procedure
+		// TODO fix this, think through all cases again, this is definitely broken...
+		// For milestone blocks that have been eliminated call disconnect procedure
 		for (BlockEvaluation b : conflictingMilestoneBlocks.stream().filter(b -> !winningBlocks.contains(b)).collect(Collectors.toList())) {
 			blockService.disconnect(b);
 		}
@@ -464,7 +465,7 @@ public class MilestoneService {
 			if (maxRatingPair != null) {
 				for (Pair<BlockEvaluation, TransactionOutPoint> pair : conflict) {
 					if (!pair.getLeft().equals(maxRatingPair.getLeft())) {
-						winningBlocks.remove(pair.getLeft()); 
+						winningBlocks.remove(pair.getLeft()); //TODO we must also remove all approving conflict blocks...
 					}
 				}
 			}

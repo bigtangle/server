@@ -214,6 +214,12 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		assertFalse(blockService.getBlockEvaluation(b8weight3.getHash()).isMilestone());
 		assertFalse(blockService.getBlockEvaluation(b8weight4.getHash()).isMilestone());
 	}
+	
+	//TODO test first four update methods in one
+	//TODO test remove blocks no longer in milestone
+	//TODO test blocks without existing UTXO should not be added
+	//TODO test dynamically invalid blocks
+	//TODO test pruned conflicts should be handled correctly in all cases
 
 	@Test
 	public void testLinearTangle() throws Exception {
