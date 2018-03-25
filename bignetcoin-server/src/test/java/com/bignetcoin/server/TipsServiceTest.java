@@ -30,12 +30,16 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.bignetcoin.server.service.BlockService;
+import com.bignetcoin.server.service.MilestoneService;
 import com.bignetcoin.server.service.TipsService;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TipsServiceTest extends AbstractIntegrationTest {
     private static final Logger log = LoggerFactory.getLogger(TipsServiceTest.class);
+    
+	@Autowired
+	private MilestoneService milestoneService;
     
     @Test
     public void testBlockEvaluationDb() throws Exception {
@@ -85,6 +89,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
            log.debug("create block, hash : " + rollingBlock.getHashAsString());
             blocks.add(rollingBlock);
         }
+        milestoneService.update();
         return blocks;
     }
 
@@ -116,6 +121,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             i++;
 
         }
+        //milestoneService.update();
         return blocks;
     }
 

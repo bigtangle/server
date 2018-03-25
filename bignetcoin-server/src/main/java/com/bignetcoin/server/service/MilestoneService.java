@@ -239,7 +239,7 @@ public class MilestoneService {
 	 */
 	public void updateRating() throws Exception {
 		// Select #tipCount solid tips via MCMC
-		int tipCount = 100;
+		final int tipCount = 100;
 		List<EvaluationWrapper> selectedTips = new ArrayList<EvaluationWrapper>(tipCount);
 		Random random = new SecureRandom();
 		for (int i = 0; i < tipCount; i++)

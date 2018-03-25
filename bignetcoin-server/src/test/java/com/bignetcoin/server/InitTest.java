@@ -95,13 +95,6 @@ public class InitTest extends AbstractIntegrationTest {
         ECKey outKey = new ECKey();
         int height = 1;
 
-        // Add genesis block
-        blockgraph.add(networkParameters.getGenesisBlock());
-        BlockEvaluation genesisEvaluation = blockService
-                .getBlockEvaluation(networkParameters.getGenesisBlock().getHash());
-        blockService.updateMilestone(genesisEvaluation, true);
-        blockService.updateSolid(genesisEvaluation, true);
-
         // Build some blocks on genesis block to create a spendable output
         Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
                 Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,

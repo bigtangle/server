@@ -22,10 +22,14 @@ import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PrunedException;
 import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutPoint;
+import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.VerificationException;
+import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.WalletTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -61,20 +65,16 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		return block;
 	}
 
-	private Block createAndAddNextBlock(Block b1, long bVersion, byte[] pubKey, Sha256Hash b2, TransactionOutPoint prevOut) throws VerificationException, PrunedException {
-		Block block = BlockForTest.createNextBlock(b1, new Address(PARAMS, outKey.getPubKeyHash()), prevOut, b2);
+	private Block createAndAddNextBlockWithTransaction(Block b1, long bVersion, byte[] pubKey, Sha256Hash b2, Transaction prevOut) throws VerificationException, PrunedException {
+		Block block = BlockForTest.createNextBlockWithCoinbase(b1, bVersion, pubKey, 0, b2);
+		block.addTransaction(prevOut);
+		block.solve();
 		this.blockgraph.add(block);
 		log.debug("created block:" + block.getHashAsString());
 		return block;
 	}
 
 	public List<Block> createLinearTangle1() throws Exception {
-
-		blockgraph.add(PARAMS.getGenesisBlock());
-		BlockEvaluation genesisEvaluation = blockService.getBlockEvaluation(PARAMS.getGenesisBlock().getHash());
-		blockService.updateMilestone(genesisEvaluation, true);
-		blockService.updateSolid(genesisEvaluation, true);
-		// TODO connectTransactions of genesisblock too
 
 		Block b0 = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0,
 				PARAMS.getGenesisBlock().getHash());
@@ -124,34 +124,42 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 //		keys.add(outKey);
 //        Wallet wallet = Wallet.fromKeys(PARAMS, keys);
 //        wallet.setServerURL(CONTEXT_ROOT);
-//
 //        Coin amount = Coin.parseCoin(amountEdit.getText(), NetworkParameters.BIGNETCOIN_TOKENID);
 //        SendRequest request = SendRequest.to(destination, amount);
 //        wallet.completeTx(request);
 
-//		Block b5 = createAndAddNextBlock(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b3.getHash());
-		Block b5 = createAndAddNextBlockCoinbase(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b3.getHash());
+        Transaction transaction = b1.getTransactions().get(0);
+        TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, transaction.getHash());
+        byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
+        Coin amount = Coin.valueOf(100000, NetworkParameters.BIGNETCOIN_TOKENID);
+
+        Transaction t = new Transaction(PARAMS);
+        t.addOutput(new TransactionOutput(PARAMS, t, amount, outKey));
+        t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
+
+		Block b5 = createAndAddNextBlockWithTransaction(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b3.getHash(), t);
 		Block b6 = createAndAddNextBlockCoinbase(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b3.getHash());
 		Block b7 = createAndAddNextBlockCoinbase(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b3.getHash());
-//		Block b8 = createAndAddNextBlock(b6, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b7.getHash());
-		Block b8 = createAndAddNextBlockCoinbase(b6, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b7.getHash());
+		Block b8 = createAndAddNextBlockWithTransaction(b6, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b7.getHash(), t);
 		Block b9 = createAndAddNextBlockCoinbase(b5, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b6.getHash());
 		Block b10 = createAndAddNextBlockCoinbase(b9, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8.getHash());
 		Block b11 = createAndAddNextBlockCoinbase(b9, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8.getHash());
 		Block b12 = createAndAddNextBlockCoinbase(b5, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8.getHash());
 		Block b13 = createAndAddNextBlockCoinbase(b5, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8.getHash());
 		Block b14 = createAndAddNextBlockCoinbase(b5, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8.getHash());
+		Block bOrphan = createAndAddNextBlockCoinbase(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b1.getHash());
 		milestoneService.update();
 		assertTrue(blockService.getBlockEvaluation(b5.getHash()).isMilestone());
 		assertTrue(blockService.getBlockEvaluation(b6.getHash()).isMilestone());
 		assertTrue(blockService.getBlockEvaluation(b7.getHash()).isMilestone());
-		assertTrue(blockService.getBlockEvaluation(b8.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b8.getHash()).isMilestone());
 		assertFalse(blockService.getBlockEvaluation(b9.getHash()).isMilestone());
 		assertFalse(blockService.getBlockEvaluation(b10.getHash()).isMilestone());
 		assertFalse(blockService.getBlockEvaluation(b11.getHash()).isMilestone());
 		assertFalse(blockService.getBlockEvaluation(b12.getHash()).isMilestone());
 		assertFalse(blockService.getBlockEvaluation(b13.getHash()).isMilestone());
 		assertFalse(blockService.getBlockEvaluation(b14.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(bOrphan.getHash()).isMilestone());
 	}
 
 	@Test
