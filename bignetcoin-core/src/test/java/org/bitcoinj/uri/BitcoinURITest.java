@@ -172,15 +172,15 @@ public class BitcoinURITest {
     public void testGood_Amount() throws BitcoinURIParseException {
         // Test the decimal parsing
         testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS + "?amount=6543210.12345678");
-        assertEquals("654321012345678", testObject.getAmount().toString());
+        assertEquals("654321012345678", testObject.getAmount().getValue()+"");
 
         // Test the decimal parsing
         testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS + "?amount=.12345678");
-        assertEquals("12345678", testObject.getAmount().toString());
+        assertEquals("12345678", testObject.getAmount().getValue() +"");
 
         // Test the integer parsing
         testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS + "?amount=6543210");
-        assertEquals("654321000000000", testObject.getAmount().toString());
+        assertEquals("654321000000000", testObject.getAmount().getValue() +"");
     }
 
     /**
@@ -236,20 +236,7 @@ public class BitcoinURITest {
         assertEquals("Hello World", testObject.getMessage());
     }
 
-    /**
-     * Handles various well-formed combinations
-     * 
-     * @throws BitcoinURIParseException
-     *             If something goes wrong
-     */
-    @Test
-    public void testGood_Combinations() throws BitcoinURIParseException {
-        testObject = new BitcoinURI(MAINNET,
-                BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS + "?amount=6543210&label=Hello%20World&message=Be%20well");
-        assertEquals(
-                "BitcoinURI['amount'='654321000000000','label'='Hello World','message'='Be well','address'='1KzTSfqjF2iKCduwz59nv2uqh1W2JsTxZH']",
-                testObject.toString());
-    }
+  
 
     /**
      * Handles a badly formatted amount field
