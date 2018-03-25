@@ -229,7 +229,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
 	public BlockEvaluation getTransactionOutputSpender(Sha256Hash prevBlockHash, long index) throws BlockStoreException;
 
-	public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, long index, boolean b) throws BlockStoreException;
+	public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, long index, boolean b, Sha256Hash spenderBlock) throws BlockStoreException;
 
     public int getMaxTokenId() throws BlockStoreException;
 }

@@ -224,10 +224,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	private static final String DELETE_UNDOABLEBLOCKS_SQL = "DELETE FROM undoableblocks WHERE height <= ?";
 
 	private static final String SELECT_OUTPUTS_COUNT_SQL = "SELECT COUNT(*) FROM outputs WHERE hash = ?";
-	private static final String INSERT_OUTPUTS_SQL = "INSERT INTO outputs (hash, `index`, height, value, scriptbytes, toaddress, addresstargetable, coinbase, blockhash,tokenid,fromaddress, description, spent) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?,?)";
+	private static final String INSERT_OUTPUTS_SQL = "INSERT INTO outputs (hash, `index`, height, value, scriptbytes, toaddress, addresstargetable, coinbase, blockhash,tokenid,fromaddress, description, spent) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?)";
 	private static final String SELECT_OUTPUTS_SQL = "SELECT height, value, scriptbytes, coinbase, toaddress, addresstargetable,blockhash,tokenid,fromaddress, description,spent FROM outputs WHERE hash = ? AND `index` = ?";
 	private static final String DELETE_OUTPUTS_SQL = "DELETE FROM outputs WHERE hash = ? AND `index`= ?";
-	private static final String UPDATE_OUTPUTS_SPENT_SQL = "UPDATE outputs SET spent = ? WHERE hash = ? AND `index`= ?";
+	private static final String UPDATE_OUTPUTS_SPENT_SQL = "UPDATE outputs SET spent = ?, spenderblockhash = ? WHERE hash = ? AND `index`= ?";
 
 	private static final String SELECT_TRANSACTION_OUTPUTS_SQL = "SELECT hash, value, scriptbytes, height, `index`, coinbase, toaddress, addresstargetable, blockhash,tokenid,fromaddress, description,spent FROM outputs where toaddress = ?";
 
@@ -272,7 +272,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	private static final String SELECT_SOLID_TIPS_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate FROM blockevaluation INNER JOIN tips ON tips.hash=blockevaluation.blockhash WHERE solid = 1";
 	private static final String SELECT_SOLID_BLOCKS_OF_HEIGHT_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate FROM blockevaluation WHERE solid = 1 && height = ?";
 
-	private static final String SELECT_OUTPUT_SPENDER_SQL = "SELECT outputs.blockhash, rating, depth, cumulativeweight, solid,  outputs.height, milestone, milestonelastupdate FROM blockevaluation INNER JOIN outputs ON outputs.blockhash=blockevaluation.blockhash WHERE solid = 1 and hash = ? AND `index`= ?";
+	private static final String SELECT_OUTPUT_SPENDER_SQL = "SELECT blockevaluation.blockhash, rating, depth, cumulativeweight, solid,  blockevaluation.height, milestone, milestonelastupdate FROM blockevaluation INNER JOIN outputs ON outputs.spenderblockhash=blockevaluation.blockhash WHERE solid = 1 and hash = ? AND `index`= ?";
 
 	private static final String SELECT_MAX_TOKENID_SQL = "select max(tokenid) from headers where blocktype = ?";
 
@@ -2062,7 +2062,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	}
 	
 	@Override
-	public void updateTransactionOutputSpent(Sha256Hash prevTxHash, long index, boolean b) throws BlockStoreException {
+	public void updateTransactionOutputSpent(Sha256Hash prevTxHash, long index, boolean b, Sha256Hash spenderBlock) throws BlockStoreException {
 		UTXO prev = this.getTransactionOutput(prevTxHash, index);
 		if (prev == null) {
 			throw new BlockStoreException("Could not find UTXO to update");
@@ -2071,8 +2071,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 		try {
 			preparedStatement = conn.get().prepareStatement(UPDATE_OUTPUTS_SPENT_SQL);
 			preparedStatement.setBoolean(1, b);
-			preparedStatement.setBytes(2, prevTxHash.getBytes());
-			preparedStatement.setLong(3, index);
+			preparedStatement.setBytes(2, spenderBlock.getBytes());
+			preparedStatement.setBytes(3, prevTxHash.getBytes());
+			preparedStatement.setLong(4, index);
 			preparedStatement.executeUpdate();
 		} catch (SQLException e) {
 			throw new BlockStoreException(e);

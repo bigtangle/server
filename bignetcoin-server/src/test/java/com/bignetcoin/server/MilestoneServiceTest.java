@@ -118,15 +118,6 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		assertTrue(blockService.getBlockEvaluation(b1.getHash()).isMilestone());
 		assertTrue(blockService.getBlockEvaluation(b2.getHash()).isMilestone());
 		assertTrue(blockService.getBlockEvaluation(b3.getHash()).isMilestone());
-		
-		//TODO test create conflicting txs
-//		ArrayList<ECKey> keys = new ArrayList<ECKey>();
-//		keys.add(outKey);
-//        Wallet wallet = Wallet.fromKeys(PARAMS, keys);
-//        wallet.setServerURL(CONTEXT_ROOT);
-//        Coin amount = Coin.parseCoin(amountEdit.getText(), NetworkParameters.BIGNETCOIN_TOKENID);
-//        SendRequest request = SendRequest.to(destination, amount);
-//        wallet.completeTx(request);
 
         Transaction transaction = b1.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, transaction.getHash());
@@ -137,21 +128,27 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         t.addOutput(new TransactionOutput(PARAMS, t, amount, outKey));
         t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
 
+		// Create blocks with a conflict
 		Block b5 = createAndAddNextBlockWithTransaction(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b3.getHash(), t);
+		Block b5link = createAndAddNextBlockCoinbase(b5, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b5.getHash());
 		Block b6 = createAndAddNextBlockCoinbase(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b3.getHash());
 		Block b7 = createAndAddNextBlockCoinbase(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b3.getHash());
 		Block b8 = createAndAddNextBlockWithTransaction(b6, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b7.getHash(), t);
 		Block b8link = createAndAddNextBlockCoinbase(b8, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8.getHash());
-		Block b9 = createAndAddNextBlockCoinbase(b5, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b6.getHash());
+		Block b9 = createAndAddNextBlockCoinbase(b5link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b6.getHash());
 		Block b10 = createAndAddNextBlockCoinbase(b9, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
 		Block b11 = createAndAddNextBlockCoinbase(b9, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
-		Block b12 = createAndAddNextBlockCoinbase(b5, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
-		Block b13 = createAndAddNextBlockCoinbase(b5, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
-		Block b14 = createAndAddNextBlockCoinbase(b5, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
+		Block b12 = createAndAddNextBlockCoinbase(b5link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
+		Block b13 = createAndAddNextBlockCoinbase(b5link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
+		Block b14 = createAndAddNextBlockCoinbase(b5link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
 		Block bOrphan1 = createAndAddNextBlockCoinbase(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b1.getHash());
-		Block bOrphan5 = createAndAddNextBlockCoinbase(b5, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b5.getHash());
+		Block bOrphan5 = createAndAddNextBlockCoinbase(b5link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b5link.getHash());
 		milestoneService.update();
+		assertTrue(blockService.getBlockEvaluation(b1.getHash()).isMilestone());
+		assertTrue(blockService.getBlockEvaluation(b2.getHash()).isMilestone());
+		assertTrue(blockService.getBlockEvaluation(b3.getHash()).isMilestone());
 		assertTrue(blockService.getBlockEvaluation(b5.getHash()).isMilestone());
+		assertTrue(blockService.getBlockEvaluation(b5link.getHash()).isMilestone());
 		assertTrue(blockService.getBlockEvaluation(b6.getHash()).isMilestone());
 		assertTrue(blockService.getBlockEvaluation(b7.getHash()).isMilestone());
 		assertFalse(blockService.getBlockEvaluation(b8.getHash()).isMilestone());
@@ -164,6 +161,58 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		assertFalse(blockService.getBlockEvaluation(b14.getHash()).isMilestone());
 		assertFalse(blockService.getBlockEvaluation(bOrphan1.getHash()).isMilestone());
 		assertFalse(blockService.getBlockEvaluation(bOrphan5.getHash()).isMilestone());
+
+		// Now make block 8 heavier and higher rated than b5 to make it disconnect block 5 and connect block 8 instead
+		Block b8weight1 = createAndAddNextBlockCoinbase(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
+		Block b8weight2 = createAndAddNextBlockCoinbase(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
+		Block b8weight3 = createAndAddNextBlockCoinbase(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
+		Block b8weight4 = createAndAddNextBlockCoinbase(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
+		milestoneService.update();
+		assertTrue(blockService.getBlockEvaluation(b1.getHash()).isMilestone());
+		assertTrue(blockService.getBlockEvaluation(b2.getHash()).isMilestone());
+		assertTrue(blockService.getBlockEvaluation(b3.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b5.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b5link.getHash()).isMilestone());
+		assertTrue(blockService.getBlockEvaluation(b6.getHash()).isMilestone());
+		assertTrue(blockService.getBlockEvaluation(b7.getHash()).isMilestone());
+		assertTrue(blockService.getBlockEvaluation(b8.getHash()).isMilestone());
+		assertTrue(blockService.getBlockEvaluation(b8link.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b9.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b10.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b11.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b12.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b13.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b14.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(bOrphan1.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(bOrphan5.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b8weight1.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b8weight2.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b8weight3.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b8weight4.getHash()).isMilestone());
+		
+		// Lastly, there will be a milestone-candidate conflict in the last update that should not change anything
+		milestoneService.update();
+		assertTrue(blockService.getBlockEvaluation(b1.getHash()).isMilestone());
+		assertTrue(blockService.getBlockEvaluation(b2.getHash()).isMilestone());
+		assertTrue(blockService.getBlockEvaluation(b3.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b5.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b5link.getHash()).isMilestone());
+		assertTrue(blockService.getBlockEvaluation(b6.getHash()).isMilestone());
+		assertTrue(blockService.getBlockEvaluation(b7.getHash()).isMilestone());
+		assertTrue(blockService.getBlockEvaluation(b8.getHash()).isMilestone());
+		assertTrue(blockService.getBlockEvaluation(b8link.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b9.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b10.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b11.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b12.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b13.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b14.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(bOrphan1.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(bOrphan5.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b8weight1.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b8weight2.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b8weight3.getHash()).isMilestone());
+		assertFalse(blockService.getBlockEvaluation(b8weight4.getHash()).isMilestone());
 	}
 
 	@Test

@@ -537,7 +537,7 @@ public abstract class MemoryFullPrunedBlockStore implements FullPrunedBlockStore
 	}
 
 	@Override
-	public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, long index, boolean b)
+	public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, long index, boolean b, Sha256Hash a)
 			throws BlockStoreException {
 		// TODO Auto-generated method stub
 		

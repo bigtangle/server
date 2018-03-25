@@ -308,7 +308,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 						}
 
 						prevOutScripts.add(prevOut.getScript());
-						blockStore.updateTransactionOutputSpent(prevOut.getHash(), prevOut.getIndex(), true);
+						blockStore.updateTransactionOutputSpent(prevOut.getHash(), prevOut.getIndex(), true, block.getHash());
 						txOutsSpent.add(prevOut);
 					}
 				}
@@ -543,7 +543,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 				// Mark all outputs used by tx input as unspent
 				for (TransactionInput txin : tx.getInputs()) {
 					if (!txin.isCoinBase()) {
-						blockStore.updateTransactionOutputSpent(block.getHash(), txin.getOutpoint().getIndex(), false);						
+						blockStore.updateTransactionOutputSpent(txin.getOutpoint().getHash(), txin.getOutpoint().getIndex(), false, Sha256Hash.ZERO_HASH);						
 					}
 				}
 
