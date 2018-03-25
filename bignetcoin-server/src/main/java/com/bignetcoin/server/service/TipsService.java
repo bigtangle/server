@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.BlockStoreException;
 import org.bitcoinj.core.NetworkParameters;
@@ -40,6 +41,15 @@ public class TipsService {
 	private BlockValidator blockValidator;
 	@Autowired
 	protected NetworkParameters networkParameters;
+	
+	public Pair<Sha256Hash, Sha256Hash> blockPairToApprove(final int iterations, Random seed) throws Exception {
+		Sha256Hash b1 = blockToApprove(iterations, seed);
+		Sha256Hash b2 = blockToApprove(iterations, seed);
+		
+		//TODO validate dynamic validity here and if not, try to reverse until no conflicts
+		
+		return Pair.of(b1, b2);
+	}
 
 	public Sha256Hash blockToApprove(final int iterations, Random seed) throws Exception {
 		List<BlockEvaluation> blockEvaluations = blockService.getSolidBlockEvaluations();

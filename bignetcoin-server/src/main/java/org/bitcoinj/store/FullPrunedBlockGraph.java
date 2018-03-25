@@ -229,6 +229,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 	public TransactionOutputChanges connectTransactions(long height, Block block)
 			throws VerificationException, BlockStoreException {
 		// TODO checkState(lock.isHeldByCurrentThread());
+		// TODO do verification sanity checks here and perform db changes
 		if (block.getTransactions() == null)
 			throw new RuntimeException("connectTransactions called with Block that didn't have transactions!");
 		if (!params.passesCheckpoint(height, block.getHash()))

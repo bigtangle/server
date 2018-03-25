@@ -393,6 +393,7 @@ public class MilestoneService {
 		HashSet<BlockEvaluation> conflictingMilestoneBlocks = new HashSet<BlockEvaluation>();
 		List<Block> blocksToAdd = blockService.getBlocks(blockEvaluationsToAdd.stream().map(e -> e.getBlockhash()).collect(Collectors.toList()));
 
+		//TODO validate dynamic validity too and if not, try to reverse until no conflicts
 		// Find all conflicts between milestone and candidates themselves
 		findMilestoneCandidateConflicts(blocksToAdd, conflictingOutPoints, conflictingMilestoneBlocks);
 		findCandidateCandidateConflicts(blocksToAdd, conflictingOutPoints);
