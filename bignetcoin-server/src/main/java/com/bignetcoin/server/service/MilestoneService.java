@@ -483,9 +483,9 @@ public class MilestoneService {
 	 */
 	private void findCandidateCandidateConflicts(List<Block> blocksToAdd, HashSet<Pair<BlockEvaluation, TransactionOutPoint>> conflictingOutPoints)
 			throws BlockStoreException {
-		// Create pairs of blocks and used utxos from blocksToAdd
+		// Create pairs of blocks and used non-coinbase utxos from blocksToAdd
 		Stream<Pair<Block, TransactionOutPoint>> outPoints = blocksToAdd.stream()
-				.flatMap(b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream()).map(in -> Pair.of(b, in.getOutpoint())));
+				.flatMap(b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream()).filter(in -> !in.isCoinBase()).map(in -> Pair.of(b, in.getOutpoint())));
 
 		// Filter to only contain utxos that are spent more than once in the new
 		// milestone candidates
@@ -508,44 +508,44 @@ public class MilestoneService {
 	 */
 	private void findMilestoneCandidateConflicts(List<Block> blocksToAdd, HashSet<Pair<BlockEvaluation, TransactionOutPoint>> conflictingOutPoints,
 			HashSet<BlockEvaluation> conflictingMilestoneBlocks) throws BlockStoreException {
-		// Create pairs of blocks and used utxos from blocksToAdd
+		// Create pairs of blocks and used non-coinbase utxos from blocksToAdd
 		Stream<Pair<Block, TransactionInput>> outPoints = blocksToAdd.stream()
-				.flatMap(b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream()).map(in -> Pair.of(b, in)));
+				.flatMap(b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream()).filter(in -> !in.isCoinBase()).map(in -> Pair.of(b, in)));
 
 		// Filter to only contain utxos that were already spent by the milestone
 		List<Pair<Block, TransactionInput>> candidatesConflictingWithMilestone = outPoints
 				.filter(pair -> transactionService.getUTXOSpent(pair.getRight()) && transactionService.getUTXOSpender(pair.getRight().getOutpoint()) != null)
 				.collect(Collectors.toList());
 
-		// Add the conflicting candidates, milestone blocks and their milestone
-		// approvers
+		// Add the conflicting candidates and milestone blocks
 		for (Pair<Block, TransactionInput> pair : candidatesConflictingWithMilestone) {
 			BlockEvaluation milestoneEvaluation = transactionService.getUTXOSpender(pair.getRight().getOutpoint());
 			BlockEvaluation toAddEvaluation = blockService.getBlockEvaluation(pair.getLeft().getHash());
 			conflictingOutPoints.add(Pair.of(toAddEvaluation, pair.getRight().getOutpoint()));
 			conflictingOutPoints.add(Pair.of(milestoneEvaluation, pair.getRight().getOutpoint()));
-			addMilestoneApprovers(conflictingMilestoneBlocks, milestoneEvaluation);
+			conflictingMilestoneBlocks.add(milestoneEvaluation);
+			//addMilestoneApprovers(conflictingMilestoneBlocks, milestoneEvaluation);
 		}
 	}
 
-	/**
-	 * Recursively adds the specified block and its approvers to the collection if
-	 * the blocks are in the current milestone.
-	 * 
-	 * @param evaluations
-	 * @param milestoneEvaluation
-	 * @throws BlockStoreException
-	 */
-	private void addMilestoneApprovers(HashSet<BlockEvaluation> evaluations, BlockEvaluation milestoneEvaluation) throws BlockStoreException {
-		if (!milestoneEvaluation.isMilestone())
-			return;
-
-		// Add this block and add all of its milestone approvers
-		evaluations.add(milestoneEvaluation);
-		for (Sha256Hash approverHash : blockService.getSolidApproverBlockHashes(milestoneEvaluation.getBlockhash())) {
-			evaluations.add(blockService.getBlockEvaluation(approverHash));
-		}
-	}
+//	/**
+//	 * Recursively adds the specified block and its approvers to the collection if
+//	 * the blocks are in the current milestone.
+//	 * 
+//	 * @param evaluations
+//	 * @param milestoneEvaluation
+//	 * @throws BlockStoreException
+//	 */
+//	private void addMilestoneApprovers(HashSet<BlockEvaluation> evaluations, BlockEvaluation milestoneEvaluation) throws BlockStoreException {
+//		if (!milestoneEvaluation.isMilestone())
+//			return;
+//
+//		// Add this block and add all of its milestone approvers
+//		evaluations.add(milestoneEvaluation);
+//		for (Sha256Hash approverHash : blockService.getSolidApproverBlockHashes(milestoneEvaluation.getBlockhash())) {
+//			evaluations.add(blockService.getBlockEvaluation(approverHash));
+//		}
+//	}
 
 	/**
 	 * Recursively removes the specified block and its approvers from the collection
