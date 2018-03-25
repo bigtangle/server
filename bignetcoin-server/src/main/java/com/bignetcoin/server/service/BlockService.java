@@ -167,6 +167,8 @@ public class BlockService {
 	 * @throws BlockStoreException
 	 */
 	public void connect(BlockEvaluation blockEvaluation ) throws BlockStoreException {
+		
+		//TODO validate static validity here and repropagate
 		blockGraphService.connectBlock(blockEvaluation);
 	}
 	
