@@ -536,7 +536,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 	 */
 	@Override
 	public void disconnectTransactions(Block block) throws BlockStoreException {
-		checkState(lock.isHeldByCurrentThread());
+		//CUI checkState(lock.isHeldByCurrentThread());
 		//blockStore.beginDatabaseBatchWrite();
 		try {
 			for (Transaction tx : block.getTransactions()) {

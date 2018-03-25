@@ -272,7 +272,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	private static final String SELECT_SOLID_TIPS_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate FROM blockevaluation INNER JOIN tips ON tips.hash=blockevaluation.blockhash WHERE solid = 1";
 	private static final String SELECT_SOLID_BLOCKS_OF_HEIGHT_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate FROM blockevaluation WHERE solid = 1 && height = ?";
 
-	private static final String SELECT_OUTPUT_SPENDER_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate FROM blockevaluation INNER JOIN outputs ON outputs.blockhash=blockevaluation.blockhash WHERE solid = 1 and hash = ? AND `index`= ?";
+	private static final String SELECT_OUTPUT_SPENDER_SQL = "SELECT outputs.blockhash, rating, depth, cumulativeweight, solid,  outputs.height, milestone, milestonelastupdate FROM blockevaluation INNER JOIN outputs ON outputs.blockhash=blockevaluation.blockhash WHERE solid = 1 and hash = ? AND `index`= ?";
 
 	private static final String SELECT_MAX_TOKENID_SQL = "select max(tokenid) from headers where blocktype = ?";
 
