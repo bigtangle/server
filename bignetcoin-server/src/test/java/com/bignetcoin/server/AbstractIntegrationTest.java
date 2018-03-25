@@ -4,6 +4,7 @@
  *******************************************************************************/
 package com.bignetcoin.server;
 
+import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.BlockStoreException;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.UnitTestParams;
@@ -29,6 +30,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import com.bignetcoin.server.config.GlobalConfigurationProperties;
+import com.bignetcoin.server.service.BlockService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -73,6 +75,9 @@ public abstract class AbstractIntegrationTest   {
     
     @Autowired
     protected FullPrunedBlockStore store;
+
+    @Autowired
+    private BlockService blockService;
     
     public FullPrunedBlockStore createStore(NetworkParameters params, int blockCount) throws BlockStoreException {
         try {
@@ -105,6 +110,14 @@ public abstract class AbstractIntegrationTest   {
         store = createStore(networkParameters, UNDOABLE_BLOCKS_STORED);
 
         blockgraph = new FullPrunedBlockGraph(networkParameters, store);
+
+        // Add genesis block
+        blockgraph.add(networkParameters.getGenesisBlock());
+        BlockEvaluation genesisEvaluation = blockService
+                .getBlockEvaluation(networkParameters.getGenesisBlock().getHash());
+        blockService.updateMilestone(genesisEvaluation, true);
+        blockService.updateSolid(genesisEvaluation, true);
+		// TODO connectTransactions of genesisblock too
     }
     
     @Autowired

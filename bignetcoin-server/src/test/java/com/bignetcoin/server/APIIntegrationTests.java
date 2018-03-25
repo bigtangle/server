@@ -139,8 +139,6 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             UTXO utxo = MapToBeanMapperUtil.parseUTXO(map);
             outputs.add(utxo);
         }
-        
-        System.out.println(outputs.get(0).getValue());
     }
 
     public ECKey createWalletAndAddCoin() throws Exception, PrunedException {
@@ -171,6 +169,9 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         
         System.out.println(wallet.getBalance(Wallet.BalanceType.AVAILABLE));
         System.out.println(wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        
+        
+        
         milestoneService.update();
         return toKey;
     }

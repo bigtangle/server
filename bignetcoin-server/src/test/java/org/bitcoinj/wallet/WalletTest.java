@@ -322,7 +322,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(ZERO, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
     }
 
-    private void basicSpendingCommon(Wallet wallet, Address toAddress, Address destination, Wallet encryptedWallet)
+    public void basicSpendingCommon(Wallet wallet, Address toAddress, Address destination, Wallet encryptedWallet)
             throws Exception {
         // We'll set up a wallet that receives a coin, then sends a coin of
         // lesser value and keeps the change. We

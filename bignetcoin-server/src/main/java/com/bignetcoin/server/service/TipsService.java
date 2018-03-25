@@ -85,7 +85,7 @@ public class TipsService {
 		
 		// Repeatedly perform transitions until the final tip is found
 		while (tip != null) {
-			List<Sha256Hash> approvers = blockService.getSolidApproverBlockHashes(tip); // TODO add check where solid = true
+			List<Sha256Hash> approvers = blockService.getSolidApproverBlockHashes(tip);
 			if (approvers.size() == 0) {
 				return tip;
 			} else if (approvers.size() == 1) {
@@ -94,7 +94,7 @@ public class TipsService {
 				Sha256Hash[] tipApprovers = approvers.toArray(new Sha256Hash[approvers.size()]);
 				double[] transitionWeights = new double[tipApprovers.length];
 				double transitionWeightSum = 0;
-				long tipCumulativeweight = cumulativeWeights.get(tip);
+				long tipCumulativeweight = cumulativeWeights.containsKey(tip) ? cumulativeWeights.get(tip) : 1;
 				
 				// Calculate the unnormalized transition weights of all approvers as ((Hx-Hy)^-3)
 				for (int i = 0; i < tipApprovers.length; i++) {
