@@ -98,7 +98,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         reqParam0.put("pubkey", Utils.HEX.encode(outKey.getPubKey()));
         reqParam0.put("toaddressPubkey", Utils.HEX.encode(outKey.getPubKey()));
         reqParam0.put("amount", String.valueOf(100));
-        reqParam0.put("tokenid", -1);
+        reqParam0.put("tokenid", networkParameters.BIGNETCOIN_TOKENID);
         
         MockHttpServletRequestBuilder httpRequest0 = post(contextRoot).content(toJson(reqParam0));
         MvcResult result0 = getMockMvc().perform(httpRequest0).andExpect(status().isOk()).andReturn();

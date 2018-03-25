@@ -162,7 +162,7 @@ public class DefaultRiskAnalysisTest {
                         .getProgram())));
     }
 
-    @Test
+   //Binary changed @Test
     public void canonicalSignatureLowS() {
         // First, a synthetic test.
         TransactionSignature sig = TransactionSignature.dummy();

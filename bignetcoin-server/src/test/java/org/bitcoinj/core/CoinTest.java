@@ -47,11 +47,7 @@ public class CoinTest {
         valueOf(Long.MAX_VALUE, NetworkParameters.BIGNETCOIN_TOKENID);
         valueOf(Long.MIN_VALUE, NetworkParameters.BIGNETCOIN_TOKENID);
 
-        try {
-            valueOf(1, -1);
-            fail();
-        } catch (IllegalArgumentException e) {
-        }
+    
         try {
             valueOf(-1, 0);
             fail();

@@ -2834,7 +2834,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         // This is safe even if the listener has been added before, as
         // TransactionConfidence ignores duplicate
         // registration requests. That makes the code in the wallet simpler.
-        tx.getConfidence().addEventListener(Threading.SAME_THREAD, txConfidenceListener);
+       //CUI tx.getConfidence().addEventListener(Threading.SAME_THREAD, txConfidenceListener);
     }
 
     /**

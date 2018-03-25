@@ -686,6 +686,7 @@ public abstract class AbstractBlockGraph {
      * @return the height of the best known chain, convenience for <tt>getChainHead().getHeight()</tt>.
      */
     public final int getBestChainHeight() {
+        if(getChainHead()==null) return 0;
         return getChainHead().getHeight();
     }
 
