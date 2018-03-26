@@ -87,7 +87,7 @@ public class EckeyController {
             addressColumn.setCellValueFactory(cellData -> cellData.getValue().addressHex());
 
             pubkeyColumn.setCellFactory(TextFieldTableCell.<EckeyModel>forTableColumn());
-            pubkeyColumn.setCellFactory(TextFieldTableCell.<EckeyModel>forTableColumn());
+            addressColumn.setCellFactory(TextFieldTableCell.<EckeyModel>forTableColumn());
         }
         if (importedKeys != null && !importedKeys.isEmpty()) {
             for (ECKey ecKey : importedKeys) {
@@ -97,7 +97,7 @@ public class EckeyController {
             pubkeyColumnA.setCellValueFactory(cellData -> cellData.getValue().pubkeyHex());
             addressColumnA.setCellValueFactory(cellData -> cellData.getValue().addressHex());
             pubkeyColumnA.setCellFactory(TextFieldTableCell.<EckeyModel>forTableColumn());
-            pubkeyColumnA.setCellFactory(TextFieldTableCell.<EckeyModel>forTableColumn());
+            addressColumnA.setCellFactory(TextFieldTableCell.<EckeyModel>forTableColumn());
         }
     }
 
