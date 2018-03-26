@@ -97,18 +97,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     @Test
     public void testCreateTransaction() throws Exception {
         byte[] data = getAskTransactionBlock();
-        
-        System.out.println("len : " + data.length);
-        ByteBuffer byteBuffer = ByteBuffer.wrap(data);
-        Block r1 = nextBlockSerializer(byteBuffer);
-        Block r2 = nextBlockSerializer(byteBuffer);
-        
-        ECKey outKey = new ECKey();
-        int height = 1;
-        
-        Block block = r2.createNextBlock(null, Block.BLOCK_VERSION_GENESIS, (TransactionOutPoint) null,
-                Utils.currentTimeSeconds(), outKey.getPubKey(), Coin.ZERO, height, r1.getHash(), outKey.getPubKey());
-
+        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         reqCmdSaveBlock(block);
     }
 
@@ -185,16 +174,6 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
         String data = mvcResult.getResponse().getContentAsString();
         logger.info("testGetBalances resp : " + data);
-    }
-    
-    @Test
-    @SuppressWarnings("unused")
-    public void testSpringBootAskTransaction() throws Exception {
-        byte[] data = getAskTransactionBlock();
-        
-        ByteBuffer byteBuffer = ByteBuffer.wrap(data);
-        Block r1 = nextBlockSerializer(byteBuffer);
-        Block r2 = nextBlockSerializer(byteBuffer);
     }
     
     @Test
