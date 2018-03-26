@@ -19,6 +19,7 @@
 package com.bignetcoin.ui.wallet;
 
 import static com.bignetcoin.ui.wallet.Main.bitcoin;
+import static com.bignetcoin.ui.wallet.Main.params;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Json;
 import org.bitcoinj.core.UTXO;
+import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.utils.MapToBeanMapperUtil;
 import org.bitcoinj.utils.MonetaryFormat;
 import org.bitcoinj.utils.OkHttp3Util;
@@ -118,6 +120,7 @@ public class MainController {
         Main.instance.getUtxoData().clear();
         Main.instance.getCoinData().clear();
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
         // ECKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
 
         DecryptingKeyBag maybeDecryptingKeyBag = new DecryptingKeyBag(bitcoin.wallet(), null);

@@ -4,11 +4,15 @@
  *******************************************************************************/
 package com.bignetcoin.ui.wallet;
 
+import static com.bignetcoin.ui.wallet.Main.bitcoin;
+import static com.bignetcoin.ui.wallet.Main.params;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.wallet.DecryptingKeyBag;
 import org.bitcoinj.wallet.DeterministicKeyChain;
 
@@ -115,11 +119,11 @@ public class EckeyController {
             // GuiUtils.crashAlert(e);
             // }
         }
-        Main.keyFileDirectory = file.getParent()+"/";
+        Main.keyFileDirectory = file.getParent() + "/";
         String filename = file.getName();
 
         Main.keyFilePrefix = filename.contains(".") ? filename.substring(0, filename.lastIndexOf(".")) : filename;
-
+        bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
         GuiUtils.informationalAlert("set key file is ok", "", "");
 
         initEcKeyList();

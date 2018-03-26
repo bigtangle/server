@@ -62,7 +62,7 @@ public class Main extends Application {
             + params.getPaymentProtocolId();
     public static String keyFileDirectory = ".";
     public static String keyFilePrefix = "bignetcoin";
-    public static WalletAppKit bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);;
+    public static WalletAppKit bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
     public static Main instance;
 
     private StackPane uiStack;
