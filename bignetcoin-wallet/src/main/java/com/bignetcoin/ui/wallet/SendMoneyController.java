@@ -96,16 +96,9 @@ public class SendMoneyController {
             HashMap<String, String> requestParam = new HashMap<String, String>();
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
                     Json.jsonmapper().writeValueAsString(requestParam));
-            ByteBuffer byteBuffer = ByteBuffer.wrap(data);
-            Block r1 = nextBlockSerializer(byteBuffer);
-            Block r2 = nextBlockSerializer(byteBuffer);
-            Main.params.getDefaultSerializer().makeBlock(r2.bitcoinSerialize());
-            // ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
-            // r1.setNetworkParameters(Main.params);
-            // r2.setNetworkParameters(Main.params);
-            Block rollingBlock = new Block(Main.params, r1.getHash(), r2.getHash(),
-                    NetworkParameters.BIGNETCOIN_TOKENID);
-
+            
+            Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
+            
             Wallet wallet = Main.bitcoin.wallet();
             wallet.setServerURL(CONTEXT_ROOT);
 

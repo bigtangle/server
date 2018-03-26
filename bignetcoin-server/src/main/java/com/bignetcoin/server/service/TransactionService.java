@@ -53,19 +53,12 @@ public class TransactionService {
         Block r1 = blockService.getBlock(getNextBlockToApprove());
         Block r2 = blockService.getBlock(getNextBlockToApprove());
 
-        System.out.println("send, r1 : " + r1.getHashAsString() + ", r2 : " + r2.getHashAsString());
-
-        byte[] r1Data = r1.bitcoinSerialize();
-        byte[] r2Data = r2.bitcoinSerialize();
-
-        ByteBuffer byteBuffer = ByteBuffer.allocate(4 + r1Data.length + 4 + r2Data.length);
-        byteBuffer.putInt(r1Data.length);
-        byteBuffer.put(r1Data);
-        byteBuffer.putInt(r2Data.length);
-        byteBuffer.put(r2Data);
-
-        System.out.print(r1.toString());
-
+        Block rollingBlock = new Block(this.networkParameters, r1.getHash(), r2.getHash(),
+                NetworkParameters.BIGNETCOIN_TOKENID);
+        
+        byte[] data = rollingBlock.bitcoinSerialize();
+        
+        ByteBuffer byteBuffer = ByteBuffer.wrap(data);
         return byteBuffer;
     }
 
