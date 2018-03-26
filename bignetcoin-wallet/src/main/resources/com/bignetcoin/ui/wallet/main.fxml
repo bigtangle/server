@@ -21,25 +21,6 @@
         <Font name="System Bold" size="25.0" fx:id="x1" />
       </font>
     </Label>
-    <HBox fx:id="controlsBox" alignment="TOP_LEFT" fillHeight="true" layoutX="14.0" layoutY="347.0" minHeight="16.0" prefHeight="36.0" prefWidth="243.0" spacing="10.0" translateY="60.0" visible="true" AnchorPane.bottomAnchor="17.0">
-      <children>
-        <Button defaultButton="true" mnemonicParsing="false" styleClass="fat-button" text="Primary" />
-        <Button cancelButton="true" mnemonicParsing="false" styleClass="fat-button" text="Secondary" />
-      </children>
-    </HBox>
-    <ImageView fitHeight="243.0" fitWidth="243.0" opacity="0.28" pickOnBounds="true" preserveRatio="true" AnchorPane.bottomAnchor="-36.0" AnchorPane.rightAnchor="-34.0">
-      <effect>
-        <ColorAdjust>
-          <input>
-            <BoxBlur height="20.0" width="20.0" />
-          </input>
-        </ColorAdjust>
-      </effect>
-      <image>
-        <Image url="@bitcoin_logo_plain.png" />
-      </image>
-    </ImageView>
-    <ClickableBitcoinAddress fx:id="addressControl" layoutY="45.0" prefHeight="21.0" prefWidth="391.0" AnchorPane.leftAnchor="14.0" AnchorPane.rightAnchor="195.0" />
     <StackPane layoutX="15.0" layoutY="144.0" prefHeight="249.0" prefWidth="572.0" style="-fx-border-color: lightgrey; -fx-border-style: dashed" AnchorPane.bottomAnchor="7.0" AnchorPane.leftAnchor="15.0" AnchorPane.rightAnchor="15.0" AnchorPane.topAnchor="144.0">
       <children>
         <Label text="Your content goes here" />
@@ -69,7 +50,7 @@
     <HBox layoutX="44.0" layoutY="107.0" prefHeight="23.0" prefWidth="711.0" spacing="20" AnchorPane.rightAnchor="45.0" AnchorPane.topAnchor="107.0">
        <children>
            <Button onAction="#settingsClicked" style="-fx-base: white;" styleClass="fat-button" text="Settings" />
-           <Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" alignment="CENTER" mnemonicParsing="false" onAction="#sendMoneyOut" style="-fx-base: lightgreen; -fx-font-weight: bold" styleClass="fat-button" text="Send money out" />
+           <Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" alignment="CENTER" mnemonicParsing="false" onAction="#sendMoneyOut" style="-fx-base: lightgreen; -fx-font-weight: bold" styleClass="fat-button" text="transfer" />
             <Button fx:id="stock" onAction="#stockPublish" styleClass="fat-button" text="token publish" />
             <Button fx:id="exchange" mnemonicParsing="false" onAction="#exchangeCoin" styleClass="fat-button" text="exchange" />
             <Button mnemonicParsing="false" onAction="#eckeyList" styleClass="fat-button" text="eckey list" />

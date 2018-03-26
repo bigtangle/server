@@ -38,7 +38,6 @@ import org.bitcoinj.wallet.DecryptingKeyBag;
 import org.bitcoinj.wallet.DeterministicKeyChain;
 import org.fxmisc.easybind.EasyBind;
 
-import com.bignetcoin.ui.wallet.controls.ClickableBitcoinAddress;
 import com.bignetcoin.ui.wallet.controls.NotificationBarPane;
 import com.bignetcoin.ui.wallet.utils.BitcoinUIModel;
 import com.bignetcoin.ui.wallet.utils.GuiUtils;
@@ -47,8 +46,6 @@ import com.bignetcoin.ui.wallet.utils.easing.ElasticInterpolator;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 
-import javafx.animation.FadeTransition;
-import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -71,7 +68,7 @@ public class MainController {
     public HBox controlsBox;
     public Label balance;
     public Button sendMoneyOutBtn;
-    public ClickableBitcoinAddress addressControl;
+
     @FXML
     public TableView<CoinModel> coinTable;
     @FXML
@@ -113,7 +110,7 @@ public class MainController {
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
-        addressControl.setOpacity(1.0);
+
     }
 
     public void initTable() throws Exception {
@@ -198,7 +195,6 @@ public class MainController {
 
     public void onBitcoinSetup() {
         model.setWallet(bitcoin.wallet());
-        addressControl.addressProperty().bind(model.addressProperty());
         balance.textProperty().bind(
                 EasyBind.map(model.balanceProperty(), coin -> MonetaryFormat.BTC.noCode().format(coin).toString()));
         // Don't let the user click send money when the wallet is empty.
@@ -307,12 +303,7 @@ public class MainController {
         TranslateTransition arrive = new TranslateTransition(Duration.millis(1200), controlsBox);
         arrive.setInterpolator(new ElasticInterpolator(EasingMode.EASE_OUT, 1, 2));
         arrive.setToY(0.0);
-        FadeTransition reveal = new FadeTransition(Duration.millis(1200), addressControl);
-        reveal.setToValue(1.0);
-        ParallelTransition group = new ParallelTransition(arrive, reveal);
-        group.setDelay(NotificationBarPane.ANIM_OUT_DURATION);
-        group.setCycleCount(1);
-        group.play();
+
     }
 
 }
