@@ -85,7 +85,7 @@ public class ExchangeController {
             fos = new FileOutputStream(file);
             bos = new BufferedOutputStream(fos);
             bos.write(blockByte);
-            
+
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         } finally {
@@ -101,6 +101,9 @@ public class ExchangeController {
             }
         }
 
+    }
+
+    public void refund(ActionEvent event) {
     }
 
     public void closeUI(ActionEvent event) {
