@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.bignetcoin.server.response.AbstractResponse;
 import com.bignetcoin.server.service.BlockService;
+import com.bignetcoin.server.service.TokensService;
 import com.bignetcoin.server.service.TransactionService;
 import com.bignetcoin.server.service.WalletService;
 
@@ -40,6 +41,9 @@ public class DispatcherController {
     
     @Autowired
     private BlockService blockService;
+    
+    @Autowired
+    private TokensService tokensService;
 
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
     public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] bodyByte,
@@ -77,7 +81,10 @@ public class DispatcherController {
             break;
             
             case createGenesisBlock: {
-                byte[] data = transactionService.createGenesisBlock(bodyByte);
+                String reqStr = new String(bodyByte, "UTF-8");
+                @SuppressWarnings("unchecked")
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                byte[] data = transactionService.createGenesisBlock(request);
                 this.outPointBinaryArray(httpServletResponse, data);
             }
             break;
@@ -87,6 +94,12 @@ public class DispatcherController {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 logger.debug("exchangeToken, {}", request);
+            }
+            break;
+            
+            case getTokens: {
+                AbstractResponse response = tokensService.getTokensList();
+                this.outPrintJSONString(httpServletResponse, response);
             }
             break;
             

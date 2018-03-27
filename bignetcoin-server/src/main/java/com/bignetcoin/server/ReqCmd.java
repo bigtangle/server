@@ -6,5 +6,7 @@ package com.bignetcoin.server;
 
 public enum ReqCmd {
 
-    getBalances, askTransaction, saveBlock, getOutputs, createGenesisBlock, exchangeToken;
+    getBalances, askTransaction, saveBlock, getOutputs, 
+    
+    createGenesisBlock, exchangeToken, getTokens;
 }

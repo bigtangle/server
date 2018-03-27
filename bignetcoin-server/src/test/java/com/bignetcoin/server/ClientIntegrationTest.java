@@ -4,6 +4,9 @@
  *******************************************************************************/
 package com.bignetcoin.server;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -37,10 +40,21 @@ import org.spongycastle.crypto.params.KeyParameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ClientIntegrationTest extends AbstractIntegrationTest {
+    
+    @Test
+    public void getTokens() throws Exception {
+        ECKey ecKey = new ECKey();
+        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getTokens.name()).content(ecKey.getPubKeyHash());
+        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
+        String data = mvcResult.getResponse().getContentAsString();
+        logger.info("testGetBalances resp : " + data);
+    }
 
     private static final Logger logger = LoggerFactory.getLogger(ClientIntegrationTest.class);
     
@@ -88,16 +102,19 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         ECKey outKey = keys.get(0);
         
         byte[] pubKey = outKey.getPubKey();
-        ByteBuffer byteBuffer = ByteBuffer.allocate(4 + 4 + pubKey.length);
-        byteBuffer.putInt(100000000);
-        byteBuffer.putInt(pubKey.length);
-        byteBuffer.put(pubKey);
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
+        requestParam.put("amount", 100000L);
+        requestParam.put("tokenname", "Test");
+        requestParam.put("description", "Test");
         
-        byte[] data = OkHttp3Util.postByte(contextRoot + ReqCmd.createGenesisBlock.name(), byteBuffer.array());
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.createGenesisBlock.name(), Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         
         logger.info("createGenesisBlock resp : " + block);
         logger.info("new tokenid : " + block.getTokenid());
+        
+        this.getTokens();
     }
 
     @SuppressWarnings("unchecked")

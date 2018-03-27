@@ -84,6 +84,13 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    milestone tinyint(1),\n" +
             "    milestonelastupdate bigint,\n" +
             "    CONSTRAINT blockevaluation_pk PRIMARY KEY (blockhash) )\n";
+    
+    private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n" +
+            "    tokenid bigint(20) NOT NULL DEFAULT '0',\n" +
+            "    tokenname varchar(255) DEFAULT NULL,\n" + 
+            "    amount bigint(20) DEFAULT NULL,\n" +
+            "    description varchar(255) DEFAULT NULL,\n" + 
+            "    PRIMARY KEY (tokenid) \n)";
 
     // Some indexes to speed up inserts
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX              = "CREATE INDEX outputs_hash_index_height_toaddress_idx ON outputs (hash, `index`, height, toaddress) USING btree";
@@ -114,6 +121,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_OUTPUT_TABLE);
         sqlStatements.add(CREATE_TIPS_TABLE);
         sqlStatements.add(CREATE_BLOCKEVALUATION_TABLE);
+        sqlStatements.add(CREATE_TOKENS_TABLE);
         return sqlStatements;
     }
 

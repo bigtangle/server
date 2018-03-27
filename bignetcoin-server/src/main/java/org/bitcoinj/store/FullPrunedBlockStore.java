@@ -14,6 +14,7 @@ import org.bitcoinj.core.BlockStoreException;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.StoredUndoableBlock;
+import org.bitcoinj.core.Tokens;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.UTXOProvider;
 
@@ -232,4 +233,10 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 	public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, long index, boolean b, Sha256Hash spenderBlock) throws BlockStoreException;
 
     public int getMaxTokenId() throws BlockStoreException;
+
+    public List<Tokens> getTokensList() throws BlockStoreException;
+    
+    public void saveTokens(Tokens tokens) throws BlockStoreException;
+
+    public void saveTokens(long tokenid, String tokenname, long amount, String description) throws BlockStoreException;
 }

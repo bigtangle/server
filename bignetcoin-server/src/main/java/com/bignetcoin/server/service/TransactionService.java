@@ -6,6 +6,7 @@ package com.bignetcoin.server.service;
 
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
+import java.util.Map;
 
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockEvaluation;
@@ -13,9 +14,11 @@ import org.bitcoinj.core.BlockStoreException;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.Tokens;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.UTXO;
+import org.bitcoinj.core.Utils;
 import org.bitcoinj.store.FullPrunedBlockGraph;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.wallet.CoinSelector;
@@ -62,20 +65,28 @@ public class TransactionService {
         return byteBuffer;
     }
 
-    public byte[] createGenesisBlock(byte[] bytes) throws Exception {
-        ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
-        int amount = byteBuffer.getInt();
-        int len = byteBuffer.getInt();
-        byte[] pubKey = new byte[len];
-        byteBuffer.get(pubKey);
+    public byte[] createGenesisBlock(Map<String, Object> request) throws Exception {
+        String pubKeyHex = (String) request.get("pubKeyHex");
+        long amount = (Integer) request.get("amount");
+        String tokenname = (String) request.get("tokenname");
+        String description = (String) request.get("description");
+        
+        byte[] pubKey = Utils.HEX.decode(pubKeyHex);
         long tokenid = blockService.getNextTokenId();
         Coin coin = Coin.valueOf(amount, tokenid);
-
-        return createGenesisBlock(coin, tokenid, pubKey);
+        byte[] data = createGenesisBlock(coin, tokenid, pubKey);
+        
+        Tokens tokens = new Tokens();
+        tokens.setTokenid(tokenid);
+        tokens.setTokenname(tokenname);
+        tokens.setAmount(amount);
+        tokens.setDescription(description);
+        store.saveTokens(tokens);
+        
+        return data;
     }
 
     public byte[] createGenesisBlock(Coin coin, long tokenid, byte[] pubKey) throws Exception {
-
         Block r1 = blockService.getBlock(getNextBlockToApprove());
         Block r2 = blockService.getBlock(getNextBlockToApprove());
         Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), tokenid);
@@ -83,7 +94,6 @@ public class TransactionService {
         block.solve();
         FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
         blockgraph.add(block);
-
         return block.bitcoinSerialize();
     }
 

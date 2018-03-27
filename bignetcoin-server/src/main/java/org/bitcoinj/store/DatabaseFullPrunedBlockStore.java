@@ -34,6 +34,7 @@ import org.bitcoinj.core.ProtocolException;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.StoredUndoableBlock;
+import org.bitcoinj.core.Tokens;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutputChanges;
 import org.bitcoinj.core.UTXO;
@@ -205,6 +206,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	private static final String DROP_OPEN_OUTPUT_TABLE = "DROP TABLE outputs";
 	private static final String DROP_TIPS_TABLE = "DROP TABLE tips";
 	private static final String DROP_BLOCKEVALUATION_TABLE = "DROP TABLE blockevaluation";
+	private static final String DROP_TOKENS_TABLE = "DROP TABLE tokens";
 
 	// Queries SQL.
 	private static final String SELECT_SETTINGS_SQL = "SELECT value FROM settings WHERE name = ?";
@@ -274,7 +276,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
 	private static final String SELECT_OUTPUT_SPENDER_SQL = "SELECT blockevaluation.blockhash, rating, depth, cumulativeweight, solid,  blockevaluation.height, milestone, milestonelastupdate FROM blockevaluation INNER JOIN outputs ON outputs.spenderblockhash=blockevaluation.blockhash WHERE solid = 1 and hash = ? AND `index`= ?";
 
-	private static final String SELECT_MAX_TOKENID_SQL = "select max(tokenid) from headers where blocktype = ?";
+	private static final String SELECT_MAX_TOKENID_SQL = "select max(tokenid) from tokens";
+	private static final String INSERT_TOKENS_SQL = "INSERT INTO tokens (tokenid, tokenname, amount, description) VALUES (?, ?, ?, ?)";
+	private static final String SELECT_TOKENS_SQL = "select tokenid, tokenname, amount, description from tokens";
 
 	protected Sha256Hash chainHeadHash;
 	protected StoredBlock chainHeadBlock;
@@ -431,6 +435,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 		sqlStatements.add(DROP_OPEN_OUTPUT_TABLE);
 		sqlStatements.add(DROP_TIPS_TABLE);
 		sqlStatements.add(DROP_BLOCKEVALUATION_TABLE);
+		sqlStatements.add(DROP_TOKENS_TABLE);
 		return sqlStatements;
 	}
 
@@ -2088,7 +2093,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 		}
 		
 	}
-	
 
     @Override
     public int getMaxTokenId() throws BlockStoreException {
@@ -2096,13 +2100,71 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(getSelectMaxTokenIdSQL());
-            preparedStatement.setLong(1, NetworkParameters.BLOCKTYPE_GENESIS);
-
             ResultSet resultSet = preparedStatement.executeQuery();
             if (!resultSet.next()) {
                 return 1;
             }
-            return (int) resultSet.getLong(1);
+            int tokenid = (int) resultSet.getLong(1);
+            return tokenid == 0 ? 1 : tokenid;
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public List<Tokens> getTokensList() throws BlockStoreException {
+        List<Tokens> list = new ArrayList<Tokens>();
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_TOKENS_SQL);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                Tokens tokens = new Tokens();
+                tokens.setTokenid(resultSet.getLong("tokenid"));
+                tokens.setTokenname(resultSet.getString("tokenname"));
+                tokens.setAmount(resultSet.getLong("amount"));
+                tokens.setDescription(resultSet.getString("description"));
+                list.add(tokens);
+            }
+            return list;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void saveTokens(Tokens tokens) throws BlockStoreException {
+        this.saveTokens(tokens.getTokenid(), tokens.getTokenname(), tokens.getAmount(), tokens.getDescription());
+    }
+
+    @Override
+    public void saveTokens(long tokenid, String tokenname, long amount, String description)
+            throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(INSERT_TOKENS_SQL);
+            preparedStatement.setLong(1, tokenid);
+            preparedStatement.setString(2, tokenname);
+            preparedStatement.setLong(3, amount);
+            preparedStatement.setString(4, description);
+            preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {
