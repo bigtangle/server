@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.aspectj.internal.lang.annotation.ajcDeclareAnnotation;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Coin;
@@ -46,15 +45,13 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     private static final Logger logger = LoggerFactory.getLogger(ClientIntegrationTest.class);
     
     public void exchangeToken() throws Exception {
+        Address destination = Address.fromBase58(networkParameters, "");
+        Coin amount = Coin.parseCoin("10000", NetworkParameters.BIGNETCOIN_TOKENID);
+        
         WalletAppKit bitcoin = new WalletAppKit(networkParameters, new File("."), "bignetcoin");
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
-        
-        
-        Address destination = Address.fromBase58(networkParameters, "");
-
-        Coin amount = Coin.parseCoin("10000", NetworkParameters.BIGNETCOIN_TOKENID);
         
         SendRequest outputRequest = SendRequest.to(destination, amount);
         bitcoin.wallet().completeTx(outputRequest);
@@ -66,6 +63,8 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         rollingBlock.addTransaction(transaction1);
         
         rollingBlock.solve();
+        
+        // upload block to server
     }
     
     public Transaction makeTransaction(byte[] pubKeyTo, Coin coin) {
