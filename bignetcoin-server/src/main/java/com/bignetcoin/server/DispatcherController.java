@@ -7,6 +7,7 @@ package com.bignetcoin.server;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
@@ -80,6 +81,15 @@ public class DispatcherController {
                 this.outPointBinaryArray(httpServletResponse, data);
             }
             break;
+            
+            case exchangeToken: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                @SuppressWarnings("unchecked")
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                logger.debug("exchangeToken, {}", request);
+            }
+            break;
+            
             }
         } catch (Exception exception) {
             logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, Utils.HEX.encode(bodyByte), exception);

@@ -5,6 +5,7 @@
 package com.bignetcoin.server;
 
 import java.io.File;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,6 +41,24 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private NetworkParameters networkParameters;
+    
+    public void createGenesisBlock() throws Exception {
+        WalletAppKit bitcoin = new WalletAppKit(networkParameters, new File("."), "bignetcoin");
+        List<ECKey> keys = getWalletKeyBag(bitcoin);
+        ECKey outKey = keys.get(0);
+        
+        byte[] pubKey = outKey.getPubKey();
+        ByteBuffer byteBuffer = ByteBuffer.allocate(4 + 4 + pubKey.length);
+        byteBuffer.putInt(100000000);
+        byteBuffer.putInt(pubKey.length);
+        byteBuffer.put(pubKey);
+        
+        byte[] data = OkHttp3Util.postByte(contextRoot + ReqCmd.createGenesisBlock.name(), byteBuffer.array());
+        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+        
+        logger.info("createGenesisBlock resp : " + block);
+        logger.info("new tokenid : " + block.getTokenid());
+    }
 
     @SuppressWarnings("unchecked")
     public void getBalances() throws Exception {
