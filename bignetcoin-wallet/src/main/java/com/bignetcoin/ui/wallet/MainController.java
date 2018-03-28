@@ -74,14 +74,14 @@ public class MainController {
     @FXML
     public TableColumn<CoinModel, Number> valueColumn;
     @FXML
-    public TableColumn<CoinModel, Number> tokentypeColumn;
+    public TableColumn<CoinModel, String> tokentypeColumn;
 
     @FXML
     public TableView<UTXOModel> utxoTable;
     @FXML
     public TableColumn<UTXOModel, Number> balanceColumn;
     @FXML
-    public TableColumn<UTXOModel, Number> tokentypeColumnA;
+    public TableColumn<UTXOModel, String> tokentypeColumnA;
     @FXML
     public TableColumn<UTXOModel, String> addressColumn;
 
