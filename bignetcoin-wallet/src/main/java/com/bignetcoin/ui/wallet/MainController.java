@@ -151,7 +151,7 @@ public class MainController {
                         UTXO u = MapToBeanMapperUtil.parseUTXO(object);
                         Coin c = u.getValue();
                         long balance = c.getValue();
-                        long tokenid = c.tokenid;
+                        byte[] tokenid = c.tokenid;
                         String address = u.getAddress();
                         if (!u.isSpent()) {
                             Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address));

@@ -47,19 +47,18 @@ public class WalletService {
             }
         }
         List<Coin> tokens = new ArrayList<Coin>();
-        long[] tokenIds = { NetworkParameters.BIGNETCOIN_TOKENID };
-        for (long tokenid : tokenIds) {
+    
             List<TransactionOutput> tmpTransactionOutputs = new ArrayList<>(transactionOutputs);
-            filter(tmpTransactionOutputs, tokenid);
+         //   filter(tmpTransactionOutputs, tokenid);
             CoinSelection selection = coinSelector.select(NetworkParameters.MAX_MONEY, tmpTransactionOutputs);
             Coin coin = selection.valueGathered;
             tokens.add(coin);
-        }
+       
 //        System.out.println("cal : " + tokens);
         return GetBalancesResponse.create(tokens, outputs);
     }
     
-    private void filter(List<TransactionOutput> candidates, long tokenid) {
+    private void filter(List<TransactionOutput> candidates, byte[] tokenid) {
         for (Iterator<TransactionOutput> iterator = candidates.iterator(); iterator.hasNext();) {
             TransactionOutput transactionOutput = iterator.next();
             FreeStandingTransactionOutput freeStandingTransactionOutput = (FreeStandingTransactionOutput) transactionOutput;

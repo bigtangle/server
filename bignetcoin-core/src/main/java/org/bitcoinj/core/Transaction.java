@@ -156,8 +156,7 @@ public class Transaction extends ChildMessage {
 
     private long lockTime;
     
-    public long tokenid = NetworkParameters.BIGNETCOIN_TOKENID;
-
+    
     // This is either the time the transaction was broadcast as measured from
     // the local clock, or the time from the
     // block in which it was included. Note that this can be changed by re-orgs
@@ -692,7 +691,7 @@ public class Transaction extends ChildMessage {
         for (long i = 0; i < numOutputs; i++) {
             TransactionOutput output = new TransactionOutput(params, this, payload, cursor, serializer);
             outputs.add(output);
-            long scriptLen = readVarInt(16);
+            long scriptLen = readVarInt(28);
             optimalEncodingMessageSize += 8 +8+ VarInt.sizeOf(scriptLen) + scriptLen;
             cursor += scriptLen;
         }
@@ -1501,7 +1500,7 @@ public class Transaction extends ChildMessage {
         if (this.getMessageSize() > Block.MAX_BLOCK_SIZE)
             throw new VerificationException.LargerThanMaxBlockSize();
         
-        Coin valueOut = Coin.valueOf(0, tokenid);
+        Coin valueOut = Coin.valueOf(0, NetworkParameters.BIGNETCOIN_TOKENID);
         HashSet<TransactionOutPoint> outpoints = new HashSet<TransactionOutPoint>();
         for (TransactionInput input : inputs) {
             if (outpoints.contains(input.getOutpoint()))

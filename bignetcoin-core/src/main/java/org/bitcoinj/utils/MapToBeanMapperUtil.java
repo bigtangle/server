@@ -14,7 +14,7 @@ public abstract class MapToBeanMapperUtil {
         if (map == null)
             return null;
         long value = (Integer) map.get("value");
-        long tokenid = (Integer) map.get("tokenid");
+        byte[] tokenid = (byte[]) map.get("tokenid");
         return Coin.valueOf(value, tokenid);
     }
 
@@ -32,7 +32,7 @@ public abstract class MapToBeanMapperUtil {
         String fromaddress = (String) map.get("fromaddress");
         Sha256Hash blockhash = Sha256Hash.wrap((String) map.get("blockHashHex"));
         String description = (String) map.get("description");
-        long tokenid = (Integer) map.get("tokenid");
+        byte[] tokenid = (byte[]) map.get("tokenid");
         boolean spent = (Boolean) map.get("spent");
         UTXO output = new UTXO(hash, index, amount, height, coinbase, new Script(Utils.HEX.decode(scriptHex)), address,
                 blockhash, fromaddress, description, tokenid, spent);

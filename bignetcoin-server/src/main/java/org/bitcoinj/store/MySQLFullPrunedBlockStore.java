@@ -37,7 +37,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    prevblockhash  varbinary(32) NOT NULL,\n" +
             "    prevbranchblockhash  varbinary(32) NOT NULL,\n" +
             "    mineraddress varbinary(255),\n" +
-            "    tokenid bigint,\n" +
+            "    tokenid varbinary(255),\n" +
             "    blocktype bigint NOT NULL,\n" +
             "    CONSTRAINT headers_pk PRIMARY KEY (hash) USING BTREE \n" +
             ")";
@@ -61,7 +61,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    addresstargetable tinyint(1),\n" +
             "    coinbase boolean,\n" +
             "    blockhash  varbinary(32)  NOT NULL,\n" +
-            "    tokenid bigint,\n" +
+            "    tokenid varbinary(255),\n" +
             "    fromaddress varchar(35),\n" +
             "    description varchar(80),\n" +
             "    spent tinyint(1) NOT NULL,\n" +

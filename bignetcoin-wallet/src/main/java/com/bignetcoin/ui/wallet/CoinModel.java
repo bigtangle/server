@@ -4,17 +4,19 @@
  *******************************************************************************/
 package com.bignetcoin.ui.wallet;
 
-import javafx.beans.property.SimpleLongProperty;
+import org.bitcoinj.core.NetworkParameters;
 
+import javafx.beans.property.SimpleLongProperty;
+import javafx.beans.property.SimpleStringProperty;
 public class CoinModel {
     private SimpleLongProperty value;
-    private SimpleLongProperty tokenid;
+    private SimpleStringProperty tokenid;
 
     public SimpleLongProperty value() {
         return value;
     }
 
-    public SimpleLongProperty tokenid() {
+    public SimpleStringProperty tokenid() {
         return tokenid;
     }
 
@@ -26,18 +28,18 @@ public class CoinModel {
         this.value.set(value);
     }
 
-    public long getTokenid() {
+    public String getTokenid() {
         return tokenid.get();
     }
 
-    public void setTokenid(int tokenid) {
+    public void setTokenid(String tokenid) {
         this.tokenid.set(tokenid);
     }
 
-    public CoinModel(long value, long tokenid) {
+    public CoinModel(long value, byte[] tokenid) {
         super();
         this.value = new SimpleLongProperty(value);
-        this.tokenid = new SimpleLongProperty(tokenid);
+        this.tokenid = new SimpleStringProperty(tokenid == NetworkParameters.BIGNETCOIN_TOKENID ? "bignetcoin" : "other");
     }
 
 }

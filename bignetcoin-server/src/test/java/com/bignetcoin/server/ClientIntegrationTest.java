@@ -82,7 +82,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     
     public Transaction makeTransaction(byte[] pubKeyTo, Coin coin) {
         Transaction transaction = new Transaction(networkParameters);
-        transaction.tokenid = coin.tokenid;
+    
         final ScriptBuilder inputBuilder = new ScriptBuilder();
         inputBuilder.data(new byte[] { (byte) 0x00, (byte) (0x01 >> 8) });
         transaction.addInput(new TransactionInput(networkParameters, transaction, inputBuilder.build().getProgram()));
@@ -130,7 +130,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
                         UTXO u = MapToBeanMapperUtil.parseUTXO(object);
                         Coin c = u.getValue();
                         long balance = c.getValue();
-                        long tokenid = c.tokenid;
+                        byte[] tokenid = c.tokenid;
                         String address = u.getAddress();
                         if (!u.isSpent()) {
                             logger.info("outputs, balance : {}, tokenid : {}, address : {}", balance, tokenid, address);

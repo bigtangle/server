@@ -153,7 +153,7 @@ public class TransactionOutput extends ChildMessage {
     protected void parse() throws ProtocolException {
        
         
-        value =  Coin.valueOf(readInt64(),readInt64());
+        value =  Coin.valueOf(readInt64(), readBytes(20));
         scriptLen = (int) readVarInt();
         length = cursor - offset + scriptLen;
         
@@ -166,7 +166,7 @@ public class TransactionOutput extends ChildMessage {
     
         checkNotNull(scriptBytes);
         Utils.int64ToByteStreamLE(value.value, stream);
-        Utils.int64ToByteStreamLE(value.tokenid, stream);
+        stream.write(value.tokenid);
         // TODO: Move script serialization into the Script class, where it belongs.
         stream.write(new VarInt(scriptBytes.length).encode());
         stream.write(scriptBytes);

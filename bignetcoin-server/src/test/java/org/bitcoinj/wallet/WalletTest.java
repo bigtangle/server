@@ -484,7 +484,7 @@ public class WalletTest extends TestWithWallet {
             wallet = roundTrip(wallet);
         Coin v3 = valueOf(50, NetworkParameters.BIGNETCOIN_TOKENID);
         assertEquals(v3, wallet.getBalance());
-        SendRequest req = SendRequest.to(OTHER_ADDRESS, valueOf(0, 48));
+        SendRequest req = SendRequest.to(OTHER_ADDRESS, valueOf(48, NetworkParameters.BIGNETCOIN_TOKENID));
         req.aesKey = aesKey;
         req.shuffleOutputs = false;
         wallet.completeTx(req);

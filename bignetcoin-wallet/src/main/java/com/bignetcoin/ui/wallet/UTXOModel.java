@@ -13,11 +13,11 @@ public class UTXOModel {
     private SimpleLongProperty balance;
     private SimpleStringProperty tokentype;
     private SimpleStringProperty address;
-    private SimpleLongProperty tokenid;
+    private SimpleStringProperty tokenid;
 
-    public UTXOModel(long balance, long tokenid, String address) {
+    public UTXOModel(long balance, byte[] tokenid, String address) {
         this.balance = new SimpleLongProperty(balance);
-        this.tokenid = new SimpleLongProperty(tokenid);
+        this.tokenid = new SimpleStringProperty(tokenid == NetworkParameters.BIGNETCOIN_TOKENID ? "bignetcoin" : "other");
         this.tokentype = new SimpleStringProperty(
                 tokenid == NetworkParameters.BIGNETCOIN_TOKENID ? "bignetcoin" : "other");
         this.address = new SimpleStringProperty(address);
@@ -31,7 +31,7 @@ public class UTXOModel {
         return tokentype;
     }
 
-    public SimpleLongProperty tokenid() {
+    public SimpleStringProperty tokenid() {
         return tokenid;
     }
 
@@ -55,11 +55,11 @@ public class UTXOModel {
         this.tokentype.set(tokentype);
     }
 
-    public long getTokenid() {
+    public String  getTokenid() {
         return tokenid.get();
     }
 
-    public void setTokenid(long tokenid) {
+    public void setTokenid(String tokenid) {
         this.tokenid.set(tokenid);
     }
 

@@ -7,6 +7,7 @@ package org.bitcoinj.core;
 
 import static org.bitcoinj.core.Coin.COIN;
 import static org.bitcoinj.core.Coin.FIFTY_COINS;
+import static org.bitcoinj.core.Utils.HEX;
 
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
@@ -75,16 +76,17 @@ public abstract class NetworkParameters {
     public static final String PAYMENT_PROTOCOL_ID_UNIT_TESTS = "unittest";
     public static final String PAYMENT_PROTOCOL_ID_REGTEST = "regtest";
 
-    // Token id for System Coin
-    public static final long BIGNETCOIN_TOKENID = 1;
+    //FIXME Token id for System Coin byte[20]
+    public static final byte[] BIGNETCOIN_TOKENID = HEX.decode(
+            "86e21e07bd2651fba1c19b0e6b678475641c885c");
 
     // BLOCKTYPE
-    public static final long BLOCKTYPE_GENESIS = 0; // Genesis Block for a token
+    public static final long BLOCKTYPE_GENESIS = 0; // Genesis Block for a token, only onetime
     public static final long BLOCKTYPE_TRANSFER = 1; // normal transfer of token
-                                                     // value
+    public static final long BLOCKTYPE_GENESIS_MULTIPLE = 3; // Genesis Block for a token, multiple times                                               // value
 
     public static final long BLOCKTYPE_REWARD = 2; // Reward of mining
-    public static final long BLOCKTYPE_SMARTCONTRACT = 3; // Reward of mining
+    
 
     // TODO: Seed nodes should be here as well.
 

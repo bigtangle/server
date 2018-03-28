@@ -8,6 +8,7 @@ package org.bitcoinj.core;
 import java.beans.Transient;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.Arrays;
 
 import org.bitcoinj.utils.MonetaryFormat;
 
@@ -74,14 +75,14 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      * The number of satoshis of this monetary value.
      */
     public final long value;
-    public final long tokenid;
+    public final byte[] tokenid;
 
-    private Coin(final long satoshis, final long tokenid) {
+    private Coin(final long satoshis, final byte[] tokenid) {
         this.value = satoshis;
         this.tokenid = tokenid;
     }
 
-    public static Coin valueOf(final long satoshis, long tokenid) {
+    public static Coin valueOf(final long satoshis, byte[] tokenid) {
         return new Coin(satoshis, tokenid);
     }
 
@@ -98,9 +99,6 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         return value;
     }
 
-    
-
-
     /**
      * Parses an amount expressed in the way humans are used to.
      * <p>
@@ -113,7 +111,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      *             if you try to specify fractional satoshis, or a value out of
      *             range.
      */
-    public static Coin parseCoin(final String str, long tokenid) {
+    public static Coin parseCoin(final String str, byte[] tokenid) {
         try {
             long satoshis = new BigDecimal(str).movePointRight(SMALLEST_UNIT_EXPONENT).toBigIntegerExact().longValue();
             return Coin.valueOf(satoshis, tokenid);
@@ -124,8 +122,8 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin add(final Coin value) {
-        if (this.tokenid != value.tokenid) {
-            throw new IllegalArgumentException("");
+        if (! Arrays.equals( this.tokenid, value.tokenid)) {
+            throw new IllegalArgumentException("!this.tokenid.equals( value.tokenid)");
         }
         return new Coin(LongMath.checkedAdd(this.value, value.value), value.tokenid);
     }
@@ -136,7 +134,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin subtract(final Coin value) {
-        if (this.tokenid != value.tokenid) {
+        if (! Arrays.equals( this.tokenid, value.tokenid)) {
             throw new IllegalArgumentException("");
         }
         return new Coin(LongMath.checkedSubtract(this.value, value.value), value.tokenid);
@@ -279,19 +277,9 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         return PLAIN_FORMAT.format(this).toString();
     }
 
-  
     @Override
     public String toString() {
         return "Coin [value=" + value + ", tokenid=" + tokenid + "]";
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + (int) (tokenid ^ (tokenid >>> 32));
-        result = prime * result + (int) (value ^ (value >>> 32));
-        return result;
     }
 
     @Override
@@ -309,7 +297,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
             return false;
         return true;
     }
-    
+
     @Override
     public int compareTo(final Coin other) {
         return Longs.compare(this.value, other.value);

@@ -823,7 +823,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setBytes(5, storedBlock.getHeader().getPrevBlockHash().getBytes());
             s.setBytes(6, storedBlock.getHeader().getPrevBranchBlockHash().getBytes());
             s.setBytes(7, storedBlock.getHeader().getMineraddress());
-            s.setLong(8, storedBlock.getHeader().getTokenid());
+            s.setBytes(8, storedBlock.getHeader().getTokenid());
             s.setLong(9, storedBlock.getHeader().getBlocktype());
             s.executeUpdate();
             s.close();
@@ -1188,7 +1188,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
             // Parse it.
             int height = results.getInt(1);
-            Coin value = Coin.valueOf(results.getLong(2), results.getLong(8));
+            Coin value = Coin.valueOf(results.getLong(2), results.getBytes(8));
             byte[] scriptBytes = results.getBytes(3);
             boolean coinbase = results.getBoolean(4);
             String address = results.getString(5);
@@ -1197,7 +1197,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             String fromaddress = results.getString(9);
             String description = results.getString(10);
             boolean spent = results.getBoolean(11);
-            long tokenid = results.getLong("tokenid");
+            byte[] tokenid = results.getBytes("tokenid");
             UTXO txout = new UTXO(hash, index, value, height, coinbase, new Script(scriptBytes), address, blockhash,
                     fromaddress, description, tokenid, spent);
             return txout;
@@ -1230,7 +1230,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setInt(7, out.getScript().getScriptType().ordinal());
             s.setBoolean(8, out.isCoinbase());
             s.setBytes(9, out.getBlockhash().getBytes());
-            s.setLong(10, out.getValue().tokenid);
+            s.setBytes(10, out.getValue().tokenid);
             s.setString(11, out.getFromaddress());
             s.setString(12, out.getDescription());
             s.setBoolean(13, out.isSpent());
@@ -1451,7 +1451,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 ResultSet rs = s.executeQuery();
                 while (rs.next()) {
                     Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));
-                    Coin amount = Coin.valueOf(rs.getLong(2), rs.getLong(10));
+                    Coin amount = Coin.valueOf(rs.getLong(2), rs.getBytes(10));
                     byte[] scriptBytes = rs.getBytes(3);
                     int height = rs.getInt(4);
                     int index = rs.getInt(5);
@@ -1463,7 +1463,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     String fromaddress = rs.getString(11);
                     String description = rs.getString(12);
                     boolean spent = rs.getBoolean(13);
-                    long tokenid = rs.getLong("tokenid");
+                    byte[] tokenid = rs.getBytes("tokenid");
                     UTXO output = new UTXO(hash, index, amount, height, coinbase, new Script(scriptBytes), toAddress,
                             blockhash, fromaddress, description, tokenid, spent);
                     outputs.add(output);
@@ -2172,7 +2172,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 Tokens tokens = new Tokens();
-                tokens.setTokenid(resultSet.getLong("tokenid"));
+                tokens.setTokenid(resultSet.getBytes("tokenid"));
                 tokens.setTokenname(resultSet.getString("tokenname"));
                 tokens.setAmount(resultSet.getLong("amount"));
                 tokens.setDescription(resultSet.getString("description"));
@@ -2198,11 +2198,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void saveTokens(long tokenid, String tokenname, long amount, String description) throws BlockStoreException {
+    public void saveTokens(byte[] tokenid, String tokenname, long amount, String description) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(INSERT_TOKENS_SQL);
-            preparedStatement.setLong(1, tokenid);
+            preparedStatement.setBytes(1, tokenid);
             preparedStatement.setString(2, tokenname);
             preparedStatement.setLong(3, amount);
             preparedStatement.setString(4, description);

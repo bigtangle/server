@@ -492,7 +492,46 @@ public abstract class AbstractBlockGraph {
             //setChainHead(newStoredBlock);
             log.debug("Chain is now {} blocks high, running listeners", newStoredBlock.getHeight());
           //  informListenersForNewBlock(block, NewBlockType.BEST_CHAIN, filteredTxHashList, filteredTxn, newStoredBlock);
-        } 
+        } else {
+            // This block connects to somewhere other than the top of the best known chain. We treat these differently.
+            //
+            // Note that we send the transactions to the wallet FIRST, even if we're about to re-organize this block
+            // to become the new best chain head. This simplifies handling of the re-org in the Wallet class.
+            StoredBlock newBlock = storedPrev.build(block, storedPrevBranch);
+        
+                StoredBlock splitPoint = findSplit(newBlock, head, blockStore);
+                if (splitPoint != null && splitPoint.equals(newBlock)) {
+                    // newStoredBlock is a part of the same chain, there's no fork. This happens when we receive a block
+                    // that we already saw and linked into the chain previously, which isn't the chain head.
+                    // Re-processing it is confusing for the wallet so just skip.
+                    log.warn("Saw duplicated block in main chain at height {}: {}",
+                            newBlock.getHeight(), newBlock.getHeader().getHash());
+                    return;
+                }
+                if (splitPoint == null) {
+                    // This should absolutely never happen
+                    // (lets not write the full block to disk to keep any bugs which allow this to happen
+                    //  from writing unreasonable amounts of data to disk)
+                    throw new VerificationException("Block forks the chain but splitPoint is null");
+                } else {
+                    // We aren't actually spending any transactions (yet) because we are on a fork
+                    addToBlockStore(storedPrev,storedPrevBranch, block);
+                    int splitPointHeight = splitPoint.getHeight();
+                    String splitPointHash = splitPoint.getHeader().getHashAsString();
+                    log.info("Block forks the chain at height {}/block {}, but it did not cause a reorganize:\n{}",
+                            splitPointHeight, splitPointHash, newBlock.getHeader().getHashAsString());
+                }
+            
+            
+            // We may not have any transactions if we received only a header, which can happen during fast catchup.
+            // If we do, send them to the wallet but state that they are on a side chain so it knows not to try and
+            // spend them until they become activated.
+            if (block.getTransactions() != null || filtered) {
+             //   informListenersForNewBlock(block, NewBlockType.SIDE_CHAIN, filteredTxHashList, filteredTxn, newBlock);
+            }
+            
+            
+        }
     }
 
 
@@ -647,7 +686,6 @@ public abstract class AbstractBlockGraph {
      * @return the height of the best known chain, convenience for <tt>getChainHead().getHeight()</tt>.
      */
     public final int getBestChainHeight() {
-        if(getChainHead()==null) return 0;
         return getChainHead().getHeight();
     }
 

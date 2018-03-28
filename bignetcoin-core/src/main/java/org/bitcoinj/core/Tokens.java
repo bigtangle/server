@@ -2,7 +2,7 @@ package org.bitcoinj.core;
 
 public class Tokens {
 
-    private long tokenid;
+    private byte[] tokenid;
     
     private String tokenname;
     
@@ -10,11 +10,11 @@ public class Tokens {
     
     private String description;
 
-    public long getTokenid() {
+    public byte[] getTokenid() {
         return tokenid;
     }
 
-    public void setTokenid(long tokenid) {
+    public void setTokenid(byte[] tokenid) {
         this.tokenid = tokenid;
     }
 

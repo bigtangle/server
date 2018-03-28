@@ -68,7 +68,7 @@ public class Block extends Message {
      * How many bytes are required to represent a block header WITHOUT the
      * trailing 00 length byte.
      */
-    public static final int HEADER_SIZE = 80 + 32 + 20 + 4;
+    public static final int HEADER_SIZE = 80 + 32 + 20 + 20;
 
     static final long ALLOWED_TIME_DRIFT = 2 * 60 * 60; // Same value as Bitcoin
                                                         // Core.
@@ -123,7 +123,8 @@ public class Block extends Message {
     private long nonce;
     // Utils.sha256hash160
     private byte[] mineraddress;
-    private long tokenid;
+ // Utils.sha256hash160, but toString() diplay with "$:"+ Addresse.totring()
+    private byte[] tokenid;
     private long blocktype;
 
     // TODO: Get rid of all the direct accesses to this field. It's a long-since
@@ -160,7 +161,7 @@ public class Block extends Message {
         length = HEADER_SIZE;
     }
 
-    public Block(NetworkParameters params, long blockVersionGenesis, long bignetcoinTokenid,
+    public Block(NetworkParameters params, long blockVersionGenesis, byte[] bignetcoinTokenid,
             long blocktypeTransfer) {
         super(params);
         version = Block.BLOCK_VERSION_GENESIS;
@@ -174,7 +175,7 @@ public class Block extends Message {
         this.transactions.addAll(transactions);
     }
 
-    public Block(NetworkParameters params, Sha256Hash prevBlockHash, Sha256Hash prevBranchBlockHash, long tokenid) {
+    public Block(NetworkParameters params, Sha256Hash prevBlockHash, Sha256Hash prevBranchBlockHash,  byte[] tokenid) {
         super(params);
         // Set up a few basic things. We are not complete after this though.
         version = Block.BLOCK_VERSION_GENESIS;
@@ -189,7 +190,7 @@ public class Block extends Message {
         this.transactions = new ArrayList<>();
     }
     
-    Block(NetworkParameters params, long setVersion, long tokenid) {
+    Block(NetworkParameters params, long setVersion,  byte[] tokenid) {
         this(params, setVersion);
         this.tokenid = tokenid;
     }
@@ -368,7 +369,7 @@ public class Block extends Message {
         // difficultyTarget = readUint32();
         nonce = readUint32();
         mineraddress = readBytes(20);
-        tokenid = readUint32();
+        tokenid =  readBytes(20);
         blocktype = readUint32();
         hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(payload, offset, cursor - offset));
         headerBytesValid = serializer.isParseRetainMode();
@@ -403,7 +404,7 @@ public class Block extends Message {
         // Utils.uint32ToByteStreamLE(difficultyTarget, stream);
         Utils.uint32ToByteStreamLE(nonce, stream);
         stream.write(mineraddress);
-        Utils.uint32ToByteStreamLE(tokenid, stream);
+        stream.write(tokenid);
         Utils.uint32ToByteStreamLE(blocktype, stream);
     }
 
@@ -624,7 +625,7 @@ public class Block extends Message {
         s.append("   nonce: ").append(nonce).append("\n");
         if(mineraddress!=null)
         s.append("   mineraddress: ").append(new Address(params, mineraddress)).append("\n");
-        s.append("   tokenid: ").append(tokenid).append("\n");
+        s.append("   tokenid: ").append(new Address(params, tokenid)).append("\n");
         s.append("   blocktype: ").append(blocktype).append("\n");
         if (transactions != null && transactions.size() > 0) {
             s.append("   with ").append(transactions.size()).append(" transaction(s):\n");
@@ -1059,7 +1060,7 @@ public class Block extends Message {
         unCacheTransactions();
         transactions = new ArrayList<Transaction>();
         Transaction coinbase = new Transaction(params);
-        coinbase.tokenid = value.tokenid;
+       // coinbase.tokenid = value.tokenid;
         final ScriptBuilder inputBuilder = new ScriptBuilder();
 
        
@@ -1083,10 +1084,7 @@ public class Block extends Message {
     }
 
     static final byte[] EMPTY_BYTES = new byte[32];
-
-    // It's pretty weak to have this around at runtime: fix later.
-    private static final byte[] pubkeyForTesting = new ECKey().getPubKey();
-
+ 
 
     /**
      * Returns a solved block that builds on top of this one. This exists for
@@ -1204,11 +1202,11 @@ public class Block extends Message {
         this.hash = null;
     }
 
-    public long getTokenid() {
+    public byte[] getTokenid() {
         return tokenid;
     }
 
-    public void setTokenid(long tokenid) {
+    public void setTokenid( byte[] tokenid) {
         unCacheHeader();
         this.tokenid = tokenid;
         this.hash = null;

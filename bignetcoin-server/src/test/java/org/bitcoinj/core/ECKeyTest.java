@@ -261,6 +261,21 @@ public class ECKeyTest {
     }
 
     @Test
+    public void testGenesisPublicKeyCreate() throws Exception {
+        Utils.setMockClock();
+        ECKey key = new ECKey();
+        long time = key.getCreationTimeSeconds();
+        assertNotEquals(0, time);
+        assertTrue(!key.isEncrypted());
+        byte[] originalPrivateKeyBytes = key.getPrivKeyBytes();
+        ECKey encryptedKey = key.encrypt(keyCrypter, keyCrypter.deriveKey("NeverUsed"));
+        assertEquals(time, encryptedKey.getCreationTimeSeconds());
+        assertTrue(encryptedKey.isEncrypted());
+        assertNull(encryptedKey.getSecretBytes());
+        log.info("Original public key = " + Utils.HEX.encode( key.getPubKeyHash()));
+    }
+    
+    @Test
     public void testEncryptedCreate() throws Exception {
         ECKey unencryptedKey = new ECKey();
         byte[] originalPrivateKeyBytes = checkNotNull(unencryptedKey.getPrivKeyBytes());

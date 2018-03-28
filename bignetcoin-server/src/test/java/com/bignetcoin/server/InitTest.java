@@ -139,33 +139,10 @@ public class InitTest extends AbstractIntegrationTest {
         // Block r1 = nextBlockSerializer(byteBuffer);
         // Block r2 = nextBlockSerializer(byteBuffer);
 
-        rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
-                outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
-        // rollingBlock = BlockForTest.createNextBlock(r1, null, r2.getHash());
-
-        amount = Coin.valueOf(100, NetworkParameters.BIGNETCOIN_TOKENID);
-
-        ECKey toKey = new ECKey();
-        Address address = new Address(networkParameters, toKey.getPubKeyHash());
-        SendRequest request = SendRequest.to(address, amount);
-        request.changeAddress = new Address(networkParameters, myKey.getPubKeyHash());
-        wallet.completeTx(request);
-
-        rollingBlock.addTransaction(request.tx);
-        rollingBlock.solve();
-        blockgraph.add(rollingBlock);
-
+   
         // cal block update
         milestoneService.update();
-        // logger.info("AVAILABLE : " +
-        // wallet.getBalance(Wallet.BalanceType.AVAILABLE) + ", ESTIMATED : " +
-        // wallet.getBalance(Wallet.BalanceType.ESTIMATED));
-
-        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name())
-                .content(myKey.getPubKeyHash());
-        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
-        String response = mvcResult.getResponse().getContentAsString();
-        logger.info("testGetBalances resp : " + response);
+      
     }
 
 }

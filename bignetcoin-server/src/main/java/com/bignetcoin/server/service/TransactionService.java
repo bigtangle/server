@@ -72,7 +72,7 @@ public class TransactionService {
         String description = (String) request.get("description");
         
         byte[] pubKey = Utils.HEX.decode(pubKeyHex);
-        long tokenid = blockService.getNextTokenId();
+        byte[] tokenid = pubKey;
         Coin coin = Coin.valueOf(amount, tokenid);
         byte[] data = createGenesisBlock(coin, tokenid, pubKey);
         
@@ -86,7 +86,7 @@ public class TransactionService {
         return data;
     }
 
-    public byte[] createGenesisBlock(Coin coin, long tokenid, byte[] pubKey) throws Exception {
+    public byte[] createGenesisBlock(Coin coin, byte[] tokenid, byte[] pubKey) throws Exception {
         Block r1 = blockService.getBlock(getNextBlockToApprove());
         Block r2 = blockService.getBlock(getNextBlockToApprove());
         Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), tokenid);

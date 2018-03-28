@@ -280,7 +280,7 @@ public class BlockChainTest {
 
             // Attempt to spend the coinbase - this should fail.
             try {
-                wallet.createSend(addressToSendTo, valueOf(49, 0));
+                wallet.createSend(addressToSendTo, valueOf(49, NetworkParameters.BIGNETCOIN_TOKENID));
                 fail();
             } catch (InsufficientMoneyException e) {
             }
@@ -299,7 +299,7 @@ public class BlockChainTest {
 
         // Create a spend with the coinbase BTC to the address in the second
         // wallet - this should now succeed.
-        Transaction coinbaseSend2 = wallet.createSend(addressToSendTo, valueOf(49, 0));
+        Transaction coinbaseSend2 = wallet.createSend(addressToSendTo, valueOf(49, NetworkParameters.BIGNETCOIN_TOKENID));
         assertNotNull(coinbaseSend2);
 
         // Commit the coinbaseSpend to the first wallet and check the balances
@@ -317,8 +317,8 @@ public class BlockChainTest {
         assertEquals(wallet.getBalance(BalanceType.AVAILABLE), COIN);
 
         // Check the balances in the second wallet.
-        assertEquals(wallet2.getBalance(BalanceType.ESTIMATED), valueOf(49, 0));
-        assertEquals(wallet2.getBalance(BalanceType.AVAILABLE), valueOf(49, 0));
+        assertEquals(wallet2.getBalance(BalanceType.ESTIMATED), valueOf(49, NetworkParameters.BIGNETCOIN_TOKENID));
+        assertEquals(wallet2.getBalance(BalanceType.AVAILABLE), valueOf(49, NetworkParameters.BIGNETCOIN_TOKENID));
     }
 
     // Some blocks from the test net.

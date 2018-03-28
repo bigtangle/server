@@ -34,13 +34,13 @@ public class UTXO {
     private String fromaddress;
     private String description;
     private boolean spent;
-    private long tokenid;
-    
-    public long getTokenid() {
+    private byte[] tokenid;
+
+    public byte[] getTokenid() {
         return tokenid;
     }
 
-    public void setTokenid(long tokenid) {
+    public void setTokenid(byte[] tokenid) {
         this.tokenid = tokenid;
     }
 
@@ -61,7 +61,7 @@ public class UTXO {
      *            The address.
      */
     public UTXO(Sha256Hash hash, long index, Coin value, long height, boolean coinbase, Script script, String address,
-            Sha256Hash blockhash,  String fromaddress, String description, long tokenid, boolean spent) { 
+            Sha256Hash blockhash, String fromaddress, String description, byte[] tokenid, boolean spent) {
         this.hash = hash;
         this.index = index;
         this.value = value;
@@ -80,7 +80,11 @@ public class UTXO {
         byte[] valueBytes = new byte[8];
         if (in.read(valueBytes, 0, 8) != 8)
             throw new EOFException();
-        value = Coin.valueOf(Utils.readInt64(valueBytes, 0),Utils.readInt64(valueBytes, 0) );
+
+        byte[] tokenid = new byte[20];
+        if (in.read(tokenid) != 20)
+            throw new EOFException();
+        value = Coin.valueOf(Utils.readInt64(valueBytes, 0), tokenid);
 
         int scriptBytesLength = ((in.read() & 0xFF)) | ((in.read() & 0xFF) << 8) | ((in.read() & 0xFF) << 16)
                 | ((in.read() & 0xFF) << 24);
@@ -120,7 +124,7 @@ public class UTXO {
     public Script getScript() {
         return script;
     }
-    
+
     public String getScriptHex() {
         return Utils.HEX.encode(this.script.getProgram());
     }
@@ -130,7 +134,7 @@ public class UTXO {
     public Sha256Hash getHash() {
         return hash;
     }
-    
+
     public String getHashHex() {
         return Utils.HEX.encode(hash.getBytes());
     }
@@ -212,8 +216,6 @@ public class UTXO {
         this.blockhash = blockhash;
     }
 
-    
-
     public String getFromaddress() {
         return fromaddress;
     }
@@ -230,13 +232,12 @@ public class UTXO {
         this.description = description;
     }
 
-	public boolean isSpent() {
-		return spent;
-	}
+    public boolean isSpent() {
+        return spent;
+    }
 
-	public void setSpent(boolean spent) {
-		this.spent = spent;
-	}
-    
-    
+    public void setSpent(boolean spent) {
+        this.spent = spent;
+    }
+
 }
