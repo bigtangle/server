@@ -100,23 +100,14 @@ public class SendMoneyController {
     @FXML
     public void initialize() throws Exception {
         initChoicebox();
-        // KeyBag maybeDecryptingKeyBag = new
-        // DecryptingKeyBag(Main.bitcoin.wallet(), Main.aesKey);
+
         DeterministicKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
 
-        // TODO xiaomi change ui
-        // Coin balance = Coin.valueOf(10000,
-        // NetworkParameters.BIGNETCOIN_TOKENID);
-        // Main.bitcoin.wallet().getBalance();
-        // checkState(!balance.isZero());
-        // new BitcoinAddressValidator(Main.params, address, sendBtn);
         address.setText(ecKey.toAddress(Main.params).toBase58());
 
         new TextFieldValidator(amountEdit, text -> !WTUtils
                 .didThrow(() -> checkState(Coin.parseCoin(text, NetworkParameters.BIGNETCOIN_TOKENID).isPositive())));
-        /*
-         * amountEdit.setText(balance.toPlainString());
-         */
+
     }
 
     public void cancel(ActionEvent event) {
