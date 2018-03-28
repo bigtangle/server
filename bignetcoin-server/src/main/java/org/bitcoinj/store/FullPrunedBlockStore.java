@@ -201,6 +201,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 	public List<Sha256Hash> getNonSolidBlocks() throws BlockStoreException;
 
 	public List<BlockEvaluation> getSolidBlockEvaluations() throws BlockStoreException;
+	
+	public List<BlockEvaluation> getAllBlockEvaluations() throws BlockStoreException;
 
 	public List<BlockEvaluation> getSolidBlocksOfHeight(long height) throws BlockStoreException;
 
