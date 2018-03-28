@@ -22,11 +22,15 @@ import static com.bignetcoin.ui.wallet.utils.GuiUtils.checkGuiThread;
 import static com.google.common.base.Preconditions.checkState;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Json;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.crypto.DeterministicKey;
@@ -40,8 +44,12 @@ import com.bignetcoin.ui.wallet.utils.TextFieldValidator;
 import com.bignetcoin.ui.wallet.utils.WTUtils;
 import com.squareup.okhttp.OkHttpClient;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 
@@ -51,7 +59,10 @@ public class SendMoneyController {
     public TextField address;
     public Label titleLabel;
     public TextField amountEdit;
+    @FXML
     public Label btcLabel;
+    @FXML
+    public ChoiceBox<Object> tokeninfo;
 
     public Main.OverlayUI<?> overlayUI;
 
@@ -60,9 +71,35 @@ public class SendMoneyController {
 
     OkHttpClient client = new OkHttpClient();
 
-    // Called by FXMLLoader
-    @SuppressWarnings({ "unchecked" })
+    public void initChoicebox() {
+        CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        ObservableList<Object> tokenData = FXCollections.observableArrayList();
+        ECKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
+        try {
+            String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens", ecKey.getPubKeyHash());
+            final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+
+            List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
+            List<String> names = new ArrayList<String>();
+            for (Map<String, Object> map : list) {
+
+                tokenData.add(map.get("tokenid"));
+                names.add(map.get("tokenname").toString());
+            }
+            tokeninfo.setItems(tokenData);
+            tokeninfo.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
+                btcLabel.setText(names.get(newv.intValue()));
+            });
+            tokeninfo.getSelectionModel().selectFirst();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+
+    }
+
+    @FXML
     public void initialize() throws Exception {
+        initChoicebox();
         // KeyBag maybeDecryptingKeyBag = new
         // DecryptingKeyBag(Main.bitcoin.wallet(), Main.aesKey);
         DeterministicKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
@@ -74,11 +111,11 @@ public class SendMoneyController {
         // checkState(!balance.isZero());
         // new BitcoinAddressValidator(Main.params, address, sendBtn);
         address.setText(ecKey.toAddress(Main.params).toBase58());
-       
-          new TextFieldValidator(amountEdit, text -> !WTUtils.didThrow( () ->
-          checkState(Coin.parseCoin(text,
-          NetworkParameters.BIGNETCOIN_TOKENID).isPositive())));
-         /* amountEdit.setText(balance.toPlainString());
+
+        new TextFieldValidator(amountEdit, text -> !WTUtils
+                .didThrow(() -> checkState(Coin.parseCoin(text, NetworkParameters.BIGNETCOIN_TOKENID).isPositive())));
+        /*
+         * amountEdit.setText(balance.toPlainString());
          */
     }
 
@@ -96,9 +133,9 @@ public class SendMoneyController {
             HashMap<String, String> requestParam = new HashMap<String, String>();
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
                     Json.jsonmapper().writeValueAsString(requestParam));
-            
+
             Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
-            
+
             Wallet wallet = Main.bitcoin.wallet();
             wallet.setServerURL(CONTEXT_ROOT);
 
