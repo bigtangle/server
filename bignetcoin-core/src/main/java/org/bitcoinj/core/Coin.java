@@ -98,6 +98,14 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     public long getValue() {
         return value;
     }
+    
+    public String getTokenHex() {
+        if (tokenid == null) {
+            return "";
+        }
+        String hexStr = Utils.HEX.encode(this.tokenid);
+        return hexStr;
+    }
 
     /**
      * Parses an amount expressed in the way humans are used to.

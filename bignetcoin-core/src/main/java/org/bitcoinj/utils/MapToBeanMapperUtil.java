@@ -15,8 +15,8 @@ public abstract class MapToBeanMapperUtil {
         if (map == null)
             return null;
         long value = (Integer) map.get("value");
-        byte[] tokenid = (byte[]) map.get("tokenid");
-        return Coin.valueOf(value, tokenid);
+        String tokenHex = (String) map.get("tokenHex");
+        return Coin.valueOf(value, Utils.HEX.decode(tokenHex));
     }
 
     @SuppressWarnings("unchecked")
