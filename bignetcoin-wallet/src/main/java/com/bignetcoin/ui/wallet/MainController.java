@@ -104,13 +104,8 @@ public class MainController {
     @SuppressWarnings("unchecked")
     @FXML
     public void initialize() {
-        try {
-
+       
             initTableView();
-        } catch (Exception e) {
-            GuiUtils.crashAlert(e);
-        }
-
     }
 
     public void initTable() throws Exception {
@@ -173,11 +168,11 @@ public class MainController {
         }
     }
 
-    public void initTableView() throws Exception {
+    public void initTableView() {
         try {
             initTable();
         } catch (Exception e) {
-            // TODO: handle exception
+            GuiUtils.crashAlert(e);
         }
         utxoTable.setItems(Main.instance.getUtxoData());
         coinTable.setItems(Main.instance.getCoinData());
