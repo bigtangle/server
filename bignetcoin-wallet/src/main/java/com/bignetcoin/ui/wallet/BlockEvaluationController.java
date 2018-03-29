@@ -60,8 +60,28 @@ public class BlockEvaluationController {
         System.out.println(response);
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> temp = (List<Map<String, Object>>) data.get("evaluations");
+        if (temp != null && !temp.isEmpty()) {
+            ObservableList<Map> allData = FXCollections.observableArrayList();
+            for (Map<String, Object> evaluationMap : temp) {
+                Map<String, Object> dataRow = new HashMap<>();
+                dataRow.put("hash", ((Map<String, String>) evaluationMap.get("blockhash")).get("bytes"));
+                dataRow.put("rating", evaluationMap.get("rating"));
+                dataRow.put("depth", evaluationMap.get("depth"));
+                dataRow.put("cumulativeWeight", evaluationMap.get("cumulativeWeight"));
+                dataRow.put("height", evaluationMap.get("height"));
+                allData.add(dataRow);
+            }
+            blockhashColumn.setCellValueFactory(new MapValueFactory("hash"));
+            ratingColumn.setCellValueFactory(new MapValueFactory("rating"));
+            depthColumn.setCellValueFactory(new MapValueFactory("depth"));
+            cumulativeWeightColumn.setCellValueFactory(new MapValueFactory("cumulativeWeight"));
+            heightColumn.setCellValueFactory(new MapValueFactory("height"));
 
-        List<BlockEvaluation> list = temp.stream().map(map -> MapToBeanMapperUtil.parseBlockEvaluation(map))
+            blockhashColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+
+            blockEvaluationTable.setItems(allData);
+        }
+      /*  List<BlockEvaluation> list = temp.stream().map(map -> MapToBeanMapperUtil.parseBlockEvaluation(map))
                 .collect(Collectors.toList());
         if (list != null && !list.isEmpty()) {
             ObservableList<Map> allData = FXCollections.observableArrayList();
@@ -84,6 +104,6 @@ public class BlockEvaluationController {
             blockhashColumn.setCellFactory(TextFieldTableCell.forTableColumn());
 
             blockEvaluationTable.setItems(allData);
-        }
+        }*/
     }
 }

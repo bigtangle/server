@@ -7,7 +7,7 @@
 
 <AnchorPane prefHeight="526.0" prefWidth="688.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bignetcoin.ui.wallet.BlockEvaluationController">
 	<children>
-		<TableView fx:id="blockEvaluationTable" layoutX="6.0" layoutY="114.0" prefHeight="355.0" prefWidth="678.0">
+		<TableView fx:id="blockEvaluationTable" editable="true" layoutX="6.0" layoutY="114.0" prefHeight="355.0" prefWidth="678.0">
 			<columns>
 				<TableColumn fx:id="blockhashColumn" prefWidth="245.0" text="blockhash" />
 				<TableColumn fx:id="ratingColumn" prefWidth="75.0" text="rating" />
