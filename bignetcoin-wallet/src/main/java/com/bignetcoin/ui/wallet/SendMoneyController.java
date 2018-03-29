@@ -33,6 +33,7 @@ import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Json;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.utils.OkHttp3Util;
 import org.bitcoinj.wallet.SendRequest;
@@ -77,6 +78,7 @@ public class SendMoneyController {
         ECKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
         try {
             String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens", ecKey.getPubKeyHash());
+          
             final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
 
             List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
@@ -130,7 +132,7 @@ public class SendMoneyController {
             Wallet wallet = Main.bitcoin.wallet();
             wallet.setServerURL(CONTEXT_ROOT);
 
-            Coin amount = Coin.parseCoin(amountEdit.getText(), NetworkParameters.BIGNETCOIN_TOKENID);
+            Coin amount = Coin.parseCoin(amountEdit.getText(), Utils.HEX.decode(tokeninfo.getValue().toString()));
             SendRequest request = SendRequest.to(destination, amount);
             wallet.completeTx(request);
             rollingBlock.addTransaction(request.tx);
