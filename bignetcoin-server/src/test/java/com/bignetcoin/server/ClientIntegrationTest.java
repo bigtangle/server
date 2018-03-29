@@ -19,13 +19,9 @@ import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Json;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.kits.WalletAppKit;
-import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.utils.MapToBeanMapperUtil;
 import org.bitcoinj.utils.OkHttp3Util;
 import org.bitcoinj.wallet.DecryptingKeyBag;
@@ -41,11 +37,20 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ClientIntegrationTest extends AbstractIntegrationTest {
     
+    @Override
+    public void setUp() throws Exception {
+        mockMvc = MockMvcBuilders.webAppContextSetup(webContext).build();
+        objectMapper = new ObjectMapper();
+    }
+
     @Test
     public void getTokens() throws Exception {
         ECKey ecKey = new ECKey();
@@ -57,40 +62,24 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
     private static final Logger logger = LoggerFactory.getLogger(ClientIntegrationTest.class);
     
+    @Test
     public void exchangeToken() throws Exception {
-        Address destination = Address.fromBase58(networkParameters, "");
-        Coin amount = Coin.parseCoin("10000", NetworkParameters.BIGNETCOIN_TOKENID);
+        Address destination = Address.fromBase58(networkParameters, "mqrXsaFj9xV9tKAw7YeP1B6zPmfEP2kjfK");
+        Coin amount = Coin.parseCoin("1", NetworkParameters.BIGNETCOIN_TOKENID);
+
+        WalletAppKit bitcoin = new WalletAppKit(PARAMS, new File("../bignetcoin-wallet"), "bignetcoin");
+        bitcoin.wallet().setServerURL(contextRoot);
         
-        WalletAppKit bitcoin = new WalletAppKit(networkParameters, new File("."), "bignetcoin");
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         
-        SendRequest outputRequest = SendRequest.to(destination, amount);
-        bitcoin.wallet().completeTx(outputRequest);
-        
-        Transaction transaction0 = outputRequest.tx;
-        rollingBlock.addTransaction(transaction0);
-        
-        Transaction transaction1 = makeTransaction(destination.getHash160(), amount);
-        rollingBlock.addTransaction(transaction1);
-        
-        rollingBlock.solve();
-        
-        // upload block to server
+        SendRequest request = SendRequest.to(destination, amount);
+        bitcoin.wallet().completeTx(request);
+        rollingBlock.addTransaction(request.tx);
+//        rollingBlock.solve();
     }
     
-    public Transaction makeTransaction(byte[] pubKeyTo, Coin coin) {
-        Transaction transaction = new Transaction(networkParameters);
-    
-        final ScriptBuilder inputBuilder = new ScriptBuilder();
-        inputBuilder.data(new byte[] { (byte) 0x00, (byte) (0x01 >> 8) });
-        transaction.addInput(new TransactionInput(networkParameters, transaction, inputBuilder.build().getProgram()));
-        transaction.addOutput(new TransactionOutput(networkParameters, transaction, coin,
-                ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
-        return transaction;
-    }
-
     @Autowired
     private NetworkParameters networkParameters;
     

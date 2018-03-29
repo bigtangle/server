@@ -54,11 +54,12 @@ public abstract class AbstractIntegrationTest   {
     private static final Logger log = LoggerFactory.getLogger(TipsServiceTest.class);
     public String contextRoot;
 
-    private MockMvc mockMvc;
-    private static ObjectMapper objectMapper;
+    protected MockMvc mockMvc;
+    
+    protected static ObjectMapper objectMapper;
 
     @Autowired
-    private WebApplicationContext webContext;
+    protected WebApplicationContext webContext;
 
     @Autowired
     private ConfigurableApplicationContext applicationContext;
@@ -101,6 +102,7 @@ public abstract class AbstractIntegrationTest   {
             return 10000;
         }
     };
+    
     @Before
     public void setUp() throws Exception {
         mockMvc = MockMvcBuilders.webAppContextSetup(webContext).build();
