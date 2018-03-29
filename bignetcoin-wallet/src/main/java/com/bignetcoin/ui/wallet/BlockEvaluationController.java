@@ -1,5 +1,7 @@
 package com.bignetcoin.ui.wallet;
 
+import static com.bignetcoin.ui.wallet.Main.bitcoin;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +55,8 @@ public class BlockEvaluationController {
 
     public void initTableView() throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
-        String response = OkHttp3Util.post(CONTEXT_ROOT + "getAllEvaluations", "".getBytes());
+        String response = OkHttp3Util.post(CONTEXT_ROOT + "getAllEvaluations",
+                bitcoin.wallet().currentReceiveKey().getPubKeyHash());
 
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> temp = (List<Map<String, Object>>) data.get("evaluations");
