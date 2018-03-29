@@ -12,6 +12,7 @@ import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.BlockStoreException;
 import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Tokens;
@@ -23,6 +24,8 @@ import org.bitcoinj.store.FullPrunedBlockGraph;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.wallet.CoinSelector;
 import org.bitcoinj.wallet.DefaultCoinSelector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -51,6 +54,7 @@ public class TransactionService {
     protected FullPrunedBlockStore store;
     @Autowired
     protected NetworkParameters networkParameters;
+    private final Logger log = LoggerFactory.getLogger(TipsService.class);
 
     public ByteBuffer askTransaction() throws Exception {
         Block r1 = blockService.getBlock(getNextBlockToApprove());
@@ -58,9 +62,9 @@ public class TransactionService {
 
         Block rollingBlock = new Block(this.networkParameters, r1.getHash(), r2.getHash(),
                 NetworkParameters.BIGNETCOIN_TOKENID);
-        
+
         byte[] data = rollingBlock.bitcoinSerialize();
-        
+
         ByteBuffer byteBuffer = ByteBuffer.wrap(data);
         return byteBuffer;
     }
@@ -70,31 +74,33 @@ public class TransactionService {
         long amount = (Integer) request.get("amount");
         String tokenname = (String) request.get("tokenname");
         String description = (String) request.get("description");
-        
+
         byte[] pubKey = Utils.HEX.decode(pubKeyHex);
-        byte[] tokenid = pubKey;
+        byte[] tokenid =( new ECKey()).fromPublicOnly(pubKey).getPubKeyHash();
         Coin coin = Coin.valueOf(amount, tokenid);
-        byte[] data = createGenesisBlock(coin, tokenid, pubKey);
-        
+        Block block = createGenesisBlock(coin, tokenid, pubKey);
+        block.toString() ;
+        log.debug(networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize()).toString());
         Tokens tokens = new Tokens();
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
         tokens.setAmount(amount);
         tokens.setDescription(description);
         store.saveTokens(tokens);
-        
-        return data;
+
+        return block.bitcoinSerialize();
     }
 
-    public byte[] createGenesisBlock(Coin coin, byte[] tokenid, byte[] pubKey) throws Exception {
+    public Block createGenesisBlock(Coin coin, byte[] tokenid, byte[] pubKey) throws Exception {
         Block r1 = blockService.getBlock(getNextBlockToApprove());
         Block r2 = blockService.getBlock(getNextBlockToApprove());
-        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), tokenid, NetworkParameters.BLOCKTYPE_GENESIS_MULTIPLE );
+        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), tokenid,
+                NetworkParameters.BLOCKTYPE_GENESIS_MULTIPLE);
         block.addCoinbaseTransaction(pubKey, coin);
         block.solve();
         FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
         blockgraph.add(block);
-        return block.bitcoinSerialize();
+        return block;
     }
 
     public Sha256Hash getNextBlockToApprove() throws Exception {

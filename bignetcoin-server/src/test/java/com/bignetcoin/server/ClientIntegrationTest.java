@@ -63,9 +63,10 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     private static final Logger logger = LoggerFactory.getLogger(ClientIntegrationTest.class);
     
     @Test
+    //must run testInitWallet first to get money to spend
     public void exchangeToken() throws Exception {
         Address address = Address.fromBase58(networkParameters, "mqrXsaFj9xV9tKAw7YeP1B6zPmfEP2kjfK");
-        Coin amount = Coin.parseCoin("1", NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin amount = Coin.parseCoin("0.0001", NetworkParameters.BIGNETCOIN_TOKENID);
 
         WalletAppKit bitcoin = new WalletAppKit(PARAMS, new File("../bignetcoin-wallet"), "bignetcoin");
         bitcoin.wallet().setServerURL(contextRoot);

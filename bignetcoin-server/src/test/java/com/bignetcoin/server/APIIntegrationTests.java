@@ -184,7 +184,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         logger.info("testGetBalances resp : " + data);
     }
     
-    @Test
+   //TODO  @Test
     public void testSpringBootCreateGenesisBlock() throws Exception {
         ECKey outKey = new ECKey();
         byte[] pubKey = outKey.getPubKey();
