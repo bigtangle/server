@@ -62,7 +62,8 @@ public class DefaultCoinSelector implements CoinSelector {
             // ours and pending.
             if (!shouldSelect(output.getParentTransaction()))
                 continue;
-            if (target.tokenid == output.getValue().tokenid) {
+            
+            if (Arrays.equals(target.tokenid, output.getValue().tokenid)) {
                 selected.add(output);
                 total += output.getValue().value;
             }

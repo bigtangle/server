@@ -64,7 +64,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     
     @Test
     public void exchangeToken() throws Exception {
-        Address destination = Address.fromBase58(networkParameters, "mqrXsaFj9xV9tKAw7YeP1B6zPmfEP2kjfK");
+        Address address = Address.fromBase58(networkParameters, "mqrXsaFj9xV9tKAw7YeP1B6zPmfEP2kjfK");
         Coin amount = Coin.parseCoin("1", NetworkParameters.BIGNETCOIN_TOKENID);
 
         WalletAppKit bitcoin = new WalletAppKit(PARAMS, new File("../bignetcoin-wallet"), "bignetcoin");
@@ -74,8 +74,11 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         
-        SendRequest request = SendRequest.to(destination, amount);
+        SendRequest request = SendRequest.to(address, amount);
         bitcoin.wallet().completeTx(request);
+        
+        // add output
+        request.tx.addOutput(amount, address);
         rollingBlock.addTransaction(request.tx);
 //        rollingBlock.solve();
     }
