@@ -195,6 +195,13 @@ public class Block extends Message {
         this.tokenid = tokenid;
     }
 
+    public String getTokenHex() {
+        if (tokenid == null) {
+            return "";
+        }
+        String hexStr = Utils.HEX.encode(this.tokenid);
+        return hexStr;
+    }
      
 
     /**
