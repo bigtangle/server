@@ -1,11 +1,16 @@
 package com.bignetcoin.ui.wallet;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.bitcoinj.core.BlockEvaluation;
+import org.bitcoinj.core.Json;
+import org.bitcoinj.utils.MapToBeanMapperUtil;
+import org.bitcoinj.utils.OkHttp3Util;
+
+import com.bignetcoin.ui.wallet.utils.GuiUtils;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -35,15 +40,25 @@ public class BlockEvaluationController {
     @FXML
     public void initialize() {
 
-        initTableView();
+        try {
+            initTableView();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
     }
 
     public void closeUI(ActionEvent event) {
         overlayUI.done();
     }
 
-    public void initTableView() {
-        List<BlockEvaluation> list = new ArrayList<BlockEvaluation>();
+    public void initTableView() throws Exception {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String response = OkHttp3Util.postString(CONTEXT_ROOT + "getAllEvaluations", "");
+        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+        List<Map<String, Object>> temp = (List<Map<String, Object>>) data.get("evaluations");
+
+        List<BlockEvaluation> list = temp.stream().map(map -> MapToBeanMapperUtil.parseBlockEvaluation(map))
+                .collect(Collectors.toList());
         if (list != null && !list.isEmpty()) {
             ObservableList<Map> allData = FXCollections.observableArrayList();
             for (BlockEvaluation blockEvaluation : list) {

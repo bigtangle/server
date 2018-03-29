@@ -31,4 +31,12 @@ public class OkHttp3Util {
         Response response = client.newCall(request).execute();
         return response.body().bytes();
     }
+
+    public static String postString(String url, String s) throws Exception {
+        OkHttpClient client = new OkHttpClient();
+        RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), s);
+        Request request = new Request.Builder().url(url).post(body).build();
+        Response response = client.newCall(request).execute();
+        return response.body().string();
+    }
 }

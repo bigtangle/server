@@ -2,6 +2,7 @@ package org.bitcoinj.utils;
 
 import java.util.Map;
 
+import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.UTXO;
@@ -37,5 +38,17 @@ public abstract class MapToBeanMapperUtil {
         UTXO output = new UTXO(hash, index, amount, height, coinbase, new Script(Utils.HEX.decode(scriptHex)), address,
                 blockhash, fromaddress, description, tokenid, spent);
         return output;
+    }
+
+    public static BlockEvaluation parseBlockEvaluation(Map<String, Object> map) {
+        if (map == null)
+            return null;
+        Sha256Hash hash = Sha256Hash.wrap((String) map.get("bytes"));
+        long rating = (Long) map.get("rating");
+        long depth = (Long) map.get("depth");
+        long cumulativeWeight = (Long) map.get("cumulativeWeight");
+        long height = (Long) map.get("height");
+        return BlockEvaluation.build(hash, rating, depth, cumulativeWeight, true, height, true, 0);
+
     }
 }

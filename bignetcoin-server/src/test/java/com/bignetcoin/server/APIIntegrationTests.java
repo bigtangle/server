@@ -175,6 +175,14 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String data = mvcResult.getResponse().getContentAsString();
         logger.info("testGetBalances resp : " + data);
     }
+    @Test
+    public void testSpringBootGetBlockEvaluations() throws Exception {
+        ECKey ecKey = new ECKey();
+        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getAllEvaluations.name()).content(ecKey.getPubKeyHash());
+        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
+        String data = mvcResult.getResponse().getContentAsString();
+        logger.info("testGetBalances resp : " + data);
+    }
     
     @Test
     public void testSpringBootCreateGenesisBlock() throws Exception {
