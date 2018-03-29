@@ -53,7 +53,8 @@ public class BlockEvaluationController {
 
     public void initTableView() throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
-        String response = OkHttp3Util.postString(CONTEXT_ROOT + "getAllEvaluations", "");
+        String response = OkHttp3Util.post(CONTEXT_ROOT + "getAllEvaluations", "".getBytes());
+
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> temp = (List<Map<String, Object>>) data.get("evaluations");
 
