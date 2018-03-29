@@ -43,16 +43,8 @@ public abstract class MapToBeanMapperUtil {
     public static BlockEvaluation parseBlockEvaluation(Map<String, Object> map) {
         if (map == null)
             return null;
-        Map<String, Object> temp = (Map<String, Object>) map.get("blockhash");
-        Sha256Hash hash = null;
-        if (temp != null && !temp.isEmpty()) {
-            try {
-                hash = Sha256Hash.wrap((String) temp.get("bytes"));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
+        String blockHexStr = (String) map.get("blockHexStr");
+        Sha256Hash hash = Sha256Hash.wrap(Utils.HEX.decode(blockHexStr));
         long rating = (Integer) map.get("rating");
         long depth = (Integer) map.get("depth");
         long cumulativeWeight = (Integer) map.get("cumulativeWeight");

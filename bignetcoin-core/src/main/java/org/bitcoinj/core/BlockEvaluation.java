@@ -4,6 +4,10 @@ package org.bitcoinj.core;
  * Evaluation of block, variable in time
  */
 public class BlockEvaluation {
+    
+    public String getBlockHexStr() {
+        return Utils.HEX.encode(this.blockhash.getBytes());
+    }
 
 	private BlockEvaluation() { 
 	}

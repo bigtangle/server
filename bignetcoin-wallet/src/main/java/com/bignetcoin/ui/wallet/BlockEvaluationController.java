@@ -60,7 +60,7 @@ public class BlockEvaluationController {
         System.out.println(response);
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> temp = (List<Map<String, Object>>) data.get("evaluations");
-        if (temp != null && !temp.isEmpty()) {
+      /*  if (temp != null && !temp.isEmpty()) {
             ObservableList<Map> allData = FXCollections.observableArrayList();
             for (Map<String, Object> evaluationMap : temp) {
                 Map<String, Object> dataRow = new HashMap<>();
@@ -80,8 +80,8 @@ public class BlockEvaluationController {
             blockhashColumn.setCellFactory(TextFieldTableCell.forTableColumn());
 
             blockEvaluationTable.setItems(allData);
-        }
-      /*  List<BlockEvaluation> list = temp.stream().map(map -> MapToBeanMapperUtil.parseBlockEvaluation(map))
+        }*/
+      List<BlockEvaluation> list = temp.stream().map(map -> MapToBeanMapperUtil.parseBlockEvaluation(map))
                 .collect(Collectors.toList());
         if (list != null && !list.isEmpty()) {
             ObservableList<Map> allData = FXCollections.observableArrayList();
@@ -104,6 +104,6 @@ public class BlockEvaluationController {
             blockhashColumn.setCellFactory(TextFieldTableCell.forTableColumn());
 
             blockEvaluationTable.setItems(allData);
-        }*/
+        }
     }
 }

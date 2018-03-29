@@ -144,6 +144,7 @@ public class SendMoneyController {
             // TODO xiaomi change ui
             checkGuiThread();
             overlayUI.done();
+            Main.instance.controller.initTableView();
             // sendBtn.setDisable(true);
             // address.setDisable(true);
             // ((HBox) amountEdit.getParent()).getChildren().remove(amountEdit);
