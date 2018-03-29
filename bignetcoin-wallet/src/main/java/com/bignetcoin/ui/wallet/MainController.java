@@ -137,6 +137,7 @@ public class MainController {
         for (ECKey ecKey : keys) {
 
             String response = OkHttp3Util.post(CONTEXT_ROOT + "getBalances", ecKey.getPubKeyHash());
+            System.out.println(response);
             final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
 
             if (data != null && !data.isEmpty()) {
