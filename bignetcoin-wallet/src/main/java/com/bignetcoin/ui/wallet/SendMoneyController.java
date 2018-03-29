@@ -78,14 +78,15 @@ public class SendMoneyController {
         ECKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
         try {
             String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens", ecKey.getPubKeyHash());
-          
+
             final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
 
             List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
             List<String> names = new ArrayList<String>();
             for (Map<String, Object> map : list) {
 
-                tokenData.add(map.get("tokenid"));
+                String tokenHex = (String) map.get("tokenHex");
+                tokenData.add(tokenHex);
                 names.add(map.get("tokenname").toString());
             }
             tokeninfo.setItems(tokenData);
@@ -131,7 +132,6 @@ public class SendMoneyController {
 
             Wallet wallet = Main.bitcoin.wallet();
             wallet.setServerURL(CONTEXT_ROOT);
-
             Coin amount = Coin.parseCoin(amountEdit.getText(), Utils.HEX.decode(tokeninfo.getValue().toString()));
             SendRequest request = SendRequest.to(destination, amount);
             wallet.completeTx(request);

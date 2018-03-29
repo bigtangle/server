@@ -9,6 +9,10 @@ public class Tokens {
     private long amount;
     
     private String description;
+    
+    public String getTokenHex() {
+        return Utils.HEX.encode(this.tokenid);
+    }
 
     public byte[] getTokenid() {
         return tokenid;
