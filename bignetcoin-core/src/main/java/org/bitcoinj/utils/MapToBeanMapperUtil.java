@@ -46,13 +46,17 @@ public abstract class MapToBeanMapperUtil {
         Map<String, Object> temp = (Map<String, Object>) map.get("blockhash");
         Sha256Hash hash = null;
         if (temp != null && !temp.isEmpty()) {
-            hash = Sha256Hash.wrap((String) temp.get("bytes"));
+            try {
+                hash = Sha256Hash.wrap((String) temp.get("bytes"));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
-        long rating = (Long) map.get("rating");
-        long depth = (Long) map.get("depth");
-        long cumulativeWeight = (Long) map.get("cumulativeWeight");
-        long height = (Long) map.get("height");
+        long rating = (Integer) map.get("rating");
+        long depth = (Integer) map.get("depth");
+        long cumulativeWeight = (Integer) map.get("cumulativeWeight");
+        long height = (Integer) map.get("height");
         return BlockEvaluation.build(hash, rating, depth, cumulativeWeight, true, height, true, 0);
 
     }

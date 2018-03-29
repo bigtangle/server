@@ -57,7 +57,7 @@ public class BlockEvaluationController {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getAllEvaluations",
                 bitcoin.wallet().currentReceiveKey().getPubKeyHash());
-
+        System.out.println(response);
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> temp = (List<Map<String, Object>>) data.get("evaluations");
 
@@ -67,7 +67,8 @@ public class BlockEvaluationController {
             ObservableList<Map> allData = FXCollections.observableArrayList();
             for (BlockEvaluation blockEvaluation : list) {
                 Map<String, Object> dataRow = new HashMap<>();
-                dataRow.put("hash", blockEvaluation.getBlockhash().toString());
+                dataRow.put("hash",
+                        blockEvaluation.getBlockhash() == null ? "" : blockEvaluation.getBlockhash().toString());
                 dataRow.put("rating", blockEvaluation.getRating());
                 dataRow.put("depth", blockEvaluation.getDepth());
                 dataRow.put("cumulativeWeight", blockEvaluation.getCumulativeWeight());

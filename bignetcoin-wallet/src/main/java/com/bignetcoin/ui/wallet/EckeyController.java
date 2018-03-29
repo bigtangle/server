@@ -65,15 +65,11 @@ public class EckeyController {
         List<ECKey> issuedKeys = new ArrayList<>();
         for (ECKey key : Main.bitcoin.wallet().getImportedKeys()) {
             ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
-            System.out.println(
-                    "realKey, pubKey : " + ecKey.getPublicKeyAsHex() + ", prvKey : " + ecKey.getPrivateKeyAsHex());
             issuedKeys.add(ecKey);
         }
         for (DeterministicKeyChain chain : Main.bitcoin.wallet().getKeyChainGroup().getDeterministicKeyChains()) {
             for (ECKey key : chain.getLeafKeys()) {
                 ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
-                System.out.println(
-                        "realKey, pubKey : " + ecKey.getPublicKeyAsHex() + ", priKey : " + ecKey.getPrivateKeyAsHex());
                 issuedKeys.add(ecKey);
             }
         }
