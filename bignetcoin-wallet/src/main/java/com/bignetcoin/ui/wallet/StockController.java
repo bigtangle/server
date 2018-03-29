@@ -4,10 +4,12 @@
  *******************************************************************************/
 package com.bignetcoin.ui.wallet;
 
-import java.nio.ByteBuffer;
+import java.util.HashMap;
 
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Json;
+import org.bitcoinj.core.Utils;
 import org.bitcoinj.utils.OkHttp3Util;
 
 import com.bignetcoin.ui.wallet.utils.GuiUtils;
@@ -32,14 +34,19 @@ public class StockController {
     public void saveStock(ActionEvent event) {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
-        byte[] pubKey = outKey.getPubKey();
-        ByteBuffer byteBuffer = ByteBuffer.allocate(4 + 4 + pubKey.length);
-        byteBuffer.putInt(Integer.parseInt(stockAmount.getText()));
-        byteBuffer.putInt(pubKey.length);
-        byteBuffer.put(pubKey);
+           
         try {
-            byte[] blockByte = OkHttp3Util.postByte(CONTEXT_ROOT + "createGenesisBlock", byteBuffer.array());
-            Block block = Main.params.getDefaultSerializer().makeBlock(blockByte);
+            byte[] pubKey = outKey.getPubKey();
+            HashMap<String, Object> requestParam = new HashMap<String, Object>();
+            requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
+            requestParam.put("amount", 100000L);
+            requestParam.put("tokenname", "Test");
+            requestParam.put("description", "Test");
+            
+            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "createGenesisBlock", Json.jsonmapper().writeValueAsString(requestParam));
+            Block block = Main.params.getDefaultSerializer().makeBlock(data);
+            
+      
             stockCode.setText(block.getTokenid() + "");
             GuiUtils.informationalAlert("token publish is ok", "", "");
         } catch (Exception e) {
