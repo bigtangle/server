@@ -49,11 +49,12 @@
     </StackPane>
     <HBox layoutX="44.0" layoutY="107.0" prefHeight="23.0" prefWidth="711.0" spacing="20" AnchorPane.rightAnchor="45.0" AnchorPane.topAnchor="107.0">
        <children>
-           <Button onAction="#settingsClicked" style="-fx-base: white;" styleClass="fat-button" text="Settings" />
-           <Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" alignment="CENTER" mnemonicParsing="false" onAction="#sendMoneyOut" style="-fx-base: lightgreen; -fx-font-weight: bold" styleClass="fat-button" text="transfer" />
-            <Button fx:id="stock" onAction="#stockPublish" styleClass="fat-button" text="token publish" />
-            <Button fx:id="exchange" mnemonicParsing="false" onAction="#exchangeCoin" styleClass="fat-button" text="exchange" />
-            <Button mnemonicParsing="false" onAction="#eckeyList" styleClass="fat-button" text="eckey list" />
+           <Button onAction="#settingsClicked" text="Settings" />
+           <Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" alignment="CENTER" mnemonicParsing="false" onAction="#sendMoneyOut" text="transfer" />
+            <Button fx:id="stock" onAction="#stockPublish" text="token publish" />
+            <Button fx:id="exchange" mnemonicParsing="false" onAction="#exchangeCoin" text="exchange" />
+            <Button mnemonicParsing="false" onAction="#eckeyList" text="eckey list" />
+            <Button mnemonicParsing="false" text="block evaluation list" />
        </children>
     </HBox>
       <AnchorPane layoutX="140.0" layoutY="25.0" prefHeight="15.0" prefWidth="572.0">
@@ -62,14 +63,14 @@
             <TextField fx:id="IPAdress" layoutX="83.0" prefHeight="23.0" prefWidth="203.0" text="127.0.0.1" />
             <Label layoutX="313.0" layoutY="1.0" text="port" />
             <TextField fx:id="IPPort" layoutX="352.0" prefHeight="23.0" prefWidth="146.0" text="14265" />
-            <Button fx:id="connectButton" layoutX="506.0" layoutY="-2.0" mnemonicParsing="false" onAction="#connectServer" styleClass="fat-button" text="connect" />
+            <Button fx:id="connectButton" layoutX="506.0" layoutY="-2.0" mnemonicParsing="false" onAction="#connectServer" text="connect" />
          </children>
       </AnchorPane>
       <AnchorPane layoutX="129.0" layoutY="65.0" prefHeight="30.0" prefWidth="591.0">
          <children>
             <Label layoutX="8.0" layoutY="7.0" text="Directory" />
             <TextField fx:id="keyFileDirectory" layoutX="72.0" layoutY="3.0" prefHeight="23.0" prefWidth="432.0" />
-            <Button layoutX="522.0" layoutY="5.0" mnemonicParsing="false" onAction="#setKeyFilePath" styleClass="fat-button" text="setKeyFilePath" />
+            <Button layoutX="522.0" layoutY="5.0" mnemonicParsing="false" onAction="#setKeyFilePath" text="setKeyFilePath" />
          </children>
       </AnchorPane>
   </children>

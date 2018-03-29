@@ -104,8 +104,8 @@ public class MainController {
     @SuppressWarnings("unchecked")
     @FXML
     public void initialize() {
-       
-            initTableView();
+
+        initTableView();
     }
 
     public void initTable() throws Exception {
@@ -216,9 +216,13 @@ public class MainController {
     }
 
     public void sendMoneyOut(ActionEvent event) {
-        // Hide this UI and show the send money UI. This UI won't be clickable
-        // until the user dismisses send_money.
+
         Main.instance.overlayUI("send_money.fxml");
+    }
+
+    public void blockEvaluation(ActionEvent event) {
+
+        Main.instance.overlayUI("blockEvaluation.fxml");
     }
 
     public void setKeyFilePath(ActionEvent event) {
