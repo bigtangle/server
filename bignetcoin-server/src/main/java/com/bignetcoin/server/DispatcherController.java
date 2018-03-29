@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bignetcoin.server.response.AbstractResponse;
+import com.bignetcoin.server.response.GetBlockEvaluationsResponse;
 import com.bignetcoin.server.service.BlockService;
 import com.bignetcoin.server.service.TokensService;
 import com.bignetcoin.server.service.TransactionService;
@@ -32,16 +33,16 @@ import com.bignetcoin.server.service.WalletService;
 @RestController
 @RequestMapping("/")
 public class DispatcherController {
-    
+
     @Autowired
     private TransactionService transactionService;
-    
+
     @Autowired
     private WalletService walletService;
-    
+
     @Autowired
     private BlockService blockService;
-    
+
     @Autowired
     private TokensService tokensService;
 
@@ -50,7 +51,7 @@ public class DispatcherController {
             HttpServletResponse httpServletResponse) throws Exception {
         try {
             logger.info("reqCmd : {}, reqHex : {}, started.", reqCmd, Utils.HEX.encode(bodyByte));
-            ReqCmd reqCmd0000  = ReqCmd.valueOf(reqCmd);
+            ReqCmd reqCmd0000 = ReqCmd.valueOf(reqCmd);
             switch (reqCmd0000) {
             case getBalances: {
                 List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
@@ -58,28 +59,28 @@ public class DispatcherController {
                 AbstractResponse response = walletService.getAccountBalanceInfo(pubKeyHashs);
                 this.outPrintJSONString(httpServletResponse, response);
             }
-            break;
+                break;
 
             case askTransaction: {
                 byte[] data = transactionService.askTransaction().array();
                 this.outPointBinaryArray(httpServletResponse, data);
             }
-            break;
+                break;
 
             case saveBlock: {
                 blockService.saveBinaryArrayToBlock(bodyByte);
                 this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
             }
-            break;
-            
+                break;
+
             case getOutputs: {
                 List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
                 pubKeyHashs.add(bodyByte);
                 AbstractResponse response = walletService.getAccountOutputs(pubKeyHashs);
                 this.outPrintJSONString(httpServletResponse, response);
             }
-            break;
-            
+                break;
+
             case createGenesisBlock: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 @SuppressWarnings("unchecked")
@@ -87,36 +88,42 @@ public class DispatcherController {
                 byte[] data = transactionService.createGenesisBlock(request);
                 this.outPointBinaryArray(httpServletResponse, data);
             }
-            break;
-            
+                break;
+
             case exchangeToken: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 @SuppressWarnings("unchecked")
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 logger.debug("exchangeToken, {}", request);
             }
-            break;
-            
+                break;
+
             case getTokens: {
                 AbstractResponse response = tokensService.getTokensList();
                 this.outPrintJSONString(httpServletResponse, response);
             }
-            break;
-            
+                break;
+            case getAllEvaluations: {
+                AbstractResponse response = GetBlockEvaluationsResponse.create(blockService.getAllBlockEvaluations());
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+
             }
         } catch (Exception exception) {
             logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, Utils.HEX.encode(bodyByte), exception);
         }
     }
-    
+
     public void outPointBinaryArray(HttpServletResponse httpServletResponse, byte[] data) throws Exception {
         ServletOutputStream servletOutputStream = httpServletResponse.getOutputStream();
         servletOutputStream.write(data);
         servletOutputStream.flush();
         servletOutputStream.close();
     }
-    
-    public void outPrintJSONString(HttpServletResponse httpServletResponse, AbstractResponse response) throws Exception {
+
+    public void outPrintJSONString(HttpServletResponse httpServletResponse, AbstractResponse response)
+            throws Exception {
         PrintWriter printWriter = httpServletResponse.getWriter();
         printWriter.append(Json.jsonmapper().writeValueAsString(response));
         printWriter.flush();
