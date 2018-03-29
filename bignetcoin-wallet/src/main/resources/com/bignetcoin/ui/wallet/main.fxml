@@ -54,7 +54,7 @@
             <Button fx:id="stock" onAction="#stockPublish" text="token publish" />
             <Button fx:id="exchange" mnemonicParsing="false" onAction="#exchangeCoin" text="exchange" />
             <Button mnemonicParsing="false" onAction="#eckeyList" text="eckey list" />
-            <Button mnemonicParsing="false" text="block evaluation list" />
+            <Button mnemonicParsing="false" onAction="#blockEvaluation" text="block evaluation list" />
        </children>
     </HBox>
       <AnchorPane layoutX="140.0" layoutY="25.0" prefHeight="15.0" prefWidth="572.0">
