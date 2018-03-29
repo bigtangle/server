@@ -67,7 +67,6 @@ import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.VerificationException;
-import org.bitcoinj.core.listeners.TransactionConfidenceEventListener;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.KeyCrypter;
@@ -139,7 +138,7 @@ public class WalletTest extends TestWithWallet {
     private void createMarriedWallet(int threshold, int numKeys, boolean addSigners) throws BlockStoreException {
         wallet = new Wallet(PARAMS);
         blockStore = new MemoryBlockStore(PARAMS);
-        chain = new BlockGraph(PARAMS, wallet, blockStore);
+        chain = new BlockGraph(PARAMS,   blockStore);
 
         List<DeterministicKey> followingKeys = Lists.newArrayList();
         for (int i = 0; i < numKeys - 1; i++) {
@@ -3604,7 +3603,7 @@ public class WalletTest extends TestWithWallet {
         String serialized = watchKey.serializePubB58(PARAMS);
         Wallet wallet = Wallet.fromWatchingKeyB58(PARAMS, serialized, 0);
         blockStore = new MemoryBlockStore(PARAMS);
-        chain = new BlockGraph(PARAMS, wallet, blockStore);
+        chain = new BlockGraph(PARAMS,   blockStore);
 
         final DeterministicKeyChain keyChain = new DeterministicKeyChain(new SecureRandom());
         DeterministicKey partnerKey = DeterministicKey.deserializeB58(null,

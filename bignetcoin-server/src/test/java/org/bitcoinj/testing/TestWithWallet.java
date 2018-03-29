@@ -49,7 +49,7 @@ public class TestWithWallet {
         myKey = wallet.currentReceiveKey();
         myAddress = myKey.toAddress(PARAMS);
         blockStore = new MemoryBlockStore(PARAMS);
-        chain = new BlockGraph(PARAMS, wallet, blockStore);
+        chain = new BlockGraph(PARAMS,  blockStore);
     }
 
     public void tearDown() throws Exception {

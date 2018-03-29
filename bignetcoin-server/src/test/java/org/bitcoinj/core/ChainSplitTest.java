@@ -60,7 +60,7 @@ public class ChainSplitTest {
         wallet = new Wallet(PARAMS);
         ECKey key1 = wallet.freshReceiveKey();
         ECKey key2 = wallet.freshReceiveKey();
-        chain = new BlockGraph(PARAMS, wallet, blockStore);
+        chain = new BlockGraph(PARAMS,  blockStore);
         coinsTo = key1.toAddress(PARAMS);
         coinsTo2 = key2.toAddress(PARAMS);
         someOtherGuy = new ECKey().toAddress(PARAMS);

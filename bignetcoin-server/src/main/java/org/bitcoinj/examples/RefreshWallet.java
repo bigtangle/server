@@ -28,7 +28,7 @@ public class RefreshWallet {
         // Set up the components and link them together.
         final NetworkParameters params = TestNet3Params.get();
         BlockStore blockStore = new MemoryBlockStore(params);
-        BlockGraph chain = new BlockGraph(params, wallet, blockStore);
+        BlockGraph chain = new BlockGraph(params,   blockStore);
 
         final PeerGroup peerGroup = new PeerGroup(params, chain);
         peerGroup.startAsync();

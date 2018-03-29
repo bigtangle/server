@@ -1512,9 +1512,9 @@ public class Transaction extends ChildMessage {
                 if (output.getValue().signum() < 0) // getValue() can throw
                                                     // IllegalStateException
                     throw new VerificationException.NegativeValueOutput();
-                valueOut = valueOut.add(output.getValue());
-                if (params.hasMaxMoney() && valueOut.compareTo(params.getMaxMoney()) > 0)
-                    throw new IllegalArgumentException();
+//                valueOut = valueOut.add(output.getValue());
+//                if (params.hasMaxMoney() && valueOut.compareTo(params.getMaxMoney()) > 0)
+//                    throw new IllegalArgumentException();
             }
         } catch (IllegalStateException e) {
             throw new VerificationException.ExcessiveValue();

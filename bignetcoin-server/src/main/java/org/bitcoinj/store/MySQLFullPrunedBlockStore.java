@@ -86,7 +86,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    CONSTRAINT blockevaluation_pk PRIMARY KEY (blockhash) )\n";
     
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n" +
-            "    tokenid bigint(20) NOT NULL DEFAULT '0',\n" +
+            "    tokenid varbinary(255) NOT NULL DEFAULT '0',\n" +
             "    tokenname varchar(255) DEFAULT NULL,\n" + 
             "    amount bigint(20) DEFAULT NULL,\n" +
             "    description varchar(255) DEFAULT NULL,\n" + 

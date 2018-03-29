@@ -89,7 +89,7 @@ public class TransactionService {
     public byte[] createGenesisBlock(Coin coin, byte[] tokenid, byte[] pubKey) throws Exception {
         Block r1 = blockService.getBlock(getNextBlockToApprove());
         Block r2 = blockService.getBlock(getNextBlockToApprove());
-        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), tokenid);
+        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), tokenid, NetworkParameters.BLOCKTYPE_GENESIS_MULTIPLE );
         block.addCoinbaseTransaction(pubKey, coin);
         block.solve();
         FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);

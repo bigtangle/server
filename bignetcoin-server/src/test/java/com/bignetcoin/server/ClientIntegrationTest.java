@@ -88,9 +88,8 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     
     @Test
     public void createGenesisBlock() throws Exception {
-        WalletAppKit bitcoin = new WalletAppKit(networkParameters, new File("."), "bignetcoin");
-        List<ECKey> keys = getWalletKeyBag(bitcoin);
-        ECKey outKey = keys.get(0);
+     //create with new tokenid
+        ECKey outKey = new ECKey();
         
         byte[] pubKey = outKey.getPubKey();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();

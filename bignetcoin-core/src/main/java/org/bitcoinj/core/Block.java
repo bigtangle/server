@@ -123,7 +123,7 @@ public class Block extends Message {
     private long nonce;
     // Utils.sha256hash160
     private byte[] mineraddress;
- // Utils.sha256hash160, but toString() diplay with "$:"+ Addresse.totring()
+    // Utils.sha256hash160, but toString() diplay with "$:"+ Addresse.totring()
     private byte[] tokenid;
     private long blocktype;
 
@@ -131,7 +131,7 @@ public class Block extends Message {
     // unnecessary holdover from the Dalvik days.
     /** If null, it means this object holds only the headers. */
     @Nullable
-     List<Transaction> transactions;
+    List<Transaction> transactions;
 
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
     private Sha256Hash hash;
@@ -146,36 +146,24 @@ public class Block extends Message {
     // of the size of the ideal encoding in addition to the actual message size
     // (which Message needs)
     protected int optimalEncodingMessageSize;
-    
+
     Block(NetworkParameters params, long setVersion) {
-        super(params);
-        // Set up a few basic things. We are not complete after this though.
-        version = setVersion;
-        // difficultyTarget = EASIEST_DIFFICULTY_TARGET;
-        time = System.currentTimeMillis() / 1000;
-        prevBlockHash = Sha256Hash.ZERO_HASH;
-        prevBranchBlockHash = Sha256Hash.ZERO_HASH;
-        tokenid = NetworkParameters.BIGNETCOIN_TOKENID;
-        blocktype = NetworkParameters.BLOCKTYPE_TRANSFER;
-        mineraddress = new byte[20];
-        length = HEADER_SIZE;
+
+        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, NetworkParameters.BIGNETCOIN_TOKENID,
+                NetworkParameters.BLOCKTYPE_TRANSFER);
     }
 
-    public Block(NetworkParameters params, long blockVersionGenesis, byte[] bignetcoinTokenid,
-            long blocktypeTransfer) {
-        super(params);
-        version = Block.BLOCK_VERSION_GENESIS;
-        time = System.currentTimeMillis() / 1000;
-        prevBlockHash = Sha256Hash.ZERO_HASH;
-        prevBranchBlockHash = Sha256Hash.ZERO_HASH;
-        tokenid = bignetcoinTokenid;
-        blocktype =blocktypeTransfer;
-        mineraddress = new byte[20];
-        this.transactions = new LinkedList<Transaction>();
-        this.transactions.addAll(transactions);
+    public Block(NetworkParameters params, long blockVersionGenesis, byte[] tokenid, long blocktypeTransfer) {
+
+        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, tokenid, NetworkParameters.BLOCKTYPE_TRANSFER);
     }
 
-    public Block(NetworkParameters params, Sha256Hash prevBlockHash, Sha256Hash prevBranchBlockHash,  byte[] tokenid) {
+    public Block(NetworkParameters params, Sha256Hash prevBlockHash, Sha256Hash prevBranchBlockHash, byte[] tokenid) {
+        this(params, prevBlockHash, prevBranchBlockHash, tokenid, NetworkParameters.BLOCKTYPE_TRANSFER);
+    }
+
+    public Block(NetworkParameters params, Sha256Hash prevBlockHash, Sha256Hash prevBranchBlockHash, byte[] tokenid,
+            long blocktype) {
         super(params);
         // Set up a few basic things. We are not complete after this though.
         version = Block.BLOCK_VERSION_GENESIS;
@@ -184,13 +172,13 @@ public class Block extends Message {
         this.prevBlockHash = prevBlockHash;
         this.prevBranchBlockHash = prevBranchBlockHash;
         this.tokenid = tokenid;
-        blocktype = NetworkParameters.BLOCKTYPE_TRANSFER;
+        this.blocktype = blocktype;
         mineraddress = new byte[20];
         length = HEADER_SIZE;
         this.transactions = new ArrayList<>();
     }
-    
-    Block(NetworkParameters params, long setVersion,  byte[] tokenid) {
+
+    Block(NetworkParameters params, long setVersion, byte[] tokenid) {
         this(params, setVersion);
         this.tokenid = tokenid;
     }
@@ -199,10 +187,9 @@ public class Block extends Message {
         if (tokenid == null) {
             return "";
         }
-        String hexStr = Utils.HEX.encode(this.tokenid);
-        return hexStr;
+        return Utils.HEX.encode(this.tokenid);
+
     }
-     
 
     /**
      * Construct a block object from the Bitcoin wire format.
@@ -376,7 +363,7 @@ public class Block extends Message {
         // difficultyTarget = readUint32();
         nonce = readUint32();
         mineraddress = readBytes(20);
-        tokenid =  readBytes(20);
+        tokenid = readBytes(20);
         blocktype = readUint32();
         hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(payload, offset, cursor - offset));
         headerBytesValid = serializer.isParseRetainMode();
@@ -630,8 +617,8 @@ public class Block extends Message {
         // s.append(" difficulty target (nBits):
         // ").append(difficultyTarget).append("\n");
         s.append("   nonce: ").append(nonce).append("\n");
-        if(mineraddress!=null)
-        s.append("   mineraddress: ").append(new Address(params, mineraddress)).append("\n");
+        if (mineraddress != null)
+            s.append("   mineraddress: ").append(new Address(params, mineraddress)).append("\n");
         s.append("   tokenid: ").append(new Address(params, tokenid)).append("\n");
         s.append("   blocktype: ").append(blocktype).append("\n");
         if (transactions != null && transactions.size() > 0) {
@@ -745,7 +732,8 @@ public class Block extends Message {
 
     private Sha256Hash calculateMerkleRoot() {
         List<byte[]> tree = buildMerkleTree();
-        if(tree.isEmpty()) return Sha256Hash.ZERO_HASH;
+        if (tree.isEmpty())
+            return Sha256Hash.ZERO_HASH;
         return Sha256Hash.wrap(tree.get(tree.size() - 1));
     }
 
@@ -887,7 +875,7 @@ public class Block extends Message {
             throw new VerificationException("Block had no transactions");
         if (this.getOptimalEncodingMessageSize() > MAX_BLOCK_SIZE)
             throw new VerificationException("Block larger than MAX_BLOCK_SIZE");
-    //CUI    checkTransactions(height, flags);
+        // CUI checkTransactions(height, flags);
         checkMerkleRoot();
         checkSigOps();
         for (Transaction transaction : transactions)
@@ -963,7 +951,7 @@ public class Block extends Message {
             transactions = new ArrayList<Transaction>();
         }
         t.setParent(this);
-        //cui
+        // cui
         transactions.add(t);
         adjustLength(transactions.size(), t.length);
         // Force a recalculation next time the values are needed.
@@ -1062,15 +1050,14 @@ public class Block extends Message {
      * @param height
      *            block height, if known, or -1 otherwise.
      */
- 
+
     public void addCoinbaseTransaction(byte[] pubKeyTo, Coin value) {
         unCacheTransactions();
         transactions = new ArrayList<Transaction>();
         Transaction coinbase = new Transaction(params);
-       // coinbase.tokenid = value.tokenid;
+        // coinbase.tokenid = value.tokenid;
         final ScriptBuilder inputBuilder = new ScriptBuilder();
 
-       
         inputBuilder.data(new byte[] { (byte) txCounter, (byte) (txCounter++ >> 8) });
 
         // A real coinbase transaction has some stuff in the scriptSig like the
@@ -1091,7 +1078,6 @@ public class Block extends Message {
     }
 
     static final byte[] EMPTY_BYTES = new byte[32];
- 
 
     /**
      * Returns a solved block that builds on top of this one. This exists for
@@ -1139,7 +1125,7 @@ public class Block extends Message {
             b.setTime(getTimeSeconds() + 1);
         else
             b.setTime(time);
-            b.solve();
+        b.solve();
         try {
             b.verifyHeader();
         } catch (VerificationException e) {
@@ -1150,8 +1136,7 @@ public class Block extends Message {
         }
         return b;
     }
- 
-    
+
     @VisibleForTesting
     boolean isHeaderBytesValid() {
         return headerBytesValid;
@@ -1213,7 +1198,7 @@ public class Block extends Message {
         return tokenid;
     }
 
-    public void setTokenid( byte[] tokenid) {
+    public void setTokenid(byte[] tokenid) {
         unCacheHeader();
         this.tokenid = tokenid;
         this.hash = null;

@@ -34,25 +34,7 @@ public class BlockGraph extends AbstractBlockGraph {
     /** Keeps a map of block hashes to StoredBlocks. */
     protected final BlockStore blockStore;
 
-    /**
-     * <p>Constructs a BlockChain connected to the given wallet and store. To obtain a {@link Wallet} you can construct
-     * one from scratch, or you can deserialize a saved wallet from disk using
-     * {@link Wallet#loadFromFile(java.io.File, WalletExtension...)}</p>
-     *
-     * <p>For the store, you should use {@link org.bitcoinj.store.SPVBlockStore} or you could also try a
-     * {@link org.bitcoinj.store.MemoryBlockStore} if you want to hold all headers in RAM and don't care about
-     * disk serialization (this is rare).</p>
-     */
-    public BlockGraph(Context context, Wallet wallet, BlockStore blockStore) throws BlockStoreException {
-        this(context, new ArrayList<Wallet>(), blockStore);
-        addWallet(wallet);
-    }
-
-    /** See {@link #BlockChain(Context, Wallet, BlockStore)}} */
-    public BlockGraph(NetworkParameters params, Wallet wallet, BlockStore blockStore) throws BlockStoreException {
-        this(Context.getOrCreate(params), wallet, blockStore);
-    }
-
+     
     /**
      * Constructs a BlockChain that has no wallet at all. This is helpful when you don't actually care about sending
      * and receiving coins but rather, just want to explore the network data structures.

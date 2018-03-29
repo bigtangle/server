@@ -70,7 +70,7 @@ public class BlockChainTest {
     public void setUp() throws Exception {
         BriefLogFormatter.initVerbose();
         Context.propagate(new Context(testNet, 100, Coin.ZERO, false));
-        testNetChain = new BlockGraph(testNet, new Wallet(testNet), new MemoryBlockStore(testNet));
+        testNetChain = new BlockGraph(testNet,   new MemoryBlockStore(testNet));
         Context.propagate(new Context(PARAMS, 100, Coin.ZERO, false));
         wallet = new Wallet(PARAMS) {
          
@@ -78,7 +78,7 @@ public class BlockChainTest {
         wallet.freshReceiveKey();
 
         resetBlockStore();
-        chain = new BlockGraph(PARAMS, wallet, blockStore);
+        chain = new BlockGraph(PARAMS,   blockStore);
 
         coinbaseTo = wallet.currentReceiveKey().toAddress(PARAMS);
     }

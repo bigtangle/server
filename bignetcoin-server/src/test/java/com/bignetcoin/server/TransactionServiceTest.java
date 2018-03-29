@@ -98,13 +98,13 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         assertEquals("Wrong Number of Outputs", 1, outputs.size());
         UTXO output = outputs.get(0);
         assertEquals("The address is not equal", address.toString(), output.getAddress());
-        assertEquals("The amount is not equal", totalAmount, output.getValue());
+        assertEquals("The amount is not equal", totalAmount.getValue(), output.getValue().getValue());
         List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
         pubKeyHashs.add(outKey.getPubKeyHash());
         Coin coin = walletService.getRealBalance(pubKeyHashs);
         log.debug("coin value:" + coin.value);
-        outputs = null;
-        output = null;
+        outputs = null; 
+  
         try {
             store.close();
         } catch (Exception e) {
