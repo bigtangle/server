@@ -76,6 +76,50 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
 	public List<Block> createLinearTangle1() throws Exception {
 
+		List<Block> blocks = new ArrayList<Block>();
+		Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0,
+				PARAMS.getGenesisBlock().getHash());
+		blocks.add(rollingBlock);
+		for (int i = 0; i < 30; i++) {
+			rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0, rollingBlock.getHash());
+			blocks.add(rollingBlock);
+		}
+		
+		int i = 0;
+		for (Block block : blocks) {
+			this.blockgraph.add(block);
+			log.debug("create  " + i + " block:" + block.getHashAsString());
+			i++;
+
+		}
+		return blocks;
+	}
+
+	public List<Block> createMultiLinearTangle1() throws Exception {
+
+		List<Block> blocks = new ArrayList<Block>();
+		for (int j = 0; j < 30; j++) {
+			Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0,
+					PARAMS.getGenesisBlock().getHash());
+			blocks.add(rollingBlock);
+			for (int i = 0; i < 30; i++) {
+				rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0, rollingBlock.getHash());
+				blocks.add(rollingBlock);
+			}
+		}
+		
+		int i = 0;
+		for (Block block : blocks) {
+			this.blockgraph.add(block);
+			log.debug("create  " + i + " block:" + block.getHashAsString());
+			i++;
+
+		}
+		return blocks;
+	}
+
+	public List<Block> createSemiLinearTangle1() throws Exception {
+
 		Block b0 = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0,
 				PARAMS.getGenesisBlock().getHash());
 		Block b1 = BlockForTest.createNextBlockWithCoinbase(b0, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0, PARAMS.getGenesisBlock().getHash());
@@ -99,17 +143,8 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		}
 		return blocks;
 	}
-	
-    private String CONTEXT_ROOT = "http://localhost:14265/";
 
 	public void createMilestoneTestTangle1() throws Exception {
-
-		// Assumption: minimum depth for milestone is zero
-		blockgraph.add(PARAMS.getGenesisBlock());
-		BlockEvaluation genesisEvaluation = blockService.getBlockEvaluation(PARAMS.getGenesisBlock().getHash());
-		blockService.updateMilestone(genesisEvaluation, true);
-		blockService.updateSolid(genesisEvaluation, true);
-		// TODO connectTransactions of genesisblock too
 
 		Block b1 = createAndAddNextBlockCoinbase(PARAMS.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), PARAMS.getGenesisBlock().getHash());
 		Block b2 = createAndAddNextBlockCoinbase(PARAMS.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), PARAMS.getGenesisBlock().getHash());
@@ -162,7 +197,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		assertFalse(blockService.getBlockEvaluation(bOrphan1.getHash()).isMilestone());
 		assertFalse(blockService.getBlockEvaluation(bOrphan5.getHash()).isMilestone());
 
-		// Now make block 8 heavier and higher rated than b5 to make it disconnect block 5 and connect block 8 instead
+		// Now make block 8 heavier and higher rated than b5 to make it disconnect block 5+link and connect block 8+link instead
 		Block b8weight1 = createAndAddNextBlockCoinbase(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
 		Block b8weight2 = createAndAddNextBlockCoinbase(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
 		Block b8weight3 = createAndAddNextBlockCoinbase(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
@@ -214,6 +249,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		assertFalse(blockService.getBlockEvaluation(b8weight3.getHash()).isMilestone());
 		assertFalse(blockService.getBlockEvaluation(b8weight4.getHash()).isMilestone());
 	}
+	// TODO connectTransactions of genesisblock too
 	
 	//TODO test first four update methods in one
 	//TODO test remove blocks no longer in milestone
@@ -224,6 +260,19 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 	@Test
 	public void testLinearTangle() throws Exception {
 		createLinearTangle1();
+		milestoneService.update();
+	}
+	
+//	@Test
+//	public void testMultiLinearTangle() throws Exception {
+//		createMultiLinearTangle1();
+//		milestoneService.update();
+//		milestoneService.update();
+//	}
+
+	@Test
+	public void testSemiLinearTangle() throws Exception {
+		createSemiLinearTangle1();
 		milestoneService.update();
 	}
 

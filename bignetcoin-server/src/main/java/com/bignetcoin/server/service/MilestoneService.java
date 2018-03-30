@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -26,6 +27,7 @@ import org.bitcoinj.core.BlockStoreException;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutPoint;
+import org.bitcoinj.core.UTXO;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.slf4j.Logger;
@@ -64,17 +66,33 @@ public class MilestoneService {
 	 * @throws Exception
 	 */
 	public void update() throws Exception {
-		final Stopwatch watch = Stopwatch.createStarted();
-
+		log.info("Milestone Update started");
+		Stopwatch watch = Stopwatch.createStarted();
 		updateSolidityAndHeight();
+		log.info("Milestone solidity and height time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+
+		watch.stop();
+		watch = Stopwatch.createStarted();
 		updateDepth();
+		log.info("Milestone depth time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+
+		watch.stop();
+		watch = Stopwatch.createStarted();
 		updateCumulativeWeight();
+		log.info("Milestone weight time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+
+		watch.stop();
+		watch = Stopwatch.createStarted();
 		updateRating();
+		log.info("Milestone rating time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+
+		watch.stop();
+		watch = Stopwatch.createStarted();
 		updateMilestone();
+		log.info("Milestone update took {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 		// Optional: Trigger batched tip pair selection here
 
 		watch.stop();
-		log.info("Milestone update took {} .", watch);
 	}
 
 	/**
@@ -149,6 +167,7 @@ public class MilestoneService {
 	 * @throws BlockStoreException
 	 */
 	public void updateDepth() throws BlockStoreException {
+		// TODO also do milestonedepth and select from milestone depth interval for tip selection
 		// Select solid tips to begin from
 		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = getSolidTipsDescending();
 
@@ -240,11 +259,19 @@ public class MilestoneService {
 	public void updateRating() throws Exception {
 		// Select #tipCount solid tips via MCMC
 		final int tipCount = 100;
-		List<EvaluationWrapper> selectedTips = new ArrayList<EvaluationWrapper>(tipCount);
+		HashMap<BlockEvaluation, HashSet<EvaluationWrapper>> selectedTips = new HashMap<BlockEvaluation, HashSet<EvaluationWrapper>>(tipCount);
 		Random random = new SecureRandom();
-		for (int i = 0; i < tipCount; i++)
-			selectedTips.add(new EvaluationWrapper(blockService.getBlockEvaluation(tipsService.blockToApprove(27, random))));
-
+		for (int i = 0; i < tipCount; i++) {
+			BlockEvaluation selectedTip = blockService.getBlockEvaluation(tipsService.blockToApprove(1, random));
+			HashSet<EvaluationWrapper> result;
+			if (selectedTips.containsKey(selectedTip))  
+				result = selectedTips.get(selectedTip);
+			else 
+				result = new HashSet<>();
+			result.add(new EvaluationWrapper(selectedTip));
+			selectedTips.put(selectedTip, result);
+		}
+		
 		// Begin from the highest solid height tips and go backwards from there
 		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = getSolidTipsDescending();
 		HashMap<Sha256Hash, HashSet<EvaluationWrapper>> approverHashSets = new HashMap<>();
@@ -256,10 +283,8 @@ public class MilestoneService {
 		while ((currentBlock = blocksByDescendingHeight.poll()) != null) {
 			// Add your own hashes as reference if current block is one of the selected tips
 			HashSet<EvaluationWrapper> approverHashes = approverHashSets.get(currentBlock.getBlockhash());
-			for (EvaluationWrapper tip : selectedTips) {
-				if (tip.blockEvaluation.getBlockhash().equals(currentBlock.getBlockhash())) {
-					approverHashes.add(tip);
-				}
+			if (selectedTips.containsKey(currentBlock)) {
+				approverHashes.addAll(selectedTips.get(currentBlock));
 			}
 			
 			// Add all current references to both approved blocks (initialize if not yet initialized)
@@ -287,7 +312,7 @@ public class MilestoneService {
 			if (approverHashSets.containsKey(block.getPrevBranchBlockHash()))
 				approverHashSets.get(block.getPrevBranchBlockHash()).addAll(approverHashes);
 
-			// Update your cumulative weight and dereference hashes
+			// Update your cumulative weight
 			blockService.updateRating(currentBlock, approverHashes.size());
 			approverHashSets.remove(currentBlock.getBlockhash());
 		}
@@ -313,8 +338,7 @@ public class MilestoneService {
 			// Optional steps from later to lower computational cost
 			if (blocksToAdd.isEmpty())
 				break;
-			removeWhereUTXONotFound(blocksToAdd);
-			//TODO remove where UTXO not confirmed instead
+			removeWhereUTXONotFoundOrUnconfirmed(blocksToAdd);
 
 			// Resolve conflicting UTXO spends that have been approved by the network
 			// (improbable to occur)
@@ -324,7 +348,7 @@ public class MilestoneService {
 			// Remove blocks from blocksToAdd that have at least one transaction input with
 			// its corresponding output not found in the outputs table and remove their
 			// approvers recursively too
-			removeWhereUTXONotFound(blocksToAdd);
+			removeWhereUTXONotFoundOrUnconfirmed(blocksToAdd);
 
 			// Exit condition: there are no more blocks to add
 			if (blocksToAdd.isEmpty())
@@ -345,11 +369,14 @@ public class MilestoneService {
 	 * @param blocksToAdd
 	 * @throws BlockStoreException
 	 */
-	private void removeWhereUTXONotFound(HashSet<BlockEvaluation> blocksToAdd) throws BlockStoreException {
+	private void removeWhereUTXONotFoundOrUnconfirmed(HashSet<BlockEvaluation> blocksToAdd) throws BlockStoreException {
 		for (BlockEvaluation e : new HashSet<BlockEvaluation>(blocksToAdd)) {
 			Block block = blockService.getBlock(e.getBlockhash());
 			for (TransactionInput in : block.getTransactions().stream().flatMap(t -> t.getInputs().stream()).collect(Collectors.toList())) {
-				if (!in.isCoinBase() && transactionService.getUTXO(in.getOutpoint()) == null)
+				if (in.isCoinBase())
+					continue;
+				UTXO utxo = transactionService.getUTXO(in.getOutpoint());
+				if (utxo == null || !utxo.isConfirmed())
 					removeBlockAndApproversFrom(blocksToAdd, e);
 			}
 		}
