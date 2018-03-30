@@ -34,10 +34,9 @@ public abstract class MapToBeanMapperUtil {
         Sha256Hash blockhash = Sha256Hash.wrap((String) map.get("blockHashHex"));
         String description = (String) map.get("description");
         String tokenHex = (String) amount.getTokenHex();
-        System.out.println("tokenHex==" + tokenHex);
+       // System.out.println("tokenHex==" + tokenHex);
         boolean spent = (Boolean) map.get("spent");
-        
-        // FIXME
+     
         boolean confirmed = (Boolean) map.get("confirmed");
         boolean spendPending = (Boolean) map.get("spendPending");
         
