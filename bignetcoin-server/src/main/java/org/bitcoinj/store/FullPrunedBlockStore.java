@@ -240,5 +240,5 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     
     public void saveTokens(Tokens tokens) throws BlockStoreException;
 
-    public void saveTokens(byte[] tokenid, String tokenname, long amount, String description) throws BlockStoreException;
+    public void saveTokens(byte[] tokenid, String tokenname, long amount, String description, int blocktype) throws BlockStoreException;
 }

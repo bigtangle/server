@@ -29,6 +29,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.subgraph.orchid.encoders.Hex;
+
 /**
  * <p>
  * A TransactionService provides service for transactions that send and receive
@@ -74,9 +76,11 @@ public class TransactionService {
         long amount = (Integer) request.get("amount");
         String tokenname = (String) request.get("tokenname");
         String description = (String) request.get("description");
+        String tokenHex = (String) request.get("tokenHex");
+        int blocktype = (Integer) request.get("blocktype");
 
         byte[] pubKey = Utils.HEX.decode(pubKeyHex);
-        byte[] tokenid =( new ECKey()).fromPublicOnly(pubKey).getPubKeyHash();
+        byte[] tokenid = Utils.HEX.decode(tokenHex);
         Coin coin = Coin.valueOf(amount, tokenid);
         Block block = createGenesisBlock(coin, tokenid, pubKey);
         block.toString() ;
@@ -85,6 +89,7 @@ public class TransactionService {
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
         tokens.setAmount(amount);
+        tokens.setBlocktype(blocktype);
         tokens.setDescription(description);
         store.saveTokens(tokens);
 

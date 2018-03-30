@@ -10,6 +10,16 @@ public class Tokens {
     
     private String description;
     
+    private int blocktype;
+    
+    public int getBlocktype() {
+        return blocktype;
+    }
+
+    public void setBlocktype(int blocktype) {
+        this.blocktype = blocktype;
+    }
+
     public String getTokenHex() {
         return Utils.HEX.encode(this.tokenid);
     }

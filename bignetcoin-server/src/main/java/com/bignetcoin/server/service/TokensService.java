@@ -24,6 +24,8 @@ public class TokensService {
         tokens.setTokenname("default");
         tokens.setAmount(100000L);
         tokens.setDescription("default");
+        tokens.setBlocktype((int) NetworkParameters.BLOCKTYPE_GENESIS);
+        
         list.add(tokens);
         list.addAll(store.getTokensList());
         
