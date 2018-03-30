@@ -126,10 +126,6 @@ public class WalletService {
         return list;
     }
 
-    public Coin getRealBalance(List<byte[]> pubKeyHashs) {
-        return Coin.ZERO;
-    }
-
     public AbstractResponse getAccountOutputs(List<byte[]> pubKeyHashs) {
         List<UTXO> outputs = new ArrayList<UTXO>();
         List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs, true);
