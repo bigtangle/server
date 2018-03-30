@@ -34,12 +34,11 @@ public abstract class MapToBeanMapperUtil {
         Sha256Hash blockhash = Sha256Hash.wrap((String) map.get("blockHashHex"));
         String description = (String) map.get("description");
         String tokenHex = (String) amount.getTokenHex();
-        System.out.println("tokenHex==" + tokenHex);
+       // System.out.println("tokenHex==" + tokenHex);
         boolean spent = (Boolean) map.get("spent");
-        
-        // FIXME
+     
         boolean confirmed = (Boolean) map.get("confirmed");
-        boolean spendPending = (Boolean) map.get("spendpending");
+        boolean spendPending = (Boolean) map.get("spendPending");
         
         UTXO output = new UTXO(hash, index, amount, height, coinbase, new Script(Utils.HEX.decode(scriptHex)), address,
                 blockhash, fromaddress, description, Utils.HEX.decode(tokenHex), spent, confirmed, spendPending);
