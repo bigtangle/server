@@ -525,22 +525,17 @@ public abstract class MemoryFullPrunedBlockStore implements FullPrunedBlockStore
 
 	@Override
 	public void removeUnspentTransactionOutput(Sha256Hash prevTxHash, long index) throws BlockStoreException {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public BlockEvaluation getTransactionOutputSpender(Sha256Hash prevBlockHash, long index)
 			throws BlockStoreException {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, long index, boolean b, Sha256Hash a)
 			throws BlockStoreException {
-		// TODO Auto-generated method stub
-		
 	}
 
     @Override

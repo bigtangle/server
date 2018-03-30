@@ -41,9 +41,6 @@ public class BlockService {
     BlockGraphService blockGraphService;
 
     public Block getBlock(Sha256Hash blockhash) throws BlockStoreException {
-        // TODO Genesis Block is not in store for now
-        if (networkParameters.getGenesisBlock().getHash().equals(blockhash))
-            return networkParameters.getGenesisBlock();
         return store.get(blockhash).getHeader();
     }
 
@@ -165,7 +162,7 @@ public class BlockService {
      * @throws BlockStoreException
      */
     public void connect(BlockEvaluation blockEvaluation) throws BlockStoreException {
-        // TODO validate static validity here and repropagate
+        // TODO validate ?some static validity? here and repropagate
         blockGraphService.addBlockToMilestone(blockEvaluation);
     }
 

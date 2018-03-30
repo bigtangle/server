@@ -533,25 +533,6 @@ public abstract class AbstractBlockGraph {
 //            
 //        }
     }
-
-
-
- 
-
-    /**
-     * Gets the median timestamp of the last 11 blocks
-     */
-    private static long getMedianTimestampOfRecentBlocks(StoredBlock storedBlock,
-                                                         BlockStore store) throws BlockStoreException {
-        long[] timestamps = new long[11];
-        int unused = 9;
-        timestamps[10] = storedBlock.getHeader().getTimeSeconds();
-        while (unused >= 0 && (storedBlock = storedBlock.getPrev(store)) != null)
-            timestamps[unused--] = storedBlock.getHeader().getTimeSeconds();
-        
-        Arrays.sort(timestamps, unused+1, 11);
-        return timestamps[unused + (11-unused)/2];
-    }
     
     /**
      * Disconnect each transaction in the block (after reading it from the block store)
@@ -640,48 +621,8 @@ public abstract class AbstractBlockGraph {
 //        setChainHead(storedNewHead);
 //    }
 
-    /**
-     * Returns the set of contiguous blocks between 'higher' and 'lower'. Higher is included, lower is not.
-     */
-    private static LinkedList<StoredBlock> getPartialChain(StoredBlock higher, StoredBlock lower, BlockStore store) throws BlockStoreException {
-        checkArgument(higher.getHeight() > lower.getHeight(), "higher and lower are reversed");
-        LinkedList<StoredBlock> results = new LinkedList<StoredBlock>();
-        StoredBlock cursor = higher;
-        while (true) {
-            results.add(cursor);
-            cursor = checkNotNull(cursor.getPrev(store), "Ran off the end of the chain");
-            if (cursor.equals(lower)) break;
-        }
-        return results;
-    }
-
-    /**
-     * Locates the point in the chain at which newStoredBlock and chainHead diverge. Returns null if no split point was
-     * found (ie they are not part of the same chain). Returns newChainHead or chainHead if they don't actually diverge
-     * but are part of the same chain.
-     */
-    private static StoredBlock findSplit(StoredBlock newChainHead, StoredBlock oldChainHead,
-                                         BlockStore store) throws BlockStoreException {
-        StoredBlock currentChainCursor = oldChainHead;
-        StoredBlock newChainCursor = newChainHead;
-        // Loop until we find the block both chains have in common. Example:
-        //
-        //    A -> B -> C -> D
-        //         \--> E -> F -> G
-        //
-        // findSplit will return block B. oldChainHead = D and newChainHead = G.
-        while (!currentChainCursor.equals(newChainCursor)) {
-            if (currentChainCursor.getHeight() > newChainCursor.getHeight()) {
-                currentChainCursor = currentChainCursor.getPrev(store);
-                checkNotNull(currentChainCursor, "Attempt to follow an orphan chain");
-            } else {
-                newChainCursor = newChainCursor.getPrev(store);
-                checkNotNull(newChainCursor, "Attempt to follow an orphan chain");
-            }
-        }
-        return currentChainCursor;
-    }
-
+    
+    // TODO Remove these
     /**
      * @return the height of the best known chain, convenience for <tt>getChainHead().getHeight()</tt>.
      */
@@ -694,8 +635,6 @@ public abstract class AbstractBlockGraph {
         SIDE_CHAIN
     }
 
- 
-
     protected void setChainHead(StoredBlock chainHead) throws BlockStoreException {
         doSetChainHead(chainHead);
         synchronized (chainHeadLock) {
@@ -703,7 +642,6 @@ public abstract class AbstractBlockGraph {
         }
     }
 
-    
     /**
      * Returns the block at the head of the current best chain. This is the block which represents the greatest
      * amount of cumulative work done.
@@ -713,7 +651,6 @@ public abstract class AbstractBlockGraph {
             return chainHead;
         }
     }
- 
  
     /**
      * Returns an estimate of when the given block will be reached, assuming a perfect 10 minute average for each

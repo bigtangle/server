@@ -249,7 +249,6 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		assertFalse(blockService.getBlockEvaluation(b8weight3.getHash()).isMilestone());
 		assertFalse(blockService.getBlockEvaluation(b8weight4.getHash()).isMilestone());
 	}
-	// TODO connectTransactions of genesisblock too
 	
 	//TODO test first four update methods in one
 	//TODO test remove blocks no longer in milestone

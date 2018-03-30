@@ -119,7 +119,6 @@ public abstract class AbstractIntegrationTest   {
                 .getBlockEvaluation(networkParameters.getGenesisBlock().getHash());
         blockService.updateMilestone(genesisEvaluation, true);
         blockService.updateSolid(genesisEvaluation, true);
-		// TODO connectTransactions of genesisblock too
     }
     
     @Autowired

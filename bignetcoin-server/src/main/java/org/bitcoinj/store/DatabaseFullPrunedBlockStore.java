@@ -1244,8 +1244,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.close();
         } catch (SQLException e) {
             if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
-            	//TODO check this, for now just ignore duplicates
-                //throw new BlockStoreException(e);
+            	//TODO BIP 30
             	return;
         } finally {
             if (s != null) {
