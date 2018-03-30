@@ -16,14 +16,20 @@ import com.bignetcoin.ui.wallet.utils.GuiUtils;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 
 public class StockController {
     @FXML
-    public TextField stockName;
+    public CheckBox firstPublishCheckBox;
     @FXML
-    public TextField stockCode;
+    public ComboBox<String> tokenid;
+
+    @FXML
+    public TextField stockName;
+
     @FXML
     public TextField stockAmount;
     @FXML
@@ -31,23 +37,30 @@ public class StockController {
 
     public Main.OverlayUI overlayUI;
 
+    @FXML
+    public void initialize() {
+        firstPublishCheckBox.setAllowIndeterminate(false);
+
+    }
+
     public void saveStock(ActionEvent event) {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
-           
+
         try {
             byte[] pubKey = outKey.getPubKey();
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
-            requestParam.put("amount", 100000L);
-            requestParam.put("tokenname", "Test");
-            requestParam.put("description", "Test");
-            
-            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "createGenesisBlock", Json.jsonmapper().writeValueAsString(requestParam));
+            requestParam.put("amount", Long.valueOf(stockAmount.getText()));
+            requestParam.put("tokenname", stockName.getText());
+            requestParam.put("description", stockDescription.getText());
+            requestParam.put("tokenHex", tokenid.getValue());
+            requestParam.put("blocktype", 0);
+
+            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "createGenesisBlock",
+                    Json.jsonmapper().writeValueAsString(requestParam));
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
-            
-      
-            stockCode.setText(block.getTokenid() + "");
+
             GuiUtils.informationalAlert("token publish is ok", "", "");
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
