@@ -39,7 +39,7 @@ public abstract class MapToBeanMapperUtil {
         
         // FIXME
         boolean confirmed = (Boolean) map.get("confirmed");
-        boolean spendPending = (Boolean) map.get("spendpending");
+        boolean spendPending = (Boolean) map.get("spendPending");
         
         UTXO output = new UTXO(hash, index, amount, height, coinbase, new Script(Utils.HEX.decode(scriptHex)), address,
                 blockhash, fromaddress, description, Utils.HEX.decode(tokenHex), spent, confirmed, spendPending);
