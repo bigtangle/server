@@ -90,6 +90,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    tokenname varchar(255) DEFAULT NULL,\n" + 
             "    amount bigint(20) DEFAULT NULL,\n" +
             "    description varchar(255) DEFAULT NULL,\n" + 
+            "    blocktype integer NOT NULL,\n" +
             "    PRIMARY KEY (tokenid) \n)";
 
     // Some indexes to speed up inserts

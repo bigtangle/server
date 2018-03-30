@@ -280,8 +280,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private static final String SELECT_OUTPUT_SPENDER_SQL = "SELECT blockevaluation.blockhash, rating, depth, cumulativeweight, solid,  blockevaluation.height, milestone, milestonelastupdate FROM blockevaluation INNER JOIN outputs ON outputs.spenderblockhash=blockevaluation.blockhash WHERE solid = 1 and hash = ? AND `index`= ?";
 
     private static final String SELECT_MAX_TOKENID_SQL = "select max(tokenid) from tokens";
-    private static final String INSERT_TOKENS_SQL = "INSERT INTO tokens (tokenid, tokenname, amount, description) VALUES (?, ?, ?, ?)";
-    private static final String SELECT_TOKENS_SQL = "select tokenid, tokenname, amount, description from tokens";
+    private static final String INSERT_TOKENS_SQL = "INSERT INTO tokens (tokenid, tokenname, amount, description, blocktype) VALUES (?, ?, ?, ?, ?)";
+    private static final String SELECT_TOKENS_SQL = "select tokenid, tokenname, amount, description, blocktype from tokens";
 
     protected Sha256Hash chainHeadHash;
     protected StoredBlock chainHeadBlock;
@@ -2176,6 +2176,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setTokenname(resultSet.getString("tokenname"));
                 tokens.setAmount(resultSet.getLong("amount"));
                 tokens.setDescription(resultSet.getString("description"));
+                tokens.setBlocktype(resultSet.getInt("blocktype"));
                 list.add(tokens);
             }
             return list;
@@ -2194,11 +2195,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public void saveTokens(Tokens tokens) throws BlockStoreException {
-        this.saveTokens(tokens.getTokenid(), tokens.getTokenname(), tokens.getAmount(), tokens.getDescription());
+        this.saveTokens(tokens.getTokenid(), tokens.getTokenname(), tokens.getAmount(), tokens.getDescription(), tokens.getBlocktype());
     }
 
     @Override
-    public void saveTokens(byte[] tokenid, String tokenname, long amount, String description) throws BlockStoreException {
+    public void saveTokens(byte[] tokenid, String tokenname, long amount, String description, int blocktype) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(INSERT_TOKENS_SQL);
@@ -2206,6 +2207,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setString(2, tokenname);
             preparedStatement.setLong(3, amount);
             preparedStatement.setString(4, description);
+            preparedStatement.setInt(5, blocktype);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);

@@ -77,7 +77,7 @@ public class TransactionService {
         String tokenname = (String) request.get("tokenname");
         String description = (String) request.get("description");
         String tokenHex = (String) request.get("tokenHex");
-        String blocktype = (String) request.get("blocktype");
+        int blocktype = (Integer) request.get("blocktype");
 
         byte[] pubKey = Utils.HEX.decode(pubKeyHex);
         byte[] tokenid = Utils.HEX.decode(tokenHex);
@@ -89,6 +89,7 @@ public class TransactionService {
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
         tokens.setAmount(amount);
+        tokens.setBlocktype(blocktype);
         tokens.setDescription(description);
         store.saveTokens(tokens);
 
