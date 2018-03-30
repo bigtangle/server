@@ -229,13 +229,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 	public TransactionOutputChanges connectTransactions(long height, Block block)
 			throws VerificationException, BlockStoreException {
 		// TODO checkState(lock.isHeldByCurrentThread());
-		// TODO do verification sanity checks here and perform db changes
 		if (block.getTransactions() == null)
 			throw new RuntimeException("connectTransactions called with Block that didn't have transactions!");
 		if (!params.passesCheckpoint(height, block.getHash()))
 			throw new VerificationException("Block failed checkpoint lockin at " + height);
 
-		//blockStore.beginDatabaseBatchWrite();
+		blockStore.beginDatabaseBatchWrite();
 
 		LinkedList<UTXO> txOutsSpent = new LinkedList<UTXO>();
 		LinkedList<UTXO> txOutsCreated = new LinkedList<UTXO>();
@@ -261,8 +260,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 					// If we already have unspent outputs for this hash, we saw the tx already.
 					// Either the block is
 					// being added twice (bug) or the block is a BIP30 violator.
-					if (blockStore.hasUnspentOutputs(hash, tx.getOutputs().size()))
-						throw new VerificationException("Block failed BIP30 test!");
+//					if (blockStore.hasUnspentOutputs(hash, tx.getOutputs().size()))
+//						throw new VerificationException("Block failed BIP30 test!");
 					if (verifyFlags.contains(VerifyFlag.P2SH)) // We already check non-BIP16 sigops in
 																// Block.verifyTransactions(true)
 						sigOps += tx.getSigOpCount();
@@ -276,18 +275,15 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 				Coin valueOut = Coin.ZERO;
 				final List<Script> prevOutScripts = new LinkedList<Script>();
 				final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx,
-						getVersionTally());
+						getVersionTally());				
 				if (!isCoinBase) {
-					// For each input of the transaction mark spent the corresponding output from
-					// the set of unspent
-					// outputs.
 					for (int index = 0; index < tx.getInputs().size(); index++) {
 						TransactionInput in = tx.getInputs().get(index);
 						UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(),
 								in.getOutpoint().getIndex());
 						if (prevOut == null)
 							throw new VerificationException(
-									"Attempted to spend a non-existent or already spent output!");
+									"Attempted to spend a non-existent output!");
 						// Coinbases can't be spent until they mature, to avoid re-orgs destroying
 						// entire transaction
 						// chains. The assumption is there will ~never be re-orgs deeper than the
@@ -306,10 +302,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 							if (sigOps > Block.MAX_BLOCK_SIGOPS)
 								throw new VerificationException("Too many P2SH SigOps in block");
 						}
-
 						prevOutScripts.add(prevOut.getScript());
-						blockStore.updateTransactionOutputSpent(prevOut.getHash(), prevOut.getIndex(), true, block.getHash());
-						txOutsSpent.add(prevOut);
+						//txOutsSpent.add(prevOut);
 					}
 				}
 				Sha256Hash hash = tx.getHash();
@@ -320,7 +314,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 					Script script = getScript(out.getScriptBytes());
 					UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), height, isCoinBase, script,
 							getScriptAddress(script), block.getHash(), out.getFromaddress(), out.getDescription(),
-							block.getTokenid(), false);
+							block.getTokenid(), false, false);
 					blockStore.addUnspentTransactionOutput(newOut);
 					txOutsCreated.add(newOut);
 				}
@@ -529,39 +523,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 //		}
 //		return txOutChanges;
 //	}
-
-	/**
-	 * This is broken for blocks that do not pass BIP30, so all BIP30-failing blocks
-	 * which are allowed to fail BIP30 must be checkpointed.
-	 */
-	@Override
-	public void disconnectTransactions(Block block) throws BlockStoreException {
-		//CUI checkState(lock.isHeldByCurrentThread());
-		//blockStore.beginDatabaseBatchWrite();
-		try {
-			for (Transaction tx : block.getTransactions()) {
-				// Mark all outputs used by tx input as unspent
-				for (TransactionInput txin : tx.getInputs()) {
-					if (!txin.isCoinBase()) {
-						blockStore.updateTransactionOutputSpent(txin.getOutpoint().getHash(), txin.getOutpoint().getIndex(), false, Sha256Hash.ZERO_HASH);						
-					}
-				}
-
-				// Remove tx outputs from output db and disconnect spending blocks
-				for (TransactionOutput txout : tx.getOutputs()) {
-					if (blockStore.getTransactionOutput(tx.getHash(), txout.getIndex()).isSpent()) {
-						disconnectBlock(blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()));
-					}
-					blockStore.removeUnspentTransactionOutput(tx.getHash(), txout.getIndex());
-				}
-			}
-		} catch (BlockStoreException e) {
-			blockStore.abortDatabaseBatchWrite();
-			throw e;
-		}
-	}
-
-
+	
 	/**
 	 * Adds the specified block and all approved blocks to the milestone. This will
 	 * connect all transactions of the block by marking used UTXOs spent and adding
@@ -570,7 +532,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 	 * @param blockEvaluation
 	 * @throws BlockStoreException
 	 */
-	public void connectBlock(BlockEvaluation blockEvaluation ) throws BlockStoreException {
+	public void addBlockToMilestone(BlockEvaluation blockEvaluation ) throws BlockStoreException {
 		blockEvaluation = blockStore.getBlockEvaluation(blockEvaluation.getBlockhash());
 		Block block = blockStore.get(blockEvaluation.getBlockhash()).getHeader();
 
@@ -583,11 +545,29 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 		blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockhash(), true);
 
 		// Connect all approved blocks first (not actually needed)
-		connectBlock(blockStore.getBlockEvaluation(block.getPrevBlockHash()));
-		connectBlock(blockStore.getBlockEvaluation(block.getPrevBranchBlockHash()));
+		addBlockToMilestone(blockStore.getBlockEvaluation(block.getPrevBlockHash()));
+		addBlockToMilestone(blockStore.getBlockEvaluation(block.getPrevBranchBlockHash()));
 
-		// Now connect the block's transactions
-		connectTransactions(blockEvaluation.getHeight(), block);
+		// Now update the block's transactions in db
+		for (final Transaction tx : block.getTransactions()) {
+			// For each used input, set its corresponding UTXO to spent
+			if (!tx.isCoinBase()) {
+				for (TransactionInput in : tx.getInputs()) {
+					UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(),
+							in.getOutpoint().getIndex());
+					if (prevOut == null || prevOut.isSpent() || !prevOut.isConfirmed())
+						throw new VerificationException(
+								"Attempted to spend a non-existent, already spent or unconfirmed output!");
+					blockStore.updateTransactionOutputSpent(prevOut.getHash(), prevOut.getIndex(), true, block.getHash());
+				}
+			}
+
+			// For each output, mark as confirmed now
+			Sha256Hash hash = tx.getHash();
+			for (TransactionOutput out : tx.getOutputs()) {
+				blockStore.updateTransactionOutputConfirmed(tx.getHash(), out.getIndex(), true);
+			}
+		}
 	}
 
 	/**
@@ -598,7 +578,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 	 * @param blockEvaluation
 	 * @throws BlockStoreException
 	 */
-	public void disconnectBlock(BlockEvaluation blockEvaluation) throws BlockStoreException {
+	public void removeBlockFromMilestone(BlockEvaluation blockEvaluation) throws BlockStoreException {
 		blockEvaluation = blockStore.getBlockEvaluation(blockEvaluation.getBlockhash());
 		Block block = blockStore.get(blockEvaluation.getBlockhash()).getHeader();
 
@@ -612,16 +592,44 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
 		// Disconnect all approver blocks first
 		for (StoredBlock approver : blockStore.getSolidApproverBlocks(blockEvaluation.getBlockhash())) {
-			disconnectBlock(blockStore.getBlockEvaluation(approver.getHeader().getHash()));
+			removeBlockFromMilestone(blockStore.getBlockEvaluation(approver.getHeader().getHash()));
 		}
 
-		disconnectTransactions(block);
+		removeTransactionsFromMilestone(block);
+	}
+
+	@Override
+	public void removeTransactionsFromMilestone(Block block) throws BlockStoreException {
+		//CUI checkState(lock.isHeldByCurrentThread());
+		//blockStore.beginDatabaseBatchWrite();
+		try {
+			for (Transaction tx : block.getTransactions()) {
+				// Mark all outputs used by tx input as unspent
+				for (TransactionInput txin : tx.getInputs()) {
+					if (!txin.isCoinBase()) {
+						blockStore.updateTransactionOutputSpent(txin.getOutpoint().getHash(), txin.getOutpoint().getIndex(), false, Sha256Hash.ZERO_HASH);						
+					}
+				}
+
+				// Mark unconfirmed all tx outputs in db and disconnect their spending blocks
+				for (TransactionOutput txout : tx.getOutputs()) {
+					if (blockStore.getTransactionOutput(tx.getHash(), txout.getIndex()).isSpent()) {
+						removeBlockFromMilestone(blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()));
+					}
+					blockStore.updateTransactionOutputConfirmed(tx.getHash(), txout.getIndex(), false);
+				}
+			}
+		} catch (BlockStoreException e) {
+			//TODO use this correctly
+			blockStore.abortDatabaseBatchWrite();
+			throw e;
+		}
 	}
 
 	@Override
 	protected void doSetChainHead(StoredBlock chainHead) throws BlockStoreException {
 		checkState(lock.isHeldByCurrentThread());
-		blockStore.setVerifiedChainHead(chainHead);
+		//blockStore.setVerifiedChainHead(chainHead);
 		blockStore.commitDatabaseBatchWrite();
 	}
 

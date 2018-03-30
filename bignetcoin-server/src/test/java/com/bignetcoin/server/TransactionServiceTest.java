@@ -57,6 +57,8 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(),
                 Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock);
+        
+        //get the coinbase to spend
         Transaction transaction = rollingBlock.getTransactions().get(0);
         byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
@@ -88,9 +90,10 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         
         Transaction t = new Transaction(PARAMS);
         t.addOutput(amount0, toKey0);
+        t.addOutput(amount1, toKey1);
+        
         t.addSignedInput(spendableOutput0, new Script(spendableOutputScriptPubKey), outKey);
         
-        t.addOutput(amount1, toKey1);
         t.addSignedInput(spendableOutput1, new Script(spendableOutputScriptPubKey), outKey);
         
 //        t.addOutput(new TransactionOutput(PARAMS, t, amount1, scriptPubKey.getProgram()));

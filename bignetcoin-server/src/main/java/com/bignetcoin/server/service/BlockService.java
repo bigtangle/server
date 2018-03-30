@@ -166,7 +166,7 @@ public class BlockService {
      */
     public void connect(BlockEvaluation blockEvaluation) throws BlockStoreException {
         // TODO validate static validity here and repropagate
-        blockGraphService.connectBlock(blockEvaluation);
+        blockGraphService.addBlockToMilestone(blockEvaluation);
     }
 
     /**
@@ -178,7 +178,7 @@ public class BlockService {
      * @throws BlockStoreException
      */
     public void disconnect(BlockEvaluation blockEvaluation) throws BlockStoreException {
-        blockGraphService.disconnectBlock(blockEvaluation);
+        blockGraphService.removeBlockFromMilestone(blockEvaluation);
     }
 
     public List<BlockEvaluation> getSolidBlockEvaluations() throws BlockStoreException {

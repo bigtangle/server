@@ -120,7 +120,7 @@ public class BlockGraph extends AbstractBlockGraph {
 //    }
 
     @Override
-    protected void disconnectTransactions(Block block) {
+    protected void removeTransactionsFromMilestone(Block block) {
         // Don't have to do anything as this is only called if(shouldVerifyTransactions())
         throw new UnsupportedOperationException();
     }

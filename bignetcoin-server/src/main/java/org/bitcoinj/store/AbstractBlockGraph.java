@@ -456,82 +456,82 @@ public abstract class AbstractBlockGraph {
                    throw new VerificationException("Block contains non-final transaction");
         }
         
-        StoredBlock head = getChainHead();
-        if (storedPrev.equals(head)) {
-            if (filtered && filteredTxn.size() > 0)  {
-                log.debug("Block {} connects to top of best chain with {} transaction(s) of which we were sent {}",
-                        block.getHashAsString(), filteredTxHashList.size(), filteredTxn.size());
-                for (Sha256Hash hash : filteredTxHashList) log.debug("  matched tx {}", hash);
-            }
-            //TODO change check to previous two blocks
-            if (expensiveChecks && block.getTimeSeconds() <= getMedianTimestampOfRecentBlocks(head, blockStore))
-                throw new VerificationException("Block's timestamp is too early");
+//        StoredBlock head = getChainHead();
+//        if (storedPrev.equals(head)) {
+        if (filtered && filteredTxn.size() > 0)  {
+            log.debug("Block {} connects to top of best chain with {} transaction(s) of which we were sent {}",
+                    block.getHashAsString(), filteredTxHashList.size(), filteredTxn.size());
+            for (Sha256Hash hash : filteredTxHashList) log.debug("  matched tx {}", hash);
+        }
+        //TODO change time check to greater than previous two blocks
+//        if (expensiveChecks && block.getTimeSeconds() <= getMedianTimestampOfRecentBlocks(head, blockStore))
+//            throw new VerificationException("Block's timestamp is too early");
 
-            // BIP 66 & 65: Enforce block version 3/4 once they are a supermajority of blocks
-            // NOTE: This requires 1,000 blocks since the last checkpoint (on main
-            // net, less on test) in order to be applied. It is also limited to
-            // stopping addition of new v2/3 blocks to the tip of the chain.
-            if (block.getVersion() == Block.BLOCK_VERSION_BIP34
-                || block.getVersion() == Block.BLOCK_VERSION_BIP66) {
-                final Integer count = versionTally.getCountAtOrAbove(block.getVersion() + 1);
-                if (count != null
-                    && count >= params.getMajorityRejectBlockOutdated()) {
-                    throw new VerificationException.BlockVersionOutOfDate(block.getVersion());
-                }
+        // BIP 66 & 65: Enforce block version 3/4 once they are a supermajority of blocks
+        // NOTE: This requires 1,000 blocks since the last checkpoint (on main
+        // net, less on test) in order to be applied. It is also limited to
+        // stopping addition of new v2/3 blocks to the tip of the chain.
+        if (block.getVersion() == Block.BLOCK_VERSION_BIP34
+            || block.getVersion() == Block.BLOCK_VERSION_BIP66) {
+            final Integer count = versionTally.getCountAtOrAbove(block.getVersion() + 1);
+            if (count != null
+                && count >= params.getMajorityRejectBlockOutdated()) {
+                throw new VerificationException.BlockVersionOutOfDate(block.getVersion());
             }
+        }
 
-            // This block connects to the best known block, it is a normal continuation of the system.
-            TransactionOutputChanges txOutChanges = null;
-//            if (shouldVerifyTransactions())
-//                txOutChanges = connectTransactions(Math.max( storedPrev.getHeight(),storedPrevBranch.getHeight()) + 1, block);
+        // This block connects to the best known block, it is a normal continuation of the system.
+        TransactionOutputChanges txOutChanges = null;
+        if (shouldVerifyTransactions())
+            txOutChanges = connectTransactions(Math.max( storedPrev.getHeight(),storedPrevBranch.getHeight()) + 1, block);
 //            StoredBlock newStoredBlock = addToBlockStore(storedPrev,storedPrevBranch,
 //                    block.transactions == null ? block : block.cloneAsHeader(), txOutChanges);
-            StoredBlock newStoredBlock = addToBlockStore(storedPrev,storedPrevBranch,
-            block, txOutChanges);
-            versionTally.add(block.getVersion());
-            //setChainHead(newStoredBlock);
-            log.debug("Chain is now {} blocks high, running listeners", newStoredBlock.getHeight());
+        StoredBlock newStoredBlock = addToBlockStore(storedPrev,storedPrevBranch,
+        block, txOutChanges);
+        versionTally.add(block.getVersion());
+        setChainHead(newStoredBlock);
+        log.debug("Chain is now {} blocks high, running listeners", newStoredBlock.getHeight());
           //  informListenersForNewBlock(block, NewBlockType.BEST_CHAIN, filteredTxHashList, filteredTxn, newStoredBlock);
-        } else {
-            // This block connects to somewhere other than the top of the best known chain. We treat these differently.
-            //
-            // Note that we send the transactions to the wallet FIRST, even if we're about to re-organize this block
-            // to become the new best chain head. This simplifies handling of the re-org in the Wallet class.
-            StoredBlock newBlock = storedPrev.build(block, storedPrevBranch);
-        
-                StoredBlock splitPoint = findSplit(newBlock, head, blockStore);
-                if (splitPoint != null && splitPoint.equals(newBlock)) {
-                    // newStoredBlock is a part of the same chain, there's no fork. This happens when we receive a block
-                    // that we already saw and linked into the chain previously, which isn't the chain head.
-                    // Re-processing it is confusing for the wallet so just skip.
-                    log.warn("Saw duplicated block in main chain at height {}: {}",
-                            newBlock.getHeight(), newBlock.getHeader().getHash());
-                    return;
-                }
-                if (splitPoint == null) {
-                    // This should absolutely never happen
-                    // (lets not write the full block to disk to keep any bugs which allow this to happen
-                    //  from writing unreasonable amounts of data to disk)
-                    throw new VerificationException("Block forks the chain but splitPoint is null");
-                } else {
-                    // We aren't actually spending any transactions (yet) because we are on a fork
-                    addToBlockStore(storedPrev,storedPrevBranch, block);
-                    int splitPointHeight = splitPoint.getHeight();
-                    String splitPointHash = splitPoint.getHeader().getHashAsString();
-                    log.info("Block forks the chain at height {}/block {}, but it did not cause a reorganize:\n{}",
-                            splitPointHeight, splitPointHash, newBlock.getHeader().getHashAsString());
-                }
-            
-            
-            // We may not have any transactions if we received only a header, which can happen during fast catchup.
-            // If we do, send them to the wallet but state that they are on a side chain so it knows not to try and
-            // spend them until they become activated.
-            if (block.getTransactions() != null || filtered) {
-             //   informListenersForNewBlock(block, NewBlockType.SIDE_CHAIN, filteredTxHashList, filteredTxn, newBlock);
-            }
-            
-            
-        }
+//        } else {
+//            // This block connects to somewhere other than the top of the best known chain. We treat these differently.
+//            //
+//            // Note that we send the transactions to the wallet FIRST, even if we're about to re-organize this block
+//            // to become the new best chain head. This simplifies handling of the re-org in the Wallet class.
+//            StoredBlock newBlock = storedPrev.build(block, storedPrevBranch);
+//        
+//                StoredBlock splitPoint = findSplit(newBlock, head, blockStore);
+//                if (splitPoint != null && splitPoint.equals(newBlock)) {
+//                    // newStoredBlock is a part of the same chain, there's no fork. This happens when we receive a block
+//                    // that we already saw and linked into the chain previously, which isn't the chain head.
+//                    // Re-processing it is confusing for the wallet so just skip.
+//                    log.warn("Saw duplicated block in main chain at height {}: {}",
+//                            newBlock.getHeight(), newBlock.getHeader().getHash());
+//                    return;
+//                }
+//                if (splitPoint == null) {
+//                    // This should absolutely never happen
+//                    // (lets not write the full block to disk to keep any bugs which allow this to happen
+//                    //  from writing unreasonable amounts of data to disk)
+//                    throw new VerificationException("Block forks the chain but splitPoint is null");
+//                } else {
+//                    // We aren't actually spending any transactions (yet) because we are on a fork
+//                    addToBlockStore(storedPrev,storedPrevBranch, block);
+//                    int splitPointHeight = splitPoint.getHeight();
+//                    String splitPointHash = splitPoint.getHeader().getHashAsString();
+//                    log.info("Block forks the chain at height {}/block {}, but it did not cause a reorganize:\n{}",
+//                            splitPointHeight, splitPointHash, newBlock.getHeader().getHashAsString());
+//                }
+//            
+//            
+//            // We may not have any transactions if we received only a header, which can happen during fast catchup.
+//            // If we do, send them to the wallet but state that they are on a side chain so it knows not to try and
+//            // spend them until they become activated.
+//            if (block.getTransactions() != null || filtered) {
+//             //   informListenersForNewBlock(block, NewBlockType.SIDE_CHAIN, filteredTxHashList, filteredTxn, newBlock);
+//            }
+//            
+//            
+//        }
     }
 
 
@@ -559,7 +559,7 @@ public abstract class AbstractBlockGraph {
      * @throws PrunedException if block does not exist as a {@link StoredUndoableBlock} in the block store.
      * @throws BlockStoreException if the block store had an underlying error or block does not exist in the block store at all.
      */
-    protected abstract void disconnectTransactions(Block block) throws PrunedException, BlockStoreException;
+    protected abstract void removeTransactionsFromMilestone(Block block) throws PrunedException, BlockStoreException;
 
     /**
      * Called as part of connecting a block when the new block results in a different chain having higher total work.

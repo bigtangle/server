@@ -226,12 +226,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private static final String DELETE_UNDOABLEBLOCKS_SQL = "DELETE FROM undoableblocks WHERE height <= ?";
 
     private static final String SELECT_OUTPUTS_COUNT_SQL = "SELECT COUNT(*) FROM outputs WHERE hash = ?";
-    private static final String INSERT_OUTPUTS_SQL = "INSERT INTO outputs (hash, `index`, height, value, scriptbytes, toaddress, addresstargetable, coinbase, blockhash,tokenid,fromaddress, description, spent) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?)";
-    private static final String SELECT_OUTPUTS_SQL = "SELECT height, value, scriptbytes, coinbase, toaddress, addresstargetable,blockhash,tokenid,fromaddress, description,spent FROM outputs WHERE hash = ? AND `index` = ?";
+    private static final String INSERT_OUTPUTS_SQL = "INSERT INTO outputs (hash, `index`, height, value, scriptbytes, toaddress, addresstargetable, coinbase, blockhash,tokenid,fromaddress, description, spent,confirmed) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?)";
+    private static final String SELECT_OUTPUTS_SQL = "SELECT height, value, scriptbytes, coinbase, toaddress, addresstargetable,blockhash,tokenid,fromaddress, description,spent,confirmed FROM outputs WHERE hash = ? AND `index` = ?";
     private static final String DELETE_OUTPUTS_SQL = "DELETE FROM outputs WHERE hash = ? AND `index`= ?";
     private static final String UPDATE_OUTPUTS_SPENT_SQL = "UPDATE outputs SET spent = ?, spenderblockhash = ? WHERE hash = ? AND `index`= ?";
+    private static final String UPDATE_OUTPUTS_CONFIRMED_SQL = "UPDATE outputs SET confirmed = ? WHERE hash = ? AND `index`= ?";
 
-    private static final String SELECT_TRANSACTION_OUTPUTS_SQL = "SELECT hash, value, scriptbytes, height, `index`, coinbase, toaddress, addresstargetable, blockhash,tokenid,fromaddress, description,spent FROM outputs where toaddress = ?";
+    private static final String SELECT_TRANSACTION_OUTPUTS_SQL = "SELECT hash, value, scriptbytes, height, `index`, coinbase, toaddress, addresstargetable, blockhash,tokenid,fromaddress, description,spent,confirmed FROM outputs where toaddress = ?";
 
     // Dump table SQL (this is just for data sizing statistics).
     private static final String SELECT_DUMP_SETTINGS_SQL = "SELECT name, value FROM settings";
@@ -899,6 +900,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         // s.close();
         try {
             putUpdateStoredBlock(storedBlock, true);
+
+            // Initial blockevaluation
+            insertBlockEvaluation(BlockEvaluation.buildInitial(undoableBlock.getHash()));
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         }
@@ -921,9 +925,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         // s.executeUpdate();
         // s.close();
         // }
-
-        // Initial blockevaluation
-        insertBlockEvaluation(BlockEvaluation.buildInitial(undoableBlock.getHash()));
 
         // } catch (SQLException ex) {
         // throw new BlockStoreException(ex);
@@ -1197,9 +1198,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             String fromaddress = results.getString(9);
             String description = results.getString(10);
             boolean spent = results.getBoolean(11);
+            boolean confirmed = results.getBoolean(12);
             byte[] tokenid = results.getBytes("tokenid");
             UTXO txout = new UTXO(hash, index, value, height, coinbase, new Script(scriptBytes), address, blockhash,
-                    fromaddress, description, tokenid, spent);
+                    fromaddress, description, tokenid, spent, confirmed);
             return txout;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
@@ -1234,11 +1236,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setString(11, out.getFromaddress());
             s.setString(12, out.getDescription());
             s.setBoolean(13, out.isSpent());
+            s.setBoolean(14, out.isConfirmed());
             s.executeUpdate();
             s.close();
         } catch (SQLException e) {
             if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
-                throw new BlockStoreException(e);
+            	//TODO check this, for now just ignore duplicates
+                //throw new BlockStoreException(e);
+            	return;
         } finally {
             if (s != null) {
                 try {
@@ -1463,9 +1468,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     String fromaddress = rs.getString(11);
                     String description = rs.getString(12);
                     boolean spent = rs.getBoolean(13);
+                    boolean confirmed = rs.getBoolean(14);
                     byte[] tokenid = rs.getBytes("tokenid");
                     UTXO output = new UTXO(hash, index, amount, height, coinbase, new Script(scriptBytes), toAddress,
-                            blockhash, fromaddress, description, tokenid, spent);
+                            blockhash, fromaddress, description, tokenid, spent, confirmed);
                     outputs.add(output);
                 }
             }
@@ -2135,6 +2141,32 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
 
+    }
+    
+    @Override
+    public void updateTransactionOutputConfirmed(Sha256Hash prevTxHash, int index, boolean b) throws BlockStoreException {
+        UTXO prev = this.getTransactionOutput(prevTxHash, index);
+        if (prev == null) {
+            throw new BlockStoreException("Could not find UTXO to update");
+        }
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(UPDATE_OUTPUTS_CONFIRMED_SQL);
+            preparedStatement.setBoolean(1, b);
+            preparedStatement.setBytes(2, prevTxHash.getBytes());
+            preparedStatement.setLong(3, index);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
     }
 
     @Override
