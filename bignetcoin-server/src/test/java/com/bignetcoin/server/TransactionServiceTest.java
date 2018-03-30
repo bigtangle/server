@@ -6,8 +6,9 @@ package com.bignetcoin.server;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.bitcoinj.core.Address;
@@ -22,6 +23,7 @@ import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptBuilder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -29,17 +31,92 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import com.bignetcoin.server.service.BlockService;
 import com.bignetcoin.server.service.MilestoneService;
 import com.bignetcoin.server.service.WalletService;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TransactionServiceTest extends AbstractIntegrationTest {
+    
+    @Test
+    public void getaaaBalance() throws Exception {
+        ECKey outKey = new ECKey();
+        int height = 1;
+        
+        blockgraph.add(PARAMS.getGenesisBlock());
+        BlockEvaluation genesisEvaluation = blockService.getBlockEvaluation(PARAMS.getGenesisBlock().getHash());
+        blockService.updateMilestone(genesisEvaluation, true);
+        blockService.updateSolid(genesisEvaluation, true);
 
-    private static final Logger log = LoggerFactory.getLogger(TransactionServiceTest.class);
+        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(),
+                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
+        blockgraph.add(rollingBlock);
+        Transaction transaction = rollingBlock.getTransactions().get(0);
+        byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
+        for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
+            rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
+                    outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
+            blockgraph.add(rollingBlock);
+        }
+        rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
+                outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
+
+        milestoneService.update();
+        {
+            MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name()).content(outKey.getPubKeyHash());
+            MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
+            String response = mvcResult.getResponse().getContentAsString();
+            logger.info("outKey > testGetBalances resp : " + response);
+        }
+        
+        ECKey toKey0 = new ECKey();
+        ECKey toKey1 = new ECKey();
+        Coin amount0 = Coin.valueOf(100, NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin amount1 = Coin.valueOf(10000, NetworkParameters.BIGNETCOIN_TOKENID);
+
+        TransactionOutPoint spendableOutput0 = new TransactionOutPoint(PARAMS, 0, transaction.getHash());
+        TransactionOutPoint spendableOutput1 = new TransactionOutPoint(PARAMS, 1, transaction.getHash());
+        
+//        ImmutableList<ECKey> keys = ImmutableList.of(outKey, toKey);
+//        Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, keys);
+        
+        Transaction t = new Transaction(PARAMS);
+        t.addOutput(amount0, toKey0);
+        t.addSignedInput(spendableOutput0, new Script(spendableOutputScriptPubKey), outKey);
+        
+        t.addOutput(amount1, toKey1);
+        t.addSignedInput(spendableOutput1, new Script(spendableOutputScriptPubKey), outKey);
+        
+//        t.addOutput(new TransactionOutput(PARAMS, t, amount1, scriptPubKey.getProgram()));
+//        t.addSignedInput(spendableOutput1, scriptPubKey, toKey);
+        
+        rollingBlock.addTransaction(t);
+        rollingBlock.solve();
+        
+        blockgraph.add(rollingBlock);
+        milestoneService.update();
+        
+        {
+            MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name()).content(toKey0.getPubKeyHash());
+            MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
+            String response = mvcResult.getResponse().getContentAsString();
+            logger.info("toKey > testGetBalances resp : " + response);
+        }
+        {
+            MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name()).content(toKey1.getPubKeyHash());
+            MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
+            String response = mvcResult.getResponse().getContentAsString();
+            logger.info("outKey > testGetBalances resp : " + response);
+        }
+    }
+
+    private static final Logger logger = LoggerFactory.getLogger(TransactionServiceTest.class);
 
     @Autowired
     private WalletService walletService;
@@ -56,7 +133,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
         ECKey outKey = new ECKey();
         int height = 1;
-        log.debug(outKey.getPublicKeyAsHex());
+        logger.debug(outKey.getPublicKeyAsHex());
 
         // Add genesis block
         blockgraph.add(PARAMS.getGenesisBlock());
@@ -99,10 +176,6 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         UTXO output = outputs.get(0);
         assertEquals("The address is not equal", address.toString(), output.getAddress());
         assertEquals("The amount is not equal", totalAmount.getValue(), output.getValue().getValue());
-        List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
-        pubKeyHashs.add(outKey.getPubKeyHash());
-        Coin coin = walletService.getRealBalance(pubKeyHashs);
-        log.debug("coin value:" + coin.value);
         outputs = null; 
   
         try {
@@ -131,15 +204,6 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
             blockgraph.add(rollingBlock);
         }
         rollingBlock = BlockForTest.createNextBlock(rollingBlock, null, PARAMS.getGenesisBlock().getHash());
-
-        // Create 1 BTC spend to a key in this wallet (to ourselves).
-        // Wallet wallet = new Wallet(PARAMS);
-        // assertEquals("Available balance is incorrect", Coin.ZERO,
-        // wallet.getBalance(Wallet.BalanceType.AVAILABLE));
-        List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
-        pubKeyHashs.add(outKey.getPubKeyHash());
-        Coin coin = walletService.getRealBalance(pubKeyHashs);
-        log.debug("coin: ", coin.toString());
     }
 
 }
