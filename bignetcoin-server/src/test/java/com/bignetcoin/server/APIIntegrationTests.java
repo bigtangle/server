@@ -29,6 +29,7 @@ import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.MapToBeanMapperUtil;
+import org.bitcoinj.utils.OkHttp3Util;
 import org.bitcoinj.wallet.Wallet;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -184,20 +185,18 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         logger.info("testGetBalances resp : " + data);
     }
     
-   //TODO  @Test
+    @Test
     public void testSpringBootCreateGenesisBlock() throws Exception {
         ECKey outKey = new ECKey();
         byte[] pubKey = outKey.getPubKey();
-        ByteBuffer byteBuffer = ByteBuffer.allocate(4 + 4 + pubKey.length);
-        byteBuffer.putInt(100000000);
-        byteBuffer.putInt(pubKey.length);
-        byteBuffer.put(pubKey);
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
+        requestParam.put("amount", 100000L);
+        requestParam.put("tokenname", "Test");
+        requestParam.put("description", "Test");
         
-        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.createGenesisBlock.name()).content(byteBuffer.array());
-        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
-        byte[] data = mvcResult.getResponse().getContentAsByteArray();
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.createGenesisBlock.name(), Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        
         logger.info("createGenesisBlock resp : " + block);
     }
     

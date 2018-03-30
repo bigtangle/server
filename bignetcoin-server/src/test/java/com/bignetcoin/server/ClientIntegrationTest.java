@@ -19,9 +19,14 @@ import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Json;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.kits.WalletAppKit;
+import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.utils.MapToBeanMapperUtil;
 import org.bitcoinj.utils.OkHttp3Util;
 import org.bitcoinj.wallet.DecryptingKeyBag;
@@ -40,6 +45,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -84,14 +90,54 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 //        rollingBlock.solve();
     }
     
+    @Test
+    public void testMultiSigOutputToString() throws Exception {
+        WalletAppKit bitcoin = new WalletAppKit(PARAMS, new File("../bignetcoin-wallet"), "bignetcoin");
+        bitcoin.wallet().setServerURL(contextRoot);
+        
+//        ECKey outKey = bitcoin.wallet().currentReceiveKey();
+//        Block rollingBlock = this.createGenesisBlock(outKey);
+        
+        Transaction multiSigTransaction = new Transaction(PARAMS);
+        ImmutableList<ECKey> keys = ImmutableList.of(bitcoin.wallet().currentReceiveKey(), new ECKey());
+        Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, keys);
+        
+        Coin amount0 = Coin.parseCoin("0.0001", NetworkParameters.BIGNETCOIN_TOKENID);
+        multiSigTransaction.addOutput(amount0, scriptPubKey);
+        multiSigTransaction.addOutput(amount0, scriptPubKey);
+
+//        Coin amount1 = Coin.parseCoin("0.0009", rollingBlock.getTokenid());
+//        multiSigTransaction.addOutput(amount1, scriptPubKey);
+        
+        SendRequest request = SendRequest.forTx(multiSigTransaction);
+        bitcoin.wallet().completeTx(request);
+        
+//        TransactionOutput multiSigTransactionOutput = multiSigTransaction.getOutput(0);
+        for (TransactionOutput transactionOutput : multiSigTransaction.getOutputs()) {
+            logger.info("output : " + transactionOutput);
+        }
+        
+        for (TransactionInput transactionInput : multiSigTransaction.getInputs()) {
+            logger.info("input : " + transactionInput);
+        }
+        
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
+
+        rollingBlock.addTransaction(request.tx);
+        rollingBlock.solve();
+
+        OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        
+        this.getBalances();
+    }
+    
     @Autowired
     private NetworkParameters networkParameters;
     
-    @Test
-    public void createGenesisBlock() throws Exception {
-     //create with new tokenid
-        ECKey outKey = new ECKey();
-        
+//    @Test
+    public Block createGenesisBlock(ECKey outKey) throws Exception {
         byte[] pubKey = outKey.getPubKey();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
@@ -105,12 +151,14 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         logger.info("createGenesisBlock resp : " + block);
         logger.info("new tokenid : " + block.getTokenid());
         
-        this.getTokens();
+//        this.getTokens();
+        return block;
     }
 
     @SuppressWarnings("unchecked")
     public void getBalances() throws Exception {
-        WalletAppKit bitcoin = new WalletAppKit(networkParameters, new File("."), "bignetcoin");
+        WalletAppKit bitcoin = new WalletAppKit(PARAMS, new File("../bignetcoin-wallet"), "bignetcoin");
+        bitcoin.wallet().setServerURL(contextRoot);
         List<ECKey> keys = getWalletKeyBag(bitcoin);
         for (ECKey ecKey : keys) {
             String response = OkHttp3Util.post(contextRoot + "getBalances", ecKey.getPubKeyHash());
