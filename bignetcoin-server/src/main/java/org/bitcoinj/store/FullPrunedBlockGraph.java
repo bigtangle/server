@@ -267,12 +267,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 						sigOps += tx.getSigOpCount();
 				}
 			}
-			Coin totalFees = Coin.ZERO;
-			Coin coinbaseValue = null;
+		
 			for (final Transaction tx : block.getTransactions()) {
 				boolean isCoinBase = tx.isCoinBase();
-				Coin valueIn = Coin.ZERO;
-				Coin valueOut = Coin.ZERO;
+		
 				final List<Script> prevOutScripts = new LinkedList<Script>();
 				final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx,
 						getVersionTally());				
@@ -295,7 +293,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 						// - prevOut.getHeight()));
 						// }
 						// }
-						valueIn = valueIn.add(prevOut.getValue());
+					
 						if (verifyFlags.contains(VerifyFlag.P2SH)) {
 							if (prevOut.getScript().isPayToScriptHash())
 								sigOps += Script.getP2SHSigOpCount(in.getScriptBytes());
@@ -309,7 +307,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 				}
 				Sha256Hash hash = tx.getHash();
 				for (TransactionOutput out : tx.getOutputs()) {
-					valueOut = valueOut.add(out.getValue());
+					
 					// For each output, add it to the set of unspent outputs so it can be consumed
 					// in future.
 					Script script = getScript(out.getScriptBytes());
@@ -319,20 +317,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 					blockStore.addUnspentTransactionOutput(newOut);
 					txOutsCreated.add(newOut);
 				}
-				// All values were already checked for being non-negative (as it is verified in
-				// Transaction.verify())
-				// but we check again here just for defence in depth. Transactions with zero
-				// output value are OK.
-				if (valueOut.signum() < 0 || valueOut.compareTo(params.getMaxMoney()) > 0)
-					throw new VerificationException("Transaction output value out of range");
-				if (isCoinBase) {
-					coinbaseValue = valueOut;
-				} else {
-					if (valueIn.compareTo(valueOut) < 0 || valueIn.compareTo(params.getMaxMoney()) > 0)
-						throw new VerificationException("Transaction input value out of range");
-					totalFees = totalFees.add(valueIn.subtract(valueOut));
-				}
-
+		
 				if (!isCoinBase && runScripts) {
 					// Because correctlySpends modifies transactions, this must come after we are
 					// done with tx
