@@ -66,6 +66,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    description varchar(80),\n" +
             "    spent tinyint(1) NOT NULL,\n" +
             "    confirmed tinyint(1) NOT NULL,\n" +
+            "    spendpending tinyint(1) NOT NULL,\n" +
             "    spenderblockhash  varbinary(32),\n" +
             "    CONSTRAINT outputs_pk PRIMARY KEY (hash, `index`) USING BTREE \n" +
             ")\n";

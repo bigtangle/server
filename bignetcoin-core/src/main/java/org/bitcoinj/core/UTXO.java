@@ -35,6 +35,7 @@ public class UTXO {
     private String description;
     private boolean spent;
     private boolean confirmed;
+    private boolean spendPending;
     private byte[] tokenid;
 
     public byte[] getTokenid() {
@@ -62,7 +63,7 @@ public class UTXO {
      *            The address.
      */
     public UTXO(Sha256Hash hash, long index, Coin value, long height, boolean coinbase, Script script, String address,
-            Sha256Hash blockhash, String fromaddress, String description, byte[] tokenid, boolean spent, boolean confirmed) {
+            Sha256Hash blockhash, String fromaddress, String description, byte[] tokenid, boolean spent, boolean confirmed, boolean spendPending) {
         this.hash = hash;
         this.index = index;
         this.value = value;
@@ -76,6 +77,7 @@ public class UTXO {
         this.spent = spent;
         this.tokenid = tokenid;
         this.confirmed = confirmed;
+        this.spendPending = spendPending;
     }
 
     public UTXO(InputStream in) throws IOException {
@@ -248,6 +250,14 @@ public class UTXO {
 
 	public void setConfirmed(boolean confirmed) {
 		this.confirmed = confirmed;
+	}
+
+	public boolean isSpendPending() {
+		return spendPending;
+	}
+
+	public void setSpendPending(boolean spendPending) {
+		this.spendPending = spendPending;
 	}
 
 }

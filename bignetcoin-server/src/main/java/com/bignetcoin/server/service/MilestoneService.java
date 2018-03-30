@@ -314,6 +314,7 @@ public class MilestoneService {
 			if (blocksToAdd.isEmpty())
 				break;
 			removeWhereUTXONotFound(blocksToAdd);
+			//TODO remove where UTXO not confirmed instead
 
 			// Resolve conflicting UTXO spends that have been approved by the network
 			// (improbable to occur)

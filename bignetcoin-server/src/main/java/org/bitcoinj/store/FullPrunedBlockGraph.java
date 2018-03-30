@@ -283,7 +283,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 								in.getOutpoint().getIndex());
 						if (prevOut == null)
 							throw new VerificationException(
-									"Attempted to spend a non-existent output!");
+									"Block attempts to spend a not yet existent output!");
 						// Coinbases can't be spent until they mature, to avoid re-orgs destroying
 						// entire transaction
 						// chains. The assumption is there will ~never be re-orgs deeper than the
@@ -303,6 +303,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 								throw new VerificationException("Too many P2SH SigOps in block");
 						}
 						prevOutScripts.add(prevOut.getScript());
+						blockStore.updateTransactionOutputSpendPending(prevOut.getHash(), prevOut.getIndex(), true);
 						//txOutsSpent.add(prevOut);
 					}
 				}
@@ -314,7 +315,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 					Script script = getScript(out.getScriptBytes());
 					UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), height, isCoinBase, script,
 							getScriptAddress(script), block.getHash(), out.getFromaddress(), out.getDescription(),
-							block.getTokenid(), false, false);
+							block.getTokenid(), false, false, false);
 					blockStore.addUnspentTransactionOutput(newOut);
 					txOutsCreated.add(newOut);
 				}
@@ -439,7 +440,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 //									throw new VerificationException("Too many P2SH SigOps in block");
 //							}
 //
-//							// TODO: Enforce DER signature format
+//							// Missing: Enforce DER signature format
 //
 //							prevOutScripts.add(prevOut.getScript());
 //
@@ -620,7 +621,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 				}
 			}
 		} catch (BlockStoreException e) {
-			//TODO use this correctly
 			blockStore.abortDatabaseBatchWrite();
 			throw e;
 		}
