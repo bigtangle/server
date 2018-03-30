@@ -287,7 +287,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
 
     @Override
     public String toString() {
-        return "Coin [value=" + value + ", tokenid=" + tokenid + "]";
+        return "Coin [value=" + value + ", tokenidHex=" + getTokenHex() + "]";
     }
 
     @Override
@@ -310,4 +310,9 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     public int compareTo(final Coin other) {
         return Longs.compare(this.value, other.value);
     }
+
+    public byte[] getTokenid() {
+        return tokenid;
+    }
+    
 }

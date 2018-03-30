@@ -90,11 +90,11 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         
         Transaction t = new Transaction(PARAMS);
         t.addOutput(amount0, toKey0);
-        t.addOutput(amount1, toKey1);
+      //  t.addOutput(amount1, toKey1);
         
         t.addSignedInput(spendableOutput0, new Script(spendableOutputScriptPubKey), outKey);
         
-        t.addSignedInput(spendableOutput1, new Script(spendableOutputScriptPubKey), outKey);
+    //    t.addSignedInput(spendableOutput1, new Script(spendableOutputScriptPubKey), outKey);
         
 //        t.addOutput(new TransactionOutput(PARAMS, t, amount1, scriptPubKey.getProgram()));
 //        t.addSignedInput(spendableOutput1, scriptPubKey, toKey);

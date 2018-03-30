@@ -84,14 +84,7 @@ public class TransactionTest {
         tx.verify();
     }
 
-    @Test(expected = VerificationException.ExcessiveValue.class)
-    public void exceedsMaxMoney2() throws Exception {
-        Coin half = PARAMS.getMaxMoney().divide(2).add(Coin.SATOSHI);
-        tx.getOutput(0).setValue(half);
-        tx.addOutput(half, ADDRESS);
-        tx.verify();
-    }
-
+ 
     @Test(expected = VerificationException.UnexpectedCoinbaseInput.class)
     public void coinbaseInputInNonCoinbaseTX() throws Exception {
         tx.addInput(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().data(new byte[10]).build());
@@ -337,11 +330,11 @@ public class TransactionTest {
         int size2 = tx1.getMessageSizeForPriorityCalc();
         assertEquals(113, size1 - size2);
         tx1.getInput(0).setScriptSig(new Script(new byte[109]));
-        assertEquals(94, tx1.getMessageSizeForPriorityCalc());
+        assertEquals(118, tx1.getMessageSizeForPriorityCalc());
         tx1.getInput(0).setScriptSig(new Script(new byte[110]));
-        assertEquals(94, tx1.getMessageSizeForPriorityCalc());
+        assertEquals(118, tx1.getMessageSizeForPriorityCalc());
         tx1.getInput(0).setScriptSig(new Script(new byte[111]));
-        assertEquals(95, tx1.getMessageSizeForPriorityCalc());
+        assertEquals(119, tx1.getMessageSizeForPriorityCalc());
     }
 
    // @Test
