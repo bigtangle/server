@@ -431,6 +431,9 @@ public abstract class AbstractBlockGraph {
             
  
             return true;
+        }
+        catch (Exception exception) {
+            throw new BlockStoreException(exception);
         } finally {
             lock.unlock();
         }

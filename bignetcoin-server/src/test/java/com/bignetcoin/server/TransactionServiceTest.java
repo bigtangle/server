@@ -23,7 +23,6 @@ import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.script.ScriptBuilder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -37,7 +36,6 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import com.bignetcoin.server.service.BlockService;
 import com.bignetcoin.server.service.MilestoneService;
 import com.bignetcoin.server.service.WalletService;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 @RunWith(SpringRunner.class)
@@ -77,8 +75,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
             logger.info("outKey > testGetBalances resp : " + response);
         }
         
-        ECKey toKey0 = new ECKey();
-        ECKey toKey1 = new ECKey();
+        ECKey toKey = new ECKey();
         Coin amount0 = Coin.valueOf(100, NetworkParameters.BIGNETCOIN_TOKENID);
         Coin amount1 = Coin.valueOf(10000, NetworkParameters.BIGNETCOIN_TOKENID);
 
@@ -89,12 +86,11 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
 //        Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, keys);
         
         Transaction t = new Transaction(PARAMS);
-        t.addOutput(amount0, toKey0);
-      //  t.addOutput(amount1, toKey1);
-        
+        t.addOutput(amount1, toKey);
         t.addSignedInput(spendableOutput0, new Script(spendableOutputScriptPubKey), outKey);
         
-    //    t.addSignedInput(spendableOutput1, new Script(spendableOutputScriptPubKey), outKey);
+//        t.addOutput(amount0, outKey);
+//        t.addSignedInput(spendableOutput1, new Script(spendableOutputScriptPubKey), toKey);
         
 //        t.addOutput(new TransactionOutput(PARAMS, t, amount1, scriptPubKey.getProgram()));
 //        t.addSignedInput(spendableOutput1, scriptPubKey, toKey);
@@ -105,14 +101,24 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         blockgraph.add(rollingBlock);
         milestoneService.update();
         
+        rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
+                outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
+        Transaction t0 = new Transaction(PARAMS);
+        t0.addOutput(amount0, outKey);
+        t0.addSignedInput(spendableOutput1, new Script(spendableOutputScriptPubKey), toKey);
+        rollingBlock.addTransaction(t0);
+        rollingBlock.solve();
+        blockgraph.add(rollingBlock);
+        milestoneService.update();
+        
         {
-            MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name()).content(toKey0.getPubKeyHash());
+            MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name()).content(toKey.getPubKeyHash());
             MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
             String response = mvcResult.getResponse().getContentAsString();
             logger.info("toKey > testGetBalances resp : " + response);
         }
         {
-            MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name()).content(toKey1.getPubKeyHash());
+            MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name()).content(outKey.getPubKeyHash());
             MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
             String response = mvcResult.getResponse().getContentAsString();
             logger.info("outKey > testGetBalances resp : " + response);
