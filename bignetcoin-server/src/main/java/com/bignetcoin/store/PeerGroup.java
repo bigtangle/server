@@ -3,7 +3,7 @@
  *  
  *******************************************************************************/
 
-package org.bitcoinj.store;
+package com.bignetcoin.store;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -1505,7 +1505,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * 
      * @param address destination IP and port.
      * @return The newly created Peer object or null if the peer could not be connected.
-     *         Use {@link org.bitcoinj.store.Peer#getConnectionOpenFuture()} if you
+     *         Use {@link com.bignetcoin.store.Peer#getConnectionOpenFuture()} if you
      *         want a future which completes when the connection is open.
      */
     @Nullable
@@ -2062,7 +2062,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
     /**
      * Returns a future that is triggered when the number of connected peers is equal to the given number of
-     * peers. By using this with {@link org.bitcoinj.store.PeerGroup#getMaxConnections()} you can wait until the
+     * peers. By using this with {@link com.bignetcoin.store.PeerGroup#getMaxConnections()} you can wait until the
      * network is fully online. To block immediately, just call get() on the result. Just calls
      * {@link #waitForPeersOfVersion(int, long)} with zero as the protocol version.
      *
@@ -2168,7 +2168,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * enough, {@link PeerGroup#broadcastTransaction(Transaction)} will wait until the minimum number is reached so
      * propagation across the network can be observed. If no value has been set using
      * {@link PeerGroup#setMinBroadcastConnections(int)} a default of 80% of whatever
-     * {@link org.bitcoinj.store.PeerGroup#getMaxConnections()} returns is used.
+     * {@link com.bignetcoin.store.PeerGroup#getMaxConnections()} returns is used.
      */
     public int getMinBroadcastConnections() {
         lock.lock();
@@ -2187,7 +2187,7 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     /**
-     * See {@link org.bitcoinj.store.PeerGroup#getMinBroadcastConnections()}.
+     * See {@link com.bignetcoin.store.PeerGroup#getMinBroadcastConnections()}.
      */
     public void setMinBroadcastConnections(int value) {
         lock.lock();
@@ -2210,7 +2210,7 @@ public class PeerGroup implements TransactionBroadcaster {
     /**
      * <p>Given a transaction, sends it un-announced to one peer and then waits for it to be received back from other
      * peers. Once all connected peers have announced the transaction, the future available via the
-     * {@link org.bitcoinj.store.TransactionBroadcast#future()} method will be completed. If anything goes
+     * {@link com.bignetcoin.store.TransactionBroadcast#future()} method will be completed. If anything goes
      * wrong the exception will be thrown when get() is called, or you can receive it via a callback on the
      * {@link ListenableFuture}. This method returns immediately, so if you want it to block just call get() on the
      * result.</p>
@@ -2222,7 +2222,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * A good choice for proportion would be between 0.5 and 0.8 but if you want faster transmission during initial
      * bringup of the peer group you can lower it.</p>
      *
-     * <p>The returned {@link org.bitcoinj.store.TransactionBroadcast} object can be used to get progress feedback,
+     * <p>The returned {@link com.bignetcoin.store.TransactionBroadcast} object can be used to get progress feedback,
      * which is calculated by watching the transaction propagate across the network and be announced by peers.</p>
      */
     public TransactionBroadcast broadcastTransaction(final Transaction tx, final int minConnections) {
@@ -2273,7 +2273,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
     /**
      * Returns the period between pings for an individual peer. Setting this lower means more accurate and timely ping
-     * times are available via {@link org.bitcoinj.store.Peer#getLastPingTime()} but it increases load on the
+     * times are available via {@link com.bignetcoin.store.Peer#getLastPingTime()} but it increases load on the
      * remote node. It defaults to {@link PeerGroup#DEFAULT_PING_INTERVAL_MSEC}.
      */
     public long getPingIntervalMsec() {
@@ -2287,10 +2287,10 @@ public class PeerGroup implements TransactionBroadcaster {
 
     /**
      * Sets the period between pings for an individual peer. Setting this lower means more accurate and timely ping
-     * times are available via {@link org.bitcoinj.store.Peer#getLastPingTime()} but it increases load on the
+     * times are available via {@link com.bignetcoin.store.Peer#getLastPingTime()} but it increases load on the
      * remote node. It defaults to {@link PeerGroup#DEFAULT_PING_INTERVAL_MSEC}.
      * Setting the value to be <= 0 disables pinging entirely, although you can still request one yourself
-     * using {@link org.bitcoinj.store.Peer#ping()}.
+     * using {@link com.bignetcoin.store.Peer#ping()}.
      */
     public void setPingIntervalMsec(long pingIntervalMsec) {
         lock.lock();

@@ -26,11 +26,12 @@ import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
-import org.bitcoinj.store.BlockGraph;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.bignetcoin.store.BlockGraph;
 
 /**
  * Just check the Transaction.verify() method. Most methods that have

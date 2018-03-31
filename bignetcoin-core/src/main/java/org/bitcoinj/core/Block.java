@@ -150,25 +150,25 @@ public class Block extends Message {
     Block(NetworkParameters params, long setVersion) {
 
         this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, NetworkParameters.BIGNETCOIN_TOKENID,
-                NetworkParameters.BLOCKTYPE_TRANSFER);
+                NetworkParameters.BLOCKTYPE_TRANSFER,0);
     }
 
     public Block(NetworkParameters params, long blockVersionGenesis, byte[] tokenid, long blocktypeTransfer) {
 
-        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, tokenid, NetworkParameters.BLOCKTYPE_TRANSFER);
+        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, tokenid, NetworkParameters.BLOCKTYPE_TRANSFER,0);
     }
 
-    public Block(NetworkParameters params, Sha256Hash prevBlockHash, Sha256Hash prevBranchBlockHash, byte[] tokenid) {
-        this(params, prevBlockHash, prevBranchBlockHash, tokenid, NetworkParameters.BLOCKTYPE_TRANSFER);
-    }
-
+    
+   
     public Block(NetworkParameters params, Sha256Hash prevBlockHash, Sha256Hash prevBranchBlockHash, byte[] tokenid,
-            long blocktype) {
+            long blocktype, long minTime ) {
         super(params);
         // Set up a few basic things. We are not complete after this though.
         version = Block.BLOCK_VERSION_GENESIS;
         // difficultyTarget = EASIEST_DIFFICULTY_TARGET;
-        time = System.currentTimeMillis() / 1000;
+        this.time = System.currentTimeMillis() / 1000;
+        if (this.time < minTime)
+            this.time = minTime;
         this.prevBlockHash = prevBlockHash;
         this.prevBranchBlockHash = prevBranchBlockHash;
         this.tokenid = tokenid;

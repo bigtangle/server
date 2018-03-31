@@ -9,7 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
-@ComponentScan(basePackages = { "com.bignetcoin.server" })
+@ComponentScan(basePackages = { "com.bignetcoin.server"  , "com.bignetcoin.store" })
 public class ServerStart {
 
     public static void main(String[] args) {

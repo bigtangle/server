@@ -5,7 +5,7 @@
 
 package org.bitcoinj.core.listeners;
 
-import org.bitcoinj.store.Peer;
+import com.bignetcoin.store.Peer;
 
 /**
  * <p>Implementors can listen to events indicating a new peer connecting.</p>

@@ -25,9 +25,6 @@ import java.util.Locale;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet2Params;
 import org.bitcoinj.params.UnitTestParams;
-import org.bitcoinj.store.AbstractBlockGraph;
-import org.bitcoinj.store.BlockGraph;
-import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.wallet.Wallet;
@@ -37,6 +34,10 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+
+import com.bignetcoin.store.AbstractBlockGraph;
+import com.bignetcoin.store.BlockGraph;
+import com.bignetcoin.store.MemoryBlockStore;
 
 // Handling of chain splits/reorgs are in ChainSplitTests.
 @Ignore

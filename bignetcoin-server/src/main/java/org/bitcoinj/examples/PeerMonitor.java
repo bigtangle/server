@@ -10,9 +10,10 @@ import org.bitcoinj.core.listeners.PeerDisconnectedEventListener;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.store.Peer;
-import org.bitcoinj.store.PeerGroup;
 import org.bitcoinj.utils.BriefLogFormatter;
+
+import com.bignetcoin.store.Peer;
+import com.bignetcoin.store.PeerGroup;
 import com.google.common.collect.Lists;
 
 import javax.swing.*;

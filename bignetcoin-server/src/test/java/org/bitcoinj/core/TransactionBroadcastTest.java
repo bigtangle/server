@@ -20,7 +20,6 @@ import java.util.Collection;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 
-import org.bitcoinj.store.TransactionBroadcast;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.InboundMessageQueuer;
 import org.bitcoinj.testing.TestWithPeerGroup;
@@ -33,6 +32,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import com.bignetcoin.store.TransactionBroadcast;
 import com.google.common.util.concurrent.AtomicDouble;
 import com.google.common.util.concurrent.ListenableFuture;
 

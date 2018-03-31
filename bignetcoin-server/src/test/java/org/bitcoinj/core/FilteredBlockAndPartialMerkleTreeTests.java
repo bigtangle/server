@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
-import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.TestWithPeerGroup;
 import org.bitcoinj.wallet.KeyChainGroup;
@@ -27,6 +26,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import com.bignetcoin.store.MemoryBlockStore;
 import com.google.common.collect.Lists;
 
 @RunWith(value = Parameterized.class)

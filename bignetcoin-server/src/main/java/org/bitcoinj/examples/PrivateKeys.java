@@ -7,10 +7,11 @@ package org.bitcoinj.examples;
 
 import org.bitcoinj.core.*;
 import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.store.BlockGraph;
-import org.bitcoinj.store.MemoryBlockStore;
-import org.bitcoinj.store.PeerGroup;
 import org.bitcoinj.wallet.Wallet;
+
+import com.bignetcoin.store.BlockGraph;
+import com.bignetcoin.store.MemoryBlockStore;
+import com.bignetcoin.store.PeerGroup;
 
 import java.math.BigInteger;
 import java.net.InetAddress;

@@ -6,12 +6,13 @@ package com.bignetcoin.server.config;
 
 import org.bitcoinj.core.BlockStoreException;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.store.FullPrunedBlockStore;
-import org.bitcoinj.store.MySQLFullPrunedBlockStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import com.bignetcoin.store.FullPrunedBlockStore;
+import com.bignetcoin.store.MySQLFullPrunedBlockStore;
 
 @Configuration
 public class MySQLDBStoreConfiguration {

@@ -7,9 +7,10 @@ package org.bitcoinj.wallet;
 
 import org.bitcoinj.core.*;
 import org.bitcoinj.params.*;
-import org.bitcoinj.store.AbstractBlockGraph;
 import org.bitcoinj.testing.*;
 import org.junit.*;
+
+import com.bignetcoin.store.AbstractBlockGraph;
 
 import java.net.*;
 import java.util.*;

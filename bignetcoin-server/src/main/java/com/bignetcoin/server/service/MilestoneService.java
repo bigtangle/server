@@ -29,13 +29,13 @@ import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
-import org.bitcoinj.store.FullPrunedBlockStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cglib.core.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import com.bignetcoin.store.FullPrunedBlockStore;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashMultiset;
 import com.lambdaworks.crypto.SCrypt;

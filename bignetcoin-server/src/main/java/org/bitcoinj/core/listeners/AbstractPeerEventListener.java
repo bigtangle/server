@@ -11,7 +11,8 @@ import org.bitcoinj.core.GetDataMessage;
 import org.bitcoinj.core.Message;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.store.Peer;
+
+import com.bignetcoin.store.Peer;
 
 import javax.annotation.*;
 import java.util.List;

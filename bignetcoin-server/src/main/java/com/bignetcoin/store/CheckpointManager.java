@@ -3,7 +3,7 @@
  *  
  *******************************************************************************/
 
-package org.bitcoinj.store;
+package com.bignetcoin.store;
 
 import com.google.common.base.Charsets;
 import com.google.common.hash.HashCode;

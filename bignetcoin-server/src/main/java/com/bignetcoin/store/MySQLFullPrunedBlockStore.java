@@ -3,7 +3,7 @@
  *  
  *******************************************************************************/
 
-package org.bitcoinj.store;
+package com.bignetcoin.store;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,12 +11,14 @@ import java.util.List;
 
 import org.bitcoinj.core.BlockStoreException;
 import org.bitcoinj.core.NetworkParameters;
+import org.springframework.stereotype.Service;
 
 /**
  * <p>A full pruned block store using the MySQL database engine. As an added bonus an address index is calculated,
  * so you can use {@link #calculateBalanceForAddress(org.bitcoinj.core.Address)} to quickly look up
  * the quantity of bitcoins controlled by that address.</p>
  */
+ 
 public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String MYSQL_DUPLICATE_KEY_ERROR_CODE = "23000";
     private static final String DATABASE_DRIVER_CLASS = "com.mysql.jdbc.Driver";

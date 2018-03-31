@@ -30,10 +30,11 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.RegTestParams;
-import org.bitcoinj.store.Peer;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
+
+import com.bignetcoin.store.Peer;
 
 /**
  * This is a little test app that waits for a coin on a local regtest node, then  generates two transactions that double

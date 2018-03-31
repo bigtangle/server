@@ -7,11 +7,12 @@ package org.bitcoinj.examples;
 
 import org.bitcoinj.core.*;
 import org.bitcoinj.params.TestNet3Params;
-import org.bitcoinj.store.BlockGraph;
-import org.bitcoinj.store.MemoryBlockStore;
-import org.bitcoinj.store.Peer;
-import org.bitcoinj.store.PeerGroup;
 import org.bitcoinj.utils.BriefLogFormatter;
+
+import com.bignetcoin.store.BlockGraph;
+import com.bignetcoin.store.MemoryBlockStore;
+import com.bignetcoin.store.Peer;
+import com.bignetcoin.store.PeerGroup;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.net.InetAddress;

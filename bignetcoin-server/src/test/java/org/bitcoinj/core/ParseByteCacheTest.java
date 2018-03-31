@@ -20,11 +20,12 @@ import java.util.Arrays;
 
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.UnitTestParams;
-import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.wallet.Wallet;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import com.bignetcoin.store.MemoryBlockStore;
 @Ignore    //TODO  new binary
 public class ParseByteCacheTest {
     private static final int BLOCK_HEIGHT_GENESIS = 0;

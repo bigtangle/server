@@ -3,7 +3,7 @@
  *  
  *******************************************************************************/
 
-package org.bitcoinj.store;
+package com.bignetcoin.store;
 
 import java.util.HashSet;
 import java.util.List;

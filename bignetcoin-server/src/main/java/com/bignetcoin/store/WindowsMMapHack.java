@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.store;
+package com.bignetcoin.store;
 
 import sun.misc.*;
 import sun.nio.ch.*;

@@ -14,8 +14,9 @@ import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.net.discovery.PeerDiscoveryException;
 import org.bitcoinj.net.NioClientManager;
 import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.store.Peer;
 import org.bitcoinj.utils.BriefLogFormatter;
+
+import com.bignetcoin.store.Peer;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;

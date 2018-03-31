@@ -6,7 +6,8 @@
 package org.bitcoinj.core.listeners;
 
 import org.bitcoinj.core.PeerAddress;
-import org.bitcoinj.store.Peer;
+
+import com.bignetcoin.store.Peer;
 
 import java.util.Set;
 

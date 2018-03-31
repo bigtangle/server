@@ -3,7 +3,7 @@
  *  
  *******************************************************************************/
 
-package org.bitcoinj.store;
+package com.bignetcoin.store;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -47,6 +47,7 @@ import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
 /**
  * <p>
@@ -60,6 +61,7 @@ import org.slf4j.LoggerFactory;
  * nevertheless provides the same security guarantees as Bitcoin Core does.
  * </p>
  */
+ 
 public class FullPrunedBlockGraph extends AbstractBlockGraph {
     private static final Logger log = LoggerFactory.getLogger(FullPrunedBlockGraph.class);
 

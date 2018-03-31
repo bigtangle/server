@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.store;
+package com.bignetcoin.store;
 
 import com.google.common.collect.Lists;
 import org.bitcoinj.core.BloomFilter;
@@ -28,9 +28,9 @@ import java.util.LinkedList;
 // This code is unit tested by the PeerGroup tests.
 
 /**
- * <p>A reusable object that will calculate, given a list of {@link org.bitcoinj.store.PeerFilterProvider}s, a merged
+ * <p>A reusable object that will calculate, given a list of {@link com.bignetcoin.store.PeerFilterProvider}s, a merged
  * {@link org.bitcoinj.core.BloomFilter} and earliest key time for all of them.
- * Used by the {@link org.bitcoinj.store.PeerGroup} class internally.</p>
+ * Used by the {@link com.bignetcoin.store.PeerGroup} class internally.</p>
  *
  * <p>Thread safety: threading here can be complicated. Each filter provider is given a begin event, which may acquire
  * a lock (and is guaranteed to receive an end event). This class is mostly thread unsafe and is meant to be used from a

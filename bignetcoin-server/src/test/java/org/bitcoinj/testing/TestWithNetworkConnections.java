@@ -41,13 +41,13 @@ import org.bitcoinj.net.NioServer;
 import org.bitcoinj.net.StreamConnection;
 import org.bitcoinj.net.StreamConnectionFactory;
 import org.bitcoinj.params.UnitTestParams;
-import org.bitcoinj.store.BlockGraph;
-import org.bitcoinj.store.MemoryBlockStore;
-import org.bitcoinj.store.Peer;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
 
+import com.bignetcoin.store.BlockGraph;
+import com.bignetcoin.store.MemoryBlockStore;
+import com.bignetcoin.store.Peer;
 import com.google.common.util.concurrent.SettableFuture;
 
 /**

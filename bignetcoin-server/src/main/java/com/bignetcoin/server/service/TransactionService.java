@@ -20,8 +20,6 @@ import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.Utils;
-import org.bitcoinj.store.FullPrunedBlockGraph;
-import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.wallet.CoinSelector;
 import org.bitcoinj.wallet.DefaultCoinSelector;
 import org.slf4j.Logger;
@@ -29,6 +27,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.bignetcoin.store.FullPrunedBlockGraph;
+import com.bignetcoin.store.FullPrunedBlockStore;
 import com.subgraph.orchid.encoders.Hex;
 
 /**
@@ -63,7 +63,8 @@ public class TransactionService {
         Block r2 = blockService.getBlock(getNextBlockToApprove());
 
         Block rollingBlock = new Block(this.networkParameters, r1.getHash(), r2.getHash(),
-                NetworkParameters.BIGNETCOIN_TOKENID);
+                NetworkParameters.BIGNETCOIN_TOKENID, NetworkParameters.BLOCKTYPE_TRANSFER,
+                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
 
         byte[] data = rollingBlock.bitcoinSerialize();
 
@@ -100,7 +101,7 @@ public class TransactionService {
         Block r1 = blockService.getBlock(getNextBlockToApprove());
         Block r2 = blockService.getBlock(getNextBlockToApprove());
         Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), tokenid,
-                NetworkParameters.BLOCKTYPE_GENESIS_MULTIPLE);
+                NetworkParameters.BLOCKTYPE_GENESIS_MULTIPLE, Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
         block.addCoinbaseTransaction(pubKey, coin);
         block.solve();
         FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);

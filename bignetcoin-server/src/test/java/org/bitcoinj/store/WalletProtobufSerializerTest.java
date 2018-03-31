@@ -18,6 +18,9 @@ import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.DeterministicKeyChain;
 import org.bitcoinj.wallet.KeyChain;
+
+import com.bignetcoin.store.BlockGraph;
+import com.bignetcoin.store.MemoryBlockStore;
 import com.google.protobuf.ByteString;
 
 import org.bitcoinj.wallet.MarriedKeyChain;

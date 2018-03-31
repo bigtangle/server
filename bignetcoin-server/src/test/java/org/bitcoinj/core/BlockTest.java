@@ -22,13 +22,13 @@ import org.bitcoinj.params.TestNet2Params;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.ScriptOpCodes;
-import org.bitcoinj.store.AbstractBlockGraph.NewBlockType;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.Wallet.BalanceType;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import com.bignetcoin.store.AbstractBlockGraph.NewBlockType;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;

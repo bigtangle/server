@@ -16,19 +16,10 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.store;
-
-import org.bitcoinj.core.BlockStoreException;
-
 /**
- * Thrown by {@link SPVBlockStore} when the process cannot gain exclusive access to the chain file.
+ * Block stores persist blockchain data downloaded from remote peers. There is an SPV block store which preserves a ring
+ * buffer of headers on disk and is suitable for lightweight user wallets, a store that's backed by Postgres and which
+ * can calculate a full indexed UTXO set (i.e. it can query address balances), a store that's backed by the embedded H2
+ * database, and a memory only store useful for unit tests.
  */
-public class ChainFileLockedException extends BlockStoreException {
-    public ChainFileLockedException(String message) {
-        super(message);
-    }
-
-    public ChainFileLockedException(Throwable t) {
-        super(t);
-    }
-}
+package com.bignetcoin.store;

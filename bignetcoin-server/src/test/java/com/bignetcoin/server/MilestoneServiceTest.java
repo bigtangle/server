@@ -27,7 +27,6 @@ import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.store.FullPrunedBlockGraph;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletTest;
@@ -42,6 +41,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import com.bignetcoin.server.service.BlockService;
 import com.bignetcoin.server.service.MilestoneService;
 import com.bignetcoin.server.service.TipsService;
+import com.bignetcoin.store.FullPrunedBlockGraph;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)

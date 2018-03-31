@@ -25,13 +25,13 @@ import static org.junit.Assert.assertThat;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
-import org.bitcoinj.store.AbstractBlockGraph;
 import org.bitcoinj.testing.TestWithWallet;
 import org.bitcoinj.wallet.SendRequest;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.bignetcoin.store.AbstractBlockGraph;
 import com.google.common.collect.ImmutableList;
 
 public class TransactionOutputTest extends TestWithWallet {

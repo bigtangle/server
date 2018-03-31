@@ -3,7 +3,7 @@
  *  
  *******************************************************************************/
 
-package org.bitcoinj.store;
+package com.bignetcoin.store;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -1401,14 +1401,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      *
      * <p>
      * The balance
-     * {@link org.bitcoinj.store.DatabaseFullPrunedBlockStore#getBalanceSelectSQL()}
+     * {@link com.bignetcoin.store.DatabaseFullPrunedBlockStore#getBalanceSelectSQL()}
      * returns the balance (summed) as an number, then use
      * calculateClientSide=false
      * </p>
      *
      * <p>
      * The balance
-     * {@link org.bitcoinj.store.DatabaseFullPrunedBlockStore#getBalanceSelectSQL()}
+     * {@link com.bignetcoin.store.DatabaseFullPrunedBlockStore#getBalanceSelectSQL()}
      * returns the all the outputs as stored in the DB (binary), then use
      * calculateClientSide=true
      * </p>

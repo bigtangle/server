@@ -6,7 +6,8 @@
 package org.bitcoinj.core.listeners;
 
 import org.bitcoinj.core.*;
-import org.bitcoinj.store.Peer;
+
+import com.bignetcoin.store.Peer;
 
 import javax.annotation.*;
 import java.util.*;

@@ -3,7 +3,7 @@
  *  
  *******************************************************************************/
 
-package org.bitcoinj.store;
+package com.bignetcoin.store;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -1599,7 +1599,7 @@ public class Peer extends PeerSocketHandler {
     /**
      * Sends the peer a ping message and returns a future that will be invoked when the pong is received back.
      * The future provides a number which is the number of milliseconds elapsed between the ping and the pong.
-     * Once the pong is received the value returned by {@link org.bitcoinj.store.Peer#getLastPingTime()} is
+     * Once the pong is received the value returned by {@link com.bignetcoin.store.Peer#getLastPingTime()} is
      * updated.
      * @throws ProtocolException if the peer version is too low to support measurable pings.
      */
@@ -1618,7 +1618,7 @@ public class Peer extends PeerSocketHandler {
     }
 
     /**
-     * Returns the elapsed time of the last ping/pong cycle. If {@link org.bitcoinj.store.Peer#ping()} has never
+     * Returns the elapsed time of the last ping/pong cycle. If {@link com.bignetcoin.store.Peer#ping()} has never
      * been called or we did not hear back the "pong" message yet, returns {@link Long#MAX_VALUE}.
      */
     public long getLastPingTime() {
@@ -1633,7 +1633,7 @@ public class Peer extends PeerSocketHandler {
     }
 
     /**
-     * Returns a moving average of the last N ping/pong cycles. If {@link org.bitcoinj.store.Peer#ping()} has never
+     * Returns a moving average of the last N ping/pong cycles. If {@link com.bignetcoin.store.Peer#ping()} has never
      * been called or we did not hear back the "pong" message yet, returns {@link Long#MAX_VALUE}. The moving average
      * window is 5 buckets.
      */

@@ -16,13 +16,13 @@ import org.bitcoinj.core.BlockStoreException;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
-import org.bitcoinj.store.FullPrunedBlockStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.bignetcoin.server.model.TipsViewModel;
+import com.bignetcoin.store.FullPrunedBlockStore;
 
 @Service
 public class TipsService {

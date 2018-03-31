@@ -19,8 +19,6 @@ import java.util.List;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.store.FullPrunedBlockGraph;
-import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.utils.BlockFileLoader;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.wallet.SendRequest;
@@ -32,6 +30,8 @@ import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.bignetcoin.store.FullPrunedBlockGraph;
+import com.bignetcoin.store.FullPrunedBlockStore;
 import com.google.common.collect.Lists;
 
 /**

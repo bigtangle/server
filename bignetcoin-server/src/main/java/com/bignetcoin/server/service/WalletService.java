@@ -18,7 +18,6 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.UTXOProviderException;
-import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.wallet.CoinSelection;
 import org.bitcoinj.wallet.CoinSelector;
 import org.bitcoinj.wallet.DefaultCoinSelector;
@@ -32,6 +31,7 @@ import com.bignetcoin.server.response.AbstractResponse;
 import com.bignetcoin.server.response.GetBalancesResponse;
 import com.bignetcoin.server.response.GetOutputsResponse;
 import com.bignetcoin.server.transaction.FreeStandingTransactionOutput;
+import com.bignetcoin.store.FullPrunedBlockStore;
 import com.google.common.collect.Lists;
  
 @Service
