@@ -110,19 +110,18 @@ public class MilestoneService {
 	private boolean updateSolidityAndHeightRecursive(Sha256Hash hash) throws BlockStoreException {
 		BlockEvaluation blockEvaluation = blockService.getBlockEvaluation(hash);
 
+		// Missing blocks -> not solid, request from network
+		if (blockEvaluation == null) {
+			// TODO broken graph, download the missing remote block needed
+			return false;
+		}
+
 		// Solid blocks stay solid
 		if (blockEvaluation.isSolid()) {
 			return true;
 		}
 
-		// Missing blocks -> not solid, request from network
-		Block block = blockService.getBlock(blockEvaluation.getBlockhash());
-		if (block == null) {
-			// TODO broken graph, download the missing remote block needed
-			blockService.updateSolid(blockEvaluation, false);
-			return false;
-		}
-
+		Block block = blockService.getBlock(hash);
 		boolean prevBlockSolid = false;
 		boolean prevBranchBlockSolid = false;
 
@@ -146,10 +145,8 @@ public class MilestoneService {
 		if (prevBlockSolid && prevBranchBlockSolid) {
 			solidifyBlock(blockEvaluation, block);
 			return true;
-		} else {
-			blockService.updateSolid(blockEvaluation, false);
-			return false;
-		}
+		} 
+		return false;
 	}
 
 	private void solidifyBlock(BlockEvaluation blockEvaluation, Block block) throws BlockStoreException {

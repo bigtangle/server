@@ -148,4 +148,9 @@ public class BlockGraph extends AbstractBlockGraph {
         }
         return success;
     }
+
+	@Override
+	protected void maybeSetSolidityAndHeight(StoredBlock newStoredBlock, StoredBlock storedPrev, StoredBlock storedPrevBranch) {
+        throw new UnsupportedOperationException();
+	}
 }

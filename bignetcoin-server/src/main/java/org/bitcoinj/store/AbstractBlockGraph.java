@@ -488,8 +488,9 @@ public abstract class AbstractBlockGraph {
             txOutChanges = connectTransactions(Math.max( storedPrev.getHeight(),storedPrevBranch.getHeight()) + 1, block);
 //            StoredBlock newStoredBlock = addToBlockStore(storedPrev,storedPrevBranch,
 //                    block.transactions == null ? block : block.cloneAsHeader(), txOutChanges);
-        StoredBlock newStoredBlock = addToBlockStore(storedPrev,storedPrevBranch,
-        block, txOutChanges);
+        StoredBlock newStoredBlock = addToBlockStore(storedPrev,storedPrevBranch, block, txOutChanges);
+        maybeSetSolidityAndHeight(newStoredBlock, storedPrev, storedPrevBranch);
+        
         versionTally.add(block.getVersion());
         setChainHead(newStoredBlock);
         log.debug("Chain is now {} blocks high, running listeners", newStoredBlock.getHeight());
@@ -536,7 +537,9 @@ public abstract class AbstractBlockGraph {
 //        }
     }
     
-    /**
+    protected abstract void maybeSetSolidityAndHeight(StoredBlock newStoredBlock, StoredBlock storedPrev, StoredBlock storedPrevBranch) throws BlockStoreException;
+
+	/**
      * Disconnect each transaction in the block (after reading it from the block store)
      * Only called if(shouldVerifyTransactions())
      * @throws PrunedException if block does not exist as a {@link StoredUndoableBlock} in the block store.
