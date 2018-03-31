@@ -7,54 +7,31 @@ package com.bignetcoin.server;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.io.File;
-import java.security.SecureRandom;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
-import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
-import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.BlockForTest;
-import org.bitcoinj.core.BlockStoreException;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.MySQLFullPrunedBlockChainTest;
+import org.bitcoinj.core.Json;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.kits.WalletAppKit;
+import org.bitcoinj.core.Utils;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.store.FullPrunedBlockGraph;
-import org.bitcoinj.store.FullPrunedBlockStore;
-import org.bitcoinj.store.MySQLFullPrunedBlockStore;
-import org.bitcoinj.wallet.DecryptingKeyBag;
-import org.bitcoinj.wallet.DeterministicKeyChain;
-import org.bitcoinj.wallet.SendRequest;
-import org.bitcoinj.wallet.Wallet;
-import org.junit.Before;
+import org.bitcoinj.utils.OkHttp3Util;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-import com.bignetcoin.server.config.GlobalConfigurationProperties;
-import com.bignetcoin.server.service.BlockService;
 import com.bignetcoin.server.service.MilestoneService;
-import com.bignetcoin.server.service.TipsService;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -65,33 +42,11 @@ public class InitTest extends AbstractIntegrationTest {
     @Autowired
     private MilestoneService milestoneService;
 
-    @Autowired
-    private BlockService blockService;
-
-   
+ 
 
     @Test
     public void testInitWallet() throws Exception {
-        KeyParameter aesKey = null;
-        WalletAppKit bitcoin = new WalletAppKit(PARAMS, new File("../bignetcoin-wallet"), "bignetcoin");
-        bitcoin.wallet().setServerURL(contextRoot);
-
-        DecryptingKeyBag maybeDecryptingKeyBag = new DecryptingKeyBag(bitcoin.wallet(), aesKey);
-        List<ECKey> keys = new ArrayList<ECKey>();
-        for (ECKey key : bitcoin.wallet().getImportedKeys()) {
-            ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
-            System.out.println(
-                    "realKey, pubKey : " + ecKey.getPublicKeyAsHex() + ", prvKey : " + ecKey.getPrivateKeyAsHex());
-            keys.add(ecKey);
-        }
-        for (DeterministicKeyChain chain : bitcoin.wallet().getKeyChainGroup().getDeterministicKeyChains()) {
-            for (ECKey key : chain.getLeafKeys()) {
-                ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
-                System.out.println(
-                        "realKey, pubKey : " + ecKey.getPublicKeyAsHex() + ", priKey : " + ecKey.getPrivateKeyAsHex());
-                keys.add(ecKey);
-            }
-        }
+      
         ECKey outKey = new ECKey();
         int height = 1;
 
@@ -110,16 +65,18 @@ public class InitTest extends AbstractIntegrationTest {
                     outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
         }
+        // Create bitcoin spend of 1 BTC.
+ 
+        ECKey myKey = walletKeys.get(0);
+        milestoneService.update();
+        Block b = createGenesisBlock(myKey);
         milestoneService.update();
 
-        rollingBlock = BlockForTest.createNextBlock(rollingBlock, null, networkParameters.getGenesisBlock().getHash());
-        System.out.println("rollingBlock : " + rollingBlock.getHashAsString());
+        rollingBlock = BlockForTest.createNextBlock(b, null, networkParameters.getGenesisBlock().getHash());
+        System.out.println("rollingBlock : " + rollingBlock.toString());
         rollingBlock = networkParameters.getDefaultSerializer().makeBlock(rollingBlock.bitcoinSerialize());
-        System.out.println("rollingBlock : " + rollingBlock.getHashAsString());
+        System.out.println("rollingBlock : " + rollingBlock.toString());
 
-        // Create bitcoin spend of 1 BTC.
-        Wallet wallet = bitcoin.wallet();
-        ECKey myKey = keys.get(0);
         System.out.println("key " + myKey.getPublicKeyAsHex());
 
         Coin amount = Coin.valueOf(100000, NetworkParameters.BIGNETCOIN_TOKENID);
@@ -132,17 +89,35 @@ public class InitTest extends AbstractIntegrationTest {
         rollingBlock.solve();
         blockgraph.add(rollingBlock);
 
-        milestoneService.update(); // ADDED
-
-        // byte[] data = getAskTransactionBlock();
-        // ByteBuffer byteBuffer = ByteBuffer.wrap(data);
-        // Block r1 = nextBlockSerializer(byteBuffer);
-        // Block r2 = nextBlockSerializer(byteBuffer);
-
-   
-        // cal block update
         milestoneService.update();
-      
+        testTransactionAndGetBalances();
     }
 
+    public Block createGenesisBlock(ECKey outKey) throws Exception {
+        byte[] pubKey = outKey.getPubKey();
+
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
+        requestParam.put("amount", 164385643856L);
+        requestParam.put("tokenname", "Test");
+        requestParam.put("description", "Test");
+        requestParam.put("blocktype", NetworkParameters.BLOCKTYPE_GENESIS_MULTIPLE);
+        requestParam.put("tokenHex", Utils.HEX.encode(outKey.getPubKeyHash()));
+
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.createGenesisBlock.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+        logger.info("createGenesisBlock resp : " + block);
+
+        return block;
+    }
+ 
+    public void testTransactionAndGetBalances() throws Exception {
+        for(ECKey toKey: walletKeys) {
+        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name()).content(toKey.getPubKeyHash());
+        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
+        String response = mvcResult.getResponse().getContentAsString();
+        logger.info("testGetBalances resp : " + response);
+        }
+    }
 }

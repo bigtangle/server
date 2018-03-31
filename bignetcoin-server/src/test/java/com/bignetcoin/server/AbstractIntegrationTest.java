@@ -4,17 +4,26 @@
  *******************************************************************************/
 package com.bignetcoin.server;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.BlockStoreException;
+import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.store.FullPrunedBlockGraph;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.store.MySQLFullPrunedBlockStore;
+import org.bitcoinj.wallet.DecryptingKeyBag;
+import org.bitcoinj.wallet.DeterministicKeyChain;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -37,12 +46,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {})
 
-// TODO Fix for incompatible mockito version. We use 2+ but spring 1.4.2 only
-// supports 1.X.
-// ResetMocksTestExecutionListener would be loaded by default and crashes on
-// runtime.
-// So we have to define our TestExecutionListeners manually.
-// Remove this as soon as we have Spring >= 1.5.0
+ 
 @TestExecutionListeners(value = { DependencyInjectionTestExecutionListener.class, MockitoTestExecutionListener.class,
         DirtiesContextTestExecutionListener.class
 
@@ -53,7 +57,7 @@ public abstract class AbstractIntegrationTest   {
     private static final String CONTEXT_ROOT_TEMPLATE = "http://localhost:%s/";
     private static final Logger log = LoggerFactory.getLogger(TipsServiceTest.class);
     public String contextRoot;
-
+    public List<ECKey> walletKeys ;
     protected MockMvc mockMvc;
     
     protected static ObjectMapper objectMapper;
@@ -119,6 +123,7 @@ public abstract class AbstractIntegrationTest   {
                 .getBlockEvaluation(networkParameters.getGenesisBlock().getHash());
         blockService.updateMilestone(genesisEvaluation, true);
         blockService.updateSolid(genesisEvaluation, true);
+        walletKeys();
     }
     
     @Autowired
@@ -143,4 +148,32 @@ public abstract class AbstractIntegrationTest   {
     public MockMvc getMockMvc() {
         return mockMvc;
     }
+    
+     
+    public void walletKeys() throws Exception {
+        KeyParameter aesKey = null;
+        WalletAppKit bitcoin = new WalletAppKit(PARAMS, new File("../bignetcoin-wallet"), "bignetcoin");
+        bitcoin.wallet().setServerURL(contextRoot);
+
+        DecryptingKeyBag maybeDecryptingKeyBag = new DecryptingKeyBag(bitcoin.wallet(), aesKey);
+         walletKeys = new ArrayList<ECKey>();
+        for (ECKey key : bitcoin.wallet().getImportedKeys()) {
+            ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
+            // System.out.println(
+            // "realKey, pubKey : " + ecKey.getPublicKeyAsHex() + ", prvKey : "
+            // + ecKey.getPrivateKeyAsHex());
+            walletKeys.add(ecKey);
+        }
+        for (DeterministicKeyChain chain : bitcoin.wallet().getKeyChainGroup().getDeterministicKeyChains()) {
+            for (ECKey key : chain.getLeafKeys()) {
+                ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
+                // System.out.println(
+                // "realKey, pubKey : " + ecKey.getPublicKeyAsHex() + ", priKey
+                // : " + ecKey.getPrivateKeyAsHex());
+                walletKeys.add(ecKey);
+            }
+        }
+         
+    }
+
 }

@@ -48,9 +48,9 @@ public class DefaultCoinSelector implements CoinSelector {
         // TODO: Take in network parameters when instanatiated, and then test
         // against the current network. Or just have a boolean parameter for
         // "give me everything"
-        if (!target.equals(NetworkParameters.MAX_MONEY)) {
+      //  if (!target.equals(NetworkParameters.MAX_MONEY)) {
             sortOutputs(sortedOutputs);
-        }
+      //  }
         // Now iterate over the sorted outputs until we have got as close to the
         // target as possible or a little
         // bit over (excessive value will be change).

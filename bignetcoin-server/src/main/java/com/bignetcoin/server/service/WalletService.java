@@ -39,7 +39,7 @@ public class WalletService {
     
     public AbstractResponse getAccountBalanceInfo(List<byte[]> pubKeyHashs) {
         List<UTXO> outputs = new ArrayList<UTXO>();
-        List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs, true);
+        List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs, false);
         for (TransactionOutput transactionOutput : transactionOutputs) {
             FreeStandingTransactionOutput freeStandingTransactionOutput = (FreeStandingTransactionOutput) transactionOutput;
             if (!freeStandingTransactionOutput.getUTXO().isSpent()) {
@@ -98,11 +98,7 @@ public class WalletService {
             for (UTXO output : getStoredOutputsFromUTXOProvider(pubKeyHashs)) {
                 if (output.isSpent()) continue;
                 boolean coinbase = output.isCoinbase();
-                long depth = chainHeight - output.getHeight() + 1; // the current
-                                                                  // depth of
-                                                                  // the output
-                                                                  // (1 = same
-                                                                  // as head).
+                long depth = chainHeight - output.getHeight() + 1; 
                 // Do not try and spend coinbases that were mined too recently,
                 // the protocol forbids it.
                 if (!excludeImmatureCoinbases || !coinbase || depth >= networkParameters.getSpendableCoinbaseDepth()) {
@@ -128,7 +124,7 @@ public class WalletService {
 
     public AbstractResponse getAccountOutputs(List<byte[]> pubKeyHashs) {
         List<UTXO> outputs = new ArrayList<UTXO>();
-        List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs, true);
+        List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs, false);
         for (TransactionOutput transactionOutput : transactionOutputs) {
             FreeStandingTransactionOutput freeStandingTransactionOutput = (FreeStandingTransactionOutput) transactionOutput;
             outputs.add(freeStandingTransactionOutput.getUTXO());

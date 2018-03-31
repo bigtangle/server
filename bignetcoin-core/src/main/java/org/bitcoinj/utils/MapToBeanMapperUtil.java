@@ -14,7 +14,17 @@ public abstract class MapToBeanMapperUtil {
     public static Coin parseCoin(Map<String, Object> map) {
         if (map == null)
             return null;
-        long value = (Integer) map.get("value");
+        long value =0l;
+        if(  map.get("value")  instanceof Integer) {
+              value = (Integer) map.get("value");
+        } else
+        if(  map.get("value")  instanceof Long) {
+              value = (Long) map.get("value");
+        } else {
+              value = new Long(  map.get("value").toString());  
+        }
+        
+ 
         String tokenHex = (String) map.get("tokenHex");
         return Coin.valueOf(value, Utils.HEX.decode(tokenHex));
     }
