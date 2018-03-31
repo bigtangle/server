@@ -459,17 +459,16 @@ public abstract class AbstractBlockGraph {
                    throw new VerificationException("Block contains non-final transaction");
         }
         
-//        StoredBlock head = getChainHead();
-//        if (storedPrev.equals(head)) {
         if (filtered && filteredTxn.size() > 0)  {
             log.debug("Block {} connects to top of best chain with {} transaction(s) of which we were sent {}",
                     block.getHashAsString(), filteredTxHashList.size(), filteredTxn.size());
             for (Sha256Hash hash : filteredTxHashList) log.debug("  matched tx {}", hash);
         }
-        //TODO change time check to greater than previous two blocks
-//        if (expensiveChecks && block.getTimeSeconds() <= getMedianTimestampOfRecentBlocks(head, blockStore))
-//            throw new VerificationException("Block's timestamp is too early");
-
+        
+        // TODO ensure that constructed blocks fulfill constraints such as this one
+        if (block.getTimeSeconds() < storedPrev.getHeader().getTimeSeconds() || block.getTimeSeconds() < storedPrevBranch.getHeader().getTimeSeconds())
+        	throw new VerificationException("Block's timestamp is too early");
+        
         // BIP 66 & 65: Enforce block version 3/4 once they are a supermajority of blocks
         // NOTE: This requires 1,000 blocks since the last checkpoint (on main
         // net, less on test) in order to be applied. It is also limited to
