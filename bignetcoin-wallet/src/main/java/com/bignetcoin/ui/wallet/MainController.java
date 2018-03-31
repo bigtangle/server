@@ -37,6 +37,7 @@ import org.bitcoinj.utils.OkHttp3Util;
 import org.bitcoinj.wallet.DecryptingKeyBag;
 import org.bitcoinj.wallet.DeterministicKeyChain;
 import org.fxmisc.easybind.EasyBind;
+import org.spongycastle.crypto.params.KeyParameter;
 
 import com.bignetcoin.ui.wallet.controls.NotificationBarPane;
 import com.bignetcoin.ui.wallet.utils.BitcoinUIModel;
@@ -113,27 +114,9 @@ public class MainController {
         Main.instance.getCoinData().clear();
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
-        // ECKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
+        KeyParameter aesKey = null;
 
-        DecryptingKeyBag maybeDecryptingKeyBag = new DecryptingKeyBag(bitcoin.wallet(), null);
-        List<ECKey> keys = new ArrayList<ECKey>();
-        for (ECKey key : bitcoin.wallet().getImportedKeys()) {
-            ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
-            // System.out.println("realKey, pubKey : " +
-            // ecKey.getPublicKeyAsHex() + ", prvKey : " +
-            // ecKey.getPrivateKeyAsHex());
-            keys.add(ecKey);
-        }
-        for (DeterministicKeyChain chain : bitcoin.wallet().getKeyChainGroup().getDeterministicKeyChains()) {
-            for (ECKey key : chain.getLeafKeys()) {
-                ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
-                // System.out.println("realKey, pubKey : " +
-                // ecKey.getPublicKeyAsHex() + ", priKey : " +
-                // ecKey.getPrivateKeyAsHex());
-                keys.add(ecKey);
-            }
-        }
-
+        List<ECKey> keys = bitcoin.wallet().walletKeys(aesKey);
         for (ECKey ecKey : keys) {
 
             String response = OkHttp3Util.post(CONTEXT_ROOT + "getBalances", ecKey.getPubKeyHash());
