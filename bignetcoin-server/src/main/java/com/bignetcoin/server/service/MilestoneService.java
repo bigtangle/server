@@ -204,6 +204,7 @@ public class MilestoneService {
 	 * @throws BlockStoreException
 	 */
 	public void updateCumulativeWeight() throws BlockStoreException {
+		// TODO merge this and depth update for performance
 		// Begin from the highest solid height tips and go backwards from there
 		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = getSolidTipsDescending();
 		HashMap<Sha256Hash, HashSet<Sha256Hash>> approverHashSets = new HashMap<>();
