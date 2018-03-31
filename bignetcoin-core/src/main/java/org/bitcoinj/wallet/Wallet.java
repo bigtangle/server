@@ -27,7 +27,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -2459,7 +2458,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
                 Coin valueSentFromMe = tx.getValueSentFromMe(this);
                 Coin newBalance = balance.add(valueSentToMe).subtract(valueSentFromMe);
                 if (valueSentToMe.signum() > 0) {
-                 
+
                     queueOnCoinsReceived(tx, balance, newBalance);
                 }
                 if (valueSentFromMe.signum() > 0)
@@ -3345,7 +3344,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
          */
         AVAILABLE_SPENDABLE
     }
- 
+
     /**
      * Returns the AVAILABLE balance of this wallet. See
      * {@link BalanceType#AVAILABLE} for details on what this means.
@@ -3381,7 +3380,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         }
     }
 
- 
     private static class BalanceFutureRequest {
         public SettableFuture<Coin> future;
         public Coin value;
@@ -3440,7 +3438,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         }
     }
 
- 
     /**
      * Returns the amount of bitcoin ever received via output. <b>This is not
      * the balance!</b> If an output spends from a transaction whose inputs are
@@ -4482,7 +4479,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
                 Coin change = selection.valueGathered.subtract(valueNeeded);
                 if (additionalValueSelected != null)
                     change = change.add(additionalValueSelected);
-           
 
                 int size = 0;
                 TransactionOutput changeOutput = null;
@@ -4854,26 +4850,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
     public List<TransactionOutput> calculateAllSpendCandidates() {
         lock.lock();
         try {
-            DecryptingKeyBag maybeDecryptingKeyBag = new DecryptingKeyBag(this, null);
-            List<ECKey> keys = new ArrayList<ECKey>();
-            for (ECKey key : getImportedKeys()) {
-                ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
-                // System.out.println("realKey, pubKey : " +
-                // ecKey.getPublicKeyAsHex() + ", prvKey : " +
-                // ecKey.getPrivateKeyAsHex());
-                keys.add(ecKey);
-            }
-            for (DeterministicKeyChain chain : getKeyChainGroup().getDeterministicKeyChains()) {
-                for (ECKey key : chain.getLeafKeys()) {
-                    ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
-                    // System.out.println("realKey, pubKey : " +
-                    // ecKey.getPublicKeyAsHex() + ", priKey : " +
-                    // ecKey.getPrivateKeyAsHex());
-                    keys.add(ecKey);
-                }
-            }
+     
             List<TransactionOutput> candidates = new ArrayList<TransactionOutput>();
-            for (ECKey ecKey : keys) {
+            for (ECKey ecKey : walletKeys(null)) {
 
                 String response = OkHttp3Util.post(this.serverurl + "getOutputs", ecKey.getPubKeyHash());
                 final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
@@ -4884,9 +4863,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
                 }
 
                 for (UTXO output : outputs) {
-                    candidates.add(new FreeStandingTransactionOutput(this.params, output, 0)); // TODO
-                                                                                               // jiang
-                                                                                               // unkown
+                    candidates.add(new FreeStandingTransactionOutput(this.params, output, 0));  
                 }
             }
             return candidates;
@@ -5080,5 +5057,24 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
             }
         }
         return true;
+    }
+
+    /*
+     * get all keys in the wallet
+     */
+    public List<ECKey> walletKeys(@Nullable KeyParameter aesKey) throws Exception {
+        DecryptingKeyBag maybeDecryptingKeyBag = new DecryptingKeyBag(this, aesKey);
+        List<ECKey> walletKeys = new ArrayList<ECKey>();
+        for (ECKey key : getImportedKeys()) {
+            ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
+            walletKeys.add(ecKey);
+        }
+        for (DeterministicKeyChain chain : getKeyChainGroup().getDeterministicKeyChains()) {
+            for (ECKey key : chain.getLeafKeys()) {
+                ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
+                walletKeys.add(ecKey);
+            }
+        }
+        return walletKeys;
     }
 }

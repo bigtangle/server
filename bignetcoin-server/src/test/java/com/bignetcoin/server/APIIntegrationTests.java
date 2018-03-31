@@ -102,15 +102,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         reqCmdSaveBlock(block);
     }
 
-    
-    @Test
-    public void testTransactionAndGetBalances() throws Exception {
-        ECKey toKey = createWalletAndAddCoin();
-        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name()).content(toKey.getPubKeyHash());
-        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
-        String response = mvcResult.getResponse().getContentAsString();
-        logger.info("testGetBalances resp : " + response);
-    }
+     
     
     @SuppressWarnings("unchecked")
     @Test

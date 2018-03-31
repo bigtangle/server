@@ -73,7 +73,7 @@ public class TransactionService {
 
     public byte[] createGenesisBlock(Map<String, Object> request) throws Exception {
         String pubKeyHex = (String) request.get("pubKeyHex");
-        long amount = (Long) request.get("amount");
+        long amount = new Long(request.get("amount").toString());
         String tokenname = (String) request.get("tokenname");
         String description = (String) request.get("description");
         String tokenHex = (String) request.get("tokenHex");
@@ -83,8 +83,8 @@ public class TransactionService {
         byte[] tokenid = Utils.HEX.decode(tokenHex);
         Coin coin = Coin.valueOf(amount, tokenid);
         Block block = createGenesisBlock(coin, tokenid, pubKey);
-        block.toString() ;
-      //  log.debug(networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize()).toString());
+        block.toString();
+        // log.debug(networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize()).toString());
         Tokens tokens = new Tokens();
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);

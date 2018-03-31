@@ -27,6 +27,7 @@ import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.store.FullPrunedBlockGraph;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletTest;
@@ -56,6 +57,9 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 	@Autowired
 	private MilestoneService milestoneService;
 
+    @Autowired
+    private NetworkParameters networkParameters;
+    
 	ECKey outKey = new ECKey();
 	
 	private Block createAndAddNextBlockCoinbase(Block b1, long bVersion, byte[] pubKey, Sha256Hash b2) throws VerificationException, PrunedException {
@@ -145,7 +149,17 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 	}
 
 	public void createMilestoneTestTangle1() throws Exception {
+	    store = createStore(networkParameters, 10);
 
+        blockgraph = new FullPrunedBlockGraph(networkParameters, store);
+
+        // Add genesis block
+        blockgraph.add(networkParameters.getGenesisBlock());
+        BlockEvaluation genesisEvaluation = blockService
+                .getBlockEvaluation(networkParameters.getGenesisBlock().getHash());
+        blockService.updateMilestone(genesisEvaluation, true);
+        blockService.updateSolid(genesisEvaluation, true);
+        
 		Block b1 = createAndAddNextBlockCoinbase(PARAMS.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), PARAMS.getGenesisBlock().getHash());
 		Block b2 = createAndAddNextBlockCoinbase(PARAMS.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), PARAMS.getGenesisBlock().getHash());
 		Block b3 = createAndAddNextBlockCoinbase(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b2.getHash());
@@ -277,6 +291,8 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
 	@Test
 	public void testMilestoneConflictingCandidates() throws Exception {
+	    //reset store
+	   
 		createMilestoneTestTangle1();
 		milestoneService.update();
 	}
