@@ -4155,7 +4155,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
      * linked data (i.e parent tx).
      *
      */
-    class FreeStandingTransactionOutput extends TransactionOutput {
+    public class FreeStandingTransactionOutput extends TransactionOutput {
         private UTXO output;
         private int chainHeight;
 

@@ -190,8 +190,11 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         }
     }
 
+    @Test
     public void createTransaction() throws Exception {
-        WalletAppKit bitcoin = new WalletAppKit(networkParameters, new File("."), "bignetcoin");
+        WalletAppKit bitcoin = new WalletAppKit(PARAMS, new File("../bignetcoin-wallet"), "bignetcoin");
+        bitcoin.wallet().setServerURL(contextRoot);
+        
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -208,6 +211,8 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
         OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
         logger.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
+        
+        this.getBalances();
     }
 
     private List<ECKey> getWalletKeyBag(WalletAppKit bitcoin) {
