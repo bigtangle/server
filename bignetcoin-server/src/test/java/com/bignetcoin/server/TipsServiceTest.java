@@ -155,7 +155,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
     public Sha256Hash getNextBlockToApprove() throws Exception {
         final SecureRandom random = new SecureRandom();
-        return tipsManager.blockToApprove(27, random);
+        return tipsManager.blockToApprove(1, random);
     }
 
 }
