@@ -3864,8 +3864,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
 
                 Script scriptPubKey = txIn.getConnectedOutput().getScriptPubKey();
                 RedeemData redeemData = txIn.getConnectedRedeemData(maybeDecryptingKeyBag);
-                checkNotNull(redeemData, "Transaction exists in wallet that we cannot redeem: %s",
-                        txIn.getOutpoint().getHash());
+            //    checkNotNull(redeemData, "Transaction exists in wallet that we cannot redeem: %s",
+            //            txIn.getOutpoint().getHash());
+                if(redeemData !=null)
                 txIn.setScriptSig(scriptPubKey.createEmptyInputScript(redeemData.keys.get(0), redeemData.redeemScript));
             }
 
@@ -4417,7 +4418,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
 
     // region Fee calculation code
 
-    public FeeCalculation calculateFee(SendRequest req, Map<String, Coin> value, List<TransactionInput> originalInputs,
+    public FeeCalculation calculateFee(SendRequest req,   Coin  value, List<TransactionInput> originalInputs,
             boolean needAtLeastReferenceFee, List<TransactionOutput> candidates) throws InsufficientMoneyException {
         checkState(lock.isHeldByCurrentThread());
         // There are 3 possibilities for what adding change might do:
@@ -4439,12 +4440,12 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         // We keep track of the last size of the transaction we calculated.
         int lastCalculatedSize = 0;
         Coin valueNeeded, valueMissing = null;
-        for (Map.Entry<String, Coin> entry : value.entrySet()) {
+       
 
             while (true) {
                 resetTxInputs(req, originalInputs);
 
-                valueNeeded = entry.getValue();
+                valueNeeded = value;
                 if (additionalValueForNextCategory != null)
                     valueNeeded = valueNeeded.add(additionalValueForNextCategory);
                 Coin additionalValueSelected = additionalValueForNextCategory;
@@ -4568,7 +4569,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
                     // Once we get a category 1 (change kept), we should break
                     // out
                     // of the loop because we can't do better
-                    checkState(selection1 == null);
+                  //  checkState(selection1 == null);
                     checkState(additionalValueForNextCategory == null);
                     selection1 = selection;
                     selection1Change = changeOutput;
@@ -4581,7 +4582,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
                 }
                 break;
             }
-        }
+        
         resetTxInputs(req, originalInputs);
 
         if (selection3 == null && selection2 == null && selection1 == null) {
@@ -4634,7 +4635,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
                 Script redeemScript = null;
                 if (script.isSentToAddress()) {
                     key = findKeyFromPubHash(script.getPubKeyHash());
-                    checkNotNull(key, "Coin selection includes unspendable outputs");
+                 //Expected   checkNotNull(key, "Coin selection includes unspendable outputs");
                 } else if (script.isPayToScriptHash()) {
                     redeemScript = findRedeemDataFromScriptHash(script.getPubKeyHash()).redeemScript;
                     checkNotNull(redeemScript, "Coin selection includes unspendable outputs");
@@ -4875,7 +4876,25 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         }
     }
 
+    public List<TransactionOutput> transforSpendCandidates(List<UTXO> outputs) {
+        List<TransactionOutput> candidates = new ArrayList<TransactionOutput>();
+        for (UTXO output : outputs) {
+            candidates.add(new FreeStandingTransactionOutput(this.params, output, 0));  
+        }
+        return candidates;
+    }
     public void completeTx(SendRequest req) throws InsufficientMoneyException {
+        // Calculate a list of ALL potential candidates for spending and
+        // then ask a coin selector to provide us
+        // with the actual outputs that'll be used to gather the required
+        // amount of value. In this way, users
+        // can customize coin selection policies. The call below will ignore
+        // immature coinbases and outputs
+        // we don't have the keys for.
+        List<TransactionOutput> candidates = calculateAllSpendCandidates();
+        completeTx(req, candidates, true);
+    }
+    public void completeTx(SendRequest req,  List<TransactionOutput> candidates, boolean sign) throws InsufficientMoneyException {
         lock.lock();
         try {
             checkArgument(!req.completed, "Given SendRequest has already been completed.");
@@ -4915,11 +4934,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
             List<TransactionInput> originalInputs = new ArrayList<TransactionInput>(req.tx.getInputs());
 
             // Check for dusty sends and the OP_RETURN limit.
-            if (req.ensureMinRequiredFee && !req.emptyWallet) { // Min fee
-                                                                // checking is
-                                                                // handled later
-                                                                // for
-                                                                // emptyWallet.
+            if (req.ensureMinRequiredFee && !req.emptyWallet) { 
+                // Min fee checking is handled later for emptyWallet.
                 int opReturnCount = 0;
                 for (TransactionOutput output : req.tx.getOutputs()) {
                     // if (output.isDust())
@@ -4930,61 +4946,16 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
                 if (opReturnCount > 1) // Only 1 OP_RETURN per transaction
                                        // allowed.
                     throw new MultipleOpReturnRequested();
-            }
-
-            // Calculate a list of ALL potential candidates for spending and
-            // then ask a coin selector to provide us
-            // with the actual outputs that'll be used to gather the required
-            // amount of value. In this way, users
-            // can customize coin selection policies. The call below will ignore
-            // immature coinbases and outputs
-            // we don't have the keys for.
-            List<TransactionOutput> candidates = calculateAllSpendCandidates();
-
-            CoinSelection bestCoinSelection;
-            TransactionOutput bestChangeOutput = null;
-            req.ensureMinRequiredFee = false;
-            if (!req.emptyWallet) {
-                // This can throw InsufficientMoneyException.
-                FeeCalculation feeCalculation = calculateFee(req, value, originalInputs, req.ensureMinRequiredFee,
-                        candidates);
-                bestCoinSelection = feeCalculation.bestCoinSelection;
-                bestChangeOutput = feeCalculation.bestChangeOutput;
-            } else {
-                // We're being asked to empty the wallet. What this means is
-                // ensuring "tx" has only a single output
-                // of the total value we can currently spend as determined by
-                // the selector, and then subtracting the fee.
-                checkState(req.tx.getOutputs().size() == 1, "Empty wallet TX must have a single output only.");
-                CoinSelector selector = req.coinSelector == null ? coinSelector : req.coinSelector;
-                bestCoinSelection = selector.select(params.getMaxMoney(), candidates);
-                candidates = null; // Selector took ownership and might have
-                                   // changed candidates. Don't access again.
-                req.tx.getOutput(0).setValue(bestCoinSelection.valueGathered);
-                log.info("  emptying {}", bestCoinSelection.valueGathered.toFriendlyString());
-            }
-
-            for (TransactionOutput output : bestCoinSelection.gathered)
-                req.tx.addInput(output);
-
-            if (req.emptyWallet) {
-                final Coin feePerKb = req.feePerKb == null ? Coin.ZERO : req.feePerKb;
-                if (!adjustOutputDownwardsForFee(req.tx, bestCoinSelection, feePerKb, req.ensureMinRequiredFee))
-                    throw new CouldNotAdjustDownwards();
-            }
-
-            if (bestChangeOutput != null) {
-                req.tx.addOutput(bestChangeOutput);
-                log.info("  with {} change", bestChangeOutput.getValue().toFriendlyString());
-            }
-
+            } 
+            completeTxSelection(req, candidates, originalInputs, value);
+       
             // Now shuffle the outputs to obfuscate which is the change.
             if (req.shuffleOutputs)
                 req.tx.shuffleOutputs();
 
             // Now sign the inputs, thus proving that we are entitled to redeem
             // the connected outputs.
-            if (req.signInputs)
+            if (req.signInputs && sign)
                 signTransaction(req);
 
             // Check size.
@@ -5016,6 +4987,50 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         }
     }
 
+    public void completeTxSelection(SendRequest req,  List<TransactionOutput> candidates,  List<TransactionInput> originalInputs,  Map<String, Coin> value  ) throws InsufficientMoneyException {
+        List<TransactionInput> start= originalInputs; 
+        for (Map.Entry<String, Coin> entry : value.entrySet()) {
+            
+        CoinSelection bestCoinSelection;
+        TransactionOutput bestChangeOutput = null;
+        req.ensureMinRequiredFee = false;
+        if (!req.emptyWallet) {
+            // This can throw InsufficientMoneyException.
+            FeeCalculation feeCalculation = calculateFee(req, entry.getValue(), start, req.ensureMinRequiredFee,
+                    candidates);
+            bestCoinSelection = feeCalculation.bestCoinSelection;
+            bestChangeOutput = feeCalculation.bestChangeOutput;
+        } else {
+            // We're being asked to empty the wallet. What this means is
+            // ensuring "tx" has only a single output
+            // of the total value we can currently spend as determined by
+            // the selector, and then subtracting the fee.
+            checkState(req.tx.getOutputs().size() == 1, "Empty wallet TX must have a single output only.");
+            CoinSelector selector = req.coinSelector == null ? coinSelector : req.coinSelector;
+            bestCoinSelection = selector.select(params.getMaxMoney(), candidates);
+            candidates = null; // Selector took ownership and might have
+                               // changed candidates. Don't access again.
+            req.tx.getOutput(0).setValue(bestCoinSelection.valueGathered);
+            log.info("  emptying {}", bestCoinSelection.valueGathered.toFriendlyString());
+        }
+
+        for (TransactionOutput output : bestCoinSelection.gathered) {
+            req.tx.addInput(output);
+            start.addAll(req.tx.getInputs() );
+        }
+        if (req.emptyWallet) {
+            final Coin feePerKb = req.feePerKb == null ? Coin.ZERO : req.feePerKb;
+            if (!adjustOutputDownwardsForFee(req.tx, bestCoinSelection, feePerKb, req.ensureMinRequiredFee))
+                throw new CouldNotAdjustDownwards();
+        }
+
+        if (bestChangeOutput != null) {
+            req.tx.addOutput(bestChangeOutput);
+            log.info("  with {} change", bestChangeOutput.getValue().toFriendlyString());
+        }
+       
+        }
+    }
     public void substract(Map<String, Coin> valueInput, Map<String, Coin> valueOut) {
 
         for (Map.Entry<String, Coin> entry : valueInput.entrySet()) {

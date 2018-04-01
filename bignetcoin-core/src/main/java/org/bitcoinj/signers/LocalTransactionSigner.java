@@ -69,7 +69,8 @@ public class LocalTransactionSigner extends StatelessTransactionSigner {
             }
 
             RedeemData redeemData = txIn.getConnectedRedeemData(keyBag);
-
+            if(redeemData==null) 
+                continue;
             Script scriptPubKey = txIn.getConnectedOutput().getScriptPubKey();
 
             // For P2SH inputs we need to share derivation path of the signing key with other signers, so that they

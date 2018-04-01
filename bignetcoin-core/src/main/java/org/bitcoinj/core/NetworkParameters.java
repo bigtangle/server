@@ -78,7 +78,8 @@ public abstract class NetworkParameters {
 
     //FIXME Token id for System Coin byte[20]
     public static final byte[] BIGNETCOIN_TOKENID = HEX.decode(
-            "86e21e07bd2651fba1c19b0e6b678475641c885c");
+            //"86e21e07bd2651fba1c19b0e6b678475641c885c");
+            "0000000000000000000000000000000000000000");
 
     // BLOCKTYPE
     public static final long BLOCKTYPE_GENESIS = 0; // Genesis Block for a token, only onetime

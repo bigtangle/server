@@ -295,6 +295,7 @@ public abstract class AbstractBlockGraph {
      */
     public boolean add(Block block) throws VerificationException, PrunedException {
         try {
+            // TODO add begindatabasebatchwrite and aborts in case of failure
             return add(block, true, null, null);
         } catch (BlockStoreException e) {
             // TODO: Figure out a better way to propagate this exception to the user.

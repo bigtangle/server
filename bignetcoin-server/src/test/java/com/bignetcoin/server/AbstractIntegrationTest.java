@@ -77,9 +77,10 @@ public abstract class AbstractIntegrationTest {
     public String contextRoot;
     public List<ECKey> walletKeys;
     protected MockMvc mockMvc;
-    WalletAppKit bitcoin;
+    WalletAppKit walletAppKit;
     protected static ObjectMapper objectMapper;
 
+    WalletAppKit walletAppKit1;
     @Autowired
     protected WebApplicationContext webContext;
 
@@ -148,6 +149,7 @@ public abstract class AbstractIntegrationTest {
         blockService.updateSolid(genesisEvaluation, true);
         walletKeys();
         testInitWallet();
+        wallet1();
     }
 
     @Autowired
@@ -175,19 +177,31 @@ public abstract class AbstractIntegrationTest {
 
     public void walletKeys() throws Exception {
         KeyParameter aesKey = null;
-        bitcoin = new WalletAppKit(PARAMS, new File("../bignetcoin-wallet"), "bignetcoin");
-        bitcoin.wallet().setServerURL(contextRoot);
-        walletKeys = bitcoin.wallet().walletKeys(aesKey);
+        walletAppKit = new WalletAppKit(PARAMS, new File("../bignetcoin-wallet"), "bignetcoin");
+        walletAppKit.wallet().setServerURL(contextRoot);
+        walletKeys = walletAppKit.wallet().walletKeys(aesKey);
     }
 
+    public void wallet1() throws Exception {
+       
+        walletAppKit1 = new WalletAppKit(PARAMS, new File("../bignetcoin-wallet"), "bignetcoin1");
+        walletAppKit1.wallet().setServerURL(contextRoot);
+ 
+    }
+    
     public List<UTXO> testTransactionAndGetBalances() throws Exception {
         return testTransactionAndGetBalances(false);
     }
 
     // get balance for the walleKeys
     public List<UTXO> testTransactionAndGetBalances(boolean withZero) throws Exception {
+    return testTransactionAndGetBalances(withZero, walletKeys);
+    }
+
+    // get balance for the walleKeys
+    public List<UTXO> testTransactionAndGetBalances(boolean withZero, List<ECKey> keys) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
-        for (ECKey toKey : walletKeys) {
+        for (ECKey toKey : keys) {
             MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name())
                     .content(toKey.getPubKeyHash());
             MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk())
@@ -213,7 +227,7 @@ public abstract class AbstractIntegrationTest {
         }
         return listUTXO;
     }
-
+    
     public void testInitWallet() throws Exception {
 
         ECKey outKey = new ECKey();
@@ -227,8 +241,7 @@ public abstract class AbstractIntegrationTest {
 
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
-        byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
-
+       
         for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
                     outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
@@ -252,8 +265,8 @@ public abstract class AbstractIntegrationTest {
         // Address address = new Address(PARAMS, toKey.getPubKeyHash());
 
         Transaction t = new Transaction(networkParameters);
-        t.addOutput(new TransactionOutput(networkParameters, t, amount, myKey));
-        t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
+        t.addOutput(new TransactionOutput(networkParameters, t, amount, myKey.toAddress(networkParameters)));
+        t.addSignedInput(spendableOutput,  transaction.getOutputs().get(0).getScriptPubKey (), outKey);
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
         blockgraph.add(rollingBlock);

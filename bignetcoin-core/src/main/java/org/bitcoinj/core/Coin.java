@@ -260,7 +260,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         return this.value;
     }
 
-    private static final MonetaryFormat FRIENDLY_FORMAT = MonetaryFormat.BTC.minDecimals(2).repeatOptionalDecimals(1, 6)
+    private static final MonetaryFormat FRIENDLY_FORMAT = MonetaryFormat.FIAT.minDecimals(2).repeatOptionalDecimals(1, 6)
             .postfixCode();
 
     /**
@@ -271,7 +271,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         return FRIENDLY_FORMAT.format(this).toString();
     }
 
-    private static final MonetaryFormat PLAIN_FORMAT = MonetaryFormat.BTC.minDecimals(0).repeatOptionalDecimals(1, 8)
+    private static final MonetaryFormat PLAIN_FORMAT = MonetaryFormat.FIAT.minDecimals(0).repeatOptionalDecimals(1, 8)
             .noCode();
 
     /**

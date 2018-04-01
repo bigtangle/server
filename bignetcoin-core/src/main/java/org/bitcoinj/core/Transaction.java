@@ -852,12 +852,12 @@ public class Transaction extends ChildMessage {
             }
             s.append('\n');
         }
-        final Coin fee = getFee();
-        if (fee != null) {
-            final int size = unsafeBitcoinSerialize().length;
-            s.append("     fee  ").append(fee.multiply(1000).divide(size).toFriendlyString()).append("/kB, ")
-                    .append(fee.toFriendlyString()).append(" for ").append(size).append(" bytes\n");
-        }
+//        final Coin fee =  getFee();
+//        if (fee != null) {
+//            final int size = unsafeBitcoinSerialize().length;
+//            s.append("     fee  ").append(fee.multiply(1000).divide(size).toFriendlyString()).append("/kB, ")
+//                    .append(fee.toFriendlyString()).append(" for ").append(size).append(" bytes\n");
+//        }
         if (purpose != null)
             s.append("     prps ").append(purpose).append('\n');
         return s.toString();
@@ -945,12 +945,14 @@ public class Transaction extends ChildMessage {
         return input;
     }
 
-    public void addSigned(ECKey sigKey) throws ScriptException {
-        Script scriptPubKey = getOutput(0).getScriptPubKey();
+    public void signInputs(TransactionOutPoint prevOut, Script scriptPubKey, ECKey sigKey) throws ScriptException {
         Sha256Hash hash = hashForSignature(inputs.size() - 1, scriptPubKey, SigHash.ALL, false);
         ECKey.ECDSASignature ecSig = sigKey.sign(hash);
         TransactionSignature txSig = new TransactionSignature(ecSig, SigHash.ALL, false);
         for (TransactionInput input : getInputs()) {
+            // TODO only sign if valid signature can be created
+            if (input.getScriptBytes().length != 0)
+                continue;
             if (scriptPubKey.isSentToRawPubKey())
                 input.setScriptSig(ScriptBuilder.createInputScript(txSig));
             else if (scriptPubKey.isSentToAddress())
