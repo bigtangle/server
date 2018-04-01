@@ -7,6 +7,7 @@ package com.bignetcoin.server;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -60,8 +61,8 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     public void exchangeToken() throws Exception {
 
         // get token from wallet to spent
-        ECKey yourKey =  walletAppKit1.wallet().walletKeys(null).get(0);
-        
+        ECKey yourKey = walletAppKit1.wallet().walletKeys(null).get(0);
+
         payToken(yourKey);
         List<ECKey> keys = new ArrayList<ECKey>();
         keys.add(yourKey);
@@ -79,9 +80,14 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         req.missingSigsMode = MissingSigsMode.USE_OP_ZERO;
         ulist.addAll(utxos);
         walletAppKit.wallet().completeTx(req, walletAppKit.wallet().transforSpendCandidates(ulist), false);
-        walletAppKit.wallet().signTransaction( req);
-        walletAppKit1.wallet().signTransaction( req);
-        exchangeTokenComplete(req.tx);
+        walletAppKit.wallet().signTransaction(req);
+         byte[] a = req.tx.bitcoinSerialize();
+         Transaction transaction = (Transaction) networkParameters.getDefaultSerializer().makeTransaction(a);
+         SendRequest request = SendRequest.forTx(transaction); 
+         //FIXME the request.tx   txIn.getConnectedOutput is lost after the bitcoinSerialize
+         //Try java class Serialize of Transaction?
+        walletAppKit1.wallet().signTransaction(request);
+        exchangeTokenComplete(request.tx);
     }
 
     public void exchangeTokenComplete(Transaction tx) throws Exception {
@@ -95,7 +101,6 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
         String res = OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
     }
- 
 
     public void payToken(ECKey outKey) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
