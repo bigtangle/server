@@ -19,13 +19,8 @@ import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Json;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.TransactionOutPoint;
-import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.Utils;
-import org.bitcoinj.script.Script;
-import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.utils.OkHttp3Util;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet.MissingSigsMode;
@@ -100,56 +95,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
         String res = OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
     }
-
-    public void exchangeToken1() throws Exception {
-        // get token from wallet to spent
-        ECKey yourKey = new ECKey();
-        payToken(yourKey);
-        List<ECKey> keys = new ArrayList<ECKey>();
-        keys.add(yourKey);
-        List<UTXO> utxos = testTransactionAndGetBalances(false, keys);
-        UTXO yourutxo = utxos.get(0);
-        List<UTXO> ulist = testTransactionAndGetBalances();
-        UTXO myutxo = null;
-        for (UTXO u : ulist) {
-            if (Arrays.equals(u.getTokenid(), NetworkParameters.BIGNETCOIN_TOKENID)) {
-                myutxo = u;
-            }
-        }
-        Transaction exchangeTransaction = new Transaction(PARAMS);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, yourutxo.getIndex(),
-                yourutxo.getHash());
-
-        exchangeTransaction.addOutput(new TransactionOutput(networkParameters, exchangeTransaction, yourutxo.getValue(),
-                new Address(PARAMS, utxos.get(0).getAddress())));
-        TransactionInput input = new TransactionInput(networkParameters, exchangeTransaction, new byte[] {},
-                spendableOutput);
-        exchangeTransaction.addInput(input);
-
-        TransactionOutPoint spendableOutput2 = new TransactionOutPoint(networkParameters, myutxo.getIndex(),
-                myutxo.getHash());
-
-        exchangeTransaction.addOutput(new TransactionOutput(networkParameters, exchangeTransaction, myutxo.getValue(),
-                new Address(PARAMS, myutxo.getAddress())));
-
-        byte[] pubkey = myutxo.getScript().getPubKey();
-        ECKey key = walletAppKit.wallet().findKeyFromPubKey(pubkey);
-
-        exchangeTransaction.addSignedInput(spendableOutput2, myutxo.getScript(), key);
-
-        exchangeTransaction.signInputs(spendableOutput, yourutxo.getScript(), yourKey);
-
-        // get new Block to be used from server
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
-
-        rollingBlock.addTransaction(exchangeTransaction);
-        rollingBlock.solve();
-        OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
-        logger.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
-    }
+ 
 
     public void payToken(ECKey outKey) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
