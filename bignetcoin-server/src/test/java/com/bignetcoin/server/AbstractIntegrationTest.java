@@ -239,6 +239,10 @@ public abstract class AbstractIntegrationTest {
                 networkParameters.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock);
 
+        System.out.println(rollingBlock.getTransactions().get(0).getOutputs());
+        Block block = networkParameters.getDefaultSerializer().makeBlock(rollingBlock.bitcoinSerialize());
+        System.out.println(block.getTransactions().get(0).getOutputs());
+        
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
        
@@ -255,9 +259,15 @@ public abstract class AbstractIntegrationTest {
         milestoneService.update();
 
         rollingBlock = BlockForTest.createNextBlock(b, null, networkParameters.getGenesisBlock().getHash());
+//        blockgraph.add(rollingBlock);
+        
         System.out.println("rollingBlock : " + rollingBlock.toString());
-        rollingBlock = networkParameters.getDefaultSerializer().makeBlock(rollingBlock.bitcoinSerialize());
+        // rollingBlock = networkParameters.getDefaultSerializer().makeBlock(rollingBlock.bitcoinSerialize());
         System.out.println("rollingBlock : " + rollingBlock.toString());
+        
+//        rollingBlock = new Block(this.networkParameters, rollingBlock.getHash(), rollingBlock.getHash(),
+//                NetworkParameters.BIGNETCOIN_TOKENID, NetworkParameters.BLOCKTYPE_TRANSFER,
+//                Math.max(rollingBlock.getTimeSeconds(), rollingBlock.getTimeSeconds()));
 
         System.out.println("key " + myKey.getPublicKeyAsHex());
 

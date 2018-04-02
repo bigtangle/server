@@ -5,15 +5,8 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.script.Script;
-import org.bitcoinj.wallet.DefaultRiskAnalysis;
-import org.bitcoinj.wallet.KeyBag;
-import org.bitcoinj.wallet.RedeemData;
-
-import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
-
-import javax.annotation.Nullable;
+import static com.google.common.base.Preconditions.checkElementIndex;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -21,8 +14,15 @@ import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkElementIndex;
-import static com.google.common.base.Preconditions.checkNotNull;
+import javax.annotation.Nullable;
+
+import org.bitcoinj.script.Script;
+import org.bitcoinj.wallet.DefaultRiskAnalysis;
+import org.bitcoinj.wallet.KeyBag;
+import org.bitcoinj.wallet.RedeemData;
+
+import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
 
 /**
  * <p>A transfer of coins from one address to another creates a transaction in which the outputs
@@ -122,14 +122,14 @@ public class TransactionInput extends ChildMessage {
     protected void parse() throws ProtocolException {
         outpoint = new TransactionOutPoint(params, payload, cursor, this, serializer);
         cursor += outpoint.getMessageSize();
-//        if (readUint32() == 1) {
-//            outpoint.connectedOutput = new TransactionOutput(params, (Transaction) this.parent, payload, cursor);
-//            cursor += outpoint.connectedOutput.getMessageSize();
-//        }
         int scriptLen = (int) readVarInt();
         length = cursor - offset + scriptLen + 4;
         scriptBytes = readBytes(scriptLen);
         sequence = readUint32();
+        if (readUint32() == 1) {
+            outpoint.connectedOutput = new TransactionOutput(params, (Transaction) this.parent, payload, cursor);
+            cursor += outpoint.connectedOutput.getMessageSize();
+        }
     }
 
     @Override
@@ -138,10 +138,10 @@ public class TransactionInput extends ChildMessage {
         stream.write(new VarInt(scriptBytes.length).encode());
         stream.write(scriptBytes);
         Utils.uint32ToByteStreamLE(sequence, stream);
-//        Utils.uint32ToByteStreamLE(this.outpoint.connectedOutput != null ? 1 : 0, stream);
-//        if (this.outpoint.connectedOutput != null) {
-//            this.outpoint.connectedOutput.bitcoinSerializeToStream(stream);
-//        }
+        Utils.uint32ToByteStreamLE(this.outpoint.connectedOutput != null ? 1 : 0, stream);
+        if (this.outpoint.connectedOutput != null) {
+            this.outpoint.connectedOutput.bitcoinSerializeToStream(stream);
+        }
     }
 
     /**
