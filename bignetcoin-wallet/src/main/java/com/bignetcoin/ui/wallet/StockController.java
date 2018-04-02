@@ -32,8 +32,7 @@ public class StockController {
     public CheckBox firstPublishCheckBox;
     @FXML
     public ComboBox<String> tokenid;
-    @FXML
-    public Label tokenname;
+
 
     @FXML
     public TextField stockName;
@@ -73,7 +72,7 @@ public class StockController {
         }
         tokenid.setItems(tokenData);
         tokenid.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
-            tokenname.setText(names.get(newv.intValue()));
+            stockName.setText(names.get(newv.intValue()));
         });
 
     }
