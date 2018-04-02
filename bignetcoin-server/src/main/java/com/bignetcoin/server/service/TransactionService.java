@@ -12,7 +12,6 @@ import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockEvaluation;
 import org.bitcoinj.core.BlockStoreException;
 import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Tokens;
@@ -29,7 +28,6 @@ import org.springframework.stereotype.Service;
 
 import com.bignetcoin.store.FullPrunedBlockGraph;
 import com.bignetcoin.store.FullPrunedBlockStore;
-import com.subgraph.orchid.encoders.Hex;
 
 /**
  * <p>
@@ -78,30 +76,36 @@ public class TransactionService {
         String tokenname = (String) request.get("tokenname");
         String description = (String) request.get("description");
         String tokenHex = (String) request.get("tokenHex");
-        int blocktype = (Integer) request.get("blocktype");
+        boolean blocktype = (Boolean) request.get("blocktype");
 
         byte[] pubKey = Utils.HEX.decode(pubKeyHex);
         byte[] tokenid = Utils.HEX.decode(tokenHex);
         Coin coin = Coin.valueOf(amount, tokenid);
-        Block block = createGenesisBlock(coin, tokenid, pubKey);
+        Block block = createGenesisBlock(coin, tokenid, pubKey, blocktype);
         block.toString();
         // log.debug(networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize()).toString());
         Tokens tokens = new Tokens();
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
         tokens.setAmount(amount);
-        tokens.setBlocktype(blocktype);
+        if (blocktype) {
+            tokens.setBlocktype((int) NetworkParameters.BLOCKTYPE_GENESIS);
+        }
+        else {
+            tokens.setBlocktype((int) NetworkParameters.BLOCKTYPE_GENESIS_MULTIPLE);
+        }
         tokens.setDescription(description);
         store.saveTokens(tokens);
 
         return block.bitcoinSerialize();
     }
 
-    public Block createGenesisBlock(Coin coin, byte[] tokenid, byte[] pubKey) throws Exception {
+    public Block createGenesisBlock(Coin coin, byte[] tokenid, byte[] pubKey, boolean blocktype) throws Exception {
         Block r1 = blockService.getBlock(getNextBlockToApprove());
         Block r2 = blockService.getBlock(getNextBlockToApprove());
+        long blocktype0 = blocktype ? NetworkParameters.BLOCKTYPE_GENESIS : NetworkParameters.BLOCKTYPE_GENESIS_MULTIPLE;
         Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), tokenid,
-                NetworkParameters.BLOCKTYPE_GENESIS_MULTIPLE, Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+                blocktype0, Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
         block.addCoinbaseTransaction(pubKey, coin);
         block.solve();
         FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
