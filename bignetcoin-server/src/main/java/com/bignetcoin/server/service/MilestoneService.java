@@ -71,11 +71,6 @@ public class MilestoneService {
 		updateSolidityAndHeight();
 		log.info("Milestone solidity and height time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
-//		watch.stop();
-//		watch = Stopwatch.createStarted();
-//		updateDepth();
-//		log.info("Milestone depth time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-
 		watch.stop();
 		watch = Stopwatch.createStarted();
 		updateCumulativeWeightAndDepth();
@@ -157,45 +152,6 @@ public class MilestoneService {
 		blockService.updateSolid(blockEvaluation, true);
 		tipsService.addTip(blockEvaluation.getBlockhash());
 	}
-//
-//	/**
-//	 * Update depth, the length of the longest reverse-oriented path to some tip.
-//	 * 
-//	 * @throws BlockStoreException
-//	 */
-//	public void updateDepth() throws BlockStoreException {
-//		// Select solid tips to begin from
-//		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = getSolidTipsDescending();
-//
-//		// Initialize tips with depth 0
-//		for (BlockEvaluation blockEvaluation : blocksByDescendingHeight) {
-//			blockService.updateDepth(blockEvaluation, 0);
-//		}
-//
-//		// Update the depth going backwards
-//		BlockEvaluation currentBlockEvaluation;
-//		while ((currentBlockEvaluation = blocksByDescendingHeight.poll()) != null) {
-//			Block block = blockService.getBlock(currentBlockEvaluation.getBlockhash());
-//			BlockEvaluation prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
-//			BlockEvaluation prevBranchBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
-//
-//			// If previous blocks are unpruned / maintained, update their depth if the
-//			// newfound depth is greater than previously and add them to the queue
-//			if (prevBlockEvaluation != null) {
-//				if (prevBlockEvaluation.getDepth() < currentBlockEvaluation.getDepth() + 1) {
-//					blockService.updateDepth(prevBlockEvaluation, currentBlockEvaluation.getDepth() + 1);
-//					blocksByDescendingHeight.offer(prevBlockEvaluation);
-//				}
-//			}
-//
-//			if (prevBranchBlockEvaluation != null) {
-//				if (prevBranchBlockEvaluation.getDepth() < currentBlockEvaluation.getDepth() + 1) {
-//					blockService.updateDepth(prevBranchBlockEvaluation, currentBlockEvaluation.getDepth() + 1);
-//					blocksByDescendingHeight.offer(prevBranchBlockEvaluation);
-//				}
-//			}
-//		}
-//	}
 
 	/**
 	 * Update cumulative weight, the amount of blocks a block is approved by
@@ -479,6 +435,7 @@ public class MilestoneService {
 		Comparator<Pair<BlockEvaluation, TransactionOutPoint>> byDescendingRating = Comparator
 				.comparingLong((Pair<BlockEvaluation, TransactionOutPoint> e) -> e.getLeft().getRating())
 				.thenComparingLong((Pair<BlockEvaluation, TransactionOutPoint> e) -> e.getLeft().getCumulativeWeight())
+				//TODO add here and below: compare by receivetime
 				.thenComparing((Pair<BlockEvaluation, TransactionOutPoint> e) -> e.getLeft().getBlockhash()).reversed();
 
 		Supplier<TreeSet<Pair<BlockEvaluation, TransactionOutPoint>>> conflictTreeSetSupplier = () -> new TreeSet<Pair<BlockEvaluation, TransactionOutPoint>>(
@@ -491,6 +448,7 @@ public class MilestoneService {
 		Comparator<TreeSet<Pair<BlockEvaluation, TransactionOutPoint>>> byDescendingSetRating = Comparator
 				.comparingLong((TreeSet<Pair<BlockEvaluation, TransactionOutPoint>> s) -> s.first().getLeft().getRating())
 				.thenComparingLong((TreeSet<Pair<BlockEvaluation, TransactionOutPoint>> s) -> s.first().getLeft().getCumulativeWeight())
+				//TODO add here and below: compare by receivetime
 				.thenComparing((TreeSet<Pair<BlockEvaluation, TransactionOutPoint>> s) -> s.first().getLeft().getBlockhash()).reversed();
 
 		Supplier<TreeSet<TreeSet<Pair<BlockEvaluation, TransactionOutPoint>>>> conflictsTreeSetSupplier = () -> new TreeSet<TreeSet<Pair<BlockEvaluation, TransactionOutPoint>>>(
