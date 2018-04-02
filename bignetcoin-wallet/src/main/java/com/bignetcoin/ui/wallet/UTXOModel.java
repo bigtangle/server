@@ -5,6 +5,7 @@
 package com.bignetcoin.ui.wallet;
 
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Utils;
 
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -17,9 +18,8 @@ public class UTXOModel {
 
     public UTXOModel(long balance, byte[] tokenid, String address) {
         this.balance = new SimpleLongProperty(balance);
-        this.tokenid = new SimpleStringProperty(tokenid == NetworkParameters.BIGNETCOIN_TOKENID ? "bignetcoin" : "other");
-        this.tokentype = new SimpleStringProperty(
-                tokenid == NetworkParameters.BIGNETCOIN_TOKENID ? "bignetcoin" : "other");
+        this.tokenid = new SimpleStringProperty(Utils.HEX.encode(tokenid));
+        this.tokentype = new SimpleStringProperty(Utils.HEX.encode(tokenid));
         this.address = new SimpleStringProperty(address);
     }
 
@@ -55,7 +55,7 @@ public class UTXOModel {
         this.tokentype.set(tokentype);
     }
 
-    public String  getTokenid() {
+    public String getTokenid() {
         return tokenid.get();
     }
 

@@ -104,6 +104,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         rollingBlock.solve();
 
         String res = OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        System.out.println(res);
     }
 
     public void payToken(ECKey outKey) throws Exception {

@@ -298,7 +298,7 @@ public class BlockChainTest {
         assertEquals(wallet.getBalance(BalanceType.ESTIMATED), FIFTY_COINS);
         assertTrue(coinbaseTransaction.isMature());
 
-        // Create a spend with the coinbase BTC to the address in the second
+        // Create a spend with the coinbase BTA to the address in the second
         // wallet - this should now succeed.
         Transaction coinbaseSend2 = wallet.createSend(addressToSendTo, valueOf(49, NetworkParameters.BIGNETCOIN_TOKENID));
         assertNotNull(coinbaseSend2);

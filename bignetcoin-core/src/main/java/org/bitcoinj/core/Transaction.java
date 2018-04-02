@@ -687,8 +687,9 @@ public class Transaction extends ChildMessage {
             TransactionInput input = new TransactionInput(params, this, payload, cursor, serializer);
             inputs.add(input);
             long scriptLen = readVarInt(TransactionOutPoint.MESSAGE_LENGTH);
-            optimalEncodingMessageSize += TransactionOutPoint.MESSAGE_LENGTH + VarInt.sizeOf(scriptLen) + scriptLen + 4;
-            cursor += scriptLen + 4;
+            int addLen = 4 + (input.getOutpoint().connectedOutput == null ? 0 : input.getOutpoint().connectedOutput.getMessageSize());
+            optimalEncodingMessageSize += TransactionOutPoint.MESSAGE_LENGTH + addLen + VarInt.sizeOf(scriptLen) + scriptLen + 4;
+            cursor += scriptLen + 4 + addLen;
         }
         // Now the outputs
         long numOutputs = readVarInt();

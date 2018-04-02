@@ -12,16 +12,17 @@ server:
 
 db:
   hostname: localhost
+  port: 3306
   dbName: info
   username: root
   password: test1234
-  
+
 service:
   milestoneschedule:
     rate: ${SERVICE_MILESTONE_RATE:500000}
     retention-time-in-minutes: ${service_HOUSEKEEPING_RETENTION:1440} # 24*60 == 1 Tag
     active: ${SERVICE_MILESTONE_ACTIVE:true}
-
+    
 ---
 spring:
   profiles: testnet

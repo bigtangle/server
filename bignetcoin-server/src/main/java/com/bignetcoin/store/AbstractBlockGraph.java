@@ -298,6 +298,7 @@ public abstract class AbstractBlockGraph {
             // TODO add begindatabasebatchwrite and aborts in case of failure
             return add(block, true, null, null);
         } catch (BlockStoreException e) {
+            e.printStackTrace();
             // TODO: Figure out a better way to propagate this exception to the user.
             throw new RuntimeException(e);
         } catch (VerificationException e) {
@@ -434,6 +435,7 @@ public abstract class AbstractBlockGraph {
             return true;
         }
         catch (Exception exception) {
+            exception.printStackTrace();
             throw new BlockStoreException(exception);
         } finally {
             lock.unlock();
