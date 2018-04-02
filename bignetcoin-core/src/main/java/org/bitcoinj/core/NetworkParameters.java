@@ -5,11 +5,8 @@
 
 package org.bitcoinj.core;
 
-import static org.bitcoinj.core.Coin.COIN;
-import static org.bitcoinj.core.Coin.FIFTY_COINS;
 import static org.bitcoinj.core.Utils.HEX;
 
-import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -17,14 +14,12 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
-import org.bitcoinj.net.discovery.HttpDiscovery;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.params.TestNet2Params;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.script.ScriptOpCodes;
 import org.bitcoinj.utils.MonetaryFormat;
 import org.bitcoinj.utils.VersionTally;
 
@@ -129,7 +124,7 @@ public abstract class NetworkParameters {
     protected int[] acceptableAddressCodes;
     protected String[] dnsSeeds;
     protected int[] addrSeeds;
-    protected HttpDiscovery.Details[] httpSeeds = {};
+
     protected Map<Long, Sha256Hash> checkpoints = new HashMap<Long, Sha256Hash>();
     protected transient MessageSerializer defaultSerializer = null;
 
@@ -334,15 +329,6 @@ public abstract class NetworkParameters {
     /** Returns IP address of active peers. */
     public int[] getAddrSeeds() {
         return addrSeeds;
-    }
-
-    /**
-     * Returns discovery objects for seeds implementing the Cartographer
-     * protocol. See {@link org.bitcoinj.net.discovery.HttpDiscovery} for more
-     * info.
-     */
-    public HttpDiscovery.Details[] getHttpSeeds() {
-        return httpSeeds;
     }
 
     /**
