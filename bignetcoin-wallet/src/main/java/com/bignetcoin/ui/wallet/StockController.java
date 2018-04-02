@@ -12,6 +12,7 @@ import java.util.Map;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Json;
+import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.utils.OkHttp3Util;
 
@@ -70,8 +71,16 @@ public class StockController {
             for (Map<String, Object> map : list) {
 
                 String tokenHex = (String) map.get("tokenHex");
-                if (!temp.equals(tokenHex) && !tokenData.contains(temp)) {
+                int blocktype = (int) map.get("blocktype");
+                if (blocktype == NetworkParameters.BLOCKTYPE_GENESIS && !temp.equals(tokenHex)
+                        && !tokenData.contains(temp)) {
                     tokenData.add(temp);
+                    break;
+                    // names.add(map.get("tokenname").toString());
+                }
+                if (blocktype == NetworkParameters.BLOCKTYPE_GENESIS_MULTIPLE && !tokenData.contains(temp)) {
+                    tokenData.add(temp);
+                    break;
                     // names.add(map.get("tokenname").toString());
                 }
 
