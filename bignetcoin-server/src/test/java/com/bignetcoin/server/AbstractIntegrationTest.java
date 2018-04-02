@@ -108,7 +108,7 @@ public abstract class AbstractIntegrationTest {
 
     public FullPrunedBlockStore createStore(NetworkParameters params, int blockCount) throws BlockStoreException {
         try {
-            String DB_HOSTNAME = globalConfigurationProperties.getHostname();
+            String DB_HOSTNAME = globalConfigurationProperties.getHostname() + ":" + globalConfigurationProperties.getPort();
             String DB_NAME = globalConfigurationProperties.getDbName();
             String DB_USERNAME = globalConfigurationProperties.getUsername();
             String DB_PASSWORD = globalConfigurationProperties.getPassword();
@@ -283,7 +283,7 @@ public abstract class AbstractIntegrationTest {
         requestParam.put("amount", 164385643856L);
         requestParam.put("tokenname", "Test");
         requestParam.put("description", "Test");
-        requestParam.put("blocktype", NetworkParameters.BLOCKTYPE_GENESIS_MULTIPLE);
+        requestParam.put("blocktype", false);
         requestParam.put("tokenHex", Utils.HEX.encode(outKey.getPubKeyHash()));
 
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.createGenesisBlock.name(),
