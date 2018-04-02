@@ -108,7 +108,7 @@ public abstract class AbstractIntegrationTest {
 
     public FullPrunedBlockStore createStore(NetworkParameters params, int blockCount) throws BlockStoreException {
         try {
-            String DB_HOSTNAME = globalConfigurationProperties.getHostname();
+            String DB_HOSTNAME = globalConfigurationProperties.getHostname() + ":" + globalConfigurationProperties.getPort();
             String DB_NAME = globalConfigurationProperties.getDbName();
             String DB_USERNAME = globalConfigurationProperties.getUsername();
             String DB_PASSWORD = globalConfigurationProperties.getPassword();

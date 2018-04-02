@@ -18,6 +18,8 @@ public class GlobalConfigurationProperties {
     private String username;
     
     private String password;
+    
+    private String port;
 
     public String getHostname() {
         return hostname;
@@ -49,5 +51,13 @@ public class GlobalConfigurationProperties {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getPort() {
+        return port;
+    }
+
+    public void setPort(String port) {
+        this.port = port;
     }
 }

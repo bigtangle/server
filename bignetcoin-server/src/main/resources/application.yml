@@ -11,10 +11,11 @@ server:
   mineraddress:  030d8952f6c079f60cd26eb3ba83cf16a81c51fc8e47b767721fa38b5e20092a75
 
 db:
-  hostname: localhost
-  dbName: info
+  hostname: 103.248.102.5
+  port: 10088
+  dbName: bitcoinj_test
   username: root
-  password: test1234
+  password: adminroot
 
 ---
 spring:
