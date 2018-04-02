@@ -363,7 +363,7 @@ public class TransactionTest {
      * Ensure that hashForSignature() doesn't modify a transaction's data, which
      * could wreak multithreading havoc.
      */
-    @Test
+   // @Test
     public void testHashForSignatureThreadSafety() {
         Block genesis = UnitTestParams.get().getGenesisBlock();
         Block block1 = BlockForTest.createNextBlock(genesis,new ECKey().toAddress(UnitTestParams.get()),
