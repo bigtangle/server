@@ -22,6 +22,7 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.Utils;
+import org.bitcoinj.utils.BeanSerializeUtil;
 import org.bitcoinj.utils.OkHttp3Util;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet.MissingSigsMode;
@@ -81,11 +82,14 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         ulist.addAll(utxos);
         walletAppKit.wallet().completeTx(req, walletAppKit.wallet().transforSpendCandidates(ulist), false);
         walletAppKit.wallet().signTransaction(req);
-         byte[] a = req.tx.bitcoinSerialize();
-         Transaction transaction = (Transaction) networkParameters.getDefaultSerializer().makeTransaction(a);
+        
+//         byte[] a = req.tx.bitcoinSerialize();
+//         Transaction transaction = (Transaction) networkParameters.getDefaultSerializer().makeTransaction(a);
+        
+        byte[] buf = BeanSerializeUtil.serializer(req.tx);
+        Transaction transaction = BeanSerializeUtil.deserialize(buf, Transaction.class);
+        
          SendRequest request = SendRequest.forTx(transaction); 
-         //FIXME the request.tx   txIn.getConnectedOutput is lost after the bitcoinSerialize
-         //Try java class Serialize of Transaction?
         walletAppKit1.wallet().signTransaction(request);
         exchangeTokenComplete(request.tx);
     }
