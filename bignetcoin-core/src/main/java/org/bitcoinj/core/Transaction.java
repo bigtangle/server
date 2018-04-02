@@ -31,7 +31,6 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptOpCodes;
 import org.bitcoinj.signers.TransactionSigner;
- 
 import org.bitcoinj.utils.ExchangeRate;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletTransaction.Pool;
@@ -75,6 +74,13 @@ import com.google.common.primitives.Longs;
  * </p>
  */
 public class Transaction extends ChildMessage {
+    
+    private static final long serialVersionUID = -1834484825483010857L;
+
+    @SuppressWarnings("deprecation")
+    public Transaction() {
+    }
+    
     /**
      * A comparator that can be used to sort transactions by their updateTime
      * field. The ordering goes from most recent into the past.
