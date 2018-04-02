@@ -71,11 +71,6 @@ public class MilestoneService {
 		updateSolidityAndHeight();
 		log.info("Milestone solidity and height time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
-//		watch.stop();
-//		watch = Stopwatch.createStarted();
-//		updateDepth();
-//		log.info("Milestone depth time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-
 		watch.stop();
 		watch = Stopwatch.createStarted();
 		updateCumulativeWeightAndDepth();
@@ -157,45 +152,6 @@ public class MilestoneService {
 		blockService.updateSolid(blockEvaluation, true);
 		tipsService.addTip(blockEvaluation.getBlockhash());
 	}
-//
-//	/**
-//	 * Update depth, the length of the longest reverse-oriented path to some tip.
-//	 * 
-//	 * @throws BlockStoreException
-//	 */
-//	public void updateDepth() throws BlockStoreException {
-//		// Select solid tips to begin from
-//		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = getSolidTipsDescending();
-//
-//		// Initialize tips with depth 0
-//		for (BlockEvaluation blockEvaluation : blocksByDescendingHeight) {
-//			blockService.updateDepth(blockEvaluation, 0);
-//		}
-//
-//		// Update the depth going backwards
-//		BlockEvaluation currentBlockEvaluation;
-//		while ((currentBlockEvaluation = blocksByDescendingHeight.poll()) != null) {
-//			Block block = blockService.getBlock(currentBlockEvaluation.getBlockhash());
-//			BlockEvaluation prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
-//			BlockEvaluation prevBranchBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
-//
-//			// If previous blocks are unpruned / maintained, update their depth if the
-//			// newfound depth is greater than previously and add them to the queue
-//			if (prevBlockEvaluation != null) {
-//				if (prevBlockEvaluation.getDepth() < currentBlockEvaluation.getDepth() + 1) {
-//					blockService.updateDepth(prevBlockEvaluation, currentBlockEvaluation.getDepth() + 1);
-//					blocksByDescendingHeight.offer(prevBlockEvaluation);
-//				}
-//			}
-//
-//			if (prevBranchBlockEvaluation != null) {
-//				if (prevBranchBlockEvaluation.getDepth() < currentBlockEvaluation.getDepth() + 1) {
-//					blockService.updateDepth(prevBranchBlockEvaluation, currentBlockEvaluation.getDepth() + 1);
-//					blocksByDescendingHeight.offer(prevBranchBlockEvaluation);
-//				}
-//			}
-//		}
-//	}
 
 	/**
 	 * Update cumulative weight, the amount of blocks a block is approved by
@@ -346,6 +302,7 @@ public class MilestoneService {
 		while (true) {
 			// Now try to find blocks that can be added to the milestone
 			HashSet<BlockEvaluation> blocksToAdd = blockService.getBlocksToAddToMilestone();
+			//TODO constraint blockstoadd by receivetime 30 sec old at least
 
 			// Optional steps from later to lower computational cost
 			if (blocksToAdd.isEmpty())
@@ -411,7 +368,7 @@ public class MilestoneService {
 				.flatMap(b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream()).map(in -> Pair.of(b, in)));
 
 		// Now filter to only contain inputs that were already spent in the milestone
-		// when the corresponding block has already been pruned
+		// where the corresponding block has already been pruned
 		Stream<Pair<Block, TransactionInput>> irresolvableConflicts = blockInputTuples
 				.filter(pair -> transactionService.getUTXOSpent(pair.getRight()) && transactionService.getUTXOSpender(pair.getRight().getOutpoint()) == null);
 
@@ -442,7 +399,6 @@ public class MilestoneService {
 		// Resolve all conflicts by grouping by UTXO ordered by descending rating
 		HashSet<BlockEvaluation> winningBlocks = resolveConflictsByDescendingRating(conflictingOutPoints);
 
-		// TODO fix this, think through all cases again, this is definitely broken...
 		// For milestone blocks that have been eliminated call disconnect procedure
 		for (BlockEvaluation b : conflictingMilestoneBlocks.stream().filter(b -> !winningBlocks.contains(b)).collect(Collectors.toList())) {
 			blockService.disconnect(b);
@@ -468,12 +424,18 @@ public class MilestoneService {
 	private HashSet<BlockEvaluation> resolveConflictsByDescendingRating(HashSet<Pair<BlockEvaluation, TransactionOutPoint>> conflictingOutPoints)
 			throws BlockStoreException {
 		// Initialize blocks that will survive the conflict resolution
-		HashSet<BlockEvaluation> winningBlocks = conflictingOutPoints.stream().map(p -> p.getLeft()).collect(Collectors.toCollection(HashSet::new));
+		HashSet<BlockEvaluation> winningBlocksSingle = conflictingOutPoints.stream().map(p -> p.getLeft()).collect(Collectors.toCollection(HashSet::new));
+		HashSet<BlockEvaluation> winningBlocks = new HashSet<>();
+		for (BlockEvaluation winningBlock : winningBlocksSingle) {
+			addApprovedNonMilestoneBlocks(winningBlocks, winningBlock);
+			addMilestoneApprovers(winningBlocks, winningBlock);
+		}
 
 		// Sort conflicts internally by descending rating, then cumulative weight
 		Comparator<Pair<BlockEvaluation, TransactionOutPoint>> byDescendingRating = Comparator
 				.comparingLong((Pair<BlockEvaluation, TransactionOutPoint> e) -> e.getLeft().getRating())
 				.thenComparingLong((Pair<BlockEvaluation, TransactionOutPoint> e) -> e.getLeft().getCumulativeWeight())
+				//TODO add here and below: compare by receivetime
 				.thenComparing((Pair<BlockEvaluation, TransactionOutPoint> e) -> e.getLeft().getBlockhash()).reversed();
 
 		Supplier<TreeSet<Pair<BlockEvaluation, TransactionOutPoint>>> conflictTreeSetSupplier = () -> new TreeSet<Pair<BlockEvaluation, TransactionOutPoint>>(
@@ -486,6 +448,7 @@ public class MilestoneService {
 		Comparator<TreeSet<Pair<BlockEvaluation, TransactionOutPoint>>> byDescendingSetRating = Comparator
 				.comparingLong((TreeSet<Pair<BlockEvaluation, TransactionOutPoint>> s) -> s.first().getLeft().getRating())
 				.thenComparingLong((TreeSet<Pair<BlockEvaluation, TransactionOutPoint>> s) -> s.first().getLeft().getCumulativeWeight())
+				//TODO add here and below: compare by receivetime
 				.thenComparing((TreeSet<Pair<BlockEvaluation, TransactionOutPoint>> s) -> s.first().getLeft().getBlockhash()).reversed();
 
 		Supplier<TreeSet<TreeSet<Pair<BlockEvaluation, TransactionOutPoint>>>> conflictsTreeSetSupplier = () -> new TreeSet<TreeSet<Pair<BlockEvaluation, TransactionOutPoint>>>(
@@ -496,16 +459,15 @@ public class MilestoneService {
 
 		// Now handle conflicts by descending max(rating)
 		for (TreeSet<Pair<BlockEvaluation, TransactionOutPoint>> conflict : sortedConflicts) {
-			// Take the block with the maximum rating in this conflict that is still in
-			// winning Blocks
-			Pair<BlockEvaluation, TransactionOutPoint> maxRatingPair = conflict.stream().findFirst().orElse(null);
+			// Take the block with the maximum rating in this conflict that is still in winning Blocks
+			Pair<BlockEvaluation, TransactionOutPoint> maxRatingPair = conflict.stream().filter(p -> winningBlocks.contains(p.getLeft())).findFirst().orElse(null);
 
 			// If such a block exists, this conflict is resolved by eliminating all other
 			// blocks in this conflict from winning Blocks
 			if (maxRatingPair != null) {
 				for (Pair<BlockEvaluation, TransactionOutPoint> pair : conflict) {
-					if (!pair.getLeft().equals(maxRatingPair.getLeft())) {
-						winningBlocks.remove(pair.getLeft()); //TODO we must also remove all approving conflict blocks...
+					if (pair.getLeft() != maxRatingPair.getLeft()) {
+						removeBlockAndApproversFrom(winningBlocks, pair.getLeft());
 					}
 				}
 			}
@@ -568,24 +530,49 @@ public class MilestoneService {
 		}
 	}
 
-//	/**
-//	 * Recursively adds the specified block and its approvers to the collection if
-//	 * the blocks are in the current milestone.
-//	 * 
-//	 * @param evaluations
-//	 * @param milestoneEvaluation
-//	 * @throws BlockStoreException
-//	 */
-//	private void addMilestoneApprovers(HashSet<BlockEvaluation> evaluations, BlockEvaluation milestoneEvaluation) throws BlockStoreException {
-//		if (!milestoneEvaluation.isMilestone())
-//			return;
-//
-//		// Add this block and add all of its milestone approvers
-//		evaluations.add(milestoneEvaluation);
-//		for (Sha256Hash approverHash : blockService.getSolidApproverBlockHashes(milestoneEvaluation.getBlockhash())) {
-//			evaluations.add(blockService.getBlockEvaluation(approverHash));
-//		}
-//	}
+	/**
+	 * Recursively adds the specified block and its approvers to the collection if
+	 * the blocks are in the current milestone.
+	 * 
+	 * @param evaluations
+	 * @param milestoneEvaluation
+	 * @throws BlockStoreException
+	 */
+	private void addMilestoneApprovers(HashSet<BlockEvaluation> evaluations, BlockEvaluation milestoneEvaluation) throws BlockStoreException {
+		if (!milestoneEvaluation.isMilestone())
+			return;
+
+		// Add this block and add all of its milestone approvers
+		evaluations.add(milestoneEvaluation);
+		for (Sha256Hash approverHash : blockService.getSolidApproverBlockHashes(milestoneEvaluation.getBlockhash())) {
+			addMilestoneApprovers(evaluations, blockService.getBlockEvaluation(approverHash));
+		}
+	}
+
+	/**
+	 * Recursively adds the specified block and its approved blocks to the collection if
+	 * the blocks are not in the current milestone.
+	 * 
+	 * @param evaluations
+	 * @param milestoneEvaluation
+	 * @throws BlockStoreException
+	 */
+	private void addApprovedNonMilestoneBlocks(HashSet<BlockEvaluation> evaluations, BlockEvaluation evaluation) throws BlockStoreException {
+		if (evaluation.isMilestone())
+			return;
+
+		// Add this block and add all of its approved non-milestone blocks
+		evaluations.add(evaluation);
+		
+		Block block = blockService.getBlock(evaluation.getBlockhash());
+		BlockEvaluation prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
+		BlockEvaluation prevBranchBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
+		
+		if (prevBlockEvaluation != null)
+			addApprovedNonMilestoneBlocks(evaluations, prevBlockEvaluation);
+		if (prevBranchBlockEvaluation != null)
+			addApprovedNonMilestoneBlocks(evaluations, prevBranchBlockEvaluation);
+	}
 
 	/**
 	 * Recursively removes the specified block and its approvers from the collection
