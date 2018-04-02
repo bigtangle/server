@@ -50,9 +50,6 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 	private static final Logger log = LoggerFactory.getLogger(MilestoneServiceTest.class);
 
 	@Autowired
-	private TipsService tipService;
-
-	@Autowired
 	private BlockService blockService;
 
 	@Autowired
@@ -62,44 +59,6 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 	private NetworkParameters networkParameters;
 
 	ECKey outKey = new ECKey();
-
-	private Block createAndAddNextBlockCoinbase(Block b1, long bVersion, byte[] pubKey, Sha256Hash b2) throws VerificationException, PrunedException {
-		Block block = BlockForTest.createNextBlockWithCoinbase(b1, bVersion, pubKey, 0, b2);
-		this.blockgraph.add(block);
-		log.debug("created block:" + block.getHashAsString());
-		return block;
-	}
-
-	private Block createAndAddNextBlockWithTransaction(Block b1, long bVersion, byte[] pubKey, Sha256Hash b2, Transaction prevOut)
-			throws VerificationException, PrunedException {
-		Block block = BlockForTest.createNextBlockWithCoinbase(b1, bVersion, pubKey, 0, b2);
-		block.addTransaction(prevOut);
-		block.solve();
-		this.blockgraph.add(block);
-		log.debug("created block:" + block.getHashAsString());
-		return block;
-	}
-
-	public List<Block> createLinearTangle1() throws Exception {
-
-		List<Block> blocks = new ArrayList<Block>();
-		Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0,
-				PARAMS.getGenesisBlock().getHash());
-		blocks.add(rollingBlock);
-		for (int i = 0; i < 30; i++) {
-			rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0, rollingBlock.getHash());
-			blocks.add(rollingBlock);
-		}
-
-		int i = 0;
-		for (Block block : blocks) {
-			this.blockgraph.add(block);
-			log.debug("create  " + i + " block:" + block.getHashAsString());
-			i++;
-
-		}
-		return blocks;
-	}
 
 	public List<Block> createMultiLinearTangle1() throws Exception {
 
@@ -125,35 +84,9 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		return blocks;
 	}
 
-	public List<Block> createSemiLinearTangle1() throws Exception {
-
-		Block b0 = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0,
-				PARAMS.getGenesisBlock().getHash());
-		Block b1 = BlockForTest.createNextBlockWithCoinbase(b0, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0, PARAMS.getGenesisBlock().getHash());
-		Block b2 = BlockForTest.createNextBlockWithCoinbase(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0, b0.getHash());
-		Block b3 = BlockForTest.createNextBlockWithCoinbase(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0, b2.getHash());
-		Block b4 = BlockForTest.createNextBlockWithCoinbase(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0, b2.getHash());
-		Block b5 = BlockForTest.createNextBlockWithCoinbase(b4, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0, b1.getHash());
-		List<Block> blocks = new ArrayList<Block>();
-		blocks.add(b0);
-		blocks.add(b1);
-		blocks.add(b2);
-		blocks.add(b3);
-		blocks.add(b4);
-		blocks.add(b5);
-		int i = 0;
-		for (Block block : blocks) {
-			this.blockgraph.add(block);
-			log.debug("create  " + i + " block:" + block.getHashAsString());
-			i++;
-
-		}
-		return blocks;
-	}
-
-	public void createMilestoneTestTangle1() throws Exception {
+	@Test
+	public void testMilestoneTestTangle1() throws Exception {
 		store = createStore(networkParameters, 10);
-
 		blockgraph = new FullPrunedBlockGraph(networkParameters, store);
 
 		// Add genesis block
@@ -342,157 +275,27 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		assertEquals(1, blockService.getBlockEvaluation(b8weight4.getHash()).getCumulativeWeight());
 	}
 
-	// TODO test first four update methods in one
-	// TODO test remove blocks no longer in milestone
-	// TODO test blocks without existing UTXO should not be added
-	// TODO test dynamically invalid blocks
-	// TODO test pruned conflicts should be handled correctly in all cases
+	// TODO test blocks without existing UTXO should not be added even if in milestonetoAdd
+	// TODO (multiconflict test)
+	
+	// TODO after dynamic validity test dynamically invalid blocks
+	
+	// TODO after pruning test pruned conflicts should be handled correctly in all cases 
 
-	// @Test
-	// public void testLinearTangle() throws Exception {
-	// createLinearTangle1();
-	// milestoneService.update();
-	// }
-
-	// @Test
-	// public void testMultiLinearTangle() throws Exception {
-	// createMultiLinearTangle1();
-	// milestoneService.update();
-	// milestoneService.update();
-	// }
-
-	// @Test
-	// public void testSemiLinearTangle() throws Exception {
-	// createSemiLinearTangle1();
-	// milestoneService.update();
-	// }
-
-	@Test
-	public void testMilestoneUpdate1() throws Exception {
-		createMilestoneTestTangle1();
-		milestoneService.update();
+	private Block createAndAddNextBlockCoinbase(Block b1, long bVersion, byte[] pubKey, Sha256Hash b2) throws VerificationException, PrunedException {
+		Block block = BlockForTest.createNextBlockWithCoinbase(b1, bVersion, pubKey, 0, b2);
+		this.blockgraph.add(block);
+		log.debug("created block:" + block.getHashAsString());
+		return block;
 	}
 
-	// @Test
-	// public void cumulativweigthLinearBlock() throws Exception {
-	// List<Block> re = createLinearBlock ();
-	// Map<Sha256Hash, Long> cumulativweigths = new HashMap<Sha256Hash, Long>();
-	// tipsManager.recursiveUpdateCumulativeweights(re.get(0).getHash(),
-	// cumulativweigths, new HashSet<>());
-	// int i = 0;
-	// for (Block block : re) {
-	// log.debug(" " + i + " block:" + block.getHashAsString() + " cumulativweigth :
-	// "
-	// + cumulativweigths.get(re.get(i).getHash()));
-	// i++;
-	// }
-	// Iterator<Map.Entry<Sha256Hash, Long>> it =
-	// cumulativweigths.entrySet().iterator();
-	// while (it.hasNext()) {
-	// Map.Entry<Sha256Hash, Long> pair = (Map.Entry<Sha256Hash, Long>) it.next();
-	// log.debug("hash : " + pair.getKey() + " -> " + pair.getValue());
-	// this.store.updateBlockEvaluationCumulativeweight(pair.getKey(),
-	// pair.getValue().intValue());
-	// }
-	// }
-	// @Test
-	// public void depth() throws Exception {
-	// List<Block> re = createBlock();
-	// Map<Sha256Hash, Long> depths = new HashMap<Sha256Hash, Long>();
-	// tipsManager.recursiveUpdateDepth(re.get(0).getHash(), depths);
-	// int i = 0;
-	// for (Block block : re) {
-	// log.debug(
-	// " " + i + " block:" + block.getHashAsString() + " depth : " +
-	// depths.get(re.get(i).getHash()));
-	// Sha256Hash blockhash = block.getHash();
-	// Long depth = depths.get(re.get(i).getHash());
-	// this.store.updateBlockEvaluationDepth(blockhash, depth.intValue());
-	// i++;
-	// }
-	// }
-	//
-	// @Test
-	// public void depth1() throws Exception {
-	// List<Block> re = createLinearBlock();
-	// Map<Sha256Hash, Long> depths = new HashMap<Sha256Hash, Long>();
-	// tipsManager.recursiveUpdateDepth(re.get(0).getHash(), depths);
-	// int i = 0;
-	// for (Block block : re) {
-	// log.debug(
-	// " " + i + " block:" + block.getHashAsString() + " depth : " +
-	// depths.get(re.get(i).getHash()));
-	// Sha256Hash blockhash = block.getHash();
-	// Long depth = depths.get(re.get(i).getHash());
-	// this.store.updateBlockEvaluationDepth(blockhash, depth.intValue());
-	// i++;
-	// }
-	// }
-	// @Test
-	// public void updateLinearCumulativeweightsTestWorks() throws Exception {
-	// createLinearBlock();
-	// Map<Sha256Hash, Set<Sha256Hash>> blockCumulativeweights1 = new
-	// HashMap<Sha256Hash, Set<Sha256Hash>>();
-	// tipsManager.updateHashCumulativeweights(PARAMS.getGenesisBlock().getHash(),
-	// blockCumulativeweights1,
-	// new HashSet<>());
-	//
-	// Iterator<Map.Entry<Sha256Hash, Set<Sha256Hash>>> iterator =
-	// blockCumulativeweights1.entrySet().iterator();
-	// while (iterator.hasNext()) {
-	// Map.Entry<Sha256Hash, Set<Sha256Hash>> pair = (Map.Entry<Sha256Hash,
-	// Set<Sha256Hash>>) iterator.next();
-	// log.debug(
-	// "hash : " + pair.getKey() + " \n size " + pair.getValue().size() + "-> " +
-	// pair.getValue());
-	// Sha256Hash blockhash = pair.getKey();
-	// int cumulativeweight = pair.getValue().size();
-	// this.store.updateBlockEvaluationCumulativeweight(blockhash,
-	// cumulativeweight);
-	// }
-	// }
-	//
-	// @Test
-	// public void getBlockToApprove() throws Exception {
-	// final SecureRandom random = new SecureRandom();
-	// for (int i = 1; i < 20; i++) {
-	// Sha256Hash b0Sha256Hash =
-	// tipsManager.blockToApprove(PARAMS.getGenesisBlock().getHash(), null, 27, 27,
-	// random);
-	// Sha256Hash b1Sha256Hash =
-	// tipsManager.blockToApprove(PARAMS.getGenesisBlock().getHash(), null, 27, 27,
-	// random);
-	// log.debug("b0Sha256Hash : " + b0Sha256Hash.toString());
-	// log.debug("b1Sha256Hash : " + b1Sha256Hash.toString());
-	// }
-	// }
-	//
-	// @Test
-	// public void getBlockToApproveTest2() throws Exception {
-	// createBlock();
-	// ECKey outKey = new ECKey();
-	// int height = 1;
-	//
-	// for (int i = 1; i < 20; i++) {
-	// Block r1 = blockService.getBlock(getNextBlockToApprove());
-	// Block r2 = blockService.getBlock(getNextBlockToApprove());
-	// Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(r2,
-	// Block.BLOCK_VERSION_GENESIS,
-	// outKey.getPubKey(), 0, r1.getHash());
-	// blockgraph.add(rollingBlock);
-	// log.debug("create block : " + i + " " + rollingBlock);
-	// }
-	//
-	// }
-	//
-	// public Sha256Hash getNextBlockToApprove() throws Exception {
-	// final SecureRandom random = new SecureRandom();
-	// return tipsManager.blockToApprove(PARAMS.getGenesisBlock().getHash(), null,
-	// 27, 27, random);
-	// // Sha256Hash b1Sha256Hash =
-	// // tipsManager.blockToApprove(PARAMS.getGenesisBlock().getHash(), null,
-	// // 27, 27, random);
-	//
-	// }
-
+	private Block createAndAddNextBlockWithTransaction(Block b1, long bVersion, byte[] pubKey, Sha256Hash b2, Transaction prevOut)
+			throws VerificationException, PrunedException {
+		Block block = BlockForTest.createNextBlockWithCoinbase(b1, bVersion, pubKey, 0, b2);
+		block.addTransaction(prevOut);
+		block.solve();
+		this.blockgraph.add(block);
+		log.debug("created block:" + block.getHashAsString());
+		return block;
+	}
 }

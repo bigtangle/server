@@ -941,7 +941,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             return verifiedChainHeadBlock;
         maybeConnect();
         PreparedStatement s = null;
-        log.info("find block hexStr : " + hash.toString());
+        //log.info("find block hexStr : " + hash.toString());
         try {
             s = conn.get().prepareStatement(getSelectHeadersSQL());
             s.setBytes(1, hash.getBytes());
