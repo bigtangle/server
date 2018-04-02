@@ -251,7 +251,7 @@ public abstract class AbstractIntegrationTest {
                     outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
         }
-        // Create bitcoin spend of 1 BTC.
+        // Create bitcoin spend of 1 BTA.
 
         ECKey myKey = walletKeys.get(0);
         milestoneService.update();

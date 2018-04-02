@@ -36,8 +36,8 @@ import org.bitcoinj.core.Monetary;
  */
 public final class MonetaryFormat {
 
-    /** Standard format for the BTC denomination. */
-    public static final MonetaryFormat BTC = new MonetaryFormat().shift(0).minDecimals(2).repeatOptionalDecimals(2, 3);
+    /** Standard format for the BTA denomination. */
+    public static final MonetaryFormat BTA = new MonetaryFormat().shift(0).minDecimals(2).repeatOptionalDecimals(2, 3);
     /** Standard format for the mBTC denomination. */
     public static final MonetaryFormat MBTC = new MonetaryFormat().shift(3).minDecimals(2).optionalDecimals(2);
     /** Standard format for the µBTC denomination. */
@@ -45,11 +45,11 @@ public final class MonetaryFormat {
     /** Standard format for fiat amounts. */
     public static final MonetaryFormat FIAT = new MonetaryFormat().shift(0).minDecimals(2).repeatOptionalDecimals(2, 1);
     /** Currency code for base 1 Bitcoin. */
-    public static final String CODE_BTC = "BTC";
+    public static final String CODE_BTC = "BTA";
     /** Currency code for base 1/1000 Bitcoin. */
-    public static final String CODE_MBTC = "mBTC";
+    public static final String CODE_MBTC = "mBTA";
     /** Currency code for base 1/1000000 Bitcoin. */
-    public static final String CODE_UBTC = "µBTC";
+    public static final String CODE_UBTC = "µBTA";
 
     public static final int MAX_DECIMALS = 8;
 
@@ -198,7 +198,7 @@ public final class MonetaryFormat {
 
     /**
      * Set number of digits to shift the decimal separator to the right, coming
-     * from the standard BTC notation that was common pre-2014. Note this will
+     * from the standard BTA notation that was common pre-2014. Note this will
      * change the currency code if enabled.
      */
     public MonetaryFormat shift(int shift) {

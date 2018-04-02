@@ -276,9 +276,9 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
 
     /**
      * <p>
-     * Returns the value as a plain string denominated in BTC. The result is
+     * Returns the value as a plain string denominated in BTA. The result is
      * unformatted with no trailing zeroes. For instance, a value of 150000
-     * satoshis gives an output string of "0.0015" BTC
+     * satoshis gives an output string of "0.0015" BTA
      * </p>
      */
     public String toPlainString() {

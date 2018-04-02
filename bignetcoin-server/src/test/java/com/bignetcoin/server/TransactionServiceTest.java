@@ -180,7 +180,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         }
         rollingBlock = BlockForTest.createNextBlock(rollingBlock, null, PARAMS.getGenesisBlock().getHash());
 
-        // Create bitcoin spend of 1 BTC.
+        // Create bitcoin spend of 1 BTA.
         ECKey toKey = new ECKey();
         Coin amount = Coin.valueOf(11123, NetworkParameters.BIGNETCOIN_TOKENID);
         Address address = new Address(PARAMS, toKey.getPubKeyHash());
