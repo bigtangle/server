@@ -14,6 +14,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 
 import javax.annotation.Nullable;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
@@ -121,6 +122,10 @@ public class TransactionInput extends ChildMessage {
     protected void parse() throws ProtocolException {
         outpoint = new TransactionOutPoint(params, payload, cursor, this, serializer);
         cursor += outpoint.getMessageSize();
+//        if (readUint32() == 1) {
+//            outpoint.connectedOutput = new TransactionOutput(params, (Transaction) this.parent, payload, cursor);
+//            cursor += outpoint.connectedOutput.getMessageSize();
+//        }
         int scriptLen = (int) readVarInt();
         length = cursor - offset + scriptLen + 4;
         scriptBytes = readBytes(scriptLen);
@@ -133,6 +138,10 @@ public class TransactionInput extends ChildMessage {
         stream.write(new VarInt(scriptBytes.length).encode());
         stream.write(scriptBytes);
         Utils.uint32ToByteStreamLE(sequence, stream);
+//        Utils.uint32ToByteStreamLE(this.outpoint.connectedOutput != null ? 1 : 0, stream);
+//        if (this.outpoint.connectedOutput != null) {
+//            this.outpoint.connectedOutput.bitcoinSerializeToStream(stream);
+//        }
     }
 
     /**

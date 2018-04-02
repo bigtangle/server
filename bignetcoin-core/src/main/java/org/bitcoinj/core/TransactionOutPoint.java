@@ -6,10 +6,13 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.Objects;
+
 import org.bitcoinj.script.*;
 import org.bitcoinj.wallet.*;
 
 import javax.annotation.*;
+import javax.validation.constraints.Null;
+
 import java.io.*;
 
 import static com.google.common.base.Preconditions.*;
@@ -32,7 +35,7 @@ public class TransactionOutPoint extends ChildMessage {
     Transaction fromTx;
 
     // The connected output.
-    private TransactionOutput connectedOutput;
+    public TransactionOutput connectedOutput = null;
 
     public TransactionOutPoint(NetworkParameters params, long index, @Nullable Transaction fromTx) {
         super(params);
