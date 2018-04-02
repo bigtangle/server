@@ -346,6 +346,7 @@ public class MilestoneService {
 		while (true) {
 			// Now try to find blocks that can be added to the milestone
 			HashSet<BlockEvaluation> blocksToAdd = blockService.getBlocksToAddToMilestone();
+			//TODO constraint blockstoadd by receivetime 30 sec old at least
 
 			// Optional steps from later to lower computational cost
 			if (blocksToAdd.isEmpty())
@@ -411,7 +412,7 @@ public class MilestoneService {
 				.flatMap(b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream()).map(in -> Pair.of(b, in)));
 
 		// Now filter to only contain inputs that were already spent in the milestone
-		// when the corresponding block has already been pruned
+		// where the corresponding block has already been pruned
 		Stream<Pair<Block, TransactionInput>> irresolvableConflicts = blockInputTuples
 				.filter(pair -> transactionService.getUTXOSpent(pair.getRight()) && transactionService.getUTXOSpender(pair.getRight().getOutpoint()) == null);
 
@@ -442,7 +443,6 @@ public class MilestoneService {
 		// Resolve all conflicts by grouping by UTXO ordered by descending rating
 		HashSet<BlockEvaluation> winningBlocks = resolveConflictsByDescendingRating(conflictingOutPoints);
 
-		// TODO fix this, think through all cases again, this is definitely broken...
 		// For milestone blocks that have been eliminated call disconnect procedure
 		for (BlockEvaluation b : conflictingMilestoneBlocks.stream().filter(b -> !winningBlocks.contains(b)).collect(Collectors.toList())) {
 			blockService.disconnect(b);
@@ -468,7 +468,12 @@ public class MilestoneService {
 	private HashSet<BlockEvaluation> resolveConflictsByDescendingRating(HashSet<Pair<BlockEvaluation, TransactionOutPoint>> conflictingOutPoints)
 			throws BlockStoreException {
 		// Initialize blocks that will survive the conflict resolution
-		HashSet<BlockEvaluation> winningBlocks = conflictingOutPoints.stream().map(p -> p.getLeft()).collect(Collectors.toCollection(HashSet::new));
+		HashSet<BlockEvaluation> winningBlocksSingle = conflictingOutPoints.stream().map(p -> p.getLeft()).collect(Collectors.toCollection(HashSet::new));
+		HashSet<BlockEvaluation> winningBlocks = new HashSet<>();
+		for (BlockEvaluation winningBlock : winningBlocksSingle) {
+			addApprovedNonMilestoneBlocks(winningBlocks, winningBlock);
+			addMilestoneApprovers(winningBlocks, winningBlock);
+		}
 
 		// Sort conflicts internally by descending rating, then cumulative weight
 		Comparator<Pair<BlockEvaluation, TransactionOutPoint>> byDescendingRating = Comparator
@@ -496,16 +501,15 @@ public class MilestoneService {
 
 		// Now handle conflicts by descending max(rating)
 		for (TreeSet<Pair<BlockEvaluation, TransactionOutPoint>> conflict : sortedConflicts) {
-			// Take the block with the maximum rating in this conflict that is still in
-			// winning Blocks
-			Pair<BlockEvaluation, TransactionOutPoint> maxRatingPair = conflict.stream().findFirst().orElse(null);
+			// Take the block with the maximum rating in this conflict that is still in winning Blocks
+			Pair<BlockEvaluation, TransactionOutPoint> maxRatingPair = conflict.stream().filter(p -> winningBlocks.contains(p.getLeft())).findFirst().orElse(null);
 
 			// If such a block exists, this conflict is resolved by eliminating all other
 			// blocks in this conflict from winning Blocks
 			if (maxRatingPair != null) {
 				for (Pair<BlockEvaluation, TransactionOutPoint> pair : conflict) {
-					if (!pair.getLeft().equals(maxRatingPair.getLeft())) {
-						winningBlocks.remove(pair.getLeft()); //TODO we must also remove all approving conflict blocks...
+					if (pair.getLeft() != maxRatingPair.getLeft()) {
+						removeBlockAndApproversFrom(winningBlocks, pair.getLeft());
 					}
 				}
 			}
@@ -568,24 +572,49 @@ public class MilestoneService {
 		}
 	}
 
-//	/**
-//	 * Recursively adds the specified block and its approvers to the collection if
-//	 * the blocks are in the current milestone.
-//	 * 
-//	 * @param evaluations
-//	 * @param milestoneEvaluation
-//	 * @throws BlockStoreException
-//	 */
-//	private void addMilestoneApprovers(HashSet<BlockEvaluation> evaluations, BlockEvaluation milestoneEvaluation) throws BlockStoreException {
-//		if (!milestoneEvaluation.isMilestone())
-//			return;
-//
-//		// Add this block and add all of its milestone approvers
-//		evaluations.add(milestoneEvaluation);
-//		for (Sha256Hash approverHash : blockService.getSolidApproverBlockHashes(milestoneEvaluation.getBlockhash())) {
-//			evaluations.add(blockService.getBlockEvaluation(approverHash));
-//		}
-//	}
+	/**
+	 * Recursively adds the specified block and its approvers to the collection if
+	 * the blocks are in the current milestone.
+	 * 
+	 * @param evaluations
+	 * @param milestoneEvaluation
+	 * @throws BlockStoreException
+	 */
+	private void addMilestoneApprovers(HashSet<BlockEvaluation> evaluations, BlockEvaluation milestoneEvaluation) throws BlockStoreException {
+		if (!milestoneEvaluation.isMilestone())
+			return;
+
+		// Add this block and add all of its milestone approvers
+		evaluations.add(milestoneEvaluation);
+		for (Sha256Hash approverHash : blockService.getSolidApproverBlockHashes(milestoneEvaluation.getBlockhash())) {
+			addMilestoneApprovers(evaluations, blockService.getBlockEvaluation(approverHash));
+		}
+	}
+
+	/**
+	 * Recursively adds the specified block and its approved blocks to the collection if
+	 * the blocks are not in the current milestone.
+	 * 
+	 * @param evaluations
+	 * @param milestoneEvaluation
+	 * @throws BlockStoreException
+	 */
+	private void addApprovedNonMilestoneBlocks(HashSet<BlockEvaluation> evaluations, BlockEvaluation evaluation) throws BlockStoreException {
+		if (evaluation.isMilestone())
+			return;
+
+		// Add this block and add all of its approved non-milestone blocks
+		evaluations.add(evaluation);
+		
+		Block block = blockService.getBlock(evaluation.getBlockhash());
+		BlockEvaluation prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
+		BlockEvaluation prevBranchBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
+		
+		if (prevBlockEvaluation != null)
+			addApprovedNonMilestoneBlocks(evaluations, prevBlockEvaluation);
+		if (prevBranchBlockEvaluation != null)
+			addApprovedNonMilestoneBlocks(evaluations, prevBranchBlockEvaluation);
+	}
 
 	/**
 	 * Recursively removes the specified block and its approvers from the collection
