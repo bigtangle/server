@@ -4,7 +4,10 @@
  *******************************************************************************/
 package com.bignetcoin.ui.wallet;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.ECKey;
@@ -14,10 +17,13 @@ import org.bitcoinj.utils.OkHttp3Util;
 
 import com.bignetcoin.ui.wallet.utils.GuiUtils;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 
@@ -26,6 +32,8 @@ public class StockController {
     public CheckBox firstPublishCheckBox;
     @FXML
     public ComboBox<String> tokenid;
+    @FXML
+    public Label tokenname;
 
     @FXML
     public TextField stockName;
@@ -40,6 +48,33 @@ public class StockController {
     @FXML
     public void initialize() {
         firstPublishCheckBox.setAllowIndeterminate(false);
+        try {
+            initCombobox();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+    }
+
+    public void initCombobox() throws Exception {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        ObservableList<String> tokenData = FXCollections.observableArrayList();
+        ECKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
+        String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens", ecKey.getPubKeyHash());
+
+        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+
+        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
+        List<String> names = new ArrayList<String>();
+        for (Map<String, Object> map : list) {
+
+            String tokenHex = (String) map.get("tokenHex");
+            tokenData.add(tokenHex);
+            names.add(map.get("tokenname").toString());
+        }
+        tokenid.setItems(tokenData);
+        tokenid.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
+            tokenname.setText(names.get(newv.intValue()));
+        });
 
     }
 
@@ -55,7 +90,7 @@ public class StockController {
             requestParam.put("tokenname", stockName.getText());
             requestParam.put("description", stockDescription.getText());
             requestParam.put("tokenHex", tokenid.getValue());
-            requestParam.put("blocktype", 0);
+            requestParam.put("blocktype", firstPublishCheckBox.selectedProperty().get());
 
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "createGenesisBlock",
                     Json.jsonmapper().writeValueAsString(requestParam));

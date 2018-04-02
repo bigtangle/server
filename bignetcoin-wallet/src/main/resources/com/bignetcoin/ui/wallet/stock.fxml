@@ -16,22 +16,24 @@
             <RowConstraints maxHeight="90.0" minHeight="10.0" prefHeight="43.0" valignment="TOP" vgrow="SOMETIMES" />
 				<RowConstraints maxHeight="90.0" minHeight="10.0" prefHeight="43.0" valignment="TOP" vgrow="SOMETIMES" />
 				<RowConstraints maxHeight="90.0" minHeight="10.0" prefHeight="55.0" valignment="TOP" vgrow="SOMETIMES" />
+            <RowConstraints maxHeight="90.0" minHeight="10.0" prefHeight="55.0" valignment="TOP" vgrow="SOMETIMES" />
 				<RowConstraints maxHeight="160.0" minHeight="0.0" prefHeight="53.0" valignment="TOP" vgrow="SOMETIMES" />
 				<RowConstraints maxHeight="351.0" minHeight="10.0" prefHeight="223.0" valignment="TOP" vgrow="SOMETIMES" />
 				<RowConstraints maxHeight="203.0" minHeight="10.0" prefHeight="52.0" valignment="TOP" vgrow="SOMETIMES" />
 			</rowConstraints>
 			<children>
 				<Label prefHeight="15.0" prefWidth="85.0" text="token id" GridPane.rowIndex="2" />
-				<Label prefHeight="15.0" prefWidth="90.0" text="token amount" GridPane.rowIndex="3" />
+				<Label prefHeight="15.0" prefWidth="90.0" text="token amount" GridPane.rowIndex="4" />
 				<Label prefHeight="0.0" prefWidth="137.0" text="token name" GridPane.rowIndex="1" />
-				<Label prefHeight="15.0" prefWidth="145.0" text="token description" GridPane.rowIndex="4" />
+				<Label prefHeight="15.0" prefWidth="145.0" text="token description" GridPane.rowIndex="5" />
 				<TextField fx:id="stockName" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-				<TextField fx:id="stockAmount" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-				<TextArea fx:id="stockDescription" prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-				<Button fx:id="save" mnemonicParsing="false" onAction="#saveStock" text="publish" GridPane.rowIndex="5" />
-				<Button fx:id="closeButton" mnemonicParsing="false" onAction="#closeStock" text="close" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+				<TextField fx:id="stockAmount" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+				<TextArea fx:id="stockDescription" prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+				<Button fx:id="save" mnemonicParsing="false" onAction="#saveStock" text="publish" GridPane.rowIndex="6" />
+				<Button fx:id="closeButton" mnemonicParsing="false" onAction="#closeStock" text="close" GridPane.columnIndex="1" GridPane.rowIndex="6" />
             <CheckBox fx:id="firstPublishCheckBox" mnemonicParsing="false" text="first publish" GridPane.columnIndex="1" />
-            <ComboBox fx:id="tokenid" prefHeight="23.0" prefWidth="238.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+            <ComboBox fx:id="tokenid" editable="true" prefHeight="23.0" prefWidth="238.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+            <Label fx:id="tokenname" prefHeight="30.0" prefWidth="229.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
 			</children>
 		</GridPane>
 	</children>
