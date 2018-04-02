@@ -4,10 +4,11 @@
  *******************************************************************************/
 package com.bignetcoin.ui.wallet;
 
-import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Utils;
 
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
+
 public class CoinModel {
     private SimpleLongProperty value;
     private SimpleStringProperty tokenid;
@@ -39,7 +40,7 @@ public class CoinModel {
     public CoinModel(long value, byte[] tokenid) {
         super();
         this.value = new SimpleLongProperty(value);
-        this.tokenid = new SimpleStringProperty(tokenid == NetworkParameters.BIGNETCOIN_TOKENID ? "bignetcoin" : "other");
+        this.tokenid = new SimpleStringProperty(Utils.HEX.encode(tokenid));
     }
 
 }
