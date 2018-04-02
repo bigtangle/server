@@ -76,18 +76,21 @@ public abstract class NetworkParameters {
     public static final String PAYMENT_PROTOCOL_ID_UNIT_TESTS = "unittest";
     public static final String PAYMENT_PROTOCOL_ID_REGTEST = "regtest";
 
-    //FIXME Token id for System Coin byte[20]
+    // FIXME Token id for System Coin byte[20]
     public static final byte[] BIGNETCOIN_TOKENID = HEX.decode(
-            //"86e21e07bd2651fba1c19b0e6b678475641c885c");
+            // "86e21e07bd2651fba1c19b0e6b678475641c885c");
             "0000000000000000000000000000000000000000");
 
     // BLOCKTYPE
-    public static final long BLOCKTYPE_GENESIS = 0; // Genesis Block for a token, only onetime
+    public static final long BLOCKTYPE_GENESIS = 0; // Genesis Block for a
+                                                    // token, only onetime
     public static final long BLOCKTYPE_TRANSFER = 1; // normal transfer of token
-    public static final long BLOCKTYPE_GENESIS_MULTIPLE = 3; // Genesis Block for a token, multiple times                                               // value
+    public static final long BLOCKTYPE_GENESIS_MULTIPLE = 3; // Genesis Block
+                                                             // for a token,
+                                                             // multiple times
+                                                             // // value
 
     public static final long BLOCKTYPE_REWARD = 2; // Reward of mining
-    
 
     // TODO: Seed nodes should be here as well.
 
@@ -137,27 +140,29 @@ public abstract class NetworkParameters {
 
     public static Block createGenesis(NetworkParameters n) {
         Block genesisBlock = new Block(n, Block.BLOCK_VERSION_GENESIS, BIGNETCOIN_TOKENID, BLOCKTYPE_GENESIS);
-        //TODO read first transaction from ICO file
-//        Transaction t = new Transaction(n);
-//        try {
-//            // A script containing the difficulty bits and the following
-//            // message:
-//            //
-//            // "The Times 03/Jan/2009 Chancellor on brink of second bailout for
-//            // banks"
-//            byte[] bytes = Utils.HEX.decode(
-//                    "04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73");
-//            t.addInput(new TransactionInput(n, t, bytes));
-//            ByteArrayOutputStream scriptPubKeyBytes = new ByteArrayOutputStream();
-//            Script.writeBytes(scriptPubKeyBytes, Utils.HEX.decode(
-//                    "04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"));
-//            scriptPubKeyBytes.write(ScriptOpCodes.OP_CHECKSIG);
-//            t.addOutput(new TransactionOutput(n, t, FIFTY_COINS, scriptPubKeyBytes.toByteArray()));
-//        } catch (Exception e) {
-//            // Cannot happen.
-//            throw new RuntimeException(e);
-//        }
-//        genesisBlock.addTransaction(t);
+        // TODO read first transaction from ICO file
+        // Transaction t = new Transaction(n);
+        // try {
+        // // A script containing the difficulty bits and the following
+        // // message:
+        // //
+        // // "The Times 03/Jan/2009 Chancellor on brink of second bailout for
+        // // banks"
+        // byte[] bytes = Utils.HEX.decode(
+        // "04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73");
+        // t.addInput(new TransactionInput(n, t, bytes));
+        // ByteArrayOutputStream scriptPubKeyBytes = new
+        // ByteArrayOutputStream();
+        // Script.writeBytes(scriptPubKeyBytes, Utils.HEX.decode(
+        // "04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"));
+        // scriptPubKeyBytes.write(ScriptOpCodes.OP_CHECKSIG);
+        // t.addOutput(new TransactionOutput(n, t, FIFTY_COINS,
+        // scriptPubKeyBytes.toByteArray()));
+        // } catch (Exception e) {
+        // // Cannot happen.
+        // throw new RuntimeException(e);
+        // }
+        // genesisBlock.addTransaction(t);
         return genesisBlock;
     }
 
@@ -180,12 +185,12 @@ public abstract class NetworkParameters {
     /**
      * The maximum number of coins to be generated
      */
-    public static final long MAX_COINS = 21000000;
+    // public static final long MAX_COINS = 21000000;
 
     /**
      * The maximum money to be generated
      */
-    public static final Coin MAX_MONEY = COIN.multiply(MAX_COINS);
+    // public static final Coin MAX_MONEY = COIN.multiply(MAX_COINS);
 
     /** Alias for TestNet3Params.get(), use that instead. */
     @Deprecated
@@ -294,8 +299,9 @@ public abstract class NetworkParameters {
      * @throws VerificationException
      *             if the block's difficulty is not correct.
      */
-//    public abstract void checkDifficultyTransitions(StoredBlock storedPrev, Block next, final BlockStore blockStore)
-//            throws VerificationException, BlockStoreException;
+    // public abstract void checkDifficultyTransitions(StoredBlock storedPrev,
+    // Block next, final BlockStore blockStore)
+    // throws VerificationException, BlockStoreException;
 
     /**
      * Returns true if the block height is either not a checkpoint, or is a
@@ -465,7 +471,7 @@ public abstract class NetworkParameters {
      * network. Where not applicable, a very large number of coins is returned
      * instead (i.e. the main coin issue for Dogecoin).
      */
-    public abstract Coin getMaxMoney();
+    // public abstract Coin getMaxMoney();
 
     /**
      * Any standard (ie pay-to-address) output smaller than this value will most

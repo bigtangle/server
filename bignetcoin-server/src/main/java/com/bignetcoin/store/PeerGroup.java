@@ -2249,7 +2249,7 @@ public class PeerGroup implements TransactionBroadcaster {
                     // We may end up with two threads trying to do this in parallel - the wallet will
                     // ignore whichever one loses the race.
                     try {
-                        wallet.receivePending(transaction, null);
+                       // wallet.receivePending(transaction, null);
                     } catch (VerificationException e) {
                         throw new RuntimeException(e);   // Cannot fail to verify a tx we created ourselves.
                     }

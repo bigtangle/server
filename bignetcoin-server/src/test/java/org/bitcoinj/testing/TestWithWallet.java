@@ -61,9 +61,7 @@ public class TestWithWallet {
             throws VerificationException {
         if (type == null) {
             // Pending transaction
-            for (Transaction tx : transactions)
-                if (wallet.isPendingTransactionRelevant(tx))
-                    wallet.receivePending(tx, null);
+        
         }      
         if (transactions.length == 1)
             return wallet.getTransaction(transactions[0].getHash());  // Can be null if tx is a double spend that's otherwise irrelevant.

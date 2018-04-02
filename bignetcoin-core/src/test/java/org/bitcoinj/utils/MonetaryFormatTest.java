@@ -264,13 +264,7 @@ public class MonetaryFormatTest {
         assertEquals(Coin.MILLICOIN.negate(), MonetaryFormat.MBTC.parse("-1",NetworkParameters.BIGNETCOIN_TOKENID));
         assertEquals(Coin.MILLICOIN.negate(), MonetaryFormat.MBTC.parse("-1.0",NetworkParameters.BIGNETCOIN_TOKENID));
 
-        assertEquals(Coin.MICROCOIN, MonetaryFormat.UBTC.parse("1",NetworkParameters.BIGNETCOIN_TOKENID));
-        assertEquals(Coin.MICROCOIN, MonetaryFormat.UBTC.parse("1.0",NetworkParameters.BIGNETCOIN_TOKENID));
-        assertEquals(Coin.MICROCOIN, MonetaryFormat.UBTC.parse("01.0000000000",NetworkParameters.BIGNETCOIN_TOKENID));
-        assertEquals(Coin.MICROCOIN, MonetaryFormat.UBTC.positiveSign('+').parse("+1.0",NetworkParameters.BIGNETCOIN_TOKENID));
-        assertEquals(Coin.MICROCOIN.negate(), MonetaryFormat.UBTC.parse("-1",NetworkParameters.BIGNETCOIN_TOKENID));
-        assertEquals(Coin.MICROCOIN.negate(), MonetaryFormat.UBTC.parse("-1.0",NetworkParameters.BIGNETCOIN_TOKENID));
-
+      
         assertEquals(Coin.CENT, NO_CODE.withLocale(new Locale("hi", "IN")).parse(".०१",NetworkParameters.BIGNETCOIN_TOKENID)); // Devanagari
     }
 

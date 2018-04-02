@@ -55,7 +55,7 @@ public class BitcoinUIModel {
     }
 
     private void update(Wallet wallet) {
-        balance.set(wallet.getBalance());
+     //   balance.set(wallet.getBalance());
         address.set(wallet.currentReceiveAddress());
     }
 
