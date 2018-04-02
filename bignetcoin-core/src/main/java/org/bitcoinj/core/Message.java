@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkState;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public abstract class Message {
+public abstract class Message implements java.io.Serializable {
     private static final Logger log = LoggerFactory.getLogger(Message.class);
 
     public static final int MAX_SIZE = 0x02000000; // 32MB

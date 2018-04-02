@@ -83,11 +83,11 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         walletAppKit.wallet().completeTx(req, walletAppKit.wallet().transforSpendCandidates(ulist), false);
         walletAppKit.wallet().signTransaction(req);
         
-//         byte[] a = req.tx.bitcoinSerialize();
-//         Transaction transaction = (Transaction) networkParameters.getDefaultSerializer().makeTransaction(a);
+         byte[] a = req.tx.bitcoinSerialize();
+         Transaction transaction = (Transaction) networkParameters.getDefaultSerializer().makeTransaction(a);
         
-        byte[] buf = BeanSerializeUtil.serializer(req.tx);
-        Transaction transaction = BeanSerializeUtil.deserialize(buf, Transaction.class);
+//        byte[] buf = BeanSerializeUtil.serializer(req.tx);
+//        Transaction transaction = BeanSerializeUtil.deserialize(buf, Transaction.class);
         
          SendRequest request = SendRequest.forTx(transaction); 
         walletAppKit1.wallet().signTransaction(request);
