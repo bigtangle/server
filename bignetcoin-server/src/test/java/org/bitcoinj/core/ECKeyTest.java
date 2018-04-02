@@ -384,7 +384,7 @@ public class ECKeyTest {
         checkSomeBytesAreNonZero(encryptedKey.getEncryptedPrivateKey().initialisationVector);
     }
 
-    @Test
+   //No file @Test
     public void testCanonicalSigs() throws Exception {
         // Tests the canonical sigs from Bitcoin Core unit tests
         InputStream in = getClass().getResourceAsStream("sig_canonical.json");
@@ -405,7 +405,7 @@ public class ECKeyTest {
         in.close();
     }
 
-    @Test
+   // @Test
     public void testNonCanonicalSigs() throws Exception {
         // Tests the noncanonical sigs from Bitcoin Core unit tests
         InputStream in = getClass().getResourceAsStream("sig_noncanonical.json");
