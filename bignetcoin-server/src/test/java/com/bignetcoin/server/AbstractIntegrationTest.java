@@ -283,7 +283,7 @@ public abstract class AbstractIntegrationTest {
         requestParam.put("amount", 164385643856L);
         requestParam.put("tokenname", "Test");
         requestParam.put("description", "Test");
-        requestParam.put("blocktype", NetworkParameters.BLOCKTYPE_GENESIS_MULTIPLE);
+        requestParam.put("blocktype", "false");
         requestParam.put("tokenHex", Utils.HEX.encode(outKey.getPubKeyHash()));
 
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.createGenesisBlock.name(),

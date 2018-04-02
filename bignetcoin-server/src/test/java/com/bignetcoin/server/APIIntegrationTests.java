@@ -186,7 +186,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         requestParam.put("amount", 100000L);
         requestParam.put("tokenname", "Test");
         requestParam.put("description", "Test");
-        requestParam.put("blocktype", networkParameters.BLOCKTYPE_GENESIS_MULTIPLE);
+        requestParam.put("blocktype", "false");
         requestParam.put("tokenHex", Utils.HEX.encode(outKey.getPubKeyHash()));
         
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.createGenesisBlock.name(), Json.jsonmapper().writeValueAsString(requestParam));
