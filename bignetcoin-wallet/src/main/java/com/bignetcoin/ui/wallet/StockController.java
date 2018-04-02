@@ -23,7 +23,6 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 
@@ -32,7 +31,6 @@ public class StockController {
     public CheckBox firstPublishCheckBox;
     @FXML
     public ComboBox<String> tokenid;
-
 
     @FXML
     public TextField stockName;
@@ -64,16 +62,26 @@ public class StockController {
 
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
         List<String> names = new ArrayList<String>();
-        for (Map<String, Object> map : list) {
+        // wallet keys minus used from token list with one time (blocktype false
+        // Todo
+        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(null);
+        for (ECKey key : keys) {
+            String temp = Utils.HEX.encode(key.getPubKeyHash());
+            for (Map<String, Object> map : list) {
 
-            String tokenHex = (String) map.get("tokenHex");
-            tokenData.add(tokenHex);
-            names.add(map.get("tokenname").toString());
+                String tokenHex = (String) map.get("tokenHex");
+                if (!temp.equals(tokenHex) && !tokenData.contains(temp)) {
+                    tokenData.add(temp);
+                    // names.add(map.get("tokenname").toString());
+                }
+
+            }
         }
         tokenid.setItems(tokenData);
-        tokenid.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
-            stockName.setText(names.get(newv.intValue()));
-        });
+        // tokenid.getSelectionModel().selectedIndexProperty().addListener((ov,
+        // oldv, newv) -> {
+        // stockName.setText(names.get(newv.intValue()));
+        // });
 
     }
 
