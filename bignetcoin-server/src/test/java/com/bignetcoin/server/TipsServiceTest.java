@@ -129,8 +129,8 @@ public class TipsServiceTest extends AbstractIntegrationTest {
     public void getBlockToApprove() throws Exception {
         final SecureRandom random = new SecureRandom();
         for (int i = 1; i < 20; i++) {
-            Sha256Hash b0Sha256Hash = tipsManager.blockToApprove(27, random);
-            Sha256Hash b1Sha256Hash = tipsManager.blockToApprove(27, random);
+            Sha256Hash b0Sha256Hash = tipsManager.getMCMCSelectedBlock(27, random);
+            Sha256Hash b1Sha256Hash = tipsManager.getMCMCSelectedBlock(27, random);
            log.debug("b0Sha256Hash : " + b0Sha256Hash.toString());
            log.debug("b1Sha256Hash : " + b1Sha256Hash.toString());
         }
@@ -155,7 +155,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
     public Sha256Hash getNextBlockToApprove() throws Exception {
         final SecureRandom random = new SecureRandom();
-        return tipsManager.blockToApprove(1, random);
+        return tipsManager.getMCMCSelectedBlock(1, random);
     }
 
 }

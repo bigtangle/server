@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -42,16 +43,35 @@ public class TipsService {
 	@Autowired
 	protected NetworkParameters networkParameters;
 	
-	public Pair<Sha256Hash, Sha256Hash> blockPairToApprove(final int iterations, Random seed) throws Exception {
-		Sha256Hash b1 = blockToApprove(iterations, seed);
-		Sha256Hash b2 = blockToApprove(iterations, seed);
+	public Sha256Hash getRatingTip(Random seed) throws Exception {
+		// TODO entry points select from further back for rating (milestonedepth y1-y2)
+		return getMCMCSelectedBlock(1, seed);
+	}
+	
+	public Pair<Sha256Hash, TreeSet<BlockEvaluation>> getSingleBlockToApprove(Random seed) throws Exception {
+		Sha256Hash b1 = getMCMCSelectedBlock(1, seed);
 		
 		//TODO validate dynamic validity here and if not, try to reverse until no conflicts
+		//Specifically, we check for milestone-candidate-conflicts + candidate-candidate-conflicts and reverse until there are no such conflicts
+		//Also returns all approved non-milestone blocks in topological ordering
+		// TODO for now just copy from milestoneservice, afterwards refactor maybe
 		
-		return Pair.of(b1, b2);
+		return null;
+	}
+	
+	public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPairToApprove(Random seed) throws Exception {
+		Pair<Sha256Hash, TreeSet<BlockEvaluation>> b1 = getSingleBlockToApprove(seed);
+		Pair<Sha256Hash, TreeSet<BlockEvaluation>> b2 = getSingleBlockToApprove(seed);
+		
+		//TODO validate dynamic validity here and if not, try to reverse until no conflicts
+		//Specifically, we only need to check for candidate-candidate conflicts in the union of both approved blocks and reverse the nearest one
+		// TODO for now just copy from milestoneservice, afterwards refactor maybe
+		
+		return Pair.of(b1.getLeft(), b2.getLeft());
 	}
 
-	public Sha256Hash blockToApprove(final int iterations, Random seed) throws Exception {
+	// TODO Reroute calls to getBlockToApprove, getRatingTip or getValidatedPair
+	public Sha256Hash getMCMCSelectedBlock(final int iterations, Random seed) throws Exception {
 		List<BlockEvaluation> blockEvaluations = blockService.getSolidBlockEvaluations();
 		Map<Sha256Hash, Long> cumulativeWeights = blockEvaluations.stream()
 				.collect(Collectors.toMap(BlockEvaluation::getBlockhash, BlockEvaluation::getCumulativeWeight));
@@ -61,7 +81,8 @@ public class TipsService {
 
 	Sha256Hash entryPoint() throws Exception {
 		return networkParameters.getGenesisBlock().getHash();
-		//TODO use multiple (iterations many) entry points in depth interval
+		
+		//TODO use multiple (iterations many) entry points in milestonedepth interval 0 to x
 	}
 
 	Sha256Hash markovChainMonteCarlo(final Sha256Hash entryPoint, final Map<Sha256Hash, Long> cumulativeWeights,

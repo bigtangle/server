@@ -66,25 +66,30 @@ public class MilestoneService {
 	 * @throws Exception
 	 */
 	public void update() throws Exception {
+		
+		// TODO test pruning here for now
+		
+		
 		log.info("Milestone Update started");
 		Stopwatch watch = Stopwatch.createStarted();
 		updateSolidityAndHeight();
-		log.info("Milestone solidity and height time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+		log.info("Solidity and height update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
 		watch.stop();
 		watch = Stopwatch.createStarted();
 		updateCumulativeWeightAndDepth();
-		log.info("Milestone weight and depth time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+		log.info("Weight and depth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
 		watch.stop();
 		watch = Stopwatch.createStarted();
 		updateRating();
-		log.info("Milestone rating time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+		log.info("Rating update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
 		watch.stop();
 		watch = Stopwatch.createStarted();
 		updateMilestone();
-		log.info("Milestone update took {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+		log.info("Milestone update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+		
 		// Optional: Trigger batched tip pair selection here
 
 		watch.stop();
@@ -144,6 +149,7 @@ public class MilestoneService {
 		return false;
 	}
 
+	// TODO deduplicate code (copy in fullprunedblock...)
 	private void solidifyBlock(BlockEvaluation blockEvaluation, Block block) throws BlockStoreException {
 		// reget evaluations...
 		BlockEvaluation prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
@@ -211,6 +217,7 @@ public class MilestoneService {
 				}
 			}
 
+			// TODO update earlier and abort if no change
 			// Update and dereference
 			blockService.updateCumulativeWeight(currentBlock, approverHashes.size());
 			blockService.updateDepth(currentBlock, depth);
@@ -230,7 +237,7 @@ public class MilestoneService {
 		HashMap<BlockEvaluation, HashSet<EvaluationWrapper>> selectedTips = new HashMap<BlockEvaluation, HashSet<EvaluationWrapper>>(tipCount);
 		Random random = new SecureRandom();
 		for (int i = 0; i < tipCount; i++) {
-			BlockEvaluation selectedTip = blockService.getBlockEvaluation(tipsService.blockToApprove(1, random));
+			BlockEvaluation selectedTip = blockService.getBlockEvaluation(tipsService.getMCMCSelectedBlock(1, random));
 			HashSet<EvaluationWrapper> result;
 			if (selectedTips.containsKey(selectedTip))  
 				result = selectedTips.get(selectedTip);
@@ -280,7 +287,8 @@ public class MilestoneService {
 			if (approverHashSets.containsKey(block.getPrevBranchBlockHash()))
 				approverHashSets.get(block.getPrevBranchBlockHash()).addAll(approverHashes);
 
-			// Update your cumulative weight
+			// TODO update earlier and abort if updated == current == max rating
+			// Update your rating
 			blockService.updateRating(currentBlock, approverHashes.size());
 			approverHashSets.remove(currentBlock.getBlockhash());
 		}
@@ -608,6 +616,7 @@ public class MilestoneService {
 		return blocksByDescendingHeight;
 	}
 
+	// TODO useless, drop this
 	private class EvaluationWrapper {
 		public BlockEvaluation blockEvaluation;
 
