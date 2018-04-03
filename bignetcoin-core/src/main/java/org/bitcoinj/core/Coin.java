@@ -16,14 +16,15 @@ import com.google.common.math.LongMath;
 import com.google.common.primitives.Longs;
 
 /**
- * Represents a monetary Bitcoin value. This class is immutable.
+ * Represents a monetary Coin value. This class is immutable.
+ * The coin is set to minimal MILLICOIN for micro payment of machine.
  */
 public final class Coin implements Monetary, Comparable<Coin>, Serializable {
 
     private static final long serialVersionUID = 551802452657362699L;
 
     /**
-     * Number of decimals for one Bitcoin. This constant is useful for quick
+     * Number of decimals for one Coin. This constant is useful for quick
      * adapting to other coins because a lot of constants derive from it.
      */
     public static final int SMALLEST_UNIT_EXPONENT = 8;
@@ -53,11 +54,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      */
     public static final Coin MILLICOIN = COIN.divide(1000);
 
-    /**
-     * 0.000001 Bitcoins, also known as 1 µBTC or 1 uBTC.
-     */
-    public static final Coin MICROCOIN = MILLICOIN.divide(1000);
-
+     
     /**
      * A satoshi is the smallest unit that can be transferred. 100 million of
      * them fit into a Bitcoin.
@@ -268,7 +265,11 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      * place will be used if necessary, but two will always be present.
      */
     public String toFriendlyString() {
-        return FRIENDLY_FORMAT.format(this).toString();
+        if(Arrays.equals(  NetworkParameters.BIGNETCOIN_TOKENID, tokenid)) {
+        return FRIENDLY_FORMAT.format(this).toString();}
+        else {
+          return   toString();
+        }
     }
 
     private static final MonetaryFormat PLAIN_FORMAT = MonetaryFormat.FIAT.minDecimals(0).repeatOptionalDecimals(1, 8)
@@ -276,9 +277,9 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
 
     /**
      * <p>
-     * Returns the value as a plain string denominated in BTC. The result is
+     * Returns the value as a plain string denominated in BTA. The result is
      * unformatted with no trailing zeroes. For instance, a value of 150000
-     * satoshis gives an output string of "0.0015" BTC
+     * satoshis gives an output string of "0.0015" BTA
      * </p>
      */
     public String toPlainString() {
@@ -287,7 +288,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
 
     @Override
     public String toString() {
-        return "Coin [value=" + value + ", tokenidHex=" + getTokenHex() + "]";
+        return "[" + value + ", " + getTokenHex() + "]";
     }
 
     @Override

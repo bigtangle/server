@@ -233,8 +233,8 @@ public class BitcoinURI {
                 // 8dp).
                 try {
                     Coin amount = Coin.parseCoin(valueToken, NetworkParameters.BIGNETCOIN_TOKENID);
-                    if (params != null && amount.isGreaterThan(params.getMaxMoney()))
-                        throw new BitcoinURIParseException("Max number of coins exceeded");
+//                    if (params != null && amount.isGreaterThan(params.getMaxMoney()))
+//                        throw new BitcoinURIParseException("Max number of coins exceeded");
                     if (amount.signum() < 0)
                         throw new ArithmeticException("Negative coins specified");
                     putWithValidation(FIELD_AMOUNT, amount);
@@ -297,7 +297,7 @@ public class BitcoinURI {
 
     /**
      * @return The amount name encoded using a pure integer value based at
-     *         10,000,000 units is 1 BTC. May be null if no amount is specified
+     *         10,000,000 units is 1 BTA. May be null if no amount is specified
      */
     public Coin getAmount() {
         return (Coin) parameterMap.get(FIELD_AMOUNT);

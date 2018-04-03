@@ -69,13 +69,7 @@ public class MockTransactionBroadcaster implements TransactionBroadcaster {
             broadcasts.put(new TxFuturePair(tx, result));
             Futures.addCallback(result, new FutureCallback<Transaction>() {
                 @Override
-                public void onSuccess(Transaction result) {
-                    try {
-                        wallet.receivePending(result, null);
-                    } catch (VerificationException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
+                public void onSuccess(Transaction result) { }
 
                 @Override
                 public void onFailure(Throwable t) {

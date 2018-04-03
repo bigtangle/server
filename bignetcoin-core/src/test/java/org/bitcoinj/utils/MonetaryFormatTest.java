@@ -20,7 +20,7 @@ import org.bitcoinj.core.NetworkParameters;
 
 public class MonetaryFormatTest {
 
-    private static final MonetaryFormat NO_CODE = MonetaryFormat.BTC.noCode();
+    private static final MonetaryFormat NO_CODE = MonetaryFormat.BTA.noCode();
 
     @Test
     public void testSigns() throws Exception {
@@ -200,9 +200,9 @@ public class MonetaryFormatTest {
 
     @Test
     public void standardCodes() throws Exception {
-        assertEquals("BTC 0.00", MonetaryFormat.BTC.format(Coin.ZERO).toString());
-        assertEquals("mBTC 0.00", MonetaryFormat.MBTC.format(Coin.ZERO).toString());
-        assertEquals("µBTC 0", MonetaryFormat.UBTC.format(Coin.ZERO).toString());
+        assertEquals("BTA 0.00", MonetaryFormat.BTA.format(Coin.ZERO).toString());
+        assertEquals("mBTA 0.00", MonetaryFormat.MBTC.format(Coin.ZERO).toString());
+        assertEquals("µBTA 0", MonetaryFormat.UBTC.format(Coin.ZERO).toString());
     }
 
     @Test
@@ -222,13 +222,13 @@ public class MonetaryFormatTest {
 
     @Test
     public void codeOrientation() throws Exception {
-        assertEquals("BTC 0.00", MonetaryFormat.BTC.prefixCode().format(Coin.ZERO).toString());
-        assertEquals("0.00 BTC", MonetaryFormat.BTC.postfixCode().format(Coin.ZERO).toString());
+        assertEquals("BTA 0.00", MonetaryFormat.BTA.prefixCode().format(Coin.ZERO).toString());
+        assertEquals("0.00 BTA", MonetaryFormat.BTA.postfixCode().format(Coin.ZERO).toString());
     }
 
     @Test
     public void codeSeparator() throws Exception {
-        assertEquals("BTC@0.00", MonetaryFormat.BTC.codeSeparator('@').format(Coin.ZERO).toString());
+        assertEquals("BTA@0.00", MonetaryFormat.BTA.codeSeparator('@').format(Coin.ZERO).toString());
     }
 
     @Test(expected = NumberFormatException.class)
@@ -264,13 +264,7 @@ public class MonetaryFormatTest {
         assertEquals(Coin.MILLICOIN.negate(), MonetaryFormat.MBTC.parse("-1",NetworkParameters.BIGNETCOIN_TOKENID));
         assertEquals(Coin.MILLICOIN.negate(), MonetaryFormat.MBTC.parse("-1.0",NetworkParameters.BIGNETCOIN_TOKENID));
 
-        assertEquals(Coin.MICROCOIN, MonetaryFormat.UBTC.parse("1",NetworkParameters.BIGNETCOIN_TOKENID));
-        assertEquals(Coin.MICROCOIN, MonetaryFormat.UBTC.parse("1.0",NetworkParameters.BIGNETCOIN_TOKENID));
-        assertEquals(Coin.MICROCOIN, MonetaryFormat.UBTC.parse("01.0000000000",NetworkParameters.BIGNETCOIN_TOKENID));
-        assertEquals(Coin.MICROCOIN, MonetaryFormat.UBTC.positiveSign('+').parse("+1.0",NetworkParameters.BIGNETCOIN_TOKENID));
-        assertEquals(Coin.MICROCOIN.negate(), MonetaryFormat.UBTC.parse("-1",NetworkParameters.BIGNETCOIN_TOKENID));
-        assertEquals(Coin.MICROCOIN.negate(), MonetaryFormat.UBTC.parse("-1.0",NetworkParameters.BIGNETCOIN_TOKENID));
-
+      
         assertEquals(Coin.CENT, NO_CODE.withLocale(new Locale("hi", "IN")).parse(".०१",NetworkParameters.BIGNETCOIN_TOKENID)); // Devanagari
     }
 

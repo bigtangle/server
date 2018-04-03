@@ -829,6 +829,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setLong(9, storedBlock.getHeader().getBlocktype());
             s.executeUpdate();
             s.close();
+            log.info("add block hexStr : " + storedBlock.getHeader().getHash().toString());
         } catch (SQLException e) {
             // It is possible we try to add a duplicate StoredBlock if we
             // upgraded
@@ -940,6 +941,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             return verifiedChainHeadBlock;
         maybeConnect();
         PreparedStatement s = null;
+        log.info("find block hexStr : " + hash.toString());
         try {
             s = conn.get().prepareStatement(getSelectHeadersSQL());
             s.setBytes(1, hash.getBytes());
