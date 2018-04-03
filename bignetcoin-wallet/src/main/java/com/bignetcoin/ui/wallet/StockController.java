@@ -64,7 +64,7 @@ public class StockController {
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
         List<String> names = new ArrayList<String>();
         // wallet keys minus used from token list with one time (blocktype false
-        // Todo
+        // TODO: @cui Main.bitcoin.wallet().walletKeys(null);
         List<ECKey> keys = Main.bitcoin.wallet().walletKeys(null);
         for (ECKey key : keys) {
             String temp = Utils.HEX.encode(key.getPubKeyHash());
