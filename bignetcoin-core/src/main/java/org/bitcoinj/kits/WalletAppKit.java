@@ -27,7 +27,6 @@ import org.bitcoinj.core.Context;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.Utils;
-import org.bitcoinj.net.discovery.PeerDiscovery;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.Protos;
@@ -103,8 +102,7 @@ public class WalletAppKit extends AbstractIdleService {
     protected WalletProtobufSerializer.WalletFactory walletFactory;
     @Nullable
     protected DeterministicSeed restoreFromSeed;
-    @Nullable
-    protected PeerDiscovery discovery;
+ 
 
     protected volatile Context context;
 
@@ -234,15 +232,7 @@ public class WalletAppKit extends AbstractIdleService {
         return this;
     }
 
-    /**
-     * Sets the peer discovery class to use. If none is provided then DNS is
-     * used, which is a reasonable default.
-     */
-    public WalletAppKit setDiscovery(@Nullable PeerDiscovery discovery) {
-        this.discovery = discovery;
-        return this;
-    }
-
+ 
     /**
      * <p>
      * Override this to return wallet extensions if any are necessary.

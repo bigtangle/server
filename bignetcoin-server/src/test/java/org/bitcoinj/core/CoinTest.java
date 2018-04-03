@@ -5,13 +5,16 @@
 
 package org.bitcoinj.core;
 
-import static org.bitcoinj.core.Coin.*;
-import static org.bitcoinj.core.NetworkParameters.MAX_MONEY;
-
+import static org.bitcoinj.core.Coin.CENT;
+import static org.bitcoinj.core.Coin.COIN;
+import static org.bitcoinj.core.Coin.NEGATIVE_SATOSHI;
+import static org.bitcoinj.core.Coin.SATOSHI;
+import static org.bitcoinj.core.Coin.ZERO;
+import static org.bitcoinj.core.Coin.parseCoin;
+import static org.bitcoinj.core.Coin.valueOf;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -40,10 +43,7 @@ public class CoinTest {
         // 1,NetworkParameters.BIGNETCOIN_TOKENID));
         assertEquals(SATOSHI, valueOf(1, NetworkParameters.BIGNETCOIN_TOKENID));
         assertEquals(NEGATIVE_SATOSHI, valueOf(-1, NetworkParameters.BIGNETCOIN_TOKENID));
-        assertEquals(MAX_MONEY, valueOf(MAX_MONEY.value, NetworkParameters.BIGNETCOIN_TOKENID));
-        assertEquals(MAX_MONEY.negate(), valueOf(MAX_MONEY.value * -1, NetworkParameters.BIGNETCOIN_TOKENID));
-        valueOf(MAX_MONEY.value + 1, NetworkParameters.BIGNETCOIN_TOKENID);
-        valueOf((MAX_MONEY.value * -1) - 1, NetworkParameters.BIGNETCOIN_TOKENID);
+ 
         valueOf(Long.MAX_VALUE, NetworkParameters.BIGNETCOIN_TOKENID);
         valueOf(Long.MIN_VALUE, NetworkParameters.BIGNETCOIN_TOKENID);
 

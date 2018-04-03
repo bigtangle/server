@@ -45,11 +45,7 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
 //            final BlockStore blockStore) throws VerificationException, BlockStoreException {
 //    }
 
-    @Override
-    public Coin getMaxMoney() {
-        return MAX_MONEY;
-    }
-
+ 
     @Override
     public Coin getMinNonDustOutput() {
         return Transaction.MIN_NONDUST_OUTPUT;

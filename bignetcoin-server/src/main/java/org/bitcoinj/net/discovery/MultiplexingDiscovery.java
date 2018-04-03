@@ -5,24 +5,32 @@
 
 package org.bitcoinj.net.discovery;
 
-import com.google.common.collect.Lists;
-import com.squareup.okhttp.OkHttpClient;
-
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.VersionMessage;
-import org.bitcoinj.net.discovery.HttpDiscovery;
-import org.bitcoinj.net.discovery.DnsDiscovery.DnsSeedDiscovery;
-import org.bitcoinj.utils.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static com.google.common.base.Preconditions.checkArgument;
 
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.VersionMessage;
+import org.bitcoinj.net.discovery.DnsDiscovery.DnsSeedDiscovery;
+import org.bitcoinj.net.discovery.HttpDiscovery.Details;
+import org.bitcoinj.utils.ContextPropagatingThreadFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Lists;
+import com.squareup.okhttp.OkHttpClient;
 
 /**
  * MultiplexingDiscovery queries multiple PeerDiscovery objects, shuffles their responses and then returns the results,
@@ -44,7 +52,13 @@ public class MultiplexingDiscovery implements PeerDiscovery {
      */
     public static MultiplexingDiscovery forServices(NetworkParameters params, long services) {
         List<PeerDiscovery> discoveries = Lists.newArrayList();
-        HttpDiscovery.Details[] httpSeeds = params.getHttpSeeds();
+        Details[] httpSeeds = new HttpDiscovery.Details[] {
+                // Andreas Schildbach
+                new HttpDiscovery.Details(
+                        ECKey.fromPublicOnly(Utils.HEX.decode("0238746c59d46d5408bf8b1d0af5740fe1a6e1703fcb56b2953f0b965c740d256f")),
+                        URI.create("http://httpseed.bitcoin.schildbach.de/peers")
+                )
+        }; 
         if (httpSeeds != null) {
             OkHttpClient httpClient = new OkHttpClient();
             for (HttpDiscovery.Details httpSeed : httpSeeds)

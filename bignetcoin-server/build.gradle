@@ -1,27 +1,24 @@
-buildscript {
-    ext {
-        springBootVersion = ver.spring_boot
-    }
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
-    }
-}
-plugins {
-    id 'org.sonarqube' version '2.2'
+ plugins {
+    id 'org.sonarqube' version '2.2.1'
     id 'jacoco'
-    id 'com.github.ksoichiro.build.info' version '0.1.5'
+    id 'application'
+    id 'idea'
 }
 
-apply plugin: 'java'
-apply plugin: 'idea'
-apply plugin: 'org.springframework.boot'
 
+defaultTasks 'clean', 'build'
 
-
+distributions {
+    main {
+        contents {
+            baseName = "server"
+        }
+    }
+}
+ 
+ 
 dependencies {
+
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-web', version:  ver.spring_boot
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version:   ver.spring_boot
     compile group: 'org.springframework.boot', name: 'spring-boot-configuration-processor', version:  ver.spring_boot
@@ -34,9 +31,9 @@ dependencies {
 	compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version:ver.bcprov_jdk15on
 	
     compile group: 'commons-io', name: 'commons-io', version:ver.commons_io
-     
+      compile group: 'mysql', name: 'mysql-connector-java', version:ver.mysql_connector_java
     compile project(':bignetcoin-core')
-            
+          compile project(':bignetcoin-orchid')      
     /**
      * test dependencies
      */
@@ -50,45 +47,25 @@ dependencies {
  
 }
 
-test {
-  //  useTestNG()
-    testLogging.showStandardStreams = true
-}
+mainClassName = "com.bignetcoin.server.ServerStart"
+//applicationDefaultJvmArgs = ["-Dlogging.config=/etc/processor/logback.xml"]
+applicationDefaultJvmArgs = ["-Dlog.root.level=WARN", "-Dlog.de.db.level=INFO", "-Xmx2g"]
 
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-        }
+jar {
+    manifest {
+        attributes("Main-Class": mainClassName)
     }
 }
-
 
 task createDistributable(type: Copy) {
-    dependsOn bootRepackage
     def distDir = file('build/dist')
-    from('build/libs') {
-        include '*.jar'
-        rename '.*', 'bignetcoin-server.jar'
-        into 'build/libs'
+    from('build/distributions') {
+        include '*processor*.tar'
+        rename '.*', 'processor-all.tar'
     }
-    from('etc/') {
-        include 'Dockerfile'
-        include 'entrypoint.sh'
+    from('etc') {
+        include '*'
     }
     destinationDir distDir
 }
-
-task buildDockerImage(dependsOn: createDistributable) {
-    group 'docker'
-    doLast {
-        parent.buildDockerImageProcessing('bignetcoin-server/build/dist', dockerLocalTag, dockerRegistryTag, project.name, project.group, projectName)
-    }
-}
-
-task pushDockerImage(dependsOn: buildDockerImage) {
-    group 'docker'
-    doLast {
-        parent.buildDockerPush(dockerRegistryTag)
-    }
-}
+createDistributable.dependsOn distTar

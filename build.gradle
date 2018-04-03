@@ -28,6 +28,8 @@ allprojects {
         // check for updates of dependencies marked as changing or -SNAPSHOT versions every build
         resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
     }
+    
+  
 }
 
 subprojects {
@@ -114,4 +116,12 @@ void execute(String command) {
     if (exitValue != 0) {
         throw new GradleScriptException("Execution of \"$command\" failed with exit code $exitValue", null)
     }
+    
+    task createDeployment(type: Copy) {
+    def distDir = file('build/deploy')
+    from('deploy') {
+        include '**/*'
+    }
+    destinationDir distDir
+}
 }

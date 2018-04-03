@@ -135,9 +135,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         
         Wallet wallet = new Wallet(networkParameters);
         wallet.setUTXOProvider(store);
-        System.out.println(wallet.getBalance(Wallet.BalanceType.AVAILABLE));
-        System.out.println(wallet.getBalance(Wallet.BalanceType.ESTIMATED));
-        
+           
         ECKey toKey = wallet.freshReceiveKey();
         Coin amount = Coin.valueOf(1000000, NetworkParameters.BIGNETCOIN_TOKENID);
 
@@ -148,10 +146,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
         blockgraph.add(rollingBlock);
-        
-        System.out.println(wallet.getBalance(Wallet.BalanceType.AVAILABLE));
-        System.out.println(wallet.getBalance(Wallet.BalanceType.ESTIMATED));
-        
+           
         
         
         milestoneService.update();

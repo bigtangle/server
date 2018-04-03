@@ -11,7 +11,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.math.BigInteger;
 import java.util.Date;
 
-import org.bitcoin.protocols.payments.Protos.PaymentDetails;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Context;
@@ -231,13 +230,7 @@ public class SendRequest {
         return req;
     }
 
-    /** Copy data from payment request. */
-    public SendRequest fromPaymentDetails(PaymentDetails paymentDetails) {
-        if (paymentDetails.hasMemo())
-            this.memo = paymentDetails.getMemo();
-        return this;
-    }
-
+ 
     @Override
     public String toString() {
         // print only the user-settable fields

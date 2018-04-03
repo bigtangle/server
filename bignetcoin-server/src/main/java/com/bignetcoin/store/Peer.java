@@ -858,7 +858,7 @@ public class Peer extends PeerSocketHandler {
                                 public void onSuccess(List<Transaction> dependencies) {
                                     try {
                                         log.info("{}: Dependency download complete!", getAddress());
-                                        wallet.receivePending(tx, dependencies);
+                                   
                                     } catch (VerificationException e) {
                                         log.error("{}: Wallet failed to process pending transaction {}", getAddress(), tx.getHash());
                                         log.error("Error was: ", e);
@@ -874,7 +874,7 @@ public class Peer extends PeerSocketHandler {
                                 }
                             });
                         } else {
-                            wallet.receivePending(tx, null);
+                           // wallet.receivePending(tx, null);
                         }
                     }
                 } catch (VerificationException e) {

@@ -286,7 +286,7 @@ public class PeerTest extends TestWithNetworkConnections {
         getdata = (GetDataMessage) outbound(writeTarget);
         inbound(writeTarget, new NotFoundMessage(PARAMS, getdata.getItems()));
         pingAndWait(writeTarget);
-        assertEquals(value, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+ 
     }
 
     @Test
