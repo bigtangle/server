@@ -11,8 +11,26 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.AddressFormatException;
+import org.bitcoinj.core.Block;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.Json;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.core.UTXO;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.utils.OkHttp3Util;
+import org.bitcoinj.wallet.SendRequest;
+import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.Wallet.MissingSigsMode;
 
 import com.bignetcoin.ui.wallet.utils.GuiUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import javafx.event.ActionEvent;
 import javafx.scene.control.TextField;
@@ -28,8 +46,45 @@ public class ExchangeController {
     public TextField coinTokenid;
     public Main.OverlayUI overlayUI;
 
-    public void exchangeCoin(ActionEvent event) {
+    @SuppressWarnings("deprecation")
+    public void exchangeCoin(ActionEvent event) throws Exception {
+        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        
+        String fromAddress = "";
+        String fromTokenHex = "";
+        String fromAmount = "";
 
+        String toAddress = "";
+        String toTokenHex = "";
+        String toAmount = "";
+
+        Coin amountCoin0 = Coin.parseCoin(toAmount, Utils.HEX.decode(toTokenHex));
+        Coin amountCoin1 = Coin.parseCoin(fromAmount, Utils.HEX.decode(fromTokenHex));
+        SendRequest req = SendRequest.to(new Address(Main.params, fromAddress), amountCoin0);
+        req.tx.addOutput(amountCoin1, new Address(Main.params, toAddress));
+        req.missingSigsMode = MissingSigsMode.USE_OP_ZERO;
+        
+        List<UTXO> outputs = new ArrayList<UTXO>();
+        List<TransactionOutput> candidates = Main.bitcoin.wallet().transforSpendCandidates(outputs);
+        Main.bitcoin.wallet().setServerURL(ContextRoot);
+        Main.bitcoin.wallet().completeTx(req, candidates, false);
+        Main.bitcoin.wallet().signTransaction(req);
+
+//        SendRequest request = SendRequest.forTx(transaction);
+//        walletAppKit1.wallet().signTransaction(request);
+        
+        exchangeTokenComplete(ContextRoot, new Address(Main.params, toAddress), req.tx);
+    }
+
+    private void exchangeTokenComplete(String ContextRoot, Address toAddress, Transaction transaction) throws Exception {
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(ContextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+        Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
+        
+        rollingBlock.addTransaction(transaction);
+        rollingBlock.solve();
+        
+        OkHttp3Util.post(ContextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
     }
 
     public void importBlock(ActionEvent event) {
@@ -73,7 +128,7 @@ public class ExchangeController {
         File file = fileChooser.showSaveDialog(null);
         if (file == null)
             return;
-        if (file.exists()) {// ÎÄ¼þÒÑ´æÔÚ£¬ÔòÉ¾³ý¸²¸ÇÎÄ¼þ
+        if (file.exists()) {// ï¿½Ä¼ï¿½ï¿½Ñ´ï¿½ï¿½Ú£ï¿½ï¿½ï¿½É¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½
             file.delete();
         }
         byte[] blockByte = null;

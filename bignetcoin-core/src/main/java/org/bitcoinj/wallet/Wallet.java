@@ -4506,6 +4506,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         }
         return candidates;
     }
+    
     public void completeTx(SendRequest req) throws InsufficientMoneyException {
         // Calculate a list of ALL potential candidates for spending and
         // then ask a coin selector to provide us
