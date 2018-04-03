@@ -14,21 +14,39 @@
 <?import javafx.scene.text.*?>
 <?import com.bignetcoin.ui.wallet.controls.*?>
 
-<AnchorPane maxHeight="Infinity" maxWidth="Infinity" minHeight="200.0" minWidth="300.0" prefHeight="573.0" prefWidth="800.0" styleClass="root-pane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bignetcoin.ui.wallet.MainController">
+<AnchorPane maxHeight="Infinity" maxWidth="Infinity" minHeight="200.0" minWidth="300.0" prefHeight="542.0" prefWidth="800.0" styleClass="root-pane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bignetcoin.ui.wallet.MainController">
   <children>
-      <TableView fx:id="utxoTable" editable="true" layoutX="14.0" layoutY="143.0" prefHeight="364.0" prefWidth="542.0">
-        <columns>
-          <TableColumn fx:id="balanceColumn" prefWidth="127.0" text="amount" />
-          <TableColumn fx:id="tokentypeColumnA" prefWidth="72.0" text="tokenid" />
-            <TableColumn fx:id="addressColumn" prefWidth="366.0" text="address" />
-        </columns>
-      </TableView>
-      <TableView fx:id="coinTable" layoutX="556.0" layoutY="143.0" prefHeight="364.0" prefWidth="235.0">
-        <columns>
-          <TableColumn fx:id="valueColumn" prefWidth="124.0" text="amount" />
-          <TableColumn fx:id="tokentypeColumn" prefWidth="75.0" text="tokenid" />
-        </columns>
-      </TableView>
+    <Label layoutX="14.0" layoutY="14.0">
+      <font>
+        <Font name="System Bold" size="25.0" fx:id="x1" />
+      </font>
+    </Label>
+    <StackPane layoutX="15.0" layoutY="144.0" prefHeight="249.0" prefWidth="572.0" style="-fx-border-color: lightgrey; -fx-border-style: dashed" AnchorPane.bottomAnchor="7.0" AnchorPane.leftAnchor="15.0" AnchorPane.rightAnchor="15.0" AnchorPane.topAnchor="144.0">
+      <children>
+        <Label text="Your content goes here" />
+            <HBox prefHeight="100.0" prefWidth="200.0">
+               <children>
+                  <HBox prefHeight="366.0" prefWidth="768.0">
+                     <children>
+                        <TableView fx:id="utxoTable" editable="true" prefHeight="364.0" prefWidth="542.0">
+                          <columns>
+                            <TableColumn fx:id="balanceColumn" prefWidth="127.0" text="amount" />
+                            <TableColumn fx:id="tokentypeColumnA" prefWidth="72.0" text="tokenid" />
+                              <TableColumn fx:id="addressColumn" prefWidth="366.0" text="address" />
+                          </columns>
+                        </TableView>
+                        <TableView fx:id="coinTable" prefHeight="298.0" prefWidth="235.0">
+                          <columns>
+                            <TableColumn fx:id="valueColumn" prefWidth="124.0" text="amount" />
+                            <TableColumn fx:id="tokentypeColumn" prefWidth="75.0" text="tokenid" />
+                          </columns>
+                        </TableView>
+                     </children>
+                  </HBox>
+               </children>
+            </HBox>
+      </children>
+    </StackPane>
     <HBox layoutX="44.0" layoutY="107.0" prefHeight="23.0" prefWidth="711.0" spacing="20" AnchorPane.rightAnchor="45.0" AnchorPane.topAnchor="107.0">
        <children>
            <Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" alignment="CENTER" mnemonicParsing="false" onAction="#sendMoneyOut" text="transfer" />
@@ -36,7 +54,6 @@
             <Button fx:id="exchange" mnemonicParsing="false" onAction="#exchangeCoin" text="exchange" />
             <Button mnemonicParsing="false" onAction="#eckeyList" text="eckey list" />
             <Button mnemonicParsing="false" onAction="#blockEvaluation" text="block evaluation list" />
-            <Button mnemonicParsing="false" onAction="#tokens" text="tokens" />
            <Button onAction="#settingsClicked" text="Settings" />
        </children>
     </HBox>

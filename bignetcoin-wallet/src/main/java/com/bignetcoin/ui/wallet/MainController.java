@@ -22,7 +22,6 @@ import static com.bignetcoin.ui.wallet.Main.bitcoin;
 import static com.bignetcoin.ui.wallet.Main.params;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -34,8 +33,6 @@ import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.utils.MapToBeanMapperUtil;
 import org.bitcoinj.utils.MonetaryFormat;
 import org.bitcoinj.utils.OkHttp3Util;
-import org.bitcoinj.wallet.DecryptingKeyBag;
-import org.bitcoinj.wallet.DeterministicKeyChain;
 import org.fxmisc.easybind.EasyBind;
 import org.spongycastle.crypto.params.KeyParameter;
 
@@ -202,6 +199,11 @@ public class MainController {
     public void sendMoneyOut(ActionEvent event) {
 
         Main.instance.overlayUI("send_money.fxml");
+    }
+
+    public void tokens(ActionEvent event) {
+
+        Main.instance.overlayUI("tokens.fxml");
     }
 
     public void blockEvaluation(ActionEvent event) {
