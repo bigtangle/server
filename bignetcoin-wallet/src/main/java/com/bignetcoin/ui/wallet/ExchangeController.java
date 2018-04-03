@@ -40,17 +40,15 @@ import javafx.scene.control.TextField;
 import javafx.stage.FileChooser;
 
 public class ExchangeController {
-    public TextField stockAddress;
-    public TextField stockCode;
-    public TextField stockNumber;
+    @FXML
+    public TextField toAmountTextField;
     @FXML
     public ComboBox<String> toTokenHexComboBox;
     @FXML
     public ComboBox<String> toAddressComboBox;
+    @FXML
+    public TextField fromAmountTextField;
 
-    public TextField coinAddress;
-    public TextField coinAmount;
-    public TextField coinTokenid;
     @FXML
     public ComboBox<String> fromTokenHexComboBox;
     @FXML
@@ -88,13 +86,13 @@ public class ExchangeController {
     public void exchangeCoin(ActionEvent event) throws Exception {
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
 
-        String fromAddress = "";
-        String fromTokenHex = "";
-        String fromAmount = "";
+        String fromAddress = fromAddressComboBox.getValue();
+        String fromTokenHex = fromTokenHexComboBox.getValue();
+        String fromAmount = fromAmountTextField.getText();
 
-        String toAddress = "";
-        String toTokenHex = "";
-        String toAmount = "";
+        String toAddress = fromAddressComboBox.getValue();
+        String toTokenHex = toTokenHexComboBox.getValue();
+        String toAmount = toAmountTextField.getText();
 
         Coin amountCoin0 = Coin.parseCoin(toAmount, Utils.HEX.decode(toTokenHex));
         Coin amountCoin1 = Coin.parseCoin(fromAmount, Utils.HEX.decode(fromTokenHex));
