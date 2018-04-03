@@ -101,10 +101,6 @@ public class BlockService {
         return store.getBlocksToAddToMilestone(0);
     }
 
-    public void updateSolidBlocks(Set<Sha256Hash> analyzedHashes) throws BlockStoreException {
-        // unnecessary
-    }
-
     public void updateSolid(BlockEvaluation blockEvaluation, boolean b) throws BlockStoreException {
         blockEvaluation.setSolid(b);
         store.updateBlockEvaluationSolid(blockEvaluation.getBlockhash(), b);

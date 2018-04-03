@@ -59,6 +59,7 @@ public class TipsService {
 		return null;
 	}
 	
+	// TODO add parameter blocktoadd and reverse to not cause static conflicts on new block (no validity errors)
 	public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPairToApprove(Random seed) throws Exception {
 		Pair<Sha256Hash, TreeSet<BlockEvaluation>> b1 = getSingleBlockToApprove(seed);
 		Pair<Sha256Hash, TreeSet<BlockEvaluation>> b2 = getSingleBlockToApprove(seed);
