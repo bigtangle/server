@@ -4,13 +4,7 @@
  *******************************************************************************/
 package com.bignetcoin.ui.wallet;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -40,6 +34,7 @@ import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet.MissingSigsMode;
 import org.spongycastle.crypto.params.KeyParameter;
 
+import com.bignetcoin.ui.wallet.utils.FileUtil;
 import com.bignetcoin.ui.wallet.utils.GuiUtils;
 
 public class ExchangeController {
@@ -116,38 +111,10 @@ public class ExchangeController {
     public void importBlock(ActionEvent event) {
         final FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showOpenDialog(null);
-        byte[] blockByte = null;
-        if (file != null) {
-            ByteArrayOutputStream byteArrayOutputStream = null;
-            BufferedInputStream bufferedInputStream = null;
-            byteArrayOutputStream = new ByteArrayOutputStream((int) file.length());
+        byte[] buf = FileUtil.readFile(file);
+        if (buf != null) {
             try {
-                bufferedInputStream = new BufferedInputStream(new FileInputStream(file));
-                int buffSize = 1024;
-                byte[] buffer = new byte[buffSize];
-                int len = 0;
-                while (-1 != (len = bufferedInputStream.read(buffer, 0, buffSize))) {
-                    byteArrayOutputStream.write(buffer, 0, len);
-                }
-                blockByte = byteArrayOutputStream.toByteArray();
-            } catch (Exception e) {
-                GuiUtils.crashAlert(e);
-            } finally {
-                if (bufferedInputStream != null) {
-                    try {
-                        bufferedInputStream.close();
-                        if (byteArrayOutputStream != null) {
-                            byteArrayOutputStream.close();
-                        }
-                    } catch (IOException e) {
-                        GuiUtils.crashAlert(e);
-                    }
-                }
-            }
-        }
-        if (blockByte != null) {
-            try {
-                mTransaction = (Transaction) Main.params.getDefaultSerializer().makeTransaction(blockByte);
+                mTransaction = (Transaction) Main.params.getDefaultSerializer().makeTransaction(buf);
                 if (mTransaction == null) {
                     GuiUtils.informationalAlert("alert", "Transaction Is Empty");
                 }
@@ -167,7 +134,7 @@ public class ExchangeController {
         String toAddress = fromAddressComboBox.getValue();
         String toTokenHex = toTokenHexComboBox.getValue();
         String toAmount = toAmountTextField.getText();
-        byte[] blockByte = null;
+        byte[] buf = null;
         KeyParameter aesKey = null;
         try {
             List<UTXO> outputs = new ArrayList<UTXO>();
@@ -187,7 +154,7 @@ public class ExchangeController {
             Main.bitcoin.wallet().signTransaction(req);
             
             this.mTransaction = req.tx;
-            blockByte = mTransaction.bitcoinSerialize();
+            buf = mTransaction.bitcoinSerialize();
         }
         catch (Exception e) {
             GuiUtils.crashAlert(e);
@@ -195,31 +162,7 @@ public class ExchangeController {
         }
         final FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showSaveDialog(null);
-        if (file == null)
-            return;
-        if (file.exists()) {
-            file.delete();
-        }
-        BufferedOutputStream bufferedOutputStream = null;
-        FileOutputStream fileOutputStream = null;
-        try {
-            fileOutputStream = new FileOutputStream(file);
-            bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
-            bufferedOutputStream.write(blockByte);
-        } catch (Exception e) {
-            GuiUtils.crashAlert(e);
-        } finally {
-            try {
-                if (bufferedOutputStream != null) {
-                    bufferedOutputStream.close();
-                }
-                if (fileOutputStream != null) {
-                    fileOutputStream.close();
-                }
-            } catch (Exception e) {
-                GuiUtils.crashAlert(e);
-            }
-        }
+        FileUtil.writeFile(file, buf);
     }
 
     public void refund(ActionEvent event) {
