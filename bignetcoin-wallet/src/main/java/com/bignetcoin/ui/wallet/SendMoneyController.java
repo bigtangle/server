@@ -31,6 +31,7 @@ import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.Json;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Utils;
@@ -95,7 +96,12 @@ public class SendMoneyController {
             });
             tokeninfo.getSelectionModel().selectFirst();
         } catch (Exception e) {
-            GuiUtils.crashAlert(e);
+            if (e instanceof InsufficientMoneyException) {
+                GuiUtils.informationalAlert("money no enough", "money no enough", "");
+            } else {
+                GuiUtils.crashAlert(e);
+            }
+
         }
 
     }
