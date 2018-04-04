@@ -5,8 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.HBox?>
 
-
-<HBox prefHeight="487.0" prefWidth="667.0" style="-fx-background-color: white;" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="com.bignetcoin.ui.wallet.OrderController">
+<HBox prefHeight="487.0" prefWidth="667.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bignetcoin.ui.wallet.OrderController">
    <children>
       <GridPane prefHeight="487.0" prefWidth="690.0">
         <columnConstraints>
@@ -26,7 +25,7 @@
             <Label prefHeight="15.0" prefWidth="314.0" text="address" />
             <Label prefHeight="15.0" prefWidth="308.0" text="token" GridPane.rowIndex="1" />
             <Label prefHeight="15.0" prefWidth="255.0" text="limitl" GridPane.rowIndex="2" />
-            <Label prefHeight="15.0" prefWidth="303.0" text="status" GridPane.rowIndex="3" />
+            <Label prefHeight="15.0" prefWidth="303.0" text="status   (buy or sell)" GridPane.rowIndex="3" />
             <TextField fx:id="limitTextField" GridPane.columnIndex="1" GridPane.rowIndex="2" />
             <ComboBox fx:id="addressComboBox" editable="true" prefHeight="23.0" prefWidth="323.0" GridPane.columnIndex="1" />
             <ComboBox fx:id="tokenComboBox" editable="true" prefHeight="23.0" prefWidth="319.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
