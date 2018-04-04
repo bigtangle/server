@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<AnchorPane id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" style="" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bignetcoin.ui.wallet.SendMoneyController">
+<AnchorPane id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="701.0" style="" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bignetcoin.ui.wallet.SendMoneyController">
 	<children>
 		<VBox alignment="CENTER_LEFT" layoutY="100.0" prefHeight="200.0" prefWidth="600.0" spacing="20.0" style="-fx-background-color: white;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
 			<children>
@@ -19,7 +19,7 @@
 							</font>
 						</Label>
 						<TextField fx:id="amountEdit" />
-						<ChoiceBox fx:id="tokeninfo" prefWidth="150.0" />
+						<ChoiceBox fx:id="tokeninfo" prefHeight="23.0" prefWidth="262.0" />
 						<Label fx:id="btcLabel" prefHeight="15.0" prefWidth="122.0" />
 					</children>
 				</HBox>
@@ -30,7 +30,7 @@
 								<Font size="24.0" />
 							</font>
 						</Label>
-						<TextField fx:id="address" maxWidth="1.7976931348623157E308" text="1EZEqFBd8yuc9ir2761987q7k3VcALC8YQ" HBox.hgrow="ALWAYS">
+						<TextField fx:id="address" maxWidth="1.7976931348623157E308" prefHeight="23.0" prefWidth="451.0" text="1EZEqFBd8yuc9ir2761987q7k3VcALC8YQ" HBox.hgrow="ALWAYS">
 							<VBox.margin>
 								<Insets />
 							</VBox.margin>

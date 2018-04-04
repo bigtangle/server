@@ -29,7 +29,7 @@
           <TableColumn fx:id="tokentypeColumn" prefWidth="110.0" text="tokenid" />
         </columns>
       </TableView>
-    <HBox layoutX="44.0" layoutY="107.0" spacing="20">
+    <HBox layoutX="16.0" layoutY="107.0" prefHeight="23.0" prefWidth="771.0" spacing="20">
        <children>
            <Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" alignment="CENTER" mnemonicParsing="false" onAction="#sendMoneyOut" text="transfer" />
             <Button fx:id="stock" onAction="#stockPublish" text="token publish" />
@@ -37,6 +37,7 @@
             <Button mnemonicParsing="false" onAction="#eckeyList" text="eckey list" />
             <Button mnemonicParsing="false" onAction="#blockEvaluation" text="block evaluation list" />
             <Button mnemonicParsing="false" onAction="#tokens" text="tokens" />
+            <Button mnemonicParsing="false" onAction="#orders" text="orders" />
            <Button onAction="#settingsClicked" text="Settings" />
        </children>
     </HBox>

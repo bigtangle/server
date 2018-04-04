@@ -201,6 +201,11 @@ public class MainController {
         Main.instance.overlayUI("send_money.fxml");
     }
 
+    public void orders(ActionEvent event) {
+
+        Main.instance.overlayUI("orders.fxml");
+    }
+
     public void tokens(ActionEvent event) {
 
         Main.instance.overlayUI("tokens.fxml");
