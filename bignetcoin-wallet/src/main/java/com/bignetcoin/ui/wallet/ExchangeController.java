@@ -53,6 +53,7 @@ public class ExchangeController {
     public ComboBox<String> fromTokenHexComboBox;
     @FXML
     public ComboBox<String> fromAddressComboBox;
+    
     public Main.OverlayUI overlayUI;
 
     @FXML
@@ -128,72 +129,66 @@ public class ExchangeController {
     public void importBlock(ActionEvent event) {
         final FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showOpenDialog(null);
-        // final Desktop desktop = Desktop.getDesktop();
         if (file != null) {
-            ByteArrayOutputStream bos = null;
-            BufferedInputStream in = null;
-            bos = new ByteArrayOutputStream((int) file.length());
+            ByteArrayOutputStream byteArrayOutputStream = null;
+            BufferedInputStream bufferedInputStream = null;
+            byteArrayOutputStream = new ByteArrayOutputStream((int) file.length());
             try {
-                in = new BufferedInputStream(new FileInputStream(file));
-                int buf_size = 1024;
-                byte[] buffer = new byte[buf_size];
+                bufferedInputStream = new BufferedInputStream(new FileInputStream(file));
+                int buffSize = 1024;
+                byte[] buffer = new byte[buffSize];
                 int len = 0;
-                while (-1 != (len = in.read(buffer, 0, buf_size))) {
-                    bos.write(buffer, 0, len);
+                while (-1 != (len = bufferedInputStream.read(buffer, 0, buffSize))) {
+                    byteArrayOutputStream.write(buffer, 0, len);
                 }
-                byte[] blockByte = bos.toByteArray();
+                byte[] blockByte = byteArrayOutputStream.toByteArray();
             } catch (Exception e) {
                 GuiUtils.crashAlert(e);
             } finally {
-                if (in != null) {
+                if (bufferedInputStream != null) {
                     try {
-                        in.close();
-                        if (bos != null) {
-                            bos.close();
+                        bufferedInputStream.close();
+                        if (byteArrayOutputStream != null) {
+                            byteArrayOutputStream.close();
                         }
                     } catch (IOException e) {
                         GuiUtils.crashAlert(e);
                     }
                 }
-
             }
         }
 
     }
 
     public void exportBlock(ActionEvent event) {
+        
         final FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showSaveDialog(null);
-        if (file == null)
-            return;
-        if (file.exists()) {// �ļ��Ѵ��ڣ���ɾ�������ļ�
+        if (file == null) return;
+        if (file.exists()) {
             file.delete();
         }
         byte[] blockByte = null;
-        BufferedOutputStream bos = null;
-        FileOutputStream fos = null;
-
+        BufferedOutputStream bufferedOutputStream = null;
+        FileOutputStream fileOutputStream = null;
         try {
-
-            fos = new FileOutputStream(file);
-            bos = new BufferedOutputStream(fos);
-            bos.write(blockByte);
-
+            fileOutputStream = new FileOutputStream(file);
+            bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
+            bufferedOutputStream.write(blockByte);
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         } finally {
             try {
-                if (bos != null) {
-                    bos.close();
+                if (bufferedOutputStream != null) {
+                    bufferedOutputStream.close();
                 }
-                if (fos != null) {
-                    fos.close();
+                if (fileOutputStream != null) {
+                    fileOutputStream.close();
                 }
             } catch (Exception e) {
                 GuiUtils.crashAlert(e);
             }
         }
-
     }
 
     public void refund(ActionEvent event) {
