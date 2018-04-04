@@ -53,7 +53,7 @@ public class ExchangeController {
     public ComboBox<String> fromTokenHexComboBox;
     @FXML
     public ComboBox<String> fromAddressComboBox;
-    
+
     public Main.OverlayUI overlayUI;
 
     @FXML
@@ -81,6 +81,12 @@ public class ExchangeController {
         toTokenHexComboBox.setItems(tokenData);
         fromTokenHexComboBox.setItems(tokenData);
 
+        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(null);
+        ObservableList<String> addresses = FXCollections.observableArrayList();
+        for (ECKey key : keys) {
+            addresses.add(key.toAddress(Main.params).toString());
+        }
+        fromAddressComboBox.setItems(addresses);
     }
 
     @SuppressWarnings("deprecation")
@@ -161,10 +167,11 @@ public class ExchangeController {
     }
 
     public void exportBlock(ActionEvent event) {
-        
+
         final FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showSaveDialog(null);
-        if (file == null) return;
+        if (file == null)
+            return;
         if (file.exists()) {
             file.delete();
         }
