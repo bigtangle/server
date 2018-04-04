@@ -11,7 +11,6 @@ import java.util.List;
 
 import org.bitcoinj.core.BlockStoreException;
 import org.bitcoinj.core.NetworkParameters;
-import org.springframework.stereotype.Service;
 
 /**
  * <p>A full pruned block store using the MySQL database engine. As an added bonus an address index is calculated,

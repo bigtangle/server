@@ -234,6 +234,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private static final String UPDATE_OUTPUTS_SPENDPENDING_SQL = "UPDATE outputs SET spendpending = ? WHERE hash = ? AND `index`= ?";
 
     private static final String SELECT_TRANSACTION_OUTPUTS_SQL = "SELECT hash, value, scriptbytes, height, `index`, coinbase, toaddress, addresstargetable, blockhash, tokenid, fromaddress, description, spent, confirmed, spendpending FROM outputs where toaddress = ?";
+    private static final String SELECT_TRANSACTION_OUTPUTS_TOKEN_SQL = "SELECT hash, value, scriptbytes, height, `index`, coinbase, toaddress, addresstargetable, blockhash, tokenid, fromaddress, description, spent, confirmed, spendpending FROM outputs where toaddress = ? and tokenid = ?";
 
     // Dump table SQL (this is just for data sizing statistics).
     private static final String SELECT_DUMP_SETTINGS_SQL = "SELECT name, value FROM settings";
@@ -426,6 +427,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      */
     protected String getTransactionOutputSelectSQL() {
         return SELECT_TRANSACTION_OUTPUTS_SQL;
+    }
+    
+    protected String getTransactionOutputTokenSelectSQL() {
+        return SELECT_TRANSACTION_OUTPUTS_TOKEN_SQL;
     }
 
     /**
@@ -1457,6 +1462,54 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s = conn.get().prepareStatement(getTransactionOutputSelectSQL());
             for (Address address : addresses) {
                 s.setString(1, address.toString());
+                ResultSet rs = s.executeQuery();
+                while (rs.next()) {
+                    Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));
+                    Coin amount = Coin.valueOf(rs.getLong(2), rs.getBytes(10));
+                    byte[] scriptBytes = rs.getBytes(3);
+                    int height = rs.getInt(4);
+                    int index = rs.getInt(5);
+                    boolean coinbase = rs.getBoolean(6);
+                    String toAddress = rs.getString(7);
+                    // addresstargetable =rs.getBytes(8);
+                    Sha256Hash blockhash = Sha256Hash.wrap(rs.getBytes(9));
+
+                    String fromaddress = rs.getString(11);
+                    String description = rs.getString(12);
+                    boolean spent = rs.getBoolean(13);
+                    boolean confirmed = rs.getBoolean(14);
+                    boolean spendPending = rs.getBoolean(15);
+                    byte[] tokenid = rs.getBytes("tokenid");
+                    UTXO output = new UTXO(hash, index, amount, height, coinbase, new Script(scriptBytes), toAddress,
+                            blockhash, fromaddress, description, tokenid, spent, confirmed, spendPending);
+                    outputs.add(output);
+                }
+            }
+            return outputs;
+        } catch (SQLException ex) {
+            throw new UTXOProviderException(ex);
+        } catch (BlockStoreException bse) {
+            throw new UTXOProviderException(bse);
+        } finally {
+            if (s != null)
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new UTXOProviderException("Could not close statement", e);
+                }
+        }
+    }
+    
+    @Override
+    public List<UTXO> getOpenTransactionOutputs(List<Address> addresses, byte[] tokenid00) throws UTXOProviderException {
+        PreparedStatement s = null;
+        List<UTXO> outputs = new ArrayList<UTXO>();
+        try {
+            maybeConnect();
+            s = conn.get().prepareStatement(getTransactionOutputTokenSelectSQL());
+            for (Address address : addresses) {
+                s.setString(1, address.toString());
+                s.setBytes(2, tokenid00);
                 ResultSet rs = s.executeQuery();
                 while (rs.next()) {
                     Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));

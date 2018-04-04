@@ -5,6 +5,7 @@
 package com.bignetcoin.server;
 
 import java.io.PrintWriter;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -105,6 +106,17 @@ public class DispatcherController {
                 break;
             case getAllEvaluations: {
                 AbstractResponse response = GetBlockEvaluationsResponse.create(blockService.getAllBlockEvaluations());
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+
+            case outputsWiteToken: {
+                ByteBuffer byteBuffer = ByteBuffer.wrap(bodyByte);
+                byte[] pubKey =  new byte[byteBuffer.getInt()];
+                byteBuffer.put(pubKey);
+                byte[] tokenid = new byte[byteBuffer.getInt()];
+                byteBuffer.put(tokenid);
+                AbstractResponse response = walletService.getAccountOutputsWithToken(pubKey, tokenid);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;

@@ -108,6 +108,39 @@ public class WalletService {
         }
         return candidates;
     }
+    
+    public LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(List<byte[]> pubKeyHashs, byte[] tokenid,
+            boolean excludeImmatureCoinbases) {
+        LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
+        try {
+            int chainHeight = 10;
+            for (UTXO output : getStoredOutputsFromUTXOProvider(pubKeyHashs, tokenid)) {
+                if (output.isSpent())
+                    continue;
+                boolean coinbase = output.isCoinbase();
+                long depth = chainHeight - output.getHeight() + 1;
+                // Do not try and spend coinbases that were mined too recently,
+                // the protocol forbids it.
+                if (!excludeImmatureCoinbases || !coinbase || depth >= networkParameters.getSpendableCoinbaseDepth()) {
+                    candidates.add(new FreeStandingTransactionOutput(networkParameters, output, chainHeight));
+                    // System.out.println(output.getHeight());
+                }
+            }
+        } catch (UTXOProviderException e) {
+            throw new RuntimeException("UTXO provider error", e);
+        }
+        return candidates;
+    }
+
+    private List<UTXO> getStoredOutputsFromUTXOProvider(List<byte[]> pubKeyHashs, byte[] tokenid) throws UTXOProviderException {
+        List<Address> addresses = new ArrayList<Address>();
+        for (byte[] key : pubKeyHashs) {
+            Address address = new Address(networkParameters, key);
+            addresses.add(address);
+        }
+        List<UTXO> list = store.getOpenTransactionOutputs(addresses, tokenid);
+        return list;
+    }
 
     private List<UTXO> getStoredOutputsFromUTXOProvider(List<byte[]> pubKeyHashs) throws UTXOProviderException {
         List<Address> addresses = new ArrayList<Address>();
@@ -120,6 +153,20 @@ public class WalletService {
     }
 
     public AbstractResponse getAccountOutputs(List<byte[]> pubKeyHashs) {
+        List<UTXO> outputs = new ArrayList<UTXO>();
+        List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs,
+                false);
+        for (TransactionOutput transactionOutput : transactionOutputs) {
+            FreeStandingTransactionOutput freeStandingTransactionOutput = (FreeStandingTransactionOutput) transactionOutput;
+            outputs.add(freeStandingTransactionOutput.getUTXO());
+        }
+        return GetOutputsResponse.create(outputs);
+    }
+
+    public AbstractResponse getAccountOutputsWithToken(byte[] pubKey, byte[] tokenid) {
+        List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
+        pubKeyHashs.add(pubKey);
+        
         List<UTXO> outputs = new ArrayList<UTXO>();
         List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs,
                 false);
