@@ -29,7 +29,7 @@
           <TableColumn fx:id="tokentypeColumn" prefWidth="110.0" text="tokenid" />
         </columns>
       </TableView>
-    <HBox layoutX="44.0" layoutY="107.0" prefHeight="23.0" prefWidth="711.0" spacing="20" AnchorPane.rightAnchor="45.0" AnchorPane.topAnchor="107.0">
+    <HBox layoutX="44.0" layoutY="107.0" spacing="20">
        <children>
            <Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" alignment="CENTER" mnemonicParsing="false" onAction="#sendMoneyOut" text="transfer" />
             <Button fx:id="stock" onAction="#stockPublish" text="token publish" />
