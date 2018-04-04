@@ -7,7 +7,6 @@ package com.bignetcoin.server.service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -19,11 +18,9 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.UTXOProviderException;
-import org.bitcoinj.wallet.CoinSelection;
 import org.bitcoinj.wallet.CoinSelector;
 import org.bitcoinj.wallet.DefaultCoinSelector;
 import org.bitcoinj.wallet.KeyChainGroup;
-import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -62,20 +59,18 @@ public class WalletService {
         for (Map.Entry<String, Coin> entry : value.entrySet()) {
             tokens.add(entry.getValue());
         }
-
-        // System.out.println("cal : " + tokens);
         return GetBalancesResponse.create(tokens, outputs);
     }
 
-    private void filter(List<TransactionOutput> candidates, byte[] tokenid) {
-        for (Iterator<TransactionOutput> iterator = candidates.iterator(); iterator.hasNext();) {
-            TransactionOutput transactionOutput = iterator.next();
-            FreeStandingTransactionOutput freeStandingTransactionOutput = (FreeStandingTransactionOutput) transactionOutput;
-            if (freeStandingTransactionOutput.getUTXO().getTokenid() != tokenid) {
-                iterator.remove();
-            }
-        }
-    }
+//    private void filter(List<TransactionOutput> candidates, byte[] tokenid) {
+//        for (Iterator<TransactionOutput> iterator = candidates.iterator(); iterator.hasNext();) {
+//            TransactionOutput transactionOutput = iterator.next();
+//            FreeStandingTransactionOutput freeStandingTransactionOutput = (FreeStandingTransactionOutput) transactionOutput;
+//            if (freeStandingTransactionOutput.getUTXO().getTokenid() != tokenid) {
+//                iterator.remove();
+//            }
+//        }
+//    }
 
     public Wallet makeWallat(ECKey ecKey) {
         KeyChainGroup group = new KeyChainGroup(networkParameters);

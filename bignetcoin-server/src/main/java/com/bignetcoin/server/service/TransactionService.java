@@ -21,8 +21,6 @@ import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.wallet.CoinSelector;
 import org.bitcoinj.wallet.DefaultCoinSelector;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -52,10 +50,10 @@ public class TransactionService {
 
     @Autowired
     protected FullPrunedBlockStore store;
+    
     @Autowired
     protected NetworkParameters networkParameters;
-    private final Logger log = LoggerFactory.getLogger(TipsService.class);
-
+    
     public ByteBuffer askTransaction() throws Exception {
         Block r1 = blockService.getBlock(getNextBlockToApprove());
         Block r2 = blockService.getBlock(getNextBlockToApprove());
