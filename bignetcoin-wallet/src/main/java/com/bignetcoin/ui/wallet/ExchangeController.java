@@ -11,14 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.TextField;
-import javafx.stage.FileChooser;
-
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Coin;
@@ -36,6 +28,14 @@ import org.spongycastle.crypto.params.KeyParameter;
 
 import com.bignetcoin.ui.wallet.utils.FileUtil;
 import com.bignetcoin.ui.wallet.utils.GuiUtils;
+
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.TextField;
+import javafx.stage.FileChooser;
 
 public class ExchangeController {
     
@@ -139,13 +139,15 @@ public class ExchangeController {
         try {
             List<UTXO> outputs = new ArrayList<UTXO>();
 
-//            outputs.addAll(this.getUTXOWithECKeyList(ECKey.fromPublicOnly(pub), Utils.HEX.decode(toTokenHex)));
+            Address fromAddress00 = new Address(Main.params, fromAddress);
+            Address toAddress00 = new Address(Main.params, toAddress);
+            outputs.addAll(this.getUTXOWithPubKeyHash(fromAddress00.getHash160(), Utils.HEX.decode(toTokenHex)));
             outputs.addAll(this.getUTXOWithECKeyList(Main.bitcoin.wallet().walletKeys(aesKey), Utils.HEX.decode(fromTokenHex)));
             
             Coin amountCoin0 = Coin.parseCoin(toAmount, Utils.HEX.decode(toTokenHex));
             Coin amountCoin1 = Coin.parseCoin(fromAmount, Utils.HEX.decode(fromTokenHex));
-            SendRequest req = SendRequest.to(new Address(Main.params, fromAddress), amountCoin0);
-            req.tx.addOutput(amountCoin1, new Address(Main.params, toAddress));
+            SendRequest req = SendRequest.to(fromAddress00, amountCoin0);
+            req.tx.addOutput(amountCoin1, toAddress00);
             req.missingSigsMode = MissingSigsMode.USE_OP_ZERO;
 
             List<TransactionOutput> candidates = Main.bitcoin.wallet().transforSpendCandidates(outputs);
@@ -165,6 +167,31 @@ public class ExchangeController {
         FileUtil.writeFile(file, buf);
     }
 
+    @SuppressWarnings("unchecked")
+    public List<UTXO> getUTXOWithPubKeyHash(byte[] pubKeyHash, byte[] tokenid) throws Exception {
+        List<UTXO> listUTXO = new ArrayList<UTXO>();
+        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String response = OkHttp3Util.post(ContextRoot + "getOutputs", pubKeyHash);
+        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+        if (data == null || data.isEmpty()) {
+            return listUTXO;
+        }
+        List<Map<String, Object>> outputs = (List<Map<String, Object>>) data.get("outputs");
+        if (outputs == null || outputs.isEmpty()) {
+            return listUTXO;
+        }
+        for (Map<String, Object> object : outputs) {
+            UTXO utxo = MapToBeanMapperUtil.parseUTXO(object);
+            if (!Arrays.equals(utxo.getTokenid(), tokenid)) {
+                continue;
+            }
+            if (utxo.getValue().getValue() > 0) {
+                listUTXO.add(utxo);
+            }
+        }
+        return listUTXO;
+    }
+
     public void refund(ActionEvent event) {
     }
 
@@ -172,11 +199,11 @@ public class ExchangeController {
         overlayUI.done();
     }
 
-    public List<UTXO> getUTXOWithECKeyList(ECKey ecKey, byte[] tokenid) throws Exception {
-        List<ECKey> ecKeys = new ArrayList<ECKey>();
-        ecKeys.add(ecKey);
-        return getUTXOWithECKeyList(ecKeys, tokenid);
-    }
+//    public List<UTXO> getUTXOWithECKeyList(ECKey ecKey, byte[] tokenid) throws Exception {
+//        List<ECKey> ecKeys = new ArrayList<ECKey>();
+//        ecKeys.add(ecKey);
+//        return getUTXOWithECKeyList(ecKeys, tokenid);
+//    }
     
     @SuppressWarnings("unchecked")
     public List<UTXO> getUTXOWithECKeyList(List<ECKey> ecKeys, byte[] tokenid) throws Exception {
