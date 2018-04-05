@@ -99,13 +99,16 @@ public class ExchangeController {
             GuiUtils.informationalAlert("alert", "Transaction Is Empty");
             return;
         }
+        SendRequest request = SendRequest.forTx(mTransaction); 
+        Main.bitcoin.wallet().signTransaction(request);
+         
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(ContextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(mTransaction);
         rollingBlock.solve();
-        OkHttp3Util.post(ContextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+       String res = OkHttp3Util.post(ContextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
     }
 
     public void importBlock(ActionEvent event) {
@@ -131,7 +134,7 @@ public class ExchangeController {
         String fromAddress = fromAddressComboBox.getValue();
         String fromTokenHex = fromTokenHexComboBox.getValue();
         String fromAmount = fromAmountTextField.getText();
-        String toAddress = fromAddressComboBox.getValue();
+        String toAddress = toAddressComboBox.getValue();
         String toTokenHex = toTokenHexComboBox.getValue();
         String toAmount = toAmountTextField.getText();
         byte[] buf = null;
@@ -141,7 +144,7 @@ public class ExchangeController {
 
             Address fromAddress00 = new Address(Main.params, fromAddress);
             Address toAddress00 = new Address(Main.params, toAddress);
-            outputs.addAll(this.getUTXOWithPubKeyHash(fromAddress00.getHash160(), Utils.HEX.decode(toTokenHex)));
+            outputs.addAll(this.getUTXOWithPubKeyHash(toAddress00.getHash160(), Utils.HEX.decode(toTokenHex)));
             outputs.addAll(this.getUTXOWithECKeyList(Main.bitcoin.wallet().walletKeys(aesKey), Utils.HEX.decode(fromTokenHex)));
             
             Coin amountCoin0 = Coin.parseCoin(toAmount, Utils.HEX.decode(toTokenHex));

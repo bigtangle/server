@@ -238,7 +238,7 @@ public class MainController {
                 Main.instance.getUtxoData().clear();
                 Main.instance.getCoinData().clear();
                 initTableView();
-                GuiUtils.informationalAlert("set key file is ok", "", "");
+              //  GuiUtils.informationalAlert("set key file is ok", "", "");
 
             } catch (Exception e) {
                 GuiUtils.crashAlert(e);
