@@ -31,9 +31,9 @@ dependencies {
 	compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version:ver.bcprov_jdk15on
 	
     compile group: 'commons-io', name: 'commons-io', version:ver.commons_io
-      compile group: 'mysql', name: 'mysql-connector-java', version:ver.mysql_connector_java
+    compile group: 'mysql', name: 'mysql-connector-java', version:ver.mysql_connector_java
     compile project(':bignetcoin-core')
-          compile project(':bignetcoin-orchid')      
+    compile project(':bignetcoin-orchid')      
     /**
      * test dependencies
      */
@@ -47,7 +47,7 @@ dependencies {
  
 }
 
-mainClassName = "com.bignetcoin.server.ServerStart"
+mainClassName = "net.bigtangle.server.ServerStart"
 //applicationDefaultJvmArgs = ["-Dlogging.config=/etc/processor/logback.xml"]
 applicationDefaultJvmArgs = ["-Dlog.root.level=WARN", "-Dlog.de.db.level=INFO", "-Xmx2g"]
 

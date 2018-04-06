@@ -27,7 +27,7 @@ dependencies {
    
 }
 
-mainClassName = "com.bignetcoin.ui.wallet.Main"
+mainClassName = "net.bigtangle.ui.wallet.Main"
 //applicationDefaultJvmArgs = ["-Dlogging.config=/etc/processor/logback.xml"]
 applicationDefaultJvmArgs = ["-Dlog.root.level=WARN", "-Dlog.de.db.level=INFO", "-Xmx2g"]
 
