@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?scenebuilder-classpath-element ../../../../target/classes?>
+<?scenebuilder-classpath-element ../../../../../core/target/bitcoinj-0.12-SNAPSHOT.jar?>
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.effect.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.input.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.text.*?>
+<?import net.bigtangle.ui.wallet.controls.*?>
+
+<AnchorPane maxHeight="Infinity" maxWidth="Infinity" minHeight="200.0" minWidth="300.0" prefHeight="573.0" prefWidth="800.0" styleClass="root-pane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.bigtangle.ui.wallet.MainController">
+  <children>
+      <TableView fx:id="utxoTable" editable="true" layoutX="14.0" layoutY="143.0" prefHeight="364.0" prefWidth="542.0">
+        <columns>
+          <TableColumn fx:id="balanceColumn" prefWidth="127.0" text="amount" />
+          <TableColumn fx:id="tokentypeColumnA" prefWidth="72.0" text="tokenid" />
+            <TableColumn fx:id="addressColumn" prefWidth="366.0" text="address" />
+        </columns>
+      </TableView>
+      <TableView fx:id="coinTable" layoutX="556.0" layoutY="143.0" prefHeight="364.0" prefWidth="235.0">
+        <columns>
+          <TableColumn fx:id="valueColumn" prefWidth="124.0" text="amount" />
+          <TableColumn fx:id="tokentypeColumn" prefWidth="110.0" text="tokenid" />
+        </columns>
+      </TableView>
+    <HBox layoutX="16.0" layoutY="107.0" prefHeight="23.0" prefWidth="771.0" spacing="20">
+       <children>
+           <Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" alignment="CENTER" mnemonicParsing="false" onAction="#sendMoneyOut" text="transfer" />
+            <Button fx:id="stock" onAction="#stockPublish" text="token publish" />
+            <Button fx:id="exchange" mnemonicParsing="false" onAction="#exchangeCoin" text="exchange" />
+            <Button mnemonicParsing="false" onAction="#eckeyList" text="eckey list" />
+            <Button mnemonicParsing="false" onAction="#blockEvaluation" text="block evaluation list" />
+            <Button mnemonicParsing="false" onAction="#tokens" text="tokens" />
+            <Button mnemonicParsing="false" onAction="#orders" text="orders" />
+           <Button onAction="#settingsClicked" text="Settings" />
+       </children>
+    </HBox>
+      <AnchorPane layoutX="140.0" layoutY="25.0" prefHeight="15.0" prefWidth="572.0">
+         <children>
+            <Label layoutY="3.0" prefHeight="15.0" prefWidth="62.0" text="IPAddress" />
+            <TextField fx:id="IPAdress" layoutX="83.0" prefHeight="23.0" prefWidth="203.0" text="127.0.0.1" />
+            <Label layoutX="313.0" layoutY="1.0" text="port" />
+            <TextField fx:id="IPPort" layoutX="352.0" prefHeight="23.0" prefWidth="146.0" text="14265" />
+            <Button fx:id="connectButton" layoutX="506.0" layoutY="-2.0" mnemonicParsing="false" onAction="#connectServer" text="connect" />
+         </children>
+      </AnchorPane>
+      <AnchorPane layoutX="129.0" layoutY="65.0" prefHeight="30.0" prefWidth="591.0">
+         <children>
+            <Label layoutX="8.0" layoutY="7.0" text="Directory" />
+            <TextField fx:id="keyFileDirectory" layoutX="72.0" layoutY="3.0" prefHeight="23.0" prefWidth="432.0" />
+            <Button layoutX="522.0" layoutY="5.0" mnemonicParsing="false" onAction="#setKeyFilePath" text="setKeyFilePath" />
+         </children>
+      </AnchorPane>
+  </children>
+</AnchorPane>

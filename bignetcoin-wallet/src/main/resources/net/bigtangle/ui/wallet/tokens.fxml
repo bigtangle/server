@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.HBox?>
+
+
+<VBox prefHeight="512.0" prefWidth="663.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.bigtangle.ui.wallet.TokensController">
+   <children>
+      <HBox prefHeight="425.0" prefWidth="663.0">
+         <children>
+            <TableView fx:id="tokensTable" prefHeight="466.0" prefWidth="663.0">
+              <columns>
+                <TableColumn fx:id="tokenHexColumn" prefWidth="153.0" text="TokenHex" />
+                <TableColumn fx:id="tokennameColumn" prefWidth="115.0" text="tokenname" />
+                  <TableColumn fx:id="amountColumn" prefWidth="75.0" text="amount" />
+                  <TableColumn fx:id="blocktypeColumn" prefWidth="63.0" text="blocktype" />
+                  <TableColumn fx:id="descriptionColumn" prefWidth="256.0" text="description" />
+              </columns>
+            </TableView>
+         </children>
+      </HBox>
+      <GridPane>
+        <columnConstraints>
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+        </columnConstraints>
+        <rowConstraints>
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+        </rowConstraints>
+         <children>
+            <Button mnemonicParsing="false" onAction="#closeUI" text="close" GridPane.columnIndex="1" />
+         </children>
+      </GridPane>
+   </children>
+</VBox>

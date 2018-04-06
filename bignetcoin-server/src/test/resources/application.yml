@@ -1,21 +1,21 @@
 server:
   neighbors: 
-  port: 14265
+  port: ${SERVER_PORT:14265}
   udp_receiver_port: 
   tcp_receiver_port: 
-  debug: true
-  testnet: true
-  remote: 0.0.0.0
+  debug: ${SERVER_DEBUG:true}
+  testnet: ${SERVER_TESTNET:true}
+  remote: ${SERVER_REMOTE:0.0.0.0}
   remote_auth: 
-  remote_limit_api: 5000
-  mineraddress:  030d8952f6c079f60cd26eb3ba83cf16a81c51fc8e47b767721fa38b5e20092a75
+  remote_limit_api: ${SERVER_REMOTE_LIMIT_API:5000}
+  mineraddress:  ${SERVER_MINERADDRESS:030d8952f6c079f60cd26eb3ba83cf16a81c51fc8e47b767721fa38b5e20092a75}
 
 db:
-  hostname: localhost
-  port: 3306
-  dbName: info
-  username: root
-  password: test1234
+  hostname: ${DB_hostname:localhost}
+  port: ${DB_PORT:3306}
+  dbName: ${DB_PORT:info}
+  username: ${DB_USERNAME:root}
+  password: ${DB_PASSWORD:test1234}
 
 service:
   milestoneschedule:
@@ -25,4 +25,4 @@ service:
     
 ---
 spring:
-  profiles: testnet
+  profiles: ${SPRING_PROFILES:testnet}
