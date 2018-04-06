@@ -5,8 +5,6 @@
 
 package net.bigtangle.store;
 
-import com.bignetcoin.store.BlockGraph;
-import com.bignetcoin.store.MemoryBlockStore;
 import com.google.protobuf.ByteString;
 
 import net.bigtangle.core.*;
@@ -16,6 +14,8 @@ import net.bigtangle.crypto.DeterministicKey;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.UnitTestParams;
 import net.bigtangle.script.ScriptBuilder;
+import net.bigtangle.store.BlockGraph;
+import net.bigtangle.store.MemoryBlockStore;
 import net.bigtangle.testing.FakeTxBuilder;
 import net.bigtangle.testing.FooWalletExtension;
 import net.bigtangle.utils.BriefLogFormatter;

@@ -22,8 +22,6 @@ import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.bignetcoin.store.FullPrunedBlockGraph;
-import com.bignetcoin.store.FullPrunedBlockStore;
 import com.google.common.collect.Lists;
 
 import net.bigtangle.core.Address;
@@ -44,6 +42,8 @@ import net.bigtangle.core.VerificationException;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.UnitTestParams;
 import net.bigtangle.script.Script;
+import net.bigtangle.store.FullPrunedBlockGraph;
+import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.BlockFileLoader;
 import net.bigtangle.utils.BriefLogFormatter;
 import net.bigtangle.wallet.SendRequest;

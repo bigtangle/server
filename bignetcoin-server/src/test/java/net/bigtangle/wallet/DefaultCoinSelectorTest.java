@@ -7,10 +7,9 @@ package net.bigtangle.wallet;
 
 import org.junit.*;
 
-import com.bignetcoin.store.AbstractBlockGraph;
-
 import net.bigtangle.core.*;
 import net.bigtangle.params.*;
+import net.bigtangle.store.AbstractBlockGraph;
 import net.bigtangle.testing.*;
 import net.bigtangle.wallet.CoinSelection;
 import net.bigtangle.wallet.DefaultCoinSelector;

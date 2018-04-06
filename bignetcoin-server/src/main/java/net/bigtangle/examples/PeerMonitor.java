@@ -5,8 +5,6 @@
 
 package net.bigtangle.examples;
 
-import com.bignetcoin.store.Peer;
-import com.bignetcoin.store.PeerGroup;
 import com.google.common.collect.Lists;
 
 import net.bigtangle.core.NetworkParameters;
@@ -14,6 +12,8 @@ import net.bigtangle.core.listeners.PeerConnectedEventListener;
 import net.bigtangle.core.listeners.PeerDisconnectedEventListener;
 import net.bigtangle.net.discovery.DnsDiscovery;
 import net.bigtangle.params.MainNetParams;
+import net.bigtangle.store.Peer;
+import net.bigtangle.store.PeerGroup;
 import net.bigtangle.utils.BriefLogFormatter;
 
 import javax.swing.*;

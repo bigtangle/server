@@ -5,12 +5,11 @@
 
 package net.bigtangle.examples;
 
-import com.bignetcoin.store.BlockGraph;
-import com.bignetcoin.store.MemoryBlockStore;
-import com.bignetcoin.store.PeerGroup;
-
 import net.bigtangle.core.*;
 import net.bigtangle.params.TestNet3Params;
+import net.bigtangle.store.BlockGraph;
+import net.bigtangle.store.MemoryBlockStore;
+import net.bigtangle.store.PeerGroup;
 import net.bigtangle.wallet.Wallet;
 import net.bigtangle.wallet.listeners.WalletCoinsReceivedEventListener;
 

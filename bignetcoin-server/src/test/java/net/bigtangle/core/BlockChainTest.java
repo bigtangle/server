@@ -28,10 +28,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import com.bignetcoin.store.AbstractBlockGraph;
-import com.bignetcoin.store.BlockGraph;
-import com.bignetcoin.store.MemoryBlockStore;
-
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockStore;
@@ -47,6 +43,9 @@ import net.bigtangle.core.VerificationException;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.TestNet2Params;
 import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.store.AbstractBlockGraph;
+import net.bigtangle.store.BlockGraph;
+import net.bigtangle.store.MemoryBlockStore;
 import net.bigtangle.testing.FakeTxBuilder;
 import net.bigtangle.utils.BriefLogFormatter;
 import net.bigtangle.wallet.Wallet;

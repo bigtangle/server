@@ -8,11 +8,10 @@ package net.bigtangle.core;
 import org.junit.After;
 import org.junit.Ignore;
 
-import com.bignetcoin.store.FullPrunedBlockStore;
-import com.bignetcoin.store.MySQLFullPrunedBlockStore;
-
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.MySQLFullPrunedBlockStore;
 
 /**
  * A MySQL implementation of the {@link AbstractFullPrunedBlockChainTest}

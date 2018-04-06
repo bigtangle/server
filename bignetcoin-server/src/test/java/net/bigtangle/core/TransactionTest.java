@@ -25,8 +25,6 @@ import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.bignetcoin.store.BlockGraph;
-
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
@@ -45,6 +43,7 @@ import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.UnitTestParams;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
+import net.bigtangle.store.BlockGraph;
 import net.bigtangle.testing.FakeTxBuilder;
 
 /**

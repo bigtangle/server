@@ -5,9 +5,8 @@
 
 package net.bigtangle.core.listeners;
 
-import com.bignetcoin.store.Peer;
-
 import net.bigtangle.core.PeerAddress;
+import net.bigtangle.store.Peer;
 
 import java.util.Set;
 

@@ -5,13 +5,13 @@
 
 package net.bigtangle.core.listeners;
 
-import com.bignetcoin.store.Peer;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.FilteredBlock;
 import net.bigtangle.core.Utils;
+import net.bigtangle.store.Peer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

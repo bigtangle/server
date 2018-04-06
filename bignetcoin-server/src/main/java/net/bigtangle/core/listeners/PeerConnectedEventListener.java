@@ -5,7 +5,7 @@
 
 package net.bigtangle.core.listeners;
 
-import com.bignetcoin.store.Peer;
+import net.bigtangle.store.Peer;
 
 /**
  * <p>Implementors can listen to events indicating a new peer connecting.</p>

@@ -5,7 +5,6 @@
 
 package net.bigtangle.examples;
 
-import com.bignetcoin.store.Peer;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -20,6 +19,7 @@ import net.bigtangle.net.NioClientManager;
 import net.bigtangle.net.discovery.DnsDiscovery;
 import net.bigtangle.net.discovery.PeerDiscoveryException;
 import net.bigtangle.params.MainNetParams;
+import net.bigtangle.store.Peer;
 import net.bigtangle.utils.BriefLogFormatter;
 
 import java.net.InetAddress;

@@ -8,14 +8,14 @@ package net.bigtangle.testing;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.bignetcoin.store.TransactionBroadcast;
-import com.bignetcoin.store.TransactionBroadcaster;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
 
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.VerificationException;
+import net.bigtangle.store.TransactionBroadcast;
+import net.bigtangle.store.TransactionBroadcaster;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.Wallet;
 

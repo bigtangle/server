@@ -24,14 +24,13 @@ import static net.bigtangle.core.Coin.SATOSHI;
 
 import java.io.File;
 
-import com.bignetcoin.store.Peer;
-
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Message;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.listeners.PreMessageReceivedEventListener;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.RegTestParams;
+import net.bigtangle.store.Peer;
 import net.bigtangle.utils.BriefLogFormatter;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.Wallet;

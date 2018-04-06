@@ -5,12 +5,12 @@
 
 package net.bigtangle.testing;
 
-import com.bignetcoin.store.*;
 import com.google.common.base.*;
 import com.google.common.util.concurrent.*;
 
 import net.bigtangle.core.*;
 import net.bigtangle.net.*;
+import net.bigtangle.store.*;
 import net.bigtangle.utils.*;
 
 import java.net.*;

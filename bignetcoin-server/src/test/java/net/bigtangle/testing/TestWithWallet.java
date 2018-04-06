@@ -10,10 +10,6 @@ import static net.bigtangle.testing.FakeTxBuilder.createFakeTx;
 
 import javax.annotation.Nullable;
 
-import com.bignetcoin.store.AbstractBlockGraph;
-import com.bignetcoin.store.BlockGraph;
-import com.bignetcoin.store.MemoryBlockStore;
-
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockStore;
@@ -24,6 +20,9 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.store.AbstractBlockGraph;
+import net.bigtangle.store.BlockGraph;
+import net.bigtangle.store.MemoryBlockStore;
 import net.bigtangle.utils.BriefLogFormatter;
 import net.bigtangle.wallet.Wallet;
 

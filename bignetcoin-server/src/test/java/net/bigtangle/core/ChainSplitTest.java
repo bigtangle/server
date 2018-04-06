@@ -30,9 +30,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.bignetcoin.store.BlockGraph;
-import com.bignetcoin.store.MemoryBlockStore;
-
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
@@ -47,6 +44,8 @@ import net.bigtangle.core.TransactionConfidence;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.TransactionConfidence.ConfidenceType;
 import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.store.BlockGraph;
+import net.bigtangle.store.MemoryBlockStore;
 import net.bigtangle.testing.FakeTxBuilder;
 import net.bigtangle.utils.BriefLogFormatter;
 import net.bigtangle.utils.Threading;

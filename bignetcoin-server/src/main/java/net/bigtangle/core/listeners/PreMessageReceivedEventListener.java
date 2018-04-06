@@ -5,10 +5,9 @@
 
 package net.bigtangle.core.listeners;
 
-import com.bignetcoin.store.Peer;
-import com.bignetcoin.store.PeerGroup;
-
 import net.bigtangle.core.*;
+import net.bigtangle.store.Peer;
+import net.bigtangle.store.PeerGroup;
 
 /**
  * <p>Implementors can listen to events like blocks being downloaded/transactions being broadcast/connect/disconnects,

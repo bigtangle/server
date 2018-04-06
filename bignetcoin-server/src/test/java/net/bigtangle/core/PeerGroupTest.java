@@ -41,7 +41,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import com.bignetcoin.store.Peer;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -80,6 +79,7 @@ import net.bigtangle.core.listeners.PeerDiscoveredEventListener;
 import net.bigtangle.core.listeners.PreMessageReceivedEventListener;
 import net.bigtangle.net.discovery.PeerDiscovery;
 import net.bigtangle.net.discovery.PeerDiscoveryException;
+import net.bigtangle.store.Peer;
 import net.bigtangle.testing.FakeTxBuilder;
 import net.bigtangle.testing.InboundMessageQueuer;
 import net.bigtangle.testing.TestWithPeerGroup;

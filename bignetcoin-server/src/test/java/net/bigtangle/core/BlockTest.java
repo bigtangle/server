@@ -21,7 +21,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.bignetcoin.store.AbstractBlockGraph.NewBlockType;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -46,6 +45,7 @@ import net.bigtangle.params.TestNet2Params;
 import net.bigtangle.params.TestNet3Params;
 import net.bigtangle.params.UnitTestParams;
 import net.bigtangle.script.ScriptOpCodes;
+import net.bigtangle.store.AbstractBlockGraph.NewBlockType;
 import net.bigtangle.wallet.Wallet;
 import net.bigtangle.wallet.Wallet.BalanceType;
 //TODO no binary blockBytes

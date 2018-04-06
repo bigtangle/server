@@ -5,10 +5,9 @@
 
 package net.bigtangle.core.listeners;
 
-import com.bignetcoin.store.Peer;
-import com.bignetcoin.store.PeerGroup;
-
 import net.bigtangle.core.*;
+import net.bigtangle.store.Peer;
+import net.bigtangle.store.PeerGroup;
 
 import javax.annotation.*;
 

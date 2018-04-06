@@ -5,14 +5,13 @@
 
 package net.bigtangle.core.listeners;
 
-import com.bignetcoin.store.Peer;
-
 import net.bigtangle.core.Block;
 import net.bigtangle.core.FilteredBlock;
 import net.bigtangle.core.GetDataMessage;
 import net.bigtangle.core.Message;
 import net.bigtangle.core.PeerAddress;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.store.Peer;
 
 import javax.annotation.*;
 import java.util.List;

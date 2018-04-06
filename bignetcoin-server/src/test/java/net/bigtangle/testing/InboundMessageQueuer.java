@@ -18,11 +18,11 @@
 
 package net.bigtangle.testing;
 
-import com.bignetcoin.store.Peer;
-import com.bignetcoin.store.PeerSocketHandler;
 import com.google.common.util.concurrent.SettableFuture;
 
 import net.bigtangle.core.*;
+import net.bigtangle.store.Peer;
+import net.bigtangle.store.PeerSocketHandler;
 
 import java.net.InetSocketAddress;
 import java.util.HashMap;
@@ -31,7 +31,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 /**
- * An extension of {@link com.bignetcoin.store.PeerSocketHandler} that keeps inbound messages in a queue for later processing
+ * An extension of {@link net.bigtangle.store.PeerSocketHandler} that keeps inbound messages in a queue for later processing
  */
 public abstract class InboundMessageQueuer extends PeerSocketHandler {
     public final BlockingQueue<Message> inboundMessages = new ArrayBlockingQueue<Message>(1000);

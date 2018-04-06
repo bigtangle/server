@@ -21,7 +21,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import com.bignetcoin.store.MemoryBlockStore;
 import com.google.common.collect.Lists;
 
 import net.bigtangle.core.Address;
@@ -37,6 +36,7 @@ import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.TransactionConfidence.ConfidenceType;
+import net.bigtangle.store.MemoryBlockStore;
 import net.bigtangle.testing.FakeTxBuilder;
 import net.bigtangle.testing.TestWithPeerGroup;
 import net.bigtangle.wallet.KeyChainGroup;

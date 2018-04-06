@@ -18,9 +18,8 @@
 
 package net.bigtangle.core.listeners;
 
-import com.bignetcoin.store.Peer;
-
 import net.bigtangle.core.*;
+import net.bigtangle.store.Peer;
 
 /**
  * Called when a new transaction is broadcast over the network.

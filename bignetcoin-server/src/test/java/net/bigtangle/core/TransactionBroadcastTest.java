@@ -27,7 +27,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import com.bignetcoin.store.TransactionBroadcast;
 import com.google.common.util.concurrent.AtomicDouble;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -43,6 +42,7 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionConfidence;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VersionMessage;
+import net.bigtangle.store.TransactionBroadcast;
 import net.bigtangle.testing.FakeTxBuilder;
 import net.bigtangle.testing.InboundMessageQueuer;
 import net.bigtangle.testing.TestWithPeerGroup;

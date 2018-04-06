@@ -19,9 +19,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 import javax.net.SocketFactory;
 
-import com.bignetcoin.store.BlockGraph;
-import com.bignetcoin.store.MemoryBlockStore;
-import com.bignetcoin.store.Peer;
 import com.google.common.util.concurrent.SettableFuture;
 
 import net.bigtangle.core.Address;
@@ -46,6 +43,9 @@ import net.bigtangle.net.NioServer;
 import net.bigtangle.net.StreamConnection;
 import net.bigtangle.net.StreamConnectionFactory;
 import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.store.BlockGraph;
+import net.bigtangle.store.MemoryBlockStore;
+import net.bigtangle.store.Peer;
 import net.bigtangle.utils.BriefLogFormatter;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.Wallet;

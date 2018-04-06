@@ -22,8 +22,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.bignetcoin.store.MemoryBlockStore;
-
 import net.bigtangle.core.BitcoinSerializer;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockStore;
@@ -38,6 +36,7 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.Utils;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.store.MemoryBlockStore;
 import net.bigtangle.wallet.Wallet;
 @Ignore    //TODO  new binary
 public class ParseByteCacheTest {
