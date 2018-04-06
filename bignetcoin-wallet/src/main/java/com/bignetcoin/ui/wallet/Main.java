@@ -32,13 +32,6 @@ import java.net.URL;
 
 import javax.annotation.Nullable;
 
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.kits.WalletAppKit;
-import org.bitcoinj.params.UnitTestParams;
-import org.bitcoinj.utils.BriefLogFormatter;
-import org.bitcoinj.utils.Threading;
-import org.bitcoinj.wallet.DeterministicSeed;
-
 import com.bignetcoin.ui.wallet.controls.NotificationBarPane;
 import com.bignetcoin.ui.wallet.utils.GuiUtils;
 import com.bignetcoin.ui.wallet.utils.TextFieldValidator;
@@ -54,6 +47,12 @@ import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.kits.WalletAppKit;
+import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.utils.BriefLogFormatter;
+import net.bigtangle.utils.Threading;
+import net.bigtangle.wallet.DeterministicSeed;
 
 public class Main extends Application {
     public static NetworkParameters params = UnitTestParams.get();

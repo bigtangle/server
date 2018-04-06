@@ -19,7 +19,8 @@
 package com.bignetcoin.store;
 
 import com.google.common.collect.Lists;
-import org.bitcoinj.core.BloomFilter;
+
+import net.bigtangle.core.BloomFilter;
 
 import com.google.common.collect.ImmutableList;
 
@@ -29,7 +30,7 @@ import java.util.LinkedList;
 
 /**
  * <p>A reusable object that will calculate, given a list of {@link com.bignetcoin.store.PeerFilterProvider}s, a merged
- * {@link org.bitcoinj.core.BloomFilter} and earliest key time for all of them.
+ * {@link net.bigtangle.core.BloomFilter} and earliest key time for all of them.
  * Used by the {@link com.bignetcoin.store.PeerGroup} class internally.</p>
  *
  * <p>Thread safety: threading here can be complicated. Each filter provider is given a begin event, which may acquire

@@ -24,55 +24,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Nullable;
 
-import org.bitcoinj.core.AddressMessage;
-import org.bitcoinj.core.AlertMessage;
-import org.bitcoinj.core.Block;
-import org.bitcoinj.core.BlockStore;
-import org.bitcoinj.core.BlockStoreException;
-import org.bitcoinj.core.BloomFilter;
-import org.bitcoinj.core.Context;
-import org.bitcoinj.core.FilteredBlock;
-import org.bitcoinj.core.GetAddrMessage;
-import org.bitcoinj.core.GetBlocksMessage;
-import org.bitcoinj.core.GetDataMessage;
-import org.bitcoinj.core.GetHeadersMessage;
-import org.bitcoinj.core.GetUTXOsMessage;
-import org.bitcoinj.core.HeadersMessage;
-import org.bitcoinj.core.InventoryItem;
-import org.bitcoinj.core.InventoryMessage;
-import org.bitcoinj.core.MemoryPoolMessage;
-import org.bitcoinj.core.Message;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.NotFoundMessage;
-import org.bitcoinj.core.PeerAddress;
-import org.bitcoinj.core.Ping;
-import org.bitcoinj.core.Pong;
-import org.bitcoinj.core.ProtocolException;
-import org.bitcoinj.core.PrunedException;
-import org.bitcoinj.core.RejectMessage;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.StoredBlock;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionConfidence;
-import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.TransactionOutPoint;
-import org.bitcoinj.core.UTXOsMessage;
-import org.bitcoinj.core.Utils;
-import org.bitcoinj.core.VerificationException;
-import org.bitcoinj.core.VersionAck;
-import org.bitcoinj.core.VersionMessage;
-import org.bitcoinj.core.listeners.AbstractPeerEventListener;
-import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
-import org.bitcoinj.core.listeners.ChainDownloadStartedEventListener;
-import org.bitcoinj.core.listeners.GetDataEventListener;
-import org.bitcoinj.core.listeners.OnTransactionBroadcastListener;
-import org.bitcoinj.core.listeners.PeerConnectedEventListener;
-import org.bitcoinj.core.listeners.PeerDisconnectedEventListener;
-import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
-import org.bitcoinj.net.StreamConnection;
-import org.bitcoinj.utils.ListenerRegistration;
-import org.bitcoinj.utils.Threading;
-import org.bitcoinj.wallet.Wallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,6 +37,55 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
+import net.bigtangle.core.AddressMessage;
+import net.bigtangle.core.AlertMessage;
+import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockStore;
+import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.BloomFilter;
+import net.bigtangle.core.Context;
+import net.bigtangle.core.FilteredBlock;
+import net.bigtangle.core.GetAddrMessage;
+import net.bigtangle.core.GetBlocksMessage;
+import net.bigtangle.core.GetDataMessage;
+import net.bigtangle.core.GetHeadersMessage;
+import net.bigtangle.core.GetUTXOsMessage;
+import net.bigtangle.core.HeadersMessage;
+import net.bigtangle.core.InventoryItem;
+import net.bigtangle.core.InventoryMessage;
+import net.bigtangle.core.MemoryPoolMessage;
+import net.bigtangle.core.Message;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.NotFoundMessage;
+import net.bigtangle.core.PeerAddress;
+import net.bigtangle.core.Ping;
+import net.bigtangle.core.Pong;
+import net.bigtangle.core.ProtocolException;
+import net.bigtangle.core.PrunedException;
+import net.bigtangle.core.RejectMessage;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.StoredBlock;
+import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionConfidence;
+import net.bigtangle.core.TransactionInput;
+import net.bigtangle.core.TransactionOutPoint;
+import net.bigtangle.core.UTXOsMessage;
+import net.bigtangle.core.Utils;
+import net.bigtangle.core.VerificationException;
+import net.bigtangle.core.VersionAck;
+import net.bigtangle.core.VersionMessage;
+import net.bigtangle.core.listeners.AbstractPeerEventListener;
+import net.bigtangle.core.listeners.BlocksDownloadedEventListener;
+import net.bigtangle.core.listeners.ChainDownloadStartedEventListener;
+import net.bigtangle.core.listeners.GetDataEventListener;
+import net.bigtangle.core.listeners.OnTransactionBroadcastListener;
+import net.bigtangle.core.listeners.PeerConnectedEventListener;
+import net.bigtangle.core.listeners.PeerDisconnectedEventListener;
+import net.bigtangle.core.listeners.PreMessageReceivedEventListener;
+import net.bigtangle.net.StreamConnection;
+import net.bigtangle.utils.ListenerRegistration;
+import net.bigtangle.utils.Threading;
+import net.bigtangle.wallet.Wallet;
 import net.jcip.annotations.GuardedBy;
 
 /**
@@ -93,8 +93,8 @@ import net.jcip.annotations.GuardedBy;
  * handles low-level message (de)serialization.</p>
  *
  * <p>Note that timeouts are handled by the extended
- * {@link org.bitcoinj.net.AbstractTimeoutHandler} and timeout is automatically disabled (using
- * {@link org.bitcoinj.net.AbstractTimeoutHandler#setTimeoutEnabled(boolean)}) once the version
+ * {@link net.bigtangle.net.AbstractTimeoutHandler} and timeout is automatically disabled (using
+ * {@link net.bigtangle.net.AbstractTimeoutHandler#setTimeoutEnabled(boolean)}) once the version
  * handshake completes.</p>
  */
 public class Peer extends PeerSocketHandler {
@@ -220,9 +220,9 @@ public class Peer extends PeerSocketHandler {
      *
      * <p>Note that this does <b>NOT</b> make a connection to the given remoteAddress, it only creates a handler for a
      * connection. If you want to create a one-off connection, create a Peer and pass it to
-     * {@link org.bitcoinj.net.NioClientManager#openConnection(java.net.SocketAddress, StreamConnection)}
+     * {@link net.bigtangle.net.NioClientManager#openConnection(java.net.SocketAddress, StreamConnection)}
      * or
-     * {@link org.bitcoinj.net.NioClient#NioClient(java.net.SocketAddress, StreamConnection, int)}.</p>
+     * {@link net.bigtangle.net.NioClient#NioClient(java.net.SocketAddress, StreamConnection, int)}.</p>
      *
      * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
@@ -232,15 +232,15 @@ public class Peer extends PeerSocketHandler {
     }
 
     /**
-     * <p>Construct a peer that reads/writes from the given block chain. Transactions stored in a {@link org.bitcoinj.core.TxConfidenceTable}
+     * <p>Construct a peer that reads/writes from the given block chain. Transactions stored in a {@link net.bigtangle.core.TxConfidenceTable}
      * will have their confidence levels updated when a peer announces it, to reflect the greater likelyhood that
      * the transaction is valid.</p>
      *
      * <p>Note that this does <b>NOT</b> make a connection to the given remoteAddress, it only creates a handler for a
      * connection. If you want to create a one-off connection, create a Peer and pass it to
-     * {@link org.bitcoinj.net.NioClientManager#openConnection(java.net.SocketAddress, StreamConnection)}
+     * {@link net.bigtangle.net.NioClientManager#openConnection(java.net.SocketAddress, StreamConnection)}
      * or
-     * {@link org.bitcoinj.net.NioClient#NioClient(java.net.SocketAddress, StreamConnection, int)}.</p>
+     * {@link net.bigtangle.net.NioClient#NioClient(java.net.SocketAddress, StreamConnection, int)}.</p>
      *
      * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
@@ -251,15 +251,15 @@ public class Peer extends PeerSocketHandler {
     }
 
     /**
-     * <p>Construct a peer that reads/writes from the given block chain. Transactions stored in a {@link org.bitcoinj.core.TxConfidenceTable}
+     * <p>Construct a peer that reads/writes from the given block chain. Transactions stored in a {@link net.bigtangle.core.TxConfidenceTable}
      * will have their confidence levels updated when a peer announces it, to reflect the greater likelyhood that
      * the transaction is valid.</p>
      *
      * <p>Note that this does <b>NOT</b> make a connection to the given remoteAddress, it only creates a handler for a
      * connection. If you want to create a one-off connection, create a Peer and pass it to
-     * {@link org.bitcoinj.net.NioClientManager#openConnection(java.net.SocketAddress, StreamConnection)}
+     * {@link net.bigtangle.net.NioClientManager#openConnection(java.net.SocketAddress, StreamConnection)}
      * or
-     * {@link org.bitcoinj.net.NioClient#NioClient(java.net.SocketAddress, StreamConnection, int)}.</p>
+     * {@link net.bigtangle.net.NioClient#NioClient(java.net.SocketAddress, StreamConnection, int)}.</p>
      *
      * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
@@ -295,9 +295,9 @@ public class Peer extends PeerSocketHandler {
      *
      * <p>Note that this does <b>NOT</b> make a connection to the given remoteAddress, it only creates a handler for a
      * connection. If you want to create a one-off connection, create a Peer and pass it to
-     * {@link org.bitcoinj.net.NioClientManager#openConnection(java.net.SocketAddress, StreamConnection)}
+     * {@link net.bigtangle.net.NioClientManager#openConnection(java.net.SocketAddress, StreamConnection)}
      * or
-     * {@link org.bitcoinj.net.NioClient#NioClient(java.net.SocketAddress, StreamConnection, int)}.</p>
+     * {@link net.bigtangle.net.NioClient#NioClient(java.net.SocketAddress, StreamConnection, int)}.</p>
      *
      * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>

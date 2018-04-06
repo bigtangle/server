@@ -7,10 +7,6 @@ package com.bignetcoin.ui.wallet;
 import java.util.List;
 import java.util.Map;
 
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.Json;
-import org.bitcoinj.utils.OkHttp3Util;
-
 import com.bignetcoin.ui.wallet.utils.GuiUtils;
 
 import javafx.collections.FXCollections;
@@ -20,6 +16,9 @@ import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Json;
+import net.bigtangle.utils.OkHttp3Util;
 
 public class OrderController {
     @FXML

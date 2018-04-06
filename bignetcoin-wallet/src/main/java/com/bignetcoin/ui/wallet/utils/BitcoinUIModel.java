@@ -18,16 +18,15 @@
 
 package com.bignetcoin.ui.wallet.utils;
 
-import org.bitcoinj.core.Address;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.listeners.WalletChangeEventListener;
-
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import net.bigtangle.core.Address;
+import net.bigtangle.core.Coin;
+import net.bigtangle.wallet.Wallet;
+import net.bigtangle.wallet.listeners.WalletChangeEventListener;
 
 /**
  * A class that exposes relevant bitcoin stuff as JavaFX bindable properties.

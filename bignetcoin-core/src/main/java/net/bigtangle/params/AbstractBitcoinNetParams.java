@@ -1,0 +1,79 @@
+/*******************************************************************************
+ *  Copyright   2018  Inasset GmbH. 
+ *  
+ *******************************************************************************/
+
+package net.bigtangle.params;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import net.bigtangle.core.BitcoinSerializer;
+import net.bigtangle.core.Coin;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.StoredBlock;
+import net.bigtangle.core.Transaction;
+import net.bigtangle.utils.MonetaryFormat;
+
+/**
+ * Parameters for Bitcoin-like networks.
+ */
+public abstract class AbstractBitcoinNetParams extends NetworkParameters {
+    /**
+     * Scheme part for Bitcoin URIs.
+     */
+    public static final String BITCOIN_SCHEME = "bitcoin";
+
+    private static final Logger log = LoggerFactory.getLogger(AbstractBitcoinNetParams.class);
+
+    public AbstractBitcoinNetParams() {
+        super();
+    }
+
+    /**
+     * Checks if we are at a difficulty transition point.
+     * 
+     * @param storedPrev
+     *            The previous stored block
+     * @return If this is a difficulty transition point
+     */
+    protected boolean isDifficultyTransitionPoint(StoredBlock storedPrev) {
+        return ((storedPrev.getHeight() + 1) % this.getInterval()) == 0;
+    }
+
+//    @Override
+//    public void checkDifficultyTransitions(final StoredBlock storedPrev, final Block nextBlock,
+//            final BlockStore blockStore) throws VerificationException, BlockStoreException {
+//    }
+
+ 
+    @Override
+    public Coin getMinNonDustOutput() {
+        return Transaction.MIN_NONDUST_OUTPUT;
+    }
+
+    @Override
+    public MonetaryFormat getMonetaryFormat() {
+        return new MonetaryFormat();
+    }
+
+    @Override
+    public int getProtocolVersionNum(final ProtocolVersion version) {
+        return version.getBitcoinProtocolVersion();
+    }
+
+    @Override
+    public BitcoinSerializer getSerializer(boolean parseRetain) {
+        return new BitcoinSerializer(this, parseRetain);
+    }
+
+    @Override
+    public String getUriScheme() {
+        return BITCOIN_SCHEME;
+    }
+
+    @Override
+    public boolean hasMaxMoney() {
+        return true;
+    }
+}

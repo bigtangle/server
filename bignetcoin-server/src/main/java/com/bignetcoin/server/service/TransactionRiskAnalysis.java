@@ -9,17 +9,18 @@ import static com.google.common.base.Preconditions.checkState;
 
 import java.util.List;
 
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.ECKey.ECDSASignature;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionConfidence;
-import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.crypto.TransactionSignature;
-import org.bitcoinj.script.ScriptChunk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import net.bigtangle.core.Coin;
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionConfidence;
+import net.bigtangle.core.TransactionInput;
+import net.bigtangle.core.TransactionOutput;
+import net.bigtangle.core.ECKey.ECDSASignature;
+import net.bigtangle.crypto.TransactionSignature;
+import net.bigtangle.script.ScriptChunk;
 
 /**
  * <p>
@@ -111,7 +112,7 @@ public class TransactionRiskAnalysis {
 
     /**
      * The reason a transaction is considered non-standard, returned by
-     * {@link #isStandard(org.bitcoinj.core.Transaction)}.
+     * {@link #isStandard(net.bigtangle.core.Transaction)}.
      */
     public enum RuleViolation {
         NONE, VERSION, DUST, SHORTEST_POSSIBLE_PUSHDATA, NONEMPTY_STACK, // Not

@@ -24,30 +24,31 @@ import java.util.concurrent.FutureTask;
 
 import javax.annotation.Nullable;
 
-import org.bitcoinj.core.Block;
-import org.bitcoinj.core.BlockEvaluation;
-import org.bitcoinj.core.BlockStoreException;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.Context;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.StoredBlock;
-import org.bitcoinj.core.StoredUndoableBlock;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.core.TransactionOutputChanges;
-import org.bitcoinj.core.UTXO;
-import org.bitcoinj.core.Utils;
-import org.bitcoinj.core.VerificationException;
-import org.bitcoinj.script.Script;
-import org.bitcoinj.script.Script.VerifyFlag;
-import org.bitcoinj.utils.ContextPropagatingThreadFactory;
-import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.WalletExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
+import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.Coin;
+import net.bigtangle.core.Context;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.StoredBlock;
+import net.bigtangle.core.StoredUndoableBlock;
+import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionInput;
+import net.bigtangle.core.TransactionOutput;
+import net.bigtangle.core.TransactionOutputChanges;
+import net.bigtangle.core.UTXO;
+import net.bigtangle.core.Utils;
+import net.bigtangle.core.VerificationException;
+import net.bigtangle.script.Script;
+import net.bigtangle.script.Script.VerifyFlag;
+import net.bigtangle.utils.ContextPropagatingThreadFactory;
+import net.bigtangle.wallet.Wallet;
+import net.bigtangle.wallet.WalletExtension;
 
 /**
  * <p>

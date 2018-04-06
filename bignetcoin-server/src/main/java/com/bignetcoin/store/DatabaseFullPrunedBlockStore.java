@@ -24,27 +24,28 @@ import java.util.Properties;
 
 import javax.annotation.Nullable;
 
-import org.bitcoinj.core.Address;
-import org.bitcoinj.core.Block;
-import org.bitcoinj.core.BlockEvaluation;
-import org.bitcoinj.core.BlockStoreException;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.ProtocolException;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.StoredBlock;
-import org.bitcoinj.core.StoredUndoableBlock;
-import org.bitcoinj.core.Tokens;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionOutputChanges;
-import org.bitcoinj.core.UTXO;
-import org.bitcoinj.core.UTXOProviderException;
-import org.bitcoinj.core.VerificationException;
-import org.bitcoinj.script.Script;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
+
+import net.bigtangle.core.Address;
+import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.Coin;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.ProtocolException;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.StoredBlock;
+import net.bigtangle.core.StoredUndoableBlock;
+import net.bigtangle.core.Tokens;
+import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionOutputChanges;
+import net.bigtangle.core.UTXO;
+import net.bigtangle.core.UTXOProviderException;
+import net.bigtangle.core.VerificationException;
+import net.bigtangle.script.Script;
 
 /**
  * <p>
@@ -748,7 +749,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     /**
      * Create a new store for the given
-     * {@link org.bitcoinj.core.NetworkParameters}.
+     * {@link net.bigtangle.core.NetworkParameters}.
      * 
      * @param params
      *            The network.

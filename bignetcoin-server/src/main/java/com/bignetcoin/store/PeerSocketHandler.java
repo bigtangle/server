@@ -5,18 +5,20 @@
 
 package com.bignetcoin.store;
 
-import org.bitcoinj.core.BitcoinSerializer;
-import org.bitcoinj.core.Message;
-import org.bitcoinj.core.MessageSerializer;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.PeerAddress;
-import org.bitcoinj.core.ProtocolException;
-import org.bitcoinj.core.BitcoinSerializer.BitcoinPacketHeader;
-import org.bitcoinj.net.AbstractTimeoutHandler;
-import org.bitcoinj.net.MessageWriteTarget;
-import org.bitcoinj.net.StreamConnection;
-import org.bitcoinj.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
+
+import net.bigtangle.core.BitcoinSerializer;
+import net.bigtangle.core.Message;
+import net.bigtangle.core.MessageSerializer;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.PeerAddress;
+import net.bigtangle.core.ProtocolException;
+import net.bigtangle.core.BitcoinSerializer.BitcoinPacketHeader;
+import net.bigtangle.net.AbstractTimeoutHandler;
+import net.bigtangle.net.MessageWriteTarget;
+import net.bigtangle.net.StreamConnection;
+import net.bigtangle.utils.Threading;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +35,7 @@ import static com.google.common.base.Preconditions.*;
 
 /**
  * Handles high-level message (de)serialization for peers, acting as the bridge between the
- * {@link org.bitcoinj.net} classes and {@link Peer}.
+ * {@link net.bigtangle.net} classes and {@link Peer}.
  */
 public abstract class PeerSocketHandler extends AbstractTimeoutHandler implements StreamConnection {
     private static final Logger log = LoggerFactory.getLogger(PeerSocketHandler.class);
@@ -186,8 +188,8 @@ public abstract class PeerSocketHandler extends AbstractTimeoutHandler implement
 
     /**
      * Sets the {@link MessageWriteTarget} used to write messages to the peer. This should almost never be called, it is
-     * called automatically by {@link org.bitcoinj.net.NioClient} or
-     * {@link org.bitcoinj.net.NioClientManager} once the socket finishes initialization.
+     * called automatically by {@link net.bigtangle.net.NioClient} or
+     * {@link net.bigtangle.net.NioClientManager} once the socket finishes initialization.
      */
     @Override
     public void setWriteTarget(MessageWriteTarget writeTarget) {

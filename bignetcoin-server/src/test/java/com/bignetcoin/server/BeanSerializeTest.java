@@ -5,8 +5,9 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.bitcoinj.utils.BeanSerializeUtil;
 import org.junit.Test;
+
+import net.bigtangle.utils.BeanSerializeUtil;
 
 public class BeanSerializeTest {
 

@@ -25,8 +25,9 @@ import javafx.event.*;
 import javafx.fxml.*;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import org.bitcoinj.crypto.*;
-import org.bitcoinj.wallet.*;
+import net.bigtangle.crypto.*;
+import net.bigtangle.wallet.*;
+
 import org.slf4j.*;
 import org.spongycastle.crypto.params.*;
 

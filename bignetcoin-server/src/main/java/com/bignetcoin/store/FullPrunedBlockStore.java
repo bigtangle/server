@@ -8,15 +8,15 @@ package com.bignetcoin.store;
 import java.util.HashSet;
 import java.util.List;
 
-import org.bitcoinj.core.BlockEvaluation;
-import org.bitcoinj.core.BlockStore;
-import org.bitcoinj.core.BlockStoreException;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.StoredBlock;
-import org.bitcoinj.core.StoredUndoableBlock;
-import org.bitcoinj.core.Tokens;
-import org.bitcoinj.core.UTXO;
-import org.bitcoinj.core.UTXOProvider;
+import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.BlockStore;
+import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.StoredBlock;
+import net.bigtangle.core.StoredUndoableBlock;
+import net.bigtangle.core.Tokens;
+import net.bigtangle.core.UTXO;
+import net.bigtangle.core.UTXOProvider;
 
 /**
  * <p>
@@ -104,19 +104,19 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     StoredUndoableBlock getUndoBlock(Sha256Hash hash) throws BlockStoreException;
 
     /**
-     * Gets a {@link org.bitcoinj.core.UTXO} with the given hash and index, or
+     * Gets a {@link net.bigtangle.core.UTXO} with the given hash and index, or
      * null if none is found
      */
     UTXO getTransactionOutput(Sha256Hash hash, long index) throws BlockStoreException;
 
     /**
-     * Adds a {@link org.bitcoinj.core.UTXO} to the list of unspent
+     * Adds a {@link net.bigtangle.core.UTXO} to the list of unspent
      * TransactionOutputs
      */
     void addUnspentTransactionOutput(UTXO out) throws BlockStoreException;
 
     /**
-     * Removes a {@link org.bitcoinj.core.UTXO} from the list of unspent
+     * Removes a {@link net.bigtangle.core.UTXO} from the list of unspent
      * TransactionOutputs Note that the coinbase of the genesis block should
      * NEVER be spendable and thus never in the list.
      * 

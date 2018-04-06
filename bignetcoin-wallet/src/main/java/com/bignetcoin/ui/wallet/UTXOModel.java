@@ -4,11 +4,10 @@
  *******************************************************************************/
 package com.bignetcoin.ui.wallet;
 
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Utils;
-
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Utils;
 
 public class UTXOModel {
     private SimpleLongProperty balance;

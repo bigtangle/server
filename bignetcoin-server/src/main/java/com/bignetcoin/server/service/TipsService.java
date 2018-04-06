@@ -12,11 +12,6 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.bitcoinj.core.BlockEvaluation;
-import org.bitcoinj.core.BlockStoreException;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.StoredBlock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +19,12 @@ import org.springframework.stereotype.Service;
 
 import com.bignetcoin.server.model.TipsViewModel;
 import com.bignetcoin.store.FullPrunedBlockStore;
+
+import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.StoredBlock;
 
 @Service
 public class TipsService {

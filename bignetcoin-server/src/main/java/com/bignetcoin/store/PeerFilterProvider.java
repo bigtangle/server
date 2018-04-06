@@ -5,7 +5,7 @@
 
 package com.bignetcoin.store;
 
-import org.bitcoinj.core.BloomFilter;
+import net.bigtangle.core.BloomFilter;
 
 /**
  * An interface which provides the information required to properly filter data downloaded from Peers.

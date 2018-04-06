@@ -44,53 +44,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Nullable;
 
-import org.bitcoinj.core.Block;
-import org.bitcoinj.core.BloomFilter;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.Context;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.FilteredBlock;
-import org.bitcoinj.core.GetDataMessage;
-import org.bitcoinj.core.InventoryItem;
-import org.bitcoinj.core.Message;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.PeerAddress;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionConfidence;
-import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.core.TxConfidenceTable;
-import org.bitcoinj.core.Utils;
-import org.bitcoinj.core.VerificationException;
-import org.bitcoinj.core.VersionMessage;
-import org.bitcoinj.core.listeners.AbstractPeerEventListener;
-import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
-import org.bitcoinj.core.listeners.ChainDownloadStartedEventListener;
-import org.bitcoinj.core.listeners.DownloadProgressTracker;
-import org.bitcoinj.core.listeners.GetDataEventListener;
-import org.bitcoinj.core.listeners.OnTransactionBroadcastListener;
-import org.bitcoinj.core.listeners.PeerConnectedEventListener;
-import org.bitcoinj.core.listeners.PeerDataEventListener;
-import org.bitcoinj.core.listeners.PeerDisconnectedEventListener;
-import org.bitcoinj.core.listeners.PeerDiscoveredEventListener;
-import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
-import org.bitcoinj.crypto.DRMWorkaround;
-import org.bitcoinj.net.BlockingClientManager;
-import org.bitcoinj.net.ClientConnectionManager;
-import org.bitcoinj.net.NioClientManager;
-import org.bitcoinj.net.discovery.HttpDiscovery;
-import org.bitcoinj.net.discovery.MultiplexingDiscovery;
-import org.bitcoinj.net.discovery.PeerDiscovery;
-import org.bitcoinj.net.discovery.PeerDiscoveryException;
-import org.bitcoinj.net.discovery.TorDiscovery;
-import org.bitcoinj.script.Script;
-import org.bitcoinj.utils.ContextPropagatingThreadFactory;
-import org.bitcoinj.utils.ExponentialBackoff;
-import org.bitcoinj.utils.ListenerRegistration;
-import org.bitcoinj.utils.Threading;
-import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.listeners.KeyChainEventListener;
-import org.bitcoinj.wallet.listeners.ScriptsChangeEventListener;
-import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,6 +68,53 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import com.squareup.okhttp.OkHttpClient;
 import com.subgraph.orchid.TorClient;
 
+import net.bigtangle.core.Block;
+import net.bigtangle.core.BloomFilter;
+import net.bigtangle.core.Coin;
+import net.bigtangle.core.Context;
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.FilteredBlock;
+import net.bigtangle.core.GetDataMessage;
+import net.bigtangle.core.InventoryItem;
+import net.bigtangle.core.Message;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.PeerAddress;
+import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionConfidence;
+import net.bigtangle.core.TransactionOutput;
+import net.bigtangle.core.TxConfidenceTable;
+import net.bigtangle.core.Utils;
+import net.bigtangle.core.VerificationException;
+import net.bigtangle.core.VersionMessage;
+import net.bigtangle.core.listeners.AbstractPeerEventListener;
+import net.bigtangle.core.listeners.BlocksDownloadedEventListener;
+import net.bigtangle.core.listeners.ChainDownloadStartedEventListener;
+import net.bigtangle.core.listeners.DownloadProgressTracker;
+import net.bigtangle.core.listeners.GetDataEventListener;
+import net.bigtangle.core.listeners.OnTransactionBroadcastListener;
+import net.bigtangle.core.listeners.PeerConnectedEventListener;
+import net.bigtangle.core.listeners.PeerDataEventListener;
+import net.bigtangle.core.listeners.PeerDisconnectedEventListener;
+import net.bigtangle.core.listeners.PeerDiscoveredEventListener;
+import net.bigtangle.core.listeners.PreMessageReceivedEventListener;
+import net.bigtangle.crypto.DRMWorkaround;
+import net.bigtangle.net.BlockingClientManager;
+import net.bigtangle.net.ClientConnectionManager;
+import net.bigtangle.net.NioClientManager;
+import net.bigtangle.net.discovery.HttpDiscovery;
+import net.bigtangle.net.discovery.MultiplexingDiscovery;
+import net.bigtangle.net.discovery.PeerDiscovery;
+import net.bigtangle.net.discovery.PeerDiscoveryException;
+import net.bigtangle.net.discovery.TorDiscovery;
+import net.bigtangle.script.Script;
+import net.bigtangle.utils.ContextPropagatingThreadFactory;
+import net.bigtangle.utils.ExponentialBackoff;
+import net.bigtangle.utils.ListenerRegistration;
+import net.bigtangle.utils.Threading;
+import net.bigtangle.wallet.Wallet;
+import net.bigtangle.wallet.listeners.KeyChainEventListener;
+import net.bigtangle.wallet.listeners.ScriptsChangeEventListener;
+import net.bigtangle.wallet.listeners.WalletCoinsReceivedEventListener;
 import net.jcip.annotations.GuardedBy;
 
 /**
@@ -1778,7 +1778,7 @@ public class PeerGroup implements TransactionBroadcaster {
     /**
      * Returns the number of currently connected peers. To be informed when this
      * count changes, register a
-     * {@link org.bitcoinj.core.listeners.PeerConnectionEventListener} and use
+     * {@link net.bigtangle.core.listeners.PeerConnectionEventListener} and use
      * the onPeerConnected/onPeerDisconnected methods.
      */
     public int numConnectedPeers() {

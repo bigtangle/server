@@ -2,7 +2,7 @@ package com.bignetcoin.server.response;
 
 import java.util.List;
 
-import org.bitcoinj.core.BlockEvaluation;
+import net.bigtangle.core.BlockEvaluation;
 
 public class GetBlockEvaluationsResponse extends AbstractResponse {
     private List<BlockEvaluation> evaluations;

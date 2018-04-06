@@ -14,9 +14,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.bitcoinj.core.Sha256Hash;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import net.bigtangle.core.Sha256Hash;
 
 
 public class Snapshot {

@@ -4,11 +4,12 @@
  *******************************************************************************/
 package com.bignetcoin.server.config;
 
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.params.MainNetParams;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.params.MainNetParams;
 
 @Configuration
 @Profile("mainent")

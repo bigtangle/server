@@ -9,12 +9,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.bitcoinj.core.BlockStoreException;
-import org.bitcoinj.core.NetworkParameters;
+import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.NetworkParameters;
 
 /**
  * <p>A full pruned block store using the MySQL database engine. As an added bonus an address index is calculated,
- * so you can use {@link #calculateBalanceForAddress(org.bitcoinj.core.Address)} to quickly look up
+ * so you can use {@link #calculateBalanceForAddress(net.bigtangle.core.Address)} to quickly look up
  * the quantity of bitcoins controlled by that address.</p>
  */
  

@@ -6,8 +6,8 @@ package com.bignetcoin.server.response;
 
 import java.util.List;
 
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.UTXO;
+import net.bigtangle.core.Coin;
+import net.bigtangle.core.UTXO;
 
 public class GetBalancesResponse extends AbstractResponse {
 

@@ -8,11 +8,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import org.bitcoinj.core.Json;
-import org.bitcoinj.core.UTXO;
-
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+
+import net.bigtangle.core.Json;
+import net.bigtangle.core.UTXO;
 
 public class Test {
 

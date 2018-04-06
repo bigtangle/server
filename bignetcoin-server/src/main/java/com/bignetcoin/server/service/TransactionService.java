@@ -8,24 +8,25 @@ import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.Map;
 
-import org.bitcoinj.core.Block;
-import org.bitcoinj.core.BlockEvaluation;
-import org.bitcoinj.core.BlockStoreException;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.Tokens;
-import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.TransactionOutPoint;
-import org.bitcoinj.core.UTXO;
-import org.bitcoinj.core.Utils;
-import org.bitcoinj.wallet.CoinSelector;
-import org.bitcoinj.wallet.DefaultCoinSelector;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.bignetcoin.store.FullPrunedBlockGraph;
 import com.bignetcoin.store.FullPrunedBlockStore;
+
+import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.Coin;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Tokens;
+import net.bigtangle.core.TransactionInput;
+import net.bigtangle.core.TransactionOutPoint;
+import net.bigtangle.core.UTXO;
+import net.bigtangle.core.Utils;
+import net.bigtangle.wallet.CoinSelector;
+import net.bigtangle.wallet.DefaultCoinSelector;
 
 /**
  * <p>

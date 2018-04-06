@@ -9,13 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.bitcoinj.core.Block;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.Json;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Utils;
-import org.bitcoinj.utils.OkHttp3Util;
-
 import com.bignetcoin.ui.wallet.utils.GuiUtils;
 
 import javafx.collections.FXCollections;
@@ -26,6 +19,12 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import net.bigtangle.core.Block;
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Json;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Utils;
+import net.bigtangle.utils.OkHttp3Util;
 
 public class StockController {
     @FXML

@@ -4,11 +4,12 @@
  *******************************************************************************/
 package com.bignetcoin.server.config;
 
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.params.TestNet3Params;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.params.TestNet3Params;
 
 @Configuration
 @Profile("testnet")

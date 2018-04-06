@@ -18,13 +18,6 @@
 
 package com.bignetcoin.ui.wallet;
 
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.Utils;
-import org.bitcoinj.crypto.MnemonicCode;
-import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.wallet.DeterministicSeed;
-import org.bitcoinj.wallet.KeyChainGroup;
-
 import com.bignetcoin.ui.wallet.utils.TextFieldValidator;
 import com.google.common.base.Splitter;
 import com.google.common.util.concurrent.Service;
@@ -35,6 +28,13 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextArea;
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Utils;
+import net.bigtangle.crypto.MnemonicCode;
+import net.bigtangle.params.MainNetParams;
+import net.bigtangle.wallet.DeterministicSeed;
+import net.bigtangle.wallet.KeyChainGroup;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;

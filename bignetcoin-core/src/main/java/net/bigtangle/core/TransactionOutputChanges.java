@@ -1,0 +1,68 @@
+/*******************************************************************************
+ *  Copyright   2018  Inasset GmbH. 
+ *  
+ *******************************************************************************/
+
+package net.bigtangle.core;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.LinkedList;
+import java.util.List;
+
+ 
+
+/**
+ * <p>TransactionOutputChanges represents a delta to the set of unspent outputs. It used as a return value for
+ * {@link AbstractBlockGraph#connectTransactions(int, Block)}. It contains the full list of transaction outputs created
+ * and spent in a block. It DOES contain outputs created that were spent later in the block, as those are needed for
+ * BIP30 (no duplicate txid creation if the previous one was not fully spent prior to this block) verification.</p>
+ */
+public class TransactionOutputChanges {
+    public final List<UTXO> txOutsCreated;
+    public final List<UTXO> txOutsSpent;
+    
+    public TransactionOutputChanges(List<UTXO> txOutsCreated, List<UTXO> txOutsSpent) {
+        this.txOutsCreated = txOutsCreated;
+        this.txOutsSpent = txOutsSpent;
+    }
+    
+    public TransactionOutputChanges(InputStream in) throws IOException {
+        int numOutsCreated = (in.read() & 0xFF) |
+                             ((in.read() & 0xFF) << 8) |
+                             ((in.read() & 0xFF) << 16) |
+                             ((in.read() & 0xFF) << 24);
+        txOutsCreated = new LinkedList<UTXO>();
+        for (int i = 0; i < numOutsCreated; i++)
+            txOutsCreated.add(new UTXO(in));
+        
+        int numOutsSpent = (in.read() & 0xFF) |
+                           ((in.read() & 0xFF) << 8) |
+                           ((in.read() & 0xFF) << 16) |
+                           ((in.read() & 0xFF) << 24);
+        txOutsSpent = new LinkedList<UTXO>();
+        for (int i = 0; i < numOutsSpent; i++)
+            txOutsSpent.add(new UTXO(in));
+    }
+
+    public void serializeToStream(OutputStream bos) throws IOException {
+        int numOutsCreated = txOutsCreated.size();
+        bos.write(0xFF & numOutsCreated);
+        bos.write(0xFF & (numOutsCreated >> 8));
+        bos.write(0xFF & (numOutsCreated >> 16));
+        bos.write(0xFF & (numOutsCreated >> 24));
+        for (UTXO output : txOutsCreated) {
+            output.serializeToStream(bos);
+        }
+        
+        int numOutsSpent = txOutsSpent.size();
+        bos.write(0xFF & numOutsSpent);
+        bos.write(0xFF & (numOutsSpent >> 8));
+        bos.write(0xFF & (numOutsSpent >> 16));
+        bos.write(0xFF & (numOutsSpent >> 24));
+        for (UTXO output : txOutsSpent) {
+            output.serializeToStream(bos);
+        }
+    }
+}

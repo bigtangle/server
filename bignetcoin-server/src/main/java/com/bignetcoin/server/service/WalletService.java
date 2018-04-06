@@ -11,17 +11,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.bitcoinj.core.Address;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.core.UTXO;
-import org.bitcoinj.core.UTXOProviderException;
-import org.bitcoinj.wallet.CoinSelector;
-import org.bitcoinj.wallet.DefaultCoinSelector;
-import org.bitcoinj.wallet.KeyChainGroup;
-import org.bitcoinj.wallet.Wallet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +20,18 @@ import com.bignetcoin.server.response.GetOutputsResponse;
 import com.bignetcoin.server.transaction.FreeStandingTransactionOutput;
 import com.bignetcoin.store.FullPrunedBlockStore;
 import com.google.common.collect.Lists;
+
+import net.bigtangle.core.Address;
+import net.bigtangle.core.Coin;
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.TransactionOutput;
+import net.bigtangle.core.UTXO;
+import net.bigtangle.core.UTXOProviderException;
+import net.bigtangle.wallet.CoinSelector;
+import net.bigtangle.wallet.DefaultCoinSelector;
+import net.bigtangle.wallet.KeyChainGroup;
+import net.bigtangle.wallet.Wallet;
 
 @Service
 public class WalletService {

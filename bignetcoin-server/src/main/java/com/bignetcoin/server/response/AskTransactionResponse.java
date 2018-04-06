@@ -6,8 +6,8 @@ package com.bignetcoin.server.response;
 
 import java.util.HashMap;
 
-import org.bitcoinj.core.Block;
-import org.bitcoinj.core.Utils;
+import net.bigtangle.core.Block;
+import net.bigtangle.core.Utils;
 
 public class AskTransactionResponse extends AbstractResponse {
 

@@ -25,14 +25,6 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.Json;
-import org.bitcoinj.core.UTXO;
-import org.bitcoinj.kits.WalletAppKit;
-import org.bitcoinj.utils.MapToBeanMapperUtil;
-import org.bitcoinj.utils.MonetaryFormat;
-import org.bitcoinj.utils.OkHttp3Util;
 import org.fxmisc.easybind.EasyBind;
 import org.spongycastle.crypto.params.KeyParameter;
 
@@ -56,6 +48,14 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
+import net.bigtangle.core.Coin;
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Json;
+import net.bigtangle.core.UTXO;
+import net.bigtangle.kits.WalletAppKit;
+import net.bigtangle.utils.MapToBeanMapperUtil;
+import net.bigtangle.utils.MonetaryFormat;
+import net.bigtangle.utils.OkHttp3Util;
 
 /**
  * Gets created auto-magically by FXMLLoader via reflection. The widget fields

@@ -5,9 +5,9 @@
 
 package org.bitcoinj.jni;
 
-import org.bitcoinj.script.Script;
-import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.listeners.ScriptsChangeEventListener;
+import net.bigtangle.script.Script;
+import net.bigtangle.wallet.Wallet;
+import net.bigtangle.wallet.listeners.ScriptsChangeEventListener;
 
 import java.util.List;
 

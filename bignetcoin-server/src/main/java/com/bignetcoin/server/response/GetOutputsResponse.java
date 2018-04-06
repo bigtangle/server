@@ -6,7 +6,7 @@ package com.bignetcoin.server.response;
 
 import java.util.List;
 
-import org.bitcoinj.core.UTXO;
+import net.bigtangle.core.UTXO;
 
 public class GetOutputsResponse extends AbstractResponse {
 

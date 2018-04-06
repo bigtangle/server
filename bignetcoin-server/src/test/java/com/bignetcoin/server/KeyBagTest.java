@@ -8,14 +8,15 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.kits.WalletAppKit;
-import org.bitcoinj.params.UnitTestParams;
-import org.bitcoinj.wallet.DecryptingKeyBag;
-import org.bitcoinj.wallet.DeterministicKeyChain;
 import org.junit.Test;
 import org.spongycastle.crypto.params.KeyParameter;
+
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.kits.WalletAppKit;
+import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.wallet.DecryptingKeyBag;
+import net.bigtangle.wallet.DeterministicKeyChain;
 
 public class KeyBagTest {
 

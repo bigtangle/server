@@ -18,7 +18,7 @@
 
 package com.bignetcoin.store;
 
-import org.bitcoinj.core.BlockStoreException;
+import net.bigtangle.core.BlockStoreException;
 
 /**
  * Thrown by {@link SPVBlockStore} when the process cannot gain exclusive access to the chain file.

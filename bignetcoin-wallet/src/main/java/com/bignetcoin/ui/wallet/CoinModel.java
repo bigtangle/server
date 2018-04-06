@@ -4,10 +4,9 @@
  *******************************************************************************/
 package com.bignetcoin.ui.wallet;
 
-import org.bitcoinj.core.Utils;
-
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
+import net.bigtangle.core.Utils;
 
 public class CoinModel {
     private SimpleLongProperty value;

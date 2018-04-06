@@ -8,8 +8,18 @@ package com.bignetcoin.store;
 import com.google.common.annotations.*;
 import com.google.common.base.*;
 import com.google.common.util.concurrent.*;
-import org.bitcoinj.utils.*;
-import org.bitcoinj.wallet.Wallet;
+
+import net.bigtangle.core.Message;
+import net.bigtangle.core.RejectMessage;
+import net.bigtangle.core.RejectedTransactionException;
+import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionConfidence;
+import net.bigtangle.core.TransactionConfidence.Listener;
+import net.bigtangle.core.TransactionConfidence.Listener.ChangeReason;
+import net.bigtangle.core.listeners.PreMessageReceivedEventListener;
+import net.bigtangle.utils.*;
+import net.bigtangle.wallet.Wallet;
+
 import org.slf4j.*;
 
 import javax.annotation.*;
@@ -17,15 +27,6 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import static com.google.common.base.Preconditions.checkState;
-
-import org.bitcoinj.core.Message;
-import org.bitcoinj.core.RejectMessage;
-import org.bitcoinj.core.RejectedTransactionException;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionConfidence;
-import org.bitcoinj.core.TransactionConfidence.Listener;
-import org.bitcoinj.core.TransactionConfidence.Listener.ChangeReason;
-import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
 
 /**
  * Represents a single transaction broadcast that we are performing. A broadcast occurs after a new transaction is created
@@ -253,7 +254,7 @@ public class TransactionBroadcast {
 
     /**
      * Sets the given callback for receiving progress values, which will run on the user thread. See
-     * {@link org.bitcoinj.utils.Threading} for details.  If the broadcast has already started then the callback will
+     * {@link net.bigtangle.utils.Threading} for details.  If the broadcast has already started then the callback will
      * be invoked immediately with the current progress.
      */
     public void setProgressCallback(ProgressCallback callback) {

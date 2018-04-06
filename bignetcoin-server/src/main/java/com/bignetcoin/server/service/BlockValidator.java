@@ -12,13 +12,14 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.bitcoinj.core.Block;
-import org.bitcoinj.core.BlockEvaluation;
-import org.bitcoinj.core.Sha256Hash;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.bignetcoin.server.model.TipsViewModel;
+
+import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.Sha256Hash;
 
 @Service
 public class BlockValidator {

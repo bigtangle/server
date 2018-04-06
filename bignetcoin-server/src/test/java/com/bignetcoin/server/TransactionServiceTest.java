@@ -12,22 +12,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.HashMap;
 import java.util.List;
 
-import org.bitcoinj.core.Address;
-import org.bitcoinj.core.Block;
-import org.bitcoinj.core.BlockEvaluation;
-import org.bitcoinj.core.BlockForTest;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.Json;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionOutPoint;
-import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.core.UTXO;
-import org.bitcoinj.script.Script;
-import org.bitcoinj.script.ScriptBuilder;
-import org.bitcoinj.utils.OkHttp3Util;
-import org.bitcoinj.wallet.SendRequest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -41,6 +25,23 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import com.bignetcoin.server.service.BlockService;
 import com.bignetcoin.server.service.MilestoneService;
 import com.google.common.collect.Lists;
+
+import net.bigtangle.core.Address;
+import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.BlockForTest;
+import net.bigtangle.core.Coin;
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Json;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionOutPoint;
+import net.bigtangle.core.TransactionOutput;
+import net.bigtangle.core.UTXO;
+import net.bigtangle.script.Script;
+import net.bigtangle.script.ScriptBuilder;
+import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.wallet.SendRequest;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)

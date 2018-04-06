@@ -27,18 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.bitcoinj.core.Address;
-import org.bitcoinj.core.Block;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.InsufficientMoneyException;
-import org.bitcoinj.core.Json;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Utils;
-import org.bitcoinj.crypto.DeterministicKey;
-import org.bitcoinj.utils.OkHttp3Util;
-import org.bitcoinj.wallet.SendRequest;
-import org.bitcoinj.wallet.Wallet;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import com.bignetcoin.ui.wallet.utils.GuiUtils;
@@ -54,6 +42,18 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import net.bigtangle.core.Address;
+import net.bigtangle.core.Block;
+import net.bigtangle.core.Coin;
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.InsufficientMoneyException;
+import net.bigtangle.core.Json;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Utils;
+import net.bigtangle.crypto.DeterministicKey;
+import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.wallet.SendRequest;
+import net.bigtangle.wallet.Wallet;
 
 public class SendMoneyController {
     public Button sendBtn;

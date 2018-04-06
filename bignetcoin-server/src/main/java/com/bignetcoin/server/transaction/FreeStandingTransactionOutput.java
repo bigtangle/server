@@ -4,10 +4,10 @@
  *******************************************************************************/
 package com.bignetcoin.server.transaction;
 
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.core.UTXO;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.TransactionOutput;
+import net.bigtangle.core.UTXO;
 
 public class FreeStandingTransactionOutput extends TransactionOutput {
     

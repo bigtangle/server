@@ -7,11 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.bitcoinj.core.BlockEvaluation;
-import org.bitcoinj.core.Json;
-import org.bitcoinj.utils.MapToBeanMapperUtil;
-import org.bitcoinj.utils.OkHttp3Util;
-
 import com.bignetcoin.ui.wallet.utils.GuiUtils;
 
 import javafx.collections.FXCollections;
@@ -22,6 +17,10 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.MapValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
+import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.Json;
+import net.bigtangle.utils.MapToBeanMapperUtil;
+import net.bigtangle.utils.OkHttp3Util;
 
 public class BlockEvaluationController {
     @FXML

@@ -5,13 +5,13 @@
 
 package com.bignetcoin.store;
 
-import org.bitcoinj.core.*;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import net.bigtangle.core.*;
+
 /**
- * Keeps {@link org.bitcoinj.core.StoredBlock}s in memory. Used primarily for unit testing.
+ * Keeps {@link net.bigtangle.core.StoredBlock}s in memory. Used primarily for unit testing.
  */
 public class MemoryBlockStore implements BlockStore {
     private LinkedHashMap<Sha256Hash, StoredBlock> blockMap = new LinkedHashMap<Sha256Hash, StoredBlock>() {

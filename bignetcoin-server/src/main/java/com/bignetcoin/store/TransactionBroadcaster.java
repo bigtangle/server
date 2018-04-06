@@ -5,7 +5,7 @@
 
 package com.bignetcoin.store;
 
-import org.bitcoinj.core.Transaction;
+import net.bigtangle.core.Transaction;
 
 /**
  * A general interface which declares the ability to broadcast transactions. This is implemented

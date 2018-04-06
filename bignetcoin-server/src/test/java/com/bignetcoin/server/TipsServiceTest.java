@@ -16,11 +16,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.tomcat.jni.Time;
-import org.bitcoinj.core.Block;
-import org.bitcoinj.core.BlockEvaluation;
-import org.bitcoinj.core.BlockForTest;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.Sha256Hash;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -32,6 +27,12 @@ import org.springframework.test.context.junit4.SpringRunner;
 import com.bignetcoin.server.service.BlockService;
 import com.bignetcoin.server.service.MilestoneService;
 import com.bignetcoin.server.service.TipsService;
+
+import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.BlockForTest;
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Sha256Hash;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)

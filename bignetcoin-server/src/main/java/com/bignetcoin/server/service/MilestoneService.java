@@ -21,14 +21,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.bitcoinj.core.Block;
-import org.bitcoinj.core.BlockEvaluation;
-import org.bitcoinj.core.BlockStoreException;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.TransactionOutPoint;
-import org.bitcoinj.core.UTXO;
-import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +31,15 @@ import com.bignetcoin.store.FullPrunedBlockStore;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashMultiset;
 import com.lambdaworks.crypto.SCrypt;
+
+import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.TransactionInput;
+import net.bigtangle.core.TransactionOutPoint;
+import net.bigtangle.core.UTXO;
+import net.bigtangle.crypto.KeyCrypterScrypt;
 
 /*
  *  check the valuation of block and trigger an update of openoutputs

@@ -3,15 +3,16 @@ package com.bignetcoin.server.service;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.bitcoinj.core.BlockStoreException;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Tokens;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.bignetcoin.server.response.AbstractResponse;
 import com.bignetcoin.server.response.GetTokensResponse;
 import com.bignetcoin.store.FullPrunedBlockStore;
+
+import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Tokens;
 
 @Service
 public class TokensService {

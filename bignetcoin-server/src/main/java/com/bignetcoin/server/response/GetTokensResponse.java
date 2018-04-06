@@ -6,7 +6,7 @@ package com.bignetcoin.server.response;
 
 import java.util.List;
 
-import org.bitcoinj.core.Tokens;
+import net.bigtangle.core.Tokens;
 
 public class GetTokensResponse extends AbstractResponse {
 

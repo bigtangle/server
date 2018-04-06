@@ -21,30 +21,31 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Nullable;
 
-import org.bitcoinj.core.Block;
-import org.bitcoinj.core.BlockStore;
-import org.bitcoinj.core.BlockStoreException;
-import org.bitcoinj.core.Context;
-import org.bitcoinj.core.FilteredBlock;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.PrunedException;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.StoredBlock;
-import org.bitcoinj.core.StoredUndoableBlock;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionOutputChanges;
-import org.bitcoinj.core.VerificationException;
-import org.bitcoinj.core.listeners.NewBestBlockListener;
-import org.bitcoinj.core.listeners.ReorganizeListener;
-import org.bitcoinj.utils.ListenerRegistration;
-import org.bitcoinj.utils.Threading;
-import org.bitcoinj.utils.VersionTally;
-import org.bitcoinj.wallet.Wallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+
+import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockStore;
+import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.Context;
+import net.bigtangle.core.FilteredBlock;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.PrunedException;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.StoredBlock;
+import net.bigtangle.core.StoredUndoableBlock;
+import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionOutputChanges;
+import net.bigtangle.core.VerificationException;
+import net.bigtangle.core.listeners.NewBestBlockListener;
+import net.bigtangle.core.listeners.ReorganizeListener;
+import net.bigtangle.utils.ListenerRegistration;
+import net.bigtangle.utils.Threading;
+import net.bigtangle.utils.VersionTally;
+import net.bigtangle.wallet.Wallet;
 
 /**
  * <p>An AbstractBlockTangle holds a series of {@link Block} objects, links them together, and knows how to verify that
