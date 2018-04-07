@@ -86,6 +86,11 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    height bigint,\n" +
             "    milestone tinyint(1),\n" +
             "    milestonelastupdate bigint,\n" +
+            "    milestonedepth bigint,\n" +//NEW
+            "    score bigint,\n" +//NEW
+            "    inserttime bigint,\n" +//NEW
+            "    maintained tinyint(1),\n" +//NEW
+            "    rewardvalidityassessment tinyint(1),\n" +//NEW
             "    CONSTRAINT blockevaluation_pk PRIMARY KEY (blockhash) )\n";
     
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n" +

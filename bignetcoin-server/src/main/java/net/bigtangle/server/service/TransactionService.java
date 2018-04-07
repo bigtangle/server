@@ -7,7 +7,9 @@ package net.bigtangle.server.service;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.Map;
+import java.util.TreeSet;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -41,7 +43,7 @@ public class TransactionService {
     protected FullPrunedBlockStore blockStore;
 
     @Autowired
-    private TipsService tipsManager;
+    private TipsService tipService;
 
     protected CoinSelector coinSelector = new DefaultCoinSelector();
 
@@ -55,8 +57,9 @@ public class TransactionService {
     protected NetworkParameters networkParameters;
     
     public ByteBuffer askTransaction() throws Exception {
-        Block r1 = blockService.getBlock(getNextBlockToApprove());
-        Block r2 = blockService.getBlock(getNextBlockToApprove());
+    	Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPairToApprove();
+        Block r1 = blockService.getBlock(tipsToApprove.getLeft());
+        Block r2 = blockService.getBlock(tipsToApprove.getRight());
 
         Block rollingBlock = new Block(this.networkParameters, r1.getHash(), r2.getHash(),
                 NetworkParameters.BIGNETCOIN_TOKENID, NetworkParameters.BLOCKTYPE_TRANSFER,
@@ -99,8 +102,9 @@ public class TransactionService {
     }
 
     public Block createGenesisBlock(Coin coin, byte[] tokenid, byte[] pubKey, boolean blocktype) throws Exception {
-        Block r1 = blockService.getBlock(getNextBlockToApprove());
-        Block r2 = blockService.getBlock(getNextBlockToApprove());
+    	Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPairToApprove();
+        Block r1 = blockService.getBlock(tipsToApprove.getLeft());
+        Block r2 = blockService.getBlock(tipsToApprove.getRight());
         long blocktype0 = blocktype ? NetworkParameters.BLOCKTYPE_GENESIS : NetworkParameters.BLOCKTYPE_GENESIS_MULTIPLE;
         Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), tokenid,
                 blocktype0, Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
@@ -109,11 +113,6 @@ public class TransactionService {
         FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
         blockgraph.add(block);
         return block;
-    }
-
-    public Sha256Hash getNextBlockToApprove() throws Exception {
-        final SecureRandom random = new SecureRandom();
-        return tipsManager.getMCMCSelectedBlock(27, random);
     }
 
     public boolean getUTXOSpent(TransactionInput txinput) {

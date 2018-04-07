@@ -5,7 +5,6 @@
 package net.bigtangle.server.service;
 
 import java.security.SecureRandom;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -28,8 +27,6 @@ import org.springframework.cglib.core.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.HashMultiset;
-import com.lambdaworks.crypto.SCrypt;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
@@ -38,7 +35,6 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.UTXO;
-import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.store.FullPrunedBlockStore;
 
 /*
@@ -236,9 +232,8 @@ public class MilestoneService {
 		// Select #tipCount solid tips via MCMC
 		final int tipCount = 100;
 		HashMap<BlockEvaluation, HashSet<EvaluationWrapper>> selectedTips = new HashMap<BlockEvaluation, HashSet<EvaluationWrapper>>(tipCount);
-		Random random = new SecureRandom();
 		for (int i = 0; i < tipCount; i++) {
-			BlockEvaluation selectedTip = blockService.getBlockEvaluation(tipsService.getMCMCSelectedBlock(1, random));
+			BlockEvaluation selectedTip = blockService.getBlockEvaluation(tipsService.getRatingTip());
 			HashSet<EvaluationWrapper> result;
 			if (selectedTips.containsKey(selectedTip))  
 				result = selectedTips.get(selectedTip);

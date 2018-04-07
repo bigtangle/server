@@ -64,7 +64,8 @@ public abstract class MapToBeanMapperUtil {
         long depth = (Integer) map.get("depth");
         long cumulativeWeight = (Integer) map.get("cumulativeWeight");
         long height = (Integer) map.get("height");
-        return BlockEvaluation.build(hash, rating, depth, cumulativeWeight, true, height, true, 0);
+        //TODO add other fields to build
+        return BlockEvaluation.build(hash, rating, depth, cumulativeWeight, true, height, true, 0, 0, 0, 0, true, true);
 
     }
 }

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tomcat.jni.Time;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,7 +46,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
     public void testBlockEvaluationDb() throws Exception {
         List<Block> blocks = this.createBlock();
         for (Block block : blocks) {
-            BlockEvaluation blockEvaluation1 = BlockEvaluation.buildInitial(block.getHash());
+            BlockEvaluation blockEvaluation1 = BlockEvaluation.buildInitial(block);
             BlockEvaluation blockEvaluation2 = this.store.getBlockEvaluation(block.getHash());
             assertEquals(blockEvaluation1.getBlockhash(), blockEvaluation2.getBlockhash());
             assertEquals(blockEvaluation1.getCumulativeWeight(), blockEvaluation2.getCumulativeWeight());
@@ -127,12 +128,12 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void getBlockToApprove() throws Exception {
-        final SecureRandom random = new SecureRandom();
         for (int i = 1; i < 20; i++) {
-            Sha256Hash b0Sha256Hash = tipsManager.getMCMCSelectedBlock(27, random);
-            Sha256Hash b1Sha256Hash = tipsManager.getMCMCSelectedBlock(27, random);
-           log.debug("b0Sha256Hash : " + b0Sha256Hash.toString());
-           log.debug("b1Sha256Hash : " + b1Sha256Hash.toString());
+        	Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsManager.getValidatedBlockPairToApprove();
+            Block r1 = blockService.getBlock(tipsToApprove.getLeft());
+            Block r2 = blockService.getBlock(tipsToApprove.getRight());
+           log.debug("b0Sha256Hash : " + r1.toString());
+           log.debug("b1Sha256Hash : " + r1.toString());
         }
     }
 
@@ -143,8 +144,9 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         int height = 1;
 
         for (int i = 1; i < 20; i++) {
-            Block r1 = blockService.getBlock(getNextBlockToApprove());
-            Block r2 = blockService.getBlock(getNextBlockToApprove());
+        	Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsManager.getValidatedBlockPairToApprove();
+            Block r1 = blockService.getBlock(tipsToApprove.getLeft());
+            Block r2 = blockService.getBlock(tipsToApprove.getRight());
             Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(r2, Block.BLOCK_VERSION_GENESIS,
                     outKey.getPubKey(), height++, r1.getHash());
             blockgraph.add(rollingBlock);
@@ -152,10 +154,4 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         }
 
     }
-
-    public Sha256Hash getNextBlockToApprove() throws Exception {
-        final SecureRandom random = new SecureRandom();
-        return tipsManager.getMCMCSelectedBlock(1, random);
-    }
-
 }
