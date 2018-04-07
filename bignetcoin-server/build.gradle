@@ -57,15 +57,36 @@ jar {
     }
 }
 
-task createDistributable(type: Copy) {
+ 
+
+
+
+task createDistributable(type: Copy) { 
     def distDir = file('build/dist')
-    from('build/distributions') {
-        include '*processor*.tar'
-        rename '.*', 'processor-all.tar'
+    from('build/libs') {
+        include '*.jar'
+        rename '.*', 'bignetcoin-server.jar'
+        into 'build/libs'
     }
-    from('etc') {
-        include '*'
+    from('etc/') {
+        include 'Dockerfile'
+        include 'entrypoint.sh'
     }
     destinationDir distDir
 }
+
+task buildDockerImage(dependsOn: createDistributable) {
+    group 'docker'
+    doLast {
+        parent.buildDockerImageProcessing('bignetcoin-server/build/dist', dockerLocalTag, dockerRegistryTag, project.name, project.group, projectName)
+    }
+}
+
+task pushDockerImage(dependsOn: buildDockerImage) {
+    group 'docker'
+    doLast {
+        parent.buildDockerPush(dockerRegistryTag)
+    }
+}
+
 createDistributable.dependsOn distTar

@@ -117,11 +117,5 @@ void execute(String command) {
         throw new GradleScriptException("Execution of \"$command\" failed with exit code $exitValue", null)
     }
     
-    task createDeployment(type: Copy) {
-    def distDir = file('build/deploy')
-    from('deploy') {
-        include '**/*'
-    }
-    destinationDir distDir
-}
+
 }

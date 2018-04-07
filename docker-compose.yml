@@ -45,4 +45,4 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka-bignetcoin:9092
       KAFKA_ZOO_KEEPER_SERVER: kafka-bignetcoin:2181
       KAFKA_SCHEMA_REGISTRY_URL: http://kafka-bignetcoin:8081
-      CASSANDRA_NODES: mysql-bignetcoin
+      DB_HOSTNAME: mysql-bignetcoin
