@@ -47,6 +47,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.UTXO;
+import net.bigtangle.core.Utils;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.ui.wallet.controls.NotificationBarPane;
 import net.bigtangle.ui.wallet.utils.BitcoinUIModel;
@@ -87,6 +88,11 @@ public class MainController {
     public TextField Server;
     @FXML
     public TextField IPPort;
+
+    @FXML
+    public TextField newPubkeyTextField;
+    @FXML
+    public TextField newPrivateKeyTextField;
 
     @FXML
     public TextField keyFileDirectory;
@@ -147,6 +153,12 @@ public class MainController {
                 }
             }
         }
+    }
+
+    public void addKey2wallet(ActionEvent event) {
+        ECKey newKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(newPrivateKeyTextField.getText()),
+                Utils.HEX.decode(newPubkeyTextField.getText()));
+        bitcoin.wallet().importKey(newKey);
     }
 
     public void initTableView() {
@@ -238,7 +250,7 @@ public class MainController {
                 Main.instance.getUtxoData().clear();
                 Main.instance.getCoinData().clear();
                 initTableView();
-              //  GuiUtils.informationalAlert("set key file is ok", "", "");
+                // GuiUtils.informationalAlert("set key file is ok", "", "");
 
             } catch (Exception e) {
                 GuiUtils.crashAlert(e);

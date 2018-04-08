@@ -8,7 +8,6 @@ import static net.bigtangle.ui.wallet.Main.bitcoin;
 import static net.bigtangle.ui.wallet.Main.params;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 import javafx.collections.FXCollections;
@@ -23,8 +22,6 @@ import javafx.stage.FileChooser;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
-import net.bigtangle.wallet.DecryptingKeyBag;
-import net.bigtangle.wallet.DeterministicKeyChain;
 
 public class EckeyController {
     @FXML
@@ -33,13 +30,6 @@ public class EckeyController {
     public TableColumn<EckeyModel, String> pubkeyColumn;
     @FXML
     public TableColumn<EckeyModel, String> addressColumn;
-
-    @FXML
-    public TableView<EckeyModel> importedKeysTable;
-    @FXML
-    public TableColumn<EckeyModel, String> pubkeyColumnA;
-    @FXML
-    public TableColumn<EckeyModel, String> addressColumnA;
 
     @FXML
     public TextField keyFileDirTextField;
@@ -53,25 +43,18 @@ public class EckeyController {
 
     @FXML
     public void initialize() {
-        initEcKeyList();
+        try {
+            initEcKeyList();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
     }
 
-    public void initEcKeyList() {
+    public void initEcKeyList() throws Exception {
         issuedKeyData.clear();
         importedKeyData.clear();
-        DecryptingKeyBag maybeDecryptingKeyBag = new DecryptingKeyBag(Main.bitcoin.wallet(), null);
-        List<ECKey> issuedKeys = new ArrayList<>();
-        for (ECKey key : Main.bitcoin.wallet().getImportedKeys()) {
-            ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
-            issuedKeys.add(ecKey);
-        }
-        for (DeterministicKeyChain chain : Main.bitcoin.wallet().getKeyChainGroup().getDeterministicKeyChains()) {
-            for (ECKey key : chain.getLeafKeys()) {
-                ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
-                issuedKeys.add(ecKey);
-            }
-        }
-        List<ECKey> importedKeys = Main.bitcoin.wallet().getImportedKeys();
+        List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(null);
+
         if (issuedKeys != null && !issuedKeys.isEmpty()) {
             for (ECKey ecKey : issuedKeys) {
                 issuedKeyData.add(new EckeyModel(ecKey.getPublicKeyAsHex(), ecKey.toAddress(Main.params).toBase58()));
@@ -83,16 +66,7 @@ public class EckeyController {
             pubkeyColumn.setCellFactory(TextFieldTableCell.<EckeyModel>forTableColumn());
             addressColumn.setCellFactory(TextFieldTableCell.<EckeyModel>forTableColumn());
         }
-        if (importedKeys != null && !importedKeys.isEmpty()) {
-            for (ECKey ecKey : importedKeys) {
-                importedKeyData.add(new EckeyModel(ecKey.getPublicKeyAsHex(), ecKey.toAddress(Main.params).toBase58()));
-            }
-            importedKeysTable.setItems(importedKeyData);
-            pubkeyColumnA.setCellValueFactory(cellData -> cellData.getValue().pubkeyHex());
-            addressColumnA.setCellValueFactory(cellData -> cellData.getValue().addressHex());
-            pubkeyColumnA.setCellFactory(TextFieldTableCell.<EckeyModel>forTableColumn());
-            addressColumnA.setCellFactory(TextFieldTableCell.<EckeyModel>forTableColumn());
-        }
+
     }
 
     public void closeUI(ActionEvent event) {
@@ -120,7 +94,11 @@ public class EckeyController {
         bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
         GuiUtils.informationalAlert("set key file is ok", "", "");
 
-        initEcKeyList();
+        try {
+            initEcKeyList();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
     }
 
     public ObservableList<EckeyModel> getIssuedKeyData() {
