@@ -61,8 +61,6 @@ public class MilestoneService {
 	 * @throws Exception
 	 */
 	public void update() throws Exception {
-		// TODO test pruning here for now
-		
 		log.info("Milestone Update started");
 		Stopwatch watch = Stopwatch.createStarted();
 		updateSolidityAndHeight();
@@ -317,17 +315,17 @@ public class MilestoneService {
 			// Optional steps from later to lower computational cost
 			if (blocksToAdd.isEmpty())
 				break;
-			removeWhereUTXONotFoundOrUnconfirmed(blocksToAdd);
+			validatorService.removeWhereUTXONotFoundOrUnconfirmed(blocksToAdd);
 
 			// Resolve conflicting UTXO spends that have been approved by the network
 			// (improbable to occur)
-			resolveUnundoableConflicts(blocksToAdd);
-			resolveUndoableConflicts(blocksToAdd);
+			validatorService.resolvePrunedConflicts(blocksToAdd);
+			validatorService.resolveUndoableConflicts(blocksToAdd);
 
 			// Remove blocks from blocksToAdd that have at least one transaction input with
 			// its corresponding output not found in the outputs table and remove their
 			// approvers recursively too
-			removeWhereUTXONotFoundOrUnconfirmed(blocksToAdd);
+			validatorService.removeWhereUTXONotFoundOrUnconfirmed(blocksToAdd);
 
 			// Exit condition: there are no more blocks to add
 			if (blocksToAdd.isEmpty())
@@ -341,87 +339,6 @@ public class MilestoneService {
 			if (i == WARNING_MILESTONE_UPDATE_LOOPS) {
 				log.warn("High amount of milestone updates per scheduled update. Can't keep up or reorganizing!");
 			}
-		}
-	}
-
-	/**
-	 * Remove blocks from blocksToAdd that have at least one transaction input with
-	 * its corresponding output not found in the outputs table and remove their
-	 * approvers recursively too
-	 * 
-	 * @param blocksToAdd
-	 * @throws BlockStoreException
-	 */
-	private void removeWhereUTXONotFoundOrUnconfirmed(HashSet<BlockEvaluation> blocksToAdd) throws BlockStoreException {
-		for (BlockEvaluation e : new HashSet<BlockEvaluation>(blocksToAdd)) {
-			Block block = blockService.getBlock(e.getBlockhash());
-			for (TransactionInput in : block.getTransactions().stream().flatMap(t -> t.getInputs().stream()).collect(Collectors.toList())) {
-				if (in.isCoinBase())
-					continue;
-				UTXO utxo = transactionService.getUTXO(in.getOutpoint());
-				if (utxo == null || !utxo.isConfirmed())
-					blockService.removeBlockAndApproversFrom(blocksToAdd, e);
-			}
-		}
-	}
-
-	/**
-	 * Resolves conflicts in new blocks to add that cannot be undone due to pruning.
-	 * This method does not do anything if not pruning blocks.
-	 * 
-	 * @param blocksToAdd
-	 * @throws BlockStoreException
-	 */
-	private void resolveUnundoableConflicts(HashSet<BlockEvaluation> blocksToAdd) throws BlockStoreException {
-		// Get the blocks to add as actual blocks from blockService
-		List<Block> blocks = blockService.getBlocks(blocksToAdd.stream().map(e -> e.getBlockhash()).collect(Collectors.toList()));
-
-		// To check for unundoable conflicts, we do the following:
-		// Create tuples (block, txinput) of all blocksToAdd
-		Stream<Pair<Block, TransactionInput>> blockInputTuples = blocks.stream()
-				.flatMap(b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream()).map(in -> Pair.of(b, in)));
-
-		// Now filter to only contain inputs that were already spent in the milestone
-		// where the corresponding block has already been pruned
-		Stream<Pair<Block, TransactionInput>> irresolvableConflicts = blockInputTuples
-				.filter(pair -> transactionService.getUTXOSpent(pair.getRight()) && transactionService.getUTXOSpender(pair.getRight().getOutpoint()) == null);
-
-		// These blocks cannot be added and must therefore be removed from blocksToAdd
-		for (Pair<Block, TransactionInput> p : irresolvableConflicts.collect(Collectors.toList())) {
-			blockService.removeBlockAndApproversFrom(blocksToAdd, blockService.getBlockEvaluation(p.getLeft().getHash()));
-		}
-	}
-
-	/**
-	 * Resolves conflicts between milestone blocks and milestone candidates as well
-	 * as conflicts among milestone candidates.
-	 * 
-	 * @param blockEvaluationsToAdd
-	 * @throws BlockStoreException
-	 */
-	private void resolveUndoableConflicts(HashSet<BlockEvaluation> blockEvaluationsToAdd) throws BlockStoreException {
-		// TODO replace all transactionOutPoints in this class with new class conflictpoints (equals of transactionoutpoints, token issuance ids, mining reward height intervals) 
-		HashSet<Pair<BlockEvaluation, TransactionOutPoint>> conflictingOutPoints = new HashSet<Pair<BlockEvaluation, TransactionOutPoint>>();
-		HashSet<BlockEvaluation> conflictingMilestoneBlocks = new HashSet<BlockEvaluation>();
-		List<Block> blocksToAdd = blockService.getBlocks(blockEvaluationsToAdd.stream().map(e -> e.getBlockhash()).collect(Collectors.toList()));
-		
-		// Find all conflicts between milestone and candidates 
-		validatorService.findMilestoneCandidateConflicts(blocksToAdd, conflictingOutPoints, conflictingMilestoneBlocks);
-		validatorService.findCandidateCandidateConflicts(blocksToAdd, conflictingOutPoints);
-
-		// Resolve all conflicts by grouping by UTXO ordered by descending rating
-		HashSet<BlockEvaluation> winningBlocks = validatorService.resolveConflictsByDescendingRating(conflictingOutPoints);
-
-		// For milestone blocks that have been eliminated call disconnect procedure
-		for (BlockEvaluation b : conflictingMilestoneBlocks.stream().filter(b -> !winningBlocks.contains(b)).collect(Collectors.toList())) {
-			blockService.disconnect(b);
-		}
-
-		// For candidates that have been eliminated (conflictingOutPoints in blocksToAdd
-		// \ winningBlocks) remove them from blocksToAdd
-		for (Pair<BlockEvaluation, TransactionOutPoint> b : conflictingOutPoints.stream()
-				.filter(b -> blockEvaluationsToAdd.contains(b.getLeft()) && !winningBlocks.contains(b.getLeft())).collect(Collectors.toList())) {
-			blockService.removeBlockAndApproversFrom(blockEvaluationsToAdd, b.getLeft());
 		}
 	}
 

@@ -7,6 +7,7 @@ package net.bigtangle.server.service;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -22,9 +23,11 @@ import org.springframework.stereotype.Service;
 
 import com.google.common.base.Stopwatch;
 
+import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.store.FullPrunedBlockStore;
 
 @Service
@@ -91,16 +94,38 @@ public class TipsService {
 
 		for (Sha256Hash entryPoint : entryPoints) {
 			Sha256Hash selectedBlock = getMCMCResultBlock(entryPoint, seed);	
-			BlockEvaluation blockEvaluation = blockService.getBlockEvaluation(selectedBlock);
+			BlockEvaluation selectedBlockEvaluation = blockService.getBlockEvaluation(selectedBlock);
 			
 			//TODO validate dynamic validity here and if not, try to reverse until no conflicts
 			//Specifically, we check for milestone-candidate-conflicts + candidate-candidate-conflicts and reverse until there are no such conflicts
 			//Also returns all approved non-milestone blocks in topological ordering
 			// TODO for now just copy resolveundoableconflicts+co from milestoneservice, afterwards refactor 
-			TreeSet<BlockEvaluation> approvedNonMilestoneBlocks = new TreeSet<>(Comparator.comparingLong((BlockEvaluation e) -> e.getHeight()).reversed());
-			blockService.addApprovedNonMilestoneBlocksTo(approvedNonMilestoneBlocks, blockEvaluation);
 			
-			results.add(Pair.of(selectedBlock, approvedNonMilestoneBlocks));
+			// Get all non-milestone blocks that are to be approved by this selection
+			TreeSet<BlockEvaluation> approvedNonMilestoneBlockEvaluations = new TreeSet<>(Comparator.comparingLong((BlockEvaluation e) -> e.getHeight()).reversed());
+			blockService.addApprovedNonMilestoneBlocksTo(approvedNonMilestoneBlockEvaluations, selectedBlockEvaluation);
+
+			// Drop all approved blocks that cannot be added
+			validatorService.resolvePrunedConflicts(approvedNonMilestoneBlockEvaluations);
+			List<Block> approvedNonMilestoneBlocks = blockService.getBlocks(approvedNonMilestoneBlockEvaluations.stream().map(e -> e.getBlockhash()).collect(Collectors.toList()));
+			
+			HashSet<Pair<BlockEvaluation, TransactionOutPoint>> conflictingOutPoints = new HashSet<Pair<BlockEvaluation, TransactionOutPoint>>();
+			HashSet<BlockEvaluation> conflictingMilestoneBlocks = new HashSet<BlockEvaluation>();
+
+			// Find all conflicts between milestone and candidates 
+			validatorService.findMilestoneConflicts(approvedNonMilestoneBlocks, conflictingOutPoints, conflictingMilestoneBlocks);
+			validatorService.findCandidateConflicts(approvedNonMilestoneBlocks, conflictingOutPoints);
+
+			// Resolve all conflicts by grouping by UTXO ordered by descending rating
+			HashSet<BlockEvaluation> winningBlocks = validatorService.resolveConflictsByDescendingRating(conflictingOutPoints);
+			
+			// If the selected block is in conflict, 
+			if (!winningBlocks.contains(selectedBlockEvaluation)) {
+				
+			}
+			
+			//TODO
+			results.add(Pair.of(selectedBlockEvaluation.getBlockhash(), null));
 		}
 		
 		return results;
