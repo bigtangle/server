@@ -312,6 +312,7 @@ public class MilestoneService {
 			// Now try to find blocks that can be added to the milestone
 			HashSet<BlockEvaluation> blocksToAdd = blockService.getBlocksToAddToMilestone();
 
+			//TODO copy all of the following to tipservice
 			// Optional steps from later to lower computational cost
 			if (blocksToAdd.isEmpty())
 				break;
@@ -320,7 +321,7 @@ public class MilestoneService {
 			// Resolve conflicting UTXO spends that have been approved by the network
 			// (improbable to occur)
 			validatorService.resolvePrunedConflicts(blocksToAdd);
-			validatorService.resolveUndoableConflicts(blocksToAdd);
+			validatorService.resolveUndoableConflicts(blocksToAdd); //TODO refactor this to deduplicate (tipsservice resolve is different)
 
 			// Remove blocks from blocksToAdd that have at least one transaction input with
 			// its corresponding output not found in the outputs table and remove their

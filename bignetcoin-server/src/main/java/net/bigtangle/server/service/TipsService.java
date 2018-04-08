@@ -98,7 +98,7 @@ public class TipsService {
 			Sha256Hash selectedBlock = getMCMCResultBlock(entryPoint, seed);	
 			BlockEvaluation selectedBlockEvaluation = blockService.getBlockEvaluation(selectedBlock);
 			
-			// TODO refactor and fix issues below
+			// TODO refactor and fix issues below, copy steps from milestoneservice
 			
 			// Get all non-milestone blocks that are to be approved by this selection
 			TreeSet<BlockEvaluation> approvedNonMilestoneBlockEvaluations = new TreeSet<>(Comparator.comparingLong((BlockEvaluation e) -> e.getHeight()).reversed());
