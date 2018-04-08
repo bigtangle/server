@@ -87,7 +87,9 @@ public class TipsService {
 		
 		return results;
 	}
-	
+
+	//Specifically, we check for milestone-candidate-conflicts + candidate-candidate-conflicts and reverse until there are no such conflicts
+	//Also returns all approved non-milestone blocks in topological ordering
 	private List<Pair<Sha256Hash, TreeSet<BlockEvaluation>>> getValidatedBlocks(int count, Random seed) throws Exception {
 		List<Pair<Sha256Hash, TreeSet<BlockEvaluation>>> results = new ArrayList<>();
 		List<Sha256Hash> entryPoints = getValidationEntryPoints(count, seed);
@@ -96,10 +98,7 @@ public class TipsService {
 			Sha256Hash selectedBlock = getMCMCResultBlock(entryPoint, seed);	
 			BlockEvaluation selectedBlockEvaluation = blockService.getBlockEvaluation(selectedBlock);
 			
-			//TODO validate dynamic validity here and if not, try to reverse until no conflicts
-			//Specifically, we check for milestone-candidate-conflicts + candidate-candidate-conflicts and reverse until there are no such conflicts
-			//Also returns all approved non-milestone blocks in topological ordering
-			// TODO for now just copy resolveundoableconflicts+co from milestoneservice, afterwards refactor 
+			// TODO refactor and fix issues below
 			
 			// Get all non-milestone blocks that are to be approved by this selection
 			TreeSet<BlockEvaluation> approvedNonMilestoneBlockEvaluations = new TreeSet<>(Comparator.comparingLong((BlockEvaluation e) -> e.getHeight()).reversed());
@@ -121,11 +120,15 @@ public class TipsService {
 			
 			// If the selected block is in conflict, 
 			if (!winningBlocks.contains(selectedBlockEvaluation)) {
+				approvedNonMilestoneBlockEvaluations.removeIf(e ->!winningBlocks.contains(e));
+				//quickfix
+				if (!approvedNonMilestoneBlockEvaluations.isEmpty())
+					selectedBlockEvaluation = approvedNonMilestoneBlockEvaluations.first();
 				
+				// TODO fix this by going backwards MCMC, also fixes first() == null
 			}
 			
-			//TODO
-			results.add(Pair.of(selectedBlockEvaluation.getBlockhash(), null));
+			results.add(Pair.of(selectedBlockEvaluation.getBlockhash(), approvedNonMilestoneBlockEvaluations));
 		}
 		
 		return results;
