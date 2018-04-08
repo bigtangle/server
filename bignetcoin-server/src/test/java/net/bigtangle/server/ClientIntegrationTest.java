@@ -7,11 +7,26 @@ package net.bigtangle.server;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+
+import net.bigtangle.core.Address;
+import net.bigtangle.core.Block;
+import net.bigtangle.core.Coin;
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Json;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Transaction;
+import net.bigtangle.core.UTXO;
+import net.bigtangle.core.Utils;
+import net.bigtangle.server.service.MilestoneService;
+import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.wallet.SendRequest;
+import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,22 +38,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-import net.bigtangle.core.Address;
-import net.bigtangle.core.Block;
-import net.bigtangle.core.Coin;
-import net.bigtangle.core.ECKey;
-import net.bigtangle.core.Json;
-import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.Transaction;
-import net.bigtangle.core.UTXO;
-import net.bigtangle.core.Utils;
-import net.bigtangle.server.ReqCmd;
-import net.bigtangle.server.service.MilestoneService;
-import net.bigtangle.utils.BeanSerializeUtil;
-import net.bigtangle.utils.OkHttp3Util;
-import net.bigtangle.wallet.SendRequest;
-import net.bigtangle.wallet.Wallet.MissingSigsMode;
-
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ClientIntegrationTest extends AbstractIntegrationTest {
@@ -48,6 +47,33 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     private static final Logger logger = LoggerFactory.getLogger(ClientIntegrationTest.class);
     @Autowired
     private MilestoneService milestoneService;
+    
+    @Test
+    public void saveOrder() throws Exception {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        HashMap<String, Object> request = new HashMap<String, Object>();
+        request.put("address", "111111111111111111111111111111111111111111111111111111");
+        request.put("tokenid", "222222222222222222222222222222222222222222222222222222");
+        request.put("type", 1);
+        request.put("limitl", 1);
+        request.put("validateto", simpleDateFormat.format(new Date()));
+        request.put("validatefrom", simpleDateFormat.format(new Date()));
+        
+        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.saveOrder.name()).content(Json.jsonmapper().writeValueAsString(request));
+        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
+        String response = mvcResult.getResponse().getContentAsString();
+        logger.info("saveOrder resp : " + response);
+        this.getOrders();
+    }
+    
+    @Test
+    public void getOrders() throws Exception {
+        HashMap<String, Object> request = new HashMap<String, Object>();
+        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getOrders.name()).content(Json.jsonmapper().writeValueAsString(request));
+        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
+        String response = mvcResult.getResponse().getContentAsString();
+        logger.info("getOrders resp : " + response);
+    }
 
     @Test
     public void getTokens() throws Exception {

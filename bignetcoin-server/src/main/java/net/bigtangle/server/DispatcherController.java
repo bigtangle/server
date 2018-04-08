@@ -126,7 +126,6 @@ public class DispatcherController {
                 break;
 
             case saveOrder: {
-                // uuid
                 String reqStr = new String(bodyByte, "UTF-8");
                 @SuppressWarnings("unchecked")
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);

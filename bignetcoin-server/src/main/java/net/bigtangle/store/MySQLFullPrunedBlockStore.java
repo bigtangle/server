@@ -95,7 +95,19 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    description varchar(255) DEFAULT NULL,\n" + 
             "    blocktype integer NOT NULL,\n" +
             "    PRIMARY KEY (tokenid) \n)";
-
+    
+    
+    private static final String CREATE_ORDER_TABLE = "CREATE TABLE `order` (\n" +
+            "   orderid VARCHAR(255) NOT NULL,\n"+
+            "   address VARCHAR(255),\n"+
+            "   tokenid VARCHAR(255),\n"+ 
+            "   type integer,\n"+ 
+            "   validateto DATETIME,\n"+ 
+            "   validatefrom DATETIME,\n"+ 
+            "   limitl BIGINT,\n"+ 
+            "   state integer,\n"+ 
+            "   PRIMARY KEY (orderid) )";
+    
     // Some indexes to speed up inserts
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX              = "CREATE INDEX outputs_hash_index_height_toaddress_idx ON outputs (hash, `index`, height, toaddress) USING btree";
     private static final String CREATE_OUTPUTS_TOADDRESS_INDEX                  = "CREATE INDEX outputs_toaddress_idx ON outputs (toaddress) USING btree";
@@ -126,6 +138,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_TIPS_TABLE);
         sqlStatements.add(CREATE_BLOCKEVALUATION_TABLE);
         sqlStatements.add(CREATE_TOKENS_TABLE);
+        sqlStatements.add(CREATE_ORDER_TABLE);
         return sqlStatements;
     }
 

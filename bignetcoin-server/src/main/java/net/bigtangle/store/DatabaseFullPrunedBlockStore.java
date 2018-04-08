@@ -9,6 +9,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -24,17 +25,13 @@ import java.util.Properties;
 
 import javax.annotation.Nullable;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.Lists;
-
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Order;
 import net.bigtangle.core.ProtocolException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
@@ -46,6 +43,11 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UTXOProviderException;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.script.Script;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Lists;
 
 /**
  * <p>
@@ -208,6 +210,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private static final String DROP_TIPS_TABLE = "DROP TABLE tips";
     private static final String DROP_BLOCKEVALUATION_TABLE = "DROP TABLE blockevaluation";
     private static final String DROP_TOKENS_TABLE = "DROP TABLE tokens";
+    private static final String DROP_ORDER_TABLE = "DROP TABLE `order`";
 
     // Queries SQL.
     private static final String SELECT_SETTINGS_SQL = "SELECT value FROM settings WHERE name = ?";
@@ -287,6 +290,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private static final String INSERT_TOKENS_SQL = "INSERT INTO tokens (tokenid, tokenname, amount, description, blocktype) VALUES (?, ?, ?, ?, ?)";
     private static final String SELECT_TOKENS_SQL = "select tokenid, tokenname, amount, description, blocktype from tokens";
 
+    private static final String INSERT_ORDER_SQL = "INSERT INTO `order` (orderid, address, tokenid, type, validateto, validatefrom, limitl, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
+    private static final String SELECT_ORDER_SQL = "select orderid, address, tokenid, type, validateto, validatefrom, limitl, state from `order`";
+    
     protected Sha256Hash chainHeadHash;
     protected StoredBlock chainHeadBlock;
     protected Sha256Hash verifiedChainHeadHash;
@@ -448,6 +454,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_TIPS_TABLE);
         sqlStatements.add(DROP_BLOCKEVALUATION_TABLE);
         sqlStatements.add(DROP_TOKENS_TABLE);
+        sqlStatements.add(DROP_ORDER_TABLE);
         return sqlStatements;
     }
 
@@ -2334,6 +2341,67 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     preparedStatement.close();
                 } catch (SQLException e) {
                     throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void saveOrder(Order order) throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(INSERT_ORDER_SQL);
+            preparedStatement.setString(1, order.getOrderid());
+            preparedStatement.setString(2, order.getAddress());
+            preparedStatement.setString(3, order.getTokenid());
+            preparedStatement.setInt(4, order.getType());
+            preparedStatement.setDate(5, new Date(order.getValidateto().getTime()));
+            preparedStatement.setDate(6, new Date(order.getValidatefrom().getTime()));
+            preparedStatement.setLong(7, order.getLimitl());
+            preparedStatement.setInt(8, order.getState());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<Order> getOrderList() throws BlockStoreException {
+        List<Order> list = new ArrayList<Order>();
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_ORDER_SQL);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                Order order = new Order();
+                order.setOrderid(resultSet.getString("orderid"));
+                order.setAddress(resultSet.getString("address"));
+                order.setTokenid(resultSet.getString("tokenid"));
+                order.setType(resultSet.getInt("type"));
+                order.setLimitl(resultSet.getLong("limitl"));
+                order.setState(resultSet.getInt("state"));
+                order.setValidateto(resultSet.getDate("validateto"));
+                order.setValidatefrom(resultSet.getDate("validatefrom"));
+                list.add(order);
+            }
+            return list;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
                 }
             }
         }
