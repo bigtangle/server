@@ -14,18 +14,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.Coin;
@@ -40,12 +28,23 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.script.Script;
-import net.bigtangle.server.ReqCmd;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.Wallet;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -62,7 +61,6 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     @Autowired
     private BlockService blockService;
     
-  
   // @Test
     public void createECKey() {
         ECKey ecKey = new ECKey();
