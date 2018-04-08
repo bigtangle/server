@@ -278,7 +278,7 @@ public class MainController {
         Main.port = IPPort.getText();
         try {
             initTableView();
-            GuiUtils.informationalAlert("set server info is ok", "", "");
+        //    GuiUtils.informationalAlert("set server info is ok", "", "");
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
