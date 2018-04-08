@@ -56,7 +56,8 @@ public class OrderController {
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
         for (Map<String, Object> map : list) {
             String tokenHex = (String) map.get("tokenHex");
-            tokenData.add(tokenHex);
+            String tokenname = (String) map.get("tokenname");
+            tokenData.add(tokenname + " : " + tokenHex);
         }
         tokenComboBox.setItems(tokenData);
 
