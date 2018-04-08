@@ -45,17 +45,19 @@ public class TipsServiceTest extends AbstractIntegrationTest {
     @Test
     public void testBlockEvaluationDb() throws Exception {
         List<Block> blocks = this.createBlock();
-        for (Block block : blocks) {
-            BlockEvaluation blockEvaluation1 = BlockEvaluation.buildInitial(block);
-            BlockEvaluation blockEvaluation2 = this.store.getBlockEvaluation(block.getHash());
-            assertEquals(blockEvaluation1.getBlockhash(), blockEvaluation2.getBlockhash());
-            assertEquals(blockEvaluation1.getCumulativeWeight(), blockEvaluation2.getCumulativeWeight());
-            assertEquals(blockEvaluation1.getDepth(), blockEvaluation2.getDepth());
-          //TODO  assertEquals(blockEvaluation1.getHeight(), blockEvaluation2.getHeight());
-            assertEquals(blockEvaluation1.getRating(), blockEvaluation2.getRating());
-            assertEquals(blockEvaluation1.isMilestone(), blockEvaluation2.isMilestone());
-         //TODO  assertEquals(blockEvaluation1.isSolid(), blockEvaluation2.isSolid());
-        }
+        
+        milestoneService.update();
+        
+        Block block1 = blocks.get(0);
+        BlockEvaluation blockEvaluation = this.store.getBlockEvaluation(block1.getHash());
+        assertEquals(block1.getHash(), blockEvaluation.getBlockhash());
+        assertEquals(6, blockEvaluation.getCumulativeWeight());
+        assertEquals(5, blockEvaluation.getDepth());
+        assertEquals(1, blockEvaluation.getHeight());
+        assertEquals(false, blockEvaluation.isMilestone());
+        assertEquals(true, blockEvaluation.isSolid());
+        assertEquals(0, blockEvaluation.getMilestoneDepth());
+            
         int i = 0;
         for (Block block : blocks) {
             if (i % 2 == 0) {
@@ -133,7 +135,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             Block r1 = blockService.getBlock(tipsToApprove.getLeft());
             Block r2 = blockService.getBlock(tipsToApprove.getRight());
            log.debug("b0Sha256Hash : " + r1.toString());
-           log.debug("b1Sha256Hash : " + r1.toString());
+           log.debug("b1Sha256Hash : " + r2.toString());
         }
     }
 

@@ -230,8 +230,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
 	public void updateBlockEvaluationMilestoneDepth(Sha256Hash blockhash, long i) throws BlockStoreException;
 
-	public void updateBlockEvaluationScore(Sha256Hash blockhash, long i) throws BlockStoreException;
-
 	public void updateBlockEvaluationMaintained(Sha256Hash blockhash, boolean b) throws BlockStoreException;
 
 	public void updateBlockEvaluationRewardValid(Sha256Hash blockhash, boolean b) throws BlockStoreException;

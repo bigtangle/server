@@ -61,7 +61,7 @@ public class TipsService {
 		return Pair.of(b1.getLeft(), b2.getLeft());
 	}
 	
-	private Pair<Sha256Hash, TreeSet<BlockEvaluation>> getSingleValidatedBlock(SecureRandom seed) throws Exception {
+	private Pair<Sha256Hash, TreeSet<BlockEvaluation>> getSingleValidatedBlock(Random seed) throws Exception {
 		Sha256Hash blockHash = getMCMCSelectedBlock(getValidationEntryPoint(), seed);
 		BlockEvaluation blockEvaluation = blockService.getBlockEvaluation(blockHash);
 		
@@ -73,7 +73,7 @@ public class TipsService {
 		return Pair.of(blockHash, null);
 	}
 
-	private Sha256Hash getMCMCSelectedBlock(Sha256Hash entryPoint, SecureRandom seed) throws Exception {
+	private Sha256Hash getMCMCSelectedBlock(Sha256Hash entryPoint, Random seed) throws Exception {
 		List<BlockEvaluation> blockEvaluations = blockService.getSolidBlockEvaluations();
 		Map<Sha256Hash, Long> cumulativeWeights = blockEvaluations.stream()
 				.collect(Collectors.toMap(BlockEvaluation::getBlockhash, BlockEvaluation::getCumulativeWeight));

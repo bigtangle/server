@@ -31,6 +31,7 @@ import com.google.common.base.Stopwatch;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
@@ -44,6 +45,8 @@ import net.bigtangle.store.FullPrunedBlockStore;
 public class MilestoneService {
 
 	private static final Logger log = LoggerFactory.getLogger(MilestoneService.class);
+
+	private static final int WARNING_MILESTONE_UPDATE_LOOPS = 20;
 
 	@Autowired
 	protected FullPrunedBlockStore store;
@@ -63,7 +66,6 @@ public class MilestoneService {
 	 * @throws Exception
 	 */
 	public void update() throws Exception {
-		
 		// TODO test pruning here for now
 		
 		
@@ -148,7 +150,6 @@ public class MilestoneService {
 
 	// TODO deduplicate code (copy in fullprunedblock...)
 	private void solidifyBlock(BlockEvaluation blockEvaluation, Block block) throws BlockStoreException {
-		// reget evaluations...
 		BlockEvaluation prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
 		BlockEvaluation prevBranchBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
 		blockService.updateHeight(blockEvaluation, Math.max(prevBlockEvaluation.getHeight() + 1, prevBranchBlockEvaluation.getHeight() + 1));
@@ -162,8 +163,8 @@ public class MilestoneService {
 	 * @throws BlockStoreException
 	 */
 	public void updateCumulativeWeightAndDepth() throws BlockStoreException {
-		// TODO also do milestonedepth and select from milestone depth interval for tip selection
 		// Begin from the highest solid height tips and go backwards from there
+		// TODO milestonedepth
 		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = getSolidTipsDescending();
 		HashMap<Sha256Hash, HashSet<Sha256Hash>> approverHashSets = new HashMap<>();
 		HashMap<Sha256Hash, Long> depths = new HashMap<>();
@@ -174,6 +175,10 @@ public class MilestoneService {
 
 		BlockEvaluation currentBlock = null;
 		while ((currentBlock = blocksByDescendingHeight.poll()) != null) {
+			// Abort if unmaintained
+			if (!currentBlock.isMaintained())
+				continue;
+			
 			// Add your own hash to approver hashes of current approver hashes
 			HashSet<Sha256Hash> approverHashes = approverHashSets.get(currentBlock.getBlockhash());
 			approverHashes.add(currentBlock.getBlockhash());
@@ -214,7 +219,6 @@ public class MilestoneService {
 				}
 			}
 
-			// TODO update earlier and abort if no change
 			// Update and dereference
 			blockService.updateCumulativeWeight(currentBlock, approverHashes.size());
 			blockService.updateDepth(currentBlock, depth);
@@ -230,9 +234,8 @@ public class MilestoneService {
 	 */
 	public void updateRating() throws Exception {
 		// Select #tipCount solid tips via MCMC
-		final int tipCount = 100;
-		HashMap<BlockEvaluation, HashSet<EvaluationWrapper>> selectedTips = new HashMap<BlockEvaluation, HashSet<EvaluationWrapper>>(tipCount);
-		for (int i = 0; i < tipCount; i++) {
+		HashMap<BlockEvaluation, HashSet<EvaluationWrapper>> selectedTips = new HashMap<BlockEvaluation, HashSet<EvaluationWrapper>>(NetworkParameters.MAX_RATING_TIP_COUNT);
+		for (int i = 0; i < NetworkParameters.MAX_RATING_TIP_COUNT; i++) {
 			BlockEvaluation selectedTip = blockService.getBlockEvaluation(tipsService.getRatingTip());
 			HashSet<EvaluationWrapper> result;
 			if (selectedTips.containsKey(selectedTip))  
@@ -252,6 +255,10 @@ public class MilestoneService {
 
 		BlockEvaluation currentBlock = null;
 		while ((currentBlock = blocksByDescendingHeight.poll()) != null) {
+			// Abort if unmaintained
+			if (!currentBlock.isMaintained())
+				continue;
+			
 			// Add your own hashes as reference if current block is one of the selected tips
 			HashSet<EvaluationWrapper> approverHashes = approverHashSets.get(currentBlock.getBlockhash());
 			if (selectedTips.containsKey(currentBlock)) {
@@ -283,8 +290,8 @@ public class MilestoneService {
 			if (approverHashSets.containsKey(block.getPrevBranchBlockHash()))
 				approverHashSets.get(block.getPrevBranchBlockHash()).addAll(approverHashes);
 
-			// TODO update earlier and abort if updated == current == max rating
-			// Update your rating
+
+			// Update your rating 
 			blockService.updateRating(currentBlock, approverHashes.size());
 			approverHashSets.remove(currentBlock.getBlockhash());
 		}
@@ -303,10 +310,9 @@ public class MilestoneService {
 			blockService.disconnect(block);
 		}
 
-		while (true) {
+		for (int i = 0; true; i++) {
 			// Now try to find blocks that can be added to the milestone
 			HashSet<BlockEvaluation> blocksToAdd = blockService.getBlocksToAddToMilestone();
-			//TODO constraint blockstoadd by receivetime 30 sec old at least
 
 			// Optional steps from later to lower computational cost
 			if (blocksToAdd.isEmpty())
@@ -330,6 +336,10 @@ public class MilestoneService {
 			// Finally add the found new milestone blocks to the milestone
 			for (BlockEvaluation block : blocksToAdd) {
 				blockService.connect(block);
+			}
+			
+			if (i == WARNING_MILESTONE_UPDATE_LOOPS) {
+				log.warn("High amount of milestone updates per scheduled update. Can't keep up or reorganizing!");
 			}
 		}
 	}
@@ -390,6 +400,7 @@ public class MilestoneService {
 	 * @throws BlockStoreException
 	 */
 	private void resolveUndoableConflicts(HashSet<BlockEvaluation> blockEvaluationsToAdd) throws BlockStoreException {
+		// TODO replace all transactionOutPoints in this class with new class conflictpoints (equals of transactionoutpoints, token issuance ids, mining reward height intervals) 
 		HashSet<Pair<BlockEvaluation, TransactionOutPoint>> conflictingOutPoints = new HashSet<Pair<BlockEvaluation, TransactionOutPoint>>();
 		HashSet<BlockEvaluation> conflictingMilestoneBlocks = new HashSet<BlockEvaluation>();
 		List<Block> blocksToAdd = blockService.getBlocks(blockEvaluationsToAdd.stream().map(e -> e.getBlockhash()).collect(Collectors.toList()));

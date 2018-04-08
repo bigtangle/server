@@ -469,7 +469,6 @@ public abstract class AbstractBlockGraph {
             for (Sha256Hash hash : filteredTxHashList) log.debug("  matched tx {}", hash);
         }
         
-        // TODO ensure that constructed blocks fulfill constraints such as this one
         if (block.getTimeSeconds() < storedPrev.getHeader().getTimeSeconds() || block.getTimeSeconds() < storedPrevBranch.getHeader().getTimeSeconds())
         	throw new VerificationException("Block's timestamp is too early");
         

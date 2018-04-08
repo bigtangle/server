@@ -15,12 +15,12 @@ public class BlockEvaluation {
 	public static BlockEvaluation buildInitial(Block block) {
 		long currentTimeMillis = System.currentTimeMillis();
         return BlockEvaluation.build(block.getHash(), 
-				0, 0, 1, false, 0, false, currentTimeMillis, 0, 0, currentTimeMillis, true, false);
+				0, 0, 1, false, 0, false, currentTimeMillis, 0, currentTimeMillis, true, false);
 	}
 
 	public static BlockEvaluation build(Sha256Hash blockhash, long rating, long depth, long cumulativeWeight, 
 	        boolean solid, long height, boolean milestone, long milestoneLastUpdateTime,
-	        long milestoneDepth, long score, long insertTime, boolean maintained, boolean validityAssessment) {
+	        long milestoneDepth, long insertTime, boolean maintained, boolean validityAssessment) {
 		BlockEvaluation blockEvaluation = new BlockEvaluation();
 		blockEvaluation.setBlockhash(blockhash);
 		blockEvaluation.setRating(rating);
@@ -30,11 +30,10 @@ public class BlockEvaluation {
 		blockEvaluation.setHeight(height);
 		blockEvaluation.setMilestone(milestone);
 		blockEvaluation.setMilestoneLastUpdateTime(milestoneLastUpdateTime);	
-        blockEvaluation.setMilestoneDepth(milestoneDepth);    
-        blockEvaluation.setScore(score);    
+        blockEvaluation.setMilestoneDepth(milestoneDepth);   
         blockEvaluation.setInsertTime(insertTime);    
         blockEvaluation.setMaintained(maintained);    
-        blockEvaluation.setRewardValidityAssessment(validityAssessment);    
+        blockEvaluation.setRewardValid(validityAssessment);    
 		return blockEvaluation;
 	}
 
@@ -66,14 +65,12 @@ public class BlockEvaluation {
 	//NEW FIELDS
     // Longest path length to any indirect milestone approver
     private long milestoneDepth;
-    // Score := # approved blocks
-    private long score;
     // Timestamp for entry into evaluations/reception time
     private long insertTime;
     // if set to false, this evaluation is not maintained anymore and can be pruned
     private boolean maintained;
     // only relevant for mining reward blocks, true if local assessment deems mining reward block valid
-    private boolean rewardValidityAssessment;
+    private boolean rewardValid;
 	
 
 	public Sha256Hash getBlockhash() {
@@ -160,14 +157,6 @@ public class BlockEvaluation {
         this.milestoneDepth = milestoneDepth;
     }
 
-    public long getScore() {
-        return score;
-    }
-
-    public void setScore(long score) {
-        this.score = score;
-    }
-
     public long getInsertTime() {
         return insertTime;
     }
@@ -185,10 +174,10 @@ public class BlockEvaluation {
     }
 
     public boolean isRewardValid() {
-        return rewardValidityAssessment;
+        return rewardValid;
     }
 
-    public void setRewardValidityAssessment(boolean rewardValidityAssessment) {
-        this.rewardValidityAssessment = rewardValidityAssessment;
+    public void setRewardValid(boolean rewardValidityAssessment) {
+        this.rewardValid = rewardValidityAssessment;
     }
 }

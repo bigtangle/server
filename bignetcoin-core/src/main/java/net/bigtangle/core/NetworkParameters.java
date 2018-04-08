@@ -177,6 +177,11 @@ public abstract class NetworkParameters {
      */
     public static final int BIP16_ENFORCE_TIME = 1333238400;
 
+    // TODO change to higher values 
+    public static final int MILESTONE_UPPER_THRESHOLD = 75;
+    public static final int MILESTONE_LOWER_THRESHOLD = 50;
+    public static final int MAX_RATING_TIP_COUNT = 100;
+
     /**
      * The maximum number of coins to be generated
      */
