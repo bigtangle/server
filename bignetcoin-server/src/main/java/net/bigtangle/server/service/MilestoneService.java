@@ -54,7 +54,7 @@ public class MilestoneService {
 	@Autowired
 	private TransactionService transactionService;	
 	@Autowired
-	private BlockValidatorService validatorService;
+	private ValidatorService validatorService;
 
 	/**
 	 * Scheduled update function that updates the Tangle

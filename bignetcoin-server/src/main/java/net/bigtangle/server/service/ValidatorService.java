@@ -25,7 +25,7 @@ import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 
 @Service
-public class BlockValidatorService {
+public class ValidatorService {
 
 	@Autowired
 	private BlockService blockService;
