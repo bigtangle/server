@@ -6,8 +6,10 @@ package net.bigtangle.server.service;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.TreeSet;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -186,6 +188,19 @@ public class BlockService {
     }
 
 	/**
+	 * Returns all solid tips ordered by descending height
+	 * 
+	 * @return solid tips by ordered by descending height
+	 * @throws BlockStoreException
+	 */
+	public TreeSet<BlockEvaluation> getSolidTipsDescending() throws BlockStoreException {
+		List<BlockEvaluation> solidTips = getSolidTips();
+		TreeSet<BlockEvaluation> blocksByDescendingHeight = new TreeSet<BlockEvaluation>(Comparator.comparingLong(BlockEvaluation::getHeight).reversed());
+		blocksByDescendingHeight.addAll(solidTips);
+		return blocksByDescendingHeight;
+	}
+
+	/**
 	 * Recursively removes the specified block and its approvers from the collection
 	 * if this block is contained in the collection.
 	 * 
@@ -202,5 +217,49 @@ public class BlockService {
 		for (Sha256Hash approver : getSolidApproverBlockHashes(blockEvaluation.getBlockhash())) {
 			removeBlockAndApproversFrom(evaluations, getBlockEvaluation(approver));
 		}
+	}
+
+	/**
+	 * Recursively adds the specified block and its approvers to the collection if
+	 * the blocks are in the current milestone and not in the collection.
+	 * 
+	 * @param evaluations
+	 * @param evaluation
+	 * @throws BlockStoreException
+	 */
+	public void addMilestoneApproversTo(Collection<BlockEvaluation> evaluations, BlockEvaluation evaluation) throws BlockStoreException {
+		if (!evaluation.isMilestone() || evaluations.contains(evaluation))
+			return;
+
+		// Add this block and add all of its milestone approvers
+		evaluations.add(evaluation);
+		for (Sha256Hash approverHash : getSolidApproverBlockHashes(evaluation.getBlockhash())) {
+			addMilestoneApproversTo(evaluations, getBlockEvaluation(approverHash));
+		}
+	}
+
+	/**
+	 * Recursively adds the specified block and its approved blocks to the collection if
+	 * the blocks are not in the current milestone and not in the collection.
+	 * 
+	 * @param evaluations
+	 * @param milestoneEvaluation
+	 * @throws BlockStoreException
+	 */
+	public void addApprovedNonMilestoneBlocksTo(Collection<BlockEvaluation> evaluations, BlockEvaluation evaluation) throws BlockStoreException {
+		if (evaluation.isMilestone() || evaluations.contains(evaluation))
+			return;
+
+		// Add this block and add all of its approved non-milestone blocks
+		evaluations.add(evaluation);
+		
+		Block block = getBlock(evaluation.getBlockhash());
+		BlockEvaluation prevBlockEvaluation = getBlockEvaluation(block.getPrevBlockHash());
+		BlockEvaluation prevBranchBlockEvaluation = getBlockEvaluation(block.getPrevBranchBlockHash());
+		
+		if (prevBlockEvaluation != null)
+			addApprovedNonMilestoneBlocksTo(evaluations, prevBlockEvaluation);
+		if (prevBranchBlockEvaluation != null)
+			addApprovedNonMilestoneBlocksTo(evaluations, prevBranchBlockEvaluation);
 	}
 }

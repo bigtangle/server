@@ -6,10 +6,13 @@ package net.bigtangle.server.service;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -18,9 +21,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.google.common.base.Stopwatch;
+
+import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.store.FullPrunedBlockStore;
 
 @Service
@@ -33,15 +40,23 @@ public class TipsService {
 	private BlockService blockService;
 	@Autowired
 	protected NetworkParameters networkParameters;
+	@Autowired
+	private ValidatorService validatorService;
 	
 	public List<Sha256Hash> getRatingTips(int count) throws Exception {
+		Stopwatch watch = Stopwatch.createStarted();		
 		SecureRandom seed = new SecureRandom();		
+		
 		List<Sha256Hash> entryPoints = getRatingUpdateEntryPoints(count, seed);
 		List<Sha256Hash> results = new ArrayList<>();
 		
 		for (Sha256Hash entryPoint : entryPoints) {
 			results.add(getMCMCResultBlock(entryPoint, seed));			
 		}
+		
+		watch.stop();
+		log.info("getRatingTips time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));		
+		
 		return results;
 	}
 	
@@ -51,7 +66,9 @@ public class TipsService {
 	}
 	
 	public List<Pair<Sha256Hash, Sha256Hash>> getValidatedBlockPairs(int count) throws Exception {
+		Stopwatch watch = Stopwatch.createStarted();		
 		SecureRandom seed = new SecureRandom();		
+		
 		List<Pair<Sha256Hash, TreeSet<BlockEvaluation>>> blocks = getValidatedBlocks(2 * count, seed);
 		List<Pair<Sha256Hash, Sha256Hash>> results = new ArrayList<>();
 		
@@ -65,21 +82,53 @@ public class TipsService {
 			results.add(Pair.of(b1.getLeft(), b2.getLeft()));
 		}
 		
+		watch.stop();
+		log.info("getValidatedBlockPairs time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));	
+		
 		return results;
 	}
-	
+
+	//Specifically, we check for milestone-candidate-conflicts + candidate-candidate-conflicts and reverse until there are no such conflicts
+	//Also returns all approved non-milestone blocks in topological ordering
 	private List<Pair<Sha256Hash, TreeSet<BlockEvaluation>>> getValidatedBlocks(int count, Random seed) throws Exception {
 		List<Pair<Sha256Hash, TreeSet<BlockEvaluation>>> results = new ArrayList<>();
 		List<Sha256Hash> entryPoints = getValidationEntryPoints(count, seed);
 
 		for (Sha256Hash entryPoint : entryPoints) {
-			BlockEvaluation blockEvaluation = blockService.getBlockEvaluation(entryPoint);
+			Sha256Hash selectedBlock = getMCMCResultBlock(entryPoint, seed);	
+			BlockEvaluation selectedBlockEvaluation = blockService.getBlockEvaluation(selectedBlock);
 			
-			//TODO validate dynamic validity here and if not, try to reverse until no conflicts
-			//Specifically, we check for milestone-candidate-conflicts + candidate-candidate-conflicts and reverse until there are no such conflicts
-			//Also returns all approved non-milestone blocks in topological ordering
-			// TODO for now just copy resolveundoableconflicts+co from milestoneservice, afterwards refactor 
-			results.add(Pair.of(entryPoint, null));
+			// TODO refactor and fix issues below, copy steps from milestoneservice
+			
+			// Get all non-milestone blocks that are to be approved by this selection
+			TreeSet<BlockEvaluation> approvedNonMilestoneBlockEvaluations = new TreeSet<>(Comparator.comparingLong((BlockEvaluation e) -> e.getHeight()).reversed());
+			blockService.addApprovedNonMilestoneBlocksTo(approvedNonMilestoneBlockEvaluations, selectedBlockEvaluation);
+
+			// Drop all approved blocks that cannot be added
+			validatorService.resolvePrunedConflicts(approvedNonMilestoneBlockEvaluations);
+			List<Block> approvedNonMilestoneBlocks = blockService.getBlocks(approvedNonMilestoneBlockEvaluations.stream().map(e -> e.getBlockhash()).collect(Collectors.toList()));
+			
+			HashSet<Pair<BlockEvaluation, TransactionOutPoint>> conflictingOutPoints = new HashSet<Pair<BlockEvaluation, TransactionOutPoint>>();
+			HashSet<BlockEvaluation> conflictingMilestoneBlocks = new HashSet<BlockEvaluation>();
+
+			// Find all conflicts between milestone and candidates 
+			validatorService.findMilestoneConflicts(approvedNonMilestoneBlocks, conflictingOutPoints, conflictingMilestoneBlocks);
+			validatorService.findCandidateConflicts(approvedNonMilestoneBlocks, conflictingOutPoints);
+
+			// Resolve all conflicts by grouping by UTXO ordered by descending rating
+			HashSet<BlockEvaluation> winningBlocks = validatorService.resolveConflictsByDescendingRating(conflictingOutPoints);
+			
+			// If the selected block is in conflict, 
+			if (!winningBlocks.contains(selectedBlockEvaluation)) {
+				approvedNonMilestoneBlockEvaluations.removeIf(e ->!winningBlocks.contains(e));
+				//quickfix
+				if (!approvedNonMilestoneBlockEvaluations.isEmpty())
+					selectedBlockEvaluation = approvedNonMilestoneBlockEvaluations.first();
+				
+				// TODO fix this by going backwards MCMC, also fixes first() == null
+			}
+			
+			results.add(Pair.of(selectedBlockEvaluation.getBlockhash(), approvedNonMilestoneBlockEvaluations));
 		}
 		
 		return results;
@@ -126,32 +175,6 @@ public class TipsService {
 		
 		return results;
 	}
-	
-//	Sha256Hash markovChainMonteCarlo(final Sha256Hash entryPoint, final Map<Sha256Hash, Long> cumulativeWeights,
-//			final int iterations, final Random seed) throws Exception {
-//
-//		// Perform MCMC tip selection iterations-times 
-//		Map<Sha256Hash, Integer> monteCarloIntegrations = new HashMap<>();
-//		for (int i = 0; i < iterations; i++) {
-//			Sha256Hash tail = randomWalk(entryPoint, cumulativeWeights, seed);
-//			if (monteCarloIntegrations.containsKey(tail)) {
-//				monteCarloIntegrations.put(tail, monteCarloIntegrations.get(tail) + 1);
-//			} else {
-//				monteCarloIntegrations.put(tail, 1);
-//			}
-//		}
-//
-//		// Randomly select one of the found tips weighted by their selection count
-//		int selectionRealization = seed.nextInt(iterations);
-//		for (Sha256Hash tip : monteCarloIntegrations.keySet()) {
-//			selectionRealization -= monteCarloIntegrations.get(tip);
-//			if (selectionRealization <= 0) {
-//				return tip;
-//			}
-//		}
-//
-//		throw new Exception("Tip selection algorithm failed.");
-//	}
 
 	Sha256Hash randomWalk(Sha256Hash tip, final Map<Sha256Hash, Long> cumulativeWeights, Random seed)
 			throws Exception {

@@ -43,10 +43,8 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
 	@Autowired
 	private BlockService blockService;
-
 	@Autowired
 	private MilestoneService milestoneService;
-
 	@Autowired
 	private NetworkParameters networkParameters;
 
@@ -217,7 +215,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		assertEquals(6, blockService.getBlockEvaluation(b8weight2.getHash()).getHeight());
 		assertEquals(6, blockService.getBlockEvaluation(b8weight3.getHash()).getHeight());
 		assertEquals(6, blockService.getBlockEvaluation(b8weight4.getHash()).getHeight());
-		
+
 		// Check depths (handmade tests)
 		assertEquals(6, blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash()).getDepth());
 		assertEquals(5, blockService.getBlockEvaluation(b1.getHash()).getDepth());
@@ -241,7 +239,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		assertEquals(0, blockService.getBlockEvaluation(b8weight2.getHash()).getDepth());
 		assertEquals(0, blockService.getBlockEvaluation(b8weight3.getHash()).getDepth());
 		assertEquals(0, blockService.getBlockEvaluation(b8weight4.getHash()).getDepth());
-		
+
 		// Check cumulative weights (handmade tests)
 		assertEquals(22, blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash()).getCumulativeWeight());
 		assertEquals(20, blockService.getBlockEvaluation(b1.getHash()).getCumulativeWeight());
@@ -265,7 +263,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		assertEquals(1, blockService.getBlockEvaluation(b8weight2.getHash()).getCumulativeWeight());
 		assertEquals(1, blockService.getBlockEvaluation(b8weight3.getHash()).getCumulativeWeight());
 		assertEquals(1, blockService.getBlockEvaluation(b8weight4.getHash()).getCumulativeWeight());
-		
+
 		// Check milestone depths (handmade tests)
 		assertEquals(5, blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash()).getMilestoneDepth());
 		assertEquals(4, blockService.getBlockEvaluation(b1.getHash()).getMilestoneDepth());
@@ -291,12 +289,14 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		assertEquals(0, blockService.getBlockEvaluation(b8weight4.getHash()).getMilestoneDepth());
 	}
 
-	// TODO test blocks without existing UTXO should not be added even if in milestonetoAdd
+	// TODO test blocks without existing UTXO should not be added even if in
+	// milestonetoAdd
 	// TODO (multiconflict test)
-	
+
 	// TODO after dynamic validity test dynamically invalid blocks
-	
-	// TODO after pruning test pruned conflicts should be handled correctly in all cases 
+
+	// TODO after pruning test pruned conflicts should be handled correctly in all
+	// cases
 
 	private Block createAndAddNextBlockCoinbase(Block b1, long bVersion, byte[] pubKey, Sha256Hash b2) throws VerificationException, PrunedException {
 		Block block = BlockForTest.createNextBlockWithCoinbase(b1, bVersion, pubKey, 0, b2);
