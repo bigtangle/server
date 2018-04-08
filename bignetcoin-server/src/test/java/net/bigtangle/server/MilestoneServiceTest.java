@@ -265,6 +265,30 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		assertEquals(1, blockService.getBlockEvaluation(b8weight2.getHash()).getCumulativeWeight());
 		assertEquals(1, blockService.getBlockEvaluation(b8weight3.getHash()).getCumulativeWeight());
 		assertEquals(1, blockService.getBlockEvaluation(b8weight4.getHash()).getCumulativeWeight());
+		
+		// Check milestone depths (handmade tests)
+		assertEquals(5, blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash()).getMilestoneDepth());
+		assertEquals(4, blockService.getBlockEvaluation(b1.getHash()).getMilestoneDepth());
+		assertEquals(4, blockService.getBlockEvaluation(b2.getHash()).getMilestoneDepth());
+		assertEquals(3, blockService.getBlockEvaluation(b3.getHash()).getMilestoneDepth());
+		assertEquals(0, blockService.getBlockEvaluation(b5.getHash()).getMilestoneDepth());
+		assertEquals(0, blockService.getBlockEvaluation(b5link.getHash()).getMilestoneDepth());
+		assertEquals(2, blockService.getBlockEvaluation(b6.getHash()).getMilestoneDepth());
+		assertEquals(2, blockService.getBlockEvaluation(b7.getHash()).getMilestoneDepth());
+		assertEquals(1, blockService.getBlockEvaluation(b8.getHash()).getMilestoneDepth());
+		assertEquals(0, blockService.getBlockEvaluation(b8link.getHash()).getMilestoneDepth());
+		assertEquals(0, blockService.getBlockEvaluation(b9.getHash()).getMilestoneDepth());
+		assertEquals(0, blockService.getBlockEvaluation(b10.getHash()).getMilestoneDepth());
+		assertEquals(0, blockService.getBlockEvaluation(b11.getHash()).getMilestoneDepth());
+		assertEquals(0, blockService.getBlockEvaluation(b12.getHash()).getMilestoneDepth());
+		assertEquals(0, blockService.getBlockEvaluation(b13.getHash()).getMilestoneDepth());
+		assertEquals(0, blockService.getBlockEvaluation(b14.getHash()).getMilestoneDepth());
+		assertEquals(0, blockService.getBlockEvaluation(bOrphan1.getHash()).getMilestoneDepth());
+		assertEquals(0, blockService.getBlockEvaluation(bOrphan5.getHash()).getMilestoneDepth());
+		assertEquals(0, blockService.getBlockEvaluation(b8weight1.getHash()).getMilestoneDepth());
+		assertEquals(0, blockService.getBlockEvaluation(b8weight2.getHash()).getMilestoneDepth());
+		assertEquals(0, blockService.getBlockEvaluation(b8weight3.getHash()).getMilestoneDepth());
+		assertEquals(0, blockService.getBlockEvaluation(b8weight4.getHash()).getMilestoneDepth());
 	}
 
 	// TODO test blocks without existing UTXO should not be added even if in milestonetoAdd

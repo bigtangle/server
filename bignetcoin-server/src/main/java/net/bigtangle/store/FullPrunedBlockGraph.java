@@ -731,21 +731,21 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
     
     @Override
-    protected void maybeSetSolidityAndHeight(StoredBlock newStoredBlock, StoredBlock storedPrev, StoredBlock storedPrevBranch) throws BlockStoreException {
-		Block block = newStoredBlock.getHeader();
-	
+    protected void maybeSetSolidityAndHeight(Block block) throws BlockStoreException {			
 		// Check previous blocks exist
 		BlockEvaluation prevBlockEvaluation = blockStore.getBlockEvaluation(block.getPrevBlockHash());
 		if (prevBlockEvaluation == null) {
 			// TODO broken graph, download the missing remote block needed
-			return;
 		} 
 	
 		BlockEvaluation prevBranchBlockEvaluation = blockStore.getBlockEvaluation(block.getPrevBranchBlockHash());
 		if (prevBranchBlockEvaluation == null) {
 			// TODO broken graph, download the missing remote block needed
-			return;
 		} 
+		
+		if (prevBlockEvaluation == null || prevBranchBlockEvaluation == null) {
+			return;
+		}
 	
 		// If both previous blocks are solid, our block should be solidified
 		if (prevBlockEvaluation.isSolid() && prevBranchBlockEvaluation.isSolid()) {
@@ -753,11 +753,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 		}
     }
 
-	private void solidifyBlock(Block block, BlockEvaluation prev, BlockEvaluation prevBranch) throws BlockStoreException {
-    	//TODO deduplicate following code (copied from tipsservice, milestoneservice)
+	public void solidifyBlock(Block block, BlockEvaluation prev, BlockEvaluation prevBranch) throws BlockStoreException {
 		blockStore.updateBlockEvaluationHeight(block.getHash(), Math.max(prev.getHeight() + 1, prevBranch.getHeight() + 1));
 		blockStore.updateBlockEvaluationSolid(block.getHash(), true);
-
+		
 		// Update tips table
 		blockStore.deleteTip(block.getPrevBlockHash());
 		blockStore.deleteTip(block.getPrevBranchBlockHash());

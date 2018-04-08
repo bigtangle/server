@@ -5,6 +5,7 @@
 package net.bigtangle.server.service;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
@@ -121,6 +122,11 @@ public class BlockService {
         store.updateBlockEvaluationDepth(blockEvaluation.getBlockhash(), i);
     }
 
+    public void updateMilestoneDepth(BlockEvaluation blockEvaluation, long i) throws BlockStoreException {
+        blockEvaluation.setMilestoneDepth(i);
+        store.updateBlockEvaluationMilestoneDepth(blockEvaluation.getBlockhash(), i);
+    }
+
     public void updateRating(BlockEvaluation blockEvaluation, long i) throws BlockStoreException {
         blockEvaluation.setRating(i);
         store.updateBlockEvaluationRating(blockEvaluation.getBlockhash(), i);
@@ -178,4 +184,23 @@ public class BlockService {
     public List<BlockEvaluation> getSolidBlockEvaluations() throws BlockStoreException {
         return store.getSolidBlockEvaluations();
     }
+
+	/**
+	 * Recursively removes the specified block and its approvers from the collection
+	 * if this block is contained in the collection.
+	 * 
+	 * @param evaluations
+	 * @param blockEvaluation
+	 * @throws BlockStoreException
+	 */
+	public void removeBlockAndApproversFrom(Collection<BlockEvaluation> evaluations, BlockEvaluation blockEvaluation) throws BlockStoreException {
+		if (!evaluations.contains(blockEvaluation))
+			return;
+
+		// Remove this block and remove its approvers
+		evaluations.remove(blockEvaluation);
+		for (Sha256Hash approver : getSolidApproverBlockHashes(blockEvaluation.getBlockhash())) {
+			removeBlockAndApproversFrom(evaluations, getBlockEvaluation(approver));
+		}
+	}
 }

@@ -1121,11 +1121,15 @@ public class Block extends Message {
 
         b.setPrevBlockHash(getHash());
         b.setPrevBranchBlockHash(prevBranchBlockHash);
+        
         // Don't let timestamp go backwards
         if (getTimeSeconds() >= time)
             b.setTime(getTimeSeconds() + 1);
         else
             b.setTime(time);
+        
+        // TODO Also don't let timestamp go backwards from prevbranchblockhash
+        
         b.solve();
         try {
             b.verifyHeader();

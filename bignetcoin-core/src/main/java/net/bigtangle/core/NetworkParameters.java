@@ -182,6 +182,11 @@ public abstract class NetworkParameters {
     public static final int MILESTONE_LOWER_THRESHOLD = 50;
     public static final int MAX_RATING_TIP_COUNT = 100;
 
+    public static final long ENTRYPOINT_RATING_LOWER_DEPTH_CUTOFF = 0;
+    public static final long ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF = 100;
+
+    public static final long ENTRYPOINT_VALIDATION_DEPTH_CUTOFF = 20;
+
     /**
      * The maximum number of coins to be generated
      */

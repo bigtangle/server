@@ -44,7 +44,7 @@ import net.bigtangle.core.UTXOProviderException;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.service.BlockService;
-import net.bigtangle.server.service.BlockValidator;
+import net.bigtangle.server.service.ValidatorService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -286,6 +286,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	private static final String SELECT_NONSOLID_BLOCKS_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation WHERE solid = 0";
 	private static final String SELECT_BLOCKS_TO_ADD_TO_MILESTONE_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation WHERE solid = 1 AND milestone = 0 AND rating >= "
 			+ NetworkParameters.MILESTONE_UPPER_THRESHOLD + " AND depth >= ?";
+	private static final String SELECT_BLOCKS_IN_MILESTONEDEPTH_INTERVAL_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation WHERE milestone = 1 AND milestonedepth >= ? AND milestonedepth <= ?";
 	private static final String SELECT_BLOCKS_TO_REMOVE_FROM_MILESTONE_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation WHERE solid = 1 AND milestone = 1 AND rating <= "
 			+ NetworkParameters.MILESTONE_LOWER_THRESHOLD;
 	private static final String SELECT_SOLID_TIPS_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation INNER JOIN tips ON tips.hash=blockevaluation.blockhash WHERE solid = 1";
@@ -313,7 +314,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	protected String schemaName;
 
 	@Autowired
-	private BlockValidator blockValidator;
+	private ValidatorService blockValidator;
 
 	public ThreadLocal<Connection> getConnection() {
 		return this.conn;
@@ -1780,8 +1781,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 			ResultSet resultSet = preparedStatement.executeQuery();
 			while (resultSet.next()) {
 				BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)), resultSet.getLong(2), resultSet.getLong(3),
-						resultSet.getLong(4), resultSet.getBoolean(5), resultSet.getLong(6), resultSet.getBoolean(7), resultSet.getLong(8), resultSet.getLong(9),
-						resultSet.getLong(10), resultSet.getBoolean(11), resultSet.getBoolean(12));
+						resultSet.getLong(4), resultSet.getBoolean(5), resultSet.getLong(6), resultSet.getBoolean(7), resultSet.getLong(8),
+						resultSet.getLong(9), resultSet.getLong(10), resultSet.getBoolean(11), resultSet.getBoolean(12));
 				result.add(blockEvaluation);
 			}
 			return result;
@@ -1807,8 +1808,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 			ResultSet resultSet = preparedStatement.executeQuery();
 			while (resultSet.next()) {
 				BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)), resultSet.getLong(2), resultSet.getLong(3),
-						resultSet.getLong(4), resultSet.getBoolean(5), resultSet.getLong(6), resultSet.getBoolean(7), resultSet.getLong(8), resultSet.getLong(9),
-						resultSet.getLong(10), resultSet.getBoolean(11), resultSet.getBoolean(12));
+						resultSet.getLong(4), resultSet.getBoolean(5), resultSet.getLong(6), resultSet.getBoolean(7), resultSet.getLong(8),
+						resultSet.getLong(9), resultSet.getLong(10), resultSet.getBoolean(11), resultSet.getBoolean(12));
 				result.add(blockEvaluation);
 			}
 			return result;
@@ -1836,8 +1837,38 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 			ResultSet resultSet = preparedStatement.executeQuery();
 			while (resultSet.next()) {
 				BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)), resultSet.getLong(2), resultSet.getLong(3),
-						resultSet.getLong(4), resultSet.getBoolean(5), resultSet.getLong(6), resultSet.getBoolean(7), resultSet.getLong(8), resultSet.getLong(9),
-						resultSet.getLong(10), resultSet.getBoolean(11), resultSet.getBoolean(12));
+						resultSet.getLong(4), resultSet.getBoolean(5), resultSet.getLong(6), resultSet.getBoolean(7), resultSet.getLong(8),
+						resultSet.getLong(9), resultSet.getLong(10), resultSet.getBoolean(11), resultSet.getBoolean(12));
+				storedBlockHashes.add(blockEvaluation);
+			}
+			return storedBlockHashes;
+		} catch (SQLException ex) {
+			throw new BlockStoreException(ex);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					throw new BlockStoreException("Failed to close PreparedStatement");
+				}
+			}
+		}
+	}
+
+	@Override
+	public List<BlockEvaluation> getBlocksInMilestoneDepthInterval(long minDepth, long maxDepth) throws BlockStoreException {
+		List<BlockEvaluation> storedBlockHashes = new ArrayList<BlockEvaluation>();
+		maybeConnect();
+		PreparedStatement preparedStatement = null;
+		try {
+			preparedStatement = conn.get().prepareStatement(SELECT_BLOCKS_IN_MILESTONEDEPTH_INTERVAL_SQL);
+			preparedStatement.setLong(1, minDepth);
+			preparedStatement.setLong(2, maxDepth);
+			ResultSet resultSet = preparedStatement.executeQuery();
+			while (resultSet.next()) {
+				BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)), resultSet.getLong(2), resultSet.getLong(3),
+						resultSet.getLong(4), resultSet.getBoolean(5), resultSet.getLong(6), resultSet.getBoolean(7), resultSet.getLong(8),
+						resultSet.getLong(9), resultSet.getLong(10), resultSet.getBoolean(11), resultSet.getBoolean(12));
 				storedBlockHashes.add(blockEvaluation);
 			}
 			return storedBlockHashes;
@@ -1864,8 +1895,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 			ResultSet resultSet = preparedStatement.executeQuery();
 			while (resultSet.next()) {
 				BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)), resultSet.getLong(2), resultSet.getLong(3),
-						resultSet.getLong(4), resultSet.getBoolean(5), resultSet.getLong(6), resultSet.getBoolean(7), resultSet.getLong(8), resultSet.getLong(9),
-						resultSet.getLong(10), resultSet.getBoolean(11), resultSet.getBoolean(12));
+						resultSet.getLong(4), resultSet.getBoolean(5), resultSet.getLong(6), resultSet.getBoolean(7), resultSet.getLong(8),
+						resultSet.getLong(9), resultSet.getLong(10), resultSet.getBoolean(11), resultSet.getBoolean(12));
 				storedBlockHashes.add(blockEvaluation);
 			}
 			return storedBlockHashes;
@@ -1892,8 +1923,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 			ResultSet resultSet = preparedStatement.executeQuery();
 			while (resultSet.next()) {
 				BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)), resultSet.getLong(2), resultSet.getLong(3),
-						resultSet.getLong(4), resultSet.getBoolean(5), resultSet.getLong(6), resultSet.getBoolean(7), resultSet.getLong(8), resultSet.getLong(9),
-						resultSet.getLong(10), resultSet.getBoolean(11), resultSet.getBoolean(12));
+						resultSet.getLong(4), resultSet.getBoolean(5), resultSet.getLong(6), resultSet.getBoolean(7), resultSet.getLong(8),
+						resultSet.getLong(9), resultSet.getLong(10), resultSet.getBoolean(11), resultSet.getBoolean(12));
 				storedBlockHashes.add(blockEvaluation);
 			}
 			return storedBlockHashes;
@@ -1921,8 +1952,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 			ResultSet resultSet = preparedStatement.executeQuery();
 			while (resultSet.next()) {
 				BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)), resultSet.getLong(2), resultSet.getLong(3),
-						resultSet.getLong(4), resultSet.getBoolean(5), resultSet.getLong(6), resultSet.getBoolean(7), resultSet.getLong(8), resultSet.getLong(9),
-						resultSet.getLong(10), resultSet.getBoolean(11), resultSet.getBoolean(12));
+						resultSet.getLong(4), resultSet.getBoolean(5), resultSet.getLong(6), resultSet.getBoolean(7), resultSet.getLong(8),
+						resultSet.getLong(9), resultSet.getLong(10), resultSet.getBoolean(11), resultSet.getBoolean(12));
 				storedBlockHashes.add(blockEvaluation);
 			}
 			return storedBlockHashes;
