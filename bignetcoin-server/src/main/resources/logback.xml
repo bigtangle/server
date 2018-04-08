@@ -30,7 +30,7 @@
   
 	<root level="${LOGGING_LEVEL:-INFO}">
 		<appender-ref ref="stdout1" />
-		<appender-ref ref="File" />
+		<appender-ref ref="FILE" />
 	</root>
 
 	<logger name="net.bigtangle" level="${LOGGING_LEVEL_BIGTANGLE:-DEBUG}" />
