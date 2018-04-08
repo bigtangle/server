@@ -141,3 +141,23 @@ create block with coinbase transaction for each miner coin
  
 (each miner for own reward or for all miner reward ?)
  
+ 
+ Execute order
+ 
+http://web.archive.org/web/20110310171841/http://www.quantcup.org/home/spec
+ 
+ select all order for each token
+ 
+ calculate the price for execution: price= max volume of orders
+ max(buy limit) <  min(  sell limit)
+ 
+ example:
+ 	EURO Token
+ 		1) buy  5  limit  7
+ 		2)					sell 8 limit 6
+ 		3) buy  8  limit  7.1
+ 		4)					sell 10 limit 6.5	
+ 	execution price = 6.5 with volume= 8+5
+ 					remainder 			
+ 	
+ 	

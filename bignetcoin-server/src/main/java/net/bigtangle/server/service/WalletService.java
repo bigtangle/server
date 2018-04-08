@@ -42,9 +42,9 @@ public class WalletService {
                 false);
         for (TransactionOutput transactionOutput : transactionOutputs) {
             FreeStandingTransactionOutput freeStandingTransactionOutput = (FreeStandingTransactionOutput) transactionOutput;
-            if (!freeStandingTransactionOutput.getUTXO().isSpent()) {
-                outputs.add(freeStandingTransactionOutput.getUTXO());
-            }
+
+            outputs.add(freeStandingTransactionOutput.getUTXO());
+
         }
         Map<String, Coin> value = new HashMap<String, Coin>();
         for (TransactionOutput output : transactionOutputs) {
@@ -61,17 +61,7 @@ public class WalletService {
             tokens.add(entry.getValue());
         }
         return GetBalancesResponse.create(tokens, outputs);
-    }
-
-//    private void filter(List<TransactionOutput> candidates, byte[] tokenid) {
-//        for (Iterator<TransactionOutput> iterator = candidates.iterator(); iterator.hasNext();) {
-//            TransactionOutput transactionOutput = iterator.next();
-//            FreeStandingTransactionOutput freeStandingTransactionOutput = (FreeStandingTransactionOutput) transactionOutput;
-//            if (freeStandingTransactionOutput.getUTXO().getTokenid() != tokenid) {
-//                iterator.remove();
-//            }
-//        }
-//    }
+    } 
 
     public Wallet makeWallat(ECKey ecKey) {
         KeyChainGroup group = new KeyChainGroup(networkParameters);
@@ -93,39 +83,10 @@ public class WalletService {
         try {
             int chainHeight = 10;
             for (UTXO output : getStoredOutputsFromUTXOProvider(pubKeyHashs)) {
-                if (output.isSpent())
+                if (output.isSpent() || !output.isConfirmed())
                     continue;
-                boolean coinbase = output.isCoinbase();
-                long depth = chainHeight - output.getHeight() + 1;
-                // Do not try and spend coinbases that were mined too recently,
-                // the protocol forbids it.
-                if (!excludeImmatureCoinbases || !coinbase || depth >= networkParameters.getSpendableCoinbaseDepth()) {
-                    candidates.add(new FreeStandingTransactionOutput(networkParameters, output, chainHeight));
-                    // System.out.println(output.getHeight());
-                }
-            }
-        } catch (UTXOProviderException e) {
-            throw new RuntimeException("UTXO provider error", e);
-        }
-        return candidates;
-    }
-    
-    public LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(List<byte[]> pubKeyHashs, byte[] tokenid,
-            boolean excludeImmatureCoinbases) {
-        LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
-        try {
-            int chainHeight = 10;
-            for (UTXO output : getStoredOutputsFromUTXOProvider(pubKeyHashs, tokenid)) {
-                if (output.isSpent())
-                    continue;
-                boolean coinbase = output.isCoinbase();
-                long depth = chainHeight - output.getHeight() + 1;
-                // Do not try and spend coinbases that were mined too recently,
-                // the protocol forbids it.
-                if (!excludeImmatureCoinbases || !coinbase || depth >= networkParameters.getSpendableCoinbaseDepth()) {
-                    candidates.add(new FreeStandingTransactionOutput(networkParameters, output, chainHeight));
-                    // System.out.println(output.getHeight());
-                }
+                candidates.add(new FreeStandingTransactionOutput(networkParameters, output, chainHeight));
+
             }
         } catch (UTXOProviderException e) {
             throw new RuntimeException("UTXO provider error", e);
@@ -133,7 +94,26 @@ public class WalletService {
         return candidates;
     }
 
-    private List<UTXO> getStoredOutputsFromUTXOProvider(List<byte[]> pubKeyHashs, byte[] tokenid) throws UTXOProviderException {
+    public LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(List<byte[]> pubKeyHashs,
+            byte[] tokenid, boolean excludeImmatureCoinbases) {
+        LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
+        try {
+            int chainHeight = 10;
+            for (UTXO output : getStoredOutputsFromUTXOProvider(pubKeyHashs, tokenid)) {
+                if (output.isSpent() || !output.isConfirmed())
+                    continue;
+                candidates.add(new FreeStandingTransactionOutput(networkParameters, output, chainHeight));
+            }
+        } catch (
+
+        UTXOProviderException e) {
+            throw new RuntimeException("UTXO provider error", e);
+        }
+        return candidates;
+    }
+
+    private List<UTXO> getStoredOutputsFromUTXOProvider(List<byte[]> pubKeyHashs, byte[] tokenid)
+            throws UTXOProviderException {
         List<Address> addresses = new ArrayList<Address>();
         for (byte[] key : pubKeyHashs) {
             Address address = new Address(networkParameters, key);
@@ -167,10 +147,10 @@ public class WalletService {
     public AbstractResponse getAccountOutputsWithToken(byte[] pubKey, byte[] tokenid) {
         List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
         pubKeyHashs.add(pubKey);
-        
+
         List<UTXO> outputs = new ArrayList<UTXO>();
         List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs,
-                false);
+                tokenid, false);
         for (TransactionOutput transactionOutput : transactionOutputs) {
             FreeStandingTransactionOutput freeStandingTransactionOutput = (FreeStandingTransactionOutput) transactionOutput;
             outputs.add(freeStandingTransactionOutput.getUTXO());
