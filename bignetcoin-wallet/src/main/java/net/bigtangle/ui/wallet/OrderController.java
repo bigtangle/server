@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.ui.wallet;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -72,9 +73,10 @@ public class OrderController {
         statusChoiceBox.setItems(statusData);
     }
 
-    @SuppressWarnings("deprecation")
     public void buy(ActionEvent event) throws Exception {
-
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String validdateFrom = df.format(validdateFromDatePicker.getValue());
+        String validdateTo = df.format(validdateToDatePicker.getValue());
     }
 
     public void closeUI(ActionEvent event) {
