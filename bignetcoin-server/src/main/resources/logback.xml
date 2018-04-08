@@ -7,27 +7,26 @@
 		</encoder>
 	</appender>
 
-	 <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>logs\logFile.html</file>
-    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <!-- daily rollover -->
-      <fileNamePattern>logs\logFile.%d{yyyy-MM-dd}.%i.html</fileNamePattern>
-      <timeBasedFileNamingAndTriggeringPolicy
-          class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-          <!-- or whenever the file size reaches 50MB -->
-        <maxFileSize>50MB</maxFileSize>
-      </timeBasedFileNamingAndTriggeringPolicy>
-      <!-- keep 30 days' worth of history -->
-      <maxHistory>30</maxHistory>
-    </rollingPolicy>
-    <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-      <charset>UTF-8</charset>
-      <layout class="ch.qos.logback.classic.html.HTMLLayout">
-        <pattern>%d{HH:mm:ss.SSS}%thread%level%logger%line%msg</pattern>
-      </layout>         
-    </encoder>
-  </appender> 
-  
+	<appender name="FILE"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>logs/server.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<!-- daily rollover -->
+			<fileNamePattern>logs/server.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+			<timeBasedFileNamingAndTriggeringPolicy
+				class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+				<!-- or whenever the file size reaches 50MB -->
+				<maxFileSize>50MB</maxFileSize>
+			</timeBasedFileNamingAndTriggeringPolicy>
+			<!-- keep 30 days' worth of history -->
+			<maxHistory>30</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<Pattern>"%date{yyyy-MM-dd'T'HH:mm:ss.SSSZ, Europe/Berlin}" [%thread]
+				%-5level [%logger{42}:%line] - message: "%msg"%n</Pattern>
+		</encoder>
+	</appender>
+
 	<root level="${LOGGING_LEVEL:-INFO}">
 		<appender-ref ref="stdout1" />
 		<appender-ref ref="FILE" />

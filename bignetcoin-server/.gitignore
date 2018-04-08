@@ -17,3 +17,4 @@ src/main/ixi/
 /test-leveldb/
 /doublespend.wallet
 /bignetcoin.wallet
+/logs/
