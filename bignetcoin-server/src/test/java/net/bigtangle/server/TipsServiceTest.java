@@ -131,7 +131,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
     @Test
     public void getBlockToApprove() throws Exception {
         for (int i = 1; i < 20; i++) {
-        	Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsManager.getValidatedBlockPairToApprove();
+        	Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsManager.getValidatedBlockPair();
             Block r1 = blockService.getBlock(tipsToApprove.getLeft());
             Block r2 = blockService.getBlock(tipsToApprove.getRight());
            log.debug("b0Sha256Hash : " + r1.toString());
@@ -146,7 +146,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         int height = 1;
 
         for (int i = 1; i < 20; i++) {
-        	Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsManager.getValidatedBlockPairToApprove();
+        	Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsManager.getValidatedBlockPair();
             Block r1 = blockService.getBlock(tipsToApprove.getLeft());
             Block r2 = blockService.getBlock(tipsToApprove.getRight());
             Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(r2, Block.BLOCK_VERSION_GENESIS,

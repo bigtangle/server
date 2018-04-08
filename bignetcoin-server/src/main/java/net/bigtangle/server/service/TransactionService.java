@@ -57,7 +57,7 @@ public class TransactionService {
     protected NetworkParameters networkParameters;
     
     public ByteBuffer askTransaction() throws Exception {
-    	Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPairToApprove();
+    	Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
         Block r2 = blockService.getBlock(tipsToApprove.getRight());
 
@@ -102,7 +102,7 @@ public class TransactionService {
     }
 
     public Block createGenesisBlock(Coin coin, byte[] tokenid, byte[] pubKey, boolean blocktype) throws Exception {
-    	Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPairToApprove();
+    	Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
         Block r2 = blockService.getBlock(tipsToApprove.getRight());
         long blocktype0 = blocktype ? NetworkParameters.BLOCKTYPE_GENESIS : NetworkParameters.BLOCKTYPE_GENESIS_MULTIPLE;

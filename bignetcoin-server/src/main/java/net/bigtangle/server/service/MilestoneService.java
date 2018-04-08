@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -49,6 +50,9 @@ public class MilestoneService {
 	private static final int WARNING_MILESTONE_UPDATE_LOOPS = 20;
 
 	@Autowired
+	protected BlockGraphService blockGraphService;
+
+	@Autowired
 	protected FullPrunedBlockStore store;
 
 	@Autowired
@@ -67,7 +71,6 @@ public class MilestoneService {
 	 */
 	public void update() throws Exception {
 		// TODO test pruning here for now
-		
 		
 		log.info("Milestone Update started");
 		Stopwatch watch = Stopwatch.createStarted();
@@ -142,19 +145,12 @@ public class MilestoneService {
 
 		// If both previous blocks are solid, our block should be solidified
 		if (prevBlockSolid && prevBranchBlockSolid) {
-			solidifyBlock(blockEvaluation, block);
+			prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
+			prevBranchBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
+			blockGraphService.solidifyBlock(block, prevBlockEvaluation, prevBranchBlockEvaluation);
 			return true;
 		} 
 		return false;
-	}
-
-	// TODO deduplicate code (copy in fullprunedblock...)
-	private void solidifyBlock(BlockEvaluation blockEvaluation, Block block) throws BlockStoreException {
-		BlockEvaluation prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
-		BlockEvaluation prevBranchBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
-		blockService.updateHeight(blockEvaluation, Math.max(prevBlockEvaluation.getHeight() + 1, prevBranchBlockEvaluation.getHeight() + 1));
-		blockService.updateSolid(blockEvaluation, true);
-		tipsService.addTip(blockEvaluation.getBlockhash());
 	}
 
 	/**
@@ -234,21 +230,22 @@ public class MilestoneService {
 	 */
 	public void updateRating() throws Exception {
 		// Select #tipCount solid tips via MCMC
-		HashMap<BlockEvaluation, HashSet<EvaluationWrapper>> selectedTips = new HashMap<BlockEvaluation, HashSet<EvaluationWrapper>>(NetworkParameters.MAX_RATING_TIP_COUNT);
-		for (int i = 0; i < NetworkParameters.MAX_RATING_TIP_COUNT; i++) {
-			BlockEvaluation selectedTip = blockService.getBlockEvaluation(tipsService.getRatingTip());
-			HashSet<EvaluationWrapper> result;
+		HashMap<BlockEvaluation, HashSet<UUID>> selectedTips = new HashMap<BlockEvaluation, HashSet<UUID>>(NetworkParameters.MAX_RATING_TIP_COUNT);
+		List<Sha256Hash> selectedTipHashes = tipsService.getRatingTips(NetworkParameters.MAX_RATING_TIP_COUNT);
+		for (Sha256Hash selectedTipHash : selectedTipHashes) {
+			BlockEvaluation selectedTip = blockService.getBlockEvaluation(selectedTipHash);
+			HashSet<UUID> result;
 			if (selectedTips.containsKey(selectedTip))  
 				result = selectedTips.get(selectedTip);
 			else 
 				result = new HashSet<>();
-			result.add(new EvaluationWrapper(selectedTip));
+			result.add(UUID.randomUUID());
 			selectedTips.put(selectedTip, result);
 		}
 		
 		// Begin from the highest solid height tips and go backwards from there
 		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = getSolidTipsDescending();
-		HashMap<Sha256Hash, HashSet<EvaluationWrapper>> approverHashSets = new HashMap<>();
+		HashMap<Sha256Hash, HashSet<UUID>> approverHashSets = new HashMap<>();
 		for (BlockEvaluation tip : blockService.getSolidTips()) {
 			approverHashSets.put(tip.getBlockhash(), new HashSet<>());
 		}
@@ -260,7 +257,7 @@ public class MilestoneService {
 				continue;
 			
 			// Add your own hashes as reference if current block is one of the selected tips
-			HashSet<EvaluationWrapper> approverHashes = approverHashSets.get(currentBlock.getBlockhash());
+			HashSet<UUID> approverHashes = approverHashSets.get(currentBlock.getBlockhash());
 			if (selectedTips.containsKey(currentBlock)) {
 				approverHashes.addAll(selectedTips.get(currentBlock));
 			}
@@ -621,14 +618,5 @@ public class MilestoneService {
 				Comparator.comparingLong(BlockEvaluation::getHeight).reversed());
 		blocksByDescendingHeight.addAll(solidTips);
 		return blocksByDescendingHeight;
-	}
-
-	// TODO useless, drop this
-	private class EvaluationWrapper {
-		public BlockEvaluation blockEvaluation;
-
-		public EvaluationWrapper(BlockEvaluation blockEvaluation) {
-			this.blockEvaluation = blockEvaluation;
-		}
 	}
 }

@@ -492,7 +492,7 @@ public abstract class AbstractBlockGraph {
 //            StoredBlock newStoredBlock = addToBlockStore(storedPrev,storedPrevBranch,
 //                    block.transactions == null ? block : block.cloneAsHeader(), txOutChanges);
         StoredBlock newStoredBlock = addToBlockStore(storedPrev,storedPrevBranch, block, txOutChanges);
-        maybeSetSolidityAndHeight(newStoredBlock, storedPrev, storedPrevBranch);
+        maybeSetSolidityAndHeight(newStoredBlock.getHeader());
         
         versionTally.add(block.getVersion());
         setChainHead(newStoredBlock);
@@ -540,7 +540,7 @@ public abstract class AbstractBlockGraph {
 //        }
     }
     
-    protected abstract void maybeSetSolidityAndHeight(StoredBlock newStoredBlock, StoredBlock storedPrev, StoredBlock storedPrevBranch) throws BlockStoreException;
+    protected abstract void maybeSetSolidityAndHeight(Block block) throws BlockStoreException;
 
 	/**
      * Disconnect each transaction in the block (after reading it from the block store)

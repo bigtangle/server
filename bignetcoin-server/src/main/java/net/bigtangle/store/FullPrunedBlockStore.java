@@ -213,6 +213,9 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
 	public HashSet<BlockEvaluation> getBlocksToAddToMilestone(long minDepth) throws BlockStoreException;
 
+	public List<BlockEvaluation> getBlocksInMilestoneDepthInterval(long minDepth, long maxDepth) throws BlockStoreException;
+	
+
 	public void updateBlockEvaluationSolid(Sha256Hash blockhash, boolean b) throws BlockStoreException;
 
 	public void updateBlockEvaluationHeight(Sha256Hash blockhash, long i) throws BlockStoreException;
