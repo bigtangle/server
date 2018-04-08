@@ -70,7 +70,7 @@ public class TipsService {
 		//Also returns all approved non-milestone blocks in topological ordering
 		// TODO for now just copy resolveundoableconflicts+co from milestoneservice, afterwards refactor 
 		
-		return null;
+		return Pair.of(blockHash, null);
 	}
 
 	private Sha256Hash getMCMCSelectedBlock(Sha256Hash entryPoint, SecureRandom seed) throws Exception {
