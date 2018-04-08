@@ -44,7 +44,7 @@ import net.bigtangle.core.UTXOProviderException;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.service.BlockService;
-import net.bigtangle.server.service.BlockValidator;
+import net.bigtangle.server.service.BlockValidatorService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -314,7 +314,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	protected String schemaName;
 
 	@Autowired
-	private BlockValidator blockValidator;
+	private BlockValidatorService blockValidator;
 
 	public ThreadLocal<Connection> getConnection() {
 		return this.conn;
