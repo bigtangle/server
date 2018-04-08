@@ -84,7 +84,7 @@ public class MainController {
     public TableColumn<UTXOModel, String> addressColumn;
 
     @FXML
-    public TextField IPAdress;
+    public TextField Server;
     @FXML
     public TextField IPPort;
 
@@ -265,7 +265,7 @@ public class MainController {
     public void connectServer(ActionEvent event) {
         Main.instance.getUtxoData().clear();
         Main.instance.getCoinData().clear();
-        Main.IpAddress = IPAdress.getText();
+        Main.IpAddress = Server.getText();
         Main.port = IPPort.getText();
         try {
             initTableView();

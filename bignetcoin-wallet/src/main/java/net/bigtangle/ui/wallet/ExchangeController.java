@@ -81,7 +81,8 @@ public class ExchangeController {
         List<Map<String, Object>> tokens = (List<Map<String, Object>>) data.get("tokens");
         for (Map<String, Object> map : tokens) {
             String tokenHex = (String) map.get("tokenHex");
-            tokenData.add(tokenHex);
+            String tokenname = (String) map.get("tokenname");
+            tokenData.add(tokenname+" : "+tokenHex);
         }
         toTokenHexComboBox.setItems(tokenData);
         fromTokenHexComboBox.setItems(tokenData);

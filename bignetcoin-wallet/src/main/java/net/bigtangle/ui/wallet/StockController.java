@@ -111,6 +111,7 @@ public class StockController {
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
 
             GuiUtils.informationalAlert("token publish is ok", "", "");
+            Main.instance.controller.initTableView();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
