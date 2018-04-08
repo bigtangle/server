@@ -18,7 +18,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cglib.core.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import com.google.common.base.Stopwatch;
@@ -152,7 +151,7 @@ public class MilestoneService {
 	 */
 	public void updateCumulativeWeightAndDepth() throws BlockStoreException {
 		// Begin from the highest solid height tips and go backwards from there
-		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = getSolidTipsDescending();
+		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = getSolidTipsDescendingAsPriorityQueue();
 		HashMap<Sha256Hash, HashSet<Sha256Hash>> approverHashSets = new HashMap<>();
 		HashMap<Sha256Hash, Long> depths = new HashMap<>();
 		HashMap<Sha256Hash, Long> milestoneDepths = new HashMap<>();
@@ -248,7 +247,7 @@ public class MilestoneService {
 		}
 		
 		// Begin from the highest solid height tips and go backwards from there
-		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = getSolidTipsDescending();
+		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = getSolidTipsDescendingAsPriorityQueue();
 		HashMap<Sha256Hash, HashSet<UUID>> approverHashSets = new HashMap<>();
 		for (BlockEvaluation tip : blockService.getSolidTips()) {
 			approverHashSets.put(tip.getBlockhash(), new HashSet<>());
@@ -432,10 +431,9 @@ public class MilestoneService {
 	 * @return solid tips by ordered by descending height
 	 * @throws BlockStoreException
 	 */
-	private PriorityQueue<BlockEvaluation> getSolidTipsDescending() throws BlockStoreException {
+	private PriorityQueue<BlockEvaluation> getSolidTipsDescendingAsPriorityQueue() throws BlockStoreException {
 		List<BlockEvaluation> solidTips = blockService.getSolidTips();
-		CollectionUtils.filter(solidTips, e -> ((BlockEvaluation) e).isSolid());
-		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = new PriorityQueue<BlockEvaluation>(solidTips.size() + 1,
+		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = new PriorityQueue<BlockEvaluation>(solidTips.size(),
 				Comparator.comparingLong(BlockEvaluation::getHeight).reversed());
 		blocksByDescendingHeight.addAll(solidTips);
 		return blocksByDescendingHeight;

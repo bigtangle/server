@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
-import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 
@@ -53,8 +52,8 @@ public class ValidatorService {
 		HashSet<BlockEvaluation> winningBlocksSingle = conflictingOutPoints.stream().map(p -> p.getLeft()).collect(Collectors.toCollection(HashSet::new));
 		HashSet<BlockEvaluation> winningBlocks = new HashSet<>();
 		for (BlockEvaluation winningBlock : winningBlocksSingle) {
-			addApprovedNonMilestoneBlocks(winningBlocks, winningBlock);
-			addMilestoneApprovers(winningBlocks, winningBlock);
+			blockService.addApprovedNonMilestoneBlocksTo(winningBlocks, winningBlock);
+			blockService.addMilestoneApproversTo(winningBlocks, winningBlock);
 		}
 
 		// Sort conflicts internally by descending rating, then cumulative weight
@@ -154,49 +153,5 @@ public class ValidatorService {
 			conflictingMilestoneBlocks.add(milestoneEvaluation);
 			//addMilestoneApprovers(conflictingMilestoneBlocks, milestoneEvaluation);
 		}
-	}
-
-	/**
-	 * Recursively adds the specified block and its approvers to the collection if
-	 * the blocks are in the current milestone.
-	 * 
-	 * @param evaluations
-	 * @param milestoneEvaluation
-	 * @throws BlockStoreException
-	 */
-	private void addMilestoneApprovers(HashSet<BlockEvaluation> evaluations, BlockEvaluation milestoneEvaluation) throws BlockStoreException {
-		if (!milestoneEvaluation.isMilestone())
-			return;
-
-		// Add this block and add all of its milestone approvers
-		evaluations.add(milestoneEvaluation);
-		for (Sha256Hash approverHash : blockService.getSolidApproverBlockHashes(milestoneEvaluation.getBlockhash())) {
-			addMilestoneApprovers(evaluations, blockService.getBlockEvaluation(approverHash));
-		}
-	}
-
-	/**
-	 * Recursively adds the specified block and its approved blocks to the collection if
-	 * the blocks are not in the current milestone.
-	 * 
-	 * @param evaluations
-	 * @param milestoneEvaluation
-	 * @throws BlockStoreException
-	 */
-	private void addApprovedNonMilestoneBlocks(HashSet<BlockEvaluation> evaluations, BlockEvaluation evaluation) throws BlockStoreException {
-		if (evaluation.isMilestone())
-			return;
-
-		// Add this block and add all of its approved non-milestone blocks
-		evaluations.add(evaluation);
-		
-		Block block = blockService.getBlock(evaluation.getBlockhash());
-		BlockEvaluation prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
-		BlockEvaluation prevBranchBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
-		
-		if (prevBlockEvaluation != null)
-			addApprovedNonMilestoneBlocks(evaluations, prevBlockEvaluation);
-		if (prevBranchBlockEvaluation != null)
-			addApprovedNonMilestoneBlocks(evaluations, prevBranchBlockEvaluation);
 	}
 }
