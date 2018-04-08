@@ -121,32 +121,32 @@ public class ExchangeController {
         ByteBuffer byteBuffer = ByteBuffer.wrap(buf);
         {
             byte[] dst = new byte[byteBuffer.getInt()];
-            byteBuffer.put(dst);
+            byteBuffer.get(dst);
             fromAddressComboBox.setValue(new String(dst));
         }
         {
             byte[] dst = new byte[byteBuffer.getInt()];
-            byteBuffer.put(dst);
+            byteBuffer.get(dst);
             fromTokenHexComboBox.setValue(new String(dst));
         }
         {
             byte[] dst = new byte[byteBuffer.getInt()];
-            byteBuffer.put(dst);
+            byteBuffer.get(dst);
             fromAmountTextField.setText(new String(dst));
         }
         {
             byte[] dst = new byte[byteBuffer.getInt()];
-            byteBuffer.put(dst);
+            byteBuffer.get(dst);
             toAddressComboBox.setValue(new String(dst));
         }
         {
             byte[] dst = new byte[byteBuffer.getInt()];
-            byteBuffer.put(dst);
+            byteBuffer.get(dst);
             toTokenHexComboBox.setValue(new String(dst));
         }
         {
             byte[] dst = new byte[byteBuffer.getInt()];
-            byteBuffer.put(dst);
+            byteBuffer.get(dst);
             toAmountTextField.setText(new String(dst));
         }
         byte[] data = new byte[byteBuffer.getInt()];
