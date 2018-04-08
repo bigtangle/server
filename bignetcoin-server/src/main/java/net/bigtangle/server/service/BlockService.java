@@ -121,6 +121,11 @@ public class BlockService {
         store.updateBlockEvaluationDepth(blockEvaluation.getBlockhash(), i);
     }
 
+    public void updateMilestoneDepth(BlockEvaluation blockEvaluation, long i) throws BlockStoreException {
+        blockEvaluation.setMilestoneDepth(i);
+        store.updateBlockEvaluationMilestoneDepth(blockEvaluation.getBlockhash(), i);
+    }
+
     public void updateRating(BlockEvaluation blockEvaluation, long i) throws BlockStoreException {
         blockEvaluation.setRating(i);
         store.updateBlockEvaluationRating(blockEvaluation.getBlockhash(), i);

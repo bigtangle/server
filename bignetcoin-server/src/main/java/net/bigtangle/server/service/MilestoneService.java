@@ -4,7 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
-import java.security.SecureRandom;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -12,7 +11,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
-import java.util.Random;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -160,13 +158,14 @@ public class MilestoneService {
 	 */
 	public void updateCumulativeWeightAndDepth() throws BlockStoreException {
 		// Begin from the highest solid height tips and go backwards from there
-		// TODO milestonedepth
 		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = getSolidTipsDescending();
 		HashMap<Sha256Hash, HashSet<Sha256Hash>> approverHashSets = new HashMap<>();
 		HashMap<Sha256Hash, Long> depths = new HashMap<>();
+		HashMap<Sha256Hash, Long> milestoneDepths = new HashMap<>();
 		for (BlockEvaluation tip : blocksByDescendingHeight) {
 			approverHashSets.put(tip.getBlockhash(), new HashSet<>());
 			depths.put(tip.getBlockhash(), 0L);
+			milestoneDepths.put(tip.getBlockhash(), 0L);
 		}
 
 		BlockEvaluation currentBlock = null;
@@ -179,6 +178,7 @@ public class MilestoneService {
 			HashSet<Sha256Hash> approverHashes = approverHashSets.get(currentBlock.getBlockhash());
 			approverHashes.add(currentBlock.getBlockhash());
 			long depth = depths.get(currentBlock.getBlockhash());
+			long milestoneDepth = milestoneDepths.get(currentBlock.getBlockhash());
 			
 			// Add all current references to both approved blocks (initialize if not yet initialized)
 			Block block = blockService.getBlock(currentBlock.getBlockhash());
@@ -189,6 +189,7 @@ public class MilestoneService {
 					blocksByDescendingHeight.add(prevBlockEvaluation);
 					approverHashSets.put(prevBlockEvaluation.getBlockhash(), new HashSet<>());
 					depths.put(prevBlockEvaluation.getBlockhash(), 0L);
+					milestoneDepths.put(prevBlockEvaluation.getBlockhash(), 0L);
 				}
 			}
 			
@@ -198,6 +199,7 @@ public class MilestoneService {
 					blocksByDescendingHeight.add(prevBranchBlockEvaluation);
 					approverHashSets.put(prevBranchBlockEvaluation.getBlockhash(), new HashSet<>());
 					depths.put(prevBranchBlockEvaluation.getBlockhash(), 0L);
+					milestoneDepths.put(prevBranchBlockEvaluation.getBlockhash(), 0L);
 				}
 			}
 			
@@ -206,6 +208,9 @@ public class MilestoneService {
 				if (depth + 1 > depths.get(block.getPrevBlockHash())) {
 					depths.put(block.getPrevBlockHash(), depth + 1);					
 				}
+				if (currentBlock.isMilestone() && milestoneDepth + 1 > milestoneDepths.get(block.getPrevBlockHash())) {
+					milestoneDepths.put(block.getPrevBlockHash(), milestoneDepth + 1);					
+				}
 			}
 			
 			if (approverHashSets.containsKey(block.getPrevBranchBlockHash())) {
@@ -213,13 +218,18 @@ public class MilestoneService {
 				if (depth + 1 > depths.get(block.getPrevBranchBlockHash())) {
 					depths.put(block.getPrevBranchBlockHash(), depth + 1);					
 				}
+				if (currentBlock.isMilestone() && milestoneDepth + 1 > milestoneDepths.get(block.getPrevBranchBlockHash())) {
+					milestoneDepths.put(block.getPrevBranchBlockHash(), milestoneDepth + 1);					
+				}
 			}
 
 			// Update and dereference
 			blockService.updateCumulativeWeight(currentBlock, approverHashes.size());
 			blockService.updateDepth(currentBlock, depth);
+			blockService.updateMilestoneDepth(currentBlock, milestoneDepth);
 			approverHashSets.remove(currentBlock.getBlockhash());
 			depths.remove(currentBlock.getBlockhash());
+			milestoneDepths.remove(currentBlock.getBlockhash());
 		}
 	}
 
