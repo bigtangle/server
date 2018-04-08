@@ -37,6 +37,7 @@ public class ValidatorService {
 		return true;
 	}
 
+	//TODO validate other dynamic validities too (TransactionOutPoint -> ConflictPoint)
 	/**
 	 * Resolve all conflicts by grouping by UTXO ordered by descending rating.
 	 * 
@@ -46,8 +47,6 @@ public class ValidatorService {
 	 * @return
 	 * @throws BlockStoreException
 	 */
-
-	//TODO validate other dynamic validities too (TransactionOutPoint -> ConflictPoint)
 	public HashSet<BlockEvaluation> resolveConflictsByDescendingRating(HashSet<Pair<BlockEvaluation, TransactionOutPoint>> conflictingOutPoints)
 			throws BlockStoreException {
 		// Initialize blocks that will survive the conflict resolution

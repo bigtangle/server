@@ -73,13 +73,15 @@ public class TipsService {
 		List<Sha256Hash> entryPoints = getValidationEntryPoints(count, seed);
 
 		for (Sha256Hash entryPoint : entryPoints) {
-			BlockEvaluation blockEvaluation = blockService.getBlockEvaluation(entryPoint);
+			Sha256Hash selectedBlock = getMCMCResultBlock(entryPoint, seed);	
+			BlockEvaluation blockEvaluation = blockService.getBlockEvaluation(selectedBlock);
 			
 			//TODO validate dynamic validity here and if not, try to reverse until no conflicts
 			//Specifically, we check for milestone-candidate-conflicts + candidate-candidate-conflicts and reverse until there are no such conflicts
 			//Also returns all approved non-milestone blocks in topological ordering
 			// TODO for now just copy resolveundoableconflicts+co from milestoneservice, afterwards refactor 
-			results.add(Pair.of(entryPoint, null));
+			
+			results.add(Pair.of(selectedBlock, null));
 		}
 		
 		return results;
