@@ -13,6 +13,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextField;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
@@ -28,6 +29,10 @@ public class OrderController {
     public ComboBox<String> tokenComboBox;
     @FXML
     public ChoiceBox<Object> statusChoiceBox;
+    @FXML
+    public DatePicker validdateFromDatePicker;
+    @FXML
+    public DatePicker validdateToDatePicker;
 
     public Main.OverlayUI overlayUI;
 
@@ -61,8 +66,8 @@ public class OrderController {
             addresses.add(key.toAddress(Main.params).toString());
         }
         addressComboBox.setItems(addresses);
-        
-        ObservableList<Object> statusData= FXCollections.observableArrayList("buy","sell");
+
+        ObservableList<Object> statusData = FXCollections.observableArrayList("buy", "sell");
         statusChoiceBox.setItems(statusData);
     }
 
