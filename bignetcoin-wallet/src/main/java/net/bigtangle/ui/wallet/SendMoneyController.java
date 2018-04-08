@@ -87,6 +87,10 @@ public class SendMoneyController {
     OkHttpClient client = new OkHttpClient();
 
     public void initChoicebox() {
+        basicRadioButton.setUserData("basic");
+        kiloRadioButton.setUserData("kilo");
+        milionRadioButton.setUserData("milion");
+        bilionRadioButton.setUserData("bilion");
         CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ObservableList<Object> tokenData = FXCollections.observableArrayList();
         ECKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
