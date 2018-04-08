@@ -38,7 +38,9 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleGroup;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
@@ -63,6 +65,17 @@ public class SendMoneyController {
     public TextField amountEdit;
     @FXML
     public Label btcLabel;
+    @FXML
+    public ToggleGroup unitToggleGroup;
+    @FXML
+    public RadioButton basicRadioButton;
+    @FXML
+    public RadioButton kiloRadioButton;
+    @FXML
+    public RadioButton milionRadioButton;
+    @FXML
+    public RadioButton bilionRadioButton;
+
     @FXML
     public ChoiceBox<Object> tokeninfo;
 
