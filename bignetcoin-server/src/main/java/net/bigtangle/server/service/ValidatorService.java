@@ -104,17 +104,18 @@ public class ValidatorService {
 		findCandidateConflicts(blocksToAdd, conflictingOutPoints);
 
 		// Resolve all conflicts by grouping by UTXO ordered by descending rating
-		HashSet<BlockEvaluation> winningBlocks = resolveConflictsByDescendingRating(conflictingOutPoints);
+		Pair<HashSet<BlockEvaluation>, HashSet<BlockEvaluation>> conflictResolution = resolveConflictsByDescendingRating(conflictingOutPoints);
+		HashSet<BlockEvaluation> losingBlocks = conflictResolution.getRight();
 
 		// For milestone blocks that have been eliminated call disconnect procedure
-		for (BlockEvaluation b : conflictingMilestoneBlocks.stream().filter(b -> !winningBlocks.contains(b)).collect(Collectors.toList())) {
+		for (BlockEvaluation b : conflictingMilestoneBlocks.stream().filter(b -> losingBlocks.contains(b)).collect(Collectors.toList())) {
 			blockService.disconnect(b);
 		}
 
 		// For candidates that have been eliminated (conflictingOutPoints in blocksToAdd
 		// \ winningBlocks) remove them from blocksToAdd
 		for (Pair<BlockEvaluation, TransactionOutPoint> b : conflictingOutPoints.stream()
-				.filter(b -> blockEvaluationsToAdd.contains(b.getLeft()) && !winningBlocks.contains(b.getLeft())).collect(Collectors.toList())) {
+				.filter(b -> blockEvaluationsToAdd.contains(b.getLeft()) && losingBlocks.contains(b.getLeft())).collect(Collectors.toList())) {
 			blockService.removeBlockAndApproversFrom(blockEvaluationsToAdd, b.getLeft());
 		}
 	}
@@ -129,7 +130,7 @@ public class ValidatorService {
 	 * @return
 	 * @throws BlockStoreException
 	 */
-	public HashSet<BlockEvaluation> resolveConflictsByDescendingRating(Collection<Pair<BlockEvaluation, TransactionOutPoint>> conflictingOutPoints)
+	public Pair<HashSet<BlockEvaluation>, HashSet<BlockEvaluation>> resolveConflictsByDescendingRating(Collection<Pair<BlockEvaluation, TransactionOutPoint>> conflictingOutPoints)
 			throws BlockStoreException {
 		// Initialize blocks that will survive the conflict resolution
 		HashSet<BlockEvaluation> winningBlocksSingle = conflictingOutPoints.stream().map(p -> p.getLeft()).collect(Collectors.toCollection(HashSet::new));
@@ -138,6 +139,7 @@ public class ValidatorService {
 			blockService.addApprovedNonMilestoneBlocksTo(winningBlocks, winningBlock);
 			blockService.addMilestoneApproversTo(winningBlocks, winningBlock);
 		}
+		HashSet<BlockEvaluation> losingBlocks = new HashSet<>(winningBlocks);
 
 		// Sort conflicts internally by descending rating, then cumulative weight
 		Comparator<Pair<BlockEvaluation, TransactionOutPoint>> byDescendingRating = Comparator
@@ -180,8 +182,10 @@ public class ValidatorService {
 				}
 			}
 		}
+		
+		losingBlocks.removeAll(winningBlocks);
 
-		return winningBlocks;
+		return Pair.of(winningBlocks, losingBlocks);
 	}
 
 	/**

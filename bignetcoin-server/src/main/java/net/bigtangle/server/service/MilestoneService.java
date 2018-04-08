@@ -11,10 +11,7 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,9 +24,6 @@ import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.TransactionInput;
-import net.bigtangle.core.TransactionOutPoint;
-import net.bigtangle.core.UTXO;
 import net.bigtangle.store.FullPrunedBlockStore;
 
 /*
@@ -50,8 +44,6 @@ public class MilestoneService {
 	private BlockService blockService;
 	@Autowired
 	private TipsService tipsService;
-	@Autowired
-	private TransactionService transactionService;	
 	@Autowired
 	private ValidatorService validatorService;
 
@@ -312,7 +304,6 @@ public class MilestoneService {
 			// Now try to find blocks that can be added to the milestone
 			HashSet<BlockEvaluation> blocksToAdd = blockService.getBlocksToAddToMilestone();
 
-			//TODO copy all of the following to tipservice
 			// Optional steps from later to lower computational cost
 			if (blocksToAdd.isEmpty())
 				break;
@@ -321,7 +312,7 @@ public class MilestoneService {
 			// Resolve conflicting UTXO spends that have been approved by the network
 			// (improbable to occur)
 			validatorService.resolvePrunedConflicts(blocksToAdd);
-			validatorService.resolveUndoableConflicts(blocksToAdd); //TODO refactor this to deduplicate (tipsservice resolve is different)
+			validatorService.resolveUndoableConflicts(blocksToAdd); 
 
 			// Remove blocks from blocksToAdd that have at least one transaction input with
 			// its corresponding output not found in the outputs table and remove their

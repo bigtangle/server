@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -75,11 +76,37 @@ public class TipsService {
 		for (int index = 0; index < count; index++) {
 			Pair<Sha256Hash, TreeSet<BlockEvaluation>> b1 = blocks.get(index);
 			Pair<Sha256Hash, TreeSet<BlockEvaluation>> b2 = blocks.get(count + index);
+			BlockEvaluation e1 = blockService.getBlockEvaluation(b1.getLeft());
+			BlockEvaluation e2 = blockService.getBlockEvaluation(b2.getLeft());
+			Sha256Hash selectedBlock1 = b1.getLeft();
+			Sha256Hash selectedBlock2 = b2.getLeft();
+
+			// TODO refactor and test, deduplicate (milestoneservice resolve is different)
+			// Get all blocks that are approved together
+			TreeSet<BlockEvaluation> approvedNonMilestoneBlockEvaluations = new TreeSet<>(b1.getRight());
+			approvedNonMilestoneBlockEvaluations.addAll(b2.getRight());
+			List<Block> approvedNonMilestoneBlocks = blockService.getBlocks(approvedNonMilestoneBlockEvaluations.stream().map(e -> e.getBlockhash()).collect(Collectors.toList()));
+			HashSet<Pair<BlockEvaluation, TransactionOutPoint>> conflictingOutPoints = new HashSet<Pair<BlockEvaluation, TransactionOutPoint>>();
+			HashSet<BlockEvaluation> conflictingMilestoneBlocks = new HashSet<BlockEvaluation>();
+
+			// Find all conflicts 
+			validatorService.findMilestoneConflicts(approvedNonMilestoneBlocks, conflictingOutPoints, conflictingMilestoneBlocks);
+			validatorService.findCandidateConflicts(approvedNonMilestoneBlocks, conflictingOutPoints);
+
+			// Resolve all conflicts by grouping by UTXO ordered by descending rating for most likely consensus
+			Pair<HashSet<BlockEvaluation>, HashSet<BlockEvaluation>> conflictResolution = validatorService.resolveConflictsByDescendingRating(conflictingOutPoints);
+			HashSet<BlockEvaluation> losingBlocks = conflictResolution.getRight();
+
+			// If the selected blocks are in conflict, walk backwards until we find a non-conflicting block
+			Set<Sha256Hash> losingBlockHashes = losingBlocks.stream().map(e -> e.getBlockhash()).collect(Collectors.toSet());
+			if (losingBlocks.contains(e1)) {
+				selectedBlock1 = walkBackwardsUntilNotContained(b1.getLeft(), seed, losingBlockHashes);
+			}
+			if (losingBlocks.contains(e2)) {
+				selectedBlock2 = walkBackwardsUntilNotContained(b2.getLeft(), seed, losingBlockHashes);
+			}
 			
-			//TODO validate dynamic validity here and if not, try to reverse until no conflicts
-			//Specifically, we only need to check for candidate-candidate conflicts in the union of both approved blocks and reverse the nearest one
-			// TODO for now just copy from milestoneservice, afterwards refactor maybe
-			results.add(Pair.of(b1.getLeft(), b2.getLeft()));
+			results.add(Pair.of(selectedBlock1, selectedBlock2));
 		}
 		
 		watch.stop();
@@ -98,37 +125,39 @@ public class TipsService {
 			Sha256Hash selectedBlock = getMCMCResultBlock(entryPoint, seed);	
 			BlockEvaluation selectedBlockEvaluation = blockService.getBlockEvaluation(selectedBlock);
 			
-			// TODO refactor and fix issues below, copy steps from milestoneservice
+			// TODO refactor and test, deduplicate (milestoneservice resolve is different)
 			
 			// Get all non-milestone blocks that are to be approved by this selection
-			TreeSet<BlockEvaluation> approvedNonMilestoneBlockEvaluations = new TreeSet<>(Comparator.comparingLong((BlockEvaluation e) -> e.getHeight()).reversed());
+			Comparator<BlockEvaluation> byDescendingHeightMultiple = Comparator.comparingLong((BlockEvaluation e) -> e.getHeight())
+					.thenComparing((BlockEvaluation e) -> e.getBlockhash()).reversed();
+			TreeSet<BlockEvaluation> approvedNonMilestoneBlockEvaluations = new TreeSet<>(byDescendingHeightMultiple);
 			blockService.addApprovedNonMilestoneBlocksTo(approvedNonMilestoneBlockEvaluations, selectedBlockEvaluation);
 
-			// Drop all approved blocks that cannot be added
+			// Drop all approved blocks that cannot be added due to current milestone
+			validatorService.removeWhereUTXONotFoundOrUnconfirmed(approvedNonMilestoneBlockEvaluations);
 			validatorService.resolvePrunedConflicts(approvedNonMilestoneBlockEvaluations);
-			List<Block> approvedNonMilestoneBlocks = blockService.getBlocks(approvedNonMilestoneBlockEvaluations.stream().map(e -> e.getBlockhash()).collect(Collectors.toList()));
 			
+			List<Block> approvedNonMilestoneBlocks = blockService.getBlocks(approvedNonMilestoneBlockEvaluations.stream().map(e -> e.getBlockhash()).collect(Collectors.toList()));
 			HashSet<Pair<BlockEvaluation, TransactionOutPoint>> conflictingOutPoints = new HashSet<Pair<BlockEvaluation, TransactionOutPoint>>();
 			HashSet<BlockEvaluation> conflictingMilestoneBlocks = new HashSet<BlockEvaluation>();
 
-			// Find all conflicts between milestone and candidates 
+			// Find all conflicts 
 			validatorService.findMilestoneConflicts(approvedNonMilestoneBlocks, conflictingOutPoints, conflictingMilestoneBlocks);
 			validatorService.findCandidateConflicts(approvedNonMilestoneBlocks, conflictingOutPoints);
 
-			// Resolve all conflicts by grouping by UTXO ordered by descending rating
-			HashSet<BlockEvaluation> winningBlocks = validatorService.resolveConflictsByDescendingRating(conflictingOutPoints);
+			// Resolve all conflicts by grouping by UTXO ordered by descending rating for most likely consensus
+			Pair<HashSet<BlockEvaluation>, HashSet<BlockEvaluation>> conflictResolution = validatorService.resolveConflictsByDescendingRating(conflictingOutPoints);
+			HashSet<BlockEvaluation> losingBlocks = conflictResolution.getRight();
 			
-			// If the selected block is in conflict, 
-			if (!winningBlocks.contains(selectedBlockEvaluation)) {
-				approvedNonMilestoneBlockEvaluations.removeIf(e ->!winningBlocks.contains(e));
-				//quickfix
-				if (!approvedNonMilestoneBlockEvaluations.isEmpty())
-					selectedBlockEvaluation = approvedNonMilestoneBlockEvaluations.first();
-				
-				// TODO fix this by going backwards MCMC, also fixes first() == null
+			// If the selected block is in conflict, walk backwards until we find a non-conflicting block
+			if (losingBlocks.contains(selectedBlockEvaluation)) {
+				selectedBlock = walkBackwardsUntilNotContained(selectedBlock, seed, losingBlocks.stream().map(e -> e.getBlockhash()).collect(Collectors.toSet()));
+				selectedBlockEvaluation = blockService.getBlockEvaluation(selectedBlock);
+				approvedNonMilestoneBlockEvaluations.clear(); 
+				blockService.addApprovedNonMilestoneBlocksTo(approvedNonMilestoneBlockEvaluations, selectedBlockEvaluation);
 			}
 			
-			results.add(Pair.of(selectedBlockEvaluation.getBlockhash(), approvedNonMilestoneBlockEvaluations));
+			results.add(Pair.of(selectedBlock, approvedNonMilestoneBlockEvaluations));
 		}
 		
 		return results;
@@ -136,6 +165,7 @@ public class TipsService {
 
 	private Sha256Hash getMCMCResultBlock(Sha256Hash entryPoint, Random seed) throws Exception {
 		List<BlockEvaluation> blockEvaluations = blockService.getSolidBlockEvaluations();
+		// TODO get only relevant cumulativeWeights
 		Map<Sha256Hash, Long> cumulativeWeights = blockEvaluations.stream()
 				.collect(Collectors.toMap(BlockEvaluation::getBlockhash, BlockEvaluation::getCumulativeWeight));
 		return randomWalk(entryPoint, cumulativeWeights, seed);
@@ -176,42 +206,64 @@ public class TipsService {
 		return results;
 	}
 
-	Sha256Hash randomWalk(Sha256Hash tip, final Map<Sha256Hash, Long> cumulativeWeights, Random seed)
+	Sha256Hash randomWalk(Sha256Hash blockHash, final Map<Sha256Hash, Long> cumulativeWeights, Random seed)
 			throws Exception {
 		
 		// Repeatedly perform transitions until the final tip is found
-		while (tip != null) {
-			List<Sha256Hash> approvers = blockService.getSolidApproverBlockHashes(tip);
-			if (approvers.size() == 0) {
-				return tip;
-			} else if (approvers.size() == 1) {
-				tip = approvers.get(0);
+		while (blockHash != null) {
+			List<Sha256Hash> approverHashes = blockService.getSolidApproverBlockHashes(blockHash);
+			if (approverHashes.size() == 0) {
+				return blockHash;
+			} else if (approverHashes.size() == 1) {
+				blockHash = approverHashes.get(0);
 			} else {
-				Sha256Hash[] tipApprovers = approvers.toArray(new Sha256Hash[approvers.size()]);
-				double[] transitionWeights = new double[tipApprovers.length];
+				Sha256Hash[] blockApprovers = approverHashes.toArray(new Sha256Hash[approverHashes.size()]);
+				double[] transitionWeights = new double[blockApprovers.length];
 				double transitionWeightSum = 0;
-				long tipCumulativeweight = cumulativeWeights.containsKey(tip) ? cumulativeWeights.get(tip) : 1;
+				long currentCumulativeWeight = cumulativeWeights.containsKey(blockHash) ? cumulativeWeights.get(blockHash) : 1;
 				
 				// Calculate the unnormalized transition weights of all approvers as ((Hx-Hy)^-3)
-				for (int i = 0; i < tipApprovers.length; i++) {
+				for (int i = 0; i < blockApprovers.length; i++) {
 					// transition probability = 
 					transitionWeights[i] = Math
-							.pow(tipCumulativeweight - cumulativeWeights.get(tipApprovers[i]), -3);
+							.pow(currentCumulativeWeight - cumulativeWeights.get(blockApprovers[i]), -3);
 					transitionWeightSum += transitionWeights[i];
 				}
 				
 				// Randomly select one of the approvers weighted by their transition probabilities
 				double transitionRealization = seed.nextDouble() * transitionWeightSum;
-				for (int i = 0; i < tipApprovers.length; i++) {
+				for (int i = 0; i < blockApprovers.length; i++) {
 					transitionRealization -= transitionWeights[i];
 					if (transitionRealization <= 0) {
-						tip = tipApprovers[i];
+						blockHash = blockApprovers[i];
 						break;
 					}
 				}
 			}
 		}
 
-		return tip;
+		return blockHash;
+	}
+
+	Sha256Hash walkBackwardsUntilNotContained(Sha256Hash blockHash, Random seed, Set<Sha256Hash> losers)
+			throws Exception {
+		
+		// Repeatedly perform transitions until a block in targets is found
+		while (blockHash != null) {
+			Block block = blockService.getBlock(blockHash);
+			if (!losers.contains(blockHash)) {
+				return blockHash;
+			} else {
+				// Randomly select one of the two approved blocks to go to
+				double transitionRealization = seed.nextDouble();
+				if (transitionRealization <= 0.5) {
+					blockHash = block.getPrevBlockHash();
+				} else {
+					blockHash = block.getPrevBranchBlockHash();					
+				}
+			}
+		}
+
+		return blockHash;
 	}
 }

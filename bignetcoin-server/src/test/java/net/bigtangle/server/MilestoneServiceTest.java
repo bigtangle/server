@@ -34,6 +34,7 @@ import net.bigtangle.core.VerificationException;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
+import net.bigtangle.server.service.TipsService;
 import net.bigtangle.store.FullPrunedBlockGraph;
 
 @RunWith(SpringRunner.class)
@@ -288,7 +289,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		assertEquals(0, blockService.getBlockEvaluation(b8weight3.getHash()).getMilestoneDepth());
 		assertEquals(0, blockService.getBlockEvaluation(b8weight4.getHash()).getMilestoneDepth());
 	}
-
+	
 	// TODO test blocks without existing UTXO should not be added even if in
 	// milestonetoAdd
 	// TODO (multiconflict test)

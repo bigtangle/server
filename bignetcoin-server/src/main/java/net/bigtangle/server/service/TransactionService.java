@@ -5,9 +5,7 @@
 package net.bigtangle.server.service;
 
 import java.nio.ByteBuffer;
-import java.security.SecureRandom;
 import java.util.Map;
-import java.util.TreeSet;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
