@@ -38,7 +38,9 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleGroup;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
@@ -64,6 +66,17 @@ public class SendMoneyController {
     @FXML
     public Label btcLabel;
     @FXML
+    public ToggleGroup unitToggleGroup;
+    @FXML
+    public RadioButton basicRadioButton;
+    @FXML
+    public RadioButton kiloRadioButton;
+    @FXML
+    public RadioButton milionRadioButton;
+    @FXML
+    public RadioButton bilionRadioButton;
+
+    @FXML
     public ChoiceBox<Object> tokeninfo;
 
     public Main.OverlayUI<?> overlayUI;
@@ -74,6 +87,10 @@ public class SendMoneyController {
     OkHttpClient client = new OkHttpClient();
 
     public void initChoicebox() {
+        basicRadioButton.setUserData("basic");
+        kiloRadioButton.setUserData("kilo");
+        milionRadioButton.setUserData("milion");
+        bilionRadioButton.setUserData("bilion");
         CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ObservableList<Object> tokenData = FXCollections.observableArrayList();
         ECKey ecKey = Main.bitcoin.wallet().currentReceiveKey();

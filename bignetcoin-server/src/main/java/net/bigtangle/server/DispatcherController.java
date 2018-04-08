@@ -27,6 +27,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.GetBlockEvaluationsResponse;
 import net.bigtangle.server.service.BlockService;
+import net.bigtangle.server.service.OrderService;
 import net.bigtangle.server.service.TokensService;
 import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.server.service.WalletService;
@@ -46,6 +47,9 @@ public class DispatcherController {
 
     @Autowired
     private TokensService tokensService;
+    
+    @Autowired
+    private OrderService orderService;
 
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
     public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] bodyByte,
@@ -121,6 +125,20 @@ public class DispatcherController {
             }
                 break;
 
+            case saveOrder: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                @SuppressWarnings("unchecked")
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                AbstractResponse response = orderService.saveOrder(request);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+                
+            case getOrders: {
+                AbstractResponse response = orderService.getOrderList();
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
             }
         } catch (Exception exception) {
             logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, Utils.HEX.encode(bodyByte), exception);

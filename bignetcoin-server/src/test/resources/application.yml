@@ -1,6 +1,6 @@
 server:
   neighbors: 
-  port: ${SERVER_PORT:14265}
+  port: ${SERVER_PORT:8088}
   udp_receiver_port: 
   tcp_receiver_port: 
   debug: ${SERVER_DEBUG:true}
@@ -11,9 +11,9 @@ server:
   mineraddress:  ${SERVER_MINERADDRESS:030d8952f6c079f60cd26eb3ba83cf16a81c51fc8e47b767721fa38b5e20092a75}
 
 db:
-  hostname: ${DB_hostname:localhost}
+  hostname: ${DB_HOSTNAME:localhost}
   port: ${DB_PORT:3306}
-  dbName: ${DB_PORT:info}
+  dbName: ${DB_NAME:info}
   username: ${DB_USERNAME:root}
   password: ${DB_PASSWORD:test1234}
 

@@ -11,6 +11,7 @@ import java.util.List;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.Order;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.StoredUndoableBlock;
@@ -256,4 +257,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void saveTokens(byte[] tokenid, String tokenname, long amount, String description, int blocktype) throws BlockStoreException;
 
+    public void saveOrder(Order order) throws BlockStoreException;
+
+    public List<Order> getOrderList() throws BlockStoreException;
 }

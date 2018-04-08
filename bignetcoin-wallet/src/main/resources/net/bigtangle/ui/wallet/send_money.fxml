@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.*?>
 <?import java.lang.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
@@ -9,7 +10,7 @@
 
 <AnchorPane id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="701.0" style="" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.bigtangle.ui.wallet.SendMoneyController">
 	<children>
-		<VBox alignment="CENTER_LEFT" layoutY="100.0" prefHeight="200.0" prefWidth="600.0" spacing="20.0" style="-fx-background-color: white;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+		<VBox alignment="CENTER_LEFT" layoutY="100.0" prefHeight="255.0" prefWidth="701.0" spacing="20.0" style="-fx-background-color: white;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
 			<children>
 				<HBox fx:id="topHBox" alignment="CENTER_LEFT" spacing="15.0">
 					<children>
@@ -19,10 +20,22 @@
 							</font>
 						</Label>
 						<TextField fx:id="amountEdit" />
-						<ChoiceBox fx:id="tokeninfo" prefHeight="23.0" prefWidth="262.0" />
+						<ChoiceBox fx:id="tokeninfo" prefHeight="23.0" prefWidth="245.0" />
 						<Label fx:id="btcLabel" prefHeight="15.0" prefWidth="122.0" />
 					</children>
 				</HBox>
+            <HBox prefHeight="33.0" prefWidth="641.0">
+               <children>
+                  <RadioButton fx:id="basicRadioButton" mnemonicParsing="false" selected="true" text="basic">
+                     <toggleGroup>
+                        <ToggleGroup fx:id="unitToggleGroup" />
+                     </toggleGroup>
+                  </RadioButton>
+                  <RadioButton fx:id="kiloRadioButton" mnemonicParsing="false" text="kilo" toggleGroup="$unitToggleGroup" />
+                  <RadioButton fx:id="milionRadioButton" mnemonicParsing="false" text="milion" toggleGroup="$unitToggleGroup" />
+                  <RadioButton fx:id="bilionRadioButton" mnemonicParsing="false" text="bilion" toggleGroup="$unitToggleGroup" />
+               </children>
+            </HBox>
 				<HBox alignment="CENTER_LEFT" spacing="15.0">
 					<children>
 						<Label text="to">

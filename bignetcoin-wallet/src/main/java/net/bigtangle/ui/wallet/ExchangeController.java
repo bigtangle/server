@@ -5,13 +5,12 @@
 package net.bigtangle.ui.wallet;
 
 import java.io.File;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.spongycastle.crypto.params.KeyParameter;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -35,6 +34,8 @@ import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
+
+import org.spongycastle.crypto.params.KeyParameter;
 
 public class ExchangeController {
     
@@ -80,7 +81,8 @@ public class ExchangeController {
         List<Map<String, Object>> tokens = (List<Map<String, Object>>) data.get("tokens");
         for (Map<String, Object> map : tokens) {
             String tokenHex = (String) map.get("tokenHex");
-            tokenData.add(tokenHex);
+            String tokenname = (String) map.get("tokenname");
+            tokenData.add(tokenname+" : "+tokenHex);
         }
         toTokenHexComboBox.setItems(tokenData);
         fromTokenHexComboBox.setItems(tokenData);
@@ -107,23 +109,57 @@ public class ExchangeController {
         Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(mTransaction);
         rollingBlock.solve();
-       String res = OkHttp3Util.post(ContextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        OkHttp3Util.post(ContextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
     }
 
     public void importBlock(ActionEvent event) {
         final FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showOpenDialog(null);
         byte[] buf = FileUtil.readFile(file);
-        if (buf != null) {
-            try {
-                mTransaction = (Transaction) Main.params.getDefaultSerializer().makeTransaction(buf);
-                if (mTransaction == null) {
-                    GuiUtils.informationalAlert("alert", "Transaction Is Empty");
-                }
+        if (buf == null) {
+            return;
+        }
+        ByteBuffer byteBuffer = ByteBuffer.wrap(buf);
+        {
+            byte[] dst = new byte[byteBuffer.getInt()];
+            byteBuffer.get(dst);
+            fromAddressComboBox.setValue(new String(dst));
+        }
+        {
+            byte[] dst = new byte[byteBuffer.getInt()];
+            byteBuffer.get(dst);
+            fromTokenHexComboBox.setValue(new String(dst));
+        }
+        {
+            byte[] dst = new byte[byteBuffer.getInt()];
+            byteBuffer.get(dst);
+            fromAmountTextField.setText(new String(dst));
+        }
+        {
+            byte[] dst = new byte[byteBuffer.getInt()];
+            byteBuffer.get(dst);
+            toAddressComboBox.setValue(new String(dst));
+        }
+        {
+            byte[] dst = new byte[byteBuffer.getInt()];
+            byteBuffer.get(dst);
+            toTokenHexComboBox.setValue(new String(dst));
+        }
+        {
+            byte[] dst = new byte[byteBuffer.getInt()];
+            byteBuffer.get(dst);
+            toAmountTextField.setText(new String(dst));
+        }
+        byte[] data = new byte[byteBuffer.getInt()];
+        byteBuffer.put(data);
+        try {
+            mTransaction = (Transaction) Main.params.getDefaultSerializer().makeTransaction(data);
+            if (mTransaction == null) {
+                GuiUtils.informationalAlert("alert", "Transaction Is Empty");
             }
-            catch (Exception e) {
-                GuiUtils.crashAlert(e);
-            }
+        }
+        catch (Exception e) {
+            GuiUtils.crashAlert(e);
         }
     }
 
@@ -164,9 +200,25 @@ public class ExchangeController {
             GuiUtils.crashAlert(e);
             return;
         }
+        ByteBuffer byteBuffer = ByteBuffer.allocate(buf.length  + 4 +
+                fromAddress.getBytes().length                   + 4 + 
+                fromTokenHex.getBytes().length                  + 4 + 
+                fromAmount.getBytes().length                    + 4 + 
+                toAddress.getBytes().length                     + 4 + 
+                toTokenHex.getBytes().length                    + 4 + 
+                toAmount.getBytes().length                      + 4);
+        
+        byteBuffer.putInt(fromAddress.getBytes().length).put(fromAddress.getBytes());
+        byteBuffer.putInt(fromTokenHex.getBytes().length).put(fromTokenHex.getBytes());
+        byteBuffer.putInt(fromAmount.getBytes().length).put(fromAmount.getBytes());
+        byteBuffer.putInt(toAddress.getBytes().length).put(toAddress.getBytes());
+        byteBuffer.putInt(toTokenHex.getBytes().length).put(toTokenHex.getBytes());
+        byteBuffer.putInt(toAmount.getBytes().length).put(toAmount.getBytes());
+        byteBuffer.putInt(buf.length).put(buf);
+        
         final FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showSaveDialog(null);
-        FileUtil.writeFile(file, buf);
+        FileUtil.writeFile(file, byteBuffer.array());
     }
 
     @SuppressWarnings("unchecked")

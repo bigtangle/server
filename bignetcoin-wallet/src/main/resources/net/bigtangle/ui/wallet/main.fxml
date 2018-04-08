@@ -14,48 +14,58 @@
 <?import javafx.scene.text.*?>
 <?import net.bigtangle.ui.wallet.controls.*?>
 
-<AnchorPane maxHeight="Infinity" maxWidth="Infinity" minHeight="200.0" minWidth="300.0" prefHeight="573.0" prefWidth="800.0" styleClass="root-pane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.bigtangle.ui.wallet.MainController">
+<AnchorPane maxHeight="Infinity" maxWidth="Infinity" minHeight="600.0" minWidth="800.0" prefHeight="600.0" prefWidth="800" styleClass="root-pane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.bigtangle.ui.wallet.MainController">
   <children>
-      <TableView fx:id="utxoTable" editable="true" layoutX="14.0" layoutY="143.0" prefHeight="364.0" prefWidth="542.0">
+      <TableView fx:id="utxoTable" editable="true" layoutX="14.0" layoutY="199.0" prefHeight="364.0" prefWidth="542.0">
         <columns>
-          <TableColumn fx:id="balanceColumn" prefWidth="127.0" text="amount" />
-          <TableColumn fx:id="tokentypeColumnA" prefWidth="72.0" text="tokenid" />
-            <TableColumn fx:id="addressColumn" prefWidth="366.0" text="address" />
+          <TableColumn fx:id="balanceColumn" prefWidth="127.0" text="Amount" />
+          <TableColumn fx:id="tokentypeColumnA" prefWidth="72.0" text="Token" />
+            <TableColumn fx:id="addressColumn" prefWidth="366.0" text="Address" />
         </columns>
       </TableView>
-      <TableView fx:id="coinTable" layoutX="556.0" layoutY="143.0" prefHeight="364.0" prefWidth="235.0">
+      <TableView fx:id="coinTable" layoutX="556.0" layoutY="199.0" prefHeight="364.0" prefWidth="235.0">
         <columns>
-          <TableColumn fx:id="valueColumn" prefWidth="124.0" text="amount" />
-          <TableColumn fx:id="tokentypeColumn" prefWidth="110.0" text="tokenid" />
+          <TableColumn fx:id="valueColumn" prefWidth="124.0" text="Amount" />
+          <TableColumn fx:id="tokentypeColumn" prefWidth="110.0" text="Token" />
         </columns>
       </TableView>
-    <HBox layoutX="16.0" layoutY="107.0" prefHeight="23.0" prefWidth="771.0" spacing="20">
+    <HBox layoutX="16.0" layoutY="155.0" prefHeight="23.0" prefWidth="771.0" spacing="20">
        <children>
-           <Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" alignment="CENTER" mnemonicParsing="false" onAction="#sendMoneyOut" text="transfer" />
-            <Button fx:id="stock" onAction="#stockPublish" text="token publish" />
-            <Button fx:id="exchange" mnemonicParsing="false" onAction="#exchangeCoin" text="exchange" />
-            <Button mnemonicParsing="false" onAction="#eckeyList" text="eckey list" />
-            <Button mnemonicParsing="false" onAction="#blockEvaluation" text="block evaluation list" />
-            <Button mnemonicParsing="false" onAction="#tokens" text="tokens" />
-            <Button mnemonicParsing="false" onAction="#orders" text="orders" />
+           <Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" mnemonicParsing="false" onAction="#sendMoneyOut" text="Transfer" />
+           <Button mnemonicParsing="false" onAction="#orders" text="Order" />
+            <Button fx:id="stock" onAction="#stockPublish" text="Token" />
+            <Button fx:id="exchange" mnemonicParsing="false" onAction="#exchangeCoin" text="Exchange" />
+       
+            <Button mnemonicParsing="false" onAction="#blockEvaluation" text="Blocks" />
+            <Button mnemonicParsing="false" onAction="#tokens" text="Token List" />
+         <Button mnemonicParsing="false" onAction="#eckeyList" text="Keys" />
            <Button onAction="#settingsClicked" text="Settings" />
        </children>
     </HBox>
       <AnchorPane layoutX="140.0" layoutY="25.0" prefHeight="15.0" prefWidth="572.0">
          <children>
-            <Label layoutY="3.0" prefHeight="15.0" prefWidth="62.0" text="IPAddress" />
-            <TextField fx:id="IPAdress" layoutX="83.0" prefHeight="23.0" prefWidth="203.0" text="127.0.0.1" />
-            <Label layoutX="313.0" layoutY="1.0" text="port" />
-            <TextField fx:id="IPPort" layoutX="352.0" prefHeight="23.0" prefWidth="146.0" text="14265" />
-            <Button fx:id="connectButton" layoutX="506.0" layoutY="-2.0" mnemonicParsing="false" onAction="#connectServer" text="connect" />
+            <Label layoutY="3.0" prefHeight="15.0" prefWidth="62.0" text="Server" />
+            <TextField fx:id="Server" layoutX="83.0" prefHeight="23.0" prefWidth="203.0" text="bigtangle.net" />
+            <Label layoutX="313.0" layoutY="1.0" text="Port" />
+            <TextField fx:id="IPPort" layoutX="352.0" prefHeight="23.0" prefWidth="146.0" text="8088" />
+            <Button fx:id="connectButton" layoutX="506.0" layoutY="-2.0" mnemonicParsing="false" onAction="#connectServer" text="Connect" />
          </children>
       </AnchorPane>
       <AnchorPane layoutX="129.0" layoutY="65.0" prefHeight="30.0" prefWidth="591.0">
          <children>
-            <Label layoutX="8.0" layoutY="7.0" text="Directory" />
+            <Label layoutX="8.0" layoutY="7.0" text="Wallet" />
             <TextField fx:id="keyFileDirectory" layoutX="72.0" layoutY="3.0" prefHeight="23.0" prefWidth="432.0" />
-            <Button layoutX="522.0" layoutY="5.0" mnemonicParsing="false" onAction="#setKeyFilePath" text="setKeyFilePath" />
+            <Button layoutX="522.0" layoutY="5.0" mnemonicParsing="false" onAction="#setKeyFilePath" text="File..." />
          </children>
       </AnchorPane>
+      <HBox alignment="CENTER_LEFT" layoutX="17.0" layoutY="102.0" prefHeight="42.0" prefWidth="752.0">
+         <children>
+            <Label text="pubkey" />
+            <TextField fx:id="newPubkeyTextField" prefHeight="23.0" prefWidth="277.0" />
+            <Label prefHeight="15.0" prefWidth="69.0" text="privatekey" />
+            <TextField fx:id="newPrivateKeyTextField" prefHeight="23.0" prefWidth="279.0" />
+            <Button mnemonicParsing="false" onAction="#addKey2wallet" text="add key" />
+         </children>
+      </HBox>
   </children>
 </AnchorPane>
