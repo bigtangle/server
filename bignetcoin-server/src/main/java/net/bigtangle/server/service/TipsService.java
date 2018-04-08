@@ -65,7 +65,6 @@ public class TipsService {
 			results.add(Pair.of(b1.getLeft(), b2.getLeft()));
 		}
 		
-		
 		return results;
 	}
 	
