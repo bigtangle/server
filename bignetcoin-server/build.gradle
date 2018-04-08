@@ -29,7 +29,8 @@ dependencies {
  	compile group: 'org.apache.kafka', name: 'kafka-streams', version:ver.kafka
  
 	compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version:ver.bcprov_jdk15on
-	
+	compile group: 'it.unimi.dsi', name: 'fastutil', version:'8.1.0'
+ 
     compile group: 'commons-io', name: 'commons-io', version:ver.commons_io
     compile group: 'mysql', name: 'mysql-connector-java', version:ver.mysql_connector_java
     compile project(':bignetcoin-core')
