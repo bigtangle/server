@@ -20,6 +20,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.stage.FileChooser;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Utils;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 
@@ -36,6 +37,11 @@ public class EckeyController {
     @FXML
     public TextField keyFilePrefixTextField;
 
+    @FXML
+    public TextField newPubkeyTextField;
+    @FXML
+    public TextField newPrivateKeyTextField;
+
     private ObservableList<EckeyModel> issuedKeyData = FXCollections.observableArrayList();
     private ObservableList<EckeyModel> importedKeyData = FXCollections.observableArrayList();
 
@@ -48,6 +54,13 @@ public class EckeyController {
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
+    }
+
+    public void addKey2wallet(ActionEvent event) {
+        ECKey newKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(newPrivateKeyTextField.getText()),
+                Utils.HEX.decode(newPubkeyTextField.getText()));
+        bitcoin.wallet().importKey(newKey);
+        bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
     }
 
     public void initEcKeyList() throws Exception {

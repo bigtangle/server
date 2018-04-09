@@ -16,20 +16,20 @@
 
 <AnchorPane maxHeight="Infinity" maxWidth="Infinity" minHeight="600.0" minWidth="800.0" prefHeight="600.0" prefWidth="800" styleClass="root-pane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.bigtangle.ui.wallet.MainController">
   <children>
-      <TableView fx:id="utxoTable" editable="true" layoutX="14.0" layoutY="199.0" prefHeight="364.0" prefWidth="542.0">
+      <TableView fx:id="utxoTable" editable="true" layoutX="14.0" layoutY="161.0" prefHeight="364.0" prefWidth="542.0">
         <columns>
           <TableColumn fx:id="balanceColumn" prefWidth="127.0" text="Amount" />
           <TableColumn fx:id="tokentypeColumnA" prefWidth="72.0" text="Token" />
             <TableColumn fx:id="addressColumn" prefWidth="366.0" text="Address" />
         </columns>
       </TableView>
-      <TableView fx:id="coinTable" layoutX="556.0" layoutY="199.0" prefHeight="364.0" prefWidth="235.0">
+      <TableView fx:id="coinTable" layoutX="556.0" layoutY="161.0" prefHeight="364.0" prefWidth="235.0">
         <columns>
           <TableColumn fx:id="valueColumn" prefWidth="124.0" text="Amount" />
           <TableColumn fx:id="tokentypeColumn" prefWidth="110.0" text="Token" />
         </columns>
       </TableView>
-    <HBox layoutX="16.0" layoutY="155.0" prefHeight="23.0" prefWidth="771.0" spacing="20">
+    <HBox layoutX="16.0" layoutY="115.0" prefHeight="23.0" prefWidth="771.0" spacing="20">
        <children>
            <Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" mnemonicParsing="false" onAction="#sendMoneyOut" text="Transfer" />
            <Button mnemonicParsing="false" onAction="#orders" text="Order" />
@@ -58,14 +58,5 @@
             <Button layoutX="522.0" layoutY="5.0" mnemonicParsing="false" onAction="#setKeyFilePath" text="File..." />
          </children>
       </AnchorPane>
-      <HBox alignment="CENTER_LEFT" layoutX="17.0" layoutY="102.0" prefHeight="42.0" prefWidth="752.0">
-         <children>
-            <Label text="pubkey" />
-            <TextField fx:id="newPubkeyTextField" prefHeight="23.0" prefWidth="277.0" />
-            <Label prefHeight="15.0" prefWidth="69.0" text="privatekey" />
-            <TextField fx:id="newPrivateKeyTextField" prefHeight="23.0" prefWidth="279.0" />
-            <Button mnemonicParsing="false" onAction="#addKey2wallet" text="add key" />
-         </children>
-      </HBox>
   </children>
 </AnchorPane>
