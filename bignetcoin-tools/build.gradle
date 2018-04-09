@@ -1,7 +1,28 @@
 
+defaultTasks 'clean', 'build'
+
+distributions {
+    main {
+        contents {
+            baseName = "wallet"
+        }
+    }
+}
+
+
 dependencies {
 
      compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version:'4.3'
-     	compile group: 'com.google.code.findbugs', name: 'jsr305', version:ver.jsr305
-       compile project(':bignetcoin-server')
+     compile group: 'com.google.code.findbugs', name: 'jsr305', version:ver.jsr305
+     compile project(':bignetcoin-core')
+}
+
+mainClassName = "net.bigtangle.ui.wallet.Main"
+//applicationDefaultJvmArgs = ["-Dlogging.config=/etc/processor/logback.xml"]
+applicationDefaultJvmArgs = ["-Dlog.root.level=WARN", "-Dlog.de.db.level=INFO", "-Xmx2g"]
+
+jar {
+    manifest {
+        attributes("Main-Class": mainClassName)
+    }
 }
