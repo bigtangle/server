@@ -114,6 +114,7 @@ public class EckeyController {
 
         try {
             initEcKeyList();
+            Main.instance.controller.initTableView();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
