@@ -160,4 +160,7 @@ http://web.archive.org/web/20110310171841/http://www.quantcup.org/home/spec
  	execution price = 6.5 with volume= 8+5
  					remainder 			
  	
- 	
+ clearing
+  
+  seller exchange buyer	
+  seller exchange system user, buyer does same.

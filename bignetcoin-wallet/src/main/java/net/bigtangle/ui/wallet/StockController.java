@@ -115,6 +115,7 @@ public class StockController {
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
+        overlayUI.done();
     }
 
     public void closeStock(ActionEvent event) {

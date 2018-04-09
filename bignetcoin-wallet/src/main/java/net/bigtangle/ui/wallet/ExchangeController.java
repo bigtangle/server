@@ -110,6 +110,7 @@ public class ExchangeController {
         rollingBlock.addTransaction(mTransaction);
         rollingBlock.solve();
         OkHttp3Util.post(ContextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        overlayUI.done();
     }
 
     public void importBlock(ActionEvent event) {
@@ -161,6 +162,7 @@ public class ExchangeController {
         catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
+        overlayUI.done();
     }
 
     @SuppressWarnings("deprecation")
@@ -219,6 +221,7 @@ public class ExchangeController {
         final FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showSaveDialog(null);
         FileUtil.writeFile(file, byteBuffer.array());
+        overlayUI.done();
     }
 
     @SuppressWarnings("unchecked")
@@ -247,6 +250,7 @@ public class ExchangeController {
     }
 
     public void refund(ActionEvent event) {
+        overlayUI.done();
     }
 
     public void closeUI(ActionEvent event) {

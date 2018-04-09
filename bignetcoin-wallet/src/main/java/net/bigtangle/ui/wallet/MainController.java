@@ -82,6 +82,8 @@ public class MainController {
     public TableColumn<UTXOModel, String> tokentypeColumnA;
     @FXML
     public TableColumn<UTXOModel, String> addressColumn;
+    @FXML
+    public TableColumn<UTXOModel, String> spendPendingColumn;
 
     @FXML
     public TextField Server;
@@ -117,7 +119,7 @@ public class MainController {
         for (ECKey ecKey : keys) {
 
             String response = OkHttp3Util.post(CONTEXT_ROOT + "getBalances", ecKey.getPubKeyHash());
-
+            System.out.println(response);
             final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
 
             if (data != null && !data.isEmpty()) {
@@ -129,7 +131,8 @@ public class MainController {
                         long balance = c.getValue();
                         byte[] tokenid = c.tokenid;
                         String address = u.getAddress();
-                        Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address));
+                        boolean spendPending = u.isSpendPending();
+                        Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending));
                     }
                 }
                 list = (List<Map<String, Object>>) data.get("tokens");
@@ -158,7 +161,7 @@ public class MainController {
         balanceColumn.setCellValueFactory(cellData -> cellData.getValue().balance());
         tokentypeColumnA.setCellValueFactory(cellData -> cellData.getValue().tokenid());
         addressColumn.setCellValueFactory(cellData -> cellData.getValue().address());
-
+        spendPendingColumn.setCellValueFactory(cellData -> cellData.getValue().spendPending());
         addressColumn.setCellFactory(TextFieldTableCell.<UTXOModel>forTableColumn());
 
         valueColumn.setCellValueFactory(cellData -> cellData.getValue().value());

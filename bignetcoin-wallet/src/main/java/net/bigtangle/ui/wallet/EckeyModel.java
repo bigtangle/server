@@ -8,15 +8,22 @@ import javafx.beans.property.SimpleStringProperty;
 
 public class EckeyModel {
     private SimpleStringProperty pubkeyHex;
+    private SimpleStringProperty privkeyHex;
     private SimpleStringProperty addressHex;
 
-    public EckeyModel(String pubkeyHex, String addressHex) {
+    public EckeyModel(String pubkeyHex, String privkeyHex, String addressHex) {
+        this.privkeyHex = new SimpleStringProperty(privkeyHex);
         this.pubkeyHex = new SimpleStringProperty(pubkeyHex);
         this.addressHex = new SimpleStringProperty(addressHex);
     }
 
     public SimpleStringProperty pubkeyHex() {
         return pubkeyHex;
+
+    }
+
+    public SimpleStringProperty privkeyHex() {
+        return privkeyHex;
 
     }
 
@@ -39,6 +46,14 @@ public class EckeyModel {
 
     public void setAddressHex(String addressHex) {
         this.addressHex.set(addressHex);
+    }
+
+    public String getPrivkeyHex() {
+        return privkeyHex.get();
+    }
+
+    public void setPrivkeyHex(String privkeyHex) {
+        this.privkeyHex.set(privkeyHex);
     }
 
 }

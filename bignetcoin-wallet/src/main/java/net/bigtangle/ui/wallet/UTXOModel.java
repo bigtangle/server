@@ -6,7 +6,6 @@ package net.bigtangle.ui.wallet;
 
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
-import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Utils;
 
 public class UTXOModel {
@@ -14,12 +13,14 @@ public class UTXOModel {
     private SimpleStringProperty tokentype;
     private SimpleStringProperty address;
     private SimpleStringProperty tokenid;
+    private SimpleStringProperty spendPending;
 
-    public UTXOModel(long balance, byte[] tokenid, String address) {
+    public UTXOModel(long balance, byte[] tokenid, String address, boolean spendPending) {
         this.balance = new SimpleLongProperty(balance);
         this.tokenid = new SimpleStringProperty(Utils.HEX.encode(tokenid));
         this.tokentype = new SimpleStringProperty(Utils.HEX.encode(tokenid));
         this.address = new SimpleStringProperty(address);
+        this.spendPending = spendPending ? new SimpleStringProperty("*") : new SimpleStringProperty("");
     }
 
     public SimpleLongProperty balance() {
@@ -36,6 +37,10 @@ public class UTXOModel {
 
     public SimpleStringProperty address() {
         return address;
+    }
+
+    public SimpleStringProperty spendPending() {
+        return spendPending;
     }
 
     public long getBalance() {
@@ -68,6 +73,14 @@ public class UTXOModel {
 
     public void setAddress(String address) {
         this.address.set(address);
+    }
+
+    public String getSpendPending() {
+        return spendPending.get();
+    }
+
+    public void setSpendPending(boolean spendPending) {
+        this.spendPending.set(spendPending ? "*" : "");
     }
 
 }

@@ -77,6 +77,7 @@ public class OrderController {
         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         String validdateFrom = df.format(validdateFromDatePicker.getValue());
         String validdateTo = df.format(validdateToDatePicker.getValue());
+        overlayUI.done();
     }
 
     public void closeUI(ActionEvent event) {
