@@ -872,8 +872,8 @@ public class Block extends Message {
         // valid block from the network and simply replace the transactions in
         // it with their own fictional
         // transactions that reference spent or non-existant inputs.
-        if (transactions.isEmpty())
-            throw new VerificationException("Block had no transactions");
+     //   if (transactions.isEmpty())
+     //       throw new VerificationException("Block had no transactions");
         if (this.getOptimalEncodingMessageSize() > MAX_BLOCK_SIZE)
             throw new VerificationException("Block larger than MAX_BLOCK_SIZE");
         // CUI checkTransactions(height, flags);

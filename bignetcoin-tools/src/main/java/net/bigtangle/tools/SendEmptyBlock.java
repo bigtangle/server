@@ -37,8 +37,8 @@ public class SendEmptyBlock {
 
     OkHttpClient client = new OkHttpClient();
 
-    private String CONTEXT_ROOT = "http://bigtangle.net:8088/";
-
+   // private String CONTEXT_ROOT = "http://bigtangle.net:8088/";
+    private String CONTEXT_ROOT = "http://localhost:8088/";
     public static void main(String[] args) {
         SendEmptyBlock sendEmptyBlock = new SendEmptyBlock();
         boolean c = true;
@@ -67,7 +67,7 @@ public class SendEmptyBlock {
         rollingBlock.solve();
 
       String res = OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
-      System.out.print(res);
+      System.out.print("saveBlock"+ res+ rollingBlock);
     }
 
     private Block nextBlockSerializer(ByteBuffer byteBuffer) {

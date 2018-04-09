@@ -55,7 +55,7 @@ public class ResetTest extends AbstractIntegrationTest {
         final int UNDOABLE_BLOCKS_STORED = 10;
         store = createStore(networkParameters, UNDOABLE_BLOCKS_STORED);
 
-        blockgraph = new FullPrunedBlockGraph(networkParameters, store); 
+      //  blockgraph = new FullPrunedBlockGraph(networkParameters, store); 
     }
     @Test
     //init 
