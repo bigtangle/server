@@ -76,11 +76,13 @@ public class Main extends Application {
     public static String port = "8088";
     public static FXMLLoader loader;
 
+    public static String lang = "";
+
     @Override
     public void start(Stage mainWindow) throws Exception {
         try {
 
-            realStart(mainWindow, "");
+            realStart(mainWindow, Main.lang);
         } catch (Throwable e) {
             GuiUtils.crashAlert(e);
             // throw e;
@@ -107,8 +109,9 @@ public class Main extends Application {
         URL location = getClass().getResource("main.fxml");
         loader = new FXMLLoader(location);
         String resourceFile = "net.bigtangle.ui.wallet.test";
+        lang = temp;
         Locale locale = Locale.CHINESE;
-        if ("en".equals(temp)) {
+        if ("en".equals(lang)) {
             resourceFile += "_en";
             locale = Locale.ENGLISH;
         }
@@ -239,6 +242,14 @@ public class Main extends Application {
             // Load the UI from disk.
             URL location = GuiUtils.getResource(name);
             FXMLLoader loader = new FXMLLoader(location);
+            String resourceFile = "net.bigtangle.ui.wallet.test";
+            Locale locale = Locale.CHINESE;
+            if ("en".equals(Main.lang)) {
+                resourceFile += "_en";
+                locale = Locale.ENGLISH;
+            }
+            ResourceBundle resourceBundle = ResourceBundle.getBundle(resourceFile, locale);
+            loader.setResources(resourceBundle);
             Pane ui = loader.load();
             T controller = loader.getController();
             OverlayUI<T> pair = new OverlayUI<T>(ui, controller);
