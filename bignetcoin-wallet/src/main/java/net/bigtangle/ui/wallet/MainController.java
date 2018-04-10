@@ -23,14 +23,9 @@ import static net.bigtangle.ui.wallet.Main.params;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import org.fxmisc.easybind.EasyBind;
-import org.spongycastle.crypto.params.KeyParameter;
-
-import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.OkHttpClient;
 
 import javafx.animation.TranslateTransition;
 import javafx.event.ActionEvent;
@@ -48,6 +43,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.UTXO;
+import net.bigtangle.core.Utils;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.ui.wallet.controls.NotificationBarPane;
 import net.bigtangle.ui.wallet.utils.BitcoinUIModel;
@@ -57,6 +53,12 @@ import net.bigtangle.ui.wallet.utils.easing.ElasticInterpolator;
 import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
+
+import org.fxmisc.easybind.EasyBind;
+import org.spongycastle.crypto.params.KeyParameter;
+
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.OkHttpClient;
 
 /**
  * Gets created auto-magically by FXMLLoader via reflection. The widget fields
@@ -102,50 +104,49 @@ public class MainController {
     OkHttpClient client = new OkHttpClient();
 
     // Called by FXMLLoader.
-    @SuppressWarnings("unchecked")
     @FXML
     public void initialize() {
 
         initTableView();
     }
 
+    @SuppressWarnings("unchecked")
     public void initTable() throws Exception {
         Main.instance.getUtxoData().clear();
         Main.instance.getCoinData().clear();
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
         KeyParameter aesKey = null;
-
-        List<ECKey> keys = bitcoin.wallet().walletKeys(aesKey);
-        for (ECKey ecKey : keys) {
-
-            String response = OkHttp3Util.post(CONTEXT_ROOT + "getBalances", ecKey.getPubKeyHash());
-            System.out.println(response);
-            final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-
-            if (data != null && !data.isEmpty()) {
-                List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("outputs");
-                if (list != null && !list.isEmpty()) {
-                    for (Map<String, Object> object : list) {
-                        UTXO u = MapToBeanMapperUtil.parseUTXO(object);
-                        Coin c = u.getValue();
-                        long balance = c.getValue();
-                        byte[] tokenid = c.tokenid;
-                        String address = u.getAddress();
-                        boolean spendPending = u.isSpendPending();
-                        Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending));
-                    }
-                }
-                list = (List<Map<String, Object>>) data.get("tokens");
-                if (list != null && !list.isEmpty()) {
-                    for (Map<String, Object> map : list) {
-                        Coin coin2 = MapToBeanMapperUtil.parseCoin(map);
-                        if (!coin2.isZero()) {
-                            Main.instance.getCoinData().add(new CoinModel(coin2.value, coin2.tokenid));
-
-                        }
-                    }
-                }
+        List<String> keyStrHex000 = new ArrayList<String>();
+        for (ECKey ecKey : bitcoin.wallet().walletKeys(aesKey)) {
+            keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
+        }
+        String response = OkHttp3Util.postString(CONTEXT_ROOT + "batchGetBalances", Json.jsonmapper().writeValueAsString(keyStrHex000));
+        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+        if (data == null || data.isEmpty()) {
+            return;
+        }
+        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("outputs");
+        if (list == null || list.isEmpty()) {
+            return;
+        }
+        for (Map<String, Object> object : list) {
+            UTXO u = MapToBeanMapperUtil.parseUTXO(object);
+            Coin c = u.getValue();
+            long balance = c.getValue();
+            byte[] tokenid = c.tokenid;
+            String address = u.getAddress();
+            boolean spendPending = u.isSpendPending();
+            Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending));
+        }
+        list = (List<Map<String, Object>>) data.get("tokens");
+        if (list == null || list.isEmpty()) {
+            return;
+        }
+        for (Map<String, Object> map : list) {
+            Coin coin2 = MapToBeanMapperUtil.parseCoin(map);
+            if (!coin2.isZero()) {
+                Main.instance.getCoinData().add(new CoinModel(coin2.value, coin2.tokenid));
             }
         }
     }

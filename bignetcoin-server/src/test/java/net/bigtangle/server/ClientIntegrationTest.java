@@ -86,6 +86,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         logger.info("testGetBalances resp : " + data);
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     public void exchangeToken() throws Exception {
 

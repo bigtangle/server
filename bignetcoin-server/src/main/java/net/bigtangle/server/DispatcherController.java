@@ -135,13 +135,23 @@ public class DispatcherController {
                 break;
                 
             case getOrders: {
-                // tokenid
-                // state
-                // address
                 String reqStr = new String(bodyByte, "UTF-8");
                 @SuppressWarnings("unchecked")
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = orderService.getOrderList(request);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+                
+            case batchGetBalances: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                @SuppressWarnings("unchecked")
+                List<String> keyStrHex000 = Json.jsonmapper().readValue(reqStr, List.class);
+                List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
+                for (String keyStrHex : keyStrHex000) {
+                    pubKeyHashs.add(Utils.HEX.decode(keyStrHex));
+                }
+                AbstractResponse response = walletService.getAccountBalanceInfo(pubKeyHashs);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
