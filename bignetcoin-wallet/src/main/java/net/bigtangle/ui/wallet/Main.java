@@ -29,6 +29,8 @@ import static net.bigtangle.ui.wallet.utils.GuiUtils.zoomIn;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 import javax.annotation.Nullable;
 
@@ -39,7 +41,6 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
@@ -73,19 +74,22 @@ public class Main extends Application {
 
     public static String IpAddress = "bigtangle.net";
     public static String port = "8088";
+    public static FXMLLoader loader;
+
+    public static String lang = "";
 
     @Override
     public void start(Stage mainWindow) throws Exception {
         try {
 
-            realStart(mainWindow);
+            realStart(mainWindow, Main.lang);
         } catch (Throwable e) {
             GuiUtils.crashAlert(e);
             // throw e;
         }
     }
 
-    private void realStart(Stage mainWindow) throws IOException {
+    public void realStart(Stage mainWindow, String temp) throws IOException {
         this.mainWindow = mainWindow;
         instance = this;
         // Show the crash dialog for any exceptions that we don't handle and
@@ -103,7 +107,16 @@ public class Main extends Application {
         // Load the GUI. The MainController class will be automagically created
         // and wired up.
         URL location = getClass().getResource("main.fxml");
-        FXMLLoader loader = new FXMLLoader(location);
+        loader = new FXMLLoader(location);
+        String resourceFile = "net.bigtangle.ui.wallet.test";
+        lang = temp;
+        Locale locale = Locale.CHINESE;
+        if ("en".equals(lang)) {
+            resourceFile += "_en";
+            locale = Locale.ENGLISH;
+        }
+        ResourceBundle resourceBundle = ResourceBundle.getBundle(resourceFile, locale);
+        loader.setResources(resourceBundle);
         mainUI = loader.load();
         controller = loader.getController();
         // Configure the window with a StackPane so we can overlay things on top
@@ -139,7 +152,7 @@ public class Main extends Application {
         mainWindow.show();
 
         WalletSetPasswordController.estimateKeyDerivationTimeMsec();
- 
+
     }
 
     public void setupWalletKit(@Nullable DeterministicSeed seed) {
@@ -229,6 +242,14 @@ public class Main extends Application {
             // Load the UI from disk.
             URL location = GuiUtils.getResource(name);
             FXMLLoader loader = new FXMLLoader(location);
+            String resourceFile = "net.bigtangle.ui.wallet.test";
+            Locale locale = Locale.CHINESE;
+            if ("en".equals(Main.lang)) {
+                resourceFile += "_en";
+                locale = Locale.ENGLISH;
+            }
+            ResourceBundle resourceBundle = ResourceBundle.getBundle(resourceFile, locale);
+            loader.setResources(resourceBundle);
             Pane ui = loader.load();
             T controller = loader.getController();
             OverlayUI<T> pair = new OverlayUI<T>(ui, controller);
