@@ -22,11 +22,12 @@ public class OrderService {
         int type = (Integer) request.get("type");
         String validateto = (String) request.get("validateto");
         String validatefrom = (String) request.get("validatefrom");
-        int limitl = (Integer) request.get("limitl");
+        int price = (Integer) request.get("price");
+//        int demandQuantity = (Integer) request.get("demandQuantity");
         
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Order order = Order.create(address, tokenid, type, 
-                simpleDateFormat.parse(validateto), simpleDateFormat.parse(validatefrom), limitl);
+                simpleDateFormat.parse(validateto), simpleDateFormat.parse(validatefrom), price, 0);
         store.saveOrder(order);
         return AbstractResponse.createEmptyResponse();
     }

@@ -52,6 +52,13 @@ class OrderBookEvents implements OrderBookListener {
             this.executedQuantity = executedQuantity;
             this.remainingQuantity = remainingQuantity;
         }
+
+        @Override
+        public String toString() {
+            return "Match [restingOrderId=" + restingOrderId + ", incomingOrderId=" + incomingOrderId
+                    + ", incomingSide=" + incomingSide + ", price=" + price + ", executedQuantity=" + executedQuantity
+                    + ", remainingQuantity=" + remainingQuantity + "]";
+        }
     }
 
     public static class Add implements Event {
@@ -65,6 +72,11 @@ class OrderBookEvents implements OrderBookListener {
             this.side = side;
             this.price = price;
             this.size = size;
+        }
+
+        @Override
+        public String toString() {
+            return "Add [orderId=" + orderId + ", side=" + side + ", price=" + price + ", size=" + size + "]";
         }
     }
 
