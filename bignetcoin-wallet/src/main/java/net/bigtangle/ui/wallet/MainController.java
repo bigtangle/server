@@ -22,6 +22,7 @@ import static net.bigtangle.ui.wallet.Main.bitcoin;
 import static net.bigtangle.ui.wallet.Main.params;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -194,6 +195,15 @@ public class MainController {
     private void showBitcoinSyncMessage() {
         syncItem = Main.instance.notificationBar.pushItem("Synchronising with the Bitcoin network",
                 model.syncProgressProperty());
+    }
+
+    public void changeLocale(ActionEvent event) {
+        try {
+            Main.instance.realStart(Main.instance.mainWindow, "en");
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
     public void sendMoneyOut(ActionEvent event) {
