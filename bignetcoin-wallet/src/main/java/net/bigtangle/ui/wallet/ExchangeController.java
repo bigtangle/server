@@ -110,6 +110,7 @@ public class ExchangeController {
         rollingBlock.addTransaction(mTransaction);
         rollingBlock.solve();
         OkHttp3Util.post(ContextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
         overlayUI.done();
     }
 

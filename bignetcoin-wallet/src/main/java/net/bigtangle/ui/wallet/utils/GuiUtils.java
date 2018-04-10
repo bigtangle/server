@@ -29,6 +29,7 @@ import javafx.scene.layout.Pane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import net.bigtangle.core.InsufficientMoneyException;
 import net.bigtangle.ui.wallet.MainController;
 
 import java.io.IOException;
@@ -41,8 +42,10 @@ import static net.bigtangle.ui.wallet.utils.WTUtils.unchecked;
 public class GuiUtils {
     public static void runAlert(BiConsumer<Stage, AlertWindowController> setup) {
         try {
-            // JavaFX2 doesn't actually have a standard alert template. Instead the Scene Builder app will create FXML
-            // files for an alert window for you, and then you customise it as you see fit. I guess it makes sense in
+            // JavaFX2 doesn't actually have a standard alert template. Instead
+            // the Scene Builder app will create FXML
+            // files for an alert window for you, and then you customise it as
+            // you see fit. I guess it makes sense in
             // an odd sort of way.
             Stage dialogStage = new Stage();
             dialogStage.initModality(Modality.APPLICATION_MODAL);
@@ -53,17 +56,21 @@ public class GuiUtils {
             dialogStage.setScene(new Scene(pane));
             dialogStage.showAndWait();
         } catch (IOException e) {
-            // We crashed whilst trying to show the alert dialog (this should never happen). Give up!
+            // We crashed whilst trying to show the alert dialog (this should
+            // never happen). Give up!
             throw new RuntimeException(e);
         }
     }
 
     public static void crashAlert(Throwable t) {
+        if (t instanceof InsufficientMoneyException) {
+            GuiUtils.informationalAlert("money no enough", "money no enough", "");
+        }
         t.printStackTrace();
         Throwable rootCause = Throwables.getRootCause(t);
         Runnable r = () -> {
             runAlert((stage, controller) -> controller.crashAlert(stage, rootCause.toString()));
-           // Platform.exit();
+            // Platform.exit();
         };
         if (Platform.isFxApplicationThread())
             r.run();
@@ -71,7 +78,10 @@ public class GuiUtils {
             Platform.runLater(r);
     }
 
-    /** Show a GUI alert box for any unhandled exceptions that propagate out of this thread. */
+    /**
+     * Show a GUI alert box for any unhandled exceptions that propagate out of
+     * this thread.
+     */
     public static void handleCrashesOnThisThread() {
         Thread.currentThread().setUncaughtExceptionHandler((thread, exception) -> {
             GuiUtils.crashAlert(Throwables.getRootCause(exception));
@@ -173,8 +183,9 @@ public class GuiUtils {
     }
 
     /**
-     * A useful helper for development purposes. Used as a switch for loading files from local disk, allowing live
-     * editing whilst the app runs without rebuilds.
+     * A useful helper for development purposes. Used as a switch for loading
+     * files from local disk, allowing live editing whilst the app runs without
+     * rebuilds.
      */
     public static URL getResource(String name) {
         if (false)

@@ -1,10 +1,17 @@
+plugins {
+    id 'org.sonarqube' version '2.2.1'
+    id 'jacoco'
+    id 'application'
+    id 'idea'
+}
+
 
 defaultTasks 'clean', 'build'
 
 distributions {
     main {
         contents {
-            baseName = "wallet"
+            baseName = "tools"
         }
     }
 }
@@ -26,3 +33,17 @@ jar {
         attributes("Main-Class": mainClassName)
     }
 }
+
+
+task createDistributable(type: Copy) {
+    def distDir = file('build/dist')
+    from('build/distributions') {
+        include '*processor*.tar'
+        rename '.*', 'processor-all.tar'
+    }
+    from('etc') {
+        include '*'
+    }
+    destinationDir distDir
+}
+createDistributable.dependsOn distTar

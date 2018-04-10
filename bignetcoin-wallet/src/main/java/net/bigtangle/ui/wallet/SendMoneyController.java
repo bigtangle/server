@@ -81,17 +81,12 @@ public class SendMoneyController {
 
     public Main.OverlayUI<?> overlayUI;
 
-    private Wallet.SendResult sendResult;
-    private KeyParameter aesKey;
-
-    OkHttpClient client = new OkHttpClient();
-
     public void initChoicebox() {
         basicRadioButton.setUserData("basic");
         kiloRadioButton.setUserData("kilo");
         milionRadioButton.setUserData("milion");
         bilionRadioButton.setUserData("bilion");
-        CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ObservableList<Object> tokenData = FXCollections.observableArrayList();
         ECKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
         try {
@@ -101,9 +96,7 @@ public class SendMoneyController {
 
             List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
             List<String> names = new ArrayList<String>();
-            for (Map<String, Object> map : list) {
-
-                String tokenHex = (String) map.get("tokenHex");
+            for (Map<String, Object> map : list) {   String tokenHex = (String) map.get("tokenHex");
                 tokenData.add(tokenHex);
                 names.add(map.get("tokenname").toString());
             }
@@ -113,12 +106,7 @@ public class SendMoneyController {
             });
             tokeninfo.getSelectionModel().selectFirst();
         } catch (Exception e) {
-            if (e instanceof InsufficientMoneyException) {
-                GuiUtils.informationalAlert("money no enough", "money no enough", "");
-            } else {
-                GuiUtils.crashAlert(e);
-            }
-
+            GuiUtils.crashAlert(e);
         }
 
     }
@@ -126,11 +114,8 @@ public class SendMoneyController {
     @FXML
     public void initialize() throws Exception {
         initChoicebox();
-
         DeterministicKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
-
         address.setText(ecKey.toAddress(Main.params).toBase58());
-
         new TextFieldValidator(amountEdit, text -> !WTUtils
                 .didThrow(() -> checkState(Coin.parseCoin(text, NetworkParameters.BIGNETCOIN_TOKENID).isPositive())));
 
@@ -140,11 +125,11 @@ public class SendMoneyController {
         overlayUI.done();
     }
 
-    private String CONTEXT_ROOT = "http://localhost:14265/";
-
     public void send(ActionEvent event) {
         try {
-            CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+           // sendBtn.setDisable(true);
+            
+            String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
             Address destination = // Address.getParametersFromAddress(address)address.getText()
                     Address.fromBase58(Main.params, address.getText());
             HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -160,17 +145,13 @@ public class SendMoneyController {
             wallet.completeTx(request);
             rollingBlock.addTransaction(request.tx);
             rollingBlock.solve();
-
-            // Block block = (Block)
-            // Main.params.getDefaultSerializer().deserialize(ByteBuffer.wrap(rollingBlock.bitcoinSerialize()));
-
             OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
 
-            // TODO xiaomi change ui
+          
             checkGuiThread();
             overlayUI.done();
             Main.instance.controller.initTableView();
-            // sendBtn.setDisable(true);
+            Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
             // address.setDisable(true);
             // ((HBox) amountEdit.getParent()).getChildren().remove(amountEdit);
             // ((HBox) btcLabel.getParent()).getChildren().remove(btcLabel);
@@ -178,16 +159,6 @@ public class SendMoneyController {
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
-    }
-
-    private Block nextBlockSerializer(ByteBuffer byteBuffer) {
-        int len = byteBuffer.getInt();
-        byte[] data = new byte[len];
-        byteBuffer.get(data);
-        Block r1 = Main.params.getDefaultSerializer().makeBlock(data);
-        System.out.print(r1.toString());
-        System.out.println("block len : " + len + " conv : " + r1.getHashAsString());
-        return r1;
     }
 
     @SuppressWarnings("unused")
@@ -202,7 +173,7 @@ public class SendMoneyController {
             // must recreate it.
             checkGuiThread();
             Main.OverlayUI<SendMoneyController> screen = Main.instance.overlayUI("send_money.fxml");
-            screen.controller.aesKey = cur;
+            // TODO screen.controller.aesKey = cur;
             screen.controller.address.setText(addressStr);
             screen.controller.amountEdit.setText(amountStr);
             try {
@@ -213,9 +184,4 @@ public class SendMoneyController {
         });
     }
 
-    @SuppressWarnings("unused")
-    private void updateTitleForBroadcast() {
-        final int peers = sendResult.tx.getConfidence().numBroadcastPeers();
-        titleLabel.setText(String.format("Broadcasting ... seen by %d peers", peers));
-    }
 }

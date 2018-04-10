@@ -7,8 +7,10 @@ package net.bigtangle.server;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
@@ -59,7 +61,7 @@ public class DispatcherController {
             ReqCmd reqCmd0000 = ReqCmd.valueOf(reqCmd);
             switch (reqCmd0000) {
             case getBalances: {
-                List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
+                Set<byte[]> pubKeyHashs = new HashSet<byte[]>();
                 pubKeyHashs.add(bodyByte);
                 AbstractResponse response = walletService.getAccountBalanceInfo(pubKeyHashs);
                 this.outPrintJSONString(httpServletResponse, response);
@@ -79,7 +81,7 @@ public class DispatcherController {
                 break;
 
             case getOutputs: {
-                List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
+                Set<byte[]> pubKeyHashs = new HashSet<byte[]>();
                 pubKeyHashs.add(bodyByte);
                 AbstractResponse response = walletService.getAccountOutputs(pubKeyHashs);
                 this.outPrintJSONString(httpServletResponse, response);
@@ -147,7 +149,7 @@ public class DispatcherController {
                 String reqStr = new String(bodyByte, "UTF-8");
                 @SuppressWarnings("unchecked")
                 List<String> keyStrHex000 = Json.jsonmapper().readValue(reqStr, List.class);
-                List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
+                 Set<byte[]> pubKeyHashs = new HashSet<byte[]>();
                 for (String keyStrHex : keyStrHex000) {
                     pubKeyHashs.add(Utils.HEX.decode(keyStrHex));
                 }

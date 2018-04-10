@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -36,32 +37,31 @@ import net.bigtangle.wallet.Wallet;
 @Service
 public class WalletService {
 
-    public AbstractResponse getAccountBalanceInfo(List<byte[]> pubKeyHashs) {
+    public AbstractResponse getAccountBalanceInfo(Set<byte[]> pubKeyHashs) {
         List<UTXO> outputs = new ArrayList<UTXO>();
         List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs,
                 false);
+        Map<String, Coin> values = new HashMap<String, Coin>();
+
         for (TransactionOutput transactionOutput : transactionOutputs) {
             FreeStandingTransactionOutput freeStandingTransactionOutput = (FreeStandingTransactionOutput) transactionOutput;
-
-            outputs.add(freeStandingTransactionOutput.getUTXO());
-
-        }
-        Map<String, Coin> value = new HashMap<String, Coin>();
-        for (TransactionOutput output : transactionOutputs) {
-            if (value.containsKey(output.getValue().getTokenHex())) {
-                value.put(output.getValue().getTokenHex(), value.get(output.getValue().getTokenHex()))
-                        .add(output.getValue());
+            UTXO output = freeStandingTransactionOutput.getUTXO();
+            outputs.add(output);
+            Coin v = output.getValue();
+            if (values.containsKey(v.getTokenHex())) {
+                Coin nv = values.get(v.getTokenHex()).add(v);
+                values.put(output.getValue().getTokenHex(), nv); 
             } else {
-                value.put(output.getValue().getTokenHex(), output.getValue());
+                values.put(v.getTokenHex(), v);
             }
         }
 
         List<Coin> tokens = new ArrayList<Coin>();
-        for (Map.Entry<String, Coin> entry : value.entrySet()) {
+        for (Map.Entry<String, Coin> entry : values.entrySet()) {
             tokens.add(entry.getValue());
         }
         return GetBalancesResponse.create(tokens, outputs);
-    } 
+    }
 
     public Wallet makeWallat(ECKey ecKey) {
         KeyChainGroup group = new KeyChainGroup(networkParameters);
@@ -77,7 +77,7 @@ public class WalletService {
 
     protected CoinSelector coinSelector = new DefaultCoinSelector();
 
-    public LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(List<byte[]> pubKeyHashs,
+    public LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(Set<byte[]> pubKeyHashs,
             boolean excludeImmatureCoinbases) {
         LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
         try {
@@ -123,7 +123,7 @@ public class WalletService {
         return list;
     }
 
-    private List<UTXO> getStoredOutputsFromUTXOProvider(List<byte[]> pubKeyHashs) throws UTXOProviderException {
+    private List<UTXO> getStoredOutputsFromUTXOProvider(Set<byte[]> pubKeyHashs) throws UTXOProviderException {
         List<Address> addresses = new ArrayList<Address>();
         for (byte[] key : pubKeyHashs) {
             Address address = new Address(networkParameters, key);
@@ -133,7 +133,7 @@ public class WalletService {
         return list;
     }
 
-    public AbstractResponse getAccountOutputs(List<byte[]> pubKeyHashs) {
+    public AbstractResponse getAccountOutputs(Set<byte[]> pubKeyHashs) {
         List<UTXO> outputs = new ArrayList<UTXO>();
         List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs,
                 false);

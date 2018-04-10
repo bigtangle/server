@@ -4,6 +4,8 @@
  *******************************************************************************/
 package net.bigtangle.ui.wallet;
 
+import static net.bigtangle.ui.wallet.utils.GuiUtils.checkGuiThread;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -110,12 +112,15 @@ public class StockController {
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
 
-            GuiUtils.informationalAlert("token publish is ok", "", "");
+            Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
+            GuiUtils.informationalAlert("Token is published.", "", "");
             Main.instance.controller.initTableView();
+            checkGuiThread();
+            overlayUI.done();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
-        overlayUI.done();
+     
     }
 
     public void closeStock(ActionEvent event) {

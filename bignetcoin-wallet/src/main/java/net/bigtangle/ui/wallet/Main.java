@@ -29,10 +29,13 @@ import static net.bigtangle.ui.wallet.utils.GuiUtils.zoomIn;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
 import javax.annotation.Nullable;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -44,6 +47,8 @@ import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import net.bigtangle.core.Block;
+import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.UnitTestParams;
@@ -51,14 +56,14 @@ import net.bigtangle.ui.wallet.controls.NotificationBarPane;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.utils.BriefLogFormatter;
+import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.DeterministicSeed;
 
 public class Main extends Application {
     public static NetworkParameters params = UnitTestParams.get();
     public static final String APP_NAME = "Wallet";
-    private static final String WALLET_FILE_NAME = APP_NAME.replaceAll("[^a-zA-Z0-9.-]", "_") + "-"
-            + params.getPaymentProtocolId();
+
     public static String keyFileDirectory = ".";
     public static String keyFilePrefix = "bignetcoin";
     public static WalletAppKit bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
@@ -72,11 +77,12 @@ public class Main extends Application {
     private ObservableList<CoinModel> coinData = FXCollections.observableArrayList();
     private ObservableList<UTXOModel> utxoData = FXCollections.observableArrayList();
 
-    public static String IpAddress = "bigtangle.net";
+    public static String IpAddress = "localhost" ;//"bigtangle.net";
     public static String port = "8088";
     public static FXMLLoader loader;
 
     public static String lang = "";
+    public static int numberOfEmptyBlocks = 5;
 
     @Override
     public void start(Stage mainWindow) throws Exception {
@@ -286,4 +292,31 @@ public class Main extends Application {
     public void setUtxoData(ObservableList<UTXOModel> utxoData) {
         this.utxoData = utxoData;
     }
+
+    public static void sentEmpstyBlock(int number) {
+      
+            for (int i = 0; i < number; i++) {
+                try {
+                    sentEmpstyBlock();
+                    System.out.println("empty block " + i);
+                } catch (Exception e) {
+                    // Ignore
+                   e.printStackTrace(); 
+                }
+            }
+       
+    }
+
+    public static String sentEmpstyBlock() throws JsonProcessingException, Exception {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
+        rollingBlock.solve();
+
+        return OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
+
+    }
+
 }
