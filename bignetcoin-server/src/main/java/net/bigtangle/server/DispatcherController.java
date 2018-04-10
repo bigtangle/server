@@ -135,7 +135,13 @@ public class DispatcherController {
                 break;
                 
             case getOrders: {
-                AbstractResponse response = orderService.getOrderList();
+                // tokenid
+                // state
+                // address
+                String reqStr = new String(bodyByte, "UTF-8");
+                @SuppressWarnings("unchecked")
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                AbstractResponse response = orderService.getOrderList(request);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
