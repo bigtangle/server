@@ -102,13 +102,14 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     
     
     private static final String CREATE_ORDER_TABLE = "CREATE TABLE `order` (\n" +
-            "   orderid VARCHAR(255) NOT NULL,\n"+
-            "   address VARCHAR(255),\n"+
-            "   tokenid VARCHAR(255),\n"+ 
+            "   orderid varchar(255) NOT NULL,\n"+
+            "   address varchar(255),\n"+
+            "   tokenid varchar(255),\n"+ 
             "   type integer,\n"+ 
-            "   validateto DATETIME,\n"+ 
-            "   validatefrom DATETIME,\n"+ 
-            "   limitl BIGINT,\n"+ 
+            "   validateto datetime,\n"+ 
+            "   validatefrom datetime,\n"+ 
+            "   price bigint,\n"+ 
+            "   demandquantity bigint,\n"+ 
             "   state integer,\n"+ 
             "   PRIMARY KEY (orderid) )";
     
