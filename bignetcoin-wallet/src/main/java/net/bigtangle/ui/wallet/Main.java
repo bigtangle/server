@@ -82,7 +82,7 @@ public class Main extends Application {
     public static FXMLLoader loader;
 
     public static String lang = "";
-    public static int numberOfEmptyBlocks = 5;
+    public static int numberOfEmptyBlocks = 3;
 
     @Override
     public void start(Stage mainWindow) throws Exception {
@@ -294,17 +294,19 @@ public class Main extends Application {
     }
 
     public static void sentEmpstyBlock(int number) {
-      
+        Runnable r = () -> {
             for (int i = 0; i < number; i++) {
                 try {
                     sentEmpstyBlock();
                     System.out.println("empty block " + i);
                 } catch (Exception e) {
                     // Ignore
-                   e.printStackTrace(); 
+                    e.printStackTrace();
                 }
             }
-       
+        };
+         Platform.runLater(r);
+       // Threading.USER_THREAD.execute(r);
     }
 
     public static String sentEmpstyBlock() throws JsonProcessingException, Exception {

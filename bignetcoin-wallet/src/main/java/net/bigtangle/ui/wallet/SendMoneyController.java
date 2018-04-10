@@ -128,7 +128,8 @@ public class SendMoneyController {
     public void send(ActionEvent event) {
         try {
            // sendBtn.setDisable(true);
-            
+            checkGuiThread();
+            overlayUI.done();
             String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
             Address destination = // Address.getParametersFromAddress(address)address.getText()
                     Address.fromBase58(Main.params, address.getText());
@@ -146,12 +147,11 @@ public class SendMoneyController {
             rollingBlock.addTransaction(request.tx);
             rollingBlock.solve();
             OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
-
-          
-            checkGuiThread();
-            overlayUI.done();
-            Main.instance.controller.initTableView();
             Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
+          
+      
+       
+            Main.instance.controller.initTableView(); 
             // address.setDisable(true);
             // ((HBox) amountEdit.getParent()).getChildren().remove(amountEdit);
             // ((HBox) btcLabel.getParent()).getChildren().remove(btcLabel);
