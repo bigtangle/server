@@ -4,35 +4,46 @@ import java.util.Date;
 import java.util.UUID;
 
 public class Order implements java.io.Serializable {
-    
-    public static Order create(String address, String tokenid, int type, Date validateto, Date validatefrom, long limitl) {
-        return new Order(address, tokenid, type, validateto, validatefrom, limitl);
+
+    public static Order create(String address, String tokenid, int type, Date validateto, Date validatefrom,
+            long price, long demandQuantity) {
+        return new Order(address, tokenid, type, validateto, validatefrom, price, demandQuantity);
     }
 
     private static final long serialVersionUID = 190060684620430983L;
-    
+
     private String orderid;
-    
+
     private String address;
-    
+
     private String tokenid;
-    
+
     private int type;
-    
+
     private Date validateto;
-    
+
     private Date validatefrom;
-    
+
     private int state;
-    
-    private long limitl;
-    
-    public long getLimitl() {
-        return limitl;
+
+    private long price;
+
+    private long demandQuantity;
+
+    public long getPrice() {
+        return price;
     }
 
-    public void setLimitl(long limitl) {
-        this.limitl = limitl;
+    public void setPrice(long price) {
+        this.price = price;
+    }
+
+    public long getDemandQuantity() {
+        return demandQuantity;
+    }
+
+    public void setDemandQuantity(long demandQuantity) {
+        this.demandQuantity = demandQuantity;
     }
 
     public String getOrderid() {
@@ -91,7 +102,8 @@ public class Order implements java.io.Serializable {
         this.state = state;
     }
 
-    public Order(String address, String tokenid, int type, Date validateto, Date validatefrom, long limitl) {
+    public Order(String address, String tokenid, int type, Date validateto, Date validatefrom, long price,
+            long demandQuantity) {
         this.orderid = UUID.randomUUID().toString();
         this.address = address;
         this.tokenid = tokenid;
@@ -99,7 +111,8 @@ public class Order implements java.io.Serializable {
         this.validateto = validateto;
         this.validatefrom = validatefrom;
         this.state = 0;
-        this.limitl = limitl;
+        this.price = price;
+        this.demandQuantity = demandQuantity;
     }
 
     public Order() {

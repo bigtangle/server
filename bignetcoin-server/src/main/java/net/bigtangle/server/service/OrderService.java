@@ -1,6 +1,7 @@
 package net.bigtangle.server.service;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -22,11 +23,12 @@ public class OrderService {
         int type = (Integer) request.get("type");
         String validateto = (String) request.get("validateto");
         String validatefrom = (String) request.get("validatefrom");
-        int limitl = (Integer) request.get("limitl");
+        int price = (Integer) request.get("price");
+//        int demandQuantity = (Integer) request.get("demandQuantity");
         
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Order order = Order.create(address, tokenid, type, 
-                simpleDateFormat.parse(validateto), simpleDateFormat.parse(validatefrom), limitl);
+                simpleDateFormat.parse(validateto), simpleDateFormat.parse(validatefrom), price, 0);
         store.saveOrder(order);
         return AbstractResponse.createEmptyResponse();
     }
@@ -34,8 +36,11 @@ public class OrderService {
     @Autowired
     protected FullPrunedBlockStore store;
 
-    public AbstractResponse getOrderList() throws BlockStoreException {
-        List<Order> orders = this.store.getOrderList();
+    public AbstractResponse getOrderList(Map<String, Object> request) throws BlockStoreException {
+        List<Order> orders = new ArrayList<Order>();
+        if (request.isEmpty()) {
+            orders = this.store.getOrderList();
+        }
         return GetOrderResponse.create(orders);
     }
 }
