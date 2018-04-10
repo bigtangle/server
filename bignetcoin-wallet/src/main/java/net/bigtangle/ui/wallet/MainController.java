@@ -57,9 +57,6 @@ import net.bigtangle.utils.OkHttp3Util;
 import org.fxmisc.easybind.EasyBind;
 import org.spongycastle.crypto.params.KeyParameter;
 
-import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.OkHttpClient;
-
 /**
  * Gets created auto-magically by FXMLLoader via reflection. The widget fields
  * are set to the GUI controls they're named after. This class handles all the
@@ -97,16 +94,11 @@ public class MainController {
     public TextField keyFileDirectory;
 
     private BitcoinUIModel model = new BitcoinUIModel();
+    
     private NotificationBarPane.Item syncItem;
-    private Main mainApp;
-    public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-
-    OkHttpClient client = new OkHttpClient();
-
-    // Called by FXMLLoader.
+    
     @FXML
     public void initialize() {
-
         initTableView();
     }
 
