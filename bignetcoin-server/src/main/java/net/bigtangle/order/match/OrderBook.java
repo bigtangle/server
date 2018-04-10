@@ -1,6 +1,8 @@
 package net.bigtangle.order.match;
 
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
 import it.unimi.dsi.fastutil.longs.Long2ObjectRBTreeMap;
 import it.unimi.dsi.fastutil.longs.LongComparators;
 
@@ -12,7 +14,8 @@ public class OrderBook {
     private Long2ObjectRBTreeMap<PriceLevel> bids;
     private Long2ObjectRBTreeMap<PriceLevel> asks;
 
-    private Long2ObjectOpenHashMap<Order> orders;
+//    private Long2ObjectOpenHashMap<Order> orders;
+    private ConcurrentHashMap<String, Order> orders;
 
     private OrderBookListener listener;
 
@@ -25,9 +28,14 @@ public class OrderBook {
         this.bids = new Long2ObjectRBTreeMap<>(LongComparators.OPPOSITE_COMPARATOR);
         this.asks = new Long2ObjectRBTreeMap<>(LongComparators.NATURAL_COMPARATOR);
 
-        this.orders = new Long2ObjectOpenHashMap<>();
+//        this.orders = new Long2ObjectOpenHashMap<>();
+        this.orders = new ConcurrentHashMap<String, Order>();
 
         this.listener = listener;
+    }
+    
+    public void enter(long orderId_, Side side, long price, long size) {
+        this.enter(UUID.randomUUID().toString().replaceAll("-", ""), side, price, size);
     }
 
     /**
@@ -47,7 +55,7 @@ public class OrderBook {
      * @param price the limit price
      * @param size the size
      */
-    public void enter(long orderId, Side side, long price, long size) {
+    public void enter(String orderId, Side side, long price, long size) {
         if (orders.containsKey(orderId))
             return;
 
@@ -57,7 +65,7 @@ public class OrderBook {
             sell(orderId, price, size);
     }
 
-    private void buy(long orderId, long price, long size) {
+    private void buy(String orderId, long price, long size) {
         long remainingQuantity = size;
 
         PriceLevel bestLevel = getBestLevel(asks);
@@ -78,7 +86,7 @@ public class OrderBook {
         }
     }
 
-    private void sell(long orderId, long price, long size) {
+    private void sell(String orderId, long price, long size) {
         long remainingQuantity = size;
 
         PriceLevel bestLevel = getBestLevel(bids);
@@ -98,6 +106,10 @@ public class OrderBook {
             listener.add(orderId, Side.SELL, price, remainingQuantity);
         }
     }
+    
+    public void cancel(long orderId, long size) {
+        this.cancel(String.valueOf(orderId), size);
+    }
 
     /**
      * Cancel a quantity of an order in this order book. The size refers
@@ -111,7 +123,7 @@ public class OrderBook {
      * @param orderId the order identifier
      * @param size the new size
      */
-    public void cancel(long orderId, long size) {
+    public void cancel(String orderId, long size) {
         Order order = orders.get(orderId);
         if (order == null)
             return;
@@ -139,7 +151,7 @@ public class OrderBook {
         return levels.get(levels.firstLongKey());
     }
 
-    private Order add(Long2ObjectRBTreeMap<PriceLevel> levels, long orderId, Side side, long price, long size) {
+    private Order add(Long2ObjectRBTreeMap<PriceLevel> levels, String orderId, Side side, long price, long size) {
         PriceLevel level = levels.get(price);
         if (level == null) {
             level = new PriceLevel(side, price);

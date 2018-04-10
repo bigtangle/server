@@ -4,11 +4,11 @@ class Order {
 
     private PriceLevel level;
 
-    private long id;
+    private String id;
 
     private long remainingQuantity;
 
-    public Order(PriceLevel level, long id, long size) {
+    public Order(PriceLevel level, String id, long size) {
         this.level = level;
 
         this.id = id;
@@ -20,7 +20,7 @@ class Order {
         return level;
     }
 
-    public long getId() {
+    public String getId() {
         return id;
     }
 

@@ -28,7 +28,7 @@ class PriceLevel {
         return orders.isEmpty();
     }
 
-    public Order add(long orderId, long size) {
+    public Order add(String orderId, long size) {
         Order order = new Order(this, orderId, size);
 
         orders.add(order);
@@ -36,7 +36,7 @@ class PriceLevel {
         return order;
     }
 
-    public long match(long orderId, Side side, long quantity, OrderBookListener listener) {
+    public long match(String orderId, Side side, long quantity, OrderBookListener listener) {
         while (quantity > 0 && !orders.isEmpty()) {
             Order order = orders.get(0);
 

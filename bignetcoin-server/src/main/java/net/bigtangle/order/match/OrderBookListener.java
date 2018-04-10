@@ -16,7 +16,7 @@ public interface OrderBookListener {
      * @param executedQuantity the executed quantity
      * @param remainingQuantity the remaining quantity of the resting order
      */
-    void match(long restingOrderId, long incomingOrderId, Side incomingSide,
+    void match(String restingOrderId, String incomingOrderId, Side incomingSide,
             long price, long executedQuantity, long remainingQuantity);
 
     /**
@@ -27,7 +27,7 @@ public interface OrderBookListener {
      * @param price the limit price
      * @param size the size
      */
-    void add(long orderId, Side side, long price, long size);
+    void add(String orderId, Side side, long price, long size);
 
     /**
      * Cancel a quantity of an order.
@@ -36,6 +36,6 @@ public interface OrderBookListener {
      * @param canceledQuantity the canceled quantity
      * @param remainingQuantity the remaining quantity
      */
-    void cancel(long orderId, long canceledQuantity, long remainingQuantity);
+    void cancel(String orderId, long canceledQuantity, long remainingQuantity);
 
 }
