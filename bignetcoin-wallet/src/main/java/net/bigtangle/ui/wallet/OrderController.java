@@ -26,6 +26,8 @@ public class OrderController {
     @FXML
     public TextField limitTextField;
     @FXML
+    public TextField amountTextField;
+    @FXML
     public ComboBox<String> addressComboBox;
     @FXML
     public ComboBox<String> tokenComboBox;

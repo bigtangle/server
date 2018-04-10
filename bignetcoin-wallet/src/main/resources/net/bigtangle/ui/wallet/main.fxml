@@ -21,7 +21,7 @@
           <TableColumn fx:id="balanceColumn" prefWidth="70.0" text="Amount" />
           <TableColumn fx:id="tokentypeColumnA" prefWidth="232.0" text="Token" />
             <TableColumn fx:id="addressColumn" prefWidth="282.0" text="Address" />
-            <TableColumn fx:id="spendPendingColumn" prefWidth="73.0" text="Token" />
+            <TableColumn fx:id="spendPendingColumn" prefWidth="73.0" text="pending(*)" />
         </columns>
       </TableView>
       <TableView fx:id="coinTable" layoutX="670.0" layoutY="161.0" prefHeight="364.0" prefWidth="235.0">
