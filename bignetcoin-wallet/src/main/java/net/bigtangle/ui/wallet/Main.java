@@ -77,7 +77,7 @@ public class Main extends Application {
     private ObservableList<CoinModel> coinData = FXCollections.observableArrayList();
     private ObservableList<UTXOModel> utxoData = FXCollections.observableArrayList();
 
-    public static String IpAddress = "localhost" ;//"bigtangle.net";
+    public static String IpAddress = "bigtangle.net";
     public static String port = "8088";
     public static FXMLLoader loader;
 
