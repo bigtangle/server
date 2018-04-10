@@ -24,11 +24,11 @@ public class OrderService {
         String validateto = (String) request.get("validateto");
         String validatefrom = (String) request.get("validatefrom");
         int price = (Integer) request.get("price");
-//        int demandQuantity = (Integer) request.get("demandQuantity");
+        int amount = (Integer) request.get("amount");
         
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Order order = Order.create(address, tokenid, type, 
-                simpleDateFormat.parse(validateto), simpleDateFormat.parse(validatefrom), price, 0);
+                simpleDateFormat.parse(validateto), simpleDateFormat.parse(validatefrom), price, amount);
         store.saveOrder(order);
         return AbstractResponse.createEmptyResponse();
     }

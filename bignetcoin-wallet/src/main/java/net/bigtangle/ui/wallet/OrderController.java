@@ -91,8 +91,10 @@ public class OrderController {
         requestParam.put("tokenid", this.tokenComboBox.getValue());
         String typeStr = (String) statusChoiceBox.getValue();
         requestParam.put("type", typeStr.equals("sell") ? 1 : 0);
-        int limit = Integer.parseInt(this.limitTextField.getText());
-        requestParam.put("limitl", limit);
+        int price = Integer.parseInt(this.limitTextField.getText());
+        int amount = Integer.parseInt(this.amountTextField.getText());
+        requestParam.put("price", price);
+        requestParam.put("amount", amount);
         requestParam.put("validateto", validdateTo);
         requestParam.put("validatefrom", validdateFrom);
         OkHttp3Util.post(ContextRoot + "saveOrder", Json.jsonmapper().writeValueAsString(requestParam));

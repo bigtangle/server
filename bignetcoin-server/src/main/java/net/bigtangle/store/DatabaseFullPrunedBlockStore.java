@@ -296,8 +296,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private static final String INSERT_TOKENS_SQL = "INSERT INTO tokens (tokenid, tokenname, amount, description, blocktype) VALUES (?, ?, ?, ?, ?)";
     private static final String SELECT_TOKENS_SQL = "select tokenid, tokenname, amount, description, blocktype from tokens";
 
-    private static final String INSERT_ORDER_SQL = "INSERT INTO `order` (orderid, address, tokenid, type, validateto, validatefrom, price, demandquantity, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
-    private static final String SELECT_ORDER_SQL = "select orderid, address, tokenid, type, validateto, validatefrom, price, demandquantity, state from `order`";
+    private static final String INSERT_ORDER_SQL = "INSERT INTO `order` (orderid, address, tokenid, type, validateto, validatefrom, price, amount, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
+    private static final String SELECT_ORDER_SQL = "select orderid, address, tokenid, type, validateto, validatefrom, price, amount, state from `order`";
 
     protected Sha256Hash chainHeadHash;
     protected StoredBlock chainHeadBlock;
@@ -2495,7 +2495,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setDate(5, new Date(order.getValidateto().getTime()));
             preparedStatement.setDate(6, new Date(order.getValidatefrom().getTime()));
             preparedStatement.setLong(7, order.getPrice());
-            preparedStatement.setLong(8, order.getDemandQuantity());
+            preparedStatement.setLong(8, order.getAmount());
             preparedStatement.setInt(9, order.getState());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
@@ -2526,7 +2526,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 order.setTokenid(resultSet.getString("tokenid"));
                 order.setType(resultSet.getInt("type"));
                 order.setPrice(resultSet.getLong("price"));
-                order.setDemandQuantity(resultSet.getLong("demandquantity"));
+                order.setAmount(resultSet.getLong("amount"));
                 order.setState(resultSet.getInt("state"));
                 order.setValidateto(resultSet.getDate("validateto"));
                 order.setValidatefrom(resultSet.getDate("validatefrom"));

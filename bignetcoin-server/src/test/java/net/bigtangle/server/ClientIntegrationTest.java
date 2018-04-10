@@ -55,7 +55,8 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         request.put("address", "111111111111111111111111111111111111111111111111111111");
         request.put("tokenid", "222222222222222222222222222222222222222222222222222222");
         request.put("type", 1);
-        request.put("limitl", 1);
+        request.put("price", 1);
+        request.put("amount", 100);
         request.put("validateto", simpleDateFormat.format(new Date()));
         request.put("validatefrom", simpleDateFormat.format(new Date()));
         

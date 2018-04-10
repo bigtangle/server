@@ -109,7 +109,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "   validateto datetime,\n"+ 
             "   validatefrom datetime,\n"+ 
             "   price bigint,\n"+ 
-            "   demandquantity bigint,\n"+ 
+            "   amount bigint,\n"+ 
             "   state integer,\n"+ 
             "   PRIMARY KEY (orderid) )";
     

@@ -6,8 +6,8 @@ import java.util.UUID;
 public class Order implements java.io.Serializable {
 
     public static Order create(String address, String tokenid, int type, Date validateto, Date validatefrom,
-            long price, long demandQuantity) {
-        return new Order(address, tokenid, type, validateto, validatefrom, price, demandQuantity);
+            long price, long amount) {
+        return new Order(address, tokenid, type, validateto, validatefrom, price, amount);
     }
 
     private static final long serialVersionUID = 190060684620430983L;
@@ -28,7 +28,7 @@ public class Order implements java.io.Serializable {
 
     private long price;
 
-    private long demandQuantity;
+    private long amount;
 
     public long getPrice() {
         return price;
@@ -38,12 +38,12 @@ public class Order implements java.io.Serializable {
         this.price = price;
     }
 
-    public long getDemandQuantity() {
-        return demandQuantity;
+    public long getAmount() {
+        return amount;
     }
 
-    public void setDemandQuantity(long demandQuantity) {
-        this.demandQuantity = demandQuantity;
+    public void setAmount(long amount) {
+        this.amount = amount;
     }
 
     public String getOrderid() {
@@ -102,8 +102,7 @@ public class Order implements java.io.Serializable {
         this.state = state;
     }
 
-    public Order(String address, String tokenid, int type, Date validateto, Date validatefrom, long price,
-            long demandQuantity) {
+    public Order(String address, String tokenid, int type, Date validateto, Date validatefrom, long price, long amount) {
         this.orderid = UUID.randomUUID().toString();
         this.address = address;
         this.tokenid = tokenid;
@@ -112,7 +111,7 @@ public class Order implements java.io.Serializable {
         this.validatefrom = validatefrom;
         this.state = 0;
         this.price = price;
-        this.demandQuantity = demandQuantity;
+        this.amount = amount;
     }
 
     public Order() {
