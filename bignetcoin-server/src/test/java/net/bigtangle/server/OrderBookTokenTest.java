@@ -1,4 +1,4 @@
-package net.bigtangle.order.match;
+package net.bigtangle.server;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -6,12 +6,20 @@ import java.util.List;
 
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Utils;
+import net.bigtangle.order.match.OrderBook;
+import net.bigtangle.order.match.OrderBookEvents;
 import net.bigtangle.order.match.OrderBookEvents.Event;
+import net.bigtangle.order.match.Side;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 
-public class OrderBookTokenTest {
+@RunWith(SpringRunner.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+public class OrderBookTokenTest extends AbstractIntegrationTest {
 
     private HashMap<String, OrderBook> orderBookResult;
 

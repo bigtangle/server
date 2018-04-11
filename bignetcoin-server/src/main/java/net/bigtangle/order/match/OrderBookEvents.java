@@ -3,7 +3,7 @@ package net.bigtangle.order.match;
 import java.util.ArrayList;
 import java.util.List;
 
-class OrderBookEvents implements OrderBookListener {
+public class OrderBookEvents implements OrderBookListener {
 
     private List<Event> events;
 
