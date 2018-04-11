@@ -3,11 +3,11 @@ package net.bigtangle.core;
 import java.util.Date;
 import java.util.UUID;
 
-public class Order implements java.io.Serializable {
+public class OrderPublish implements java.io.Serializable {
 
-    public static Order create(String address, String tokenid, int type, Date validateto, Date validatefrom,
+    public static OrderPublish create(String address, String tokenid, int type, Date validateto, Date validatefrom,
             long price, long amount) {
-        return new Order(address, tokenid, type, validateto, validatefrom, price, amount);
+        return new OrderPublish(address, tokenid, type, validateto, validatefrom, price, amount);
     }
 
     private static final long serialVersionUID = 190060684620430983L;
@@ -102,7 +102,7 @@ public class Order implements java.io.Serializable {
         this.state = state;
     }
 
-    public Order(String address, String tokenid, int type, Date validateto, Date validatefrom, long price, long amount) {
+    public OrderPublish(String address, String tokenid, int type, Date validateto, Date validatefrom, long price, long amount) {
         this.orderid = UUID.randomUUID().toString();
         this.address = address;
         this.tokenid = tokenid;
@@ -114,6 +114,6 @@ public class Order implements java.io.Serializable {
         this.amount = amount;
     }
 
-    public Order() {
+    public OrderPublish() {
     }
 }

@@ -13,6 +13,9 @@ import org.springframework.context.annotation.ComponentScan;
 public class ServerStart {
 
     public static void main(String[] args) {
-        SpringApplication.run(ServerStart.class, args);
+//        SpringApplication.run(ServerStart.class, args);
+        SpringApplication springApplication = new SpringApplication(ServerStart.class);
+        springApplication.addListeners(new BeforeStartup());
+        springApplication.run(args);
     }
 }

@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import net.bigtangle.core.BlockStoreException;
-import net.bigtangle.core.Order;
+import net.bigtangle.core.OrderPublish;
 import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.GetOrderResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -27,7 +27,7 @@ public class OrderService {
         int amount = (Integer) request.get("amount");
         
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Order order = Order.create(address, tokenid, type, 
+        OrderPublish order = OrderPublish.create(address, tokenid, type, 
                 simpleDateFormat.parse(validateto), simpleDateFormat.parse(validatefrom), price, amount);
         store.saveOrder(order);
         return AbstractResponse.createEmptyResponse();
@@ -37,7 +37,7 @@ public class OrderService {
     protected FullPrunedBlockStore store;
 
     public AbstractResponse getOrderList(Map<String, Object> request) throws BlockStoreException {
-        List<Order> orders = new ArrayList<Order>();
+        List<OrderPublish> orders = new ArrayList<OrderPublish>();
         if (request.isEmpty()) {
             orders = this.store.getOrderList();
         }

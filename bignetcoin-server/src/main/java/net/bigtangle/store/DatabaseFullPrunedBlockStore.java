@@ -31,7 +31,7 @@ import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.Order;
+import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.ProtocolException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
@@ -212,7 +212,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private static final String DROP_TIPS_TABLE = "DROP TABLE tips";
     private static final String DROP_BLOCKEVALUATION_TABLE = "DROP TABLE blockevaluation";
     private static final String DROP_TOKENS_TABLE = "DROP TABLE tokens";
-    private static final String DROP_ORDER_TABLE = "DROP TABLE `order`";
+    private static final String DROP_ORDER_TABLE = "DROP TABLE orderpublish";
 
     // Queries SQL.
     private static final String SELECT_SETTINGS_SQL = "SELECT value FROM settings WHERE name = ?";
@@ -296,8 +296,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private static final String INSERT_TOKENS_SQL = "INSERT INTO tokens (tokenid, tokenname, amount, description, blocktype) VALUES (?, ?, ?, ?, ?)";
     private static final String SELECT_TOKENS_SQL = "select tokenid, tokenname, amount, description, blocktype from tokens";
 
-    private static final String INSERT_ORDER_SQL = "INSERT INTO `order` (orderid, address, tokenid, type, validateto, validatefrom, price, amount, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
-    private static final String SELECT_ORDER_SQL = "select orderid, address, tokenid, type, validateto, validatefrom, price, amount, state from `order`";
+    private static final String INSERT_ORDER_SQL = "INSERT INTO orderpublish (orderid, address, tokenid, type, validateto, validatefrom, price, amount, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
+    private static final String SELECT_ORDER_SQL = "SELECT orderid, address, tokenid, type, validateto, validatefrom, price, amount, state FROM orderpublish";
 
     protected Sha256Hash chainHeadHash;
     protected StoredBlock chainHeadBlock;
@@ -2484,7 +2484,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void saveOrder(Order order) throws BlockStoreException {
+    public void saveOrder(OrderPublish order) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(INSERT_ORDER_SQL);
@@ -2512,15 +2512,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<Order> getOrderList() throws BlockStoreException {
-        List<Order> list = new ArrayList<Order>();
+    public List<OrderPublish> getOrderList() throws BlockStoreException {
+        List<OrderPublish> list = new ArrayList<OrderPublish>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_ORDER_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                Order order = new Order();
+                OrderPublish order = new OrderPublish();
                 order.setOrderid(resultSet.getString("orderid"));
                 order.setAddress(resultSet.getString("address"));
                 order.setTokenid(resultSet.getString("tokenid"));

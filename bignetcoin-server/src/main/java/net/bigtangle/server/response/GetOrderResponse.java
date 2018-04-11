@@ -6,23 +6,23 @@ package net.bigtangle.server.response;
 
 import java.util.List;
 
-import net.bigtangle.core.Order;
+import net.bigtangle.core.OrderPublish;
 
 public class GetOrderResponse extends AbstractResponse {
 
-    private List<Order> orders;
+    private List<OrderPublish> orders;
     
-    public static AbstractResponse create(List<Order> orders) {
+    public static AbstractResponse create(List<OrderPublish> orders) {
         GetOrderResponse res = new GetOrderResponse();
         res.orders = orders;
         return res;
     }
 
-    public List<Order> getOrders() {
+    public List<OrderPublish> getOrders() {
         return orders;
     }
 
-    public void setOrders(List<Order> orders) {
+    public void setOrders(List<OrderPublish> orders) {
         this.orders = orders;
     }
 }
