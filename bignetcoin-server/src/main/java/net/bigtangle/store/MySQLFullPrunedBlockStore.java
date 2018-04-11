@@ -113,12 +113,25 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "   state integer,\n"+ 
             "   PRIMARY KEY (orderid) )";
     
+    private static final String CREATE_EXCHANGE_TABLE = "CREATE TABLE exchange (\n" +
+            "   orderid varchar(255) NOT NULL,\n"+
+            "   fromAddress varchar(255),\n"+
+            "   fromTokenHex varchar(255),\n"+ 
+            "   fromAmount varchar(255),\n"+ 
+            "   toAddress varchar(255),\n"+ 
+            "   toTokenHex varchar(255),\n"+ 
+            "   toAmount varchar(255),\n"+ 
+            "   data varbinary(5000) NOT NULL,\n" +
+            "   PRIMARY KEY (orderid) )";
+    
     // Some indexes to speed up inserts
-    private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX              = "CREATE INDEX outputs_hash_index_height_toaddress_idx ON outputs (hash, `index`, height, toaddress) USING btree";
-    private static final String CREATE_OUTPUTS_TOADDRESS_INDEX                  = "CREATE INDEX outputs_toaddress_idx ON outputs (toaddress) USING btree";
-    private static final String CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX          = "CREATE INDEX outputs_addresstargetable_idx ON outputs (addresstargetable) USING btree";
-    private static final String CREATE_OUTPUTS_HASH_INDEX                       = "CREATE INDEX outputs_hash_idx ON outputs (hash) USING btree";
-    private static final String CREATE_UNDOABLE_TABLE_INDEX                     = "CREATE INDEX undoableblocks_height_idx ON undoableblocks (height) USING btree";
+    private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_height_toaddress_idx ON outputs (hash, `index`, height, toaddress) USING btree";
+    private static final String CREATE_OUTPUTS_TOADDRESS_INDEX = "CREATE INDEX outputs_toaddress_idx ON outputs (toaddress) USING btree";
+    private static final String CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX = "CREATE INDEX outputs_addresstargetable_idx ON outputs (addresstargetable) USING btree";
+    private static final String CREATE_OUTPUTS_HASH_INDEX = "CREATE INDEX outputs_hash_idx ON outputs (hash) USING btree";
+    private static final String CREATE_UNDOABLE_TABLE_INDEX = "CREATE INDEX undoableblocks_height_idx ON undoableblocks (height) USING btree";
+    private static final String CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX = "CREATE INDEX exchange_fromAddress_idx ON exchange (fromAddress) USING btree";
+    private static final String CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX = "CREATE INDEX exchange_toAddress_idx ON exchange (toAddress) USING btree";
 
     // SQL involving index column (table outputs) overridden as it is a reserved word and must be back ticked in MySQL.
       public MySQLFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
@@ -144,6 +157,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_BLOCKEVALUATION_TABLE);
         sqlStatements.add(CREATE_TOKENS_TABLE);
         sqlStatements.add(CREATE_ORDER_TABLE);
+        sqlStatements.add(CREATE_EXCHANGE_TABLE);
         return sqlStatements;
     }
 
@@ -155,6 +169,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX);
         sqlStatements.add(CREATE_OUTPUTS_HASH_INDEX);
         sqlStatements.add(CREATE_OUTPUTS_TOADDRESS_INDEX);
+        sqlStatements.add(CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX);
+        sqlStatements.add(CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX);
         return sqlStatements;
     }
 

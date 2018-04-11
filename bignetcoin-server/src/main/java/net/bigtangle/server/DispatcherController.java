@@ -19,6 +19,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.GetBlockEvaluationsResponse;
 import net.bigtangle.server.service.BlockService;
+import net.bigtangle.server.service.ExchangeService;
 import net.bigtangle.server.service.OrderService;
 import net.bigtangle.server.service.TokensService;
 import net.bigtangle.server.service.TransactionService;
@@ -37,20 +38,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/")
 public class DispatcherController {
 
-    @Autowired
-    private TransactionService transactionService;
+    @Autowired private TransactionService transactionService;
 
-    @Autowired
-    private WalletService walletService;
+    @Autowired private WalletService walletService;
 
-    @Autowired
-    private BlockService blockService;
+    @Autowired private BlockService blockService;
 
-    @Autowired
-    private TokensService tokensService;
+    @Autowired private TokensService tokensService;
     
-    @Autowired
-    private OrderService orderService;
+    @Autowired private OrderService orderService;
+    
+    @Autowired private ExchangeService exchangeService;
 
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
     public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] bodyByte,
@@ -153,6 +151,25 @@ public class DispatcherController {
                     pubKeyHashs.add(Utils.HEX.decode(keyStrHex));
                 }
                 AbstractResponse response = walletService.getAccountBalanceInfo(pubKeyHashs);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+                
+            case saveExchange: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                @SuppressWarnings("unchecked")
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                AbstractResponse response = exchangeService.saveExchange(request);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+                
+            case getExchange: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                @SuppressWarnings("unchecked")
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String address = (String) request.get("address");
+                AbstractResponse response = exchangeService.getExchangeListWithAddress(address);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;

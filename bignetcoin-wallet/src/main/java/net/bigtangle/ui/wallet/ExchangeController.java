@@ -222,6 +222,21 @@ public class ExchangeController {
         final FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showSaveDialog(null);
         FileUtil.writeFile(file, byteBuffer.array());
+        
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("fromAddress", fromAddress);
+        requestParam.put("fromTokenHex", fromTokenHex);
+        requestParam.put("fromAmount", fromAmount);
+        requestParam.put("toAddress", toAddress);
+        requestParam.put("toTokenHex", toTokenHex);
+        requestParam.put("toAmount", toAmount);
+        requestParam.put("dataHex", Utils.HEX.encode(byteBuffer.array()));
+        try {
+            OkHttp3Util.post(ContextRoot + "saveExchange", Json.jsonmapper().writeValueAsBytes(requestParam));
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+            return;
+        }
         overlayUI.done();
     }
 
