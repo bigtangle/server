@@ -35,6 +35,10 @@ public class OrderBook {
     }
     
     public void enter(long orderId_, Side side, long price, long size) {
+        this.enter(String.valueOf(orderId_), side, price, size);
+    }
+    
+    public void enter(Side side, long price, long size) {
         this.enter(UUID.randomUUID().toString().replaceAll("-", ""), side, price, size);
     }
 
