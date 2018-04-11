@@ -94,9 +94,9 @@ public class MainController {
     public TextField keyFileDirectory;
 
     private BitcoinUIModel model = new BitcoinUIModel();
-    
+
     private NotificationBarPane.Item syncItem;
-    
+
     @FXML
     public void initialize() {
         initTableView();
@@ -113,7 +113,8 @@ public class MainController {
         for (ECKey ecKey : bitcoin.wallet().walletKeys(aesKey)) {
             keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
         }
-        String response = OkHttp3Util.postString(CONTEXT_ROOT + "batchGetBalances", Json.jsonmapper().writeValueAsString(keyStrHex000));
+        String response = OkHttp3Util.post(CONTEXT_ROOT + "batchGetBalances",
+                Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         if (data == null || data.isEmpty()) {
             return;
