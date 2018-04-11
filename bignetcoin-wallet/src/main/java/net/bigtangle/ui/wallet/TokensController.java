@@ -5,7 +5,6 @@ import java.util.Map;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -29,8 +28,6 @@ public class TokensController {
     @FXML
     public TableColumn<Map, String> descriptionColumn;
 
-    public Main.OverlayUI overlayUI;
-
     @FXML
     public void initialize() {
 
@@ -39,10 +36,6 @@ public class TokensController {
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
-    }
-
-    public void closeUI(ActionEvent event) {
-        overlayUI.done();
     }
 
     public void initTableView() throws Exception {
