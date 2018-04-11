@@ -10,5 +10,7 @@ public enum ReqCmd {
 
     createGenesisBlock, exchangeToken, getTokens, getAllEvaluations, 
     
-    outputsWiteToken, saveOrder, getOrders, batchGetBalances;
+    outputsWiteToken, saveOrder, getOrders, batchGetBalances, 
+    
+    saveExchange, getExchange;
 }

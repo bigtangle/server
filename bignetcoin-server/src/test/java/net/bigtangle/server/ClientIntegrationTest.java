@@ -113,6 +113,22 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         walletAppKit.wallet().signTransaction(req);
         
          byte[] a = req.tx.bitcoinSerialize();
+         
+         
+         HashMap<String, Object> requestParam = new HashMap<String, Object>();
+         requestParam.put("fromAddress", "fromAddress");
+         requestParam.put("fromTokenHex", "fromTokenHex");
+         requestParam.put("fromAmount", "22");
+         requestParam.put("toAddress", "toAddress");
+         requestParam.put("toTokenHex", "toTokenHex");
+         requestParam.put("toAmount", "33");
+         requestParam.put("dataHex", Utils.HEX.encode(a));
+         MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.saveExchange.name())
+                 .content(Json.jsonmapper().writeValueAsString(requestParam));
+         MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
+         String data = mvcResult.getResponse().getContentAsString();
+         logger.info("testGetBalances resp : " + data);
+         
          Transaction transaction = (Transaction) networkParameters.getDefaultSerializer().makeTransaction(a);
         
 //        byte[] buf = BeanSerializeUtil.serializer(req.tx);
@@ -121,6 +137,14 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
          SendRequest request = SendRequest.forTx(transaction); 
         walletAppKit1.wallet().signTransaction(request);
         exchangeTokenComplete(request.tx);
+        
+        requestParam.clear();
+        requestParam.put("address", "fromAddress");
+        httpServletRequestBuilder = post(contextRoot + ReqCmd.getExchange.name())
+                .content(Json.jsonmapper().writeValueAsString(requestParam));
+        mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
+        data = mvcResult.getResponse().getContentAsString();
+        logger.info("getExchange resp : " + data);
     }
 
     public void exchangeTokenComplete(Transaction tx) throws Exception {

@@ -30,6 +30,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.Exchange;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.ProtocolException;
@@ -213,6 +214,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private static final String DROP_BLOCKEVALUATION_TABLE = "DROP TABLE blockevaluation";
     private static final String DROP_TOKENS_TABLE = "DROP TABLE tokens";
     private static final String DROP_ORDER_TABLE = "DROP TABLE orderpublish";
+    private static final String DROP_EXCHANGE_TABLE = "DROP TABLE exchange";
 
     // Queries SQL.
     private static final String SELECT_SETTINGS_SQL = "SELECT value FROM settings WHERE name = ?";
@@ -298,6 +300,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     private static final String INSERT_ORDER_SQL = "INSERT INTO orderpublish (orderid, address, tokenid, type, validateto, validatefrom, price, amount, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
     private static final String SELECT_ORDER_SQL = "SELECT orderid, address, tokenid, type, validateto, validatefrom, price, amount, state FROM orderpublish";
+
+    private static final String INSERT_EXCHANGE_SQL = "INSERT INTO exchange (orderid, fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
+    private static final String SELECT_EXCHANGE_SQL = "SELECT orderid, fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, data FROM exchange WHERE fromAddress = ? OR toAddress = ?";
 
     protected Sha256Hash chainHeadHash;
     protected StoredBlock chainHeadBlock;
@@ -464,6 +469,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_BLOCKEVALUATION_TABLE);
         sqlStatements.add(DROP_TOKENS_TABLE);
         sqlStatements.add(DROP_ORDER_TABLE);
+        sqlStatements.add(DROP_EXCHANGE_TABLE);
         return sqlStatements;
     }
 
@@ -2531,6 +2537,69 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 order.setValidateto(resultSet.getDate("validateto"));
                 order.setValidatefrom(resultSet.getDate("validatefrom"));
                 list.add(order);
+            }
+            return list;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void saveExchange(Exchange exchange) throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(INSERT_EXCHANGE_SQL);
+            preparedStatement.setString(1, exchange.getOrderid());
+            preparedStatement.setString(2, exchange.getFromAddress());
+            preparedStatement.setString(3, exchange.getFromTokenHex());
+            preparedStatement.setString(4, exchange.getFromAmount());
+            preparedStatement.setString(5, exchange.getToAddress());
+            preparedStatement.setString(6, exchange.getToTokenHex());
+            preparedStatement.setString(7, exchange.getToAmount());
+            preparedStatement.setBytes(8, exchange.getData());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<Exchange> getExchangeListWithAddress(String address) throws BlockStoreException {
+        List<Exchange> list = new ArrayList<Exchange>();
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_EXCHANGE_SQL);
+            preparedStatement.setString(1, address);
+            preparedStatement.setString(2, address);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                Exchange exchange = new Exchange();
+                exchange.setOrderid(resultSet.getString("orderid"));
+                exchange.setFromAddress(resultSet.getString("fromAddress"));
+                exchange.setFromTokenHex(resultSet.getString("fromTokenHex"));
+                exchange.setFromAmount(resultSet.getString("fromAmount"));
+                exchange.setToAddress(resultSet.getString("toAddress"));
+                exchange.setToTokenHex(resultSet.getString("toTokenHex"));
+                exchange.setToAmount(resultSet.getString("toAmount"));
+                exchange.setData(resultSet.getBytes("data"));
+                list.add(exchange);
             }
             return list;
         } catch (SQLException ex) {
