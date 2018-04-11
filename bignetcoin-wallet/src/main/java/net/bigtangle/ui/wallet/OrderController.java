@@ -130,21 +130,28 @@ public class OrderController {
     }
 
     public void buy(ActionEvent event) throws Exception {
-        if (validdateFromDatePicker.getValue().equals("")) {
-            GuiUtils.informationalAlert("save order param", "validdate From Date Picker ERROR");
-            return;
-        }
-        if (validdateToDatePicker.getValue().equals("")) {
-            GuiUtils.informationalAlert("save order param", "validdate To Date Picker ERROR");
-            return;
-        }
+//        if (validdateFromDatePicker.getValue() == null) {
+//            GuiUtils.informationalAlert("save order param", "validdate From Date Picker ERROR");
+//            return;
+//        }
+//        if (validdateToDatePicker.getValue() == null) {
+//            GuiUtils.informationalAlert("save order param", "validdate To Date Picker ERROR");
+//            return;
+//        }
         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd 00:00:00");
-        String validdateFrom = df.format(validdateFromDatePicker.getValue());
-        String validdateTo = df.format(validdateToDatePicker.getValue());
+        String validdateFrom = "";
+        if (validdateFromDatePicker.getValue() != null) {
+            validdateFrom = df.format(validdateFromDatePicker.getValue());
+        }
+        String validdateTo = "";
+        if (validdateToDatePicker.getValue() != null) {
+            validdateTo = df.format(validdateToDatePicker.getValue());
+        }
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("address", this.addressComboBox.getValue());
-        requestParam.put("tokenid", this.tokenComboBox.getValue());
+        String tokenid = this.tokenComboBox.getValue().split(":")[1].trim();
+        requestParam.put("tokenid", tokenid);
         String typeStr = (String) statusChoiceBox.getValue();
         requestParam.put("type", typeStr.equals("sell") ? 1 : 0);
         int price = Integer.parseInt(this.limitTextField.getText());

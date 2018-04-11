@@ -2492,14 +2492,25 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public void saveOrder(OrderPublish order) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
+        maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(INSERT_ORDER_SQL);
             preparedStatement.setString(1, order.getOrderid());
             preparedStatement.setString(2, order.getAddress());
             preparedStatement.setString(3, order.getTokenid());
             preparedStatement.setInt(4, order.getType());
-            preparedStatement.setDate(5, new Date(order.getValidateto().getTime()));
-            preparedStatement.setDate(6, new Date(order.getValidatefrom().getTime()));
+            if (order.getValidateto() == null) {
+                preparedStatement.setDate(5, null);
+            }
+            else {
+                preparedStatement.setDate(5, new Date(order.getValidateto().getTime()));
+            }
+            if (order.getValidatefrom() == null) {
+                preparedStatement.setDate(6, null);
+            }
+            else {
+                preparedStatement.setDate(6, new Date(order.getValidatefrom().getTime()));
+            }
             preparedStatement.setLong(7, order.getPrice());
             preparedStatement.setLong(8, order.getAmount());
             preparedStatement.setInt(9, order.getState());

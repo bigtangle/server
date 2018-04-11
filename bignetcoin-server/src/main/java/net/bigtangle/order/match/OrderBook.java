@@ -5,6 +5,8 @@ import it.unimi.dsi.fastutil.longs.LongComparators;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * An order book.
@@ -19,6 +21,16 @@ public class OrderBook {
 
     private OrderBookListener listener;
 
+    private Lock lock = new ReentrantLock();
+
+    public void lock() {
+        this.lock.lock();
+    }
+
+    public void unlock() {
+        this.lock.unlock();
+    }
+
     /**
      * Create an order book.
      *
@@ -27,17 +39,15 @@ public class OrderBook {
     public OrderBook(OrderBookListener listener) {
         this.bids = new Long2ObjectRBTreeMap<>(LongComparators.OPPOSITE_COMPARATOR);
         this.asks = new Long2ObjectRBTreeMap<>(LongComparators.NATURAL_COMPARATOR);
-
 //        this.orders = new Long2ObjectOpenHashMap<>();
         this.orders = new ConcurrentHashMap<String, Order>();
-
         this.listener = listener;
     }
     
     public void enter(long orderId_, Side side, long price, long size) {
         this.enter(String.valueOf(orderId_), side, price, size);
     }
-    
+
     public void enter(Side side, long price, long size) {
         this.enter(UUID.randomUUID().toString().replaceAll("-", ""), side, price, size);
     }
@@ -60,13 +70,19 @@ public class OrderBook {
      * @param size the size
      */
     public void enter(String orderId, Side side, long price, long size) {
-        if (orders.containsKey(orderId))
-            return;
-
-        if (side == Side.BUY)
-            buy(orderId, price, size);
-        else
-            sell(orderId, price, size);
+        try {
+            this.lock();
+            if (orders.containsKey(orderId)) {
+                return;
+            }
+            if (side == Side.BUY)
+                buy(orderId, price, size);
+            else
+                sell(orderId, price, size);
+        }
+        finally {
+            this.unlock();
+        }
     }
 
     private void buy(String orderId, long price, long size) {
@@ -128,24 +144,30 @@ public class OrderBook {
      * @param size the new size
      */
     public void cancel(String orderId, long size) {
-        Order order = orders.get(orderId);
-        if (order == null)
-            return;
+        try {
+            this.lock();
+            Order order = orders.get(orderId);
+            if (order == null) {
+                return;
+            }
+            long remainingQuantity = order.getRemainingQuantity();
 
-        long remainingQuantity = order.getRemainingQuantity();
+            if (size >= remainingQuantity) {
+                return;
+            }
+            if (size > 0) {
+                order.resize(size);
+            } else {
+                delete(order);
 
-        if (size >= remainingQuantity)
-            return;
+                orders.remove(orderId);
+            }
 
-        if (size > 0) {
-            order.resize(size);
-        } else {
-            delete(order);
-
-            orders.remove(orderId);
+            listener.cancel(orderId, remainingQuantity - size, size);
         }
-
-        listener.cancel(orderId, remainingQuantity - size, size);
+        finally {
+            this.unlock();
+        }
     }
 
     private PriceLevel getBestLevel(Long2ObjectRBTreeMap<PriceLevel> levels) {

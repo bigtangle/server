@@ -8,6 +8,7 @@ import java.util.Map;
 
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.OrderPublish;
+import net.bigtangle.order.match.Side;
 import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.GetOrderResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -39,8 +40,13 @@ public class OrderService {
         }
         OrderPublish order = OrderPublish.create(address, tokenid, type, toDate, fromDate, price, amount);
         store.saveOrder(order);
+        
+        orderBookHolder.getOrderBookWithTokenId(tokenid).enter(order.getOrderid(), type == 1 ? Side.SELL : Side.BUY, price, amount);
         return AbstractResponse.createEmptyResponse();
     }
+    
+    @Autowired
+    private OrderBookHolder orderBookHolder;
     
     @Autowired
     protected FullPrunedBlockStore store;

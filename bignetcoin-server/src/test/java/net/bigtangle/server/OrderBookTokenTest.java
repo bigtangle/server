@@ -51,6 +51,11 @@ public class OrderBookTokenTest extends AbstractIntegrationTest {
         book.enter(2, Side.BUY,  1004,  50);
         book.enter(3, Side.BUY,  1003,  80);
         book.enter(4, Side.BUY,  1002,  50);
+        book.enter(5, Side.SELL, 1001, 100);
+        book.enter(6, Side.SELL, 1001, 100);
+        book.enter(7, Side.SELL, 1001, 100);
+        book.enter(8, Side.SELL, 1001, 100);
+        book.enter(9, Side.SELL, 1001, 100);
         List<OrderBookEvents.Match> orderMatchs = new ArrayList<OrderBookEvents.Match>();
         OrderBookEvents orderBookEvents = (OrderBookEvents) book.listener();
         for (Event event : orderBookEvents.collect()) {
