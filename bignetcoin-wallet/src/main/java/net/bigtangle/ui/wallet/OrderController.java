@@ -16,7 +16,11 @@ import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.cell.MapValueFactory;
+import javafx.scene.control.cell.TextFieldTableCell;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -37,6 +41,26 @@ public class OrderController {
     public DatePicker validdateFromDatePicker;
     @FXML
     public DatePicker validdateToDatePicker;
+    @FXML
+    public TableView<Map<String, Object>> orderTable;
+    @FXML
+    public TableColumn<Map<String, Object>, String> orderidCol;
+    @FXML
+    public TableColumn<Map<String, Object>, String> addressCol;
+    @FXML
+    public TableColumn<Map<String, Object>, String> tokenidCol;
+    @FXML
+    public TableColumn<Map<String, Object>, String> typeCol;
+    @FXML
+    public TableColumn<Map<String, Object>, String> validdatetoCol;
+    @FXML
+    public TableColumn<Map<String, Object>, String> validdatefromCol;
+    @FXML
+    public TableColumn<Map<String, Object>, String> stateCol;
+    @FXML
+    public TableColumn<Map<String, Object>, String> priceCol;
+    @FXML
+    public TableColumn<Map<String, Object>, String> amountCol;
 
     public Main.OverlayUI<?> overlayUI;
 
@@ -44,17 +68,49 @@ public class OrderController {
     public void initialize() {
         try {
             initComboBox();
+            initTable();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
+    }
+
+    public void initTable() throws Exception {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        ObservableList<Map<String, Object>> orderData = FXCollections.observableArrayList();
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        String response = OkHttp3Util.post(CONTEXT_ROOT + "getOrders",
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+        
+        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+
+        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("orders");
+        for (Map<String, Object> map : list) {
+            orderData.add(map);
+        }
+        orderidCol.setCellValueFactory(new MapValueFactory("orderid"));
+        addressCol.setCellValueFactory(new MapValueFactory("address"));
+        tokenidCol.setCellValueFactory(new MapValueFactory("tokenid"));
+        typeCol.setCellValueFactory(new MapValueFactory("type"));
+        validdatetoCol.setCellValueFactory(new MapValueFactory("validateto"));
+        validdatefromCol.setCellValueFactory(new MapValueFactory("validatefrom"));
+        stateCol.setCellValueFactory(new MapValueFactory("state"));
+        priceCol.setCellValueFactory(new MapValueFactory("price"));
+        amountCol.setCellValueFactory(new MapValueFactory("amount"));
+
+        orderidCol.setCellFactory(TextFieldTableCell.forTableColumn());
+        addressCol.setCellFactory(TextFieldTableCell.forTableColumn());
+        tokenidCol.setCellFactory(TextFieldTableCell.forTableColumn());
+
+        orderTable.setItems(orderData);
     }
 
     @SuppressWarnings("unchecked")
     public void initComboBox() throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ObservableList<String> tokenData = FXCollections.observableArrayList();
-        ECKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
-        String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens", ecKey.getPubKeyHash());
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens",
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
         for (Map<String, Object> map : list) {

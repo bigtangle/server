@@ -41,7 +41,12 @@
             <Button mnemonicParsing="false" onAction="#tokens" text="Token List" />
          <Button mnemonicParsing="false" onAction="#eckeyList" text="Keys" />
            <Button onAction="#settingsClicked" text="Settings" />
-            <Button fx:id="enButton" mnemonicParsing="false" onAction="#changeLocale" text="Button" />
+            <ToggleButton mnemonicParsing="false" text="en">
+               <toggleGroup>
+                  <ToggleGroup fx:id="toggleGroup" />
+               </toggleGroup>
+            </ToggleButton>
+            <ToggleButton mnemonicParsing="false" prefHeight="23.0" prefWidth="31.0" text="cn" toggleGroup="$toggleGroup" />
        </children>
     </HBox>
       <AnchorPane layoutX="140.0" layoutY="25.0" prefHeight="15.0" prefWidth="572.0">

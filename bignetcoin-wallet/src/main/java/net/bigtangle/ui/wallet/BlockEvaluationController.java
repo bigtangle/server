@@ -55,7 +55,6 @@ public class BlockEvaluationController {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getAllEvaluations",
                 bitcoin.wallet().currentReceiveKey().getPubKeyHash());
-        System.out.println(response);
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> temp = (List<Map<String, Object>>) data.get("evaluations");
       /*  if (temp != null && !temp.isEmpty()) {
