@@ -214,24 +214,4 @@ public class OrderBookTest {
 
         assertEquals(asList(bid, cancel), events.collect());
     }
-    
-    @Test
-    public void testOrderMatch() {
-        book.enter(1, Side.SELL, 1001, 100);
-        book.enter(2, Side.BUY,  1004,  50);
-        book.enter(3, Side.BUY,  1003,  80);
-        book.enter(4, Side.BUY,  1002,  50);
-        List<OrderBookEvents.Match> orderMatchs = new ArrayList<OrderBookEvents.Match>();
-        for (Event event : events.collect()) {
-            if (event instanceof OrderBookEvents.Match) {
-                OrderBookEvents.Match match = (OrderBookEvents.Match) event;
-                System.out.println(match);
-                orderMatchs.add(match);
-            }
-            else if (event instanceof OrderBookEvents.Add) {
-                OrderBookEvents.Add add = (OrderBookEvents.Add) event;
-                System.out.println(add);
-            }
-        }
-    }
 }
