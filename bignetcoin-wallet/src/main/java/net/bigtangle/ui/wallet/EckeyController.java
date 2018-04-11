@@ -45,7 +45,6 @@ public class EckeyController {
     public TextField newPrivateKeyTextField;
 
     private ObservableList<EckeyModel> issuedKeyData = FXCollections.observableArrayList();
-    private ObservableList<EckeyModel> importedKeyData = FXCollections.observableArrayList();
 
     public Main.OverlayUI overlayUI;
 
@@ -63,11 +62,15 @@ public class EckeyController {
                 Utils.HEX.decode(newPubkeyTextField.getText()));
         bitcoin.wallet().importKey(newKey);
         bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
+        try {
+            initEcKeyList();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
     }
 
     public void initEcKeyList() throws Exception {
         issuedKeyData.clear();
-        importedKeyData.clear();
         List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(null);
 
         if (issuedKeys != null && !issuedKeys.isEmpty()) {
@@ -126,14 +129,6 @@ public class EckeyController {
 
     public void setIssuedKeyData(ObservableList<EckeyModel> issuedKeyData) {
         this.issuedKeyData = issuedKeyData;
-    }
-
-    public ObservableList<EckeyModel> getImportedKeyData() {
-        return importedKeyData;
-    }
-
-    public void setImportedKeyData(ObservableList<EckeyModel> importedKeyData) {
-        this.importedKeyData = importedKeyData;
     }
 
 }
