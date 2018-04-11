@@ -31,7 +31,7 @@ public class OrderBookHolder {
     
     private static final Logger logger = LoggerFactory.getLogger(OrderBookHolder.class);
     
-    private void putOrderBook(ConcurrentHashMap<String, OrderBook> dataMap, String tokenHex, OrderBook orderBook) {
+    public void putOrderBook(ConcurrentHashMap<String, OrderBook> dataMap, String tokenHex, OrderBook orderBook) {
         dataMap.put(tokenHex, orderBook);
     }
 
@@ -49,4 +49,8 @@ public class OrderBookHolder {
     
     @Autowired
     private TokensService tokensService;
+
+    public void addOrderBook(String tokenSTR, OrderBook orderBook) {
+        this.dataMap.put(tokenSTR, orderBook);
+    }
 }

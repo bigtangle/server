@@ -27,7 +27,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
 
-public class StockController {
+public class StockController extends TokensController{
     @FXML
     public CheckBox firstPublishCheckBox;
     @FXML
@@ -47,6 +47,7 @@ public class StockController {
     public void initialize() {
         firstPublishCheckBox.setAllowIndeterminate(false);
         try {
+            initTableView();
             initCombobox();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
@@ -116,6 +117,7 @@ public class StockController {
             GuiUtils.informationalAlert("Token is published.", "", "");
             Main.instance.controller.initTableView();
             checkGuiThread();
+            initTableView();
             overlayUI.done();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
@@ -123,7 +125,7 @@ public class StockController {
      
     }
 
-    public void closeStock(ActionEvent event) {
+    public void closeUI(ActionEvent event) {
         overlayUI.done();
     }
 

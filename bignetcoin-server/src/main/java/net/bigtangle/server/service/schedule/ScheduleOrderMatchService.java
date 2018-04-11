@@ -39,6 +39,7 @@ public class ScheduleOrderMatchService {
                 String tokenSTR = tokens.getTokenHex();
                 OrderBook orderBook = orderBookHolder.getOrderBookWithTokenId(tokenSTR);
                 if (orderBook == null) {
+                    orderBookHolder.addOrderBook(tokenSTR, orderBookHolder.createOrderBook());
                     continue;
                 }
                 try {
