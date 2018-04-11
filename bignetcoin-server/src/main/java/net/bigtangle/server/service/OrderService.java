@@ -2,6 +2,7 @@ package net.bigtangle.server.service;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -11,6 +12,7 @@ import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.GetOrderResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,9 +28,16 @@ public class OrderService {
         int price = (Integer) request.get("price");
         int amount = (Integer) request.get("amount");
         
+        Date toDate = null;
+        Date fromDate = null;
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        OrderPublish order = OrderPublish.create(address, tokenid, type, 
-                simpleDateFormat.parse(validateto), simpleDateFormat.parse(validatefrom), price, amount);
+        if (!StringUtils.isBlank(validateto)) {
+            toDate = simpleDateFormat.parse(validateto);
+        }
+        if (!StringUtils.isBlank(validatefrom)) {
+            fromDate = simpleDateFormat.parse(validatefrom);
+        }
+        OrderPublish order = OrderPublish.create(address, tokenid, type, toDate, fromDate, price, amount);
         store.saveOrder(order);
         return AbstractResponse.createEmptyResponse();
     }
