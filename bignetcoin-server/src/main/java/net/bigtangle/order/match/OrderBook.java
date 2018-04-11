@@ -1,10 +1,10 @@
 package net.bigtangle.order.match;
 
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-
 import it.unimi.dsi.fastutil.longs.Long2ObjectRBTreeMap;
 import it.unimi.dsi.fastutil.longs.LongComparators;
+
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * An order book.
@@ -35,6 +35,10 @@ public class OrderBook {
     }
     
     public void enter(long orderId_, Side side, long price, long size) {
+        this.enter(String.valueOf(orderId_), side, price, size);
+    }
+    
+    public void enter(Side side, long price, long size) {
         this.enter(UUID.randomUUID().toString().replaceAll("-", ""), side, price, size);
     }
 
@@ -181,4 +185,7 @@ public class OrderBook {
         }
     }
 
+    public OrderBookListener listener() {
+        return this.listener;
+    }
 }

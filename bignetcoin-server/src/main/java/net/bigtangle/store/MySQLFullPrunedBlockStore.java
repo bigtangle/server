@@ -101,7 +101,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    PRIMARY KEY (tokenid) \n)";
     
     
-    private static final String CREATE_ORDER_TABLE = "CREATE TABLE `order` (\n" +
+    private static final String CREATE_ORDER_TABLE = "CREATE TABLE orderpublish (\n" +
             "   orderid varchar(255) NOT NULL,\n"+
             "   address varchar(255),\n"+
             "   tokenid varchar(255),\n"+ 

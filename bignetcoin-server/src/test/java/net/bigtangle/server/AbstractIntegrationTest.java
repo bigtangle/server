@@ -13,8 +13,31 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.BlockForTest;
+import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.Coin;
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Json;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionOutPoint;
+import net.bigtangle.core.TransactionOutput;
+import net.bigtangle.core.UTXO;
+import net.bigtangle.core.Utils;
+import net.bigtangle.kits.WalletAppKit;
+import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.server.config.GlobalConfigurationProperties;
+import net.bigtangle.server.service.BlockService;
+import net.bigtangle.server.service.MilestoneService;
+import net.bigtangle.store.FullPrunedBlockGraph;
+import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.MySQLFullPrunedBlockStore;
+import net.bigtangle.utils.MapToBeanMapperUtil;
+import net.bigtangle.utils.OkHttp3Util;
+
 import org.junit.Before;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,32 +60,6 @@ import org.springframework.web.context.WebApplicationContext;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockEvaluation;
-import net.bigtangle.core.BlockForTest;
-import net.bigtangle.core.BlockStoreException;
-import net.bigtangle.core.Coin;
-import net.bigtangle.core.ECKey;
-import net.bigtangle.core.Json;
-import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.Transaction;
-import net.bigtangle.core.TransactionOutPoint;
-import net.bigtangle.core.TransactionOutput;
-import net.bigtangle.core.UTXO;
-import net.bigtangle.core.Utils;
-import net.bigtangle.kits.WalletAppKit;
-import net.bigtangle.params.UnitTestParams;
-import net.bigtangle.script.Script;
-import net.bigtangle.server.ReqCmd;
-import net.bigtangle.server.config.GlobalConfigurationProperties;
-import net.bigtangle.server.service.BlockService;
-import net.bigtangle.server.service.MilestoneService;
-import net.bigtangle.store.FullPrunedBlockGraph;
-import net.bigtangle.store.FullPrunedBlockStore;
-import net.bigtangle.store.MySQLFullPrunedBlockStore;
-import net.bigtangle.utils.MapToBeanMapperUtil;
-import net.bigtangle.utils.OkHttp3Util;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {})
