@@ -65,6 +65,12 @@ public class ExchangeController {
 
     @FXML
     public TableView<Map<String, Object>> exchangeTable;
+
+    @FXML
+    public TableColumn<Map<String, Object>, String> orderidsCol;
+    @FXML
+    public TableColumn<Map<String, Object>, String> dataHexCol;
+
     @FXML
     public TableColumn<Map<String, Object>, String> fromAddressCol;
     @FXML
@@ -97,13 +103,14 @@ public class ExchangeController {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getExchange",
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        System.out.println(response);
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
 
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("exchanges");
         for (Map<String, Object> map : list) {
             exchangeData.add(map);
         }
+        orderidsCol.setCellValueFactory(new MapValueFactory("orderid"));
+        dataHexCol.setCellValueFactory(new MapValueFactory("dataHex"));
         fromAddressCol.setCellValueFactory(new MapValueFactory("fromAddress"));
         fromTokenidCol.setCellValueFactory(new MapValueFactory("fromTokenHex"));
         fromAmountCol.setCellValueFactory(new MapValueFactory("fromAmount"));
@@ -311,6 +318,31 @@ public class ExchangeController {
 
     public void refund(ActionEvent event) {
         overlayUI.done();
+    }
+
+    public void signExchange(ActionEvent event) {
+        Map<String, Object> temp = exchangeTable.getSelectionModel().getSelectedItem();
+        if (temp != null && !temp.isEmpty()) {
+            String orderid = getString(temp.get("orderid"));
+            String dataHex = getString(temp.get("dataHex"));
+            String fromAddress = getString(temp.get("fromAddress"));
+            String fromTokenid = getString(temp.get("fromTokenHex"));
+            String fromAmount = getString(temp.get("fromAmount"));
+            String toAddress = getString(temp.get("toAddress"));
+            String toTokenid = getString(temp.get("toTokenHex"));
+            String toAmount = getString(temp.get("toAmount"));
+        } else {
+            GuiUtils.informationalAlert("no selected", "please select", "");
+        }
+        // overlayUI.done();
+    }
+
+    private String getString(Object object) {
+        if (object == null) {
+            return "";
+        } else {
+            return String.valueOf(object);
+        }
     }
 
     public void closeUI(ActionEvent event) {

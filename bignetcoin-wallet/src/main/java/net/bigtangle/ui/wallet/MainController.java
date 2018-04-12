@@ -27,6 +27,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.fxmisc.easybind.EasyBind;
+import org.spongycastle.crypto.params.KeyParameter;
+
 import javafx.animation.TranslateTransition;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -53,9 +56,6 @@ import net.bigtangle.ui.wallet.utils.easing.ElasticInterpolator;
 import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
-
-import org.fxmisc.easybind.EasyBind;
-import org.spongycastle.crypto.params.KeyParameter;
 
 /**
  * Gets created auto-magically by FXMLLoader via reflection. The widget fields
@@ -99,6 +99,8 @@ public class MainController {
 
     @FXML
     public void initialize() {
+        Server.setText(Main.IpAddress);
+        IPPort.setText(Main.IpAddress);
         initTableView();
     }
 
@@ -210,9 +212,9 @@ public class MainController {
         Main.instance.overlayUI("orders.fxml");
     }
 
-    public void tokens(ActionEvent event) {
+    public void otherWallet(ActionEvent event) {
 
-        Main.instance.overlayUI("tokens.fxml");
+        //Main.instance.overlayUI("tokens.fxml");
     }
 
     public void blockEvaluation(ActionEvent event) {
