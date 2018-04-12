@@ -305,8 +305,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     private static final String INSERT_ORDERMATCH_SQL = "INSERT INTO ordermatch (matchid, restingOrderId, incomingOrderId, type, price, executedQuantity, remainingQuantity) VALUES (?, ?, ?, ?, ?, ?, ?);";
 
-    private static final String INSERT_EXCHANGE_SQL = "INSERT INTO exchange (orderid, fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
-    private static final String SELECT_EXCHANGE_SQL = "SELECT orderid, fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, data FROM exchange WHERE fromAddress = ? OR toAddress = ?";
+    private static final String INSERT_EXCHANGE_SQL = "INSERT INTO exchange (orderid, fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, data, toSign, fromSign) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+    private static final String SELECT_EXCHANGE_SQL = "SELECT orderid, fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, data, toSign, fromSign FROM exchange WHERE fromAddress = ? OR toAddress = ?";
 
     protected Sha256Hash chainHeadHash;
     protected StoredBlock chainHeadBlock;
@@ -2581,6 +2581,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setString(6, exchange.getToTokenHex());
             preparedStatement.setString(7, exchange.getToAmount());
             preparedStatement.setBytes(8, exchange.getData());
+            preparedStatement.setInt(9, exchange.getToSign());
+            preparedStatement.setInt(10, exchange.getFromSign());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -2615,6 +2617,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 exchange.setToTokenHex(resultSet.getString("toTokenHex"));
                 exchange.setToAmount(resultSet.getString("toAmount"));
                 exchange.setData(resultSet.getBytes("data"));
+                exchange.setToSign(resultSet.getInt("toSign"));
+                exchange.setFromSign(resultSet.getInt("fromSign"));
                 list.add(exchange);
             }
             return list;

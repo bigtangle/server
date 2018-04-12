@@ -23,6 +23,26 @@ public class Exchange implements java.io.Serializable {
     
     private byte[] data;
     
+    private int toSign;
+    
+    private int fromSign;
+    
+    public int getToSign() {
+        return toSign;
+    }
+
+    public void setToSign(int toSign) {
+        this.toSign = toSign;
+    }
+
+    public int getFromSign() {
+        return fromSign;
+    }
+
+    public void setFromSign(int fromSign) {
+        this.fromSign = fromSign;
+    }
+
     public Exchange(String fromAddress, String fromTokenHex, String fromAmount, String toAddress,
             String toTokenHex, String toAmount, byte[] data) {
         this.orderid = UUID.randomUUID().toString().replaceAll("-", "");
