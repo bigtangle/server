@@ -45,8 +45,7 @@ public class OrderController {
     public ChoiceBox<Object> statusChoiceBox;
 
     @FXML
-    public ChoiceBox<Object> state4searchChoiceBox = new ChoiceBox<Object>(
-            FXCollections.observableArrayList("0", "1", "2"));;
+    public ChoiceBox<String> state4searchChoiceBox;
 
     @FXML
     public DatePicker validdateFromDatePicker;
@@ -78,6 +77,7 @@ public class OrderController {
     @FXML
     public void initialize() {
         try {
+            state4searchChoiceBox.setItems(FXCollections.observableArrayList("0", "1", "2"));
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             initComboBox();
             initTable(requestParam);

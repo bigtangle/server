@@ -27,7 +27,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
 
-public class StockController extends TokensController{
+public class StockController extends TokensController {
     @FXML
     public CheckBox firstPublishCheckBox;
     @FXML
@@ -122,7 +122,7 @@ public class StockController extends TokensController{
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
-     
+
     }
 
     public void closeUI(ActionEvent event) {
