@@ -213,7 +213,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private static final String DROP_TIPS_TABLE = "DROP TABLE tips";
     private static final String DROP_BLOCKEVALUATION_TABLE = "DROP TABLE blockevaluation";
     private static final String DROP_TOKENS_TABLE = "DROP TABLE tokens";
-    private static final String DROP_ORDER_TABLE = "DROP TABLE orderpublish";
+    private static final String DROP_ORDERPUBLISH_TABLE = "DROP TABLE orderpublish";
+    private static final String DROP_ORDERMATCH_TABLE = "DROP TABLE ordermatch";
     private static final String DROP_EXCHANGE_TABLE = "DROP TABLE exchange";
 
     // Queries SQL.
@@ -468,7 +469,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_TIPS_TABLE);
         sqlStatements.add(DROP_BLOCKEVALUATION_TABLE);
         sqlStatements.add(DROP_TOKENS_TABLE);
-        sqlStatements.add(DROP_ORDER_TABLE);
+        sqlStatements.add(DROP_ORDERPUBLISH_TABLE);
+        sqlStatements.add(DROP_ORDERMATCH_TABLE);
         sqlStatements.add(DROP_EXCHANGE_TABLE);
         return sqlStatements;
     }
