@@ -29,6 +29,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * type) can contain a hash of a script instead.</p>
  */
 public class Address extends VersionedChecksummedBytes {
+
+    private static final long serialVersionUID = -8349088464746837045L;
+
     /**
      * An address is a RIPEMD160 hash of a public key, therefore is always 160 bits or 20 bytes.
      */

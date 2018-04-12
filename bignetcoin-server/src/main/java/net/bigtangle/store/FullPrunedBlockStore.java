@@ -12,6 +12,7 @@ import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Exchange;
+import net.bigtangle.core.OrderMatch;
 import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
@@ -259,11 +260,13 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void saveTokens(byte[] tokenid, String tokenname, long amount, String description, int blocktype) throws BlockStoreException;
 
-    public void saveOrder(OrderPublish order) throws BlockStoreException;
+    public void saveOrderPublish(OrderPublish orderPublish) throws BlockStoreException;
 
-    public List<OrderPublish> getOrderList() throws BlockStoreException;
+    public void saveOrderMatch(OrderMatch orderMatch) throws BlockStoreException;
 
-    void saveExchange(Exchange exchange) throws BlockStoreException;
+    public List<OrderPublish> getOrderPublishList() throws BlockStoreException;
 
-    List<Exchange> getExchangeListWithAddress(String address) throws BlockStoreException;
+    public void saveExchange(Exchange exchange) throws BlockStoreException;
+
+    public List<Exchange> getExchangeListWithAddress(String address) throws BlockStoreException;
 }

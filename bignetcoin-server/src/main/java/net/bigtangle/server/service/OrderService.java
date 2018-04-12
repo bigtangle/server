@@ -39,7 +39,7 @@ public class OrderService {
             fromDate = simpleDateFormat.parse(validatefrom);
         }
         OrderPublish order = OrderPublish.create(address, tokenid, type, toDate, fromDate, price, amount);
-        store.saveOrder(order);
+        store.saveOrderPublish(order);
         
         orderBookHolder.getOrderBookWithTokenId(tokenid).enter(order.getOrderid(), type == 1 ? Side.SELL : Side.BUY, price, amount);
         return AbstractResponse.createEmptyResponse();
@@ -54,7 +54,7 @@ public class OrderService {
     public AbstractResponse getOrderList(Map<String, Object> request) throws BlockStoreException {
         List<OrderPublish> orders = new ArrayList<OrderPublish>();
         if (request.isEmpty()) {
-            orders = this.store.getOrderList();
+            orders = this.store.getOrderPublishList();
         }
         return GetOrderResponse.create(orders);
     }

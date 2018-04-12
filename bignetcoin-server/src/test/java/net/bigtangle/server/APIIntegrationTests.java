@@ -13,14 +13,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockForTest;
+import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OrderMatch;
 import net.bigtangle.core.PrunedException;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutPoint;
@@ -54,6 +57,19 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     private int height = 1;
 
     private static final Logger logger = LoggerFactory.getLogger(APIIntegrationTests.class);
+    
+    @Test
+    public void testSaveOrderMatch() throws BlockStoreException {
+        OrderMatch orderMatch = new OrderMatch();
+        orderMatch.setMatchid(UUID.randomUUID().toString().replaceAll("-", ""));
+        orderMatch.setRestingOrderId(UUID.randomUUID().toString().replaceAll("-", ""));
+        orderMatch.setIncomingOrderId(UUID.randomUUID().toString().replaceAll("-", ""));
+        orderMatch.setType(1);
+        orderMatch.setPrice(1000);
+        orderMatch.setExecutedQuantity(1);
+        orderMatch.setRemainingQuantity(100);
+        this.store.saveOrderMatch(orderMatch);
+    }
     
     @Autowired
     private MilestoneService milestoneService;
