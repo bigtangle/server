@@ -40,8 +40,8 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.HBox;
-import javafx.stage.FileChooser;
 import javafx.util.Duration;
+import net.bigtangle.core.Address;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
@@ -91,7 +91,7 @@ public class MainController {
     public TextField IPPort;
 
     @FXML
-    public TextField keyFileDirectory;
+    public TextField addressTextField;
 
     private BitcoinUIModel model = new BitcoinUIModel();
 
@@ -105,16 +105,21 @@ public class MainController {
     }
 
     @SuppressWarnings("unchecked")
-    public void initTable() throws Exception {
+    public void initTable(String addressString) throws Exception {
         Main.instance.getUtxoData().clear();
         Main.instance.getCoinData().clear();
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
         KeyParameter aesKey = null;
         List<String> keyStrHex000 = new ArrayList<String>();
-        for (ECKey ecKey : bitcoin.wallet().walletKeys(aesKey)) {
-            keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
+        if (addressString == null || "".equals(addressString.trim())) {
+            for (ECKey ecKey : bitcoin.wallet().walletKeys(aesKey)) {
+                keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
+            }
+        } else {
+            keyStrHex000.add(Utils.HEX.encode(Address.fromBase58(Main.params, addressString).getHash160()));
         }
+
         String response = OkHttp3Util.post(CONTEXT_ROOT + "batchGetBalances",
                 Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
@@ -148,7 +153,8 @@ public class MainController {
 
     public void initTableView() {
         try {
-            initTable();
+
+            initTable(addressTextField.getText());
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
@@ -214,43 +220,12 @@ public class MainController {
 
     public void otherWallet(ActionEvent event) {
 
-        //Main.instance.overlayUI("tokens.fxml");
+        initialize();
     }
 
     public void blockEvaluation(ActionEvent event) {
 
         Main.instance.overlayUI("blockEvaluation.fxml");
-    }
-
-    public void setKeyFilePath(ActionEvent event) {
-        final FileChooser fileChooser = new FileChooser();
-        File file = fileChooser.showOpenDialog(null);
-        // final Desktop desktop = Desktop.getDesktop();
-        if (file != null) {
-            // try {
-            // desktop.open(file);
-            keyFileDirectory.setText(file.getAbsolutePath());
-            // } catch (IOException e) {
-
-            // GuiUtils.crashAlert(e);
-            // }
-
-            Main.keyFileDirectory = file.getParent() + "/";
-            String filename = file.getName();
-
-            Main.keyFilePrefix = filename.contains(".") ? filename.substring(0, filename.lastIndexOf(".")) : filename;
-
-            try {
-                Main.instance.getUtxoData().clear();
-                Main.instance.getCoinData().clear();
-                initTableView();
-                // GuiUtils.informationalAlert("set key file is ok", "", "");
-
-            } catch (Exception e) {
-                GuiUtils.crashAlert(e);
-            }
-        }
-
     }
 
     public void stockPublish(ActionEvent event) {

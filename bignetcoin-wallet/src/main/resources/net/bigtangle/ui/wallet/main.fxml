@@ -38,7 +38,6 @@
 				<Button fx:id="exchange" mnemonicParsing="false" onAction="#exchangeCoin" text="Exchange" />
 
 				<Button mnemonicParsing="false" onAction="#blockEvaluation" text="Blocks" />
-				<Button mnemonicParsing="false" onAction="#otherWallet" text="other wallet" />
 				<Button mnemonicParsing="false" onAction="#eckeyList" text="Keys" />
 				<Button onAction="#settingsClicked" text="Settings" />
 				<ToggleButton mnemonicParsing="false" text="en">
@@ -60,9 +59,9 @@
 		</AnchorPane>
 		<AnchorPane layoutX="129.0" layoutY="65.0" prefHeight="30.0" prefWidth="591.0">
 			<children>
-				<Label layoutX="8.0" layoutY="7.0" text="Wallet" />
-				<TextField fx:id="keyFileDirectory" layoutX="72.0" layoutY="3.0" prefHeight="23.0" prefWidth="432.0" />
-				<Button layoutX="522.0" layoutY="5.0" mnemonicParsing="false" onAction="#setKeyFilePath" text="%File" />
+				<Label layoutX="8.0" layoutY="7.0" text="address" />
+				<TextField fx:id="addressTextField" layoutX="72.0" layoutY="3.0" prefHeight="23.0" prefWidth="432.0" />
+				<Button layoutX="520.0" layoutY="3.0" mnemonicParsing="false" onAction="#otherWallet" text="other wallet" />
 			</children>
 		</AnchorPane>
 	</children>

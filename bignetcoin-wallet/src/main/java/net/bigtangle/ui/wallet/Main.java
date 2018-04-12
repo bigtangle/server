@@ -96,7 +96,9 @@ public class Main extends Application {
     }
 
     public void realStart(Stage mainWindow, String temp) throws IOException {
+        
         this.mainWindow = mainWindow;
+        mainWindow.setMaximized(true);
         instance = this;
         // Show the crash dialog for any exceptions that we don't handle and
         // that hit the main loop.
