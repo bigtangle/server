@@ -74,7 +74,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         t.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.BUILDING);
 
         DefaultCoinSelector selector = new DefaultCoinSelector();
-        CoinSelection selection = selector.select(COIN.multiply(2), outputs);
+        CoinSelection selection = selector.select(COIN.multiply(200000), outputs);
 
         assertTrue(selection.gathered.size() == 4);
     }

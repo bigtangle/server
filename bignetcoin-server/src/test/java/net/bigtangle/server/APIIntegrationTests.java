@@ -153,7 +153,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         wallet.setUTXOProvider(store);
            
         ECKey toKey = wallet.freshReceiveKey();
-        Coin amount = Coin.valueOf(1000000, NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin amount = Coin.valueOf(100, NetworkParameters.BIGNETCOIN_TOKENID);
 
         Transaction t = new Transaction(networkParameters);
         t.addOutput(new TransactionOutput(networkParameters, t, amount, toKey));
@@ -161,10 +161,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
-        blockgraph.add(rollingBlock);
-           
-        
-        
+        blockgraph.add(rollingBlock); 
         milestoneService.update();
         return toKey;
     }

@@ -9,21 +9,21 @@ import javafx.beans.property.SimpleStringProperty;
 import net.bigtangle.core.Utils;
 
 public class UTXOModel {
-    private SimpleLongProperty balance;
+    private SimpleStringProperty balance;
     private SimpleStringProperty tokentype;
     private SimpleStringProperty address;
     private SimpleStringProperty tokenid;
     private SimpleStringProperty spendPending;
 
-    public UTXOModel(long balance, byte[] tokenid, String address, boolean spendPending) {
-        this.balance = new SimpleLongProperty(balance);
+    public UTXOModel(String balance, byte[] tokenid, String address, boolean spendPending) {
+        this.balance = new SimpleStringProperty(balance);
         this.tokenid = new SimpleStringProperty(Utils.HEX.encode(tokenid));
         this.tokentype = new SimpleStringProperty(Utils.HEX.encode(tokenid));
         this.address = new SimpleStringProperty(address);
         this.spendPending = spendPending ? new SimpleStringProperty("*") : new SimpleStringProperty("");
     }
 
-    public SimpleLongProperty balance() {
+    public SimpleStringProperty balance() {
         return balance;
     }
 
@@ -43,11 +43,11 @@ public class UTXOModel {
         return spendPending;
     }
 
-    public long getBalance() {
+    public String getBalance() {
         return balance.get();
     }
 
-    public void setBalance(long balance) {
+    public void setBalance(String balance) {
         this.balance.set(balance);
     }
 

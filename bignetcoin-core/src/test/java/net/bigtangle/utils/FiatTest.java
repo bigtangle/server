@@ -26,7 +26,7 @@ public class FiatTest {
     public void testToFriendlyString() {
         assertEquals("1.00 EUR", parseFiat("EUR", "1").toFriendlyString());
         assertEquals("1.23 EUR", parseFiat("EUR", "1.23").toFriendlyString());
-        assertEquals("0.0010 EUR", parseFiat("EUR", "0.001").toFriendlyString());
+        assertEquals("0.001 EUR", parseFiat("EUR", "0.001").toFriendlyString());
         assertEquals("-1.23 EUR", parseFiat("EUR", "-1.23").toFriendlyString());
     }
 

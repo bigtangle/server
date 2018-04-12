@@ -16,8 +16,8 @@ import com.google.common.primitives.Longs;
 import net.bigtangle.utils.MonetaryFormat;
 
 /**
- * Represents a monetary Coin value. This class is immutable.
- * The coin is set to minimal MILLICOIN for micro payment of machine.
+ * Represents a monetary Coin value. This class is immutable. The coin is set to
+ * minimal MILLICOIN for micro payment of machine.
  */
 public final class Coin implements Monetary, Comparable<Coin>, Serializable {
 
@@ -27,7 +27,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      * Number of decimals for one Coin. This constant is useful for quick
      * adapting to other coins because a lot of constants derive from it.
      */
-    public static final int SMALLEST_UNIT_EXPONENT = 8;
+    public static final int SMALLEST_UNIT_EXPONENT = 3;
 
     /**
      * The number of satoshis equal to one bitcoin.
@@ -54,7 +54,6 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      */
     public static final Coin MILLICOIN = COIN.divide(1000);
 
-     
     /**
      * A satoshi is the smallest unit that can be transferred. 100 million of
      * them fit into a Bitcoin.
@@ -95,7 +94,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     public long getValue() {
         return value;
     }
-    
+
     public String getTokenHex() {
         if (tokenid == null) {
             return "";
@@ -127,7 +126,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin add(final Coin value) {
-        if (! Arrays.equals( this.tokenid, value.tokenid)) {
+        if (!Arrays.equals(this.tokenid, value.tokenid)) {
             throw new IllegalArgumentException("!this.tokenid.equals( value.tokenid)");
         }
         return new Coin(LongMath.checkedAdd(this.value, value.value), value.tokenid);
@@ -139,7 +138,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin subtract(final Coin value) {
-        if (! Arrays.equals( this.tokenid, value.tokenid)) {
+        if (!Arrays.equals(this.tokenid, value.tokenid)) {
             throw new IllegalArgumentException("");
         }
         return new Coin(LongMath.checkedSubtract(this.value, value.value), value.tokenid);
@@ -257,18 +256,19 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         return this.value;
     }
 
-    private static final MonetaryFormat FRIENDLY_FORMAT = MonetaryFormat.FIAT.minDecimals(2).repeatOptionalDecimals(1, 6)
-            .postfixCode();
+    private static final MonetaryFormat FRIENDLY_FORMAT = MonetaryFormat.FIAT.minDecimals(2)
+            .repeatOptionalDecimals(1, 1).postfixCode();
 
     /**
      * Returns the value as a 0.12 type string. More digits after the decimal
      * place will be used if necessary, but two will always be present.
      */
     public String toFriendlyString() {
-        if(Arrays.equals(  NetworkParameters.BIGNETCOIN_TOKENID, tokenid)) {
-        return FRIENDLY_FORMAT.format(this).toString();}
+         if(Arrays.equals(  NetworkParameters.BIGNETCOIN_TOKENID, tokenid)) {
+        return FRIENDLY_FORMAT.format(this).toString()+ " " +MonetaryFormat.CODE_BTC;
+        }
         else {
-          return   toString();
+            return FRIENDLY_FORMAT.format(this).toString();   
         }
     }
 
@@ -315,5 +315,5 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     public byte[] getTokenid() {
         return tokenid;
     }
-    
+
 }

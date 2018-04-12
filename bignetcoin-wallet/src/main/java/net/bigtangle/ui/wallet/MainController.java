@@ -70,14 +70,14 @@ public class MainController {
     @FXML
     public TableView<CoinModel> coinTable;
     @FXML
-    public TableColumn<CoinModel, Number> valueColumn;
+    public TableColumn<CoinModel, String> valueColumn;
     @FXML
     public TableColumn<CoinModel, String> tokentypeColumn;
 
     @FXML
     public TableView<UTXOModel> utxoTable;
     @FXML
-    public TableColumn<UTXOModel, Number> balanceColumn;
+    public TableColumn<UTXOModel, String> balanceColumn;
     @FXML
     public TableColumn<UTXOModel, String> tokentypeColumnA;
     @FXML
@@ -133,7 +133,7 @@ public class MainController {
         for (Map<String, Object> object : list) {
             UTXO u = MapToBeanMapperUtil.parseUTXO(object);
             Coin c = u.getValue();
-            long balance = c.getValue();
+            String balance = c.toFriendlyString();
             byte[] tokenid = c.tokenid;
             String address = u.getAddress();
             boolean spendPending = u.isSpendPending();
@@ -146,7 +146,7 @@ public class MainController {
         for (Map<String, Object> map : list) {
             Coin coin2 = MapToBeanMapperUtil.parseCoin(map);
             if (!coin2.isZero()) {
-                Main.instance.getCoinData().add(new CoinModel(coin2.value, coin2.tokenid));
+                Main.instance.getCoinData().add(new CoinModel(coin2.toFriendlyString(), coin2.tokenid));
             }
         }
     }

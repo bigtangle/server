@@ -94,8 +94,8 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         }
 
         ECKey toKey = new ECKey();
-        Coin amount0 = Coin.valueOf(100, NetworkParameters.BIGNETCOIN_TOKENID);
-        Coin amount1 = Coin.valueOf(10000, NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin amount0 = Coin.valueOf(3, NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin amount1 = Coin.valueOf(2, NetworkParameters.BIGNETCOIN_TOKENID);
 
         TransactionOutPoint spendableOutput0 = new TransactionOutPoint(PARAMS, 0, transaction.getHash());
         TransactionOutPoint spendableOutput1 = new TransactionOutPoint(PARAMS, 1, transaction.getHash());
@@ -241,7 +241,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
 
         Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, walletKeys);
 
-        Coin amount0 = Coin.parseCoin("0.0001", NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin amount0 = Coin.parseCoin("0.01", NetworkParameters.BIGNETCOIN_TOKENID);
         multiSigTransaction.addOutput(amount0, scriptPubKey);
         // get new Block to be used from server
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -267,7 +267,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
 
-        Coin amount = Coin.parseCoin("0.0001", NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin amount = Coin.parseCoin("0.001", NetworkParameters.BIGNETCOIN_TOKENID);
         SendRequest request = SendRequest.to(walletKeys.get(1).toAddress(networkParameters), amount);
         walletAppKit.wallet().completeTx(request);
         rollingBlock.addTransaction(request.tx);

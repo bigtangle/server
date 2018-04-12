@@ -270,7 +270,7 @@ public abstract class AbstractIntegrationTest {
 
         System.out.println("key " + myKey.getPublicKeyAsHex());
 
-        Coin amount = Coin.valueOf(100000, NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin amount = Coin.valueOf(10, NetworkParameters.BIGNETCOIN_TOKENID);
         // Address address = new Address(PARAMS, toKey.getPubKeyHash());
 
         Transaction t = new Transaction(networkParameters);

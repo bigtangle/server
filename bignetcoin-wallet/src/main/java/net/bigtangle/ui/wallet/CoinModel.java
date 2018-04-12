@@ -4,15 +4,14 @@
  *******************************************************************************/
 package net.bigtangle.ui.wallet;
 
-import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 import net.bigtangle.core.Utils;
 
 public class CoinModel {
-    private SimpleLongProperty value;
+    private SimpleStringProperty value;
     private SimpleStringProperty tokenid;
 
-    public SimpleLongProperty value() {
+    public SimpleStringProperty value() {
         return value;
     }
 
@@ -20,11 +19,11 @@ public class CoinModel {
         return tokenid;
     }
 
-    public long getValue() {
+    public String getValue() {
         return value.get();
     }
 
-    public void setValue(long value) {
+    public void setValue(String value) {
         this.value.set(value);
     }
 
@@ -36,9 +35,9 @@ public class CoinModel {
         this.tokenid.set(tokenid);
     }
 
-    public CoinModel(long value, byte[] tokenid) {
+    public CoinModel(String value, byte[] tokenid) {
         super();
-        this.value = new SimpleLongProperty(value);
+        this.value = new SimpleStringProperty(value);
         this.tokenid = new SimpleStringProperty(Utils.HEX.encode(tokenid));
     }
 

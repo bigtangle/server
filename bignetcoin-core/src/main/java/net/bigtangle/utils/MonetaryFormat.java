@@ -37,21 +37,14 @@ import net.bigtangle.core.Monetary;
 public final class MonetaryFormat {
 
     /** Standard format for the BTA denomination. */
-    public static final MonetaryFormat BTA = new MonetaryFormat().shift(0).minDecimals(2).repeatOptionalDecimals(2, 3);
-    /** Standard format for the mBTC denomination. */
-    public static final MonetaryFormat MBTC = new MonetaryFormat().shift(3).minDecimals(2).optionalDecimals(2);
-    /** Standard format for the µBTC denomination. */
-    public static final MonetaryFormat UBTC = new MonetaryFormat().shift(6).minDecimals(0).optionalDecimals(2);
+    public static final MonetaryFormat BTA = new MonetaryFormat().shift(0).minDecimals(2).repeatOptionalDecimals(1, 1);
+
     /** Standard format for fiat amounts. */
-    public static final MonetaryFormat FIAT = new MonetaryFormat().shift(0).minDecimals(2).repeatOptionalDecimals(2, 1);
+    public static final MonetaryFormat FIAT = new MonetaryFormat().shift(0).minDecimals(2).repeatOptionalDecimals(1, 1);
     /** Currency code for base 1 Bitcoin. */
     public static final String CODE_BTC = "BTA";
-    /** Currency code for base 1/1000 Bitcoin. */
-    public static final String CODE_MBTC = "mBTA";
-    /** Currency code for base 1/1000000 Bitcoin. */
-    public static final String CODE_UBTC = "µBTA";
-
-    public static final int MAX_DECIMALS = 8;
+  
+    public static final int MAX_DECIMALS = 3;
 
     private final char negativeSign;
     private final char positiveSign;
@@ -65,7 +58,7 @@ public final class MonetaryFormat {
     private final char codeSeparator;
     private final boolean codePrefixed;
 
-    private static final String DECIMALS_PADDING = "0000000000000000"; // a few
+    private static final String DECIMALS_PADDING = "00000000000"; // a few
                                                                        // more
                                                                        // than
                                                                        // necessary
@@ -312,9 +305,8 @@ public final class MonetaryFormat {
         this.shift = 0;
         this.roundingMode = RoundingMode.HALF_UP;
         this.codes = new String[MAX_DECIMALS];
-        this.codes[0] = CODE_BTC;
-        this.codes[3] = CODE_MBTC;
-        this.codes[6] = CODE_UBTC;
+        this.codes[0] = "";// CODE_BTC;
+  
         this.codeSeparator = ' ';
         this.codePrefixed = true;
     }

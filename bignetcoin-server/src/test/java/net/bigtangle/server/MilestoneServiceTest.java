@@ -97,7 +97,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		Transaction transaction = b1.getTransactions().get(0);
 		TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, transaction.getHash());
 		byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
-		Coin amount = Coin.valueOf(100000, NetworkParameters.BIGNETCOIN_TOKENID);
+		Coin amount = Coin.valueOf(2, NetworkParameters.BIGNETCOIN_TOKENID);
 
 		Transaction t = new Transaction(PARAMS);
 		t.addOutput(new TransactionOutput(PARAMS, t, amount, outKey));
