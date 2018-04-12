@@ -5,13 +5,17 @@
 package net.bigtangle.server.service.schedule;
 
 import java.util.Iterator;
+import java.util.UUID;
 
+import net.bigtangle.core.OrderMatch;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.order.match.OrderBook;
 import net.bigtangle.order.match.OrderBookEvents;
+import net.bigtangle.order.match.Side;
 import net.bigtangle.server.response.GetTokensResponse;
 import net.bigtangle.server.service.OrderBookHolder;
 import net.bigtangle.server.service.TokensService;
+import net.bigtangle.store.FullPrunedBlockStore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +33,9 @@ public class ScheduleOrderMatchService {
 
     @Autowired
     private TokensService tokensService;
+    
+    @Autowired
+    protected FullPrunedBlockStore store;
 
     @Scheduled(fixedRateString = "10000")
     public void updateMatch() {
@@ -51,6 +58,15 @@ public class ScheduleOrderMatchService {
                         if (event instanceof OrderBookEvents.Match) {
                             OrderBookEvents.Match match = (OrderBookEvents.Match) event;
                             logger.debug("order match hit : " + match);
+                            OrderMatch orderMatch = new OrderMatch();
+                            orderMatch.setMatchid(UUID.randomUUID().toString().replaceAll("-", ""));
+                            orderMatch.setRestingOrderId(match.restingOrderId);
+                            orderMatch.setIncomingOrderId(match.incomingOrderId);
+                            orderMatch.setType(match.incomingSide == Side.SELL ? 1 : 0);
+                            orderMatch.setPrice(match.price);
+                            orderMatch.setExecutedQuantity(match.executedQuantity);
+                            orderMatch.setRemainingQuantity(match.remainingQuantity);
+                            this.store.saveOrderMatch(orderMatch);
                             iterator.remove();
                         }
                     }

@@ -814,6 +814,7 @@ public class Block extends Message {
      * @throws VerificationException
      *             if there was an error verifying the block.
      */
+    @SuppressWarnings("unused")
     private void checkTransactions(final int height, final EnumSet<VerifyFlag> flags) throws VerificationException {
         // The first transaction in a block must always be a coinbase
         // transaction.

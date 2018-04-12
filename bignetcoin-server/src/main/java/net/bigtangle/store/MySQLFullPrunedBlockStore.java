@@ -119,8 +119,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "   incomingOrderId varchar(255),\n"+ 
             "   type integer,\n"+ 
             "   price bigint,\n"+ 
-            "   executedQuantity integer,\n"+ 
-            "   remainingQuantity integer,\n"+ 
+            "   executedQuantity bigint,\n"+ 
+            "   remainingQuantity bigint,\n"+ 
             "   PRIMARY KEY (matchid) )";
     
     private static final String CREATE_EXCHANGE_TABLE = "CREATE TABLE exchange (\n" +

@@ -32,6 +32,7 @@ import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OrderMatch;
 import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.ProtocolException;
 import net.bigtangle.core.Sha256Hash;
@@ -299,8 +300,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private static final String INSERT_TOKENS_SQL = "INSERT INTO tokens (tokenid, tokenname, amount, description, blocktype) VALUES (?, ?, ?, ?, ?)";
     private static final String SELECT_TOKENS_SQL = "select tokenid, tokenname, amount, description, blocktype from tokens";
 
-    private static final String INSERT_ORDER_SQL = "INSERT INTO orderpublish (orderid, address, tokenid, type, validateto, validatefrom, price, amount, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
-    private static final String SELECT_ORDER_SQL = "SELECT orderid, address, tokenid, type, validateto, validatefrom, price, amount, state FROM orderpublish";
+    private static final String INSERT_ORDERPUBLISH_SQL = "INSERT INTO orderpublish (orderid, address, tokenid, type, validateto, validatefrom, price, amount, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
+    private static final String SELECT_ORDERPUBLISH_SQL = "SELECT orderid, address, tokenid, type, validateto, validatefrom, price, amount, state FROM orderpublish";
+
+    private static final String INSERT_ORDERMATCH_SQL = "INSERT INTO ordermatch (matchid, restingOrderId, incomingOrderId, type, price, executedQuantity, remainingQuantity) VALUES (?, ?, ?, ?, ?, ?, ?);";
 
     private static final String INSERT_EXCHANGE_SQL = "INSERT INTO exchange (orderid, fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
     private static final String SELECT_EXCHANGE_SQL = "SELECT orderid, fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, data FROM exchange WHERE fromAddress = ? OR toAddress = ?";
@@ -2492,11 +2495,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void saveOrder(OrderPublish order) throws BlockStoreException {
+    public void saveOrderPublish(OrderPublish order) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
-            preparedStatement = conn.get().prepareStatement(INSERT_ORDER_SQL);
+            preparedStatement = conn.get().prepareStatement(INSERT_ORDERPUBLISH_SQL);
             preparedStatement.setString(1, order.getOrderid());
             preparedStatement.setString(2, order.getAddress());
             preparedStatement.setString(3, order.getTokenid());
@@ -2531,12 +2534,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<OrderPublish> getOrderList() throws BlockStoreException {
+    public List<OrderPublish> getOrderPublishList() throws BlockStoreException {
         List<OrderPublish> list = new ArrayList<OrderPublish>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_ORDER_SQL);
+            preparedStatement = conn.get().prepareStatement(SELECT_ORDERPUBLISH_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 OrderPublish order = new OrderPublish();
@@ -2623,6 +2626,32 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     preparedStatement.close();
                 } catch (SQLException e) {
                     throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void saveOrderMatch(OrderMatch orderMatch) throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(INSERT_ORDERMATCH_SQL);
+            preparedStatement.setString(1, orderMatch.getMatchid());
+            preparedStatement.setString(2, orderMatch.getRestingOrderId());
+            preparedStatement.setString(3, orderMatch.getIncomingOrderId());
+            preparedStatement.setInt(4, orderMatch.getType());
+            preparedStatement.setLong(5, orderMatch.getPrice());
+            preparedStatement.setLong(6, orderMatch.getExecutedQuantity());
+            preparedStatement.setLong(7, orderMatch.getRemainingQuantity());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
                 }
             }
         }
