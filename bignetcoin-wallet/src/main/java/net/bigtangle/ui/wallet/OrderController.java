@@ -31,12 +31,23 @@ public class OrderController {
     public TextField limitTextField;
     @FXML
     public TextField amountTextField;
+
+    @FXML
+    public TextField orderid4searchTextField;
+    @FXML
+    public TextField address4searchTextField;
+
     @FXML
     public ComboBox<String> addressComboBox;
     @FXML
     public ComboBox<String> tokenComboBox;
     @FXML
     public ChoiceBox<Object> statusChoiceBox;
+
+    @FXML
+    public ChoiceBox<Object> state4searchChoiceBox = new ChoiceBox<Object>(
+            FXCollections.observableArrayList("0", "1", "2"));;
+
     @FXML
     public DatePicker validdateFromDatePicker;
     @FXML
@@ -67,20 +78,21 @@ public class OrderController {
     @FXML
     public void initialize() {
         try {
+            HashMap<String, Object> requestParam = new HashMap<String, Object>();
             initComboBox();
-            initTable();
+            initTable(requestParam);
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
     }
 
-    public void initTable() throws Exception {
+    public void initTable(Map<String, Object> param) throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ObservableList<Map<String, Object>> orderData = FXCollections.observableArrayList();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getOrders",
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        
+
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
 
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("orders");
@@ -130,14 +142,16 @@ public class OrderController {
     }
 
     public void buy(ActionEvent event) throws Exception {
-//        if (validdateFromDatePicker.getValue() == null) {
-//            GuiUtils.informationalAlert("save order param", "validdate From Date Picker ERROR");
-//            return;
-//        }
-//        if (validdateToDatePicker.getValue() == null) {
-//            GuiUtils.informationalAlert("save order param", "validdate To Date Picker ERROR");
-//            return;
-//        }
+        // if (validdateFromDatePicker.getValue() == null) {
+        // GuiUtils.informationalAlert("save order param", "validdate From Date
+        // Picker ERROR");
+        // return;
+        // }
+        // if (validdateToDatePicker.getValue() == null) {
+        // GuiUtils.informationalAlert("save order param", "validdate To Date
+        // Picker ERROR");
+        // return;
+        // }
         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd 00:00:00");
         String validdateFrom = "";
         if (validdateFromDatePicker.getValue() != null) {
@@ -162,6 +176,18 @@ public class OrderController {
         requestParam.put("validatefrom", validdateFrom);
         OkHttp3Util.post(ContextRoot + "saveOrder", Json.jsonmapper().writeValueAsString(requestParam));
         overlayUI.done();
+    }
+
+    public void search(ActionEvent event) {
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("orderid", orderid4searchTextField.getText());
+        requestParam.put("address", address4searchTextField.getText());
+        requestParam.put("state", state4searchChoiceBox.getValue());
+        try {
+            initTable(requestParam);
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
     }
 
     public void closeUI(ActionEvent event) {
