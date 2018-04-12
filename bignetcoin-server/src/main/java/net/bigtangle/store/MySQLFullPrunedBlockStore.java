@@ -132,6 +132,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "   toTokenHex varchar(255),\n"+ 
             "   toAmount varchar(255),\n"+ 
             "   data varbinary(5000) NOT NULL,\n" +
+            "   toSign integer,\n"+ 
+            "   fromSign integer,\n"+ 
             "   PRIMARY KEY (orderid) )";
     
     // Some indexes to speed up inserts
