@@ -12,12 +12,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.spongycastle.crypto.params.KeyParameter;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.cell.MapValueFactory;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.stage.FileChooser;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
@@ -35,40 +41,82 @@ import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
-import org.spongycastle.crypto.params.KeyParameter;
-
 public class ExchangeController {
-    
+
     @FXML
     public TextField toAmountTextField;
-    
+
     @FXML
     public ComboBox<String> toTokenHexComboBox;
-    
+
     @FXML
     public ComboBox<String> toAddressComboBox;
-    
+
     @FXML
     public TextField fromAmountTextField;
 
     @FXML
     public ComboBox<String> fromTokenHexComboBox;
-    
+
     @FXML
     public ComboBox<String> fromAddressComboBox;
 
     public Main.OverlayUI<?> overlayUI;
-    
+
+    @FXML
+    public TableView<Map<String, Object>> exchangeTable;
+    @FXML
+    public TableColumn<Map<String, Object>, String> fromAddressCol;
+    @FXML
+    public TableColumn<Map<String, Object>, String> fromTokenidCol;
+    @FXML
+    public TableColumn<Map<String, Object>, String> fromAmountCol;
+    @FXML
+    public TableColumn<Map<String, Object>, String> toAddressCol;
+    @FXML
+    public TableColumn<Map<String, Object>, String> toTokenidCol;
+    @FXML
+    public TableColumn<Map<String, Object>, String> toAmountCol;
+
     private Transaction mTransaction;
 
     @FXML
     public void initialize() {
         try {
             initComboBox();
+            initTable();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
         mTransaction = null;
+    }
+
+    public void initTable() throws Exception {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        ObservableList<Map<String, Object>> exchangeData = FXCollections.observableArrayList();
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        String response = OkHttp3Util.post(CONTEXT_ROOT + "getExchange",
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+        System.out.println(response);
+        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+
+        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("exchanges");
+        for (Map<String, Object> map : list) {
+            exchangeData.add(map);
+        }
+        fromAddressCol.setCellValueFactory(new MapValueFactory("fromAddress"));
+        fromTokenidCol.setCellValueFactory(new MapValueFactory("fromTokenHex"));
+        fromAmountCol.setCellValueFactory(new MapValueFactory("fromAmount"));
+        toAddressCol.setCellValueFactory(new MapValueFactory("toAddress"));
+        toTokenidCol.setCellValueFactory(new MapValueFactory("toTokenHex"));
+        toAmountCol.setCellValueFactory(new MapValueFactory("toAmount"));
+
+        fromAddressCol.setCellFactory(TextFieldTableCell.forTableColumn());
+        fromTokenidCol.setCellFactory(TextFieldTableCell.forTableColumn());
+        toAddressCol.setCellFactory(TextFieldTableCell.forTableColumn());
+        toTokenidCol.setCellFactory(TextFieldTableCell.forTableColumn());
+
+        exchangeTable.setItems(exchangeData);
     }
 
     @SuppressWarnings("unchecked")
@@ -82,7 +130,7 @@ public class ExchangeController {
         for (Map<String, Object> map : tokens) {
             String tokenHex = (String) map.get("tokenHex");
             String tokenname = (String) map.get("tokenname");
-            tokenData.add(tokenname+" : "+tokenHex);
+            tokenData.add(tokenname + " : " + tokenHex);
         }
         toTokenHexComboBox.setItems(tokenData);
         fromTokenHexComboBox.setItems(tokenData);
@@ -100,12 +148,13 @@ public class ExchangeController {
             GuiUtils.informationalAlert("alert", "Transaction Is Empty");
             return;
         }
-        SendRequest request = SendRequest.forTx(mTransaction); 
+        SendRequest request = SendRequest.forTx(mTransaction);
         Main.bitcoin.wallet().signTransaction(request);
-         
+
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(ContextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] data = OkHttp3Util.post(ContextRoot + "askTransaction",
+                Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(mTransaction);
         rollingBlock.solve();
@@ -159,8 +208,7 @@ public class ExchangeController {
             if (mTransaction == null) {
                 GuiUtils.informationalAlert("alert", "Transaction Is Empty");
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
         overlayUI.done();
@@ -183,8 +231,9 @@ public class ExchangeController {
             Address fromAddress00 = new Address(Main.params, fromAddress);
             Address toAddress00 = new Address(Main.params, toAddress);
             outputs.addAll(this.getUTXOWithPubKeyHash(toAddress00.getHash160(), Utils.HEX.decode(toTokenHex)));
-            outputs.addAll(this.getUTXOWithECKeyList(Main.bitcoin.wallet().walletKeys(aesKey), Utils.HEX.decode(fromTokenHex)));
-            
+            outputs.addAll(this.getUTXOWithECKeyList(Main.bitcoin.wallet().walletKeys(aesKey),
+                    Utils.HEX.decode(fromTokenHex)));
+
             Coin amountCoin0 = Coin.parseCoin(toAmount, Utils.HEX.decode(toTokenHex));
             Coin amountCoin1 = Coin.parseCoin(fromAmount, Utils.HEX.decode(fromTokenHex));
             SendRequest req = SendRequest.to(fromAddress00, amountCoin0);
@@ -195,22 +244,17 @@ public class ExchangeController {
             Main.bitcoin.wallet().setServerURL(ContextRoot);
             Main.bitcoin.wallet().completeTx(req, candidates, false);
             Main.bitcoin.wallet().signTransaction(req);
-            
+
             this.mTransaction = req.tx;
             buf = mTransaction.bitcoinSerialize();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             GuiUtils.crashAlert(e);
             return;
         }
-        ByteBuffer byteBuffer = ByteBuffer.allocate(buf.length  + 4 +
-                fromAddress.getBytes().length                   + 4 + 
-                fromTokenHex.getBytes().length                  + 4 + 
-                fromAmount.getBytes().length                    + 4 + 
-                toAddress.getBytes().length                     + 4 + 
-                toTokenHex.getBytes().length                    + 4 + 
-                toAmount.getBytes().length                      + 4);
-        
+        ByteBuffer byteBuffer = ByteBuffer.allocate(buf.length + 4 + fromAddress.getBytes().length + 4
+                + fromTokenHex.getBytes().length + 4 + fromAmount.getBytes().length + 4 + toAddress.getBytes().length
+                + 4 + toTokenHex.getBytes().length + 4 + toAmount.getBytes().length + 4);
+
         byteBuffer.putInt(fromAddress.getBytes().length).put(fromAddress.getBytes());
         byteBuffer.putInt(fromTokenHex.getBytes().length).put(fromTokenHex.getBytes());
         byteBuffer.putInt(fromAmount.getBytes().length).put(fromAmount.getBytes());
@@ -218,11 +262,11 @@ public class ExchangeController {
         byteBuffer.putInt(toTokenHex.getBytes().length).put(toTokenHex.getBytes());
         byteBuffer.putInt(toAmount.getBytes().length).put(toAmount.getBytes());
         byteBuffer.putInt(buf.length).put(buf);
-        
+
         final FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showSaveDialog(null);
         FileUtil.writeFile(file, byteBuffer.array());
-        
+
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("fromAddress", fromAddress);
         requestParam.put("fromTokenHex", fromTokenHex);
@@ -273,12 +317,13 @@ public class ExchangeController {
         overlayUI.done();
     }
 
-//    public List<UTXO> getUTXOWithECKeyList(ECKey ecKey, byte[] tokenid) throws Exception {
-//        List<ECKey> ecKeys = new ArrayList<ECKey>();
-//        ecKeys.add(ecKey);
-//        return getUTXOWithECKeyList(ecKeys, tokenid);
-//    }
-    
+    // public List<UTXO> getUTXOWithECKeyList(ECKey ecKey, byte[] tokenid)
+    // throws Exception {
+    // List<ECKey> ecKeys = new ArrayList<ECKey>();
+    // ecKeys.add(ecKey);
+    // return getUTXOWithECKeyList(ecKeys, tokenid);
+    // }
+
     @SuppressWarnings("unchecked")
     public List<UTXO> getUTXOWithECKeyList(List<ECKey> ecKeys, byte[] tokenid) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();

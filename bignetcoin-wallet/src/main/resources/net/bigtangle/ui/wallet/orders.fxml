@@ -5,10 +5,9 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.HBox?>
 
-
 <AnchorPane style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.bigtangle.ui.wallet.OrderController">
    <children>
-      <TabPane>
+      <TabPane prefHeight="541.0" prefWidth="780.0">
          <tabs>
             <Tab closable="false" text="add">
                <content>
@@ -54,12 +53,12 @@
             </Tab>
             <Tab closable="false" text="search">
               <content>
-                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="436.0" prefWidth="780.0">
+                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="473.0" prefWidth="780.0">
                      <children>
                         <Label layoutX="40.0" layoutY="25.0" text="name" />
                         <TextField layoutX="96.0" layoutY="21.0" prefHeight="23.0" prefWidth="309.0" />
                         <Button layoutX="413.0" layoutY="21.0" mnemonicParsing="false" text="Button" />
-                        <TableView fx:id="orderTable" editable="true" layoutX="6.0" layoutY="58.0" prefHeight="368.0" prefWidth="774.0">
+                        <TableView fx:id="orderTable" editable="true" layoutX="6.0" layoutY="58.0" prefHeight="376.0" prefWidth="774.0">
                           <columns>
                             <TableColumn fx:id="orderidCol" prefWidth="75.0" text="orderid" />
                             <TableColumn fx:id="addressCol" prefWidth="131.0" text="address" />
@@ -72,6 +71,7 @@
                               <TableColumn fx:id="amountCol" prefWidth="84.0" text="amount" />
                           </columns>
                         </TableView>
+                        <Button layoutX="452.0" layoutY="459.0" mnemonicParsing="false" onAction="#closeUI" text="close" />
                      </children>
                   </AnchorPane>
               </content>
