@@ -1,7 +1,6 @@
 package net.bigtangle.server.service;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -56,10 +55,7 @@ public class OrderService {
     protected FullPrunedBlockStore store;
 
     public AbstractResponse getOrderList(Map<String, Object> request) throws BlockStoreException {
-        List<OrderPublish> orders = new ArrayList<OrderPublish>();
-        if (request.isEmpty()) {
-            orders = this.store.getOrderPublishList();
-        }
+        List<OrderPublish> orders = this.store.getOrderPublishList(request);
         return GetOrderResponse.create(orders);
     }
 }

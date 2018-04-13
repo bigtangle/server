@@ -26,7 +26,17 @@ public class ExchangeService {
         String dataHex = (String) request.get("dataHex");
         byte[] data = Utils.HEX.decode(dataHex);
         Exchange exchange = new Exchange(fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, data);
+        exchange.setFromSign(1);
         this.store.saveExchange(exchange);
+        return AbstractResponse.createEmptyResponse();
+    }
+    
+    public AbstractResponse signExchange(Map<String, Object> request) throws BlockStoreException {
+        String dataHex = (String) request.get("dataHex");
+        String orderid = (String) request.get("orderid");
+        String signtype = (String) request.get("signtype");
+        byte[] data = Utils.HEX.decode(dataHex);
+        this.store.updateExchangeSign(orderid, signtype, data);
         return AbstractResponse.createEmptyResponse();
     }
 

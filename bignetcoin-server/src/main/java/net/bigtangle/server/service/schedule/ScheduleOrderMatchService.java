@@ -7,7 +7,9 @@ package net.bigtangle.server.service.schedule;
 import java.util.Iterator;
 import java.util.UUID;
 
+import net.bigtangle.core.Exchange;
 import net.bigtangle.core.OrderMatch;
+import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.order.match.OrderBook;
 import net.bigtangle.order.match.OrderBookEvents;
@@ -40,7 +42,7 @@ public class ScheduleOrderMatchService {
     @Scheduled(fixedRateString = "10000")
     public void updateMatch() {
         try {
-            logger.debug("cal order match start");
+            //logger.debug("cal order match start");
             GetTokensResponse getTokensResponse = (GetTokensResponse) tokensService.getTokensList();
             for (Tokens tokens : getTokensResponse.getTokens()) {
                 String tokenSTR = tokens.getTokenHex();
@@ -67,6 +69,14 @@ public class ScheduleOrderMatchService {
                             orderMatch.setExecutedQuantity(match.executedQuantity);
                             orderMatch.setRemainingQuantity(match.remainingQuantity);
                             this.store.saveOrderMatch(orderMatch);
+                            
+                            OrderPublish orderPublish0 = this.store.getOrderPublishByOrderid(match.restingOrderId);
+                            OrderPublish orderPublish1 = this.store.getOrderPublishByOrderid(match.incomingOrderId);
+                            
+                            Exchange exchange = new Exchange(orderPublish0.getAddress(), orderPublish0.getTokenid(),
+                                    String.valueOf(orderPublish0.getAmount()), orderPublish1.getAddress(), orderPublish1.getTokenid(), String.valueOf(orderPublish1.getAmount()), new byte[0]);
+                            this.store.saveExchange(exchange);
+
                             iterator.remove();
                         }
                     }
@@ -74,7 +84,7 @@ public class ScheduleOrderMatchService {
                     orderBook.unlock();
                 }
             }
-            logger.debug("cal order match end");
+            //logger.debug("cal order match end");
         } catch (Exception e) {
             logger.warn("cal order match error", e);
         }

@@ -21,6 +21,8 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 
 import javax.annotation.Nullable;
@@ -2534,12 +2536,17 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<OrderPublish> getOrderPublishList() throws BlockStoreException {
+    public List<OrderPublish> getOrderPublishList(Map<String, Object> request) throws BlockStoreException {
         List<OrderPublish> list = new ArrayList<OrderPublish>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_ORDERPUBLISH_SQL);
+            StringBuffer whereStr = new StringBuffer(" WHERE 1 = 1 ");
+            for (Entry<String, Object> entry : request.entrySet()) {
+                whereStr.append(" AND ").append(entry.getKey() + "=" + "'" + entry.getValue() + "' ");
+            }
+            String sql = SELECT_ORDERPUBLISH_SQL + whereStr;
+            preparedStatement = conn.get().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 OrderPublish order = new OrderPublish();
@@ -2659,5 +2666,39 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 }
             }
         }
+    }
+
+    @Override
+    public void updateExchangeSign(String orderid, String signtype, byte[] data) throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+        try {
+            String sql = "";
+            if (signtype.equals("to")) {
+                sql = "UPDATE exchange SET toSign = 1, data = ? WHERE orderid = ?";
+            }
+            else {
+                sql = "UPDATE exchange SET fromSign = 1, data = ? WHERE orderid = ?";
+            }
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setString(1, orderid);
+            preparedStatement.setBytes(2, data);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public OrderPublish getOrderPublishByOrderid(String orderid) throws BlockStoreException {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

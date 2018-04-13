@@ -7,6 +7,7 @@ package net.bigtangle.store;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStore;
@@ -264,9 +265,13 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void saveOrderMatch(OrderMatch orderMatch) throws BlockStoreException;
 
-    public List<OrderPublish> getOrderPublishList() throws BlockStoreException;
+    public List<OrderPublish> getOrderPublishList(Map<String, Object> request) throws BlockStoreException;
 
     public void saveExchange(Exchange exchange) throws BlockStoreException;
 
     public List<Exchange> getExchangeListWithAddress(String address) throws BlockStoreException;
+
+    public void updateExchangeSign(String orderid, String signtype, byte[] data) throws BlockStoreException;
+
+    OrderPublish getOrderPublishByOrderid(String orderid) throws BlockStoreException;
 }

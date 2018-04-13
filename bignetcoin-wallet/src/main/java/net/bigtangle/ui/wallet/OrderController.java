@@ -86,10 +86,10 @@ public class OrderController {
         }
     }
 
-    public void initTable(Map<String, Object> param) throws Exception {
+    public void initTable(Map<String, Object> requestParam) throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ObservableList<Map<String, Object>> orderData = FXCollections.observableArrayList();
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+//        HashMap<String, Object> requestParam = new HashMap<String, Object>();
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getOrders",
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 

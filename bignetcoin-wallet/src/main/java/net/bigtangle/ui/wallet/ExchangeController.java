@@ -225,10 +225,10 @@ public class ExchangeController {
     public void exportBlock(ActionEvent event) {
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
         String fromAddress = fromAddressComboBox.getValue();
-        String fromTokenHex = fromTokenHexComboBox.getValue();
+        String fromTokenHex = fromTokenHexComboBox.getValue().split(":")[1].trim();
         String fromAmount = fromAmountTextField.getText();
         String toAddress = toAddressComboBox.getValue();
-        String toTokenHex = toTokenHexComboBox.getValue();
+        String toTokenHex = toTokenHexComboBox.getValue().split(":")[1].trim();
         String toAmount = toAmountTextField.getText();
         byte[] buf = null;
         KeyParameter aesKey = null;
