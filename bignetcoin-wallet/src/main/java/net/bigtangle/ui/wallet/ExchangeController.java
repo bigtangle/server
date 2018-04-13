@@ -41,8 +41,6 @@ import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
 import org.spongycastle.crypto.params.KeyParameter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 public class ExchangeController {
 
     @FXML
@@ -99,7 +97,7 @@ public class ExchangeController {
         mTransaction = null;
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public void initTable() throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         
@@ -355,7 +353,10 @@ public class ExchangeController {
         
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         String orderid = getString(rowData.get("orderid"));
-        OkHttp3Util.post(ContextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+        requestParam.put("orderid", orderid);
+        requestParam.put("dataHex", Utils.HEX.encode(mTransaction.bitcoinSerialize()));
+        requestParam.put("signtype", "to");
+        OkHttp3Util.post(ContextRoot + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
         Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
         // overlayUI.done();
     }
