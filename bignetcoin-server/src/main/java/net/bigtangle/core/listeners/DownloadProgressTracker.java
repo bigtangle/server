@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutionException;
  * as a percentage. The default implementation prints progress to stdout, but you can subclass it and override the
  * progress method to update a GUI instead.</p>
  */
+@SuppressWarnings("deprecation")
 public class DownloadProgressTracker extends AbstractPeerDataEventListener {
     private static final Logger log = LoggerFactory.getLogger(DownloadProgressTracker.class);
     private int originalBlocksLeft = -1;

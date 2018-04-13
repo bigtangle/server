@@ -279,9 +279,11 @@ public class ExchangeController {
             GuiUtils.crashAlert(e);
             return;
         }
+        String orderid = UUID.randomUUID().toString().replaceAll("-", "");
+        this.mOrderid = orderid;
         ByteBuffer byteBuffer = ByteBuffer.allocate(buf.length + 4 + fromAddress.getBytes().length + 4
                 + fromTokenHex.getBytes().length + 4 + fromAmount.getBytes().length + 4 + toAddress.getBytes().length
-                + 4 + toTokenHex.getBytes().length + 4 + toAmount.getBytes().length + 4);
+                + 4 + toTokenHex.getBytes().length + 4 + toAmount.getBytes().length + 4 + orderid.getBytes().length + 4);
 
         byteBuffer.putInt(fromAddress.getBytes().length).put(fromAddress.getBytes());
         byteBuffer.putInt(fromTokenHex.getBytes().length).put(fromTokenHex.getBytes());
@@ -289,8 +291,7 @@ public class ExchangeController {
         byteBuffer.putInt(toAddress.getBytes().length).put(toAddress.getBytes());
         byteBuffer.putInt(toTokenHex.getBytes().length).put(toTokenHex.getBytes());
         byteBuffer.putInt(toAmount.getBytes().length).put(toAmount.getBytes());
-        String orderid = UUID.randomUUID().toString().replaceAll("-", "");
-        this.mOrderid = orderid;
+        
         byteBuffer.putInt(orderid.getBytes().length).put(orderid.getBytes());
         byteBuffer.putInt(buf.length).put(buf);
 

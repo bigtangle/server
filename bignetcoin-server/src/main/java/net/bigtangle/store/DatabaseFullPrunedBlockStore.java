@@ -2497,30 +2497,30 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void saveOrderPublish(OrderPublish order) throws BlockStoreException {
+    public void saveOrderPublish(OrderPublish orderPublish) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(INSERT_ORDERPUBLISH_SQL);
-            preparedStatement.setString(1, order.getOrderid());
-            preparedStatement.setString(2, order.getAddress());
-            preparedStatement.setString(3, order.getTokenid());
-            preparedStatement.setInt(4, order.getType());
-            if (order.getValidateto() == null) {
+            preparedStatement.setString(1, orderPublish.getOrderid());
+            preparedStatement.setString(2, orderPublish.getAddress());
+            preparedStatement.setString(3, orderPublish.getTokenid());
+            preparedStatement.setInt(4, orderPublish.getType());
+            if (orderPublish.getValidateto() == null) {
                 preparedStatement.setDate(5, null);
             }
             else {
-                preparedStatement.setDate(5, new Date(order.getValidateto().getTime()));
+                preparedStatement.setDate(5, new Date(orderPublish.getValidateto().getTime()));
             }
-            if (order.getValidatefrom() == null) {
+            if (orderPublish.getValidatefrom() == null) {
                 preparedStatement.setDate(6, null);
             }
             else {
-                preparedStatement.setDate(6, new Date(order.getValidatefrom().getTime()));
+                preparedStatement.setDate(6, new Date(orderPublish.getValidatefrom().getTime()));
             }
-            preparedStatement.setLong(7, order.getPrice());
-            preparedStatement.setLong(8, order.getAmount());
-            preparedStatement.setInt(9, order.getState());
+            preparedStatement.setLong(7, orderPublish.getPrice());
+            preparedStatement.setLong(8, orderPublish.getAmount());
+            preparedStatement.setInt(9, orderPublish.getState());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -2549,17 +2549,17 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement = conn.get().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                OrderPublish order = new OrderPublish();
-                order.setOrderid(resultSet.getString("orderid"));
-                order.setAddress(resultSet.getString("address"));
-                order.setTokenid(resultSet.getString("tokenid"));
-                order.setType(resultSet.getInt("type"));
-                order.setPrice(resultSet.getLong("price"));
-                order.setAmount(resultSet.getLong("amount"));
-                order.setState(resultSet.getInt("state"));
-                order.setValidateto(resultSet.getDate("validateto"));
-                order.setValidatefrom(resultSet.getDate("validatefrom"));
-                list.add(order);
+                OrderPublish orderPublish = new OrderPublish();
+                orderPublish.setOrderid(resultSet.getString("orderid"));
+                orderPublish.setAddress(resultSet.getString("address"));
+                orderPublish.setTokenid(resultSet.getString("tokenid"));
+                orderPublish.setType(resultSet.getInt("type"));
+                orderPublish.setPrice(resultSet.getLong("price"));
+                orderPublish.setAmount(resultSet.getLong("amount"));
+                orderPublish.setState(resultSet.getInt("state"));
+                orderPublish.setValidateto(resultSet.getDate("validateto"));
+                orderPublish.setValidatefrom(resultSet.getDate("validatefrom"));
+                list.add(orderPublish);
             }
             return list;
         } catch (SQLException ex) {
@@ -2698,7 +2698,38 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public OrderPublish getOrderPublishByOrderid(String orderid) throws BlockStoreException {
-        // TODO Auto-generated method stub
-        return null;
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            StringBuffer whereStr = new StringBuffer(" WHERE orderid = ? ");
+            String sql = SELECT_ORDERPUBLISH_SQL + whereStr;
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setString(1, orderid);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (!resultSet.next()) {
+                return null;
+            }
+            OrderPublish orderPublish = new OrderPublish();
+            orderPublish.setOrderid(resultSet.getString("orderid"));
+            orderPublish.setAddress(resultSet.getString("address"));
+            orderPublish.setTokenid(resultSet.getString("tokenid"));
+            orderPublish.setType(resultSet.getInt("type"));
+            orderPublish.setPrice(resultSet.getLong("price"));
+            orderPublish.setAmount(resultSet.getLong("amount"));
+            orderPublish.setState(resultSet.getInt("state"));
+            orderPublish.setValidateto(resultSet.getDate("validateto"));
+            orderPublish.setValidatefrom(resultSet.getDate("validatefrom"));
+            return orderPublish;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
     }
 }
