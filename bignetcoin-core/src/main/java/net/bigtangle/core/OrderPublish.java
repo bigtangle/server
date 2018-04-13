@@ -1,7 +1,8 @@
 package net.bigtangle.core;
 
 import java.util.Date;
-import java.util.UUID;
+
+import net.bigtangle.utils.UUIDUtil;
 
 public class OrderPublish implements java.io.Serializable {
 
@@ -103,7 +104,7 @@ public class OrderPublish implements java.io.Serializable {
     }
 
     public OrderPublish(String address, String tokenid, int type, Date validateto, Date validatefrom, long price, long amount) {
-        this.orderid = UUID.randomUUID().toString().replaceAll("-", "");
+        this.orderid = UUIDUtil.randomUUID();
         this.address = address;
         this.tokenid = tokenid;
         this.type = type;

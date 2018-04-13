@@ -1,7 +1,8 @@
 package net.bigtangle.core;
 
 import java.beans.Transient;
-import java.util.UUID;
+
+import net.bigtangle.utils.UUIDUtil;
 
 public class Exchange implements java.io.Serializable {
 
@@ -45,7 +46,7 @@ public class Exchange implements java.io.Serializable {
 
     public Exchange(String fromAddress, String fromTokenHex, String fromAmount, String toAddress,
             String toTokenHex, String toAmount, byte[] data) {
-        this.orderid = UUID.randomUUID().toString().replaceAll("-", "");
+        this.orderid = UUIDUtil.randomUUID();
         this.fromAddress = fromAddress;
         this.fromTokenHex = fromTokenHex;
         this.fromAmount = fromAmount;

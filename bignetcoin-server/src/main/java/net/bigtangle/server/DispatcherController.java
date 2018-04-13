@@ -14,17 +14,6 @@ import java.util.Set;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 
-import net.bigtangle.core.Json;
-import net.bigtangle.core.Utils;
-import net.bigtangle.server.response.AbstractResponse;
-import net.bigtangle.server.response.GetBlockEvaluationsResponse;
-import net.bigtangle.server.service.BlockService;
-import net.bigtangle.server.service.ExchangeService;
-import net.bigtangle.server.service.OrderService;
-import net.bigtangle.server.service.TokensService;
-import net.bigtangle.server.service.TransactionService;
-import net.bigtangle.server.service.WalletService;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +22,17 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+
+import net.bigtangle.core.Json;
+import net.bigtangle.core.Utils;
+import net.bigtangle.server.response.AbstractResponse;
+import net.bigtangle.server.response.GetBlockEvaluationsResponse;
+import net.bigtangle.server.service.BlockService;
+import net.bigtangle.server.service.ExchangeService;
+import net.bigtangle.server.service.OrderPublishService;
+import net.bigtangle.server.service.TokensService;
+import net.bigtangle.server.service.TransactionService;
+import net.bigtangle.server.service.WalletService;
 
 @RestController
 @RequestMapping("/")
@@ -46,7 +46,7 @@ public class DispatcherController {
 
     @Autowired private TokensService tokensService;
     
-    @Autowired private OrderService orderService;
+    @Autowired private OrderPublishService orderPublishService;
     
     @Autowired private ExchangeService exchangeService;
 
@@ -128,7 +128,7 @@ public class DispatcherController {
                 String reqStr = new String(bodyByte, "UTF-8");
                 @SuppressWarnings("unchecked")
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                AbstractResponse response = orderService.saveOrder(request);
+                AbstractResponse response = orderPublishService.saveOrderPublish(request);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
@@ -137,7 +137,7 @@ public class DispatcherController {
                 String reqStr = new String(bodyByte, "UTF-8");
                 @SuppressWarnings("unchecked")
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                AbstractResponse response = orderService.getOrderList(request);
+                AbstractResponse response = orderPublishService.getOrderPublishListWithCondition(request);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;

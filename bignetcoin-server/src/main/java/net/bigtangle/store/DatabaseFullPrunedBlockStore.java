@@ -2536,7 +2536,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<OrderPublish> getOrderPublishList(Map<String, Object> request) throws BlockStoreException {
+    public List<OrderPublish> getOrderPublishListWithCondition(Map<String, Object> request) throws BlockStoreException {
         List<OrderPublish> list = new ArrayList<OrderPublish>();
         maybeConnect();
         PreparedStatement preparedStatement = null;

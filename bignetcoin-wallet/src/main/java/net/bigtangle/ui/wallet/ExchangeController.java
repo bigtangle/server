@@ -11,9 +11,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import org.spongycastle.crypto.params.KeyParameter;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -39,6 +40,7 @@ import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
@@ -163,6 +165,11 @@ public class ExchangeController {
     }
 
     public void exchangeCoin(ActionEvent event) throws Exception {
+        exchange();
+        overlayUI.done();
+    }
+
+    private void exchange() throws Exception, JsonProcessingException {
         if (mTransaction == null) {
             GuiUtils.informationalAlert("alert", "Transaction Is Empty");
             return;
@@ -178,14 +185,13 @@ public class ExchangeController {
         OkHttp3Util.post(ContextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
         
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        String orderid = getString(mOrderid);
+        String orderid = stringValueOf(mOrderid);
         requestParam.put("orderid", orderid);
         requestParam.put("dataHex", Utils.HEX.encode(mTransaction.bitcoinSerialize()));
         requestParam.put("signtype", "to");
         OkHttp3Util.post(ContextRoot + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
         
         Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
-        overlayUI.done();
     }
 
     public void importBlock(ActionEvent event) {
@@ -195,6 +201,11 @@ public class ExchangeController {
         if (buf == null) {
             return;
         }
+        reloadTransaction(buf);
+        overlayUI.done();
+    }
+
+    private void reloadTransaction(byte[] buf) {
         ByteBuffer byteBuffer = ByteBuffer.wrap(buf);
         {
             byte[] dst = new byte[byteBuffer.getInt()];
@@ -242,10 +253,8 @@ public class ExchangeController {
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
-        overlayUI.done();
     }
 
-    @SuppressWarnings("deprecation")
     public void exportBlock(ActionEvent event) {
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
         String fromAddress = fromAddressComboBox.getValue();
@@ -254,63 +263,23 @@ public class ExchangeController {
         String toAddress = toAddressComboBox.getValue();
         String toTokenHex = toTokenHexComboBox.getValue().split(":")[1].trim();
         String toAmount = toAmountTextField.getText();
-        byte[] buf = null;
-        KeyParameter aesKey = null;
-        try {
-            List<UTXO> outputs = new ArrayList<UTXO>();
-
-            Address fromAddress00 = new Address(Main.params, fromAddress);
-            Address toAddress00 = new Address(Main.params, toAddress);
-            outputs.addAll(this.getUTXOWithPubKeyHash(toAddress00.getHash160(), Utils.HEX.decode(toTokenHex)));
-            outputs.addAll(this.getUTXOWithECKeyList(Main.bitcoin.wallet().walletKeys(aesKey),
-                    Utils.HEX.decode(fromTokenHex)));
-
-            Coin amountCoin0 = Coin.parseCoin(toAmount, Utils.HEX.decode(toTokenHex));
-            Coin amountCoin1 = Coin.parseCoin(fromAmount, Utils.HEX.decode(fromTokenHex));
-            SendRequest req = SendRequest.to(fromAddress00, amountCoin0);
-            req.tx.addOutput(amountCoin1, toAddress00);
-            req.missingSigsMode = MissingSigsMode.USE_OP_ZERO;
-
-            List<TransactionOutput> candidates = Main.bitcoin.wallet().transforSpendCandidates(outputs);
-            Main.bitcoin.wallet().setServerURL(ContextRoot);
-            Main.bitcoin.wallet().completeTx(req, candidates, false);
-            Main.bitcoin.wallet().signTransaction(req);
-
-            this.mTransaction = req.tx;
-            buf = mTransaction.bitcoinSerialize();
-        } catch (Exception e) {
-            GuiUtils.crashAlert(e);
-            return;
-        }
-        String orderid = UUID.randomUUID().toString().replaceAll("-", "");
-        this.mOrderid = orderid;
-        ByteBuffer byteBuffer = ByteBuffer.allocate(buf.length + 4 + fromAddress.getBytes().length + 4
-                + fromTokenHex.getBytes().length + 4 + fromAmount.getBytes().length + 4 + toAddress.getBytes().length
-                + 4 + toTokenHex.getBytes().length + 4 + toAmount.getBytes().length + 4 + orderid.getBytes().length + 4);
-
-        byteBuffer.putInt(fromAddress.getBytes().length).put(fromAddress.getBytes());
-        byteBuffer.putInt(fromTokenHex.getBytes().length).put(fromTokenHex.getBytes());
-        byteBuffer.putInt(fromAmount.getBytes().length).put(fromAmount.getBytes());
-        byteBuffer.putInt(toAddress.getBytes().length).put(toAddress.getBytes());
-        byteBuffer.putInt(toTokenHex.getBytes().length).put(toTokenHex.getBytes());
-        byteBuffer.putInt(toAmount.getBytes().length).put(toAmount.getBytes());
         
-        byteBuffer.putInt(orderid.getBytes().length).put(orderid.getBytes());
-        byteBuffer.putInt(buf.length).put(buf);
+        this.mOrderid = UUIDUtil.randomUUID();
+        byte[] buf = this.makeSignTransactionBuffer(fromAddress, toAddress, toTokenHex, fromTokenHex, toAmount, fromAmount);
 
         final FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showSaveDialog(null);
-        FileUtil.writeFile(file, byteBuffer.array());
+        FileUtil.writeFile(file, buf);
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("orderid", orderid);
+        requestParam.put("orderid", this.mOrderid);
         requestParam.put("fromAddress", fromAddress);
         requestParam.put("fromTokenHex", fromTokenHex);
         requestParam.put("fromAmount", fromAmount);
         requestParam.put("toAddress", toAddress);
         requestParam.put("toTokenHex", toTokenHex);
         requestParam.put("toAmount", toAmount);
-        requestParam.put("dataHex", Utils.HEX.encode(byteBuffer.array()));
+        requestParam.put("dataHex", Utils.HEX.encode(buf));
         try {
             OkHttp3Util.post(ContextRoot + "saveExchange", Json.jsonmapper().writeValueAsBytes(requestParam));
         } catch (Exception e) {
@@ -354,38 +323,90 @@ public class ExchangeController {
         if (rowData == null || rowData.isEmpty()) {
             GuiUtils.informationalAlert("no selected", "please select", "");
         }
-        String dataHex = getString(rowData.get("dataHex"));
+        this.mOrderid = stringValueOf(rowData.get("orderid"));
+        String dataHex = stringValueOf(rowData.get("dataHex"));
         if (dataHex.isEmpty()) {
+            byte[] buf = null;
+            String fromAddress = stringValueOf(rowData.get("fromAddress"));
+            String toAddress = stringValueOf(rowData.get("toAddress"));
+            String toTokenHex = stringValueOf(rowData.get("toTokenHex"));
+            String fromTokenHex = stringValueOf(rowData.get("fromTokenHex"));
+            String toAmount = stringValueOf(rowData.get("toAmount"));
+            String fromAmount = stringValueOf(rowData.get("fromAmount"));
+            buf = this.makeSignTransactionBuffer(fromAddress, toAddress, toTokenHex, fromTokenHex, toAmount, fromAmount);
+            
+            HashMap<String, Object> requestParam = new HashMap<String, Object>();
+            requestParam.put("orderid", this.mOrderid);
+            requestParam.put("dataHex", Utils.HEX.encode(buf));
+            requestParam.put("signtype", "to");
+            
+            String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+            OkHttp3Util.post(ContextRoot + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
             return;
         }
         byte[] buf = Utils.HEX.decode(dataHex);
-        mTransaction = (Transaction) Main.params.getDefaultSerializer().makeTransaction(buf);
+        this.reloadTransaction(buf);
         if (mTransaction == null) {
             GuiUtils.informationalAlert("alert", "Transaction Is Empty");
             return;
         }
-        
-        SendRequest request = SendRequest.forTx(mTransaction);
-        Main.bitcoin.wallet().signTransaction(request);
-
-        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
-        byte[] data = OkHttp3Util.post(ContextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
-        Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
-        rollingBlock.addTransaction(mTransaction);
-        rollingBlock.solve();
-        OkHttp3Util.post(ContextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
-        
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        String orderid = getString(rowData.get("orderid"));
-        requestParam.put("orderid", orderid);
-        requestParam.put("dataHex", Utils.HEX.encode(mTransaction.bitcoinSerialize()));
-        requestParam.put("signtype", "to");
-        OkHttp3Util.post(ContextRoot + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
-        Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
+        this.exchange();
         // overlayUI.done();
     }
 
-    private String getString(Object object) {
+    @SuppressWarnings("deprecation")
+    private byte[] makeSignTransactionBuffer(String fromAddress,
+            String toAddress, String toTokenHex, String fromTokenHex, String toAmount, String fromAmount) {
+        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        KeyParameter aesKey = null;
+        byte[] buf = null;
+        try {
+            List<UTXO> outputs = new ArrayList<UTXO>();
+            
+            Address fromAddress00 = new Address(Main.params, fromAddress);
+            Address toAddress00 = new Address(Main.params, toAddress);
+            outputs.addAll(this.getUTXOWithPubKeyHash(toAddress00.getHash160(), Utils.HEX.decode(toTokenHex)));
+            outputs.addAll(this.getUTXOWithECKeyList(Main.bitcoin.wallet().walletKeys(aesKey),
+                    Utils.HEX.decode(fromTokenHex)));
+
+            Coin amountCoin0 = Coin.parseCoin(toAmount, Utils.HEX.decode(toTokenHex));
+            Coin amountCoin1 = Coin.parseCoin(fromAmount, Utils.HEX.decode(fromTokenHex));
+            SendRequest req = SendRequest.to(fromAddress00, amountCoin0);
+            req.tx.addOutput(amountCoin1, toAddress00);
+            req.missingSigsMode = MissingSigsMode.USE_OP_ZERO;
+
+            List<TransactionOutput> candidates = Main.bitcoin.wallet().transforSpendCandidates(outputs);
+            Main.bitcoin.wallet().setServerURL(ContextRoot);
+            Main.bitcoin.wallet().completeTx(req, candidates, false);
+            Main.bitcoin.wallet().signTransaction(req);
+
+            this.mTransaction = req.tx;
+            buf = mTransaction.bitcoinSerialize();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+            return null;
+        }
+        ByteBuffer byteBuffer = ByteBuffer.allocate(buf.length + 4
+                + fromAddress.getBytes().length + 4
+                + fromTokenHex.getBytes().length + 4
+                + fromAmount.getBytes().length + 4
+                + toAddress.getBytes().length + 4
+                + toTokenHex.getBytes().length + 4
+                + toAmount.getBytes().length + 4
+                + this.mOrderid.getBytes().length + 4);
+
+        byteBuffer.putInt(fromAddress.getBytes().length).put(fromAddress.getBytes());
+        byteBuffer.putInt(fromTokenHex.getBytes().length).put(fromTokenHex.getBytes());
+        byteBuffer.putInt(fromAmount.getBytes().length).put(fromAmount.getBytes());
+        byteBuffer.putInt(toAddress.getBytes().length).put(toAddress.getBytes());
+        byteBuffer.putInt(toTokenHex.getBytes().length).put(toTokenHex.getBytes());
+        byteBuffer.putInt(toAmount.getBytes().length).put(toAmount.getBytes());
+        byteBuffer.putInt(this.mOrderid.getBytes().length).put(this.mOrderid.getBytes());
+        byteBuffer.putInt(buf.length).put(buf);
+        return buf;
+    }
+
+    private String stringValueOf(Object object) {
         if (object == null) {
             return "";
         } else {
@@ -396,13 +417,6 @@ public class ExchangeController {
     public void closeUI(ActionEvent event) {
         overlayUI.done();
     }
-
-    // public List<UTXO> getUTXOWithECKeyList(ECKey ecKey, byte[] tokenid)
-    // throws Exception {
-    // List<ECKey> ecKeys = new ArrayList<ECKey>();
-    // ecKeys.add(ecKey);
-    // return getUTXOWithECKeyList(ecKeys, tokenid);
-    // }
 
     @SuppressWarnings("unchecked")
     public List<UTXO> getUTXOWithECKeyList(List<ECKey> ecKeys, byte[] tokenid) throws Exception {

@@ -265,7 +265,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void saveOrderMatch(OrderMatch orderMatch) throws BlockStoreException;
 
-    public List<OrderPublish> getOrderPublishList(Map<String, Object> request) throws BlockStoreException;
+    public List<OrderPublish> getOrderPublishListWithCondition(Map<String, Object> request) throws BlockStoreException;
 
     public void saveExchange(Exchange exchange) throws BlockStoreException;
 

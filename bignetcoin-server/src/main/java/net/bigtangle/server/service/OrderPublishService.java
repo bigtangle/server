@@ -18,9 +18,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class OrderService {
+public class OrderPublishService {
 
-    public AbstractResponse saveOrder(Map<String, Object> request) throws Exception {
+    public AbstractResponse saveOrderPublish(Map<String, Object> request) throws Exception {
         String address = (String) request.get("address");
         String tokenid = (String) request.get("tokenid");
         int type = (Integer) request.get("type");
@@ -54,8 +54,8 @@ public class OrderService {
     @Autowired
     protected FullPrunedBlockStore store;
 
-    public AbstractResponse getOrderList(Map<String, Object> request) throws BlockStoreException {
-        List<OrderPublish> orders = this.store.getOrderPublishList(request);
+    public AbstractResponse getOrderPublishListWithCondition(Map<String, Object> request) throws BlockStoreException {
+        List<OrderPublish> orders = this.store.getOrderPublishListWithCondition(request);
         return GetOrderResponse.create(orders);
     }
 }
