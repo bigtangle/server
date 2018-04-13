@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 public class ExchangeService {
 
     public AbstractResponse saveExchange(Map<String, Object> request) throws BlockStoreException {
+        String orderid = (String) request.get("orderid");
         String fromAddress = (String) request.get("fromAddress");
         String fromTokenHex = (String) request.get("fromTokenHex");
         String fromAmount = (String) request.get("fromAmount");
@@ -26,6 +27,7 @@ public class ExchangeService {
         String dataHex = (String) request.get("dataHex");
         byte[] data = Utils.HEX.decode(dataHex);
         Exchange exchange = new Exchange(fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, data);
+        exchange.setOrderid(orderid);
         exchange.setFromSign(1);
         this.store.saveExchange(exchange);
         return AbstractResponse.createEmptyResponse();

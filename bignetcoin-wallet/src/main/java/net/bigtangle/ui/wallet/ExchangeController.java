@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -85,6 +86,8 @@ public class ExchangeController {
     public TableColumn<Map<String, Object>, String> toAmountCol;
 
     private Transaction mTransaction;
+    
+    private String mOrderid;
 
     @FXML
     public void initialize() {
@@ -95,6 +98,7 @@ public class ExchangeController {
             GuiUtils.crashAlert(e);
         }
         mTransaction = null;
+        mOrderid = "";
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -164,13 +168,19 @@ public class ExchangeController {
         Main.bitcoin.wallet().signTransaction(request);
 
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(ContextRoot + "askTransaction",
-                Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] data = OkHttp3Util.post(ContextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
         Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(mTransaction);
         rollingBlock.solve();
         OkHttp3Util.post(ContextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        String orderid = getString(mOrderid);
+        requestParam.put("orderid", orderid);
+        requestParam.put("dataHex", Utils.HEX.encode(mTransaction.bitcoinSerialize()));
+        requestParam.put("signtype", "to");
+        OkHttp3Util.post(ContextRoot + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+        
         Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
         overlayUI.done();
     }
@@ -213,6 +223,12 @@ public class ExchangeController {
             byteBuffer.get(dst);
             toAmountTextField.setText(new String(dst));
         }
+        byte[] orderid = new byte[byteBuffer.getInt()];
+        byteBuffer.put(orderid);
+        
+        mOrderid = new String(orderid);
+        System.out.println("orderid : " + new String(orderid));
+        
         byte[] data = new byte[byteBuffer.getInt()];
         byteBuffer.put(data);
         try {
@@ -273,6 +289,9 @@ public class ExchangeController {
         byteBuffer.putInt(toAddress.getBytes().length).put(toAddress.getBytes());
         byteBuffer.putInt(toTokenHex.getBytes().length).put(toTokenHex.getBytes());
         byteBuffer.putInt(toAmount.getBytes().length).put(toAmount.getBytes());
+        String orderid = UUID.randomUUID().toString().replaceAll("-", "");
+        this.mOrderid = orderid;
+        byteBuffer.putInt(orderid.getBytes().length).put(orderid.getBytes());
         byteBuffer.putInt(buf.length).put(buf);
 
         final FileChooser fileChooser = new FileChooser();
@@ -280,6 +299,7 @@ public class ExchangeController {
         FileUtil.writeFile(file, byteBuffer.array());
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("orderid", orderid);
         requestParam.put("fromAddress", fromAddress);
         requestParam.put("fromTokenHex", fromTokenHex);
         requestParam.put("fromAmount", fromAmount);
