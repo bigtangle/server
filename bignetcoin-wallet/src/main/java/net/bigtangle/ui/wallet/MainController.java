@@ -100,7 +100,7 @@ public class MainController {
     @FXML
     public void initialize() {
         Server.setText(Main.IpAddress);
-        IPPort.setText(Main.IpAddress);
+        IPPort.setText(Main.port);
         initTableView();
     }
 
