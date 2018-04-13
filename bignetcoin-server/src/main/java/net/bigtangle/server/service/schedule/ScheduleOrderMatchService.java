@@ -7,6 +7,7 @@ package net.bigtangle.server.service.schedule;
 import java.util.Iterator;
 import java.util.UUID;
 
+import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.OrderMatch;
 import net.bigtangle.core.OrderPublish;
@@ -60,19 +61,12 @@ public class ScheduleOrderMatchService {
                         if (event instanceof OrderBookEvents.Match) {
                             OrderBookEvents.Match match = (OrderBookEvents.Match) event;
                             logger.debug("order match hit : " + match);
-                            OrderMatch orderMatch = new OrderMatch();
-                            orderMatch.setMatchid(UUID.randomUUID().toString().replaceAll("-", ""));
-                            orderMatch.setRestingOrderId(match.restingOrderId);
-                            orderMatch.setIncomingOrderId(match.incomingOrderId);
-                            orderMatch.setType(match.incomingSide == Side.SELL ? 1 : 0);
-                            orderMatch.setPrice(match.price);
-                            orderMatch.setExecutedQuantity(match.executedQuantity);
-                            orderMatch.setRemainingQuantity(match.remainingQuantity);
-                            this.store.saveOrderMatch(orderMatch);
+                            saveOrderMatch(match);
                             
                             OrderPublish orderPublish0 = this.store.getOrderPublishByOrderid(match.restingOrderId);
                             OrderPublish orderPublish1 = this.store.getOrderPublishByOrderid(match.incomingOrderId);
                             
+                            // TODO Here's the change orders Jiang
                             Exchange exchange = new Exchange(orderPublish0.getAddress(), orderPublish0.getTokenid(),
                                     String.valueOf(orderPublish0.getAmount()), orderPublish1.getAddress(), orderPublish1.getTokenid(), String.valueOf(orderPublish1.getAmount()), new byte[0]);
                             this.store.saveExchange(exchange);
@@ -88,6 +82,18 @@ public class ScheduleOrderMatchService {
         } catch (Exception e) {
             logger.warn("cal order match error", e);
         }
+    }
+
+    public void saveOrderMatch(OrderBookEvents.Match match) throws BlockStoreException {
+        OrderMatch orderMatch = new OrderMatch();
+        orderMatch.setMatchid(UUID.randomUUID().toString().replaceAll("-", ""));
+        orderMatch.setRestingOrderId(match.restingOrderId);
+        orderMatch.setIncomingOrderId(match.incomingOrderId);
+        orderMatch.setType(match.incomingSide == Side.SELL ? 1 : 0);
+        orderMatch.setPrice(match.price);
+        orderMatch.setExecutedQuantity(match.executedQuantity);
+        orderMatch.setRemainingQuantity(match.remainingQuantity);
+        this.store.saveOrderMatch(orderMatch);
     }
 
 }

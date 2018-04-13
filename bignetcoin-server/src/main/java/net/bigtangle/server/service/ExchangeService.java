@@ -31,7 +31,7 @@ public class ExchangeService {
         return AbstractResponse.createEmptyResponse();
     }
     
-    public AbstractResponse signExchange(Map<String, Object> request) throws BlockStoreException {
+    public AbstractResponse signTransaction(Map<String, Object> request) throws BlockStoreException {
         String dataHex = (String) request.get("dataHex");
         String orderid = (String) request.get("orderid");
         String signtype = (String) request.get("signtype");

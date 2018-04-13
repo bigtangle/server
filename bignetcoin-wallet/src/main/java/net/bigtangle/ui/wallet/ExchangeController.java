@@ -12,8 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.spongycastle.crypto.params.KeyParameter;
-
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -40,6 +38,10 @@ import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
+
+import org.spongycastle.crypto.params.KeyParameter;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 public class ExchangeController {
 
@@ -97,17 +99,22 @@ public class ExchangeController {
         mTransaction = null;
     }
 
+    @SuppressWarnings("unchecked")
     public void initTable() throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        
+        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(null);
         ObservableList<Map<String, Object>> exchangeData = FXCollections.observableArrayList();
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        String response = OkHttp3Util.post(CONTEXT_ROOT + "getExchange",
-                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-
-        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("exchanges");
-        for (Map<String, Object> map : list) {
-            exchangeData.add(map);
+        for (ECKey key : keys) {
+            String address = key.toAddress(Main.params).toString();
+            HashMap<String, Object> requestParam = new HashMap<String, Object>();
+            requestParam.put("address", address);
+            String response = OkHttp3Util.post(CONTEXT_ROOT + "getExchange", Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+            final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+            List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("exchanges");
+            for (Map<String, Object> map : list) {
+                exchangeData.add(map);
+            }
         }
         orderidsCol.setCellValueFactory(new MapValueFactory("orderid"));
         dataHexCol.setCellValueFactory(new MapValueFactory("dataHex"));
@@ -320,20 +327,36 @@ public class ExchangeController {
         overlayUI.done();
     }
 
-    public void signExchange(ActionEvent event) {
-        Map<String, Object> temp = exchangeTable.getSelectionModel().getSelectedItem();
-        if (temp != null && !temp.isEmpty()) {
-            String orderid = getString(temp.get("orderid"));
-            String dataHex = getString(temp.get("dataHex"));
-            String fromAddress = getString(temp.get("fromAddress"));
-            String fromTokenid = getString(temp.get("fromTokenHex"));
-            String fromAmount = getString(temp.get("fromAmount"));
-            String toAddress = getString(temp.get("toAddress"));
-            String toTokenid = getString(temp.get("toTokenHex"));
-            String toAmount = getString(temp.get("toAmount"));
-        } else {
+    public void signExchange(ActionEvent event) throws Exception {
+        Map<String, Object> rowData = exchangeTable.getSelectionModel().getSelectedItem();
+        if (rowData == null || rowData.isEmpty()) {
             GuiUtils.informationalAlert("no selected", "please select", "");
         }
+        String dataHex = getString(rowData.get("dataHex"));
+        if (dataHex.isEmpty()) {
+            return;
+        }
+        byte[] buf = Utils.HEX.decode(dataHex);
+        mTransaction = (Transaction) Main.params.getDefaultSerializer().makeTransaction(buf);
+        if (mTransaction == null) {
+            GuiUtils.informationalAlert("alert", "Transaction Is Empty");
+            return;
+        }
+        
+        SendRequest request = SendRequest.forTx(mTransaction);
+        Main.bitcoin.wallet().signTransaction(request);
+
+        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        byte[] data = OkHttp3Util.post(ContextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
+        Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
+        rollingBlock.addTransaction(mTransaction);
+        rollingBlock.solve();
+        OkHttp3Util.post(ContextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        String orderid = getString(rowData.get("orderid"));
+        OkHttp3Util.post(ContextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+        Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
         // overlayUI.done();
     }
 
