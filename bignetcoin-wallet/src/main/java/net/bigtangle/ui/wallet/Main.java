@@ -83,6 +83,7 @@ public class Main extends Application {
 
     public static String lang = "";
     public static int numberOfEmptyBlocks = 3;
+    public static boolean emptyBlocks = false;
 
     @Override
     public void start(Stage mainWindow) throws Exception {
@@ -296,19 +297,21 @@ public class Main extends Application {
     }
 
     public static void sentEmpstyBlock(int number) {
-        Runnable r = () -> {
-            for (int i = 0; i < number; i++) {
-                try {
-                    sentEmpstyBlock();
-                    System.out.println("empty block " + i);
-                } catch (Exception e) {
-                    // Ignore
-                    e.printStackTrace();
+        if (emptyBlocks) {
+            Runnable r = () -> {
+                for (int i = 0; i < number; i++) {
+                    try {
+                        sentEmpstyBlock();
+                        System.out.println("empty block " + i);
+                    } catch (Exception e) {
+                        // Ignore
+                        e.printStackTrace();
+                    }
                 }
-            }
-        };
-        Platform.runLater(r);
-        // Threading.USER_THREAD.execute(r);
+            };
+            Platform.runLater(r);
+            // Threading.USER_THREAD.execute(r);
+        }
     }
 
     public static String sentEmpstyBlock() throws JsonProcessingException, Exception {

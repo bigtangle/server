@@ -2670,6 +2670,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public void updateExchangeSign(String orderid, String signtype, byte[] data) throws BlockStoreException {
+        maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             String sql = "";
@@ -2680,8 +2681,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 sql = "UPDATE exchange SET fromSign = 1, data = ? WHERE orderid = ?";
             }
             preparedStatement = conn.get().prepareStatement(sql);
-            preparedStatement.setString(1, orderid);
-            preparedStatement.setBytes(2, data);
+            preparedStatement.setString(2, orderid);
+            preparedStatement.setBytes(1, data);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);

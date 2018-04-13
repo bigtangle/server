@@ -256,7 +256,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         return this.value;
     }
 
-    private static final MonetaryFormat FRIENDLY_FORMAT = MonetaryFormat.FIAT.minDecimals(2)
+    private static final MonetaryFormat FRIENDLY_FORMAT = MonetaryFormat.BTA.minDecimals(2)
             .repeatOptionalDecimals(1, 1).postfixCode();
 
     /**
@@ -265,7 +265,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      */
     public String toFriendlyString() {
          if(Arrays.equals(  NetworkParameters.BIGNETCOIN_TOKENID, tokenid)) {
-        return FRIENDLY_FORMAT.format(this).toString()+ " " +MonetaryFormat.CODE_BTC;
+        return FRIENDLY_FORMAT.format(this).toString() +MonetaryFormat.CODE_BTC;
         }
         else {
             return FRIENDLY_FORMAT.format(this).toString();   

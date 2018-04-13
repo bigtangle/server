@@ -369,6 +369,7 @@ public class ExchangeController {
             return;
         }
         this.exchange();
+        this. initTable();
         // overlayUI.done();
     }
 

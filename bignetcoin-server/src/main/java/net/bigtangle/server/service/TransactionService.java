@@ -50,23 +50,28 @@ public class TransactionService {
 
     @Autowired
     protected FullPrunedBlockStore store;
-    
+
     @Autowired
     protected NetworkParameters networkParameters;
-    
-    public ByteBuffer askTransaction() throws Exception {
-    	Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
-        Block r1 = blockService.getBlock(tipsToApprove.getLeft());
-        Block r2 = blockService.getBlock(tipsToApprove.getRight());
 
-        Block rollingBlock = new Block(this.networkParameters, r1.getHash(), r2.getHash(),
-                NetworkParameters.BIGNETCOIN_TOKENID, NetworkParameters.BLOCKTYPE_TRANSFER,
-                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+    public ByteBuffer askTransaction() throws Exception {
+
+        Block rollingBlock = askTransactionBlock();
 
         byte[] data = rollingBlock.bitcoinSerialize();
 
         ByteBuffer byteBuffer = ByteBuffer.wrap(data);
         return byteBuffer;
+    }
+
+    public Block askTransactionBlock() throws Exception {
+        Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
+        Block r1 = blockService.getBlock(tipsToApprove.getLeft());
+        Block r2 = blockService.getBlock(tipsToApprove.getRight());
+
+        return new Block(this.networkParameters, r1.getHash(), r2.getHash(), NetworkParameters.BIGNETCOIN_TOKENID,
+                NetworkParameters.BLOCKTYPE_TRANSFER, Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+
     }
 
     public byte[] createGenesisBlock(Map<String, Object> request) throws Exception {
@@ -89,8 +94,7 @@ public class TransactionService {
         tokens.setAmount(amount);
         if (blocktype) {
             tokens.setBlocktype((int) NetworkParameters.BLOCKTYPE_GENESIS);
-        }
-        else {
+        } else {
             tokens.setBlocktype((int) NetworkParameters.BLOCKTYPE_GENESIS_MULTIPLE);
         }
         tokens.setDescription(description);
@@ -100,12 +104,13 @@ public class TransactionService {
     }
 
     public Block createGenesisBlock(Coin coin, byte[] tokenid, byte[] pubKey, boolean blocktype) throws Exception {
-    	Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
+        Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
         Block r2 = blockService.getBlock(tipsToApprove.getRight());
-        long blocktype0 = blocktype ? NetworkParameters.BLOCKTYPE_GENESIS : NetworkParameters.BLOCKTYPE_GENESIS_MULTIPLE;
-        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), tokenid,
-                blocktype0, Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+        long blocktype0 = blocktype ? NetworkParameters.BLOCKTYPE_GENESIS
+                : NetworkParameters.BLOCKTYPE_GENESIS_MULTIPLE;
+        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), tokenid, blocktype0,
+                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
         block.addCoinbaseTransaction(pubKey, coin);
         block.solve();
         FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);

@@ -17,12 +17,14 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import net.bigtangle.core.Block;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.Utils;
 import net.bigtangle.server.response.AbstractResponse;
@@ -33,22 +35,35 @@ import net.bigtangle.server.service.OrderPublishService;
 import net.bigtangle.server.service.TokensService;
 import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.server.service.WalletService;
+  
 
 @RestController
 @RequestMapping("/")
 public class DispatcherController {
 
-    @Autowired private TransactionService transactionService;
+    private static final Logger logger = LoggerFactory.getLogger(DispatcherController.class);
+    @Autowired
+    private TransactionService transactionService;
 
-    @Autowired private WalletService walletService;
+    @Autowired
+    private WalletService walletService;
 
-    @Autowired private BlockService blockService;
+    @Autowired
+    private BlockService blockService;
 
-    @Autowired private TokensService tokensService;
-    
-    @Autowired private OrderPublishService orderPublishService;
-    
-    @Autowired private ExchangeService exchangeService;
+    @Autowired
+    private TokensService tokensService;
+
+    @Autowired
+    private OrderPublishService orderPublishService;
+
+    @Autowired
+    private ExchangeService exchangeService;
+
+    @Autowired
+    TaskExecutor taskExecutor;
+
+    public static int numberOfEmptyBlocks = 3;
 
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
     public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] bodyByte,
@@ -73,6 +88,7 @@ public class DispatcherController {
 
             case saveBlock: {
                 blockService.saveBinaryArrayToBlock(bodyByte);
+                saveEmptyBlock(numberOfEmptyBlocks);
                 this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
             }
                 break;
@@ -90,6 +106,7 @@ public class DispatcherController {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 byte[] data = transactionService.createGenesisBlock(request);
+                saveEmptyBlock(numberOfEmptyBlocks);
                 this.outPointBinaryArray(httpServletResponse, data);
             }
                 break;
@@ -115,7 +132,7 @@ public class DispatcherController {
 
             case outputsWiteToken: {
                 ByteBuffer byteBuffer = ByteBuffer.wrap(bodyByte);
-                byte[] pubKey =  new byte[byteBuffer.getInt()];
+                byte[] pubKey = new byte[byteBuffer.getInt()];
                 byteBuffer.put(pubKey);
                 byte[] tokenid = new byte[byteBuffer.getInt()];
                 byteBuffer.put(tokenid);
@@ -132,7 +149,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-                
+
             case getOrders: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 @SuppressWarnings("unchecked")
@@ -141,12 +158,12 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-                
+
             case batchGetBalances: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 @SuppressWarnings("unchecked")
                 List<String> keyStrHex000 = Json.jsonmapper().readValue(reqStr, List.class);
-                 Set<byte[]> pubKeyHashs = new HashSet<byte[]>();
+                Set<byte[]> pubKeyHashs = new HashSet<byte[]>();
                 for (String keyStrHex : keyStrHex000) {
                     pubKeyHashs.add(Utils.HEX.decode(keyStrHex));
                 }
@@ -154,16 +171,17 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-                
+
             case saveExchange: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 @SuppressWarnings("unchecked")
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = exchangeService.saveExchange(request);
+                saveEmptyBlock(numberOfEmptyBlocks);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-                
+
             case getExchange: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 @SuppressWarnings("unchecked")
@@ -173,7 +191,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-                
+
             case signTransaction: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 @SuppressWarnings("unchecked")
@@ -206,5 +224,20 @@ public class DispatcherController {
         printWriter.close();
     }
 
-    private static final Logger logger = LoggerFactory.getLogger(DispatcherController.class);
+    public void saveEmptyBlock(int number) {
+        Runnable r = () -> {
+            for (int i = 0; i < number; i++) {
+                try {
+                    Block b = transactionService.askTransactionBlock();
+                    b.solve();
+                    logger.debug("empty block " + i);
+                } catch (Exception e) {
+                    logger.debug("", e);
+                }
+            }
+        };
+        taskExecutor.execute(r);
+        // Threading.USER_THREAD.execute(r);
+    }
+
 }

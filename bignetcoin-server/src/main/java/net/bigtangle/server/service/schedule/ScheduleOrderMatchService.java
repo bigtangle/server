@@ -7,11 +7,19 @@ package net.bigtangle.server.service.schedule;
 import java.util.Iterator;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Exchange;
+import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderMatch;
 import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.Tokens;
+import net.bigtangle.core.Utils;
 import net.bigtangle.order.match.OrderBook;
 import net.bigtangle.order.match.OrderBookEvents;
 import net.bigtangle.order.match.Side;
@@ -19,12 +27,6 @@ import net.bigtangle.server.response.GetTokensResponse;
 import net.bigtangle.server.service.OrderBookHolder;
 import net.bigtangle.server.service.TokensService;
 import net.bigtangle.store.FullPrunedBlockStore;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
 
 @Service
 public class ScheduleOrderMatchService {
@@ -36,14 +38,14 @@ public class ScheduleOrderMatchService {
 
     @Autowired
     private TokensService tokensService;
-    
+
     @Autowired
     protected FullPrunedBlockStore store;
 
     @Scheduled(fixedRateString = "10000")
     public void updateMatch() {
         try {
-            //logger.debug("cal order match start");
+            // logger.debug("cal order match start");
             GetTokensResponse getTokensResponse = (GetTokensResponse) tokensService.getTokensList();
             for (Tokens tokens : getTokensResponse.getTokens()) {
                 String tokenSTR = tokens.getTokenHex();
@@ -62,14 +64,23 @@ public class ScheduleOrderMatchService {
                             OrderBookEvents.Match match = (OrderBookEvents.Match) event;
                             logger.debug("order match hit : " + match);
                             saveOrderMatch(match);
-                            
-                            OrderPublish orderPublish0 = this.store.getOrderPublishByOrderid(match.restingOrderId);
-                            OrderPublish orderPublish1 = this.store.getOrderPublishByOrderid(match.incomingOrderId);
-                            
+
+                            OrderPublish incomingOrder = this.store.getOrderPublishByOrderid(match.incomingOrderId);
+                            OrderPublish restingOrder = this.store.getOrderPublishByOrderid(match.restingOrderId);
                             // TODO Here's the change orders Jiang
-                            Exchange exchange = new Exchange(orderPublish0.getAddress(), orderPublish0.getTokenid(),
-                                    String.valueOf(orderPublish0.getAmount()), orderPublish1.getAddress(), orderPublish1.getTokenid(), String.valueOf(orderPublish1.getAmount()), new byte[0]);
-                            this.store.saveExchange(exchange);
+                            // sell side will get the system coin as token
+                            if (match.incomingSide == Side.SELL) {
+                                Exchange exchange = new Exchange(restingOrder.getAddress(), incomingOrder.getTokenid(),
+                                        String.valueOf(match.executedQuantity), incomingOrder.getAddress(),
+                                        Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID),
+                                        String.valueOf(match.executedQuantity * match.price), new byte[0]);
+                                this.store.saveExchange(exchange);
+                            } else {
+                                Exchange exchange = new Exchange(incomingOrder.getAddress(), incomingOrder.getTokenid(),
+                                        String.valueOf(match.executedQuantity), restingOrder.getAddress(),
+                                        Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID),
+                                        String.valueOf(match.executedQuantity * match.price), new byte[0]);
+                            }
 
                             iterator.remove();
                         }
@@ -78,7 +89,7 @@ public class ScheduleOrderMatchService {
                     orderBook.unlock();
                 }
             }
-            //logger.debug("cal order match end");
+            // logger.debug("cal order match end");
         } catch (Exception e) {
             logger.warn("cal order match error", e);
         }
