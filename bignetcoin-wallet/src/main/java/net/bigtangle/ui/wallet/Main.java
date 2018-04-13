@@ -96,9 +96,9 @@ public class Main extends Application {
     }
 
     public void realStart(Stage mainWindow, String temp) throws IOException {
-        
+
         this.mainWindow = mainWindow;
-        mainWindow.setMaximized(true);
+        // mainWindow.setMaximized(true);
         instance = this;
         // Show the crash dialog for any exceptions that we don't handle and
         // that hit the main loop.
@@ -116,7 +116,7 @@ public class Main extends Application {
         // and wired up.
         URL location = getClass().getResource("main.fxml");
         loader = new FXMLLoader(location);
-        String resourceFile = "net.bigtangle.ui.wallet.test";
+        String resourceFile = "net.bigtangle.ui.wallet.message";
         lang = temp;
         Locale locale = Locale.CHINESE;
         if ("en".equals(lang)) {
@@ -250,7 +250,7 @@ public class Main extends Application {
             // Load the UI from disk.
             URL location = GuiUtils.getResource(name);
             FXMLLoader loader = new FXMLLoader(location);
-            String resourceFile = "net.bigtangle.ui.wallet.test";
+            String resourceFile = "net.bigtangle.ui.wallet.message";
             Locale locale = Locale.CHINESE;
             if ("en".equals(Main.lang)) {
                 resourceFile += "_en";
@@ -307,8 +307,8 @@ public class Main extends Application {
                 }
             }
         };
-         Platform.runLater(r);
-       // Threading.USER_THREAD.execute(r);
+        Platform.runLater(r);
+        // Threading.USER_THREAD.execute(r);
     }
 
     public static String sentEmpstyBlock() throws JsonProcessingException, Exception {

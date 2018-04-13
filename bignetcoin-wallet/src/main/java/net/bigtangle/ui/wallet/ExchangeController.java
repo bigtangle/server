@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.spongycastle.crypto.params.KeyParameter;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -39,8 +41,6 @@ import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
-
-import org.spongycastle.crypto.params.KeyParameter;
 
 public class ExchangeController {
 
@@ -114,6 +114,9 @@ public class ExchangeController {
             String response = OkHttp3Util.post(CONTEXT_ROOT + "getExchange", Json.jsonmapper().writeValueAsString(requestParam).getBytes());
             final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
             List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("exchanges");
+            if (list==null) {
+                return;
+            }
             for (Map<String, Object> map : list) {
                 exchangeData.add(map);
             }

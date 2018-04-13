@@ -18,50 +18,50 @@
 	<children>
 		<TableView fx:id="utxoTable" editable="true" layoutX="14.0" layoutY="161.0" prefHeight="364.0" prefWidth="660.0">
 			<columns>
-				<TableColumn fx:id="balanceColumn" prefWidth="70.0" text="Amount" />
-				<TableColumn fx:id="tokentypeColumnA" prefWidth="232.0" text="Token" />
-				<TableColumn fx:id="addressColumn" prefWidth="282.0" text="Address" />
-				<TableColumn fx:id="spendPendingColumn" prefWidth="73.0" text="pending(*)" />
+				<TableColumn fx:id="balanceColumn" prefWidth="70.0" text="%Amount" />
+				<TableColumn fx:id="tokentypeColumnA" prefWidth="232.0" text="%Token" />
+				<TableColumn fx:id="addressColumn" prefWidth="282.0" text="%Address" />
+				<TableColumn fx:id="spendPendingColumn" prefWidth="73.0" text="%pending" />
 			</columns>
 		</TableView>
 		<TableView fx:id="coinTable" layoutX="670.0" layoutY="161.0" prefHeight="364.0" prefWidth="235.0">
 			<columns>
-				<TableColumn fx:id="valueColumn" prefWidth="124.0" text="Amount" />
-				<TableColumn fx:id="tokentypeColumn" prefWidth="110.0" text="Token" />
+				<TableColumn fx:id="valueColumn" prefWidth="124.0" text="%Amount" />
+				<TableColumn fx:id="tokentypeColumn" prefWidth="110.0" text="%Token" />
 			</columns>
 		</TableView>
 		<HBox layoutX="16.0" layoutY="115.0" prefHeight="23.0" prefWidth="771.0" spacing="20">
 			<children>
-				<Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" mnemonicParsing="false" onAction="#sendMoneyOut" text="Transfer" />
-				<Button mnemonicParsing="false" onAction="#orders" text="Order" />
-				<Button fx:id="stock" onAction="#stockPublish" text="Token" />
-				<Button fx:id="exchange" mnemonicParsing="false" onAction="#exchangeCoin" text="Exchange" />
+				<Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" mnemonicParsing="false" onAction="#sendMoneyOut" text="%Transfer" />
+				<Button mnemonicParsing="false" onAction="#orders" text="%Order" />
+				<Button fx:id="stock" onAction="#stockPublish" text="%Token" />
+				<Button fx:id="exchange" mnemonicParsing="false" onAction="#exchangeCoin" text="%Exchange" />
 
-				<Button mnemonicParsing="false" onAction="#blockEvaluation" text="Blocks" />
-				<Button mnemonicParsing="false" onAction="#eckeyList" text="Keys" />
-				<Button onAction="#settingsClicked" text="Settings" />
-				<ToggleButton mnemonicParsing="false" text="en">
+				<Button mnemonicParsing="false" onAction="#blockEvaluation" text="%Blocks" />
+				<Button mnemonicParsing="false" onAction="#eckeyList" text="%Keys" />
+				<Button onAction="#settingsClicked" text="%Settings" />
+				<ToggleButton mnemonicParsing="false" text="%en">
 					<toggleGroup>
 						<ToggleGroup fx:id="toggleGroup" />
 					</toggleGroup>
 				</ToggleButton>
-				<ToggleButton mnemonicParsing="false" prefHeight="23.0" prefWidth="31.0" text="cn" toggleGroup="$toggleGroup" />
+				<ToggleButton mnemonicParsing="false" prefHeight="23.0" prefWidth="38.0" text="%cn" toggleGroup="$toggleGroup" />
 			</children>
 		</HBox>
 		<AnchorPane layoutX="140.0" layoutY="25.0" prefHeight="15.0" prefWidth="572.0">
 			<children>
-				<Label layoutY="3.0" prefHeight="15.0" prefWidth="62.0" text="Server" />
+				<Label layoutY="3.0" prefHeight="15.0" prefWidth="62.0" text="%Server" />
 				<TextField fx:id="Server" layoutX="83.0" prefHeight="23.0" prefWidth="203.0" />
-				<Label layoutX="313.0" layoutY="1.0" text="Port" />
+				<Label layoutX="313.0" layoutY="1.0" text="%Port" />
 				<TextField fx:id="IPPort" layoutX="352.0" prefHeight="23.0" prefWidth="146.0" />
-				<Button fx:id="connectButton" layoutX="506.0" layoutY="-2.0" mnemonicParsing="false" onAction="#connectServer" text="Connect" />
+				<Button fx:id="connectButton" layoutX="506.0" layoutY="-2.0" mnemonicParsing="false" onAction="#connectServer" text="%Connect" />
 			</children>
 		</AnchorPane>
 		<AnchorPane layoutX="129.0" layoutY="65.0" prefHeight="30.0" prefWidth="591.0">
 			<children>
-				<Label layoutX="8.0" layoutY="7.0" text="address" />
+				<Label layoutX="8.0" layoutY="7.0" text="%address" />
 				<TextField fx:id="addressTextField" layoutX="72.0" layoutY="3.0" prefHeight="23.0" prefWidth="432.0" />
-				<Button layoutX="520.0" layoutY="3.0" mnemonicParsing="false" onAction="#otherWallet" text="other wallet" />
+				<Button layoutX="520.0" layoutY="3.0" mnemonicParsing="false" onAction="#otherWallet" text="%other_wallet" />
 			</children>
 		</AnchorPane>
 	</children>

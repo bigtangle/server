@@ -14,7 +14,7 @@
 			<children>
 				<HBox fx:id="topHBox" alignment="CENTER_LEFT" spacing="15.0">
 					<children>
-						<Label fx:id="titleLabel" text="Send">
+						<Label fx:id="titleLabel" text="%Send">
 							<font>
 								<Font size="25.0" />
 							</font>
@@ -26,18 +26,18 @@
 				</HBox>
             <HBox prefHeight="33.0" prefWidth="641.0">
                <children>
-                  <RadioButton fx:id="basicRadioButton" mnemonicParsing="false" selected="true" text="basic">
+                  <RadioButton fx:id="basicRadioButton" mnemonicParsing="false" selected="true" text="%basic">
                      <toggleGroup>
                         <ToggleGroup fx:id="unitToggleGroup" />
                      </toggleGroup>
                   </RadioButton>
-                  <RadioButton fx:id="kiloRadioButton" mnemonicParsing="false" text="kilo" toggleGroup="$unitToggleGroup" />
-                  <RadioButton fx:id="milionRadioButton" mnemonicParsing="false" text="milion" toggleGroup="$unitToggleGroup" />
+                  <RadioButton fx:id="kiloRadioButton" mnemonicParsing="false" text="%kilo" toggleGroup="$unitToggleGroup" />
+                  <RadioButton fx:id="milionRadioButton" mnemonicParsing="false" text="%milion" toggleGroup="$unitToggleGroup" />
                </children>
             </HBox>
 				<HBox alignment="CENTER_LEFT" spacing="15.0">
 					<children>
-						<Label text="to">
+						<Label text="%to">
 							<font>
 								<Font size="24.0" />
 							</font>
@@ -51,8 +51,8 @@
 				</HBox>
 				<HBox alignment="CENTER_RIGHT" fillHeight="true" prefHeight="30.0" prefWidth="600.0" spacing="15.0" VBox.vgrow="NEVER">
 					<children>
-						<Button fx:id="cancelBtn" cancelButton="true" mnemonicParsing="false" onAction="#cancel" prefWidth="79.0" text="Cancel" />
-						<Button fx:id="sendBtn" defaultButton="true" mnemonicParsing="false" onAction="#send" prefWidth="79.0" text="Send" />
+						<Button fx:id="cancelBtn" cancelButton="true" mnemonicParsing="false" onAction="#cancel" prefWidth="79.0" text="%Cancel" />
+						<Button fx:id="sendBtn" defaultButton="true" mnemonicParsing="false" onAction="#send" prefWidth="79.0" text="%Send" />
 					</children>
 				</HBox>
 			</children>

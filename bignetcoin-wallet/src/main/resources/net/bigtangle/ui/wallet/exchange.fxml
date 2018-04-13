@@ -14,7 +14,7 @@
 				<TabPane layoutX="2.0" layoutY="-2.0" prefHeight="512.0"
 					prefWidth="873.0">
 					<tabs>
-						<Tab text="add">
+						<Tab text="%add">
 							<content>
 								<GridPane layoutX="2.0" layoutY="-9.0" prefHeight="483.0"
 									prefWidth="676.0">
@@ -43,18 +43,18 @@
 											vgrow="SOMETIMES" />
 									</rowConstraints>
 									<children>
-										<Label text="to Address" />
-										<Label text="to tokenid" GridPane.rowIndex="1" />
-										<Label text="to tokenAmount" GridPane.rowIndex="2" />
-										<Label text="from Address" GridPane.rowIndex="3" />
-										<Label text="from Amount" GridPane.rowIndex="5" />
-										<Label text="from Tokenid" GridPane.rowIndex="4" />
+										<Label text="%to_Address" />
+										<Label text="%to_tokenid" GridPane.rowIndex="1" />
+										<Label text="%to_tokenAmount" GridPane.rowIndex="2" />
+										<Label text="%from_Address" GridPane.rowIndex="3" />
+										<Label text="%from_Amount" GridPane.rowIndex="5" />
+										<Label text="%from_Tokenid" GridPane.rowIndex="4" />
 										<TextField fx:id="toAmountTextField"
 											GridPane.columnIndex="1" GridPane.rowIndex="2" />
 										<TextField fx:id="fromAmountTextField"
 											GridPane.columnIndex="1" GridPane.rowIndex="5" />
 										<Button mnemonicParsing="false" onAction="#closeUI"
-											text="close" GridPane.columnIndex="2" GridPane.rowIndex="6" />
+											text="%close" GridPane.columnIndex="2" GridPane.rowIndex="6" />
 										<GridPane GridPane.columnIndex="1" GridPane.rowIndex="6">
 											<columnConstraints>
 												<ColumnConstraints hgrow="SOMETIMES"
@@ -72,13 +72,13 @@
 											</rowConstraints>
 											<children>
 												<Button mnemonicParsing="false" onAction="#exchangeCoin"
-													text="exchange" />
+													text="%Exchange" />
 												<Button mnemonicParsing="false" onAction="#importBlock"
-													text="import" GridPane.columnIndex="1" />
+													text="%import" GridPane.columnIndex="1" />
 												<Button mnemonicParsing="false" onAction="#exportBlock"
-													text="export" GridPane.columnIndex="2" />
+													text="%export" GridPane.columnIndex="2" />
 												<Button mnemonicParsing="false" onAction="#refund"
-													text="refund" GridPane.columnIndex="3" />
+													text="%refund" GridPane.columnIndex="3" />
 											</children>
 										</GridPane>
 										<ComboBox fx:id="toTokenHexComboBox" editable="true"
@@ -96,7 +96,7 @@
 								</GridPane>
 							</content>
 						</Tab>
-						<Tab text="search">
+						<Tab text="%search">
 							<content>
 								<AnchorPane minHeight="0.0" minWidth="0.0"
 									prefHeight="180.0" prefWidth="200.0">
@@ -105,27 +105,27 @@
 											layoutY="14.0" prefHeight="376.0" prefWidth="847.0">
 											<columns>
 												<TableColumn fx:id="orderidsCol" prefWidth="1.0"
-													text="orderid" visible="false" />
+													text="%orderid" visible="false" />
 												<TableColumn fx:id="dataHexCol" prefWidth="1.0"
-													text="dataHex" visible="false" />
+													text="%dataHex" visible="false" />
 												<TableColumn fx:id="fromAddressCol" prefWidth="106.0"
-													text="fromAddress" />
+													text="%from_Address" />
 												<TableColumn fx:id="fromTokenidCol" prefWidth="145.0"
-													text="fromTokenid" />
+													text="%from_Tokenid" />
 												<TableColumn fx:id="fromAmountCol" prefWidth="118.0"
-													text="fromAmount" />
+													text="%from_Amount" />
 												<TableColumn fx:id="toAddressCol" prefWidth="84.0"
-													text="toAddress" />
+													text="%to_Address" />
 												<TableColumn fx:id="toTokenidCol" prefWidth="143.0"
-													text="toTokenid" />
+													text="%to_tokenid" />
 												<TableColumn fx:id="toAmountCol" prefWidth="54.0"
-													text="toAmount" />
+													text="%to_tokenAmount" />
 											</columns>
 										</TableView>
 										<Button layoutX="412.0" layoutY="426.0"
-											mnemonicParsing="false" onAction="#closeUI" text="close" />
+											mnemonicParsing="false" onAction="#closeUI" text="%close" />
 										<Button layoutX="88.0" layoutY="426.0" mnemonicParsing="false"
-											onAction="#signExchange" text="sign" />
+											onAction="#signExchange" text="%sign" />
 									</children>
 								</AnchorPane>
 							</content>
