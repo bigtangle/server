@@ -86,6 +86,8 @@ public class ExchangeController {
     public TableColumn<Map<String, Object>, String> toTokenidCol;
     @FXML
     public TableColumn<Map<String, Object>, String> toAmountCol;
+    public TableColumn<Map<String, Object>, String> toSignCol;
+    public TableColumn<Map<String, Object>, String> fromSignCol;
 
     private Transaction mTransaction;
     
@@ -120,6 +122,18 @@ public class ExchangeController {
                 return;
             }
             for (Map<String, Object> map : list) {
+                if ((Integer) map.get("toSign") == 1) {
+                    map.put("toSign", "*");
+                }
+                else {
+                    map.put("toSign", "-");
+                }
+                if ((Integer) map.get("fromSign") == 1) {
+                    map.put("fromSign", "*");
+                }
+                else {
+                    map.put("fromSign", "-");
+                }
                 exchangeData.add(map);
             }
         }
@@ -131,6 +145,8 @@ public class ExchangeController {
         toAddressCol.setCellValueFactory(new MapValueFactory("toAddress"));
         toTokenidCol.setCellValueFactory(new MapValueFactory("toTokenHex"));
         toAmountCol.setCellValueFactory(new MapValueFactory("toAmount"));
+        toSignCol.setCellValueFactory(new MapValueFactory("toSign"));
+        fromSignCol.setCellValueFactory(new MapValueFactory("fromSign"));
 
         fromAddressCol.setCellFactory(TextFieldTableCell.forTableColumn());
         fromTokenidCol.setCellFactory(TextFieldTableCell.forTableColumn());
@@ -334,7 +350,9 @@ public class ExchangeController {
             String toAmount = stringValueOf(rowData.get("toAmount"));
             String fromAmount = stringValueOf(rowData.get("fromAmount"));
             buf = this.makeSignTransactionBuffer(fromAddress, toAddress, toTokenHex, fromTokenHex, toAmount, fromAmount);
-            
+            if (buf == null) {
+                return;
+            }
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("orderid", this.mOrderid);
             requestParam.put("dataHex", Utils.HEX.encode(buf));

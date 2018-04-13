@@ -86,6 +86,7 @@ public class OrderController {
         }
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public void initTable(Map<String, Object> requestParam) throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ObservableList<Map<String, Object>> orderData = FXCollections.observableArrayList();
@@ -97,6 +98,12 @@ public class OrderController {
 
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("orders");
         for (Map<String, Object> map : list) {
+            if ((Integer) map.get("type") == 1) {
+                map.put("type", "SELL");
+            }
+            else {
+                map.put("type", "BUY");
+            }
             orderData.add(map);
         }
         orderidCol.setCellValueFactory(new MapValueFactory("orderid"));

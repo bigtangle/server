@@ -120,6 +120,10 @@
 													text="%to_tokenid" />
 												<TableColumn fx:id="toAmountCol" prefWidth="54.0"
 													text="%to_tokenAmount" />
+												<TableColumn fx:id="toSignCol" prefWidth="54.0"
+                                                    text="%to_sign" />
+                                                <TableColumn fx:id="fromSignCol" prefWidth="54.0"
+                                                    text="%from_sign" />
 											</columns>
 										</TableView>
 										<Button layoutX="412.0" layoutY="426.0"
