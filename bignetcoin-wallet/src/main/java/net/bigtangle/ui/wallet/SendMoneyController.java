@@ -21,15 +21,10 @@ package net.bigtangle.ui.wallet;
 import static com.google.common.base.Preconditions.checkState;
 import static net.bigtangle.ui.wallet.utils.GuiUtils.checkGuiThread;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.spongycastle.crypto.params.KeyParameter;
-
-import com.squareup.okhttp.OkHttpClient;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -45,7 +40,6 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.InsufficientMoneyException;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Utils;
@@ -73,8 +67,6 @@ public class SendMoneyController {
     public RadioButton kiloRadioButton;
     @FXML
     public RadioButton milionRadioButton;
-    @FXML
-    public RadioButton bilionRadioButton;
 
     @FXML
     public ChoiceBox<Object> tokeninfo;
@@ -82,10 +74,9 @@ public class SendMoneyController {
     public Main.OverlayUI<?> overlayUI;
 
     public void initChoicebox() {
-        basicRadioButton.setUserData("basic");
-        kiloRadioButton.setUserData("kilo");
-        milionRadioButton.setUserData("milion");
-        bilionRadioButton.setUserData("bilion");
+        basicRadioButton.setUserData(1 + "");
+        kiloRadioButton.setUserData(1000 + "");
+        milionRadioButton.setUserData(1000 * 1000 + "");
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ObservableList<Object> tokenData = FXCollections.observableArrayList();
         ECKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
@@ -96,7 +87,8 @@ public class SendMoneyController {
 
             List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
             List<String> names = new ArrayList<String>();
-            for (Map<String, Object> map : list) {   String tokenHex = (String) map.get("tokenHex");
+            for (Map<String, Object> map : list) {
+                String tokenHex = (String) map.get("tokenHex");
                 tokenData.add(tokenHex);
                 names.add(map.get("tokenname").toString());
             }
@@ -127,7 +119,7 @@ public class SendMoneyController {
 
     public void send(ActionEvent event) {
         try {
-           // sendBtn.setDisable(true);
+            // sendBtn.setDisable(true);
             checkGuiThread();
             overlayUI.done();
             String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
@@ -141,17 +133,19 @@ public class SendMoneyController {
 
             Wallet wallet = Main.bitcoin.wallet();
             wallet.setServerURL(CONTEXT_ROOT);
+
             Coin amount = Coin.parseCoin(amountEdit.getText(), Utils.HEX.decode(tokeninfo.getValue().toString()));
+            long factor = Long.valueOf(unitToggleGroup.getSelectedToggle().getUserData().toString()).longValue();
+
+            amount = amount.multiply(factor);
             SendRequest request = SendRequest.to(destination, amount);
             wallet.completeTx(request);
             rollingBlock.addTransaction(request.tx);
             rollingBlock.solve();
             OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
             Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
-          
-      
-       
-            Main.instance.controller.initTableView(); 
+
+            Main.instance.controller.initTableView();
             // address.setDisable(true);
             // ((HBox) amountEdit.getParent()).getChildren().remove(amountEdit);
             // ((HBox) btcLabel.getParent()).getChildren().remove(btcLabel);

@@ -33,7 +33,6 @@
                   </RadioButton>
                   <RadioButton fx:id="kiloRadioButton" mnemonicParsing="false" text="kilo" toggleGroup="$unitToggleGroup" />
                   <RadioButton fx:id="milionRadioButton" mnemonicParsing="false" text="milion" toggleGroup="$unitToggleGroup" />
-                  <RadioButton fx:id="bilionRadioButton" mnemonicParsing="false" text="bilion" toggleGroup="$unitToggleGroup" />
                </children>
             </HBox>
 				<HBox alignment="CENTER_LEFT" spacing="15.0">
