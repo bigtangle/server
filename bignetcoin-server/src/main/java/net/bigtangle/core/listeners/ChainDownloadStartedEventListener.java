@@ -5,7 +5,6 @@
 
 package net.bigtangle.core.listeners;
 
-import net.bigtangle.core.*;
 import net.bigtangle.store.Peer;
 import net.bigtangle.store.PeerGroup;
 
