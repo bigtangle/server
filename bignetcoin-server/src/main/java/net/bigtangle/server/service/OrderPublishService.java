@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.Coin;
 import net.bigtangle.core.OrderPublish;
+import net.bigtangle.core.Utils;
 import net.bigtangle.order.match.OrderBook;
 import net.bigtangle.order.match.Side;
 import net.bigtangle.server.response.AbstractResponse;
@@ -26,8 +28,8 @@ public class OrderPublishService {
         int type = (Integer) request.get("type");
         String validateto = (String) request.get("validateto");
         String validatefrom = (String) request.get("validatefrom");
-        int price = (Integer) request.get("price");
-        int amount = (Integer) request.get("amount");
+        long price =  Coin.parseCoin( request.get("price").toString(), Utils.HEX.decode( tokenid)).getValue();
+        long amount =    Coin.parseCoin( request.get("amount").toString(), Utils.HEX.decode( tokenid)).getValue();
         
         Date toDate = null;
         Date fromDate = null;

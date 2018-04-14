@@ -97,7 +97,7 @@
 										<TableColumn fx:id="addressCol" prefWidth="131.0"
 											text="%address" />
 										<TableColumn fx:id="tokenidCol" prefWidth="149.0"
-											text="%tokenid" />
+											text="%token_id" />
 										<TableColumn fx:id="typeCol" prefWidth="47.0"
 											text="%type" />
 										<TableColumn fx:id="validdatetoCol" prefWidth="77.0"
