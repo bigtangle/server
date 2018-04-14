@@ -39,6 +39,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.MapToBeanMapperUtil;
+import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.SendRequest;
@@ -90,7 +91,7 @@ public class ExchangeController {
     public TableColumn<Map<String, Object>, String> fromSignCol;
 
     private Transaction mTransaction;
-    
+
     private String mOrderid;
 
     @FXML
@@ -134,6 +135,14 @@ public class ExchangeController {
                 else {
                     map.put("fromSign", "-");
                 }
+                Coin fromAmount = Coin.valueOf( 
+                        Long.parseLong( (String) map.get("fromAmount")), Utils.HEX.decode((String) map.get("fromTokenHex")));
+                Coin toAmount =  Coin.valueOf( 
+                                Long.parseLong( (String) map.get("toAmount")), Utils.HEX.decode((String) map.get("toTokenHex")));
+          
+                map.put("fromAmount", fromAmount.toPlainString());
+                
+                map.put("toAmount", toAmount.toPlainString());
                 exchangeData.add(map);
             }
         }
@@ -194,19 +203,20 @@ public class ExchangeController {
         Main.bitcoin.wallet().signTransaction(request);
 
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
-        byte[] data = OkHttp3Util.post(ContextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
+        byte[] data = OkHttp3Util.post(ContextRoot + "askTransaction",
+                Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
         Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(mTransaction);
         rollingBlock.solve();
         OkHttp3Util.post(ContextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
-        
+
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         String orderid = stringValueOf(mOrderid);
         requestParam.put("orderid", orderid);
         requestParam.put("dataHex", Utils.HEX.encode(mTransaction.bitcoinSerialize()));
         requestParam.put("signtype", "to");
         OkHttp3Util.post(ContextRoot + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
-        
+
         Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
     }
 
@@ -255,10 +265,10 @@ public class ExchangeController {
         }
         byte[] orderid = new byte[byteBuffer.getInt()];
         byteBuffer.put(orderid);
-        
+
         mOrderid = new String(orderid);
         System.out.println("orderid : " + new String(orderid));
-        
+
         byte[] data = new byte[byteBuffer.getInt()];
         byteBuffer.put(data);
         try {
@@ -279,9 +289,10 @@ public class ExchangeController {
         String toAddress = toAddressComboBox.getValue();
         String toTokenHex = toTokenHexComboBox.getValue().split(":")[1].trim();
         String toAmount = toAmountTextField.getText();
-        
+
         this.mOrderid = UUIDUtil.randomUUID();
-        byte[] buf = this.makeSignTransactionBuffer(fromAddress, toAddress, toTokenHex, fromTokenHex, toAmount, fromAmount);
+        byte[] buf = this.makeSignTransactionBuffer(fromAddress, toAddress, toTokenHex, fromTokenHex, toAmount,
+                fromAmount);
 
         final FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showSaveDialog(null);
@@ -349,7 +360,8 @@ public class ExchangeController {
             String fromTokenHex = stringValueOf(rowData.get("fromTokenHex"));
             String toAmount = stringValueOf(rowData.get("toAmount"));
             String fromAmount = stringValueOf(rowData.get("fromAmount"));
-            buf = this.makeSignTransactionBuffer(fromAddress, toAddress, toTokenHex, fromTokenHex, toAmount, fromAmount);
+            buf = this.makeSignTransactionBuffer(fromAddress, toAddress, toTokenHex, fromTokenHex, toAmount,
+                    fromAmount);
             if (buf == null) {
                 return;
             }
@@ -357,7 +369,7 @@ public class ExchangeController {
             requestParam.put("orderid", this.mOrderid);
             requestParam.put("dataHex", Utils.HEX.encode(buf));
             requestParam.put("signtype", "to");
-            
+
             String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
             OkHttp3Util.post(ContextRoot + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
             return;
@@ -369,19 +381,19 @@ public class ExchangeController {
             return;
         }
         this.exchange();
-        this. initTable();
+        this.initTable();
         // overlayUI.done();
     }
 
     @SuppressWarnings("deprecation")
-    private byte[] makeSignTransactionBuffer(String fromAddress,
-            String toAddress, String toTokenHex, String fromTokenHex, String toAmount, String fromAmount) {
+    private byte[] makeSignTransactionBuffer(String fromAddress, String toAddress, String toTokenHex,
+            String fromTokenHex, String toAmount, String fromAmount) {
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
         KeyParameter aesKey = null;
         byte[] buf = null;
         try {
             List<UTXO> outputs = new ArrayList<UTXO>();
-            
+
             Address fromAddress00 = new Address(Main.params, fromAddress);
             Address toAddress00 = new Address(Main.params, toAddress);
             outputs.addAll(this.getUTXOWithPubKeyHash(toAddress00.getHash160(), Utils.HEX.decode(toTokenHex)));
@@ -405,13 +417,9 @@ public class ExchangeController {
             GuiUtils.crashAlert(e);
             return null;
         }
-        ByteBuffer byteBuffer = ByteBuffer.allocate(buf.length + 4
-                + fromAddress.getBytes().length + 4
-                + fromTokenHex.getBytes().length + 4
-                + fromAmount.getBytes().length + 4
-                + toAddress.getBytes().length + 4
-                + toTokenHex.getBytes().length + 4
-                + toAmount.getBytes().length + 4
+        ByteBuffer byteBuffer = ByteBuffer.allocate(buf.length + 4 + fromAddress.getBytes().length + 4
+                + fromTokenHex.getBytes().length + 4 + fromAmount.getBytes().length + 4 + toAddress.getBytes().length
+                + 4 + toTokenHex.getBytes().length + 4 + toAmount.getBytes().length + 4
                 + this.mOrderid.getBytes().length + 4);
 
         byteBuffer.putInt(fromAddress.getBytes().length).put(fromAddress.getBytes());

@@ -256,8 +256,8 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         return this.value;
     }
 
-    private static final MonetaryFormat FRIENDLY_FORMAT = MonetaryFormat.BTA.minDecimals(2)
-            .repeatOptionalDecimals(1, 1).postfixCode();
+    private static final MonetaryFormat FRIENDLY_FORMAT = MonetaryFormat.BTA.minDecimals(0)
+            .repeatOptionalDecimals(1, 3).postfixCode();
 
     /**
      * Returns the value as a 0.12 type string. More digits after the decimal
@@ -271,8 +271,9 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
             return FRIENDLY_FORMAT.format(this).toString();   
         }
     }
-
-    private static final MonetaryFormat PLAIN_FORMAT = MonetaryFormat.FIAT.minDecimals(0).repeatOptionalDecimals(1, 8)
+    
+ 
+    private static final MonetaryFormat PLAIN_FORMAT = MonetaryFormat.FIAT.minDecimals(0).repeatOptionalDecimals(1, 3)
             .noCode();
 
     /**

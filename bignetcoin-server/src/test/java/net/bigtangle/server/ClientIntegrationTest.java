@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
+import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -13,20 +14,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-
-import net.bigtangle.core.Address;
-import net.bigtangle.core.Block;
-import net.bigtangle.core.Coin;
-import net.bigtangle.core.ECKey;
-import net.bigtangle.core.Json;
-import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.Transaction;
-import net.bigtangle.core.UTXO;
-import net.bigtangle.core.Utils;
-import net.bigtangle.server.service.MilestoneService;
-import net.bigtangle.utils.OkHttp3Util;
-import net.bigtangle.wallet.SendRequest;
-import net.bigtangle.wallet.Wallet.MissingSigsMode;
+import java.util.Map;
+import java.util.UUID;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,6 +27,21 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import net.bigtangle.core.Address;
+import net.bigtangle.core.Block;
+import net.bigtangle.core.Coin;
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Json;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Transaction;
+import net.bigtangle.core.UTXO;
+import net.bigtangle.core.Utils;
+import net.bigtangle.server.service.MilestoneService;
+import net.bigtangle.server.service.schedule.ScheduleOrderMatchService;
+import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.wallet.SendRequest;
+import net.bigtangle.wallet.Wallet.MissingSigsMode;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ClientIntegrationTest extends AbstractIntegrationTest {
@@ -47,7 +51,9 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     private static final Logger logger = LoggerFactory.getLogger(ClientIntegrationTest.class);
     @Autowired
     private MilestoneService milestoneService;
-    
+    @Autowired
+    private ScheduleOrderMatchService scheduleOrderMatchService;
+
     @Test
     public void saveOrder() throws Exception {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -59,18 +65,20 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         request.put("amount", 100);
         request.put("validateto", simpleDateFormat.format(new Date()));
         request.put("validatefrom", simpleDateFormat.format(new Date()));
-        
-        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.saveOrder.name()).content(Json.jsonmapper().writeValueAsString(request));
+
+        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.saveOrder.name())
+                .content(Json.jsonmapper().writeValueAsString(request));
         MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
         String response = mvcResult.getResponse().getContentAsString();
         logger.info("saveOrder resp : " + response);
         this.getOrders();
     }
-    
+
     @Test
     public void getOrders() throws Exception {
         HashMap<String, Object> request = new HashMap<String, Object>();
-        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getOrders.name()).content(Json.jsonmapper().writeValueAsString(request));
+        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getOrders.name())
+                .content(Json.jsonmapper().writeValueAsString(request));
         MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
         String response = mvcResult.getResponse().getContentAsString();
         logger.info("getOrders resp : " + response);
@@ -111,33 +119,34 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         ulist.addAll(utxos);
         walletAppKit.wallet().completeTx(req, walletAppKit.wallet().transforSpendCandidates(ulist), false);
         walletAppKit.wallet().signTransaction(req);
-        
-         byte[] a = req.tx.bitcoinSerialize();
-         
-         
-         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-         requestParam.put("fromAddress", "fromAddress");
-         requestParam.put("fromTokenHex", "fromTokenHex");
-         requestParam.put("fromAmount", "22");
-         requestParam.put("toAddress", "toAddress");
-         requestParam.put("toTokenHex", "toTokenHex");
-         requestParam.put("toAmount", "33");
-         requestParam.put("dataHex", Utils.HEX.encode(a));
-         MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.saveExchange.name())
-                 .content(Json.jsonmapper().writeValueAsString(requestParam));
-         MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
-         String data = mvcResult.getResponse().getContentAsString();
-         logger.info("testGetBalances resp : " + data);
-         
-         Transaction transaction = (Transaction) networkParameters.getDefaultSerializer().makeTransaction(a);
-        
-//        byte[] buf = BeanSerializeUtil.serializer(req.tx);
-//        Transaction transaction = BeanSerializeUtil.deserialize(buf, Transaction.class);
-        
-         SendRequest request = SendRequest.forTx(transaction); 
+
+        byte[] a = req.tx.bitcoinSerialize();
+
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("fromAddress", "fromAddress");
+        requestParam.put("fromTokenHex", "fromTokenHex");
+        requestParam.put("fromAmount", "22");
+        requestParam.put("toAddress", "toAddress");
+        requestParam.put("toTokenHex", "toTokenHex");
+        requestParam.put("toAmount", "33");
+        requestParam.put("orderid", UUID.randomUUID().toString());
+        requestParam.put("dataHex", Utils.HEX.encode(a));
+        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.saveExchange.name())
+                .content(Json.jsonmapper().writeValueAsString(requestParam));
+        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
+        String data = mvcResult.getResponse().getContentAsString();
+        logger.info("testGetBalances resp : " + data);
+
+        Transaction transaction = (Transaction) networkParameters.getDefaultSerializer().makeTransaction(a);
+
+        // byte[] buf = BeanSerializeUtil.serializer(req.tx);
+        // Transaction transaction = BeanSerializeUtil.deserialize(buf,
+        // Transaction.class);
+
+        SendRequest request = SendRequest.forTx(transaction);
         walletAppKit1.wallet().signTransaction(request);
         exchangeTokenComplete(request.tx);
-        
+
         requestParam.clear();
         requestParam.put("address", "fromAddress");
         httpServletRequestBuilder = post(contextRoot + ReqCmd.getExchange.name())
@@ -184,7 +193,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         milestoneService.update();
     }
 
-    //TODO no money@Test
+    // TODO no money@Test
     public void createTransaction() throws Exception {
         milestoneService.update();
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -205,6 +214,90 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         logger.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
 
         testTransactionAndGetBalances();
+    }
+
+    @SuppressWarnings("deprecation")
+    @Test
+    public void exchangeOrder() throws Exception {
+
+        // get token from wallet to spent
+        ECKey yourKey = walletAppKit1.wallet().walletKeys(null).get(0);
+
+        payToken(yourKey);
+        List<ECKey> keys = new ArrayList<ECKey>();
+        keys.add(yourKey);
+        List<UTXO> utxos = testTransactionAndGetBalances(false, keys);
+        UTXO yourutxo = utxos.get(0);
+        List<UTXO> ulist = testTransactionAndGetBalances();
+        UTXO myutxo = null;
+        for (UTXO u : ulist) {
+            if (Arrays.equals(u.getTokenid(), NetworkParameters.BIGNETCOIN_TOKENID)) {
+                myutxo = u;
+            }
+        }
+
+        HashMap<String, Object> request = new HashMap<String, Object>();
+        request.put("address", yourutxo.getAddress());
+        request.put("tokenid", Utils.HEX.encode(yourutxo.getTokenid()));
+        request.put("type", 2);
+        request.put("price", 1);
+        request.put("amount", 1);
+        // sell token order
+        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.saveOrder.name())
+                .content(Json.jsonmapper().writeValueAsString(request));
+        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
+
+        request.put("address", myutxo.getAddress());
+        request.put("tokenid", Utils.HEX.encode(yourutxo.getTokenid()));
+        request.put("type", 1);
+        request.put("price", 1);
+        request.put("amount", 1);
+        // buy token order
+        httpServletRequestBuilder = post(contextRoot + ReqCmd.saveOrder.name())
+                .content(Json.jsonmapper().writeValueAsString(request));
+        getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
+
+        scheduleOrderMatchService.updateMatch();
+
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("address", myutxo.getAddress());
+        String response = OkHttp3Util.post(contextRoot + "getExchange",
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("exchanges");
+        assertTrue(list.size() >= 1);
+        Map<String, Object> exchangemap = list.get(0);
+
+        
+        Address fromAddress00 = new Address(networkParameters, (String) exchangemap.get("fromAddress"));
+        Address toAddress00 = new Address(networkParameters, (String) exchangemap.get("toAddress"));
+        Coin fromAmount = Coin.valueOf( 
+                Long.parseLong( (String) exchangemap.get("fromAmount")), Utils.HEX.decode((String) exchangemap.get("fromTokenHex")));
+        Coin toAmount =  Coin.valueOf( 
+                        Long.parseLong( (String) exchangemap.get("toAmount")), Utils.HEX.decode((String) exchangemap.get("toTokenHex")));
+                   
+        SendRequest req = SendRequest.to(fromAddress00,fromAmount  );
+        req.tx.addOutput(toAmount , toAddress00 );
+        
+      
+        req.missingSigsMode = MissingSigsMode.USE_OP_ZERO;
+        ulist.addAll(utxos);
+        walletAppKit.wallet().completeTx(req, walletAppKit.wallet().transforSpendCandidates(ulist), false);
+        walletAppKit.wallet().signTransaction(req);
+
+        byte[] a = req.tx.bitcoinSerialize();
+
+  
+
+        Transaction transaction = (Transaction) networkParameters.getDefaultSerializer().makeTransaction(a);
+
+        // byte[] buf = BeanSerializeUtil.serializer(req.tx);
+        // Transaction transaction = BeanSerializeUtil.deserialize(buf,
+        // Transaction.class);
+
+        req = SendRequest.forTx(transaction);
+        walletAppKit1.wallet().signTransaction(req);
+        exchangeTokenComplete(req.tx); 
     }
 
 }

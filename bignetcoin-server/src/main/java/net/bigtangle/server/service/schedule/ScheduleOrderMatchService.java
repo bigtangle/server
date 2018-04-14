@@ -14,6 +14,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.Coin;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderMatch;
@@ -73,13 +74,13 @@ public class ScheduleOrderMatchService {
                                 Exchange exchange = new Exchange(incomingOrder.getAddress(), incomingOrder.getTokenid(),
                                         String.valueOf(match.executedQuantity), restingOrder.getAddress(),
                                         Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID),
-                                        String.valueOf(match.executedQuantity * match.price), new byte[0]);
+                                        String.valueOf(match.executedQuantity * match.price/ Coin.COIN_VALUE), new byte[0]);
                                 this.store.saveExchange(exchange);
                             } else {
                                 Exchange exchange = new Exchange(restingOrder.getAddress(), restingOrder.getTokenid(),
                                         String.valueOf(match.executedQuantity), incomingOrder.getAddress(),
                                         Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID),
-                                        String.valueOf(match.executedQuantity * match.price), new byte[0]);
+                                        String.valueOf(match.executedQuantity * match.price / Coin.COIN_VALUE), new byte[0]);
                                 //add exchange to store
                                 this.store.saveExchange(exchange);
                             }
