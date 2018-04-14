@@ -80,6 +80,8 @@ public class ScheduleOrderMatchService {
                                         String.valueOf(match.executedQuantity), restingOrder.getAddress(),
                                         Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID),
                                         String.valueOf(match.executedQuantity * match.price), new byte[0]);
+                                //add exchange to store
+                                this.store.saveExchange(exchange);
                             }
 
                             iterator.remove();
