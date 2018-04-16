@@ -4,7 +4,7 @@ apply from: "dependencies.gradle"
 allprojects {
 
     project.group = 'com.bignetcoin'
-    project.version = '0.1-SNAPSHOT'
+    project.version = '0.1.0'
 
     ext {
         projectName = rootProject.name + '.' + project.name
