@@ -102,7 +102,7 @@ public class CoinTest {
 
     @Test
     public void testToFriendlyString() {
-        assertEquals("1.00 "+MonetaryFormat.CODE_BTC , COIN.toFriendlyString());
+        assertEquals("1 "+MonetaryFormat.CODE_BTC , COIN.toFriendlyString());
   //      assertEquals("1.23 BTA", valueOf(Coin.COIN_VALUE*1+ 23, NetworkParameters.BIGNETCOIN_TOKENID).toFriendlyString());
         assertEquals("0.001 "+MonetaryFormat.CODE_BTC , COIN.divide(1000).toFriendlyString());
    //     assertEquals("-1.23 BTA", valueOf(Coin.COIN_VALUE*1+ 23, NetworkParameters.BIGNETCOIN_TOKENID).negate().toFriendlyString());

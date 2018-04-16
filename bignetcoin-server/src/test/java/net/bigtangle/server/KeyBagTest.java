@@ -30,7 +30,7 @@ public class KeyBagTest {
     @Test
     public void testPubKey() throws Exception {
         KeyParameter aesKey = null;
-        WalletAppKit bitcoin = new WalletAppKit(PARAMS, new File("."), "bignetcoin");
+        WalletAppKit bitcoin = new WalletAppKit(PARAMS, new File("../bignetcoin"), "bignetcoin");
         DecryptingKeyBag maybeDecryptingKeyBag = new DecryptingKeyBag(bitcoin.wallet(), aesKey);
         List<ECKey> keys = new ArrayList<ECKey>();
         for (ECKey key : bitcoin.wallet().getImportedKeys()) {
