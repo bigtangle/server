@@ -308,7 +308,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private static final String INSERT_ORDERMATCH_SQL = "INSERT INTO ordermatch (matchid, restingOrderId, incomingOrderId, type, price, executedQuantity, remainingQuantity) VALUES (?, ?, ?, ?, ?, ?, ?);";
 
     private static final String INSERT_EXCHANGE_SQL = "INSERT INTO exchange (orderid, fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, data, toSign, fromSign, toOrderId, fromOrderId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
-    private static final String SELECT_EXCHANGE_SQL = "SELECT orderid, fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, data, toSign, fromSign, toOrderId, fromOrderId FROM exchange WHERE fromAddress = ? OR toAddress = ?";
+    private static final String SELECT_EXCHANGE_SQL = "SELECT orderid, fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, data, toSign, fromSign, toOrderId, fromOrderId FROM exchange WHERE (fromAddress = ? OR toAddress = ?) AND (toSign = 0 OR fromSign = 0)";
     private static final String SELECT_EXCHANGE_ORDERID_SQL = "SELECT orderid, fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, data, toSign, fromSign, toOrderId, fromOrderId FROM exchange WHERE orderid = ?";
 
     protected Sha256Hash chainHeadHash;
