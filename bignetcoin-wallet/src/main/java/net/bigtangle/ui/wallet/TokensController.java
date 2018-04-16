@@ -9,8 +9,10 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.MapValueFactory;
+import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.Utils;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
 
@@ -48,6 +50,9 @@ public class TokensController {
 
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
         for (Map<String, Object> map : list) {
+            Coin fromAmount = Coin.valueOf(Long.parseLong((String) map.get("amount")),
+                    Utils.HEX.decode((String) map.get("tokenHex")));
+            map.put("amount", fromAmount.toPlainString());
             tokenData.add(map);
         }
         tokennameColumn.setCellValueFactory(new MapValueFactory("tokenname"));
