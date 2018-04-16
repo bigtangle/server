@@ -2733,4 +2733,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
+
+    @Override
+    public Exchange getExchangeInfoByOrderid(String orderid) throws BlockStoreException {
+        return null;
+    }
 }

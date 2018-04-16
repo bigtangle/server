@@ -28,6 +28,27 @@ public class Exchange implements java.io.Serializable {
     
     private int fromSign;
     
+    private String toOrderId;
+    
+    private String fromOrderId;
+    
+    
+    public String getToOrderId() {
+        return toOrderId;
+    }
+
+    public void setToOrderId(String toOrderId) {
+        this.toOrderId = toOrderId;
+    }
+
+    public String getFromOrderId() {
+        return fromOrderId;
+    }
+
+    public void setFromOrderId(String fromOrderId) {
+        this.fromOrderId = fromOrderId;
+    }
+
     public int getToSign() {
         return toSign;
     }
@@ -54,6 +75,13 @@ public class Exchange implements java.io.Serializable {
         this.toTokenHex = toTokenHex;
         this.toAmount = toAmount;
         this.data = data;
+    }
+    
+    public Exchange(String fromOrderId, String fromAddress, String fromTokenHex, String fromAmount, String toOrderId, String toAddress,
+            String toTokenHex, String toAmount, byte[] data) {
+        this(fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, data);
+        this.toOrderId = toOrderId;
+        this.fromOrderId = fromOrderId;
     }
 
     public Exchange() {

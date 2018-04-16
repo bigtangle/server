@@ -39,6 +39,8 @@ public class ExchangeService {
         String signtype = (String) request.get("signtype");
         byte[] data = Utils.HEX.decode(dataHex);
         this.store.updateExchangeSign(orderid, signtype, data);
+        
+        Exchange exchange = this.store.getExchangeInfoByOrderid(orderid);
         return AbstractResponse.createEmptyResponse();
     }
 

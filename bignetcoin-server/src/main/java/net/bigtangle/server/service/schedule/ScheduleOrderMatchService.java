@@ -71,14 +71,14 @@ public class ScheduleOrderMatchService {
                             // TODO Here's the change orders Jiang
                             // sell side will get the system coin as token
                             if (match.incomingSide == Side.SELL) {
-                                Exchange exchange = new Exchange(incomingOrder.getAddress(), incomingOrder.getTokenid(),
-                                        String.valueOf(match.executedQuantity), restingOrder.getAddress(),
+                                Exchange exchange = new Exchange(incomingOrder.getOrderid(), incomingOrder.getAddress(), incomingOrder.getTokenid(),
+                                        String.valueOf(match.executedQuantity), restingOrder.getOrderid(), restingOrder.getAddress(),
                                         Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID),
                                         String.valueOf(match.executedQuantity * match.price/ Coin.COIN_VALUE), new byte[0]);
                                 this.store.saveExchange(exchange);
                             } else {
-                                Exchange exchange = new Exchange(restingOrder.getAddress(), restingOrder.getTokenid(),
-                                        String.valueOf(match.executedQuantity), incomingOrder.getAddress(),
+                                Exchange exchange = new Exchange(restingOrder.getOrderid(), restingOrder.getAddress(), restingOrder.getTokenid(),
+                                        String.valueOf(match.executedQuantity), incomingOrder.getOrderid(), incomingOrder.getAddress(),
                                         Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID),
                                         String.valueOf(match.executedQuantity * match.price / Coin.COIN_VALUE), new byte[0]);
                                 //add exchange to store
