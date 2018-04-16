@@ -286,7 +286,12 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         walletAppKit.wallet().signTransaction(req);
 
         byte[] a = req.tx.bitcoinSerialize();
+        HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
+        requestParam0.put("orderid", (String) exchangemap.get("orderid"));
+        requestParam0.put("dataHex", Utils.HEX.encode(a));
+        requestParam0.put("signtype", "to");
 
+        OkHttp3Util.post(contextRoot + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam0));
   
 
         Transaction transaction = (Transaction) networkParameters.getDefaultSerializer().makeTransaction(a);
@@ -298,6 +303,12 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         req = SendRequest.forTx(transaction);
         walletAppKit1.wallet().signTransaction(req);
         exchangeTokenComplete(req.tx); 
+        
+        HashMap<String, Object> requestParam1 = new HashMap<String, Object>();
+        requestParam1.put("orderid", (String) exchangemap.get("orderid"));
+        requestParam1.put("dataHex", Utils.HEX.encode(transaction.bitcoinSerialize()));
+        requestParam1.put("signtype", "from");
+        OkHttp3Util.post(contextRoot + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam1));
     }
 
 }
