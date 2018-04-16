@@ -307,8 +307,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     private static final String INSERT_ORDERMATCH_SQL = "INSERT INTO ordermatch (matchid, restingOrderId, incomingOrderId, type, price, executedQuantity, remainingQuantity) VALUES (?, ?, ?, ?, ?, ?, ?);";
 
-    private static final String INSERT_EXCHANGE_SQL = "INSERT INTO exchange (orderid, fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, data, toSign, fromSign) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
-    private static final String SELECT_EXCHANGE_SQL = "SELECT orderid, fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, data, toSign, fromSign FROM exchange WHERE fromAddress = ? OR toAddress = ?";
+    private static final String INSERT_EXCHANGE_SQL = "INSERT INTO exchange (orderid, fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, data, toSign, fromSign, toOrderId, fromOrderId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+    private static final String SELECT_EXCHANGE_SQL = "SELECT orderid, fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, data, toSign, fromSign, toOrderId, fromOrderId FROM exchange WHERE fromAddress = ? OR toAddress = ?";
+    private static final String SELECT_EXCHANGE_ORDERID_SQL = "SELECT orderid, fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, data, toSign, fromSign, toOrderId, fromOrderId FROM exchange WHERE orderid = ?";
 
     protected Sha256Hash chainHeadHash;
     protected StoredBlock chainHeadBlock;
@@ -2590,6 +2591,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setBytes(8, exchange.getData());
             preparedStatement.setInt(9, exchange.getToSign());
             preparedStatement.setInt(10, exchange.getFromSign());
+            preparedStatement.setString(11, exchange.getToOrderId());
+            preparedStatement.setString(12, exchange.getFromOrderId());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -2626,6 +2629,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 exchange.setData(resultSet.getBytes("data"));
                 exchange.setToSign(resultSet.getInt("toSign"));
                 exchange.setFromSign(resultSet.getInt("fromSign"));
+                exchange.setToOrderId(resultSet.getString("toOrderId"));
+                exchange.setFromOrderId(resultSet.getString("fromOrderId"));
                 list.add(exchange);
             }
             return list;
@@ -2736,6 +2741,62 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public Exchange getExchangeInfoByOrderid(String orderid) throws BlockStoreException {
-        return null;
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_EXCHANGE_ORDERID_SQL);
+            preparedStatement.setString(1, orderid);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (!resultSet.next()) {
+                return null;
+            }
+            Exchange exchange = new Exchange();
+            exchange.setOrderid(resultSet.getString("orderid"));
+            exchange.setFromAddress(resultSet.getString("fromAddress"));
+            exchange.setFromTokenHex(resultSet.getString("fromTokenHex"));
+            exchange.setFromAmount(resultSet.getString("fromAmount"));
+            exchange.setToAddress(resultSet.getString("toAddress"));
+            exchange.setToTokenHex(resultSet.getString("toTokenHex"));
+            exchange.setToAmount(resultSet.getString("toAmount"));
+            exchange.setData(resultSet.getBytes("data"));
+            exchange.setToSign(resultSet.getInt("toSign"));
+            exchange.setFromSign(resultSet.getInt("fromSign"));
+            exchange.setToOrderId(resultSet.getString("toOrderId"));
+            exchange.setFromOrderId(resultSet.getString("fromOrderId"));
+            return exchange;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void updateOrderPublishState(String orderid, int state) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            String sql = "UPDATE orderpublish SET state = ? WHERE orderid = ?";
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setInt(1, state);
+            preparedStatement.setString(2, orderid);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
     }
 }

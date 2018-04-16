@@ -2,6 +2,7 @@ package net.bigtangle.core;
 
 import java.util.Date;
 
+import net.bigtangle.utils.OrderState;
 import net.bigtangle.utils.UUIDUtil;
 
 public class OrderPublish implements java.io.Serializable {
@@ -110,7 +111,7 @@ public class OrderPublish implements java.io.Serializable {
         this.type = type;
         this.validateto = validateto;
         this.validatefrom = validatefrom;
-        this.state = 0;
+        this.state = OrderState.publish.ordinal();
         this.price = price;
         this.amount = amount;
     }

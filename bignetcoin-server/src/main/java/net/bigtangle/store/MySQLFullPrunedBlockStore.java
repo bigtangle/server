@@ -134,6 +134,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "   data varbinary(5000) NOT NULL,\n" +
             "   toSign integer,\n"+ 
             "   fromSign integer,\n"+ 
+            "   toOrderId varchar(255),\n"+ 
+            "   fromOrderId varchar(255),\n"+ 
             "   PRIMARY KEY (orderid) )";
     
     // Some indexes to speed up inserts

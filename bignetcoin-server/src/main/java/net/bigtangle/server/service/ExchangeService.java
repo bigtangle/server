@@ -9,7 +9,9 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.GetExchangeResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.utils.OrderState;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -41,6 +43,11 @@ public class ExchangeService {
         this.store.updateExchangeSign(orderid, signtype, data);
         
         Exchange exchange = this.store.getExchangeInfoByOrderid(orderid);
+        if (exchange.getToSign() == 1 && exchange.getFromSign() == 1 && StringUtils.isNotBlank(exchange.getToOrderId())
+                && StringUtils.isNotBlank(exchange.getFromOrderId())) {
+            this.store.updateOrderPublishState(exchange.getToOrderId(), OrderState.finish.ordinal());
+            this.store.updateOrderPublishState(exchange.getFromOrderId(), OrderState.finish.ordinal());
+        }
         return AbstractResponse.createEmptyResponse();
     }
 

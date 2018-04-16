@@ -28,6 +28,7 @@ import net.bigtangle.server.response.GetTokensResponse;
 import net.bigtangle.server.service.OrderBookHolder;
 import net.bigtangle.server.service.TokensService;
 import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.utils.OrderState;
 
 @Service
 public class ScheduleOrderMatchService {
@@ -84,7 +85,8 @@ public class ScheduleOrderMatchService {
                                 //add exchange to store
                                 this.store.saveExchange(exchange);
                             }
-
+                            this.store.updateOrderPublishState(incomingOrder.getOrderid(), OrderState.match.ordinal());
+                            this.store.updateOrderPublishState(restingOrder.getOrderid(), OrderState.match.ordinal());
                             iterator.remove();
                         }
                     }

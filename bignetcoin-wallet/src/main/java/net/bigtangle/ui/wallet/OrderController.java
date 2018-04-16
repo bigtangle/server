@@ -27,6 +27,7 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.Utils;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.utils.OrderState;
 
 public class OrderController {
     @FXML
@@ -79,7 +80,11 @@ public class OrderController {
     @FXML
     public void initialize() {
         try {
-            state4searchChoiceBox.setItems(FXCollections.observableArrayList("0", "1", "2"));
+            String[] items = new String[OrderState.values().length];
+            for (int i = 0; i < OrderState.values().length; i++) {
+                items[i] = OrderState.values()[i].name();
+            }
+            state4searchChoiceBox.setItems(FXCollections.observableArrayList(items));
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             initComboBox();
             initTable(requestParam);
@@ -90,6 +95,11 @@ public class OrderController {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void initTable(Map<String, Object> requestParam) throws Exception {
+        if (requestParam.containsKey("state")) {
+            String stateStr = (String) requestParam.get("state");
+            OrderState orderState = OrderState.valueOf(stateStr);
+            requestParam.put("state", orderState.ordinal());
+        }
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ObservableList<Map<String, Object>> orderData = FXCollections.observableArrayList();
         // HashMap<String, Object> requestParam = new HashMap<String, Object>();

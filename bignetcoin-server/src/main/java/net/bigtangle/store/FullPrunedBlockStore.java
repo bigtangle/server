@@ -276,4 +276,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public OrderPublish getOrderPublishByOrderid(String orderid) throws BlockStoreException;
 
     public Exchange getExchangeInfoByOrderid(String orderid) throws BlockStoreException;
+
+    public void updateOrderPublishState(String orderid, int state) throws BlockStoreException;
 }
