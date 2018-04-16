@@ -81,7 +81,7 @@ public class Main extends Application {
     public static String port = "8088";
     public static FXMLLoader loader;
 
-    public static String lang = "en";
+    public static String lang = "cn";
     public static int numberOfEmptyBlocks = 3;
     public static boolean emptyBlocks = false;
 
@@ -96,7 +96,7 @@ public class Main extends Application {
         }
     }
 
-    public void realStart(Stage mainWindow, String temp) throws IOException {
+    public void realStart(Stage mainWindow, String language) throws IOException {
 
         this.mainWindow = mainWindow;
         // mainWindow.setMaximized(true);
@@ -118,7 +118,7 @@ public class Main extends Application {
         URL location = getClass().getResource("main.fxml");
         loader = new FXMLLoader(location);
         String resourceFile = "net.bigtangle.ui.wallet.message";
-        lang = temp;
+        lang = language;
         Locale locale = Locale.CHINESE;
         if ("en".equals(lang)) {
             resourceFile += "_en";
