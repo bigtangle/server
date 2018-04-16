@@ -109,7 +109,6 @@ public class MainController {
     public void initialize() {
         enLocaleButton.setUserData("en");
         cnLocaleButton.setUserData("cn");
-        cnLocaleButton.setSelected(true);
         toggleGroup.selectedToggleProperty().addListener((v, oldt, newt) -> {
             Main.lang = newt.getUserData().toString();
             changeLocale();
