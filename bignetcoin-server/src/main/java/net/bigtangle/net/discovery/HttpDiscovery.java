@@ -110,8 +110,7 @@ public class HttpDiscovery implements PeerDiscovery {
         PeerSeedProtos.PeerSeeds seeds = PeerSeedProtos.PeerSeeds.parseFrom(proto.getPeerSeeds());
         if (seeds.getTimestamp() < Utils.currentTimeSeconds() - (60 * 60 * 24))
             throw new PeerDiscoveryException("Seed data is more than one day old: replay attack?");
-        if (!seeds.getNet().equals(params.getPaymentProtocolId()))
-            throw new PeerDiscoveryException("Network mismatch");
+      
         InetSocketAddress[] results = new InetSocketAddress[seeds.getSeedCount()];
         int i = 0;
         for (PeerSeedProtos.PeerSeedData data : seeds.getSeedList())

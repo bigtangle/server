@@ -21,8 +21,10 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.MapValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
+import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.Utils;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
 
@@ -90,7 +92,7 @@ public class OrderController {
     public void initTable(Map<String, Object> requestParam) throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ObservableList<Map<String, Object>> orderData = FXCollections.observableArrayList();
-//        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        // HashMap<String, Object> requestParam = new HashMap<String, Object>();
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getOrders",
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
@@ -100,10 +102,17 @@ public class OrderController {
         for (Map<String, Object> map : list) {
             if ((Integer) map.get("type") == 1) {
                 map.put("type", "SELL");
-            }
-            else {
+            } else {
                 map.put("type", "BUY");
             }
+            Coin fromAmount = Coin.valueOf(Long.parseLong(map.get("price").toString()),
+                    Utils.HEX.decode((String) map.get("tokenid")));
+            Coin toAmount = Coin.valueOf(Long.parseLong(map.get("amount").toString()),
+                    Utils.HEX.decode((String) map.get("tokenid")));
+
+            map.put("price", fromAmount.toPlainString());
+
+            map.put("amount", toAmount.toPlainString());
             orderData.add(map);
         }
         orderidCol.setCellValueFactory(new MapValueFactory("orderid"));
@@ -175,8 +184,8 @@ public class OrderController {
         requestParam.put("tokenid", tokenid);
         String typeStr = (String) statusChoiceBox.getValue();
         requestParam.put("type", typeStr.equals("sell") ? 1 : 0);
-        int price = Integer.parseInt(this.limitTextField.getText());
-        int amount = Integer.parseInt(this.amountTextField.getText());
+        long price = Coin.parseCoinValue( this.limitTextField.getText());
+        long amount = Coin.parseCoinValue( this.amountTextField.getText());
         requestParam.put("price", price);
         requestParam.put("amount", amount);
         requestParam.put("validateto", validdateTo);

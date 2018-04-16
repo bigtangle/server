@@ -61,8 +61,5 @@ public class RegTestParams extends TestNet2Params {
         return instance;
     }
 
-    @Override
-    public String getPaymentProtocolId() {
-        return PAYMENT_PROTOCOL_ID_REGTEST;
-    }
+ 
 }

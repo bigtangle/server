@@ -5,19 +5,17 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import net.bigtangle.core.BlockStoreException;
-import net.bigtangle.core.Coin;
 import net.bigtangle.core.OrderPublish;
-import net.bigtangle.core.Utils;
 import net.bigtangle.order.match.OrderBook;
 import net.bigtangle.order.match.Side;
 import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.GetOrderResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
-
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 @Service
 public class OrderPublishService {
@@ -28,8 +26,8 @@ public class OrderPublishService {
         int type = (Integer) request.get("type");
         String validateto = (String) request.get("validateto");
         String validatefrom = (String) request.get("validatefrom");
-        long price =  Coin.parseCoin( request.get("price").toString(), Utils.HEX.decode( tokenid)).getValue();
-        long amount =    Coin.parseCoin( request.get("amount").toString(), Utils.HEX.decode( tokenid)).getValue();
+        long price =  Long.parseLong( request.get("price").toString());
+        long amount =   Long.parseLong( request.get("amount").toString());
         
         Date toDate = null;
         Date fromDate = null;

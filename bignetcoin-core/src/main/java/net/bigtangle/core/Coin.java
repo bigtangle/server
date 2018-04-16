@@ -125,6 +125,12 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         }
     }
 
+    public static long parseCoinValue(final String str) {
+       
+           return  new BigDecimal(str).movePointRight(SMALLEST_UNIT_EXPONENT).toBigIntegerExact().longValue();
+        
+    }
+    
     public Coin add(final Coin value) {
         if (!Arrays.equals(this.tokenid, value.tokenid)) {
             throw new IllegalArgumentException("!this.tokenid.equals( value.tokenid)");

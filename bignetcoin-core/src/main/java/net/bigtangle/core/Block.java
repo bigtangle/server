@@ -150,7 +150,7 @@ public class Block extends Message {
 
     Block(NetworkParameters params, long setVersion) {
 
-        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, NetworkParameters.BIGNETCOIN_TOKENID,
+        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, NetworkParameters.DUMMY_TOKENID,
                 NetworkParameters.BLOCKTYPE_TRANSFER,0);
     }
 

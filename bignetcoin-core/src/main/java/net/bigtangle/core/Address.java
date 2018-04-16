@@ -186,8 +186,5 @@ public class Address extends VersionedChecksummedBytes {
         out.writeUTF(params.id);
     }
 
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        params = NetworkParameters.fromID(in.readUTF());
-    }
+ 
 }

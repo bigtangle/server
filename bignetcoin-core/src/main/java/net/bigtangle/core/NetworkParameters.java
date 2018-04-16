@@ -41,41 +41,27 @@ import net.bigtangle.utils.VersionTally;
  * </p>
  */
 public abstract class NetworkParameters {
-    /**
-     * The alert signing key originally owned by Satoshi, and now passed on to
-     * Gavin along with a few others.
-     */
-    public static final byte[] SATOSHI_KEY = Utils.HEX.decode(
-            "04fc9702847840aaf195de8442ebecedf5b095cdbb9bc716bda9110971b28a49e0ead8564ff0db22209e0374782c093bb899692d524e9d6a6956e7c5ecbcd68284");
-
+    
     /**
      * The string returned by getId() for the main, production network where
      * people trade things.
      */
-    public static final String ID_MAINNET = "org.bitcoin.production";
+    public static final String ID_MAINNET = "net.bigtangle";
     /** The string returned by getId() for the testnet. */
-    public static final String ID_TESTNET = "org.bitcoin.test";
+    public static final String ID_TESTNET = "net.bigtangle.test";
     /** The string returned by getId() for regtest mode. */
-    public static final String ID_REGTEST = "org.bitcoin.regtest";
+    public static final String ID_REGTEST = "net.bigtangle.regtest";
     /** Unit test network. */
-    public static final String ID_UNITTESTNET = "org.bitcoinj.unittest";
-
-    /** The string used by the payment protocol to represent the main net. */
-    public static final String PAYMENT_PROTOCOL_ID_MAINNET = "main";
-    /** The string used by the payment protocol to represent the test net. */
-    public static final String PAYMENT_PROTOCOL_ID_TESTNET = "test";
-    /**
-     * The string used by the payment protocol to represent unit testing (note
-     * that this is non-standard).
-     */
-    public static final String PAYMENT_PROTOCOL_ID_UNIT_TESTS = "unittest";
-    public static final String PAYMENT_PROTOCOL_ID_REGTEST = "regtest";
-
-    // FIXME Token id for System Coin byte[20]
+    public static final String ID_UNITTESTNET = "net.bigtangle.unittest";
+ 
+    //Token id for System Coin byte[20]
     public static final byte[] BIGNETCOIN_TOKENID = HEX.decode(
-            // "86e21e07bd2651fba1c19b0e6b678475641c885c");
             "0000000000000000000000000000000000000000");
 
+    //DUMMY Token id byte[20]
+    public static final byte[] DUMMY_TOKENID = HEX.decode(
+            "1111111111111111111111111111111111111111");
+    
     // BLOCKTYPE
     public static final long BLOCKTYPE_GENESIS = 0; // Genesis Block for a
                                                     // token, only onetime
@@ -129,7 +115,7 @@ public abstract class NetworkParameters {
     protected transient MessageSerializer defaultSerializer = null;
 
     protected NetworkParameters() {
-        alertSigningKey = SATOSHI_KEY;
+     
         genesisBlock = createGenesis(this);
     }
 
@@ -195,44 +181,7 @@ public abstract class NetworkParameters {
     /**
      * The maximum money to be generated
      */
-    // public static final Coin MAX_MONEY = COIN.multiply(MAX_COINS);
-
-    /** Alias for TestNet3Params.get(), use that instead. */
-    @Deprecated
-    public static NetworkParameters testNet() {
-        return TestNet3Params.get();
-    }
-
-    /** Alias for TestNet2Params.get(), use that instead. */
-    @Deprecated
-    public static NetworkParameters testNet2() {
-        return TestNet2Params.get();
-    }
-
-    /** Alias for TestNet3Params.get(), use that instead. */
-    @Deprecated
-    public static NetworkParameters testNet3() {
-        return TestNet3Params.get();
-    }
-
-    /** Alias for MainNetParams.get(), use that instead */
-    @Deprecated
-    public static NetworkParameters prodNet() {
-        return MainNetParams.get();
-    }
-
-    /** Returns a testnet params modified to allow any difficulty target. */
-    @Deprecated
-    public static NetworkParameters unitTests() {
-        return UnitTestParams.get();
-    }
-
-    /** Returns a standard regression test params (similar to unitTests) */
-    @Deprecated
-    public static NetworkParameters regTests() {
-        return RegTestParams.get();
-    }
-
+   
     /**
      * A Java package style string acting as unique ID for these parameters
      */
@@ -240,8 +189,7 @@ public abstract class NetworkParameters {
         return id;
     }
 
-    public abstract String getPaymentProtocolId();
-
+  
     @Override
     public boolean equals(Object o) {
         if (this == o)
@@ -275,25 +223,7 @@ public abstract class NetworkParameters {
         }
     }
 
-    /**
-     * Returns the network parameters for the given string paymentProtocolID or
-     * NULL if not recognized.
-     */
-    @Nullable
-    public static NetworkParameters fromPmtProtocolID(String pmtProtocolId) {
-        if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_MAINNET)) {
-            return MainNetParams.get();
-        } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_TESTNET)) {
-            return TestNet3Params.get();
-        } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_UNIT_TESTS)) {
-            return UnitTestParams.get();
-        } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_REGTEST)) {
-            return RegTestParams.get();
-        } else {
-            return null;
-        }
-    }
-
+ 
     public int getSpendableCoinbaseDepth() {
         return spendableCoinbaseDepth;
     }

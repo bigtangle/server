@@ -55,8 +55,5 @@ public class TestNet2Params extends AbstractBitcoinNetParams {
         return instance;
     }
 
-    @Override
-    public String getPaymentProtocolId() {
-        return null;
-    }
+ 
 }

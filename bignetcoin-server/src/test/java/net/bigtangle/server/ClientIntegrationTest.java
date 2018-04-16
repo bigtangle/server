@@ -240,8 +240,8 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         request.put("address", yourutxo.getAddress());
         request.put("tokenid", Utils.HEX.encode(yourutxo.getTokenid()));
         request.put("type", 2);
-        request.put("price", 1);
-        request.put("amount", 1);
+        request.put("price", 1100);
+        request.put("amount", 2100);
         // sell token order
         MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.saveOrder.name())
                 .content(Json.jsonmapper().writeValueAsString(request));
@@ -250,8 +250,8 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         request.put("address", myutxo.getAddress());
         request.put("tokenid", Utils.HEX.encode(yourutxo.getTokenid()));
         request.put("type", 1);
-        request.put("price", 1);
-        request.put("amount", 1);
+        request.put("price", 1100);
+        request.put("amount", 2100);
         // buy token order
         httpServletRequestBuilder = post(contextRoot + ReqCmd.saveOrder.name())
                 .content(Json.jsonmapper().writeValueAsString(request));
