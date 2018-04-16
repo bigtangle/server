@@ -239,7 +239,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         HashMap<String, Object> request = new HashMap<String, Object>();
         request.put("address", yourutxo.getAddress());
         request.put("tokenid", Utils.HEX.encode(yourutxo.getTokenid()));
-        request.put("type", 2);
+        request.put("type", 0);
         request.put("price", 1100);
         request.put("amount", 2100);
         // sell token order
