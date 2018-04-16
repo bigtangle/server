@@ -115,6 +115,10 @@ public class OrderController {
             } else {
                 map.put("type", "BUY");
             }
+            int stateIndex = (int) map.get("state");
+            OrderState orderState = OrderState.values()[stateIndex];
+            map.put("state", orderState.name());
+            
             Coin fromAmount = Coin.valueOf(Long.parseLong(map.get("price").toString()),
                     Utils.HEX.decode((String) map.get("tokenid")));
             Coin toAmount = Coin.valueOf(Long.parseLong(map.get("amount").toString()),
