@@ -38,7 +38,8 @@ public class OrderPublishService {
         if (!StringUtils.isBlank(validatefrom)) {
             fromDate = simpleDateFormat.parse(validatefrom);
         }
-        OrderPublish order = OrderPublish.create(address, tokenid, type, toDate, fromDate, price, amount);
+        // add market
+        OrderPublish order = OrderPublish.create(address, tokenid, type, toDate, fromDate, price, amount, "");
         store.saveOrderPublish(order);
         
         OrderBook orderBook = orderBookHolder.getOrderBookWithTokenId(tokenid);

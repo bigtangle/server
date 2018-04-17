@@ -8,8 +8,8 @@ import net.bigtangle.utils.UUIDUtil;
 public class OrderPublish implements java.io.Serializable {
 
     public static OrderPublish create(String address, String tokenid, int type, Date validateto, Date validatefrom,
-            long price, long amount) {
-        return new OrderPublish(address, tokenid, type, validateto, validatefrom, price, amount);
+            long price, long amount, String market) {
+        return new OrderPublish(address, tokenid, type, validateto, validatefrom, price, amount, market);
     }
 
     private static final long serialVersionUID = 190060684620430983L;
@@ -31,6 +31,16 @@ public class OrderPublish implements java.io.Serializable {
     private long price;
 
     private long amount;
+    
+    private String market;
+    
+    public String getMarket() {
+        return market;
+    }
+
+    public void setMarket(String market) {
+        this.market = market;
+    }
 
     public long getPrice() {
         return price;
@@ -104,7 +114,8 @@ public class OrderPublish implements java.io.Serializable {
         this.state = state;
     }
 
-    public OrderPublish(String address, String tokenid, int type, Date validateto, Date validatefrom, long price, long amount) {
+    public OrderPublish(String address, String tokenid, int type, Date validateto, Date validatefrom, 
+            long price, long amount, String market) {
         this.orderid = UUIDUtil.randomUUID();
         this.address = address;
         this.tokenid = tokenid;
@@ -114,6 +125,7 @@ public class OrderPublish implements java.io.Serializable {
         this.state = OrderState.publish.ordinal();
         this.price = price;
         this.amount = amount;
+        this.market = market;
     }
 
     public OrderPublish() {

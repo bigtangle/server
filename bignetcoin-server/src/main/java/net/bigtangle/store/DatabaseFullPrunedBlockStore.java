@@ -302,8 +302,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private static final String INSERT_TOKENS_SQL = "INSERT INTO tokens (tokenid, tokenname, amount, description, blocktype) VALUES (?, ?, ?, ?, ?)";
     private static final String SELECT_TOKENS_SQL = "select tokenid, tokenname, amount, description, blocktype from tokens";
 
-    private static final String INSERT_ORDERPUBLISH_SQL = "INSERT INTO orderpublish (orderid, address, tokenid, type, validateto, validatefrom, price, amount, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
-    private static final String SELECT_ORDERPUBLISH_SQL = "SELECT orderid, address, tokenid, type, validateto, validatefrom, price, amount, state FROM orderpublish";
+    private static final String INSERT_ORDERPUBLISH_SQL = "INSERT INTO orderpublish (orderid, address, tokenid, type, validateto, validatefrom, price, amount, state, market) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+    private static final String SELECT_ORDERPUBLISH_SQL = "SELECT orderid, address, tokenid, type, validateto, validatefrom, price, amount, state, market FROM orderpublish";
 
     private static final String INSERT_ORDERMATCH_SQL = "INSERT INTO ordermatch (matchid, restingOrderId, incomingOrderId, type, price, executedQuantity, remainingQuantity) VALUES (?, ?, ?, ?, ?, ?, ?);";
 
@@ -2522,6 +2522,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setLong(7, orderPublish.getPrice());
             preparedStatement.setLong(8, orderPublish.getAmount());
             preparedStatement.setInt(9, orderPublish.getState());
+            preparedStatement.setString(10, orderPublish.getMarket());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -2560,6 +2561,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 orderPublish.setState(resultSet.getInt("state"));
                 orderPublish.setValidateto(resultSet.getDate("validateto"));
                 orderPublish.setValidatefrom(resultSet.getDate("validatefrom"));
+                orderPublish.setMarket(resultSet.getString("market"));
                 list.add(orderPublish);
             }
             return list;
