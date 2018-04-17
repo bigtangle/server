@@ -118,6 +118,16 @@ public class DispatcherController {
                 logger.debug("exchangeToken, {}", request);
             }
                 break;
+                
+            case exchangeInfo: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                @SuppressWarnings("unchecked")
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String orderid = (String) request.get("orderid");
+                AbstractResponse response = this.exchangeService.getExchangeByOrderid(orderid);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
 
             case getTokens: {
                 AbstractResponse response = tokensService.getTokensList();

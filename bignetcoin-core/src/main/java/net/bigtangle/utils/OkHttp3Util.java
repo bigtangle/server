@@ -28,4 +28,13 @@ public class OkHttp3Util {
         return response.body().bytes();
     }
 
+    public static String postString(String url, String s) throws Exception {
+        OkHttpClient client = new OkHttpClient();
+        client.setReadTimeout(3, TimeUnit.MINUTES);
+        RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), s);
+        Request request = new Request.Builder().url(url).post(body).build();
+        Response response = client.newCall(request).execute();
+        return response.body().string();
+    }
+
 }

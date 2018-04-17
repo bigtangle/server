@@ -64,7 +64,7 @@ public class ScheduleOrderMatchService {
                         OrderBookEvents.Event event = iterator.next();
                         if (event instanceof OrderBookEvents.Match) {
                             OrderBookEvents.Match match = (OrderBookEvents.Match) event;
-                            logger.debug("order match hit : " + match);
+                            logger.info("order match hit : " + match);
                             saveOrderMatch(match);
 
                             OrderPublish incomingOrder = this.store.getOrderPublishByOrderid(match.incomingOrderId);

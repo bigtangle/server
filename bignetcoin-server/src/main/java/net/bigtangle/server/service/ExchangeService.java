@@ -7,6 +7,7 @@ import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.Utils;
 import net.bigtangle.server.response.AbstractResponse;
+import net.bigtangle.server.response.ExchangeInfoResponse;
 import net.bigtangle.server.response.GetExchangeResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.OrderState;
@@ -57,5 +58,10 @@ public class ExchangeService {
     public AbstractResponse getExchangeListWithAddress(String address) throws BlockStoreException {
         List<Exchange> list = this.store.getExchangeListWithAddress(address);
         return GetExchangeResponse.create(list);
+    }
+
+    public AbstractResponse getExchangeByOrderid(String orderid) throws BlockStoreException {
+        Exchange exchange = this.store.getExchangeInfoByOrderid(orderid);
+        return ExchangeInfoResponse.create(exchange);
     }
 }

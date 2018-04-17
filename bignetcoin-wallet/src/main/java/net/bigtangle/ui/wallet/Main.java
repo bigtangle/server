@@ -81,7 +81,7 @@ public class Main extends Application {
     public static String port = "8088";
     public static FXMLLoader loader;
 
-    public static String lang = "cn";
+    public static String lang = "en";
     public static int numberOfEmptyBlocks = 3;
     public static boolean emptyBlocks = false;
 
