@@ -40,6 +40,7 @@ public class TokensController {
         }
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public void initTableView() throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ObservableList<Map> tokenData = FXCollections.observableArrayList();
@@ -50,7 +51,7 @@ public class TokensController {
 
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
         for (Map<String, Object> map : list) {
-            Coin fromAmount = Coin.valueOf(Long.parseLong((String) map.get("amount")),
+            Coin fromAmount = Coin.valueOf(Long.parseLong(map.get("amount").toString()),
                     Utils.HEX.decode((String) map.get("tokenHex")));
             map.put("amount", fromAmount.toPlainString());
             tokenData.add(map);

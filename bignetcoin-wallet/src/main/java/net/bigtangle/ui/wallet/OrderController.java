@@ -109,25 +109,24 @@ public class OrderController {
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
 
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("orders");
-        for (Map<String, Object> map : list) {
-            if ((Integer) map.get("type") == 1) {
-                map.put("type", "SELL");
-            } else {
-                map.put("type", "BUY");
+        if (list != null) {
+            for (Map<String, Object> map : list) {
+                if ((Integer) map.get("type") == 1) {
+                    map.put("type", "SELL");
+                } else {
+                    map.put("type", "BUY");
+                }
+                int stateIndex = (int) map.get("state");
+                OrderState orderState = OrderState.values()[stateIndex];
+                map.put("state", orderState.name());
+                Coin fromAmount = Coin.valueOf(Long.parseLong(map.get("price").toString()),
+                        Utils.HEX.decode((String) map.get("tokenid")));
+                Coin toAmount = Coin.valueOf(Long.parseLong(map.get("amount").toString()),
+                        Utils.HEX.decode((String) map.get("tokenid")));
+                map.put("price", fromAmount.toPlainString());
+                map.put("amount", toAmount.toPlainString());
+                orderData.add(map);
             }
-            int stateIndex = (int) map.get("state");
-            OrderState orderState = OrderState.values()[stateIndex];
-            map.put("state", orderState.name());
-            
-            Coin fromAmount = Coin.valueOf(Long.parseLong(map.get("price").toString()),
-                    Utils.HEX.decode((String) map.get("tokenid")));
-            Coin toAmount = Coin.valueOf(Long.parseLong(map.get("amount").toString()),
-                    Utils.HEX.decode((String) map.get("tokenid")));
-
-            map.put("price", fromAmount.toPlainString());
-
-            map.put("amount", toAmount.toPlainString());
-            orderData.add(map);
         }
         orderidCol.setCellValueFactory(new MapValueFactory("orderid"));
         addressCol.setCellValueFactory(new MapValueFactory("address"));
