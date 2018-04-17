@@ -108,39 +108,38 @@ public class ExchangeController {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void initTable() throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
-        
+
         List<ECKey> keys = Main.bitcoin.wallet().walletKeys(null);
         ObservableList<Map<String, Object>> exchangeData = FXCollections.observableArrayList();
         for (ECKey key : keys) {
             String address = key.toAddress(Main.params).toString();
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("address", address);
-            String response = OkHttp3Util.post(CONTEXT_ROOT + "getExchange", Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+            String response = OkHttp3Util.post(CONTEXT_ROOT + "getExchange",
+                    Json.jsonmapper().writeValueAsString(requestParam).getBytes());
             final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
             List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("exchanges");
-            if (list==null) {
+            if (list == null) {
                 return;
             }
             for (Map<String, Object> map : list) {
                 if ((Integer) map.get("toSign") == 1) {
                     map.put("toSign", "*");
-                }
-                else {
+                } else {
                     map.put("toSign", "-");
                 }
                 if ((Integer) map.get("fromSign") == 1) {
                     map.put("fromSign", "*");
-                }
-                else {
+                } else {
                     map.put("fromSign", "-");
                 }
-                Coin fromAmount = Coin.valueOf( 
-                        Long.parseLong( (String) map.get("fromAmount")), Utils.HEX.decode((String) map.get("fromTokenHex")));
-                Coin toAmount =  Coin.valueOf( 
-                                Long.parseLong( (String) map.get("toAmount")), Utils.HEX.decode((String) map.get("toTokenHex")));
-          
+                Coin fromAmount = Coin.valueOf(Long.parseLong((String) map.get("fromAmount")),
+                        Utils.HEX.decode((String) map.get("fromTokenHex")));
+                Coin toAmount = Coin.valueOf(Long.parseLong((String) map.get("toAmount")),
+                        Utils.HEX.decode((String) map.get("toTokenHex")));
+
                 map.put("fromAmount", fromAmount.toPlainString());
-                
+
                 map.put("toAmount", toAmount.toPlainString());
                 exchangeData.add(map);
             }
@@ -218,16 +217,15 @@ public class ExchangeController {
         String fromAmount = (String) exchangeResult.get("fromAmount");
         String toTokenHex = (String) exchangeResult.get("toTokenHex");
         String toAmount = (String) exchangeResult.get("toAmount");
-        
+
         String signtype = "";
         if (toSign == 0 && calculatedAddressHit(toAddress)) {
             signtype = "to";
-        }
-        else if (fromSign == 0 && calculatedAddressHit(fromAddress)) {
+        } else if (fromSign == 0 && calculatedAddressHit(fromAddress)) {
             signtype = "from";
         }
-        byte[] buf = this.makeSignTransactionBuffer(fromAddress, toAddress, toTokenHex, fromTokenHex, toAmount,
-                fromAmount, mTransaction.bitcoinSerialize());
+        byte[] buf = this.makeSignTransactionBuffer(fromAddress, getCoin(fromAmount, fromTokenHex, true), toAddress,
+                getCoin(toAmount, toTokenHex, true), mTransaction.bitcoinSerialize());
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         String orderid = stringValueOf(mOrderid);
         requestParam.put("orderid", orderid);
@@ -293,7 +291,8 @@ public class ExchangeController {
         byteBuffer.get(data);
         try {
             mTransaction = (Transaction) Main.params.getDefaultSerializer().makeTransaction(data);
-//            mTransaction = (Transaction) Main.params.getDefaultSerializer().makeTransaction(data);
+            // mTransaction = (Transaction)
+            // Main.params.getDefaultSerializer().makeTransaction(data);
             if (mTransaction == null) {
                 GuiUtils.informationalAlert("alert", "Transaction Is Empty");
             }
@@ -312,8 +311,9 @@ public class ExchangeController {
         String toAmount = toAmountTextField.getText();
 
         this.mOrderid = UUIDUtil.randomUUID();
-        byte[] buf = this.makeSignTransactionBuffer(fromAddress, toAddress, toTokenHex, fromTokenHex, toAmount,
-                fromAmount);
+        byte[] buf = this.makeSignTransactionBuffer(fromAddress, getCoin(fromAmount, fromTokenHex, false), toAddress,
+                getCoin(toAmount, toTokenHex, false));
+        ;
 
         final FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showSaveDialog(null);
@@ -365,13 +365,14 @@ public class ExchangeController {
     public void refund(ActionEvent event) {
         overlayUI.done();
     }
-    
+
     @SuppressWarnings("unchecked")
     public HashMap<String, Object> getExchangeInfoResult(String orderid) throws Exception {
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", orderid);
-        String respone = OkHttp3Util.postString(ContextRoot + "exchangeInfo", Json.jsonmapper().writeValueAsString(requestParam));
+        String respone = OkHttp3Util.postString(ContextRoot + "exchangeInfo",
+                Json.jsonmapper().writeValueAsString(requestParam));
         HashMap<String, Object> result = Json.jsonmapper().readValue(respone, HashMap.class);
         HashMap<String, Object> exchange = (HashMap<String, Object>) result.get("exchange");
         return exchange;
@@ -380,7 +381,7 @@ public class ExchangeController {
     public void signExchange(ActionEvent event) throws Exception {
         Map<String, Object> rowData = exchangeTable.getSelectionModel().getSelectedItem();
         if (rowData == null || rowData.isEmpty()) {
-            GuiUtils.informationalAlert("no selected", "please select", "");
+            GuiUtils.informationalAlert("There is no selection of data.", "please select", "");
         }
         this.mOrderid = stringValueOf(rowData.get("orderid"));
         HashMap<String, Object> exchangeResult = getExchangeInfoResult(this.mOrderid);
@@ -393,8 +394,8 @@ public class ExchangeController {
             String fromTokenHex = stringValueOf(exchangeResult.get("fromTokenHex"));
             String toAmount = stringValueOf(exchangeResult.get("toAmount"));
             String fromAmount = stringValueOf(exchangeResult.get("fromAmount"));
-            buf = this.makeSignTransactionBuffer(fromAddress, toAddress, toTokenHex, fromTokenHex, toAmount,
-                    fromAmount);
+            buf = this.makeSignTransactionBuffer(fromAddress, getCoin(fromAmount, fromTokenHex, false), toAddress,
+                    getCoin(toAmount, toTokenHex, false));
             if (buf == null) {
                 return;
             }
@@ -403,8 +404,7 @@ public class ExchangeController {
             String signtype = "";
             if (toSign == 0 && calculatedAddressHit(toAddress)) {
                 signtype = "to";
-            }
-            else if (fromSign == 0 && calculatedAddressHit(fromAddress)) {
+            } else if (fromSign == 0 && calculatedAddressHit(fromAddress)) {
                 signtype = "from";
             }
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -425,7 +425,7 @@ public class ExchangeController {
         this.initTable();
         // overlayUI.done();
     }
-    
+
     public boolean calculatedAddressHit(String address) throws Exception {
         List<ECKey> keys = Main.bitcoin.wallet().walletKeys(null);
         for (ECKey key : keys) {
@@ -437,28 +437,27 @@ public class ExchangeController {
         return false;
     }
 
-    private byte[] makeSignTransactionBuffer(String fromAddress, String toAddress, String toTokenHex,
-            String fromTokenHex, String toAmount, String fromAmount, byte[] buf) {
+    private byte[] makeSignTransactionBuffer(String fromAddress, Coin fromCoin, String toAddress, Coin toCoin,
+            byte[] buf) {
         ByteBuffer byteBuffer = ByteBuffer.allocate(buf.length + 4 + fromAddress.getBytes().length + 4
-                + fromTokenHex.getBytes().length + 4 + fromAmount.getBytes().length + 4 + toAddress.getBytes().length
-                + 4 + toTokenHex.getBytes().length + 4 + toAmount.getBytes().length + 4
-                + this.mOrderid.getBytes().length + 4);
+                + fromCoin.getTokenHex().getBytes().length + 4 + fromCoin.toPlainString().getBytes().length + 4
+                + toAddress.getBytes().length + 4 + toCoin.getTokenHex().getBytes().length + 4
+                + toCoin.toPlainString().getBytes().length + 4 + this.mOrderid.getBytes().length + 4);
 
         byteBuffer.putInt(fromAddress.getBytes().length).put(fromAddress.getBytes());
-        byteBuffer.putInt(fromTokenHex.getBytes().length).put(fromTokenHex.getBytes());
-        byteBuffer.putInt(fromAmount.getBytes().length).put(fromAmount.getBytes());
+        byteBuffer.putInt(fromCoin.getTokenHex().getBytes().length).put(fromCoin.getTokenHex().getBytes());
+        byteBuffer.putInt(fromCoin.toPlainString().getBytes().length).put(fromCoin.toPlainString().getBytes());
         byteBuffer.putInt(toAddress.getBytes().length).put(toAddress.getBytes());
-        byteBuffer.putInt(toTokenHex.getBytes().length).put(toTokenHex.getBytes());
-        byteBuffer.putInt(toAmount.getBytes().length).put(toAmount.getBytes());
+        byteBuffer.putInt(toCoin.getTokenHex().getBytes().length).put(toCoin.getTokenHex().getBytes());
+        byteBuffer.putInt(toCoin.toPlainString().getBytes().length).put(toCoin.toPlainString().getBytes());
         byteBuffer.putInt(this.mOrderid.getBytes().length).put(this.mOrderid.getBytes());
         byteBuffer.putInt(buf.length).put(buf);
         System.out.println("tx len : " + buf.length);
         return byteBuffer.array();
     }
-    
+
     @SuppressWarnings("deprecation")
-    private byte[] makeSignTransactionBuffer(String fromAddress, String toAddress, String toTokenHex,
-            String fromTokenHex, String toAmount, String fromAmount) {
+    private byte[] makeSignTransactionBuffer(String fromAddress, Coin fromCoin, String toAddress, Coin toCoin) {
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
         KeyParameter aesKey = null;
         byte[] buf = null;
@@ -467,14 +466,13 @@ public class ExchangeController {
 
             Address fromAddress00 = new Address(Main.params, fromAddress);
             Address toAddress00 = new Address(Main.params, toAddress);
-            outputs.addAll(this.getUTXOWithPubKeyHash(toAddress00.getHash160(), Utils.HEX.decode(toTokenHex)));
+            outputs.addAll(
+                    this.getUTXOWithPubKeyHash(toAddress00.getHash160(), Utils.HEX.decode(toCoin.getTokenHex())));
             outputs.addAll(this.getUTXOWithECKeyList(Main.bitcoin.wallet().walletKeys(aesKey),
-                    Utils.HEX.decode(fromTokenHex)));
+                    Utils.HEX.decode(fromCoin.getTokenHex())));
 
-            Coin amountCoin0 = Coin.parseCoin(toAmount, Utils.HEX.decode(toTokenHex));
-            Coin amountCoin1 = Coin.parseCoin(fromAmount, Utils.HEX.decode(fromTokenHex));
-            SendRequest req = SendRequest.to(fromAddress00, amountCoin0);
-            req.tx.addOutput(amountCoin1, toAddress00);
+            SendRequest req = SendRequest.to(fromAddress00, toCoin);
+            req.tx.addOutput(fromCoin, toAddress00);
             req.missingSigsMode = MissingSigsMode.USE_OP_ZERO;
 
             List<TransactionOutput> candidates = Main.bitcoin.wallet().transforSpendCandidates(outputs);
@@ -488,7 +486,7 @@ public class ExchangeController {
             GuiUtils.crashAlert(e);
             return null;
         }
-        return makeSignTransactionBuffer(fromAddress, toAddress, toTokenHex, fromTokenHex, toAmount, fromAmount, buf);
+        return makeSignTransactionBuffer(fromAddress, fromCoin, toAddress, toCoin, buf);
     }
 
     private String stringValueOf(Object object) {
@@ -528,5 +526,13 @@ public class ExchangeController {
             }
         }
         return listUTXO;
+    }
+
+    public Coin getCoin(String toAmount, String toTokenHex, boolean decimal) {
+        if (decimal) {
+            return Coin.parseCoin(toAmount, Utils.HEX.decode(toTokenHex));
+        } else {
+            return Coin.valueOf(Long.parseLong(toAmount), Utils.HEX.decode(toTokenHex));
+        }
     }
 }
