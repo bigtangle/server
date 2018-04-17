@@ -49,6 +49,7 @@ import net.bigtangle.core.VerificationException;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.service.ValidatorService;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -2545,9 +2546,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             StringBuffer whereStr = new StringBuffer(" WHERE 1 = 1 ");
             for (Entry<String, Object> entry : request.entrySet()) {
+                if (StringUtils.isBlank(entry.getValue().toString())) {
+                    continue;
+                }
                 whereStr.append(" AND ").append(entry.getKey() + "=" + "'" + entry.getValue() + "' ");
             }
             String sql = SELECT_ORDERPUBLISH_SQL + whereStr;
+            System.out.println(sql);
             preparedStatement = conn.get().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
