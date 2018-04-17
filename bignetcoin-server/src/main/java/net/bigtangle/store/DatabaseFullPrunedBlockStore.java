@@ -2552,7 +2552,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 whereStr.append(" AND ").append(entry.getKey() + "=" + "'" + entry.getValue() + "' ");
             }
             String sql = SELECT_ORDERPUBLISH_SQL + whereStr;
-            System.out.println(sql);
+//            System.out.println(sql);
             preparedStatement = conn.get().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
