@@ -340,31 +340,6 @@ public class ExchangeController {
         overlayUI.done();
     }
 
-    @SuppressWarnings("unchecked")
-    public List<UTXO> getUTXOWithPubKeyHash(byte[] pubKeyHash, byte[] tokenid) throws Exception {
-        List<UTXO> listUTXO = new ArrayList<UTXO>();
-        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
-        String response = OkHttp3Util.post(ContextRoot + "getOutputs", pubKeyHash);
-        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-        if (data == null || data.isEmpty()) {
-            return listUTXO;
-        }
-        List<Map<String, Object>> outputs = (List<Map<String, Object>>) data.get("outputs");
-        if (outputs == null || outputs.isEmpty()) {
-            return listUTXO;
-        }
-        for (Map<String, Object> object : outputs) {
-            UTXO utxo = MapToBeanMapperUtil.parseUTXO(object);
-            if (!Arrays.equals(utxo.getTokenid(), tokenid)) {
-                continue;
-            }
-            if (utxo.getValue().getValue() > 0) {
-                listUTXO.add(utxo);
-            }
-        }
-        return listUTXO;
-    }
-
     public void refund(ActionEvent event) {
         overlayUI.done();
     }
@@ -474,7 +449,7 @@ public class ExchangeController {
             Address fromAddress00 = new Address(Main.params, fromAddress);
             Address toAddress00 = new Address(Main.params, toAddress);
             outputs.addAll(
-                    this.getUTXOWithPubKeyHash(toAddress00.getHash160(), Utils.HEX.decode(toCoin.getTokenHex())));
+                    Main.getUTXOWithPubKeyHash(toAddress00.getHash160(), Utils.HEX.decode(toCoin.getTokenHex())));
             outputs.addAll(this.getUTXOWithECKeyList(Main.bitcoin.wallet().walletKeys(aesKey),
                     Utils.HEX.decode(fromCoin.getTokenHex())));
 

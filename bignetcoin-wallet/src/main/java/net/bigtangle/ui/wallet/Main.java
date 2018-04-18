@@ -29,8 +29,12 @@ import static net.bigtangle.ui.wallet.utils.GuiUtils.zoomIn;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 import javax.annotation.Nullable;
@@ -52,6 +56,7 @@ import javafx.stage.Stage;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.UTXO;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.UnitTestParams;
@@ -59,6 +64,7 @@ import net.bigtangle.ui.wallet.controls.NotificationBarPane;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.utils.BriefLogFormatter;
+import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.DeterministicSeed;
@@ -335,6 +341,30 @@ public class Main extends Application {
 
         return OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
 
+    }
+
+    public static List<UTXO> getUTXOWithPubKeyHash(byte[] pubKeyHash, byte[] tokenid) throws Exception {
+        List<UTXO> listUTXO = new ArrayList<UTXO>();
+        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String response = OkHttp3Util.post(ContextRoot + "getOutputs", pubKeyHash);
+        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+        if (data == null || data.isEmpty()) {
+            return listUTXO;
+        }
+        List<Map<String, Object>> outputs = (List<Map<String, Object>>) data.get("outputs");
+        if (outputs == null || outputs.isEmpty()) {
+            return listUTXO;
+        }
+        for (Map<String, Object> object : outputs) {
+            UTXO utxo = MapToBeanMapperUtil.parseUTXO(object);
+            if (!Arrays.equals(utxo.getTokenid(), tokenid)) {
+                continue;
+            }
+            if (utxo.getValue().getValue() > 0) {
+                listUTXO.add(utxo);
+            }
+        }
+        return listUTXO;
     }
 
 }

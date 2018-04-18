@@ -46,6 +46,10 @@ public class OrderController {
     public ComboBox<String> addressComboBox;
     @FXML
     public ComboBox<String> tokenComboBox;
+
+    @FXML
+    public ComboBox<String> marketComboBox;
+
     @FXML
     public ChoiceBox<Object> statusChoiceBox;
 
@@ -87,6 +91,7 @@ public class OrderController {
                 items[i] = OrderState.values()[i].name();
             }
             state4searchChoiceBox.setItems(FXCollections.observableArrayList(items));
+            state4searchChoiceBox.getSelectionModel().selectFirst();
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             initComboBox();
             initTable(requestParam);
@@ -208,7 +213,7 @@ public class OrderController {
         requestParam.put("validateto", validdateTo);
         requestParam.put("validatefrom", validdateFrom);
         // TODO xiao mi change
-        String market = "";
+        String market = marketComboBox.getValue();
         requestParam.put("market", market);
         OkHttp3Util.post(ContextRoot + "saveOrder", Json.jsonmapper().writeValueAsString(requestParam));
         overlayUI.done();
