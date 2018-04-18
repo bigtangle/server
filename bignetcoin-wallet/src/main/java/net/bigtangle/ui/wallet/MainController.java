@@ -224,8 +224,10 @@ public class MainController {
 
     public void orders(ActionEvent event) {
         Main.OverlayUI<OrderController> order = Main.instance.overlayUI("orders.fxml");
-        String address = utxoTable.getSelectionModel().getSelectedItem().getAddress();
-        order.controller.initAddress(address);
+        if (utxoTable.getSelectionModel().getSelectedItem() != null) {
+            String address = utxoTable.getSelectionModel().getSelectedItem().getAddress();
+            order.controller.initAddress(address);
+        }
     }
 
     public void otherWallet(ActionEvent event) {

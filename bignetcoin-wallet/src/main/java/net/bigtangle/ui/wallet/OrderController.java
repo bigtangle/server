@@ -186,10 +186,10 @@ public class OrderController {
     }
 
     public void buy(ActionEvent event) throws Exception {
-
+        String tokenid = tokenComboBox.getValue().split(":")[1].trim();
         List<UTXO> utxos = Main.getUTXOWithPubKeyHash(
                 Address.fromBase58(Main.params, addressComboBox.getValue()).getHash160(),
-                Utils.HEX.decode(tokenComboBox.getValue()));
+                Utils.HEX.decode(tokenid));
         long utxoAmount = 0;
         if (utxos != null && !utxos.isEmpty()) {
             for (UTXO utxo : utxos) {
@@ -215,7 +215,7 @@ public class OrderController {
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("address", this.addressComboBox.getValue());
-        String tokenid = this.tokenComboBox.getValue().split(":")[1].trim();
+//        String tokenid = this.tokenComboBox.getValue().split(":")[1].trim();
         requestParam.put("tokenid", tokenid);
         String typeStr = (String) statusChoiceBox.getValue();
         requestParam.put("type", typeStr.equals("sell") ? 1 : 0);
