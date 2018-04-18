@@ -183,8 +183,11 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
                 utxo = u;
             }
         }
+        System.out.println(utxo.getValue());
+        Coin baseCoin = utxo.getValue().subtract(Coin.parseCoin("10000", utxo.getValue().getTokenid()));
+        System.out.println(baseCoin);
         Address destination = outKey.toAddress(PARAMS);
-        SendRequest request = SendRequest.to(destination, utxo.getValue());
+        SendRequest request = SendRequest.to(destination, baseCoin);
         walletAppKit.wallet().completeTx(request);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();

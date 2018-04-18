@@ -61,6 +61,9 @@ public class EckeyController {
     }
 
     public void addKey2wallet(ActionEvent event) {
+        if (newPrivateKeyTextField.getText().equals("")) {
+            return;
+        }
         ECKey newKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(newPrivateKeyTextField.getText()),
                 Utils.HEX.decode(newPubkeyTextField.getText()));
         bitcoin.wallet().importKey(newKey);
