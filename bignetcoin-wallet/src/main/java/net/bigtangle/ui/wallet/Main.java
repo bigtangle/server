@@ -82,6 +82,7 @@ public class Main extends Application {
     public static FXMLLoader loader;
 
     public static String lang = "en";
+    public static String password = "";
     public static int numberOfEmptyBlocks = 3;
     public static boolean emptyBlocks = false;
 

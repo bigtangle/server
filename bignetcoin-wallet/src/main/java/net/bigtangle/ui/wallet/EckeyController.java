@@ -10,6 +10,8 @@ import static net.bigtangle.ui.wallet.Main.params;
 import java.io.File;
 import java.util.List;
 
+import org.spongycastle.crypto.params.KeyParameter;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -21,6 +23,7 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.stage.FileChooser;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Utils;
+import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 
@@ -71,8 +74,13 @@ public class EckeyController {
 
     public void initEcKeyList() throws Exception {
         issuedKeyData.clear();
-        List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(null);
 
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        KeyParameter aesKey = null;
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
+        List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
         if (issuedKeys != null && !issuedKeys.isEmpty()) {
             for (ECKey ecKey : issuedKeys) {
                 issuedKeyData.add(new EckeyModel(ecKey.getPublicKeyAsHex(), ecKey.getPrivateKeyAsHex(),
