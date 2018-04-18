@@ -207,6 +207,9 @@ public class OrderController {
         requestParam.put("amount", amount);
         requestParam.put("validateto", validdateTo);
         requestParam.put("validatefrom", validdateFrom);
+        // TODO xiao mi change
+        String market = "";
+        requestParam.put("market", market);
         OkHttp3Util.post(ContextRoot + "saveOrder", Json.jsonmapper().writeValueAsString(requestParam));
         overlayUI.done();
     }
