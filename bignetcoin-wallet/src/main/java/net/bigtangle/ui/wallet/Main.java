@@ -294,14 +294,23 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
-        String systemLang=Locale.getDefault().getLanguage();
-        String systemName=System.getProperty("os.name").toLowerCase();
-        if (args != null && args.length == 1) {
-            lang = args[0];
+        String systemLang = Locale.getDefault().getLanguage();
+        String systemName = System.getProperty("os.name").toLowerCase();
+        if (args == null || args.length == 0) {
+            lang = systemLang;
+            keyFileDirectory = System.getProperty("user.home");
+            keyFilePrefix = System.getProperty("user.name");
         }
         if (args != null && args.length == 2) {
             lang = args[0];
-            keyFileDirectory = args[1];
+            keyFileDirectory = new File(args[1]).getParent();
+            String temp = new File(args[1]).getName();
+            if (temp.contains(".")) {
+                keyFilePrefix = temp.substring(0, temp.lastIndexOf("."));
+            } else {
+                keyFilePrefix = temp;
+            }
+
         }
         launch(args);
     }
