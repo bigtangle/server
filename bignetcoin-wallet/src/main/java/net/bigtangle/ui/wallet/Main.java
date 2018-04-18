@@ -294,6 +294,15 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
+        String systemLang=Locale.getDefault().getLanguage();
+        String systemName=System.getProperty("os.name").toLowerCase();
+        if (args != null && args.length == 1) {
+            lang = args[0];
+        }
+        if (args != null && args.length == 2) {
+            lang = args[0];
+            keyFileDirectory = args[1];
+        }
         launch(args);
     }
 

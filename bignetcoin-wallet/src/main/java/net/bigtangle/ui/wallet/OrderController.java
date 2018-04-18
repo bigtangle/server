@@ -23,9 +23,11 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.MapValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
+import net.bigtangle.core.Address;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
@@ -98,6 +100,10 @@ public class OrderController {
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
+    }
+
+    public void initAddress(String address) {
+        addressComboBox.setValue(address);
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -180,16 +186,23 @@ public class OrderController {
     }
 
     public void buy(ActionEvent event) throws Exception {
-        // if (validdateFromDatePicker.getValue() == null) {
-        // GuiUtils.informationalAlert("save order param", "validdate From Date
-        // Picker ERROR");
-        // return;
-        // }
-        // if (validdateToDatePicker.getValue() == null) {
-        // GuiUtils.informationalAlert("save order param", "validdate To Date
-        // Picker ERROR");
-        // return;
-        // }
+
+        List<UTXO> utxos = Main.getUTXOWithPubKeyHash(
+                Address.fromBase58(Main.params, addressComboBox.getValue()).getHash160(),
+                Utils.HEX.decode(tokenComboBox.getValue()));
+        long utxoAmount = 0;
+        if (utxos != null && !utxos.isEmpty()) {
+            for (UTXO utxo : utxos) {
+                utxoAmount += utxo.getValue().getValue();
+            }
+        }
+        long amount = Coin.parseCoinValue(this.amountTextField.getText());
+
+        if (utxoAmount < amount) {
+            GuiUtils.informationalAlert("amount no enough", "amount no enough", "");
+            return;
+        }
+
         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd 00:00:00");
         String validdateFrom = "";
         if (validdateFromDatePicker.getValue() != null) {
@@ -207,7 +220,6 @@ public class OrderController {
         String typeStr = (String) statusChoiceBox.getValue();
         requestParam.put("type", typeStr.equals("sell") ? 1 : 0);
         long price = Coin.parseCoinValue(this.limitTextField.getText());
-        long amount = Coin.parseCoinValue(this.amountTextField.getText());
         requestParam.put("price", price);
         requestParam.put("amount", amount);
         requestParam.put("validateto", validdateTo);
