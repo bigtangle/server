@@ -12,6 +12,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.spongycastle.crypto.params.KeyParameter;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -39,10 +43,6 @@ import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
-
-import org.spongycastle.crypto.params.KeyParameter;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 public class ExchangeController {
 
@@ -108,8 +108,9 @@ public class ExchangeController {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void initTable() throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
-
-        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(null);
+        KeyParameter aesKey = null;
+        Main.initAeskey(aesKey);
+        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
         ObservableList<Map<String, Object>> exchangeData = FXCollections.observableArrayList();
         for (ECKey key : keys) {
             String address = key.toAddress(Main.params).toString();
@@ -179,7 +180,9 @@ public class ExchangeController {
         toTokenHexComboBox.setItems(tokenData);
         fromTokenHexComboBox.setItems(tokenData);
 
-        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(null);
+        KeyParameter aesKey = null;
+        Main.initAeskey(aesKey);
+        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
         ObservableList<String> addresses = FXCollections.observableArrayList();
         for (ECKey key : keys) {
             addresses.add(key.toAddress(Main.params).toString());
@@ -427,7 +430,9 @@ public class ExchangeController {
     }
 
     public boolean calculatedAddressHit(String address) throws Exception {
-        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(null);
+        KeyParameter aesKey = null;
+        Main.initAeskey(aesKey);
+        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
         for (ECKey key : keys) {
             String n = key.toAddress(Main.params).toString();
             if (n.equalsIgnoreCase(address)) {
@@ -459,7 +464,9 @@ public class ExchangeController {
     @SuppressWarnings("deprecation")
     private byte[] makeSignTransactionBuffer(String fromAddress, Coin fromCoin, String toAddress, Coin toCoin) {
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+
         KeyParameter aesKey = null;
+        Main.initAeskey(aesKey);
         byte[] buf = null;
         try {
             List<UTXO> outputs = new ArrayList<UTXO>();

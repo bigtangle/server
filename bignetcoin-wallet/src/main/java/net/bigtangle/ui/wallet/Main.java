@@ -35,6 +35,8 @@ import java.util.ResourceBundle;
 
 import javax.annotation.Nullable;
 
+import org.spongycastle.crypto.params.KeyParameter;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import javafx.application.Application;
@@ -50,6 +52,7 @@ import javafx.stage.Stage;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.UnitTestParams;
 import net.bigtangle.ui.wallet.controls.NotificationBarPane;
@@ -94,6 +97,13 @@ public class Main extends Application {
         } catch (Throwable e) {
             GuiUtils.crashAlert(e);
             // throw e;
+        }
+    }
+
+    public static void initAeskey(KeyParameter aesKey) {
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
         }
     }
 

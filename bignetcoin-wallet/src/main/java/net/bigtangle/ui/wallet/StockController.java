@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.spongycastle.crypto.params.KeyParameter;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -65,8 +67,9 @@ public class StockController extends TokensController {
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
         List<String> names = new ArrayList<String>();
         // wallet keys minus used from token list with one time (blocktype false
-        // TODO: @cui Main.bitcoin.wallet().walletKeys(null);
-        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(null);
+        KeyParameter aeskey = null;
+        Main.initAeskey(aeskey);
+        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aeskey);
         for (ECKey key : keys) {
             String temp = Utils.HEX.encode(key.getPubKeyHash());
             for (Map<String, Object> map : list) {

@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.spongycastle.crypto.params.KeyParameter;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -160,7 +162,9 @@ public class OrderController {
             tokenData.add(tokenname + " : " + tokenHex);
         }
         tokenComboBox.setItems(tokenData);
-        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(null);
+        KeyParameter aeskey = null;
+        Main.initAeskey(aeskey);
+        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aeskey);
         ObservableList<String> addresses = FXCollections.observableArrayList();
         for (ECKey key : keys) {
             addresses.add(key.toAddress(Main.params).toString());
@@ -197,8 +201,8 @@ public class OrderController {
         requestParam.put("tokenid", tokenid);
         String typeStr = (String) statusChoiceBox.getValue();
         requestParam.put("type", typeStr.equals("sell") ? 1 : 0);
-        long price = Coin.parseCoinValue( this.limitTextField.getText());
-        long amount = Coin.parseCoinValue( this.amountTextField.getText());
+        long price = Coin.parseCoinValue(this.limitTextField.getText());
+        long amount = Coin.parseCoinValue(this.amountTextField.getText());
         requestParam.put("price", price);
         requestParam.put("amount", amount);
         requestParam.put("validateto", validdateTo);
