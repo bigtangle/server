@@ -36,22 +36,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Nullable;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.google.common.primitives.Ints;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
-import com.google.protobuf.ByteString;
-
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
@@ -65,6 +49,7 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionBag;
 import net.bigtangle.core.TransactionConfidence;
+import net.bigtangle.core.TransactionConfidence.ConfidenceType;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
@@ -74,7 +59,6 @@ import net.bigtangle.core.UTXOProviderException;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VarInt;
 import net.bigtangle.core.VerificationException;
-import net.bigtangle.core.TransactionConfidence.ConfidenceType;
 import net.bigtangle.crypto.ChildNumber;
 import net.bigtangle.crypto.DeterministicHierarchy;
 import net.bigtangle.crypto.DeterministicKey;
@@ -102,6 +86,22 @@ import net.bigtangle.wallet.listeners.WalletCoinsSentEventListener;
 import net.bigtangle.wallet.listeners.WalletEventListener;
 import net.bigtangle.wallet.listeners.WalletReorganizeEventListener;
 import net.jcip.annotations.GuardedBy;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.google.common.primitives.Ints;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
+import com.google.protobuf.ByteString;
 
 // To do list:
 //
@@ -154,8 +154,11 @@ import net.jcip.annotations.GuardedBy;
  * for more information about this.
  * </p>
  */
+@SuppressWarnings("deprecation")
 public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag {
+    
     private static final Logger log = LoggerFactory.getLogger(Wallet.class);
+    
     private static final int MINIMUM_BLOOM_DATA_LENGTH = 8;
 
     // Ordering: lock > keyChainGroupLock. KeyChainGroup is protected separately
@@ -4039,10 +4042,14 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         public TransactionOutput bestChangeOutput;
     }
 
-    // region Fee calculation code
-
-    public FeeCalculation calculateFee(SendRequest req,   Coin  value, List<TransactionInput> originalInputs,
+    public FeeCalculation calculateFee(SendRequest req, Coin value, List<TransactionInput> originalInputs,
             boolean needAtLeastReferenceFee, List<TransactionOutput> candidates) throws InsufficientMoneyException {
+        return this.calculateFee(req, value, originalInputs, needAtLeastReferenceFee, candidates, req.changeAddress);
+    }
+    
+    public FeeCalculation calculateFee(SendRequest req, Coin value, List<TransactionInput> originalInputs,
+            boolean needAtLeastReferenceFee, List<TransactionOutput> candidates, Address changeAddress)
+            throws InsufficientMoneyException {
         checkState(lock.isHeldByCurrentThread());
         // There are 3 possibilities for what adding change might do:
         // 1) No effect
@@ -4115,7 +4122,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
                     // Add another output that sends the change
                     // back to us. The address comes either from the request or
                     // currentChangeAddress() as a default.
-                    Address changeAddress = req.changeAddress;
+//                    Address changeAddress = req.changeAddress;
                     if (changeAddress == null)
                         changeAddress = currentChangeAddress();
                     changeOutput = new TransactionOutput(params, req.tx, change, changeAddress);
@@ -4518,7 +4525,12 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         List<TransactionOutput> candidates = calculateAllSpendCandidates();
         completeTx(req, candidates, true);
     }
+    
     public void completeTx(SendRequest req,  List<TransactionOutput> candidates, boolean sign) throws InsufficientMoneyException {
+        this.completeTx(req, candidates, sign, new HashMap<String, Address>());
+    }
+    
+    public void completeTx(SendRequest req,  List<TransactionOutput> candidates, boolean sign, HashMap<String, Address> addressResult) throws InsufficientMoneyException {
         lock.lock();
         try {
             checkArgument(!req.completed, "Given SendRequest has already been completed.");
@@ -4571,7 +4583,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
                                        // allowed.
                     throw new MultipleOpReturnRequested();
             } 
-            completeTxSelection(req, candidates, originalInputs, value);
+            completeTxSelection(req, candidates, originalInputs, value, addressResult);
        
             // Now shuffle the outputs to obfuscate which is the change.
             if (req.shuffleOutputs)
@@ -4611,33 +4623,33 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         }
     }
 
-    public void completeTxSelection(SendRequest req,  List<TransactionOutput> candidates,  List<TransactionInput> originalInputs,  Map<String, Coin> value  ) throws InsufficientMoneyException {
-        List<TransactionInput> start= originalInputs; 
+    public void completeTxSelection(SendRequest req, List<TransactionOutput> candidates,
+            List<TransactionInput> originalInputs, Map<String, Coin> value, HashMap<String, Address> addressResult)
+            throws InsufficientMoneyException {
+        List<TransactionInput> start = originalInputs;
         for (Map.Entry<String, Coin> entry : value.entrySet()) {
-            
-        CoinSelection bestCoinSelection;
-        TransactionOutput bestChangeOutput = null;
-        req.ensureMinRequiredFee = false;
-     
-            // This can throw InsufficientMoneyException.
+            CoinSelection bestCoinSelection;
+            TransactionOutput bestChangeOutput = null;
+            req.ensureMinRequiredFee = false;
+            String tokenHex = entry.getKey();
+            Address address = addressResult.get(tokenHex);
             FeeCalculation feeCalculation = calculateFee(req, entry.getValue(), start, req.ensureMinRequiredFee,
-                    candidates);
+                    candidates, address);
             bestCoinSelection = feeCalculation.bestCoinSelection;
             bestChangeOutput = feeCalculation.bestChangeOutput;
-   
-        for (TransactionOutput output : bestCoinSelection.gathered) {
-            req.tx.addInput(output);
-            start.addAll(req.tx.getInputs() );
-        }
-      
-
-        if (bestChangeOutput != null) {
-            req.tx.addOutput(bestChangeOutput);
-            log.info("  with {} change", bestChangeOutput.getValue().toFriendlyString());
-        }
-       
+            
+            for (TransactionOutput output : bestCoinSelection.gathered) {
+                req.tx.addInput(output);
+                start.addAll(req.tx.getInputs());
+            }
+            
+            if (bestChangeOutput != null) {
+                req.tx.addOutput(bestChangeOutput);
+                log.info("  with {} change", bestChangeOutput.getValue().toFriendlyString());
+            }
         }
     }
+    
     public void substract(Map<String, Coin> valueInput, Map<String, Coin> valueOut) {
 
         for (Map.Entry<String, Coin> entry : valueInput.entrySet()) {
