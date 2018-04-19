@@ -39,14 +39,15 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.ui.wallet.utils.KeyDerivationTasks;
 import net.bigtangle.wallet.Protos;
 
 public class WalletSetPasswordController {
     private static final Logger log = LoggerFactory.getLogger(WalletSetPasswordController.class);
-    public PasswordField pass1, pass2;
-
+    public PasswordField pass1, pass2, oldPassword;
+    public HBox oldPassHBox;
     public ProgressIndicator progressMeter;
     public GridPane widgetGrid;
     public Button closeButton;
@@ -60,7 +61,13 @@ public class WalletSetPasswordController {
     public static final Protos.ScryptParameters SCRYPT_PARAMETERS = Protos.ScryptParameters.newBuilder().setP(6).setR(8)
             .setN(32768).setSalt(ByteString.copyFrom(KeyCrypterScrypt.randomSalt())).build();
 
+    @FXML
     public void initialize() {
+        if (Main.bitcoin.wallet().isEncrypted()) {
+            oldPassHBox.setVisible(true);
+        } else {
+            oldPassHBox.setVisible(false);
+        }
         progressMeter.setOpacity(0);
     }
 
@@ -122,6 +129,9 @@ public class WalletSetPasswordController {
                 // The actual encryption part doesn't take very long as most
                 // private keys are derived on demand.
                 log.info("Key derived, now encrypting");
+                if (Main.bitcoin.wallet().isEncrypted()) {
+                    Main.bitcoin.wallet().decrypt(oldPassword.getText());
+                }
                 Main.bitcoin.wallet().encrypt(scrypt, aesKey);
                 log.info("Encryption done");
                 informationalAlert("Wallet encrypted",

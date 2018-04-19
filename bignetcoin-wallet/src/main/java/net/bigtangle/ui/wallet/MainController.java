@@ -116,6 +116,17 @@ public class MainController {
 
     @FXML
     public void initialize() {
+        if (bitcoin.wallet().isEncrypted()) {
+            searchPane.setVisible(false);
+            serverPane.setVisible(false);
+            buttonHBox.setVisible(false);
+            passwordHBox.setVisible(true);
+        } else {
+            searchPane.setVisible(true);
+            serverPane.setVisible(true);
+            buttonHBox.setVisible(true);
+            passwordHBox.setVisible(false);
+        }
         Server.setText(Main.IpAddress);
         IPPort.setText(Main.port);
         initTableView();
