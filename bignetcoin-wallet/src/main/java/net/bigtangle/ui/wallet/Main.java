@@ -106,6 +106,17 @@ public class Main extends Application {
         }
     }
 
+    public static String getTextt(String s) {
+        ResourceBundle rb = ResourceBundle.getBundle("net.bigtangle.ui.wallet.message", Locale.getDefault());
+        if ("en".equalsIgnoreCase(lang)) {
+            rb = ResourceBundle.getBundle("net.bigtangle.ui.wallet.message_en", Locale.ENGLISH);
+        }else {
+            rb = ResourceBundle.getBundle("net.bigtangle.ui.wallet.message", Locale.CHINESE);
+        }
+        return rb.getString(s);
+        
+    }
+
     public static void initAeskey(KeyParameter aesKey) {
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
