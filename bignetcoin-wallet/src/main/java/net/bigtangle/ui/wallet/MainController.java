@@ -26,18 +26,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.fxmisc.easybind.EasyBind;
 import org.spongycastle.crypto.params.KeyParameter;
 
+import javafx.animation.FadeTransition;
+import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.util.Duration;
 import net.bigtangle.core.Address;
@@ -48,13 +51,13 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletAppKit;
+import net.bigtangle.ui.wallet.controls.ClickableBitcoinAddress;
 import net.bigtangle.ui.wallet.controls.NotificationBarPane;
 import net.bigtangle.ui.wallet.utils.BitcoinUIModel;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.easing.EasingMode;
 import net.bigtangle.ui.wallet.utils.easing.ElasticInterpolator;
 import net.bigtangle.utils.MapToBeanMapperUtil;
-import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 
 /**
@@ -63,9 +66,22 @@ import net.bigtangle.utils.OkHttp3Util;
  * updates and event handling for the main UI.
  */
 public class MainController {
+
     public HBox controlsBox;
+    public ClickableBitcoinAddress addressControl;
+
+    @FXML
+    public HBox buttonHBox;
+    @FXML
+    public AnchorPane serverPane;
+    @FXML
+    public AnchorPane searchPane;
     public Label balance;
     public Button sendMoneyOutBtn;
+    @FXML
+    public HBox passwordHBox;
+    @FXML
+    public PasswordField passwordField;
 
     @FXML
     public TableView<CoinModel> coinTable;
@@ -96,10 +112,10 @@ public class MainController {
     private BitcoinUIModel model = new BitcoinUIModel();
 
     private NotificationBarPane.Item syncItem;
+    private KeyParameter aesKey = null;
 
     @FXML
     public void initialize() {
-
         Server.setText(Main.IpAddress);
         IPPort.setText(Main.port);
         initTableView();
@@ -111,7 +127,7 @@ public class MainController {
         Main.instance.getCoinData().clear();
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
-        KeyParameter aesKey = null;
+        aesKey = null;
         // Main.initAeskey(aesKey);
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
@@ -161,48 +177,47 @@ public class MainController {
         try {
 
             initTable(addressTextField.getText());
+            utxoTable.setItems(Main.instance.getUtxoData());
+            coinTable.setItems(Main.instance.getCoinData());
+
+            balanceColumn.setCellValueFactory(cellData -> cellData.getValue().balance());
+            tokentypeColumnA.setCellValueFactory(cellData -> cellData.getValue().tokenid());
+            addressColumn.setCellValueFactory(cellData -> cellData.getValue().address());
+            spendPendingColumn.setCellValueFactory(cellData -> cellData.getValue().spendPending());
+            addressColumn.setCellFactory(TextFieldTableCell.<UTXOModel>forTableColumn());
+
+            valueColumn.setCellValueFactory(cellData -> cellData.getValue().value());
+            tokentypeColumn.setCellValueFactory(cellData -> cellData.getValue().tokenid());
+            searchPane.setVisible(true);
+            serverPane.setVisible(true);
+            buttonHBox.setVisible(true);
+            passwordHBox.setVisible(false);
+            // bitcoin.wallet().isEncrypted()
+            // if (!passwordHBox.isVisible()) {
+            // utxoTable.setLayoutY(utxoTable.getLayoutY() -
+            // passwordHBox.getHeight());
+            // coinTable.setLayoutY(coinTable.getLayoutY() -
+            // passwordHBox.getHeight());
+            // }
         } catch (Exception e) {
-            GuiUtils.crashAlert(e);
-        }
-        utxoTable.setItems(Main.instance.getUtxoData());
-        coinTable.setItems(Main.instance.getCoinData());
+            if (e instanceof ECKey.KeyIsEncryptedException) {
+                searchPane.setVisible(false);
+                serverPane.setVisible(false);
+                buttonHBox.setVisible(false);
+                passwordHBox.setVisible(true);
 
-        balanceColumn.setCellValueFactory(cellData -> cellData.getValue().balance());
-        tokentypeColumnA.setCellValueFactory(cellData -> cellData.getValue().tokenid());
-        addressColumn.setCellValueFactory(cellData -> cellData.getValue().address());
-        spendPendingColumn.setCellValueFactory(cellData -> cellData.getValue().spendPending());
-        addressColumn.setCellFactory(TextFieldTableCell.<UTXOModel>forTableColumn());
-
-        valueColumn.setCellValueFactory(cellData -> cellData.getValue().value());
-        tokentypeColumn.setCellValueFactory(cellData -> cellData.getValue().tokenid());
-
-    }
-
-    public void onBitcoinSetup() {
-        model.setWallet(bitcoin.wallet());
-        balance.textProperty().bind(
-                EasyBind.map(model.balanceProperty(), coin -> MonetaryFormat.BTA.noCode().format(coin).toString()));
-        // Don't let the user click send money when the wallet is empty.
-        sendMoneyOutBtn.disableProperty().bind(model.balanceProperty().isEqualTo(Coin.ZERO));
-
-        showBitcoinSyncMessage();
-
-        model.syncProgressProperty().addListener(x -> {
-            if (model.syncProgressProperty().get() >= 1.0) {
-                readyToGoAnimation();
-                if (syncItem != null) {
-                    syncItem.cancel();
-                    syncItem = null;
-                }
-            } else if (syncItem == null) {
-                showBitcoinSyncMessage();
+            } else {
+                GuiUtils.crashAlert(e);
             }
-        });
+
+        }
+
     }
 
-    private void showBitcoinSyncMessage() {
-        syncItem = Main.instance.notificationBar.pushItem("Synchronising with the Bitcoin network",
-                model.syncProgressProperty());
+    public void okPassword(ActionEvent event) {
+        Main.password = passwordField.getText();
+
+        initTableView();
     }
 
     public void sendMoneyOut(ActionEvent event) {
@@ -262,6 +277,18 @@ public class MainController {
         screen.controller.initialize(null);
     }
 
+    private void askForPasswordAndRetry() {
+        Main.OverlayUI<WalletPasswordController> pwd = Main.instance.overlayUI("wallet_password.fxml");
+
+        pwd.controller.aesKeyProperty().addListener((observable, old, cur) -> {
+
+            Main.OverlayUI<MainController> screen = Main.instance.overlayUI("main.fxml");
+            screen.controller.aesKey = cur;
+
+            screen.controller.initTableView();
+        });
+    }
+
     public void restoreFromSeedAnimation() {
         // Buttons slide out ...
         TranslateTransition leave = new TranslateTransition(Duration.millis(1200), controlsBox);
@@ -274,7 +301,11 @@ public class MainController {
         TranslateTransition arrive = new TranslateTransition(Duration.millis(1200), controlsBox);
         arrive.setInterpolator(new ElasticInterpolator(EasingMode.EASE_OUT, 1, 2));
         arrive.setToY(0.0);
-
+        FadeTransition reveal = new FadeTransition(Duration.millis(1200), addressControl);
+        reveal.setToValue(1.0);
+        ParallelTransition group = new ParallelTransition(arrive, reveal);
+        group.setDelay(NotificationBarPane.ANIM_OUT_DURATION);
+        group.setCycleCount(1);
+        group.play();
     }
-
 }
