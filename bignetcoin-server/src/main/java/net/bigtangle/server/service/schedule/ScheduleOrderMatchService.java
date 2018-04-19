@@ -71,7 +71,7 @@ public class ScheduleOrderMatchService {
                             OrderPublish restingOrder = this.store.getOrderPublishByOrderid(match.restingOrderId);
                             // TODO Here's the change orders Jiang
                             // sell side will get the system coin as token
-                            if (match.incomingSide == Side.SELL) {
+                            if (match.incomingSide == Side.BUY) {
                                 Exchange exchange = new Exchange(incomingOrder.getOrderid(), incomingOrder.getAddress(), incomingOrder.getTokenid(),
                                         String.valueOf(match.executedQuantity), restingOrder.getOrderid(), restingOrder.getAddress(),
                                         Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID),

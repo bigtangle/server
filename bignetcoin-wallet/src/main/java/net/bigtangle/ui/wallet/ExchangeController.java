@@ -15,6 +15,7 @@ import java.util.Map;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.sun.org.apache.bcel.internal.generic.SWAP;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -400,6 +401,7 @@ public class ExchangeController {
             requestParam.put("signtype", signtype);
             String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
             OkHttp3Util.post(ContextRoot + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+            this.initTable();
             return;
         }
         byte[] buf = Utils.HEX.decode(dataHex);
@@ -448,6 +450,12 @@ public class ExchangeController {
         System.out.println("tx len : " + buf.length);
         return byteBuffer.array();
     }
+    
+    public void swap(Coin fromCoin, Coin toCoin) {
+        Coin t = fromCoin;
+        fromCoin = toCoin;
+        toCoin = t;
+    }
 
     @SuppressWarnings("deprecation")
     private byte[] makeSignTransactionBuffer(String fromAddress, Coin fromCoin, String toAddress, Coin toCoin) {
@@ -463,26 +471,46 @@ public class ExchangeController {
         try {
             List<UTXO> outputs = new ArrayList<UTXO>();
 
-            Address fromAddress00 = new Address(Main.params, fromAddress);
-            Address toAddress00 = new Address(Main.params, toAddress);
+            Address fromAddress00, toAddress00;
+            if (calculatedAddressHit(fromAddress)) {
+                fromAddress00 = new Address(Main.params, fromAddress);
+                toAddress00 = new Address(Main.params, toAddress);
+            }
+            else {
+                fromAddress00 = new Address(Main.params, toAddress);
+                toAddress00 = new Address(Main.params, fromAddress);
+                Coin t = fromCoin;
+                fromCoin = toCoin;
+                toCoin = t;
+            }
+            
             outputs.addAll(
-                    Main.getUTXOWithPubKeyHash(toAddress00.getHash160(), Utils.HEX.decode(toCoin.getTokenHex())));
+                    Main.getUTXOWithPubKeyHash(toAddress00.getHash160(), Utils.HEX.decode(fromCoin.getTokenHex())));
             outputs.addAll(this.getUTXOWithECKeyList(Main.bitcoin.wallet().walletKeys(aesKey),
-                    Utils.HEX.decode(fromCoin.getTokenHex())));
+                    Utils.HEX.decode(toCoin.getTokenHex())));
 
-            SendRequest req = SendRequest.to(fromAddress00, toCoin);
-            req.tx.addOutput(fromCoin, toAddress00);
+            SendRequest req = SendRequest.to(toAddress00, toCoin);
+            req.tx.addOutput(fromCoin, fromAddress00);
+            
+//            SendRequest req = SendRequest.to(fromAddress00,fromAmount  );
+//            req.tx.addOutput(toAmount , toAddress00 );
+
             req.missingSigsMode = MissingSigsMode.USE_OP_ZERO;
 
             HashMap<String, Address> addressResult = new HashMap<String, Address>();
             addressResult.put(fromCoin.getTokenHex(), toAddress00);
             addressResult.put(toCoin.getTokenHex(), fromAddress00);
             
+            //        addressResult.put((String) exchangemap.get("fromTokenHex"), toAddress00);
+//            addressResult.put((String) exchangemap.get("toTokenHex"), fromAddress00);
+            
             List<TransactionOutput> candidates = Main.bitcoin.wallet().transforSpendCandidates(outputs);
             Main.bitcoin.wallet().setServerURL(ContextRoot);
             Main.bitcoin.wallet().completeTx(req, candidates, false, addressResult);
             Main.bitcoin.wallet().signTransaction(req);
-            System.out.println(req.tx.getInputs().size());
+            
+            //        walletAppKit.wallet().completeTx(req, walletAppKit.wallet().transforSpendCandidates(ulist), false, addressResult);
+//            walletAppKit.wallet().signTransaction(req);
             this.mTransaction = req.tx;
             buf = mTransaction.bitcoinSerialize();
         } catch (Exception e) {

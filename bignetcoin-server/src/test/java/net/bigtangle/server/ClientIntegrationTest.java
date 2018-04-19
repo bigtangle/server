@@ -248,9 +248,10 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         HashMap<String, Object> request = new HashMap<String, Object>();
         request.put("address", yourutxo.getAddress());
         request.put("tokenid", Utils.HEX.encode(yourutxo.getTokenid()));
-        request.put("type", 0);
-        request.put("price", 1100);
-        request.put("amount", 2100);
+        request.put("type", 1);
+        request.put("price", 1000);
+        request.put("amount", 1000);
+        System.out.println("req : " + request);
         // sell token order
         MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.saveOrder.name())
                 .content(Json.jsonmapper().writeValueAsString(request));
@@ -258,9 +259,10 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
         request.put("address", myutxo.getAddress());
         request.put("tokenid", Utils.HEX.encode(yourutxo.getTokenid()));
-        request.put("type", 1);
-        request.put("price", 1100);
-        request.put("amount", 2100);
+        request.put("type", 2);
+        request.put("price", 1000);
+        request.put("amount", 1000);
+        System.out.println("req : " + request);
         // buy token order
         httpServletRequestBuilder = post(contextRoot + ReqCmd.saveOrder.name())
                 .content(Json.jsonmapper().writeValueAsString(request));
@@ -285,8 +287,8 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         Coin toAmount =  Coin.valueOf( 
                         Long.parseLong( (String) exchangemap.get("toAmount")), Utils.HEX.decode((String) exchangemap.get("toTokenHex")));
                    
-        SendRequest req = SendRequest.to(fromAddress00,fromAmount  );
-        req.tx.addOutput(toAmount , toAddress00 );
+        SendRequest req = SendRequest.to(toAddress00,toAmount  );
+        req.tx.addOutput(fromAmount , fromAddress00 );
         
         HashMap<String, Address> addressResult = new HashMap<String, Address>();
         addressResult.put((String) exchangemap.get("fromTokenHex"), toAddress00);
