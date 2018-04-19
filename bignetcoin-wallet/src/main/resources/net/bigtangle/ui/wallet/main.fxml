@@ -55,7 +55,7 @@
 			<children>
 				<Label layoutX="8.0" layoutY="7.0" text="%address" />
 				<TextField fx:id="addressTextField" layoutX="72.0" layoutY="3.0" prefHeight="23.0" prefWidth="432.0" />
-				<Button layoutX="520.0" layoutY="3.0" mnemonicParsing="false" onAction="#otherWallet" text="%other_wallet" />
+				<Button layoutX="520.0" layoutY="3.0" mnemonicParsing="false" onAction="#otherWallet" prefHeight="23.0" prefWidth="173.0" text="%other_wallet" />
 			</children>
 		</AnchorPane>
       <HBox fx:id="passwordHBox" alignment="CENTER" layoutX="14.0" layoutY="151.0" prefHeight="38.0" prefWidth="725.0">
