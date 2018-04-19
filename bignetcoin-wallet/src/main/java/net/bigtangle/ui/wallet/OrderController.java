@@ -29,6 +29,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.OrderState;
@@ -174,7 +175,11 @@ public class OrderController {
         }
         tokenComboBox.setItems(tokenData);
         KeyParameter aeskey = null;
-        Main.initAeskey(aeskey);
+        // Main.initAeskey(aeskey);
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aeskey = keyCrypter.deriveKey(Main.password);
+        }
         List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aeskey);
         ObservableList<String> addresses = FXCollections.observableArrayList();
         for (ECKey key : keys) {
@@ -188,8 +193,7 @@ public class OrderController {
     public void buy(ActionEvent event) throws Exception {
         String tokenid = tokenComboBox.getValue().split(":")[1].trim();
         List<UTXO> utxos = Main.getUTXOWithPubKeyHash(
-                Address.fromBase58(Main.params, addressComboBox.getValue()).getHash160(),
-                Utils.HEX.decode(tokenid));
+                Address.fromBase58(Main.params, addressComboBox.getValue()).getHash160(), Utils.HEX.decode(tokenid));
         long utxoAmount = 0;
         if (utxos != null && !utxos.isEmpty()) {
             for (UTXO utxo : utxos) {
@@ -215,7 +219,7 @@ public class OrderController {
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("address", this.addressComboBox.getValue());
-//        String tokenid = this.tokenComboBox.getValue().split(":")[1].trim();
+        // String tokenid = this.tokenComboBox.getValue().split(":")[1].trim();
         requestParam.put("tokenid", tokenid);
         String typeStr = (String) statusChoiceBox.getValue();
         requestParam.put("type", typeStr.equals("sell") ? 1 : 0);

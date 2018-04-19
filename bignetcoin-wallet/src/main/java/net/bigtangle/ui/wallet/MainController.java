@@ -37,8 +37,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.control.ToggleButton;
-import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.HBox;
 import javafx.util.Duration;
@@ -48,6 +46,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.ui.wallet.controls.NotificationBarPane;
 import net.bigtangle.ui.wallet.utils.BitcoinUIModel;
@@ -99,26 +98,11 @@ public class MainController {
     private NotificationBarPane.Item syncItem;
 
     @FXML
-    public ToggleGroup toggleGroup;
-    @FXML
-    public ToggleButton enLocaleButton;
-    @FXML
-    public ToggleButton cnLocaleButton;
-
-    @FXML
     public void initialize() {
-        enLocaleButton.setUserData("en");
-        cnLocaleButton.setUserData("cn");
-        toggleGroup.selectedToggleProperty().addListener((v, oldt, newt) -> {
-            Main.lang = newt.getUserData().toString();
-            changeLocale();
-        });
+
         Server.setText(Main.IpAddress);
         IPPort.setText(Main.port);
         initTableView();
-    }
-
-    public void changeLocale() {
     }
 
     @SuppressWarnings("unchecked")
@@ -128,7 +112,11 @@ public class MainController {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
         KeyParameter aesKey = null;
-        Main.initAeskey(aesKey);
+        // Main.initAeskey(aesKey);
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
         List<String> keyStrHex000 = new ArrayList<String>();
         if (addressString == null || "".equals(addressString.trim())) {
             for (ECKey ecKey : bitcoin.wallet().walletKeys(aesKey)) {

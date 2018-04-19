@@ -36,6 +36,7 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.MapToBeanMapperUtil;
@@ -109,7 +110,11 @@ public class ExchangeController {
     public void initTable() throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         KeyParameter aesKey = null;
-        Main.initAeskey(aesKey);
+        // Main.initAeskey(aesKey);
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
         List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
         ObservableList<Map<String, Object>> exchangeData = FXCollections.observableArrayList();
         for (ECKey key : keys) {
@@ -181,7 +186,11 @@ public class ExchangeController {
         fromTokenHexComboBox.setItems(tokenData);
 
         KeyParameter aesKey = null;
-        Main.initAeskey(aesKey);
+        // Main.initAeskey(aesKey);
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
         List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
         ObservableList<String> addresses = FXCollections.observableArrayList();
         for (ECKey key : keys) {
@@ -406,7 +415,11 @@ public class ExchangeController {
 
     public boolean calculatedAddressHit(String address) throws Exception {
         KeyParameter aesKey = null;
-        Main.initAeskey(aesKey);
+        // Main.initAeskey(aesKey);
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
         List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
         for (ECKey key : keys) {
             String n = key.toAddress(Main.params).toString();
@@ -441,7 +454,11 @@ public class ExchangeController {
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
 
         KeyParameter aesKey = null;
-        Main.initAeskey(aesKey);
+        // Main.initAeskey(aesKey);
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
         byte[] buf = null;
         try {
             List<UTXO> outputs = new ArrayList<UTXO>();

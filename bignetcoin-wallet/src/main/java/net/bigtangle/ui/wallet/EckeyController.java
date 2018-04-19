@@ -79,7 +79,11 @@ public class EckeyController {
         issuedKeyData.clear();
 
         KeyParameter aesKey = null;
-        Main.initAeskey(aesKey);
+        // Main.initAeskey(aesKey);
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
         List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
         if (issuedKeys != null && !issuedKeys.isEmpty()) {
             for (ECKey ecKey : issuedKeys) {

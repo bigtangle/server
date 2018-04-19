@@ -26,6 +26,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Utils;
+import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
 
@@ -68,7 +69,11 @@ public class StockController extends TokensController {
         List<String> names = new ArrayList<String>();
         // wallet keys minus used from token list with one time (blocktype false
         KeyParameter aeskey = null;
-        Main.initAeskey(aeskey);
+        // Main.initAeskey(aeskey);
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aeskey = keyCrypter.deriveKey(Main.password);
+        }
         List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aeskey);
         for (ECKey key : keys) {
             String temp = Utils.HEX.encode(key.getPubKeyHash());
