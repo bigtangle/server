@@ -112,13 +112,9 @@ public class EckeyController {
         File file = fileChooser.showOpenDialog(null);
         // final Desktop desktop = Desktop.getDesktop();
         if (file != null) {
-            // try {
-            // desktop.open(file);
             keyFileDirTextField.setText(file.getAbsolutePath());
-            // } catch (IOException e) {
-
-            // GuiUtils.crashAlert(e);
-            // }
+        } else {
+            return;
         }
         Main.keyFileDirectory = file.getParent() + "/";
         String filename = file.getName();
