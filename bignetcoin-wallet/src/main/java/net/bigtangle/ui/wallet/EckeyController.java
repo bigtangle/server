@@ -49,7 +49,7 @@ public class EckeyController {
 
     private ObservableList<EckeyModel> issuedKeyData = FXCollections.observableArrayList();
 
-    public Main.OverlayUI overlayUI;
+    public Main.OverlayUI<?> overlayUI;
 
     @FXML
     public void initialize() {

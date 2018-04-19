@@ -289,8 +289,8 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         req.tx.addOutput(toAmount , toAddress00 );
         
         HashMap<String, Address> addressResult = new HashMap<String, Address>();
-        addressResult.put((String) exchangemap.get("fromTokenHex"), fromAddress00);
-        addressResult.put((String) exchangemap.get("toTokenHex"), toAddress00);
+        addressResult.put((String) exchangemap.get("fromTokenHex"), toAddress00);
+        addressResult.put((String) exchangemap.get("toTokenHex"), fromAddress00);
         
         req.missingSigsMode = MissingSigsMode.USE_OP_ZERO;
         ulist.addAll(utxos);
