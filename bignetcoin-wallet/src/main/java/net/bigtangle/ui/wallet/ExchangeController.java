@@ -474,9 +474,13 @@ public class ExchangeController {
             req.tx.addOutput(fromCoin, toAddress00);
             req.missingSigsMode = MissingSigsMode.USE_OP_ZERO;
 
+            HashMap<String, Address> addressResult = new HashMap<String, Address>();
+            addressResult.put(fromCoin.getTokenHex(), toAddress00);
+            addressResult.put(toCoin.getTokenHex(), fromAddress00);
+            
             List<TransactionOutput> candidates = Main.bitcoin.wallet().transforSpendCandidates(outputs);
             Main.bitcoin.wallet().setServerURL(ContextRoot);
-            Main.bitcoin.wallet().completeTx(req, candidates, false);
+            Main.bitcoin.wallet().completeTx(req, candidates, false, addressResult);
             Main.bitcoin.wallet().signTransaction(req);
             System.out.println(req.tx.getInputs().size());
             this.mTransaction = req.tx;

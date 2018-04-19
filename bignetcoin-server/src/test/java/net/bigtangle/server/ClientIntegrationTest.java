@@ -288,10 +288,13 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         SendRequest req = SendRequest.to(fromAddress00,fromAmount  );
         req.tx.addOutput(toAmount , toAddress00 );
         
-      
+        HashMap<String, Address> addressResult = new HashMap<String, Address>();
+        addressResult.put((String) exchangemap.get("fromTokenHex"), toAddress00);
+        addressResult.put((String) exchangemap.get("toTokenHex"), fromAddress00);
+        
         req.missingSigsMode = MissingSigsMode.USE_OP_ZERO;
         ulist.addAll(utxos);
-        walletAppKit.wallet().completeTx(req, walletAppKit.wallet().transforSpendCandidates(ulist), false);
+        walletAppKit.wallet().completeTx(req, walletAppKit.wallet().transforSpendCandidates(ulist), false, addressResult);
         walletAppKit.wallet().signTransaction(req);
 
         byte[] a = req.tx.bitcoinSerialize();
