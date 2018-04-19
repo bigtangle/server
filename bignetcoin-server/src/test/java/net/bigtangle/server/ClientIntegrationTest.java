@@ -113,8 +113,14 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
                 myutxo = u;
             }
         }
-        SendRequest req = SendRequest.to(new Address(PARAMS, myutxo.getAddress()), yourutxo.getValue());
+        
+        Coin amount = Coin.valueOf(10000, yourutxo.getValue().tokenid);
+        SendRequest req = SendRequest.to(new Address(PARAMS, myutxo.getAddress()), amount);
         req.tx.addOutput(myutxo.getValue(), new Address(PARAMS, yourutxo.getAddress()));
+        
+        System.out.println(myutxo.getAddress() + ", " + myutxo.getValue());
+        System.out.println(yourutxo.getAddress() + ", " + amount);
+        
         req.missingSigsMode = MissingSigsMode.USE_OP_ZERO;
         ulist.addAll(utxos);
         walletAppKit.wallet().completeTx(req, walletAppKit.wallet().transforSpendCandidates(ulist), false);
@@ -184,10 +190,10 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
             }
         }
         System.out.println(utxo.getValue());
-        Coin baseCoin = utxo.getValue().subtract(Coin.parseCoin("10000", utxo.getValue().getTokenid()));
-        System.out.println(baseCoin);
+        //Coin baseCoin = utxo.getValue().subtract(Coin.parseCoin("10000", utxo.getValue().getTokenid()));
+        //System.out.println(baseCoin);
         Address destination = outKey.toAddress(PARAMS);
-        SendRequest request = SendRequest.to(destination, baseCoin);
+        SendRequest request = SendRequest.to(destination, utxo.getValue());
         walletAppKit.wallet().completeTx(request);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
