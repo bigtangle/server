@@ -54,6 +54,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import net.bigtangle.core.Block;
+import net.bigtangle.core.Coin;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.UTXO;
@@ -255,7 +256,7 @@ public class Main extends Application {
     }
 
     @Nullable
-    private OverlayUI currentOverlay;
+    private OverlayUI<?> currentOverlay;
 
     public <T> OverlayUI<T> overlayUI(Node node, T controller) {
         checkGuiThread();
@@ -306,7 +307,7 @@ public class Main extends Application {
 
     public static void main(String[] args) {
         String systemLang = Locale.getDefault().getLanguage();
-        String systemName = System.getProperty("os.name").toLowerCase();
+//        String systemName = System.getProperty("os.name").toLowerCase();
         if (args == null || args.length == 0) {
             lang = systemLang;
             keyFileDirectory = System.getProperty("user.home");
@@ -372,6 +373,7 @@ public class Main extends Application {
 
     }
 
+    @SuppressWarnings("unchecked")
     public static List<UTXO> getUTXOWithPubKeyHash(byte[] pubKeyHash, byte[] tokenid) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
@@ -396,4 +398,15 @@ public class Main extends Application {
         return listUTXO;
     }
 
+    public static Coin calculateTotalUTXOList(byte[] pubKeyHash, byte[] tokenid) throws Exception {
+        List<UTXO> listUTXO = getUTXOWithPubKeyHash(pubKeyHash, tokenid);
+        Coin amount = Coin.valueOf(0, tokenid);
+        if (listUTXO == null || listUTXO.isEmpty()) {
+            return amount;
+        }
+        for (UTXO utxo : listUTXO) {
+            amount = amount.add(utxo.getValue());
+        }
+        return amount;
+    }
 }

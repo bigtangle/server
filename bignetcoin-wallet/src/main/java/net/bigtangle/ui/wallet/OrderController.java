@@ -9,8 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.spongycastle.crypto.params.KeyParameter;
-
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -27,12 +25,14 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
-import net.bigtangle.core.UTXO;
+import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.OrderState;
+
+import org.spongycastle.crypto.params.KeyParameter;
 
 public class OrderController {
     @FXML
@@ -192,17 +192,13 @@ public class OrderController {
 
     public void buy(ActionEvent event) throws Exception {
         String tokenid = tokenComboBox.getValue().split(":")[1].trim();
-        List<UTXO> utxos = Main.getUTXOWithPubKeyHash(
-                Address.fromBase58(Main.params, addressComboBox.getValue()).getHash160(), Utils.HEX.decode(tokenid));
-        long utxoAmount = 0;
-        if (utxos != null && !utxos.isEmpty()) {
-            for (UTXO utxo : utxos) {
-                utxoAmount += utxo.getValue().getValue();
-            }
-        }
+        String typeStr = (String) statusChoiceBox.getValue();
+
+        byte[] pubKeyHash = Address.fromBase58(Main.params, addressComboBox.getValue()).getHash160();
+        Coin coin = Main.calculateTotalUTXOList(pubKeyHash, typeStr.equals("sell") ? Utils.HEX.decode(tokenid) : NetworkParameters.BIGNETCOIN_TOKENID);
         long amount = Coin.parseCoinValue(this.amountTextField.getText());
 
-        if (utxoAmount < amount) {
+        if (coin.getValue() < amount) {
             GuiUtils.informationalAlert("amount no enough", "amount no enough", "");
             return;
         }
@@ -221,7 +217,6 @@ public class OrderController {
         requestParam.put("address", this.addressComboBox.getValue());
         // String tokenid = this.tokenComboBox.getValue().split(":")[1].trim();
         requestParam.put("tokenid", tokenid);
-        String typeStr = (String) statusChoiceBox.getValue();
         requestParam.put("type", typeStr.equals("sell") ? 1 : 0);
         long price = Coin.parseCoinValue(this.limitTextField.getText());
         requestParam.put("price", price);
