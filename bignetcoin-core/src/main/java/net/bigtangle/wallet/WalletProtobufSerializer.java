@@ -130,18 +130,10 @@ public class WalletProtobufSerializer {
     }
 
     /**
-     * Converts the given wallet to the object representation of the protocol
-     * buffers. This can be modified, or additional data fields set, before
-     * serialization takes place.
+     * only keys 
      */
     public Protos.Wallet walletToProto(Wallet wallet) {
         Protos.Wallet.Builder walletBuilder = Protos.Wallet.newBuilder();
-        walletBuilder.setNetworkIdentifier(wallet.getNetworkParameters().getId());
-        if (wallet.getDescription() != null) {
-            walletBuilder.setDescription(wallet.getDescription());
-        }
- 
-      
         walletBuilder.addAllKey(wallet.serializeKeyChainGroupToProtobuf());
 
         // Populate the scrypt parameters.
@@ -163,16 +155,7 @@ public class WalletProtobufSerializer {
                                 + "' but this WalletProtobufSerializer does not know how to persist this.");
             }
         }
-
-        if (wallet.getKeyRotationTime() != null) {
-            long timeSecs = wallet.getKeyRotationTime().getTime() / 1000;
-            walletBuilder.setKeyRotationTime(timeSecs);
-        } 
-
-        for (Map.Entry<String, ByteString> entry : wallet.getTags().entrySet()) {
-            Protos.Tag.Builder tag = Protos.Tag.newBuilder().setTag(entry.getKey()).setData(entry.getValue());
-            walletBuilder.addTags(tag);
-        }
+ 
 
         return walletBuilder.build();
     }
