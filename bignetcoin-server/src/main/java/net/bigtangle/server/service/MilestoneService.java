@@ -24,6 +24,7 @@ import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 
 /*
@@ -37,7 +38,7 @@ public class MilestoneService {
 	private static final int WARNING_MILESTONE_UPDATE_LOOPS = 20;
 
 	@Autowired
-	protected BlockGraphService blockGraphService;
+	protected FullPrunedBlockGraph blockGraphService;
 	@Autowired
 	protected FullPrunedBlockStore store;
 	@Autowired

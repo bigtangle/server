@@ -22,6 +22,7 @@ import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.wallet.CoinSelector;
@@ -54,6 +55,8 @@ public class TransactionService {
     @Autowired
     protected NetworkParameters networkParameters;
 
+
+    
     public ByteBuffer askTransaction() throws Exception {
 
         Block rollingBlock = askTransactionBlock();
@@ -141,5 +144,9 @@ public class TransactionService {
 
     public UTXO getUTXO(TransactionOutPoint out) throws BlockStoreException {
         return blockStore.getTransactionOutput(out.getHash(), out.getIndex());
+    }
+
+    public void kafkaSend(Block block) {
+
     }
 }

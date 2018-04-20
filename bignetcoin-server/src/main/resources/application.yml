@@ -13,15 +13,22 @@ server:
 db:
   hostname: ${DB_HOSTNAME:localhost}
   port: ${DB_PORT:3306}
-  dbName: ${DB_NAME:baseDB}
+  dbName: ${DB_NAME:info}
   username: ${DB_USERNAME:root}
-  password: ${DB_PASSWORD:123456}
+  password: ${DB_PASSWORD:test1234}
 
 service:
   milestoneschedule:
     rate: ${SERVICE_MILESTONE_RATE:500000}
     retention-time-in-minutes: ${service_HOUSEKEEPING_RETENTION:1440} # 24*60 == 1 Tag
     active: ${SERVICE_MILESTONE_ACTIVE:true}
+    
+kafka:
+  broker: ${KAFKA_BROKER:kafka2.bigtangle.net:9092}
+  bootstrapServers: ${BOOT_STRAP_SERVERS:kafka2.bigtangle.net:9092}
+  zooKeeperServer: ${ZOOKEEPER_SERVERS:zookeeper2.bigtangle.net:2281}
+  topicOutName: ${TOPIC_OUT_NAME:bigtangle}
+
     
 ---
 spring:

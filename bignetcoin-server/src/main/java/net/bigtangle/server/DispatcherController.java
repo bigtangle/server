@@ -35,7 +35,6 @@ import net.bigtangle.server.service.OrderPublishService;
 import net.bigtangle.server.service.TokensService;
 import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.server.service.WalletService;
-  
 
 @RestController
 @RequestMapping("/")
@@ -118,7 +117,7 @@ public class DispatcherController {
                 logger.debug("exchangeToken, {}", request);
             }
                 break;
-                
+
             case exchangeInfo: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 @SuppressWarnings("unchecked")
@@ -235,12 +234,15 @@ public class DispatcherController {
     }
 
     public void saveEmptyBlock(int number) {
+    }
+    public void saveEmptyBlockTask(int number) {
         Runnable r = () -> {
             for (int i = 0; i < number; i++) {
                 try {
                     Block b = transactionService.askTransactionBlock();
                     b.solve();
-                    logger.debug("empty block " + i);
+                    blockService.saveBlock(b);
+                    logger.debug("empty block saved" + i);
                 } catch (Exception e) {
                     logger.debug("", e);
                 }
@@ -250,4 +252,6 @@ public class DispatcherController {
         // Threading.USER_THREAD.execute(r);
     }
 
+   
+    
 }

@@ -40,7 +40,7 @@ public class MySQLDBStoreConfiguration {
     private int fullStoreDepth = 10;
     @Autowired
     NetworkParameters networkParameters;
-    private static final Logger logger = LoggerFactory.getLogger(DispatcherController.class);
+    private static final Logger logger = LoggerFactory.getLogger(MySQLDBStoreConfiguration.class);
     @Bean
     public FullPrunedBlockStore store() throws BlockStoreException {
         MySQLFullPrunedBlockStore store = new MySQLFullPrunedBlockStore(networkParameters, fullStoreDepth,

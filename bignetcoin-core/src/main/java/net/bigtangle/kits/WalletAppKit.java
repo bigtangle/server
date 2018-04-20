@@ -294,10 +294,10 @@ public class WalletAppKit extends AbstractIdleService {
         }
         log.info("Starting up with directory = {}", directory);
 
-        File chainFile = new File(directory, filePrefix + ".spvchain");
-        boolean chainFileExists = chainFile.exists();
+       
+        
         vWalletFile = new File(directory, filePrefix + ".wallet");
-        boolean shouldReplayWallet = (vWalletFile.exists() && !chainFileExists) || restoreFromSeed != null;
+        boolean shouldReplayWallet =  vWalletFile.exists()   ;
         vWallet = createOrLoadWallet(shouldReplayWallet);
     }
 

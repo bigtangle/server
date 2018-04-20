@@ -9,7 +9,6 @@ import static com.google.common.base.Preconditions.checkState;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -26,6 +25,7 @@ import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.Block;
@@ -62,10 +62,17 @@ import net.bigtangle.wallet.WalletExtension;
  * nevertheless provides the same security guarantees as Bitcoin Core does.
  * </p>
  */
- 
+@Service
 public class FullPrunedBlockGraph extends AbstractBlockGraph {
     private static final Logger log = LoggerFactory.getLogger(FullPrunedBlockGraph.class);
 
+    
+    @Autowired
+    public FullPrunedBlockGraph(NetworkParameters networkParameters, FullPrunedBlockStore blockStore) throws BlockStoreException {
+        this(Context.getOrCreate(networkParameters), blockStore);
+    }
+
+    
     /**
      * Keeps a map of block hashes to StoredBlocks.
      */
@@ -106,12 +113,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         this(context, new ArrayList<Wallet>(), blockStore);
     }
 
-    /**
-     * See {@link #FullPrunedBlockChain(Context, Wallet, FullPrunedBlockStore)}
-     */
-    public FullPrunedBlockGraph(NetworkParameters params, FullPrunedBlockStore blockStore) throws BlockStoreException {
-        this(Context.getOrCreate(params), blockStore);
-    }
 
     /**
      * Constructs a block chain connected to the given list of wallets and a

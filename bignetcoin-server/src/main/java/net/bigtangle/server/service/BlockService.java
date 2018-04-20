@@ -9,8 +9,11 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.TreeSet;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,8 +21,12 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.PrunedException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
+import net.bigtangle.core.VerificationException;
+import net.bigtangle.kafka.KafkaMessageProducer;
+import net.bigtangle.server.DispatcherController;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.wallet.CoinSelector;
@@ -41,7 +48,12 @@ public class BlockService {
     @Autowired
     protected NetworkParameters networkParameters;
     @Autowired
-    BlockGraphService blockGraphService;
+    FullPrunedBlockGraph blockGraphService;
+
+    @Autowired
+    protected KafkaMessageProducer kafkaMessageProducer;
+
+    private static final Logger logger = LoggerFactory.getLogger(DispatcherController.class);
 
     public Block getBlock(Sha256Hash blockhash) throws BlockStoreException {
         return store.get(blockhash).getHeader();
@@ -101,7 +113,7 @@ public class BlockService {
 
     public HashSet<BlockEvaluation> getBlocksToAddToMilestone() throws BlockStoreException {
         return store.getBlocksToAddToMilestone(0);
-		//TODO constraint blockstoadd by receivetime e.g. 30 sec old at least?
+        // TODO constraint blockstoadd by receivetime e.g. 30 sec old at least?
     }
 
     public void updateSolid(BlockEvaluation blockEvaluation, boolean b) throws BlockStoreException {
@@ -145,9 +157,20 @@ public class BlockService {
 
     public void saveBinaryArrayToBlock(byte[] bytes) throws Exception {
         Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bytes);
+        saveBlock(block);
+    }
+
+    public void saveBlock(Block block) throws Exception {
         FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
         blockgraph.add(block);
+        try {
         milestoneService.update();
+        kafkaMessageProducer.sendMessage(block.bitcoinSerialize());
+        }catch (Exception e) {
+            // TODO: handle exception
+            logger.warn(" saveBlock problem after save ", e);
+        }
+
     }
 
     public int getNextTokenId() throws BlockStoreException {
@@ -187,79 +210,99 @@ public class BlockService {
         return store.getSolidBlockEvaluations();
     }
 
-	/**
-	 * Returns all solid tips ordered by descending height
-	 * 
-	 * @return solid tips by ordered by descending height
-	 * @throws BlockStoreException
-	 */
-	public TreeSet<BlockEvaluation> getSolidTipsDescending() throws BlockStoreException {
-		List<BlockEvaluation> solidTips = getSolidTips();
-		TreeSet<BlockEvaluation> blocksByDescendingHeight = new TreeSet<BlockEvaluation>(Comparator.comparingLong(BlockEvaluation::getHeight).reversed());
-		blocksByDescendingHeight.addAll(solidTips);
-		return blocksByDescendingHeight;
-	}
+    /**
+     * Returns all solid tips ordered by descending height
+     * 
+     * @return solid tips by ordered by descending height
+     * @throws BlockStoreException
+     */
+    public TreeSet<BlockEvaluation> getSolidTipsDescending() throws BlockStoreException {
+        List<BlockEvaluation> solidTips = getSolidTips();
+        TreeSet<BlockEvaluation> blocksByDescendingHeight = new TreeSet<BlockEvaluation>(
+                Comparator.comparingLong(BlockEvaluation::getHeight).reversed());
+        blocksByDescendingHeight.addAll(solidTips);
+        return blocksByDescendingHeight;
+    }
 
-	/**
-	 * Recursively removes the specified block and its approvers from the collection
-	 * if this block is contained in the collection.
-	 * 
-	 * @param evaluations
-	 * @param blockEvaluation
-	 * @throws BlockStoreException
-	 */
-	public void removeBlockAndApproversFrom(Collection<BlockEvaluation> evaluations, BlockEvaluation blockEvaluation) throws BlockStoreException {
-		if (!evaluations.contains(blockEvaluation))
-			return;
+    /**
+     * Recursively removes the specified block and its approvers from the
+     * collection if this block is contained in the collection.
+     * 
+     * @param evaluations
+     * @param blockEvaluation
+     * @throws BlockStoreException
+     */
+    public void removeBlockAndApproversFrom(Collection<BlockEvaluation> evaluations, BlockEvaluation blockEvaluation)
+            throws BlockStoreException {
+        if (!evaluations.contains(blockEvaluation))
+            return;
 
-		// Remove this block and remove its approvers
-		evaluations.remove(blockEvaluation);
-		for (Sha256Hash approver : getSolidApproverBlockHashes(blockEvaluation.getBlockhash())) {
-			removeBlockAndApproversFrom(evaluations, getBlockEvaluation(approver));
-		}
-	}
+        // Remove this block and remove its approvers
+        evaluations.remove(blockEvaluation);
+        for (Sha256Hash approver : getSolidApproverBlockHashes(blockEvaluation.getBlockhash())) {
+            removeBlockAndApproversFrom(evaluations, getBlockEvaluation(approver));
+        }
+    }
 
-	/**
-	 * Recursively adds the specified block and its approvers to the collection if
-	 * the blocks are in the current milestone and not in the collection.
-	 * 
-	 * @param evaluations
-	 * @param evaluation
-	 * @throws BlockStoreException
-	 */
-	public void addMilestoneApproversTo(Collection<BlockEvaluation> evaluations, BlockEvaluation evaluation) throws BlockStoreException {
-		if (!evaluation.isMilestone() || evaluations.contains(evaluation))
-			return;
+    /**
+     * Recursively adds the specified block and its approvers to the collection
+     * if the blocks are in the current milestone and not in the collection.
+     * 
+     * @param evaluations
+     * @param evaluation
+     * @throws BlockStoreException
+     */
+    public void addMilestoneApproversTo(Collection<BlockEvaluation> evaluations, BlockEvaluation evaluation)
+            throws BlockStoreException {
+        if (!evaluation.isMilestone() || evaluations.contains(evaluation))
+            return;
 
-		// Add this block and add all of its milestone approvers
-		evaluations.add(evaluation);
-		for (Sha256Hash approverHash : getSolidApproverBlockHashes(evaluation.getBlockhash())) {
-			addMilestoneApproversTo(evaluations, getBlockEvaluation(approverHash));
-		}
-	}
+        // Add this block and add all of its milestone approvers
+        evaluations.add(evaluation);
+        for (Sha256Hash approverHash : getSolidApproverBlockHashes(evaluation.getBlockhash())) {
+            addMilestoneApproversTo(evaluations, getBlockEvaluation(approverHash));
+        }
+    }
 
-	/**
-	 * Recursively adds the specified block and its approved blocks to the collection if
-	 * the blocks are not in the current milestone and not in the collection.
-	 * 
-	 * @param evaluations
-	 * @param milestoneEvaluation
-	 * @throws BlockStoreException
-	 */
-	public void addApprovedNonMilestoneBlocksTo(Collection<BlockEvaluation> evaluations, BlockEvaluation evaluation) throws BlockStoreException {
-		if (evaluation.isMilestone() || evaluations.contains(evaluation))
-			return;
+    /**
+     * Recursively adds the specified block and its approved blocks to the
+     * collection if the blocks are not in the current milestone and not in the
+     * collection.
+     * 
+     * @param evaluations
+     * @param milestoneEvaluation
+     * @throws BlockStoreException
+     */
+    public void addApprovedNonMilestoneBlocksTo(Collection<BlockEvaluation> evaluations, BlockEvaluation evaluation)
+            throws BlockStoreException {
+        if (evaluation.isMilestone() || evaluations.contains(evaluation))
+            return;
 
-		// Add this block and add all of its approved non-milestone blocks
-		evaluations.add(evaluation);
-		
-		Block block = getBlock(evaluation.getBlockhash());
-		BlockEvaluation prevBlockEvaluation = getBlockEvaluation(block.getPrevBlockHash());
-		BlockEvaluation prevBranchBlockEvaluation = getBlockEvaluation(block.getPrevBranchBlockHash());
-		
-		if (prevBlockEvaluation != null)
-			addApprovedNonMilestoneBlocksTo(evaluations, prevBlockEvaluation);
-		if (prevBranchBlockEvaluation != null)
-			addApprovedNonMilestoneBlocksTo(evaluations, prevBranchBlockEvaluation);
-	}
+        // Add this block and add all of its approved non-milestone blocks
+        evaluations.add(evaluation);
+
+        Block block = getBlock(evaluation.getBlockhash());
+        BlockEvaluation prevBlockEvaluation = getBlockEvaluation(block.getPrevBlockHash());
+        BlockEvaluation prevBranchBlockEvaluation = getBlockEvaluation(block.getPrevBranchBlockHash());
+
+        if (prevBlockEvaluation != null)
+            addApprovedNonMilestoneBlocksTo(evaluations, prevBlockEvaluation);
+        if (prevBranchBlockEvaluation != null)
+            addApprovedNonMilestoneBlocksTo(evaluations, prevBranchBlockEvaluation);
+    }
+    
+
+    public Optional<Block> addConnected(byte[] bytes) {
+        try {
+            Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bytes); 
+            FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
+            blockgraph.add(block); 
+            return Optional.of(block);
+        } catch (VerificationException e) {
+            return   Optional.empty();
+        } catch ( Exception e) {
+            return  Optional.empty();
+        }
+
+    }
 }
