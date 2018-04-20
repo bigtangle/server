@@ -13,7 +13,7 @@
 				<TableColumn fx:id="ratingColumn" prefWidth="77.0" text="%rating" />
 				<TableColumn fx:id="depthColumn" text="%depth" />
 				<TableColumn fx:id="cumulativeWeightColumn" prefWidth="155.0" text="%cumulativeWeight" />
-				<TableColumn fx:id="heightColumn" prefWidth="88.0" text="%height" />
+				<TableColumn fx:id="heightColumn" prefWidth="92.0" text="%height" />
 			</columns>
 		</TableView>
       <Button layoutX="779.0" layoutY="483.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />
