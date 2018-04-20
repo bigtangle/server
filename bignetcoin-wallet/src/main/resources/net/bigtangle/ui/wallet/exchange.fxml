@@ -5,41 +5,40 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<StackPane prefHeight="503.0" prefWidth="873.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.bigtangle.ui.wallet.ExchangeController">
-	<children>
-		<AnchorPane prefHeight="416.0" prefWidth="567.0">
+
+		<AnchorPane maxHeight="600.0" maxWidth="1000.0" minHeight="600.0" minWidth="1000.0" prefHeight="600.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.bigtangle.ui.wallet.ExchangeController">
 			<children>
-				<TabPane layoutX="2.0" layoutY="-2.0" prefHeight="512.0" prefWidth="873.0">
+				<TabPane layoutX="2.0" layoutY="-2.0" maxHeight="600.0" maxWidth="1000.0" minHeight="600.0" minWidth="1000.0" prefHeight="600.0" prefWidth="1000.0">
 					<tabs>
 						<Tab closable="false" text="%search">
 							<content>
-								<AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+								<AnchorPane maxHeight="550.0" maxWidth="1000.0" minHeight="550.0" minWidth="1000.0" prefHeight="550.0" prefWidth="1000.0">
 									<children>
-										<TableView fx:id="exchangeTable" layoutX="14.0" layoutY="14.0" prefHeight="376.0" prefWidth="847.0">
+										<TableView fx:id="exchangeTable" layoutX="14.0" layoutY="14.0" prefHeight="460.0" prefWidth="977.0">
 											<columns>
 												<TableColumn fx:id="orderidsCol" prefWidth="1.0" text="%orderid" visible="false" />
 												<TableColumn fx:id="dataHexCol" prefWidth="1.0" text="%dataHex" visible="false" />
-												<TableColumn fx:id="fromAddressCol" prefWidth="106.0" text="%from_Address" />
-												<TableColumn fx:id="fromTokenidCol" prefWidth="145.0" text="%from_Tokenid" />
-												<TableColumn fx:id="fromAmountCol" prefWidth="118.0" text="%from_Amount" />
-												<TableColumn fx:id="toAddressCol" prefWidth="84.0" text="%to_Address" />
-												<TableColumn fx:id="toTokenidCol" prefWidth="143.0" text="%to_tokenid" />
-												<TableColumn fx:id="toAmountCol" prefWidth="54.0" text="%to_tokenAmount" />
-												<TableColumn fx:id="toSignCol" prefWidth="54.0" text="%to_sign" />
-                                                <TableColumn fx:id="fromSignCol" prefWidth="54.0" text="%from_sign" />
+												<TableColumn fx:id="fromAddressCol" prefWidth="128.0" text="%from_Address" />
+												<TableColumn fx:id="fromTokenidCol" prefWidth="159.0" text="%from_Tokenid" />
+												<TableColumn fx:id="fromAmountCol" prefWidth="110.0" text="%from_Amount" />
+												<TableColumn fx:id="toAddressCol" prefWidth="137.0" text="%to_Address" />
+												<TableColumn fx:id="toTokenidCol" prefWidth="138.0" text="%to_tokenid" />
+												<TableColumn fx:id="toAmountCol" prefWidth="122.0" text="%to_tokenAmount" />
+												<TableColumn fx:id="toSignCol" prefWidth="71.0" text="%to_sign" />
+                                          <TableColumn fx:id="fromSignCol" prefWidth="102.0" text="%from_sign" />
 											</columns>
 										</TableView>
-										<Button layoutX="412.0" layoutY="426.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />
-										<Button layoutX="88.0" layoutY="426.0" mnemonicParsing="false" onAction="#signExchange" text="%sign" />
+										<Button layoutX="409.0" layoutY="494.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />
+										<Button layoutX="88.0" layoutY="494.0" mnemonicParsing="false" onAction="#signExchange" text="%sign" />
 									</children>
 								</AnchorPane>
 							</content>
 						</Tab>
 						<Tab closable="false" text="%add">
 							<content>
-								<GridPane layoutX="2.0" layoutY="-9.0" prefHeight="483.0" prefWidth="676.0">
+								<GridPane layoutX="2.0" layoutY="-9.0" maxHeight="500.0" maxWidth="1000.0" minHeight="500.0" minWidth="1000.0" prefHeight="500.0" prefWidth="1000.0">
 									<columnConstraints>
-										<ColumnConstraints hgrow="SOMETIMES" maxWidth="246.0" minWidth="10.0" prefWidth="115.0" />
+										<ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="246.0" minWidth="10.0" prefWidth="115.0" />
 										<ColumnConstraints hgrow="SOMETIMES" maxWidth="449.0" minWidth="10.0" prefWidth="424.0" />
 										<ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
 									</columnConstraints>
@@ -91,5 +90,3 @@
 				</TabPane>
 			</children>
 		</AnchorPane>
-	</children>
-</StackPane>

@@ -5,19 +5,15 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane prefHeight="555.0" prefWidth="634.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.bigtangle.ui.wallet.StockController">
+<AnchorPane maxHeight="600.0" maxWidth="1000.0" minHeight="600.0" minWidth="1000.0" prefHeight="600.0" prefWidth="1000.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.bigtangle.ui.wallet.StockController">
 	<children>
-		<TabPane layoutX="2.0" layoutY="5.0" prefHeight="526.0" prefWidth="683.0">
+		<TabPane layoutX="2.0" layoutY="5.0" maxHeight="550.0" maxWidth="990.0" minHeight="550.0" minWidth="990.0" prefHeight="550.0" prefWidth="990.0">
 			<tabs>
 				<Tab closable="false" text="%search">
 					<content>
-						<AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+						<AnchorPane maxHeight="550.0" maxWidth="990.0" minHeight="550.0" minWidth="990.0" prefHeight="550.0" prefWidth="990.0">
 							<children>
-								<VBox prefHeight="512.0" prefWidth="668.0" style="-fx-background-color: white;">
-									<children>
-										<HBox prefHeight="425.0" prefWidth="663.0">
-											<children>
-												<TableView fx:id="tokensTable" prefHeight="425.0" prefWidth="683.0">
+												<TableView fx:id="tokensTable" prefHeight="425.0" prefWidth="762.0">
 													<columns>
 														<TableColumn fx:id="tokenHexColumn" prefWidth="153.0" text="%TokenHex" />
 														<TableColumn fx:id="tokennameColumn" prefWidth="115.0" text="%tokenname" />
@@ -26,9 +22,7 @@
 														<TableColumn fx:id="descriptionColumn" prefWidth="261.0" text="%description" />
 													</columns>
 												</TableView>
-											</children>
-										</HBox>
-										<GridPane>
+										<GridPane layoutX="295.0" layoutY="451.0">
 											<children>
 												<Button mnemonicParsing="false" onAction="#closeUI" text="%close" GridPane.columnIndex="1" />
 											</children>
@@ -40,15 +34,13 @@
 												<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
 											</rowConstraints>
 										</GridPane>
-									</children>
-								</VBox>
 							</children>
 						</AnchorPane>
 					</content>
 				</Tab>
 				<Tab closable="false" text="%add">
 					<content>
-						<GridPane layoutX="42.0" layoutY="78.0" prefHeight="424.0" prefWidth="485.0">
+						<GridPane layoutX="42.0" layoutY="78.0" maxHeight="550.0" maxWidth="990.0" minHeight="550.0" minWidth="990.0" prefHeight="550.0" prefWidth="990.0">
 							<columnConstraints>
 								<ColumnConstraints halignment="LEFT" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
 								<ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
@@ -72,7 +64,7 @@
 								<Button fx:id="save" mnemonicParsing="false" onAction="#saveStock" text="%publish" GridPane.rowIndex="5" />
 								<Button fx:id="closeButton" mnemonicParsing="false" onAction="#closeUI" text="%close" GridPane.columnIndex="1" GridPane.rowIndex="5" />
 								<CheckBox fx:id="firstPublishCheckBox" mnemonicParsing="false" text="%first_publish" GridPane.columnIndex="1" />
-								<ComboBox fx:id="tokenid" editable="true" prefHeight="23.0" prefWidth="238.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+								<ComboBox fx:id="tokenid" editable="true" prefHeight="23.0" prefWidth="429.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
 							</children>
 						</GridPane>
 					</content>
