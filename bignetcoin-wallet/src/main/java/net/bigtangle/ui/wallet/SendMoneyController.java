@@ -142,9 +142,9 @@ public class SendMoneyController {
             wallet.completeTx(request);
             rollingBlock.addTransaction(request.tx);
             rollingBlock.solve();
-            OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
-            Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
-
+           // OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
+           // Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
+            Main.instance.sendMessage(rollingBlock.bitcoinSerialize());
             Main.instance.controller.initTableView();
             // address.setDisable(true);
             // ((HBox) amountEdit.getParent()).getChildren().remove(amountEdit);

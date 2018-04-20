@@ -27,7 +27,7 @@ public class ThreadConfig {
 
         executor.setMaxPoolSize(4);
 
-        executor.setThreadNamePrefix("sgfgd");
+        executor.setThreadNamePrefix("taskExecutor");
 
         executor.initialize();
 

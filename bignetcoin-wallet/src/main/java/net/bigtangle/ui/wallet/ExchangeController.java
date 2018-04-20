@@ -247,7 +247,7 @@ public class ExchangeController {
         requestParam.put("signtype", signtype);
         OkHttp3Util.post(ContextRoot + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
 
-        Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
+        //Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
     }
 
     public void importBlock(ActionEvent event) {

@@ -22,9 +22,7 @@ public class KafkaMessageProducer {
     // public String topic;
     @Autowired
     private KafkaConfiguration configuration;;
-    private boolean binaryMessageKey = false;
-
-    private KafkaProducer producer;
+    private boolean binaryMessageKey = false; 
 
     private static final Logger log = LoggerFactory.getLogger(KafkaMessageProducer.class);
 
@@ -36,8 +34,9 @@ public class KafkaMessageProducer {
         final Future<RecordMetadata> result = messageProducer.send(producerRecord);
         RecordMetadata mdata = result.get();
         log.debug(" sendMessage "+ key );
+        messageProducer.close();
         return mdata != null;
-        // messageProducer.close();
+        
     }
 
     public Properties producerConfig() {

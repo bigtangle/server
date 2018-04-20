@@ -2360,92 +2360,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         keyChainGroup.addEventListener(listener, executor);
     }
 
-    /**
-     * Adds an event listener object. Methods on this object are called when
-     * something interesting happens, like receiving money. Runs the listener
-     * methods in the user thread.
-     */
-    public void addReorganizeEventListener(WalletReorganizeEventListener listener) {
-        addReorganizeEventListener(Threading.USER_THREAD, listener);
-    }
-
-    /**
-     * Adds an event listener object. Methods on this object are called when
-     * something interesting happens, like receiving money. The listener is
-     * executed by the given executor.
-     */
-    public void addReorganizeEventListener(Executor executor, WalletReorganizeEventListener listener) {
-        // This is thread safe, so we don't need to take the lock.
-        reorganizeListeners.add(new ListenerRegistration<WalletReorganizeEventListener>(listener, executor));
-    }
-
-    /**
-     * Adds an event listener object. Methods on this object are called when
-     * scripts watched by this wallet change. Runs the listener methods in the
-     * user thread.
-     */
-    public void addScriptsChangeEventListener(ScriptsChangeEventListener listener) {
-        addScriptChangeEventListener(Threading.USER_THREAD, listener);
-    }
-
-    /**
-     * Adds an event listener object. Methods on this object are called when
-     * scripts watched by this wallet change. The listener is executed by the
-     * given executor.
-     */
-    public void addScriptChangeEventListener(Executor executor, ScriptsChangeEventListener listener) {
-        // This is thread safe, so we don't need to take the lock.
-        scriptChangeListeners.add(new ListenerRegistration<ScriptsChangeEventListener>(listener, executor));
-    }
-
-    /**
-     * Removes the given event listener object. Returns true if the listener was
-     * removed, false if that listener was never added.
-     */
-    public boolean removeChangeEventListener(WalletChangeEventListener listener) {
-        return ListenerRegistration.removeFromList(listener, changeListeners);
-    }
-
-    /**
-     * Removes the given event listener object. Returns true if the listener was
-     * removed, false if that listener was never added.
-     */
-    public boolean removeCoinsReceivedEventListener(WalletCoinsReceivedEventListener listener) {
-        return ListenerRegistration.removeFromList(listener, coinsReceivedListeners);
-    }
-
-    /**
-     * Removes the given event listener object. Returns true if the listener was
-     * removed, false if that listener was never added.
-     */
-    public boolean removeCoinsSentEventListener(WalletCoinsSentEventListener listener) {
-        return ListenerRegistration.removeFromList(listener, coinsSentListeners);
-    }
-
-    /**
-     * Removes the given event listener object. Returns true if the listener was
-     * removed, false if that listener was never added.
-     */
-    public boolean removeKeyChainEventListener(KeyChainEventListener listener) {
-        return keyChainGroup.removeEventListener(listener);
-    }
-
-    /**
-     * Removes the given event listener object. Returns true if the listener was
-     * removed, false if that listener was never added.
-     */
-    public boolean removeReorganizeEventListener(WalletReorganizeEventListener listener) {
-        return ListenerRegistration.removeFromList(listener, reorganizeListeners);
-    }
-
-    /**
-     * Removes the given event listener object. Returns true if the listener was
-     * removed, false if that listener was never added.
-     */
-    public boolean removeScriptChangeEventListener(ScriptsChangeEventListener listener) {
-        return ListenerRegistration.removeFromList(listener, scriptChangeListeners);
-    }
-
+ 
+ 
+ 
     protected void maybeQueueOnWalletChanged() {
         // Don't invoke the callback in some circumstances, eg, whilst we are
         // re-organizing or fiddling with

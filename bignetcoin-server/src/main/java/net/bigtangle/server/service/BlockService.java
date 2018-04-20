@@ -294,13 +294,17 @@ public class BlockService {
 
     public Optional<Block> addConnected(byte[] bytes) {
         try {
+             
             Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bytes); 
             FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
             blockgraph.add(block); 
+            logger.debug("addConnected from kafka "+ block );
             return Optional.of(block);
         } catch (VerificationException e) {
+            logger.debug("addConnected from kafka ",e);
             return   Optional.empty();
         } catch ( Exception e) {
+            logger.debug("addConnected from kafka ",e );
             return  Optional.empty();
         }
 

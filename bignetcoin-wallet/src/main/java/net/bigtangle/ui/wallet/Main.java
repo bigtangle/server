@@ -35,13 +35,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 import java.util.ResourceBundle;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import javax.annotation.Nullable;
 
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ser.std.StringSerializer;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -96,6 +106,10 @@ public class Main extends Application {
     public static int numberOfEmptyBlocks = 3;
     public static boolean emptyBlocks = false;
 
+    
+    public   String blockTopic = "bigtangle";
+    public   String bootstrapServers = "kafka2.bigtangle.net:9092";
+    
     @Override
     public void start(Stage mainWindow) throws Exception {
         try {
@@ -409,4 +423,37 @@ public class Main extends Application {
         }
         return amount;
     }
+
+    public boolean sendMessage(byte[] data ) throws InterruptedException, ExecutionException {
+        return sendMessage(data, this.blockTopic, this.bootstrapServers);
+    }
+    public boolean sendMessage(byte[] data, String topic, String bootstrapServers ) throws InterruptedException, ExecutionException {
+        final String key = UUID.randomUUID().toString();
+        KafkaProducer<String, byte[]> messageProducer = new KafkaProducer<String, byte[]>(producerConfig(bootstrapServers, true));
+        ProducerRecord<String, byte[]> producerRecord = null;
+        producerRecord = new ProducerRecord<String, byte[]>(topic, key, data);
+        final Future<RecordMetadata> result = messageProducer.send(producerRecord);
+        RecordMetadata mdata = result.get();
+      //  log.debug(" sendMessage "+ key );
+        messageProducer.close();
+        return mdata != null;
+   
+    }
+
+    public Properties producerConfig(String bootstrapServers, boolean binaryMessageKey ) {
+        Properties producerConfig = new Properties();
+        producerConfig.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        producerConfig.setProperty(ProducerConfig.ACKS_CONFIG, "all");
+        producerConfig.setProperty(ProducerConfig.RETRIES_CONFIG, "0");
+        producerConfig.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+                binaryMessageKey ? ByteArraySerializer.class.getName() : StringSerializer.class.getName());
+        producerConfig.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        producerConfig.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer");
+        // producerConfig.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+        // KafkaAvroSerializer.class.getName());
+        // producerConfig.setProperty(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
+        // configuration.getSchemaRegistryUrl());
+        return producerConfig;
+    }
+ 
 }

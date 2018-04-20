@@ -121,7 +121,7 @@ public class StockController extends TokensController {
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
 
-            Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
+           // Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
             GuiUtils.informationalAlert("Token is published.", "", "");
             Main.instance.controller.initTableView();
             checkGuiThread();
