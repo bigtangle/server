@@ -29,6 +29,7 @@ import javafx.scene.control.cell.MapValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.stage.FileChooser;
 import net.bigtangle.core.Address;
+import net.bigtangle.core.AddressFormatException;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
@@ -326,10 +327,13 @@ public class ExchangeController {
         this.mOrderid = UUIDUtil.randomUUID();
         byte[] buf = this.makeSignTransactionBuffer(fromAddress, getCoin(fromAmount, fromTokenHex, false), toAddress,
                 getCoin(toAmount, toTokenHex, false));
-        ;
 
         final FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showSaveDialog(null);
+        if (file == null) {
+            return;
+        }
+        // wirte file 
         FileUtil.writeFile(file, buf);
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -382,7 +386,7 @@ public class ExchangeController {
             String fromTokenHex = stringValueOf(exchangeResult.get("fromTokenHex"));
             String toAmount = stringValueOf(exchangeResult.get("toAmount"));
             String fromAmount = stringValueOf(exchangeResult.get("fromAmount"));
-            buf = this.makeSignTransactionBuffer(fromAddress, getCoin(fromAmount, fromTokenHex, false), toAddress,
+            buf = this.makeSignTransactionBufferCheckSwap(fromAddress, getCoin(fromAmount, fromTokenHex, false), toAddress,
                     getCoin(toAmount, toTokenHex, false));
             if (buf == null) {
                 return;
@@ -457,10 +461,29 @@ public class ExchangeController {
         toCoin = t;
     }
 
+    private byte[] makeSignTransactionBufferCheckSwap(String fromAddress, Coin fromCoin, String toAddress, Coin toCoin) throws Exception {
+        String fromAddress00, toAddress00;
+        Coin fromCoin00, toCoin00;
+        if (this.calculatedAddressHit(fromAddress)) {
+            fromAddress00 = fromAddress;
+            toAddress00 = toAddress;
+            fromCoin00 = fromCoin;
+            toCoin00 = toCoin;
+        }
+        else {
+            fromAddress00 = toAddress;
+            toAddress00 = fromAddress;
+            fromCoin00 = toCoin;
+            toCoin00 = fromCoin;
+        }
+        return makeSignTransactionBuffer(fromAddress00, fromCoin00, toAddress00, toCoin00);
+    }
+    
     @SuppressWarnings("deprecation")
     private byte[] makeSignTransactionBuffer(String fromAddress, Coin fromCoin, String toAddress, Coin toCoin) {
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
-
+        Address fromAddress00 = new Address(Main.params, fromAddress);
+        Address toAddress00 = new Address(Main.params, toAddress);
         KeyParameter aesKey = null;
         // Main.initAeskey(aesKey);
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
@@ -470,20 +493,6 @@ public class ExchangeController {
         byte[] buf = null;
         try {
             List<UTXO> outputs = new ArrayList<UTXO>();
-
-            Address fromAddress00, toAddress00;
-            if (calculatedAddressHit(fromAddress)) {
-                fromAddress00 = new Address(Main.params, fromAddress);
-                toAddress00 = new Address(Main.params, toAddress);
-            }
-            else {
-                fromAddress00 = new Address(Main.params, toAddress);
-                toAddress00 = new Address(Main.params, fromAddress);
-                Coin t = fromCoin;
-                fromCoin = toCoin;
-                toCoin = t;
-            }
-            
             outputs.addAll(
                     Main.getUTXOWithPubKeyHash(toAddress00.getHash160(), Utils.HEX.decode(fromCoin.getTokenHex())));
             outputs.addAll(this.getUTXOWithECKeyList(Main.bitcoin.wallet().walletKeys(aesKey),
