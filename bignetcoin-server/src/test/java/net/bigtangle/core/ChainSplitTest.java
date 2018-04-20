@@ -87,12 +87,7 @@ public class ChainSplitTest {
         // testForking2.
         final AtomicBoolean reorgHappened = new AtomicBoolean();
         final AtomicInteger walletChanged = new AtomicInteger();
-        wallet.addReorganizeEventListener(new WalletReorganizeEventListener() {
-            @Override
-            public void onReorganize(Wallet wallet) {
-                reorgHappened.set(true);
-            }
-        });
+    
         wallet.addChangeEventListener(new WalletChangeEventListener() {
 
             @Override

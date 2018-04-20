@@ -88,13 +88,7 @@ public class Kit {
             }
         });
 
-        kit.wallet().addScriptsChangeEventListener(new ScriptsChangeEventListener() {
-            @Override
-            public void onScriptsChanged(Wallet wallet, List<Script> scripts, boolean isAddingScripts) {
-                System.out.println("new script added");
-            }
-        });
-
+      
        
 
         // Ready to run. The kit syncs the blockchain and our wallet event listener gets notified when something happens.

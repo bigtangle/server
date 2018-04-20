@@ -1547,11 +1547,7 @@ public class PeerGroup implements TransactionBroadcaster {
             checkNotNull(wallet);
             checkState(!wallets.contains(wallet));
             wallets.add(wallet);
-            // wallet.setTransactionBroadcaster(this);
-            wallet.addCoinsReceivedEventListener(Threading.SAME_THREAD, walletCoinsReceivedEventListener);
-            wallet.addKeyChainEventListener(Threading.SAME_THREAD, walletKeyEventListener);
-            wallet.addScriptChangeEventListener(Threading.SAME_THREAD, walletScriptEventListener);
-            // addPeerFilterProvider(wallet);
+                     // addPeerFilterProvider(wallet);
             for (Peer peer : peers) {
                 peer.addWallet(wallet);
             }
@@ -1642,10 +1638,7 @@ public class PeerGroup implements TransactionBroadcaster {
      */
     public void removeWallet(Wallet wallet) {
         wallets.remove(checkNotNull(wallet));
-        peerFilterProviders.remove(wallet);
-        wallet.removeCoinsReceivedEventListener(walletCoinsReceivedEventListener);
-        wallet.removeKeyChainEventListener(walletKeyEventListener);
-        wallet.removeScriptChangeEventListener(walletScriptEventListener);
+        peerFilterProviders.remove(wallet); 
         // wallet.setTransactionBroadcaster(null);
         for (Peer peer : peers) {
             peer.removeWallet(wallet);
