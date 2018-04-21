@@ -55,7 +55,7 @@ public class BlockService {
     @Autowired
     protected KafkaMessageProducer kafkaMessageProducer;
 
-    private static final Logger logger = LoggerFactory.getLogger(DispatcherController.class);
+    private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
     public Block getBlock(Sha256Hash blockhash) throws BlockStoreException {
         return store.get(blockhash).getHeader();
