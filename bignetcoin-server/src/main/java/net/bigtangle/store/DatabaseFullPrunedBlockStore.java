@@ -2806,4 +2806,43 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
+
+    @Override
+    public List<BlockEvaluation> getSearchBlockEvaluations(List<String> address) throws BlockStoreException {
+        if (address.isEmpty()) {
+            return new ArrayList<BlockEvaluation>();
+        }
+        
+        String sql = "SELECT blockevaluation.* FROM outputs LEFT JOIN blockevaluation ON outputs.blockhash = blockevaluation.blockhash WHERE outputs.toaddress in ";
+        StringBuffer stringBuffer = new StringBuffer();
+        for (String str : address) stringBuffer.append(",").append("'" + str + "'");
+        sql += "(" + stringBuffer.substring(1).toString() + ")";
+
+        List<BlockEvaluation> result = new ArrayList<BlockEvaluation>();
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(sql);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)),
+                        resultSet.getLong(2), resultSet.getLong(3), resultSet.getLong(4), resultSet.getBoolean(5),
+                        resultSet.getLong(6), resultSet.getBoolean(7), resultSet.getLong(8), resultSet.getLong(9),
+                        resultSet.getLong(10), resultSet.getBoolean(11), resultSet.getBoolean(12));
+                result.add(blockEvaluation);
+            }
+            return result;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    
+    }
 }

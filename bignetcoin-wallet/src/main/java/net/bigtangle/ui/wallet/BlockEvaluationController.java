@@ -51,6 +51,7 @@ public class BlockEvaluationController {
         overlayUI.done();
     }
 
+    @SuppressWarnings("unchecked")
     public void initTableView() throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getAllEvaluations",

@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.TreeSet;
 
@@ -21,12 +22,13 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.PrunedException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.DispatcherController;
+import net.bigtangle.server.response.AbstractResponse;
+import net.bigtangle.server.response.GetBlockEvaluationsResponse;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.wallet.CoinSelector;
@@ -308,5 +310,12 @@ public class BlockService {
             return  Optional.empty();
         }
 
+    }
+
+    @SuppressWarnings("unchecked")
+    public AbstractResponse searchBlock(Map<String, Object> request) throws BlockStoreException {
+        List<String> address = (List<String>) request.get("address");
+        List<BlockEvaluation> evaluations = this.store.getSearchBlockEvaluations(address);
+        return GetBlockEvaluationsResponse.create(evaluations);
     }
 }

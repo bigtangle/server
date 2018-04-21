@@ -295,10 +295,10 @@ public class ExchangeController {
         byteBuffer.get(orderid);
 
         mOrderid = new String(orderid);
-        System.out.println("orderid : " + new String(orderid));
+        // System.out.println("orderid : " + new String(orderid));
 
         int len = byteBuffer.getInt();
-        System.out.println("tx len : " + len);
+        // System.out.println("tx len : " + len);
         byte[] data = new byte[len];
         byteBuffer.get(data);
         try {
@@ -452,7 +452,7 @@ public class ExchangeController {
         byteBuffer.putInt(toCoin.toPlainString().getBytes().length).put(toCoin.toPlainString().getBytes());
         byteBuffer.putInt(this.mOrderid.getBytes().length).put(this.mOrderid.getBytes());
         byteBuffer.putInt(buf.length).put(buf);
-        System.out.println("tx len : " + buf.length);
+        // System.out.println("tx len : " + buf.length);
         return byteBuffer.array();
     }
     

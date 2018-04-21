@@ -12,5 +12,5 @@ public enum ReqCmd {
     
     outputsWiteToken, saveOrder, getOrders, exchangeInfo, batchGetBalances, 
     
-    saveExchange, getExchange, signTransaction;
+    saveExchange, getExchange, signTransaction, searchBlock;
 }
