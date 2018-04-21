@@ -35,7 +35,7 @@ public class BlockEvaluationController {
     @FXML
     public TableColumn<Map, Number> heightColumn;
 
-    public Main.OverlayUI overlayUI;
+    public Main.OverlayUI<?> overlayUI;
 
     @FXML
     public void initialize() {

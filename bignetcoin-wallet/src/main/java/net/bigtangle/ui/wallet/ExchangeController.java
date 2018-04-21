@@ -15,7 +15,6 @@ import java.util.Map;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.sun.org.apache.bcel.internal.generic.SWAP;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -29,7 +28,6 @@ import javafx.scene.control.cell.MapValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.stage.FileChooser;
 import net.bigtangle.core.Address;
-import net.bigtangle.core.AddressFormatException;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
@@ -327,6 +325,9 @@ public class ExchangeController {
         this.mOrderid = UUIDUtil.randomUUID();
         byte[] buf = this.makeSignTransactionBuffer(fromAddress, getCoin(fromAmount, fromTokenHex, false), toAddress,
                 getCoin(toAmount, toTokenHex, false));
+        if (buf == null) {
+            return;
+        }
 
         final FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showSaveDialog(null);
