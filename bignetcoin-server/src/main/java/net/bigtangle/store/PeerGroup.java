@@ -65,7 +65,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Runnables;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
-import com.squareup.okhttp.OkHttpClient;
 import com.subgraph.orchid.TorClient;
 
 import net.bigtangle.core.Block;
@@ -116,6 +115,7 @@ import net.bigtangle.wallet.listeners.KeyChainEventListener;
 import net.bigtangle.wallet.listeners.ScriptsChangeEventListener;
 import net.bigtangle.wallet.listeners.WalletCoinsReceivedEventListener;
 import net.jcip.annotations.GuardedBy;
+import okhttp3.OkHttpClient;
 
 /**
  * <p>
@@ -540,11 +540,12 @@ public class PeerGroup implements TransactionBroadcaster {
             if (httpSeeds.length > 0) {
                 // Use HTTP discovery when Tor is active and there is a
                 // Cartographer seed, for a much needed speed boost.
-                OkHttpClient httpClient = new OkHttpClient();
-                httpClient.setSocketFactory(torClient.getSocketFactory());
+                OkHttpClient httpClient =   (new  OkHttpClient.Builder()) .connectTimeout(3, TimeUnit.MINUTES).build();
+                
+              //  httpClient.setSocketFactory(torClient.getSocketFactory());
                 List<PeerDiscovery> discoveries = Lists.newArrayList();
-                for (HttpDiscovery.Details httpSeed : httpSeeds)
-                    discoveries.add(new HttpDiscovery(params, httpSeed, httpClient));
+               // for (HttpDiscovery.Details httpSeed : httpSeeds)
+             //       discoveries.add(new HttpDiscovery(params, httpSeed, httpClient));
                 result.addPeerDiscovery(new MultiplexingDiscovery(params, discoveries));
             } else {
                 result.addPeerDiscovery(new TorDiscovery(params, torClient));

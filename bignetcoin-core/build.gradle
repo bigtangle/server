@@ -12,7 +12,7 @@ dependencies {
     compile group: 'net.jcip', name: 'jcip-annotations', version:ver.jcip_annotations
     compile group: 'com.lambdaworks', name: 'scrypt', version:ver.scrypt
 
-    compile group: 'com.squareup.okhttp', name: 'okhttp', version:ver.okhttp
+    compile group: 'com.squareup.okhttp3', name: 'okhttp', version:ver.okhttp
 
    
     /**

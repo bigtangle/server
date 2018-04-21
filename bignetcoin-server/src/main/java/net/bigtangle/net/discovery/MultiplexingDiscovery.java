@@ -23,7 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
-import com.squareup.okhttp.OkHttpClient;
 
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
@@ -32,6 +31,7 @@ import net.bigtangle.core.VersionMessage;
 import net.bigtangle.net.discovery.DnsDiscovery.DnsSeedDiscovery;
 import net.bigtangle.net.discovery.HttpDiscovery.Details;
 import net.bigtangle.utils.ContextPropagatingThreadFactory;
+import okhttp3.OkHttpClient;
 
 /**
  * MultiplexingDiscovery queries multiple PeerDiscovery objects, shuffles their responses and then returns the results,

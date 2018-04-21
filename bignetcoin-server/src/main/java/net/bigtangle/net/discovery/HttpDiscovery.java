@@ -5,24 +5,34 @@
 
 package net.bigtangle.net.discovery;
 
-import com.google.common.annotations.*;
-import com.google.protobuf.*;
-import com.squareup.okhttp.*;
+import static com.google.common.base.Preconditions.checkArgument;
 
-import net.bigtangle.core.*;
-import net.bigtangle.crawler.*;
+import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.security.SignatureException;
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
+import java.util.zip.GZIPInputStream;
 
-import org.slf4j.*;
+import javax.annotation.Nullable;
 
-import javax.annotation.*;
-import java.io.*;
-import java.net.*;
-import java.security.*;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.zip.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.*;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.protobuf.InvalidProtocolBufferException;
+
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Utils;
+import net.bigtangle.core.VersionMessage;
+import net.bigtangle.crawler.PeerSeedProtos;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * A class that knows how to read signed sets of seeds over HTTP, using a simple protobuf based protocol. See the
