@@ -115,7 +115,7 @@ public class BlockService {
 
     public HashSet<BlockEvaluation> getBlocksToAddToMilestone() throws BlockStoreException {
         return store.getBlocksToAddToMilestone(0);
-        // TODO constraint blockstoadd by receivetime e.g. 30 sec old at least?
+        // TODO constraint blockstoadd by receive time, e.g. 30+ seconds old
     }
 
     public void updateSolid(BlockEvaluation blockEvaluation, boolean b) throws BlockStoreException {

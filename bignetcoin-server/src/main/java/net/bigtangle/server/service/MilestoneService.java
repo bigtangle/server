@@ -28,13 +28,11 @@ import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 
 /*
- *  This service offers update functions to include newest tangle updates
+ *  This service offers maintenance functions to update the local state of the Tangle
  */
 @Service
 public class MilestoneService {
-
 	private static final Logger log = LoggerFactory.getLogger(MilestoneService.class);
-
 	private static final int WARNING_MILESTONE_UPDATE_LOOPS = 20;
 
 	@Autowired
@@ -54,6 +52,9 @@ public class MilestoneService {
 	 * @throws Exception
 	 */
 	public void update() throws Exception {
+
+		// TODO Lock database read/write
+		
 		log.info("Milestone Update started");
 		Stopwatch watch = Stopwatch.createStarted();
 		updateSolidityAndHeight();
@@ -73,6 +74,8 @@ public class MilestoneService {
 		watch = Stopwatch.createStarted();
 		updateMilestone();
 		log.info("Milestone update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+		
+		// TODO Set unmaintained true somewhere or dynamically calculate maintained state so we can dynamically adjust maintenance threshold
 		
 		// Optional: Trigger batched tip pair selection here
 
