@@ -26,7 +26,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     // create table SQL
     private static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" +
             "    name varchar(32) NOT NULL,\n" +
-            "    value blob,\n" +
+            "    settingvalue blob,\n" +
             "    CONSTRAINT setting_pk PRIMARY KEY (name)  \n" +
             ")\n";
 
@@ -54,9 +54,9 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
 
     private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" +
             "    hash varbinary(32) NOT NULL,\n" +
-            "    `index` integer NOT NULL,\n" +
+            "    outputindex integer NOT NULL,\n" +
             "    height bigint NOT NULL,\n" +
-            "    value bigint NOT NULL,\n" +
+            "    coinvalue bigint NOT NULL,\n" +
             "    scriptbytes mediumblob NOT NULL,\n" +
             "    toaddress varchar(35),\n" +
             "    addresstargetable tinyint(1),\n" +
@@ -69,7 +69,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    confirmed tinyint(1) NOT NULL,\n" +
             "    spendpending tinyint(1) NOT NULL,\n" +
             "    spenderblockhash  varbinary(32),\n" +
-            "    CONSTRAINT outputs_pk PRIMARY KEY (hash, `index`) USING BTREE \n" +
+            "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex) USING BTREE \n" +
             ")\n";
     
     private static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" +
@@ -140,7 +140,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "   PRIMARY KEY (orderid) )";
     
     // Some indexes to speed up inserts
-    private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_height_toaddress_idx ON outputs (hash, `index`, height, toaddress) USING btree";
+    private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_height_toaddress_idx ON outputs (hash, outputindex, height, toaddress) USING btree";
     private static final String CREATE_OUTPUTS_TOADDRESS_INDEX = "CREATE INDEX outputs_toaddress_idx ON outputs (toaddress) USING btree";
     private static final String CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX = "CREATE INDEX outputs_addresstargetable_idx ON outputs (addresstargetable) USING btree";
     private static final String CREATE_OUTPUTS_HASH_INDEX = "CREATE INDEX outputs_hash_idx ON outputs (hash) USING btree";
@@ -203,4 +203,5 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     protected String getDatabaseDriverClass() {
         return DATABASE_DRIVER_CLASS;
     }
+   
 }

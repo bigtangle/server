@@ -9,6 +9,7 @@ dependencies {
    compile group: 'com.google.code.findbugs', name: 'jsr305', version:ver.jsr305
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:ver.jackson_databind
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:ver.jackson_databind
+        compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version:ver.jackson_databind
     compile group: 'net.jcip', name: 'jcip-annotations', version:ver.jcip_annotations
     compile group: 'com.lambdaworks', name: 'scrypt', version:ver.scrypt
 
