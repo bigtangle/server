@@ -53,6 +53,23 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     private MilestoneService milestoneService;
     @Autowired
     private ScheduleOrderMatchService scheduleOrderMatchService;
+    
+    @Test
+    public void searchBlock() throws Exception {
+        List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
+        List<String> address = new ArrayList<String>();
+        for (ECKey ecKey : keys) {
+            address.add(ecKey.toAddress(networkParameters).toBase58());
+        }
+        HashMap<String, Object> request = new HashMap<String, Object>();
+        request.put("address", address);
+        
+        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.searchBlock.name())
+                .content(Json.jsonmapper().writeValueAsString(request));
+        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
+        String response = mvcResult.getResponse().getContentAsString();
+        logger.info("searchBlock resp : " + response);
+    }
 
     @Test
     public void saveOrder() throws Exception {
