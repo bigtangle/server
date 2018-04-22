@@ -301,7 +301,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                         UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(),
                                 in.getOutpoint().getIndex());
                         if (prevOut == null)
-                            // TODO These blocks should not be dropped, since initialization would be impossible
+                            // TODO These blocks should not be dropped, since initialization would be impossible.
                         	// Instead, we should add them and validate later (set validated false)
                             throw new VerificationException("Block attempts to spend a not yet existent output!");
                         
