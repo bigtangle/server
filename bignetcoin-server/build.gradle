@@ -46,7 +46,8 @@ dependencies {
      compile group: 'com.mchange', name: 'c3p0', version:  ver.c3p0
      compile group: 'com.google.code.gson', name: 'gson', version:ver.gson
     compile project(':bignetcoin-core')
-    compile group: 'org.springframework', name: 'spring-web', version: '5.0.5.RELEASE'
+    compile group: 'org.springframework', name: 'spring-web', version: ver.spring
+     compile group: 'org.springframework', name: 'spring-jdbc', version:  ver.spring
     compile project(':bignetcoin-orchid')      
     /**
      * test dependencies
