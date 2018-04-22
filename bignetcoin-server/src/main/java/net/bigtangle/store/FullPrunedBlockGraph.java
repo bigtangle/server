@@ -301,7 +301,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                         UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(),
                                 in.getOutpoint().getIndex());
                         if (prevOut == null)
+                            // TODO These blocks should not be dropped, since initialization would be impossible
+                        	// Instead, we should add them and validate later (set validated false)
                             throw new VerificationException("Block attempts to spend a not yet existent output!");
+                        
                         // Coinbases can't be spent until they mature, to avoid
                         // re-orgs destroying
                         // entire transaction
@@ -323,12 +326,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                         } else {
                             valueIn.put(Utils.HEX.encode(prevOut.getValue().getTokenid() ), prevOut.getValue());
 
-                        }
-                        if (verifyFlags.contains(VerifyFlag.P2SH)) {
-                            if (prevOut.getScript().isPayToScriptHash())
-                                sigOps += Script.getP2SHSigOpCount(in.getScriptBytes());
-                            if (sigOps > Block.MAX_BLOCK_SIGOPS)
-                                throw new VerificationException("Too many P2SH SigOps in block");
                         }
                         if (verifyFlags.contains(VerifyFlag.P2SH)) {
                             if (prevOut.getScript().isPayToScriptHash())
