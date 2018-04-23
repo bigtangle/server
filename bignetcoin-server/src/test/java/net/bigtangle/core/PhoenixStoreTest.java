@@ -25,7 +25,7 @@ public class PhoenixStoreTest extends AbstractFullPrunedBlockChainTest {
     }
 
     // Replace these with your mysql location/credentials and remove @Ignore to test
-    private static final String DB_HOSTNAME = "kafka2.bigtangle.net:8765";
+    private static final String DB_HOSTNAME = "cn.phoenix.bigtangle.net:8765";
     private static final String DB_NAME = "info";
     private static final String DB_USERNAME = null;
     private static final String DB_PASSWORD = null;
