@@ -1,9 +1,12 @@
 package net.bigtangle.ui.wallet;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import org.spongycastle.crypto.params.KeyParameter;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -15,7 +18,9 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.MapValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
@@ -41,7 +46,6 @@ public class BlockEvaluationController {
 
     @FXML
     public void initialize() {
-
         try {
             initTableView();
         } catch (Exception e) {
@@ -61,22 +65,38 @@ public class BlockEvaluationController {
         overlayUI.done();
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public void initTableView() throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
 
         String address = addressComboBox.getValue();
-        Map<String, String> requestParam = new HashMap<String, String>();
-        requestParam.put("address", address);
-        String response = OkHttp3Util.post(CONTEXT_ROOT + "searchBlock",
-                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+        List<String> addresses = new ArrayList<String>();
+        if (address == null || address.equals("")) {
+            KeyParameter aesKey = null;
+            // Main.initAeskey(aesKey);
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            if (!"".equals(Main.password.trim())) {
+                aesKey = keyCrypter.deriveKey(Main.password);
+            }
+            List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
+            for (ECKey key : keys) {
+                addresses.add(key.toAddress(Main.params).toString());
+            }
+        }
+        else {
+            addresses.add(address);
+        }
+        Map<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("address", addresses);
+        String response = OkHttp3Util.postString(CONTEXT_ROOT + "searchBlock",
+                Json.jsonmapper().writeValueAsString(requestParam));
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> temp = (List<Map<String, Object>>) data.get("evaluations");
 
         List<BlockEvaluation> list = temp.stream().map(map -> MapToBeanMapperUtil.parseBlockEvaluation(map))
                 .collect(Collectors.toList());
+        ObservableList<Map> allData = FXCollections.observableArrayList();
         if (list != null && !list.isEmpty()) {
-            ObservableList<Map> allData = FXCollections.observableArrayList();
             for (BlockEvaluation blockEvaluation : list) {
                 Map<String, Object> dataRow = new HashMap<>();
                 dataRow.put("hash",
@@ -92,10 +112,8 @@ public class BlockEvaluationController {
             depthColumn.setCellValueFactory(new MapValueFactory("depth"));
             cumulativeWeightColumn.setCellValueFactory(new MapValueFactory("cumulativeWeight"));
             heightColumn.setCellValueFactory(new MapValueFactory("height"));
-
             blockhashColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-
-            blockEvaluationTable.setItems(allData);
         }
+        blockEvaluationTable.setItems(allData);
     }
 }

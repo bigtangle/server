@@ -2750,7 +2750,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         if (address.isEmpty()) {
             return new ArrayList<BlockEvaluation>();
         }
-
         String sql = "SELECT blockevaluation.* FROM outputs LEFT JOIN blockevaluation ON outputs.blockhash = blockevaluation.blockhash WHERE outputs.toaddress in ";
         StringBuffer stringBuffer = new StringBuffer();
         for (String str : address)
