@@ -77,6 +77,7 @@ public class ValidatorService {
 
 		// Now filter to only contain inputs that were already spent in the milestone
 		// where the corresponding block has already been pruned
+		// TODO or where the corresponding block is unmaintained...
 		Stream<Pair<Block, TransactionInput>> irresolvableConflicts = blockInputTuples
 				.filter(pair -> transactionService.getUTXOSpent(pair.getRight()) && transactionService.getUTXOSpender(pair.getRight().getOutpoint()) == null);
 
@@ -232,6 +233,7 @@ public class ValidatorService {
 				.collect(Collectors.toList());
 
 		// Add the conflicting candidates and milestone blocks
+		// TODO where the milestone blocks are maintained...
 		for (Pair<Block, TransactionInput> pair : candidatesConflictingWithMilestone) {
 			BlockEvaluation milestoneEvaluation = transactionService.getUTXOSpender(pair.getRight().getOutpoint());
 			BlockEvaluation toAddEvaluation = blockService.getBlockEvaluation(pair.getLeft().getHash());

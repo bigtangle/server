@@ -33,19 +33,25 @@ dependencies {
  
     compile group: 'commons-io', name: 'commons-io', version:ver.commons_io
     compile group: 'mysql', name: 'mysql-connector-java', version:ver.mysql_connector_java
+   
+    //  compile ( group: 'org.apache.phoenix', name: 'phoenix-server-client', version: '4.7.0-HBase-1.1') 
+    compile group: 'joda-time', name: 'joda-time', version:  '2.9.8'
+     compile group: 'com.mchange', name: 'c3p0', version:  ver.c3p0
+     compile group: 'com.google.code.gson', name: 'gson', version:ver.gson
     compile project(':bignetcoin-core')
+    compile group: 'org.springframework', name: 'spring-web', version: ver.spring
+     compile group: 'org.springframework', name: 'spring-jdbc', version:  ver.spring
     compile project(':bignetcoin-orchid')      
     /**
      * test dependencies
      */
-    testCompile group: 'org.testng', name: 'testng', version: ver.testng
+ 
     testCompile group: 'org.mockito', name: 'mockito-all', version:  ver.mockito_all
-    testCompile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-avro', version: ver.jackson_dataformat_avro
     testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
     testCompile group: 'junit', name: 'junit',version:ver.junit
     testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
         testCompile group: 'org.easymock', name: 'easymock', version:  ver.easymock
- 
+  
 }
 
 mainClassName = "net.bigtangle.server.ServerStart"

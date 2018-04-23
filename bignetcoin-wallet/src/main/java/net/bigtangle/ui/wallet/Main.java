@@ -86,7 +86,7 @@ public class Main extends Application {
 
     public static String keyFileDirectory = ".";
     public static String keyFilePrefix = "bignetcoin";
-    public static WalletAppKit bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
+    public static WalletAppKit bitcoin;
     public static Main instance;
 
     private StackPane uiStack;
@@ -123,7 +123,7 @@ public class Main extends Application {
 
     public static String getTextt(String s) {
         ResourceBundle rb = ResourceBundle.getBundle("net.bigtangle.ui.wallet.message", Locale.getDefault());
-        if ("en".equalsIgnoreCase(lang)) {
+        if ("en".equalsIgnoreCase(lang) || "de".equalsIgnoreCase(lang)) {
             rb = ResourceBundle.getBundle("net.bigtangle.ui.wallet.message_en", Locale.ENGLISH);
         }else {
             rb = ResourceBundle.getBundle("net.bigtangle.ui.wallet.message", Locale.CHINESE);
@@ -163,12 +163,13 @@ public class Main extends Application {
         String resourceFile = "net.bigtangle.ui.wallet.message";
         lang = language;
         Locale locale = Locale.CHINESE;
-        if ("en".equals(lang)) {
+        if ("en".equals(lang) || "de".equals(lang)) {
             resourceFile += "_en";
             locale = Locale.ENGLISH;
         }
         ResourceBundle resourceBundle = ResourceBundle.getBundle(resourceFile, locale);
         loader.setResources(resourceBundle);
+        bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
         mainUI = loader.load();
         controller = loader.getController();
         // Configure the window with a StackPane so we can overlay things on top
@@ -296,7 +297,7 @@ public class Main extends Application {
             FXMLLoader loader = new FXMLLoader(location);
             String resourceFile = "net.bigtangle.ui.wallet.message";
             Locale locale = Locale.CHINESE;
-            if ("en".equals(Main.lang)) {
+            if ("en".equals(Main.lang) || "de".equals(Main.lang)) {
                 resourceFile += "_en";
                 locale = Locale.ENGLISH;
             }

@@ -24,18 +24,17 @@ dependencies {
     /**
      * test dependencies
      */
-    testCompile group: 'org.testng', name: 'testng', version: ver.testng
+    
     testCompile group: 'org.mockito', name: 'mockito-all', version:  ver.mockito_all
-  	testCompile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-avro', version:ver.jackson_dataformat_avro
-  
+    
   
   
   /**
      * test dependencies
      */
-    testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
+     
     testCompile group: 'junit', name: 'junit',  version:ver.junit
-   // testCompile group: 'com.google.code.gson', name: 'gson', version:ver.gson
+    testCompile group: 'com.google.code.gson', name: 'gson', version:ver.gson
 
 
 }
