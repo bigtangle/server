@@ -235,7 +235,10 @@ public class MainController {
 
         Main.instance.overlayUI("send_money.fxml");
     }
+    public void modyfySIgn(ActionEvent event) {
 
+        Main.instance.overlayUI("modify_sign.fxml");
+    }
     public void orders(ActionEvent event) {
         Main.OverlayUI<OrderController> order = Main.instance.overlayUI("orders.fxml");
         if (utxoTable.getSelectionModel().getSelectedItem() != null) {
