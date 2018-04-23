@@ -17,5 +17,8 @@
 			</columns>
 		</TableView>
       <Button layoutX="779.0" layoutY="483.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />
+      <Label layoutX="107.0" layoutY="58.0" prefHeight="15.0" prefWidth="126.0" text="address" />
+      <ComboBox fx:id="addressComboBox" editable="true" layoutX="275.0" layoutY="54.0" prefHeight="23.0" prefWidth="299.0" />
+      <Button layoutX="606.0" layoutY="54.0" mnemonicParsing="false" onAction="#searchBlock" prefHeight="23.0" prefWidth="111.0" text="search" />
 	</children>
 </AnchorPane>
