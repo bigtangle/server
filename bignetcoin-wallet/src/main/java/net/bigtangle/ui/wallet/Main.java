@@ -55,6 +55,8 @@ import com.fasterxml.jackson.databind.ser.std.StringSerializer;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -92,8 +94,10 @@ public class Main extends Application {
     public MainController controller;
     public NotificationBarPane notificationBar;
     public Stage mainWindow;
-   
-    public static String IpAddress = "localhost";
+    private ObservableList<CoinModel> coinData = FXCollections.observableArrayList();
+    private ObservableList<UTXOModel> utxoData = FXCollections.observableArrayList();
+
+    public static String IpAddress = "cn.server.bigtangle.net";
     public static String port = "8088";
     public static FXMLLoader loader;
 
@@ -169,8 +173,8 @@ public class Main extends Application {
         
         //set local kafka to send
         if(!Locale.CHINESE.equals(locale)) {
-            IpAddress="de.server.bigtangle.net";
             kafka="de.kafka.bigtangle.net:9092";
+            IpAddress = "de.server.bigtangle.net";
         }
         mainUI = loader.load();
         controller = loader.getController();
@@ -344,7 +348,22 @@ public class Main extends Application {
         launch(args);
     }
 
-   
+    public ObservableList<CoinModel> getCoinData() {
+        return coinData;
+    }
+
+    public void setCoinData(ObservableList<CoinModel> coinData) {
+        this.coinData = coinData;
+    }
+
+    public ObservableList<UTXOModel> getUtxoData() {
+        return utxoData;
+    }
+
+    public void setUtxoData(ObservableList<UTXOModel> utxoData) {
+        this.utxoData = utxoData;
+    }
+
     public static void sentEmpstyBlock(int number) {
         if (emptyBlocks) {
             Runnable r = () -> {
