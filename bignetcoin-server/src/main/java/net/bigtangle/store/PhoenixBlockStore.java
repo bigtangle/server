@@ -5,12 +5,16 @@
 
 package net.bigtangle.store;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.StoredBlock;
 
 /**
  * <p>
@@ -27,25 +31,25 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String DATABASE_CONNECTION_URL_PREFIX = "jdbc:phoenix:thin:url=http://";
 
     // create table SQL
-    private static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" + "    name binary(32) not null,\n"
+    private static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" + "    name varchar(32) not null,\n"
             + "    settingvalue binary(1000),\n" + "    CONSTRAINT setting_pk PRIMARY KEY (name)  \n" + ")\n";
 
     private static final String CREATE_HEADERS_TABLE = "CREATE TABLE headers (\n" + "    hash binary(32) not null,\n"
-            + "    height integer ,\n" + "    header binary(4000) ,\n" + "    wasundoable tinyint(1) ,\n"
+            + "    height bigint ,\n" + "    header binary(4000) ,\n" + "    wasundoable boolean ,\n"
             + "    prevblockhash  binary(32) ,\n" + "    prevbranchblockhash  binary(32) ,\n"
             + "    mineraddress binary(255),\n" + "    tokenid binary(255),\n" + "    blocktype bigint ,\n"
             + "    CONSTRAINT headers_pk PRIMARY KEY (hash)  \n" + ")";
 
     private static final String CREATE_UNDOABLE_TABLE = "CREATE TABLE undoableblocks (\n"
-            + "    hash binary(32) not null,\n" + "    height integer ,\n" + "    txoutchanges binary(4000),\n"
+            + "    hash binary(32) not null,\n" + "    height bigint ,\n" + "    txoutchanges binary(4000),\n"
             + "    transactions binary(4000),\n" + "    CONSTRAINT undoableblocks_pk PRIMARY KEY (hash)  \n" + ")\n";
 
     private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" + "    hash binary(32) not null,\n"
             + "    outputindex integer not null,\n" + "    height bigint ,\n" + "    coinvalue bigint ,\n"
-            + "    scriptbytes binary(4000) ,\n" + "    toaddress binary(35),\n" + "    addresstargetable tinyint(1),\n"
+            + "    scriptbytes binary(4000) ,\n" + "    toaddress binary(35),\n" + "    addresstargetable boolean,\n"
             + "    coinbase boolean,\n" + "    blockhash  binary(32)  ,\n" + "    tokenid binary(255),\n"
-            + "    fromaddress binary(35),\n" + "    description binary(80),\n" + "    spent tinyint(1) ,\n"
-            + "    confirmed tinyint(1) ,\n" + "    spendpending tinyint(1) ,\n" + "    spenderblockhash  binary(32),\n"
+            + "    fromaddress binary(35),\n" + "    description binary(80),\n" + "    spent boolean ,\n"
+            + "    confirmed boolean ,\n" + "    spendpending boolean ,\n" + "    spenderblockhash  binary(32),\n"
             + "    CONSTRAINT outputs_pk PRIMARY KEY (hash,outputindex)  \n" + ")\n";
 
     private static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" + "    hash binary(32) not null,\n"
@@ -53,9 +57,9 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
 
     private static final String CREATE_BLOCKEVALUATION_TABLE = "CREATE TABLE blockevaluation (\n"
             + "    blockhash binary(32) not null,\n" + "    rating bigint ,\n" + "    depth bigint,\n"
-            + "    cumulativeweight  bigint ,\n" + "    solid tinyint(1) ,\n" + "    height bigint,\n"
-            + "    milestone tinyint(1),\n" + "    milestonelastupdate bigint,\n" + "    milestonedepth bigint,\n"
-            + "    inserttime bigint,\n" + "    maintained tinyint(1),\n" + "    rewardvalidityassessment tinyint(1),\n"
+            + "    cumulativeweight  bigint ,\n" + "    solid boolean ,\n" + "    height bigint,\n"
+            + "    milestone boolean,\n" + "    milestonelastupdate bigint,\n" + "    milestonedepth bigint,\n"
+            + "    inserttime bigint,\n" + "    maintained boolean,\n" + "    rewardvalidityassessment boolean,\n"
             + "    CONSTRAINT blockevaluation_pk PRIMARY KEY (blockhash) )\n";
 
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n" + "    tokenid binary(255) not null ,\n"
@@ -162,14 +166,51 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     protected String getInsert() {
         return "upsert ";
     }
-
-    /**
-     * Get the SQL to insert a settings record.
-     * 
-     * @return The SQL insert statement.
-     */
-    protected String getInsertSettingsSQL() {
+    protected String getUpdate() {
+        return "UPSERT ";
+    }
+    
+    protected String getUpdateHeadersSQL() {
+        return INSERT_HEADERS_SQL;
+    }
+    protected String getUpdateSettingsSLQ() {
         return INSERT_SETTINGS_SQL;
+    }
+
+    @Override
+    public void setChainHead(StoredBlock chainHead) throws BlockStoreException {
+        Sha256Hash hash = chainHead.getHeader().getHash();
+        this.chainHeadHash = hash;
+        this.chainHeadBlock = chainHead;
+        maybeConnect();
+        try {
+            PreparedStatement s = conn.get().prepareStatement(getUpdateSettingsSLQ());
+            s.setString(1, CHAIN_HEAD_SETTING);
+            s.setBytes(2, hash.getBytes());
+            s.executeUpdate();
+            s.close();
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        }
+    }
+    @Override
+    public void setVerifiedChainHead(StoredBlock chainHead) throws BlockStoreException {
+        Sha256Hash hash = chainHead.getHeader().getHash();
+        this.verifiedChainHeadHash = hash;
+        this.verifiedChainHeadBlock = chainHead;
+        maybeConnect();
+        try {
+            PreparedStatement s = conn.get().prepareStatement(getUpdateSettingsSLQ());
+            s.setString(1, VERIFIED_CHAIN_HEAD_SETTING);
+            s.setBytes(2, hash.getBytes());
+            s.executeUpdate();
+            s.close();
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        }
+        if (this.chainHeadBlock.getHeight() < chainHead.getHeight())
+            setChainHead(chainHead);
+        removeUndoableBlocksWhereHeightIsLessThan(chainHead.getHeight() - fullStoreDepth);
     }
 
 }

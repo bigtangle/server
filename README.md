@@ -164,3 +164,8 @@ http://web.archive.org/web/20110310171841/http://www.quantcup.org/home/spec
   
   seller exchange buyer	
   seller exchange system user, buyer does same.
+  
+  
+  $ docker run -it --rm --net vnet smizy/apache-phoenix:4.13.1-alpine sh
+> bin/sqlline-thin.py http://kafka2.bigtangle.net:8765
+
