@@ -14,56 +14,83 @@
 <?import javafx.scene.text.*?>
 <?import net.bigtangle.ui.wallet.controls.*?>
 
-<AnchorPane maxHeight="600.0" maxWidth="1000.0" minHeight="600.0" minWidth="1000.0" prefHeight="600.0" prefWidth="1000.0" styleClass="root-pane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.bigtangle.ui.wallet.MainController">
+<AnchorPane maxHeight="600.0" maxWidth="1000.0" minHeight="600.0"
+	minWidth="1000.0" prefHeight="600.0" prefWidth="1000.0" styleClass="root-pane"
+	xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+	fx:controller="net.bigtangle.ui.wallet.MainController">
 	<children>
-		<TableView fx:id="utxoTable" editable="true" layoutX="14.0" layoutY="204.0" prefHeight="364.0" prefWidth="660.0">
+		<TableView fx:id="utxoTable" editable="true" layoutX="14.0"
+			layoutY="204.0" prefHeight="364.0" prefWidth="660.0">
 			<columns>
-				<TableColumn fx:id="balanceColumn" prefWidth="70.0" text="%Amount" />
-				<TableColumn fx:id="tokentypeColumnA" prefWidth="232.0" text="%Token" />
-				<TableColumn fx:id="addressColumn" prefWidth="282.0" text="%Address" />
-				<TableColumn fx:id="spendPendingColumn" prefWidth="73.0" text="%pending" />
+				<TableColumn fx:id="balanceColumn" prefWidth="70.0"
+					text="%Amount" />
+				<TableColumn fx:id="tokentypeColumnA" prefWidth="232.0"
+					text="%Token" />
+				<TableColumn fx:id="addressColumn" prefWidth="282.0"
+					text="%Address" />
+				<TableColumn fx:id="spendPendingColumn" prefWidth="73.0"
+					text="%pending" />
 			</columns>
 		</TableView>
-		<TableView fx:id="coinTable" layoutX="675.0" layoutY="204.0" prefHeight="364.0" prefWidth="309.0">
+		<TableView fx:id="coinTable" layoutX="675.0" layoutY="204.0"
+			prefHeight="364.0" prefWidth="309.0">
 			<columns>
 				<TableColumn fx:id="valueColumn" prefWidth="91.0" text="%Amount" />
-				<TableColumn fx:id="tokentypeColumn" prefWidth="217.0" text="%Token" />
+				<TableColumn fx:id="tokentypeColumn" prefWidth="217.0"
+					text="%Token" />
 			</columns>
 		</TableView>
-		<HBox fx:id="buttonHBox" layoutX="16.0" layoutY="115.0" prefHeight="23.0" prefWidth="771.0" spacing="20">
+		<HBox fx:id="buttonHBox" layoutX="16.0" layoutY="115.0"
+			prefHeight="23.0" prefWidth="771.0" spacing="20">
 			<children>
-				<Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" mnemonicParsing="false" onAction="#sendMoneyOut" text="%Transfer" />
+				<Button id="sendMoneyOut" fx:id="sendMoneyOutBtn"
+					mnemonicParsing="false" onAction="#sendMoneyOut" text="%Transfer" />
 				<Button mnemonicParsing="false" onAction="#orders" text="%Order" />
 				<Button fx:id="stock" onAction="#stockPublish" text="%Token" />
-				<Button fx:id="exchange" mnemonicParsing="false" onAction="#exchangeCoin" text="%Exchange" />
+				<Button fx:id="exchange" mnemonicParsing="false" onAction="#exchangeCoin"
+					text="%Exchange" />
 
-      				<Button mnemonicParsing="false" onAction="#blockEvaluation" text="%Blocks" />
+				<Button mnemonicParsing="false" onAction="#blockEvaluation"
+					text="%Blocks" />
 				<Button mnemonicParsing="false" onAction="#eckeyList" text="%Keys" />
+				<Button mnemonicParsing="false" text="%modyfySign" />
 				<Button onAction="#settingsClicked" text="%Settings" />
 			</children>
 		</HBox>
-		<AnchorPane fx:id="serverPane" layoutX="140.0" layoutY="25.0" prefHeight="15.0" prefWidth="572.0">
+		<AnchorPane fx:id="serverPane" layoutX="140.0" layoutY="25.0"
+			prefHeight="15.0" prefWidth="572.0">
 			<children>
 				<Label layoutY="3.0" prefHeight="15.0" prefWidth="62.0" text="%Server" />
-				<TextField fx:id="Server" layoutX="83.0" prefHeight="23.0" prefWidth="203.0" />
+				<TextField fx:id="Server" layoutX="83.0" prefHeight="23.0"
+					prefWidth="203.0" />
 				<Label layoutX="313.0" layoutY="1.0" text="%Port" />
-				<TextField fx:id="IPPort" layoutX="352.0" prefHeight="23.0" prefWidth="146.0" />
-				<Button fx:id="connectButton" layoutX="506.0" layoutY="-2.0" mnemonicParsing="false" onAction="#connectServer" text="%Connect" />
+				<TextField fx:id="IPPort" layoutX="352.0" prefHeight="23.0"
+					prefWidth="146.0" />
+				<Button fx:id="connectButton" layoutX="506.0" layoutY="-2.0"
+					mnemonicParsing="false" onAction="#connectServer" text="%Connect" />
 			</children>
 		</AnchorPane>
-		<AnchorPane fx:id="searchPane" layoutX="129.0" layoutY="65.0" prefHeight="30.0" prefWidth="591.0">
+		<AnchorPane fx:id="searchPane" layoutX="129.0" layoutY="65.0"
+			prefHeight="30.0" prefWidth="591.0">
 			<children>
 				<Label layoutX="8.0" layoutY="7.0" text="%address" />
-				<TextField fx:id="addressTextField" layoutX="72.0" layoutY="3.0" prefHeight="23.0" prefWidth="432.0" />
-				<Button layoutX="520.0" layoutY="3.0" mnemonicParsing="false" onAction="#otherWallet" prefHeight="23.0" prefWidth="173.0" text="%other_wallet_search" />
+				<TextField fx:id="addressTextField" layoutX="72.0"
+					layoutY="3.0" prefHeight="23.0" prefWidth="432.0" />
+				<Button layoutX="520.0" layoutY="3.0" mnemonicParsing="false"
+					onAction="#otherWallet" prefHeight="23.0" prefWidth="173.0"
+					text="%other_wallet_search" />
 			</children>
 		</AnchorPane>
-      <HBox fx:id="passwordHBox" alignment="CENTER" layoutX="14.0" layoutY="151.0" prefHeight="38.0" prefWidth="725.0">
-         <children>
-            <Label alignment="CENTER" prefHeight="30.0" prefWidth="130.0" text="%Password" textAlignment="CENTER" />
-            <PasswordField fx:id="passwordField" prefHeight="23.0" prefWidth="320.0" />
-            <Button mnemonicParsing="false" onAction="#okPassword" prefHeight="23.0" prefWidth="100.0" text="%OK" />
-         </children>
-      </HBox>
+		<HBox fx:id="passwordHBox" alignment="CENTER" layoutX="14.0"
+			layoutY="151.0" prefHeight="38.0" prefWidth="725.0">
+			<children>
+				<Label alignment="CENTER" prefHeight="30.0" prefWidth="130.0"
+					text="%Password" textAlignment="CENTER" />
+				<PasswordField fx:id="passwordField" prefHeight="23.0"
+					prefWidth="320.0" />
+				<Button mnemonicParsing="false" onAction="#okPassword"
+					prefHeight="23.0" prefWidth="100.0" text="%OK" />
+			</children>
+		</HBox>
 	</children>
 </AnchorPane>
