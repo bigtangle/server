@@ -314,7 +314,7 @@ public class ExchangeController {
     }
 
     public void exportBlock(ActionEvent event) {
-        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+//        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
         String fromAddress = fromAddressComboBox.getValue();
         String fromTokenHex = fromTokenHexComboBox.getValue().split(":")[1].trim();
         String fromAmount = fromAmountTextField.getText();
@@ -337,7 +337,7 @@ public class ExchangeController {
         // wirte file 
         FileUtil.writeFile(file, buf);
 
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        /*HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", this.mOrderid);
         requestParam.put("fromAddress", fromAddress);
         requestParam.put("fromTokenHex", fromTokenHex);
@@ -351,7 +351,7 @@ public class ExchangeController {
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
             return;
-        }
+        }*/
         overlayUI.done();
     }
 
