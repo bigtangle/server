@@ -90,7 +90,7 @@ public class Threading {
             start();
         }
 
-        @SuppressWarnings("InfiniteLoopStatement") @Override
+        @Override
         public void run() {
             while (true) {
                 Runnable task = Uninterruptibles.takeUninterruptibly(tasks);
