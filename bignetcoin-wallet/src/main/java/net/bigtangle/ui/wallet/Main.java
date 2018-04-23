@@ -108,7 +108,7 @@ public class Main extends Application {
 
     
     public   String blockTopic = "bigtangle";
-    public   String bootstrapServers = "kafka2.bigtangle.net:9092";
+    public   String kafka =   "cn.kafka.bigtangle.net:9092";
     
     @Override
     public void start(Stage mainWindow) throws Exception {
@@ -170,6 +170,11 @@ public class Main extends Application {
         ResourceBundle resourceBundle = ResourceBundle.getBundle(resourceFile, locale);
         loader.setResources(resourceBundle);
         bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
+        
+        //set local kafka to send
+        if(!Locale.CHINESE.equals(locale)) {
+            kafka="de.kafka.bigtangle.net:9092";
+        }
         mainUI = loader.load();
         controller = loader.getController();
         // Configure the window with a StackPane so we can overlay things on top
@@ -426,7 +431,7 @@ public class Main extends Application {
     }
 
     public boolean sendMessage(byte[] data ) throws InterruptedException, ExecutionException {
-        return sendMessage(data, this.blockTopic, this.bootstrapServers);
+        return sendMessage(data, this.blockTopic, this.kafka);
     }
     public boolean sendMessage(byte[] data, String topic, String bootstrapServers ) throws InterruptedException, ExecutionException {
         final String key = UUID.randomUUID().toString();

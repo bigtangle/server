@@ -106,8 +106,8 @@ public class SendMoneyController {
     @FXML
     public void initialize() throws Exception {
         initChoicebox();
-        DeterministicKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
-        address.setText(ecKey.toAddress(Main.params).toBase58());
+      //  DeterministicKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
+      //  address.setText(ecKey.toAddress(Main.params).toBase58());
         new TextFieldValidator(amountEdit, text -> !WTUtils
                 .didThrow(() -> checkState(Coin.parseCoin(text, NetworkParameters.BIGNETCOIN_TOKENID).isPositive())));
 
