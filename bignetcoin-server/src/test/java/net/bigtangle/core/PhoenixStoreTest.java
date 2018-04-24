@@ -5,6 +5,9 @@
 
 package net.bigtangle.core;
 
+import java.sql.SQLException;
+import java.sql.Statement;
+
 import org.junit.After;
 import org.junit.Ignore;
 
@@ -41,6 +44,12 @@ public class PhoenixStoreTest extends AbstractFullPrunedBlockChainTest {
         return store;
     }
   
+    public void test() throws SQLException {
+        Statement s = ((PhoenixBlockStore)store).getConnection().get().createStatement();
+        s.executeUpdate("create table test (IDCardNum INTEGER not null primary key, Name varchar(20), Age INTEGER);");
+        s.executeUpdate("UPSERT INTO TEST VALUES(1,'bar',3);");
+        s.close();
+    }
 
     @Override
     public void resetStore(FullPrunedBlockStore store) throws BlockStoreException {
