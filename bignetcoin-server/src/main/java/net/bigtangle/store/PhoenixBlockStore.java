@@ -5,6 +5,7 @@
 
 package net.bigtangle.store;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -211,6 +212,17 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         if (this.chainHeadBlock.getHeight() < chainHead.getHeight())
             setChainHead(chainHead);
         removeUndoableBlocksWhereHeightIsLessThan(chainHead.getHeight() - fullStoreDepth);
+    }
+    
+    @Override
+    protected synchronized void maybeConnect() throws BlockStoreException {
+        super.maybeConnect();
+        Connection connection = this.getConnection().get();
+        try {
+            connection.setAutoCommit(true);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 }
