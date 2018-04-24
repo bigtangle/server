@@ -39,7 +39,7 @@
 
 				<Button mnemonicParsing="false" onAction="#blockEvaluation" text="%Blocks" />
 				<Button mnemonicParsing="false" onAction="#eckeyList" text="%Keys" />
-				<Button mnemonicParsing="false" onAction="#modyfySIgn" text="%modyfySign" />
+				<Button mnemonicParsing="false" onAction="#modyfySIgn" text="%multiSign" />
 				<Button onAction="#settingsClicked" text="%Settings" />
 			</children>
 		</HBox>
