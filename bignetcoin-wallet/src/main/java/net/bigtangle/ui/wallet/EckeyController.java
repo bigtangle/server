@@ -54,6 +54,7 @@ public class EckeyController {
     @FXML
     public void initialize() {
         try {
+            keyFileDirTextField.setText(System.getProperty("user.home") + File.separator + System.getProperty("user.name")+".wallet");
             initEcKeyList();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);

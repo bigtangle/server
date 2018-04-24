@@ -657,7 +657,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * @throws BlockStoreException
      *             if successful connection to the DB couldn't be made.
      */
-    protected synchronized final void maybeConnect() throws BlockStoreException {
+    protected synchronized void maybeConnect() throws BlockStoreException {
         try {
             if (conn.get() != null && !conn.get().isClosed())
                 return;

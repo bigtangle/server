@@ -5,11 +5,13 @@
 
 package net.bigtangle.core;
 
+import java.sql.SQLException;
+import java.sql.Statement;
+
 import org.junit.After;
-import org.junit.Ignore;
+import org.junit.Test;
 
 import net.bigtangle.store.FullPrunedBlockStore;
-import net.bigtangle.store.MySQLFullPrunedBlockStore;
 import net.bigtangle.store.PhoenixBlockStore;
 
 /**
@@ -37,13 +39,24 @@ public class PhoenixStoreTest extends AbstractFullPrunedBlockChainTest {
         } catch (RuntimeException e) {
             e.printStackTrace();
         }
-        resetStore(store);
+        //resetStore(store);
         return store;
     }
   
+    @Test
+    public void test() throws SQLException, BlockStoreException {
+        store = createStore(PARAMS, 10);
+//        ((PhoenixBlockStore)store).getConnection().get().setAutoCommit(true);
+        Statement s = ((PhoenixBlockStore)store).getConnection().get().createStatement();
+        s.executeUpdate("DROP TABLE test");
+        s.executeUpdate("CREATE TABLE test (IDCardNum INTEGER not null primary key, Name varchar(20), Age INTEGER)");
+        s.executeUpdate("UPSERT INTO TEST (IDCardNum, Name, Age) VALUES(1,'THIS IS TEST',3)");
+        s.close();
+//        ((PhoenixBlockStore)store).getConnection().get().commit();
+    }
 
     @Override
     public void resetStore(FullPrunedBlockStore store) throws BlockStoreException {
-        ((PhoenixBlockStore)store).resetStore();
+        // ((PhoenixBlockStore)store).resetStore();
     }
 }
