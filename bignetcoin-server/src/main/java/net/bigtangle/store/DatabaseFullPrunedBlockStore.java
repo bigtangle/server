@@ -271,16 +271,16 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "  INTO blockevaluation (blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 
-    protected String SELECT_SOLID_BLOCKEVALUATIONS_SQL = "SELECT  blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation WHERE solid = 1";
+    protected String SELECT_SOLID_BLOCKEVALUATIONS_SQL = "SELECT  blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation WHERE solid = true";
     protected String SELECT_ALL_BLOCKEVALUATIONS_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation ";
-    protected String SELECT_NONSOLID_BLOCKS_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation WHERE solid = 0";
-    protected String SELECT_BLOCKS_TO_ADD_TO_MILESTONE_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation WHERE solid = 1 AND milestone = 0 AND rating >= "
+    protected String SELECT_NONSOLID_BLOCKS_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation WHERE solid = false";
+    protected String SELECT_BLOCKS_TO_ADD_TO_MILESTONE_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation WHERE solid = true AND milestone = false AND rating >= "
             + NetworkParameters.MILESTONE_UPPER_THRESHOLD + " AND depth >= ?";
-    protected String SELECT_BLOCKS_IN_MILESTONEDEPTH_INTERVAL_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation WHERE milestone = 1 AND milestonedepth >= ? AND milestonedepth <= ?";
-    protected String SELECT_BLOCKS_TO_REMOVE_FROM_MILESTONE_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation WHERE solid = 1 AND milestone = 1 AND rating <= "
+    protected String SELECT_BLOCKS_IN_MILESTONEDEPTH_INTERVAL_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation WHERE milestone = true AND milestonedepth >= ? AND milestonedepth <= ?";
+    protected String SELECT_BLOCKS_TO_REMOVE_FROM_MILESTONE_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation WHERE solid = true AND milestone = true AND rating <= "
             + NetworkParameters.MILESTONE_LOWER_THRESHOLD;
-    protected String SELECT_SOLID_TIPS_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation INNER JOIN tips ON tips.hash=blockevaluation.blockhash WHERE solid = 1";
-    protected String SELECT_SOLID_BLOCKS_OF_HEIGHT_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation WHERE solid = 1 && height = ?";
+    protected String SELECT_SOLID_TIPS_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation INNER JOIN tips ON tips.hash=blockevaluation.blockhash WHERE solid = true";
+    protected String SELECT_SOLID_BLOCKS_OF_HEIGHT_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation WHERE solid = true && height = ?";
     protected String SELECT_OUTPUT_SPENDER_SQL = "SELECT blockevaluation.blockhash, rating, depth, cumulativeweight, solid,  blockevaluation.height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation INNER JOIN outputs ON outputs.spenderblockhash=blockevaluation.blockhash WHERE solid = 1 and hash = ? AND outputindex= ?";
 
     protected String SELECT_MAX_TOKENID_SQL = "select max(tokenid) from tokens";
@@ -456,7 +456,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         List<String> sqlStatements = new ArrayList<String>();
         sqlStatements.add(DROP_SETTINGS_TABLE);
         sqlStatements.add(DROP_HEADERS_TABLE);
-        sqlStatements.add(DROP_UNDOABLE_TABLE);
+     
         sqlStatements.add(DROP_OPEN_OUTPUT_TABLE);
         sqlStatements.add(DROP_TIPS_TABLE);
         sqlStatements.add(DROP_BLOCKEVALUATION_TABLE);
@@ -1202,13 +1202,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s = conn.get().prepareStatement(getSelectOpenoutputsSQL());
             s.setBytes(1, hash.getBytes());
             // index is actually an unsigned int
-            s.setInt(2, (int) index);
+            s.setLong(2,   index);
             ResultSet results = s.executeQuery();
             if (!results.next()) {
                 return null;
             }
             // Parse it.
-            int height = results.getInt(1);
+            long height = results.getLong(1);
             Coin coinvalue = Coin.valueOf(results.getLong(2), results.getBytes(8));
             byte[] scriptBytes = results.getBytes(3);
             boolean coinbase = results.getBoolean(4);
@@ -1245,12 +1245,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s = conn.get().prepareStatement(getInsertOpenoutputsSQL());
             s.setBytes(1, out.getHash().getBytes());
             // index is actually an unsigned int
-            s.setInt(2, (int) out.getIndex());
+            s.setLong(2,   out.getIndex());
             s.setLong(3, out.getHeight());
             s.setLong(4, out.getValue().value);
             s.setBytes(5, out.getScript().getProgram());
             s.setString(6, out.getAddress());
-            s.setInt(7, out.getScript().getScriptType().ordinal());
+            s.setLong(7, out.getScript().getScriptType().ordinal()   );
             s.setBoolean(8, out.isCoinbase());
             s.setBytes(9, out.getBlockhash().getBytes());
             s.setBytes(10, out.getValue().tokenid);
@@ -1262,14 +1262,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.executeUpdate();
             s.close();
         } catch (SQLException e) {
-            if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
+            if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
                 throw new BlockStoreException(e);
         } finally {
             if (s != null) {
                 try {
-                    s.close();
+                  if( s.getConnection()!=null) s.close();
                 } catch (SQLException e) {
-                    throw new BlockStoreException(e);
+                   // throw new BlockStoreException(e);
                 }
             }
         }

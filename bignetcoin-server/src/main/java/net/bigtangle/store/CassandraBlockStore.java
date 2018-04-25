@@ -5,6 +5,7 @@
 
 package net.bigtangle.store;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -59,7 +60,7 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
             "    coinvalue bigint ,\n" +
             "    scriptbytes blob ,\n" +
             "    toaddress text,\n" +
-            "    addresstargetable boolean,\n" +
+            "    addresstargetable int,\n" +
             "    coinbase boolean,\n" +
             "    blockhash  blob  ,\n" +
             "    tokenid blob,\n" +
@@ -214,94 +215,90 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
        
     }
 
+   
+ 
+    protected String UPDATE_BLOCKEVALUATION_CUMULATIVEWEIGHT_SQL = getUpdate() +" blockevaluation SET cumulativeweight = ? WHERE blockhash = ?";
+     
+    protected String UPDATE_BLOCKEVALUATION_REWARDVALIDITYASSESSMENT_SQL = getUpdate() +" blockevaluation SET rewardvalidityassessment = ? WHERE blockhash = ?";
+    
     @Override
     protected String getUpdateSettingsSLQ() {
-        // TODO Auto-generated method stub
-        return null;
+        return getUpdate() + " settings SET settingvalue = ? WHERE name = ?";
     }
-
+    
     @Override
     protected String getUpdateHeadersSQL() {
-        // TODO Auto-generated method stub
-        return null;
+        return getUpdate() +" headers SET wasundoable=? WHERE hash=?";
     }
-
+    
     @Override
     protected String getUpdateBlockEvaluationCumulativeweightSQL() {
-        // TODO Auto-generated method stub
-        return null;
+        return   getUpdate() +" outputs SET spent = ?, spenderblockhash = ? WHERE hash = ? AND outputindex= ?";
     }
-
+    
     @Override
     protected String getUpdateBlockEvaluationDepthSQL() {
-        // TODO Auto-generated method stub
-        return null;
+        return getUpdate() +" blockevaluation SET depth = ? WHERE blockhash = ?";
     }
-
+    
     @Override
-    protected String getUpdateBlockEvaluationHeightSQL() {
-        // TODO Auto-generated method stub
-        return null;
+    public String getUpdateBlockEvaluationHeightSQL() {
+        return getUpdate() +" blockevaluation SET height = ? WHERE blockhash = ?";
     }
-
+    
     @Override
-    protected String getUpdateBlockEvaluationMilestoneSQL() {
-        // TODO Auto-generated method stub
-        return null;
+    public String getUpdateBlockEvaluationMilestoneSQL() {
+        return  getUpdate() +" blockevaluation SET milestone = ? WHERE blockhash = ?";
     }
-
+    
     @Override
     protected String getUpdateBlockEvaluationRatingSQL() {
-        // TODO Auto-generated method stub
-        return null;
+        return getUpdate() +" blockevaluation SET rating = ? WHERE blockhash = ?";
     }
-
+    
     @Override
     protected String getUpdateBlockEvaluationSolidSQL() {
-        // TODO Auto-generated method stub
-        return null;
+        return getUpdate() +" blockevaluation SET solid = ? WHERE blockhash = ?";
     }
-
+    
     @Override
     protected String getUpdateBlockEvaluationMilestoneLastUpdateTimeSQL() {
-        // TODO Auto-generated method stub
-        return null;
+        return  getUpdate() +" blockevaluation SET milestonelastupdate = ? WHERE blockhash = ?";
     }
-
+    
     @Override
     protected String getUpdateBlockEvaluationMilestoneDepthSQL() {
-        // TODO Auto-generated method stub
-        return null;
+        return  getUpdate() +" blockevaluation SET milestonedepth = ? WHERE blockhash = ?";
     }
-
+    
     @Override
     protected String getUpdateBlockEvaluationMaintainedSQL() {
-        // TODO Auto-generated method stub
-        return null;
+        return getUpdate() +" blockevaluation SET maintained = ? WHERE blockhash = ?";
     }
-
+    
     @Override
     protected String getUpdateBlockEvaluationRewardValidItyassessmentSQL() {
-        // TODO Auto-generated method stub
-        return null;
+        return getUpdate() +" blockevaluation SET maintained = ? WHERE blockhash = ?";
     }
-
+    
     @Override
     protected String getUpdateOutputsSpentSQL() {
-        // TODO Auto-generated method stub
-        return null;
+        return getUpdate() +" outputs SET spendpending = ? WHERE hash = ? AND outputindex= ?";
     }
-
+    
     @Override
     protected String getUpdateOutputsConfirmedSQL() {
-        // TODO Auto-generated method stub
-        return null;
+        return  getUpdate() +" outputs SET confirmed = ? WHERE hash = ? AND outputindex= ?";
+    }
+    
+    @Override
+    protected String getUpdateOutputsSpendPendingSQL() {
+        return getUpdate() +" outputs SET spendpending = ? WHERE hash = ? AND outputindex= ?";
     }
 
     @Override
-    protected String getUpdateOutputsSpendPendingSQL() {
-        // TODO Auto-generated method stub
-        return null;
+    public void commitDatabaseBatchWrite() throws BlockStoreException {
+        //cassandra is autocommit
     }
 
 }

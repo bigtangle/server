@@ -16,7 +16,7 @@ import net.bigtangle.store.MySQLFullPrunedBlockStore;
 /**
  * A MySQL implementation of the {@link AbstractFullPrunedBlockChainTest}
  */
- @Ignore
+
  //("enable the mysql driver dependency in the maven POM")
 public class MySQLFullPrunedBlockChainTest extends AbstractFullPrunedBlockChainTest {
 

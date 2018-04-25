@@ -32,9 +32,9 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
 
     private static final String CREATE_HEADERS_TABLE = "CREATE TABLE headers (\n" +
             "    hash varbinary(32) NOT NULL,\n" +
-            "    height integer NOT NULL,\n" +
+            "    height bigint NOT NULL,\n" +
             "    header mediumblob NOT NULL,\n" +
-            "    wasundoable tinyint(1) NOT NULL,\n" +
+            "    wasundoable boolean NOT NULL,\n" +
             "    prevblockhash  varbinary(32) NOT NULL,\n" +
             "    prevbranchblockhash  varbinary(32) NOT NULL,\n" +
             "    mineraddress varbinary(255),\n" +
@@ -43,31 +43,23 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    CONSTRAINT headers_pk PRIMARY KEY (hash) USING BTREE \n" +
             ")";
 
-
-    private static final String CREATE_UNDOABLE_TABLE = "CREATE TABLE undoableblocks (\n" +
-            "    hash varbinary(32) NOT NULL,\n" +
-            "    height integer NOT NULL,\n" +
-            "    txoutchanges mediumblob,\n" +
-            "    transactions mediumblob,\n" +
-            "    CONSTRAINT undoableblocks_pk PRIMARY KEY (hash) USING BTREE \n" +
-            ")\n";
-
+ 
     private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" +
             "    hash varbinary(32) NOT NULL,\n" +
-            "    outputindex integer NOT NULL,\n" +
+            "    outputindex bigint NOT NULL,\n" +
             "    height bigint NOT NULL,\n" +
             "    coinvalue bigint NOT NULL,\n" +
             "    scriptbytes mediumblob NOT NULL,\n" +
             "    toaddress varchar(35),\n" +
-            "    addresstargetable tinyint(1),\n" +
+            "    addresstargetable bigint,\n" +
             "    coinbase boolean,\n" +
             "    blockhash  varbinary(32)  NOT NULL,\n" +
             "    tokenid varbinary(255),\n" +
             "    fromaddress varchar(35),\n" +
             "    description varchar(80),\n" +
-            "    spent tinyint(1) NOT NULL,\n" +
-            "    confirmed tinyint(1) NOT NULL,\n" +
-            "    spendpending tinyint(1) NOT NULL,\n" +
+            "    spent boolean NOT NULL,\n" +
+            "    confirmed boolean NOT NULL,\n" +
+            "    spendpending boolean NOT NULL,\n" +
             "    spenderblockhash  varbinary(32),\n" +
             "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex) USING BTREE \n" +
             ")\n";
@@ -82,14 +74,14 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    rating bigint ,\n" +
             "    depth bigint,\n" +
             "    cumulativeweight  bigint ,\n" +
-            "    solid tinyint(1) NOT NULL,\n" +
+            "    solid boolean NOT NULL,\n" +
             "    height bigint,\n" +
-            "    milestone tinyint(1),\n" +
+            "    milestone boolean,\n" +
             "    milestonelastupdate bigint,\n" +
             "    milestonedepth bigint,\n" +
             "    inserttime bigint,\n" +
-            "    maintained tinyint(1),\n" +
-            "    rewardvalidityassessment tinyint(1),\n" +
+            "    maintained boolean,\n" +
+            "    rewardvalidityassessment boolean,\n" +
             "    CONSTRAINT blockevaluation_pk PRIMARY KEY (blockhash) )\n";
     
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n" +
@@ -165,7 +157,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         List<String> sqlStatements = new ArrayList<String>();
         sqlStatements.add(CREATE_SETTINGS_TABLE);
         sqlStatements.add(CREATE_HEADERS_TABLE);
-        sqlStatements.add(CREATE_UNDOABLE_TABLE);
+ 
         sqlStatements.add(CREATE_OUTPUT_TABLE);
         sqlStatements.add(CREATE_TIPS_TABLE);
         sqlStatements.add(CREATE_BLOCKEVALUATION_TABLE);
@@ -179,7 +171,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     @Override
     protected List<String> getCreateIndexesSQL() {
         List<String> sqlStatements = new ArrayList<String>();
-        sqlStatements.add(CREATE_UNDOABLE_TABLE_INDEX);
+
         sqlStatements.add(CREATE_OUTPUTS_ADDRESS_MULTI_INDEX);
         sqlStatements.add(CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX);
         sqlStatements.add(CREATE_OUTPUTS_HASH_INDEX);

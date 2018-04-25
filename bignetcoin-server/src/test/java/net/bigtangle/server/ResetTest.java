@@ -52,11 +52,7 @@ public class ResetTest extends AbstractIntegrationTest {
     @Before
     public void setUp() throws Exception {
        
-        final int UNDOABLE_BLOCKS_STORED = 10;
-        store = createStore(networkParameters, UNDOABLE_BLOCKS_STORED);
-
-      //  blockgraph = new FullPrunedBlockGraph(networkParameters, store); 
-    }
+     }
     @Test
     //init 
     public void testReset() throws Exception {

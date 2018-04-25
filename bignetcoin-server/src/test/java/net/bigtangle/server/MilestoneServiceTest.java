@@ -77,7 +77,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
 	@Test
 	public void testMilestoneTestTangle1() throws Exception {
-		store = createStore(networkParameters, 10);
+		 
 		blockgraph = new FullPrunedBlockGraph(networkParameters, store);
 
 		// Add genesis block

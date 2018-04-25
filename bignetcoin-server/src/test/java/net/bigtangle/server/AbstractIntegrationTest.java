@@ -13,31 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockEvaluation;
-import net.bigtangle.core.BlockForTest;
-import net.bigtangle.core.BlockStoreException;
-import net.bigtangle.core.Coin;
-import net.bigtangle.core.ECKey;
-import net.bigtangle.core.Json;
-import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.Transaction;
-import net.bigtangle.core.TransactionOutPoint;
-import net.bigtangle.core.TransactionOutput;
-import net.bigtangle.core.UTXO;
-import net.bigtangle.core.Utils;
-import net.bigtangle.kits.WalletAppKit;
-import net.bigtangle.params.UnitTestParams;
-import net.bigtangle.server.config.GlobalConfigurationProperties;
-import net.bigtangle.server.service.BlockService;
-import net.bigtangle.server.service.MilestoneService;
-import net.bigtangle.store.FullPrunedBlockGraph;
-import net.bigtangle.store.FullPrunedBlockStore;
-import net.bigtangle.store.MySQLFullPrunedBlockStore;
-import net.bigtangle.store.PhoenixBlockStore;
-import net.bigtangle.utils.MapToBeanMapperUtil;
-import net.bigtangle.utils.OkHttp3Util;
-
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -61,6 +36,31 @@ import org.springframework.web.context.WebApplicationContext;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.BlockForTest;
+import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.Coin;
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Json;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionOutPoint;
+import net.bigtangle.core.TransactionOutput;
+import net.bigtangle.core.UTXO;
+import net.bigtangle.core.Utils;
+import net.bigtangle.kits.WalletAppKit;
+import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.server.config.DBStoreConfiguration;
+import net.bigtangle.server.service.BlockService;
+import net.bigtangle.server.service.MilestoneService;
+import net.bigtangle.store.FullPrunedBlockGraph;
+import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.MySQLFullPrunedBlockStore;
+import net.bigtangle.store.PhoenixBlockStore;
+import net.bigtangle.utils.MapToBeanMapperUtil;
+import net.bigtangle.utils.OkHttp3Util;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {})
@@ -92,9 +92,7 @@ public abstract class AbstractIntegrationTest {
         contextRoot = String.format(CONTEXT_ROOT_TEMPLATE, port);
     }
 
-    @Autowired
-    private GlobalConfigurationProperties globalConfigurationProperties;
-
+  
     protected FullPrunedBlockGraph blockgraph;
 
     @Autowired
@@ -105,25 +103,12 @@ public abstract class AbstractIntegrationTest {
 
     @Autowired
     private MilestoneService milestoneService;
+    @Autowired
+    DBStoreConfiguration dbConfiguration;
+    
+  
 
-    public FullPrunedBlockStore createStore(NetworkParameters params, int blockCount) throws BlockStoreException {
-        try {
-//            String DB_HOSTNAME = globalConfigurationProperties.getHostname() + ":" + globalConfigurationProperties.getPort();
-            String DB_NAME = globalConfigurationProperties.getDbName();
-//            String DB_USERNAME = globalConfigurationProperties.getUsername();
-//            String DB_PASSWORD = globalConfigurationProperties.getPassword();
-//            store = new MySQLFullPrunedBlockStore(params, blockCount, DB_HOSTNAME, DB_NAME, DB_USERNAME, DB_PASSWORD);
-            store = new PhoenixBlockStore(params, blockCount, "cn.phoenix.bigtangle.net:8765", DB_NAME, null, null);
-            // ((MySQLFullPrunedBlockStore)store).initFromDatabase();
-            // delete + create +initFromDatabase
-            ((PhoenixBlockStore) store).resetStore();
-        } catch (Exception e) {
-            log.debug("", e);
-        }
-        // reset pro @test
-
-        return store;
-    }
+   
 
     protected static final NetworkParameters PARAMS = new UnitTestParams() {
         @Override
@@ -136,10 +121,10 @@ public abstract class AbstractIntegrationTest {
     public void setUp() throws Exception {
         mockMvc = MockMvcBuilders.webAppContextSetup(webContext).build();
         objectMapper = new ObjectMapper();
-        // registerModule(new Jackson2HalModule());
-        final int UNDOABLE_BLOCKS_STORED = 10;
-        store = createStore(networkParameters, UNDOABLE_BLOCKS_STORED);
-
+   
+        store =  dbConfiguration.store();
+         store.resetStore();
+      
         blockgraph = new FullPrunedBlockGraph(networkParameters, store);
 
         // Add genesis block
@@ -184,19 +169,19 @@ public abstract class AbstractIntegrationTest {
     }
 
     public void wallet1() throws Exception {
-       
+
         walletAppKit1 = new WalletAppKit(PARAMS, new File("../bignetcoin-wallet"), "bignetcoin1");
         walletAppKit1.wallet().setServerURL(contextRoot);
- 
+
     }
-    
+
     public List<UTXO> testTransactionAndGetBalances() throws Exception {
         return testTransactionAndGetBalances(false);
     }
 
     // get balance for the walleKeys
     public List<UTXO> testTransactionAndGetBalances(boolean withZero) throws Exception {
-    return testTransactionAndGetBalances(withZero, walletKeys);
+        return testTransactionAndGetBalances(withZero, walletKeys);
     }
 
     // get balance for the walleKeys
@@ -228,7 +213,7 @@ public abstract class AbstractIntegrationTest {
         }
         return listUTXO;
     }
-    
+
     public void testInitWallet() throws Exception {
 
         ECKey outKey = new ECKey();
@@ -243,10 +228,10 @@ public abstract class AbstractIntegrationTest {
         System.out.println(rollingBlock.getTransactions().get(0).getOutputs());
         Block block = networkParameters.getDefaultSerializer().makeBlock(rollingBlock.bitcoinSerialize());
         System.out.println(block.getTransactions().get(0).getOutputs());
-        
+
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
-       
+
         for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
                     outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
@@ -260,15 +245,19 @@ public abstract class AbstractIntegrationTest {
         milestoneService.update();
 
         rollingBlock = BlockForTest.createNextBlock(b, null, networkParameters.getGenesisBlock().getHash());
-//        blockgraph.add(rollingBlock);
-        
+        // blockgraph.add(rollingBlock);
+
         System.out.println("rollingBlock : " + rollingBlock.toString());
-        // rollingBlock = networkParameters.getDefaultSerializer().makeBlock(rollingBlock.bitcoinSerialize());
+        // rollingBlock =
+        // networkParameters.getDefaultSerializer().makeBlock(rollingBlock.bitcoinSerialize());
         System.out.println("rollingBlock : " + rollingBlock.toString());
-        
-//        rollingBlock = new Block(this.networkParameters, rollingBlock.getHash(), rollingBlock.getHash(),
-//                NetworkParameters.BIGNETCOIN_TOKENID, NetworkParameters.BLOCKTYPE_TRANSFER,
-//                Math.max(rollingBlock.getTimeSeconds(), rollingBlock.getTimeSeconds()));
+
+        // rollingBlock = new Block(this.networkParameters,
+        // rollingBlock.getHash(), rollingBlock.getHash(),
+        // NetworkParameters.BIGNETCOIN_TOKENID,
+        // NetworkParameters.BLOCKTYPE_TRANSFER,
+        // Math.max(rollingBlock.getTimeSeconds(),
+        // rollingBlock.getTimeSeconds()));
 
         System.out.println("key " + myKey.getPublicKeyAsHex());
 
@@ -277,7 +266,7 @@ public abstract class AbstractIntegrationTest {
 
         Transaction t = new Transaction(networkParameters);
         t.addOutput(new TransactionOutput(networkParameters, t, amount, myKey.toAddress(networkParameters)));
-        t.addSignedInput(spendableOutput,  transaction.getOutputs().get(0).getScriptPubKey (), outKey);
+        t.addSignedInput(spendableOutput, transaction.getOutputs().get(0).getScriptPubKey(), outKey);
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
         blockgraph.add(rollingBlock);

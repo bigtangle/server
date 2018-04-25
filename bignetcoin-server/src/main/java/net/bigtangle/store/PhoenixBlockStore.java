@@ -46,17 +46,10 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             + "    hash VARBINARY(32) not null,\n" + "    height bigint ,\n" + "    txoutchanges VARBINARY(4000),\n"
             + "    transactions VARBINARY(4000),\n" + "    CONSTRAINT undoableblocks_pk PRIMARY KEY (hash)  \n" + ")\n";
 
-//    private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" + "    hash VARBINARY(32) not null,\n"
-//            + "    outputindex integer,\n" + "    height bigint ,\n" + "    coinvalue bigint ,\n"
-//            + "    scriptbytes VARBINARY(4000) ,\n" + "    toaddress VARBINARY(35),\n" + "    addresstargetable boolean,\n"
-//            + "    coinbase boolean,\n" + "    blockhash  VARBINARY(32)  ,\n" + "    tokenid VARBINARY(255),\n"
-//            + "    fromaddress VARBINARY(35),\n" + "    description VARBINARY(80),\n" + "    spent boolean ,\n"
-//            + "    confirmed boolean ,\n" + "    spendpending boolean ,\n" + "    spenderblockhash  VARBINARY(32),\n"
-//            + "    CONSTRAINT outputs_pk PRIMARY KEY (hash)  \n" + ")\n";
-    
+ 
     private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" + "    hash binary(32) not null,\n"
-            + "    outputindex integer not null,\n" + "    height bigint ,\n" + "    coinvalue bigint ,\n"
-            + "    scriptbytes binary(4000) ,\n" + "    toaddress binary(35),\n" + "    addresstargetable boolean,\n"
+            + "    outputindex bigint not null,\n" + "    height bigint ,\n" + "    coinvalue bigint ,\n"
+            + "    scriptbytes binary(4000) ,\n" + "    toaddress binary(35),\n" + "    addresstargetable bigint,\n"
             + "    coinbase boolean,\n" + "    blockhash  binary(32)  ,\n" + "    tokenid binary(255),\n"
             + "    fromaddress binary(35),\n" + "    description binary(80),\n" + "    spent boolean ,\n"
             + "    confirmed boolean ,\n" + "    spendpending boolean ,\n" + "    spenderblockhash  binary(32),\n"
@@ -134,7 +127,6 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         List<String> sqlStatements = new ArrayList<String>();
         sqlStatements.add(CREATE_SETTINGS_TABLE);
         sqlStatements.add(CREATE_HEADERS_TABLE);
-        sqlStatements.add(CREATE_UNDOABLE_TABLE);
         sqlStatements.add(CREATE_OUTPUT_TABLE);
         sqlStatements.add(CREATE_TIPS_TABLE);
         sqlStatements.add(CREATE_BLOCKEVALUATION_TABLE);
