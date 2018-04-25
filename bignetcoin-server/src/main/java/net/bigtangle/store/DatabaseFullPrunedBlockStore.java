@@ -7,7 +7,6 @@ package net.bigtangle.store;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.DriverManager;
@@ -225,7 +224,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     // Queries SQL.
     protected String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
     protected String INSERT_SETTINGS_SQL = getInsert() + "  INTO settings(name, settingvalue) VALUES(?, ?)";
-    protected String UPDATE_SETTINGS_SQL = getUpdate() +" settings SET settingvalue = ? WHERE name = ?";
 
     protected String SELECT_HEADERS_SQL = "SELECT  height, header, wasundoable,prevblockhash,prevbranchblockhash,mineraddress,tokenid,blocktype FROM headers WHERE hash = ?";
     protected String SELECT_SOLID_APPROVER_HEADERS_SQL = "SELECT  headers.height, header, wasundoable,prevblockhash,prevbranchblockhash,mineraddress,tokenid,blocktype FROM headers INNER JOIN blockevaluation ON headers.hash=blockevaluation.blockhash WHERE blockevaluation.solid = 1 AND (prevblockhash = ? OR prevbranchblockhash = ?)";
@@ -233,12 +231,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String INSERT_HEADERS_SQL = getInsert()
             + "  INTO headers(hash,  height, header, wasundoable,prevblockhash,prevbranchblockhash,mineraddress,tokenid,blocktype ) VALUES(?, ?, ?, ?, ?,?, ?, ?, ?)";
-    protected String UPDATE_HEADERS_SQL = getUpdate() +" headers SET wasundoable=? WHERE hash=?";
 
     protected String SELECT_UNDOABLEBLOCKS_SQL = "SELECT txoutchanges, transactions FROM undoableblocks WHERE hash = ?";
     protected String INSERT_UNDOABLEBLOCKS_SQL = getInsert()
             + " INTO undoableblocks(hash, height, txoutchanges, transactions) VALUES(?, ?, ?, ?)";
-    protected String UPDATE_UNDOABLEBLOCKS_SQL = getUpdate() +" undoableblocks SET txoutchanges=?, transactions=? WHERE hash = ?";
     protected String DELETE_UNDOABLEBLOCKS_SQL = "DELETE FROM undoableblocks WHERE height <= ?";
 
     protected String SELECT_OUTPUTS_COUNT_SQL = "SELECT COUNT(*) FROM outputs WHERE hash = ?";
@@ -246,9 +242,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " INTO outputs (hash, outputindex, height, coinvalue, scriptbytes, toaddress, addresstargetable, coinbase, blockhash, tokenid, fromaddress, description, spent, confirmed, spendpending) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?)";
     protected String SELECT_OUTPUTS_SQL = "SELECT height, coinvalue, scriptbytes, coinbase, toaddress, addresstargetable, blockhash, tokenid, fromaddress, description, spent, confirmed, spendpending FROM outputs WHERE hash = ? AND outputindex = ?";
     protected String DELETE_OUTPUTS_SQL = "DELETE FROM outputs WHERE hash = ? AND outputindex= ?";
-    protected String UPDATE_OUTPUTS_SPENT_SQL = getUpdate() +" outputs SET spent = ?, spenderblockhash = ? WHERE hash = ? AND outputindex= ?";
-    protected String UPDATE_OUTPUTS_CONFIRMED_SQL = getUpdate() +" outputs SET confirmed = ? WHERE hash = ? AND outputindex= ?";
-    protected String UPDATE_OUTPUTS_SPENDPENDING_SQL = getUpdate() +" outputs SET spendpending = ? WHERE hash = ? AND outputindex= ?";
 
     protected String SELECT_TRANSACTION_OUTPUTS_SQL = "SELECT hash, coinvalue, scriptbytes, height, outputindex, coinbase, toaddress, addresstargetable, blockhash, tokenid, fromaddress, description, spent, confirmed, spendpending FROM outputs where toaddress = ?";
     protected String SELECT_TRANSACTION_OUTPUTS_TOKEN_SQL = "SELECT hash, coinvalue, scriptbytes, height, outputindex, coinbase, toaddress, addresstargetable, blockhash, tokenid, fromaddress, description, spent, confirmed, spendpending FROM outputs where toaddress = ? and tokenid = ?";
@@ -277,17 +270,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String INSERT_BLOCKEVALUATION_SQL = getInsert()
             + "  INTO blockevaluation (blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-    protected String UPDATE_BLOCKEVALUATION_DEPTH_SQL = getUpdate() +" blockevaluation SET depth = ? WHERE blockhash = ?";
-    protected String UPDATE_BLOCKEVALUATION_CUMULATIVEWEIGHT_SQL = getUpdate() +" blockevaluation SET cumulativeweight = ? WHERE blockhash = ?";
-    protected String UPDATE_BLOCKEVALUATION_HEIGHT_SQL = getUpdate() +" blockevaluation SET height = ? WHERE blockhash = ?";
-    protected String UPDATE_BLOCKEVALUATION_MILESTONE_SQL = getUpdate() +" blockevaluation SET milestone = ? WHERE blockhash = ?";
-    protected String UPDATE_BLOCKEVALUATION_MILESTONE_LAST_UPDATE_TIME_SQL = getUpdate() +" blockevaluation SET milestonelastupdate = ? WHERE blockhash = ?";
-    protected String UPDATE_BLOCKEVALUATION_RATING_SQL = getUpdate() +" blockevaluation SET rating = ? WHERE blockhash = ?";
-    protected String UPDATE_BLOCKEVALUATION_SOLID_SQL = getUpdate() +" blockevaluation SET solid = ? WHERE blockhash = ?";
-
-    protected String UPDATE_BLOCKEVALUATION_MILESTONEDEPTH_SQL = getUpdate() +" blockevaluation SET milestonedepth = ? WHERE blockhash = ?";
-    protected String UPDATE_BLOCKEVALUATION_MAINTAINED_SQL = getUpdate() +" blockevaluation SET maintained = ? WHERE blockhash = ?";
-    protected String UPDATE_BLOCKEVALUATION_REWARDVALIDITYASSESSMENT_SQL = getUpdate() +" blockevaluation SET rewardvalidityassessment = ? WHERE blockhash = ?";
 
     protected String SELECT_SOLID_BLOCKEVALUATIONS_SQL = "SELECT  blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation WHERE solid = 1";
     protected String SELECT_ALL_BLOCKEVALUATIONS_SQL = "SELECT blockhash, rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation ";
@@ -508,9 +490,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * 
      * @return The SQL update statement.
      */
-    protected String getUpdateSettingsSLQ() {
-        return UPDATE_SETTINGS_SQL;
-    }
+    protected abstract String getUpdateSettingsSLQ();
 
     /**
      * Get the SQL to select a headers record.
@@ -535,9 +515,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * 
      * @return The SQL update statement.
      */
-    protected String getUpdateHeadersSQL() {
-        return UPDATE_HEADERS_SQL;
-    }
+    protected abstract String getUpdateHeadersSQL();
 
     /**
      * Get the SQL to select an undoableblocks record.
@@ -1947,6 +1925,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
+    
+    protected abstract String getUpdateBlockEvaluationCumulativeweightSQL();
 
     @Override
     public void updateBlockEvaluationCumulativeweight(Sha256Hash blockhash, long cumulativeweight)
@@ -1957,7 +1937,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_BLOCKEVALUATION_CUMULATIVEWEIGHT_SQL);
+            preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationCumulativeweightSQL());
             preparedStatement.setLong(1, cumulativeweight);
             preparedStatement.setBytes(2, blockhash.getBytes());
             preparedStatement.executeUpdate();
@@ -1974,6 +1954,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
+    protected abstract String getUpdateBlockEvaluationDepthSQL();
+    
     @Override
     public void updateBlockEvaluationDepth(Sha256Hash blockhash, long depth) throws BlockStoreException {
         BlockEvaluation blockEvaluation = this.getBlockEvaluation(blockhash);
@@ -1982,7 +1964,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_BLOCKEVALUATION_DEPTH_SQL);
+            preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationDepthSQL());
             preparedStatement.setLong(1, depth);
             preparedStatement.setBytes(2, blockhash.getBytes());
             preparedStatement.executeUpdate();
@@ -1998,6 +1980,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
+    
+    protected abstract String getUpdateBlockEvaluationHeightSQL();
 
     @Override
     public void updateBlockEvaluationHeight(Sha256Hash blockhash, long height) throws BlockStoreException {
@@ -2007,7 +1991,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_BLOCKEVALUATION_HEIGHT_SQL);
+            preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationHeightSQL());
             preparedStatement.setLong(1, height);
             preparedStatement.setBytes(2, blockhash.getBytes());
             preparedStatement.executeUpdate();
@@ -2022,9 +2006,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 }
             }
         }
-
     }
 
+    protected abstract String getUpdateBlockEvaluationMilestoneSQL();
+    
     @Override
     public void updateBlockEvaluationMilestone(Sha256Hash blockhash, boolean b) throws BlockStoreException {
         BlockEvaluation blockEvaluation = this.getBlockEvaluation(blockhash);
@@ -2033,7 +2018,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_BLOCKEVALUATION_MILESTONE_SQL);
+            preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationMilestoneSQL());
             preparedStatement.setBoolean(1, b);
             preparedStatement.setBytes(2, blockhash.getBytes());
             preparedStatement.executeUpdate();
@@ -2048,8 +2033,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 }
             }
         }
-
     }
+    
+    protected abstract String getUpdateBlockEvaluationRatingSQL();
 
     @Override
     public void updateBlockEvaluationRating(Sha256Hash blockhash, long i) throws BlockStoreException {
@@ -2059,7 +2045,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_BLOCKEVALUATION_RATING_SQL);
+            preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationRatingSQL());
             preparedStatement.setLong(1, i);
             preparedStatement.setBytes(2, blockhash.getBytes());
             preparedStatement.executeUpdate();
@@ -2074,8 +2060,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 }
             }
         }
-
     }
+    
+    protected abstract String getUpdateBlockEvaluationSolidSQL();
 
     @Override
     public void updateBlockEvaluationSolid(Sha256Hash blockhash, boolean b) throws BlockStoreException {
@@ -2085,7 +2072,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_BLOCKEVALUATION_SOLID_SQL);
+            preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationSolidSQL());
             preparedStatement.setBoolean(1, b);
             preparedStatement.setBytes(2, blockhash.getBytes());
             preparedStatement.executeUpdate();
@@ -2101,6 +2088,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
+    
+    protected abstract String getUpdateBlockEvaluationMilestoneLastUpdateTimeSQL();
 
     @Override
     public void updateBlockEvaluationMilestoneLastUpdateTime(Sha256Hash blockhash, long now)
@@ -2111,7 +2100,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_BLOCKEVALUATION_MILESTONE_LAST_UPDATE_TIME_SQL);
+            preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationMilestoneLastUpdateTimeSQL());
             preparedStatement.setLong(1, now);
             preparedStatement.setBytes(2, blockhash.getBytes());
             preparedStatement.executeUpdate();
@@ -2128,6 +2117,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
+    protected abstract String getUpdateBlockEvaluationMilestoneDepthSQL();
+    
     @Override
     public void updateBlockEvaluationMilestoneDepth(Sha256Hash blockhash, long i) throws BlockStoreException {
         BlockEvaluation blockEvaluation = this.getBlockEvaluation(blockhash);
@@ -2136,7 +2127,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_BLOCKEVALUATION_MILESTONEDEPTH_SQL);
+            preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationMilestoneDepthSQL());
             preparedStatement.setLong(1, i);
             preparedStatement.setBytes(2, blockhash.getBytes());
             preparedStatement.executeUpdate();
@@ -2152,6 +2143,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
+    
+    protected abstract String getUpdateBlockEvaluationMaintainedSQL();
 
     @Override
     public void updateBlockEvaluationMaintained(Sha256Hash blockhash, boolean b) throws BlockStoreException {
@@ -2161,7 +2154,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_BLOCKEVALUATION_MAINTAINED_SQL);
+            preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationMaintainedSQL());
             preparedStatement.setBoolean(1, b);
             preparedStatement.setBytes(2, blockhash.getBytes());
             preparedStatement.executeUpdate();
@@ -2177,6 +2170,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
+    
+    protected abstract String getUpdateBlockEvaluationRewardValidItyassessmentSQL();
 
     @Override
     public void updateBlockEvaluationRewardValid(Sha256Hash blockhash, boolean b) throws BlockStoreException {
@@ -2186,7 +2181,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_BLOCKEVALUATION_REWARDVALIDITYASSESSMENT_SQL);
+            preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationRewardValidItyassessmentSQL());
             preparedStatement.setBoolean(1, b);
             preparedStatement.setBytes(2, blockhash.getBytes());
             preparedStatement.executeUpdate();
@@ -2272,6 +2267,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
+    
+    protected abstract String getUpdateOutputsSpentSQL();
 
     @Override
     public void updateTransactionOutputSpent(Sha256Hash prevTxHash, long index, boolean b, Sha256Hash spenderBlock)
@@ -2282,7 +2279,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_OUTPUTS_SPENT_SQL);
+            preparedStatement = conn.get().prepareStatement(getUpdateOutputsSpentSQL());
             preparedStatement.setBoolean(1, b);
             preparedStatement.setBytes(2, spenderBlock.getBytes());
             preparedStatement.setBytes(3, prevTxHash.getBytes());
@@ -2301,6 +2298,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
 
     }
+    
+    protected abstract String getUpdateOutputsConfirmedSQL();
 
     @Override
     public void updateTransactionOutputConfirmed(Sha256Hash prevTxHash, long index, boolean b)
@@ -2311,7 +2310,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_OUTPUTS_CONFIRMED_SQL);
+            preparedStatement = conn.get().prepareStatement(getUpdateOutputsConfirmedSQL());
             preparedStatement.setBoolean(1, b);
             preparedStatement.setBytes(2, prevTxHash.getBytes());
             preparedStatement.setLong(3, index);
@@ -2328,6 +2327,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
+    
+    protected abstract String getUpdateOutputsSpendPendingSQL();
 
     @Override
     public void updateTransactionOutputSpendPending(Sha256Hash prevTxHash, long index, boolean b)
@@ -2338,7 +2339,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_OUTPUTS_SPENDPENDING_SQL);
+            preparedStatement = conn.get().prepareStatement(getUpdateOutputsSpendPendingSQL());
             preparedStatement.setBoolean(1, b);
             preparedStatement.setBytes(2, prevTxHash.getBytes());
             preparedStatement.setLong(3, index);

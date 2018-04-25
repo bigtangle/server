@@ -46,11 +46,12 @@ public class PhoenixStoreTest extends AbstractFullPrunedBlockChainTest {
     @Test
     public void test() throws SQLException, BlockStoreException {
         store = createStore(PARAMS, 10);
-//        ((PhoenixBlockStore)store).getConnection().get().setAutoCommit(true);
+        ((PhoenixBlockStore)store).getConnection().get().setAutoCommit(true);
         Statement s = ((PhoenixBlockStore)store).getConnection().get().createStatement();
-        s.executeUpdate("DROP TABLE test");
-        s.executeUpdate("CREATE TABLE test (IDCardNum INTEGER not null primary key, Name varchar(20), Age INTEGER)");
-        s.executeUpdate("UPSERT INTO TEST (IDCardNum, Name, Age) VALUES(1,'THIS IS TEST',3)");
+//        s.executeUpdate("DROP TABLE test");
+//        s.executeUpdate("CREATE TABLE test (IDCardNum INTEGER not null primary key, Name varchar(20), Age INTEGER)");
+        s.executeUpdate("UPSERT INTO TEST (IDCardNum, Name, Age) VALUES(1,'THIS IS TEST',33)");
+//        s.executeUpdate("UPSERT INTO TEST (Name, IDCardNum) VALUES('THIS IS 112222222222', 1)");
         s.close();
 //        ((PhoenixBlockStore)store).getConnection().get().commit();
     }

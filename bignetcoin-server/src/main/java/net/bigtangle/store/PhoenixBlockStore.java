@@ -226,5 +226,100 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             e.printStackTrace();
         }
     }
+    
+
+    protected String UPDATE_SETTINGS_SQL = getUpdate() + " settings (settingvalue, name) VALUES (?, ?)";
+    protected String UPDATE_HEADERS_SQL = getUpdate() +" headers (wasundoable, hash) VALUES (?, ?)";
+    protected String UPDATE_UNDOABLEBLOCKS_SQL = getUpdate() +" undoableblocks (txoutchanges, transactions, hash) VALUES (?, ?, ?)";
+    
+    protected String UPDATE_OUTPUTS_SPENT_SQL = getUpdate() +" outputs SET spent = ?, spenderblockhash = ? WHERE hash = ? AND outputindex= ?";
+    protected String UPDATE_OUTPUTS_CONFIRMED_SQL = getUpdate() +" outputs SET confirmed = ? WHERE hash = ? AND outputindex= ?";
+    protected String UPDATE_OUTPUTS_SPENDPENDING_SQL = getUpdate() +" outputs SET spendpending = ? WHERE hash = ? AND outputindex= ?";
+    
+    protected String UPDATE_BLOCKEVALUATION_DEPTH_SQL = getUpdate() +" blockevaluation (depth, blockhash) VALUES (?, ?)";
+    protected String UPDATE_BLOCKEVALUATION_CUMULATIVEWEIGHT_SQL = getUpdate() +" blockevaluation (cumulativeweight, blockhash) VALUES (?, ?)";
+    protected String UPDATE_BLOCKEVALUATION_HEIGHT_SQL = getUpdate() +" blockevaluation (height, blockhash) VALUES (?, ?)";
+    protected String UPDATE_BLOCKEVALUATION_MILESTONE_SQL = getUpdate() +" blockevaluation (milestone, blockhash) VALUES (?, ?)";
+    protected String UPDATE_BLOCKEVALUATION_MILESTONE_LAST_UPDATE_TIME_SQL = getUpdate() +" blockevaluation (milestonelastupdate, blockhash) VALUES (?, ?)";
+    protected String UPDATE_BLOCKEVALUATION_RATING_SQL = getUpdate() +" blockevaluation (rating, blockhash) VALUES (?, ?)";
+    protected String UPDATE_BLOCKEVALUATION_SOLID_SQL = getUpdate() +" blockevaluation (solid, blockhash) VALUES (?, ?)";
+    protected String UPDATE_BLOCKEVALUATION_MILESTONEDEPTH_SQL = getUpdate() +" blockevaluation (milestonedepth, blockhash) VALUES (?, ?)";
+    protected String UPDATE_BLOCKEVALUATION_MAINTAINED_SQL = getUpdate() +" blockevaluation (maintained, blockhash) VALUES (?, ?)";
+    protected String UPDATE_BLOCKEVALUATION_REWARDVALIDITYASSESSMENT_SQL = getUpdate() +" blockevaluation (rewardvalidityassessment, blockhash) VALUES (?, ?)";
+    
+//    @Override
+//    protected String getUpdateSettingsSLQ() {
+//        return UPDATE_SETTINGS_SQL;
+//    }
+//    
+//    @Override
+//    protected String getUpdateHeadersSQL() {
+//        return UPDATE_HEADERS_SQL;
+//    }
+    
+    @Override
+    protected String getUpdateBlockEvaluationCumulativeweightSQL() {
+        return UPDATE_BLOCKEVALUATION_CUMULATIVEWEIGHT_SQL;
+    }
+    
+    @Override
+    protected String getUpdateBlockEvaluationDepthSQL() {
+        return UPDATE_BLOCKEVALUATION_DEPTH_SQL;
+    }
+    
+    @Override
+    public String getUpdateBlockEvaluationHeightSQL() {
+        return UPDATE_BLOCKEVALUATION_HEIGHT_SQL;
+    }
+    
+    @Override
+    public String getUpdateBlockEvaluationMilestoneSQL() {
+        return UPDATE_BLOCKEVALUATION_MILESTONE_SQL;
+    }
+    
+    @Override
+    protected String getUpdateBlockEvaluationRatingSQL() {
+        return UPDATE_BLOCKEVALUATION_RATING_SQL;
+    }
+    
+    @Override
+    protected String getUpdateBlockEvaluationSolidSQL() {
+        return UPDATE_BLOCKEVALUATION_SOLID_SQL;
+    }
+    
+    @Override
+    protected String getUpdateBlockEvaluationMilestoneLastUpdateTimeSQL() {
+        return UPDATE_BLOCKEVALUATION_MILESTONE_LAST_UPDATE_TIME_SQL;
+    }
+    
+    @Override
+    protected String getUpdateBlockEvaluationMilestoneDepthSQL() {
+        return UPDATE_BLOCKEVALUATION_MILESTONEDEPTH_SQL;
+    }
+    
+    @Override
+    protected String getUpdateBlockEvaluationMaintainedSQL() {
+        return UPDATE_BLOCKEVALUATION_MAINTAINED_SQL;
+    }
+    
+    @Override
+    protected String getUpdateBlockEvaluationRewardValidItyassessmentSQL() {
+        return UPDATE_BLOCKEVALUATION_REWARDVALIDITYASSESSMENT_SQL;
+    }
+    
+    @Override
+    protected String getUpdateOutputsSpentSQL() {
+        return UPDATE_OUTPUTS_SPENT_SQL;
+    }
+    
+    @Override
+    protected String getUpdateOutputsConfirmedSQL() {
+        return UPDATE_OUTPUTS_CONFIRMED_SQL;
+    }
+    
+    @Override
+    protected String getUpdateOutputsSpendPendingSQL() {
+        return UPDATE_OUTPUTS_SPENDPENDING_SQL;
+    }
 
 }

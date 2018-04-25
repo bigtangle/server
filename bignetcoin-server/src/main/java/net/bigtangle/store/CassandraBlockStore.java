@@ -5,7 +5,6 @@
 
 package net.bigtangle.store;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -213,6 +212,96 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
     public void beginDatabaseBatchWrite() throws BlockStoreException {
         maybeConnect();
        
+    }
+
+    @Override
+    protected String getUpdateSettingsSLQ() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected String getUpdateHeadersSQL() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected String getUpdateBlockEvaluationCumulativeweightSQL() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected String getUpdateBlockEvaluationDepthSQL() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected String getUpdateBlockEvaluationHeightSQL() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected String getUpdateBlockEvaluationMilestoneSQL() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected String getUpdateBlockEvaluationRatingSQL() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected String getUpdateBlockEvaluationSolidSQL() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected String getUpdateBlockEvaluationMilestoneLastUpdateTimeSQL() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected String getUpdateBlockEvaluationMilestoneDepthSQL() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected String getUpdateBlockEvaluationMaintainedSQL() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected String getUpdateBlockEvaluationRewardValidItyassessmentSQL() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected String getUpdateOutputsSpentSQL() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected String getUpdateOutputsConfirmedSQL() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected String getUpdateOutputsSpendPendingSQL() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }
