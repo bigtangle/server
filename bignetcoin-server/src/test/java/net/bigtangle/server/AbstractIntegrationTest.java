@@ -34,6 +34,7 @@ import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.store.MySQLFullPrunedBlockStore;
+import net.bigtangle.store.PhoenixBlockStore;
 import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
 
@@ -107,14 +108,15 @@ public abstract class AbstractIntegrationTest {
 
     public FullPrunedBlockStore createStore(NetworkParameters params, int blockCount) throws BlockStoreException {
         try {
-            String DB_HOSTNAME = globalConfigurationProperties.getHostname() + ":" + globalConfigurationProperties.getPort();
+//            String DB_HOSTNAME = globalConfigurationProperties.getHostname() + ":" + globalConfigurationProperties.getPort();
             String DB_NAME = globalConfigurationProperties.getDbName();
-            String DB_USERNAME = globalConfigurationProperties.getUsername();
-            String DB_PASSWORD = globalConfigurationProperties.getPassword();
-            store = new MySQLFullPrunedBlockStore(params, blockCount, DB_HOSTNAME, DB_NAME, DB_USERNAME, DB_PASSWORD);
+//            String DB_USERNAME = globalConfigurationProperties.getUsername();
+//            String DB_PASSWORD = globalConfigurationProperties.getPassword();
+//            store = new MySQLFullPrunedBlockStore(params, blockCount, DB_HOSTNAME, DB_NAME, DB_USERNAME, DB_PASSWORD);
+            store = new PhoenixBlockStore(params, blockCount, "cn.phoenix.bigtangle.net:8765", DB_NAME, null, null);
             // ((MySQLFullPrunedBlockStore)store).initFromDatabase();
             // delete + create +initFromDatabase
-            ((MySQLFullPrunedBlockStore) store).resetStore();
+            ((PhoenixBlockStore) store).resetStore();
         } catch (Exception e) {
             log.debug("", e);
         }

@@ -33,7 +33,7 @@ public class PhoenixDBStoreConfiguration {
     
     private static final String password = null;
     
-//    @Bean
+    @Bean
     public FullPrunedBlockStore store() throws BlockStoreException {
         PhoenixBlockStore store = new PhoenixBlockStore(networkParameters, fullStoreDepth,
                 hostname, "", username, password);

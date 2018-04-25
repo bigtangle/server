@@ -42,7 +42,7 @@ public class MySQLDBStoreConfiguration {
     
     private static final Logger logger = LoggerFactory.getLogger(MySQLDBStoreConfiguration.class);
     
-    @Bean
+//    @Bean
     public FullPrunedBlockStore store() throws BlockStoreException {
         MySQLFullPrunedBlockStore store = new MySQLFullPrunedBlockStore(networkParameters, fullStoreDepth,
                 hostname + ":" + port, dbName, username, password);
