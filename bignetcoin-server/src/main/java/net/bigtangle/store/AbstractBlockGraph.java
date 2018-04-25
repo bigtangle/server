@@ -161,7 +161,7 @@ public abstract class AbstractBlockGraph {
     public final void addWallet(Wallet wallet) {
 
         int walletHeight = wallet.getLastBlockSeenHeight();
-        int chainHeight = getBestChainHeight();
+        long chainHeight = getBestChainHeight();
         if (walletHeight != chainHeight) {
             log.warn("Wallet/chain height mismatch: {} vs {}", walletHeight, chainHeight);
             log.warn("Hashes: {} vs {}", wallet.getLastBlockSeenHash(), getChainHead().getHeader().getHash());
@@ -393,7 +393,7 @@ public abstract class AbstractBlockGraph {
 
             final StoredBlock storedPrev;
             final StoredBlock storedPrevBranch;
-            final int height;
+            final long height;
             final EnumSet<Block.VerifyFlag> flags;
 
             // Prove the block is internally valid: hash is lower than target, etc. This only checks the block contents
@@ -631,7 +631,7 @@ public abstract class AbstractBlockGraph {
     /**
      * @return the height of the best known chain, convenience for <tt>getChainHead().getHeight()</tt>.
      */
-    public final int getBestChainHeight() {
+    public final long getBestChainHeight() {
         return getChainHead().getHeight();
     }
 

@@ -29,13 +29,13 @@ import java.util.concurrent.ExecutionException;
 @SuppressWarnings("deprecation")
 public class DownloadProgressTracker extends AbstractPeerDataEventListener {
     private static final Logger log = LoggerFactory.getLogger(DownloadProgressTracker.class);
-    private int originalBlocksLeft = -1;
+    private long originalBlocksLeft = -1;
     private int lastPercent = 0;
     private SettableFuture<Long> future = SettableFuture.create();
     private boolean caughtUp = false;
 
     @Override
-    public void onChainDownloadStarted(Peer peer, int blocksLeft) {
+    public void onChainDownloadStarted(Peer peer, long blocksLeft) {
         if (blocksLeft > 0 && originalBlocksLeft == -1)
             startDownload(blocksLeft);
         // Only mark this the first time, because this method can be called more than once during a chain download
@@ -51,7 +51,7 @@ public class DownloadProgressTracker extends AbstractPeerDataEventListener {
     }
 
     @Override
-    public void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
+    public void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, long blocksLeft) {
         if (caughtUp)
             return;
 
@@ -77,7 +77,7 @@ public class DownloadProgressTracker extends AbstractPeerDataEventListener {
      * @param pct  the percentage of chain downloaded, estimated
      * @param date the date of the last block downloaded
      */
-    protected void progress(double pct, int blocksSoFar, Date date) {
+    protected void progress(double pct, long blocksSoFar, Date date) {
         log.info(String.format(Locale.US, "Chain download %d%% done with %d blocks to go, block date %s", (int) pct, blocksSoFar,
                 Utils.dateTimeFormat(date)));
     }
@@ -87,7 +87,7 @@ public class DownloadProgressTracker extends AbstractPeerDataEventListener {
      *
      * @param blocks the number of blocks to download, estimated
      */
-    protected void startDownload(int blocks) {
+    protected void startDownload(long blocks) {
         log.info("Downloading block chain of size " + blocks + ". " +
                 (blocks > 1000 ? "This may take a while." : ""));
     }

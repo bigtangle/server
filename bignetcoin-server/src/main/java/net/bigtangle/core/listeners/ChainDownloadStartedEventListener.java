@@ -21,5 +21,5 @@ public interface ChainDownloadStartedEventListener {
      * @param peer       the peer receiving the block
      * @param blocksLeft the number of blocks left to download
      */
-    void onChainDownloadStarted(Peer peer, int blocksLeft);
+    void onChainDownloadStarted(Peer peer, long blocksLeft);
 }

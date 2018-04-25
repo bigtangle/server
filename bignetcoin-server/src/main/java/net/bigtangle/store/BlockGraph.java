@@ -81,7 +81,7 @@ public class BlockGraph extends AbstractBlockGraph {
     protected void rollbackBlockStore(int height) throws BlockStoreException {
         lock.lock();
         try {
-            int currentHeight = getBestChainHeight();
+            long currentHeight = getBestChainHeight();
             checkArgument(height >= 0 && height <= currentHeight, "Bad height: %s", height);
             if (height == currentHeight)
                 return; // nothing to do

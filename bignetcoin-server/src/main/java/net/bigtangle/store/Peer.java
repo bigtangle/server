@@ -1203,7 +1203,7 @@ public class Peer extends PeerSocketHandler {
         // It is possible for the peer block height difference to be negative when blocks have been solved and broadcast
         // since the time we first connected to the peer. However, it's weird and unexpected to receive a callback
         // with negative "blocks left" in this case, so we clamp to zero so the API user doesn't have to think about it.
-        final int blocksLeft = Math.max(0, (int) vPeerVersionMessage.bestHeight - checkNotNull(blockChain).getBestChainHeight());
+        final long blocksLeft = Math.max(0, (long) vPeerVersionMessage.bestHeight - checkNotNull(blockChain).getBestChainHeight());
         for (final ListenerRegistration<BlocksDownloadedEventListener> registration : blocksDownloadedEventListeners) {
             registration.executor.execute(new Runnable() {
                 @Override
@@ -1533,7 +1533,7 @@ public class Peer extends PeerSocketHandler {
         setDownloadData(true);
         // TODO: peer might still have blocks that we don't have, and even have a heavier
         // chain even if the chain block count is lower.
-        final int blocksLeft = getPeerBlockHeightDifference();
+        final long blocksLeft = getPeerBlockHeightDifference();
         if (blocksLeft >= 0) {
             for (final ListenerRegistration<ChainDownloadStartedEventListener> registration : chainDownloadStartedEventListeners) {
                 registration.executor.execute(new Runnable() {
@@ -1671,7 +1671,7 @@ public class Peer extends PeerSocketHandler {
      * Returns the difference between our best chain height and the peers, which can either be positive if we are
      * behind the peer, or negative if the peer is ahead of us.
      */
-    public int getPeerBlockHeightDifference() {
+    public long getPeerBlockHeightDifference() {
         checkNotNull(blockChain, "No block chain configured");
         // Chain will overflow signed int blocks in ~41,000 years.
         int chainHeight = (int) getBestHeight();

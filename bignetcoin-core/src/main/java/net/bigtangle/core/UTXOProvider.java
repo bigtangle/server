@@ -30,7 +30,7 @@ public interface UTXOProvider {
      * @return The chain head height.
      * @throws UTXOProvider If there is an error.
      */
-    int getChainHeadHeight() throws UTXOProviderException;
+    long getChainHeadHeight() throws UTXOProviderException;
 
     /**
      * The {@link NetworkParameters} of this provider.

@@ -182,10 +182,12 @@ public class SendMoneyController {
 
     public void exportSign(ActionEvent event) {
         String toAddress = address.getText();
-        String toTokenHex = tokeninfo.getValue().toString().split(":")[1].trim();
+        String toTokenHex = tokeninfo.getValue().toString().trim();
         String toAmount = amountEdit.getText();
         this.mOrderid = UUIDUtil.randomUUID();
-        byte[] buf = this.makeSignTransactionBuffer(toAddress, getCoin(toAmount, toTokenHex, false));
+        boolean decial = true;
+
+        byte[] buf = this.makeSignTransactionBuffer(toAddress, getCoin(toAmount, toTokenHex, decial));
         if (buf == null) {
             return;
         }
