@@ -52,7 +52,7 @@
 							</font>
 						</Label>
 						<TextField fx:id="address" maxWidth="1.7976931348623157E308"
-							prefHeight="23.0" prefWidth="451.0" text="1EZEqFBd8yuc9ir2761987q7k3VcALC8YQ"
+							prefHeight="23.0" prefWidth="451.0" text=""
 							HBox.hgrow="ALWAYS">
 							<VBox.margin>
 								<Insets />
