@@ -45,6 +45,7 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutputChanges;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UTXOProviderException;
+import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.service.ValidatorService;
@@ -818,7 +819,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         if (!rs.next()) {
             throw new BlockStoreException("corrupt database block store - no chain head pointer");
         }
-        Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));
+        byte[] data = rs.getBytes(1);
+        System.out.println("aaa > " + Utils.HEX.encode(data));
+        Sha256Hash hash = Sha256Hash.wrap(data);
         rs.close();
         this.chainHeadBlock = get(hash);
         this.chainHeadHash = hash;
@@ -1163,6 +1166,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         this.chainHeadHash = hash;
         this.chainHeadBlock = chainHead;
         maybeConnect();
+        System.out.println("bbb > " + Utils.HEX.encode(hash.getBytes()));
         try {
             PreparedStatement s = conn.get().prepareStatement(getUpdateSettingsSLQ());
             s.setString(2, CHAIN_HEAD_SETTING);

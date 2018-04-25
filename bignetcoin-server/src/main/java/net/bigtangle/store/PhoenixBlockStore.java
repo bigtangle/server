@@ -16,6 +16,7 @@ import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
+import net.bigtangle.core.Utils;
 
 /**
  * <p>
@@ -33,44 +34,44 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
 
     // create table SQL
     private static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" + "    name varchar(32) not null,\n"
-            + "    settingvalue binary(1000),\n" + "    CONSTRAINT setting_pk PRIMARY KEY (name)  \n" + ")\n";
+            + "    settingvalue VARBINARY(10000),\n" + "    CONSTRAINT setting_pk PRIMARY KEY (name)  \n" + ")\n";
 
-    private static final String CREATE_HEADERS_TABLE = "CREATE TABLE headers (\n" + "    hash binary(32) not null,\n"
-            + "    height bigint ,\n" + "    header binary(4000) ,\n" + "    wasundoable boolean ,\n"
-            + "    prevblockhash  binary(32) ,\n" + "    prevbranchblockhash  binary(32) ,\n"
-            + "    mineraddress binary(255),\n" + "    tokenid binary(255),\n" + "    blocktype bigint ,\n"
+    private static final String CREATE_HEADERS_TABLE = "CREATE TABLE headers (\n" + "    hash VARBINARY(32) not null,\n"
+            + "    height bigint ,\n" + "    header VARBINARY(4000) ,\n" + "    wasundoable boolean ,\n"
+            + "    prevblockhash  VARBINARY(32) ,\n" + "    prevbranchblockhash  VARBINARY(32) ,\n"
+            + "    mineraddress VARBINARY(255),\n" + "    tokenid VARBINARY(255),\n" + "    blocktype bigint ,\n"
             + "    CONSTRAINT headers_pk PRIMARY KEY (hash)  \n" + ")";
 
     private static final String CREATE_UNDOABLE_TABLE = "CREATE TABLE undoableblocks (\n"
-            + "    hash binary(32) not null,\n" + "    height bigint ,\n" + "    txoutchanges binary(4000),\n"
-            + "    transactions binary(4000),\n" + "    CONSTRAINT undoableblocks_pk PRIMARY KEY (hash)  \n" + ")\n";
+            + "    hash VARBINARY(32) not null,\n" + "    height bigint ,\n" + "    txoutchanges VARBINARY(4000),\n"
+            + "    transactions VARBINARY(4000),\n" + "    CONSTRAINT undoableblocks_pk PRIMARY KEY (hash)  \n" + ")\n";
 
-    private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" + "    hash binary(32) not null,\n"
-            + "    outputindex integer not null,\n" + "    height bigint ,\n" + "    coinvalue bigint ,\n"
-            + "    scriptbytes binary(4000) ,\n" + "    toaddress binary(35),\n" + "    addresstargetable boolean,\n"
-            + "    coinbase boolean,\n" + "    blockhash  binary(32)  ,\n" + "    tokenid binary(255),\n"
-            + "    fromaddress binary(35),\n" + "    description binary(80),\n" + "    spent boolean ,\n"
-            + "    confirmed boolean ,\n" + "    spendpending boolean ,\n" + "    spenderblockhash  binary(32),\n"
-            + "    CONSTRAINT outputs_pk PRIMARY KEY (hash,outputindex)  \n" + ")\n";
+    private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" + "    hash VARBINARY(32) not null,\n"
+            + "    outputindex integer,\n" + "    height bigint ,\n" + "    coinvalue bigint ,\n"
+            + "    scriptbytes VARBINARY(4000) ,\n" + "    toaddress VARBINARY(35),\n" + "    addresstargetable boolean,\n"
+            + "    coinbase boolean,\n" + "    blockhash  VARBINARY(32)  ,\n" + "    tokenid VARBINARY(255),\n"
+            + "    fromaddress VARBINARY(35),\n" + "    description VARBINARY(80),\n" + "    spent boolean ,\n"
+            + "    confirmed boolean ,\n" + "    spendpending boolean ,\n" + "    spenderblockhash  VARBINARY(32),\n"
+            + "    CONSTRAINT outputs_pk PRIMARY KEY (hash)  \n" + ")\n";
 
-    private static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" + "    hash binary(32) not null,\n"
+    private static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" + "    hash VARBINARY(32) not null,\n"
             + "    CONSTRAINT tips_pk PRIMARY KEY (hash)  \n" + ")\n";
 
     private static final String CREATE_BLOCKEVALUATION_TABLE = "CREATE TABLE blockevaluation (\n"
-            + "    blockhash binary(32) not null,\n" + "    rating bigint ,\n" + "    depth bigint,\n"
+            + "    blockhash VARBINARY(32) not null,\n" + "    rating bigint ,\n" + "    depth bigint,\n"
             + "    cumulativeweight  bigint ,\n" + "    solid boolean ,\n" + "    height bigint,\n"
             + "    milestone boolean,\n" + "    milestonelastupdate bigint,\n" + "    milestonedepth bigint,\n"
             + "    inserttime bigint,\n" + "    maintained boolean,\n" + "    rewardvalidityassessment boolean,\n"
             + "    CONSTRAINT blockevaluation_pk PRIMARY KEY (blockhash) )\n";
 
-    private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n" + "    tokenid binary(255) not null ,\n"
-            + "    tokenname binary(255)  ,\n" + "    amount bigint ,\n" + "    description varchar(255),\n"
+    private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n" + "    tokenid VARBINARY(255) not null ,\n"
+            + "    tokenname VARBINARY(255)  ,\n" + "    amount bigint ,\n" + "    description varchar(255),\n"
             + "    blocktype integer ,\n" + "    CONSTRAINT tokenid_pk PRIMARY KEY (tokenid) \n)";
 
     private static final String CREATE_ORDERPUBLISH_TABLE = "CREATE TABLE orderpublish (\n"
-            + "   orderid binary(255) not null,\n" + "   address binary(255),\n" + "   tokenid binary(255),\n"
+            + "   orderid VARBINARY(255) not null,\n" + "   address VARBINARY(255),\n" + "   tokenid VARBINARY(255),\n"
             + "   type integer,\n" + "   validateto DATE,\n" + "   validatefrom DATE,\n" + "   price bigint,\n"
-            + "   amount bigint,\n" + "   state integer,\n" + "   market binary(255),\n"
+            + "   amount bigint,\n" + "   state integer,\n" + "   market VARBINARY(255),\n"
             + "   CONSTRAINT orderid_pk PRIMARY KEY (orderid) )";
 
     private static final String CREATE_ORDERMATCH_TABLE = "CREATE TABLE ordermatch (\n"
@@ -168,7 +169,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         return "upsert ";
     }
     protected String getUpdate() {
-        return "UPSERT ";
+        return "UPSERT INTO ";
     }
     
     protected String getUpdateHeadersSQL() {
@@ -183,6 +184,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         Sha256Hash hash = chainHead.getHeader().getHash();
         this.chainHeadHash = hash;
         this.chainHeadBlock = chainHead;
+        System.out.println("bbb > " + Utils.HEX.encode(hash.getBytes()));
         maybeConnect();
         try {
             PreparedStatement s = conn.get().prepareStatement(getUpdateSettingsSLQ());
