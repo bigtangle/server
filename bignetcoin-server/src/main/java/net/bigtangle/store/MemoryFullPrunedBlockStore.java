@@ -246,7 +246,7 @@ public abstract class MemoryFullPrunedBlockStore implements FullPrunedBlockStore
         public StoredBlockAndWasUndoableFlag(StoredBlock block, boolean wasUndoable) { this.block = block; this.wasUndoable = wasUndoable; }
     }
     private TransactionalHashMap<Sha256Hash, StoredBlockAndWasUndoableFlag> blockMap;
-    private TransactionalMultiKeyHashMap<Sha256Hash, Integer, StoredUndoableBlock> fullBlockMap;
+    private TransactionalMultiKeyHashMap<Sha256Hash, Long, StoredUndoableBlock> fullBlockMap;
     private TransactionalHashMap<StoredTransactionOutPoint, UTXO> transactionOutputMap;
     private StoredBlock chainHead;
     private StoredBlock verifiedChainHead;
@@ -260,7 +260,7 @@ public abstract class MemoryFullPrunedBlockStore implements FullPrunedBlockStore
      */
     public MemoryFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth) {
         blockMap = new TransactionalHashMap<Sha256Hash, StoredBlockAndWasUndoableFlag>();
-        fullBlockMap = new TransactionalMultiKeyHashMap<Sha256Hash, Integer, StoredUndoableBlock>();
+        fullBlockMap = new TransactionalMultiKeyHashMap<Sha256Hash, Long, StoredUndoableBlock>();
         transactionOutputMap = new TransactionalHashMap<StoredTransactionOutPoint, UTXO>();
         this.fullStoreDepth = fullStoreDepth > 0 ? fullStoreDepth : 1;
         // Insert the genesis block.
@@ -409,7 +409,7 @@ public abstract class MemoryFullPrunedBlockStore implements FullPrunedBlockStore
     }
 
     @Override
-    public int getChainHeadHeight() throws UTXOProviderException {
+    public long getChainHeadHeight() throws UTXOProviderException {
         try {
             return getVerifiedChainHead().getHeight();
         } catch (BlockStoreException e) {

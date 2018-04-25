@@ -489,7 +489,7 @@ public abstract class NetworkParameters {
      *            should be a safe subset if block height is unknown.
      */
     public EnumSet<Block.VerifyFlag> getBlockVerificationFlags(final Block block, final VersionTally tally,
-            final Integer height) {
+            final long height) {
         final EnumSet<Block.VerifyFlag> flags = EnumSet.noneOf(Block.VerifyFlag.class);
 
         if (block.isBIP34()) {

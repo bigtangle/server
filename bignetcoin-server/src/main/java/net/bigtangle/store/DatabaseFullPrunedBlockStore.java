@@ -845,7 +845,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             PreparedStatement s = conn.get().prepareStatement(getInsertHeadersSQL());
 
             s.setBytes(1, storedBlock.getHeader().getHash().getBytes());
-            s.setInt(2, storedBlock.getHeight());
+            s.setLong(2, storedBlock.getHeight());
             s.setBytes(3, storedBlock.getHeader().unsafeBitcoinSerialize());
             s.setBoolean(4, wasUndoable);
             s.setBytes(5, storedBlock.getHeader().getPrevBlockHash().getBytes());
@@ -1196,13 +1196,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
         if (this.chainHeadBlock.getHeight() < chainHead.getHeight())
             setChainHead(chainHead);
-        removeUndoableBlocksWhereHeightIsLessThan(chainHead.getHeight() - fullStoreDepth);
+      //  removeUndoableBlocksWhereHeightIsLessThan(chainHead.getHeight() - fullStoreDepth);
     }
 
-    protected void removeUndoableBlocksWhereHeightIsLessThan(int height) throws BlockStoreException {
+    protected void removeUndoableBlocksWhereHeightIsLessThan(long height) throws BlockStoreException {
         try {
             PreparedStatement s = conn.get().prepareStatement(getDeleteUndoableBlocksSQL());
-            s.setInt(1, height);
+            s.setLong(1, height);
             if (log.isDebugEnabled())
                 log.debug("Deleting undoable undoable block with height <= " + height);
             s.executeUpdate();
@@ -1385,7 +1385,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public int getChainHeadHeight() throws UTXOProviderException {
+    public long getChainHeadHeight() throws UTXOProviderException {
         try {
             return getVerifiedChainHead().getHeight();
         } catch (BlockStoreException e) {

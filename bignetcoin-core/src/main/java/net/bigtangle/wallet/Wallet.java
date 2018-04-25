@@ -3548,7 +3548,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         UTXOProvider utxoProvider = checkNotNull(vUTXOProvider, "No UTXO provider has been set");
         LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
         try {
-            int chainHeight = utxoProvider.getChainHeadHeight();
+            long chainHeight = utxoProvider.getChainHeadHeight();
             for (UTXO output : getStoredOutputsFromUTXOProvider()) {
                 boolean coinbase = output.isCoinbase();
                 long depth = chainHeight - output.getHeight() + 1; // the
@@ -3698,7 +3698,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
      */
     public class FreeStandingTransactionOutput extends TransactionOutput {
         private UTXO output;
-        private int chainHeight;
+        private long chainHeight;
 
         /**
          * Construct a free standing Transaction Output.
@@ -3708,7 +3708,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
          * @param output
          *            The stored output (free standing).
          */
-        public FreeStandingTransactionOutput(NetworkParameters params, UTXO output, int chainHeight) {
+        public FreeStandingTransactionOutput(NetworkParameters params, UTXO output, long chainHeight) {
             super(params, null, output.getValue(), output.getScript().getProgram());
             this.output = output;
             this.chainHeight = chainHeight;
