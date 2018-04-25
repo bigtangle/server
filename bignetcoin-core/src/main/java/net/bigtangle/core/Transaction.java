@@ -397,48 +397,7 @@ public class Transaction extends ChildMessage {
         return getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.PENDING;
     }
 
-    /**
-     * <p>
-     * Puts the given block in the internal set of blocks in which this
-     * transaction appears. This is used by the wallet to ensure transactions
-     * that appear on side chains are recorded properly even though the block
-     * stores do not save the transaction data at all.
-     * </p>
-     *
-     * <p>
-     * If there is a re-org this will be called once for each block that was
-     * previously seen, to update which block is the best chain. The best chain
-     * block is guaranteed to be called last. So this must be idempotent.
-     * </p>
-     *
-     * <p>
-     * Sets updatedAt to be the earliest valid block time where this tx was
-     * seen.
-     * </p>
-     *
-     * @param block
-     *            The {@link StoredBlock} in which the transaction has appeared.
-     * @param bestChain
-     *            whether to set the updatedAt timestamp from the block header
-     *            (only if not already set)
-     * @param relativityOffset
-     *            A number that disambiguates the order of transactions within a
-     *            block.
-     */
-    public void setBlockAppearance(StoredBlock block, boolean bestChain, int relativityOffset) {
-        long blockTime = block.getHeader().getTimeSeconds() * 1000;
-        if (bestChain && (updatedAt == null || updatedAt.getTime() == 0 || updatedAt.getTime() > blockTime)) {
-            updatedAt = new Date(blockTime);
-        }
-
-        addBlockAppearance(block.getHeader().getHash(), relativityOffset);
-
-        if (bestChain) {
-            TransactionConfidence transactionConfidence = getConfidence();
-            // This sets type to BUILDING and depth to one.
-            transactionConfidence.setAppearedAtChainHeight(block.getHeight());
-        }
-    }
+ 
 
     public void addBlockAppearance(final Sha256Hash blockHash, int relativityOffset) {
         if (appearsInHashes == null) {
@@ -1589,7 +1548,7 @@ public class Transaction extends ChildMessage {
      * and will need to be re-activated before this functionality is useful.
      * </p>
      */
-    public boolean isFinal(int height, long blockTimeSeconds) {
+    public boolean isFinal(long height, long blockTimeSeconds) {
         long time = getLockTime();
         return time < (time < LOCKTIME_THRESHOLD ? height : blockTimeSeconds) || !isTimeLocked();
     }

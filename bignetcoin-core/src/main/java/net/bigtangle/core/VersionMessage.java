@@ -81,7 +81,7 @@ public class VersionMessage extends Message {
     // If you're receiving this on the wire you need to check the protocol version and it will never need to be sent
     // back down the wire.
     
-    public VersionMessage(NetworkParameters params, int newBestHeight) {
+    public VersionMessage(NetworkParameters params, long newBestHeight) {
         super(params);
         clientVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT);
         localServices = 0;

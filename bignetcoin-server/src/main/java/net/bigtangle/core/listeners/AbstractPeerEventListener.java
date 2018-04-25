@@ -23,11 +23,11 @@ import java.util.Set;
 @Deprecated
 public abstract class AbstractPeerEventListener extends AbstractPeerDataEventListener implements PeerConnectionEventListener, OnTransactionBroadcastListener {
     @Override
-    public void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
+    public void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, long blocksLeft) {
     }
 
     @Override
-    public void onChainDownloadStarted(Peer peer, int blocksLeft) {
+    public void onChainDownloadStarted(Peer peer, long blocksLeft) {
     }
 
     @Override

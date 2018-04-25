@@ -31,9 +31,9 @@ public class StoredBlock {
                                                                              // height
 
     private Block header;
-    private int height;
+    private long  height;
 
-    public StoredBlock(Block header, int height) {
+    public StoredBlock(Block header, long height) {
         this.header = header;
         this.height = height;
     }
@@ -50,7 +50,7 @@ public class StoredBlock {
      * Position in the graph for this block. The genesis block has a height of
      * zero.
      */
-    public int getHeight() {
+    public long getHeight() {
         return height;
     }
 
@@ -77,7 +77,7 @@ public class StoredBlock {
         // Stored blocks track total work done in this graph, because the
         // canonical graph is the one that represents
         // the largest amount of work done not the tallest.
-        int height = Math.max(  this.height,prevBranchblock.getHeight())  + 1;
+        long height = Math.max(  this.height,prevBranchblock.getHeight())  + 1;
         return new StoredBlock(block, height);
     }
 
@@ -103,7 +103,7 @@ public class StoredBlock {
      */
     public void serializeCompact(ByteBuffer buffer) {
 
-        buffer.putInt(getHeight());
+        buffer.putLong(getHeight());
         // Using unsafeBitcoinSerialize here can give us direct access to the
         // same bytes we read off the wire,
         // avoiding serialization round-trips.

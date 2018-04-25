@@ -366,7 +366,7 @@ public class PeerGroup implements TransactionBroadcaster {
         }
 
         @Override
-        public void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
+        public void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, long blocksLeft) {
             if (chain == null)
                 return;
             final double rate = chain.getFalsePositiveRate();
@@ -594,7 +594,7 @@ public class PeerGroup implements TransactionBroadcaster {
         // - using connectTo() will increment it by one
         maxConnections = 0;
 
-        int height = chain == null ? 0 : chain.getBestChainHeight();
+        long height = chain == null ? 0 : chain.getBestChainHeight();
         versionMessage = new VersionMessage(params, height);
         // We never request that the remote node wait for a bloom filter yet, as
         // we have no wallets
@@ -892,7 +892,7 @@ public class PeerGroup implements TransactionBroadcaster {
     public void setUserAgent(String name, String version, @Nullable String comments) {
         // TODO Check that height is needed here (it wasnt, but it should be,
         // no?)
-        int height = chain == null ? 0 : chain.getBestChainHeight();
+        long height = chain == null ? 0 : chain.getBestChainHeight();
         VersionMessage ver = new VersionMessage(params, height);
         ver.relayTxesBeforeFilter = false;
         updateVersionMessageRelayTxesBeforeFilter(ver);
@@ -2285,7 +2285,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
         @Override
         public synchronized void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock,
-                int blocksLeft) {
+                long blocksLeft) {
             blocksInLastSecond++;
             bytesInLastSecond += Block.HEADER_SIZE;
             List<Transaction> blockTransactions = block.getTransactions();

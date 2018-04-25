@@ -865,7 +865,7 @@ public class Block extends Message {
      * @throws VerificationException
      *             if there was an error verifying the block.
      */
-    public void verifyTransactions(final int height, final EnumSet<VerifyFlag> flags) throws VerificationException {
+    public void verifyTransactions(final long height, final EnumSet<VerifyFlag> flags) throws VerificationException {
         // Now we need to check that the body of the block actually matches the
         // headers. The network won't generate
         // an invalid block, but if we didn't validate this then an untrusted

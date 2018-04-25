@@ -17,11 +17,11 @@ import java.util.*;
 @Deprecated
 public abstract class AbstractPeerDataEventListener implements PeerDataEventListener {
     @Override
-    public void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
+    public void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, long blocksLeft) {
     }
 
     @Override
-    public void onChainDownloadStarted(Peer peer, int blocksLeft) {
+    public void onChainDownloadStarted(Peer peer, long blocksLeft) {
     }
 
     @Override
