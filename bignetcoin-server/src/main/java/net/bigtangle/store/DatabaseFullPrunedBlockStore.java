@@ -227,7 +227,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String SELECT_HEADERS_SQL = "SELECT  height, header, wasundoable,prevblockhash,prevbranchblockhash,mineraddress,tokenid,blocktype FROM headers WHERE hash = ?";
     protected String SELECT_SOLID_APPROVER_HEADERS_SQL = "SELECT  headers.height, header, wasundoable,prevblockhash,prevbranchblockhash,mineraddress,tokenid,blocktype FROM headers INNER JOIN blockevaluation ON headers.hash=blockevaluation.blockhash WHERE blockevaluation.solid = 1 AND (prevblockhash = ? OR prevbranchblockhash = ?)";
-    protected String SELECT_SOLID_APPROVER_HASHES_SQL = "SELECT hash FROM headers, blockevaluation WHERE headers.hash=blockevaluation.blockhash and blockevaluation.solid = 1 AND (prevblockhash = ? OR prevbranchblockhash = ?)";
+    protected String SELECT_SOLID_APPROVER_HASHES_SQL = "SELECT headers.hash FROM headers INNER JOIN blockevaluation ON headers.hash=blockevaluation.blockhash WHERE blockevaluation.solid = 1 AND (headers.prevblockhash = ? OR headers.prevbranchblockhash = ?)";
 
     protected String INSERT_HEADERS_SQL = getInsert()
             + "  INTO headers(hash,  height, header, wasundoable,prevblockhash,prevbranchblockhash,mineraddress,tokenid,blocktype ) VALUES(?, ?, ?, ?, ?,?, ?, ?, ?)";

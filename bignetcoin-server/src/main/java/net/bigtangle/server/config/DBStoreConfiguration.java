@@ -48,12 +48,12 @@ public class DBStoreConfiguration {
     
     @Bean
     public FullPrunedBlockStore store() throws BlockStoreException {
-            if("phoenix".equalsIgnoreCase(dbtype))
-                    return phoenixStore() ;
-            if("cassandra".equalsIgnoreCase(dbtype))
-                return mysqlstore() ;
+//            if("phoenix".equalsIgnoreCase(dbtype))
+//                    return phoenixStore() ;
+//            if("cassandra".equalsIgnoreCase(dbtype))
+//                return mysqlstore() ;
         
-            return mysqlstore() ;
+            return phoenixStore() ;
             
             
     }
@@ -77,6 +77,8 @@ public class DBStoreConfiguration {
     }
     
     public FullPrunedBlockStore phoenixStore() throws BlockStoreException {
+        hostname= "cn.phoenix.bigtangle.net";
+        port = "8765";
         PhoenixBlockStore store = new PhoenixBlockStore(networkParameters, fullStoreDepth,
                 hostname+ ":" + port, "", null, null);
         try {

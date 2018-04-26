@@ -140,6 +140,9 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     @Override
     protected List<String> getCreateIndexesSQL() {
         List<String> sqlStatements = new ArrayList<String>();
+        sqlStatements.add("CREATE LOCAL INDEX headers_prevblockhash_idx ON headers (prevblockhash)");
+        sqlStatements.add("CREATE LOCAL INDEX headers_prevbranchblockhash_idx ON headers (prevbranchblockhash)");
+        sqlStatements.add("CREATE LOCAL INDEX blockevaluation_solid ON blockevaluation (solid)");
         /*
          * sqlStatements.add(CREATE_UNDOABLE_TABLE_INDEX);
          * sqlStatements.add(CREATE_OUTPUTS_ADDRESS_MULTI_INDEX);
