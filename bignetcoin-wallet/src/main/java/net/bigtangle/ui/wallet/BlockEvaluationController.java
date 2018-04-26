@@ -1,6 +1,8 @@
 package net.bigtangle.ui.wallet;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +40,21 @@ public class BlockEvaluationController {
     public TableColumn<Map, Number> cumulativeWeightColumn;
     @FXML
     public TableColumn<Map, Number> heightColumn;
+
+    @FXML
+    public TableColumn<Map, Boolean> solidColumn;
+    @FXML
+    public TableColumn<Map, Boolean> milestoneColumn;
+    @FXML
+    public TableColumn<Map, Boolean> maintainedColumn;
+    @FXML
+    public TableColumn<Map, Boolean> rewardValidColumn;
+    @FXML
+    public TableColumn<Map, String> milestoneLastUpdateTimeColumn;
+    @FXML
+    public TableColumn<Map, Number> milestoneDepthColumn;
+    @FXML
+    public TableColumn<Map, String> insertTimeColumn;
 
     @FXML
     public ComboBox<String> addressComboBox;
@@ -82,8 +99,7 @@ public class BlockEvaluationController {
             for (ECKey key : keys) {
                 addresses.add(key.toAddress(Main.params).toString());
             }
-        }
-        else {
+        } else {
             addresses.add(address);
         }
         Map<String, Object> requestParam = new HashMap<String, Object>();
@@ -105,6 +121,20 @@ public class BlockEvaluationController {
                 dataRow.put("depth", blockEvaluation.getDepth());
                 dataRow.put("cumulativeWeight", blockEvaluation.getCumulativeWeight());
                 dataRow.put("height", blockEvaluation.getHeight());
+
+                dataRow.put("solid", blockEvaluation.isSolid());
+                dataRow.put("milestone", blockEvaluation.isMilestone());
+                dataRow.put("milestoneDepth", blockEvaluation.getMilestoneDepth());
+                dataRow.put("maintained", blockEvaluation.isMaintained());
+                dataRow.put("rewardValid", blockEvaluation.isRewardValid());
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                java.util.Date date = new Date(blockEvaluation.getMilestoneLastUpdateTime());
+                String str = sdf.format(date);
+                dataRow.put("milestoneLastUpdateTime", str);
+                date = new Date(blockEvaluation.getInsertTime());
+                str = sdf.format(date);
+                dataRow.put("insertTime", str);
+
                 allData.add(dataRow);
             }
             blockhashColumn.setCellValueFactory(new MapValueFactory("hash"));
@@ -112,6 +142,15 @@ public class BlockEvaluationController {
             depthColumn.setCellValueFactory(new MapValueFactory("depth"));
             cumulativeWeightColumn.setCellValueFactory(new MapValueFactory("cumulativeWeight"));
             heightColumn.setCellValueFactory(new MapValueFactory("height"));
+
+            solidColumn.setCellValueFactory(new MapValueFactory("solid"));
+            milestoneColumn.setCellValueFactory(new MapValueFactory("milestone"));
+            milestoneDepthColumn.setCellValueFactory(new MapValueFactory("milestoneDepth"));
+            maintainedColumn.setCellValueFactory(new MapValueFactory("maintained"));
+            rewardValidColumn.setCellValueFactory(new MapValueFactory("rewardValid"));
+            milestoneLastUpdateTimeColumn.setCellValueFactory(new MapValueFactory("milestoneLastUpdateTime"));
+            insertTimeColumn.setCellValueFactory(new MapValueFactory("insertTime"));
+
             blockhashColumn.setCellFactory(TextFieldTableCell.forTableColumn());
         }
         blockEvaluationTable.setItems(allData);
