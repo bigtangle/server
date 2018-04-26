@@ -97,6 +97,10 @@ public class ExchangeController {
     @FXML
     public void initialize() {
         try {
+            List<String> list = Main.initAddress4file();
+
+            ObservableList<String> addressData = FXCollections.observableArrayList(list);
+            fromAddressComboBox.setItems(addressData);
             initComboBox();
             initTable();
         } catch (Exception e) {
@@ -245,7 +249,7 @@ public class ExchangeController {
         requestParam.put("signtype", signtype);
         OkHttp3Util.post(ContextRoot + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
 
-        //Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
+        // Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
     }
 
     public void importBlock(ActionEvent event) {
@@ -314,7 +318,8 @@ public class ExchangeController {
     }
 
     public void exportBlock(ActionEvent event) {
-//        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        // String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port +
+        // "/";
         String fromAddress = fromAddressComboBox.getValue();
         String fromTokenHex = fromTokenHexComboBox.getValue().split(":")[1].trim();
         String fromAmount = fromAmountTextField.getText();
@@ -334,24 +339,22 @@ public class ExchangeController {
         if (file == null) {
             return;
         }
-        // wirte file 
+        // wirte file
         FileUtil.writeFile(file, buf);
 
-        /*HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("orderid", this.mOrderid);
-        requestParam.put("fromAddress", fromAddress);
-        requestParam.put("fromTokenHex", fromTokenHex);
-        requestParam.put("fromAmount", fromAmount);
-        requestParam.put("toAddress", toAddress);
-        requestParam.put("toTokenHex", toTokenHex);
-        requestParam.put("toAmount", toAmount);
-        requestParam.put("dataHex", Utils.HEX.encode(buf));
-        try {
-            OkHttp3Util.post(ContextRoot + "saveExchange", Json.jsonmapper().writeValueAsBytes(requestParam));
-        } catch (Exception e) {
-            GuiUtils.crashAlert(e);
-            return;
-        }*/
+        /*
+         * HashMap<String, Object> requestParam = new HashMap<String, Object>();
+         * requestParam.put("orderid", this.mOrderid);
+         * requestParam.put("fromAddress", fromAddress);
+         * requestParam.put("fromTokenHex", fromTokenHex);
+         * requestParam.put("fromAmount", fromAmount);
+         * requestParam.put("toAddress", toAddress);
+         * requestParam.put("toTokenHex", toTokenHex);
+         * requestParam.put("toAmount", toAmount); requestParam.put("dataHex",
+         * Utils.HEX.encode(buf)); try { OkHttp3Util.post(ContextRoot +
+         * "saveExchange", Json.jsonmapper().writeValueAsBytes(requestParam)); }
+         * catch (Exception e) { GuiUtils.crashAlert(e); return; }
+         */
         overlayUI.done();
     }
 
@@ -387,8 +390,8 @@ public class ExchangeController {
             String fromTokenHex = stringValueOf(exchangeResult.get("fromTokenHex"));
             String toAmount = stringValueOf(exchangeResult.get("toAmount"));
             String fromAmount = stringValueOf(exchangeResult.get("fromAmount"));
-            buf = this.makeSignTransactionBufferCheckSwap(fromAddress, getCoin(fromAmount, fromTokenHex, false), toAddress,
-                    getCoin(toAmount, toTokenHex, false));
+            buf = this.makeSignTransactionBufferCheckSwap(fromAddress, getCoin(fromAmount, fromTokenHex, false),
+                    toAddress, getCoin(toAmount, toTokenHex, false));
             if (buf == null) {
                 return;
             }
@@ -455,14 +458,15 @@ public class ExchangeController {
         // System.out.println("tx len : " + buf.length);
         return byteBuffer.array();
     }
-    
+
     public void swap(Coin fromCoin, Coin toCoin) {
         Coin t = fromCoin;
         fromCoin = toCoin;
         toCoin = t;
     }
 
-    private byte[] makeSignTransactionBufferCheckSwap(String fromAddress, Coin fromCoin, String toAddress, Coin toCoin) throws Exception {
+    private byte[] makeSignTransactionBufferCheckSwap(String fromAddress, Coin fromCoin, String toAddress, Coin toCoin)
+            throws Exception {
         String fromAddress00, toAddress00;
         Coin fromCoin00, toCoin00;
         if (this.calculatedAddressHit(fromAddress)) {
@@ -470,8 +474,7 @@ public class ExchangeController {
             toAddress00 = toAddress;
             fromCoin00 = fromCoin;
             toCoin00 = toCoin;
-        }
-        else {
+        } else {
             fromAddress00 = toAddress;
             toAddress00 = fromAddress;
             fromCoin00 = toCoin;
@@ -479,7 +482,7 @@ public class ExchangeController {
         }
         return makeSignTransactionBuffer(fromAddress00, fromCoin00, toAddress00, toCoin00);
     }
-    
+
     @SuppressWarnings("deprecation")
     private byte[] makeSignTransactionBuffer(String fromAddress, Coin fromCoin, String toAddress, Coin toCoin) {
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
@@ -501,26 +504,30 @@ public class ExchangeController {
 
             SendRequest req = SendRequest.to(toAddress00, toCoin);
             req.tx.addOutput(fromCoin, fromAddress00);
-            
-//            SendRequest req = SendRequest.to(fromAddress00,fromAmount  );
-//            req.tx.addOutput(toAmount , toAddress00 );
+
+            // SendRequest req = SendRequest.to(fromAddress00,fromAmount );
+            // req.tx.addOutput(toAmount , toAddress00 );
 
             req.missingSigsMode = MissingSigsMode.USE_OP_ZERO;
 
             HashMap<String, Address> addressResult = new HashMap<String, Address>();
             addressResult.put(fromCoin.getTokenHex(), toAddress00);
             addressResult.put(toCoin.getTokenHex(), fromAddress00);
-            
-            //        addressResult.put((String) exchangemap.get("fromTokenHex"), toAddress00);
-//            addressResult.put((String) exchangemap.get("toTokenHex"), fromAddress00);
-            
+
+            // addressResult.put((String) exchangemap.get("fromTokenHex"),
+            // toAddress00);
+            // addressResult.put((String) exchangemap.get("toTokenHex"),
+            // fromAddress00);
+
             List<TransactionOutput> candidates = Main.bitcoin.wallet().transforSpendCandidates(outputs);
             Main.bitcoin.wallet().setServerURL(ContextRoot);
             Main.bitcoin.wallet().completeTx(req, candidates, false, addressResult);
             Main.bitcoin.wallet().signTransaction(req);
-            
-            //        walletAppKit.wallet().completeTx(req, walletAppKit.wallet().transforSpendCandidates(ulist), false, addressResult);
-//            walletAppKit.wallet().signTransaction(req);
+
+            // walletAppKit.wallet().completeTx(req,
+            // walletAppKit.wallet().transforSpendCandidates(ulist), false,
+            // addressResult);
+            // walletAppKit.wallet().signTransaction(req);
             this.mTransaction = req.tx;
             buf = mTransaction.bitcoinSerialize();
         } catch (Exception e) {
