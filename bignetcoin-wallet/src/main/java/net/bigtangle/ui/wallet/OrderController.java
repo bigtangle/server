@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.spongycastle.crypto.params.KeyParameter;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -31,8 +33,6 @@ import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.OrderState;
-
-import org.spongycastle.crypto.params.KeyParameter;
 
 public class OrderController {
     @FXML
@@ -197,7 +197,8 @@ public class OrderController {
         String tokenid = tokenComboBox.getValue().split(":")[1].trim();
         String typeStr = (String) statusChoiceBox.getValue();
 
-        byte[] pubKeyHash = Address.fromBase58(Main.params, addressComboBox.getValue()).getHash160();
+        byte[] pubKeyHash = Address.fromBase58(Main.params, !addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
+                : addressComboBox.getValue().split(",")[1]).getHash160();
         Coin coin = Main.calculateTotalUTXOList(pubKeyHash, typeStr.equals("sell") ? Utils.HEX.decode(tokenid) : NetworkParameters.BIGNETCOIN_TOKENID);
         long amount = Coin.parseCoinValue(this.amountTextField.getText());
 
@@ -217,7 +218,8 @@ public class OrderController {
         }
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("address", this.addressComboBox.getValue());
+        requestParam.put("address",!addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
+                : addressComboBox.getValue().split(",")[1]);
         // String tokenid = this.tokenComboBox.getValue().split(":")[1].trim();
         requestParam.put("tokenid", tokenid);
         requestParam.put("type", typeStr.equals("sell") ? 1 : 0);

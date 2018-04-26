@@ -320,7 +320,8 @@ public class ExchangeController {
     public void exportBlock(ActionEvent event) {
         // String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port +
         // "/";
-        String fromAddress = fromAddressComboBox.getValue();
+        String fromAddress = !fromAddressComboBox.getValue().contains(",") ? fromAddressComboBox.getValue()
+                : fromAddressComboBox.getValue().split(",")[1];
         String fromTokenHex = fromTokenHexComboBox.getValue().split(":")[1].trim();
         String fromAmount = fromAmountTextField.getText();
         String toAddress = toAddressComboBox.getValue();
