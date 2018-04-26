@@ -225,13 +225,33 @@ public class Main extends Application {
         if (!addressFile.exists()) {
             addressFile.createNewFile();
         }
-        BufferedWriter out = new BufferedWriter(
-                new OutputStreamWriter(new FileOutputStream(addressFile, true), "UTF-8"));
-        out.write(name + "," + address);
-        out.newLine();
-        out.flush();
+        String addresses = getString4file(homedir + "/addresses.txt");
+        if (!addresses.contains(address)) {
 
-        out.close();
+            BufferedWriter out = new BufferedWriter(
+                    new OutputStreamWriter(new FileOutputStream(addressFile, true), "UTF-8"));
+            out.write(name + "," + address);
+            out.newLine();
+            out.flush();
+            out.close();
+        }
+    }
+
+    public static String getString4file(String filestring) throws Exception {
+        StringBuffer temp = new StringBuffer("");
+        File addressFile = new File(filestring);
+        if (!addressFile.exists()) {
+            addressFile.createNewFile();
+        }
+        BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(addressFile), "UTF-8"));
+        String str = "";
+        while ((str = in.readLine()) != null) {
+            temp.append(str);
+        }
+        in.close();
+
+        return temp.toString();
+
     }
 
     public static List<String> initAddress4file() throws Exception {

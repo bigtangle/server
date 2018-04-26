@@ -98,9 +98,9 @@ public class ExchangeController {
     public void initialize() {
         try {
             List<String> list = Main.initAddress4file();
-
             ObservableList<String> addressData = FXCollections.observableArrayList(list);
-            fromAddressComboBox.setItems(addressData);
+            toAddressComboBox.setItems(addressData);
+
             initComboBox();
             initTable();
         } catch (Exception e) {
@@ -320,11 +320,11 @@ public class ExchangeController {
     public void exportBlock(ActionEvent event) {
         // String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port +
         // "/";
-        String fromAddress = !fromAddressComboBox.getValue().contains(",") ? fromAddressComboBox.getValue()
-                : fromAddressComboBox.getValue().split(",")[1];
+        String fromAddress = fromAddressComboBox.getValue();
         String fromTokenHex = fromTokenHexComboBox.getValue().split(":")[1].trim();
         String fromAmount = fromAmountTextField.getText();
-        String toAddress = toAddressComboBox.getValue();
+        String toAddress = !toAddressComboBox.getValue().contains(",") ? toAddressComboBox.getValue()
+                : toAddressComboBox.getValue().split(",")[1];
         String toTokenHex = toTokenHexComboBox.getValue().split(":")[1].trim();
         String toAmount = toAmountTextField.getText();
 

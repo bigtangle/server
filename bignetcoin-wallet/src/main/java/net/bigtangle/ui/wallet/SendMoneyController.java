@@ -146,7 +146,6 @@ public class SendMoneyController {
             return;
         }
         reloadTransaction(buf);
-        overlayUI.done();
     }
 
     private void reloadTransaction(byte[] buf) {

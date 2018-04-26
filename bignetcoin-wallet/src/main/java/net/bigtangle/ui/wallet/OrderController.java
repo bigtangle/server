@@ -89,9 +89,6 @@ public class OrderController {
     @FXML
     public void initialize() {
         try {
-            List<String> list = Main.initAddress4file();
-            ObservableList<String> addressData = FXCollections.observableArrayList(list);
-            addressComboBox.setItems(addressData);
             String[] items = new String[OrderState.values().length];
             for (int i = 0; i < OrderState.values().length; i++) {
                 items[i] = OrderState.values()[i].name();
@@ -197,9 +194,9 @@ public class OrderController {
         String tokenid = tokenComboBox.getValue().split(":")[1].trim();
         String typeStr = (String) statusChoiceBox.getValue();
 
-        byte[] pubKeyHash = Address.fromBase58(Main.params, !addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
-                : addressComboBox.getValue().split(",")[1]).getHash160();
-        Coin coin = Main.calculateTotalUTXOList(pubKeyHash, typeStr.equals("sell") ? Utils.HEX.decode(tokenid) : NetworkParameters.BIGNETCOIN_TOKENID);
+        byte[] pubKeyHash = Address.fromBase58(Main.params, addressComboBox.getValue()).getHash160();
+        Coin coin = Main.calculateTotalUTXOList(pubKeyHash,
+                typeStr.equals("sell") ? Utils.HEX.decode(tokenid) : NetworkParameters.BIGNETCOIN_TOKENID);
         long amount = Coin.parseCoinValue(this.amountTextField.getText());
 
         if (coin.getValue() < amount) {
@@ -218,8 +215,7 @@ public class OrderController {
         }
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("address",!addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
-                : addressComboBox.getValue().split(",")[1]);
+        requestParam.put("address", addressComboBox.getValue());
         // String tokenid = this.tokenComboBox.getValue().split(":")[1].trim();
         requestParam.put("tokenid", tokenid);
         requestParam.put("type", typeStr.equals("sell") ? 1 : 0);
