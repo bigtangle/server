@@ -228,6 +228,7 @@ public class Main extends Application {
         BufferedWriter out = new BufferedWriter(
                 new OutputStreamWriter(new FileOutputStream(addressFile, true), "UTF-8"));
         out.write(name + "," + address);
+        out.newLine();
         out.flush();
 
         out.close();
