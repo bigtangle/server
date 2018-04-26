@@ -37,6 +37,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
@@ -67,7 +68,12 @@ import net.bigtangle.wallet.Wallet.MissingSigsMode;
 public class SendMoneyController {
     public Button sendBtn;
     public Button cancelBtn;
-    public TextField address;
+
+    @FXML
+    public ComboBox<String> addressComboBox;
+    @FXML
+    public TextField linknameTextField;
+
     public Label titleLabel;
     public TextField amountEdit;
     @FXML
@@ -122,8 +128,11 @@ public class SendMoneyController {
     @FXML
     public void initialize() throws Exception {
         initChoicebox();
-        // DeterministicKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
-        // address.setText(ecKey.toAddress(Main.params).toBase58());
+        List<String> list = Main.initAddress4file();
+
+        ObservableList<String> addressData = FXCollections.observableArrayList(list);
+        addressComboBox.setItems(addressData);
+
         new TextFieldValidator(amountEdit, text -> !WTUtils
                 .didThrow(() -> checkState(Coin.parseCoin(text, NetworkParameters.BIGNETCOIN_TOKENID).isPositive())));
 
@@ -146,7 +155,7 @@ public class SendMoneyController {
         {
             byte[] dst = new byte[byteBuffer.getInt()];
             byteBuffer.get(dst);
-            address.setText(new String(dst));
+            addressComboBox.setValue(new String(dst));
         }
         {
             byte[] dst = new byte[byteBuffer.getInt()];
@@ -181,7 +190,8 @@ public class SendMoneyController {
     }
 
     public void exportSign(ActionEvent event) {
-        String toAddress = address.getText();
+        String toAddress = !addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
+                : addressComboBox.getValue().split(",")[1];
         String toTokenHex = tokeninfo.getValue().toString().trim();
         String toAmount = amountEdit.getText();
         this.mOrderid = UUIDUtil.randomUUID();
@@ -252,9 +262,6 @@ public class SendMoneyController {
                 .allocate(buf.length + 4 + toAddress.getBytes().length + 4 + toCoin.getTokenHex().getBytes().length + 4
                         + toCoin.toPlainString().getBytes().length + 4 + this.mOrderid.getBytes().length + 4);
 
-        // byteBuffer.putInt(fromAddress.getBytes().length).put(fromAddress.getBytes());
-        // byteBuffer.putInt(fromCoin.getTokenHex().getBytes().length).put(fromCoin.getTokenHex().getBytes());
-        // byteBuffer.putInt(fromCoin.toPlainString().getBytes().length).put(fromCoin.toPlainString().getBytes());
         byteBuffer.putInt(toAddress.getBytes().length).put(toAddress.getBytes());
         byteBuffer.putInt(toCoin.getTokenHex().getBytes().length).put(toCoin.getTokenHex().getBytes());
         byteBuffer.putInt(toCoin.toPlainString().getBytes().length).put(toCoin.toPlainString().getBytes());
@@ -296,12 +303,16 @@ public class SendMoneyController {
 
     public void send(ActionEvent event) {
         try {
-            // sendBtn.setDisable(true);
+            Main.addAddress2file(linknameTextField.getText(),
+                    !addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
+                            : addressComboBox.getValue().split(",")[1]);
             checkGuiThread();
             overlayUI.done();
             String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
             Address destination = // Address.getParametersFromAddress(address)address.getText()
-                    Address.fromBase58(Main.params, address.getText());
+                    Address.fromBase58(Main.params,
+                            !addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
+                                    : addressComboBox.getValue().split(",")[1]);
             HashMap<String, String> requestParam = new HashMap<String, String>();
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
                     Json.jsonmapper().writeValueAsString(requestParam));
@@ -319,41 +330,13 @@ public class SendMoneyController {
             wallet.completeTx(request);
             rollingBlock.addTransaction(request.tx);
             rollingBlock.solve();
-            // OkHttp3Util.post(CONTEXT_ROOT + "saveBlock",
-            // rollingBlock.bitcoinSerialize());
-            // Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
+
             Main.instance.sendMessage(rollingBlock.bitcoinSerialize());
             Main.instance.controller.initTableView();
-            // address.setDisable(true);
-            // ((HBox) amountEdit.getParent()).getChildren().remove(amountEdit);
-            // ((HBox) btcLabel.getParent()).getChildren().remove(btcLabel);
-            // updateTitleForBroadcast();
+
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
-    }
-
-    @SuppressWarnings("unused")
-    private void askForPasswordAndRetry() {
-        Main.OverlayUI<WalletPasswordController> pwd = Main.instance.overlayUI("wallet_password.fxml");
-        final String addressStr = address.getText();
-        final String amountStr = amountEdit.getText();
-        pwd.controller.aesKeyProperty().addListener((observable, old, cur) -> {
-            // We only get here if the user found the right password. If they
-            // don't or they cancel, we end up back on
-            // the main UI screen. By now the send money screen is history so we
-            // must recreate it.
-            checkGuiThread();
-            Main.OverlayUI<SendMoneyController> screen = Main.instance.overlayUI("send_money.fxml");
-            // TODO screen.controller.aesKey = cur;
-            screen.controller.address.setText(addressStr);
-            screen.controller.amountEdit.setText(amountStr);
-            try {
-                screen.controller.send(null);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
     }
 
 }

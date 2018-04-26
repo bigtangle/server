@@ -26,8 +26,14 @@ import static net.bigtangle.ui.wallet.utils.GuiUtils.fadeIn;
 import static net.bigtangle.ui.wallet.utils.GuiUtils.fadeOutAndRemove;
 import static net.bigtangle.ui.wallet.utils.GuiUtils.zoomIn;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -106,10 +112,9 @@ public class Main extends Application {
     public static int numberOfEmptyBlocks = 3;
     public static boolean emptyBlocks = false;
 
-    
-    public   String blockTopic = "bigtangle";
-    public   String kafka =   "cn.kafka.bigtangle.net:9092";
-    
+    public String blockTopic = "bigtangle";
+    public String kafka = "cn.kafka.bigtangle.net:9092";
+
     @Override
     public void start(Stage mainWindow) throws Exception {
         try {
@@ -125,11 +130,11 @@ public class Main extends Application {
         ResourceBundle rb = ResourceBundle.getBundle("net.bigtangle.ui.wallet.message", Locale.getDefault());
         if ("en".equalsIgnoreCase(lang) || "de".equalsIgnoreCase(lang)) {
             rb = ResourceBundle.getBundle("net.bigtangle.ui.wallet.message_en", Locale.ENGLISH);
-        }else {
+        } else {
             rb = ResourceBundle.getBundle("net.bigtangle.ui.wallet.message", Locale.CHINESE);
         }
         return rb.getString(s);
-        
+
     }
 
     public static void initAeskey(KeyParameter aesKey) {
@@ -170,10 +175,10 @@ public class Main extends Application {
         ResourceBundle resourceBundle = ResourceBundle.getBundle(resourceFile, locale);
         loader.setResources(resourceBundle);
         bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
-        
-        //set local kafka to send
-        if(!Locale.CHINESE.equals(locale)) {
-            kafka="de.kafka.bigtangle.net:9092";
+
+        // set local kafka to send
+        if (!Locale.CHINESE.equals(locale)) {
+            kafka = "de.kafka.bigtangle.net:9092";
             IpAddress = "de.server.bigtangle.net";
         }
         mainUI = loader.load();
@@ -214,9 +219,40 @@ public class Main extends Application {
 
     }
 
+    public static void addAddress2file(String name, String address) throws Exception {
+        String homedir = Main.keyFileDirectory;
+        File addressFile = new File(homedir + "/addresses.txt");
+        if (!addressFile.exists()) {
+            addressFile.createNewFile();
+        }
+        BufferedWriter out = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream(addressFile, true), "UTF-8"));
+        out.write(name + "," + address);
+        out.flush();
+
+        out.close();
+    }
+
+    public static List<String> initAddress4file() throws Exception {
+        String homedir = Main.keyFileDirectory;
+        File addressFile = new File(homedir + "/addresses.txt");
+        if (!addressFile.exists()) {
+            addressFile.createNewFile();
+        }
+        BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(addressFile), "UTF-8"));
+        String str = "";
+        List<String> addressList = new ArrayList<String>();
+        addressList.clear();
+        addressList = new ArrayList<String>();
+        while ((str = in.readLine()) != null) {
+            addressList.add(str);
+        }
+        in.close();
+        return addressList;
+    }
+
     public void setupWalletKit(@Nullable DeterministicSeed seed) {
-        // If seed is non-null it means we are restoring from backup.
-        bitcoin.startAsync();
+
         if (seed != null)
             bitcoin.restoreWalletFromSeed(seed);
     }
@@ -328,7 +364,7 @@ public class Main extends Application {
 
     public static void main(String[] args) {
         String systemLang = Locale.getDefault().getLanguage();
-//        String systemName = System.getProperty("os.name").toLowerCase();
+        // String systemName = System.getProperty("os.name").toLowerCase();
         if (args == null || args.length == 0) {
             lang = systemLang;
             keyFileDirectory = System.getProperty("user.home");
@@ -431,23 +467,26 @@ public class Main extends Application {
         return amount;
     }
 
-    public boolean sendMessage(byte[] data ) throws InterruptedException, ExecutionException {
+    public boolean sendMessage(byte[] data) throws InterruptedException, ExecutionException {
         return sendMessage(data, this.blockTopic, this.kafka);
     }
-    public boolean sendMessage(byte[] data, String topic, String bootstrapServers ) throws InterruptedException, ExecutionException {
+
+    public boolean sendMessage(byte[] data, String topic, String bootstrapServers)
+            throws InterruptedException, ExecutionException {
         final String key = UUID.randomUUID().toString();
-        KafkaProducer<String, byte[]> messageProducer = new KafkaProducer<String, byte[]>(producerConfig(bootstrapServers, true));
+        KafkaProducer<String, byte[]> messageProducer = new KafkaProducer<String, byte[]>(
+                producerConfig(bootstrapServers, true));
         ProducerRecord<String, byte[]> producerRecord = null;
         producerRecord = new ProducerRecord<String, byte[]>(topic, key, data);
         final Future<RecordMetadata> result = messageProducer.send(producerRecord);
         RecordMetadata mdata = result.get();
-      //  log.debug(" sendMessage "+ key );
+        // log.debug(" sendMessage "+ key );
         messageProducer.close();
         return mdata != null;
-   
+
     }
 
-    public Properties producerConfig(String bootstrapServers, boolean binaryMessageKey ) {
+    public Properties producerConfig(String bootstrapServers, boolean binaryMessageKey) {
         Properties producerConfig = new Properties();
         producerConfig.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         producerConfig.setProperty(ProducerConfig.ACKS_CONFIG, "all");
@@ -462,5 +501,5 @@ public class Main extends Application {
         // configuration.getSchemaRegistryUrl());
         return producerConfig;
     }
- 
+
 }

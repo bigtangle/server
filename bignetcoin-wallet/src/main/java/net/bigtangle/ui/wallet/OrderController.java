@@ -89,6 +89,9 @@ public class OrderController {
     @FXML
     public void initialize() {
         try {
+            List<String> list = Main.initAddress4file();
+            ObservableList<String> addressData = FXCollections.observableArrayList(list);
+            addressComboBox.setItems(addressData);
             String[] items = new String[OrderState.values().length];
             for (int i = 0; i < OrderState.values().length; i++) {
                 items[i] = OrderState.values()[i].name();

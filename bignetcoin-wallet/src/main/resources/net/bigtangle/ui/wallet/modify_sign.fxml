@@ -8,14 +8,9 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<AnchorPane id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity"
-	minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0"
-	prefWidth="701.0" style="" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
-	fx:controller="net.bigtangle.ui.wallet.SendMoneyController">
+<AnchorPane id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="701.0" style="" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.bigtangle.ui.wallet.SendMoneyController">
 	<children>
-		<VBox alignment="CENTER_LEFT" layoutY="100.0" prefHeight="255.0"
-			prefWidth="701.0" spacing="20.0" style="-fx-background-color: white;"
-			AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+		<VBox alignment="CENTER_LEFT" layoutY="23.0" prefHeight="361.0" prefWidth="701.0" spacing="20.0" style="-fx-background-color: white;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
 			<children>
 				<HBox fx:id="topHBox" alignment="CENTER_LEFT" spacing="15.0">
 					<children>
@@ -25,25 +20,27 @@
 							</font>
 						</Label>
 						<TextField fx:id="amountEdit" />
-						<ChoiceBox fx:id="tokeninfo" prefHeight="23.0"
-							prefWidth="245.0" />
+						<ChoiceBox fx:id="tokeninfo" prefHeight="23.0" prefWidth="245.0" />
 						<Label fx:id="btcLabel" prefHeight="15.0" prefWidth="122.0" />
 					</children>
 				</HBox>
 				<HBox prefHeight="33.0" prefWidth="641.0">
 					<children>
-						<RadioButton fx:id="basicRadioButton" mnemonicParsing="false"
-							selected="true" text="%basic">
+						<RadioButton fx:id="basicRadioButton" mnemonicParsing="false" selected="true" text="%basic">
 							<toggleGroup>
 								<ToggleGroup fx:id="unitToggleGroup" />
 							</toggleGroup>
 						</RadioButton>
-						<RadioButton fx:id="kiloRadioButton" mnemonicParsing="false"
-							text="%kilo" toggleGroup="$unitToggleGroup" />
-						<RadioButton fx:id="milionRadioButton"
-							mnemonicParsing="false" text="%milion" toggleGroup="$unitToggleGroup" />
+						<RadioButton fx:id="kiloRadioButton" mnemonicParsing="false" text="%kilo" toggleGroup="$unitToggleGroup" />
+						<RadioButton fx:id="milionRadioButton" mnemonicParsing="false" text="%milion" toggleGroup="$unitToggleGroup" />
 					</children>
 				</HBox>
+            <HBox prefHeight="50.0" prefWidth="641.0">
+               <children>
+                  <Label prefHeight="47.0" prefWidth="99.0" text="linkname" />
+                  <TextField fx:id="linknameTextField" prefHeight="49.0" prefWidth="221.0" />
+               </children>
+            </HBox>
 				<HBox alignment="CENTER_LEFT" spacing="15.0">
 					<children>
 						<Label text="%to">
@@ -51,26 +48,15 @@
 								<Font size="24.0" />
 							</font>
 						</Label>
-						<TextField fx:id="address" maxWidth="1.7976931348623157E308"
-							prefHeight="23.0" prefWidth="451.0" text=""
-							HBox.hgrow="ALWAYS">
-							<VBox.margin>
-								<Insets />
-							</VBox.margin>
-						</TextField>
+                  <ComboBox fx:id="addressComboBox" prefHeight="23.0" prefWidth="445.0" />
 					</children>
 				</HBox>
-				<HBox alignment="CENTER_RIGHT" fillHeight="true" prefHeight="30.0"
-					prefWidth="600.0" spacing="15.0" VBox.vgrow="NEVER">
+				<HBox alignment="CENTER_RIGHT" fillHeight="true" prefHeight="30.0" prefWidth="600.0" spacing="15.0" VBox.vgrow="NEVER">
 					<children>
-						<Button fx:id="sendBtn" defaultButton="true"
-							mnemonicParsing="false" onAction="#send" prefWidth="79.0" text="%Send" />
-						<Button mnemonicParsing="false" onAction="#importSign"
-							text="%import" />
-						<Button mnemonicParsing="false" onAction="#exportSign"
-							text="%export" />
-						<Button fx:id="cancelBtn" cancelButton="true"
-							mnemonicParsing="false" onAction="#cancel" prefWidth="79.0" text="%Cancel" />
+						<Button fx:id="sendBtn" defaultButton="true" mnemonicParsing="false" onAction="#send" prefWidth="79.0" text="%Send" />
+						<Button mnemonicParsing="false" onAction="#importSign" text="%import" />
+						<Button mnemonicParsing="false" onAction="#exportSign" text="%export" />
+						<Button fx:id="cancelBtn" cancelButton="true" mnemonicParsing="false" onAction="#cancel" prefWidth="79.0" text="%Cancel" />
 					</children>
 				</HBox>
 			</children>
