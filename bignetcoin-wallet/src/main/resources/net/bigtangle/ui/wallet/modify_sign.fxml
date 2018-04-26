@@ -37,7 +37,7 @@
 				</HBox>
             <HBox prefHeight="50.0" prefWidth="641.0">
                <children>
-                  <Label prefHeight="47.0" prefWidth="99.0" text="linkname" />
+                  <Label prefHeight="47.0" prefWidth="99.0" text="%linkname" />
                   <TextField fx:id="linknameTextField" prefHeight="49.0" prefWidth="221.0" />
                </children>
             </HBox>
