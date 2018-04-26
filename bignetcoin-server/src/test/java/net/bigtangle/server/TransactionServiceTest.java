@@ -63,25 +63,25 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         ECKey outKey = new ECKey();
         int height = 1;
 
-        blockgraph.add(PARAMS.getGenesisBlock());
-        BlockEvaluation genesisEvaluation = blockService.getBlockEvaluation(PARAMS.getGenesisBlock().getHash());
+        blockgraph.add(networkParameters.getGenesisBlock());
+        BlockEvaluation genesisEvaluation = blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash());
         blockService.updateMilestone(genesisEvaluation, true);
         blockService.updateSolid(genesisEvaluation, true);
 
-        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
+        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
+                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock);
 
         // get the coinbase to spend
         Transaction transaction = rollingBlock.getTransactions().get(0);
         byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
-        for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
+        for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
-                    outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
+                    outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
         }
         rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
-                outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
+                outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
 
         milestoneService.update();
         {
@@ -97,14 +97,14 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         Coin amount0 = Coin.valueOf(3, NetworkParameters.BIGNETCOIN_TOKENID);
         Coin amount1 = Coin.valueOf(2, NetworkParameters.BIGNETCOIN_TOKENID);
 
-        TransactionOutPoint spendableOutput0 = new TransactionOutPoint(PARAMS, 0, transaction.getHash());
-        TransactionOutPoint spendableOutput1 = new TransactionOutPoint(PARAMS, 1, transaction.getHash());
+        TransactionOutPoint spendableOutput0 = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
+        TransactionOutPoint spendableOutput1 = new TransactionOutPoint(networkParameters, 1, transaction.getHash());
 
         // ImmutableList<ECKey> keys = ImmutableList.of(outKey, toKey);
         // Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2,
         // keys);
 
-        Transaction t = new Transaction(PARAMS);
+        Transaction t = new Transaction(networkParameters);
         t.addOutput(amount1, toKey);
         t.addSignedInput(spendableOutput0, new Script(spendableOutputScriptPubKey), outKey);
 
@@ -112,7 +112,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         // t.addSignedInput(spendableOutput1, new
         // Script(spendableOutputScriptPubKey), toKey);
 
-        // t.addOutput(new TransactionOutput(PARAMS, t, amount1,
+        // t.addOutput(new TransactionOutput(networkParameters, t, amount1,
         // scriptPubKey.getProgram()));
         // t.addSignedInput(spendableOutput1, scriptPubKey, toKey);
 
@@ -123,8 +123,8 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         milestoneService.update();
 
         rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
-                outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
-        Transaction t0 = new Transaction(PARAMS);
+                outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
+        Transaction t0 = new Transaction(networkParameters);
         t0.addOutput(amount0, outKey);
         t0.addSignedInput(spendableOutput1, new Script(spendableOutputScriptPubKey), toKey);
         rollingBlock.addTransaction(t0);
@@ -163,33 +163,33 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         logger.debug(outKey.getPublicKeyAsHex());
 
         // Add genesis block
-        blockgraph.add(PARAMS.getGenesisBlock());
-        BlockEvaluation genesisEvaluation = blockService.getBlockEvaluation(PARAMS.getGenesisBlock().getHash());
+        blockgraph.add(networkParameters.getGenesisBlock());
+        BlockEvaluation genesisEvaluation = blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash());
         blockService.updateMilestone(genesisEvaluation, true);
         blockService.updateSolid(genesisEvaluation, true);
 
         // Build some blocks on genesis block to create a spendable output
-        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
+        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
+                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock);
         Transaction transaction = rollingBlock.getTransactions().get(0);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, transaction.getHash());
+        TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
         byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
-        for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
+        for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
-                    outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
+                    outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
         }
-        rollingBlock = BlockForTest.createNextBlock(rollingBlock, null, PARAMS.getGenesisBlock().getHash());
+        rollingBlock = BlockForTest.createNextBlock(rollingBlock, null, networkParameters.getGenesisBlock().getHash());
 
         // Create bitcoin spend of 1 BTA.
         ECKey toKey = new ECKey();
         Coin amount = Coin.valueOf(11123, NetworkParameters.BIGNETCOIN_TOKENID);
-        Address address = new Address(PARAMS, toKey.getPubKeyHash());
+        Address address = new Address(networkParameters, toKey.getPubKeyHash());
         Coin totalAmount = Coin.ZERO;
 
-        Transaction t = new Transaction(PARAMS);
-        t.addOutput(new TransactionOutput(PARAMS, t, amount, toKey));
+        Transaction t = new Transaction(networkParameters);
+        t.addOutput(new TransactionOutput(networkParameters, t, amount, toKey));
         t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
@@ -219,25 +219,25 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         int height = 1;
 
         // Build some blocks on genesis block to create a spendable output.
-        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
+        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
+                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock);
         Transaction transaction = rollingBlock.getTransactions().get(0);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, transaction.getHash());
+        TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
         byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
-        for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
+        for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
-                    outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
+                    outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
         }
-        rollingBlock = BlockForTest.createNextBlock(rollingBlock, null, PARAMS.getGenesisBlock().getHash());
+        rollingBlock = BlockForTest.createNextBlock(rollingBlock, null, networkParameters.getGenesisBlock().getHash());
     }
 
     @Test
     // transfer the coin to address with multisign for spent
     public void testMultiSigOutputToString() throws Exception {
 
-        Transaction multiSigTransaction = new Transaction(PARAMS);
+        Transaction multiSigTransaction = new Transaction(networkParameters);
 
         Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, walletKeys);
 

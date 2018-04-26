@@ -55,8 +55,8 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
 		List<Block> blocks = new ArrayList<Block>();
 		for (int j = 0; j < 30; j++) {
-			Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0,
-					PARAMS.getGenesisBlock().getHash());
+			Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0,
+					networkParameters.getGenesisBlock().getHash());
 			blocks.add(rollingBlock);
 			for (int i = 0; i < 30; i++) {
 				rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0,
@@ -86,8 +86,8 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		blockService.updateMilestone(genesisEvaluation, true);
 		blockService.updateSolid(genesisEvaluation, true);
 
-		Block b1 = createAndAddNextBlockCoinbase(PARAMS.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), PARAMS.getGenesisBlock().getHash());
-		Block b2 = createAndAddNextBlockCoinbase(PARAMS.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), PARAMS.getGenesisBlock().getHash());
+		Block b1 = createAndAddNextBlockCoinbase(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), networkParameters.getGenesisBlock().getHash());
+		Block b2 = createAndAddNextBlockCoinbase(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), networkParameters.getGenesisBlock().getHash());
 		Block b3 = createAndAddNextBlockCoinbase(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b2.getHash());
 		milestoneService.update();
 		assertTrue(blockService.getBlockEvaluation(b1.getHash()).isMilestone());
@@ -95,12 +95,12 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		assertTrue(blockService.getBlockEvaluation(b3.getHash()).isMilestone());
 
 		Transaction transaction = b1.getTransactions().get(0);
-		TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, transaction.getHash());
+		TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
 		byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
 		Coin amount = Coin.valueOf(2, NetworkParameters.BIGNETCOIN_TOKENID);
 
-		Transaction t = new Transaction(PARAMS);
-		t.addOutput(new TransactionOutput(PARAMS, t, amount, outKey));
+		Transaction t = new Transaction(networkParameters);
+		t.addOutput(new TransactionOutput(networkParameters, t, amount, outKey));
 		t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
 
 		// Create blocks with a conflict

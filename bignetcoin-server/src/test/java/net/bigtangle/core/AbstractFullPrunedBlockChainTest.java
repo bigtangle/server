@@ -203,25 +203,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         rollingBlock.solve();
         
         blockgraph.add(rollingBlock);
-        WeakReference<StoredUndoableBlock> undoBlock = new WeakReference<StoredUndoableBlock>(store.getUndoBlock(rollingBlock.getHash()));
-
-        StoredUndoableBlock storedUndoableBlock = undoBlock.get();
-        assertNotNull(storedUndoableBlock);
-        assertNull(storedUndoableBlock.getTransactions());
-        WeakReference<TransactionOutputChanges> changes = new WeakReference<TransactionOutputChanges>(storedUndoableBlock.getTxOutChanges());
-        assertNotNull(changes.get());
-        storedUndoableBlock = null;   // Blank the reference so it can be GCd.
         
-        // Create a blockgraph longer than UNDOABLE_BLOCKS_STORED
-        for (int i = 0; i < UNDOABLE_BLOCKS_STORED; i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock,null,PARAMS.getGenesisBlock().getHash());
-            blockgraph.add(rollingBlock);
-        }
-        // Try to get the garbage collector to run
-        System.gc();
-        assertNull(undoBlock.get());
-        assertNull(changes.get());
-        assertNull(out.get());
         try {
             store.close();
         } catch (Exception e) {}

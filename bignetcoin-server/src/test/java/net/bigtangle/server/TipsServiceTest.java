@@ -78,8 +78,8 @@ public class TipsServiceTest extends AbstractIntegrationTest {
  
     public List<Block> createLinearBlock() throws Exception {
         List<Block> blocks = new ArrayList<Block>();
-        Block rollingBlock1 = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
+        Block rollingBlock1 = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
+                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock1);
         blocks.add(rollingBlock1);
        //log.debug("create block, hash : " + rollingBlock1.getHashAsString());
@@ -87,7 +87,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         Block rollingBlock = rollingBlock1;
         for (int i = 1; i < 5; i++) {
             rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
-                    outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
+                    outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
            log.debug("create block, hash : " + rollingBlock.getHashAsString());
             blocks.add(rollingBlock);
@@ -98,10 +98,10 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
     public List<Block> createBlock() throws Exception {
 
-        Block b0 = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
-                outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
+        Block b0 = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
+                outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
         Block b1 = BlockForTest.createNextBlockWithCoinbase(b0, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                height++, PARAMS.getGenesisBlock().getHash());
+                height++, networkParameters.getGenesisBlock().getHash());
         Block b2 = BlockForTest.createNextBlockWithCoinbase(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                 height++, b0.getHash());
         Block b3 = BlockForTest.createNextBlockWithCoinbase(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),

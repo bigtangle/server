@@ -216,7 +216,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         }
         if (this.chainHeadBlock.getHeight() < chainHead.getHeight())
             setChainHead(chainHead);
-        removeUndoableBlocksWhereHeightIsLessThan(chainHead.getHeight() - fullStoreDepth);
+      
     }
     
     @Override

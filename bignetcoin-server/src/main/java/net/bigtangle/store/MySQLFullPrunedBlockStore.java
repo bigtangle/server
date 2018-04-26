@@ -85,11 +85,11 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    CONSTRAINT blockevaluation_pk PRIMARY KEY (blockhash) )\n";
     
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n" +
-            "    tokenid varbinary(255) NOT NULL DEFAULT '0',\n" +
-            "    tokenname varchar(255) DEFAULT NULL,\n" + 
-            "    amount bigint(20) DEFAULT NULL,\n" +
-            "    description varchar(255) DEFAULT NULL,\n" + 
-            "    blocktype integer NOT NULL,\n" +
+            "    tokenid varbinary(255) NOT NULL  ,\n" +
+            "    tokenname varchar(255) ,\n" + 
+            "    amount bigint(20) ,\n" +
+            "    description varchar(255) ,\n" + 
+            "    blocktype bigint ,\n" +
             "    PRIMARY KEY (tokenid) \n)";
     
     
@@ -125,7 +125,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "   toTokenHex varchar(255),\n"+ 
             "   toAmount varchar(255),\n"+ 
             "   data varbinary(5000) NOT NULL,\n" +
-            "   toSign integer,\n"+ 
+            "   toSign boolean,\n"+ 
             "   fromSign integer,\n"+ 
             "   toOrderId varchar(255),\n"+ 
             "   fromOrderId varchar(255),\n"+ 
@@ -136,8 +136,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_OUTPUTS_TOADDRESS_INDEX = "CREATE INDEX outputs_toaddress_idx ON outputs (toaddress) USING btree";
     private static final String CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX = "CREATE INDEX outputs_addresstargetable_idx ON outputs (addresstargetable) USING btree";
     private static final String CREATE_OUTPUTS_HASH_INDEX = "CREATE INDEX outputs_hash_idx ON outputs (hash) USING btree";
-    private static final String CREATE_UNDOABLE_TABLE_INDEX = "CREATE INDEX undoableblocks_height_idx ON undoableblocks (height) USING btree";
-    private static final String CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX = "CREATE INDEX exchange_fromAddress_idx ON exchange (fromAddress) USING btree";
+     private static final String CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX = "CREATE INDEX exchange_fromAddress_idx ON exchange (fromAddress) USING btree";
     private static final String CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX = "CREATE INDEX exchange_toAddress_idx ON exchange (toAddress) USING btree";
     private static final String CREATE_ORDERMATCH_RESTINGORDERID_TABLE_INDEX = "CREATE INDEX ordermatch_restingOrderId_idx ON ordermatch (restingOrderId) USING btree";
     private static final String CREATE_ORDERMATCH_INCOMINGORDERID_TABLE_INDEX = "CREATE INDEX ordermatch_incomingOrderId_idx ON ordermatch (incomingOrderId) USING btree";

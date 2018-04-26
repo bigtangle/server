@@ -35,7 +35,7 @@ dependencies {
     compile group: 'mysql', name: 'mysql-connector-java', version:ver.mysql_connector_java
    
    
-   //compile group: 'org.apache.phoenix', name: 'phoenix', version: '4.13.1-HBase-1.3', ext: 'pom'
+  compile group: 'org.apache-extras.cassandra-jdbc', name: 'cassandra-jdbc', version: '1.2.5'
    
     compile (group: 'org.apache.phoenix', name: 'phoenix-queryserver-client', version: '4.13.0-HBase-1.3')
       {  
@@ -47,7 +47,7 @@ dependencies {
      compile group: 'com.google.code.gson', name: 'gson', version:ver.gson
     compile project(':bignetcoin-core')
     compile group: 'org.springframework', name: 'spring-web', version: ver.spring
-     compile group: 'org.springframework', name: 'spring-jdbc', version:  ver.spring
+    compile group: 'org.springframework', name: 'spring-jdbc', version:  ver.spring
     compile project(':bignetcoin-orchid')      
     /**
      * test dependencies

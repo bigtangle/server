@@ -132,8 +132,8 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         }
         
         Coin amount = Coin.valueOf(10000, yourutxo.getValue().tokenid);
-        SendRequest req = SendRequest.to(new Address(PARAMS, myutxo.getAddress()), amount);
-        req.tx.addOutput(myutxo.getValue(), new Address(PARAMS, yourutxo.getAddress()));
+        SendRequest req = SendRequest.to(new Address(networkParameters, myutxo.getAddress()), amount);
+        req.tx.addOutput(myutxo.getValue(), new Address(networkParameters, yourutxo.getAddress()));
         
         System.out.println(myutxo.getAddress() + ", " + myutxo.getValue());
         System.out.println(yourutxo.getAddress() + ", " + amount);
@@ -209,7 +209,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         System.out.println(utxo.getValue());
         //Coin baseCoin = utxo.getValue().subtract(Coin.parseCoin("10000", utxo.getValue().getTokenid()));
         //System.out.println(baseCoin);
-        Address destination = outKey.toAddress(PARAMS);
+        Address destination = outKey.toAddress(networkParameters);
         SendRequest request = SendRequest.to(destination, utxo.getValue());
         walletAppKit.wallet().completeTx(request);
         rollingBlock.addTransaction(request.tx);

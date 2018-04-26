@@ -45,13 +45,7 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
             ")";
 
 
-    private static final String CREATE_UNDOABLE_TABLE = "CREATE TABLE IF NOT EXISTS  " + " bigtangle." +"undoableblocks (\n" +
-            "    hash blob ,\n" +
-            "    height bigint ,\n" +
-            "    txoutchanges blob,\n" +
-            "    transactions blob,\n" +
-            "    PRIMARY KEY (hash)  \n" +
-            ")\n";
+   
 
     private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE IF NOT EXISTS  " + " bigtangle." +"outputs (\n" +
             "    hash blob ,\n" +
@@ -60,7 +54,7 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
             "    coinvalue bigint ,\n" +
             "    scriptbytes blob ,\n" +
             "    toaddress text,\n" +
-            "    addresstargetable int,\n" +
+            "    addresstargetable bigint,\n" +
             "    coinbase boolean,\n" +
             "    blockhash  blob  ,\n" +
             "    tokenid blob,\n" +
@@ -91,7 +85,7 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
             "    inserttime bigint,\n" +
             "    maintained boolean,\n" +
             "    rewardvalidityassessment boolean,\n" +
-            "    PRIMARY KEY (blockhash) )\n";
+            "    PRIMARY KEY (blockhash)  )\n";
     
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE IF NOT EXISTS  " + " bigtangle." +"tokens (\n" +
             "    tokenid blob  ,\n" +
@@ -161,14 +155,16 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
         return MYSQL_DUPLICATE_KEY_ERROR_CODE;
     }
 
-    
+    protected String afterSelect() {
+        return " ALLOW FILTERING ";
+    }
+
 
     @Override
     protected List<String> getCreateTablesSQL() {
         List<String> sqlStatements = new ArrayList<String>();
         sqlStatements.add(CREATE_SETTINGS_TABLE);
         sqlStatements.add(CREATE_HEADERS_TABLE);
-        sqlStatements.add(CREATE_UNDOABLE_TABLE);
         sqlStatements.add(CREATE_OUTPUT_TABLE);
         sqlStatements.add(CREATE_TIPS_TABLE);
         sqlStatements.add(CREATE_BLOCKEVALUATION_TABLE);
@@ -200,7 +196,6 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
     // Drop table SQL.
     protected String DROP_SETTINGS_TABLE = "DROP TABLE IF EXISTS " + "bigtangle."+ "settings";
     protected String DROP_HEADERS_TABLE = "DROP TABLE IF EXISTS " + "bigtangle."+"headers";
-    protected String DROP_UNDOABLE_TABLE = "DROP TABLE IF EXISTS " + "bigtangle."+ "undoableblocks";
     protected String DROP_OPEN_OUTPUT_TABLE = "DROP TABLE IF EXISTS " + "bigtangle."+ "outputs";
     protected String DROP_TIPS_TABLE = "DROP TABLE IF EXISTS " + "bigtangle."+ "tips";
     protected String DROP_BLOCKEVALUATION_TABLE = "DROP TABLE IF EXISTS " + "bigtangle."+ "blockevaluation";

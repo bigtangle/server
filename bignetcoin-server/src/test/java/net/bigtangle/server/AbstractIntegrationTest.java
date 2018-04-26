@@ -40,7 +40,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockForTest;
-import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
@@ -51,14 +50,12 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.kits.WalletAppKit;
-import net.bigtangle.params.UnitTestParams;
 import net.bigtangle.server.config.DBStoreConfiguration;
+import net.bigtangle.server.config.NetConfiguration;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
-import net.bigtangle.store.MySQLFullPrunedBlockStore;
-import net.bigtangle.store.PhoenixBlockStore;
 import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
 
@@ -92,7 +89,6 @@ public abstract class AbstractIntegrationTest {
         contextRoot = String.format(CONTEXT_ROOT_TEMPLATE, port);
     }
 
-  
     protected FullPrunedBlockGraph blockgraph;
 
     @Autowired
@@ -105,26 +101,17 @@ public abstract class AbstractIntegrationTest {
     private MilestoneService milestoneService;
     @Autowired
     DBStoreConfiguration dbConfiguration;
-    
-  
-
-   
-
-    protected static final NetworkParameters PARAMS = new UnitTestParams() {
-        @Override
-        public int getInterval() {
-            return 10000;
-        }
-    };
+    @Autowired
+    NetworkParameters networkParameters;
 
     @Before
     public void setUp() throws Exception {
         mockMvc = MockMvcBuilders.webAppContextSetup(webContext).build();
         objectMapper = new ObjectMapper();
-   
-        store =  dbConfiguration.store();
-         store.resetStore();
-      
+
+        store = dbConfiguration.store();
+        store.resetStore();
+
         blockgraph = new FullPrunedBlockGraph(networkParameters, store);
 
         // Add genesis block
@@ -137,9 +124,6 @@ public abstract class AbstractIntegrationTest {
         testInitWallet();
         wallet1();
     }
-
-    @Autowired
-    private NetworkParameters networkParameters;
 
     public String toJson(Object object) throws JsonProcessingException {
         return getMapper().writeValueAsString(object);
@@ -163,14 +147,14 @@ public abstract class AbstractIntegrationTest {
 
     public void walletKeys() throws Exception {
         KeyParameter aesKey = null;
-        walletAppKit = new WalletAppKit(PARAMS, new File("../bignetcoin-wallet"), "bignetcoin");
+        walletAppKit = new WalletAppKit(networkParameters, new File("../bignetcoin-wallet"), "bignetcoin");
         walletAppKit.wallet().setServerURL(contextRoot);
         walletKeys = walletAppKit.wallet().walletKeys(aesKey);
     }
 
     public void wallet1() throws Exception {
 
-        walletAppKit1 = new WalletAppKit(PARAMS, new File("../bignetcoin-wallet"), "bignetcoin1");
+        walletAppKit1 = new WalletAppKit(networkParameters, new File("../bignetcoin-wallet"), "bignetcoin1");
         walletAppKit1.wallet().setServerURL(contextRoot);
 
     }

@@ -17,8 +17,7 @@ public class ServerConfiguration {
 
  
     private String neighbors;
-
-    @NotNull
+    
     private String port;
 
     private String udp_receiver_port;
@@ -27,8 +26,8 @@ public class ServerConfiguration {
 
     private Boolean debug;
 
-    @NotNull
-    private Boolean testnet;
+    @Value("${net:Mainnet}")
+    private String net;
 
     private String remote;
 
@@ -86,12 +85,13 @@ public class ServerConfiguration {
         this.debug = debug;
     }
 
-    public Boolean getTestnet() {
-        return testnet;
+  
+    public String getNet() {
+        return net;
     }
 
-    public void setTestnet(Boolean testnet) {
-        this.testnet = testnet;
+    public void setNet(String net) {
+        this.net = net;
     }
 
     public String getRemote() {
