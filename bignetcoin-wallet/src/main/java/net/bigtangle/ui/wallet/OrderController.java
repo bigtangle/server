@@ -15,12 +15,13 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.cell.MapValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import net.bigtangle.core.Address;
@@ -54,10 +55,20 @@ public class OrderController {
     public ComboBox<String> marketComboBox;
 
     @FXML
-    public ChoiceBox<Object> statusChoiceBox;
+    public RadioButton buyRadioButton;
+    @FXML
+    public RadioButton sellRadioButton;
 
     @FXML
-    public ChoiceBox<String> state4searchChoiceBox;
+    public RadioButton stateRB1;
+    @FXML
+    public RadioButton stateRB2;
+    @FXML
+    public RadioButton stateRB3;
+    @FXML
+    public ToggleGroup stateTG;
+    @FXML
+    public ToggleGroup buySellTG;
 
     @FXML
     public DatePicker validdateFromDatePicker;
@@ -89,12 +100,12 @@ public class OrderController {
     @FXML
     public void initialize() {
         try {
-            String[] items = new String[OrderState.values().length];
-            for (int i = 0; i < OrderState.values().length; i++) {
-                items[i] = OrderState.values()[i].name();
-            }
-            state4searchChoiceBox.setItems(FXCollections.observableArrayList(items));
-            state4searchChoiceBox.getSelectionModel().selectFirst();
+            buyRadioButton.setUserData("buy");
+            sellRadioButton.setUserData("sell");
+            stateRB1.setUserData("publish");
+            stateRB2.setUserData("match");
+            stateRB3.setUserData("finish");
+
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             initComboBox();
             initTable(requestParam);
@@ -126,13 +137,13 @@ public class OrderController {
         if (list != null) {
             for (Map<String, Object> map : list) {
                 if ((Integer) map.get("type") == 1) {
-                    map.put("type", "SELL");
+                    map.put("type", Main.getText("SELL"));
                 } else {
-                    map.put("type", "BUY");
+                    map.put("type", Main.getText("BUY"));
                 }
                 int stateIndex = (int) map.get("state");
                 OrderState orderState = OrderState.values()[stateIndex];
-                map.put("state", orderState.name());
+                map.put("state", Main.getText(orderState.name()));
                 Coin fromAmount = Coin.valueOf(Long.parseLong(map.get("price").toString()),
                         Utils.HEX.decode((String) map.get("tokenid")));
                 Coin toAmount = Coin.valueOf(Long.parseLong(map.get("amount").toString()),
@@ -186,13 +197,12 @@ public class OrderController {
             addresses.add(key.toAddress(Main.params).toString());
         }
         addressComboBox.setItems(addresses);
-        ObservableList<Object> statusData = FXCollections.observableArrayList("buy", "sell");
-        statusChoiceBox.setItems(statusData);
+
     }
 
     public void buy(ActionEvent event) throws Exception {
         String tokenid = tokenComboBox.getValue().split(":")[1].trim();
-        String typeStr = (String) statusChoiceBox.getValue();
+        String typeStr = (String) buySellTG.getSelectedToggle().getUserData().toString();
 
         byte[] pubKeyHash = Address.fromBase58(Main.params, addressComboBox.getValue()).getHash160();
         Coin coin = Main.calculateTotalUTXOList(pubKeyHash,
@@ -235,7 +245,7 @@ public class OrderController {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", orderid4searchTextField.getText());
         requestParam.put("address", address4searchTextField.getText());
-        requestParam.put("state", state4searchChoiceBox.getValue());
+        requestParam.put("state", stateTG.getSelectedToggle().getUserData().toString());
         try {
             initTable(requestParam);
         } catch (Exception e) {
