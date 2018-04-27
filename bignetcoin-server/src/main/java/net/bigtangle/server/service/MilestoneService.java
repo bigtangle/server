@@ -75,7 +75,7 @@ public class MilestoneService {
 		updateMilestone();
 		log.info("Milestone update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 		
-		// TODO Set unmaintained true somewhere or dynamically calculate maintained state so we can dynamically adjust maintenance threshold
+		// TODO dynamically calculated maintained state so we can dynamically adjust maintenance threshold
 		
 		// Optional: Trigger batched tip pair selection here
 
