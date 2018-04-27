@@ -15,13 +15,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import net.bigtangle.server.config.ServerConfiguration;
+
 
 public abstract class AbstractStreamHandler {
 
 	@Autowired
 	protected KafkaConfiguration kafkaConfiguration;
 
- 
+	   @Autowired
+	    protected ServerConfiguration serverConfiguration;
+	   
 	protected KafkaStreams streams;
 	   private static final Logger log = LoggerFactory.getLogger(KafkaMessageProducer.class);
 
@@ -59,7 +63,8 @@ public abstract class AbstractStreamHandler {
 		Properties streamsConfiguration = new Properties();
 		 streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, getApplicationId());
 		streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaConfiguration.getBootstrapServers());
-		 
+		streamsConfiguration.put(StreamsConfig.CONSUMER_PREFIX, serverConfiguration.getMineraddress());
+        
 		streamsConfiguration.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 		streamsConfiguration.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer");
 		streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -71,6 +76,6 @@ public abstract class AbstractStreamHandler {
 		streams.close();
 	}
 	 private String getApplicationId() {
-	        return BlockStreamHandler.class.getCanonicalName() + "_" + this.getClass().getSimpleName() + "_" + kafkaConfiguration.getConsumerIdSuffix();
+	        return BlockStreamHandler.class.getCanonicalName() + "_" + this.getClass().getSimpleName() + "_" + serverConfiguration.getMineraddress();
 	    }
 }

@@ -19,7 +19,7 @@ db:
 
 service:
   milestoneschedule:
-    rate: ${SERVICE_MILESTONE_RATE:500000}
+    rate: ${SERVICE_MILESTONE_RATE:10000}
     retention-time-in-minutes: ${service_HOUSEKEEPING_RETENTION:1440} # 24*60 == 1 Tag
     active: ${SERVICE_MILESTONE_ACTIVE:true}
     
