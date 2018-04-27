@@ -11,7 +11,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.TreeSet;
 
 import org.slf4j.Logger;
@@ -25,15 +24,16 @@ import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
-import net.bigtangle.core.VerificationException;
 import net.bigtangle.kafka.KafkaMessageProducer;
-import net.bigtangle.server.DispatcherController;
 import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.GetBlockEvaluationsResponse;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.wallet.CoinSelector;
 import net.bigtangle.wallet.DefaultCoinSelector;
+
+// TODO: disallow 0x000... as tx and block hashes
+// TODO: duplicate inserts test: disallow token issuances without txs
 
 /**
  * <p>

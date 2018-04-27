@@ -77,9 +77,13 @@ public class MilestoneService {
 		
 		// TODO dynamically calculated maintained state so we can dynamically adjust maintenance threshold
 		
+		// TODO check for recent orphan rate and go back with rating threshold until bifurcation for reevaluation?
+		
 		// Optional: Trigger batched tip pair selection here
 
 		watch.stop();
+        
+        // TODO Unlock database read/write
 	}
 
 	/**
