@@ -361,8 +361,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String password;
     protected String schemaName;
 
-    @Autowired
-    private ValidatorService blockValidator;
+    
 
     public ThreadLocal<Connection> getConnection() {
         return this.conn;
@@ -931,9 +930,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             BlockEvaluation blockEval = BlockEvaluation.buildInitial(storedBlock.getHeader());
 
             if (storedBlock.getHeader().getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD) {
-                if (blockValidator.assessMiningRewardBlock(storedBlock.getHeader())) {
-                    blockEval.setRewardValid(true);
-                }
+//TODO  context form a cycle:                 if (blockValidator.assessMiningRewardBlock(storedBlock.getHeader())) {
+//                    blockEval.setRewardValid(true);
+//                }
             }
 
             insertBlockEvaluation(blockEval);

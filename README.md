@@ -167,5 +167,63 @@ http://web.archive.org/web/20110310171841/http://www.quantcup.org/home/spec
   
   
   $ docker run -it --rm --net vnet smizy/apache-phoenix:4.13.1-alpine sh
-> bin/sqlline-thin.py http://kafka2.bigtangle.net:8765
+> bin/sqlline-thin.py http://cn.phoenix.bigtangle.net:8765
+
+
+master hbase-site.xml
+
+vi /usr/local/hbase-1.3.1/conf/hbase-site.xml.mustache
+
+<property>
+  <name>hbase.master.loadbalancer.class</name>                                     
+  <value>org.apache.phoenix.hbase.index.balancer.IndexLoadBalancer</value>
+</property>
+
+<property>
+  <name>hbase.coprocessor.master.classes</name>
+  <value>org.apache.phoenix.hbase.index.master.IndexMasterObserver</value>
+</property>
+
+
+RegionServer  hbase-site.xml
+docker exec -it hmaster-1 bash
+vi /usr/local/hbase-1.3.1/conf/hbase-site.xml
+
+docker exec hmaster-1 more  /usr/local/hbase-1.3.1/conf/hbase-site.xml
+docker exec regionserver-1 more  /usr/local/hbase-1.3.1/conf/hbase-site.xml
+docker exec queryserver-1 more  /usr/local/hbase-1.3.1/conf/hbase-site.xml
+
+!indexs
+docker restart hmaster-1 regionserver-1 queryserver-1
+
+docker logs -f  hmaster-1 regionserver-1
+<property> 
+  <name>hbase.regionserver.wal.codec</name> 
+  <value>org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec</value> 
+</property>
+
+<property> 
+  <name>hbase.region.server.rpc.scheduler.factory.class</name>
+  <value>org.apache.hadoop.hbase.ipc.PhoenixRpcSchedulerFactory</value> 
+  <description>Factory to create the Phoenix RPC Scheduler that uses separate queues for index and metadata updates</description> 
+</property>
+
+<property>
+  <name>hbase.rpc.controllerfactory.class</name>
+  <value>org.apache.hadoop.hbase.ipc.controller.ServerRpcControllerFactory</value>
+  <description>Factory to create the Phoenix RPC Scheduler that uses separate queues for index and metadata updates</description>
+</property>
+
+<property>
+  <name>hbase.coprocessor.regionserver.classes</name>
+  <value>org.apache.hadoop.hbase.regionserver.LocalIndexMerger</value> 
+</property>
+
+Given the schema shown here:
+
+CREATE TABLE my_table (k VARCHAR PRIMARY KEY, v1 VARCHAR, v2 BIGINT);
+
+you'd create an index on the v1 column like this:
+
+CREATE INDEX my_index ON my_table (v1);
 
