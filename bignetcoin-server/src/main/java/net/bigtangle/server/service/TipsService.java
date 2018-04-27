@@ -241,8 +241,8 @@ public class TipsService {
 
 				// Calculate the unnormalized transition weights of all
 				// approvers as ((Hx-Hy)^-3)
+				// TODO set alpha according to ideal orphan rates as found in parameter tuning simulations
 				for (int i = 0; i < blockApprovers.length; i++) {
-					// transition probability =
 					transitionWeights[i] = Math.pow(currentCumulativeWeight - blockService.getBlockEvaluation(blockApprovers[i]).getCumulativeWeight(), -3);
 					transitionWeightSum += transitionWeights[i];
 				}
