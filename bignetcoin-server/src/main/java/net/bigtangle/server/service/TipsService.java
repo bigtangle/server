@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
@@ -45,6 +44,8 @@ public class TipsService {
 	private ValidatorService validatorService;
 
 	public List<Sha256Hash> getRatingTips(int count) throws Exception {
+	    // TODO include different time snapshots (max(time) - timeInterval) to be robust against attacks (low pass filter)
+	    
 		Stopwatch watch = Stopwatch.createStarted();
 		SecureRandom seed = new SecureRandom();
 
@@ -240,8 +241,8 @@ public class TipsService {
 
 				// Calculate the unnormalized transition weights of all
 				// approvers as ((Hx-Hy)^-3)
+				// TODO set alpha according to ideal orphan rates as found in parameter tuning simulations
 				for (int i = 0; i < blockApprovers.length; i++) {
-					// transition probability =
 					transitionWeights[i] = Math.pow(currentCumulativeWeight - blockService.getBlockEvaluation(blockApprovers[i]).getCumulativeWeight(), -3);
 					transitionWeightSum += transitionWeights[i];
 				}
@@ -264,6 +265,7 @@ public class TipsService {
 
 	Sha256Hash walkBackwardsUntilNotContained(Sha256Hash blockHash, Random seed, Set<Sha256Hash> losers) throws Exception {
 
+	    // TODO supply path taken and reverse on taken path instead 
 		// Repeatedly perform transitions until a block in targets is found
 		while (blockHash != null) {
 			Block block = blockService.getBlock(blockHash);

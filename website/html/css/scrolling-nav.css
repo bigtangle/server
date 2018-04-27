@@ -23,12 +23,12 @@ section {
 	background: #515e90 !important;
 }
 
-.bg-primary, #services{
+.bg-primary, #services, #contact{
 	background: rgba(23,37,87,.7) !important;
 	color: #fff;
 }
 
-#about, #contact, #blog, #imprint{
+#about, #team, #blog, #imprint, footer{
 	background: #f0f0f0;
 	color: #07123a;
 }
@@ -102,4 +102,31 @@ canvas {
 
 .card a{
 	color: #000;
+}
+
+#team img{
+	width: 100%;
+}
+
+#team .card-body{
+	padding: 0;
+}
+#team .card-header{
+	font-size: 1.1rem;
+}
+#team .title{
+	font-size: 1rem;
+}
+
+.agb{
+	height: 200px;
+	overflow-y: scroll;
+	background: rgba(0,0,0,.1);
+	padding: 10px;
+	font-size: 0.75rem;
+	white-space: pre-wrap;
+}
+
+.ico header{
+	padding: 110px 0 30px;
 }

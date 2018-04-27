@@ -294,6 +294,7 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
     @Override
     public void commitDatabaseBatchWrite() throws BlockStoreException {
         //cassandra is autocommit
+        // TODO check that invalid blocks are reverted / written to db only after confirming validity
     }
 
 }
