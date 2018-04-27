@@ -78,6 +78,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 	@Test
 	public void testMilestoneTestTangle1() throws Exception {
 
+	    //TODO this test is not valid for general transition functions due to small size
         store.resetStore();
 		blockgraph = new FullPrunedBlockGraph(networkParameters, store);
 

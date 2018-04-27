@@ -45,6 +45,7 @@ public class TipsService {
 
 	public List<Sha256Hash> getRatingTips(int count) throws Exception {
 	    // TODO include different time snapshots (max(time) - timeInterval) to be robust against attacks (low pass filter)
+	    // Also set receivetime of genesis block to 0
 	    
 		Stopwatch watch = Stopwatch.createStarted();
 		SecureRandom seed = new SecureRandom();
@@ -241,7 +242,7 @@ public class TipsService {
 
 				// Calculate the unnormalized transition weights of all
 				// approvers as ((Hx-Hy)^-3)
-				// TODO set alpha according to ideal orphan rates as found in parameter tuning simulations
+				// TODO set exp fct and alpha according to ideal orphan rates as found in parameter tuning simulations and papers
 				for (int i = 0; i < blockApprovers.length; i++) {
 					transitionWeights[i] = Math.pow(currentCumulativeWeight - blockService.getBlockEvaluation(blockApprovers[i]).getCumulativeWeight(), -3);
 					transitionWeightSum += transitionWeights[i];
