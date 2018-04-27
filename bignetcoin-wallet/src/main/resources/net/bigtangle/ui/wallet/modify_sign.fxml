@@ -48,7 +48,7 @@
 								<Font size="24.0" />
 							</font>
 						</Label>
-                  <ComboBox fx:id="addressComboBox" prefHeight="23.0" prefWidth="445.0" />
+                  <ComboBox fx:id="addressComboBox" prefHeight="23.0" prefWidth="445.0" editable="true"/>
 					</children>
 				</HBox>
 				<HBox alignment="CENTER_RIGHT" fillHeight="true" prefHeight="30.0" prefWidth="600.0" spacing="15.0" VBox.vgrow="NEVER">
