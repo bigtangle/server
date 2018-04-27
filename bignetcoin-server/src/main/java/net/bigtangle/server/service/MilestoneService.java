@@ -303,7 +303,7 @@ public class MilestoneService {
 		// First remove any blocks that should no longer be in the milestone
 		HashSet<BlockEvaluation> blocksToRemove = blockService.getBlocksToRemoveFromMilestone();
 		for (BlockEvaluation block : blocksToRemove) {
-			blockService.disconnect(block);
+			blockService.unconfirm(block);
 		}
 
 		for (int i = 0; true; i++) {
@@ -331,7 +331,7 @@ public class MilestoneService {
 
 			// Finally add the found new milestone blocks to the milestone
 			for (BlockEvaluation block : blocksToAdd) {
-				blockService.connect(block);
+				blockService.confirm(block);
 			}
 			
 			if (i == WARNING_MILESTONE_UPDATE_LOOPS) {

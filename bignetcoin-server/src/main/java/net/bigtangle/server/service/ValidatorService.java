@@ -124,7 +124,7 @@ public class ValidatorService {
         // procedure
         for (BlockEvaluation b : conflictingMilestoneBlocks.stream().filter(b -> losingBlocks.contains(b))
                 .collect(Collectors.toList())) {
-            blockService.disconnect(b);
+            blockService.unconfirm(b);
         }
 
         // For candidates that have been eliminated (conflictingOutPoints in

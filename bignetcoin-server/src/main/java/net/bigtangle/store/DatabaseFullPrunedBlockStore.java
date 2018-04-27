@@ -297,6 +297,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " milestonedepth, inserttime, maintained, rewardvalidityassessment "
             + "FROM blockevaluation WHERE solid = true AND milestone = false AND rating >= "
             + NetworkParameters.MILESTONE_UPPER_THRESHOLD + " AND depth >= ?"+afterSelect();
+    // TODO constraint SELECT_BLOCKS_TO_ADD_TO_MILESTONE_SQL by receive time e.g. 30+ seconds old
     protected String SELECT_BLOCKS_IN_MILESTONEDEPTH_INTERVAL_SQL = "SELECT blockhash, "
             + "rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate,"
             + " milestonedepth, inserttime, maintained, rewardvalidityassessment "
