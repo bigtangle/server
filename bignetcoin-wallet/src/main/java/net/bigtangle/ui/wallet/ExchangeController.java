@@ -260,7 +260,7 @@ public class ExchangeController {
             return;
         }
         reloadTransaction(buf);
-        overlayUI.done();
+        // overlayUI.done();
     }
 
     private void reloadTransaction(byte[] buf) {
