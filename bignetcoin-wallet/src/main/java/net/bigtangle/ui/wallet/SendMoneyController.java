@@ -331,8 +331,11 @@ public class SendMoneyController {
             rollingBlock.solve();
 
             Main.instance.sendMessage(rollingBlock.bitcoinSerialize());
+         
+          //  Main.instance.sentEmpstyBlock(2);
+            
             Main.instance.controller.initTableView();
-
+            
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }

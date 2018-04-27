@@ -54,10 +54,13 @@ public class SendEmptyBlock {
     public static void main(String[] args) {
         SendEmptyBlock sendEmptyBlock = new SendEmptyBlock();
         boolean c = true;
+        int i=0;
         while (c) {
 
             try {
-                sendEmptyBlock.send();
+                sendEmptyBlock.send(); i+=1;
+                if(i % 5 ==0)
+                System.out.println(" empty blocks  =  " +i);
             } catch (JsonProcessingException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

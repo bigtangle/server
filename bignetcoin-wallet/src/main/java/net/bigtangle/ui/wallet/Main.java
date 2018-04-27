@@ -103,14 +103,14 @@ public class Main extends Application {
     private ObservableList<CoinModel> coinData = FXCollections.observableArrayList();
     private ObservableList<UTXOModel> utxoData = FXCollections.observableArrayList();
 
-    public static String IpAddress = "cn.server.bigtangle.net";
+    public static String IpAddress = "";
     public static String port = "8088";
     public static FXMLLoader loader;
 
     public static String lang = "en";
     public static String password = "";
     public static int numberOfEmptyBlocks = 3;
-    public static boolean emptyBlocks = false;
+    public static boolean emptyBlocks = true;
 
     public String blockTopic = "bigtangle";
     public String kafka = "cn.kafka.bigtangle.net:9092";
@@ -179,7 +179,12 @@ public class Main extends Application {
         // set local kafka to send
         if (!Locale.CHINESE.equals(locale)) {
             kafka = "de.kafka.bigtangle.net:9092";
-            IpAddress = "de.server.bigtangle.net";
+            if ("".equals(IpAddress))
+                IpAddress = "de.server.bigtangle.net";
+        } else {
+            if ("".equals(IpAddress))
+                IpAddress = "cn.server.bigtangle.net";
+
         }
         mainUI = loader.load();
         controller = loader.getController();
@@ -391,7 +396,7 @@ public class Main extends Application {
             keyFileDirectory = System.getProperty("user.home");
             keyFilePrefix = System.getProperty("user.name");
         }
-        if (args != null && args.length == 2) {
+        if (args != null && args.length >= 2) {
             lang = args[0];
             keyFileDirectory = new File(args[1]).getParent();
             String temp = new File(args[1]).getName();
@@ -399,6 +404,9 @@ public class Main extends Application {
                 keyFilePrefix = temp.substring(0, temp.lastIndexOf("."));
             } else {
                 keyFilePrefix = temp;
+            }
+            if (args.length >= 3) {
+                IpAddress = args[2];
             }
 
         }
@@ -421,25 +429,26 @@ public class Main extends Application {
         this.utxoData = utxoData;
     }
 
-    public static void sentEmpstyBlock(int number) {
+    public void sentEmpstyBlock(int number) {
         if (emptyBlocks) {
-            Runnable r = () -> {
-                for (int i = 0; i < number; i++) {
-                    try {
-                        sentEmpstyBlock();
-                        System.out.println("empty block " + i);
-                    } catch (Exception e) {
-                        // Ignore
-                        e.printStackTrace();
-                    }
+
+            for (int i = 0; i < number; i++) {
+                try {
+                    sentEmpstyBlock();
+                    System.out.println("empty block " + i);
+                } catch (Exception e) {
+                    // Ignore
+                    e.printStackTrace();
                 }
-            };
-            Platform.runLater(r);
+
+            }
+            ;
+
             // Threading.USER_THREAD.execute(r);
         }
     }
 
-    public static String sentEmpstyBlock() throws JsonProcessingException, Exception {
+    public String sentEmpstyBlock() throws JsonProcessingException, Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
@@ -501,7 +510,7 @@ public class Main extends Application {
         producerRecord = new ProducerRecord<String, byte[]>(topic, key, data);
         final Future<RecordMetadata> result = messageProducer.send(producerRecord);
         RecordMetadata mdata = result.get();
-        // log.debug(" sendMessage "+ key );
+        System.out.println(" sendMessage " + key + "kafka server " + bootstrapServers);
         messageProducer.close();
         return mdata != null;
 

@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.OrderState;
 
 @Component
+@EnableAsync
 public class ScheduleOrderMatchService {
 
     private static final Logger logger = LoggerFactory.getLogger(ScheduleOrderMatchService.class);
@@ -48,7 +50,7 @@ public class ScheduleOrderMatchService {
     @Scheduled(fixedRateString = "10000")
     public void updateMatch() {
         try {
-         //   logger.info("cal order match start");
+             logger.info("cal order match start");
             GetTokensResponse getTokensResponse = (GetTokensResponse) tokensService.getTokensList();
             for (Tokens tokens : getTokensResponse.getTokens()) {
                 String tokenSTR = tokens.getTokenHex();

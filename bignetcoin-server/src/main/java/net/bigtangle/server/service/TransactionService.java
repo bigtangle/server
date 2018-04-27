@@ -200,6 +200,7 @@ public class TransactionService {
             FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
             blockgraph.add(block);
             logger.debug("addConnected from kafka " + block);
+            if(!block.getTransactions().isEmpty())
             saveEmptyBlock(3);
             return Optional.of(block);
         } catch (VerificationException e) {
