@@ -45,16 +45,15 @@ public class MilestoneService {
 	private TipsService tipsService;
 	@Autowired
 	private ValidatorService validatorService;
+    @Autowired
+    private BlockRequester blockRequester;
 
 	/**
 	 * Scheduled update function that updates the Tangle
 	 * 
 	 * @throws Exception
 	 */
-	public void update() throws Exception {
-
-		// TODO Lock database read/write
-		
+	public void update() throws Exception {		
 		log.info("Milestone Update started");
 		Stopwatch watch = Stopwatch.createStarted();
 		updateSolidityAndHeight();
@@ -76,14 +75,10 @@ public class MilestoneService {
 		log.info("Milestone update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 		
 		// TODO dynamically calculated maintained state so we can dynamically adjust maintenance threshold
-		
 		// TODO check for recent orphan rate and go back with rating threshold until bifurcation for reevaluation?
-		
 		// Optional: Trigger batched tip pair selection here
 
 		watch.stop();
-        
-        // TODO Unlock database read/write
 	}
 
 	/**
@@ -103,7 +98,8 @@ public class MilestoneService {
 
 		// Missing blocks -> not solid, request from network
 		if (blockEvaluation == null) {
-			// TODO broken graph, download the missing remote block needed
+			blockRequester.requestBlock(hash);
+            log.warn("this block does not exist for solidity update, requesting...");
 			return false;
 		}
 
@@ -119,7 +115,8 @@ public class MilestoneService {
 		// Check previous trunk block exists and is solid
 		BlockEvaluation prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
 		if (prevBlockEvaluation == null) {
-			// TODO broken graph, download the missing remote block needed
+            blockRequester.requestBlock(block.getPrevBlockHash());
+            log.warn("this block does not exist for solidity update, requesting...");
 		} else {
 			prevBlockSolid = updateSolidityAndHeightRecursive(block.getPrevBlockHash());
 		}
@@ -127,7 +124,8 @@ public class MilestoneService {
 		// Check previous branch block exists and is solid
 		BlockEvaluation prevBranchBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
 		if (prevBranchBlockEvaluation == null) {
-			// TODO broken graph, download the missing remote block needed
+            blockRequester.requestBlock(block.getPrevBranchBlockHash());
+            log.warn("this block does not exist for solidity update, requesting...");
 		} else {
 			prevBranchBlockSolid = updateSolidityAndHeightRecursive(block.getPrevBranchBlockHash());
 		}
@@ -305,7 +303,7 @@ public class MilestoneService {
 		// First remove any blocks that should no longer be in the milestone
 		HashSet<BlockEvaluation> blocksToRemove = blockService.getBlocksToRemoveFromMilestone();
 		for (BlockEvaluation block : blocksToRemove) {
-			blockService.disconnect(block);
+			blockService.unconfirm(block);
 		}
 
 		for (int i = 0; true; i++) {
@@ -333,7 +331,7 @@ public class MilestoneService {
 
 			// Finally add the found new milestone blocks to the milestone
 			for (BlockEvaluation block : blocksToAdd) {
-				blockService.connect(block);
+				blockService.confirm(block);
 			}
 			
 			if (i == WARNING_MILESTONE_UPDATE_LOOPS) {

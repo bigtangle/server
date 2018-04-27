@@ -46,6 +46,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.Script.VerifyFlag;
+import net.bigtangle.server.service.BlockRequester;
 import net.bigtangle.utils.ContextPropagatingThreadFactory;
 import net.bigtangle.wallet.Wallet;
 import net.bigtangle.wallet.WalletExtension;
@@ -77,6 +78,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * Keeps a map of block hashes to StoredBlocks.
      */
     protected final FullPrunedBlockStore blockStore;
+    @Autowired
+    private BlockRequester blockRequester;
 
     // Whether or not to execute scriptPubKeys before accepting a transaction
     // (i.e.
@@ -301,8 +304,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                         UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(),
                                 in.getOutpoint().getIndex());
                         if (prevOut == null)
-                            // TODO These blocks should not be dropped, since initialization would be impossible.
-                        	// Instead, we should add them and validate later (set validated false)
                             throw new VerificationException("Block attempts to spend a not yet existent output!");
                         
                         // Coinbases can't be spent until they mature, to avoid
@@ -733,12 +734,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 		// Check previous blocks exist
 		BlockEvaluation prevBlockEvaluation = blockStore.getBlockEvaluation(block.getPrevBlockHash());
 		if (prevBlockEvaluation == null) {
-			// TODO broken graph, download the missing remote block needed
+		    blockRequester.requestBlock(block.getPrevBlockHash());
+            log.warn("previous block does not exist for solidity update, requesting...");
 		} 
 	
 		BlockEvaluation prevBranchBlockEvaluation = blockStore.getBlockEvaluation(block.getPrevBranchBlockHash());
 		if (prevBranchBlockEvaluation == null) {
-			// TODO broken graph, download the missing remote block needed
+            blockRequester.requestBlock(block.getPrevBranchBlockHash());
+            log.warn("previous block does not exist for solidity update, requesting...");
 		} 
 		
 		if (prevBlockEvaluation == null || prevBranchBlockEvaluation == null) {

@@ -116,7 +116,6 @@ public class BlockService {
 
     public HashSet<BlockEvaluation> getBlocksToAddToMilestone() throws BlockStoreException {
         return store.getBlocksToAddToMilestone(0);
-        // TODO constraint blockstoadd by receive time, e.g. 30+ seconds old
     }
 
     public void updateSolid(BlockEvaluation blockEvaluation, boolean b) throws BlockStoreException {
@@ -192,8 +191,7 @@ public class BlockService {
      * @param blockEvaluation
      * @throws BlockStoreException
      */
-    public void connect(BlockEvaluation blockEvaluation) throws BlockStoreException {
-        // TODO validate ?some static validity? here and repropagate
+    public void confirm(BlockEvaluation blockEvaluation) throws BlockStoreException {
         blockGraphService.addBlockToMilestone(blockEvaluation);
     }
 
@@ -205,7 +203,7 @@ public class BlockService {
      * @param blockEvaluation
      * @throws BlockStoreException
      */
-    public void disconnect(BlockEvaluation blockEvaluation) throws BlockStoreException {
+    public void unconfirm(BlockEvaluation blockEvaluation) throws BlockStoreException {
         blockGraphService.removeBlockFromMilestone(blockEvaluation);
     }
 
