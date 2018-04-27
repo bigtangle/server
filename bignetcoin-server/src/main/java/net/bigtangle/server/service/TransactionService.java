@@ -6,9 +6,13 @@ package net.bigtangle.server.service;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.Block;
@@ -22,6 +26,7 @@ import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.VerificationException;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -55,8 +60,17 @@ public class TransactionService {
     @Autowired
     protected NetworkParameters networkParameters;
 
+    @Autowired
+    protected KafkaMessageProducer kafkaMessageProducer;
 
-    
+    @Autowired
+    MilestoneService milestoneService;
+
+    private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
+
+    @Autowired
+    TaskExecutor taskExecutor;
+
     public ByteBuffer askTransaction() throws Exception {
 
         Block rollingBlock = askTransactionBlock();
@@ -149,4 +163,53 @@ public class TransactionService {
     public void kafkaSend(Block block) {
 
     }
+
+    public void saveEmptyBlockTask(int number) {
+        Runnable r = () -> {
+            saveEmptyBlock(number);
+        };
+        taskExecutor.execute(r);
+        // Threading.USER_THREAD.execute(r);
+    }
+
+    public void saveEmptyBlock(int number) {
+
+        for (int i = 0; i < number; i++) {
+            try {
+                Block b = askTransactionBlock();
+                b.solve();
+                // blockService.saveBlock(b);
+                kafkaMessageProducer.sendMessage(b.bitcoinSerialize());
+                logger.debug("empty block saved" + i);
+            } catch (Exception e) {
+                logger.debug("", e);
+            }
+        }
+        try {
+            milestoneService.update();
+        } catch (Exception e) {
+            logger.debug("", e);
+        }
+
+    }
+
+    public Optional<Block> addConnected(byte[] bytes) {
+        try {
+
+            Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bytes);
+            FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
+            blockgraph.add(block);
+            logger.debug("addConnected from kafka " + block);
+            saveEmptyBlock(3);
+            return Optional.of(block);
+        } catch (VerificationException e) {
+            logger.debug("addConnected from kafka ", e);
+            return Optional.empty();
+        } catch (Exception e) {
+            logger.debug("addConnected from kafka ", e);
+            return Optional.empty();
+        }
+
+    }
+
 }

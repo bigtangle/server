@@ -48,7 +48,7 @@ public class ScheduleOrderMatchService {
     @Scheduled(fixedRateString = "10000")
     public void updateMatch() {
         try {
-            logger.info("cal order match start");
+         //   logger.info("cal order match start");
             GetTokensResponse getTokensResponse = (GetTokensResponse) tokensService.getTokensList();
             for (Tokens tokens : getTokensResponse.getTokens()) {
                 String tokenSTR = tokens.getTokenHex();
