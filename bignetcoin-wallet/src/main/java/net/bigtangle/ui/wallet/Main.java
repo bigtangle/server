@@ -126,7 +126,7 @@ public class Main extends Application {
         }
     }
 
-    public static String getTextt(String s) {
+    public static String getText(String s) {
         ResourceBundle rb = ResourceBundle.getBundle("net.bigtangle.ui.wallet.message", Locale.getDefault());
         if ("en".equalsIgnoreCase(lang) || "de".equalsIgnoreCase(lang)) {
             rb = ResourceBundle.getBundle("net.bigtangle.ui.wallet.message_en", Locale.ENGLISH);

@@ -5,63 +5,124 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.HBox?>
 
-<AnchorPane maxHeight="600.0" maxWidth="1000.0" minHeight="600.0" minWidth="1000.0" prefHeight="600.0" prefWidth="1000.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.bigtangle.ui.wallet.OrderController">
+<AnchorPane maxHeight="600.0" maxWidth="1000.0" minHeight="600.0"
+	minWidth="1000.0" prefHeight="600.0" prefWidth="1000.0"
+	style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/8"
+	xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.bigtangle.ui.wallet.OrderController">
 	<children>
-		<TabPane maxHeight="550.0" maxWidth="990.0" minHeight="550.0" minWidth="990.0" prefHeight="550.0" prefWidth="990.0">
+		<TabPane maxHeight="550.0" maxWidth="990.0" minHeight="550.0"
+			minWidth="990.0" prefHeight="550.0" prefWidth="990.0">
 			<tabs>
 				<Tab closable="false" text="%search">
 					<content>
-						<AnchorPane maxHeight="500.0" maxWidth="980.0" minHeight="500.0" minWidth="980.0" prefHeight="500.0" prefWidth="980.0">
+						<AnchorPane maxHeight="500.0" maxWidth="980.0"
+							minHeight="500.0" minWidth="980.0" prefHeight="500.0" prefWidth="980.0">
 							<children>
 								<Label layoutX="40.0" layoutY="25.0" text="%orderid" />
-								<TextField fx:id="orderid4searchTextField" layoutX="96.0" layoutY="21.0" prefHeight="23.0" prefWidth="309.0" />
-								<Button layoutX="413.0" layoutY="62.0" mnemonicParsing="false" onAction="#search" text="%search" />
-								<TableView fx:id="orderTable" editable="true" layoutX="6.0" layoutY="114.0" prefHeight="351.0" prefWidth="977.0">
+								<TextField fx:id="orderid4searchTextField" layoutX="96.0"
+									layoutY="21.0" prefHeight="23.0" prefWidth="309.0" />
+								<Button layoutX="413.0" layoutY="62.0" mnemonicParsing="false"
+									onAction="#search" text="%search" />
+								<TableView fx:id="orderTable" editable="true" layoutX="6.0"
+									layoutY="114.0" prefHeight="351.0" prefWidth="977.0">
 									<columns>
-										<TableColumn fx:id="orderidCol" prefWidth="105.0" text="%orderid" />
-										<TableColumn fx:id="addressCol" prefWidth="174.0" text="%address" />
-										<TableColumn fx:id="tokenidCol" prefWidth="175.0" text="%token_id" />
-										<TableColumn fx:id="typeCol" prefWidth="62.0" text="%type" />
-										<TableColumn fx:id="validdatetoCol" prefWidth="94.0" text="%validdateTo" />
-										<TableColumn fx:id="validdatefromCol" prefWidth="118.0" text="%validdateFrom" />
-										<TableColumn fx:id="stateCol" prefWidth="65.0" text="%state" />
-										<TableColumn fx:id="priceCol" prefWidth="85.0" text="%price" />
-										<TableColumn fx:id="amountCol" prefWidth="101.0" text="%Amount" />
+										<TableColumn fx:id="orderidCol" prefWidth="105.0"
+											text="%orderid" />
+										<TableColumn fx:id="addressCol" prefWidth="174.0"
+											text="%address" />
+										<TableColumn fx:id="tokenidCol" prefWidth="175.0"
+											text="%token_id" />
+										<TableColumn fx:id="typeCol" prefWidth="62.0"
+											text="%type" />
+										<TableColumn fx:id="validdatetoCol" prefWidth="94.0"
+											text="%validdateTo" />
+										<TableColumn fx:id="validdatefromCol" prefWidth="118.0"
+											text="%validdateFrom" />
+										<TableColumn fx:id="stateCol" prefWidth="65.0"
+											text="%state" />
+										<TableColumn fx:id="priceCol" prefWidth="85.0"
+											text="%price" />
+										<TableColumn fx:id="amountCol" prefWidth="101.0"
+											text="%Amount" />
 									</columns>
 								</TableView>
-								<Button layoutX="452.0" layoutY="478.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />
+								<Button layoutX="452.0" layoutY="478.0" mnemonicParsing="false"
+									onAction="#closeUI" text="%close" />
 								<Label layoutX="41.0" layoutY="66.0" text="%address" />
-								<TextField fx:id="address4searchTextField" layoutX="98.0" layoutY="62.0" prefHeight="23.0" prefWidth="306.0" />
+								<TextField fx:id="address4searchTextField" layoutX="98.0"
+									layoutY="62.0" prefHeight="23.0" prefWidth="306.0" />
 								<Label layoutX="413.0" layoutY="25.0" text="%state" />
-								<ChoiceBox fx:id="state4searchChoiceBox" layoutX="452.0" layoutY="21.0" prefWidth="150.0" />
+								<RadioButton fx:id="stateRB1" layoutX="474.0"
+									layoutY="25.0" mnemonicParsing="false" selected="true" text="%publish">
+									<toggleGroup>
+										<ToggleGroup fx:id="stateTG" />
+									</toggleGroup>
+								</RadioButton>
+								<RadioButton fx:id="stateRB2" layoutX="550.0"
+									layoutY="25.0" mnemonicParsing="false" text="%match"
+									toggleGroup="$stateTG" />
+								<RadioButton fx:id="stateRB3" layoutX="620.0"
+									layoutY="25.0" mnemonicParsing="false" text="%finish"
+									toggleGroup="$stateTG" />
 							</children>
 						</AnchorPane>
 					</content>
 				</Tab>
 				<Tab closable="false" text="%add">
 					<content>
-                  <AnchorPane>
-                     <children>
-										<DatePicker fx:id="validdateToDatePicker" layoutX="227.0" layoutY="296.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
-										<Label alignment="CENTER" layoutY="189.0" prefHeight="15.0" prefWidth="226.0" text="%Amount" GridPane.rowIndex="3" />
-                        <Label alignment="CENTER" layoutY="410.0" prefHeight="15.0" prefWidth="224.0" text="%market" GridPane.rowIndex="7" />
-										<ComboBox fx:id="addressComboBox" editable="true" layoutX="227.0" layoutY="17.0" prefHeight="23.0" prefWidth="394.0" GridPane.columnIndex="1" />
-										<TextField fx:id="limitTextField" layoutX="227.0" layoutY="129.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-										<Button layoutX="227.0" layoutY="461.0" mnemonicParsing="false" onAction="#closeUI" text="%close" GridPane.columnIndex="1" GridPane.rowIndex="8" />
-										<Button layoutX="89.0" layoutY="461.0" mnemonicParsing="false" onAction="#buy" text="%save" GridPane.rowIndex="8" />
-										<ComboBox fx:id="tokenComboBox" editable="true" layoutX="227.0" layoutY="73.0" prefHeight="23.0" prefWidth="392.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-										<Label alignment="CENTER" layoutY="133.0" prefHeight="15.0" prefWidth="227.0" text="%limit" GridPane.rowIndex="2" />
-										<Label alignment="CENTER" layoutY="77.0" prefHeight="15.0" prefWidth="226.0" text="%token" textAlignment="CENTER" GridPane.rowIndex="1" />
-										<ChoiceBox fx:id="statusChoiceBox" layoutX="227.0" layoutY="351.0" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="6" />
-										<TextField fx:id="amountTextField" layoutX="227.0" layoutY="185.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                        <ComboBox fx:id="marketComboBox" editable="true" layoutX="227.0" layoutY="406.0" prefHeight="23.0" prefWidth="403.0" GridPane.columnIndex="1" GridPane.rowIndex="7" />
-										<Label alignment="CENTER" layoutY="245.0" prefHeight="15.0" prefWidth="226.0" text="%validdateFrom" GridPane.rowIndex="4" />
-										<Label alignment="CENTER" layoutY="21.0" prefHeight="15.0" prefWidth="226.0" text="%address" textAlignment="CENTER" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
-										<Label alignment="CENTER" layoutY="355.0" prefHeight="15.0" prefWidth="226.0" text="%buy_or_sell" GridPane.rowIndex="6" />
-										<DatePicker fx:id="validdateFromDatePicker" layoutX="227.0" layoutY="241.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-										<Label alignment="CENTER" layoutY="300.0" prefHeight="15.0" prefWidth="227.0" text="%validdateTo" GridPane.rowIndex="5" />
-                     </children>
-                  </AnchorPane>
+						<AnchorPane>
+							<children>
+								<DatePicker fx:id="validdateToDatePicker" layoutX="227.0"
+									layoutY="296.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+								<Label alignment="CENTER" layoutY="189.0" prefHeight="15.0"
+									prefWidth="226.0" text="%Amount" GridPane.rowIndex="3" />
+								<Label alignment="CENTER" layoutY="410.0" prefHeight="15.0"
+									prefWidth="224.0" text="%market" GridPane.rowIndex="7" />
+								<ComboBox fx:id="addressComboBox" editable="true"
+									layoutX="227.0" layoutY="17.0" prefHeight="23.0" prefWidth="394.0"
+									GridPane.columnIndex="1" />
+								<TextField fx:id="limitTextField" layoutX="227.0"
+									layoutY="129.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+								<Button layoutX="227.0" layoutY="461.0" mnemonicParsing="false"
+									onAction="#closeUI" text="%close" GridPane.columnIndex="1"
+									GridPane.rowIndex="8" />
+								<Button layoutX="89.0" layoutY="461.0" mnemonicParsing="false"
+									onAction="#buy" text="%save" GridPane.rowIndex="8" />
+								<ComboBox fx:id="tokenComboBox" editable="true"
+									layoutX="227.0" layoutY="73.0" prefHeight="23.0" prefWidth="392.0"
+									GridPane.columnIndex="1" GridPane.rowIndex="1" />
+								<Label alignment="CENTER" layoutY="133.0" prefHeight="15.0"
+									prefWidth="227.0" text="%limit" GridPane.rowIndex="2" />
+								<Label alignment="CENTER" layoutY="77.0" prefHeight="15.0"
+									prefWidth="226.0" text="%token" textAlignment="CENTER"
+									GridPane.rowIndex="1" />
+								<TextField fx:id="amountTextField" layoutX="227.0"
+									layoutY="185.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+								<ComboBox fx:id="marketComboBox" editable="true"
+									layoutX="227.0" layoutY="406.0" prefHeight="23.0" prefWidth="403.0"
+									GridPane.columnIndex="1" GridPane.rowIndex="7" />
+								<Label alignment="CENTER" layoutY="245.0" prefHeight="15.0"
+									prefWidth="226.0" text="%validdateFrom" GridPane.rowIndex="4" />
+								<Label alignment="CENTER" layoutY="21.0" prefHeight="15.0"
+									prefWidth="226.0" text="%address" textAlignment="CENTER"
+									GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
+								<Label alignment="CENTER" layoutY="355.0" prefHeight="15.0"
+									prefWidth="226.0" text="%buy_or_sell" GridPane.rowIndex="6" />
+								<DatePicker fx:id="validdateFromDatePicker" layoutX="227.0"
+									layoutY="241.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+								<Label alignment="CENTER" layoutY="300.0" prefHeight="15.0"
+									prefWidth="227.0" text="%validdateTo" GridPane.rowIndex="5" />
+								<RadioButton fx:id="buyRadioButton" layoutX="232.0"
+									layoutY="355.0" mnemonicParsing="false" selected="true" text="%BUY">
+									<toggleGroup>
+										<ToggleGroup fx:id="buySellTG" />
+									</toggleGroup>
+								</RadioButton>
+								<RadioButton fx:id="sellRadioButton" layoutX="296.0"
+									layoutY="355.0" mnemonicParsing="false" text="%SELL"
+									toggleGroup="$buySellTG" />
+							</children>
+						</AnchorPane>
 					</content>
 				</Tab>
 			</tabs>
