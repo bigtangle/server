@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.Utils;
+import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.GetBlockEvaluationsResponse;
 import net.bigtangle.server.service.BlockService;
@@ -59,11 +60,11 @@ public class DispatcherController {
     @Autowired
     private ExchangeService exchangeService;
 
-    @Autowired
-    TaskExecutor taskExecutor;
 
     public static int numberOfEmptyBlocks = 3;
 
+    @Autowired private KafkaMessageProducer kafkaMessageProducer;
+    
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
     public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] bodyByte,
             HttpServletResponse httpServletResponse) throws Exception {
@@ -242,23 +243,9 @@ public class DispatcherController {
     }
 
     public void saveEmptyBlock(int number) {
+       // transactionService. saveEmptyBlockTask(number);
     }
-    public void saveEmptyBlockTask(int number) {
-        Runnable r = () -> {
-            for (int i = 0; i < number; i++) {
-                try {
-                    Block b = transactionService.askTransactionBlock();
-                    b.solve();
-                    blockService.saveBlock(b);
-                    logger.debug("empty block saved" + i);
-                } catch (Exception e) {
-                    logger.debug("", e);
-                }
-            }
-        };
-        taskExecutor.execute(r);
-        // Threading.USER_THREAD.execute(r);
-    }
+   
 
    
     

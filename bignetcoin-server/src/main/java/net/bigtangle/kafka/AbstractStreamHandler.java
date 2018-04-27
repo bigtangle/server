@@ -27,6 +27,7 @@ public abstract class AbstractStreamHandler {
 
 	@PostConstruct
 	public void runStream() {
+	    log.info("KafkaConfiguration {} ", kafkaConfiguration.toString());
 		log.info("start stream {} handler", this.getClass().getSimpleName());
 		Properties props = prepareConfiguration();
 		KStreamBuilder streamBuilder = new KStreamBuilder();

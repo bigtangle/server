@@ -46,7 +46,7 @@ public class SendEmptyBlock {
 
     OkHttpClient client = new OkHttpClient();
     public String blockTopic = "bigtangle";
-    public String bootstrapServers = "kafka2.bigtangle.net:9092";
+    public String bootstrapServers = "de.kafka.bigtangle.net:9092";
 
    // private String CONTEXT_ROOT = "http://bigtangle.net:8088/";
 

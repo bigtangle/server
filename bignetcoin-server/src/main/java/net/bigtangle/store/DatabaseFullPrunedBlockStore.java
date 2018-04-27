@@ -27,7 +27,6 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.collect.Lists;
 
@@ -51,7 +50,6 @@ import net.bigtangle.core.UTXOProviderException;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.script.Script;
-import net.bigtangle.server.service.ValidatorService;
 
 /**
  * <p>

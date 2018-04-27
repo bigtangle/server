@@ -84,5 +84,13 @@ public class KafkaConfiguration {
         this.commitInterval = commitInterval;
     }
 
+
+    @Override
+    public String toString() {
+        return "KafkaConfiguration [topicOutName=" + topicOutName + ", broker=" + broker + ", zooKeeperServer="
+                + zooKeeperServer + ", bootstrapServers=" + bootstrapServers + ", consumerIdSuffix=" + consumerIdSuffix
+                + ", commitInterval=" + commitInterval + "]";
+    }
+
   
 }
