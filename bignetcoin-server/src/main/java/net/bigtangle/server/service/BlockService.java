@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -316,6 +317,17 @@ public class BlockService {
     public AbstractResponse searchBlock(Map<String, Object> request) throws BlockStoreException {
         List<String> address = (List<String>) request.get("address");
         List<BlockEvaluation> evaluations = this.store.getSearchBlockEvaluations(address);
+        HashSet<String> hashSet = new HashSet<String>();
+        // filter
+        for (Iterator<BlockEvaluation> iterator = evaluations.iterator(); iterator.hasNext(); ) {
+            BlockEvaluation blockEvaluation = iterator.next();
+            if (hashSet.contains(blockEvaluation.getBlockHexStr())) {
+                iterator.remove();
+            }
+            else {
+                hashSet.add(blockEvaluation.getBlockHexStr());
+            }
+        }
         return GetBlockEvaluationsResponse.create(evaluations);
     }
 }

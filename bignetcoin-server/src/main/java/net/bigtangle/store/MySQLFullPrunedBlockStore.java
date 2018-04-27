@@ -212,7 +212,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     
     @Override
     protected String getUpdateSettingsSLQ() {
-        return UPDATE_SETTINGS_SQL;
+//        return UPDATE_SETTINGS_SQL;
+        return getUpdate() + " settings SET settingvalue = ? WHERE name = ?";
     }
     
     @Override
