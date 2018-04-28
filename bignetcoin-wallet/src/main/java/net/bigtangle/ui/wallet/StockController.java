@@ -22,6 +22,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import net.bigtangle.core.Block;
+import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
@@ -111,7 +112,7 @@ public class StockController extends TokensController {
             byte[] pubKey = outKey.getPubKey();
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
-            requestParam.put("amount", Long.valueOf(stockAmount.getText()));
+            requestParam.put("amount", Coin.parseCoin(stockAmount.getText(), Utils.HEX.decode(tokenid.getValue())).getValue());
             requestParam.put("tokenname", stockName.getText());
             requestParam.put("description", stockDescription.getText());
             requestParam.put("tokenHex", tokenid.getValue());
@@ -121,7 +122,7 @@ public class StockController extends TokensController {
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
 
-           // Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
+            // Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
             GuiUtils.informationalAlert("Token is published.", "", "");
             Main.instance.controller.initTableView();
             checkGuiThread();
