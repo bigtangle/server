@@ -18,8 +18,21 @@
 
 package net.bigtangle.ui.wallet.utils;
 
+import static com.google.common.base.Preconditions.checkState;
+import static net.bigtangle.ui.wallet.utils.WTUtils.unchecked;
+
+import java.io.IOException;
+import java.net.URL;
+import java.util.function.BiConsumer;
+
 import com.google.common.base.Throwables;
-import javafx.animation.*;
+
+import javafx.animation.Animation;
+import javafx.animation.FadeTransition;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.ScaleTransition;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -30,14 +43,8 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import net.bigtangle.core.InsufficientMoneyException;
+import net.bigtangle.ui.wallet.Main;
 import net.bigtangle.ui.wallet.MainController;
-
-import java.io.IOException;
-import java.net.URL;
-import java.util.function.BiConsumer;
-
-import static com.google.common.base.Preconditions.checkState;
-import static net.bigtangle.ui.wallet.utils.WTUtils.unchecked;
 
 public class GuiUtils {
     public static void runAlert(BiConsumer<Stage, AlertWindowController> setup) {
@@ -64,7 +71,7 @@ public class GuiUtils {
 
     public static void crashAlert(Throwable t) {
         if (t instanceof InsufficientMoneyException) {
-            GuiUtils.informationalAlert("money no enough", "money no enough", "");
+            GuiUtils.informationalAlert(Main.getText("m_n_e"), Main.getText("m_n_e"), "");
         }
         t.printStackTrace();
         Throwable rootCause = Throwables.getRootCause(t);

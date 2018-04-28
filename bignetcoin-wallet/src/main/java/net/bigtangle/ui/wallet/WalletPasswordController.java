@@ -70,7 +70,7 @@ public class WalletPasswordController {
     @FXML void confirmClicked(ActionEvent event) {
         String password = pass1.getText();
         if (password.isEmpty() || password.length() < 4) {
-            informationalAlert("Bad password", "The password you entered is empty or too short.");
+            informationalAlert(Main.getText("w_p_c_m"), Main.getText("w_p_c_d"));
             return;
         }
 
@@ -88,8 +88,7 @@ public class WalletPasswordController {
                     fadeIn(widgetGrid);
                     fadeIn(explanationLabel);
                     fadeIn(buttonsBox);
-                    informationalAlert("Wrong password",
-                            "Please try entering your password again, carefully checking for typos or spelling errors.");
+                    informationalAlert(Main.getText("w_p_c_m1"), Main.getText("w_p_c_d1"));
                 }
             }
         };

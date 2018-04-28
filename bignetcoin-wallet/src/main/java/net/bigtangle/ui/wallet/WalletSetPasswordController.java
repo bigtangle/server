@@ -99,14 +99,14 @@ public class WalletSetPasswordController {
     @FXML
     public void setPasswordClicked(ActionEvent event) {
         if (!pass1.getText().equals(pass2.getText())) {
-            informationalAlert("Passwords do not match", "Try re-typing your chosen passwords.");
+            informationalAlert(Main.getText("w_s_p_c_m"), Main.getText("w_s_p_c_d"));
             return;
         }
         String password = pass1.getText();
         // This is kind of arbitrary and we could do much more to help people
         // pick strong passwords.
         if (password.length() < 4) {
-            informationalAlert("Password too short", "You need to pick a password at least five characters or longer.");
+            informationalAlert(Main.getText("w_s_p_c_m1"), Main.getText("w_s_p_c_d1"));
             return;
         }
         Main.password = pass1.getText();
@@ -134,8 +134,7 @@ public class WalletSetPasswordController {
                 }
                 Main.bitcoin.wallet().encrypt(scrypt, aesKey);
                 log.info("Encryption done");
-                informationalAlert("Wallet encrypted",
-                        "You can remove the password at any time from the settings screen.");
+                informationalAlert(Main.getText("w_s_p_c_m2"), Main.getText("w_s_p_c_d2"));
                 overlayUI.done();
             }
         };

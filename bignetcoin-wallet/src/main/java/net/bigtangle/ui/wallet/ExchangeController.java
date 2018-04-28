@@ -210,7 +210,7 @@ public class ExchangeController {
 
     private void exchange() throws Exception, JsonProcessingException {
         if (mTransaction == null) {
-            GuiUtils.informationalAlert("alert", "Transaction Is Empty");
+            GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("ex_c_d"));
             return;
         }
         SendRequest request = SendRequest.forTx(mTransaction);
@@ -310,7 +310,7 @@ public class ExchangeController {
             // mTransaction = (Transaction)
             // Main.params.getDefaultSerializer().makeTransaction(data);
             if (mTransaction == null) {
-                GuiUtils.informationalAlert("alert", "Transaction Is Empty");
+                GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("ex_c_d"));
             }
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
@@ -378,7 +378,7 @@ public class ExchangeController {
     public void signExchange(ActionEvent event) throws Exception {
         Map<String, Object> rowData = exchangeTable.getSelectionModel().getSelectedItem();
         if (rowData == null || rowData.isEmpty()) {
-            GuiUtils.informationalAlert("There is no selection of data.", "please select", "");
+            GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_d1"));
         }
         this.mOrderid = stringValueOf(rowData.get("orderid"));
         HashMap<String, Object> exchangeResult = getExchangeInfoResult(this.mOrderid);
@@ -416,7 +416,7 @@ public class ExchangeController {
         byte[] buf = Utils.HEX.decode(dataHex);
         this.reloadTransaction(buf);
         if (mTransaction == null) {
-            GuiUtils.informationalAlert("alert", "Transaction Is Empty");
+            GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("ex_c_d"));
             return;
         }
         this.exchange();

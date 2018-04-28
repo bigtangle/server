@@ -112,7 +112,8 @@ public class StockController extends TokensController {
             byte[] pubKey = outKey.getPubKey();
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
-            requestParam.put("amount", Coin.parseCoin(stockAmount.getText(), Utils.HEX.decode(tokenid.getValue())).getValue());
+            requestParam.put("amount",
+                    Coin.parseCoin(stockAmount.getText(), Utils.HEX.decode(tokenid.getValue())).getValue());
             requestParam.put("tokenname", stockName.getText());
             requestParam.put("description", stockDescription.getText());
             requestParam.put("tokenHex", tokenid.getValue());
@@ -123,7 +124,7 @@ public class StockController extends TokensController {
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
 
             // Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
-            GuiUtils.informationalAlert("Token is published.", "", "");
+            GuiUtils.informationalAlert(Main.getText("s_c_m"), Main.getText("s_c_m"));
             Main.instance.controller.initTableView();
             checkGuiThread();
             initTableView();

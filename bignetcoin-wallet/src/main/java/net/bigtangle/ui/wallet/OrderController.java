@@ -210,7 +210,7 @@ public class OrderController {
         long amount = Coin.parseCoinValue(this.amountTextField.getText());
 
         if (coin.getValue() < amount) {
-            GuiUtils.informationalAlert("amount no enough", "amount no enough", "");
+            GuiUtils.informationalAlert(Main.getText("o_c_m"), Main.getText("o_c_d"));
             return;
         }
 

@@ -122,7 +122,7 @@ public class EckeyController {
 
         Main.keyFilePrefix = filename.contains(".") ? filename.substring(0, filename.lastIndexOf(".")) : filename;
         bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
-        GuiUtils.informationalAlert("set key file is ok", "", "");
+        GuiUtils.informationalAlert(Main.getText("e_c"),Main.getText("e_c"), "");
 
         try {
             initEcKeyList();

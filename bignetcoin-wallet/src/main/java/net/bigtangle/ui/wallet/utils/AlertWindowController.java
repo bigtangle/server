@@ -21,6 +21,7 @@ package net.bigtangle.ui.wallet.utils;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.stage.Stage;
+import net.bigtangle.ui.wallet.Main;
 
 public class AlertWindowController {
     public Label messageLabel;
@@ -31,7 +32,7 @@ public class AlertWindowController {
 
     /** Initialize this alert dialog for information about a crash. */
     public void crashAlert(Stage stage, String crashMessage) {
-        messageLabel.setText("Unfortunately, we screwed up and the app crashed. Sorry about that!");
+        messageLabel.setText(Main.getText("a_w_c"));
         detailsLabel.setText(crashMessage);
 
         cancelButton.setVisible(false);
@@ -39,7 +40,10 @@ public class AlertWindowController {
         okButton.setOnAction(actionEvent -> stage.close());
     }
 
-    /** Initialize this alert for general information: OK button only, nothing happens on dismissal. */
+    /**
+     * Initialize this alert for general information: OK button only, nothing
+     * happens on dismissal.
+     */
     public void informational(Stage stage, String message, String details) {
         messageLabel.setText(message);
         detailsLabel.setText(details);

@@ -18,8 +18,31 @@
 
 package net.bigtangle.ui.wallet;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static javafx.beans.binding.Bindings.createBooleanBinding;
+import static javafx.beans.binding.Bindings.equal;
+import static javafx.beans.binding.Bindings.not;
+import static javafx.beans.binding.Bindings.or;
+import static net.bigtangle.ui.wallet.utils.GuiUtils.checkGuiThread;
+import static net.bigtangle.ui.wallet.utils.GuiUtils.informationalAlert;
+import static net.bigtangle.ui.wallet.utils.WTUtils.didThrow;
+import static net.bigtangle.ui.wallet.utils.WTUtils.unchecked;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.List;
+
+import javax.annotation.Nullable;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
+
 import com.google.common.base.Splitter;
 import com.google.common.util.concurrent.Service;
+
 import javafx.application.Platform;
 import javafx.beans.binding.BooleanBinding;
 import javafx.event.ActionEvent;
@@ -35,31 +58,17 @@ import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.wallet.DeterministicSeed;
 import net.bigtangle.wallet.KeyChainGroup;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
-
-import javax.annotation.Nullable;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.util.List;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static javafx.beans.binding.Bindings.*;
-import static net.bigtangle.ui.wallet.utils.GuiUtils.checkGuiThread;
-import static net.bigtangle.ui.wallet.utils.GuiUtils.informationalAlert;
-import static net.bigtangle.ui.wallet.utils.WTUtils.didThrow;
-import static net.bigtangle.ui.wallet.utils.WTUtils.unchecked;
-
 public class WalletSettingsController {
     private static final Logger log = LoggerFactory.getLogger(WalletSettingsController.class);
 
-    @FXML Button passwordButton;
-    @FXML DatePicker datePicker;
-    @FXML TextArea wordsArea;
-    @FXML Button restoreButton;
+    @FXML
+    Button passwordButton;
+    @FXML
+    DatePicker datePicker;
+    @FXML
+    TextArea wordsArea;
+    @FXML
+    Button restoreButton;
 
     public Main.OverlayUI overlayUI;
 
@@ -67,11 +76,12 @@ public class WalletSettingsController {
 
     // Note: NOT called by FXMLLoader!
     public void initialize(@Nullable KeyParameter aesKey) {
-        DeterministicSeed seed = getKeyChainSeed();//Main.bitcoin.wallet().getKeyChainSeed();
+        DeterministicSeed seed = getKeyChainSeed();// Main.bitcoin.wallet().getKeyChainSeed();
         if (aesKey == null) {
             if (seed.isEncrypted()) {
                 log.info("Wallet is encrypted, requesting password first.");
-                // Delay execution of this until after we've finished initialising this screen.
+                // Delay execution of this until after we've finished
+                // initialising this screen.
                 Platform.runLater(() -> askForPasswordAndRetry());
                 return;
             }
@@ -89,45 +99,37 @@ public class WalletSettingsController {
 
         // Set the mnemonic seed words.
         final List<String> mnemonicCode = seed.getMnemonicCode();
-        checkNotNull(mnemonicCode);    // Already checked for encryption.
+        checkNotNull(mnemonicCode); // Already checked for encryption.
         String origWords = Utils.join(mnemonicCode);
         wordsArea.setText(origWords);
 
         // Validate words as they are being typed.
         MnemonicCode codec = unchecked(MnemonicCode::new);
-        TextFieldValidator validator = new TextFieldValidator(wordsArea, text ->
-            !didThrow(() -> codec.check(Splitter.on(' ').splitToList(text)))
-        );
+        TextFieldValidator validator = new TextFieldValidator(wordsArea,
+                text -> !didThrow(() -> codec.check(Splitter.on(' ').splitToList(text))));
 
-        // Clear the date picker if the user starts editing the words, if it contained the current wallets date.
+        // Clear the date picker if the user starts editing the words, if it
+        // contained the current wallets date.
         // This forces them to set the birthday field when restoring.
         wordsArea.textProperty().addListener(o -> {
             if (origDate.equals(datePicker.getValue()))
                 datePicker.setValue(null);
         });
 
-        BooleanBinding datePickerIsInvalid = or(
-                datePicker.valueProperty().isNull(),
+        BooleanBinding datePickerIsInvalid = or(datePicker.valueProperty().isNull(),
 
-                createBooleanBinding(() ->
-                        datePicker.getValue().isAfter(LocalDate.now())
-                , /* depends on */ datePicker.valueProperty())
-        );
+                createBooleanBinding(() -> datePicker.getValue().isAfter(LocalDate.now()),
+                        /* depends on */ datePicker.valueProperty()));
 
-        // Don't let the user click restore if the words area contains the current wallet words, or are an invalid set,
+        // Don't let the user click restore if the words area contains the
+        // current wallet words, or are an invalid set,
         // or if the date field isn't set, or if it's in the future.
-        restoreButton.disableProperty().bind(
-                or(
-                        or(
-                                not(validator.valid),
-                                equal(origWords, wordsArea.textProperty())
-                        ),
+        restoreButton.disableProperty().bind(or(or(not(validator.valid), equal(origWords, wordsArea.textProperty())),
 
-                        datePickerIsInvalid
-                )
-        );
+                datePickerIsInvalid));
 
-        // Highlight the date picker in red if it's empty or in the future, so the user knows why restore is disabled.
+        // Highlight the date picker in red if it's empty or in the future, so
+        // the user knows why restore is disabled.
         datePickerIsInvalid.addListener((dp, old, cur) -> {
             if (cur) {
                 datePicker.getStyleClass().add("validation_error");
@@ -140,7 +142,8 @@ public class WalletSettingsController {
     private void askForPasswordAndRetry() {
         Main.OverlayUI<WalletPasswordController> pwd = Main.instance.overlayUI("wallet_password.fxml");
         pwd.controller.aesKeyProperty().addListener((observable, old, cur) -> {
-            // We only get here if the user found the right password. If they don't or they cancel, we end up back on
+            // We only get here if the user found the right password. If they
+            // don't or they cancel, we end up back on
             // the main UI screen.
             checkGuiThread();
             Main.OverlayUI<WalletSettingsController> screen = Main.instance.overlayUI("wallet_settings.fxml");
@@ -153,23 +156,24 @@ public class WalletSettingsController {
     }
 
     public void restoreClicked(ActionEvent event) {
-        // Don't allow a restore unless this wallet is presently empty. We don't want to end up with two wallets, too
-        // much complexity, even though WalletAppKit will keep the current one as a backup file in case of disaster.
-  
+        // Don't allow a restore unless this wallet is presently empty. We don't
+        // want to end up with two wallets, too
+        // much complexity, even though WalletAppKit will keep the current one
+        // as a backup file in case of disaster.
+
         if (aesKey != null) {
             // This is weak. We should encrypt the new seed here.
-            informationalAlert("Wallet is encrypted",
-                    "After restore, the wallet will no longer be encrypted and you must set a new password.");
+            informationalAlert(Main.getText("w_s_c_m"), Main.getText("w_s_c_d"));
         }
 
         log.info("Attempting wallet restore using seed '{}' from date {}", wordsArea.getText(), datePicker.getValue());
-        informationalAlert("Wallet restore in progress",
-                "Your wallet will now be resynced from the Bitcoin network. This can take a long time for old wallets.");
+        informationalAlert(Main.getText("w_s_c_m1"), Main.getText("w_s_c_d1"));
         overlayUI.done();
         Main.instance.controller.restoreFromSeedAnimation();
 
         long birthday = datePicker.getValue().atStartOfDay().toEpochSecond(ZoneOffset.UTC);
-        DeterministicSeed seed = new DeterministicSeed(Splitter.on(' ').splitToList(wordsArea.getText()), null, "", birthday);
+        DeterministicSeed seed = new DeterministicSeed(Splitter.on(' ').splitToList(wordsArea.getText()), null, "",
+                birthday);
         // Shut down bitcoinj and restart it with the new seed.
         Main.bitcoin.addListener(new Service.Listener() {
             @Override
@@ -181,24 +185,24 @@ public class WalletSettingsController {
         Main.bitcoin.stopAsync();
     }
 
-
     public void passwordButtonClicked(ActionEvent event) {
         if (aesKey == null) {
             Main.instance.overlayUI("wallet_set_password.fxml");
         } else {
             Main.bitcoin.wallet().decrypt(aesKey);
-            informationalAlert("Wallet decrypted", "A password will no longer be required to send money or edit settings.");
+            informationalAlert(Main.getText("w_s_c_m2"), Main.getText("w_s_c_d2"));
             passwordButton.setText("Set password");
             aesKey = null;
         }
     }
+
     public DeterministicSeed getKeyChainSeed() {
-        
-        KeyChainGroup  keyChainGroup=     new KeyChainGroup( MainNetParams.get());
-            DeterministicSeed seed = keyChainGroup.getActiveKeyChain().getSeed();
-            if (seed == null)
-                throw new ECKey.MissingPrivateKeyException();
-            return seed;
-        
+
+        KeyChainGroup keyChainGroup = new KeyChainGroup(MainNetParams.get());
+        DeterministicSeed seed = keyChainGroup.getActiveKeyChain().getSeed();
+        if (seed == null)
+            throw new ECKey.MissingPrivateKeyException();
+        return seed;
+
     }
 }

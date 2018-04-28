@@ -181,7 +181,7 @@ public class SendMoneyController {
             // mTransaction = (Transaction)
             // Main.params.getDefaultSerializer().makeTransaction(data);
             if (mTransaction == null) {
-                GuiUtils.informationalAlert("alert", "Transaction Is Empty");
+                GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("ex_c_d"));
             }
         } catch (Exception e) {
             GuiUtils.crashAlert(e);

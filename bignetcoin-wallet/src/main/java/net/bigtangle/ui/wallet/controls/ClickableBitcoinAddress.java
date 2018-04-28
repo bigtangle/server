@@ -53,15 +53,20 @@ import java.net.URI;
 import static javafx.beans.binding.Bindings.convert;
 
 /**
- * A custom control that implements a clickable, copyable Bitcoin address. Clicking it opens a local wallet app. The
- * address looks like a blue hyperlink. Next to it there are two icons, one that copies to the clipboard and another
- * that shows a QRcode.
+ * A custom control that implements a clickable, copyable Bitcoin address.
+ * Clicking it opens a local wallet app. The address looks like a blue
+ * hyperlink. Next to it there are two icons, one that copies to the clipboard
+ * and another that shows a QRcode.
  */
 public class ClickableBitcoinAddress extends AnchorPane {
-    @FXML protected Label addressLabel;
-    @FXML protected ContextMenu addressMenu;
-    @FXML protected Label copyWidget;
-    @FXML protected Label qrCode;
+    @FXML
+    protected Label addressLabel;
+    @FXML
+    protected ContextMenu addressMenu;
+    @FXML
+    protected Label copyWidget;
+    @FXML
+    protected Label qrCode;
 
     protected SimpleObjectProperty<Address> address = new SimpleObjectProperty<>();
     private final StringExpression addressStr;
@@ -71,7 +76,8 @@ public class ClickableBitcoinAddress extends AnchorPane {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("bitcoin_address.fxml"));
             loader.setRoot(this);
             loader.setController(this);
-            // The following line is supposed to help Scene Builder, although it doesn't seem to be needed for me.
+            // The following line is supposed to help Scene Builder, although it
+            // doesn't seem to be needed for me.
             loader.setClassLoader(getClass().getClassLoader());
             loader.load();
 
@@ -109,16 +115,17 @@ public class ClickableBitcoinAddress extends AnchorPane {
         // User clicked icon or menu item.
         Clipboard clipboard = Clipboard.getSystemClipboard();
         ClipboardContent content = new ClipboardContent();
-        if(addressStr.get()!=null) {
-        content.putString(addressStr.get());
-        content.putHtml(String.format("<a href='%s'>%s</a>", uri(), addressStr.get()));
-        clipboard.setContent(content);
+        if (addressStr.get() != null) {
+            content.putString(addressStr.get());
+            content.putHtml(String.format("<a href='%s'>%s</a>", uri(), addressStr.get()));
+            clipboard.setContent(content);
         }
     }
 
     @FXML
     protected void requestMoney(MouseEvent event) {
-        if (event.getButton() == MouseButton.SECONDARY || (event.getButton() == MouseButton.PRIMARY && event.isMetaDown())) {
+        if (event.getButton() == MouseButton.SECONDARY
+                || (event.getButton() == MouseButton.PRIMARY && event.isMetaDown())) {
             // User right clicked or the Mac equivalent. Show the context menu.
             addressMenu.show(addressLabel, event.getScreenX(), event.getScreenY());
         } else {
@@ -126,7 +133,7 @@ public class ClickableBitcoinAddress extends AnchorPane {
             try {
                 Desktop.getDesktop().browse(URI.create(uri()));
             } catch (IOException e) {
-                GuiUtils.informationalAlert("Opening wallet app failed", "Perhaps you don't have one installed?");
+                GuiUtils.informationalAlert(Main.getText("c_b_a_m"), Main.getText("c_b_a_d"));
             }
         }
     }
@@ -138,19 +145,17 @@ public class ClickableBitcoinAddress extends AnchorPane {
 
     @FXML
     protected void showQRCode(MouseEvent event) {
-        // Serialize to PNG and back into an image. Pretty lame but it's the shortest code to write and I'm feeling
+        // Serialize to PNG and back into an image. Pretty lame but it's the
+        // shortest code to write and I'm feeling
         // lazy tonight.
-        final byte[] imageBytes = QRCode
-                .from(uri())
-                .withSize(320, 240)
-                .to(ImageType.PNG)
-                .stream()
-                .toByteArray();
+        final byte[] imageBytes = QRCode.from(uri()).withSize(320, 240).to(ImageType.PNG).stream().toByteArray();
         Image qrImage = new Image(new ByteArrayInputStream(imageBytes));
         ImageView view = new ImageView(qrImage);
         view.setEffect(new DropShadow());
-        // Embed the image in a pane to ensure the drop-shadow interacts with the fade nicely, otherwise it looks weird.
-        // Then fix the width/height to stop it expanding to fill the parent, which would result in the image being
+        // Embed the image in a pane to ensure the drop-shadow interacts with
+        // the fade nicely, otherwise it looks weird.
+        // Then fix the width/height to stop it expanding to fill the parent,
+        // which would result in the image being
         // non-centered on the screen. Finally fade/blur it in.
         Pane pane = new Pane(view);
         pane.setMaxSize(qrImage.getWidth(), qrImage.getHeight());
