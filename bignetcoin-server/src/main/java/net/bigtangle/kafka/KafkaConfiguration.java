@@ -10,7 +10,8 @@ public class KafkaConfiguration {
 
     private String topicOutName;
 
- 
+    private String topicOut2Name;
+    
     private String broker;
 
    
@@ -82,6 +83,16 @@ public class KafkaConfiguration {
 
     public void setCommitInterval(long commitInterval) {
         this.commitInterval = commitInterval;
+    }
+
+
+    public String getTopicOut2Name() {
+        return topicOut2Name;
+    }
+
+
+    public void setTopicOut2Name(String topicOut2Name) {
+        this.topicOut2Name = topicOut2Name;
     }
 
 
