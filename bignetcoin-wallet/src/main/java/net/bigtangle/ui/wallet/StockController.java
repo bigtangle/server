@@ -122,8 +122,9 @@ public class StockController extends TokensController {
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "createGenesisBlock",
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
-
-            // Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
+            //TODO no post to off tangle data, send it to kafka for broadcast
+            Main.instance.sendMessage(block.bitcoinSerialize());
+ 
             GuiUtils.informationalAlert(Main.getText("s_c_m"), Main.getText("s_c_m"));
             Main.instance.controller.initTableView();
             checkGuiThread();

@@ -20,13 +20,10 @@ db:
 service:
   milestoneschedule:
     rate: ${SERVICE_MILESTONE_RATE:10000}
-    retention-time-in-minutes: ${service_HOUSEKEEPING_RETENTION:1440} # 24*60 == 1 Tag
     active: ${SERVICE_MILESTONE_ACTIVE:true}
     
 kafka:
-  broker: ${KAFKA_BROKER:cn.kafka.bigtangle.net:9092}
   bootstrapServers: ${BOOT_STRAP_SERVERS:cn.kafka.bigtangle.net:9092}
-  zooKeeperServer: ${ZOOKEEPER_SERVERS:cn.zookeeper.bigtangle.net:2281}
   topicOutName: ${TOPIC_OUT_NAME:bigtangle}
   topicOut2Name: ${TOPIC_OUT2_NAME:bigtangle2}
 

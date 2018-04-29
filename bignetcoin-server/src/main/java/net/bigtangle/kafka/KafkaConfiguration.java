@@ -12,11 +12,6 @@ public class KafkaConfiguration {
 
     private String topicOut2Name;
     
-    private String broker;
-
-   
-    private String zooKeeperServer;
-
  
     private String bootstrapServers;
 
@@ -35,26 +30,7 @@ public class KafkaConfiguration {
         this.topicOutName = topicOutName;
     }
 
-
-    public String getBroker() {
-        return broker;
-    }
-
-
-    public void setBroker(String broker) {
-        this.broker = broker;
-    }
-
-
-    public String getZooKeeperServer() {
-        return zooKeeperServer;
-    }
-
-
-    public void setZooKeeperServer(String zooKeeperServer) {
-        this.zooKeeperServer = zooKeeperServer;
-    }
-
+ 
 
     public String getBootstrapServers() {
         return bootstrapServers;
@@ -96,12 +72,15 @@ public class KafkaConfiguration {
     }
 
 
+
     @Override
     public String toString() {
-        return "KafkaConfiguration [topicOutName=" + topicOutName + ", broker=" + broker + ", zooKeeperServer="
-                + zooKeeperServer + ", bootstrapServers=" + bootstrapServers + ", consumerIdSuffix=" + consumerIdSuffix
+        return "KafkaConfiguration [topicOutName=" + topicOutName + ", topicOut2Name=" + topicOut2Name
+                + ", bootstrapServers=" + bootstrapServers + ", consumerIdSuffix=" + consumerIdSuffix
                 + ", commitInterval=" + commitInterval + "]";
     }
+
+ 
 
   
 }
