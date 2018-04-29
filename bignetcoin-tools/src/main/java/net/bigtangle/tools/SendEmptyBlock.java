@@ -58,6 +58,7 @@ public class SendEmptyBlock {
         while (c) {
 
             try {
+                Thread.sleep(1000);
                 sendEmptyBlock.send(); i+=1;
                 if(i % 5 ==0)
                 System.out.println(" empty blocks  =  " +i);

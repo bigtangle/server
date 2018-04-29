@@ -780,7 +780,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             // Set up the genesis block. When we start out fresh, it is by
             // definition the top of the chain.
-            StoredBlock storedGenesisHeader = new StoredBlock(params.getGenesisBlock().cloneAsHeader(), 0);
+            StoredBlock storedGenesisHeader = new StoredBlock(params.getGenesisBlock(), 0);
             // The coinbase in the genesis block is not spendable. This is
             // because of how Bitcoin Core inits
             // its database - the genesis transaction isn't actually in the db
@@ -791,6 +791,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             put(storedGenesisHeader, storedGenesis);
             setChainHead(storedGenesisHeader);
             setVerifiedChainHead(storedGenesisHeader);
+
+			updateBlockEvaluationMilestone(params.getGenesisBlock().getHash(), true);
+            updateBlockEvaluationSolid(params.getGenesisBlock().getHash(), true);
         } catch (VerificationException e) {
             throw new RuntimeException(e); // Cannot happen.
         }

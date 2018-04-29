@@ -114,12 +114,6 @@ public abstract class AbstractIntegrationTest {
 
         blockgraph = new FullPrunedBlockGraph(networkParameters, store);
 
-        // Add genesis block
-        blockgraph.add(networkParameters.getGenesisBlock());
-        BlockEvaluation genesisEvaluation = blockService
-                .getBlockEvaluation(networkParameters.getGenesisBlock().getHash());
-        blockService.updateMilestone(genesisEvaluation, true);
-        blockService.updateSolid(genesisEvaluation, true);
         walletKeys();
         testInitWallet();
         wallet1();

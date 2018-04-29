@@ -229,7 +229,7 @@ public class TipsService {
 
 		// Repeatedly perform transitions until the final tip is found
 		while (blockHash != null) {
-			List<Sha256Hash> approverHashes = blockService.getSolidApproverBlockHashes(blockHash);
+			List<Sha256Hash> approverHashes = blockService.getSolidApproverBlockHashes(blockHash); // TODO debug tip selection
 			if (approverHashes.size() == 0) {
 				return blockHash;
 			} else if (approverHashes.size() == 1) {
