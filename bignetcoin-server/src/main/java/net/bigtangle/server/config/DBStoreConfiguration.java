@@ -64,7 +64,7 @@ public class DBStoreConfiguration {
         MySQLFullPrunedBlockStore store = new MySQLFullPrunedBlockStore(networkParameters, fullStoreDepth,
                 hostname + ":" + port, dbName, username, password);
         try {
-            store.initFromDatabase();
+
             FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store); 
             // Add genesis block
             blockgraph.add(networkParameters.getGenesisBlock());
@@ -82,7 +82,7 @@ public class DBStoreConfiguration {
         PhoenixBlockStore store = new PhoenixBlockStore(networkParameters, fullStoreDepth,
                 hostname+ ":" + port, "", null, null);
         try {
-            store.initFromDatabase();
+        
             FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store); 
             // Add genesis block
             blockgraph.add(networkParameters.getGenesisBlock());
