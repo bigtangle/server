@@ -24,7 +24,7 @@ public class DBStoreConfiguration {
 
     @Value("${db.dbtype:mysql}")
     private String dbtype;
-    
+
     @Value("${db.hostname:localhost}")
     private String hostname;
 
@@ -43,9 +43,9 @@ public class DBStoreConfiguration {
     private int fullStoreDepth = 10;
     @Autowired
     NetworkParameters networkParameters;
-    
+
     private static final Logger logger = LoggerFactory.getLogger(DBStoreConfiguration.class);
-    
+
     @Bean
     public FullPrunedBlockStore store() throws BlockStoreException {
         if ("phoenix".equalsIgnoreCase(dbtype))
@@ -55,7 +55,7 @@ public class DBStoreConfiguration {
         else
             return createMysqlBlockStore();
     }
-    
+
     private FullPrunedBlockStore createCassandraBlockStore() {
         return null;
     }
@@ -63,36 +63,14 @@ public class DBStoreConfiguration {
     public FullPrunedBlockStore createMysqlBlockStore() throws BlockStoreException {
         MySQLFullPrunedBlockStore store = new MySQLFullPrunedBlockStore(networkParameters, fullStoreDepth,
                 hostname + ":" + port, dbName, username, password);
-        try {
 
-            FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store); 
-            // Add genesis block
-            blockgraph.add(networkParameters.getGenesisBlock());
-         
-            BlockEvaluation genesisEvaluation = store.getBlockEvaluation(networkParameters.getGenesisBlock().getHash());
-            store.updateBlockEvaluationMilestone(genesisEvaluation.getBlockhash(), true);
-            store.updateBlockEvaluationSolid(genesisEvaluation.getBlockhash(), true);
-        } catch (Exception e) {
-            logger.warn("create bean FullPrunedBlockStore store", e);
-        }
         return store;
     }
-    
+
     public FullPrunedBlockStore createPhoenixBlockStore() throws BlockStoreException {
-        PhoenixBlockStore store = new PhoenixBlockStore(networkParameters, fullStoreDepth,
-                hostname+ ":" + port, "", null, null);
-        try {
-        
-            FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store); 
-            // Add genesis block
-            blockgraph.add(networkParameters.getGenesisBlock());
-         
-            BlockEvaluation genesisEvaluation = store.getBlockEvaluation(networkParameters.getGenesisBlock().getHash());
-            store.updateBlockEvaluationMilestone(genesisEvaluation.getBlockhash(), true);
-            store.updateBlockEvaluationSolid(genesisEvaluation.getBlockhash(), true);
-        } catch (Exception e) {
-            logger.warn("create bean FullPrunedBlockStore store", e);
-        }
+        PhoenixBlockStore store = new PhoenixBlockStore(networkParameters, fullStoreDepth, hostname + ":" + port, "",
+                null, null);
+
         return store;
     }
 }

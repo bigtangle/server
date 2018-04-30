@@ -56,146 +56,7 @@ import net.bigtangle.script.Script;
  * A generic full pruned block store for a relational database. This generic
  * class requires certain table structures for the block store.
  * </p>
- *
- * <p>
- * The following are the tables and field names/types that are assumed:-
- * </p>
- *
- * <p>
- * <b>setting</b> table
- * <table>
- * <tr>
- * <th>Field Name</th>
- * <th>Type (generic)</th>
- * </tr>
- * <tr>
- * <td>name</td>
- * <td>string</td>
- * </tr>
- * <tr>
- * <td>settingvalue</td>
- * <td>binary</td>
- * </tr>
- * </table>
- * </p>
- *
- * <p>
- * <br/>
- * <b>headers</b> table
- * <table>
- * <tr>
- * <th>Field Name</th>
- * <th>Type (generic)</th>
- * </tr>
- * <tr>
- * <td>hash</td>
- * <td>binary</td>
- * </tr>
- * <tr>
- * <td>chainwork</td>
- * <td>binary</td>
- * </tr>
- * <tr>
- * <td>height</td>
- * <td>integer</td>
- * </tr>
- * <tr>
- * <td>header</td>
- * <td>binary</td>
- * </tr>
- * <tr>
- * <td>wasundoable</td>
- * <td>boolean</td>
- * </tr>
- * </table>
- * </p>
- *
- * <p>
- * <br/>
- * <b>undoableblocks</b> table
- * <table>
- * <tr>
- * <th>Field Name</th>
- * <th>Type (generic)</th>
- * </tr>
- * <tr>
- * <td>hash</td>
- * <td>binary</td>
- * </tr>
- * <tr>
- * <td>height</td>
- * <td>integer</td>
- * </tr>
- * <tr>
- * <td>txoutchanges</td>
- * <td>binary</td>
- * </tr>
- * <tr>
- * <td>transactions</td>
- * <td>binary</td>
- * </tr>
- * </table>
- * </p>
- *
- * <p>
- * <br/>
- * <b>outputs</b> table
- * <table>
- * <tr>
- * <th>Field Name</th>
- * <th>Type (generic)</th>
- * </tr>
- * <tr>
- * <td>hash</td>
- * <td>binary</td>
- * </tr>
- * <tr>
- * <td>index</td>
- * <td>integer</td>
- * </tr>
- * <tr>
- * <td>height</td>
- * <td>integer</td>
- * </tr>
- * <tr>
- * <td>coinvalue</td>
- * <td>integer</td>
- * </tr>
- * <tr>
- * <td>scriptbytes</td>
- * <td>binary</td>
- * </tr>
- * <tr>
- * <td>toaddress</td>
- * <td>string</td>
- * </tr>
- * <tr>
- * <td>addresstargetable</td>
- * <td>integer</td>
- * </tr>
- * <tr>
- * <td>coinbase</td>
- * <td>boolean</td>
- * </tr>
- * <tr>
- * <td>blockhash</td>
- * <td>binary</td>
- * </tr>
- * <tr>
- * <td>tokenid</td>
- * <td>string</td>
- * </tr>
- * <tr>
- * <td>fromaddress</td>
- * <td>string</td>
- * </tr>
- * <tr>
- * <td>description</td>
- * <td>string</td>
- * </tr>
- * </table>
- * </p>
- *
+ * 
  */
 public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockStore {
     private static final Logger log = LoggerFactory.getLogger(DatabaseFullPrunedBlockStore.class);
@@ -347,6 +208,27 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex,"
             + " toAmount, data, toSign, fromSign, toOrderId, fromOrderId FROM exchange WHERE orderid = ?";
 
+    
+
+    protected String UPDATE_SETTINGS_SQL = getUpdate() + " settings SET settingvalue = ? WHERE name = ?";
+    protected String UPDATE_HEADERS_SQL = getUpdate() +" headers SET wasundoable=? WHERE hash=?";
+    protected String UPDATE_UNDOABLEBLOCKS_SQL = getUpdate() +" undoableblocks SET txoutchanges=?, transactions=? WHERE hash = ?";
+    protected String UPDATE_OUTPUTS_SPENT_SQL = getUpdate() +" outputs SET spent = ?, spenderblockhash = ? WHERE hash = ? AND outputindex= ?";
+    protected String UPDATE_OUTPUTS_CONFIRMED_SQL = getUpdate() +" outputs SET confirmed = ? WHERE hash = ? AND outputindex= ?";
+    protected String UPDATE_OUTPUTS_SPENDPENDING_SQL = getUpdate() +" outputs SET spendpending = ? WHERE hash = ? AND outputindex= ?";
+    protected String UPDATE_BLOCKEVALUATION_DEPTH_SQL = getUpdate() +" blockevaluation SET depth = ? WHERE blockhash = ?";
+    protected String UPDATE_BLOCKEVALUATION_CUMULATIVEWEIGHT_SQL = getUpdate() +" blockevaluation SET cumulativeweight = ? WHERE blockhash = ?";
+    protected String UPDATE_BLOCKEVALUATION_HEIGHT_SQL = getUpdate() +" blockevaluation SET height = ? WHERE blockhash = ?";
+    protected String UPDATE_BLOCKEVALUATION_MILESTONE_SQL = getUpdate() +" blockevaluation SET milestone = ? WHERE blockhash = ?";
+    protected String UPDATE_BLOCKEVALUATION_MILESTONE_LAST_UPDATE_TIME_SQL = getUpdate() +" blockevaluation SET milestonelastupdate = ? WHERE blockhash = ?";
+    protected String UPDATE_BLOCKEVALUATION_RATING_SQL = getUpdate() +" blockevaluation SET rating = ? WHERE blockhash = ?";
+    protected String UPDATE_BLOCKEVALUATION_SOLID_SQL = getUpdate() +" blockevaluation SET solid = ? WHERE blockhash = ?";
+    protected String UPDATE_BLOCKEVALUATION_MILESTONEDEPTH_SQL = getUpdate() +" blockevaluation SET milestonedepth = ? WHERE blockhash = ?";
+    protected String UPDATE_BLOCKEVALUATION_MAINTAINED_SQL = getUpdate() +" blockevaluation SET maintained = ? WHERE blockhash = ?";
+    protected String UPDATE_BLOCKEVALUATION_REWARDVALIDITYASSESSMENT_SQL = getUpdate() +" blockevaluation SET rewardvalidityassessment = ? WHERE blockhash = ?";
+
+    
+    
     protected Sha256Hash chainHeadHash;
     protected StoredBlock chainHeadBlock;
     protected Sha256Hash verifiedChainHeadHash;
@@ -417,7 +299,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             if (!tablesExists()) {
                 createTables();
             }
-            // initFromDatabase();
+ 
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         }
@@ -847,47 +729,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public void put(StoredBlock storedBlock, StoredUndoableBlock undoableBlock) throws BlockStoreException {
         maybeConnect();
-        // We skip the first 4 bytes because (on mainnet) the minimum target has
-        // 4 0-bytes
 
-        // int height = storedBlock.getHeight();
-        // byte[] transactions = null;
-        // byte[] txOutChanges = null;
-        // try {
-        // ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        // if (undoableBlock.getTxOutChanges() != null) {
-        // undoableBlock.getTxOutChanges().serializeToStream(bos);
-        // txOutChanges = bos.toByteArray();
-        // } else {
-        // int numTxn = undoableBlock.getTransactions().size();
-        // bos.write(0xFF & numTxn);
-        // bos.write(0xFF & (numTxn >> 8));
-        // bos.write(0xFF & (numTxn >> 16));
-        // bos.write(0xFF & (numTxn >> 24));
-        // for (Transaction tx : undoableBlock.getTransactions())
-        // tx.bitcoinSerialize(bos);
-        // transactions = bos.toByteArray();
-        // }
-        // bos.close();
-        // } catch (IOException e) {
-        // throw new BlockStoreException(e);
-        // }
-
-        // try {
-        // try {
-        // PreparedStatement s =
-        // conn.get().prepareStatement(getInsertUndoableBlocksSQL());
-        // s.setBytes(1, storedBlock.getHeader().getHash().getBytes());
-        // s.setInt(2, height);
-        // if (transactions == null) {
-        // s.setBytes(3, txOutChanges);
-        // s.setNull(4, Types.BINARY);
-        // } else {
-        // s.setNull(3, Types.BINARY);
-        // s.setBytes(4, transactions);
-        // }
-        // s.executeUpdate();
-        // s.close();
         try {
             putUpdateStoredBlock(storedBlock, true);
 
