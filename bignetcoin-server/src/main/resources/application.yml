@@ -7,7 +7,7 @@ server:
   remote: ${SERVER_REMOTE:0.0.0.0}
   remote_auth: 
   remote_limit_api: ${SERVER_REMOTE_LIMIT_API:5000}
-  mineraddress:  ${SERVER_MINERADDRESS:030d8952f6c079f60cd26eb3ba83cf16a81c51fc8e47b767721fa38b5e20092a75}
+  mineraddress:  ${SERVER_MINERADDRESS:mjWvzPZz4YJtWqb7ux7cdgq5G7rzkg3bXG}
 
 db:
   dbtype: ${DBTYPE:mysql}
@@ -20,7 +20,9 @@ db:
 service:
   milestoneschedule:
     rate: ${SERVICE_MILESTONE_RATE:10000}
-    retention-time-in-minutes: ${service_HOUSEKEEPING_RETENTION:1440} # 24*60 == 1 Tag
+    active: ${SERVICE_MILESTONE_ACTIVE:true}
+  orderMatchService:
+    rate: ${SERVICE_MILESTONE_RATE:10000}
     active: ${SERVICE_MILESTONE_ACTIVE:true}
     
 kafka:

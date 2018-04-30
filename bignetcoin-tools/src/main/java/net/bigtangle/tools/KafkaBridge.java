@@ -40,7 +40,7 @@ public class KafkaBridge {
         // TODO auto discover
         kafkaBridge.kafkaServerList = new ArrayList<String>();
         kafkaBridge.kafkaServerList.add("de.kafka.bigtangle.net:9092");
-        kafkaBridge.kafkaServerList.add("61.181.128.230:9092");
+        kafkaBridge.kafkaServerList.add("cn.kafka.bigtangle.net:9092");
         kafkaBridge.runStream();
     }
 
