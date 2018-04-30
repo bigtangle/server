@@ -237,10 +237,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 		// TODO alles in solidify verschieben
 		if (block.getTransactions() == null)
 			throw new RuntimeException("connectTransactions called with Block that didn't have transactions!");
-		if (!params.passesCheckpoint(height, block.getHash()))
-			throw new VerificationException("Block failed checkpoint lockin at " + height);
 
-		blockStore.beginDatabaseBatchWrite();
+		blockStore.beginDatabaseBatchWrite(); // TODO copy this to begin of committing block? abort and commit this when solidifying transactions
 
 		LinkedList<UTXO> txOutsSpent = new LinkedList<UTXO>();
 		LinkedList<UTXO> txOutsCreated = new LinkedList<UTXO>();

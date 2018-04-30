@@ -226,10 +226,9 @@ public class TipsService {
 	}
 
 	Sha256Hash randomWalk(Sha256Hash blockHash, Random seed) throws Exception {
-
 		// Repeatedly perform transitions until the final tip is found
 		while (blockHash != null) {
-			List<Sha256Hash> approverHashes = blockService.getSolidApproverBlockHashes(blockHash); // TODO debug tip selection
+			List<Sha256Hash> approverHashes = blockService.getSolidApproverBlockHashes(blockHash);
 			if (approverHashes.size() == 0) {
 				return blockHash;
 			} else if (approverHashes.size() == 1) {
@@ -265,7 +264,6 @@ public class TipsService {
 	}
 
 	Sha256Hash walkBackwardsUntilNotContained(Sha256Hash blockHash, Random seed, Set<Sha256Hash> losers) throws Exception {
-
 	    // TODO supply path taken and reverse on taken path instead 
 		// Repeatedly perform transitions until a block in targets is found
 		while (blockHash != null) {
