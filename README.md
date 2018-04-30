@@ -7,7 +7,7 @@ You have two options, the preferred option is that you compile yourself. The sec
 #### Locally
 
 ```
-java -jar bignetcoin-server.jar -Xms512m -Xmx1g 
+java -jar bigtangle-server.jar -Xms512m -Xmx1g 
 ```
 
 ### Compiling yourself  
@@ -16,8 +16,8 @@ Make sure to have Java 8 installed on your computer.
 
 #### To compile & package
 ```
-$ git clone https://git.dasimi.com/digi/bignetcoin.git
-$ cd bignetcoin
+$ git clone https://git.dasimi.com/digi/bigtangle.git
+$ cd bigtangle
 $ ./gradlew build 
 
 ```
@@ -31,7 +31,7 @@ use the format preference-> java -> code style -> formatter import the file desi
 
 
 #test of client needs the server to be started
-com.bignetcoin.server.ServerStart
+com.bigtangle.server.ServerStart
 
 
 

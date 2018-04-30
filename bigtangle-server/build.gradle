@@ -45,10 +45,10 @@ dependencies {
     compile group: 'joda-time', name: 'joda-time', version:  '2.9.8'
      compile group: 'com.mchange', name: 'c3p0', version:  ver.c3p0
      compile group: 'com.google.code.gson', name: 'gson', version:ver.gson
-    compile project(':bignetcoin-core')
+    compile project(':bigtangle-core')
     compile group: 'org.springframework', name: 'spring-web', version: ver.spring
     compile group: 'org.springframework', name: 'spring-jdbc', version:  ver.spring
-    compile project(':bignetcoin-orchid')      
+    compile project(':bigtangle-orchid')      
     /**
      * test dependencies
      */
@@ -79,7 +79,7 @@ task createDistributable(type: Copy) {
     def distDir = file('build/dist')
     from('build/libs') {
         include '*.jar'
-        rename '.*', 'bignetcoin-server.jar'
+        rename '.*', 'bigtangle-server.jar'
         into 'build/libs'
     }
     from('etc/') {
@@ -92,7 +92,7 @@ task createDistributable(type: Copy) {
 task buildDockerImage(dependsOn: createDistributable) {
     group 'docker'
     doLast {
-        parent.buildDockerImageProcessing('bignetcoin-server/build/dist', dockerLocalTag, dockerRegistryTag, project.name, project.group, projectName)
+        parent.buildDockerImageProcessing('bigtangle-server/build/dist', dockerLocalTag, dockerRegistryTag, project.name, project.group, projectName)
     }
 }
 

@@ -91,7 +91,7 @@ public class Main extends Application {
     public static final String APP_NAME = "Wallet";
 
     public static String keyFileDirectory = ".";
-    public static String keyFilePrefix = "bignetcoin";
+    public static String keyFilePrefix = "bigtangle";
     public static WalletAppKit bitcoin;
     public static Main instance;
 

@@ -141,14 +141,14 @@ public abstract class AbstractIntegrationTest {
 
     public void walletKeys() throws Exception {
         KeyParameter aesKey = null;
-        walletAppKit = new WalletAppKit(networkParameters, new File("../bignetcoin-wallet"), "bignetcoin");
+        walletAppKit = new WalletAppKit(networkParameters, new File("../bigtangle-wallet"), "bigtangle");
         walletAppKit.wallet().setServerURL(contextRoot);
         walletKeys = walletAppKit.wallet().walletKeys(aesKey);
     }
 
     public void wallet1() throws Exception {
 
-        walletAppKit1 = new WalletAppKit(networkParameters, new File("../bignetcoin-wallet"), "bignetcoin1");
+        walletAppKit1 = new WalletAppKit(networkParameters, new File("../bigtangle-wallet"), "bignetcoin1");
         walletAppKit1.wallet().setServerURL(contextRoot);
 
     }

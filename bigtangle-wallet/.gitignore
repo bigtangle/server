@@ -2,8 +2,9 @@
 /WalletTemplate-main.wallet
 /build/
 /doublespend.wallet
-/bignetcoin.wallet
+/bigtangle.wallet
 /mykey.wallet
 /bignetcoin1.wallet
 /addresses.txt
 /logs/
+/bignetcoin.wallet

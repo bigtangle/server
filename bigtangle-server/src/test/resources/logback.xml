@@ -14,7 +14,7 @@
         <appender-ref ref="stdout1"/>
     </root>
 
-    <logger name="com.bignetcoin" level="DEBUG"/>
+    <logger name="com.bigtangle" level="DEBUG"/>
     
     <logger name="org.apache.kafka" level="${LOGGING_LEVEL_KAFKA:-WARN}"/>
     

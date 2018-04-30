@@ -28,7 +28,7 @@ dependencies {
        exclude group: "org.rocksdb", module: "rocksdbjni"
      }
        compile group: 'ch.qos.logback', name: 'logback-classic', version:'1.0.0'
-    compile project(':bignetcoin-core')
+    compile project(':bigtangle-core')
    
 }
 

@@ -4,4 +4,4 @@
 #  
 #*******************************************************************************
 
-java -jar /app/bignetcoin-server.jar -Xms512m -Xmx1g  $*
+java -jar /app/bigtangle-server.jar -Xms512m -Xmx1g  $*

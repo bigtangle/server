@@ -3,7 +3,7 @@ apply from: "dependencies.gradle"
 
 allprojects {
 
-    project.group = 'com.bignetcoin'
+    project.group = 'com.bigtangle'
     project.version = '0.1.0'
 
     ext {
