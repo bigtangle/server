@@ -7,4 +7,4 @@
 7) Cassandra
 8) validation of different blocks
 9) add market as option, enable the strict caution
-10) 
+10) enable stop mutiple token issance 

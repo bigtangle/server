@@ -33,10 +33,7 @@ use the format preference-> java -> code style -> formatter import the file desi
 #test of client needs the server to be started
 com.bignetcoin.server.ServerStart
 
-The configuration is in applcation.yml
-without arg is the default regnet for unit test
- --spring.profiles.active=testnet
---spring.profiles.active=mainnet
+
 
 #Design
 
