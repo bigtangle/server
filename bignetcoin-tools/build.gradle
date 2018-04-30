@@ -22,6 +22,7 @@ dependencies {
      compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version:'4.3'
      compile group: 'com.google.code.findbugs', name: 'jsr305', version:ver.jsr305
      compile group: 'org.apache.kafka', name: 'kafka-streams', version:ver.kafka
+      compile group: 'ch.qos.logback', name: 'logback-classic', version:'1.0.0'
      compile project(':bignetcoin-core')
 }
 

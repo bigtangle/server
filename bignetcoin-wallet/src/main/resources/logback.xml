@@ -9,7 +9,7 @@
 
 	<appender name="FILE"
 		class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<file>logs/tools.log</file>
+		<file>logs/wallet.log</file>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover -->
 			<fileNamePattern>logs/server.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
