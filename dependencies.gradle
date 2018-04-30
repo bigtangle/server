@@ -2,7 +2,7 @@ ext {
 
     ver = [
             avro       : '1.8.2',
-            kafka      : '0.10.2.1',
+            kafka      : '1.1.0',
             spring     : '5.0.5.RELEASE',
             spring_boot : '2.0.1.RELEASE',
             spring_data_cassandra:'1.5.6.RELEASE',
