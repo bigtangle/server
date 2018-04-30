@@ -32,8 +32,9 @@ import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.wallet.CoinSelector;
 import net.bigtangle.wallet.DefaultCoinSelector;
 
-// TODO: disallow 0x000... as tx and block hashes
-// TODO: duplicate inserts test: disallow token issuances without txs
+// TODO bugs: 
+// disallow 0x000... as tx and block hashes
+// disallow token issuances without txs
 
 /**
  * <p>

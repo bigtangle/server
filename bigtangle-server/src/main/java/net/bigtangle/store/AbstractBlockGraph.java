@@ -105,7 +105,6 @@ public abstract class AbstractBlockGraph {
      */
     protected StoredBlock chainHead;
 
-    // TODO: Scrap this and use a proper read/write for all of the block tangle objects.
     // The tangleHead field is read/written synchronized with this object rather than BlockTangle. However writing is
     // also guaranteed to happen whilst BlockTangle is synchronized (see setTangleHead). The goal of this is to let
     // clients quickly access the tangle head even whilst the block tangle is downloading and thus the BlockTangle is
@@ -298,7 +297,6 @@ public abstract class AbstractBlockGraph {
             return add(block, true, null, null);
         } catch (BlockStoreException e) {
             e.printStackTrace();
-            // TODO: Figure out a better way to propagate this exception to the user.
             throw new RuntimeException(e);
         } catch (VerificationException e) {
             e.printStackTrace();
@@ -328,7 +326,6 @@ public abstract class AbstractBlockGraph {
             // of the transactions.
             return add(block.getBlockHeader(), true, block.getTransactionHashes(), block.getAssociatedTransactions());
         } catch (BlockStoreException e) {
-            // TODO: Figure out a better way to propagate this exception to the user.
             throw new RuntimeException(e);
         } catch (VerificationException e) {
             try {
@@ -357,17 +354,6 @@ public abstract class AbstractBlockGraph {
      * @return The full set of all changes made to the set of open transaction outputs.
      */
     protected abstract TransactionOutputChanges connectTransactions(long height, Block block) throws VerificationException, BlockStoreException;
-
-    /**
-     * Load newBlock from BlockStore and connect its transactions, returning changes to the set of unspent transactions.
-     * If an error is encountered in a transaction, no changes should be made to the underlying BlockStore.
-     * Only called if(shouldVerifyTransactions())
-     * @throws PrunedException if newBlock does not exist as a {@link StoredUndoableBlock} in the block store.
-     * @throws VerificationException if an attempt was made to spend an already-spent output, or if a transaction incorrectly solved an output script.
-     * @throws BlockStoreException if the block store had an underlying error or newBlock does not exist in the block store at all.
-     * @return The full set of all changes made to the set of open transaction outputs.
-     */
-//    protected abstract TransactionOutputChanges connectTransactions(StoredBlock newBlock) throws VerificationException, BlockStoreException, PrunedException;    
     
     // filteredTxHashList contains all transactions, filteredTxn just a subset
     private boolean add(Block block, boolean tryConnecting,
@@ -495,21 +481,6 @@ public abstract class AbstractBlockGraph {
             return chainHead;
         }
     }
- 
-    /**
-     * Returns an estimate of when the given block will be reached, assuming a perfect 10 minute average for each
-     * block. This is useful for turning transaction lock times into human readable times. Note that a height in
-     * the past will still be estimated, even though the time of solving is actually known (we won't scan backwards
-     * through the chain to obtain the right answer).
-     */
-    public Date estimateBlockTime(int height) {
-        synchronized (chainHeadLock) {
-            long offset = height - chainHead.getHeight();
-            long headTime = chainHead.getHeader().getTimeSeconds();
-            long estimated = (headTime * 1000) + (1000L * 60L * 10L * offset);
-            return new Date(estimated);
-        }
-    }
 
     /**
      * Returns a future that completes when the block chain has reached the given height. Yields the
@@ -528,8 +499,6 @@ public abstract class AbstractBlockGraph {
         });
         return result;
     }
-
-
 
     /**
      * The false positive rate is the average over all blockchain transactions of:
