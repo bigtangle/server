@@ -794,6 +794,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
 			updateBlockEvaluationMilestone(params.getGenesisBlock().getHash(), true);
             updateBlockEvaluationSolid(params.getGenesisBlock().getHash(), true);
+    		insertTip(params.getGenesisBlock().getHash());
         } catch (VerificationException e) {
             throw new RuntimeException(e); // Cannot happen.
         }
@@ -808,35 +809,35 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      *             If there is a block store error.
      */
     public void initFromDatabase() throws SQLException, BlockStoreException {
-        PreparedStatement ps = conn.get().prepareStatement(getSelectSettingsSQL());
-        ResultSet rs;
-        ps.setString(1, CHAIN_HEAD_SETTING);
-        rs = ps.executeQuery();
-        if (!rs.next()) {
-            throw new BlockStoreException("corrupt database block store - no chain head pointer");
-        }
-        byte[] data = rs.getBytes(1);
-        System.out.println("aaa > " + Utils.HEX.encode(data));
-        Sha256Hash hash = Sha256Hash.wrap(data);
-        rs.close();
-        this.chainHeadBlock = get(hash);
-        this.chainHeadHash = hash;
-        if (this.chainHeadBlock == null) {
-            throw new BlockStoreException("corrupt database block store - head block not found");
-        }
-        ps.setString(1, VERIFIED_CHAIN_HEAD_SETTING);
-        rs = ps.executeQuery();
-        if (!rs.next()) {
-            throw new BlockStoreException("corrupt database block store - no verified chain head pointer");
-        }
-        hash = Sha256Hash.wrap(rs.getBytes(1));
-        rs.close();
-        ps.close();
-        this.verifiedChainHeadBlock = get(hash);
-        this.verifiedChainHeadHash = hash;
-        if (this.verifiedChainHeadBlock == null) {
-            throw new BlockStoreException("corrupt databse block store - verified head block not found");
-        }
+//        PreparedStatement ps = conn.get().prepareStatement(getSelectSettingsSQL());
+//        ResultSet rs;
+//        ps.setString(1, CHAIN_HEAD_SETTING);
+//        rs = ps.executeQuery();
+//        if (!rs.next()) {
+//            throw new BlockStoreException("corrupt database block store - no chain head pointer");
+//        }
+//        byte[] data = rs.getBytes(1);
+//        System.out.println("aaa > " + Utils.HEX.encode(data));
+//        Sha256Hash hash = Sha256Hash.wrap(data);
+//        rs.close();
+//        this.chainHeadBlock = get(hash);
+//        this.chainHeadHash = hash;
+//        if (this.chainHeadBlock == null) {
+//            throw new BlockStoreException("corrupt database block store - head block not found");
+//        }
+//        ps.setString(1, VERIFIED_CHAIN_HEAD_SETTING);
+//        rs = ps.executeQuery();
+//        if (!rs.next()) {
+//            throw new BlockStoreException("corrupt database block store - no verified chain head pointer");
+//        }
+//        hash = Sha256Hash.wrap(rs.getBytes(1));
+//        rs.close();
+//        ps.close();
+//        this.verifiedChainHeadBlock = get(hash);
+//        this.verifiedChainHeadHash = hash;
+//        if (this.verifiedChainHeadBlock == null) {
+//            throw new BlockStoreException("corrupt databse block store - verified head block not found");
+//        }
     }
 
     protected void putUpdateStoredBlock(StoredBlock storedBlock, boolean wasUndoable) throws SQLException {

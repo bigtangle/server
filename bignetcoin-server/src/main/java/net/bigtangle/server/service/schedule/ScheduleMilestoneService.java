@@ -26,7 +26,7 @@ public class ScheduleMilestoneService {
             logger.debug(" Start ScheduleMilestoneService: " );
             milestoneService.update();
         } catch (Exception e) {
-        //    logger.warn("updateMilestoneService ", e);
+            logger.warn("updateMilestoneService ", e);
         } 
         }
      

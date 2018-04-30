@@ -150,7 +150,7 @@ public class BlockGraph extends AbstractBlockGraph {
     }
 
 	@Override
-	protected void maybeSetSolidityAndHeight(Block block) throws BlockStoreException {
+	protected void tryFirstSetSolidityAndHeight(Block block) throws BlockStoreException {
 		// TODO Auto-generated method stub
 		
 	}

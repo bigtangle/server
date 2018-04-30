@@ -39,6 +39,7 @@ import net.bigtangle.core.TransactionOutputChanges;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.core.listeners.NewBestBlockListener;
 import net.bigtangle.core.listeners.ReorganizeListener;
+import net.bigtangle.server.service.BlockRequester;
 import net.bigtangle.utils.ListenerRegistration;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.utils.VersionTally;
@@ -375,12 +376,6 @@ public abstract class AbstractBlockGraph {
         // TODO: Use read/write locks to ensure that during tangle download properties are still low latency.
         lock.lock();
         try {
-            // Quick check for duplicates to avoid an expensive check further down (in findSplit). This can happen a lot
-            // when connecting orphan transactions due to the dumb brute force algorithm we use.
-            if (block.equals(getChainHead().getHeader())) {
-                return true;
-            }
-         
             // If we want to verify transactions (ie we are running with full blocks), verify that block has transactions
             if (shouldVerifyTransactions() && block.getTransactions() == null)
                 throw new VerificationException("Got a block header while running in full-block mode");
@@ -404,6 +399,7 @@ public abstract class AbstractBlockGraph {
                 block.verifyHeader();
                 storedPrev = getStoredBlockInCurrentScope(block.getPrevBlockHash());
                 storedPrevBranch = getStoredBlockInCurrentScope(block.getPrevBranchBlockHash());
+                
                 
                 if (storedPrev != null && storedPrevBranch != null) {
                     height = Math.max(storedPrev.getHeight(), storedPrevBranch.getHeight()) + 1;
@@ -448,96 +444,17 @@ public abstract class AbstractBlockGraph {
                               @Nullable final List<Sha256Hash> filteredTxHashList,
                               @Nullable final Map<Sha256Hash, Transaction> filteredTxn) throws BlockStoreException, VerificationException, PrunedException {
         checkState(lock.isHeldByCurrentThread());
-        boolean filtered = filteredTxHashList != null && filteredTxn != null;
-        // Check that we aren't connecting a block that fails a checkpoint check
-        if (!params.passesCheckpoint(
-                Math.max( storedPrev.getHeight(),storedPrevBranch.getHeight()) + 1, block.getHash()))
-            throw new VerificationException("Block failed checkpoint lockin at " + (storedPrev.getHeight() + 1));
-        if (shouldVerifyTransactions()) {
-            checkNotNull(block.getTransactions());
-            for (Transaction tx : block.getTransactions())
-                if (!tx.isFinal(Math.max( storedPrev.getHeight(),storedPrevBranch.getHeight()) + 1, block.getTimeSeconds()))
-                   throw new VerificationException("Block contains non-final transaction");
-        }
-        
-        if (filtered && filteredTxn.size() > 0)  {
-            log.debug("Block {} connects to top of best chain with {} transaction(s) of which we were sent {}",
-                    block.getHashAsString(), filteredTxHashList.size(), filteredTxn.size());
-            for (Sha256Hash hash : filteredTxHashList) log.debug("  matched tx {}", hash);
-        }
-        
-        if (block.getTimeSeconds() < storedPrev.getHeader().getTimeSeconds() || block.getTimeSeconds() < storedPrevBranch.getHeader().getTimeSeconds())
-        	throw new VerificationException("Block's timestamp is too early");
-        
-        // BIP 66 & 65: Enforce block version 3/4 once they are a supermajority of blocks
-        // NOTE: This requires 1,000 blocks since the last checkpoint (on main
-        // net, less on test) in order to be applied. It is also limited to
-        // stopping addition of new v2/3 blocks to the tip of the chain.
-        if (block.getVersion() == Block.BLOCK_VERSION_BIP34
-            || block.getVersion() == Block.BLOCK_VERSION_BIP66) {
-            final Integer count = versionTally.getCountAtOrAbove(block.getVersion() + 1);
-            if (count != null
-                && count >= params.getMajorityRejectBlockOutdated()) {
-                throw new VerificationException.BlockVersionOutOfDate(block.getVersion());
-            }
-        }
 
         // This block connects to the best known block, it is a normal continuation of the system.
         TransactionOutputChanges txOutChanges = null;
         if (shouldVerifyTransactions())
             txOutChanges = connectTransactions(Math.max( storedPrev.getHeight(),storedPrevBranch.getHeight()) + 1, block);
-//            StoredBlock newStoredBlock = addToBlockStore(storedPrev,storedPrevBranch,
-//                    block.transactions == null ? block : block.cloneAsHeader(), txOutChanges);
         StoredBlock newStoredBlock = addToBlockStore(storedPrev,storedPrevBranch, block, txOutChanges);
-        maybeSetSolidityAndHeight(newStoredBlock.getHeader());
-        
-        versionTally.add(block.getVersion());
-        setChainHead(newStoredBlock);
-        log.debug("Chain is now {} blocks high, running listeners", newStoredBlock.getHeight());
-          //  informListenersForNewBlock(block, NewBlockType.BEST_CHAIN, filteredTxHashList, filteredTxn, newStoredBlock);
-//        } else {
-//            // This block connects to somewhere other than the top of the best known chain. We treat these differently.
-//            //
-//            // Note that we send the transactions to the wallet FIRST, even if we're about to re-organize this block
-//            // to become the new best chain head. This simplifies handling of the re-org in the Wallet class.
-//            StoredBlock newBlock = storedPrev.build(block, storedPrevBranch);
-//        
-//                StoredBlock splitPoint = findSplit(newBlock, head, blockStore);
-//                if (splitPoint != null && splitPoint.equals(newBlock)) {
-//                    // newStoredBlock is a part of the same chain, there's no fork. This happens when we receive a block
-//                    // that we already saw and linked into the chain previously, which isn't the chain head.
-//                    // Re-processing it is confusing for the wallet so just skip.
-//                    log.warn("Saw duplicated block in main chain at height {}: {}",
-//                            newBlock.getHeight(), newBlock.getHeader().getHash());
-//                    return;
-//                }
-//                if (splitPoint == null) {
-//                    // This should absolutely never happen
-//                    // (lets not write the full block to disk to keep any bugs which allow this to happen
-//                    //  from writing unreasonable amounts of data to disk)
-//                    throw new VerificationException("Block forks the chain but splitPoint is null");
-//                } else {
-//                    // We aren't actually spending any transactions (yet) because we are on a fork
-//                    addToBlockStore(storedPrev,storedPrevBranch, block);
-//                    int splitPointHeight = splitPoint.getHeight();
-//                    String splitPointHash = splitPoint.getHeader().getHashAsString();
-//                    log.info("Block forks the chain at height {}/block {}, but it did not cause a reorganize:\n{}",
-//                            splitPointHeight, splitPointHash, newBlock.getHeader().getHashAsString());
-//                }
-//            
-//            
-//            // We may not have any transactions if we received only a header, which can happen during fast catchup.
-//            // If we do, send them to the wallet but state that they are on a side chain so it knows not to try and
-//            // spend them until they become activated.
-//            if (block.getTransactions() != null || filtered) {
-//             //   informListenersForNewBlock(block, NewBlockType.SIDE_CHAIN, filteredTxHashList, filteredTxn, newBlock);
-//            }
-//            
-//            
-//        }
+        tryFirstSetSolidityAndHeight(newStoredBlock.getHeader());
+		doSetChainHead(newStoredBlock);
     }
     
-    protected abstract void maybeSetSolidityAndHeight(Block block) throws BlockStoreException;
+    protected abstract void tryFirstSetSolidityAndHeight(Block block) throws BlockStoreException;
 
 	/**
      * Disconnect each transaction in the block (after reading it from the block store)
@@ -547,84 +464,6 @@ public abstract class AbstractBlockGraph {
      */
     protected abstract void removeTransactionsFromMilestone(Block block) throws PrunedException, BlockStoreException;
 
-    /**
-     * Called as part of connecting a block when the new block results in a different chain having higher total work.
-     * 
-     * if (shouldVerifyTransactions)
-     *     Either newChainHead needs to be in the block store as a FullStoredBlock, or (block != null && block.transactions != null)
-     */
-//    private void handleNewBestChain(StoredBlock storedPrev, StoredBlock storedPrevBranch, StoredBlock newChainHead, Block block, boolean expensiveChecks)
-//            throws BlockStoreException, VerificationException, PrunedException {
-//        checkState(lock.isHeldByCurrentThread());
-//        // This chain has overtaken the one we currently believe is best. Reorganize is required.
-//        //
-//        // Firstly, calculate the block at which the chain diverged. We only need to examine the
-//        // chain from beyond this block to find differences.
-//        StoredBlock head = getChainHead();
-//        final StoredBlock splitPoint = findSplit(newChainHead, head, blockStore);
-//        log.info("Re-organize after split at height {}", splitPoint.getHeight());
-//        log.info("Old chain head: {}", head.getHeader().getHashAsString());
-//        log.info("New chain head: {}", newChainHead.getHeader().getHashAsString());
-//        log.info("Split at block: {}", splitPoint.getHeader().getHashAsString());
-//        // Then build a list of all blocks in the old part of the chain and the new part.
-//        final LinkedList<StoredBlock> oldBlocks = getPartialChain(head, splitPoint, blockStore);
-//        final LinkedList<StoredBlock> newBlocks = getPartialChain(newChainHead, splitPoint, blockStore);
-//        // Disconnect each transaction in the previous main chain that is no longer in the new main chain
-//        StoredBlock storedNewHead = splitPoint;
-//        if (shouldVerifyTransactions()) {
-//            for (StoredBlock oldBlock : oldBlocks) {
-//                try {
-//                    //disconnectTransactions(oldBlock);
-//                } catch (PrunedException e) {
-//                    // We threw away the data we need to re-org this deep! We need to go back to a peer with full
-//                    // block contents and ask them for the relevant data then rebuild the indexs. Or we could just
-//                    // give up and ask the human operator to help get us unstuck (eg, rescan from the genesis block).
-//                    // TODO: Retry adding this block when we get a block with hash e.getHash()
-//                    throw e;
-//                }
-//            }
-//            StoredBlock cursor;
-//            // Walk in ascending chronological order.
-//            for (Iterator<StoredBlock> it = newBlocks.descendingIterator(); it.hasNext();) {
-//                cursor = it.next();
-//                Block cursorBlock = cursor.getHeader();
-//                if (expensiveChecks && cursorBlock.getTimeSeconds() <= getMedianTimestampOfRecentBlocks(cursor.getPrev(blockStore), blockStore))
-//                    throw new VerificationException("Block's timestamp is too early during reorg");
-//                TransactionOutputChanges txOutChanges;
-//                if (cursor != newChainHead || block == null)
-//                    txOutChanges = connectTransactions(cursor);
-//                else
-//                    txOutChanges = connectTransactions(newChainHead.getHeight(), block);
-//                storedNewHead = addToBlockStore(storedNewHead, storedPrevBranch,cursorBlock.cloneAsHeader(), txOutChanges);
-//            }
-//        } else {
-//            // (Finally) write block to block store
-//            storedNewHead = addToBlockStore(storedPrev, storedPrevBranch, newChainHead.getHeader());
-//        }
-//        // Now inform the listeners. This is necessary so the set of currently active transactions (that we can spend)
-//        // can be updated to take into account the re-organize. We might also have received new coins we didn't have
-//        // before and our previous spends might have been undone.
-//        for (final ListenerRegistration<ReorganizeListener> registration : reorganizeListeners) {
-//            if (registration.executor == Threading.SAME_THREAD) {
-//                // Short circuit the executor so we can propagate any exceptions.
-//                // TODO: Do we really need to do this or should it be irrelevant?
-//                registration.listener.reorganize(splitPoint, oldBlocks, newBlocks);
-//            } else {
-//                registration.executor.execute(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        try {
-//                            registration.listener.reorganize(splitPoint, oldBlocks, newBlocks);
-//                        } catch (VerificationException e) {
-//                            log.error("Block chain listener threw exception during reorg", e);
-//                        }
-//                    }
-//                });
-//            }
-//        }
-//        // Update the pointer to the best known block.
-//        setChainHead(storedNewHead);
-//    }
 
     
     // TODO Remove these
