@@ -35,12 +35,7 @@
                   <RadioButton fx:id="milionRadioButton" mnemonicParsing="false" text="%milion" toggleGroup="$unitToggleGroup" />
                </children>
             </HBox>
-            <HBox prefHeight="43.0" prefWidth="641.0" spacing="20.0">
-               <children>
-                  <Label prefHeight="24.0" prefWidth="71.0" text="%linkname" />
-                  <TextField fx:id="linknameTextField" prefHeight="25.0" prefWidth="281.0" />
-               </children>
-            </HBox>
+          
 				<HBox alignment="CENTER_LEFT" spacing="15.0">
 					<children>
 						<Label text="%to">

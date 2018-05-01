@@ -27,7 +27,7 @@
 						</AnchorPane>
 					</content>
 				</Tab>
-				<Tab closable="false" text="%add">
+				<Tab closable="false" text="%create">
 					<content>
                   <AnchorPane maxHeight="550.0" maxWidth="990.0" minHeight="550.0" minWidth="990.0" prefHeight="550.0" prefWidth="990.0">
                      <children>

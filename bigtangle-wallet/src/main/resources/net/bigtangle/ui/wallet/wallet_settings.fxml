@@ -35,14 +35,14 @@
 				</HBox>
 				<TextArea fx:id="wordsArea" layoutX="22.0" layoutY="155.0"
 					prefHeight="127.0" prefWidth="561.0" styleClass="mnemonic-area"
-					text="%w_s" wrapText="true" AnchorPane.leftAnchor="22.0"
+					text="" wrapText="true" AnchorPane.leftAnchor="22.0"
 					AnchorPane.rightAnchor="17.0">
 					<font>
 						<Font size="30.0" />
 					</font>
 				</TextArea>
 				<Label layoutX="22.0" layoutY="83.0" prefHeight="52.0"
-					prefWidth="561.0" text="%w_s1" wrapText="true" />
+					prefWidth="561.0" text="" wrapText="true" />
 				<HBox alignment="CENTER_RIGHT" layoutX="22.0" layoutY="292.0"
 					prefHeight="26.0" prefWidth="561.0" spacing="10.0"
 					AnchorPane.rightAnchor="17.0">

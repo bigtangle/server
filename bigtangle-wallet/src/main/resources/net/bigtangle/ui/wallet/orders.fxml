@@ -68,7 +68,7 @@
 						</AnchorPane>
 					</content>
 				</Tab>
-				<Tab closable="false" text="%add">
+				<Tab closable="false" text="%Order">
 					<content>
 						<AnchorPane>
 							<children>

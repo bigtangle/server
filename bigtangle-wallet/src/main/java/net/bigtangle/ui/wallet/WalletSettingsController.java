@@ -101,12 +101,12 @@ public class WalletSettingsController {
         final List<String> mnemonicCode = seed.getMnemonicCode();
         checkNotNull(mnemonicCode); // Already checked for encryption.
         String origWords = Utils.join(mnemonicCode);
-        wordsArea.setText(origWords);
+       // wordsArea.setText(origWords);
 
         // Validate words as they are being typed.
         MnemonicCode codec = unchecked(MnemonicCode::new);
-        TextFieldValidator validator = new TextFieldValidator(wordsArea,
-                text -> !didThrow(() -> codec.check(Splitter.on(' ').splitToList(text))));
+//        TextFieldValidator validator = new TextFieldValidator(wordsArea,
+//                text -> !didThrow(() -> codec.check(Splitter.on(' ').splitToList(text))));
 
         // Clear the date picker if the user starts editing the words, if it
         // contained the current wallets date.
@@ -124,9 +124,9 @@ public class WalletSettingsController {
         // Don't let the user click restore if the words area contains the
         // current wallet words, or are an invalid set,
         // or if the date field isn't set, or if it's in the future.
-        restoreButton.disableProperty().bind(or(or(not(validator.valid), equal(origWords, wordsArea.textProperty())),
+    //    restoreButton.disableProperty().bind(or(or(not(validator.valid), equal(origWords, wordsArea.textProperty())),
 
-                datePickerIsInvalid));
+      //          datePickerIsInvalid));
 
         // Highlight the date picker in red if it's empty or in the future, so
         // the user knows why restore is disabled.

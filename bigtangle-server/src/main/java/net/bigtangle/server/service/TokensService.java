@@ -12,6 +12,7 @@ import net.bigtangle.core.Tokens;
 import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.GetTokensResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.utils.MonetaryFormat;
 
 @Service
 public class TokensService {
@@ -21,9 +22,9 @@ public class TokensService {
         
         Tokens tokens = new Tokens();
         tokens.setTokenid(NetworkParameters.BIGNETCOIN_TOKENID);
-        tokens.setTokenname("default");
+        tokens.setTokenname( MonetaryFormat.CODE_BTC );
         tokens.setAmount(100000L);
-        tokens.setDescription("default");
+       // tokens.setDescription("default");
         tokens.setBlocktype((int) NetworkParameters.BLOCKTYPE_GENESIS);
         
         list.add(tokens);
