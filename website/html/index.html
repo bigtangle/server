@@ -47,10 +47,13 @@
 						href="#contact">FAQ</a></li>
 					<li class="nav-item"><a class="nav-link "
 						href="whitepaper.pdf" target="_blank">Whitepaper</a></li>
+					<!--  
 					<li class="nav-item"><a class="nav-link"
 						href="//blog.bigtangle.net">Blog</a></li>
+						
 					<li class="nav-item"><a class="nav-link" href="imprint.html">Imprint</a>
 					</li>
+					-->
 				</ul>
 			</div>
 		</div>
@@ -64,21 +67,14 @@
 			</h1>
 			<p class="lead">
 				<big><b><img src="img/whitelogo.png" height="19" />
-						BigTangle</b></big> BigTangle is a cryptocurrency and cryptocurrency network
-				extending the Tangle directed acyclic graph (DAG) architecture. It
-				retains the advantages of recent approaches such as feelessness and
-				low latency transactions while solving scalability issues of current
-				implementations. Through the use of industry standard big data
-				technology (Spark, Phoenix, Kafka ...) in conjunction with the
-				parallelizable Tangle architecture, it is intended for nodes to run
-				on computer clusters, therefore no longer being limited by single
-				machine performance. Additionally, BigTangle employs a
-				Proof-of-Work-based DAG mining process to introduce inflation and
-				network validation incentives. The transaction consensus is achieved
-				in a completely decentralized manner and does not rely on any
-				centralized instances. Finally, custom token self-issuances are
-				supported to enable a number of economic key use cases via
-				sufficient throughput.
+						BigTangle</b></big> BigTangle is a cryptocurrency network extending the
+				directed acyclic graph architecture. Through the use of industry
+				standard big data technology in conjunction with the parallelizable
+				architecture, it is intended for nodes to run on computer clusters,
+				therefore no longer being limited by single machine performance. The
+				transaction consensus is achieved in a completely decentralized
+				manner and custom token self-issuances are supported to enable a
+				number of economic key use cases via sufficient throughput.
 			</p>
 			<!--   	<div class="row">
 			<div class="col-lg-12 mx-auto">
@@ -92,7 +88,34 @@
 		</div>
 	</header>
 
-	<section id="about">
+
+	<section id="services" class="bg-light">
+		<div class="container">
+			<div class="row">
+				<div class="col-lg-12 mx-auto">
+					<h2>Wallet</h2>
+					<p class="lead">
+						Wallet Application. Please download the wallet zip file and
+						extract to directory. On the windows, click the file
+						bin\bigtangle-wallet.bat to start the wallet application. <br>On
+						Linux/Mac, please start the shell bin/bigtangle-wallet
+					</p>
+					<button type="button" class="btn"
+						onclick="window.open('http://bigtangle.net/bigtangle-wallet-0.1.0.zip');">
+						<span class="fas fa-download"></span> Download from Server in
+						Europa
+					</button>
+					<button type="button" class="btn"
+						onclick="window.open('http://cn.bigtangle.net:5184/bigtangle-wallet-0.1.0.zip');">
+						<span class="fas fa-download"></span> Download from Server in
+						China
+					</button>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<section id="usecases">
 		<div class="container">
 			<div class="row">
 				<div class="col-lg-12 mx-auto">
@@ -122,9 +145,8 @@
 							<div class="card mb-4 box-shadow">
 								<!--<img src="img/svg/015-strategy.svg" class="card-img-top">-->
 								<div class="card-header">Infinite Scalability</div>
-								<div class="card-body">The throughput can be improved by
-									orders-of-magnitude over Bitcoin. The implementation is based
-									on big data technology and can process million transactions per
+								<div class="card-body">The implementation is based on big
+									data technology and can process million transactions per
 									second. This technology comes out with features required for
 									worldwide global scale transaction.</div>
 							</div>
@@ -132,13 +154,12 @@
 						<div class="col-md-4">
 							<div class="card mb-4 box-shadow">
 								<!--<img src="img/svg/035-teamwork.svg" class="card-img-top">-->
-								<div class="card-header">Distributed Proof of Work</div>
+								<div class="card-header">Distributed Proof of Work and
+									Quantum Secure</div>
 								<div class="card-body"></div>
-								We spit the function into two parts as client and server as
-								miner. The client will do the transaction and must do the
-								proof-of-work for the secure transaction. The server works as
-								miner and provides the service for the clients and will be
-								rewarded.
+								The client will do the transaction and must do the proof-of-work
+								for the secure transaction. The server works as miner and
+								provides the service for the clients and will be rewarded.
 							</div>
 						</div>
 						<div class="col-md-4">
@@ -160,38 +181,10 @@
 								<div class="card-body">BigTangle sees itself as a
 									successor to Bitcoin, focusing on economically important key
 									use-cases. It supports all functions supported by Bitcoin,
-									including but not limited to mining process, escrow
-									transactions, bonded contracts, third-party arbitration,
-									multiparty signatures etc.</div>
+									including but not limited to mining process.</div>
 							</div>
 						</div>
 					</div>
-				</div>
-			</div>
-		</div>
-	</section>
-
-	<section id="services" class="bg-light">
-		<div class="container">
-			<div class="row">
-				<div class="col-lg-12 mx-auto">
-					<h2>Wallet</h2>
-					<p class="lead">
-						Wallet Application. Please download the wallet zip file and
-						extract to directory. On the windows, click the file
-						bin\bigtangle-wallet.bat to start the wallet application. <br>On
-						Linux/Mac, please start the shell bin/bigtangle-wallet
-					</p>
-					<button type="button" class="btn"
-						onclick="window.open('http://bigtangle.net/bigtangle-wallet-0.1.0.zip');">
-						<span class="fas fa-download"></span> Download from Server in
-						Europa
-					</button>
-					<button type="button" class="btn"
-						onclick="window.open('http://cn.bigtangle.net:5184/bigtangle-wallet-0.1.0.zip');">
-						<span class="fas fa-download"></span> Download from Server in
-						China
-					</button>
 				</div>
 			</div>
 		</div>
