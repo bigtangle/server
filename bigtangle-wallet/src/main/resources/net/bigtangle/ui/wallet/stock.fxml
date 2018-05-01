@@ -15,7 +15,7 @@
 							<children>
 												<TableView fx:id="tokensTable" maxWidth="980.0" minHeight="500.0" minWidth="980.0" prefHeight="437.0" prefWidth="980.0">
 													<columns>
-														<TableColumn fx:id="tokenHexColumn" prefWidth="300.0" text="%TokenHex" />
+														<TableColumn fx:id="tokenHexColumn" prefWidth="300.0" text="%Token" />
 														<TableColumn fx:id="tokennameColumn" prefWidth="89.0" text="%tokenname" />
 														<TableColumn fx:id="amountColumn" prefWidth="95.0" text="%Amount" />
 														<TableColumn fx:id="blocktypeColumn" prefWidth="105.0" text="%blocktype" />
