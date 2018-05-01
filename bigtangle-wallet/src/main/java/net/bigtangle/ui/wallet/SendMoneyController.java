@@ -47,6 +47,7 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.InsufficientMoneyException;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Transaction;
@@ -302,9 +303,10 @@ public class SendMoneyController {
 
     public void send(ActionEvent event) {
         try {
-            Main.addAddress2file(linknameTextField.getText(),
-                    !addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
-                            : addressComboBox.getValue().split(",")[1]);
+            // Main.addAddress2file(linknameTextField.getText(),
+            // !addressComboBox.getValue().contains(",") ?
+            // addressComboBox.getValue()
+            // : addressComboBox.getValue().split(",")[1]);
             checkGuiThread();
             overlayUI.done();
             String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
@@ -326,16 +328,21 @@ public class SendMoneyController {
 
             amount = amount.multiply(factor);
             SendRequest request = SendRequest.to(destination, amount);
-            wallet.completeTx(request);
-            rollingBlock.addTransaction(request.tx);
-            rollingBlock.solve();
+            try {
+                wallet.completeTx(request);
+                rollingBlock.addTransaction(request.tx);
+                rollingBlock.solve();
+            } catch (InsufficientMoneyException e) {
 
+                GuiUtils.informationalAlert(Main.getText("m_n_e"), Main.getText("m_n_e"), "");
+                return;
+            }
             Main.instance.sendMessage(rollingBlock.bitcoinSerialize());
-         
-          //  Main.instance.sentEmpstyBlock(2);
-            
+
+            // Main.instance.sentEmpstyBlock(2);
+
             Main.instance.controller.initTableView();
-            
+
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }

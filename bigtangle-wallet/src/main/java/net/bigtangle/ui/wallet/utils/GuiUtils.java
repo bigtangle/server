@@ -70,10 +70,8 @@ public class GuiUtils {
     }
 
     public static void crashAlert(Throwable t) {
-        if (t instanceof InsufficientMoneyException) {
-            GuiUtils.informationalAlert(Main.getText("m_n_e"), Main.getText("m_n_e"), "");
-        }
-        t.printStackTrace();
+        
+     
         Throwable rootCause = Throwables.getRootCause(t);
         Runnable r = () -> {
             runAlert((stage, controller) -> controller.crashAlert(stage, rootCause.toString()));
