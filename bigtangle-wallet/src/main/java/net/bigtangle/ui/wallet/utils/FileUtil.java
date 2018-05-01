@@ -1,3 +1,7 @@
+/*******************************************************************************
+ *  Copyright   2018  Inasset GmbH. 
+ *  
+ *******************************************************************************/
 package net.bigtangle.ui.wallet.utils;
 
 import java.io.BufferedInputStream;

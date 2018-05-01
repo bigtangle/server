@@ -1,3 +1,7 @@
+/*******************************************************************************
+ *  Copyright   2018  Inasset GmbH. 
+ *  
+ *******************************************************************************/
 package net.bigtangle.kafka;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;

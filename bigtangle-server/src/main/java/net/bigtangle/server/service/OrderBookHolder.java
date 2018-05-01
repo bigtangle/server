@@ -1,3 +1,7 @@
+/*******************************************************************************
+ *  Copyright   2018  Inasset GmbH. 
+ *  
+ *******************************************************************************/
 package net.bigtangle.server.service;
 
 import java.util.concurrent.ConcurrentHashMap;

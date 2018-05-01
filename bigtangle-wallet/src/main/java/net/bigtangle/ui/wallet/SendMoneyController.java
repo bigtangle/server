@@ -133,7 +133,7 @@ public class SendMoneyController {
 
         ObservableList<String> addressData = FXCollections.observableArrayList(list);
         addressComboBox.setItems(addressData);
-
+       // new BitcoinAddressValidator(Main.params, addressComboBox, sendBtn);
         new TextFieldValidator(amountEdit, text -> !WTUtils
                 .didThrow(() -> checkState(Coin.parseCoin(text, NetworkParameters.BIGNETCOIN_TOKENID).isPositive())));
 
@@ -309,6 +309,10 @@ public class SendMoneyController {
             // : addressComboBox.getValue().split(",")[1]);
             checkGuiThread();
             overlayUI.done();
+            if(addressComboBox.getValue()==null) {
+                GuiUtils.informationalAlert(Main.getText("address_empty"), "", "");
+                return; 
+            }
             String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
             Address destination = // Address.getParametersFromAddress(address)address.getText()
                     Address.fromBase58(Main.params,
@@ -334,7 +338,7 @@ public class SendMoneyController {
                 rollingBlock.solve();
             } catch (InsufficientMoneyException e) {
 
-                GuiUtils.informationalAlert(Main.getText("m_n_e"), Main.getText("m_n_e"), "");
+                GuiUtils.informationalAlert(Main.getText("m_n_e"),"", "");
                 return;
             }
             Main.instance.sendMessage(rollingBlock.bitcoinSerialize());
