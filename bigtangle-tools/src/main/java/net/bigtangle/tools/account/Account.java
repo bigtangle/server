@@ -79,8 +79,8 @@ public class Account {
         return "account_" + walletPath;
     }
 
-    public Random0 getRandom0() {
-        return new Random0("", "");
+    public RandomTrade getRandomTrade() {
+        return new RandomTrade("", "");
     }
 
     public ECKey getRandomECKey() {
