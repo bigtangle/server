@@ -36,10 +36,10 @@
 				<Button mnemonicParsing="false" onAction="#orders" text="%market" />
 				<Button fx:id="stock" onAction="#stockPublish" text="%Token" />
 				<Button fx:id="exchange" mnemonicParsing="false" onAction="#exchangeCoin" text="%Exchange" />
-
+				<Button mnemonicParsing="false" onAction="#modyfySIgn" text="%multiSign" />
 				<Button mnemonicParsing="false" onAction="#blockEvaluation" text="%Blocks" />
 				<Button mnemonicParsing="false" onAction="#eckeyList" text="%Keys" />
-				<Button mnemonicParsing="false" onAction="#modyfySIgn" text="%multiSign" />
+			
 				<Button onAction="#settingsClicked" text="%Settings" />
 			</children>
 		</HBox>
