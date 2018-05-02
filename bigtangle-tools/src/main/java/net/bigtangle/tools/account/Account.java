@@ -10,10 +10,10 @@ import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.tools.action.Action;
 import net.bigtangle.tools.action.impl.BalancesAction;
 import net.bigtangle.tools.action.impl.BuyOrderAction;
-import net.bigtangle.tools.action.impl.ExchangeAction;
 import net.bigtangle.tools.action.impl.PayAction;
 import net.bigtangle.tools.action.impl.SellOrderAction;
 import net.bigtangle.tools.action.impl.SignOrderAction;
+import net.bigtangle.tools.action.impl.TokenAction;
 import net.bigtangle.tools.action.impl.TransferAction;
 import net.bigtangle.tools.config.Configure;
 import net.bigtangle.tools.thread.TradeRun;
@@ -26,6 +26,8 @@ public class Account {
     private List<Action> executes = new ArrayList<Action>();
 
     private Random random = new Random();
+    
+//    private List<String> tokenHexList = new ArrayList<String>();
 
     public List<ECKey> walletKeys() throws Exception {
         List<ECKey> walletKeys = walletAppKit.wallet().walletKeys(aesKey);
@@ -34,7 +36,7 @@ public class Account {
 
     private KeyParameter aesKey = null;
 
-    public Account(String walletPath) {
+    public Account(String walletPath) throws Exception {
         this.walletPath = walletPath;
         this.initialize();
     }
@@ -53,14 +55,28 @@ public class Account {
 
     private WalletAppKit walletAppKit;
 
-    public void initialize() {
+//    @SuppressWarnings("unchecked")
+    public void initialize() throws Exception {
         // init wallet
         walletAppKit = new WalletAppKit(Configure.PARAMS, new File("."), walletPath);
         walletAppKit.wallet().setServerURL(Configure.CONTEXT_ROOT);
 
         // give amount
-        Action action = new PayAction(this);
-        action.execute();
+        Action action1 = new PayAction(this);
+        action1.execute();
+        // gen token
+        Action action2 = new TokenAction(this);
+        action2.execute();
+        
+//        for (ECKey ecKey : this.walletKeys()) {
+//            String resp = OkHttp3Util.post(Configure.CONTEXT_ROOT + "getTokens", ecKey.getPubKeyHash());
+//            final Map<String, Object> data = Json.jsonmapper().readValue(resp, Map.class);
+//            List<Map<String, Object>> tokens = (List<Map<String, Object>>) data.get("tokens");
+//            for (Map<String, Object> map : tokens) {
+//                String tokenHex = (String) map.get("tokenHex");
+//                tokenHexList.add(tokenHex);
+//            }
+//        }
 
         // init action
         this.executes.add(new BalancesAction(this));
@@ -68,7 +84,6 @@ public class Account {
         this.executes.add(new SellOrderAction(this));
         this.executes.add(new TransferAction(this));
         this.executes.add(new SignOrderAction(this));
-        this.executes.add(new ExchangeAction(this));
     }
 
     public void doAction() {
@@ -90,7 +105,9 @@ public class Account {
     }
 
     public RandomTrade getRandomTrade() {
-        return new RandomTrade("", "");
+        ECKey ecKey = this.getRandomECKey();
+        String address = ecKey.toAddress(Configure.PARAMS).toBase58();
+        return new RandomTrade(address, ecKey.getPublicKeyAsHex());
     }
 
     public ECKey getRandomECKey() {
