@@ -311,8 +311,8 @@ public class SendMoneyController {
             // !addressComboBox.getValue().contains(",") ?
             // addressComboBox.getValue()
             // : addressComboBox.getValue().split(",")[1]);
-            checkGuiThread();
-            overlayUI.done();
+            //checkGuiThread();
+           // overlayUI.done();
             if (addressComboBox.getValue() == null) {
                 GuiUtils.informationalAlert(Main.getText("address_empty"), "", "");
                 return;
