@@ -24,6 +24,7 @@ import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Utils;
 import net.bigtangle.order.match.OrderBook;
 import net.bigtangle.order.match.OrderBookEvents;
+import net.bigtangle.order.match.OrderBookEvents.Add;
 import net.bigtangle.order.match.Side;
 import net.bigtangle.server.response.GetTokensResponse;
 import net.bigtangle.server.service.OrderBookHolder;
@@ -46,7 +47,7 @@ public class ScheduleOrderMatchService {
     @Autowired
     protected FullPrunedBlockStore store;
 
-    @Scheduled(fixedRateString = "${service.orderMatchService.rate:10000}")
+    @Scheduled(fixedRateString = "1000")
     public void updateMatch() {
         try {
              logger.info("cal order match start");
@@ -90,6 +91,12 @@ public class ScheduleOrderMatchService {
                             this.store.updateOrderPublishState(incomingOrder.getOrderid(), OrderState.match.ordinal());
                             this.store.updateOrderPublishState(restingOrder.getOrderid(), OrderState.match.ordinal());
                             iterator.remove();
+                        }
+                        else {
+                            Add add = (Add) event;
+                            if (add.side == Side.SELL) {
+                                System.out.println(add);
+                            }
                         }
                     }
                 } finally {

@@ -49,7 +49,11 @@ public class OrderPublishService {
         store.saveOrderPublish(order);
         
         OrderBook orderBook = orderBookHolder.getOrderBookWithTokenId(tokenid);
-        if (orderBook != null) {
+        synchronized (this) {
+            if (orderBook == null) {
+                orderBook = orderBookHolder.createOrderBook();
+                orderBookHolder.addOrderBook(tokenid, orderBook);
+            }
             orderBook.enter(order.getOrderid(), type == 1 ? Side.SELL : Side.BUY, price, amount);
         }
         return AbstractResponse.createEmptyResponse();
