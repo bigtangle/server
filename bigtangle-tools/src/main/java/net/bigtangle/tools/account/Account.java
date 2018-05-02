@@ -26,8 +26,8 @@ public class Account {
     private List<Action> executes = new ArrayList<Action>();
 
     private Random random = new Random();
-    
-//    private List<String> tokenHexList = new ArrayList<String>();
+
+    // private List<String> tokenHexList = new ArrayList<String>();
 
     public List<ECKey> walletKeys() throws Exception {
         List<ECKey> walletKeys = walletAppKit.wallet().walletKeys(aesKey);
@@ -36,11 +36,11 @@ public class Account {
 
     private KeyParameter aesKey = null;
 
-    public Account(String walletPath) throws Exception {
+    public Account(String walletPath) {
         this.walletPath = walletPath;
         this.initialize();
     }
-    
+
     public boolean calculatedAddressHit(String address) throws Exception {
         for (ECKey key : this.walletKeys()) {
             String n = key.toAddress(Configure.PARAMS).toString();
@@ -55,28 +55,24 @@ public class Account {
 
     private WalletAppKit walletAppKit;
 
-//    @SuppressWarnings("unchecked")
-    public void initialize() throws Exception {
+    // @SuppressWarnings("unchecked")
+    public void initialize() {
         // init wallet
         walletAppKit = new WalletAppKit(Configure.PARAMS, new File("."), walletPath);
         walletAppKit.wallet().setServerURL(Configure.CONTEXT_ROOT);
 
-        // give amount
-        Action action1 = new PayAction(this);
-        action1.execute();
-        // gen token
-        Action action2 = new TokenAction(this);
-        action2.execute();
-        
-//        for (ECKey ecKey : this.walletKeys()) {
-//            String resp = OkHttp3Util.post(Configure.CONTEXT_ROOT + "getTokens", ecKey.getPubKeyHash());
-//            final Map<String, Object> data = Json.jsonmapper().readValue(resp, Map.class);
-//            List<Map<String, Object>> tokens = (List<Map<String, Object>>) data.get("tokens");
-//            for (Map<String, Object> map : tokens) {
-//                String tokenHex = (String) map.get("tokenHex");
-//                tokenHexList.add(tokenHex);
-//            }
-//        }
+        try {
+            // give amount
+            Action action1 = new PayAction(this);
+            action1.execute();
+        } catch (Exception e) {
+        }
+        try {
+            // gen token
+            Action action2 = new TokenAction(this);
+            action2.execute();
+        } catch (Exception e) {
+        }
 
         // init action
         this.executes.add(new BalancesAction(this));
@@ -126,7 +122,7 @@ public class Account {
     public void completeTransaction(SendRequest request) throws Exception {
         this.walletAppKit.wallet().completeTx(request);
     }
-    
+
     public void signTransaction(SendRequest request) throws Exception {
         this.walletAppKit.wallet().signTransaction(request);
     }

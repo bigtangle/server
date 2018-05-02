@@ -15,6 +15,9 @@ public class TradeRun implements Runnable {
         while (true) {
             try {
                 this.account.doAction();
+                Thread.sleep(2000);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
             finally {
             }
