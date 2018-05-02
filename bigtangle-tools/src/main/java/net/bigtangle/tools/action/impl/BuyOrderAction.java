@@ -31,7 +31,7 @@ public class BuyOrderAction extends Action {
             requestParams.put("address", ecKey.toAddress(Configure.PARAMS).toBase58());
             String tokenHex = TokenPost.getInstance().randomTokenHex();
             requestParams.put("tokenid", tokenHex);
-            requestParams.put("type", 0);
+            requestParams.put("type", 2);
             requestParams.put("price", 10);
             requestParams.put("amount", 10);
             String data = OkHttp3Util.post(Configure.CONTEXT_ROOT + "saveOrder", Json.jsonmapper().writeValueAsString(requestParams).getBytes());

@@ -76,8 +76,8 @@ public class Account {
         this.executes.add(new BalancesAction(this));
         this.executes.add(new BuyOrderAction(this));
         this.executes.add(new SellOrderAction(this));
-        this.executes.add(new TransferAction(this));
-        this.executes.add(new SignOrderAction(this));
+//        this.executes.add(new TransferAction(this));
+//        this.executes.add(new SignOrderAction(this));
     }
 
     public void doAction() {
