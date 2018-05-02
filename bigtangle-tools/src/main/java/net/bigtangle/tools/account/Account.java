@@ -60,20 +60,18 @@ public class Account {
         // init wallet
         walletAppKit = new WalletAppKit(Configure.PARAMS, new File("."), walletPath);
         walletAppKit.wallet().setServerURL(Configure.CONTEXT_ROOT);
-
-        try {
-            // give amount
-            Action action1 = new PayAction(this);
-            action1.execute();
-        } catch (Exception e) {
-        }
         try {
             // gen token
             Action action2 = new TokenAction(this);
             action2.execute();
         } catch (Exception e) {
         }
-
+        try {
+            // give amount
+            Action action1 = new PayAction(this);
+            action1.execute();
+        } catch (Exception e) {
+        }
         // init action
         this.executes.add(new BalancesAction(this));
         this.executes.add(new BuyOrderAction(this));
