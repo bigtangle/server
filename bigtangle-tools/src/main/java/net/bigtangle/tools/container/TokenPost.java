@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import net.bigtangle.core.Json;
 import net.bigtangle.tools.config.Configure;
@@ -30,5 +31,11 @@ public class TokenPost extends ArrayList<String> {
             String tokenHex = (String) map.get("tokenHex");
             this.add(tokenHex);
         }
+    }
+
+    public String randomTokenHex() {
+        Random random = new Random();
+        int index = random.nextInt(this.size());
+        return this.get(index);
     }
 }
