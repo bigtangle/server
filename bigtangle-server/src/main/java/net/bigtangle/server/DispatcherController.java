@@ -14,18 +14,6 @@ import java.util.Set;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 
-import net.bigtangle.core.Json;
-import net.bigtangle.core.Utils;
-import net.bigtangle.kafka.KafkaMessageProducer;
-import net.bigtangle.server.response.AbstractResponse;
-import net.bigtangle.server.response.GetBlockEvaluationsResponse;
-import net.bigtangle.server.service.BlockService;
-import net.bigtangle.server.service.ExchangeService;
-import net.bigtangle.server.service.OrderPublishService;
-import net.bigtangle.server.service.TokensService;
-import net.bigtangle.server.service.TransactionService;
-import net.bigtangle.server.service.WalletService;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +22,17 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+
+import net.bigtangle.core.Json;
+import net.bigtangle.core.Utils;
+import net.bigtangle.server.response.AbstractResponse;
+import net.bigtangle.server.response.GetBlockEvaluationsResponse;
+import net.bigtangle.server.service.BlockService;
+import net.bigtangle.server.service.ExchangeService;
+import net.bigtangle.server.service.OrderPublishService;
+import net.bigtangle.server.service.TokensService;
+import net.bigtangle.server.service.TransactionService;
+import net.bigtangle.server.service.WalletService;
 
 @RestController
 @RequestMapping("/")
@@ -61,7 +60,7 @@ public class DispatcherController {
 
     public static int numberOfEmptyBlocks = 3;
 
-    @Autowired private KafkaMessageProducer kafkaMessageProducer;
+    // @Autowired private KafkaMessageProducer kafkaMessageProducer;
     
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
     public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] bodyByte,

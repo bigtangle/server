@@ -47,13 +47,14 @@ public class ScheduleOrderMatchService {
     @Autowired
     protected FullPrunedBlockStore store;
 
-    @Scheduled(fixedRateString = "1000")
+    @Scheduled(fixedRateString = "10000")
     public void updateMatch() {
         try {
              logger.info("cal order match start");
             GetTokensResponse getTokensResponse = (GetTokensResponse) tokensService.getTokensList();
             for (Tokens tokens : getTokensResponse.getTokens()) {
                 String tokenSTR = tokens.getTokenHex();
+                System.out.println(tokenSTR);
                 OrderBook orderBook = orderBookHolder.getOrderBookWithTokenId(tokenSTR);
                 if (orderBook == null) {
                     orderBookHolder.addOrderBook(tokenSTR, orderBookHolder.createOrderBook());
