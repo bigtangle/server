@@ -10,6 +10,7 @@ import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.tools.action.Action;
 import net.bigtangle.tools.action.impl.BalancesAction;
 import net.bigtangle.tools.action.impl.BuyOrderAction;
+import net.bigtangle.tools.action.impl.ExchangeAction;
 import net.bigtangle.tools.action.impl.PayAction;
 import net.bigtangle.tools.action.impl.SellOrderAction;
 import net.bigtangle.tools.action.impl.SignOrderAction;
@@ -57,6 +58,7 @@ public class Account {
         this.executes.add(new SellOrderAction(this));
         this.executes.add(new TransferAction(this));
         this.executes.add(new SignOrderAction(this));
+        this.executes.add(new ExchangeAction(this));
     }
 
     public void doAction() {
