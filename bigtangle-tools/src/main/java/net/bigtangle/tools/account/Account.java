@@ -1,7 +1,7 @@
 package net.bigtangle.tools.account;
 
 import java.io.File;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -12,6 +12,7 @@ import net.bigtangle.tools.action.impl.BalancesAction;
 import net.bigtangle.tools.action.impl.BuyOrderAction;
 import net.bigtangle.tools.action.impl.PayAction;
 import net.bigtangle.tools.action.impl.SellOrderAction;
+import net.bigtangle.tools.action.impl.SignOrderAction;
 import net.bigtangle.tools.action.impl.TransferAction;
 import net.bigtangle.tools.config.Configure;
 import net.bigtangle.tools.thread.TradeRun;
@@ -21,7 +22,7 @@ import org.spongycastle.crypto.params.KeyParameter;
 
 public class Account {
 
-    private HashMap<String, Action> executes = new HashMap<String, Action>();
+    private List<Action> executes = new ArrayList<Action>();
 
     private Random random = new Random();
 
@@ -51,10 +52,11 @@ public class Account {
         action.execute();
 
         // init action
-        this.executes.put(BalancesAction.class.getSimpleName(), new BalancesAction(this));
-        this.executes.put(BuyOrderAction.class.getSimpleName(), new BuyOrderAction(this));
-        this.executes.put(SellOrderAction.class.getSimpleName(), new SellOrderAction(this));
-        this.executes.put(TransferAction.class.getSimpleName(), new TransferAction(this));
+        this.executes.add(new BalancesAction(this));
+        this.executes.add(new BuyOrderAction(this));
+        this.executes.add(new SellOrderAction(this));
+        this.executes.add(new TransferAction(this));
+        this.executes.add(new SignOrderAction(this));
     }
 
     public void doAction() {
@@ -62,7 +64,8 @@ public class Account {
             return;
         }
         int index = random.nextInt(this.executes.size());
-        
+        Action action = this.executes.get(index);
+        action.execute();
     }
 
     public void startTrade() {
@@ -93,5 +96,9 @@ public class Account {
 
     public void completeTransaction(SendRequest request) throws Exception {
         this.walletAppKit.wallet().completeTx(request);
+    }
+    
+    public void signTransaction(SendRequest request) throws Exception {
+        this.walletAppKit.wallet().signTransaction(request);
     }
 }
