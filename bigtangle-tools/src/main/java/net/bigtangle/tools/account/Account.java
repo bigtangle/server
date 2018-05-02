@@ -58,6 +58,11 @@ public class Account {
     }
 
     public void doAction() {
+        if (this.executes == null || this.executes.isEmpty()) {
+            return;
+        }
+        int index = random.nextInt(this.executes.size());
+        
     }
 
     public void startTrade() {
