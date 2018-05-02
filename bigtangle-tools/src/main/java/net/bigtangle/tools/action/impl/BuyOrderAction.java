@@ -32,8 +32,8 @@ public class BuyOrderAction extends Action {
             String tokenHex = TokenPost.getInstance().randomTokenHex();
             requestParams.put("tokenid", tokenHex);
             requestParams.put("type", 0);
-            requestParams.put("price", 1000);
-            requestParams.put("amount", 1000);
+            requestParams.put("price", 10);
+            requestParams.put("amount", 10);
             String data = OkHttp3Util.post(Configure.CONTEXT_ROOT + "saveOrder", Json.jsonmapper().writeValueAsString(requestParams).getBytes());
             logger.info("account name : {}, buyOrder action resp : {} success", account.getName(), data);
         }
