@@ -19,7 +19,6 @@
 package net.bigtangle.ui.wallet;
 
 import static com.google.common.base.Preconditions.checkState;
-import static net.bigtangle.ui.wallet.utils.GuiUtils.checkGuiThread;
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -28,6 +27,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.spongycastle.crypto.params.KeyParameter;
 
@@ -41,6 +41,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.ToggleGroup;
 import javafx.stage.FileChooser;
 import net.bigtangle.core.Address;
@@ -307,12 +308,13 @@ public class SendMoneyController {
 
     public void send(ActionEvent event) {
         try {
+
             // Main.addAddress2file(linknameTextField.getText(),
             // !addressComboBox.getValue().contains(",") ?
             // addressComboBox.getValue()
             // : addressComboBox.getValue().split(",")[1]);
-            //checkGuiThread();
-           // overlayUI.done();
+            // checkGuiThread();
+            // overlayUI.done();
             if (addressComboBox.getValue() == null) {
                 GuiUtils.informationalAlert(Main.getText("address_empty"), "", "");
                 return;
@@ -350,7 +352,23 @@ public class SendMoneyController {
             // Main.instance.sentEmpstyBlock(2);
 
             Main.instance.controller.initTableView();
-
+            String homedir = Main.keyFileDirectory;
+            String addresses = Main.getString4file(homedir + "/addresses.txt");
+            if (!addresses.contains(!addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
+                    : addressComboBox.getValue().split(",")[1])) {
+                TextInputDialog dialog = new TextInputDialog();
+                dialog.setTitle(Main.getText("linkman"));
+                dialog.setHeaderText(!addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
+                        : addressComboBox.getValue().split(",")[1]);
+                dialog.setContentText(Main.getText("linkman"));
+                dialog.setWidth(900);
+                Optional<String> result = dialog.showAndWait();
+                if (result.isPresent()) {
+                    Main.addAddress2file(result.get(),
+                            !addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
+                                    : addressComboBox.getValue().split(",")[1]);
+                }
+            }
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
