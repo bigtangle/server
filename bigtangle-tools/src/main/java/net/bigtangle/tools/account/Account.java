@@ -38,10 +38,20 @@ public class Account {
         this.walletPath = walletPath;
         this.initialize();
     }
+    
+    public boolean calculatedAddressHit(String address) throws Exception {
+        for (ECKey key : this.walletKeys()) {
+            String n = key.toAddress(Configure.PARAMS).toString();
+            if (n.equalsIgnoreCase(address)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     private String walletPath;
 
-    public WalletAppKit walletAppKit;
+    private WalletAppKit walletAppKit;
 
     public void initialize() {
         // init wallet
