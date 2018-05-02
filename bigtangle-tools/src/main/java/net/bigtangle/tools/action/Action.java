@@ -1,4 +1,4 @@
-package net.bigtangle.tools.account.action;
+package net.bigtangle.tools.action;
 
 import net.bigtangle.tools.account.Account;
 
@@ -8,6 +8,9 @@ public abstract class Action {
         try {
             this.execute0();
         }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
         finally {
             this.callback();
         }
@@ -15,7 +18,7 @@ public abstract class Action {
     
     public abstract void callback();
     
-    public abstract void execute0();
+    public abstract void execute0() throws Exception;
     
     protected Account account;
     

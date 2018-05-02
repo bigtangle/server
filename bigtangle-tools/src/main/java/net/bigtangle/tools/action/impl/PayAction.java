@@ -1,7 +1,7 @@
-package net.bigtangle.tools.account.action.impl;
+package net.bigtangle.tools.action.impl;
 
 import net.bigtangle.tools.account.Account;
-import net.bigtangle.tools.account.action.Action;
+import net.bigtangle.tools.action.Action;
 
 public class PayAction extends Action {
 

@@ -1,4 +1,4 @@
-package net.bigtangle.tools.account.thread;
+package net.bigtangle.tools.thread;
 
 import net.bigtangle.tools.account.Account;
 
