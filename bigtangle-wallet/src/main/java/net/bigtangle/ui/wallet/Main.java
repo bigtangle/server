@@ -38,11 +38,13 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -111,6 +113,9 @@ public class Main extends Application {
     public static String password = "";
     public static int numberOfEmptyBlocks = 3;
     public static boolean emptyBlocks = true;
+
+    public static Map<String, Boolean> validTokenMap = new HashMap<String, Boolean>();
+    public static Set<String> validAddressSet = new HashSet<String>();
 
     public String blockTopic = "bigtangle";
     public String kafka = "cn.kafka.bigtangle.net:9092";
