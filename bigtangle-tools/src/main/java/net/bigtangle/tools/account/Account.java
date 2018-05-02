@@ -9,6 +9,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.UnitTestParams;
 import net.bigtangle.tools.action.Action;
+import net.bigtangle.tools.action.impl.BalancesAction;
 import net.bigtangle.tools.action.impl.PayAction;
 import net.bigtangle.tools.config.Tools;
 import net.bigtangle.tools.thread.TradeRun;
@@ -44,8 +45,7 @@ public class Account {
 
         Action action = new PayAction(this);
         action.execute();
-        // this.executes.put(PayAction.class.getSimpleName(), new
-        // PayAction(this));
+        this.executes.put(BalancesAction.class.getSimpleName(), new BalancesAction(this));
     }
 
     public void doAction() {
@@ -57,6 +57,10 @@ public class Account {
     }
 
     public String getName() {
-        return walletPath;
+        return "account_" + walletPath;
+    }
+
+    public Random0 getRandom0() {
+        return null;
     }
 }
