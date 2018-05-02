@@ -38,7 +38,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
@@ -51,7 +50,6 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.server.config.DBStoreConfiguration;
-import net.bigtangle.server.config.NetConfiguration;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.store.FullPrunedBlockGraph;
@@ -148,7 +146,7 @@ public abstract class AbstractIntegrationTest {
 
     public void wallet1() throws Exception {
 
-        walletAppKit1 = new WalletAppKit(networkParameters, new File("../bigtangle-wallet"), "bignetcoin1");
+        walletAppKit1 = new WalletAppKit(networkParameters, new File("../bigtangle-wallet"), "bigtangle1");
         walletAppKit1.wallet().setServerURL(contextRoot);
 
     }
