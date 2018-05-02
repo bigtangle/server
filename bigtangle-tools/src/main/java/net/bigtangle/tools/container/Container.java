@@ -12,8 +12,12 @@ public class Container extends ArrayList<Account> {
 
     public void initialize() {
         for (int i = 1; i <= 5; i++) {
-            Account account = new Account("wallet" + String.valueOf(i));
-            this.add(account);
+            try {
+                Account account = new Account("wallet" + String.valueOf(i));
+                this.add(account);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -28,6 +32,12 @@ public class Container extends ArrayList<Account> {
         for (Iterator<Account> iterator = this.iterator(); iterator.hasNext();) {
             Account account = iterator.next();
             account.startTrade();
+        }
+        TokenPost tokenPost = TokenPost.getInstance();
+        try {
+            tokenPost.initialize();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
