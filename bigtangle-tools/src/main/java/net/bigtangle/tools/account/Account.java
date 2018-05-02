@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import org.spongycastle.crypto.params.KeyParameter;
+
 import net.bigtangle.core.ECKey;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.tools.action.Action;
@@ -12,14 +14,10 @@ import net.bigtangle.tools.action.impl.BalancesAction;
 import net.bigtangle.tools.action.impl.BuyOrderAction;
 import net.bigtangle.tools.action.impl.PayAction;
 import net.bigtangle.tools.action.impl.SellOrderAction;
-import net.bigtangle.tools.action.impl.SignOrderAction;
 import net.bigtangle.tools.action.impl.TokenAction;
-import net.bigtangle.tools.action.impl.TransferAction;
 import net.bigtangle.tools.config.Configure;
 import net.bigtangle.tools.thread.TradeRun;
 import net.bigtangle.wallet.SendRequest;
-
-import org.spongycastle.crypto.params.KeyParameter;
 
 public class Account {
 
@@ -28,6 +26,8 @@ public class Account {
     private Random random = new Random();
 
     // private List<String> tokenHexList = new ArrayList<String>();
+    
+    private ThreadLocal<ECKey> threadLocal = new ThreadLocal<ECKey>();
 
     public List<ECKey> walletKeys() throws Exception {
         List<ECKey> walletKeys = walletAppKit.wallet().walletKeys(aesKey);
@@ -113,8 +113,13 @@ public class Account {
         if (walletKeys == null || walletKeys.isEmpty()) {
             return null;
         }
-        int index = random.nextInt(walletKeys.size());
-        return walletKeys.get(index);
+        ECKey outKey = threadLocal.get();
+        if (outKey == null) {
+            int index = random.nextInt(walletKeys.size());
+            outKey = walletKeys.get(index);
+            threadLocal.set(outKey);
+        }
+        return outKey;
     }
 
     public void completeTransaction(SendRequest request) throws Exception {
