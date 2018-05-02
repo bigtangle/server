@@ -111,9 +111,13 @@ public class SendMoneyController {
             List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
             List<String> names = new ArrayList<String>();
             for (Map<String, Object> map : list) {
+
                 String tokenHex = (String) map.get("tokenHex");
-                tokenData.add(tokenHex);
-                names.add(map.get("tokenname").toString());
+                if (Main.validTokenMap.containsKey(tokenHex)) {
+                    tokenData.add(tokenHex);
+                    names.add(map.get("tokenname").toString());
+                }
+
             }
             tokeninfo.setItems(tokenData);
             tokeninfo.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
@@ -133,7 +137,7 @@ public class SendMoneyController {
 
         ObservableList<String> addressData = FXCollections.observableArrayList(list);
         addressComboBox.setItems(addressData);
-       // new BitcoinAddressValidator(Main.params, addressComboBox, sendBtn);
+        // new BitcoinAddressValidator(Main.params, addressComboBox, sendBtn);
         new TextFieldValidator(amountEdit, text -> !WTUtils
                 .didThrow(() -> checkState(Coin.parseCoin(text, NetworkParameters.BIGNETCOIN_TOKENID).isPositive())));
 
@@ -309,9 +313,9 @@ public class SendMoneyController {
             // : addressComboBox.getValue().split(",")[1]);
             checkGuiThread();
             overlayUI.done();
-            if(addressComboBox.getValue()==null) {
+            if (addressComboBox.getValue() == null) {
                 GuiUtils.informationalAlert(Main.getText("address_empty"), "", "");
-                return; 
+                return;
             }
             String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
             Address destination = // Address.getParametersFromAddress(address)address.getText()
@@ -338,7 +342,7 @@ public class SendMoneyController {
                 rollingBlock.solve();
             } catch (InsufficientMoneyException e) {
 
-                GuiUtils.informationalAlert(Main.getText("m_n_e"),"", "");
+                GuiUtils.informationalAlert(Main.getText("m_n_e"), "", "");
                 return;
             }
             Main.instance.sendMessage(rollingBlock.bitcoinSerialize());

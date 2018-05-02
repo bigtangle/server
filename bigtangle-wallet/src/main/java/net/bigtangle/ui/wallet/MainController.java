@@ -169,6 +169,8 @@ public class MainController {
             String balance = c.toFriendlyString();
             byte[] tokenid = c.tokenid;
             String address = u.getAddress();
+            Main.validAddressSet.clear();
+            Main.validAddressSet.add(address);
             boolean spendPending = u.isSpendPending();
             Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending));
         }
@@ -178,6 +180,9 @@ public class MainController {
         }
         for (Map<String, Object> map : list) {
             Coin coin2 = MapToBeanMapperUtil.parseCoin(map);
+            Main.validTokenMap.clear();
+            Main.validTokenMap.put(Utils.HEX.encode(coin2.tokenid), true);
+
             if (!coin2.isZero()) {
                 Main.instance.getCoinData().add(new CoinModel(coin2.toFriendlyString(), coin2.tokenid));
             }
@@ -250,7 +255,8 @@ public class MainController {
     }
 
     public void otherWallet(ActionEvent event) {
-
+        Main.IpAddress = Server.getText();
+        Main.port = IPPort.getText();
         initialize();
     }
 

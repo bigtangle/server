@@ -105,9 +105,24 @@ public class OrderController {
             stateRB1.setUserData("publish");
             stateRB2.setUserData("match");
             stateRB3.setUserData("finish");
+            buySellTG.selectedToggleProperty().addListener((ov, o, n) -> {
+                String temp = n.getUserData().toString();
+                if ("sell".equalsIgnoreCase(temp)) {
+                    try {
+                        initComboBox(false);
+                    } catch (Exception e) {
 
+                    }
+                } else {
+                    try {
+                        initComboBox(true);
+                    } catch (Exception e) {
+
+                    }
+                }
+            });
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
-            initComboBox();
+            initComboBox(true);
             initTable(requestParam);
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
@@ -170,8 +185,14 @@ public class OrderController {
         orderTable.setItems(orderData);
     }
 
+    /**
+     * 
+     * @param all
+     *            buy==all
+     * @throws Exception
+     */
     @SuppressWarnings("unchecked")
-    public void initComboBox() throws Exception {
+    public void initComboBox(boolean buy) throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ObservableList<String> tokenData = FXCollections.observableArrayList();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -181,8 +202,16 @@ public class OrderController {
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
         for (Map<String, Object> map : list) {
             String tokenHex = (String) map.get("tokenHex");
-            String tokenname = (String) map.get("tokenname");
-            tokenData.add(tokenname + " : " + tokenHex);
+            if (!buy) {
+                if (Main.validTokenMap.containsKey(tokenHex)) {
+                    String tokenname = (String) map.get("tokenname");
+                    tokenData.add(tokenname + " : " + tokenHex);
+                }
+            } else {
+                String tokenname = (String) map.get("tokenname");
+                tokenData.add(tokenname + " : " + tokenHex);
+            }
+
         }
         tokenComboBox.setItems(tokenData);
         KeyParameter aeskey = null;
@@ -194,7 +223,10 @@ public class OrderController {
         List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aeskey);
         ObservableList<String> addresses = FXCollections.observableArrayList();
         for (ECKey key : keys) {
-            addresses.add(key.toAddress(Main.params).toString());
+            String address = key.toAddress(Main.params).toString();
+            if (Main.validAddressSet.contains(address)) {
+                addresses.add(address);
+            }
         }
         addressComboBox.setItems(addresses);
 

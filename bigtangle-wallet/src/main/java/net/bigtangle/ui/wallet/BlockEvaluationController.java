@@ -21,6 +21,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.control.cell.MapValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import net.bigtangle.core.BlockEvaluation;
@@ -62,6 +63,8 @@ public class BlockEvaluationController {
 
     @FXML
     public ComboBox<String> addressComboBox;
+    @FXML
+    public TextField latestAmountTextField;
 
     public Main.OverlayUI<?> overlayUI;
 
@@ -89,7 +92,7 @@ public class BlockEvaluationController {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void initTableView() throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
-
+        String lastestAmount = latestAmountTextField.getText();
         String address = addressComboBox.getValue();
         List<String> addresses = new ArrayList<String>();
         if (address == null || address.equals("")) {
@@ -108,6 +111,7 @@ public class BlockEvaluationController {
         }
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("address", addresses);
+        requestParam.put("lastestAmount", lastestAmount);
         String response = OkHttp3Util.postString(CONTEXT_ROOT + "searchBlock",
                 Json.jsonmapper().writeValueAsString(requestParam));
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
