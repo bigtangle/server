@@ -220,9 +220,11 @@ public class DispatcherController {
                 String reqStr = new String(bodyByte, "UTF-8");
                 @SuppressWarnings("unchecked")
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                if(request.get("hashHex")!=null) {
                 Block block = this.blockService.getBlock(Sha256Hash.wrap(request.get("hashHex").toString()));
-                saveEmptyBlock(numberOfEmptyBlocks);
+            
                 this.outPointBinaryArray(httpServletResponse, block.bitcoinSerialize());
+                }
             }
                 break;
             }

@@ -2543,14 +2543,20 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         if (address.isEmpty()) {
             return new ArrayList<BlockEvaluation>();
         }
-        String sql = "SELECT blockevaluation.* FROM outputs LEFT JOIN blockevaluation ON outputs.blockhash = blockevaluation.blockhash WHERE outputs.toaddress in ";
+        String sql = "SELECT blockevaluation.* FROM outputs LEFT JOIN blockevaluation "
+                + "ON outputs.blockhash = blockevaluation.blockhash  "; 
+               
         StringBuffer stringBuffer = new StringBuffer();
-        for (String str : address)
-            stringBuffer.append(",").append("'" + str + "'");
-        sql += "(" + stringBuffer.substring(1).toString() + ")";
-        sql += " ORDER BY insertTime desc ";
-        if (!"0".equalsIgnoreCase(lastestAmount)) {
+       
+       
+        if (!"0".equalsIgnoreCase(lastestAmount) && !"".equalsIgnoreCase(lastestAmount)) {
+            sql += " ORDER BY insertTime desc ";
             sql += " LIMIT " + lastestAmount;
+        }else {
+            sql += "WHERE outputs.toaddress in ";
+            for (String str : address)
+                stringBuffer.append(",").append("'" + str + "'");
+            sql += "(" + stringBuffer.substring(1).toString() + ")";
         }
         List<BlockEvaluation> result = new ArrayList<BlockEvaluation>();
         maybeConnect();
