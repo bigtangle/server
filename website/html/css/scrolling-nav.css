@@ -28,7 +28,7 @@ section {
 	color: #fff;
 }
 
-#abouts, #team, #blog, #imprint, footer, #services{
+#features, #team, #blog, #imprint, footer, #services{
 	background: #f0f0f0;
 	color: #07123a;
 }
@@ -173,6 +173,7 @@ canvas {
 	 border: 2em solid #fff;
 	 box-shadow: 0px 0px 5px #aaa;
 	 position: relative;
+	display: none;
  }
 
 .arc {

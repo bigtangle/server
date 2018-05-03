@@ -46,6 +46,8 @@ $(document).ready(function(){
     $(this).next().slideToggle();
     $(this).toggleClass('arrowDown');
   });
+  $('.circle').css('display','block');
+  $('#features .col-md-4').addClass('cardFeature');
 });
 
 lastActive = 2;
