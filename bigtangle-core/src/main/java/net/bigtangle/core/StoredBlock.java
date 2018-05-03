@@ -8,8 +8,6 @@ package net.bigtangle.core;
 import java.nio.ByteBuffer;
 import java.util.Locale;
 
- 
-
 import com.google.common.base.Objects;
 
 /**
@@ -31,7 +29,7 @@ public class StoredBlock {
                                                                              // height
 
     private Block header;
-    private long  height;
+    private long height;
 
     public StoredBlock(Block header, long height) {
         this.header = header;
@@ -73,11 +71,16 @@ public class StoredBlock {
      * Creates a new StoredBlock, calculating the additional fields by adding to
      * the values in this block.
      */
-    public StoredBlock build(Block block, StoredBlock prevBranchblock) throws VerificationException {
+    public static StoredBlock  build(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch)
+            throws VerificationException {
         // Stored blocks track total work done in this graph, because the
         // canonical graph is the one that represents
         // the largest amount of work done not the tallest.
-        long height = Math.max(  this.height,prevBranchblock.getHeight())  + 1;
+        long height = Block.BLOCK_HEIGHT_UNKNOWN;
+        if (storedPrev != null && storedPrevBranch != null) {
+            height = Math.max(storedPrev.getHeight(), storedPrevBranch.getHeight()) + 1;
+        }
+
         return new StoredBlock(block, height);
     }
 

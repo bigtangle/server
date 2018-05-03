@@ -57,7 +57,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     private int height = 1;
 
     private static final Logger logger = LoggerFactory.getLogger(APIIntegrationTests.class);
-    
+
     @Test
     public void testSaveOrderMatch() throws BlockStoreException {
         OrderMatch orderMatch = new OrderMatch();
@@ -70,47 +70,51 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         orderMatch.setRemainingQuantity(100);
         this.store.saveOrderMatch(orderMatch);
     }
-    
+
     @Autowired
     private MilestoneService milestoneService;
-    
+
     @Autowired
     private BlockService blockService;
-    
-  // @Test
+
+    // @Test
     public void createECKey() {
         ECKey ecKey = new ECKey();
         logger.info("pubKey : " + Utils.HEX.encode(ecKey.getPubKey()));
         logger.info("pubKeyHash : " + Utils.HEX.encode(ecKey.getPubKeyHash()));
-        //pubKey = 032f46420523938d355d1a539e849cf2903a314dce13c32562c0dec456757c9dce
-        ECKey toKey =ECKey.fromPublicOnly(ecKey.getPubKey());
+        // pubKey =
+        // 032f46420523938d355d1a539e849cf2903a314dce13c32562c0dec456757c9dce
+        ECKey toKey = ECKey.fromPublicOnly(ecKey.getPubKey());
         logger.info("pubKey : " + Utils.HEX.encode(ecKey.getPubKey()));
         logger.info("pubKeyHash : " + Utils.HEX.encode(toKey.getPubKeyHash()));
     }
-    
+
     @Test
     public void testWalletWrapperECKey() {
         Wallet wallet = new Wallet(networkParameters, contextRoot);
-        for (int i = 0; i < 10; i ++) {
+        for (int i = 0; i < 10; i++) {
             ECKey toKey = wallet.freshReceiveKey();
             logger.info("a->eckey pubKeyHash : " + Utils.HEX.encode(toKey.getPubKeyHash()));
             toKey = wallet.currentReceiveKey();
             logger.info("c->eckey pubKeyHash : " + Utils.HEX.encode(toKey.getPubKeyHash()));
         }
     }
-    
-//    @Before
+
+    // @Before
     public Block getRollingBlock(ECKey outKey) throws Exception {
         Context.propagate(new Context(networkParameters));
-        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,networkParameters.getGenesisBlock().getHash());
+        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
+                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,
+                networkParameters.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock);
         for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
-            rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock,Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,networkParameters.getGenesisBlock().getHash());
+            rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
+                    outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
         }
         return rollingBlock;
     }
-    
+
     @Test
     public void testCreateTransaction() throws Exception {
         byte[] data = getAskTransactionBlock();
@@ -118,18 +122,17 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         reqCmdSaveBlock(block);
     }
 
-     
-    
     @SuppressWarnings("unchecked")
     @Test
     public void testTransactionAndGetOutputs() throws Exception {
         ECKey toKey = createWalletAndAddCoin();
-        
-        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getOutputs.name()).content(toKey.getPubKeyHash());
+
+        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getOutputs.name())
+                .content(toKey.getPubKeyHash());
         MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
         String response = mvcResult.getResponse().getContentAsString();
         logger.info("testGetBalances resp : " + response);
-        
+
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> outputs0 = (List<Map<String, Object>>) data.get("outputs");
         List<UTXO> outputs = new ArrayList<UTXO>();
@@ -142,49 +145,51 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public ECKey createWalletAndAddCoin() throws Exception, PrunedException {
         ECKey outKey = new ECKey();
         Block rollingBlock = this.getRollingBlock(outKey);
-        
-        rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock,Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,networkParameters.getGenesisBlock().getHash());
+
+        rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
+                outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
 
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
         byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
-        
+
         Wallet wallet = new Wallet(networkParameters);
         wallet.setUTXOProvider(store);
-           
+
         ECKey toKey = wallet.freshReceiveKey();
         Coin amount = Coin.valueOf(100, NetworkParameters.BIGNETCOIN_TOKENID);
 
         Transaction t = new Transaction(networkParameters);
         t.addOutput(new TransactionOutput(networkParameters, t, amount, toKey));
         t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
-        
+
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
-        blockgraph.add(rollingBlock); 
+        blockgraph.add(rollingBlock);
         milestoneService.update();
         return toKey;
     }
-    
 
-    
     @Test
     public void testSpringBootGetBalances() throws Exception {
         ECKey ecKey = new ECKey();
-        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name()).content(ecKey.getPubKeyHash());
+        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name())
+                .content(ecKey.getPubKeyHash());
         MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
         String data = mvcResult.getResponse().getContentAsString();
         logger.info("testGetBalances resp : " + data);
     }
+
     @Test
     public void testSpringBootGetBlockEvaluations() throws Exception {
         ECKey ecKey = new ECKey();
-        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getAllEvaluations.name()).content(ecKey.getPubKeyHash());
+        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getAllEvaluations.name())
+                .content(ecKey.getPubKeyHash());
         MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
         String data = mvcResult.getResponse().getContentAsString();
         logger.info("testGetBalances resp : " + data);
     }
-    
+
     @Test
     public void testSpringBootCreateGenesisBlock() throws Exception {
         ECKey outKey = new ECKey();
@@ -196,12 +201,27 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         requestParam.put("description", "Test");
         requestParam.put("blocktype", true);
         requestParam.put("tokenHex", Utils.HEX.encode(outKey.getPubKeyHash()));
-        
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.createGenesisBlock.name(), Json.jsonmapper().writeValueAsString(requestParam));
+
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.createGenesisBlock.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         logger.info("createGenesisBlock resp : " + block);
+        testRequestBlock(block);
     }
-    
+
+    public void testRequestBlock(Block block) throws Exception {
+
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+
+        requestParam.put("hashHex", Utils.HEX.encode(block.getHash().getBytes()));
+
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getBlock.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block re = networkParameters.getDefaultSerializer().makeBlock(data);
+        logger.info("createGenesisBlock resp : " + re);
+
+    }
+
     @Test
     public void testSpringBootSaveBlock() throws Exception {
         Block block = networkParameters.getGenesisBlock();
@@ -219,20 +239,19 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
     public byte[] getAskTransactionBlock() throws JsonProcessingException, Exception {
         final Map<String, Object> request = new HashMap<String, Object>();
-        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.askTransaction.name()).content(toJson(request));
+        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.askTransaction.name())
+                .content(toJson(request));
         MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
         byte[] data = mvcResult.getResponse().getContentAsByteArray();
         return data;
     }
 
-
     public void reqCmdSaveBlock(Block block) throws Exception, UnsupportedEncodingException {
-        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.saveBlock.name()).content(block.bitcoinSerialize());
+        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.saveBlock.name())
+                .content(block.bitcoinSerialize());
         MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
         String data = mvcResult.getResponse().getContentAsString();
         logger.info("testSaveBlock resp : " + data);
     }
-    
-    
-   
+
 }

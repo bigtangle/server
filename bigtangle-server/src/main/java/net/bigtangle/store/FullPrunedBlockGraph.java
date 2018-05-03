@@ -132,14 +132,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 	@Override
 	protected StoredBlock addToBlockStore(StoredBlock storedPrev, StoredBlock storedPrevBranch, Block header, TransactionOutputChanges txOutChanges)
 			throws BlockStoreException, VerificationException {
-		StoredBlock newBlock = storedPrev.build(header, storedPrevBranch);
+		StoredBlock newBlock = StoredBlock. build(header,storedPrev,storedPrevBranch);
 		blockStore.put(newBlock, new StoredUndoableBlock(newBlock.getHeader().getHash(), txOutChanges));
 		return newBlock;
 	}
 
 	@Override
 	protected StoredBlock addToBlockStore(StoredBlock storedPrev, StoredBlock storedPrevBranch, Block block) throws BlockStoreException, VerificationException {
-		StoredBlock newBlock = storedPrev.build(block, storedPrevBranch);
+		StoredBlock newBlock = StoredBlock. build(block,storedPrev,storedPrevBranch);
 		blockStore.put(newBlock, new StoredUndoableBlock(newBlock.getHeader().getHash(), block.getTransactions()));
 		return newBlock;
 	}
