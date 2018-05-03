@@ -167,9 +167,9 @@ public class BlockService {
         FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
         blockgraph.add(block);
         try {
-        milestoneService.update();
-        kafkaMessageProducer.sendMessage(block.bitcoinSerialize());
-        }catch (Exception e) {
+            milestoneService.update();
+            kafkaMessageProducer.sendMessage(block.bitcoinSerialize());
+        } catch (Exception e) {
             // TODO: handle exception
             logger.warn(" saveBlock problem after save ", e);
         }
@@ -292,20 +292,19 @@ public class BlockService {
         if (prevBranchBlockEvaluation != null)
             addApprovedNonMilestoneBlocksTo(evaluations, prevBranchBlockEvaluation);
     }
-    
 
     @SuppressWarnings("unchecked")
     public AbstractResponse searchBlock(Map<String, Object> request) throws BlockStoreException {
         List<String> address = (List<String>) request.get("address");
-        List<BlockEvaluation> evaluations = this.store.getSearchBlockEvaluations(address);
+        String lastestAmount = request.get("lastestAmount") == null ? "0" : request.get("lastestAmount").toString();
+        List<BlockEvaluation> evaluations = this.store.getSearchBlockEvaluations(address, lastestAmount);
         HashSet<String> hashSet = new HashSet<String>();
         // filter
-        for (Iterator<BlockEvaluation> iterator = evaluations.iterator(); iterator.hasNext(); ) {
+        for (Iterator<BlockEvaluation> iterator = evaluations.iterator(); iterator.hasNext();) {
             BlockEvaluation blockEvaluation = iterator.next();
             if (hashSet.contains(blockEvaluation.getBlockHexStr())) {
                 iterator.remove();
-            }
-            else {
+            } else {
                 hashSet.add(blockEvaluation.getBlockHexStr());
             }
         }

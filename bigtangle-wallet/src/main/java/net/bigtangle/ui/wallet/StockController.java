@@ -19,6 +19,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import net.bigtangle.core.Block;
@@ -32,6 +33,9 @@ import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
 
 public class StockController extends TokensController {
+    @FXML
+    public TabPane tabPane;
+
     @FXML
     public CheckBox firstPublishCheckBox;
     @FXML
@@ -51,7 +55,15 @@ public class StockController extends TokensController {
     public void initialize() {
         firstPublishCheckBox.setAllowIndeterminate(false);
         try {
+            tabPane.getSelectionModel().selectedItemProperty().addListener((ov, t, t1) -> {
+                try {
+                    initPositveTableView();
+                } catch (Exception e) {
+
+                }
+            });
             initTableView();
+            initPositveTableView();
             initCombobox();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
@@ -122,9 +134,9 @@ public class StockController extends TokensController {
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "createGenesisBlock",
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
-            //TODO no post to off tangle data, send it to kafka for broadcast
+            // TODO no post to off tangle data, send it to kafka for broadcast
             Main.instance.sendMessage(block.bitcoinSerialize());
- 
+
             GuiUtils.informationalAlert(Main.getText("s_c_m"), Main.getText("s_c_m"));
             Main.instance.controller.initTableView();
             checkGuiThread();
@@ -134,6 +146,20 @@ public class StockController extends TokensController {
             GuiUtils.crashAlert(e);
         }
 
+    }
+
+    public void add2positve(ActionEvent event) {
+        Map<String, Object> rowData = tokensTable.getSelectionModel().getSelectedItem();
+        if (rowData == null || rowData.isEmpty()) {
+            GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_d1"));
+        }
+        String tokeninfo = "";
+        tokeninfo += Main.getString(rowData.get("tokenHex")) + "," + Main.getString(rowData.get("tokenname"));
+        try {
+            Main.addText2file(tokeninfo, Main.keyFileDirectory + "/positve.txt");
+        } catch (Exception e) {
+
+        }
     }
 
     public void closeUI(ActionEvent event) {

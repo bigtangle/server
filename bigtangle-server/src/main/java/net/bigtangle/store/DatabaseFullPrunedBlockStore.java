@@ -82,19 +82,19 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String INSERT_SETTINGS_SQL = getInsert() + "  INTO settings(name, settingvalue) VALUES(?, ?)";
 
     protected String SELECT_HEADERS_SQL = "SELECT  height, header, wasundoable,prevblockhash,prevbranchblockhash,mineraddress,"
-            + "tokenid,blocktype FROM headers WHERE hash = ?" +afterSelect();
+            + "tokenid,blocktype FROM headers WHERE hash = ?" + afterSelect();
     protected String SELECT_SOLID_APPROVER_HEADERS_SQL = "SELECT  headers.height, header, wasundoable,prevblockhash,"
             + "prevbranchblockhash,mineraddress,tokenid,blocktype FROM headers INNER JOIN blockevaluation"
-            + " ON headers.hash=blockevaluation.blockhash WHERE blockevaluation.solid = true AND (prevblockhash = ? OR prevbranchblockhash = ?)"+afterSelect();
+            + " ON headers.hash=blockevaluation.blockhash WHERE blockevaluation.solid = true AND (prevblockhash = ? OR prevbranchblockhash = ?)"
+            + afterSelect();
     protected String SELECT_SOLID_APPROVER_HASHES_SQL = "SELECT headers.hash FROM headers INNER JOIN"
             + " blockevaluation ON headers.hash=blockevaluation.blockhash "
-            + "WHERE blockevaluation.solid = true AND (headers.prevblockhash = ? OR headers.prevbranchblockhash = ?)"+afterSelect();
+            + "WHERE blockevaluation.solid = true AND (headers.prevblockhash = ? OR headers.prevbranchblockhash = ?)"
+            + afterSelect();
 
     protected String INSERT_HEADERS_SQL = getInsert()
             + "  INTO headers(hash,  height, header, wasundoable,prevblockhash,"
             + "prevbranchblockhash,mineraddress,tokenid,blocktype ) VALUES(?, ?, ?, ?, ?,?, ?, ?, ?)";
-
- 
 
     protected String SELECT_OUTPUTS_COUNT_SQL = "SELECT COUNT(*) FROM outputs WHERE hash = ?";
     protected String INSERT_OUTPUTS_SQL = getInsert()
@@ -117,11 +117,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     // Dump table SQL (this is just for data sizing statistics).
     protected String SELECT_DUMP_SETTINGS_SQL = "SELECT name, coinvalue FROM settings";
     protected String SELECT_DUMP_HEADERS_SQL = "SELECT chainwork, header FROM headers";
- 
+
     protected String SELECT_DUMP_OUTPUTS_SQL = "SELECT coinvalue, scriptbytes FROM outputs";
 
     // Select the maximum height of all solid blocks
-    protected String SELECT_MAX_SOLID_HEIGHT = "SELECT max(height) FROM blockevaluation WHERE solid = true"+afterSelect();
+    protected String SELECT_MAX_SOLID_HEIGHT = "SELECT max(height) FROM blockevaluation WHERE solid = true"
+            + afterSelect();
 
     // Tables exist SQL.
     protected String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM settings WHERE 1 = 2";
@@ -135,7 +136,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String SELECT_BLOCKEVALUATION_SQL = "SELECT blockhash, rating, depth, cumulativeweight, "
             + "solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained,"
-            + " rewardvalidityassessment FROM blockevaluation WHERE blockhash = ?"+afterSelect();
+            + " rewardvalidityassessment FROM blockevaluation WHERE blockhash = ?" + afterSelect();
     protected String DELETE_BLOCKEVALUATION_SQL = "DELETE FROM blockevaluation WHERE blockhash = ?";
     protected String INSERT_BLOCKEVALUATION_SQL = getInsert()
             + "  INTO blockevaluation (blockhash, rating, depth, cumulativeweight, solid, height, "
@@ -145,43 +146,45 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String SELECT_SOLID_BLOCKEVALUATIONS_SQL = "SELECT  blockhash, rating, depth, "
             + "cumulativeweight, solid, height, milestone, milestonelastupdate,"
             + " milestonedepth, inserttime, maintained, rewardvalidityassessment "
-            + "FROM blockevaluation WHERE solid = true"+afterSelect();
+            + "FROM blockevaluation WHERE solid = true" + afterSelect();
     protected String SELECT_ALL_BLOCKEVALUATIONS_SQL = "SELECT blockhash, "
             + "rating, depth, cumulativeweight, solid, height, milestone,"
             + " milestonelastupdate, milestonedepth, inserttime, maintained, "
             + "rewardvalidityassessment FROM blockevaluation ";
     protected String SELECT_NONSOLID_BLOCKS_SQL = "SELECT blockhash, rating, "
             + "depth, cumulativeweight, solid, height, milestone, milestonelastupdate,"
-            + " milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation WHERE solid = false" +afterSelect();
+            + " milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blockevaluation WHERE solid = false"
+            + afterSelect();
     protected String SELECT_BLOCKS_TO_ADD_TO_MILESTONE_SQL = "SELECT blockhash, "
             + "rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate,"
             + " milestonedepth, inserttime, maintained, rewardvalidityassessment "
             + "FROM blockevaluation WHERE solid = true AND milestone = false AND rating >= "
-            + NetworkParameters.MILESTONE_UPPER_THRESHOLD + " AND depth >= ?"+afterSelect();
-    // TODO constraint SELECT_BLOCKS_TO_ADD_TO_MILESTONE_SQL by receive time e.g. 30+ seconds old
+            + NetworkParameters.MILESTONE_UPPER_THRESHOLD + " AND depth >= ?" + afterSelect();
+    // TODO constraint SELECT_BLOCKS_TO_ADD_TO_MILESTONE_SQL by receive time
+    // e.g. 30+ seconds old
     protected String SELECT_BLOCKS_IN_MILESTONEDEPTH_INTERVAL_SQL = "SELECT blockhash, "
             + "rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate,"
             + " milestonedepth, inserttime, maintained, rewardvalidityassessment "
-            + "FROM blockevaluation WHERE milestone = true AND milestonedepth >= ? AND milestonedepth <= ?" +afterSelect();
+            + "FROM blockevaluation WHERE milestone = true AND milestonedepth >= ? AND milestonedepth <= ?"
+            + afterSelect();
     protected String SELECT_BLOCKS_TO_REMOVE_FROM_MILESTONE_SQL = "SELECT blockhash, rating, depth, "
             + "cumulativeweight, solid, height, milestone, milestonelastupdate,"
             + " milestonedepth, inserttime, maintained, rewardvalidityassessment"
             + " FROM blockevaluation WHERE solid = true AND milestone = true AND rating <= "
-            + NetworkParameters.MILESTONE_LOWER_THRESHOLD+afterSelect();
+            + NetworkParameters.MILESTONE_LOWER_THRESHOLD + afterSelect();
     protected String SELECT_SOLID_TIPS_SQL = "SELECT blockhash, rating, depth, cumulativeweight, "
             + "solid, height, milestone, milestonelastupdate, milestonedepth, inserttime,"
             + "maintained, rewardvalidityassessment FROM blockevaluation "
-            + "INNER JOIN tips ON tips.hash=blockevaluation.blockhash WHERE solid = true"+afterSelect();
+            + "INNER JOIN tips ON tips.hash=blockevaluation.blockhash WHERE solid = true" + afterSelect();
     protected String SELECT_SOLID_BLOCKS_OF_HEIGHT_SQL = "SELECT blockhash, rating, depth, "
             + "cumulativeweight, solid, height, milestone, milestonelastupdate, "
             + "milestonedepth, inserttime, maintained, rewardvalidityassessment "
-            + "FROM blockevaluation WHERE solid = true && height = ?"+afterSelect();
+            + "FROM blockevaluation WHERE solid = true && height = ?" + afterSelect();
     protected String SELECT_OUTPUT_SPENDER_SQL = "SELECT blockevaluation.blockhash,"
-            + " rating, depth, cumulativeweight, solid,  "
-            + "blockevaluation.height, milestone, milestonelastupdate, "
+            + " rating, depth, cumulativeweight, solid,  " + "blockevaluation.height, milestone, milestonelastupdate, "
             + "milestonedepth, inserttime, maintained, rewardvalidityassessment "
             + "FROM blockevaluation INNER JOIN outputs ON outputs.spenderblockhash=blockevaluation.blockhash"
-            + " WHERE solid = true and hash = ? AND outputindex= ?"+afterSelect();
+            + " WHERE solid = true and hash = ? AND outputindex= ?" + afterSelect();
 
     protected String SELECT_MAX_TOKENID_SQL = "select max(tokenid) from tokens";
     protected String INSERT_TOKENS_SQL = getInsert()
@@ -203,32 +206,43 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String SELECT_EXCHANGE_SQL = "SELECT orderid, fromAddress, "
             + "fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, "
             + "data, toSign, fromSign, toOrderId, fromOrderId "
-            + "FROM exchange WHERE (fromAddress = ? OR toAddress = ?) AND (toSign = false OR fromSign = false)" +afterSelect();
+            + "FROM exchange WHERE (fromAddress = ? OR toAddress = ?) AND (toSign = false OR fromSign = false)"
+            + afterSelect();
     protected String SELECT_EXCHANGE_ORDERID_SQL = "SELECT orderid,"
             + " fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex,"
             + " toAmount, data, toSign, fromSign, toOrderId, fromOrderId FROM exchange WHERE orderid = ?";
 
-    
-
     protected String UPDATE_SETTINGS_SQL = getUpdate() + " settings SET settingvalue = ? WHERE name = ?";
-    protected String UPDATE_HEADERS_SQL = getUpdate() +" headers SET wasundoable=? WHERE hash=?";
-    protected String UPDATE_UNDOABLEBLOCKS_SQL = getUpdate() +" undoableblocks SET txoutchanges=?, transactions=? WHERE hash = ?";
-    protected String UPDATE_OUTPUTS_SPENT_SQL = getUpdate() +" outputs SET spent = ?, spenderblockhash = ? WHERE hash = ? AND outputindex= ?";
-    protected String UPDATE_OUTPUTS_CONFIRMED_SQL = getUpdate() +" outputs SET confirmed = ? WHERE hash = ? AND outputindex= ?";
-    protected String UPDATE_OUTPUTS_SPENDPENDING_SQL = getUpdate() +" outputs SET spendpending = ? WHERE hash = ? AND outputindex= ?";
-    protected String UPDATE_BLOCKEVALUATION_DEPTH_SQL = getUpdate() +" blockevaluation SET depth = ? WHERE blockhash = ?";
-    protected String UPDATE_BLOCKEVALUATION_CUMULATIVEWEIGHT_SQL = getUpdate() +" blockevaluation SET cumulativeweight = ? WHERE blockhash = ?";
-    protected String UPDATE_BLOCKEVALUATION_HEIGHT_SQL = getUpdate() +" blockevaluation SET height = ? WHERE blockhash = ?";
-    protected String UPDATE_BLOCKEVALUATION_MILESTONE_SQL = getUpdate() +" blockevaluation SET milestone = ? WHERE blockhash = ?";
-    protected String UPDATE_BLOCKEVALUATION_MILESTONE_LAST_UPDATE_TIME_SQL = getUpdate() +" blockevaluation SET milestonelastupdate = ? WHERE blockhash = ?";
-    protected String UPDATE_BLOCKEVALUATION_RATING_SQL = getUpdate() +" blockevaluation SET rating = ? WHERE blockhash = ?";
-    protected String UPDATE_BLOCKEVALUATION_SOLID_SQL = getUpdate() +" blockevaluation SET solid = ? WHERE blockhash = ?";
-    protected String UPDATE_BLOCKEVALUATION_MILESTONEDEPTH_SQL = getUpdate() +" blockevaluation SET milestonedepth = ? WHERE blockhash = ?";
-    protected String UPDATE_BLOCKEVALUATION_MAINTAINED_SQL = getUpdate() +" blockevaluation SET maintained = ? WHERE blockhash = ?";
-    protected String UPDATE_BLOCKEVALUATION_REWARDVALIDITYASSESSMENT_SQL = getUpdate() +" blockevaluation SET rewardvalidityassessment = ? WHERE blockhash = ?";
+    protected String UPDATE_HEADERS_SQL = getUpdate() + " headers SET wasundoable=? WHERE hash=?";
+    protected String UPDATE_UNDOABLEBLOCKS_SQL = getUpdate()
+            + " undoableblocks SET txoutchanges=?, transactions=? WHERE hash = ?";
+    protected String UPDATE_OUTPUTS_SPENT_SQL = getUpdate()
+            + " outputs SET spent = ?, spenderblockhash = ? WHERE hash = ? AND outputindex= ?";
+    protected String UPDATE_OUTPUTS_CONFIRMED_SQL = getUpdate()
+            + " outputs SET confirmed = ? WHERE hash = ? AND outputindex= ?";
+    protected String UPDATE_OUTPUTS_SPENDPENDING_SQL = getUpdate()
+            + " outputs SET spendpending = ? WHERE hash = ? AND outputindex= ?";
+    protected String UPDATE_BLOCKEVALUATION_DEPTH_SQL = getUpdate()
+            + " blockevaluation SET depth = ? WHERE blockhash = ?";
+    protected String UPDATE_BLOCKEVALUATION_CUMULATIVEWEIGHT_SQL = getUpdate()
+            + " blockevaluation SET cumulativeweight = ? WHERE blockhash = ?";
+    protected String UPDATE_BLOCKEVALUATION_HEIGHT_SQL = getUpdate()
+            + " blockevaluation SET height = ? WHERE blockhash = ?";
+    protected String UPDATE_BLOCKEVALUATION_MILESTONE_SQL = getUpdate()
+            + " blockevaluation SET milestone = ? WHERE blockhash = ?";
+    protected String UPDATE_BLOCKEVALUATION_MILESTONE_LAST_UPDATE_TIME_SQL = getUpdate()
+            + " blockevaluation SET milestonelastupdate = ? WHERE blockhash = ?";
+    protected String UPDATE_BLOCKEVALUATION_RATING_SQL = getUpdate()
+            + " blockevaluation SET rating = ? WHERE blockhash = ?";
+    protected String UPDATE_BLOCKEVALUATION_SOLID_SQL = getUpdate()
+            + " blockevaluation SET solid = ? WHERE blockhash = ?";
+    protected String UPDATE_BLOCKEVALUATION_MILESTONEDEPTH_SQL = getUpdate()
+            + " blockevaluation SET milestonedepth = ? WHERE blockhash = ?";
+    protected String UPDATE_BLOCKEVALUATION_MAINTAINED_SQL = getUpdate()
+            + " blockevaluation SET maintained = ? WHERE blockhash = ?";
+    protected String UPDATE_BLOCKEVALUATION_REWARDVALIDITYASSESSMENT_SQL = getUpdate()
+            + " blockevaluation SET rewardvalidityassessment = ? WHERE blockhash = ?";
 
-    
-    
     protected Sha256Hash chainHeadHash;
     protected StoredBlock chainHeadBlock;
     protected Sha256Hash verifiedChainHeadHash;
@@ -241,8 +255,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String username;
     protected String password;
     protected String schemaName;
-
-    
 
     public ThreadLocal<Connection> getConnection() {
         return this.conn;
@@ -299,7 +311,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             if (!tablesExists()) {
                 createTables();
             }
- 
+
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         }
@@ -451,7 +463,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      */
     protected abstract String getUpdateHeadersSQL();
 
- 
     /**
      * Get the SQL to select a outputs record.
      * 
@@ -506,7 +517,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         return SELECT_DUMP_HEADERS_SQL;
     }
 
-   
     /**
      * Get the SQL to select the openoutouts dump fields for sizing/statistics.
      * 
@@ -674,15 +684,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             setChainHead(storedGenesisHeader);
             setVerifiedChainHead(storedGenesisHeader);
 
-			updateBlockEvaluationMilestone(params.getGenesisBlock().getHash(), true);
+            updateBlockEvaluationMilestone(params.getGenesisBlock().getHash(), true);
             updateBlockEvaluationSolid(params.getGenesisBlock().getHash(), true);
-    		insertTip(params.getGenesisBlock().getHash());
+            insertTip(params.getGenesisBlock().getHash());
         } catch (VerificationException e) {
             throw new RuntimeException(e); // Cannot happen.
         }
     }
-
- 
 
     protected void putUpdateStoredBlock(StoredBlock storedBlock, boolean wasUndoable) throws SQLException {
         try {
@@ -737,9 +745,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             BlockEvaluation blockEval = BlockEvaluation.buildInitial(storedBlock.getHeader());
 
             if (storedBlock.getHeader().getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD) {
-//TODO  context form a cycle:                 if (blockValidator.assessMiningRewardBlock(storedBlock.getHeader())) {
-//                    blockEval.setRewardValid(true);
-//                }
+                // TODO context form a cycle: if
+                // (blockValidator.assessMiningRewardBlock(storedBlock.getHeader()))
+                // {
+                // blockEval.setRewardValid(true);
+                // }
             }
 
             insertBlockEvaluation(blockEval);
@@ -898,8 +908,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         return get(hash, true);
     }
 
- 
-
     @Override
     public StoredBlock getChainHead() throws BlockStoreException {
         return chainHeadBlock;
@@ -948,8 +956,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         // removeUndoableBlocksWhereHeightIsLessThan(chainHead.getHeight() -
         // fullStoreDepth);
     }
-
-    
 
     @Override
     public UTXO getTransactionOutput(Sha256Hash hash, long index) throws BlockStoreException {
@@ -1145,7 +1151,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             deleteStore();
             createTables();
-          
+
         } catch (SQLException ex) {
             log.warn("Warning: deleteStore", ex);
             throw new RuntimeException(ex);
@@ -1304,7 +1310,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         System.out.printf(Locale.US, "Headers size: %d, count: %d, average size: %f%n", size, count,
                 (double) size / count);
 
-      
         rs.close();
         System.out.printf(Locale.US, "Undoable Blocks size: %d, count: %d, average size: %f%n", size, count,
                 (double) size / count);
@@ -2503,7 +2508,50 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         for (String str : address)
             stringBuffer.append(",").append("'" + str + "'");
         sql += "(" + stringBuffer.substring(1).toString() + ")";
+        sql += " ORDER BY insertTime desc ";
+        List<BlockEvaluation> result = new ArrayList<BlockEvaluation>();
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(sql);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)),
+                        resultSet.getLong(2), resultSet.getLong(3), resultSet.getLong(4), resultSet.getBoolean(5),
+                        resultSet.getLong(6), resultSet.getBoolean(7), resultSet.getLong(8), resultSet.getLong(9),
+                        resultSet.getLong(10), resultSet.getBoolean(11), resultSet.getBoolean(12));
+                result.add(blockEvaluation);
+            }
+            return result;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
 
+    }
+
+    @Override
+    public List<BlockEvaluation> getSearchBlockEvaluations(List<String> address, String lastestAmount)
+            throws BlockStoreException {
+        if (address.isEmpty()) {
+            return new ArrayList<BlockEvaluation>();
+        }
+        String sql = "SELECT blockevaluation.* FROM outputs LEFT JOIN blockevaluation ON outputs.blockhash = blockevaluation.blockhash WHERE outputs.toaddress in ";
+        StringBuffer stringBuffer = new StringBuffer();
+        for (String str : address)
+            stringBuffer.append(",").append("'" + str + "'");
+        sql += "(" + stringBuffer.substring(1).toString() + ")";
+        sql += " ORDER BY insertTime desc ";
+        if (!"0".equalsIgnoreCase(lastestAmount)) {
+            sql += " LIMIT " + lastestAmount;
+        }
         List<BlockEvaluation> result = new ArrayList<BlockEvaluation>();
         maybeConnect();
         PreparedStatement preparedStatement = null;

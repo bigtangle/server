@@ -142,6 +142,12 @@ public class Main extends Application {
 
     }
 
+    public static String getString(Object object) {
+
+        return object == null ? " " : String.valueOf(object).trim();
+
+    }
+
     public static void initAeskey(KeyParameter aesKey) {
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
@@ -247,6 +253,23 @@ public class Main extends Application {
         }
     }
 
+    public static void addText2file(String info, String filepath) throws Exception {
+        File addressFile = new File(filepath);
+        if (!addressFile.exists()) {
+            addressFile.createNewFile();
+        }
+        String addresses = getString4file(filepath);
+        if (!addresses.contains(info)) {
+
+            BufferedWriter out = new BufferedWriter(
+                    new OutputStreamWriter(new FileOutputStream(addressFile, true), "UTF-8"));
+            out.write(info);
+            out.newLine();
+            out.flush();
+            out.close();
+        }
+    }
+
     public static String getString4file(String filestring) throws Exception {
         StringBuffer temp = new StringBuffer("");
         File addressFile = new File(filestring);
@@ -267,6 +290,24 @@ public class Main extends Application {
     public static List<String> initAddress4file() throws Exception {
         String homedir = Main.keyFileDirectory;
         File addressFile = new File(homedir + "/addresses.txt");
+        if (!addressFile.exists()) {
+            addressFile.createNewFile();
+        }
+        BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(addressFile), "UTF-8"));
+        String str = "";
+        List<String> addressList = new ArrayList<String>();
+        addressList.clear();
+        addressList = new ArrayList<String>();
+        while ((str = in.readLine()) != null) {
+            addressList.add(str);
+        }
+        in.close();
+        return addressList;
+    }
+
+    public static List<String> initToken4file() throws Exception {
+        String homedir = Main.keyFileDirectory;
+        File addressFile = new File(homedir + "/positve.txt");
         if (!addressFile.exists()) {
             addressFile.createNewFile();
         }

@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.ui.wallet;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,12 +36,36 @@ public class TokensController {
     public TableColumn<Map, String> descriptionColumn;
 
     @FXML
+    public TableView<Map> positveTokensTable;
+    @FXML
+    public TableColumn<Map, String> positveTokenHexColumn;
+    @FXML
+    public TableColumn<Map, String> positveTokennameColumn;
+
+    @FXML
     public void initialize() {
 
         try {
             initTableView();
+            initPositveTableView();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
+        }
+    }
+
+    public void initPositveTableView() throws Exception {
+        List<String> tokens = Main.initToken4file();
+        ObservableList<Map> tokenData = FXCollections.observableArrayList();
+        if (tokens != null && !tokens.isEmpty()) {
+            for (String temp : tokens) {
+                Map map = new HashMap();
+                map.put("tokenHex", temp.split(",")[0]);
+                map.put("tokenname", temp.split(",")[1]);
+                tokenData.add(map);
+            }
+            positveTokennameColumn.setCellValueFactory(new MapValueFactory("tokenname"));
+            positveTokenHexColumn.setCellValueFactory(new MapValueFactory("tokenHex"));
+            positveTokensTable.setItems(tokenData);
         }
     }
 

@@ -98,7 +98,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
      */
     StoredBlock getOnceUndoableStoredBlock(Sha256Hash hash) throws BlockStoreException;
 
-      /**
+    /**
      * Gets a {@link net.bigtangle.core.UTXO} with the given hash and index, or
      * null if none is found
      */
@@ -188,69 +188,69 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public BlockEvaluation getBlockEvaluation(Sha256Hash hash) throws BlockStoreException;
 
     public void insertBlockEvaluation(BlockEvaluation blockEvaluation) throws BlockStoreException;
-    
+
     public void removeBlockEvaluation(Sha256Hash hash) throws BlockStoreException;
 
-	public long getMaxSolidHeight() throws BlockStoreException;
+    public long getMaxSolidHeight() throws BlockStoreException;
 
-	public List<Sha256Hash> getNonSolidBlocks() throws BlockStoreException;
+    public List<Sha256Hash> getNonSolidBlocks() throws BlockStoreException;
 
-	public List<BlockEvaluation> getSolidBlockEvaluations() throws BlockStoreException;
-	
-	public List<BlockEvaluation> getAllBlockEvaluations() throws BlockStoreException;
+    public List<BlockEvaluation> getSolidBlockEvaluations() throws BlockStoreException;
 
-	public List<BlockEvaluation> getSolidBlocksOfHeight(long height) throws BlockStoreException;
+    public List<BlockEvaluation> getAllBlockEvaluations() throws BlockStoreException;
 
-	public List<BlockEvaluation> getSolidTips() throws BlockStoreException;
+    public List<BlockEvaluation> getSolidBlocksOfHeight(long height) throws BlockStoreException;
 
-	public HashSet<BlockEvaluation> getBlocksToRemoveFromMilestone() throws BlockStoreException;
+    public List<BlockEvaluation> getSolidTips() throws BlockStoreException;
 
-	public HashSet<BlockEvaluation> getBlocksToAddToMilestone(long minDepth) throws BlockStoreException;
+    public HashSet<BlockEvaluation> getBlocksToRemoveFromMilestone() throws BlockStoreException;
 
-	public List<BlockEvaluation> getBlocksInMilestoneDepthInterval(long minDepth, long maxDepth) throws BlockStoreException;
-	
+    public HashSet<BlockEvaluation> getBlocksToAddToMilestone(long minDepth) throws BlockStoreException;
 
-	public void updateBlockEvaluationSolid(Sha256Hash blockhash, boolean b) throws BlockStoreException;
+    public List<BlockEvaluation> getBlocksInMilestoneDepthInterval(long minDepth, long maxDepth)
+            throws BlockStoreException;
 
-	public void updateBlockEvaluationHeight(Sha256Hash blockhash, long i) throws BlockStoreException;
+    public void updateBlockEvaluationSolid(Sha256Hash blockhash, boolean b) throws BlockStoreException;
 
-	public void updateBlockEvaluationCumulativeweight(Sha256Hash blockhash, long i) throws BlockStoreException;
+    public void updateBlockEvaluationHeight(Sha256Hash blockhash, long i) throws BlockStoreException;
 
-	public void updateBlockEvaluationDepth(Sha256Hash blockhash, long i) throws BlockStoreException;
+    public void updateBlockEvaluationCumulativeweight(Sha256Hash blockhash, long i) throws BlockStoreException;
 
-	public void updateBlockEvaluationRating(Sha256Hash blockhash, long i) throws BlockStoreException;
+    public void updateBlockEvaluationDepth(Sha256Hash blockhash, long i) throws BlockStoreException;
 
-	public void updateBlockEvaluationMilestone(Sha256Hash blockhash, boolean b) throws BlockStoreException;
+    public void updateBlockEvaluationRating(Sha256Hash blockhash, long i) throws BlockStoreException;
 
-	public void updateBlockEvaluationMilestoneLastUpdateTime(Sha256Hash blockhash, long now) throws BlockStoreException;
-	
+    public void updateBlockEvaluationMilestone(Sha256Hash blockhash, boolean b) throws BlockStoreException;
 
-	public void updateBlockEvaluationMilestoneDepth(Sha256Hash blockhash, long i) throws BlockStoreException;
+    public void updateBlockEvaluationMilestoneLastUpdateTime(Sha256Hash blockhash, long now) throws BlockStoreException;
 
-	public void updateBlockEvaluationMaintained(Sha256Hash blockhash, boolean b) throws BlockStoreException;
+    public void updateBlockEvaluationMilestoneDepth(Sha256Hash blockhash, long i) throws BlockStoreException;
 
-	public void updateBlockEvaluationRewardValid(Sha256Hash blockhash, boolean b) throws BlockStoreException;
+    public void updateBlockEvaluationMaintained(Sha256Hash blockhash, boolean b) throws BlockStoreException;
 
+    public void updateBlockEvaluationRewardValid(Sha256Hash blockhash, boolean b) throws BlockStoreException;
 
-	public void deleteTip(Sha256Hash blockhash) throws BlockStoreException;
+    public void deleteTip(Sha256Hash blockhash) throws BlockStoreException;
 
-	public void insertTip(Sha256Hash blockhash) throws BlockStoreException;
+    public void insertTip(Sha256Hash blockhash) throws BlockStoreException;
 
-	public BlockEvaluation getTransactionOutputSpender(Sha256Hash prevBlockHash, long index) throws BlockStoreException;
+    public BlockEvaluation getTransactionOutputSpender(Sha256Hash prevBlockHash, long index) throws BlockStoreException;
 
-	public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, long index, boolean b, Sha256Hash spenderBlock) throws BlockStoreException;
+    public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, long index, boolean b, Sha256Hash spenderBlock)
+            throws BlockStoreException;
 
-	public void updateTransactionOutputConfirmed(Sha256Hash hash, long index, boolean b) throws BlockStoreException;
+    public void updateTransactionOutputConfirmed(Sha256Hash hash, long index, boolean b) throws BlockStoreException;
 
-	public void updateTransactionOutputSpendPending(Sha256Hash hash, long index, boolean b) throws BlockStoreException;
+    public void updateTransactionOutputSpendPending(Sha256Hash hash, long index, boolean b) throws BlockStoreException;
 
     public int getMaxTokenId() throws BlockStoreException;
 
     public List<Tokens> getTokensList() throws BlockStoreException;
-    
+
     public void saveTokens(Tokens tokens) throws BlockStoreException;
 
-    public void saveTokens(byte[] tokenid, String tokenname, long amount, String description, int blocktype) throws BlockStoreException;
+    public void saveTokens(byte[] tokenid, String tokenname, long amount, String description, int blocktype)
+            throws BlockStoreException;
 
     public void saveOrderPublish(OrderPublish orderPublish) throws BlockStoreException;
 
@@ -271,6 +271,9 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void updateOrderPublishState(String orderid, int state) throws BlockStoreException;
 
     public List<BlockEvaluation> getSearchBlockEvaluations(List<String> address) throws BlockStoreException;
-    
-    public void resetStore() throws BlockStoreException ;
+
+    public List<BlockEvaluation> getSearchBlockEvaluations(List<String> address, String lastestAmount)
+            throws BlockStoreException;
+
+    public void resetStore() throws BlockStoreException;
 }

@@ -5,45 +5,106 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane maxHeight="600.0" maxWidth="1000.0" minHeight="600.0" minWidth="1000.0" prefHeight="600.0" prefWidth="1000.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.bigtangle.ui.wallet.StockController">
+<AnchorPane maxHeight="600.0" maxWidth="1000.0" minHeight="600.0"
+	minWidth="1000.0" prefHeight="600.0" prefWidth="1000.0"
+	style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/8"
+	xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.bigtangle.ui.wallet.StockController">
 	<children>
-		<TabPane layoutX="2.0" layoutY="5.0" maxHeight="580.0" maxWidth="990.0" minHeight="580.0" minWidth="990.0" prefHeight="580.0" prefWidth="990.0">
+		<TabPane fx:id="tabPane" layoutX="2.0" layoutY="5.0"
+			maxHeight="580.0" maxWidth="990.0" minHeight="580.0" minWidth="990.0"
+			prefHeight="580.0" prefWidth="990.0">
 			<tabs>
 				<Tab closable="false" text="%search">
 					<content>
-						<AnchorPane maxHeight="580.0" maxWidth="990.0" minHeight="580.0" minWidth="990.0" prefHeight="580.0" prefWidth="990.0">
+						<AnchorPane maxHeight="580.0" maxWidth="990.0"
+							minHeight="580.0" minWidth="990.0" prefHeight="580.0" prefWidth="990.0">
 							<children>
-												<TableView fx:id="tokensTable" maxWidth="980.0" minHeight="500.0" minWidth="980.0" prefHeight="437.0" prefWidth="980.0">
-													<columns>
-														<TableColumn fx:id="tokenHexColumn" prefWidth="300.0" text="%Token" />
-														<TableColumn fx:id="tokennameColumn" prefWidth="89.0" text="%tokenname" />
-														<TableColumn fx:id="amountColumn" prefWidth="95.0" text="%Amount" />
-														<TableColumn fx:id="blocktypeColumn" prefWidth="105.0" text="%blocktype" />
-														<TableColumn fx:id="descriptionColumn" prefWidth="387.0" text="%description" />
-													</columns>
-												</TableView>
-												<Button layoutX="629.0" layoutY="509.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />
+								<TableView fx:id="tokensTable" maxWidth="980.0"
+									minHeight="500.0" minWidth="980.0" prefHeight="437.0"
+									prefWidth="980.0">
+									<columns>
+										<TableColumn fx:id="tokenHexColumn" prefWidth="300.0"
+											text="%Token" />
+										<TableColumn fx:id="tokennameColumn" prefWidth="89.0"
+											text="%tokenname" />
+										<TableColumn fx:id="amountColumn" prefWidth="95.0"
+											text="%Amount" />
+										<TableColumn fx:id="blocktypeColumn" prefWidth="105.0"
+											text="%blocktype" />
+										<TableColumn fx:id="descriptionColumn" prefWidth="387.0"
+											text="%description" />
+									</columns>
+								</TableView>
+								<Button layoutX="629.0" layoutY="509.0" mnemonicParsing="false"
+									onAction="#closeUI" text="%close" />
+								<Button layoutX="165.0" layoutY="509.0" mnemonicParsing="false"
+									onAction="#add2positve" text="%addPositve" />
 							</children>
 						</AnchorPane>
 					</content>
 				</Tab>
 				<Tab closable="false" text="%create">
 					<content>
-                  <AnchorPane maxHeight="550.0" maxWidth="990.0" minHeight="550.0" minWidth="990.0" prefHeight="550.0" prefWidth="990.0">
-                     <children>
-								<Label alignment="CENTER" layoutY="141.0" maxWidth="300.0" minWidth="300.0" prefHeight="15.0" prefWidth="300.0" text="%token_id" GridPane.rowIndex="2" />
-								<Label alignment="CENTER" layoutY="209.0" maxWidth="300.0" minWidth="300.0" prefHeight="15.0" prefWidth="300.0" text="%token_amount" GridPane.rowIndex="3" />
-								<TextArea fx:id="stockDescription" layoutX="279.0" layoutY="257.0" prefHeight="200.0" prefWidth="267.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-								<TextField fx:id="stockAmount" layoutX="279.0" layoutY="205.0" prefHeight="23.0" prefWidth="265.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-								<Button fx:id="save" alignment="CENTER" layoutX="150.0" layoutY="474.0" mnemonicParsing="false" nodeOrientation="LEFT_TO_RIGHT" onAction="#saveStock" text="%publish" GridPane.halignment="CENTER" GridPane.rowIndex="5" GridPane.valignment="TOP" />
-								<Button fx:id="closeButton" layoutX="386.0" layoutY="474.0" mnemonicParsing="false" onAction="#closeUI" text="%close" GridPane.columnIndex="1" GridPane.rowIndex="5" />
-								<CheckBox fx:id="firstPublishCheckBox" layoutX="279.0" layoutY="36.0" mnemonicParsing="false" text="%first_publish" GridPane.columnIndex="1" />
-								<Label alignment="CENTER" contentDisplay="CENTER" layoutY="249.0" maxWidth="300.0" minWidth="300.0" prefHeight="15.0" prefWidth="300.0" text="%token_description" GridPane.rowIndex="4" />
-								<ComboBox fx:id="tokenid" editable="true" layoutX="279.0" layoutY="137.0" prefHeight="23.0" prefWidth="260.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-								<Label alignment="CENTER" layoutY="78.0" maxWidth="300.0" minWidth="300.0" prefHeight="15.0" prefWidth="300.0" text="%token_name" GridPane.rowIndex="1" />
-								<TextField fx:id="stockName" layoutX="279.0" layoutY="74.0" minWidth="255.0" prefHeight="23.0" prefWidth="50.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                     </children>
-                  </AnchorPane>
+						<AnchorPane maxHeight="550.0" maxWidth="990.0"
+							minHeight="550.0" minWidth="990.0" prefHeight="550.0" prefWidth="990.0">
+							<children>
+								<Label alignment="CENTER" layoutY="141.0" maxWidth="300.0"
+									minWidth="300.0" prefHeight="15.0" prefWidth="300.0" text="%token_id"
+									GridPane.rowIndex="2" />
+								<Label alignment="CENTER" layoutY="209.0" maxWidth="300.0"
+									minWidth="300.0" prefHeight="15.0" prefWidth="300.0" text="%token_amount"
+									GridPane.rowIndex="3" />
+								<TextArea fx:id="stockDescription" layoutX="279.0"
+									layoutY="257.0" prefHeight="200.0" prefWidth="267.0"
+									GridPane.columnIndex="1" GridPane.rowIndex="4" />
+								<TextField fx:id="stockAmount" layoutX="279.0"
+									layoutY="205.0" prefHeight="23.0" prefWidth="265.0"
+									GridPane.columnIndex="1" GridPane.rowIndex="3" />
+								<Button fx:id="save" alignment="CENTER" layoutX="150.0"
+									layoutY="474.0" mnemonicParsing="false" nodeOrientation="LEFT_TO_RIGHT"
+									onAction="#saveStock" text="%publish" GridPane.halignment="CENTER"
+									GridPane.rowIndex="5" GridPane.valignment="TOP" />
+								<Button fx:id="closeButton" layoutX="386.0" layoutY="474.0"
+									mnemonicParsing="false" onAction="#closeUI" text="%close"
+									GridPane.columnIndex="1" GridPane.rowIndex="5" />
+								<CheckBox fx:id="firstPublishCheckBox" layoutX="279.0"
+									layoutY="36.0" mnemonicParsing="false" text="%first_publish"
+									GridPane.columnIndex="1" />
+								<Label alignment="CENTER" contentDisplay="CENTER" layoutY="249.0"
+									maxWidth="300.0" minWidth="300.0" prefHeight="15.0" prefWidth="300.0"
+									text="%token_description" GridPane.rowIndex="4" />
+								<ComboBox fx:id="tokenid" editable="true" layoutX="279.0"
+									layoutY="137.0" prefHeight="23.0" prefWidth="260.0"
+									GridPane.columnIndex="1" GridPane.rowIndex="2" />
+								<Label alignment="CENTER" layoutY="78.0" maxWidth="300.0"
+									minWidth="300.0" prefHeight="15.0" prefWidth="300.0" text="%token_name"
+									GridPane.rowIndex="1" />
+								<TextField fx:id="stockName" layoutX="279.0" layoutY="74.0"
+									minWidth="255.0" prefHeight="23.0" prefWidth="50.0"
+									GridPane.columnIndex="1" GridPane.rowIndex="1" />
+							</children>
+						</AnchorPane>
+					</content>
+				</Tab>
+				<Tab closable="false" text="%positve">
+					<content>
+						<AnchorPane maxHeight="580.0" maxWidth="990.0"
+							minHeight="580.0" minWidth="990.0" prefHeight="580.0" prefWidth="990.0">
+							<children>
+								<TableView fx:id="positveTokensTable" maxWidth="980.0"
+									minHeight="500.0" minWidth="980.0" prefHeight="437.0"
+									prefWidth="980.0">
+									<columns>
+										<TableColumn fx:id="positveTokenHexColumn"
+											prefWidth="532.0" text="%Token" />
+										<TableColumn fx:id="positveTokennameColumn"
+											prefWidth="149.0" text="%tokenname" />
+									</columns>
+								</TableView>
+								<Button layoutX="629.0" layoutY="509.0" mnemonicParsing="false"
+									onAction="#closeUI" text="%close" />
+							</children>
+						</AnchorPane>
 					</content>
 				</Tab>
 			</tabs>
