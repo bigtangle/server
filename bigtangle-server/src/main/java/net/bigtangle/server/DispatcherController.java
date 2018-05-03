@@ -23,7 +23,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import net.bigtangle.core.Block;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
 import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.GetBlockEvaluationsResponse;
@@ -57,11 +59,10 @@ public class DispatcherController {
     @Autowired
     private ExchangeService exchangeService;
 
-
     public static int numberOfEmptyBlocks = 3;
 
     // @Autowired private KafkaMessageProducer kafkaMessageProducer;
-    
+
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
     public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] bodyByte,
             HttpServletResponse httpServletResponse) throws Exception {
@@ -214,6 +215,15 @@ public class DispatcherController {
                 AbstractResponse response = this.blockService.searchBlock(request);
                 this.outPrintJSONString(httpServletResponse, response);
             }
+
+            case getBlock: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                @SuppressWarnings("unchecked")
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                Block block = this.blockService.getBlock(Sha256Hash.wrap(request.get("hashHex").toString()));
+                saveEmptyBlock(numberOfEmptyBlocks);
+                this.outPointBinaryArray(httpServletResponse, block.bitcoinSerialize());
+            }
                 break;
             }
         } catch (Exception exception) {
@@ -240,10 +250,7 @@ public class DispatcherController {
     }
 
     public void saveEmptyBlock(int number) {
-       // transactionService. saveEmptyBlockTask(number);
+        // transactionService. saveEmptyBlockTask(number);
     }
-   
 
-   
-    
 }

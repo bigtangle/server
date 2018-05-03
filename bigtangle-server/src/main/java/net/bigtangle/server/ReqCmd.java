@@ -8,9 +8,9 @@ public enum ReqCmd {
 
     getBalances, askTransaction, saveBlock, getOutputs,
 
-    createGenesisBlock, exchangeToken, getTokens, getAllEvaluations, 
-    
-    outputsWiteToken, saveOrder, getOrders, exchangeInfo, batchGetBalances, 
-    
-    saveExchange, getExchange, signTransaction, searchBlock;
+    createGenesisBlock, exchangeToken, getTokens, getAllEvaluations,
+
+    outputsWiteToken, saveOrder, getOrders, exchangeInfo, batchGetBalances,
+
+    saveExchange, getExchange, signTransaction, searchBlock, getBlock;
 }
