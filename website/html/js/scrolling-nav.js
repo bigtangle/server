@@ -23,119 +23,74 @@
   // Activate scrollspy to add active class to navbar items on scroll
   $('body').scrollspy({
     target: '#mainNav',
-    offset: 54
+    offset: 300,
   });
 
 })(jQuery); // End of use strict
 
-particlesJS("particles-js", {
-  "particles": {
-    "number": {
-      "value": 380,
-      "density": {
-        "enable": true,
-        "value_area": 800
-      }
-    },
-    "color": {
-      "value": "#ffffff"
-    },
-    "shape": {
-      "type": "circle",
-      "stroke": {
-        "width": 0,
-        "color": "#000000"
-      },
-      "polygon": {
-        "nb_sides": 5
-      },
-      "image": {
-        "src": "img/github.svg",
-        "width": 100,
-        "height": 100
-      }
-    },
-    "opacity": {
-      "value": 0.5,
-      "random": false,
-      "anim": {
-        "enable": false,
-        "speed": 1,
-        "opacity_min": 0.1,
-        "sync": false
-      }
-    },
-    "size": {
-      "value": 3,
-      "random": true,
-      "anim": {
-        "enable": false,
-        "speed": 40,
-        "size_min": 0.1,
-        "sync": false
-      }
-    },
-    "line_linked": {
-      "enable": true,
-      "distance": 150,
-      "color": "#ffffff",
-      "opacity": 0.4,
-      "width": 1
-    },
-    "move": {
-      "enable": true,
-      "speed": 0,
-      "direction": "none",
-      "random": false,
-      "straight": false,
-      "out_mode": "out",
-      "bounce": false,
-      "attract": {
-        "enable": false,
-        "rotateX": 600,
-        "rotateY": 1200
-      }
-    }
-  },
-  "interactivity": {
-    "detect_on": "canvas",
-    "events": {
-      "onhover": {
-        "enable": false,
-        "mode": "grab"
-      },
-      "onclick": {
-        "enable": false,
-        "mode": "push"
-      },
-      "resize": true
-    },
-    "modes": {
-      "grab": {
-        "distance": 140,
-        "line_linked": {
-          "opacity": 1
-        }
-      },
-      "bubble": {
-        "distance": 400,
-        "size": 40,
-        "duration": 2,
-        "opacity": 8,
-        "speed": 3
-      },
-      "repulse": {
-        "distance": 200,
-        "duration": 0.4
-      },
-      "push": {
-        "particles_nb": 4
-      },
-      "remove": {
-        "particles_nb": 2
-      }
-    }
-  },
-  "retina_detect": true
+var positions = [90,150,210,270,330,30];
+var active = 3;
+var last = 3;
+var screwInterval;
+$(document).ready(function(){
+  for(i = 1; i <= 6; i++){
+    $('#cardFeature'+i).hide();
+    $('#item'+i).click(function(){
+      var id = $(this).attr('id')[4];
+      screw(id);
+    })
+  }
+  screw(1);
+
+  $('#faq h3').click(function(){
+    $(this).next().slideToggle();
+    $(this).toggleClass('arrowDown');
+  });
 });
+
+lastActive = 2;
+function screw(active){
+  window.clearTimeout(screwInterval);
+  console.log("Aktiv "+active);
+  $('.cardFeature').hide();
+  $('#cardFeature'+active).show();
+  var teta = (lastActive-active+6)%6;
+  for(i = 1; i <= 6; i++) {
+    //i//f(teta == 5)
+
+    positions[i-1] += teta*60;
+    $('.arc').removeClass('arc'+i);
+    if(i%6 == active%6){
+      $('#arc'+i).addClass('arc'+i);
+    }
+    animateStuff(i);
+
+  }
+  console.log(positions, teta);
+  var next = active-1 == 0 ?6 : active-1;
+  //var next = active+1 == 7 ?1 : active+1;
+  lastActive = active;
+  screwInterval = window.setTimeout("screw("+next+")",5000);
+}
+
+function animateStuff(i){
+  var color = $('#arc'+i+':before').css('backgroundColor');
+  $('#arc' + i).stop().animate({borderSpacing: positions[i - 1], backgroundColor: color}, {
+    step: function (now, fx) {
+      $(this).css('-webkit-transform', 'rotate(' + now + 'deg) skewX(30deg)');
+      $(this).css('-moz-transform', 'rotate(' + now + 'deg) skewX(30deg)');
+      $(this).css('transform', 'rotate(' + now + 'deg) skewX(30deg)');
+      angle = (now + 210) / 180 * Math.PI;
+      var x = 130 + Math.cos(angle) * 100 - 16;
+      var y = 130 + Math.sin(angle) * 100 - 16;
+      $('#item' + i).css('left', x + 'px').css('top', y + 'px');
+      $('#border' + i).css('transform', 'rotate('+now+'deg)');
+    },
+    duration: 'slow'
+  }, 'linear');
+}
+
+
+
+
 

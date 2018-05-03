@@ -23,12 +23,12 @@ section {
 	background: #515e90 !important;
 }
 
-.bg-primary, #services, #contact{
+.bg-primary, #faq, #usecases{
 	background: rgba(23,37,87,.7) !important;
 	color: #fff;
 }
 
-#about, #team, #blog, #imprint, footer{
+#abouts, #team, #blog, #imprint, footer, #services{
 	background: #f0f0f0;
 	color: #07123a;
 }
@@ -46,7 +46,7 @@ section {
 }
 
 button{
-    background: rgba(0,0,0,.4);
+    background: rgba(0,0,0,.7);
     color: #fff;
 }
 
@@ -67,11 +67,8 @@ canvas {
   top: 0;
   width: 100%;
   height: 100%;
-  background: #303e73;
-  background-image: url("");
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: 50% 50%;
+  background-color: #303e73;
+	background: url(../img/mesh.jpg) center center;
   z-index: -1;
 }
 .card-header{
@@ -129,4 +126,40 @@ canvas {
 
 .ico header{
 	padding: 110px 0 30px;
+}
+
+.download{
+	background-image: url(../img/arrowDown.png);
+	background-repeat: no-repeat;
+	background-position: 10px center;
+	background-size: 12px;
+	padding-left: 30px;
+	-webkit-transition: background-image 0.2s, color 0.2s;
+	transition: background-image 0.2s, color 0.2s;
+}
+
+.download:hover{
+	color: #bbb;
+	background-image: url(../img/arrowDownGrey.png);
+}
+
+#faq h3{
+	background-image: url(../img/arrowLeft.png);
+	background-position: 10px center;
+	background-repeat: no-repeat;
+	background-size: 12px;
+	padding-left: 30px;
+	font-size: 1.25em;
+}
+
+.arrowDown{
+	background-image: url(../img/arrowDownLight.png) !important;
+	background-position: 0px 12px !important;
+	background-size: 24px !important;
+	-webkit-transition: display 0.2s;
+	transition: display 0.2s;
+}
+
+#faq p{
+	display: none;
 }
