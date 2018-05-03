@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.Random;
 
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Utils;
 import net.bigtangle.tools.account.Account;
 
 public class TokenPost extends ArrayList<String> {
@@ -26,15 +27,16 @@ public class TokenPost extends ArrayList<String> {
 //        }
         for (Iterator<Account> iterator = Container.getInstance().iterator(); iterator.hasNext(); ) {
             Account account = iterator.next();
-            ECKey ecKey = account.getRandomECKey();
-            this.add(ecKey.getPublicKeyAsHex());
+            ECKey outKey = account.getRandomECKey();
+//            byte[] pubKey = outKey.getPubKey();
+            this.add(Utils.HEX.encode(outKey.getPubKeyHash()));
         }
     }
 
     public String randomTokenHex() {
-//        Random random = new Random();
-//        int index = random.nextInt(this.size());
-//        return this.get(index);
-        return this.get(0);
+        Random random = new Random();
+        int index = random.nextInt(this.size());
+        return this.get(index);
+//        return this.get(0);
     }
 }

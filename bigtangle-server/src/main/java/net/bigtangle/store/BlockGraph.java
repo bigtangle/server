@@ -64,7 +64,7 @@ public class BlockGraph extends AbstractBlockGraph {
     @Override
     protected StoredBlock addToBlockStore(StoredBlock storedPrev, StoredBlock storedPrevBranch,  Block blockHeader, TransactionOutputChanges txOutChanges)
             throws BlockStoreException, VerificationException {
-        StoredBlock newBlock = storedPrev.build(blockHeader,storedPrevBranch);
+        StoredBlock newBlock =StoredBlock. build(blockHeader,storedPrev,storedPrevBranch);
         blockStore.put(newBlock);
         return newBlock;
     }
@@ -72,7 +72,7 @@ public class BlockGraph extends AbstractBlockGraph {
     @Override
     protected StoredBlock addToBlockStore(StoredBlock storedPrev, StoredBlock storedPrevBranch,Block blockHeader)
             throws BlockStoreException, VerificationException {
-        StoredBlock newBlock = storedPrev.build(blockHeader, storedPrevBranch);
+        StoredBlock newBlock = StoredBlock. build(blockHeader,storedPrev,storedPrevBranch);
         blockStore.put(newBlock);
         return newBlock;
     }
