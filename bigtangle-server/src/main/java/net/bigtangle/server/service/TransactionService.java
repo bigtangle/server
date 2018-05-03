@@ -193,14 +193,14 @@ public class TransactionService {
 
     }
 
-    public Optional<Block> addConnected(byte[] bytes) {
+    public Optional<Block> addConnected(byte[] bytes, boolean emptyBlock) {
         try {
 
             Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bytes);
             FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
             blockgraph.add(block);
             logger.debug("addConnected from kafka " + block);
-            if(!block.getTransactions().isEmpty())
+            if(!block.getTransactions().isEmpty() && emptyBlock)
             saveEmptyBlock(3);
             return Optional.of(block);
         } catch (VerificationException e) {

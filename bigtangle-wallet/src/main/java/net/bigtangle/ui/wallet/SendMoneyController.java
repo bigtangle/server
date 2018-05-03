@@ -348,30 +348,36 @@ public class SendMoneyController {
                 return;
             }
             Main.instance.sendMessage(rollingBlock.bitcoinSerialize());
-
+            checkContact(event);
             // Main.instance.sentEmpstyBlock(2);
-
+            overlayUI.done();
             Main.instance.controller.initTableView();
-            String homedir = Main.keyFileDirectory;
-            String addresses = Main.getString4file(homedir + "/addresses.txt");
-            if (!addresses.contains(!addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
-                    : addressComboBox.getValue().split(",")[1])) {
-                TextInputDialog dialog = new TextInputDialog();
-                dialog.setTitle(Main.getText("linkman"));
-                dialog.setHeaderText(!addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
-                        : addressComboBox.getValue().split(",")[1]);
-                dialog.setContentText(Main.getText("linkman"));
-                dialog.setWidth(900);
-                Optional<String> result = dialog.showAndWait();
-                if (result.isPresent()) {
-                    Main.addAddress2file(result.get(),
-                            !addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
-                                    : addressComboBox.getValue().split(",")[1]);
-                }
-            }
+            
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
     }
+    //TODO Fix problem after send return to main
+    public void checkContact(ActionEvent event) throws Exception {
 
+        
+        String homedir = Main.keyFileDirectory;
+        String addresses = Main.getString4file(homedir + "/addresses.txt");
+        if (!addresses.contains(!addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
+                : addressComboBox.getValue().split(",")[1])) {
+            TextInputDialog dialog = new TextInputDialog();
+            dialog.setTitle(Main.getText("linkman"));
+            dialog.setHeaderText(!addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
+                    : addressComboBox.getValue().split(",")[1]);
+            dialog.setContentText(Main.getText("linkman"));
+            dialog.setWidth(900);
+            Optional<String> result = dialog.showAndWait();
+            if (result.isPresent()) {
+                Main.addAddress2file(result.get(),
+                        !addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
+                                : addressComboBox.getValue().split(",")[1]);
+            }
+        }
+        
+    }
 }

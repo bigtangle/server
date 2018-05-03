@@ -2540,19 +2540,20 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public List<BlockEvaluation> getSearchBlockEvaluations(List<String> address, String lastestAmount)
             throws BlockStoreException {
-        if (address.isEmpty()) {
-            return new ArrayList<BlockEvaluation>();
-        }
-        String sql = "SELECT blockevaluation.* FROM outputs LEFT JOIN blockevaluation "
-                + "ON outputs.blockhash = blockevaluation.blockhash  "; 
-               
+
+        String sql = "";
         StringBuffer stringBuffer = new StringBuffer();
-       
-       
         if (!"0".equalsIgnoreCase(lastestAmount) && !"".equalsIgnoreCase(lastestAmount)) {
+            sql += "SELECT blockevaluation.* FROM  blockevaluation ";
             sql += " ORDER BY insertTime desc ";
-            sql += " LIMIT " + lastestAmount;
-        }else {
+            Integer a = Integer.valueOf(lastestAmount);
+            if (a > 1000) {
+                a = 2000;
+            }
+            sql += " LIMIT " + a;
+        } else {
+            sql += "SELECT blockevaluation.* FROM outputs LEFT JOIN blockevaluation "
+                    + "ON outputs.blockhash = blockevaluation.blockhash  ";
             sql += "WHERE outputs.toaddress in ";
             for (String str : address)
                 stringBuffer.append(",").append("'" + str + "'");

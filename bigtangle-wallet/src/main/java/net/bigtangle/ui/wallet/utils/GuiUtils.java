@@ -25,6 +25,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.function.BiConsumer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Throwables;
 
 import javafx.animation.Animation;
@@ -42,11 +45,11 @@ import javafx.scene.layout.Pane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import net.bigtangle.core.InsufficientMoneyException;
-import net.bigtangle.ui.wallet.Main;
 import net.bigtangle.ui.wallet.MainController;
 
 public class GuiUtils {
+    private static final Logger log = LoggerFactory.getLogger(GuiUtils.class);
+
     public static void runAlert(BiConsumer<Stage, AlertWindowController> setup) {
         try {
             // JavaFX2 doesn't actually have a standard alert template. Instead
@@ -70,8 +73,8 @@ public class GuiUtils {
     }
 
     public static void crashAlert(Throwable t) {
-        
-     
+
+        log.warn("", t);
         Throwable rootCause = Throwables.getRootCause(t);
         Runnable r = () -> {
             runAlert((stage, controller) -> controller.crashAlert(stage, rootCause.toString()));

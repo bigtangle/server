@@ -12,7 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
@@ -29,6 +30,8 @@ import net.bigtangle.utils.OkHttp3Util;
  */
 @Service
 public class BlockRequester {
+    private static final Logger log = LoggerFactory.getLogger(BlockRequester.class);
+
     @Autowired
     protected NetworkParameters networkParameters;
 
@@ -37,7 +40,7 @@ public class BlockRequester {
 
     public byte[] requestBlock(Sha256Hash hash) {
         // TODO block from network peers
-
+        log.debug("requestBlock" +hash.toString() );
         List<String> serverList = new ArrayList<String>();
         serverList.add("http://de.server.bigtangle.net:8088/");
         serverList.add("http://cn.server.bigtangle.net:8088/");
@@ -49,7 +52,7 @@ public class BlockRequester {
 
             try {
                 data = OkHttp3Util.post(s + ReqCmd.getBlock, Json.jsonmapper().writeValueAsString(requestParam));
-                transactionService.addConnected(data);
+                transactionService.addConnected(data, false);
                 break;
             } catch (JsonProcessingException e) {
                 // TODO Auto-generated catch block

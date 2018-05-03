@@ -4,3 +4,9 @@
 # token positive list
 #change of server must be taken without connect
 # block display, display the lastest xxx blocks  with  evaluation 
+
+
+New 
+add select a block in blockevaluation and display the block using block.toString() in new UI
+remove empty setting page and replace it with setPassword
+remove a token positive list

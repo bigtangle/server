@@ -22,7 +22,7 @@ public class BlockPeerStreamHandler extends AbstractStreamHandler {
     public void run(KStreamBuilder streamBuilder) {
         final KStream<byte[], byte[]> input = streamBuilder.stream(kafkaConfiguration.getTopicOut2Name());
 
-        input.map((key, bytes) -> KeyValue.pair(key, transactionService.addConnected(bytes)));
+        input.map((key, bytes) -> KeyValue.pair(key, transactionService.addConnected(bytes, false)));
 
     }
    
