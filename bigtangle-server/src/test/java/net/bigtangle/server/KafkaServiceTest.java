@@ -6,8 +6,6 @@ package net.bigtangle.server;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.HashMap;
 import java.util.List;
@@ -19,14 +17,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import com.google.common.collect.Lists;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
@@ -36,6 +31,7 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
+import net.bigtangle.kafka.BlockStreamHandler;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
@@ -59,18 +55,19 @@ public class KafkaServiceTest extends AbstractIntegrationTest {
     private BlockService blockService;
     @Autowired
     private KafkaMessageProducer kafkaMessageProducer;
-
-
+    @Autowired
+    private BlockStreamHandler blockStreamHandler;
     @Test
     public void getBalance() throws Exception {
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
         ECKey outKey = new ECKey();
         int height = 1;
-   
+
         // Build some blocks on genesis block to create a spendable output
         Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
+                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,
+                networkParameters.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock);
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
@@ -78,7 +75,7 @@ public class KafkaServiceTest extends AbstractIntegrationTest {
         for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
                     outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
-            blockgraph.add(rollingBlock);
+            kafkaMessageProducer.sendMessage(rollingBlock.bitcoinSerialize());
         }
         rollingBlock = BlockForTest.createNextBlock(rollingBlock, null, networkParameters.getGenesisBlock().getHash());
 
@@ -93,8 +90,9 @@ public class KafkaServiceTest extends AbstractIntegrationTest {
         t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
-        kafkaMessageProducer.sendMessage( rollingBlock.bitcoinSerialize());
-        
+        kafkaMessageProducer.sendMessage(rollingBlock.bitcoinSerialize());
+        blockStreamHandler.runStream();
+        Thread.sleep(10000);
         totalAmount = totalAmount.add(amount);
 
         milestoneService.update(); // ADDED
@@ -121,17 +119,17 @@ public class KafkaServiceTest extends AbstractIntegrationTest {
 
         // Build some blocks on genesis block to create a spendable output.
         Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
-        blockgraph.add(rollingBlock);
+                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,
+                networkParameters.getGenesisBlock().getHash());
+        kafkaMessageProducer.sendMessage(rollingBlock.bitcoinSerialize());
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
         byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
         for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
                     outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
-            blockgraph.add(rollingBlock);
+            kafkaMessageProducer.sendMessage(rollingBlock.bitcoinSerialize());
         }
-        rollingBlock = BlockForTest.createNextBlock(rollingBlock, null, networkParameters.getGenesisBlock().getHash());
     }
 
     @Test
@@ -153,13 +151,12 @@ public class KafkaServiceTest extends AbstractIntegrationTest {
         SendRequest request = SendRequest.forTx(multiSigTransaction);
         walletAppKit.wallet().completeTx(request);
         rollingBlock.solve();
-        OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
-
+        kafkaMessageProducer.sendMessage(rollingBlock.bitcoinSerialize());
         testTransactionAndGetBalances();
     }
 
     @Test
-    // transfer the coin to address 
+    // transfer the coin to address
     public void testTransferWallet() throws Exception {
 
         // get new Block to be used from server
@@ -173,7 +170,6 @@ public class KafkaServiceTest extends AbstractIntegrationTest {
         walletAppKit.wallet().completeTx(request);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
-
-        OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        kafkaMessageProducer.sendMessage(rollingBlock.bitcoinSerialize());
     }
 }
