@@ -128,7 +128,9 @@ public class DispatcherController {
                 break;
 
             case getTokens: {
-                AbstractResponse response = tokensService.getTokensList();
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                AbstractResponse response = tokensService.getTokensList(request.get("name").toString());
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
@@ -220,10 +222,10 @@ public class DispatcherController {
                 String reqStr = new String(bodyByte, "UTF-8");
                 @SuppressWarnings("unchecked")
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                if(request.get("hashHex")!=null) {
-                Block block = this.blockService.getBlock(Sha256Hash.wrap(request.get("hashHex").toString()));
-            
-                this.outPointBinaryArray(httpServletResponse, block.bitcoinSerialize());
+                if (request.get("hashHex") != null) {
+                    Block block = this.blockService.getBlock(Sha256Hash.wrap(request.get("hashHex").toString()));
+
+                    this.outPointBinaryArray(httpServletResponse, block.bitcoinSerialize());
                 }
             }
                 break;

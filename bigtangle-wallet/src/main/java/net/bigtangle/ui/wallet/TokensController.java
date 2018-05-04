@@ -15,6 +15,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.control.cell.MapValueFactory;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
@@ -43,6 +44,8 @@ public class TokensController {
     public TableColumn<Map, String> positveTokenHexColumn;
     @FXML
     public TableColumn<Map, String> positveTokennameColumn;
+    @FXML
+    public TextField nameTextField;
 
     @FXML
     public void initialize() {
@@ -50,6 +53,14 @@ public class TokensController {
         try {
             initTableView();
             initPositveTableView();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+    }
+
+    public void searchTokens(ActionEvent event) {
+        try {
+            initTableView();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
@@ -94,10 +105,14 @@ public class TokensController {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void initTableView() throws Exception {
+        String name = nameTextField.getText();
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ObservableList<Map> tokenData = FXCollections.observableArrayList();
         ECKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
-        String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens", ecKey.getPubKeyHash());
+        Map<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("name", Main.getString(name));
+        String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens",
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
 

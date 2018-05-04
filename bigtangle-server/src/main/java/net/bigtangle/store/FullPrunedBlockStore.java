@@ -246,6 +246,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public int getMaxTokenId() throws BlockStoreException;
 
     public List<Tokens> getTokensList() throws BlockStoreException;
+    public List<Tokens> getTokensList(String name) throws BlockStoreException;
 
     public void saveTokens(Tokens tokens) throws BlockStoreException;
 

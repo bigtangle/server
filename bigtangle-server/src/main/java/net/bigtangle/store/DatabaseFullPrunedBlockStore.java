@@ -2162,6 +2162,40 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
+    public List<Tokens> getTokensList(String name) throws BlockStoreException {
+        List<Tokens> list = new ArrayList<Tokens>();
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            if (name != null || !"".equals(name.trim())) {
+                SELECT_TOKENS_SQL += " WHERE tokenname LIKE '%" + name + "%' OR description LIKE '%" + name + "%'";
+            }
+            preparedStatement = conn.get().prepareStatement(SELECT_TOKENS_SQL);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                Tokens tokens = new Tokens();
+                tokens.setTokenid(resultSet.getBytes("tokenid"));
+                tokens.setTokenname(resultSet.getString("tokenname"));
+                tokens.setAmount(resultSet.getLong("amount"));
+                tokens.setDescription(resultSet.getString("description"));
+                tokens.setBlocktype(resultSet.getInt("blocktype"));
+                list.add(tokens);
+            }
+            return list;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
     public void saveTokens(Tokens tokens) throws BlockStoreException {
         this.saveTokens(tokens.getTokenid(), tokens.getTokenname(), tokens.getAmount(), tokens.getDescription(),
                 tokens.getBlocktype());
