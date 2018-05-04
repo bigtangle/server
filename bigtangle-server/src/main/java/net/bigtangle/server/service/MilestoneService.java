@@ -55,7 +55,8 @@ public class MilestoneService {
 	 */
 	public void update() throws Exception {		
 		log.info("Milestone Update started");
-		Stopwatch watch = Stopwatch.createStarted();
+		
+        Stopwatch watch = Stopwatch.createStarted();
 		updateSolidityAndHeight();
 		log.info("Solidity and height update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
@@ -73,9 +74,12 @@ public class MilestoneService {
 		watch = Stopwatch.createStarted();
 		updateMilestone();
 		log.info("Milestone update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+
+        watch.stop();
+        watch = Stopwatch.createStarted();
+        updateMaintained();
+        log.info("Maintained update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 		
-		// TODO dynamically calculated maintained state so we can dynamically adjust maintenance threshold
-		// TODO check for recent orphan rate and go back with rating threshold until bifurcation for reevaluation?
 		// Optional: Trigger batched tip pair selection here
 
 		watch.stop();
@@ -229,6 +233,7 @@ public class MilestoneService {
 	 */
 	public void updateRating() throws Exception {
 		// Select #tipCount solid tips via MCMC
+        // TODO check for reorg and go back with rating threshold until bifurcation for reevaluation
 		HashMap<BlockEvaluation, HashSet<UUID>> selectedTips = new HashMap<BlockEvaluation, HashSet<UUID>>(NetworkParameters.MAX_RATING_TIP_COUNT);
 		List<Sha256Hash> selectedTipHashes = tipsService.getRatingTips(NetworkParameters.MAX_RATING_TIP_COUNT);
 		for (Sha256Hash selectedTipHash : selectedTipHashes) {
@@ -286,7 +291,6 @@ public class MilestoneService {
 			if (approverHashSets.containsKey(block.getPrevBranchBlockHash()))
 				approverHashSets.get(block.getPrevBranchBlockHash()).addAll(approverHashes);
 
-
 			// Update your rating 
 			blockService.updateRating(currentBlock, approverHashes.size());
 			approverHashSets.remove(currentBlock.getBlockhash());
@@ -339,6 +343,18 @@ public class MilestoneService {
 			}
 		}
 	}
+	
+    /**
+     * Updates maintained field in block evaluation
+     * 
+     * @throws BlockStoreException
+     */
+    public void updateMaintained() throws BlockStoreException {
+        // Set maintained to false where milestonedepth is sufficient and maintained is true
+        store.updateRemoveUnmaintainedBlocks();
+        // Set maintained to true where milestonedepth is insufficient and maintained is false
+        store.updateAddMaintainedBlocks();
+    }
 
 	/**
 	 * Returns all solid tips ordered by descending height

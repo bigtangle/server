@@ -25,6 +25,10 @@ import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.UTXO;
 
+//TODO bugs: 
+//disallow 0x000... as tx and block hashes
+//disallow token issuances without txs
+
 @Service
 public class ValidatorService {
 

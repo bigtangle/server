@@ -32,9 +32,6 @@ import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.wallet.CoinSelector;
 import net.bigtangle.wallet.DefaultCoinSelector;
 
-// TODO bugs: 
-// disallow 0x000... as tx and block hashes
-// disallow token issuances without txs
 
 /**
  * <p>
@@ -147,15 +144,6 @@ public class BlockService {
     public void updateRating(BlockEvaluation blockEvaluation, long i) throws BlockStoreException {
         blockEvaluation.setRating(i);
         store.updateBlockEvaluationRating(blockEvaluation.getBlockhash(), i);
-    }
-
-    public void updateMilestone(BlockEvaluation blockEvaluation, boolean b) throws BlockStoreException {
-        blockEvaluation.setMilestone(b);
-        store.updateBlockEvaluationMilestone(blockEvaluation.getBlockhash(), b);
-
-        long now = System.currentTimeMillis();
-        blockEvaluation.setMilestoneLastUpdateTime(now);
-        store.updateBlockEvaluationMilestoneLastUpdateTime(blockEvaluation.getBlockhash(), now);
     }
 
     public void saveBinaryArrayToBlock(byte[] bytes) throws Exception {

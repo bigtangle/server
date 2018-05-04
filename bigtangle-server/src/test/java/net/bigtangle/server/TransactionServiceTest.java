@@ -65,7 +65,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
 
         blockgraph.add(networkParameters.getGenesisBlock());
         BlockEvaluation genesisEvaluation = blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash());
-        blockService.updateMilestone(genesisEvaluation, true);
+        store.updateBlockEvaluationMilestone(genesisEvaluation.getBlockhash(), true);
         blockService.updateSolid(genesisEvaluation, true);
 
         Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
@@ -165,7 +165,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         // Add genesis block
         blockgraph.add(networkParameters.getGenesisBlock());
         BlockEvaluation genesisEvaluation = blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash());
-        blockService.updateMilestone(genesisEvaluation, true);
+        store.updateBlockEvaluationMilestone(genesisEvaluation.getBlockhash(), true);
         blockService.updateSolid(genesisEvaluation, true);
 
         // Build some blocks on genesis block to create a spendable output
