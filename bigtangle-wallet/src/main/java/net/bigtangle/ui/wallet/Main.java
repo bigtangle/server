@@ -118,7 +118,7 @@ public class Main extends Application {
     public static Set<String> validAddressSet = new HashSet<String>();
 
     public String blockTopic = "bigtangle";
-    public String kafka = "cn.kafka.bigtangle.net:9092";
+    public static String kafka = "";
 
     @Override
     public void start(Stage mainWindow) throws Exception {
@@ -189,10 +189,16 @@ public class Main extends Application {
 
         // set local kafka to send
         if (!Locale.CHINESE.equals(locale)) {
-            kafka = "de.kafka.bigtangle.net:9092";
+            if (kafka.equals("")) {
+                 kafka = "de.kafka.bigtangle.net:9092";
+            }
+           
             if ("".equals(IpAddress))
                 IpAddress = "de.server.bigtangle.net";
         } else {
+            if (kafka.equals("")) {
+                kafka = "cn.kafka.bigtangle.net:9092";
+           }
             if ("".equals(IpAddress))
                 IpAddress = "cn.server.bigtangle.net";
 
@@ -454,7 +460,9 @@ public class Main extends Application {
             if (args.length >= 3) {
                 IpAddress = args[2];
             }
-
+            if (args.length >= 4) {
+                kafka = args[3];
+            }
         }
         launch(args);
     }
