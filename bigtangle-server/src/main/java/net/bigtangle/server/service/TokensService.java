@@ -23,17 +23,33 @@ public class TokensService {
 
     public AbstractResponse getTokensList() throws BlockStoreException {
         List<Tokens> list = new ArrayList<Tokens>();
-        
+
         Tokens tokens = new Tokens();
         tokens.setTokenid(NetworkParameters.BIGNETCOIN_TOKENID);
-        tokens.setTokenname( MonetaryFormat.CODE_BTC );
+        tokens.setTokenname(MonetaryFormat.CODE_BTC);
         tokens.setAmount(100000L);
-       // tokens.setDescription("default");
+        // tokens.setDescription("default");
         tokens.setBlocktype((int) NetworkParameters.BLOCKTYPE_GENESIS);
-        
+
         list.add(tokens);
         list.addAll(store.getTokensList());
-        
+
+        return GetTokensResponse.create(list);
+    }
+
+    public AbstractResponse getTokensList(String name) throws BlockStoreException {
+        List<Tokens> list = new ArrayList<Tokens>();
+
+        Tokens tokens = new Tokens();
+        tokens.setTokenid(NetworkParameters.BIGNETCOIN_TOKENID);
+        tokens.setTokenname(MonetaryFormat.CODE_BTC);
+        tokens.setAmount(100000L);
+        // tokens.setDescription("default");
+        tokens.setBlocktype((int) NetworkParameters.BLOCKTYPE_GENESIS);
+
+        list.add(tokens);
+        list.addAll(store.getTokensList(name));
+
         return GetTokensResponse.create(list);
     }
 

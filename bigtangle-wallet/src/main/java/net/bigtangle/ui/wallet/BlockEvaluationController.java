@@ -104,7 +104,7 @@ public class BlockEvaluationController {
         byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "getBlock", Json.jsonmapper().writeValueAsString(requestParam));
         Block re = Main.params.getDefaultSerializer().makeBlock(data);
         Alert alert = new Alert(AlertType.INFORMATION);
-        alert.setHeight(600);
+        alert.setHeight(800);
         alert.setWidth(800);
         alert.setTitle("");
         alert.setHeaderText(null);

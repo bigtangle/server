@@ -190,15 +190,15 @@ public class Main extends Application {
         // set local kafka to send
         if (!Locale.CHINESE.equals(locale)) {
             if (kafka.equals("")) {
-                 kafka = "de.kafka.bigtangle.net:9092";
+                kafka = "de.kafka.bigtangle.net:9092";
             }
-           
+
             if ("".equals(IpAddress))
                 IpAddress = "de.server.bigtangle.net";
         } else {
             if (kafka.equals("")) {
                 kafka = "cn.kafka.bigtangle.net:9092";
-           }
+            }
             if ("".equals(IpAddress))
                 IpAddress = "cn.server.bigtangle.net";
 
