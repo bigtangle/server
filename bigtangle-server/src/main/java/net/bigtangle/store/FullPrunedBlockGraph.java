@@ -474,9 +474,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 		if (!blockEvaluation.isMilestone())
 			return;
 
-		// Set milestone false and update latestMilestoneUpdateTime to stop
-		// infinite
-		// recursions
+		// Set milestone false and update latestMilestoneUpdateTime
 		blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockhash(), false);
 
 		// Disconnect all approver blocks first

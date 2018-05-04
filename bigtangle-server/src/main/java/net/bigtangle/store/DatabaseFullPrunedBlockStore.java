@@ -243,6 +243,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String UPDATE_BLOCKEVALUATION_REWARDVALIDITYASSESSMENT_SQL = getUpdate()
             + " blockevaluation SET rewardvalidityassessment = ? WHERE blockhash = ?";
 
+    protected String UPDATE_BLOCKEVALUATION_NEW_UNMAINTAINED = getUpdate()
+            + " blockevaluation SET maintained = false WHERE milestonedepth > ? AND maintained = true AND rating = 100";
+    protected String UPDATE_BLOCKEVALUATION_NEW_MAINTAINED = getUpdate()
+            + " blockevaluation SET maintained = true WHERE milestonedepth <= ? AND maintained = false AND rating < 100";
+    
     protected Sha256Hash chainHeadHash;
     protected StoredBlock chainHeadBlock;
     protected Sha256Hash verifiedChainHeadHash;
@@ -1342,6 +1347,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public void insertBlockEvaluation(BlockEvaluation blockEvaluation) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
+        maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(INSERT_BLOCKEVALUATION_SQL);
             preparedStatement.setBytes(1, blockEvaluation.getBlockhash().getBytes());
@@ -1373,6 +1379,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public void removeBlockEvaluation(Sha256Hash hash) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
+        maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(DELETE_BLOCKEVALUATION_SQL);
             preparedStatement.setBytes(1, hash.getBytes());
@@ -1393,6 +1400,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public BlockEvaluation getBlockEvaluation(Sha256Hash hash) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
+        maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_BLOCKEVALUATION_SQL);
             preparedStatement.setBytes(1, hash.getBytes());
@@ -1422,6 +1430,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public long getMaxSolidHeight() throws BlockStoreException {
         PreparedStatement preparedStatement = null;
+        maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_MAX_SOLID_HEIGHT);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -1684,6 +1693,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             throw new BlockStoreException("Could not find blockevaluation to update");
         }
         PreparedStatement preparedStatement = null;
+        maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationCumulativeweightSQL());
             preparedStatement.setLong(1, cumulativeweight);
@@ -1711,6 +1721,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             throw new BlockStoreException("Could not find blockevaluation to update");
         }
         PreparedStatement preparedStatement = null;
+        maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationDepthSQL());
             preparedStatement.setLong(1, depth);
@@ -1738,6 +1749,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             throw new BlockStoreException("Could not find blockevaluation to update");
         }
         PreparedStatement preparedStatement = null;
+        maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationHeightSQL());
             preparedStatement.setLong(1, height);
@@ -1765,6 +1777,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             throw new BlockStoreException("Could not find blockevaluation to update");
         }
         PreparedStatement preparedStatement = null;
+        maybeConnect();
+
         try {
             preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationMilestoneSQL());
             preparedStatement.setBoolean(1, b);
@@ -1781,6 +1795,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 }
             }
         }
+
+        long now = System.currentTimeMillis();
+        blockEvaluation.setMilestoneLastUpdateTime(now);
+        updateBlockEvaluationMilestoneLastUpdateTime(blockEvaluation.getBlockhash(), now);
     }
 
     protected abstract String getUpdateBlockEvaluationRatingSQL();
@@ -1792,6 +1810,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             throw new BlockStoreException("Could not find blockevaluation to update");
         }
         PreparedStatement preparedStatement = null;
+        maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationRatingSQL());
             preparedStatement.setLong(1, i);
@@ -1819,6 +1838,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             throw new BlockStoreException("Could not find blockevaluation to update");
         }
         PreparedStatement preparedStatement = null;
+        maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationSolidSQL());
             preparedStatement.setBoolean(1, b);
@@ -1847,6 +1867,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             throw new BlockStoreException("Could not find blockevaluation to update");
         }
         PreparedStatement preparedStatement = null;
+        maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationMilestoneLastUpdateTimeSQL());
             preparedStatement.setLong(1, now);
@@ -1874,6 +1895,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             throw new BlockStoreException("Could not find blockevaluation to update");
         }
         PreparedStatement preparedStatement = null;
+        maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationMilestoneDepthSQL());
             preparedStatement.setLong(1, i);
@@ -1901,6 +1923,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             throw new BlockStoreException("Could not find blockevaluation to update");
         }
         PreparedStatement preparedStatement = null;
+        maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationMaintainedSQL());
             preparedStatement.setBoolean(1, b);
@@ -1928,6 +1951,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             throw new BlockStoreException("Could not find blockevaluation to update");
         }
         PreparedStatement preparedStatement = null;
+        maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationRewardValidItyassessmentSQL());
             preparedStatement.setBoolean(1, b);
@@ -1949,6 +1973,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public void deleteTip(Sha256Hash blockhash) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
+        maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(DELETE_TIP_SQL);
             preparedStatement.setBytes(1, blockhash.getBytes());
@@ -1969,6 +1994,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public void insertTip(Sha256Hash blockhash) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
+        maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(INSERT_TIP_SQL);
             preparedStatement.setBytes(1, blockhash.getBytes());
@@ -1989,6 +2015,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public BlockEvaluation getTransactionOutputSpender(Sha256Hash prevTxHash, long index) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
+        maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_OUTPUT_SPENDER_SQL);
             preparedStatement.setBytes(1, prevTxHash.getBytes());
@@ -2025,6 +2052,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         if (prev == null) {
             throw new BlockStoreException("Could not find UTXO to update");
         }
+        maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(getUpdateOutputsSpentSQL());
@@ -2056,6 +2084,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         if (prev == null) {
             throw new BlockStoreException("Could not find UTXO to update");
         }
+        maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(getUpdateOutputsConfirmedSQL());
@@ -2085,6 +2114,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         if (prev == null) {
             throw new BlockStoreException("Could not find UTXO to update");
         }
+        maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(getUpdateOutputsSpendPendingSQL());
@@ -2167,7 +2197,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            if (name != null || !"".equals(name.trim())) {
+            if (name != null || !"".equals(name.trim())) { // TODO && instead of || ?
                 SELECT_TOKENS_SQL += " WHERE tokenname LIKE '%" + name + "%' OR description LIKE '%" + name + "%'";
             }
             preparedStatement = conn.get().prepareStatement(SELECT_TOKENS_SQL);
@@ -2204,6 +2234,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public void saveTokens(byte[] tokenid, String tokenname, long amount, String description, int blocktype)
             throws BlockStoreException {
+        maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(INSERT_TOKENS_SQL);
@@ -2228,8 +2259,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public void saveOrderPublish(OrderPublish orderPublish) throws BlockStoreException {
-        PreparedStatement preparedStatement = null;
         maybeConnect();
+        PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(INSERT_ORDERPUBLISH_SQL);
             preparedStatement.setString(1, orderPublish.getOrderid());
@@ -2266,9 +2297,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public List<OrderPublish> getOrderPublishListWithCondition(Map<String, Object> request) throws BlockStoreException {
-        List<OrderPublish> list = new ArrayList<OrderPublish>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
+        List<OrderPublish> list = new ArrayList<OrderPublish>();
         try {
             StringBuffer whereStr = new StringBuffer(" WHERE 1 = 1 ");
             for (Entry<String, Object> entry : request.entrySet()) {
@@ -2311,6 +2342,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public void saveExchange(Exchange exchange) throws BlockStoreException {
+        maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(INSERT_EXCHANGE_SQL);
@@ -2342,9 +2374,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public List<Exchange> getExchangeListWithAddress(String address) throws BlockStoreException {
-        List<Exchange> list = new ArrayList<Exchange>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
+        List<Exchange> list = new ArrayList<Exchange>();
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_EXCHANGE_SQL);
             preparedStatement.setString(1, address);
@@ -2382,6 +2414,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public void saveOrderMatch(OrderMatch orderMatch) throws BlockStoreException {
+        maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(INSERT_ORDERMATCH_SQL);
@@ -2420,6 +2453,48 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement = conn.get().prepareStatement(sql);
             preparedStatement.setString(2, orderid);
             preparedStatement.setBytes(1, data);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public void updateAddMaintainedBlocks() throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(UPDATE_BLOCKEVALUATION_NEW_MAINTAINED);
+            preparedStatement.setLong(1, NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public void updateRemoveUnmaintainedBlocks() throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(UPDATE_BLOCKEVALUATION_NEW_UNMAINTAINED);
+            preparedStatement.setLong(1, NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);

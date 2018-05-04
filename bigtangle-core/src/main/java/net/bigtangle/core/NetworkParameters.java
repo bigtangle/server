@@ -168,7 +168,7 @@ public abstract class NetworkParameters {
     public static final int MAX_RATING_TIP_COUNT = 100;
 
     public static final long ENTRYPOINT_RATING_LOWER_DEPTH_CUTOFF = 0;
-    public static final long ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF = 100;
+    public static final long ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF = 60;
 
     public static final long ENTRYPOINT_TIPSELECTION_DEPTH_CUTOFF = 20;
 

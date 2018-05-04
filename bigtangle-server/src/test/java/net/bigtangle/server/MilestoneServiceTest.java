@@ -34,8 +34,8 @@ import net.bigtangle.core.VerificationException;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
-import net.bigtangle.server.service.TipsService;
 import net.bigtangle.store.FullPrunedBlockGraph;
+import net.bigtangle.store.FullPrunedBlockStore;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -48,6 +48,8 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 	private MilestoneService milestoneService;
 	@Autowired
 	private NetworkParameters networkParameters;
+    @Autowired
+    protected FullPrunedBlockStore store;
 
 	ECKey outKey = new ECKey();
 
@@ -75,17 +77,36 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		return blocks;
 	}
 
+    public List<Block> createLinearTangle1() throws Exception {
+
+        List<Block> blocks = new ArrayList<Block>();
+        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0,
+                networkParameters.getGenesisBlock().getHash());
+        blocks.add(rollingBlock);
+        for (int i = 0; i < 80; i++) {
+            rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0,
+                    rollingBlock.getHash());
+            blocks.add(rollingBlock);
+        }
+
+        int i = 0;
+        for (Block block : blocks) {
+            this.blockgraph.add(block);
+            log.debug("create  " + i + " block:" + block.getHashAsString());
+            i++;
+
+        }
+        return blocks;
+    }
 	@Test
 	public void testMilestoneTestTangle1() throws Exception {
-
-	    //TODO this test is not valid for general transition functions due to small size
         store.resetStore();
 		blockgraph = new FullPrunedBlockGraph(networkParameters, store);
 
 		// Add genesis block
 		blockgraph.add(networkParameters.getGenesisBlock());
 		BlockEvaluation genesisEvaluation = blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash());
-		blockService.updateMilestone(genesisEvaluation, true);
+        store.updateBlockEvaluationMilestone(genesisEvaluation.getBlockhash(), true);
 		blockService.updateSolid(genesisEvaluation, true);
 
 		Block b1 = createAndAddNextBlockCoinbase(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), networkParameters.getGenesisBlock().getHash());
@@ -291,6 +312,28 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		assertEquals(0, blockService.getBlockEvaluation(b8weight3.getHash()).getMilestoneDepth());
 		assertEquals(0, blockService.getBlockEvaluation(b8weight4.getHash()).getMilestoneDepth());
 	}
+
+    @Test
+    public void testMilestoneTestTangle2() throws Exception {
+        store.resetStore();
+        blockgraph = new FullPrunedBlockGraph(networkParameters, store);
+
+        // Add genesis block
+        blockgraph.add(networkParameters.getGenesisBlock());
+        BlockEvaluation genesisEvaluation = blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash());
+        store.updateBlockEvaluationMilestone(genesisEvaluation.getBlockhash(), true);
+        blockService.updateSolid(genesisEvaluation, true);
+        
+        List<Block> blocks = createLinearTangle1();
+        milestoneService.update();
+        milestoneService.update();
+
+        Block rollingBlock = blocks.get(blocks.size() - 1);
+        blockgraph.add(BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0,
+                rollingBlock.getHash()));
+        
+        milestoneService.update();
+    }
 	
 	// TODO test blocks without existing UTXO should not be added even if in
 	// milestonetoAdd

@@ -5,10 +5,8 @@
 
 package net.bigtangle.store;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +37,6 @@ import net.bigtangle.core.TransactionOutputChanges;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.core.listeners.NewBestBlockListener;
 import net.bigtangle.core.listeners.ReorganizeListener;
-import net.bigtangle.server.service.BlockRequester;
 import net.bigtangle.utils.ListenerRegistration;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.utils.VersionTally;
