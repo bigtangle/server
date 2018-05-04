@@ -34,7 +34,6 @@ import net.bigtangle.core.VerificationException;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
-import net.bigtangle.server.service.TipsService;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 
