@@ -152,6 +152,7 @@ public class StockController extends TokensController {
         Map<String, Object> rowData = tokensTable.getSelectionModel().getSelectedItem();
         if (rowData == null || rowData.isEmpty()) {
             GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_d1"));
+            return;
         }
         String tokeninfo = "";
         tokeninfo += Main.getString(rowData.get("tokenHex")) + "," + Main.getString(rowData.get("tokenname"));
