@@ -108,6 +108,7 @@ public class BlockEvaluationController {
         alert.setWidth(800);
         alert.setTitle("");
         alert.setHeaderText(null);
+        alert.setResizable(true);
         alert.setContentText(re.toString());
 
         alert.showAndWait();
