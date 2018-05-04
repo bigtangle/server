@@ -55,7 +55,7 @@
 			<children>
 				<Label layoutX="8.0" layoutY="7.0" text="%address" />
 				<TextField fx:id="addressTextField" layoutX="72.0" layoutY="3.0" prefHeight="23.0" prefWidth="432.0" />
-				<Button layoutX="520.0" layoutY="3.0" mnemonicParsing="false" onAction="#otherWallet"  text="%other_wallet_search" />
+				<Button layoutX="520.0" layoutY="3.0" mnemonicParsing="false" onAction="#otherWallet" text="%other_wallet_search" />
 			</children>
 		</AnchorPane>
 		<HBox fx:id="passwordHBox" alignment="CENTER" layoutX="14.0" layoutY="151.0" prefHeight="38.0" prefWidth="725.0">
@@ -65,5 +65,10 @@
 				<Button mnemonicParsing="false" onAction="#okPassword" prefHeight="23.0" prefWidth="100.0" text="%OK" />
 			</children>
 		</HBox>
+      <ImageView fitHeight="84.0" fitWidth="100.0" layoutX="16.0" layoutY="16.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="bitcoin_logo_plain.png" />
+         </image>
+      </ImageView>
 	</children>
 </AnchorPane>

@@ -18,12 +18,15 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.MapValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
+import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
@@ -87,6 +90,27 @@ public class BlockEvaluationController {
 
     public void closeUI(ActionEvent event) {
         overlayUI.done();
+    }
+
+    public void showBlock(ActionEvent event) throws Exception {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        Map<String, Object> rowData = blockEvaluationTable.getSelectionModel().getSelectedItem();
+        if (rowData == null || rowData.isEmpty()) {
+            GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_d1"));
+        }
+        Map<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("hashHex", Main.getString(rowData.get("hash")));
+
+        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "getBlock", Json.jsonmapper().writeValueAsString(requestParam));
+        Block re = Main.params.getDefaultSerializer().makeBlock(data);
+        Alert alert = new Alert(AlertType.INFORMATION);
+        alert.setHeight(600);
+        alert.setWidth(800);
+        alert.setTitle("");
+        alert.setHeaderText(null);
+        alert.setContentText(re.toString());
+
+        alert.showAndWait();
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })

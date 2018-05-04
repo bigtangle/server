@@ -4,12 +4,14 @@
  *******************************************************************************/
 package net.bigtangle.ui.wallet;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -66,6 +68,27 @@ public class TokensController {
             positveTokennameColumn.setCellValueFactory(new MapValueFactory("tokenname"));
             positveTokenHexColumn.setCellValueFactory(new MapValueFactory("tokenHex"));
             positveTokensTable.setItems(tokenData);
+        }
+    }
+
+    public void removePositvle(ActionEvent event) {
+        Map<String, Object> rowData = positveTokensTable.getSelectionModel().getSelectedItem();
+        if (rowData == null || rowData.isEmpty()) {
+            GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_d1"));
+        }
+        String tokenHex = Main.getString(rowData.get("tokenHex"));
+        String tokenname = Main.getString(rowData.get("tokenname"));
+        try {
+            String myPositvleTokens = Main.getString4file(Main.keyFileDirectory + "/positve.txt");
+            myPositvleTokens.replace(tokenHex + "," + tokenname, "");
+            File temp = new File(Main.keyFileDirectory + "/positve.txt");
+            if (temp.exists()) {
+                temp.delete();
+            }
+            Main.addText2file(myPositvleTokens, Main.keyFileDirectory + "/positve.txt");
+            initPositveTableView();
+        } catch (Exception e) {
+
         }
     }
 

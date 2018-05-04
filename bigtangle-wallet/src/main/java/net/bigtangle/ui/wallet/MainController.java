@@ -134,12 +134,12 @@ public class MainController {
 
     @SuppressWarnings("unchecked")
     public void initTable(String addressString) throws Exception {
+        String myPositvleTokens = Main.getString4file(Main.keyFileDirectory + "/positve.txt");
         Main.instance.getUtxoData().clear();
         Main.instance.getCoinData().clear();
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
         aesKey = null;
-        // Main.initAeskey(aesKey);
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
@@ -169,10 +169,16 @@ public class MainController {
             String balance = c.toFriendlyString();
             byte[] tokenid = c.tokenid;
             String address = u.getAddress();
+
             Main.validAddressSet.clear();
             Main.validAddressSet.add(address);
             boolean spendPending = u.isSpendPending();
-            Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending));
+            if (myPositvleTokens != null && !"".equals(myPositvleTokens.trim()) && !myPositvleTokens.trim().isEmpty()
+                    && myPositvleTokens.contains(Utils.HEX.encode(tokenid))) {
+                Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending));
+            }
+            if (myPositvleTokens == null || myPositvleTokens.isEmpty() || "".equals(myPositvleTokens.trim()))
+                Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending));
         }
         list = (List<Map<String, Object>>) data.get("tokens");
         if (list == null || list.isEmpty()) {
@@ -184,7 +190,12 @@ public class MainController {
             Main.validTokenMap.put(Utils.HEX.encode(coin2.tokenid), true);
 
             if (!coin2.isZero()) {
-                Main.instance.getCoinData().add(new CoinModel(coin2.toFriendlyString(), coin2.tokenid));
+                if (myPositvleTokens != null && !"".equals(myPositvleTokens.trim())
+                        && !myPositvleTokens.trim().isEmpty()
+                        && myPositvleTokens.contains(Utils.HEX.encode(coin2.tokenid)))
+                    Main.instance.getCoinData().add(new CoinModel(coin2.toFriendlyString(), coin2.tokenid));
+                if (myPositvleTokens == null || myPositvleTokens.isEmpty() || "".equals(myPositvleTokens.trim()))
+                    Main.instance.getCoinData().add(new CoinModel(coin2.toFriendlyString(), coin2.tokenid));
             }
         }
     }
@@ -295,8 +306,7 @@ public class MainController {
     }
 
     public void settingsClicked(ActionEvent event) {
-        Main.OverlayUI<WalletSettingsController> screen = Main.instance.overlayUI("wallet_settings.fxml");
-        screen.controller.initialize(null);
+        Main.instance.overlayUI("wallet_set_password.fxml");
     }
 
     private void askForPasswordAndRetry() {
