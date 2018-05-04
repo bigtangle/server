@@ -11,3 +11,14 @@ add select a block in blockevaluation and display the block using block.toString
 remove empty setting page and replace it with setPassword
 remove a token from my positive list
 add search filter for token
+
+Change:
+use default http://xx.server.bigtangle.net or  https://xx.server.bigtangle.net as Server URL
+enable to use server to send block, not with kafka as the port for kafka and protocol are blocked in company 
+remove base/kilo/M from payment 
+new key generation
+private key display with password  check
+balance display token name
+disply  total only in balance and UTXO as dialog for details
+
+logo or icon windows after start of application
