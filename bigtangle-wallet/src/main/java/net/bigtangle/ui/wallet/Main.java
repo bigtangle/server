@@ -285,7 +285,7 @@ public class Main extends Application {
         BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(addressFile), "UTF-8"));
         String str = "";
         while ((str = in.readLine()) != null) {
-            temp.append(str);
+            temp.append(str + "\n");
         }
         in.close();
 

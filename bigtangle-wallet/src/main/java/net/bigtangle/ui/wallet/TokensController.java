@@ -71,10 +71,14 @@ public class TokensController {
         ObservableList<Map> tokenData = FXCollections.observableArrayList();
         if (tokens != null && !tokens.isEmpty()) {
             for (String temp : tokens) {
-                Map map = new HashMap();
-                map.put("tokenHex", temp.split(",")[0]);
-                map.put("tokenname", temp.split(",")[1]);
-                tokenData.add(map);
+                System.out.println("temp:" + temp);
+                if (!temp.equals("")) {
+                    Map map = new HashMap();
+                    map.put("tokenHex", temp.split(",")[0]);
+                    map.put("tokenname", temp.split(",")[1]);
+                    tokenData.add(map);
+                }
+
             }
             positveTokennameColumn.setCellValueFactory(new MapValueFactory("tokenname"));
             positveTokenHexColumn.setCellValueFactory(new MapValueFactory("tokenHex"));
@@ -91,6 +95,7 @@ public class TokensController {
         String tokenname = Main.getString(rowData.get("tokenname"));
         try {
             String myPositvleTokens = Main.getString4file(Main.keyFileDirectory + "/positve.txt");
+            System.out.println(myPositvleTokens);
             myPositvleTokens.replace(tokenHex + "," + tokenname, "");
             File temp = new File(Main.keyFileDirectory + "/positve.txt");
             if (temp.exists()) {
@@ -99,7 +104,7 @@ public class TokensController {
             Main.addText2file(myPositvleTokens, Main.keyFileDirectory + "/positve.txt");
             initPositveTableView();
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
     }
 
