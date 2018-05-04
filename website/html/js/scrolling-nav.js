@@ -49,29 +49,30 @@ $(document).ready(function(){
   $('.circle').css('display','block');
   $('#features .col-md-4').addClass('cardFeature');
 });
-
+run = true;
 lastActive = 2;
 function screw(active){
   window.clearTimeout(screwInterval);
-  console.log("Aktiv "+active);
-  $('.cardFeature').hide();
-  $('#cardFeature'+active).show();
-  var teta = (lastActive-active+6)%6;
-  for(i = 1; i <= 6; i++) {
-    //i//f(teta == 5)
+  if(run) {
+    console.log("Aktiv " + active);
+    $('.cardFeature').hide();
+    $('#cardFeature' + active).show();
+    var teta = (lastActive - active + 6) % 6;
+    for (i = 1; i <= 6; i++) {
+      //i//f(teta == 5)
+      positions[i - 1] += teta * 60;
+      $('.arc').removeClass('arc' + i);
+      if (i % 6 == active % 6) {
+        $('#arc' + i).addClass('arc' + i);
+      }
+      animateStuff(i);
 
-    positions[i-1] += teta*60;
-    $('.arc').removeClass('arc'+i);
-    if(i%6 == active%6){
-      $('#arc'+i).addClass('arc'+i);
     }
-    animateStuff(i);
-
+    console.log(positions, teta);
+    var next = active - 1 == 0 ? 6 : active - 1;
+    //var next = active+1 == 7 ?1 : active+1;
+    lastActive = active;
   }
-  console.log(positions, teta);
-  var next = active-1 == 0 ?6 : active-1;
-  //var next = active+1 == 7 ?1 : active+1;
-  lastActive = active;
   screwInterval = window.setTimeout("screw("+next+")",5000);
 }
 
@@ -82,14 +83,23 @@ function animateStuff(i){
       $(this).css('-webkit-transform', 'rotate(' + now + 'deg) skewX(30deg)');
       $(this).css('-moz-transform', 'rotate(' + now + 'deg) skewX(30deg)');
       $(this).css('transform', 'rotate(' + now + 'deg) skewX(30deg)');
-      angle = (now + 210) / 180 * Math.PI;
+      var angle = (now + 210) / 180 * Math.PI;
       var x = 130 + Math.cos(angle) * 100 - 16;
       var y = 130 + Math.sin(angle) * 100 - 16;
       $('#item' + i).css('left', x + 'px').css('top', y + 'px');
       $('#border' + i).css('transform', 'rotate('+now+'deg)');
     },
-    duration: 'slow'
-  }, 'linear');
+    duration: 'slow',
+    complete: function(){
+      var now = positions[i-1]%360;
+      positions[i-1] = now;
+      $('#arc' + i).css('-webkit-transform', 'rotate(' + now + 'deg) skewX(30deg)')
+          .css('-moz-transform', 'rotate(' + now + 'deg) skewX(30deg)')
+          .css('transform', 'rotate(' + now + 'deg) skewX(30deg)')
+        .css('borderSpacing', now);
+      $('#border' + i).css('transform', 'rotate('+now+'deg)');
+      console.log(positions);
+    }}, 'linear');
 }
 
 
