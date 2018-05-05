@@ -46,10 +46,10 @@ public class ScheduleOrderMatchService {
     @Autowired
     protected FullPrunedBlockStore store;
 
-    @Scheduled(fixedRateString = "1000")
+    @Scheduled(fixedRateString = "${service.orderMatchService.rate:5000}")
     public void updateMatch() {
         try {
-             logger.info("cal order match start");
+            logger.info("cal order match start");
             GetTokensResponse getTokensResponse = (GetTokensResponse) tokensService.getTokensList();
             for (Tokens tokens : getTokensResponse.getTokens()) {
                 String tokenSTR = tokens.getTokenHex();
@@ -75,24 +75,27 @@ public class ScheduleOrderMatchService {
                             // TODO Here's the change orders Jiang
                             // sell side will get the system coin as token
                             if (match.incomingSide == Side.BUY) {
-                                Exchange exchange = new Exchange(incomingOrder.getOrderid(), incomingOrder.getAddress(), incomingOrder.getTokenid(),
-                                        String.valueOf(match.executedQuantity), restingOrder.getOrderid(), restingOrder.getAddress(),
+                                Exchange exchange = new Exchange(incomingOrder.getOrderid(), incomingOrder.getAddress(),
+                                        incomingOrder.getTokenid(), String.valueOf(match.executedQuantity),
+                                        restingOrder.getOrderid(), restingOrder.getAddress(),
                                         Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID),
-                                        String.valueOf(match.executedQuantity * match.price/ Coin.COIN_VALUE), new byte[0]);
+                                        String.valueOf(match.executedQuantity * match.price / Coin.COIN_VALUE),
+                                        new byte[0]);
                                 this.store.saveExchange(exchange);
                             } else {
-                                Exchange exchange = new Exchange(restingOrder.getOrderid(), restingOrder.getAddress(), restingOrder.getTokenid(),
-                                        String.valueOf(match.executedQuantity), incomingOrder.getOrderid(), incomingOrder.getAddress(),
+                                Exchange exchange = new Exchange(restingOrder.getOrderid(), restingOrder.getAddress(),
+                                        restingOrder.getTokenid(), String.valueOf(match.executedQuantity),
+                                        incomingOrder.getOrderid(), incomingOrder.getAddress(),
                                         Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID),
-                                        String.valueOf(match.executedQuantity * match.price / Coin.COIN_VALUE), new byte[0]);
-                                //add exchange to store
+                                        String.valueOf(match.executedQuantity * match.price / Coin.COIN_VALUE),
+                                        new byte[0]);
+                                // add exchange to store
                                 this.store.saveExchange(exchange);
                             }
                             this.store.updateOrderPublishState(incomingOrder.getOrderid(), OrderState.match.ordinal());
                             this.store.updateOrderPublishState(restingOrder.getOrderid(), OrderState.match.ordinal());
                             iterator.remove();
-                        }
-                        else {
+                        } else {
                             // Add add = (Add) event;
                             // System.out.println(tokenSTR + "," + add);
                         }
