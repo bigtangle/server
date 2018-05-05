@@ -77,6 +77,11 @@ public class MilestoneService {
 
         watch.stop();
         watch = Stopwatch.createStarted();
+        updateMilestoneDepth();
+        log.info("Milestonedepth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+		
+        watch.stop();
+        watch = Stopwatch.createStarted();
         updateMaintained();
         log.info("Maintained update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 		
@@ -91,7 +96,7 @@ public class MilestoneService {
 	 * 
 	 * @throws Exception
 	 */
-	public void updateSolidityAndHeight() throws Exception {
+	private void updateSolidityAndHeight() throws Exception {
 		List<Sha256Hash> nonSolidBlocks = blockService.getNonSolidBlocks();
 		for (Sha256Hash nonSolidBlock : nonSolidBlocks)
 			updateSolidityAndHeightRecursive(nonSolidBlock);
@@ -149,16 +154,14 @@ public class MilestoneService {
 	 * 
 	 * @throws BlockStoreException
 	 */
-	public void updateCumulativeWeightAndDepth() throws BlockStoreException {
+	private void updateCumulativeWeightAndDepth() throws BlockStoreException {
 		// Begin from the highest solid height tips and go backwards from there
 		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = getSolidTipsDescendingAsPriorityQueue();
 		HashMap<Sha256Hash, HashSet<Sha256Hash>> approverHashSets = new HashMap<>();
 		HashMap<Sha256Hash, Long> depths = new HashMap<>();
-		HashMap<Sha256Hash, Long> milestoneDepths = new HashMap<>();
 		for (BlockEvaluation tip : blocksByDescendingHeight) {
 			approverHashSets.put(tip.getBlockhash(), new HashSet<>());
 			depths.put(tip.getBlockhash(), 0L);
-			milestoneDepths.put(tip.getBlockhash(), 0L);
 		}
 
 		BlockEvaluation currentBlock = null;
@@ -171,7 +174,6 @@ public class MilestoneService {
 			HashSet<Sha256Hash> approverHashes = approverHashSets.get(currentBlock.getBlockhash());
 			approverHashes.add(currentBlock.getBlockhash());
 			long depth = depths.get(currentBlock.getBlockhash());
-			long milestoneDepth = milestoneDepths.get(currentBlock.getBlockhash());
 			
 			// Add all current references to both approved blocks (initialize if not yet initialized)
 			Block block = blockService.getBlock(currentBlock.getBlockhash());
@@ -182,7 +184,6 @@ public class MilestoneService {
 					blocksByDescendingHeight.add(prevBlockEvaluation);
 					approverHashSets.put(prevBlockEvaluation.getBlockhash(), new HashSet<>());
 					depths.put(prevBlockEvaluation.getBlockhash(), 0L);
-					milestoneDepths.put(prevBlockEvaluation.getBlockhash(), 0L);
 				}
 			}
 			
@@ -192,7 +193,6 @@ public class MilestoneService {
 					blocksByDescendingHeight.add(prevBranchBlockEvaluation);
 					approverHashSets.put(prevBranchBlockEvaluation.getBlockhash(), new HashSet<>());
 					depths.put(prevBranchBlockEvaluation.getBlockhash(), 0L);
-					milestoneDepths.put(prevBranchBlockEvaluation.getBlockhash(), 0L);
 				}
 			}
 			
@@ -201,9 +201,6 @@ public class MilestoneService {
 				if (depth + 1 > depths.get(block.getPrevBlockHash())) {
 					depths.put(block.getPrevBlockHash(), depth + 1);					
 				}
-				if (currentBlock.isMilestone() && milestoneDepth + 1 > milestoneDepths.get(block.getPrevBlockHash())) {
-					milestoneDepths.put(block.getPrevBlockHash(), milestoneDepth + 1);					
-				}
 			}
 			
 			if (approverHashSets.containsKey(block.getPrevBranchBlockHash())) {
@@ -211,27 +208,79 @@ public class MilestoneService {
 				if (depth + 1 > depths.get(block.getPrevBranchBlockHash())) {
 					depths.put(block.getPrevBranchBlockHash(), depth + 1);					
 				}
-				if (currentBlock.isMilestone() && milestoneDepth + 1 > milestoneDepths.get(block.getPrevBranchBlockHash())) {
-					milestoneDepths.put(block.getPrevBranchBlockHash(), milestoneDepth + 1);					
-				}
 			}
 
 			// Update and dereference
 			blockService.updateCumulativeWeight(currentBlock, approverHashes.size());
 			blockService.updateDepth(currentBlock, depth);
-			blockService.updateMilestoneDepth(currentBlock, milestoneDepth);
 			approverHashSets.remove(currentBlock.getBlockhash());
 			depths.remove(currentBlock.getBlockhash());
-			milestoneDepths.remove(currentBlock.getBlockhash());
 		}
 	}
+
+    /**
+     * Update cumulative weight, the amount of blocks a block is approved by
+     * 
+     * @throws BlockStoreException
+     */
+    private void updateMilestoneDepth() throws BlockStoreException {
+        // Begin from the highest solid height tips and go backwards from there
+        PriorityQueue<BlockEvaluation> blocksByDescendingHeight = getSolidTipsDescendingAsPriorityQueue();
+        HashMap<Sha256Hash, Long> milestoneDepths = new HashMap<>();
+        for (BlockEvaluation tip : blocksByDescendingHeight) {
+            milestoneDepths.put(tip.getBlockhash(), -1L);
+        }
+
+        BlockEvaluation currentBlock = null;
+        while ((currentBlock = blocksByDescendingHeight.poll()) != null) {
+            // Abort if unmaintained
+            if (!currentBlock.isMaintained())
+                continue;
+            
+            // Add all current references to both approved blocks (initialize if not yet initialized)
+            long milestoneDepth = milestoneDepths.get(currentBlock.getBlockhash());
+            Block block = blockService.getBlock(currentBlock.getBlockhash());
+            
+            if (!milestoneDepths.containsKey(block.getPrevBlockHash())) {
+                BlockEvaluation prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
+                if (prevBlockEvaluation != null) {
+                    blocksByDescendingHeight.add(prevBlockEvaluation);
+                    milestoneDepths.put(prevBlockEvaluation.getBlockhash(), -1L);
+                }
+            }
+            
+            if (!milestoneDepths.containsKey(block.getPrevBranchBlockHash())) {
+                BlockEvaluation prevBranchBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
+                if (prevBranchBlockEvaluation != null) {
+                    blocksByDescendingHeight.add(prevBranchBlockEvaluation);
+                    milestoneDepths.put(prevBranchBlockEvaluation.getBlockhash(), -1L);
+                }
+            }
+            
+            if (milestoneDepths.containsKey(block.getPrevBlockHash())) {
+                if (currentBlock.isMilestone() && milestoneDepth + 1 > milestoneDepths.get(block.getPrevBlockHash())) {
+                    milestoneDepths.put(block.getPrevBlockHash(), milestoneDepth + 1);                  
+                }
+            }
+            
+            if (milestoneDepths.containsKey(block.getPrevBranchBlockHash())) {
+                if (currentBlock.isMilestone() && milestoneDepth + 1 > milestoneDepths.get(block.getPrevBranchBlockHash())) {
+                    milestoneDepths.put(block.getPrevBranchBlockHash(), milestoneDepth + 1);                    
+                }
+            }
+
+            // Update and dereference
+            blockService.updateMilestoneDepth(currentBlock, milestoneDepth + 1);
+            milestoneDepths.remove(currentBlock.getBlockhash());
+        }
+    }
 
 	/**
 	 * Update the percentage of times that tips selected by MCMC approve a block
 	 * 
 	 * @throws Exception
 	 */
-	public void updateRating() throws Exception {
+	private void updateRating() throws Exception {
 		// Select #tipCount solid tips via MCMC
         // TODO check for reorg and go back with rating threshold until bifurcation for reevaluation
 		HashMap<BlockEvaluation, HashSet<UUID>> selectedTips = new HashMap<BlockEvaluation, HashSet<UUID>>(NetworkParameters.MAX_RATING_TIP_COUNT);
@@ -303,7 +352,7 @@ public class MilestoneService {
 	 * 
 	 * @throws BlockStoreException
 	 */
-	public void updateMilestone() throws BlockStoreException {
+	private void updateMilestone() throws BlockStoreException {
 		// First remove any blocks that should no longer be in the milestone
 		HashSet<BlockEvaluation> blocksToRemove = blockService.getBlocksToRemoveFromMilestone();
 		for (BlockEvaluation block : blocksToRemove) {
@@ -349,7 +398,7 @@ public class MilestoneService {
      * 
      * @throws BlockStoreException
      */
-    public void updateMaintained() throws BlockStoreException {
+	private void updateMaintained() throws BlockStoreException {
         // Set maintained to false where milestonedepth is sufficient and maintained is true
         store.updateRemoveUnmaintainedBlocks();
         // Set maintained to true where milestonedepth is insufficient and maintained is false
