@@ -201,14 +201,14 @@ public abstract class AbstractIntegrationTest {
                 networkParameters.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock);
 
-        System.out.println(rollingBlock.getTransactions().get(0).getOutputs());
+        log.debug(rollingBlock.getTransactions().get(0).getOutputs().toString());
         Block block = networkParameters.getDefaultSerializer().makeBlock(rollingBlock.bitcoinSerialize());
-        System.out.println(block.getTransactions().get(0).getOutputs());
+        log.debug(block.getTransactions().get(0).getOutputs().toString());
 
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
 
-        for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
+        for (int i = 1; i < 3; i++) {
             rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
                     outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
@@ -216,27 +216,12 @@ public abstract class AbstractIntegrationTest {
         // Create bitcoin spend of 1 BTA.
 
         ECKey myKey = walletKeys.get(0);
+        //TODO why no milestone, the program hangs here
         milestoneService.update();
         Block b = createGenesisBlock(myKey);
-        milestoneService.update();
 
         rollingBlock = BlockForTest.createNextBlock(b, null, networkParameters.getGenesisBlock().getHash());
-        // blockgraph.add(rollingBlock);
-
-        System.out.println("rollingBlock : " + rollingBlock.toString());
-        // rollingBlock =
-        // networkParameters.getDefaultSerializer().makeBlock(rollingBlock.bitcoinSerialize());
-        System.out.println("rollingBlock : " + rollingBlock.toString());
-
-        // rollingBlock = new Block(this.networkParameters,
-        // rollingBlock.getHash(), rollingBlock.getHash(),
-        // NetworkParameters.BIGNETCOIN_TOKENID,
-        // NetworkParameters.BLOCKTYPE_TRANSFER,
-        // Math.max(rollingBlock.getTimeSeconds(),
-        // rollingBlock.getTimeSeconds()));
-
-        System.out.println("key " + myKey.getPublicKeyAsHex());
-
+       
         Coin amount = Coin.valueOf(12345, NetworkParameters.BIGNETCOIN_TOKENID);
         // Address address = new Address(PARAMS, toKey.getPubKeyHash());
 
