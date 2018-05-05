@@ -49,7 +49,7 @@ public class MilestoneService {
     private ValidatorService validatorService;
     @Autowired
     private BlockRequester blockRequester;
-    
+
     private final Semaphore lock = new Semaphore(1, true);
 
     /**
@@ -58,45 +58,46 @@ public class MilestoneService {
      * @throws Exception
      */
     public void update() throws Exception {
-        
         lock.acquire();
-        
-        log.info("Milestone Update started");
 
-        Stopwatch watch = Stopwatch.createStarted();
-        updateSolidityAndHeight();
-        log.info("Solidity and height update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+        try {
+            log.info("Milestone Update started");
 
-        watch.stop();
-        watch = Stopwatch.createStarted();
-        updateCumulativeWeightAndDepth();
-        log.info("Weight and depth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+            Stopwatch watch = Stopwatch.createStarted();
+            updateSolidityAndHeight();
+            log.info("Solidity and height update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
-        watch.stop();
-        watch = Stopwatch.createStarted();
-        updateRating();
-        log.info("Rating update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+            watch.stop();
+            watch = Stopwatch.createStarted();
+            updateCumulativeWeightAndDepth();
+            log.info("Weight and depth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
-        watch.stop();
-        watch = Stopwatch.createStarted();
-        updateMilestone();
-        log.info("Milestone update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+            watch.stop();
+            watch = Stopwatch.createStarted();
+            updateRating();
+            log.info("Rating update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
-        watch.stop();
-        watch = Stopwatch.createStarted();
-        updateMilestoneDepth();
-        log.info("Milestonedepth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+            watch.stop();
+            watch = Stopwatch.createStarted();
+            updateMilestone();
+            log.info("Milestone update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
-        watch.stop();
-        watch = Stopwatch.createStarted();
-        updateMaintained();
-        log.info("Maintained update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+            watch.stop();
+            watch = Stopwatch.createStarted();
+            updateMilestoneDepth();
+            log.info("Milestonedepth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
-        // Optional: Trigger batched tip pair selection here
-        
-        lock.release();
+            watch.stop();
+            watch = Stopwatch.createStarted();
+            updateMaintained();
+            log.info("Maintained update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
-        watch.stop();
+            // Optional: Trigger batched tip pair selection here
+
+            watch.stop();
+        } finally {
+            lock.release();
+        }
     }
 
     /**
@@ -414,16 +415,16 @@ public class MilestoneService {
     }
 
     /**
-     * Updates maintained field in block evaluation
-     * Sets maintained to true if reachable by a rating entry point, else false.
+     * Updates maintained field in block evaluation Sets maintained to true if
+     * reachable by a rating entry point, else false.
      * 
      * @throws BlockStoreException
      */
-	private void updateMaintained() throws BlockStoreException {
+    private void updateMaintained() throws BlockStoreException {
         // TODO check for reorg and go back with rating threshold until
         // bifurcation for reevaluation
-	    
-	    // Set all unmaintained
+
+        // Set all unmaintained
         store.updateUnmaintainAll();
         PriorityQueue<BlockEvaluation> blocks = getRatingEntryPointsAscendingAsPriorityQueue();
 
@@ -448,7 +449,7 @@ public class MilestoneService {
         List<BlockEvaluation> solidTips = blockService.getSolidTips();
         if (solidTips.isEmpty())
             throw new IllegalStateException("No solid tips were found!");
-        
+
         PriorityQueue<BlockEvaluation> blocksByDescendingHeight = new PriorityQueue<BlockEvaluation>(solidTips.size(),
                 Comparator.comparingLong(BlockEvaluation::getHeight).reversed());
         blocksByDescendingHeight.addAll(solidTips);
@@ -465,7 +466,7 @@ public class MilestoneService {
         List<BlockEvaluation> candidates = blockService.getRatingEntryPointCandidates();
         if (candidates.isEmpty())
             throw new IllegalStateException("No rating entry point candidates were found!");
-        
+
         PriorityQueue<BlockEvaluation> blocksByDescendingHeight = new PriorityQueue<BlockEvaluation>(candidates.size(),
                 Comparator.comparingLong(BlockEvaluation::getHeight));
         blocksByDescendingHeight.addAll(candidates);
