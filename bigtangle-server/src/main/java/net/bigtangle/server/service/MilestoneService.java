@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.UUID;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -48,6 +49,8 @@ public class MilestoneService {
     private ValidatorService validatorService;
     @Autowired
     private BlockRequester blockRequester;
+    
+    private final Semaphore lock = new Semaphore(1, true);
 
     /**
      * Scheduled update function that updates the Tangle
@@ -55,6 +58,9 @@ public class MilestoneService {
      * @throws Exception
      */
     public void update() throws Exception {
+        
+        lock.acquire();
+        
         log.info("Milestone Update started");
 
         Stopwatch watch = Stopwatch.createStarted();
@@ -87,6 +93,8 @@ public class MilestoneService {
         log.info("Maintained update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
         // Optional: Trigger batched tip pair selection here
+        
+        lock.release();
 
         watch.stop();
     }
@@ -448,7 +456,7 @@ public class MilestoneService {
     }
 
     /**
-     * Returns all rating entry point candidates ordered by asscending height
+     * Returns all rating entry point candidates ordered by ascending height
      * 
      * @return solid tips by ordered by descending height
      * @throws BlockStoreException
