@@ -9,6 +9,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -46,7 +49,7 @@ public class TokensController {
     public TableColumn<Map, String> positveTokennameColumn;
     @FXML
     public TextField nameTextField;
-
+    private static final Logger log = LoggerFactory.getLogger(TokensController.class);
     @FXML
     public void initialize() {
 
@@ -71,7 +74,7 @@ public class TokensController {
         ObservableList<Map> tokenData = FXCollections.observableArrayList();
         if (tokens != null && !tokens.isEmpty()) {
             for (String temp : tokens) {
-                System.out.println("temp:" + temp);
+               //ONLY log System.out.println("temp:" + temp);
                 if (!temp.equals("")) {
                     Map map = new HashMap();
                     map.put("tokenHex", temp.split(",")[0]);
@@ -95,7 +98,7 @@ public class TokensController {
         String tokenname = Main.getString(rowData.get("tokenname"));
         try {
             String myPositvleTokens = Main.getString4file(Main.keyFileDirectory + "/positve.txt");
-            System.out.println(myPositvleTokens);
+            log.debug(myPositvleTokens);
             myPositvleTokens.replace(tokenHex + "," + tokenname, "");
             File temp = new File(Main.keyFileDirectory + "/positve.txt");
             if (temp.exists()) {

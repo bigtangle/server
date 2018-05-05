@@ -176,10 +176,10 @@ public class SendMoneyController {
         byteBuffer.get(orderid);
 
         mOrderid = new String(orderid);
-        // System.out.println("orderid : " + new String(orderid));
+        //       log.debug ("orderid : " + new String(orderid));
 
         int len = byteBuffer.getInt();
-        // System.out.println("tx len : " + len);
+        //  log.debug("tx len : " + len);
         byte[] data = new byte[len];
         byteBuffer.get(data);
         try {

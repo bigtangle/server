@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import javafx.animation.FadeTransition;
@@ -66,7 +68,7 @@ import net.bigtangle.utils.OkHttp3Util;
  * updates and event handling for the main UI.
  */
 public class MainController {
-
+    private static final Logger log = LoggerFactory.getLogger(MainController.class);
     public HBox controlsBox;
     public ClickableBitcoinAddress addressControl;
 

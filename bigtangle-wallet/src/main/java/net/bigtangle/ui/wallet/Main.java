@@ -56,6 +56,8 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -119,6 +121,7 @@ public class Main extends Application {
 
     public String blockTopic = "bigtangle";
     public static String kafka = "";
+    private static final Logger log = LoggerFactory.getLogger(Main.class);
 
     @Override
     public void start(Stage mainWindow) throws Exception {
@@ -484,22 +487,21 @@ public class Main extends Application {
     }
 
     public void sentEmpstyBlock(int number) {
-        if (emptyBlocks) {
 
-            for (int i = 0; i < number; i++) {
-                try {
-                    sentEmpstyBlock();
-                    System.out.println("empty block " + i);
-                } catch (Exception e) {
-                    // Ignore
-                    e.printStackTrace();
-                }
-
+        for (int i = 0; i < number; i++) {
+            try {
+                sentEmpstyBlock();
+                log.debug("empty block " + i);
+            } catch (Exception e) {
+                // Ignore
+                log.debug("", e);
             }
-            ;
 
-            // Threading.USER_THREAD.execute(r);
         }
+        ;
+
+        // Threading.USER_THREAD.execute(r);
+
     }
 
     public String sentEmpstyBlock() throws JsonProcessingException, Exception {
@@ -551,8 +553,11 @@ public class Main extends Application {
         return amount;
     }
 
-    public boolean sendMessage(byte[] data) throws InterruptedException, ExecutionException {
-        return sendMessage(data, this.blockTopic, this.kafka);
+    public boolean sendMessage(byte[] data) throws Exception {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", data);
+        return true;
+        // return sendMessage(data, this.blockTopic, this.kafka);
     }
 
     public boolean sendMessage(byte[] data, String topic, String bootstrapServers)
@@ -564,7 +569,7 @@ public class Main extends Application {
         producerRecord = new ProducerRecord<String, byte[]>(topic, key, data);
         final Future<RecordMetadata> result = messageProducer.send(producerRecord);
         RecordMetadata mdata = result.get();
-        System.out.println(" sendMessage " + key + "kafka server " + bootstrapServers);
+        log.debug(" sendMessage " + key + "kafka server " + bootstrapServers);
         messageProducer.close();
         return mdata != null;
 

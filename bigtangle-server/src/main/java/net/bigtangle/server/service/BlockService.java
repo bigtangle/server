@@ -51,8 +51,7 @@ public class BlockService {
     @Autowired
     FullPrunedBlockGraph blockGraphService;
 
-    @Autowired
-    protected KafkaMessageProducer kafkaMessageProducer;
+ 
 
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
@@ -156,7 +155,7 @@ public class BlockService {
         blockgraph.add(block);
         try {
             milestoneService.update();
-            kafkaMessageProducer.sendMessage(block.bitcoinSerialize());
+      
         } catch (Exception e) {
             // TODO: handle exception
             logger.warn(" saveBlock problem after save ", e);

@@ -10,6 +10,7 @@ import static org.junit.Assert.assertNotNull;
 import java.util.HashMap;
 import java.util.List;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -39,7 +40,7 @@ import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.SendRequest;
-
+@Ignore
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class KafkaServiceTest extends AbstractIntegrationTest {

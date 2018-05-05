@@ -22,8 +22,8 @@ service:
     rate: ${SERVICE_MILESTONE_RATE:10000}
     active: ${SERVICE_MILESTONE_ACTIVE:true}
   orderMatchService:
-    rate: ${SERVICE_MILESTONE_RATE:10000}
-    active: ${SERVICE_MILESTONE_ACTIVE:true}
+    rate: ${SERVICE_ORDERMATCH_RATE:10000}
+    active: ${SERVICE_ORDERMATCH_ACTIVE:true}
     
 kafka:
   bootstrapServers: ${BOOT_STRAP_SERVERS:test.kafka.bigtangle.net:9092}

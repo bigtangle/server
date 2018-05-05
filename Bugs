@@ -18,11 +18,20 @@ TODO:
 
 Change:
 use default http://xx.server.bigtangle.net or  https://xx.server.bigtangle.net as Server URL
+
 enable to use server to send block, not with kafka as the port for kafka and protocol are blocked in company 
+no kafka on the client kafka brodcast with local cache to filter own blocks
+
 remove base/kilo/M from payment 
+
 new key generation
 private key display with password  check
+
 balance display token name
-disply  total only in balance and UTXO as dialog for details
+display  total only in balance and UTXO as dialog for details
 
 logo or icon windows after start of application
+
+problem that schedule is down.
+
+
