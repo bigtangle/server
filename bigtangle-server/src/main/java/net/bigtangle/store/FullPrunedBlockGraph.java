@@ -260,7 +260,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 				// https://github.com/bitcoin/bips/blob/master/bip-0030.mediawiki
 				for (Transaction tx : block.getTransactions()) {
 					final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx, getVersionTally());
-					Sha256Hash hash = tx.getHash();
+					// TODO why is this hash commented out
+					// Sha256Hash hash = tx.getHash();
 					// If we already have unspent outputs for this hash, we saw
 					// the tx already.
 					// Either the block is
@@ -451,7 +452,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 			}
 
 			// For each output, mark as confirmed now
-			Sha256Hash hash = tx.getHash();
 			for (TransactionOutput out : tx.getOutputs()) {
 				blockStore.updateTransactionOutputConfirmed(tx.getHash(), out.getIndex(), true);
 			}

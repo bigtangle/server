@@ -278,7 +278,5 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void resetStore() throws BlockStoreException;
 
-    public void updateRemoveUnmaintainedBlocks() throws BlockStoreException;
-    
-    public void updateAddMaintainedBlocks() throws BlockStoreException;
+    public void updateUnmaintainAll() throws BlockStoreException;
 }

@@ -50,7 +50,7 @@ public class TipsService {
 		Stopwatch watch = Stopwatch.createStarted();
 		SecureRandom seed = new SecureRandom();
 
-		List<Sha256Hash> entryPoints = getRatingUpdateEntryPoints(count, seed);
+		List<Sha256Hash> entryPoints = getRatingEntryPoints(count, seed);
 		List<Sha256Hash> results = new ArrayList<>();
 
 		for (Sha256Hash entryPoint : entryPoints) {
@@ -188,14 +188,13 @@ public class TipsService {
 		return randomWalk(entryPoint, seed);
 	}
 
-	private List<Sha256Hash> getRatingUpdateEntryPoints(int count, Random seed) throws Exception {
-		List<BlockEvaluation> candidates = store.getBlocksInMilestoneDepthInterval(NetworkParameters.ENTRYPOINT_RATING_LOWER_DEPTH_CUTOFF,
-				NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF);
+	private List<Sha256Hash> getRatingEntryPoints(int count, Random seed) throws Exception {
+		List<BlockEvaluation> candidates = blockService.getRatingEntryPointCandidates();
 		return getRandomsByCumulativeWeight(candidates, count, seed);
 	}
 
 	private List<Sha256Hash> getValidationEntryPoints(int count, Random seed) throws Exception {
-		List<BlockEvaluation> candidates = store.getBlocksInMilestoneDepthInterval(0, NetworkParameters.ENTRYPOINT_TIPSELECTION_DEPTH_CUTOFF);
+		List<BlockEvaluation> candidates = blockService.getValidationEntryPointCandidates();
 		return getRandomsByCumulativeWeight(candidates, count, seed);
 	}
 
@@ -225,7 +224,7 @@ public class TipsService {
 		return results;
 	}
 
-	Sha256Hash randomWalk(Sha256Hash blockHash, Random seed) throws Exception {
+	private Sha256Hash randomWalk(Sha256Hash blockHash, Random seed) throws Exception {
 		// Repeatedly perform transitions until the final tip is found
 		while (blockHash != null) {
 			List<Sha256Hash> approverHashes = blockService.getSolidApproverBlockHashes(blockHash);
@@ -263,7 +262,7 @@ public class TipsService {
 		return blockHash;
 	}
 
-	Sha256Hash walkBackwardsUntilNotContained(Sha256Hash blockHash, Random seed, Set<Sha256Hash> losers) throws Exception {
+	private Sha256Hash walkBackwardsUntilNotContained(Sha256Hash blockHash, Random seed, Set<Sha256Hash> losers) throws Exception {
 	    // TODO supply path taken and reverse on taken path instead 
 		// Repeatedly perform transitions until a block in targets is found
 		while (blockHash != null) {

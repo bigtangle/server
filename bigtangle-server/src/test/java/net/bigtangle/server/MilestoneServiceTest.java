@@ -326,7 +326,6 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         
         List<Block> blocks = createLinearTangle1();
         milestoneService.update();
-        milestoneService.update();
 
         Block rollingBlock = blocks.get(blocks.size() - 1);
         blockgraph.add(BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0,

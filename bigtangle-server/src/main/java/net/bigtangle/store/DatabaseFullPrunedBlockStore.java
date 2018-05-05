@@ -243,10 +243,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String UPDATE_BLOCKEVALUATION_REWARDVALIDITYASSESSMENT_SQL = getUpdate()
             + " blockevaluation SET rewardvalidityassessment = ? WHERE blockhash = ?";
 
-    protected String UPDATE_BLOCKEVALUATION_NEW_UNMAINTAINED = getUpdate()
-            + " blockevaluation SET maintained = false WHERE milestonedepth > ? AND maintained = true AND rating = 100";
-    protected String UPDATE_BLOCKEVALUATION_NEW_MAINTAINED = getUpdate()
-            + " blockevaluation SET maintained = true WHERE milestonedepth <= ? AND maintained = false AND rating < 100";
+    protected String UPDATE_BLOCKEVALUATION_UNMAINTAIN_ALL = getUpdate()
+            + " blockevaluation SET maintained = false WHERE maintained = true";
     
     protected Sha256Hash chainHeadHash;
     protected StoredBlock chainHeadBlock;
@@ -2197,7 +2195,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            if (name != null || !"".equals(name.trim())) { // TODO && instead of || ?
+            if (name != null && !"".equals(name.trim())) {
                 SELECT_TOKENS_SQL += " WHERE tokenname LIKE '%" + name + "%' OR description LIKE '%" + name + "%'";
             }
             preparedStatement = conn.get().prepareStatement(SELECT_TOKENS_SQL);
@@ -2468,33 +2466,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
     
     @Override
-    public void updateAddMaintainedBlocks() throws BlockStoreException {
+    public void updateUnmaintainAll() throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_BLOCKEVALUATION_NEW_MAINTAINED);
-            preparedStatement.setLong(1, NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-    
-    @Override
-    public void updateRemoveUnmaintainedBlocks() throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_BLOCKEVALUATION_NEW_UNMAINTAINED);
-            preparedStatement.setLong(1, NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF);
+            preparedStatement = conn.get().prepareStatement(UPDATE_BLOCKEVALUATION_UNMAINTAIN_ALL);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);

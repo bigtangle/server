@@ -298,4 +298,13 @@ public class BlockService {
         }
         return GetBlockEvaluationsResponse.create(evaluations);
     }
+
+    public List<BlockEvaluation> getRatingEntryPointCandidates() throws BlockStoreException {
+        return store.getBlocksInMilestoneDepthInterval(NetworkParameters.ENTRYPOINT_RATING_LOWER_DEPTH_CUTOFF,
+                NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF);
+    }
+
+    public List<BlockEvaluation> getValidationEntryPointCandidates() throws BlockStoreException {
+        return store.getBlocksInMilestoneDepthInterval(0, NetworkParameters.ENTRYPOINT_TIPSELECTION_DEPTH_CUTOFF);
+    }
 }
