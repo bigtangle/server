@@ -26,21 +26,23 @@ public class KafkaMessageProducer {
     // public String topic;
     @Autowired
     private KafkaConfiguration configuration;;
-    private boolean binaryMessageKey = false; 
+    private boolean binaryMessageKey = false;
 
     private static final Logger log = LoggerFactory.getLogger(KafkaMessageProducer.class);
 
     public boolean sendMessage(byte[] data) throws InterruptedException, ExecutionException {
+        if (!"".equalsIgnoreCase(configuration.getBootstrapServers()))
+            return false;
         final String key = UUID.randomUUID().toString();
         KafkaProducer<String, byte[]> messageProducer = new KafkaProducer<String, byte[]>(producerConfig());
         ProducerRecord<String, byte[]> producerRecord = null;
         producerRecord = new ProducerRecord<String, byte[]>(configuration.getTopicOutName(), key, data);
         final Future<RecordMetadata> result = messageProducer.send(producerRecord);
         RecordMetadata mdata = result.get();
-        log.debug(" sendMessage "+ key );
+        log.debug(" sendMessage " + key);
         messageProducer.close();
         return mdata != null;
-        
+
     }
 
     public Properties producerConfig() {
