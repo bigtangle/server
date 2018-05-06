@@ -38,7 +38,7 @@ public class Account {
         return walletKeys;
     }
 
-    private KeyParameter aesKey = null;
+//    private KeyParameter aesKey = null;
 
     public Account(String walletPath) {
         this.walletPath = walletPath;

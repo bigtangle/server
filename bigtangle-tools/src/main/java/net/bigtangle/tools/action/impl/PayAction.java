@@ -14,7 +14,6 @@ import net.bigtangle.script.Script;
 import net.bigtangle.tools.account.Account;
 import net.bigtangle.tools.action.Action;
 import net.bigtangle.tools.config.Configure;
-import net.bigtangle.tools.kafka.KafkaMessageProducer;
 import net.bigtangle.tools.utils.BlockForTest;
 import net.bigtangle.utils.OkHttp3Util;
 
