@@ -194,15 +194,16 @@ public class TransactionService {
     }
 
     public Optional<Block> addConnected(byte[] bytes, boolean emptyBlock) {
-        try {
-
+        try { 
             Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bytes);
-            FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
-            blockgraph.add(block);
-            logger.debug("addConnected from kafka " + block);
-            // if(!block.getTransactions().isEmpty() && emptyBlock)
-            // saveEmptyBlock(3);
-            return Optional.of(block);
+            if (!checkBlockExists(block)) {
+                FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
+                blockgraph.add(block);
+                logger.debug("addConnected from kafka " + block);
+                // if(!block.getTransactions().isEmpty() && emptyBlock)
+                // saveEmptyBlock(3);
+                return Optional.of(block);
+            } 
         } catch (VerificationException e) {
             logger.debug("addConnected from kafka ", e);
             return Optional.empty();
@@ -210,7 +211,14 @@ public class TransactionService {
             logger.debug("addConnected from kafka ", e);
             return Optional.empty();
         }
-
+        return Optional.empty();
     }
 
+    /*
+     * check before add Block from kafka , the block can be already exists. TODO
+     * the block may be cached for performance
+     */
+    public boolean checkBlockExists(Block block) throws BlockStoreException {
+        return store.get(block.getHash()) != null;
+    }
 }

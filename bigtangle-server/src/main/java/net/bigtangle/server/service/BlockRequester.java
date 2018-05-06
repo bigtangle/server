@@ -40,11 +40,11 @@ public class BlockRequester {
 
     public byte[] requestBlock(Sha256Hash hash) {
         // TODO block from network peers
-        log.debug("requestBlock" +hash.toString() );
+        log.debug("requestBlock" + hash.toString());
         List<String> serverList = new ArrayList<String>();
         serverList.add("http://de.server.bigtangle.net:8088/");
         serverList.add("http://cn.server.bigtangle.net:8088/");
-        byte[] data=null;
+        byte[] data = null;
         for (String s : serverList) {
 
             HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -62,6 +62,10 @@ public class BlockRequester {
 
         }
         return data;
+    }
+
+    public void broadcastBlocks(long startheight, String kafkaserver) {
+       
     }
 
 }
