@@ -49,7 +49,8 @@ public class PayAction extends Action {
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
         
-        KafkaMessageProducer kafkaMessageProducer = KafkaMessageProducer.getInstance();
-        kafkaMessageProducer.sendMessage(rollingBlock.bitcoinSerialize());
+//        KafkaMessageProducer kafkaMessageProducer = KafkaMessageProducer.getInstance();
+//        kafkaMessageProducer.sendMessage(rollingBlock.bitcoinSerialize());
+        OkHttp3Util.post(Configure.CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
     }
 }

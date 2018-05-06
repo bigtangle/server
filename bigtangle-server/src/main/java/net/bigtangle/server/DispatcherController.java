@@ -135,7 +135,7 @@ public class DispatcherController {
             case getTokens: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                AbstractResponse response = tokensService.getTokensList(request.get("name").toString());
+                AbstractResponse response = tokensService.getTokensList((String) request.get("name"));
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;

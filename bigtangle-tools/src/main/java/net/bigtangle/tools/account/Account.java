@@ -11,13 +11,13 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Utils;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.tools.action.Action;
-import net.bigtangle.tools.action.impl.BalancesAction;
 import net.bigtangle.tools.action.impl.BuyOrderAction;
 import net.bigtangle.tools.action.impl.PayAction;
 import net.bigtangle.tools.action.impl.SellOrderAction;
 import net.bigtangle.tools.action.impl.SignOrderAction;
 import net.bigtangle.tools.action.impl.TokenAction;
 import net.bigtangle.tools.config.Configure;
+import net.bigtangle.tools.thread.BuyRun;
 import net.bigtangle.tools.thread.TradeRun;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet;
@@ -145,5 +145,10 @@ public class Account {
 
     public Wallet wallet() {
         return this.walletAppKit.wallet();
+    }
+
+    public void runBuyOrder() {
+        Thread thread = new Thread(new BuyRun(this));
+        thread.start();
     }
 }

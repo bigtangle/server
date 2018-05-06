@@ -8,3 +8,4 @@ target
 *.spvchain
 /.gradle/
 /bin/
+/bigtangle-wachted.txt

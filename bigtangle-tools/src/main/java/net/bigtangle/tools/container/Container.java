@@ -49,4 +49,18 @@ public class Container extends ArrayList<Account> {
         int index = random.nextInt(this.size());
         return this.get(index);
     }
+
+    public void runBuyOrder() {
+        this.initialize();
+        for (Iterator<Account> iterator = this.iterator(); iterator.hasNext();) {
+            Account account = iterator.next();
+            account.runBuyOrder();
+        }
+        TokenPost tokenPost = TokenPost.getInstance();
+        try {
+            tokenPost.initialize();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
