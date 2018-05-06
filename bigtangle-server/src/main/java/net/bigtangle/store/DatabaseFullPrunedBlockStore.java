@@ -84,7 +84,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String SELECT_HEADERS_SQL = "SELECT  height, header, wasundoable,prevblockhash,prevbranchblockhash,mineraddress,"
             + "tokenid,blocktype FROM headers WHERE hash = ?" + afterSelect();
-    protected String SELECT_HEADERS_HEIGHT_SQL = "SELECT headere FROM headers WHERE height >= ?" + afterSelect();
+    protected String SELECT_HEADERS_HEIGHT_SQL = "SELECT header FROM headers WHERE height >= ?" + afterSelect()
+            + " order by height asc ";
     protected String SELECT_SOLID_APPROVER_HEADERS_SQL = "SELECT  headers.height, header, wasundoable,prevblockhash,"
             + "prevbranchblockhash,mineraddress,tokenid,blocktype FROM headers INNER JOIN blockevaluation"
             + " ON headers.hash=blockevaluation.blockhash WHERE blockevaluation.solid = true AND (prevblockhash = ? OR prevbranchblockhash = ?)"
@@ -833,7 +834,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    public void streamBlocks(long heigth, KafkaMessageProducer kafkaMessageProducer) throws BlockStoreException {
+    public void streamBlocks(long height, KafkaMessageProducer kafkaMessageProducer) throws BlockStoreException {
         // Optimize for chain head
 
         maybeConnect();
@@ -841,14 +842,16 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         // log.info("find block hexStr : " + hash.toString());
         try {
             s = conn.get().prepareStatement(SELECT_HEADERS_HEIGHT_SQL);
-            s.setLong(1, heigth);
+            s.setLong(1, height);
             ResultSet results = s.executeQuery();
+            long count =0;
             if (!results.next()) {
                 kafkaMessageProducer.sendMessage(results.getBytes(1));
+                count+=1;
             }
-
+            log.info(" streamBlocks count= " + count + " from height " + height);
         } catch (Exception ex) {
-            log.warn("", ex); 
+            log.warn("", ex);
         } finally {
             if (s != null) {
                 try {

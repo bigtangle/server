@@ -233,6 +233,15 @@ public class DispatcherController {
                     this.outPointBinaryArray(httpServletResponse, block.bitcoinSerialize());
                 }
             }
+            case streamBlocks: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                @SuppressWarnings("unchecked")
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                if (request.get("heightstart") != null) {
+                    this.transactionService.streamBlocks(Long.valueOf((String) request.get("heightstart")));
+                    this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
+                }
+            }
                 break;
             }
         } catch (Exception exception) {

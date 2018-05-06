@@ -27,7 +27,9 @@ import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
+import net.bigtangle.kafka.KafkaConfiguration;
 import net.bigtangle.kafka.KafkaMessageProducer;
+import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.wallet.CoinSelector;
@@ -59,9 +61,9 @@ public class TransactionService {
 
     @Autowired
     protected NetworkParameters networkParameters;
-
     @Autowired
-    protected KafkaMessageProducer kafkaMessageProducer;
+    private KafkaConfiguration kafkaConfiguration;
+ 
 
     @Autowired
     MilestoneService milestoneService;
@@ -190,7 +192,11 @@ public class TransactionService {
     }
     
     public void streamBlocks(Long heightstart) throws BlockStoreException {
+        KafkaMessageProducer kafkaMessageProducer = new KafkaMessageProducer(kafkaConfiguration);
+   
           store.streamBlocks(heightstart, kafkaMessageProducer); 
+          
+          
     }
     
     
