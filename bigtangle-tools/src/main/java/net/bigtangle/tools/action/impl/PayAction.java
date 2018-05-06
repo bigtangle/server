@@ -40,7 +40,7 @@ public class PayAction extends Action {
             byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
             
             ECKey toKey = new ECKey();
-            Coin amount = Coin.valueOf(10000, NetworkParameters.BIGNETCOIN_TOKENID);
+            Coin amount = Coin.valueOf(99999999, NetworkParameters.BIGNETCOIN_TOKENID);
             Transaction t = new Transaction(Configure.PARAMS);
             t.addOutput(new TransactionOutput(Configure.PARAMS, t, amount, toKey));
             t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);

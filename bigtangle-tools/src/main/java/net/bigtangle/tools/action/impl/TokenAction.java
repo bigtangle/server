@@ -30,13 +30,12 @@ public class TokenAction extends Action {
             byte[] pubKey = outKey.getPubKey();
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
-            requestParam.put("amount", 164385643856L);
+            requestParam.put("amount", 999999999999L);
             requestParam.put("tokenname", "Test-" + UUIDUtil.randomUUID());
             requestParam.put("description", "Test-" + UUIDUtil.randomUUID());
             requestParam.put("blocktype", false);
             requestParam.put("tokenHex", Utils.HEX.encode(outKey.getPubKeyHash()));
-            OkHttp3Util.post(Configure.CONTEXT_ROOT + "createGenesisBlock",
-                    Json.jsonmapper().writeValueAsString(requestParam));
+            OkHttp3Util.post(Configure.CONTEXT_ROOT + "createGenesisBlock", Json.jsonmapper().writeValueAsString(requestParam));
         }
         logger.info("account name : {}, createGenesisBlock action success", account.getName());
     }

@@ -160,6 +160,7 @@ public class PayOrder {
             // walletAppKit.wallet().signTransaction(req);
             buf = req.tx.bitcoinSerialize();
         } catch (Exception e) {
+            e.printStackTrace();
             return null;
         }
         return makeSignTransactionBuffer(fromAddress, fromCoin, toAddress, toCoin, buf);
