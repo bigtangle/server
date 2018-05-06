@@ -42,8 +42,8 @@ public class StreamBlocks {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
         requestParam.put("heightstart", "1");
-         OkHttp3Util.post(CONTEXT_ROOT + "streamBlocks",
-                Json.jsonmapper().writeValueAsString(requestParam));
+        requestParam.put("kafka", "test.kafka.bigtangle.net:9092");
+        OkHttp3Util.post(CONTEXT_ROOT + "streamBlocks", Json.jsonmapper().writeValueAsString(requestParam));
 
     }
 

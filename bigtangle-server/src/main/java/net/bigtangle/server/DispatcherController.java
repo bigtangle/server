@@ -238,7 +238,8 @@ public class DispatcherController {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 if (request.get("heightstart") != null) {
-                    this.transactionService.streamBlocks(Long.valueOf((String) request.get("heightstart")));
+                    this.transactionService.streamBlocks(Long.valueOf((String) request.get("heightstart")),
+                            (String) request.get("kafka"));
                     this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
                 }
             }

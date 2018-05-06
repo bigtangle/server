@@ -35,7 +35,7 @@ public abstract class AbstractStreamHandler {
 
 	@PostConstruct
 	public void runStream() {
-	    if (!"".equalsIgnoreCase(kafkaConfiguration.getBootstrapServers()))
+	    if ("".equalsIgnoreCase(kafkaConfiguration.getBootstrapServers()))
             return  ;
 	    log.info("KafkaConfiguration {} ", kafkaConfiguration.toString());
 		log.info("start stream {} handler", this.getClass().getSimpleName());

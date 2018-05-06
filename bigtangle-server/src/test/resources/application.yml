@@ -26,6 +26,6 @@ service:
     active: ${SERVICE_ORDERMATCH_ACTIVE:false}
     
 kafka:
-  bootstrapServers: ${BOOT_STRAP_SERVERS:""}
+  bootstrapServers: ${BOOT_STRAP_SERVERS:}
   topicOutName: ${TOPIC_OUT_NAME:bigtangle}
   topicOut2Name: ${TOPIC_OUT2_NAME:bigtangle2}

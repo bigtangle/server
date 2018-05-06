@@ -63,7 +63,6 @@ public class TransactionService {
     protected NetworkParameters networkParameters;
     @Autowired
     private KafkaConfiguration kafkaConfiguration;
- 
 
     @Autowired
     MilestoneService milestoneService;
@@ -144,7 +143,7 @@ public class TransactionService {
             return blockStore.getTransactionOutput(txinput.getOutpoint().getHash(), txinput.getOutpoint().getIndex())
                     .isSpent();
         } catch (BlockStoreException e) {
-            logger.debug("", e); 
+            logger.debug("", e);
         }
         return true;
     }
@@ -190,14 +189,20 @@ public class TransactionService {
     public boolean checkBlockExists(Block block) throws BlockStoreException {
         return store.get(block.getHash()) != null;
     }
-    
+
     public void streamBlocks(Long heightstart) throws BlockStoreException {
         KafkaMessageProducer kafkaMessageProducer = new KafkaMessageProducer(kafkaConfiguration);
-   
-          store.streamBlocks(heightstart, kafkaMessageProducer); 
-          
-          
+        store.streamBlocks(heightstart, kafkaMessageProducer);
     }
-    
-    
+
+    public void streamBlocks(Long heightstart, String kafka) throws BlockStoreException {
+        KafkaMessageProducer kafkaMessageProducer;
+        if (kafka == null || "".equals(kafka)) {
+            kafkaMessageProducer = new KafkaMessageProducer(kafkaConfiguration);
+        } else {
+            kafkaMessageProducer = new KafkaMessageProducer(kafka, kafkaConfiguration.getTopicOutName(), true);
+        }
+        store.streamBlocks(heightstart, kafkaMessageProducer);
+    }
+
 }
