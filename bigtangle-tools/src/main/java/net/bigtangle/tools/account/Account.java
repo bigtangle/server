@@ -11,7 +11,6 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Utils;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.tools.action.Action;
-import net.bigtangle.tools.action.impl.BalancesAction;
 import net.bigtangle.tools.action.impl.BuyOrderAction;
 import net.bigtangle.tools.action.impl.PayAction;
 import net.bigtangle.tools.action.impl.SellOrderAction;
@@ -31,9 +30,10 @@ public class Account {
     // private List<String> tokenHexList = new ArrayList<String>();
     
 //    private ThreadLocal<ECKey> threadLocal = new ThreadLocal<ECKey>();
+    
+    private List<ECKey> walletKeys = new ArrayList<ECKey>();
 
     public List<ECKey> walletKeys() throws Exception {
-        List<ECKey> walletKeys = walletAppKit.wallet().walletKeys(aesKey);
         return walletKeys;
     }
 
@@ -65,6 +65,11 @@ public class Account {
     public void initialize() {
         // init wallet
         walletAppKit = new WalletAppKit(Configure.PARAMS, new File("."), walletPath);
+        KeyParameter aesKey = null;
+        try {
+            this.walletKeys = walletAppKit.wallet().walletKeys(aesKey);
+        } catch (Exception e) {
+        }
         walletAppKit.wallet().setServerURL(Configure.CONTEXT_ROOT);
         try {
             // gen token
