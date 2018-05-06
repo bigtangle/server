@@ -30,27 +30,26 @@ public class PayAction extends Action {
 
     @Override
     public void execute0() throws Exception {
-        for (ECKey outKey : this.account.walletKeys()) {
-            HashMap<String, String> requestParam = new HashMap<String, String>();
-            byte[] data = OkHttp3Util.post(Configure.CONTEXT_ROOT + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
-            Block rollingBlock = Configure.PARAMS.getDefaultSerializer().makeBlock(data);
-            
-            Transaction transaction = rollingBlock.getTransactions().get(0);
-            TransactionOutPoint spendableOutput = new TransactionOutPoint(Configure.PARAMS, 0, transaction.getHash());
-            byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
-            
-            ECKey toKey = new ECKey();
-            Coin amount = Coin.valueOf(99999999, NetworkParameters.BIGNETCOIN_TOKENID);
-            Transaction t = new Transaction(Configure.PARAMS);
-            t.addOutput(new TransactionOutput(Configure.PARAMS, t, amount, toKey));
-            t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
-            
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, null, Configure.PARAMS.getGenesisBlock().getHash());
-            rollingBlock.addTransaction(t);
-            rollingBlock.solve();
-            
-            KafkaMessageProducer kafkaMessageProducer = KafkaMessageProducer.getInstance();
-            kafkaMessageProducer.sendMessage(rollingBlock.bitcoinSerialize());
-        }
+        ECKey outKey = this.account.getBuyKey();
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(Configure.CONTEXT_ROOT + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+        Block rollingBlock = Configure.PARAMS.getDefaultSerializer().makeBlock(data);
+        
+        Transaction transaction = rollingBlock.getTransactions().get(0);
+        TransactionOutPoint spendableOutput = new TransactionOutPoint(Configure.PARAMS, 0, transaction.getHash());
+        byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
+        
+        ECKey toKey = new ECKey();
+        Coin amount = Coin.valueOf(99999999, NetworkParameters.BIGNETCOIN_TOKENID);
+        Transaction t = new Transaction(Configure.PARAMS);
+        t.addOutput(new TransactionOutput(Configure.PARAMS, t, amount, toKey));
+        t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
+        
+        rollingBlock = BlockForTest.createNextBlock(rollingBlock, null, Configure.PARAMS.getGenesisBlock().getHash());
+        rollingBlock.addTransaction(t);
+        rollingBlock.solve();
+        
+        KafkaMessageProducer kafkaMessageProducer = KafkaMessageProducer.getInstance();
+        kafkaMessageProducer.sendMessage(rollingBlock.bitcoinSerialize());
     }
 }

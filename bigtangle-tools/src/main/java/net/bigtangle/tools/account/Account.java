@@ -79,10 +79,9 @@ public class Account {
         } catch (Exception e) {
         }
         // init action
-        this.executes.add(new BalancesAction(this));
+//        this.executes.add(new BalancesAction(this));
         this.executes.add(new BuyOrderAction(this));
         this.executes.add(new SellOrderAction(this));
-//        this.executes.add(new TransferAction(this));
         this.executes.add(new SignOrderAction(this));
     }
 
@@ -105,12 +104,12 @@ public class Account {
     }
 
     public RandomTrade getRandomTrade() {
-        ECKey outKey = this.getRandomECKey();
+        ECKey outKey = this.getSellKey();
         String address = outKey.toAddress(Configure.PARAMS).toBase58();
         return new RandomTrade(address, Utils.HEX.encode(outKey.getPubKeyHash()));
     }
 
-    public ECKey getRandomECKey() {
+    public ECKey getSellKey() {
         List<ECKey> walletKeys = null;
         try {
             walletKeys = this.walletKeys();
@@ -120,11 +119,19 @@ public class Account {
             return null;
         }
         ECKey outKey = walletKeys.get(0);
-//        if (outKey == null) {
-//            int index = random.nextInt(walletKeys.size());
-//            outKey = walletKeys.get(index);
-//            threadLocal.set(outKey);
-//        }
+        return outKey;
+    }
+    
+    public ECKey getBuyKey() {
+        List<ECKey> walletKeys = null;
+        try {
+            walletKeys = this.walletKeys();
+        } catch (Exception e) {
+        }
+        if (walletKeys == null || walletKeys.isEmpty()) {
+            return null;
+        }
+        ECKey outKey = walletKeys.get(1);
         return outKey;
     }
 

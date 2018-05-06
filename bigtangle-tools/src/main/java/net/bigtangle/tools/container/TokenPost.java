@@ -27,7 +27,7 @@ public class TokenPost extends ArrayList<String> {
 //        }
         for (Iterator<Account> iterator = Container.getInstance().iterator(); iterator.hasNext(); ) {
             Account account = iterator.next();
-            ECKey outKey = account.getRandomECKey();
+            ECKey outKey = account.getSellKey();
 //            byte[] pubKey = outKey.getPubKey();
             this.add(Utils.HEX.encode(outKey.getPubKeyHash()));
         }

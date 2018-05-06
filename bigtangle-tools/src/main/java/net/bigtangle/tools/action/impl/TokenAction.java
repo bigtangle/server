@@ -26,18 +26,19 @@ public class TokenAction extends Action {
 
     @Override
     public void execute0() throws Exception {
-        for (ECKey outKey : this.account.walletKeys()) {
-            byte[] pubKey = outKey.getPubKey();
-            HashMap<String, Object> requestParam = new HashMap<String, Object>();
-            requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
-            requestParam.put("amount", 999999999999L);
-            requestParam.put("tokenname", "Test-" + UUIDUtil.randomUUID());
-            requestParam.put("description", "Test-" + UUIDUtil.randomUUID());
-            requestParam.put("blocktype", false);
-            requestParam.put("tokenHex", Utils.HEX.encode(outKey.getPubKeyHash()));
-            OkHttp3Util.post(Configure.CONTEXT_ROOT + "createGenesisBlock", Json.jsonmapper().writeValueAsString(requestParam));
-        }
+        ECKey outKey = this.account.getSellKey();
+        byte[] pubKey = outKey.getPubKey();
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
+        requestParam.put("amount", 999999999999L);
+        requestParam.put("tokenname", "Test-" + UUIDUtil.randomUUID());
+        requestParam.put("description", "Test-" + UUIDUtil.randomUUID());
+        requestParam.put("blocktype", false);
+        requestParam.put("tokenHex", Utils.HEX.encode(outKey.getPubKeyHash()));
+        OkHttp3Util.post(Configure.CONTEXT_ROOT + "createGenesisBlock", Json.jsonmapper().writeValueAsString(requestParam));
         logger.info("account name : {}, createGenesisBlock action success", account.getName());
+        
+        
     }
     
     private static final Logger logger = LoggerFactory.getLogger(TokenAction.class);
