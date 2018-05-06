@@ -31,9 +31,10 @@ public class Account {
     // private List<String> tokenHexList = new ArrayList<String>();
     
 //    private ThreadLocal<ECKey> threadLocal = new ThreadLocal<ECKey>();
+    
+    private List<ECKey> walletKeys = new ArrayList<ECKey>();
 
     public List<ECKey> walletKeys() throws Exception {
-        List<ECKey> walletKeys = walletAppKit.wallet().walletKeys(aesKey);
         return walletKeys;
     }
 
@@ -65,6 +66,11 @@ public class Account {
     public void initialize() {
         // init wallet
         walletAppKit = new WalletAppKit(Configure.PARAMS, new File("."), walletPath);
+        KeyParameter aesKey = null;
+        try {
+            this.walletKeys = walletAppKit.wallet().walletKeys(aesKey);
+        } catch (Exception e) {
+        }
         walletAppKit.wallet().setServerURL(Configure.CONTEXT_ROOT);
         try {
             // gen token

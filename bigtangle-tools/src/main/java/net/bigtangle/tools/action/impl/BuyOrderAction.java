@@ -27,7 +27,7 @@ public class BuyOrderAction extends Action {
     public void execute0() throws Exception {
         try {
             HashMap<String, Object> requestParams = new HashMap<String, Object>();
-            ECKey ecKey = this.account.getSellKey();
+            ECKey ecKey = this.account.getBuyKey();
             requestParams.put("address", ecKey.toAddress(Configure.PARAMS).toBase58());
             String tokenHex = TokenPost.getInstance().randomTokenHex();
             requestParams.put("tokenid", tokenHex);
