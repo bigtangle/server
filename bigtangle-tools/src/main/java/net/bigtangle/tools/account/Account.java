@@ -15,10 +15,12 @@ import net.bigtangle.tools.action.impl.BalancesAction;
 import net.bigtangle.tools.action.impl.BuyOrderAction;
 import net.bigtangle.tools.action.impl.PayAction;
 import net.bigtangle.tools.action.impl.SellOrderAction;
+import net.bigtangle.tools.action.impl.SignOrderAction;
 import net.bigtangle.tools.action.impl.TokenAction;
 import net.bigtangle.tools.config.Configure;
 import net.bigtangle.tools.thread.TradeRun;
 import net.bigtangle.wallet.SendRequest;
+import net.bigtangle.wallet.Wallet;
 
 public class Account {
 
@@ -42,12 +44,15 @@ public class Account {
         this.initialize();
     }
 
-    public boolean calculatedAddressHit(String address) throws Exception {
-        for (ECKey key : this.walletKeys()) {
-            String n = key.toAddress(Configure.PARAMS).toString();
-            if (n.equalsIgnoreCase(address)) {
-                return true;
+    public boolean calculatedAddressHit(String address) {
+        try {
+            for (ECKey key : this.walletKeys()) {
+                String n = key.toAddress(Configure.PARAMS).toString();
+                if (n.equalsIgnoreCase(address)) {
+                    return true;
+                }
             }
+        } catch (Exception e) {
         }
         return false;
     }
@@ -78,7 +83,7 @@ public class Account {
         this.executes.add(new BuyOrderAction(this));
         this.executes.add(new SellOrderAction(this));
 //        this.executes.add(new TransferAction(this));
-//        this.executes.add(new SignOrderAction(this));
+        this.executes.add(new SignOrderAction(this));
     }
 
     public void doAction() {
@@ -129,5 +134,9 @@ public class Account {
 
     public void signTransaction(SendRequest request) throws Exception {
         this.walletAppKit.wallet().signTransaction(request);
+    }
+
+    public Wallet wallet() {
+        return this.walletAppKit.wallet();
     }
 }

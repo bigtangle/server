@@ -9,13 +9,13 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConfigurationProperties(prefix = "schedule")
+@ConfigurationProperties(prefix = "service")
 public class ScheduleConfiguration {
 
-    @Value("${milestone.active:false}")
+    @Value("${milestoneschedule.active:false}")
     boolean milestone_active;
 
-    @Value("${ordermatch.active:false}")
+    @Value("${orderMatchService.active:false}")
     boolean ordermatch_active;
 
     public boolean isMilestone_active() {
