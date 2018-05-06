@@ -9,20 +9,12 @@ import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
-import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,12 +25,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.databind.ser.std.StringSerializer;
-
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
+import net.bigtangle.kafka.KafkaConfiguration;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.GetBlockEvaluationsResponse;
@@ -74,7 +65,8 @@ public class DispatcherController {
 
     public static int numberOfEmptyBlocks = 3;
 
-   @Autowired private KafkaMessageProducer kafkaMessageProducer;
+    @Autowired
+    private KafkaConfiguration kafkaConfiguration;
 
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
     public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] bodyByte,
@@ -200,7 +192,7 @@ public class DispatcherController {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = exchangeService.saveExchange(request);
-            
+
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
@@ -268,11 +260,12 @@ public class DispatcherController {
 
     public void brodcastBlock(byte[] data) {
         try {
+            KafkaMessageProducer kafkaMessageProducer = new KafkaMessageProducer(kafkaConfiguration);
             kafkaMessageProducer.sendMessage(data);
         } catch (InterruptedException | ExecutionException e) {
-            
-            Log.warn("", e );
+
+            Log.warn("", e);
         }
     }
- 
+
 }

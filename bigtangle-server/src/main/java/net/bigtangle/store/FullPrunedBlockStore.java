@@ -21,6 +21,7 @@ import net.bigtangle.core.StoredUndoableBlock;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UTXOProvider;
+import net.bigtangle.kafka.KafkaMessageProducer;
 
 /**
  * <p>
@@ -279,4 +280,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void resetStore() throws BlockStoreException;
 
     public void updateUnmaintainAll() throws BlockStoreException;
+
+    public void  streamBlocks(long heightstart, KafkaMessageProducer kafkaMessageProducer)  throws BlockStoreException;
 }

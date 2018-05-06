@@ -555,7 +555,8 @@ public class Main extends Application {
 
     public boolean sendMessage(byte[] data) throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
-        OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", data);
+        OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", data); 
+        sentEmpstyBlock(2);
         return true;
         // return sendMessage(data, this.blockTopic, this.kafka);
     }

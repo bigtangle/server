@@ -142,7 +142,7 @@ public class TransactionService {
             return blockStore.getTransactionOutput(txinput.getOutpoint().getHash(), txinput.getOutpoint().getIndex())
                     .isSpent();
         } catch (BlockStoreException e) {
-            e.printStackTrace();
+            logger.debug("", e); 
         }
         return true;
     }
@@ -160,41 +160,8 @@ public class TransactionService {
         return blockStore.getTransactionOutput(out.getHash(), out.getIndex());
     }
 
-    public void kafkaSend(Block block) {
-
-    }
-
-    public void saveEmptyBlockTask(int number) {
-        Runnable r = () -> {
-            saveEmptyBlock(number);
-        };
-        taskExecutor.execute(r);
-        // Threading.USER_THREAD.execute(r);
-    }
-
-    public void saveEmptyBlock(int number) {
-
-        for (int i = 0; i < number; i++) {
-            try {
-                Block b = askTransactionBlock();
-                b.solve();
-                // blockService.saveBlock(b);
-                kafkaMessageProducer.sendMessage(b.bitcoinSerialize());
-                logger.debug("empty block saved" + i);
-            } catch (Exception e) {
-                logger.debug("", e);
-            }
-        }
-        try {
-            milestoneService.update();
-        } catch (Exception e) {
-            logger.debug("", e);
-        }
-
-    }
-
     public Optional<Block> addConnected(byte[] bytes, boolean emptyBlock) {
-        try { 
+        try {
             Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bytes);
             if (!checkBlockExists(block)) {
                 FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
@@ -203,7 +170,7 @@ public class TransactionService {
                 // if(!block.getTransactions().isEmpty() && emptyBlock)
                 // saveEmptyBlock(3);
                 return Optional.of(block);
-            } 
+            }
         } catch (VerificationException e) {
             logger.debug("addConnected from kafka ", e);
             return Optional.empty();
@@ -221,4 +188,10 @@ public class TransactionService {
     public boolean checkBlockExists(Block block) throws BlockStoreException {
         return store.get(block.getHash()) != null;
     }
+    
+    public void streamBlocks(Long heightstart) throws BlockStoreException {
+          store.streamBlocks(heightstart, kafkaMessageProducer); 
+    }
+    
+    
 }

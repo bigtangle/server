@@ -49,6 +49,7 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UTXOProviderException;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
+import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.script.Script;
 
 /**
@@ -83,6 +84,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String SELECT_HEADERS_SQL = "SELECT  height, header, wasundoable,prevblockhash,prevbranchblockhash,mineraddress,"
             + "tokenid,blocktype FROM headers WHERE hash = ?" + afterSelect();
+    protected String SELECT_HEADERS_HEIGHT_SQL = "SELECT headere FROM headers WHERE height >= ?" + afterSelect();
     protected String SELECT_SOLID_APPROVER_HEADERS_SQL = "SELECT  headers.height, header, wasundoable,prevblockhash,"
             + "prevbranchblockhash,mineraddress,tokenid,blocktype FROM headers INNER JOIN blockevaluation"
             + " ON headers.hash=blockevaluation.blockhash WHERE blockevaluation.solid = true AND (prevblockhash = ? OR prevbranchblockhash = ?)"
@@ -245,7 +247,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String UPDATE_BLOCKEVALUATION_UNMAINTAIN_ALL = getUpdate()
             + " blockevaluation SET maintained = false WHERE maintained = true";
-    
+
     protected Sha256Hash chainHeadHash;
     protected StoredBlock chainHeadBlock;
     protected Sha256Hash verifiedChainHeadHash;
@@ -820,6 +822,33 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             // Should not be able to happen unless the database contains bad
             // blocks.
             throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    public void streamBlocks(long heigth, KafkaMessageProducer kafkaMessageProducer) throws BlockStoreException {
+        // Optimize for chain head
+
+        maybeConnect();
+        PreparedStatement s = null;
+        // log.info("find block hexStr : " + hash.toString());
+        try {
+            s = conn.get().prepareStatement(SELECT_HEADERS_HEIGHT_SQL);
+            s.setLong(1, heigth);
+            ResultSet results = s.executeQuery();
+            if (!results.next()) {
+                kafkaMessageProducer.sendMessage(results.getBytes(1));
+            }
+
+        } catch (Exception ex) {
+            log.warn("", ex); 
         } finally {
             if (s != null) {
                 try {
@@ -2464,7 +2493,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
+
     @Override
     public void updateUnmaintainAll() throws BlockStoreException {
         maybeConnect();
