@@ -136,7 +136,7 @@ public class MainController {
 
     @SuppressWarnings("unchecked")
     public void initTable(String addressString) throws Exception {
-        String myPositvleTokens = Main.getString4file(Main.keyFileDirectory + "/positve.txt");
+        String myPositvleTokens = Main.getString4file(Main.keyFileDirectory + Main.positiveFile);
         Main.instance.getUtxoData().clear();
         Main.instance.getCoinData().clear();
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";

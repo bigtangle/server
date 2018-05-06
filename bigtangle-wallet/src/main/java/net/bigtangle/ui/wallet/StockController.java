@@ -157,7 +157,7 @@ public class StockController extends TokensController {
         String tokeninfo = "";
         tokeninfo += Main.getString(rowData.get("tokenHex")) + "," + Main.getString(rowData.get("tokenname"));
         try {
-            Main.addText2file(tokeninfo, Main.keyFileDirectory + "/positve.txt");
+            Main.addText2file(tokeninfo, Main.keyFileDirectory + Main.positiveFile);
         } catch (Exception e) {
 
         }

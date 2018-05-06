@@ -122,7 +122,8 @@ public class Main extends Application {
     public String blockTopic = "bigtangle";
     public static String kafka = "";
     private static final Logger log = LoggerFactory.getLogger(Main.class);
-
+    public static String positiveFile = "/bigtangle-wachted.txt";
+    public static String contactFile = "/bigtangle-contact.txt";
     @Override
     public void start(Stage mainWindow) throws Exception {
         try {
@@ -246,11 +247,11 @@ public class Main extends Application {
 
     public static void addAddress2file(String name, String address) throws Exception {
         String homedir = Main.keyFileDirectory;
-        File addressFile = new File(homedir + "/addresses.txt");
+        File addressFile = new File(homedir + Main.contactFile);
         if (!addressFile.exists()) {
             addressFile.createNewFile();
         }
-        String addresses = getString4file(homedir + "/addresses.txt");
+        String addresses = getString4file(homedir + Main.contactFile);
         if (!addresses.contains(address)) {
 
             BufferedWriter out = new BufferedWriter(
@@ -298,7 +299,7 @@ public class Main extends Application {
 
     public static List<String> initAddress4file() throws Exception {
         String homedir = Main.keyFileDirectory;
-        File addressFile = new File(homedir + "/addresses.txt");
+        File addressFile = new File(homedir + Main.contactFile);
         if (!addressFile.exists()) {
             addressFile.createNewFile();
         }
@@ -316,7 +317,7 @@ public class Main extends Application {
 
     public static List<String> initToken4file() throws Exception {
         String homedir = Main.keyFileDirectory;
-        File addressFile = new File(homedir + "/positve.txt");
+        File addressFile = new File(homedir + Main.positiveFile);
         if (!addressFile.exists()) {
             addressFile.createNewFile();
         }

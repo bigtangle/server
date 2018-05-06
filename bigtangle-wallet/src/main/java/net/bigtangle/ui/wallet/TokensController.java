@@ -50,6 +50,7 @@ public class TokensController {
     @FXML
     public TextField nameTextField;
     private static final Logger log = LoggerFactory.getLogger(TokensController.class);
+
     @FXML
     public void initialize() {
 
@@ -74,7 +75,7 @@ public class TokensController {
         ObservableList<Map> tokenData = FXCollections.observableArrayList();
         if (tokens != null && !tokens.isEmpty()) {
             for (String temp : tokens) {
-               //ONLY log System.out.println("temp:" + temp);
+                // ONLY log System.out.println("temp:" + temp);
                 if (!temp.equals("")) {
                     Map map = new HashMap();
                     map.put("tokenHex", temp.split(",")[0]);
@@ -97,14 +98,14 @@ public class TokensController {
         String tokenHex = Main.getString(rowData.get("tokenHex"));
         String tokenname = Main.getString(rowData.get("tokenname"));
         try {
-            String myPositvleTokens = Main.getString4file(Main.keyFileDirectory + "/positve.txt");
+            String myPositvleTokens = Main.getString4file(Main.keyFileDirectory + "Main.positiveFile");
             log.debug(myPositvleTokens);
             myPositvleTokens.replace(tokenHex + "," + tokenname, "");
-            File temp = new File(Main.keyFileDirectory + "/positve.txt");
+            File temp = new File(Main.keyFileDirectory + Main.positiveFile);
             if (temp.exists()) {
                 temp.delete();
             }
-            Main.addText2file(myPositvleTokens, Main.keyFileDirectory + "/positve.txt");
+            Main.addText2file(myPositvleTokens, Main.keyFileDirectory + Main.positiveFile);
             initPositveTableView();
         } catch (Exception e) {
             e.printStackTrace();
@@ -125,11 +126,13 @@ public class TokensController {
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
 
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
-        for (Map<String, Object> map : list) {
-            Coin fromAmount = Coin.valueOf(Long.parseLong(map.get("amount").toString()),
-                    Utils.HEX.decode((String) map.get("tokenHex")));
-            map.put("amount", fromAmount.toPlainString());
-            tokenData.add(map);
+        if (list != null) {
+            for (Map<String, Object> map : list) {
+                Coin fromAmount = Coin.valueOf(Long.parseLong(map.get("amount").toString()),
+                        Utils.HEX.decode((String) map.get("tokenHex")));
+                map.put("amount", fromAmount.toPlainString());
+                tokenData.add(map);
+            }
         }
         tokennameColumn.setCellValueFactory(new MapValueFactory("tokenname"));
         amountColumn.setCellValueFactory(new MapValueFactory("amount"));
