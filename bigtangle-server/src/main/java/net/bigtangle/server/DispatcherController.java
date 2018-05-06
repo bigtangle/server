@@ -270,6 +270,8 @@ public class DispatcherController {
 
     public void brodcastBlock(byte[] data) {
         try {
+            if ("".equalsIgnoreCase(kafkaConfiguration.getBootstrapServers()))
+                return  ;
             KafkaMessageProducer kafkaMessageProducer = new KafkaMessageProducer(kafkaConfiguration);
             kafkaMessageProducer.sendMessage(data);
         } catch (InterruptedException | ExecutionException e) {
