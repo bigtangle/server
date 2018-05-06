@@ -19,7 +19,7 @@ db:
 
 service:
   milestoneschedule:
-    rate: ${SERVICE_MILESTONE_RATE:5000}
+    rate: ${SERVICE_MILESTONE_RATE:15000}
     active: ${SERVICE_MILESTONE_ACTIVE:false}
   orderMatchService:
     rate: ${SERVICE_ORDERMATCH_RATE:10000}

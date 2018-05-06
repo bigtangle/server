@@ -171,6 +171,8 @@ public class TransactionService {
                 // if(!block.getTransactions().isEmpty() && emptyBlock)
                 // saveEmptyBlock(3);
                 return Optional.of(block);
+            }else {
+                logger.debug("addConnected   BlockExists " + block);
             }
         } catch (VerificationException e) {
             logger.debug("addConnected from kafka ", e);

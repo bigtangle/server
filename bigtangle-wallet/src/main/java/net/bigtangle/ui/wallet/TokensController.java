@@ -117,7 +117,7 @@ public class TokensController {
         String name = nameTextField.getText();
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ObservableList<Map> tokenData = FXCollections.observableArrayList();
-        ECKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
+      
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("name", Main.getString(name));
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens",
