@@ -274,8 +274,7 @@ public class DispatcherController {
                 return  ;
             KafkaMessageProducer kafkaMessageProducer = new KafkaMessageProducer(kafkaConfiguration);
             kafkaMessageProducer.sendMessage(data);
-        } catch (InterruptedException | ExecutionException e) {
-
+        } catch (InterruptedException | ExecutionException e) { 
             Log.warn("", e);
         }
     }

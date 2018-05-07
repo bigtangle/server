@@ -69,8 +69,6 @@ public abstract class AbstractStreamHandler {
 		Properties streamsConfiguration = new Properties();
 		 streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, getApplicationId());
 		streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaConfiguration.getBootstrapServers());
-		streamsConfiguration.put(StreamsConfig.CONSUMER_PREFIX, serverConfiguration.getMineraddress());
-        
 		streamsConfiguration.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 		streamsConfiguration.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer");
 		streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");

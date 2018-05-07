@@ -43,7 +43,7 @@ public class KafkaMessageProducer {
     }
 
     public boolean sendMessage(byte[] data) throws InterruptedException, ExecutionException {
-        if (!"".equalsIgnoreCase(kafkaserver))
+        if ("".equalsIgnoreCase(kafkaserver))
             return false;
         final String key = UUID.randomUUID().toString();
         KafkaProducer<String, byte[]> messageProducer = new KafkaProducer<String, byte[]>(producerConfig());

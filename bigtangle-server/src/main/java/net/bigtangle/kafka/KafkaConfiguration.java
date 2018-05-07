@@ -14,7 +14,7 @@ public class KafkaConfiguration {
 
     private String topicOutName;
 
-    private String topicOut2Name;
+
     
  
     private String bootstrapServers;
@@ -66,20 +66,12 @@ public class KafkaConfiguration {
     }
 
 
-    public String getTopicOut2Name() {
-        return topicOut2Name;
-    }
-
-
-    public void setTopicOut2Name(String topicOut2Name) {
-        this.topicOut2Name = topicOut2Name;
-    }
 
 
 
     @Override
     public String toString() {
-        return "KafkaConfiguration [topicOutName=" + topicOutName + ", topicOut2Name=" + topicOut2Name
+        return "KafkaConfiguration [topicOutName=" + topicOutName 
                 + ", bootstrapServers=" + bootstrapServers + ", consumerIdSuffix=" + consumerIdSuffix
                 + ", commitInterval=" + commitInterval + "]";
     }
