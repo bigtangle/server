@@ -51,6 +51,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.script.Script;
+import net.bigtangle.utils.OrderState;
 
 /**
  * <p>
@@ -2701,6 +2702,43 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 }
             }
         }
+    }
 
+    @Override
+    public List<OrderPublish> getOrderPublishListWithNotMatch() throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        List<OrderPublish> list = new ArrayList<OrderPublish>();
+        try {
+            String sql = SELECT_ORDERPUBLISH_SQL + " WHERE 1 = 1 AND state = ?";
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setInt(1, OrderState.publish.ordinal());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                OrderPublish orderPublish = new OrderPublish();
+                orderPublish.setOrderid(resultSet.getString("orderid"));
+                orderPublish.setAddress(resultSet.getString("address"));
+                orderPublish.setTokenid(resultSet.getString("tokenid"));
+                orderPublish.setType(resultSet.getInt("type"));
+                orderPublish.setPrice(resultSet.getLong("price"));
+                orderPublish.setAmount(resultSet.getLong("amount"));
+                orderPublish.setState(resultSet.getInt("state"));
+                orderPublish.setValidateto(resultSet.getDate("validateto"));
+                orderPublish.setValidatefrom(resultSet.getDate("validatefrom"));
+                orderPublish.setMarket(resultSet.getString("market"));
+                list.add(orderPublish);
+            }
+            return list;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
     }
 }
