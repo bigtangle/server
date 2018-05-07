@@ -233,5 +233,6 @@ prevblockhash  BINARY(32) ,     prevbranchblockhash  BINARY(32) ,
  mineraddress VARBINARY(255),     tokenid VARBINARY(255),     blocktype bigint ,
  CONSTRAINT headers_pk PRIMARY KEY (hash)   );
                 
-CREATE LOCAL INDEX headerstest_prevblockhash_idx ON headerstest (prevblockhash);
+CREATE LOCAL INDEX headers_prevblockhash_idx ON headers (prevblockhash);
+CREATE LOCAL INDEX headers_prevbranchblockhash_idx ON headers (prevbranchblockhash);
 

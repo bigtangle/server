@@ -68,16 +68,16 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String VERSION_SETTING = "version";
 
     // Drop table SQL.
-    protected String DROP_SETTINGS_TABLE = "DROP TABLE settings";
-    protected String DROP_HEADERS_TABLE = "DROP TABLE headers";
-    protected String DROP_UNDOABLE_TABLE = "DROP TABLE undoableblocks";
-    protected String DROP_OPEN_OUTPUT_TABLE = "DROP TABLE outputs";
-    protected String DROP_TIPS_TABLE = "DROP TABLE tips";
-    protected String DROP_BLOCKEVALUATION_TABLE = "DROP TABLE blockevaluation";
-    protected String DROP_TOKENS_TABLE = "DROP TABLE tokens";
-    protected String DROP_ORDERPUBLISH_TABLE = "DROP TABLE orderpublish";
-    protected String DROP_ORDERMATCH_TABLE = "DROP TABLE ordermatch";
-    protected String DROP_EXCHANGE_TABLE = "DROP TABLE exchange";
+    public static String DROP_SETTINGS_TABLE = "DROP TABLE settings";
+    public static String DROP_HEADERS_TABLE = "DROP TABLE headers";
+    public static String DROP_UNDOABLE_TABLE = "DROP TABLE undoableblocks";
+    public static String DROP_OPEN_OUTPUT_TABLE = "DROP TABLE outputs";
+    public static String DROP_TIPS_TABLE = "DROP TABLE tips";
+    public static String DROP_BLOCKEVALUATION_TABLE = "DROP TABLE blockevaluation";
+    public static String DROP_TOKENS_TABLE = "DROP TABLE tokens";
+    public static String DROP_ORDERPUBLISH_TABLE = "DROP TABLE orderpublish";
+    public static String DROP_ORDERMATCH_TABLE = "DROP TABLE ordermatch";
+    public static String DROP_EXCHANGE_TABLE = "DROP TABLE exchange";
 
     // Queries SQL.
     protected String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";

@@ -33,21 +33,21 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String DATABASE_CONNECTION_URL_PREFIX = "jdbc:phoenix:thin:url=http://";
 
     // create table SQL
-    private static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" + "    name varchar(32) not null,\n"
+    public static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" + "    name varchar(32) not null,\n"
             + "    settingvalue VARBINARY(10000),\n" + "    CONSTRAINT setting_pk PRIMARY KEY (name)  \n" + ")\n";
 
-    private static final String CREATE_HEADERS_TABLE = "CREATE TABLE headers (\n" + "    hash VARBINARY(32) not null,\n"
+    public static final String CREATE_HEADERS_TABLE = "CREATE TABLE headers (\n" + "    hash BINARY(32) not null,\n"
             + "    height bigint ,\n" + "    header VARBINARY(4000) ,\n" + "    wasundoable boolean ,\n"
-            + "    prevblockhash  VARBINARY(32) ,\n" + "    prevbranchblockhash  VARBINARY(32) ,\n"
+            + "    prevblockhash  varchar(32) ,\n" + "    prevbranchblockhash  varchar(32) ,\n"
             + "    mineraddress VARBINARY(255),\n" + "    tokenid VARBINARY(255),\n" + "    blocktype bigint ,\n"
             + "    CONSTRAINT headers_pk PRIMARY KEY (hash)  \n" + ")";
 
-    private static final String CREATE_UNDOABLE_TABLE = "CREATE TABLE undoableblocks (\n"
+    public static final String CREATE_UNDOABLE_TABLE = "CREATE TABLE undoableblocks (\n"
             + "    hash VARBINARY(32) not null,\n" + "    height bigint ,\n" + "    txoutchanges VARBINARY(4000),\n"
             + "    transactions VARBINARY(4000),\n" + "    CONSTRAINT undoableblocks_pk PRIMARY KEY (hash)  \n" + ")\n";
 
  
-    private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" + "    hash binary(32) not null,\n"
+    public static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" + "    hash binary(32) not null,\n"
             + "    outputindex bigint not null,\n" + "    height bigint ,\n" + "    coinvalue bigint ,\n"
             + "    scriptbytes binary(4000) ,\n" + "    toaddress binary(35),\n" + "    addresstargetable bigint,\n"
             + "    coinbase boolean,\n" + "    blockhash  binary(32)  ,\n" + "    tokenid binary(255),\n"
@@ -55,33 +55,33 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             + "    confirmed boolean ,\n" + "    spendpending boolean ,\n" + "    spenderblockhash  binary(32),\n"
             + "    CONSTRAINT outputs_pk PRIMARY KEY (hash,outputindex)  \n" + ")\n";
 
-    private static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" + "    hash VARBINARY(32) not null,\n"
+    public static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" + "    hash VARBINARY(32) not null,\n"
             + "    CONSTRAINT tips_pk PRIMARY KEY (hash)  \n" + ")\n";
 
-    private static final String CREATE_BLOCKEVALUATION_TABLE = "CREATE TABLE blockevaluation (\n"
+    public static final String CREATE_BLOCKEVALUATION_TABLE = "CREATE TABLE blockevaluation (\n"
             + "    blockhash VARBINARY(32) not null,\n" + "    rating bigint ,\n" + "    depth bigint,\n"
             + "    cumulativeweight  bigint ,\n" + "    solid boolean ,\n" + "    height bigint,\n"
             + "    milestone boolean,\n" + "    milestonelastupdate bigint,\n" + "    milestonedepth bigint,\n"
             + "    inserttime bigint,\n" + "    maintained boolean,\n" + "    rewardvalidityassessment boolean,\n"
             + "    CONSTRAINT blockevaluation_pk PRIMARY KEY (blockhash) )\n";
 
-    private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n" + "    tokenid VARBINARY(255) not null ,\n"
+    public static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n" + "    tokenid VARBINARY(255) not null ,\n"
             + "    tokenname VARBINARY(255)  ,\n" + "    amount bigint ,\n" + "    description varchar(255),\n"
             + "    blocktype integer ,\n" + "    CONSTRAINT tokenid_pk PRIMARY KEY (tokenid) \n)";
 
-    private static final String CREATE_ORDERPUBLISH_TABLE = "CREATE TABLE orderpublish (\n"
+    public static final String CREATE_ORDERPUBLISH_TABLE = "CREATE TABLE orderpublish (\n"
             + "   orderid VARBINARY(255) not null,\n" + "   address VARBINARY(255),\n" + "   tokenid VARBINARY(255),\n"
             + "   type integer,\n" + "   validateto DATE,\n" + "   validatefrom DATE,\n" + "   price bigint,\n"
             + "   amount bigint,\n" + "   state integer,\n" + "   market VARBINARY(255),\n"
             + "   CONSTRAINT orderid_pk PRIMARY KEY (orderid) )";
 
-    private static final String CREATE_ORDERMATCH_TABLE = "CREATE TABLE ordermatch (\n"
+    public static final String CREATE_ORDERMATCH_TABLE = "CREATE TABLE ordermatch (\n"
             + "   matchid varchar(255) not null,\n" + "   restingOrderId varchar(255),\n"
             + "   incomingOrderId varchar(255),\n" + "   type integer,\n" + "   price bigint,\n"
             + "   executedQuantity bigint,\n" + "   remainingQuantity bigint,\n"
             + "   CONSTRAINT matchid_pk PRIMARY KEY (matchid) )";
 
-    private static final String CREATE_EXCHANGE_TABLE = "CREATE TABLE exchange (\n"
+    public static final String CREATE_EXCHANGE_TABLE = "CREATE TABLE exchange (\n"
             + "   orderid varchar(255) not null,\n" + "   fromAddress varchar(255),\n"
             + "   fromTokenHex varchar(255),\n" + "   fromAmount varchar(255),\n" + "   toAddress varchar(255),\n"
             + "   toTokenHex varchar(255),\n" + "   toAmount varchar(255),\n" + "   data varchar(5000) ,\n"
