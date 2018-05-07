@@ -60,6 +60,9 @@ public class MilestoneService {
     public void update() throws Exception {
         lock.acquire();
 
+        // TODO rebuild fct
+        // TODO reattach fct
+        
         try {
             log.info("Milestone Update started");
 
