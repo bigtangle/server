@@ -108,7 +108,13 @@ public class EckeyController {
     }
 
     public void showPrivateKey(ActionEvent event) {
+        EckeyModel temp = issuedReceiveKeysTable.getSelectionModel().getSelectedItem();
+        if (temp == null) {
+            GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_m1"));
+            return;
+        }
         if (bitcoin.wallet().isEncrypted()) {
+
             TextInputDialog dialog = new TextInputDialog();
             dialog.setTitle(Main.getText("Enter_password"));
             dialog.setHeaderText(null);
@@ -120,8 +126,23 @@ public class EckeyController {
                     if (Main.password.trim().equals(result.get().trim())) {
                         keyCrypter.deriveKey(result.get());
                         showKey();
+                    } else {
+                        Alert alert = new Alert(AlertType.WARNING);
+                        alert.setWidth(500);
+                        alert.setTitle("");
+                        alert.setHeaderText(null);
+                        alert.setContentText(Main.getText("w_p_c_m"));
+
+                        alert.showAndWait();
                     }
                 } catch (Exception e) {
+                    Alert alert = new Alert(AlertType.WARNING);
+                    alert.setWidth(500);
+                    alert.setTitle("");
+                    alert.setHeaderText(null);
+                    alert.setContentText(Main.getText("w_p_c_m"));
+
+                    alert.showAndWait();
                 }
 
             }
