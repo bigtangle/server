@@ -36,14 +36,14 @@ public class StreamBlocks {
 
     // private String CONTEXT_ROOT = "http://bigtangle.net:8088/";
 
-    private static String CONTEXT_ROOT = "http://localhost:8088/";
+    private static String CONTEXT_ROOT = "http://cn.server.bigtangle.net:8088/";
 
     public static void main(String[] args) throws JsonProcessingException, Exception {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
         requestParam.put("heightstart", "1");
-         OkHttp3Util.post(CONTEXT_ROOT + "streamBlocks",
-                Json.jsonmapper().writeValueAsString(requestParam));
+        requestParam.put("kafka", "test.kafka.bigtangle.net:9092");
+        OkHttp3Util.post(CONTEXT_ROOT + "streamBlocks", Json.jsonmapper().writeValueAsString(requestParam));
 
     }
 

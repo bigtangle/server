@@ -103,9 +103,12 @@ public class SendMoneyController {
         milionRadioButton.setUserData(1000 * 1000 + "");
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ObservableList<Object> tokenData = FXCollections.observableArrayList();
-        ECKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
+        
         try {
-            String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens", ecKey.getPubKeyHash());
+            Map<String, Object> requestParam = new HashMap<String, Object>();
+            requestParam.put("name", null);
+            String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens",
+                    Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
             final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
 

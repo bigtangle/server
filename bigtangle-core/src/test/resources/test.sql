@@ -1,4 +1,5 @@
 select * from headers   ;
+select count( *) from headers   ;
 select * from outputs   ;
 select * from tips   ;
 select * from tokens   ;

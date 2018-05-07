@@ -124,6 +124,7 @@ public class Main extends Application {
     private static final Logger log = LoggerFactory.getLogger(Main.class);
     public static String positiveFile = "/bigtangle-wachted.txt";
     public static String contactFile = "/bigtangle-contact.txt";
+
     @Override
     public void start(Stage mainWindow) throws Exception {
         try {
@@ -242,6 +243,25 @@ public class Main extends Application {
         mainWindow.show();
 
         WalletSetPasswordController.estimateKeyDerivationTimeMsec();
+
+    }
+
+    public static Map<String, String> getTokenHexNameMap() throws Exception {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        Map<String, Object> requestParam = new HashMap<String, Object>();
+        String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens",
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+
+        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
+        if (list != null && !list.isEmpty()) {
+            Map<String, String> temp = new HashMap<String, String>();
+            for (Map<String, Object> map : list) {
+                temp.put(Main.getString(map.get("tokenHex")), Main.getString(map.get("tokenname")));
+            }
+            return temp;
+        }
+        return null;
 
     }
 
@@ -556,7 +576,7 @@ public class Main extends Application {
 
     public boolean sendMessage(byte[] data) throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
-        OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", data); 
+        OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", data);
         sentEmpstyBlock(2);
         return true;
         // return sendMessage(data, this.blockTopic, this.kafka);

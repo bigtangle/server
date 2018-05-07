@@ -177,8 +177,10 @@ public class ExchangeController {
     public void initComboBox() throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ObservableList<String> tokenData = FXCollections.observableArrayList();
-        ECKey ecKey = Main.bitcoin.wallet().currentReceiveKey();
-        String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens", ecKey.getPubKeyHash());
+        Map<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("name", null);
+        String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens",
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> tokens = (List<Map<String, Object>>) data.get("tokens");
         for (Map<String, Object> map : tokens) {
