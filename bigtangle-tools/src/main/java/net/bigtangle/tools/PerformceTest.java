@@ -6,6 +6,6 @@ public class PerformceTest {
 
     public static void main(String[] args) {
         Container container = Container.getInstance();
-        container.run();
+        container.startTrade();
     }
 }

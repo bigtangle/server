@@ -5,26 +5,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.Json;
 import net.bigtangle.core.Utils;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.tools.action.Action;
+import net.bigtangle.tools.action.impl.BalancesAction;
 import net.bigtangle.tools.action.impl.BuyOrderAction;
 import net.bigtangle.tools.action.impl.SellOrderAction;
 import net.bigtangle.tools.action.impl.SignOrderAction;
 import net.bigtangle.tools.action.impl.TokenAction;
 import net.bigtangle.tools.config.Configure;
-import net.bigtangle.tools.container.Simulator;
 import net.bigtangle.tools.thread.BuyRun;
 import net.bigtangle.tools.thread.TradeRun;
-import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet;
 
@@ -84,32 +78,13 @@ public class Account {
             action2.execute();
         } catch (Exception e) {
         }
-        try {
-            Simulator.give(this.getBuyKey());
-        } catch (Exception e) {
-        }
-        List<String> requestParams = new ArrayList<String>();
-        requestParams.add(Utils.HEX.encode(this.getBuyKey().getPubKeyHash()));
-        try {
-            String data;
-            data = OkHttp3Util.post(Configure.CONTEXT_ROOT + "batchGetBalances", Json.jsonmapper().writeValueAsString(requestParams).getBytes());
-            logger.info("account name : {}, Balances action resp : {} success", this.getName(), data);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        try {
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-        }
         // init action
         this.executes.add(new BuyOrderAction(this));
         this.executes.add(new SellOrderAction(this));
         this.executes.add(new SignOrderAction(this));
     }
     
-    private static final Logger logger = LoggerFactory.getLogger(Account.class);
+//    private static final Logger logger = LoggerFactory.getLogger(Account.class);
 
     public void doAction() {
         if (this.executes == null || this.executes.isEmpty()) {
@@ -173,8 +148,13 @@ public class Account {
         return this.walletAppKit.wallet();
     }
 
-    public void runBuyOrder() {
+    public void startBuyOrder() {
         Thread thread = new Thread(new BuyRun(this));
         thread.start();
+    }
+
+    public void startGiveMoney() {
+        BalancesAction balancesAction = new BalancesAction(this);
+        balancesAction.execute();
     }
 }

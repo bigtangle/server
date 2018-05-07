@@ -27,7 +27,7 @@ public class Container extends ArrayList<Account> {
         return instance;
     }
 
-    public void run() {
+    public void startTrade() {
         this.initialize();
         for (Iterator<Account> iterator = this.iterator(); iterator.hasNext();) {
             Account account = iterator.next();
@@ -50,17 +50,25 @@ public class Container extends ArrayList<Account> {
         return this.get(index);
     }
 
-    public void runBuyOrder() {
+    public void startBuyOrder() {
         this.initialize();
         for (Iterator<Account> iterator = this.iterator(); iterator.hasNext();) {
             Account account = iterator.next();
-            account.runBuyOrder();
+            account.startBuyOrder();
         }
         TokenPost tokenPost = TokenPost.getInstance();
         try {
             tokenPost.initialize();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public void startGiveMoney() {
+        this.initialize();
+        for (Iterator<Account> iterator = this.iterator(); iterator.hasNext();) {
+            Account account = iterator.next();
+            account.startGiveMoney();
         }
     }
 }
