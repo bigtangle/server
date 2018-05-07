@@ -164,7 +164,8 @@ http://web.archive.org/web/20110310171841/http://www.quantcup.org/home/spec
   
   
   $ docker run -it --rm --net vnet smizy/apache-phoenix:4.13.1-alpine sh
-> bin/sqlline-thin.py http://cn.phoenix.bigtangle.net:8765
+> bin/sqlline-thin.py http://61.181.128.236:8765
+bin/sqlline-thin.py http://42.51.129.106:8765
 
 
 master hbase-site.xml
@@ -184,6 +185,7 @@ vi /usr/local/hbase-1.3.1/conf/hbase-site.xml.mustache
 
 RegionServer  hbase-site.xml
 docker exec -it hmaster-1 bash
+docker exec -it regionserver-1 bash
 vi /usr/local/hbase-1.3.1/conf/hbase-site.xml
 
 docker exec hmaster-1 more  /usr/local/hbase-1.3.1/conf/hbase-site.xml
@@ -191,9 +193,10 @@ docker exec regionserver-1 more  /usr/local/hbase-1.3.1/conf/hbase-site.xml
 docker exec queryserver-1 more  /usr/local/hbase-1.3.1/conf/hbase-site.xml
 
 !indexs
-docker restart hmaster-1 regionserver-1 queryserver-1
+docker restart zookeeper-1 namenode-1  datanode-1 hmaster-1 regionserver-1 queryserver-1 
 
-docker logs -f  hmaster-1 regionserver-1
+docker logs -f  hmaster-1
+ docker logs -f regionserver-1
 <property> 
   <name>hbase.regionserver.wal.codec</name> 
   <value>org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec</value> 
@@ -223,4 +226,12 @@ CREATE TABLE my_table (k VARCHAR PRIMARY KEY, v1 VARCHAR, v2 BIGINT);
 you'd create an index on the v1 column like this:
 
 CREATE INDEX my_index ON my_table (v1);
+
+
+ CREATE TABLE headerstest  (  hash BINARY(32) not null,   height bigint ,  header VARBINARY(4000) ,   wasundoable boolean ,
+prevblockhash  BINARY(32) ,     prevbranchblockhash  BINARY(32) ,
+ mineraddress VARBINARY(255),     tokenid VARBINARY(255),     blocktype bigint ,
+ CONSTRAINT headers_pk PRIMARY KEY (hash)   );
+                
+CREATE LOCAL INDEX headerstest_prevblockhash_idx ON headerstest (prevblockhash);
 
