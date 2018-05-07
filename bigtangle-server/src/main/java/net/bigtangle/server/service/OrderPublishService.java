@@ -69,4 +69,9 @@ public class OrderPublishService {
         List<OrderPublish> orders = this.store.getOrderPublishListWithCondition(request);
         return GetOrderResponse.create(orders);
     }
+
+    public List<OrderPublish> getOrderPublishListWithNotMatch() throws BlockStoreException {
+        List<OrderPublish> orders = this.store.getOrderPublishListWithNotMatch();
+        return orders;
+    }
 }

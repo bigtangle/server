@@ -282,4 +282,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void updateUnmaintainAll() throws BlockStoreException;
 
     public void  streamBlocks(long heightstart, KafkaMessageProducer kafkaMessageProducer)  throws BlockStoreException;
+
+    public List<OrderPublish> getOrderPublishListWithNotMatch() throws BlockStoreException;
 }
