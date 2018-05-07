@@ -9,6 +9,7 @@ import static net.bigtangle.ui.wallet.Main.params;
 
 import java.io.File;
 import java.util.List;
+import java.util.Optional;
 
 import org.spongycastle.crypto.params.KeyParameter;
 
@@ -16,9 +17,12 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.stage.FileChooser;
 import net.bigtangle.core.ECKey;
@@ -54,7 +58,7 @@ public class EckeyController {
     @FXML
     public void initialize() {
         try {
-            keyFileDirTextField.setText(Main.keyFileDirectory + File.separator + Main.keyFilePrefix+".wallet");
+            keyFileDirTextField.setText(Main.keyFileDirectory + File.separator + Main.keyFilePrefix + ".wallet");
             initEcKeyList();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
@@ -103,6 +107,40 @@ public class EckeyController {
 
     }
 
+    public void showPrivateKey(ActionEvent event) {
+        if (bitcoin.wallet().isEncrypted()) {
+            TextInputDialog dialog = new TextInputDialog();
+            dialog.setTitle(Main.getText("Enter_password"));
+            dialog.setHeaderText(null);
+            dialog.setContentText(Main.getText("Password"));
+            Optional<String> result = dialog.showAndWait();
+            if (result.isPresent()) {
+                final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+                try {
+                    if (Main.password.trim().equals(result.get().trim())) {
+                        keyCrypter.deriveKey(result.get());
+                        showKey();
+                    }
+                } catch (Exception e) {
+                }
+
+            }
+        } else {
+            showKey();
+        }
+    }
+
+    public void showKey() {
+        EckeyModel temp = issuedReceiveKeysTable.getSelectionModel().getSelectedItem();
+        Alert alert = new Alert(AlertType.INFORMATION);
+        alert.setWidth(500);
+        alert.setTitle("");
+        alert.setHeaderText(null);
+        alert.setContentText(temp.getPrivkeyHex());
+
+        alert.showAndWait();
+    }
+
     public void closeUI(ActionEvent event) {
         overlayUI.done();
     }
@@ -122,8 +160,8 @@ public class EckeyController {
 
         Main.keyFilePrefix = filename.contains(".") ? filename.substring(0, filename.lastIndexOf(".")) : filename;
         bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
-        GuiUtils.informationalAlert(Main.getText("e_c"),Main.getText("e_c"), "");
-        Main.password="";
+        GuiUtils.informationalAlert(Main.getText("e_c"), Main.getText("e_c"), "");
+        Main.password = "";
         try {
             initEcKeyList();
             Main.instance.controller.initTableView();
