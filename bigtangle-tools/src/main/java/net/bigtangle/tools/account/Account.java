@@ -99,6 +99,10 @@ public class Account {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+        }
         // init action
         this.executes.add(new BuyOrderAction(this));
         this.executes.add(new SellOrderAction(this));
