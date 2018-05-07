@@ -11,7 +11,7 @@ public class Container extends ArrayList<Account> {
     private static final long serialVersionUID = -2908678813397748468L;
 
     public void initialize() {
-        for (int i = 1; i <= 3; i++) {
+        for (int i = 1; i <= 1; i++) {
             try {
                 Account account = new Account("wallet" + String.valueOf(i));
                 this.add(account);

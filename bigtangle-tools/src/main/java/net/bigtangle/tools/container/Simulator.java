@@ -17,7 +17,7 @@ import net.bigtangle.utils.OkHttp3Util;
 
 public class Simulator {
 
-    public void give(ECKey ecKey) throws Exception {
+    public static void give(ECKey ecKey) throws Exception {
         int height = 1;
         Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(Configure.PARAMS.getGenesisBlock(),
                 Block.BLOCK_VERSION_GENESIS, Configure.OUT_KEY.getPubKey(), height++,
@@ -35,10 +35,8 @@ public class Simulator {
         }
         
         Block b = createGenesisBlock(ecKey);
-
         rollingBlock = BlockForTest.createNextBlock(b, null, Configure.PARAMS.getGenesisBlock().getHash());
-       
-        Coin amount = Coin.valueOf(12345, NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin amount = Coin.valueOf(999999999999L, NetworkParameters.BIGNETCOIN_TOKENID);
 
         Transaction t = new Transaction(Configure.PARAMS);
         t.addOutput(new TransactionOutput(Configure.PARAMS, t, amount, ecKey.toAddress(Configure.PARAMS)));
@@ -48,11 +46,11 @@ public class Simulator {
         OkHttp3Util.post(Configure.CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
     }
 
-    private Block createGenesisBlock(ECKey outKey) throws Exception {
+    private static Block createGenesisBlock(ECKey outKey) throws Exception {
         byte[] pubKey = outKey.getPubKey();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
-        requestParam.put("amount", 164385643856L);
+        requestParam.put("amount", 999999999999L);
         requestParam.put("tokenname", "Test");
         requestParam.put("description", "Test");
         requestParam.put("blocktype", false);
