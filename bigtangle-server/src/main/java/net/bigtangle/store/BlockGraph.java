@@ -23,7 +23,6 @@ import net.bigtangle.wallet.Wallet;
 import java.util.ArrayList;
 import java.util.List;
 
-// TODO: Rename this class to SPVBlockChain at some point.
 
 /**
  * A BlockChain implements the <i>simplified payment verification</i> mode of the Bitcoin protocol. It is the right

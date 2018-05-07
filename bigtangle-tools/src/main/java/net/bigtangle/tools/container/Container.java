@@ -11,7 +11,7 @@ public class Container extends ArrayList<Account> {
     private static final long serialVersionUID = -2908678813397748468L;
 
     public void initialize() {
-        for (int i = 1; i <= 3; i++) {
+        for (int i = 1; i <= 1; i++) {
             try {
                 Account account = new Account("wallet" + String.valueOf(i));
                 this.add(account);
@@ -27,7 +27,7 @@ public class Container extends ArrayList<Account> {
         return instance;
     }
 
-    public void run() {
+    public void startTrade() {
         this.initialize();
         for (Iterator<Account> iterator = this.iterator(); iterator.hasNext();) {
             Account account = iterator.next();
@@ -50,17 +50,25 @@ public class Container extends ArrayList<Account> {
         return this.get(index);
     }
 
-    public void runBuyOrder() {
+    public void startBuyOrder() {
         this.initialize();
         for (Iterator<Account> iterator = this.iterator(); iterator.hasNext();) {
             Account account = iterator.next();
-            account.runBuyOrder();
+            account.startBuyOrder();
         }
         TokenPost tokenPost = TokenPost.getInstance();
         try {
             tokenPost.initialize();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public void startGiveMoney() {
+        this.initialize();
+        for (Iterator<Account> iterator = this.iterator(); iterator.hasNext();) {
+            Account account = iterator.next();
+            account.startGiveMoney();
         }
     }
 }

@@ -1,4 +1,4 @@
-package net.bigtangle.tools.account;
+package net.bigtangle.tools.utils;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -16,6 +16,7 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.tools.account.Account;
 import net.bigtangle.tools.config.Configure;
 import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;

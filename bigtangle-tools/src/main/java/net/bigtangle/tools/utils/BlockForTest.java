@@ -64,7 +64,7 @@ public class BlockForTest {
     public static Block createNextBlockWithCoinbase(Block block, long version, byte[] pubKey, final int height,
             Sha256Hash prevBranchBlockHash) {
         return block.createNextBlock(null, version, (TransactionOutPoint) null, Utils.currentTimeSeconds(), pubKey,
-                Coin.FIFTY_COINS, height, prevBranchBlockHash, keyForTesting.getPubKeyHash() 
+                Coin.COIN.multiply(9999999999L), height, prevBranchBlockHash, keyForTesting.getPubKeyHash() 
                 );
     }
 

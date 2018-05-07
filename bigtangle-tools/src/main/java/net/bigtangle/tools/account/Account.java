@@ -11,14 +11,15 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Utils;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.tools.action.Action;
+import net.bigtangle.tools.action.impl.BalancesAction;
 import net.bigtangle.tools.action.impl.BuyOrderAction;
-import net.bigtangle.tools.action.impl.PayAction;
 import net.bigtangle.tools.action.impl.SellOrderAction;
 import net.bigtangle.tools.action.impl.SignOrderAction;
 import net.bigtangle.tools.action.impl.TokenAction;
 import net.bigtangle.tools.config.Configure;
 import net.bigtangle.tools.thread.BuyRun;
 import net.bigtangle.tools.thread.TradeRun;
+import net.bigtangle.tools.utils.RandomTrade;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet;
 
@@ -78,18 +79,13 @@ public class Account {
             action2.execute();
         } catch (Exception e) {
         }
-        try {
-            // give amount
-            Action action1 = new PayAction(this);
-            action1.execute();
-        } catch (Exception e) {
-        }
         // init action
-//        this.executes.add(new BalancesAction(this));
         this.executes.add(new BuyOrderAction(this));
         this.executes.add(new SellOrderAction(this));
         this.executes.add(new SignOrderAction(this));
     }
+    
+//    private static final Logger logger = LoggerFactory.getLogger(Account.class);
 
     public void doAction() {
         if (this.executes == null || this.executes.isEmpty()) {
@@ -153,8 +149,13 @@ public class Account {
         return this.walletAppKit.wallet();
     }
 
-    public void runBuyOrder() {
+    public void startBuyOrder() {
         Thread thread = new Thread(new BuyRun(this));
         thread.start();
+    }
+
+    public void startGiveMoney() {
+        BalancesAction balancesAction = new BalancesAction(this);
+        balancesAction.execute();
     }
 }

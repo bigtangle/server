@@ -1,4 +1,4 @@
-package net.bigtangle.tools.account;
+package net.bigtangle.tools.utils;
 
 public class RandomTrade {
 

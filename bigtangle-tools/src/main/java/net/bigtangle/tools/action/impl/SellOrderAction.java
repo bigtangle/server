@@ -2,15 +2,15 @@ package net.bigtangle.tools.action.impl;
 
 import java.util.HashMap;
 
-import net.bigtangle.core.Json;
-import net.bigtangle.tools.account.Account;
-import net.bigtangle.tools.account.RandomTrade;
-import net.bigtangle.tools.action.Action;
-import net.bigtangle.tools.config.Configure;
-import net.bigtangle.utils.OkHttp3Util;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import net.bigtangle.core.Json;
+import net.bigtangle.tools.account.Account;
+import net.bigtangle.tools.action.Action;
+import net.bigtangle.tools.config.Configure;
+import net.bigtangle.tools.utils.RandomTrade;
+import net.bigtangle.utils.OkHttp3Util;
 
 public class SellOrderAction extends Action {
 

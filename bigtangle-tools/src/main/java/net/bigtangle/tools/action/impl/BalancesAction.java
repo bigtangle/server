@@ -3,16 +3,18 @@ package net.bigtangle.tools.action.impl;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.bigtangle.core.ECKey;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import net.bigtangle.core.Json;
 import net.bigtangle.core.Utils;
 import net.bigtangle.tools.account.Account;
 import net.bigtangle.tools.action.Action;
 import net.bigtangle.tools.config.Configure;
+import net.bigtangle.tools.utils.Simulator;
 import net.bigtangle.utils.OkHttp3Util;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class BalancesAction extends Action {
 
@@ -26,12 +28,21 @@ public class BalancesAction extends Action {
 
     @Override
     public void execute0() throws Exception {
-        List<String> requestParams = new ArrayList<String>();
-        for (ECKey ecKey : account.walletKeys()) {
-            requestParams.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
+        try {
+            Simulator.give(this.account.getBuyKey());
+        } catch (Exception e) {
         }
-        String data = OkHttp3Util.post(Configure.CONTEXT_ROOT + "batchGetBalances", Json.jsonmapper().writeValueAsString(requestParams).getBytes());
-        logger.info("account name : {}, Balances action resp : {} success", account.getName(), data);
+        List<String> requestParams = new ArrayList<String>();
+        requestParams.add(Utils.HEX.encode(this.account.getBuyKey().getPubKeyHash()));
+        try {
+            String data;
+            data = OkHttp3Util.post(Configure.CONTEXT_ROOT + "batchGetBalances", Json.jsonmapper().writeValueAsString(requestParams).getBytes());
+            logger.info("account name : {}, Balances action resp : {} success", this.account.getName(), data);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private static final Logger logger = LoggerFactory.getLogger(BalancesAction.class);
