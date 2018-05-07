@@ -35,10 +35,10 @@ public class CoinModel {
         this.tokenid.set(tokenid);
     }
 
-    public CoinModel(String value, byte[] tokenid) {
+    public CoinModel(String value, byte[] tokenid,String tokenname) {
         super();
         this.value = new SimpleStringProperty(value);
-        this.tokenid = new SimpleStringProperty(Utils.HEX.encode(tokenid));
+        this.tokenid = new SimpleStringProperty(tokenname+":"+Utils.HEX.encode(tokenid));
     }
 
 }
