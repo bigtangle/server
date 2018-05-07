@@ -9,7 +9,7 @@
 <meta name="description" content="">
 <meta name="author" content="">
 
-<title>BigTangle.net - Protocol for internet of value.</title>
+<title>BigTangle.net - Protocol for the internet of value.</title>
 
 <!-- Bootstrap core CSS -->
 <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
@@ -40,10 +40,10 @@
 						href="index.html">Home</a></li>
 					<li class="nav-item"><a class="nav-link "
 						href="whitepaper.pdf" target="_blank">Whitepaper</a></li>
-
+					<li class="nav-item"><a class="nav-link"
+						href="quickstart.html">Quick Start</a>
 					<li class="nav-item"><a class="nav-link" href="imprint.html">Imprint</a>
 					</li>
-
 				</ul>
 			</div>
 		</div>
@@ -52,23 +52,19 @@
 
 	<header class="bg-primary text-white" id="home">
 		<div class="container text-center">
-			<h1>Quick Start for BigTangle Wallet after Download</h1>
+			<h1>Quick Start for BigTangle Test Wallet</h1>
 		</div>
 	</header>
 	<section id="screenwallet">
 		<div class="container">
-
 			<img src="quickstart/ScreenshotWallet.png">
-
 		</div>
 	</section>
-
 
 	<section id="quickstart">
 		<div class="container">
 			<div class="row">
 				<div class="col-lg-12 mx-auto">
-
 					<div class="row">
 						<div class="col-md-4">
 							<div class="card mb-4 box-shadow">
@@ -79,7 +75,7 @@
 									list and enter an amount and address to pay. Then, after
 									clicking the button Send, the system will allow you to save the
 									address in the contact list. Next time, you can select the
-									address from this list. If you cannot find the payment in the
+									address from this list. If you cannot find the payment in your
 									balance, please check the Blocks window. There may be a delay
 									in the range of seconds for payment confirmation. The column
 									pending will indicate with an asterisk if a payment is still
@@ -88,33 +84,13 @@
 						</div>
 						<div class="col-md-4">
 							<div class="card mb-4 box-shadow">
-								<!--<img src="img/svg/007-startup.svg" class="card-img-top">-->
-								<div class="card-header">Tokens</div>
-								<div class="card-body">
-									Tokens can be anything from fiat money to stocks of companies.
-									Anyone can issue any number of tokens. As an example, you can
-									create your work days as token for tracking and trading. Click
-									the create button in the token window. <br>Enter the name
-									of your token: My Work Days <br>Enter the amount of
-									tokens: 365 <br>Select an address as the issuer and id of
-									this token. <br>Finalize this. <br>You may click
-									search to refresh your balance and check the block evaluations
-									in the window Blocks if your token is not shown in your
-									balance.
-
-								</div>
-							</div>
-						</div>
-						<div class="col-md-4">
-							<div class="card mb-4 box-shadow">
 								<!--<img src="img/svg/015-strategy.svg" class="card-img-top">-->
-								<div class="card-header">Markets</div>
-								<div class="card-body">Markets can be stock exchanges for
-									stocks, bonds etc. Financial products can easily be traded by
+								<div class="card-header">Market</div>
+								<div class="card-body">Anything of value can be traded by
 									creating new token equivalents. The system has an integrated
 									free market for token exchanges. In the last step we created a
-									work day token. Now we want to get system coins in exchange for
-									our work days. Click the order tab in the Markets window.
+									work day token. Now we wish to get BT in exchange for
+									our work days. Click the order tab in the Market window.
 									Select your token and give a price for your work days. Then
 									wait for someone to be matched to your sale. For testing
 									purposes, we have an agent running as an automated service: The
@@ -123,15 +99,42 @@
 						</div>
 						<div class="col-md-4">
 							<div class="card mb-4 box-shadow">
+								<!--<img src="img/svg/007-startup.svg" class="card-img-top">-->
+								<div class="card-header">Token</div>
+								<div class="card-body">Tokens can be anything from fiat
+									money to stocks of companies. Anyone can issue any number of
+									tokens. As an example, you can create your work days as token
+									for tracking and trading. Click the create button in the token
+									window. Enter the name of your token: My Work Days. Enter the
+									amount of tokens: 365. Select an address as the issuer and id
+									of this token. Finalize this. You may click search to refresh
+									your balance and check the block evaluations in the window
+									Blocks if your token is not shown in your balance.</div>
+							</div>
+						</div>
+						<div class="col-md-4">
+							<div class="card mb-4 box-shadow">
 								<!--<img src="img/svg/025-data.svg" class="card-img-top">-->
 								<div class="card-header">Exchange</div>
 								<div class="card-body">When an order is matched, it
-									becomes an offer (transaction) that can be signed in the
-									wallet. In the Exchange window you will find the offer and it
-									is already signed by the automated agent. Click the sign button
-									and the deal is finalized such that you will trade the tokens.
-									You can also create a custom transaction offer. To do so, click
+									becomes a transaction offer that can be signed in the wallet.
+									In the Exchange window you will find the offer already signed
+									by the automated agent. Click the sign button and the deal is
+									finalized such that you will exchange the specified tokens. You
+									can also create custom transaction offers. To do so, click
 									create in the Exchange window.</div>
+							</div>
+						</div>
+						<div class="col-md-4">
+							<div class="card mb-4 box-shadow">
+								<!--<img src="img/svg/023-business.svg" class="card-img-top">-->
+								<div class="card-header">Multi Sign</div>
+								<div class="card-body">It is possible to set up payments
+									to require N out of M signatures. For example, two signatures
+									out of three might be required to authorize a transaction. To
+									perform such transactions, the first key holder signs by click export, then sends
+									it to the next key holder. The next key holder imports the
+									block file and clicks the send button to perform the payment.</div>
 							</div>
 						</div>
 						<div class="col-md-4">
@@ -141,28 +144,16 @@
 								<div class="card-body">By default it will display blocks
 									related to you only. If you perform transactions but they do
 									not show up in the main window balance, you will probably find
-									the blocks here with ratings lower than 75 and milestone set to
-									false. These blocks are not confirmed yet due to conflicts,
-									insufficient processing time or orphaning. You can select the
-									blocks and view their details.</div>
+									the blocks here with ratings lower than the threshold and
+									milestone set to false. These blocks are not confirmed yet due
+									to conflicts, insufficient processing time or orphaning. You
+									can select the blocks and view their details.</div>
 							</div>
 						</div>
 						<div class="col-md-4">
 							<div class="card mb-4 box-shadow">
 								<!--<img src="img/svg/023-business.svg" class="card-img-top">-->
-								<div class="card-header">Multi Sign</div>
-								<div class="card-body">It is possible to set payments to
-									require N of M signatures. For example, two signatures might be
-									required to authorize a transaction. To do so, the first key
-									holder signs by click export, then sends it to the next key
-									holder. The next key holder imports the block file and clicks
-									the send button to perform the payment.</div>
-							</div>
-						</div>
-						<div class="col-md-4">
-							<div class="card mb-4 box-shadow">
-								<!--<img src="img/svg/023-business.svg" class="card-img-top">-->
-								<div class="card-header">Settings</div>
+								<div class="card-header">Keys and Settings</div>
 								<div class="card-body">The BigTangle wallet is a key
 									store. It saves all your public and private keys in your
 									wallet. You can set a password to protect your wallet, but IT
@@ -181,8 +172,8 @@
 									the current Testnet operated by us. One of the clusters is in
 									China and can be connected to via cn.server.bigtangle.net, the
 									other is in Europe and is found under de.server.bigtangle.net.
-									The wallet will connect to the server in China if your
-									operations system is Chinese. The clusters are currently
+									The wallet will per default connect to the server in China if your
+									operation system's locale is Chinese. The clusters are currently
 									connected peer to peer. There will be more clusters in the test
 									network after release of the BigTangle node.</div>
 							</div>
