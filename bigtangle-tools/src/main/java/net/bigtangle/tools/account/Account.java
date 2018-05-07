@@ -19,6 +19,7 @@ import net.bigtangle.tools.action.impl.TokenAction;
 import net.bigtangle.tools.config.Configure;
 import net.bigtangle.tools.thread.BuyRun;
 import net.bigtangle.tools.thread.TradeRun;
+import net.bigtangle.tools.utils.RandomTrade;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet;
 
