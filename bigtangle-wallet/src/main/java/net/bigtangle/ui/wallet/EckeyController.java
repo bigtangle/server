@@ -17,13 +17,20 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonBar.ButtonData;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Utils;
@@ -107,35 +114,42 @@ public class EckeyController {
 
     }
 
-    public void showPrivateKey(ActionEvent event) {
-        EckeyModel temp = issuedReceiveKeysTable.getSelectionModel().getSelectedItem();
-        if (temp == null) {
-            GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_m1"));
-            return;
-        }
-        if (bitcoin.wallet().isEncrypted()) {
+    public void test() {
+        Dialog<String> dialog = new Dialog<>();
+        dialog.setTitle(Main.getText("Enter_password"));
+        dialog.setHeaderText(null);
 
-            TextInputDialog dialog = new TextInputDialog();
-            dialog.setTitle(Main.getText("Enter_password"));
-            dialog.setHeaderText(null);
-            dialog.setContentText(Main.getText("Password"));
-            Optional<String> result = dialog.showAndWait();
-            if (result.isPresent()) {
-                final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
-                try {
-                    if (Main.password.trim().equals(result.get().trim())) {
-                        keyCrypter.deriveKey(result.get());
-                        showKey();
-                    } else {
-                        Alert alert = new Alert(AlertType.WARNING);
-                        alert.setWidth(500);
-                        alert.setTitle("");
-                        alert.setHeaderText(null);
-                        alert.setContentText(Main.getText("w_p_c_m"));
+        ButtonType loginButtonType = new ButtonType(Main.getText("OK"), ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(loginButtonType, ButtonType.CANCEL);
 
-                        alert.showAndWait();
-                    }
-                } catch (Exception e) {
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        PasswordField password = new PasswordField();
+
+        grid.add(new Label(Main.getText("Password")), 0, 0);
+        grid.add(password, 1, 0);
+
+        Node loginButton = dialog.getDialogPane().lookupButton(loginButtonType);
+
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == loginButtonType) {
+                return password.getText();
+            }
+            return "";
+        });
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(usernamePassword -> {
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            try {
+                if (Main.password.trim().equals(usernamePassword.trim())) {
+                    keyCrypter.deriveKey(usernamePassword.trim());
+                    showKey();
+                } else {
                     Alert alert = new Alert(AlertType.WARNING);
                     alert.setWidth(500);
                     alert.setTitle("");
@@ -144,8 +158,60 @@ public class EckeyController {
 
                     alert.showAndWait();
                 }
+            } catch (Exception e) {
+                Alert alert = new Alert(AlertType.WARNING);
+                alert.setWidth(500);
+                alert.setTitle("");
+                alert.setHeaderText(null);
+                alert.setContentText(Main.getText("w_p_c_m"));
 
+                alert.showAndWait();
             }
+        });
+    }
+
+    public void showPrivateKey(ActionEvent event) {
+        EckeyModel temp = issuedReceiveKeysTable.getSelectionModel().getSelectedItem();
+        if (temp == null) {
+            GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_m1"));
+            return;
+        }
+        if (bitcoin.wallet().isEncrypted()) {
+            //
+            // TextInputDialog dialog = new TextInputDialog();
+            // dialog.setTitle(Main.getText("Enter_password"));
+            // dialog.setHeaderText(null);
+            // dialog.setContentText(Main.getText("Password"));
+            //
+            // Optional<String> result = dialog.showAndWait();
+            // if (result.isPresent()) {
+            // final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt)
+            // Main.bitcoin.wallet().getKeyCrypter();
+            // try {
+            // if (Main.password.trim().equals(result.get().trim())) {
+            // keyCrypter.deriveKey(result.get());
+            // showKey();
+            // } else {
+            // Alert alert = new Alert(AlertType.WARNING);
+            // alert.setWidth(500);
+            // alert.setTitle("");
+            // alert.setHeaderText(null);
+            // alert.setContentText(Main.getText("w_p_c_m"));
+            //
+            // alert.showAndWait();
+            // }
+            // } catch (Exception e) {
+            // Alert alert = new Alert(AlertType.WARNING);
+            // alert.setWidth(500);
+            // alert.setTitle("");
+            // alert.setHeaderText(null);
+            // alert.setContentText(Main.getText("w_p_c_m"));
+            //
+            // alert.showAndWait();
+            // }
+            //
+            // }
+            test();
         } else {
             showKey();
         }
