@@ -297,4 +297,9 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
         // TODO check that invalid blocks are reverted / written to db only after confirming validity
     }
 
+    @Override
+    protected List<String> getDropIndexsSQL() {
+        return new ArrayList<String>();
+    }
+
 }

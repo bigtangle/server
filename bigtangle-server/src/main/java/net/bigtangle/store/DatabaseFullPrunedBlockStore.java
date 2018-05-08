@@ -321,6 +321,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
 
         } catch (SQLException e) {
+            e.printStackTrace();
             throw new BlockStoreException(e);
         }
     }
@@ -635,23 +636,32 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      *             If the block store could not be created.
      */
     private void createTables() throws SQLException, BlockStoreException {
-        Statement s = conn.get().createStatement();
         // create all the database tables
         for (String sql : getCreateTablesSQL()) {
             if (log.isDebugEnabled()) {
                 log.debug("DatabaseFullPrunedBlockStore : CREATE table " + sql);
             }
-            s.executeUpdate(sql);
+            Statement s = conn.get().createStatement();
+            try {
+                s.execute(sql);
+            }
+            finally {
+                s.close();
+            }
         }
         // create all the database indexes
-//        for (String sql : getCreateIndexesSQL()) {
-//            if (log.isDebugEnabled()) {
-//                log.debug("DatabaseFullPrunedBlockStore : CREATE index " + sql);
-//            }
-//            s.executeUpdate(sql);
-//        }
-        s.close();
-
+        for (String sql : getCreateIndexesSQL()) {
+            if (log.isDebugEnabled()) {
+                log.debug("DatabaseFullPrunedBlockStore : CREATE index " + sql);
+            }
+            Statement s = conn.get().createStatement();
+            try {
+                s.execute(sql);
+            }
+            finally {
+                s.close();
+            }
+        }
         // insert the initial settings for this store
         PreparedStatement ps = conn.get().prepareStatement(getInsertSettingsSQL());
         ps.setString(1, CHAIN_HEAD_SETTING);
@@ -1205,16 +1215,33 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public void deleteStore() throws BlockStoreException {
         maybeConnect();
         try {
-            Statement s = conn.get().createStatement();
+            /*for (String sql : getDropIndexsSQL()) {
+                Statement s = conn.get().createStatement();
+                try {
+                    log.info("drop index : " + sql);
+                    s.execute(sql);
+                }
+                finally {
+                    s.close();
+                }
+            }*/
             for (String sql : getDropTablesSQL()) {
-                s.execute(sql);
+                Statement s = conn.get().createStatement();
+                try {
+                    log.info("drop table : " + sql);
+                    s.execute(sql);
+                }
+                finally {
+                    s.close();
+                }
             }
-            s.close();
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             log.warn("Warning: deleteStore", ex);
             // throw new RuntimeException(ex);
         }
     }
+
+    protected abstract List<String> getDropIndexsSQL();
 
     @Override
     public List<UTXO> getOpenTransactionOutputs(List<Address> addresses) throws UTXOProviderException {

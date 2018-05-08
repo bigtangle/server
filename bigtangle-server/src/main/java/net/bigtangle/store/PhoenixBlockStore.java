@@ -11,12 +11,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.Utils;
+import net.bigtangle.utils.UUIDUtil;
 
 /**
  * <p>
@@ -196,20 +198,19 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     @Override
     protected List<String> getCreateIndexesSQL() {
         List<String> sqlStatements = new ArrayList<String>();
-        sqlStatements.add("CREATE LOCAL INDEX headers_prevblockhash_idx ON headers (prevblockhash)");
-        sqlStatements.add("CREATE LOCAL INDEX headers_prevbranchblockhash_idx ON headers (prevbranchblockhash)");
-        sqlStatements.add("CREATE LOCAL INDEX blockevaluation_solid ON blockevaluation (solid)");
-        /*
-         * sqlStatements.add(CREATE_UNDOABLE_TABLE_INDEX);
-         * sqlStatements.add(CREATE_OUTPUTS_ADDRESS_MULTI_INDEX);
-         * sqlStatements.add(CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX);
-         * sqlStatements.add(CREATE_OUTPUTS_HASH_INDEX);
-         * sqlStatements.add(CREATE_OUTPUTS_TOADDRESS_INDEX);
-         * sqlStatements.add(CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX);
-         * sqlStatements.add(CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX);
-         * sqlStatements.add(CREATE_ORDERMATCH_INCOMINGORDERID_TABLE_INDEX);
-         * sqlStatements.add(CREATE_ORDERMATCH_RESTINGORDERID_TABLE_INDEX);
-         */
+        int index = new Random().nextInt(1000);
+        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index + 1) + " ON headers (prevblockhash)");
+        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index + 2) + " ON headers (prevbranchblockhash)");
+        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index + 3) + " ON blockevaluation (solid)");
+        return sqlStatements;
+    }
+    
+    @Override
+    protected List<String> getDropIndexsSQL() {
+        List<String> sqlStatements = new ArrayList<String>();
+        sqlStatements.add("DROP INDEX headers_prevblockhash_idx1 ON headers");
+        sqlStatements.add("DROP INDEX headers_prevbranchblockhash_idx1 ON headers");
+        sqlStatements.add("DROP INDEX blockevaluation_solid1 ON blockevaluation");
         return sqlStatements;
     }
 
@@ -350,5 +351,4 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     protected String getUpdateOutputsSpendPendingSQL() {
         return getUpdate() +" outputs (spendpending, hash, outputindex) VALUES (?, ?, ?)";
     }
-
 }

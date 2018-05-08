@@ -28,7 +28,7 @@ public class PhoenixStoreTest extends AbstractFullPrunedBlockChainTest {
 
     @After
     public void tearDown() throws Exception {
-          ((PhoenixBlockStore)store).deleteStore();
+          //((PhoenixBlockStore)store).deleteStore();
     }
 
     // Replace these with your mysql location/credentials and remove @Ignore to test
@@ -67,11 +67,10 @@ public class PhoenixStoreTest extends AbstractFullPrunedBlockChainTest {
 
     @Override
     public void resetStore(FullPrunedBlockStore store) throws BlockStoreException {
-        // ((PhoenixBlockStore)store).resetStore();
+         ((PhoenixBlockStore)store).resetStore();
     }
     
 
-  
     public void showCreateTable() {
         for (String sql : this.getDropTablesSQL()) {
             System.out.println(sql + ";");

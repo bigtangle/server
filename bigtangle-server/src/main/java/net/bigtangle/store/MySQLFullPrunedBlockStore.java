@@ -268,4 +268,9 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     protected String getUpdateOutputsSpendPendingSQL() {
         return UPDATE_OUTPUTS_SPENDPENDING_SQL;
     }
+
+    @Override
+    protected List<String> getDropIndexsSQL() {
+        return new ArrayList<String>();
+    }
 }
