@@ -227,7 +227,7 @@ you'd create an index on the v1 column like this:
 
 CREATE INDEX my_index ON my_table (v1);
 
-
+error
  CREATE TABLE headerstest  (  hash BINARY(32) not null,   height bigint ,  header VARBINARY(4000) ,   wasundoable boolean ,
 prevblockhash  BINARY(32) ,     prevbranchblockhash  BINARY(32) ,
  mineraddress VARBINARY(255),     tokenid VARBINARY(255),     blocktype bigint ,
@@ -236,3 +236,5 @@ prevblockhash  BINARY(32) ,     prevbranchblockhash  BINARY(32) ,
 CREATE LOCAL INDEX headers_prevblockhash_idx ON headers (prevblockhash);
 CREATE LOCAL INDEX headers_prevbranchblockhash_idx ON headers (prevbranchblockhash);
 
+
+to replace to char(32)
