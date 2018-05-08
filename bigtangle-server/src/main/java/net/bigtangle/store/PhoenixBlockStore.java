@@ -7,18 +7,24 @@ package net.bigtangle.store;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.ProtocolException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.Utils;
-import net.bigtangle.utils.UUIDUtil;
+import net.bigtangle.core.VerificationException;
 
 /**
  * <p>
@@ -30,6 +36,109 @@ import net.bigtangle.utils.UUIDUtil;
  */
 
 public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
+    
+    private static final Logger log = LoggerFactory.getLogger(DatabaseFullPrunedBlockStore.class);
+    
+    @Override
+    protected void putUpdateStoredBlock(StoredBlock storedBlock, boolean wasUndoable) throws SQLException {
+        try {
+            PreparedStatement s = conn.get().prepareStatement(getInsertHeadersSQL());
+
+            s.setBytes(1, storedBlock.getHeader().getHash().getBytes());
+            s.setLong(2, storedBlock.getHeight());
+            s.setBytes(3, storedBlock.getHeader().unsafeBitcoinSerialize());
+            s.setBoolean(4, wasUndoable);
+            s.setString(5, Utils.HEX.encode(storedBlock.getHeader().getPrevBlockHash().getBytes()));
+            s.setString(6, Utils.HEX.encode(storedBlock.getHeader().getPrevBranchBlockHash().getBytes()));
+            s.setBytes(7, storedBlock.getHeader().getMineraddress());
+            s.setBytes(8, storedBlock.getHeader().getTokenid());
+            s.setLong(9, storedBlock.getHeader().getBlocktype());
+            s.executeUpdate();
+            s.close();
+            log.info("add block hexStr : " + storedBlock.getHeader().getHash().toString());
+        } catch (SQLException e) {
+            if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())) || !wasUndoable)
+                throw e;
+            PreparedStatement s = conn.get().prepareStatement(getUpdateHeadersSQL());
+            s.setBoolean(1, true);
+            s.setBytes(2, storedBlock.getHeader().getHash().getBytes());
+            s.executeUpdate();
+            s.close();
+        }
+    }
+    
+    @Override
+    public List<StoredBlock> getSolidApproverBlocks(Sha256Hash hash) throws BlockStoreException {
+        List<StoredBlock> storedBlocks = new ArrayList<StoredBlock>();
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_HEADERS_SQL);
+            s.setString(1, Utils.HEX.encode(hash.getBytes()));
+            s.setString(2, Utils.HEX.encode(hash.getBytes()));
+            ResultSet results = s.executeQuery();
+            while (results.next()) {
+                // Parse it.
+                int height = results.getInt(1);
+                Block b = params.getDefaultSerializer().makeBlock(results.getBytes(2));
+                b.verifyHeader();
+                storedBlocks.add(new StoredBlock(b, height));
+            }
+            return storedBlocks;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            // Corrupted database.
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            // Should not be able to happen unless the database contains bad
+            // blocks.
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public List<Sha256Hash> getSolidApproverBlockHashes(Sha256Hash hash) throws BlockStoreException {
+        List<Sha256Hash> storedBlockHash = new ArrayList<Sha256Hash>();
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_HASHES_SQL);
+            s.setString(1, Utils.HEX.encode(hash.getBytes()));
+            s.setString(2, Utils.HEX.encode(hash.getBytes()));
+            ResultSet results = s.executeQuery();
+            while (results.next()) {
+                storedBlockHash.add(Sha256Hash.wrap(results.getBytes(1)));
+            }
+            return storedBlockHash;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            // Corrupted database.
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            // Should not be able to happen unless the database contains bad
+            // blocks.
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+    
     private static final String MYSQL_DUPLICATE_KEY_ERROR_CODE = "23000";
     private static final String DATABASE_DRIVER_CLASS = "org.apache.phoenix.queryserver.client.Driver";
     private static final String DATABASE_CONNECTION_URL_PREFIX = "jdbc:phoenix:thin:url=http://";
@@ -46,8 +155,8 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             + "    height bigint ,\n" 
             + "    header VARBINARY(4000) ,\n" 
             + "    wasundoable boolean ,\n"
-            + "    prevblockhash  BINARY(32) ,\n" 
-            + "    prevbranchblockhash  BINARY(32) ,\n"
+            + "    prevblockhash VARCHAR(255) ,\n" 
+            + "    prevbranchblockhash VARCHAR(255) ,\n"
             + "    mineraddress VARBINARY(255),\n" 
             + "    tokenid VARBINARY(255),\n" 
             + "    blocktype bigint ,\n"
@@ -146,29 +255,6 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             + "   fromOrderId varchar(255),\n" 
             + "   CONSTRAINT orderid_pk PRIMARY KEY (orderid) )";
 
-    // Some indexes to speed up inserts
-    /*
-     * private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX =
-     * "CREATE INDEX outputs_hash_index_height_toaddress_idx ON outputs (hash, outputindex, height, toaddress) "
-     * ; private static final String CREATE_OUTPUTS_TOADDRESS_INDEX =
-     * "CREATE INDEX outputs_toaddress_idx ON outputs (toaddress) "; private
-     * static final String CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX =
-     * "CREATE INDEX outputs_addresstargetable_idx ON outputs (addresstargetable) "
-     * ; private static final String CREATE_OUTPUTS_HASH_INDEX =
-     * "CREATE INDEX outputs_hash_idx ON outputs (hash) "; private static final
-     * String CREATE_UNDOABLE_TABLE_INDEX =
-     * "CREATE INDEX undoableblocks_height_idx ON undoableblocks (height) ";
-     * private static final String CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX =
-     * "CREATE INDEX exchange_fromAddress_idx ON exchange (fromAddress) ";
-     * private static final String CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX =
-     * "CREATE INDEX exchange_toAddress_idx ON exchange (toAddress) "; private
-     * static final String CREATE_ORDERMATCH_RESTINGORDERID_TABLE_INDEX =
-     * "CREATE INDEX ordermatch_restingOrderId_idx ON ordermatch (restingOrderId) "
-     * ; private static final String
-     * CREATE_ORDERMATCH_INCOMINGORDERID_TABLE_INDEX =
-     * "CREATE INDEX ordermatch_incomingOrderId_idx ON ordermatch (incomingOrderId) "
-     * ;
-     */
     public PhoenixBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
             String username, String password) throws BlockStoreException {
         super(params, DATABASE_CONNECTION_URL_PREFIX + hostname + ";serialization=PROTOBUF", fullStoreDepth, username,
@@ -198,19 +284,16 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     @Override
     protected List<String> getCreateIndexesSQL() {
         List<String> sqlStatements = new ArrayList<String>();
-//        int index = new Random().nextInt(1000);
-//        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index + 1) + " ON headers (prevblockhash)");
-//        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index + 2) + " ON headers (prevbranchblockhash)");
-//        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index + 3) + " ON blockevaluation (solid)");
+        int index = new Random().nextInt(1000);
+        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index + 1) + " ON headers (prevblockhash)");
+        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index + 2) + " ON headers (prevbranchblockhash)");
+        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index + 3) + " ON blockevaluation (solid)");
         return sqlStatements;
     }
     
     @Override
     protected List<String> getDropIndexsSQL() {
         List<String> sqlStatements = new ArrayList<String>();
-        sqlStatements.add("DROP INDEX headers_prevblockhash_idx1 ON headers");
-        sqlStatements.add("DROP INDEX headers_prevbranchblockhash_idx1 ON headers");
-        sqlStatements.add("DROP INDEX blockevaluation_solid1 ON blockevaluation");
         return sqlStatements;
     }
 
