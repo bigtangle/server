@@ -159,7 +159,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             }
             // Parse it.
             long height = results.getLong(1);
-            Coin coinvalue = Coin.valueOf(results.getLong(2), results.getBytes(8));
+            Coin coinvalue = Coin.valueOf(results.getLong(2), Utils.HEX.decode(results.getString(8)));
             byte[] scriptBytes = results.getBytes(3);
             boolean coinbase = results.getBoolean(4);
             String address = results.getString(5);
