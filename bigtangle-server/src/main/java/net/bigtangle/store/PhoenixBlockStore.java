@@ -17,14 +17,19 @@ import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.Coin;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.ProtocolException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
+import net.bigtangle.core.UTXO;
+import net.bigtangle.core.UTXOProviderException;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
+import net.bigtangle.script.Script;
 
 /**
  * <p>
@@ -139,6 +144,185 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         }
     }
     
+    @Override
+    public UTXO getTransactionOutput(Sha256Hash hash, long index) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(getSelectOpenoutputsSQL());
+            s.setBytes(1, hash.getBytes());
+            // index is actually an unsigned int
+            s.setLong(2, index);
+            ResultSet results = s.executeQuery();
+            if (!results.next()) {
+                return null;
+            }
+            // Parse it.
+            long height = results.getLong(1);
+            Coin coinvalue = Coin.valueOf(results.getLong(2), results.getBytes(8));
+            byte[] scriptBytes = results.getBytes(3);
+            boolean coinbase = results.getBoolean(4);
+            String address = results.getString(5);
+            Sha256Hash blockhash = Sha256Hash.wrap(results.getBytes(7));
+
+            String fromaddress = results.getString(9);
+            String description = results.getString(10);
+            boolean spent = results.getBoolean(11);
+            boolean confirmed = results.getBoolean(12);
+            boolean spendPending = results.getBoolean(13);
+            String tokenid = results.getString("tokenid");
+            UTXO txout = new UTXO(hash, index, coinvalue, height, coinbase, new Script(scriptBytes), address, blockhash,
+                    fromaddress, description, Utils.HEX.decode(tokenid), spent, confirmed, spendPending);
+            return txout;
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            throw new BlockStoreException(ex);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public void addUnspentTransactionOutput(UTXO out) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(getInsertOpenoutputsSQL());
+            s.setBytes(1, out.getHash().getBytes());
+            // index is actually an unsigned int
+            s.setLong(2, out.getIndex());
+            s.setLong(3, out.getHeight());
+            s.setLong(4, out.getValue().value);
+            s.setBytes(5, out.getScript().getProgram());
+            s.setString(6, out.getAddress());
+            s.setLong(7, out.getScript().getScriptType().ordinal());
+            s.setBoolean(8, out.isCoinbase());
+            s.setBytes(9, out.getBlockhash().getBytes());
+            s.setString(10, Utils.HEX.encode(out.getValue().tokenid));
+            s.setString(11, out.getFromaddress());
+            s.setString(12, out.getDescription());
+            s.setBoolean(13, out.isSpent());
+            s.setBoolean(14, out.isConfirmed());
+            s.setBoolean(15, out.isSpendPending());
+            s.executeUpdate();
+            s.close();
+        } catch (SQLException e) {
+            if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
+                throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    if (s.getConnection() != null)
+                        s.close();
+                } catch (SQLException e) {
+                    // throw new BlockStoreException(e);
+                }
+            }
+        }
+    }
+    
+    @Override
+    public List<UTXO> getOpenTransactionOutputs(List<Address> addresses) throws UTXOProviderException {
+        PreparedStatement s = null;
+        List<UTXO> outputs = new ArrayList<UTXO>();
+        try {
+            maybeConnect();
+            s = conn.get().prepareStatement(getTransactionOutputSelectSQL());
+            for (Address address : addresses) {
+                s.setString(1, address.toString());
+                ResultSet rs = s.executeQuery();
+                while (rs.next()) {
+                    Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));
+                    Coin amount = Coin.valueOf(rs.getLong(2), rs.getBytes(10));
+                    byte[] scriptBytes = rs.getBytes(3);
+                    int height = rs.getInt(4);
+                    int index = rs.getInt(5);
+                    boolean coinbase = rs.getBoolean(6);
+                    String toAddress = rs.getString(7);
+                    // addresstargetable =rs.getBytes(8);
+                    Sha256Hash blockhash = Sha256Hash.wrap(rs.getBytes(9));
+
+                    String fromaddress = rs.getString(11);
+                    String description = rs.getString(12);
+                    boolean spent = rs.getBoolean(13);
+                    boolean confirmed = rs.getBoolean(14);
+                    boolean spendPending = rs.getBoolean(15);
+                    String tokenid = rs.getString("tokenid");
+                    UTXO output = new UTXO(hash, index, amount, height, coinbase, new Script(scriptBytes), toAddress,
+                            blockhash, fromaddress, description, Utils.HEX.decode(tokenid), spent, confirmed, spendPending);
+                    outputs.add(output);
+                }
+            }
+            return outputs;
+        } catch (SQLException ex) {
+            throw new UTXOProviderException(ex);
+        } catch (BlockStoreException bse) {
+            throw new UTXOProviderException(bse);
+        } finally {
+            if (s != null)
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new UTXOProviderException("Could not close statement", e);
+                }
+        }
+    }
+    
+    @Override
+    public List<UTXO> getOpenTransactionOutputs(List<Address> addresses, byte[] tokenid00)
+            throws UTXOProviderException {
+        PreparedStatement s = null;
+        List<UTXO> outputs = new ArrayList<UTXO>();
+        try {
+            maybeConnect();
+            s = conn.get().prepareStatement(getTransactionOutputTokenSelectSQL());
+            for (Address address : addresses) {
+                s.setString(1, address.toString());
+                s.setBytes(2, tokenid00);
+                ResultSet rs = s.executeQuery();
+                while (rs.next()) {
+                    Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));
+                    Coin amount = Coin.valueOf(rs.getLong(2), rs.getBytes(10));
+                    byte[] scriptBytes = rs.getBytes(3);
+                    int height = rs.getInt(4);
+                    int index = rs.getInt(5);
+                    boolean coinbase = rs.getBoolean(6);
+                    String toAddress = rs.getString(7);
+                    // addresstargetable =rs.getBytes(8);
+                    Sha256Hash blockhash = Sha256Hash.wrap(rs.getBytes(9));
+
+                    String fromaddress = rs.getString(11);
+                    String description = rs.getString(12);
+                    boolean spent = rs.getBoolean(13);
+                    boolean confirmed = rs.getBoolean(14);
+                    boolean spendPending = rs.getBoolean(15);
+                    String tokenid = rs.getString("tokenid");
+                    UTXO output = new UTXO(hash, index, amount, height, coinbase, new Script(scriptBytes), toAddress,
+                            blockhash, fromaddress, description, Utils.HEX.decode(tokenid), spent, confirmed, spendPending);
+                    outputs.add(output);
+                }
+            }
+            return outputs;
+        } catch (SQLException ex) {
+            throw new UTXOProviderException(ex);
+        } catch (BlockStoreException bse) {
+            throw new UTXOProviderException(bse);
+        } finally {
+            if (s != null)
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new UTXOProviderException("Could not close statement", e);
+                }
+        }
+    }
+    
     private static final String MYSQL_DUPLICATE_KEY_ERROR_CODE = "23000";
     private static final String DATABASE_DRIVER_CLASS = "org.apache.phoenix.queryserver.client.Driver";
     private static final String DATABASE_CONNECTION_URL_PREFIX = "jdbc:phoenix:thin:url=http://";
@@ -176,13 +360,13 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             + "    height bigint ,\n" 
             + "    coinvalue bigint ,\n"
             + "    scriptbytes VARBINARY(4000) ,\n" 
-            + "    toaddress VARBINARY(35),\n" 
+            + "    toaddress varchar(255),\n" 
             + "    addresstargetable bigint,\n"
             + "    coinbase boolean,\n" 
             + "    blockhash  VARBINARY(32)  ,\n" 
-            + "    tokenid VARBINARY(255),\n"
-            + "    fromaddress VARBINARY(35),\n" 
-            + "    description VARBINARY(80),\n" 
+            + "    tokenid varchar(255),\n"
+            + "    fromaddress varchar(35),\n" 
+            + "    description varchar(80),\n" 
             + "    spent boolean ,\n"
             + "    confirmed boolean ,\n" 
             + "    spendpending boolean ,\n" 
@@ -211,7 +395,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
 
     public static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n" 
             + "    tokenid VARBINARY(255) not null ,\n"
-            + "    tokenname VARBINARY(255)  ,\n" 
+            + "    tokenname varchar(255)  ,\n" 
             + "    amount bigint ,\n" 
             + "    description varchar(255),\n"
             + "    blocktype integer ,\n" 
@@ -285,9 +469,22 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     protected List<String> getCreateIndexesSQL() {
         List<String> sqlStatements = new ArrayList<String>();
         int index = new Random().nextInt(1000);
-        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index + 1) + " ON headers (prevblockhash)");
-        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index + 2) + " ON headers (prevbranchblockhash)");
-        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index + 3) + " ON blockevaluation (solid)");
+        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON headers (prevblockhash)");
+        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON headers (prevbranchblockhash)");
+        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON outputs (toaddress)");
+        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON outputs (tokenid)");
+        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blockevaluation (solid)");
+        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blockevaluation (milestone)");
+        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blockevaluation (rating)");
+        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blockevaluation (depth)");
+        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blockevaluation (milestonedepth)");
+        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blockevaluation (height)");
+        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON exchange (fromAddress)");
+        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON exchange (toAddress)");
+        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON exchange (toSign)");
+        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON exchange (fromSign)");
+        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON tokens (tokenname)");
+        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON tokens (description)");
         return sqlStatements;
     }
     

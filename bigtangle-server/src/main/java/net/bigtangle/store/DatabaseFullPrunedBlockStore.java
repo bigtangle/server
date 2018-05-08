@@ -713,7 +713,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected void putUpdateStoredBlock(StoredBlock storedBlock, boolean wasUndoable) throws SQLException {
         try {
             PreparedStatement s = conn.get().prepareStatement(getInsertHeadersSQL());
-
             s.setBytes(1, storedBlock.getHeader().getHash().getBytes());
             s.setLong(2, storedBlock.getHeight());
             s.setBytes(3, storedBlock.getHeader().unsafeBitcoinSerialize());
