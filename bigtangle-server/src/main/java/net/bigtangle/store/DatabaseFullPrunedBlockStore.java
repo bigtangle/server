@@ -301,7 +301,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         this.password = password;
         this.conn = new ThreadLocal<Connection>();
         this.allConnections = new LinkedList<Connection>();
+        create();
+    }
 
+    public void create() throws BlockStoreException {
         try {
             Class.forName(getDatabaseDriverClass());
             log.info(getDatabaseDriverClass() + " loaded. ");
@@ -843,12 +846,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s = conn.get().prepareStatement(SELECT_HEADERS_HEIGHT_SQL);
             s.setLong(1, height);
             ResultSet results = s.executeQuery();
-            long count =0;
+            long count = 0;
             while (results.next()) {
                 kafkaMessageProducer.sendMessage(results.getBytes(1));
-                count+=1;
+                count += 1;
             }
-            log.info(" streamBlocks count= " + count + " from height " + height + " to kafka:"+ kafkaMessageProducer.producerConfig());
+            log.info(" streamBlocks count= " + count + " from height " + height + " to kafka:"
+                    + kafkaMessageProducer.producerConfig());
         } catch (Exception ex) {
             log.warn("", ex);
         } finally {

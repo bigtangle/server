@@ -37,6 +37,8 @@ public class PhoenixStoreTest extends AbstractFullPrunedBlockChainTest {
     public FullPrunedBlockStore createStore(NetworkParameters params, int blockCount) throws BlockStoreException {
         try {
             store = new PhoenixBlockStore(params, blockCount, DB_HOSTNAME, DB_NAME, DB_USERNAME, DB_PASSWORD);
+       
+           ((PhoenixBlockStore) store) .create();
         } catch (RuntimeException e) {
             e.printStackTrace();
         }
