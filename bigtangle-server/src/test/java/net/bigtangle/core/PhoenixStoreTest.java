@@ -18,7 +18,7 @@ import net.bigtangle.store.PhoenixBlockStore;
 /**
  * A MySQL implementation of the {@link AbstractFullPrunedBlockChainTest}
  */
-  @Ignore
+
  //("enable the mysql driver dependency in the maven POM")
 public class PhoenixStoreTest extends AbstractFullPrunedBlockChainTest {
 
@@ -28,7 +28,7 @@ public class PhoenixStoreTest extends AbstractFullPrunedBlockChainTest {
     }
 
     // Replace these with your mysql location/credentials and remove @Ignore to test
-    private static final String DB_HOSTNAME = "de.phoenix.bigtangle.net:8765";
+    private static final String DB_HOSTNAME = "cn.phoenix.bigtangle.net:8765";
     private static final String DB_NAME = "info";
     private static final String DB_USERNAME = null;
     private static final String DB_PASSWORD = null;
