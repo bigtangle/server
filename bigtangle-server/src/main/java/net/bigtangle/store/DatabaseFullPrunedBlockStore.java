@@ -313,7 +313,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
 
         maybeConnect();
-
+        deleteStore();
         try {
             // Create tables if needed
             if (!tablesExists()) {
@@ -644,12 +644,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.executeUpdate(sql);
         }
         // create all the database indexes
-        for (String sql : getCreateIndexesSQL()) {
-            if (log.isDebugEnabled()) {
-                log.debug("DatabaseFullPrunedBlockStore : CREATE index " + sql);
-            }
-            s.executeUpdate(sql);
-        }
+//        for (String sql : getCreateIndexesSQL()) {
+//            if (log.isDebugEnabled()) {
+//                log.debug("DatabaseFullPrunedBlockStore : CREATE index " + sql);
+//            }
+//            s.executeUpdate(sql);
+//        }
         s.close();
 
         // insert the initial settings for this store

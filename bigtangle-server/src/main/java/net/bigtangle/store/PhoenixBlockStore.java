@@ -33,60 +33,116 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String DATABASE_CONNECTION_URL_PREFIX = "jdbc:phoenix:thin:url=http://";
 
     // create table SQL
-    public static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" + "    name varchar(32) not null,\n"
-            + "    settingvalue VARBINARY(10000),\n" + "    CONSTRAINT setting_pk PRIMARY KEY (name)  \n" + ")\n";
+    public static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" 
+            + "    name varchar(32) not null,\n"
+            + "    settingvalue VARBINARY(10000),\n"
+            + "    CONSTRAINT setting_pk PRIMARY KEY (name)  \n"
+            + ")\n";
 
-    public static final String CREATE_HEADERS_TABLE = "CREATE TABLE headers (\n" + "    hash BINARY(32) not null,\n"
-            + "    height bigint ,\n" + "    header VARBINARY(4000) ,\n" + "    wasundoable boolean ,\n"
-            + "    prevblockhash  varchar(32) ,\n" + "    prevbranchblockhash  varchar(32) ,\n"
-            + "    mineraddress VARBINARY(255),\n" + "    tokenid VARBINARY(255),\n" + "    blocktype bigint ,\n"
+    public static final String CREATE_HEADERS_TABLE = "CREATE TABLE headers (\n"
+            + "    hash BINARY(32) not null,\n"
+            + "    height bigint ,\n" 
+            + "    header VARBINARY(4000) ,\n" 
+            + "    wasundoable boolean ,\n"
+            + "    prevblockhash  BINARY(32) ,\n" 
+            + "    prevbranchblockhash  BINARY(32) ,\n"
+            + "    mineraddress VARBINARY(255),\n" 
+            + "    tokenid VARBINARY(255),\n" 
+            + "    blocktype bigint ,\n"
             + "    CONSTRAINT headers_pk PRIMARY KEY (hash)  \n" + ")";
 
     public static final String CREATE_UNDOABLE_TABLE = "CREATE TABLE undoableblocks (\n"
-            + "    hash VARBINARY(32) not null,\n" + "    height bigint ,\n" + "    txoutchanges VARBINARY(4000),\n"
-            + "    transactions VARBINARY(4000),\n" + "    CONSTRAINT undoableblocks_pk PRIMARY KEY (hash)  \n" + ")\n";
+            + "    hash VARBINARY(32) not null,\n" 
+            + "    height bigint ,\n" 
+            + "    txoutchanges VARBINARY(4000),\n"
+            + "    transactions VARBINARY(4000),\n" 
+            + "    CONSTRAINT undoableblocks_pk PRIMARY KEY (hash)  \n" + ")\n";
 
  
-    public static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" + "    hash binary(32) not null,\n"
-            + "    outputindex bigint not null,\n" + "    height bigint ,\n" + "    coinvalue bigint ,\n"
-            + "    scriptbytes binary(4000) ,\n" + "    toaddress binary(35),\n" + "    addresstargetable bigint,\n"
-            + "    coinbase boolean,\n" + "    blockhash  binary(32)  ,\n" + "    tokenid binary(255),\n"
-            + "    fromaddress binary(35),\n" + "    description binary(80),\n" + "    spent boolean ,\n"
-            + "    confirmed boolean ,\n" + "    spendpending boolean ,\n" + "    spenderblockhash  binary(32),\n"
+    public static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" 
+            + "    hash binary(32) not null,\n"
+            + "    outputindex bigint not null,\n" 
+            + "    height bigint ,\n" 
+            + "    coinvalue bigint ,\n"
+            + "    scriptbytes VARBINARY(4000) ,\n" 
+            + "    toaddress VARBINARY(35),\n" 
+            + "    addresstargetable bigint,\n"
+            + "    coinbase boolean,\n" 
+            + "    blockhash  VARBINARY(32)  ,\n" 
+            + "    tokenid VARBINARY(255),\n"
+            + "    fromaddress VARBINARY(35),\n" 
+            + "    description VARBINARY(80),\n" 
+            + "    spent boolean ,\n"
+            + "    confirmed boolean ,\n" 
+            + "    spendpending boolean ,\n" 
+            + "    spenderblockhash  VARBINARY(32),\n"
             + "    CONSTRAINT outputs_pk PRIMARY KEY (hash,outputindex)  \n" + ")\n";
 
-    public static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" + "    hash VARBINARY(32) not null,\n"
-            + "    CONSTRAINT tips_pk PRIMARY KEY (hash)  \n" + ")\n";
+    public static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" 
+            + "    hash VARBINARY(32) not null,\n"
+            + "    CONSTRAINT tips_pk PRIMARY KEY (hash)  \n" 
+            + ")\n";
 
     public static final String CREATE_BLOCKEVALUATION_TABLE = "CREATE TABLE blockevaluation (\n"
-            + "    blockhash VARBINARY(32) not null,\n" + "    rating bigint ,\n" + "    depth bigint,\n"
-            + "    cumulativeweight  bigint ,\n" + "    solid boolean ,\n" + "    height bigint,\n"
-            + "    milestone boolean,\n" + "    milestonelastupdate bigint,\n" + "    milestonedepth bigint,\n"
-            + "    inserttime bigint,\n" + "    maintained boolean,\n" + "    rewardvalidityassessment boolean,\n"
+            + "    blockhash BINARY(32) not null,\n" 
+            + "    rating bigint ,\n" 
+            + "    depth bigint,\n"
+            + "    cumulativeweight  bigint ,\n" 
+            + "    solid boolean ,\n"
+            + "    height bigint,\n"
+            + "    milestone boolean,\n"
+            + "    milestonelastupdate bigint,\n" 
+            + "    milestonedepth bigint,\n"
+            + "    inserttime bigint,\n" 
+            + "    maintained boolean,\n"
+            + "    rewardvalidityassessment boolean,\n"
             + "    CONSTRAINT blockevaluation_pk PRIMARY KEY (blockhash) )\n";
 
-    public static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n" + "    tokenid VARBINARY(255) not null ,\n"
-            + "    tokenname VARBINARY(255)  ,\n" + "    amount bigint ,\n" + "    description varchar(255),\n"
-            + "    blocktype integer ,\n" + "    CONSTRAINT tokenid_pk PRIMARY KEY (tokenid) \n)";
+    public static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n" 
+            + "    tokenid VARBINARY(255) not null ,\n"
+            + "    tokenname VARBINARY(255)  ,\n" 
+            + "    amount bigint ,\n" 
+            + "    description varchar(255),\n"
+            + "    blocktype integer ,\n" 
+            + "    CONSTRAINT tokenid_pk PRIMARY KEY (tokenid) \n)";
 
     public static final String CREATE_ORDERPUBLISH_TABLE = "CREATE TABLE orderpublish (\n"
-            + "   orderid VARBINARY(255) not null,\n" + "   address VARBINARY(255),\n" + "   tokenid VARBINARY(255),\n"
-            + "   type integer,\n" + "   validateto DATE,\n" + "   validatefrom DATE,\n" + "   price bigint,\n"
-            + "   amount bigint,\n" + "   state integer,\n" + "   market VARBINARY(255),\n"
+            + "   orderid VARBINARY(255) not null,\n" 
+            + "   address VARBINARY(255),\n" 
+            + "   tokenid VARBINARY(255),\n"
+            + "   type integer,\n" 
+            + "   validateto DATE,\n" 
+            + "   validatefrom DATE,\n"
+            + "   price bigint,\n"
+            + "   amount bigint,\n" 
+            + "   state integer,\n" 
+            + "   market VARBINARY(255),\n"
             + "   CONSTRAINT orderid_pk PRIMARY KEY (orderid) )";
 
     public static final String CREATE_ORDERMATCH_TABLE = "CREATE TABLE ordermatch (\n"
-            + "   matchid varchar(255) not null,\n" + "   restingOrderId varchar(255),\n"
-            + "   incomingOrderId varchar(255),\n" + "   type integer,\n" + "   price bigint,\n"
-            + "   executedQuantity bigint,\n" + "   remainingQuantity bigint,\n"
+            + "   matchid varchar(255) not null,\n" 
+            + "   restingOrderId varchar(255),\n"
+            + "   incomingOrderId varchar(255),\n"
+            + "   type integer,\n" 
+            + "   price bigint,\n"
+            + "   executedQuantity bigint,\n" 
+            + "   remainingQuantity bigint,\n"
             + "   CONSTRAINT matchid_pk PRIMARY KEY (matchid) )";
 
     public static final String CREATE_EXCHANGE_TABLE = "CREATE TABLE exchange (\n"
-            + "   orderid varchar(255) not null,\n" + "   fromAddress varchar(255),\n"
-            + "   fromTokenHex varchar(255),\n" + "   fromAmount varchar(255),\n" + "   toAddress varchar(255),\n"
-            + "   toTokenHex varchar(255),\n" + "   toAmount varchar(255),\n" + "   data varchar(5000) ,\n"
-            + "   toSign integer,\n" + "   fromSign integer,\n" + "   toOrderId varchar(255),\n"
-            + "   fromOrderId varchar(255),\n" + "   CONSTRAINT orderid_pk PRIMARY KEY (orderid) )";
+            + "   orderid varchar(255) not null,\n" 
+            + "   fromAddress varchar(255),\n"
+            + "   fromTokenHex varchar(255),\n" 
+            + "   fromAmount varchar(255),\n"
+            + "   toAddress varchar(255),\n"
+            + "   toTokenHex varchar(255),\n" 
+            + "   toAmount varchar(255),\n" 
+            + "   data varchar(5000) ,\n"
+            + "   toSign integer,\n" 
+            + "   fromSign integer,\n" 
+            + "   toOrderId varchar(255),\n"
+            + "   fromOrderId varchar(255),\n" 
+            + "   CONSTRAINT orderid_pk PRIMARY KEY (orderid) )";
 
     // Some indexes to speed up inserts
     /*
@@ -230,99 +286,69 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         }
     }
     
-
-    protected String UPDATE_SETTINGS_SQL = getUpdate() + " settings (settingvalue, name) VALUES (?, ?)";
-    protected String UPDATE_HEADERS_SQL = getUpdate() +" headers (wasundoable, hash) VALUES (?, ?)";
-    protected String UPDATE_UNDOABLEBLOCKS_SQL = getUpdate() +" undoableblocks (txoutchanges, transactions, hash) VALUES (?, ?, ?)";
-    
-    protected String UPDATE_OUTPUTS_SPENT_SQL = getUpdate() +" outputs (spent, spenderblockhash, hash, outputindex) VALUES (?, ?, ?, ?)";
-    protected String UPDATE_OUTPUTS_CONFIRMED_SQL = getUpdate() +" outputs (confirmed, hash, outputindex) VALUES (?, ?, ?)";
-    protected String UPDATE_OUTPUTS_SPENDPENDING_SQL = getUpdate() +" outputs (spendpending, hash, outputindex) VALUES (?, ?, ?)";
-    
-    protected String UPDATE_BLOCKEVALUATION_DEPTH_SQL = getUpdate() +" blockevaluation (depth, blockhash) VALUES (?, ?)";
-    protected String UPDATE_BLOCKEVALUATION_CUMULATIVEWEIGHT_SQL = getUpdate() +" blockevaluation (cumulativeweight, blockhash) VALUES (?, ?)";
-    protected String UPDATE_BLOCKEVALUATION_HEIGHT_SQL = getUpdate() +" blockevaluation (height, blockhash) VALUES (?, ?)";
-    protected String UPDATE_BLOCKEVALUATION_MILESTONE_SQL = getUpdate() +" blockevaluation (milestone, blockhash) VALUES (?, ?)";
-    protected String UPDATE_BLOCKEVALUATION_MILESTONE_LAST_UPDATE_TIME_SQL = getUpdate() +" blockevaluation (milestonelastupdate, blockhash) VALUES (?, ?)";
-    protected String UPDATE_BLOCKEVALUATION_RATING_SQL = getUpdate() +" blockevaluation (rating, blockhash) VALUES (?, ?)";
-    protected String UPDATE_BLOCKEVALUATION_SOLID_SQL = getUpdate() +" blockevaluation (solid, blockhash) VALUES (?, ?)";
-    protected String UPDATE_BLOCKEVALUATION_MILESTONEDEPTH_SQL = getUpdate() +" blockevaluation (milestonedepth, blockhash) VALUES (?, ?)";
-    protected String UPDATE_BLOCKEVALUATION_MAINTAINED_SQL = getUpdate() +" blockevaluation (maintained, blockhash) VALUES (?, ?)";
-    protected String UPDATE_BLOCKEVALUATION_REWARDVALIDITYASSESSMENT_SQL = getUpdate() +" blockevaluation (rewardvalidityassessment, blockhash) VALUES (?, ?)";
-    
-//    @Override
-//    protected String getUpdateSettingsSLQ() {
-//        return UPDATE_SETTINGS_SQL;
-//    }
-//    
-//    @Override
-//    protected String getUpdateHeadersSQL() {
-//        return UPDATE_HEADERS_SQL;
-//    }
-    
     @Override
     protected String getUpdateBlockEvaluationCumulativeweightSQL() {
-        return UPDATE_BLOCKEVALUATION_CUMULATIVEWEIGHT_SQL;
+        return getUpdate() +" blockevaluation (cumulativeweight, blockhash) VALUES (?, ?)";
     }
     
     @Override
     protected String getUpdateBlockEvaluationDepthSQL() {
-        return UPDATE_BLOCKEVALUATION_DEPTH_SQL;
+        return getUpdate() +" blockevaluation (depth, blockhash) VALUES (?, ?)";
     }
     
     @Override
     public String getUpdateBlockEvaluationHeightSQL() {
-        return UPDATE_BLOCKEVALUATION_HEIGHT_SQL;
+        return getUpdate() +" blockevaluation (height, blockhash) VALUES (?, ?)";
     }
     
     @Override
     public String getUpdateBlockEvaluationMilestoneSQL() {
-        return UPDATE_BLOCKEVALUATION_MILESTONE_SQL;
+        return getUpdate() +" blockevaluation (milestone, blockhash) VALUES (?, ?)";
     }
     
     @Override
     protected String getUpdateBlockEvaluationRatingSQL() {
-        return UPDATE_BLOCKEVALUATION_RATING_SQL;
+        return getUpdate() +" blockevaluation (rating, blockhash) VALUES (?, ?)";
     }
     
     @Override
     protected String getUpdateBlockEvaluationSolidSQL() {
-        return UPDATE_BLOCKEVALUATION_SOLID_SQL;
+        return getUpdate() +" blockevaluation (solid, blockhash) VALUES (?, ?)";
     }
     
     @Override
     protected String getUpdateBlockEvaluationMilestoneLastUpdateTimeSQL() {
-        return UPDATE_BLOCKEVALUATION_MILESTONE_LAST_UPDATE_TIME_SQL;
+        return getUpdate() +" blockevaluation (milestonelastupdate, blockhash) VALUES (?, ?)";
     }
     
     @Override
     protected String getUpdateBlockEvaluationMilestoneDepthSQL() {
-        return UPDATE_BLOCKEVALUATION_MILESTONEDEPTH_SQL;
+        return getUpdate() +" blockevaluation (milestonedepth, blockhash) VALUES (?, ?)";
     }
     
     @Override
     protected String getUpdateBlockEvaluationMaintainedSQL() {
-        return UPDATE_BLOCKEVALUATION_MAINTAINED_SQL;
+        return getUpdate() +" blockevaluation (maintained, blockhash) VALUES (?, ?)";
     }
     
     @Override
     protected String getUpdateBlockEvaluationRewardValidItyassessmentSQL() {
-        return UPDATE_BLOCKEVALUATION_REWARDVALIDITYASSESSMENT_SQL;
+        return getUpdate() +" blockevaluation (rewardvalidityassessment, blockhash) VALUES (?, ?)";
     }
     
     @Override
     protected String getUpdateOutputsSpentSQL() {
-        return UPDATE_OUTPUTS_SPENT_SQL;
+        return getUpdate() +" outputs (spent, spenderblockhash, hash, outputindex) VALUES (?, ?, ?, ?)";
     }
     
     @Override
     protected String getUpdateOutputsConfirmedSQL() {
-        return UPDATE_OUTPUTS_CONFIRMED_SQL;
+        return getUpdate() +" outputs (confirmed, hash, outputindex) VALUES (?, ?, ?)";
     }
     
     @Override
     protected String getUpdateOutputsSpendPendingSQL() {
-        return UPDATE_OUTPUTS_SPENDPENDING_SQL;
+        return getUpdate() +" outputs (spendpending, hash, outputindex) VALUES (?, ?, ?)";
     }
 
 }
