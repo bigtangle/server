@@ -10,13 +10,12 @@ server:
   mineraddress:  ${SERVER_MINERADDRESS:mjWvzPZz4YJtWqb7ux7cdgq5G7rzkg3bXG}
 
 db:
-  dbtype: ${DBTYPE:phoenix}
-  hostname: ${DB_HOSTNAME:42.51.129.106}
-  port: ${DB_PORT:8765}
+  dbtype: ${DBTYPE:mysql}
+  hostname: ${DB_HOSTNAME:localhost}
+  port: ${DB_PORT:3306}
   dbName: ${DB_NAME:info}
   username: ${DB_USERNAME:root}
   password: ${DB_PASSWORD:test1234}
-
 
 service:
   milestoneschedule:
