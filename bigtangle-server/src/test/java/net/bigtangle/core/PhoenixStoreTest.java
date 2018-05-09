@@ -45,7 +45,7 @@ public class PhoenixStoreTest extends AbstractFullPrunedBlockChainTest {
         } catch (RuntimeException e) {
             e.printStackTrace();
         }
-        //resetStore(store);
+        // resetStore(store);
         return store;
     }
   

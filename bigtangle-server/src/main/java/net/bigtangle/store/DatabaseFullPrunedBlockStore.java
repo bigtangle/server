@@ -311,15 +311,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         } catch (ClassNotFoundException e) {
             log.error("check CLASSPATH for database driver jar ", e);
         }
-
         maybeConnect();
-        deleteStore();
+        this.resetStore();
         try {
             // Create tables if needed
             if (!tablesExists()) {
                 createTables();
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
             throw new BlockStoreException(e);
