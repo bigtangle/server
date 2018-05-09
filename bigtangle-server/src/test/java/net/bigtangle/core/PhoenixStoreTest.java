@@ -69,7 +69,6 @@ public class PhoenixStoreTest extends AbstractFullPrunedBlockChainTest {
     public void resetStore(FullPrunedBlockStore store) throws BlockStoreException {
          ((PhoenixBlockStore)store).resetStore();
     }
-    
 
     public void showCreateTable() {
         for (String sql : this.getDropTablesSQL()) {

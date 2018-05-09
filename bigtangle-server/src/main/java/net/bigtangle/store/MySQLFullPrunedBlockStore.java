@@ -273,4 +273,9 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     protected List<String> getDropIndexsSQL() {
         return new ArrayList<String>();
     }
+
+    @Override
+    protected String getUpdateBlockevaluationUnmaintainAllSQL() {
+        return getUpdate() + " blockevaluation SET maintained = false WHERE maintained = true";
+    }
 }

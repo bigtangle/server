@@ -5,7 +5,6 @@
 
 package net.bigtangle.store;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -28,7 +27,7 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_SETTINGS_TABLE = "CREATE TABLE IF NOT EXISTS  "  + " bigtangle." +"settings (\n" +
             "    name varchar ,\n" +
             "    settingvalue blob,\n" +
-            "     PRIMARY KEY (name)  \n" +
+            "    PRIMARY KEY (name)\n" +
             ")\n";
 
     private static final String CREATE_HEADERS_TABLE = "CREATE TABLE IF NOT EXISTS  " + " bigtangle." +"headers (\n" +
@@ -43,9 +42,6 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
             "    blocktype bigint ,\n" +
             "     PRIMARY KEY (hash)  \n" +
             ")";
-
-
-   
 
     private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE IF NOT EXISTS  " + " bigtangle." +"outputs (\n" +
             "    hash blob ,\n" +
@@ -302,4 +298,8 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
         return new ArrayList<String>();
     }
 
+    @Override
+    protected String getUpdateBlockevaluationUnmaintainAllSQL() {
+        return null;
+    }
 }

@@ -632,4 +632,57 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     protected String getUpdateOutputsSpendPendingSQL() {
         return getUpdate() +" outputs (spendpending, hash, outputindex) VALUES (?, ?, ?)";
     }
+
+    @Override
+    protected String getUpdateBlockevaluationUnmaintainAllSQL() {
+        return getUpdate() + " blockevaluation (maintained) VALUES (false)";
+    }
+    
+    @Override
+    public void updateUnmaintainAll() throws BlockStoreException {
+        maybeConnect();
+        List<byte[]> buf = new ArrayList<byte[]>();
+        PreparedStatement preparedStatement = null;
+        try {
+            String sql = "select blockhash from blockevaluation where maintained = true";
+            preparedStatement = conn.get().prepareStatement(sql);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                buf.add(resultSet.getBytes("blockhash"));
+            }
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        }
+        finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+        if (buf.isEmpty()) {
+            return;
+        }
+//        PreparedStatement preparedStatement = null;
+        try {
+            for (byte[] b : buf) {
+                String sql = getUpdate() + " blockevaluation (blockhash, maintained) VALUES (?, false)";
+                preparedStatement = conn.get().prepareStatement(sql);
+                preparedStatement.setBytes(1, b);
+                preparedStatement.executeUpdate();
+            }
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
 }

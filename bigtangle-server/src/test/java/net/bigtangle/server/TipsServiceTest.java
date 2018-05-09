@@ -28,6 +28,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockForTest;
+import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.server.service.BlockService;
@@ -38,6 +39,15 @@ import net.bigtangle.server.service.TipsService;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TipsServiceTest extends AbstractIntegrationTest {
     private static final Logger log = LoggerFactory.getLogger(TipsServiceTest.class);
+    
+    @Test
+    public void testUpdateUnmaintainAll() {
+        try {
+            this.store.updateUnmaintainAll();
+        } catch (BlockStoreException e) {
+            e.printStackTrace();
+        }
+    }
     
 	@Autowired
 	private MilestoneService milestoneService;
