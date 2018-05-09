@@ -325,6 +325,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             log.error("check CLASSPATH for database driver jar ", e);
         }
         maybeConnect();
+        
         try {
             // Create tables if needed
             if (!tablesExists()) {
