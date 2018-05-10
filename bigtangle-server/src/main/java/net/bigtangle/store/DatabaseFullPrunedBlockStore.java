@@ -199,7 +199,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String SELECT_ORDERPUBLISH_SQL = "SELECT orderid, address, tokenid, type,"
             + " validateto, validatefrom, price, amount, state, market FROM orderpublish";
 
-    protected String INSERT_ORDERMATCH_SQL = "INSERT INTO ordermatch (matchid, "
+    protected String INSERT_ORDERMATCH_SQL = getInsert() + " INTO ordermatch (matchid, "
             + "restingOrderId, incomingOrderId, type, price, executedQuantity, remainingQuantity) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
     protected String INSERT_EXCHANGE_SQL = getInsert()
@@ -2480,7 +2480,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-
+    
     @Override
     public void saveOrderMatch(OrderMatch orderMatch) throws BlockStoreException {
         maybeConnect();

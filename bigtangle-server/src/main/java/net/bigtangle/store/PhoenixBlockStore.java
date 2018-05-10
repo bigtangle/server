@@ -239,7 +239,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
                 ResultSet rs = s.executeQuery();
                 while (rs.next()) {
                     Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));
-                    Coin amount = Coin.valueOf(rs.getLong(2), rs.getBytes(10));
+                    Coin amount = Coin.valueOf(rs.getLong(2), Utils.HEX.decode(rs.getString(10)));
                     byte[] scriptBytes = rs.getBytes(3);
                     int height = rs.getInt(4);
                     int index = rs.getInt(5);
@@ -261,6 +261,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             }
             return outputs;
         } catch (SQLException ex) {
+        	log.error("getOpenTransactionOutputs sql error, ", ex);
             throw new UTXOProviderException(ex);
         } catch (BlockStoreException bse) {
             throw new UTXOProviderException(bse);
@@ -269,6 +270,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
                 try {
                     s.close();
                 } catch (SQLException e) {
+                	log.error("Could not close statement", e);
                     throw new UTXOProviderException("Could not close statement", e);
                 }
         }
