@@ -2449,7 +2449,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_EXCHANGE_SQL);
             preparedStatement.setString(1, address);
-            preparedStatement.setString(2, address);
+            // preparedStatement.setString(2, address);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 Exchange exchange = new Exchange();

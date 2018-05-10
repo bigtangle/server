@@ -97,6 +97,9 @@ public class Exchange implements java.io.Serializable {
     }
     
     public String getDataHex() {
+    	if (this.data == null) {
+    		return "";
+    	}
         return Utils.HEX.encode(this.data);
     }
 
