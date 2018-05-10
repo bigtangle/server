@@ -26,24 +26,28 @@
 								<TableView fx:id="orderTable" editable="true" layoutX="6.0"
 									layoutY="114.0" prefHeight="351.0" prefWidth="977.0">
 									<columns>
-										<TableColumn fx:id="orderidCol" prefWidth="105.0"
-											text="%orderid" />
-										<TableColumn fx:id="addressCol" prefWidth="174.0"
-											text="%address" />
 										<TableColumn fx:id="tokenidCol" prefWidth="175.0"
 											text="%token_id" />
-										<TableColumn fx:id="typeCol" prefWidth="62.0"
-											text="%type" />
-										<TableColumn fx:id="validdatetoCol" prefWidth="94.0"
-											text="%validdateTo" />
-										<TableColumn fx:id="validdatefromCol" prefWidth="118.0"
-											text="%validdateFrom" />
-										<TableColumn fx:id="stateCol" prefWidth="65.0"
-											text="%state" />
 										<TableColumn fx:id="priceCol" prefWidth="85.0"
 											text="%price" />
 										<TableColumn fx:id="amountCol" prefWidth="101.0"
 											text="%Amount" />
+
+										<TableColumn fx:id="addressCol" prefWidth="174.0"
+											text="%address" />
+										<TableColumn fx:id="typeCol" prefWidth="62.0"
+											text="%type" />
+
+										<TableColumn fx:id="stateCol" prefWidth="65.0"
+											text="%state" />
+
+										<TableColumn fx:id="orderidCol" prefWidth="105.0"
+											text="%orderid" />
+										<TableColumn fx:id="validdatefromCol" prefWidth="118.0"
+											text="%validdateFrom" />
+										<TableColumn fx:id="validdatetoCol" prefWidth="94.0"
+											text="%validdateTo" />
+
 									</columns>
 								</TableView>
 								<Button layoutX="452.0" layoutY="478.0" mnemonicParsing="false"
@@ -73,7 +77,8 @@
 						<AnchorPane>
 							<children>
 								<DatePicker fx:id="validdateToDatePicker" layoutX="227.0"
-									layoutY="296.0" GridPane.columnIndex="1" GridPane.rowIndex="5" editable="true"/>
+									layoutY="296.0" GridPane.columnIndex="1" GridPane.rowIndex="5"
+									editable="true" />
 								<Label alignment="CENTER" layoutY="189.0" prefHeight="15.0"
 									prefWidth="226.0" text="%Amount" GridPane.rowIndex="3" />
 								<Label alignment="CENTER" layoutY="410.0" prefHeight="15.0"
@@ -109,7 +114,8 @@
 								<Label alignment="CENTER" layoutY="355.0" prefHeight="15.0"
 									prefWidth="226.0" text="%buy_or_sell" GridPane.rowIndex="6" />
 								<DatePicker fx:id="validdateFromDatePicker" layoutX="227.0"
-									layoutY="241.0" GridPane.columnIndex="1" GridPane.rowIndex="4" editable="true"/>
+									layoutY="241.0" GridPane.columnIndex="1" GridPane.rowIndex="4"
+									editable="true" />
 								<Label alignment="CENTER" layoutY="300.0" prefHeight="15.0"
 									prefWidth="227.0" text="%validdateTo" GridPane.rowIndex="5" />
 								<RadioButton fx:id="buyRadioButton" layoutX="232.0"
