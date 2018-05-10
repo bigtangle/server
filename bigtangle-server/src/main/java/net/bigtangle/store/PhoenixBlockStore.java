@@ -434,7 +434,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             + "   toAddress varchar(255),\n"
             + "   toTokenHex varchar(255),\n" 
             + "   toAmount varchar(255),\n" 
-            + "   data varchar(5000) ,\n"
+            + "   data VARBINARY(5000) ,\n"
             + "   toSign integer,\n" 
             + "   fromSign integer,\n" 
             + "   toOrderId varchar(255),\n"
