@@ -73,7 +73,7 @@
 						<AnchorPane>
 							<children>
 								<DatePicker fx:id="validdateToDatePicker" layoutX="227.0"
-									layoutY="296.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+									layoutY="296.0" GridPane.columnIndex="1" GridPane.rowIndex="5" editable="true"/>
 								<Label alignment="CENTER" layoutY="189.0" prefHeight="15.0"
 									prefWidth="226.0" text="%Amount" GridPane.rowIndex="3" />
 								<Label alignment="CENTER" layoutY="410.0" prefHeight="15.0"
@@ -109,7 +109,7 @@
 								<Label alignment="CENTER" layoutY="355.0" prefHeight="15.0"
 									prefWidth="226.0" text="%buy_or_sell" GridPane.rowIndex="6" />
 								<DatePicker fx:id="validdateFromDatePicker" layoutX="227.0"
-									layoutY="241.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+									layoutY="241.0" GridPane.columnIndex="1" GridPane.rowIndex="4" editable="true"/>
 								<Label alignment="CENTER" layoutY="300.0" prefHeight="15.0"
 									prefWidth="227.0" text="%validdateTo" GridPane.rowIndex="5" />
 								<RadioButton fx:id="buyRadioButton" layoutX="232.0"
