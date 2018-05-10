@@ -11,7 +11,7 @@ server:
 
 db:
   dbtype: ${DBTYPE:phoenix}
-  hostname: ${DB_HOSTNAME:42.51.129.106}
+  hostname: ${DB_HOSTNAME:61.181.128.236}
   port: ${DB_PORT:8765}
   dbName: ${DB_NAME:info}
   username: ${DB_USERNAME:root}
