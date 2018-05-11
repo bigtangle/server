@@ -4,7 +4,7 @@ ext {
             avro       : '1.8.2',
             kafka      : '1.1.0',
             spring     : '5.0.5.RELEASE',
-            spring_boot : '2.0.1.RELEASE',
+            spring_boot : '2.0.2.RELEASE',
             spring_data_cassandra:'1.5.6.RELEASE',
             commons_lang3 : '3.6',
             commons_io : '2.5',   
