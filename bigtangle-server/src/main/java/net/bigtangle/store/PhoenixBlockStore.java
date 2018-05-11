@@ -664,7 +664,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         Sha256Hash hash = chainHead.getHeader().getHash();
         this.chainHeadHash = hash;
         this.chainHeadBlock = chainHead;
-        System.out.println("bbb > " + Utils.HEX.encode(hash.getBytes()));
+       // System.out.println("bbb > " + Utils.HEX.encode(hash.getBytes()));
         maybeConnect();
         try {
             PreparedStatement s = conn.get().prepareStatement(getUpdateSettingsSLQ());

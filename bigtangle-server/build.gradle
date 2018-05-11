@@ -22,8 +22,8 @@ dependencies {
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-web', version:  ver.spring_boot
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version:   ver.spring_boot
     compile group: 'org.springframework.boot', name: 'spring-boot-configuration-processor', version:  ver.spring_boot
-   compile group: 'org.springframework.boot', name: 'spring-boot-starter-cache', version:  ver.spring_boot
-
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-cache', version:  ver.spring_boot
+ 
     compile group: 'org.aspectj', name: 'aspectjrt',   version:ver.aspectjrt
     compile group: 'org.aspectj', name: 'aspectjweaver', version:ver.aspectjweaver
    	compile group: 'org.apache.commons', name: 'commons-lang3', version:ver.commons_lang3
@@ -35,9 +35,10 @@ dependencies {
  
     compile group: 'commons-io', name: 'commons-io', version:ver.commons_io
     compile group: 'mysql', name: 'mysql-connector-java', version:ver.mysql_connector_java
-   
-   
-  compile group: 'org.apache-extras.cassandra-jdbc', name: 'cassandra-jdbc', version: '1.2.5'
+     // compile group: 'com.googlecode.log4jdbc', name: 'log4jdbc', version: '1.2' 
+    compile group: 'org.bgee.log4jdbc-log4j2', name: 'log4jdbc-log4j2-jdbc4.1', version: '1.16'
+    //compile group: 'org.lazyluke', name: 'log4jdbc-remix', version: '0.2.7'
+    compile group: 'org.apache-extras.cassandra-jdbc', name: 'cassandra-jdbc', version: '1.2.5'
    
     compile (group: 'org.apache.phoenix', name: 'phoenix-queryserver-client', version: '4.13.0-HBase-1.3')
       {  

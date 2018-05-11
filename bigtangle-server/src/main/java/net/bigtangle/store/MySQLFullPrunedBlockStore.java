@@ -21,7 +21,7 @@ import net.bigtangle.core.NetworkParameters;
 public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String MYSQL_DUPLICATE_KEY_ERROR_CODE = "23000";
     private static final String DATABASE_DRIVER_CLASS = "com.mysql.jdbc.Driver";
-    private static final String DATABASE_CONNECTION_URL_PREFIX = "jdbc:mysql://";
+    private static final String DATABASE_CONNECTION_URL_PREFIX = "jdbc:log4jdbc:mysql://";
 
     // create table SQL
     private static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" +
@@ -82,7 +82,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    inserttime bigint,\n" +
             "    maintained boolean,\n" +
             "    rewardvalidityassessment boolean,\n" +
-            "    CONSTRAINT blockevaluation_pk PRIMARY KEY (blockhash) )\n";
+            "    CONSTRAINT blockevaluation_pk PRIMARY KEY (blockhash)  USING BTREE )\n";
     
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n" +
             "    tokenid varbinary(255) NOT NULL  ,\n" +
