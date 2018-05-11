@@ -39,10 +39,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
-import javafx.scene.control.ToggleGroup;
 import javafx.stage.FileChooser;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
@@ -106,20 +104,25 @@ public class SendMoneyController {
 
         try {
             Map<String, Object> requestParam = new HashMap<String, Object>();
-            requestParam.put("name", null);
+            requestParam.put("name", "");
             String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens",
                     Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-
             final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
 
             List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
             List<String> names = new ArrayList<String>();
+            List<String> tokens = Main.initToken4file();
             for (Map<String, Object> map : list) {
 
                 String tokenHex = (String) map.get("tokenHex");
-                if (Main.validTokenMap.containsKey(tokenHex)) {
-                    tokenData.add(tokenHex);
-                    names.add(map.get("tokenname").toString());
+                if (tokens != null && !tokens.isEmpty()) {
+                    for (String temp : tokens) {
+                        // ONLY log System.out.println("temp:" + temp);
+                        if (!temp.equals("") && temp.contains(tokenHex)) {
+                            tokenData.add(tokenHex);
+                            names.add(map.get("tokenname").toString());
+                        }
+                    }
                 }
 
             }
