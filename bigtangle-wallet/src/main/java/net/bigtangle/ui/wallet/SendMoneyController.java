@@ -80,14 +80,14 @@ public class SendMoneyController {
     public TextField amountEdit;
     @FXML
     public Label btcLabel;
-    @FXML
-    public ToggleGroup unitToggleGroup;
-    @FXML
-    public RadioButton basicRadioButton;
-    @FXML
-    public RadioButton kiloRadioButton;
-    @FXML
-    public RadioButton milionRadioButton;
+    // @FXML
+    // public ToggleGroup unitToggleGroup;
+    // @FXML
+    // public RadioButton basicRadioButton;
+    // @FXML
+    // public RadioButton kiloRadioButton;
+    // @FXML
+    // public RadioButton milionRadioButton;
 
     @FXML
     public ChoiceBox<Object> tokeninfo;
@@ -98,12 +98,12 @@ public class SendMoneyController {
     private Transaction mTransaction;
 
     public void initChoicebox() {
-        basicRadioButton.setUserData(1 + "");
-        kiloRadioButton.setUserData(1000 + "");
-        milionRadioButton.setUserData(1000 * 1000 + "");
+        // basicRadioButton.setUserData(1 + "");
+        // kiloRadioButton.setUserData(1000 + "");
+        // milionRadioButton.setUserData(1000 * 1000 + "");
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ObservableList<Object> tokenData = FXCollections.observableArrayList();
-        
+
         try {
             Map<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("name", null);
@@ -179,10 +179,10 @@ public class SendMoneyController {
         byteBuffer.get(orderid);
 
         mOrderid = new String(orderid);
-        //       log.debug ("orderid : " + new String(orderid));
+        // log.debug ("orderid : " + new String(orderid));
 
         int len = byteBuffer.getInt();
-        //  log.debug("tx len : " + len);
+        // log.debug("tx len : " + len);
         byte[] data = new byte[len];
         byteBuffer.get(data);
         try {
@@ -337,8 +337,9 @@ public class SendMoneyController {
             wallet.setServerURL(CONTEXT_ROOT);
 
             Coin amount = Coin.parseCoin(amountEdit.getText(), Utils.HEX.decode(tokeninfo.getValue().toString()));
-            long factor = Long.valueOf(unitToggleGroup.getSelectedToggle().getUserData().toString()).longValue();
-
+            // long factor =
+            // Long.valueOf(unitToggleGroup.getSelectedToggle().getUserData().toString()).longValue();
+            long factor = 1;
             amount = amount.multiply(factor);
             SendRequest request = SendRequest.to(destination, amount);
             try {
@@ -355,15 +356,15 @@ public class SendMoneyController {
             // Main.instance.sentEmpstyBlock(2);
             overlayUI.done();
             Main.instance.controller.initTableView();
-            
+
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
     }
-    //TODO Fix problem after send return to main
+
+    // TODO Fix problem after send return to main
     public void checkContact(ActionEvent event) throws Exception {
 
-        
         String homedir = Main.keyFileDirectory;
         String addresses = Main.getString4file(homedir + "/addresses.txt");
         if (!addresses.contains(!addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
@@ -381,6 +382,6 @@ public class SendMoneyController {
                                 : addressComboBox.getValue().split(",")[1]);
             }
         }
-        
+
     }
 }
