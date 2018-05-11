@@ -27,6 +27,8 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 
 import com.google.common.collect.Lists;
 
@@ -42,6 +44,7 @@ import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.ProtocolException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
+import net.bigtangle.core.StoredBlockBinary;
 import net.bigtangle.core.StoredUndoableBlock;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
@@ -216,25 +219,25 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String UPDATE_SETTINGS_SQL = getUpdate() + " settings SET settingvalue = ? WHERE name = ?";
     protected String UPDATE_HEADERS_SQL = getUpdate() + " headers SET wasundoable=? WHERE hash=?";
-    
+
     protected String UPDATE_UNDOABLEBLOCKS_SQL = getUpdate()
             + " undoableblocks SET txoutchanges=?, transactions=? WHERE hash = ?";
-    
+
     protected String UPDATE_OUTPUTS_SPENT_SQL = getUpdate()
             + " outputs SET spent = ?, spenderblockhash = ? WHERE hash = ? AND outputindex= ?";
-    
+
     protected String UPDATE_OUTPUTS_CONFIRMED_SQL = getUpdate()
             + " outputs SET confirmed = ? WHERE hash = ? AND outputindex= ?";
-    
+
     protected String UPDATE_OUTPUTS_SPENDPENDING_SQL = getUpdate()
             + " outputs SET spendpending = ? WHERE hash = ? AND outputindex= ?";
-    
+
     protected String UPDATE_BLOCKEVALUATION_DEPTH_SQL = getUpdate()
             + " blockevaluation SET depth = ? WHERE blockhash = ?";
-    
+
     protected String UPDATE_BLOCKEVALUATION_CUMULATIVEWEIGHT_SQL = getUpdate()
             + " blockevaluation SET cumulativeweight = ? WHERE blockhash = ?";
-    
+
     protected String UPDATE_BLOCKEVALUATION_HEIGHT_SQL = getUpdate()
             + " blockevaluation SET height = ? WHERE blockhash = ?";
 
@@ -246,7 +249,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String UPDATE_BLOCKEVALUATION_RATING_SQL = getUpdate()
             + " blockevaluation SET rating = ? WHERE blockhash = ?";
-    
+
     protected String UPDATE_BLOCKEVALUATION_SOLID_SQL = getUpdate()
             + " blockevaluation SET solid = ? WHERE blockhash = ?";
 
@@ -255,7 +258,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String UPDATE_BLOCKEVALUATION_MAINTAINED_SQL = getUpdate()
             + " blockevaluation SET maintained = ? WHERE blockhash = ?";
-    
+
     protected String UPDATE_BLOCKEVALUATION_REWARDVALIDITYASSESSMENT_SQL = getUpdate()
             + " blockevaluation SET rewardvalidityassessment = ? WHERE blockhash = ?";
 
@@ -325,7 +328,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             log.error("check CLASSPATH for database driver jar ", e);
         }
         maybeConnect();
-        
+
         try {
             // Create tables if needed
             if (!tablesExists()) {
@@ -655,8 +658,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             Statement s = conn.get().createStatement();
             try {
                 s.execute(sql);
-            }
-            finally {
+            } finally {
                 s.close();
             }
         }
@@ -668,8 +670,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             Statement s = conn.get().createStatement();
             try {
                 s.execute(sql);
-            }
-            finally {
+            } finally {
                 s.close();
             }
         }
@@ -722,31 +723,39 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     protected void putUpdateStoredBlock(StoredBlock storedBlock, boolean wasUndoable) throws SQLException {
+
+        putBinary(new StoredBlockBinary(storedBlock.getHeader().bitcoinSerialize(), storedBlock.getHeight()));
+    }
+
+    @CachePut(cacheNames = "Blocks")
+    protected void putBinary(StoredBlockBinary r) throws SQLException {
         try {
+            Block block = params.getDefaultSerializer().makeBlock(r.getBlockBytes());
+
             PreparedStatement s = conn.get().prepareStatement(getInsertHeadersSQL());
-            s.setBytes(1, storedBlock.getHeader().getHash().getBytes());
-            s.setLong(2, storedBlock.getHeight());
-            s.setBytes(3, storedBlock.getHeader().unsafeBitcoinSerialize());
-            s.setBoolean(4, wasUndoable);
-            s.setBytes(5, storedBlock.getHeader().getPrevBlockHash().getBytes());
-            s.setBytes(6, storedBlock.getHeader().getPrevBranchBlockHash().getBytes());
-            s.setBytes(7, storedBlock.getHeader().getMineraddress());
-            s.setBytes(8, storedBlock.getHeader().getTokenid());
-            s.setLong(9, storedBlock.getHeader().getBlocktype());
+            s.setBytes(1, block.getHash().getBytes());
+            s.setLong(2, r.getHeight());
+            s.setBytes(3, block.unsafeBitcoinSerialize());
+            s.setBoolean(4, false);
+            s.setBytes(5, block.getPrevBlockHash().getBytes());
+            s.setBytes(6, block.getPrevBranchBlockHash().getBytes());
+            s.setBytes(7, block.getMineraddress());
+            s.setBytes(8, block.getTokenid());
+            s.setLong(9, block.getBlocktype());
             s.executeUpdate();
             s.close();
-            log.info("add block hexStr : " + storedBlock.getHeader().getHash().toString());
+            log.info("add block hexStr : " + block.getHash().toString());
         } catch (SQLException e) {
             // It is possible we try to add a duplicate StoredBlock if we
             // upgraded
             // In that case, we just update the entry to mark it wasUndoable
-            if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())) || !wasUndoable)
+            if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
                 throw e;
-
+            Block block = params.getDefaultSerializer().makeBlock(r.getBlockBytes());
             PreparedStatement s = conn.get().prepareStatement(getUpdateHeadersSQL());
             s.setBoolean(1, true);
 
-            s.setBytes(2, storedBlock.getHeader().getHash().getBytes());
+            s.setBytes(2, block.getHash().getBytes());
             s.executeUpdate();
             s.close();
         }
@@ -816,6 +825,17 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             return chainHeadBlock;
         if (verifiedChainHeadHash != null && verifiedChainHeadHash.equals(hash))
             return verifiedChainHeadBlock;
+        StoredBlockBinary r = getBinary(hash, wasUndoableOnly);
+        if (r == null)
+            return null;
+        Block b = params.getDefaultSerializer().makeBlock(r.getBlockBytes());
+        b.verifyHeader();
+        return new StoredBlock(b, r.getHeight());
+    }
+
+    @Cacheable(cacheNames = "Blocks")
+    public StoredBlockBinary getBinary(Sha256Hash hash, boolean wasUndoableOnly) throws BlockStoreException {
+
         maybeConnect();
         PreparedStatement s = null;
         // log.info("find block hexStr : " + hash.toString());
@@ -831,10 +851,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 return null;
 
             int height = results.getInt(1);
-            Block b = params.getDefaultSerializer().makeBlock(results.getBytes(2));
-            b.verifyHeader();
-            StoredBlock stored = new StoredBlock(b, height);
-            return stored;
+
+            return new StoredBlockBinary(results.getBytes(2), height);
+
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } catch (ProtocolException e) {
@@ -977,7 +996,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         this.chainHeadHash = hash;
         this.chainHeadBlock = chainHead;
         maybeConnect();
-        System.out.println("bbb > " + Utils.HEX.encode(hash.getBytes()));
+      //  System.out.println("bbb > " + Utils.HEX.encode(hash.getBytes()));
         try {
             PreparedStatement s = conn.get().prepareStatement(getUpdateSettingsSLQ());
             s.setString(2, CHAIN_HEAD_SETTING);
@@ -1224,23 +1243,17 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public void deleteStore() throws BlockStoreException {
         maybeConnect();
         try {
-            /*for (String sql : getDropIndexsSQL()) {
-                Statement s = conn.get().createStatement();
-                try {
-                    log.info("drop index : " + sql);
-                    s.execute(sql);
-                }
-                finally {
-                    s.close();
-                }
-            }*/
+            /*
+             * for (String sql : getDropIndexsSQL()) { Statement s =
+             * conn.get().createStatement(); try { log.info("drop index : " +
+             * sql); s.execute(sql); } finally { s.close(); } }
+             */
             for (String sql : getDropTablesSQL()) {
                 Statement s = conn.get().createStatement();
                 try {
                     log.info("drop table : " + sql);
                     s.execute(sql);
-                }
-                finally {
+                } finally {
                     s.close();
                 }
             }
@@ -1467,6 +1480,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
+    @Cacheable(cacheNames = "BlockEvaluations")
     public BlockEvaluation getBlockEvaluation(Sha256Hash hash) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         maybeConnect();

@@ -365,9 +365,9 @@ public abstract class AbstractBlockGraph {
 
             // Check for already-seen block, but only for full pruned mode, where the DB is
             // more likely able to handle these queries quickly.
-            if (shouldVerifyTransactions() && blockStore.get(block.getHash()) != null) {
-                return true;
-            }
+//            if (shouldVerifyTransactions() && blockStore.get(block.getHash()) != null) {
+//                return true;
+//            }
 
             final StoredBlock storedPrev;
             final StoredBlock storedPrevBranch;
