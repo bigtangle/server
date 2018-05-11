@@ -214,9 +214,13 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         maybeConnect();
         PreparedStatement s = null;
         try {
+            String SELECT_SOLID_APPROVER_HEADERS_SQL = "SELECT  headers.height, header, wasundoable,prevblockhash,"
+                    + "prevbranchblockhash,mineraddress,tokenid,blocktype FROM headers INNER JOIN blockevaluation"
+                    + " ON headers.hash=blockevaluation.blockhash WHERE blockevaluation.solid = true AND (prevblockhash = ?)"
+                    + afterSelect();
             s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_HEADERS_SQL);
             s.setString(1, Utils.HEX.encode(hash.getBytes()));
-            s.setString(2, Utils.HEX.encode(hash.getBytes()));
+//            s.setString(2, Utils.HEX.encode(hash.getBytes()));
             ResultSet results = s.executeQuery();
             while (results.next()) {
                 // Parse it.
@@ -225,7 +229,6 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
                 b.verifyHeader();
                 storedBlocks.add(new StoredBlock(b, height));
             }
-            return storedBlocks;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } catch (ProtocolException e) {
@@ -244,6 +247,41 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
                 }
             }
         }
+        try {
+            String SELECT_SOLID_APPROVER_HEADERS_SQL = "SELECT  headers.height, header, wasundoable,prevblockhash,"
+                    + "prevbranchblockhash,mineraddress,tokenid,blocktype FROM headers INNER JOIN blockevaluation"
+                    + " ON headers.hash=blockevaluation.blockhash WHERE blockevaluation.solid = true AND (prevbranchblockhash = ?)"
+                    + afterSelect();
+            s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_HEADERS_SQL);
+            s.setString(1, Utils.HEX.encode(hash.getBytes()));
+//            s.setString(2, Utils.HEX.encode(hash.getBytes()));
+            ResultSet results = s.executeQuery();
+            while (results.next()) {
+                // Parse it.
+                int height = results.getInt(1);
+                Block b = params.getDefaultSerializer().makeBlock(results.getBytes(2));
+                b.verifyHeader();
+                storedBlocks.add(new StoredBlock(b, height));
+            }
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            // Corrupted database.
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            // Should not be able to happen unless the database contains bad
+            // blocks.
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+        return storedBlocks;
     }
     
     @Override
