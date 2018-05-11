@@ -18,3 +18,4 @@ src/main/ixi/
 /doublespend.wallet
 /bigtangle.wallet
 /logs/
+/cache/

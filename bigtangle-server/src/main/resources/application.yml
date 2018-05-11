@@ -28,3 +28,7 @@ service:
 kafka:
   bootstrapServers: ${BOOT_STRAP_SERVERS:}
   topicOutName: ${TOPIC_OUT_NAME:bigtangle}
+spring:
+  cache:
+    jcache:
+      config: classpath:ehcache.xml

@@ -83,7 +83,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0,
                 networkParameters.getGenesisBlock().getHash());
         blocks.add(rollingBlock);
-        for (int i = 0; i < 80; i++) {
+        for (int i = 0; i < 180; i++) {
             rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0,
                     rollingBlock.getHash());
             blocks.add(rollingBlock);
@@ -104,7 +104,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		blockgraph = new FullPrunedBlockGraph(networkParameters, store);
 
 		// Add genesis block
-		blockgraph.add(networkParameters.getGenesisBlock());
+		//blockgraph.add(networkParameters.getGenesisBlock());
 		BlockEvaluation genesisEvaluation = blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash());
         store.updateBlockEvaluationMilestone(genesisEvaluation.getBlockhash(), true);
 		blockService.updateSolid(genesisEvaluation, true);
@@ -319,7 +319,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         blockgraph = new FullPrunedBlockGraph(networkParameters, store);
 
         // Add genesis block
-        blockgraph.add(networkParameters.getGenesisBlock());
+       // blockgraph.add(networkParameters.getGenesisBlock());
         BlockEvaluation genesisEvaluation = blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash());
         store.updateBlockEvaluationMilestone(genesisEvaluation.getBlockhash(), true);
         blockService.updateSolid(genesisEvaluation, true);

@@ -4,11 +4,19 @@
  *******************************************************************************/
 package net.bigtangle.core;
 
+import java.io.Serializable;
+
 /*
  * Evaluation of block, variable in time
  */
-public class BlockEvaluation {
+public class BlockEvaluation implements Serializable{
     
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
+
     public String getBlockHexStr() {
         return Utils.HEX.encode(this.blockhash.getBytes());
     }

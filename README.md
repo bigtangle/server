@@ -183,41 +183,18 @@ vi /usr/local/hbase-1.3.1/conf/hbase-site.xml.mustache
 </property>
 
 
-RegionServer  hbase-site.xml
-docker exec -it hmaster-1 bash
-docker exec -it regionserver-1 bash
-vi /usr/local/hbase-1.3.1/conf/hbase-site.xml
+RegionServer/master/queryserver-1 
+  hbase-site.xml
 
-docker exec hmaster-1 more  /usr/local/hbase-1.3.1/conf/hbase-site.xml
-docker exec regionserver-1 more  /usr/local/hbase-1.3.1/conf/hbase-site.xml
-docker exec queryserver-1 more  /usr/local/hbase-1.3.1/conf/hbase-site.xml
+vi /usr/local/hbase-1.3.1/conf/hbase-site.xml.mustache
 
-!indexs
-docker restart zookeeper-1 namenode-1  datanode-1 hmaster-1 regionserver-1 queryserver-1 
 
-docker logs -f  hmaster-1
- docker logs -f regionserver-1
 <property> 
   <name>hbase.regionserver.wal.codec</name> 
   <value>org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec</value> 
 </property>
 
-<property> 
-  <name>hbase.region.server.rpc.scheduler.factory.class</name>
-  <value>org.apache.hadoop.hbase.ipc.PhoenixRpcSchedulerFactory</value> 
-  <description>Factory to create the Phoenix RPC Scheduler that uses separate queues for index and metadata updates</description> 
-</property>
-
-<property>
-  <name>hbase.rpc.controllerfactory.class</name>
-  <value>org.apache.hadoop.hbase.ipc.controller.ServerRpcControllerFactory</value>
-  <description>Factory to create the Phoenix RPC Scheduler that uses separate queues for index and metadata updates</description>
-</property>
-
-<property>
-  <name>hbase.coprocessor.regionserver.classes</name>
-  <value>org.apache.hadoop.hbase.regionserver.LocalIndexMerger</value> 
-</property>
+ 
 
 Given the schema shown here:
 
@@ -238,3 +215,27 @@ CREATE LOCAL INDEX headers_prevbranchblockhash_idx ON headers (prevbranchblockha
 
 
 to replace to char(32)
+
+
+docker exec -it hmaster-1 bash
+docker exec -it regionserver-1 bash
+vi /usr/local/hbase-1.3.1/conf/hbase-site.xml
+
+docker exec hmaster-1 more  /usr/local/hbase-1.3.1/conf/hbase-site.xml
+docker exec regionserver-1 more  /usr/local/hbase-1.3.1/conf/hbase-site.xml
+docker exec queryserver-1 more  /usr/local/hbase-1.3.1/conf/hbase-site.xml
+
+!indexs
+docker restart zookeeper-1 namenode-1  
+docker restart datanode-1
+ docker restart hmaster-1 regionserver-1 queryserver-1 
+ docker exec namenode-1  bash  -c " hdfs   dfsadmin -report"
+ 
+docker logs -f  hmaster-1
+ docker logs -f regionserver-1
+  docker logs -f queryserver-1 
+ 
+ $ docker run -it --rm --net vnet smizy/apache-phoenix:4.13.1-alpine sh
+> bin/sqlline-thin.py http://61.181.128.236:8765
+
+ 

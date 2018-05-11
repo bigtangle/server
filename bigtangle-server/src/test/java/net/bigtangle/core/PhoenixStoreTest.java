@@ -32,7 +32,10 @@ public class PhoenixStoreTest extends AbstractFullPrunedBlockChainTest {
     }
 
     // Replace these with your mysql location/credentials and remove @Ignore to test
-    private static final String DB_HOSTNAME = "42.51.129.106:8765";
+    private static final String DB_HOSTNAME = "61.181.128.236:8765";
+            //"42.51.129.106:8765";
+    // bin/sqlline-thin.py http://61.181.128.236:8765
+    //PROTOBUF
     private static final String DB_NAME = "info";
     private static final String DB_USERNAME = null;
     private static final String DB_PASSWORD = null;

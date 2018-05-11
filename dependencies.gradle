@@ -32,7 +32,7 @@ ext {
             easymock:'3.2',
             spongycastlecore:'1.51.0.0',
             c3p0: '0.9.5.2',
-            
+            ehcache: '3.5.0',
     ]
 
 }

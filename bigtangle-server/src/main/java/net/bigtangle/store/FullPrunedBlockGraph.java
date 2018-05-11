@@ -527,8 +527,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
 	@Override
 	protected StoredBlock getStoredBlockInCurrentScope(Sha256Hash hash) throws BlockStoreException {
-		checkState(lock.isHeldByCurrentThread());
-		return blockStore.getOnceUndoableStoredBlock(hash);
+		//checkState(lock.isHeldByCurrentThread());
+		return blockStore.get(hash);
 	}
 
 	@Override

@@ -63,7 +63,6 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         ECKey outKey = new ECKey();
         int height = 1;
 
-        blockgraph.add(networkParameters.getGenesisBlock());
         BlockEvaluation genesisEvaluation = blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash());
         store.updateBlockEvaluationMilestone(genesisEvaluation.getBlockhash(), true);
         blockService.updateSolid(genesisEvaluation, true);
@@ -162,8 +161,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         int height = 1;
         logger.debug(outKey.getPublicKeyAsHex());
 
-        // Add genesis block
-        blockgraph.add(networkParameters.getGenesisBlock());
+        
         BlockEvaluation genesisEvaluation = blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash());
         store.updateBlockEvaluationMilestone(genesisEvaluation.getBlockhash(), true);
         blockService.updateSolid(genesisEvaluation, true);
