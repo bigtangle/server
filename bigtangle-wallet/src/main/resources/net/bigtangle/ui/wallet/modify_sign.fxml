@@ -12,18 +12,6 @@
 	<children>
 		<VBox alignment="CENTER_LEFT" layoutY="23.0" prefHeight="361.0" prefWidth="701.0" spacing="20.0" style="-fx-background-color: white;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
 			<children>
-				<HBox fx:id="topHBox" alignment="CENTER_LEFT" spacing="15.0">
-					<children>
-						<Label fx:id="titleLabel" text="%Send">
-							<font>
-								<Font size="25.0" />
-							</font>
-						</Label>
-						<TextField fx:id="amountEdit" />
-						<ChoiceBox fx:id="tokeninfo" prefHeight="23.0" prefWidth="245.0" />
-						<Label fx:id="btcLabel" prefHeight="15.0" prefWidth="122.0" />
-					</children>
-				</HBox>
 				<HBox prefHeight="33.0" prefWidth="641.0">
 					<children>
 						<RadioButton fx:id="basicRadioButton" mnemonicParsing="false" selected="true" text="%basic">
@@ -35,22 +23,48 @@
 						<RadioButton fx:id="milionRadioButton" mnemonicParsing="false" text="%milion" toggleGroup="$unitToggleGroup" />
 					</children>
 				</HBox>
-       
-				<HBox alignment="CENTER_LEFT" spacing="15.0">
+				<HBox fx:id="topHBox" alignment="CENTER_LEFT" spacing="50.0">
 					<children>
-						<Label text="%to">
+						<Label fx:id="titleLabel" prefWidth="150.0" text="%Amount">
+							<font>
+								<Font size="25.0" />
+							</font>
+						</Label>
+						<TextField fx:id="amountEdit" prefWidth="300.0" />
+					</children>
+				</HBox>
+				<HBox prefHeight="26.0" prefWidth="641.0" spacing="50.0">
+					<children>
+						<Label prefWidth="150.0" text="%Token">
+							<font>
+								<Font size="25.0" />
+							</font>
+						</Label>
+						<ChoiceBox fx:id="tokeninfo" prefHeight="23.0" prefWidth="300.0" />
+					</children>
+				</HBox>
+				<HBox prefHeight="23.0" prefWidth="200.0" spacing="50.0">
+					<children>
+						<Label prefWidth="150.0" />
+						<Label fx:id="btcLabel" maxHeight="1.7976931348623157E308" prefHeight="15.0" prefWidth="300.0" />
+					</children>
+				</HBox>
+
+				<HBox alignment="CENTER_LEFT" spacing="50.0">
+					<children>
+						<Label prefWidth="150.0" text="%to">
 							<font>
 								<Font size="24.0" />
 							</font>
 						</Label>
-                  <ComboBox fx:id="addressComboBox" prefHeight="23.0" prefWidth="445.0" editable="true"/>
+						<ComboBox fx:id="addressComboBox" editable="true" prefHeight="23.0" prefWidth="300.0" />
 					</children>
 				</HBox>
 				<HBox alignment="CENTER_RIGHT" fillHeight="true" prefHeight="30.0" prefWidth="600.0" spacing="15.0" VBox.vgrow="NEVER">
 					<children>
 						<Button fx:id="sendBtn" defaultButton="true" mnemonicParsing="false" onAction="#send" prefWidth="79.0" text="%Send" />
-						<Button mnemonicParsing="false" onAction="#importSign" text="%import" />
-						<Button mnemonicParsing="false" onAction="#exportSign" text="%export" />
+						<Button defaultButton="true" mnemonicParsing="false" onAction="#importSign" text="%import" />
+						<Button defaultButton="true" mnemonicParsing="false" onAction="#exportSign" text="%export" />
 						<Button fx:id="cancelBtn" cancelButton="true" mnemonicParsing="false" onAction="#cancel" prefWidth="79.0" text="%Cancel" />
 					</children>
 				</HBox>

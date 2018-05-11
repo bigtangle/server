@@ -83,7 +83,7 @@
 								<Button layoutX="795.0" layoutY="599.0" mnemonicParsing="false" onAction="#removePositvle" text="%remove" />
                         <HBox prefHeight="68.0" prefWidth="1000.0" styleClass="title-banner">
                            <children>
-                              <Label maxHeight="1.7976931348623157E308" styleClass="title-label" text="Label">
+                              <Label maxHeight="1.7976931348623157E308" styleClass="title-label" text="%Token">
                                  <font>
                                     <Font size="30.0" />
                                  </font>

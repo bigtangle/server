@@ -15,19 +15,19 @@
 				<TableColumn fx:id="privkeyColumn" prefWidth="24.0" text="%privatekeyString" visible="false" />
 			</columns>
 		</TableView>
-		<Button fx:id="closeUI" layoutX="922.0" layoutY="649.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />
-				<Button layoutX="769.0" layoutY="111.0" mnemonicParsing="false" onAction="#selectFile" prefHeight="23.0" prefWidth="87.0" text="%File" GridPane.columnIndex="2" />
+		<Button fx:id="closeUI" defaultButton="true" layoutX="922.0" layoutY="649.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />
+				<Button defaultButton="true" layoutX="769.0" layoutY="111.0" mnemonicParsing="false" onAction="#selectFile" prefHeight="23.0" prefWidth="87.0" text="%File" GridPane.columnIndex="2" />
 				<Label layoutX="34.0" layoutY="115.0" prefHeight="15.0" prefWidth="69.0" text="%Wallet" />
 				<TextField fx:id="keyFileDirTextField" layoutX="103.0" layoutY="111.0" prefHeight="23.0" prefWidth="641.0" GridPane.columnIndex="1" />
 				<TextField fx:id="newPubkeyTextField" layoutX="103.0" layoutY="154.0" prefHeight="23.0" prefWidth="277.0" />
-				<Button layoutX="769.0" layoutY="154.0" mnemonicParsing="false" onAction="#addKey2wallet" prefHeight="23.0" prefWidth="87.0" text="%add_key" />
+				<Button defaultButton="true" layoutX="769.0" layoutY="154.0" mnemonicParsing="false" onAction="#addKey2wallet" prefHeight="23.0" prefWidth="87.0" text="%add_key" />
 				<TextField fx:id="newPrivateKeyTextField" layoutX="467.0" layoutY="154.0" prefHeight="23.0" prefWidth="277.0" />
 				<Label alignment="CENTER" layoutX="385.0" layoutY="158.0" prefHeight="15.0" prefWidth="78.0" text="%privatekey" textAlignment="CENTER" />
 				<Label layoutX="30.0" layoutY="158.0" prefHeight="15.0" prefWidth="63.0" text="%pubkey" />
-		<Button layoutX="808.0" layoutY="649.0" mnemonicParsing="false" onAction="#showPrivateKey" text="%shwoPrivKey" />
+		<Button defaultButton="true" layoutX="808.0" layoutY="649.0" mnemonicParsing="false" onAction="#showPrivateKey" text="%shwoPrivKey" />
       <HBox prefHeight="68.0" prefWidth="1000.0" styleClass="title-banner">
          <children>
-            <Label maxHeight="1.7976931348623157E308" styleClass="title-label" text="Label">
+            <Label maxHeight="1.7976931348623157E308" styleClass="title-label" text="%Keys">
                <font>
                   <Font size="30.0" />
                </font>

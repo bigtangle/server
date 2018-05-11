@@ -40,15 +40,15 @@
 		</TableView>
 		<HBox fx:id="buttonHBox" layoutX="16.0" layoutY="115.0" prefHeight="23.0" prefWidth="771.0" spacing="20">
 			<children>
-				<Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" mnemonicParsing="false" onAction="#sendMoneyOut" text="%Transfer" />
-				<Button mnemonicParsing="false" onAction="#orders" text="%market" />
-				<Button fx:id="stock" onAction="#stockPublish" text="%Token" />
-				<Button fx:id="exchange" mnemonicParsing="false" onAction="#exchangeCoin" text="%Exchange" />
-				<Button mnemonicParsing="false" onAction="#modyfySIgn" text="%multiSign" />
-				<Button mnemonicParsing="false" onAction="#blockEvaluation" text="%Blocks" />
-				<Button mnemonicParsing="false" onAction="#eckeyList" text="%Keys" />
+				<Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" defaultButton="true" mnemonicParsing="false" onAction="#sendMoneyOut" text="%Transfer" />
+				<Button defaultButton="true" mnemonicParsing="false" onAction="#orders" text="%market" />
+				<Button fx:id="stock" defaultButton="true" onAction="#stockPublish" text="%Token" />
+				<Button fx:id="exchange" defaultButton="true" mnemonicParsing="false" onAction="#exchangeCoin" text="%Exchange" />
+				<Button defaultButton="true" mnemonicParsing="false" onAction="#modyfySIgn" text="%multiSign" />
+				<Button defaultButton="true" mnemonicParsing="false" onAction="#blockEvaluation" text="%Blocks" />
+				<Button defaultButton="true" mnemonicParsing="false" onAction="#eckeyList" text="%Keys" />
 
-				<Button onAction="#settingsClicked" text="%Settings" />
+				<Button defaultButton="true" onAction="#settingsClicked" text="%Settings" />
 			</children>
 		</HBox>
 		<AnchorPane fx:id="serverPane" layoutX="140.0" layoutY="25.0" prefHeight="23.0" prefWidth="673.0">
@@ -63,14 +63,14 @@
 			<children>
 				<Label layoutY="7.0" text="%address" />
 				<TextField fx:id="addressTextField" layoutX="92.0" layoutY="3.0" prefHeight="23.0" prefWidth="452.0" />
-				<Button layoutX="571.0" layoutY="5.0" mnemonicParsing="false" onAction="#otherWallet" text="%other_wallet_search" />
+				<Button defaultButton="true" layoutX="571.0" layoutY="5.0" mnemonicParsing="false" onAction="#otherWallet" text="%other_wallet_search" />
 			</children>
 		</AnchorPane>
 		<HBox fx:id="passwordHBox" alignment="CENTER" layoutX="14.0" layoutY="151.0" prefHeight="38.0" prefWidth="725.0">
 			<children>
 				<Label alignment="CENTER" prefHeight="30.0" prefWidth="130.0" text="%Password" textAlignment="CENTER" />
 				<PasswordField fx:id="passwordField" prefHeight="23.0" prefWidth="320.0" />
-				<Button mnemonicParsing="false" onAction="#okPassword" prefHeight="23.0" prefWidth="100.0" text="%OK" />
+				<Button defaultButton="true" mnemonicParsing="false" onAction="#okPassword" prefHeight="23.0" prefWidth="100.0" text="%OK" />
 			</children>
 		</HBox>
 		<ImageView fitHeight="84.0" fitWidth="100.0" layoutX="16.0" layoutY="16.0" pickOnBounds="true" preserveRatio="true">

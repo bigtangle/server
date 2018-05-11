@@ -24,15 +24,15 @@
 				<TableColumn fx:id="insertTimeColumn" prefWidth="59.0" text="%insertTime" />
 			</columns>
 		</TableView>
-		<Button layoutX="929.0" layoutY="624.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />
+		<Button defaultButton="true" layoutX="929.0" layoutY="624.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />
 		<Label layoutX="40.0" layoutY="99.0" prefHeight="15.0" prefWidth="126.0" text="%address" />
 		<ComboBox fx:id="addressComboBox" editable="true" layoutX="173.0" layoutY="95.0" prefHeight="23.0" prefWidth="299.0" />
-		<Button layoutX="658.0" layoutY="95.0" mnemonicParsing="false" onAction="#searchBlock" prefHeight="23.0" prefWidth="111.0" text="%search" />
+		<Button defaultButton="true" layoutX="658.0" layoutY="95.0" mnemonicParsing="false" onAction="#searchBlock" prefHeight="23.0" prefWidth="111.0" text="%search" />
 		<TextField fx:id="latestAmountTextField" layoutX="480.0" layoutY="95.0" promptText="%lastest" />
-      <Button layoutX="808.0" layoutY="624.0" mnemonicParsing="false" onAction="#showBlock" text="%showBlock" />
+      <Button defaultButton="true" layoutX="808.0" layoutY="624.0" mnemonicParsing="false" onAction="#showBlock" text="%showBlock" />
       <HBox prefHeight="68.0" prefWidth="1000.0" styleClass="title-banner">
          <children>
-            <Label maxHeight="1.7976931348623157E308" styleClass="title-label" text="Label">
+            <Label maxHeight="1.7976931348623157E308" styleClass="title-label" text="%Blocks">
                <font>
                   <Font size="30.0" />
                </font>
