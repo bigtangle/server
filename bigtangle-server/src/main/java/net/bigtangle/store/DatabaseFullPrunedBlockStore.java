@@ -242,10 +242,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " blockevaluation SET height = ? WHERE blockhash = ?";
 
     protected String UPDATE_BLOCKEVALUATION_MILESTONE_SQL = getUpdate()
-            + " blockevaluation SET milestone = ? WHERE blockhash = ?";
+            + " blockevaluation SET milestone = ?,milestonelastupdate= ?  WHERE blockhash = ?";
 
-    protected String UPDATE_BLOCKEVALUATION_MILESTONE_LAST_UPDATE_TIME_SQL = getUpdate()
-            + " blockevaluation SET milestonelastupdate = ? WHERE blockhash = ?";
+    // protected String UPDATE_BLOCKEVALUATION_MILESTONE_LAST_UPDATE_TIME_SQL =
+    // getUpdate()
+    // + " blockevaluation SET milestonelastupdate = ? WHERE blockhash = ?";
 
     protected String UPDATE_BLOCKEVALUATION_RATING_SQL = getUpdate()
             + " blockevaluation SET rating = ? WHERE blockhash = ?";
@@ -996,7 +997,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         this.chainHeadHash = hash;
         this.chainHeadBlock = chainHead;
         maybeConnect();
-      //  System.out.println("bbb > " + Utils.HEX.encode(hash.getBytes()));
+        // System.out.println("bbb > " + Utils.HEX.encode(hash.getBytes()));
         try {
             PreparedStatement s = conn.get().prepareStatement(getUpdateSettingsSLQ());
             s.setString(2, CHAIN_HEAD_SETTING);
@@ -1480,7 +1481,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    @Cacheable(cacheNames = "BlockEvaluations")
+    // TODO @Cacheable(cacheNames = "BlockEvaluations")
     public BlockEvaluation getBlockEvaluation(Sha256Hash hash) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         maybeConnect();
@@ -1771,10 +1772,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public void updateBlockEvaluationCumulativeweight(Sha256Hash blockhash, long cumulativeweight)
             throws BlockStoreException {
-        BlockEvaluation blockEvaluation = this.getBlockEvaluation(blockhash);
-        if (blockEvaluation == null) {
-            throw new BlockStoreException("Could not find blockevaluation to update");
-        }
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
@@ -1799,10 +1796,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public void updateBlockEvaluationDepth(Sha256Hash blockhash, long depth) throws BlockStoreException {
-        BlockEvaluation blockEvaluation = this.getBlockEvaluation(blockhash);
-        if (blockEvaluation == null) {
-            throw new BlockStoreException("Could not find blockevaluation to update");
-        }
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
@@ -1827,10 +1820,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public void updateBlockEvaluationHeight(Sha256Hash blockhash, long height) throws BlockStoreException {
-        BlockEvaluation blockEvaluation = this.getBlockEvaluation(blockhash);
-        if (blockEvaluation == null) {
-            throw new BlockStoreException("Could not find blockevaluation to update");
-        }
+
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
@@ -1855,17 +1845,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public void updateBlockEvaluationMilestone(Sha256Hash blockhash, boolean b) throws BlockStoreException {
-        BlockEvaluation blockEvaluation = this.getBlockEvaluation(blockhash);
-        if (blockEvaluation == null) {
-            throw new BlockStoreException("Could not find blockevaluation to update");
-        }
+
         PreparedStatement preparedStatement = null;
         maybeConnect();
 
         try {
             preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationMilestoneSQL());
             preparedStatement.setBoolean(1, b);
-            preparedStatement.setBytes(2, blockhash.getBytes());
+            preparedStatement.setLong(2, System.currentTimeMillis());
+            preparedStatement.setBytes(3, blockhash.getBytes());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -1879,19 +1867,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
 
-        long now = System.currentTimeMillis();
-        blockEvaluation.setMilestoneLastUpdateTime(now);
-        updateBlockEvaluationMilestoneLastUpdateTime(blockEvaluation.getBlockhash(), now);
+        
     }
 
     protected abstract String getUpdateBlockEvaluationRatingSQL();
 
     @Override
     public void updateBlockEvaluationRating(Sha256Hash blockhash, long i) throws BlockStoreException {
-        BlockEvaluation blockEvaluation = this.getBlockEvaluation(blockhash);
-        if (blockEvaluation == null) {
-            throw new BlockStoreException("Could not find blockevaluation to update");
-        }
+
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
@@ -1916,10 +1899,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public void updateBlockEvaluationSolid(Sha256Hash blockhash, boolean b) throws BlockStoreException {
-        BlockEvaluation blockEvaluation = this.getBlockEvaluation(blockhash);
-        if (blockEvaluation == null) {
-            throw new BlockStoreException("Could not find blockevaluation to update");
-        }
+
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
@@ -1939,44 +1919,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-
-    protected abstract String getUpdateBlockEvaluationMilestoneLastUpdateTimeSQL();
-
-    @Override
-    public void updateBlockEvaluationMilestoneLastUpdateTime(Sha256Hash blockhash, long now)
-            throws BlockStoreException {
-        BlockEvaluation blockEvaluation = this.getBlockEvaluation(blockhash);
-        if (blockEvaluation == null) {
-            throw new BlockStoreException("Could not find blockevaluation to update");
-        }
-        PreparedStatement preparedStatement = null;
-        maybeConnect();
-        try {
-            preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationMilestoneLastUpdateTimeSQL());
-            preparedStatement.setLong(1, now);
-            preparedStatement.setBytes(2, blockhash.getBytes());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
+ 
 
     protected abstract String getUpdateBlockEvaluationMilestoneDepthSQL();
 
     @Override
     public void updateBlockEvaluationMilestoneDepth(Sha256Hash blockhash, long i) throws BlockStoreException {
-        BlockEvaluation blockEvaluation = this.getBlockEvaluation(blockhash);
-        if (blockEvaluation == null) {
-            throw new BlockStoreException("Could not find blockevaluation to update");
-        }
+
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
@@ -2001,10 +1950,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public void updateBlockEvaluationMaintained(Sha256Hash blockhash, boolean b) throws BlockStoreException {
-        BlockEvaluation blockEvaluation = this.getBlockEvaluation(blockhash);
-        if (blockEvaluation == null) {
-            throw new BlockStoreException("Could not find blockevaluation to update");
-        }
+
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
@@ -2029,10 +1975,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public void updateBlockEvaluationRewardValid(Sha256Hash blockhash, boolean b) throws BlockStoreException {
-        BlockEvaluation blockEvaluation = this.getBlockEvaluation(blockhash);
-        if (blockEvaluation == null) {
-            throw new BlockStoreException("Could not find blockevaluation to update");
-        }
+
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
@@ -2463,7 +2406,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_EXCHANGE_SQL);
             preparedStatement.setString(1, address);
-             preparedStatement.setString(2, address);
+            preparedStatement.setString(2, address);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 Exchange exchange = new Exchange();
@@ -2494,7 +2437,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
+
     @Override
     public void saveOrderMatch(OrderMatch orderMatch) throws BlockStoreException {
         maybeConnect();

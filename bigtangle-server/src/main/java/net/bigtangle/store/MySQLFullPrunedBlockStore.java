@@ -234,11 +234,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         return UPDATE_BLOCKEVALUATION_SOLID_SQL;
     }
     
-    @Override
-    protected String getUpdateBlockEvaluationMilestoneLastUpdateTimeSQL() {
-        return UPDATE_BLOCKEVALUATION_MILESTONE_LAST_UPDATE_TIME_SQL;
-    }
-    
+   
     @Override
     protected String getUpdateBlockEvaluationMilestoneDepthSQL() {
         return UPDATE_BLOCKEVALUATION_MILESTONEDEPTH_SQL;
@@ -278,4 +274,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     protected String getUpdateBlockevaluationUnmaintainAllSQL() {
         return getUpdate() + " blockevaluation SET maintained = false WHERE maintained = true";
     }
+
+     
 }

@@ -796,7 +796,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     
     @Override
     public String getUpdateBlockEvaluationMilestoneSQL() {
-        return getUpdate() +" blockevaluation (milestone, blockhash) VALUES (?, ?)";
+        return getUpdate() +" blockevaluation (milestone,milestonelastupdate, blockhash) VALUES (?, ?, ?)";
     }
     
     @Override
@@ -809,11 +809,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         return getUpdate() +" blockevaluation (solid, blockhash) VALUES (?, ?)";
     }
     
-    @Override
-    protected String getUpdateBlockEvaluationMilestoneLastUpdateTimeSQL() {
-        return getUpdate() +" blockevaluation (milestonelastupdate, blockhash) VALUES (?, ?)";
-    }
-    
+   
     @Override
     protected String getUpdateBlockEvaluationMilestoneDepthSQL() {
         return getUpdate() +" blockevaluation (milestonedepth, blockhash) VALUES (?, ?)";
