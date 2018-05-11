@@ -68,7 +68,8 @@ public class DispatcherController {
     @Autowired
     private KafkaConfiguration kafkaConfiguration;
 
-    @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
+    @SuppressWarnings("unchecked")
+	@RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
     public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] bodyByte,
             HttpServletResponse httpServletResponse) throws Exception {
         try {
@@ -106,7 +107,6 @@ public class DispatcherController {
 
             case createGenesisBlock: {
                 String reqStr = new String(bodyByte, "UTF-8");
-                @SuppressWarnings("unchecked")
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 byte[] data = transactionService.createGenesisBlock(request);
                 brodcastBlock(data);
@@ -116,7 +116,6 @@ public class DispatcherController {
 
             case exchangeToken: {
                 String reqStr = new String(bodyByte, "UTF-8");
-                @SuppressWarnings("unchecked")
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 logger.debug("exchangeToken, {}", request);
             }
@@ -124,7 +123,6 @@ public class DispatcherController {
 
             case exchangeInfo: {
                 String reqStr = new String(bodyByte, "UTF-8");
-                @SuppressWarnings("unchecked")
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String orderid = (String) request.get("orderid");
                 AbstractResponse response = this.exchangeService.getExchangeByOrderid(orderid);
@@ -158,7 +156,6 @@ public class DispatcherController {
 
             case saveOrder: {
                 String reqStr = new String(bodyByte, "UTF-8");
-                @SuppressWarnings("unchecked")
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = orderPublishService.saveOrderPublish(request);
                 this.outPrintJSONString(httpServletResponse, response);
@@ -167,7 +164,6 @@ public class DispatcherController {
 
             case getOrders: {
                 String reqStr = new String(bodyByte, "UTF-8");
-                @SuppressWarnings("unchecked")
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = orderPublishService.getOrderPublishListWithCondition(request);
                 this.outPrintJSONString(httpServletResponse, response);
@@ -176,7 +172,6 @@ public class DispatcherController {
 
             case batchGetBalances: {
                 String reqStr = new String(bodyByte, "UTF-8");
-                @SuppressWarnings("unchecked")
                 List<String> keyStrHex000 = Json.jsonmapper().readValue(reqStr, List.class);
                 Set<byte[]> pubKeyHashs = new HashSet<byte[]>();
                 for (String keyStrHex : keyStrHex000) {
@@ -189,7 +184,6 @@ public class DispatcherController {
 
             case saveExchange: {
                 String reqStr = new String(bodyByte, "UTF-8");
-                @SuppressWarnings("unchecked")
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = exchangeService.saveExchange(request);
 
@@ -199,7 +193,6 @@ public class DispatcherController {
 
             case getExchange: {
                 String reqStr = new String(bodyByte, "UTF-8");
-                @SuppressWarnings("unchecked")
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String address = (String) request.get("address");
                 AbstractResponse response = exchangeService.getExchangeListWithAddress(address);
@@ -209,7 +202,6 @@ public class DispatcherController {
 
             case signTransaction: {
                 String reqStr = new String(bodyByte, "UTF-8");
-                @SuppressWarnings("unchecked")
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = exchangeService.signTransaction(request);
                 this.outPrintJSONString(httpServletResponse, response);
@@ -217,7 +209,6 @@ public class DispatcherController {
                 break;
             case searchBlock: {
                 String reqStr = new String(bodyByte, "UTF-8");
-                @SuppressWarnings("unchecked")
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = this.blockService.searchBlock(request);
                 this.outPrintJSONString(httpServletResponse, response);
@@ -225,7 +216,6 @@ public class DispatcherController {
 
             case getBlock: {
                 String reqStr = new String(bodyByte, "UTF-8");
-                @SuppressWarnings("unchecked")
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 if (request.get("hashHex") != null) {
                     Block block = this.blockService.getBlock(Sha256Hash.wrap(request.get("hashHex").toString()));
@@ -235,7 +225,6 @@ public class DispatcherController {
             }
             case streamBlocks: {
                 String reqStr = new String(bodyByte, "UTF-8");
-                @SuppressWarnings("unchecked")
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 if (request.get("heightstart") != null) {
                     this.transactionService.streamBlocks(Long.valueOf((String) request.get("heightstart")),
