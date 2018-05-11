@@ -15,7 +15,7 @@
 				<TableColumn fx:id="privkeyColumn" prefWidth="24.0" text="%privatekeyString" visible="false" />
 			</columns>
 		</TableView>
-		<Button fx:id="closeUI" defaultButton="true" layoutX="922.0" layoutY="649.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />
+		<Button fx:id="closeUI" cancelButton="true" layoutX="922.0" layoutY="649.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />
 				<Button defaultButton="true" layoutX="769.0" layoutY="111.0" mnemonicParsing="false" onAction="#selectFile" prefHeight="23.0" prefWidth="87.0" text="%File" GridPane.columnIndex="2" />
 				<Label layoutX="34.0" layoutY="115.0" prefHeight="15.0" prefWidth="69.0" text="%Wallet" />
 				<TextField fx:id="keyFileDirTextField" layoutX="103.0" layoutY="111.0" prefHeight="23.0" prefWidth="641.0" GridPane.columnIndex="1" />
