@@ -501,7 +501,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     
     private static final String MYSQL_DUPLICATE_KEY_ERROR_CODE = "23000";
     private static final String DATABASE_DRIVER_CLASS = "org.apache.phoenix.queryserver.client.Driver";
-    private static final String DATABASE_CONNECTION_URL_PREFIX = "jdbc:phoenix:thin:url=http://";
+    private static final String DATABASE_CONNECTION_URL_PREFIX = "jdbc:log4jdbc:phoenix:thin:url=http://";
 
     // create table SQL
     public static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" 
