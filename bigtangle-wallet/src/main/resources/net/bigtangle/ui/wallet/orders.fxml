@@ -84,7 +84,7 @@
 		</TabPane>
       <HBox prefHeight="68.0" prefWidth="1000.0" styleClass="title-banner">
          <children>
-            <Label maxHeight="1.7976931348623157E308" styleClass="title-label" text="Label">
+            <Label maxHeight="1.7976931348623157E308" styleClass="title-label" text="%market">
                <font>
                   <Font size="30.0" />
                </font>
