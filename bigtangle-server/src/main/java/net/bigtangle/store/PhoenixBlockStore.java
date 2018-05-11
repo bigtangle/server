@@ -290,14 +290,17 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         maybeConnect();
         PreparedStatement s = null;
         try {
+            String SELECT_SOLID_APPROVER_HASHES_SQL = "SELECT headers.hash FROM headers INNER JOIN"
+                    + " blockevaluation ON headers.hash=blockevaluation.blockhash "
+                    + "WHERE blockevaluation.solid = true AND (headers.prevblockhash = ?)"
+                    + afterSelect();
             s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_HASHES_SQL);
             s.setString(1, Utils.HEX.encode(hash.getBytes()));
-            s.setString(2, Utils.HEX.encode(hash.getBytes()));
+//            s.setString(2, Utils.HEX.encode(hash.getBytes()));
             ResultSet results = s.executeQuery();
             while (results.next()) {
                 storedBlockHash.add(Sha256Hash.wrap(results.getBytes(1)));
             }
-            return storedBlockHash;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } catch (ProtocolException e) {
@@ -316,6 +319,37 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
                 }
             }
         }
+        try {
+            String SELECT_SOLID_APPROVER_HASHES_SQL = "SELECT headers.hash FROM headers INNER JOIN"
+                    + " blockevaluation ON headers.hash=blockevaluation.blockhash "
+                    + "WHERE blockevaluation.solid = true AND (headers.prevbranchblockhash = ?)"
+                    + afterSelect();
+            s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_HASHES_SQL);
+            s.setString(1, Utils.HEX.encode(hash.getBytes()));
+//            s.setString(2, Utils.HEX.encode(hash.getBytes()));
+            ResultSet results = s.executeQuery();
+            while (results.next()) {
+                storedBlockHash.add(Sha256Hash.wrap(results.getBytes(1)));
+            }
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            // Corrupted database.
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            // Should not be able to happen unless the database contains bad
+            // blocks.
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+        return storedBlockHash;
     }
     
     @Override
