@@ -16,6 +16,8 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.google.common.base.Stopwatch;
@@ -65,21 +67,21 @@ public class MilestoneService {
         
         try {
             log.info("Milestone Update started");
-
+            clearCacheBlockEvaluations();
             Stopwatch watch = Stopwatch.createStarted();
             updateSolidityAndHeight();
             log.info("Solidity and height update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-
+            clearCacheBlockEvaluations();
             watch.stop();
             watch = Stopwatch.createStarted();
             updateCumulativeWeightAndDepth();
             log.info("Weight and depth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-
+            clearCacheBlockEvaluations();
             watch.stop();
             watch = Stopwatch.createStarted();
             updateRating();
             log.info("Rating update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-
+            clearCacheBlockEvaluations();
             watch.stop();
             watch = Stopwatch.createStarted();
             updateMilestone();
@@ -103,6 +105,12 @@ public class MilestoneService {
         }
     }
 
+    
+    //@CacheEvict(cacheNames = "BlockEvaluations", allEntries=true)
+    private void clearCacheBlockEvaluations() throws Exception {
+    }
+   
+    
     /**
      * Update solid, true if all directly or indirectly approved blocks exist.
      * If solid, update height to be the max of previous heights + 1
