@@ -207,7 +207,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             s.close();
         }
     }
-    
+    /*
     @Override
     public List<StoredBlock> getSolidApproverBlocks(Sha256Hash hash) throws BlockStoreException {
         List<StoredBlock> storedBlocks = new ArrayList<StoredBlock>();
@@ -350,7 +350,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             }
         }
         return storedBlockHash;
-    }
+    }*/
     
     @Override
     public UTXO getTransactionOutput(Sha256Hash hash, long index) throws BlockStoreException {
