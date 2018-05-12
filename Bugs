@@ -33,3 +33,53 @@ logo or icon windows after start of application
 problem that schedule is down.
 display  total only in balance and UTXO as dialog for details
 
+
+
+
+## Serial number to tokens table and multisign for tokens creation
+
+    
+ private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n" +
+            "    tokenid varchar(255) NOT NULL  ,\n" +
+            "    tokenname varchar(255) ,\n" + 
+            "    description varchar(255) ,\n" + 
+            "    signnumber bigint NOT NULL   ,\n" +
+            "    multiserial boolean,\n" +
+            "    asmarket boolean,\n" +
+             "   tokenstop boolean,\n" +
+            "    PRIMARY KEY (tokenid) \n)";
+              
+ private static final String CREATE_MULTISIGNADDRESS_TABLE = "CREATE TABLE multisignaddress (\n" +
+            "    tokenid varchar(255) NOT NULL  ,\n" +
+       		"    address varchar(35),\n" +
+            "    PRIMARY KEY (tokenid, address) \n)"; 
+            
+                      
+  private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokenserial (\n" +
+            "    tokenid varchar(255) NOT NULL  ,\n" +
+            "    tokenindex bigint NOT NULL   ,\n" +
+            "    amount bigint(20) ,\n" +
+            "    PRIMARY KEY (tokenid, tokenindex) \n)";
+
+
+            
+ private static final String CREATE_MULTISIGNBY_TABLE = "CREATE TABLE multisignby (\n" +
+            "    tokenid varchar(255) NOT NULL  ,\n" +
+            "    tokenindex bigint NOT NULL   ,\n" +
+       		"    address varchar(35),\n" +
+            "    PRIMARY KEY (tokenid,tokenindex, address) \n)";  
+
+Check block validation:
+
+Blocktype =3
+read data from   TABLE tokensmultisign and  multisignby, if count address multisignby >=  signnumber, then ok. 
+
+check tokensmulti, if multiserial is false. then check tokenindex <=1
+
+
+Stop the token serial:
+	
+
+
+
+##usage of

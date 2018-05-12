@@ -134,6 +134,8 @@ public class Block extends Message {
     @Nullable
     List<Transaction> transactions;
 
+    
+    
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
     private Sha256Hash hash;
 
@@ -602,9 +604,14 @@ public class Block extends Message {
      */
     @Override
     public String toString() {
-        StringBuilder s = new StringBuilder();
-        s.append(" block: \n");
-        s.append("   hash: ").append(getHashAsString()).append('\n');
+        StringBuilder s = new StringBuilder(); 
+        s.append("block hash: ").append(getHashAsString()).append('\n');
+        if (transactions != null && transactions.size() > 0) {
+            s.append("   ").append(transactions.size()).append(" transaction(s):\n");
+            for (Transaction tx : transactions) {
+                s.append(tx);
+            }
+        }
         s.append("   version: ").append(version);
         String bips = Joiner.on(", ").skipNulls().join(isBIP34() ? "BIP34" : null, isBIP66() ? "BIP66" : null,
                 isBIP65() ? "BIP65" : null);
@@ -612,7 +619,7 @@ public class Block extends Message {
             s.append(" (").append(bips).append(')');
         s.append('\n');
         s.append("   previous block: ").append(getPrevBlockHash()).append("\n");
-        s.append("   previous branch block: ").append(getPrevBranchBlockHash()).append("\n");
+        s.append("   branch block: ").append(getPrevBranchBlockHash()).append("\n");
         s.append("   merkle root: ").append(getMerkleRoot()).append("\n");
         s.append("   time: ").append(time).append(" (").append(Utils.dateTimeFormat(time * 1000)).append(")\n");
         // s.append(" difficulty target (nBits):
@@ -622,12 +629,7 @@ public class Block extends Message {
             s.append("   mineraddress: ").append(new Address(params, mineraddress)).append("\n");
         s.append("   tokenid: ").append(new Address(params, tokenid)).append("\n");
         s.append("   blocktype: ").append(blocktype).append("\n");
-        if (transactions != null && transactions.size() > 0) {
-            s.append("   with ").append(transactions.size()).append(" transaction(s):\n");
-            for (Transaction tx : transactions) {
-                s.append(tx);
-            }
-        }
+ 
         return s.toString();
     }
 
