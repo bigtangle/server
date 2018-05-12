@@ -5,10 +5,7 @@ plugins {
     id 'com.github.ksoichiro.build.info' version '0.1.5'
 }
 
-apply plugin: 'java'
-apply plugin: 'idea'
-
-
+ 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 

@@ -1,0 +1,10 @@
+curl
+
+https://localhost:8443/rest/earlyinsights?prop=all&hdest=undefined&onm=undefined&plt=%20&serialNumber=&tableName=banknotelist&cols=nscsoilmodfront,nscsoilmodback,nscsoildensfront,nscsoildensback,nscstain_border,nscstain_whitearea,nscstain_center,nsc2rldefttotarea,dis2tapearea,flpluvdmed,flplanaphroi1,nsc2rrirratio&sdate=&edate=
+
+
+
+
+ https://localhost:8443/rest/earlyinsights/rejectreasons?prop=all&hdest=undefined&onm=undefined&plt= &qly=11&serialNumber=&tableName=banknotelist&cols=nscsoilmodfront,nscsoilmodback,nscsoildensfront,nscsoildensback,nscstain_border,nscstain_whitearea,nscstain_center,nsc2rldefttotarea,dis2tapearea,flpluvdmed,flplanaphroi1,nsc2rrirratio&sdate=&edate=
+
+cols=nscsoilmodfront,nscsoilmodback,nscsoildensfront,nscsoildensback,nscstain_border,nscstain_whitearea,nscstain_center,nsc2rldefttotarea,dis2tapearea,flpluvdmed,flplanaphroi1,nsc2rrirratio&sdate=&edate=

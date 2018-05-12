@@ -19,3 +19,5 @@ src/main/ixi/
 /bigtangle.wallet
 /logs/
 /cache/
+/.cache-main
+/.cache-tests
