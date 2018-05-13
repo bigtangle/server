@@ -76,6 +76,7 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.UTXO;
@@ -539,8 +540,35 @@ public class Main extends Application {
 
     }
 
+
+    public static List<UTXO> getUTXOWithECKeyList(List<ECKey> ecKeys, String tokenid) throws Exception {
+        List<UTXO> listUTXO = new ArrayList<UTXO>();
+        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        for (ECKey ecKey : ecKeys) {
+            String response = OkHttp3Util.post(ContextRoot + "getOutputs", ecKey.getPubKeyHash());
+            final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+            if (data == null || data.isEmpty()) {
+                return listUTXO;
+            }
+            List<Map<String, Object>> outputs = (List<Map<String, Object>>) data.get("outputs");
+            if (outputs == null || outputs.isEmpty()) {
+                return listUTXO;
+            }
+            for (Map<String, Object> object : outputs) {
+                UTXO utxo = MapToBeanMapperUtil.parseUTXO(object);
+                if (! (utxo.getTokenid().equals( tokenid))) {
+                    continue;
+                }
+                if (utxo.getValue().getValue() > 0) {
+                    listUTXO.add(utxo);
+                }
+            }
+        }
+        return listUTXO;
+    }
+
     @SuppressWarnings("unchecked")
-    public static List<UTXO> getUTXOWithPubKeyHash(byte[] pubKeyHash, byte[] tokenid) throws Exception {
+    public static List<UTXO> getUTXOWithPubKeyHash(byte[] pubKeyHash, String tokenid) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
         String response = OkHttp3Util.post(ContextRoot + "getOutputs", pubKeyHash);
@@ -554,7 +582,7 @@ public class Main extends Application {
         }
         for (Map<String, Object> object : outputs) {
             UTXO utxo = MapToBeanMapperUtil.parseUTXO(object);
-            if (!Arrays.equals(utxo.getTokenid(), tokenid)) {
+            if (! utxo.getTokenid().equals( tokenid)) {
                 continue;
             }
             if (utxo.getValue().getValue() > 0) {
@@ -564,7 +592,7 @@ public class Main extends Application {
         return listUTXO;
     }
 
-    public static Coin calculateTotalUTXOList(byte[] pubKeyHash, byte[] tokenid) throws Exception {
+    public static Coin calculateTotalUTXOList(byte[] pubKeyHash, String tokenid) throws Exception {
         List<UTXO> listUTXO = getUTXOWithPubKeyHash(pubKeyHash, tokenid);
         Coin amount = Coin.valueOf(0, tokenid);
         if (listUTXO == null || listUTXO.isEmpty()) {

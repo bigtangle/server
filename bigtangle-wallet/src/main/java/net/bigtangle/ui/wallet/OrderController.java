@@ -238,7 +238,7 @@ public class OrderController {
 
         byte[] pubKeyHash = Address.fromBase58(Main.params, addressComboBox.getValue()).getHash160();
         Coin coin = Main.calculateTotalUTXOList(pubKeyHash,
-                typeStr.equals("sell") ? Utils.HEX.decode(tokenid) : NetworkParameters.BIGNETCOIN_TOKENID);
+                typeStr.equals("sell") ? tokenid : NetworkParameters.BIGNETCOIN_TOKENID_String);
         long amount = Coin.parseCoinValue(this.amountTextField.getText());
 
         if (coin.getValue() < amount) {

@@ -83,4 +83,10 @@ Stop the token serial:
 
 UI manages sign address (add remove, list)
 
-##usage of
+
+This data for each tokenid will be added to block -> transaction
+
+Change the size of transactions in block 
+The data for token must be treated as UTXO table plus the other data
+
+

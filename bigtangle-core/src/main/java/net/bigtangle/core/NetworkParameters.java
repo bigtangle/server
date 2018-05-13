@@ -41,7 +41,7 @@ import net.bigtangle.utils.VersionTally;
  * </p>
  */
 public abstract class NetworkParameters {
-    
+
     /**
      * The string returned by getId() for the main, production network where
      * people trade things.
@@ -53,15 +53,14 @@ public abstract class NetworkParameters {
     public static final String ID_REGTEST = "net.bigtangle.regtest";
     /** Unit test network. */
     public static final String ID_UNITTESTNET = "net.bigtangle.unittest";
- 
-    //Token id for System Coin byte[20]
-    public static final byte[] BIGNETCOIN_TOKENID = HEX.decode(
-            "0000000000000000000000000000000000000000");
 
-    //DUMMY Token id byte[20]
-    public static final byte[] DUMMY_TOKENID = HEX.decode(
-            "1111111111111111111111111111111111111111");
-    
+    // Token id for System Coin  
+    public static final String BIGNETCOIN_TOKENID_String = "0000000000000000000000000000000000000000";
+    public static final byte[] BIGNETCOIN_TOKENID = HEX.decode(BIGNETCOIN_TOKENID_String);
+
+    // DUMMY Token id byte[20]
+    public static final byte[] DUMMY_TOKENID = HEX.decode("1111111111111111111111111111111111111111");
+
     // BLOCKTYPE
     public static final long BLOCKTYPE_GENESIS = 0; // Genesis Block for a
                                                     // token, only onetime
@@ -115,7 +114,7 @@ public abstract class NetworkParameters {
     protected transient MessageSerializer defaultSerializer = null;
 
     protected NetworkParameters() {
-     
+
         genesisBlock = createGenesis(this);
     }
 
@@ -180,7 +179,7 @@ public abstract class NetworkParameters {
     /**
      * The maximum money to be generated
      */
-   
+
     /**
      * A Java package style string acting as unique ID for these parameters
      */
@@ -188,7 +187,6 @@ public abstract class NetworkParameters {
         return id;
     }
 
-  
     @Override
     public boolean equals(Object o) {
         if (this == o)
@@ -222,7 +220,6 @@ public abstract class NetworkParameters {
         }
     }
 
- 
     public int getSpendableCoinbaseDepth() {
         return spendableCoinbaseDepth;
     }
@@ -373,9 +370,9 @@ public abstract class NetworkParameters {
     }
 
     /**
-     * The key used to sign {@link net.bigtangle.core.AlertMessage}s. You can use
-     * {@link net.bigtangle.core.ECKey#verify(byte[], byte[], byte[])} to verify
-     * signatures using it.
+     * The key used to sign {@link net.bigtangle.core.AlertMessage}s. You can
+     * use {@link net.bigtangle.core.ECKey#verify(byte[], byte[], byte[])} to
+     * verify signatures using it.
      */
     public byte[] getAlertSigningKey() {
         return alertSigningKey;

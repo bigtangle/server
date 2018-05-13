@@ -244,8 +244,8 @@ public class SendMoneyController {
         try {
             List<UTXO> outputs = new ArrayList<UTXO>();
             outputs.addAll(Main.getUTXOWithPubKeyHash(toAddress00.getHash160(), null));
-            outputs.addAll(this.getUTXOWithECKeyList(Main.bitcoin.wallet().walletKeys(aesKey),
-                    Utils.HEX.decode(toCoin.getTokenHex())));
+            outputs.addAll(Main.getUTXOWithECKeyList(Main.bitcoin.wallet().walletKeys(aesKey),
+                    toCoin.getTokenHex() ));
 
             SendRequest req = SendRequest.to(toAddress00, toCoin);
 
@@ -280,32 +280,6 @@ public class SendMoneyController {
         byteBuffer.putInt(buf.length).put(buf);
         // System.out.println("tx len : " + buf.length);
         return byteBuffer.array();
-    }
-
-    public List<UTXO> getUTXOWithECKeyList(List<ECKey> ecKeys, byte[] tokenid) throws Exception {
-        List<UTXO> listUTXO = new ArrayList<UTXO>();
-        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
-        for (ECKey ecKey : ecKeys) {
-            String response = OkHttp3Util.post(ContextRoot + "getOutputs", ecKey.getPubKeyHash());
-            final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-            if (data == null || data.isEmpty()) {
-                return listUTXO;
-            }
-            List<Map<String, Object>> outputs = (List<Map<String, Object>>) data.get("outputs");
-            if (outputs == null || outputs.isEmpty()) {
-                return listUTXO;
-            }
-            for (Map<String, Object> object : outputs) {
-                UTXO utxo = MapToBeanMapperUtil.parseUTXO(object);
-                if (!Arrays.equals(utxo.getTokenid(), tokenid)) {
-                    continue;
-                }
-                if (utxo.getValue().getValue() > 0) {
-                    listUTXO.add(utxo);
-                }
-            }
-        }
-        return listUTXO;
     }
 
     public void cancel(ActionEvent event) {
