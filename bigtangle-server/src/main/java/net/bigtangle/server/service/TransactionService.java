@@ -19,8 +19,11 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.MultiSignAddress;
+import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
@@ -29,7 +32,6 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.kafka.KafkaConfiguration;
 import net.bigtangle.kafka.KafkaMessageProducer;
-import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.wallet.CoinSelector;
@@ -100,23 +102,75 @@ public class TransactionService {
         String tokenHex = (String) request.get("tokenHex");
         boolean blocktype = (Boolean) request.get("blocktype");
 
-        byte[] pubKey = Utils.HEX.decode(pubKeyHex);
-        byte[] tokenid = Utils.HEX.decode(tokenHex);
-        Coin coin = Coin.valueOf(amount, tokenid);
-        Block block = createGenesisBlock(coin, tokenid, pubKey, blocktype);
-        block.toString();
-        // log.debug(networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize()).toString());
-        
         String url = request.containsKey("url") ? (String) request.get("url") : "";
-        long signnumber = request.containsKey("signnumber") ? Long.parseLong(request.get("signnumber").toString()) : 0L;
+        long signnumber = request.containsKey("signnumber") ? Long.parseLong(request.get("signnumber").toString()) : 1L;
+        if (signnumber <= 0) {
+            throw new BlockStoreException("signnumber error");
+        }
         boolean multiserial = request.containsKey("multiserial") ? Boolean.parseBoolean(request.get("multiserial").toString()) : false;
         boolean asmarket = request.containsKey("asmarket") ? Boolean.parseBoolean(request.get("asmarket").toString()) : false;
         boolean tokenstop = request.containsKey("tokenstop") ? Boolean.parseBoolean(request.get("tokenstop").toString()) : false;
         
         Tokens tokens = new Tokens(tokenHex, tokenname, description, url, signnumber, multiserial, asmarket, tokenstop);
         store.saveTokens(tokens);
+        
+        // TODO pubKeyHex == address ?
+        MultiSignAddress multiSignAddress = new MultiSignAddress(tokenHex, pubKeyHex);
+        store.insertMultiSignAddress(multiSignAddress);
+        
+        TokenSerial tokenSerial = new TokenSerial(tokenHex, 0L, amount);
+        store.insertTokenSerial(tokenSerial);
 
-        return block.bitcoinSerialize();
+        MultiSignBy multiSignBy = new MultiSignBy(tokenHex, 0L, pubKeyHex);
+        store.insertMultisignby(multiSignBy);
+        
+        if (tokens.getSignnumber() == 1L) {
+            byte[] pubKey = Utils.HEX.decode(pubKeyHex);
+            byte[] tokenid = Utils.HEX.decode(tokenHex);
+            Coin coin = Coin.valueOf(amount, tokenid);
+            Block block = createGenesisBlock(coin, tokenid, pubKey, blocktype);
+            block.toString();
+            return block.bitcoinSerialize();
+        }
+        return new byte[0];
+    }
+    
+    public void multiSign(Map<String, Object> request) throws BlockStoreException {
+        String tokenid = (String) request.get("tokenid");
+        String address = (String) request.get("address");
+        long tokenindex = Long.parseLong(request.get("tokenindex").toString());
+        Tokens tokens = this.store.getTokensInfo(tokenid);
+        if (tokens == null) {
+            return;
+        }
+        TokenSerial tokenSerial = this.store.getTokenSerialInfo(tokenid, tokenindex);
+        if (tokenSerial == null) {
+            return;
+        }
+        MultiSignAddress multiSignAddress = this.store.getMultiSignAddressInfo(tokenid, address);
+        if (multiSignAddress == null) {
+            return;
+        }
+        int count = this.store.getCountMultiSignByTokenIndexAndAddress(tokenid, tokenSerial.getTokenindex(), address);
+        if (count > 0) {
+            return;
+        }
+        MultiSignBy multiSignBy = new MultiSignBy(tokenid, tokenSerial.getTokenindex(), address);
+        store.insertMultisignby(multiSignBy);
+        if (canCreateGenesisBlock(tokens, tokenSerial.getTokenindex())) {
+//            long amount = tokenSerial.getAmount();
+//            Coin coin = Coin.valueOf(amount, tokenid);
+//            Block block = createGenesisBlock(coin, tokenid, pubKey, blocktype);
+            // TODO create genesis block 
+        }
+    }
+
+    public boolean canCreateGenesisBlock(Tokens tokens, long tokenindex) throws BlockStoreException {
+        int count = this.store.getCountMultiSignByAlready(tokens.getTokenid(), tokenindex);
+        if (count >= tokens.getSignnumber()) {
+            return true;
+        }
+        return false;
     }
 
     public Block createGenesisBlock(Coin coin, byte[] tokenid, byte[] pubKey, boolean blocktype) throws Exception {
@@ -204,5 +258,4 @@ public class TransactionService {
         }
         store.streamBlocks(heightstart, kafkaMessageProducer);
     }
-
 }

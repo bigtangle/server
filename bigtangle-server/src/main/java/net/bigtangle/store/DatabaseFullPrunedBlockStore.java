@@ -274,12 +274,16 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     
     protected String SELECT_MULTISIGNADDRESS_SQL = "SELECT tokenid, address FROM multisignaddress WHERE tokenid = ?";
     protected String INSERT_MULTISIGNADDRESS_SQL = "INSERT INTO multisignaddress (tokenid, address) VALUES (?, ?)";
-    protected String DELETE_MULTISIGNADDRESS_SQL = "DELETE FROM multisignaddress WHERE tokenid = ? and address = ?";
+    protected String DELETE_MULTISIGNADDRESS_SQL = "DELETE FROM multisignaddress WHERE tokenid = ? AND address = ?";
     protected String COUNT_MULTISIGNADDRESS_SQL = "SELECT COUNT(*) as count FROM multisignaddress WHERE tokenid = ?";
+    protected String SELECT_MULTISIGNADDRESSINFO_SQL = "SELECT tokenid, address FROM multisignaddress WHERE tokenid = ? AND address = ?";
     
     protected String INSERT_TOKENSERIAL_SQL = "INSERT INTO tokenserial (tokenid, tokenindex, amount) VALUES (?, ?, ?)";
+    protected String SELECT_TOKENSERIAL_SQL = "SELECT tokenid, tokenindex, amount FROM tokenserial WHERE tokenid = ? AND tokenindex = ?";
 
     protected String INSERT_MULTISIGNBY_SQL = "INSERT INTO multisignby (tokenid, tokenindex, address) VALUES (?, ?, ?)";
+    protected String SELECT_MULTISIGNBY_SQL = "SELECT COUNT(*) as count FROM multisignby WHERE tokenid = ? AND tokenindex = ? AND address = ?";
+    protected String SELECT_MULTISIGNBY0_SQL = "SELECT COUNT(*) as count FROM multisignby WHERE tokenid = ? AND tokenindex = ?";
 
     protected Sha256Hash chainHeadHash;
     protected StoredBlock chainHeadBlock;
@@ -2932,6 +2936,118 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setUrl(resultSet.getString("url"));
             }
             return tokens;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public TokenSerial getTokenSerialInfo(String tokenid, long tokenindex) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_TOKENSERIAL_SQL);
+            preparedStatement.setString(1, tokenid);
+            preparedStatement.setLong(2, tokenindex);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            TokenSerial tokenSerial = null;
+            if (resultSet.next()) {
+//                String tokenid = resultSet.getString("tokenid");
+//                long tokenindex = resultSet.getLong("tokenindex");
+                long amount = resultSet.getLong("amount");
+                tokenSerial = new TokenSerial(tokenid, tokenindex, amount);
+            }
+            return tokenSerial;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public MultiSignAddress getMultiSignAddressInfo(String tokenid, String address) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_MULTISIGNADDRESSINFO_SQL);
+            preparedStatement.setString(1, tokenid);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            MultiSignAddress multiSignAddress = null;
+            if (resultSet.next()) {
+                String tokenid0 = resultSet.getString("tokenid");
+                String address0 = resultSet.getString("address");
+                multiSignAddress = new MultiSignAddress(tokenid0, address0);
+            }
+            return multiSignAddress;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public int getCountMultiSignByTokenIndexAndAddress(String tokenid, long tokenindex, String address)
+            throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_MULTISIGNBY_SQL);
+            preparedStatement.setString(1, tokenid);
+            preparedStatement.setLong(2, tokenindex);
+            preparedStatement.setString(3, address);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getInt("count");
+            }
+            return 0;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public int getCountMultiSignByAlready(String tokenid, long tokenindex) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_MULTISIGNBY0_SQL);
+            preparedStatement.setString(1, tokenid);
+            preparedStatement.setLong(2, tokenindex);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getInt("count");
+            }
+            return 0;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } finally {

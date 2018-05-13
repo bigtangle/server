@@ -261,6 +261,14 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
             }
                 break;
+                
+            case multiSign: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                this.transactionService.multiSign(request);
+                this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
+            }
+                break;
             }
         } catch (Exception exception) {
             logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, Utils.HEX.encode(bodyByte), exception);
