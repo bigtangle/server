@@ -126,7 +126,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         List<UTXO> ulist = testTransactionAndGetBalances();
         UTXO myutxo = null;
         for (UTXO u : ulist) {
-            if (Arrays.equals(u.getTokenid(), NetworkParameters.BIGNETCOIN_TOKENID)) {
+            if (Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGNETCOIN_TOKENID)) {
                 myutxo = u;
             }
         }
@@ -202,7 +202,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         UTXO utxo = null;
         List<UTXO> ulist = testTransactionAndGetBalances();
         for (UTXO u : ulist) {
-            if (!Arrays.equals(u.getTokenid(), NetworkParameters.BIGNETCOIN_TOKENID)) {
+            if (!Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGNETCOIN_TOKENID)) {
                 utxo = u;
             }
         }
@@ -257,14 +257,14 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         List<UTXO> ulist = testTransactionAndGetBalances();
         UTXO myutxo = null;
         for (UTXO u : ulist) {
-            if (Arrays.equals(u.getTokenid(), NetworkParameters.BIGNETCOIN_TOKENID)) {
+            if (Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGNETCOIN_TOKENID)) {
                 myutxo = u;
             }
         }
 
         HashMap<String, Object> request = new HashMap<String, Object>();
         request.put("address", yourutxo.getAddress());
-        request.put("tokenid", Utils.HEX.encode(yourutxo.getTokenid()));
+        request.put("tokenid", yourutxo.getTokenid());
         request.put("type", 1);
         request.put("price", 1000);
         request.put("amount", 1000);
@@ -275,7 +275,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
 
         request.put("address", myutxo.getAddress());
-        request.put("tokenid", Utils.HEX.encode(yourutxo.getTokenid()));
+        request.put("tokenid", yourutxo.getTokenid());
         request.put("type", 2);
         request.put("price", 1000);
         request.put("amount", 1000);

@@ -36,14 +36,19 @@ public class UTXO {
     private boolean spent;
     private boolean confirmed;
     private boolean spendPending;
-    private byte[] tokenid;
+    private String tokenid;
 
-    public byte[] getTokenid() {
+    public String getTokenid() {
         return tokenid;
     }
 
-    public void setTokenid(byte[] tokenid) {
+    public void setTokenid(String tokenid) {
         this.tokenid = tokenid;
+    }
+    
+    @Transient 
+    public byte[] getTokenidBuf() {
+        return Utils.HEX.decode(this.tokenid);
     }
 
     /**
@@ -63,7 +68,7 @@ public class UTXO {
      *            The address.
      */
     public UTXO(Sha256Hash hash, long index, Coin value, long height, boolean coinbase, Script script, String address,
-            Sha256Hash blockhash, String fromaddress, String description, byte[] tokenid, boolean spent, boolean confirmed, boolean spendPending) {
+            Sha256Hash blockhash, String fromaddress, String description, String tokenid, boolean spent, boolean confirmed, boolean spendPending) {
         this.hash = hash;
         this.index = index;
         this.value = value;

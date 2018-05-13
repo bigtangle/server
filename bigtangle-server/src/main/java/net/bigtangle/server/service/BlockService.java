@@ -66,7 +66,7 @@ public class BlockService {
         }
         return blocks;
     }
-     // @Cacheable(cacheNames = "BlockEvaluations")
+     @Cacheable(cacheNames = "BlockEvaluations")
     public BlockEvaluation getBlockEvaluation(Sha256Hash hash) throws BlockStoreException {
         return store.getBlockEvaluation(hash);
     }

@@ -15,9 +15,10 @@ import okhttp3.Response;
 public class OkHttp3Util {
 
     public static String post(String url, byte[] b) throws Exception {
-        OkHttpClient client = (new OkHttpClient.Builder()).connectTimeout(5, TimeUnit.MINUTES)
-                .writeTimeout(5, TimeUnit.MINUTES)
-                .readTimeout(5, TimeUnit.MINUTES).build();
+        System.out.println(url);
+        OkHttpClient client = (new OkHttpClient.Builder()).connectTimeout(60, TimeUnit.MINUTES)
+                .writeTimeout(60, TimeUnit.MINUTES)
+                .readTimeout(60, TimeUnit.MINUTES).build();
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), b);
         Request request = new Request.Builder().url(url).post(body).build();
         Response response = client.newCall(request).execute();
@@ -34,9 +35,9 @@ public class OkHttp3Util {
     }
 
     public static byte[] post(String url, String s) throws Exception {
-        OkHttpClient client = (new OkHttpClient.Builder()).connectTimeout(5, TimeUnit.MINUTES)
-                .writeTimeout(5, TimeUnit.MINUTES)
-                .readTimeout(5, TimeUnit.MINUTES).build();
+        OkHttpClient client = (new OkHttpClient.Builder()).connectTimeout(60, TimeUnit.MINUTES)
+                .writeTimeout(60, TimeUnit.MINUTES)
+                .readTimeout(60, TimeUnit.MINUTES).build();
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), s);
         Request request = new Request.Builder().url(url).post(body).build();
         Response response = client.newCall(request).execute();
@@ -53,9 +54,9 @@ public class OkHttp3Util {
     }
 
     public static String postString(String url, String s) throws Exception {
-        OkHttpClient client = (new OkHttpClient.Builder()).connectTimeout(5, TimeUnit.MINUTES)
-                .writeTimeout(5, TimeUnit.MINUTES)
-                .readTimeout(5, TimeUnit.MINUTES).build();
+        OkHttpClient client = (new OkHttpClient.Builder()).connectTimeout(60, TimeUnit.MINUTES)
+                .writeTimeout(60, TimeUnit.MINUTES)
+                .readTimeout(60, TimeUnit.MINUTES).build();
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), s);
         Request request = new Request.Builder().url(url).post(body).build();
         Response response = client.newCall(request).execute();

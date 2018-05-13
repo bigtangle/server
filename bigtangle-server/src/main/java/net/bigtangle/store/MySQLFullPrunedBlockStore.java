@@ -38,7 +38,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    prevblockhash  varbinary(32) NOT NULL,\n" +
             "    prevbranchblockhash  varbinary(32) NOT NULL,\n" +
             "    mineraddress varbinary(255),\n" +
-            "    tokenid varchar(255),\n" +
+            "    tokenid varbinary(255),\n" +
             "    blocktype bigint NOT NULL,\n" +
             "    CONSTRAINT headers_pk PRIMARY KEY (hash) USING BTREE \n" +
             ")";
@@ -85,7 +85,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    CONSTRAINT blockevaluation_pk PRIMARY KEY (blockhash)  USING BTREE )\n";
     
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n" +
-            "    tokenid varchar(255) NOT NULL  ,\n" +
+            "    tokenid varbinary(255) NOT NULL  ,\n" +
             "    tokenname varchar(255) ,\n" + 
             "    amount bigint(20) ,\n" +
             "    description varchar(255) ,\n" + 

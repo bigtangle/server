@@ -43,6 +43,7 @@ display  total only in balance and UTXO as dialog for details
             "    tokenid varchar(255) NOT NULL  ,\n" +
             "    tokenname varchar(255) ,\n" + 
             "    description varchar(255) ,\n" + 
+            "    url varchar(255) ,\n" + 
             "    signnumber bigint NOT NULL   ,\n" +
             "    multiserial boolean,\n" +
             "    asmarket boolean,\n" +
@@ -80,6 +81,6 @@ check tokensmulti, if multiserial is false. then check tokenindex <=1
 Stop the token serial:
 	
 
-
+UI manages sign address (add remove, list)
 
 ##usage of
