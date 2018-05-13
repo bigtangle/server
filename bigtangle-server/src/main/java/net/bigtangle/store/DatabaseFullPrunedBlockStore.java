@@ -274,7 +274,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     
     protected String SELECT_MULTISIGNADDRESS_SQL = "SELECT tokenid, address FROM multisignaddress WHERE tokenid = ?";
     protected String INSERT_MULTISIGNADDRESS_SQL = "INSERT INTO multisignaddress (tokenid, address) VALUES (?, ?)";
-    protected String DELETE_MULTISIGNADDRESS_SQL = "delete from multisignaddress where tokenid = ? and address = ?";
+    protected String DELETE_MULTISIGNADDRESS_SQL = "DELETE FROM multisignaddress WHERE tokenid = ? and address = ?";
+    protected String COUNT_MULTISIGNADDRESS_SQL = "SELECT COUNT(*) as count FROM multisignaddress WHERE tokenid = ?";
     
     protected String INSERT_TOKENSERIAL_SQL = "INSERT INTO tokenserial (tokenid, tokenindex, amount) VALUES (?, ?, ?)";
 
@@ -2880,6 +2881,65 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     preparedStatement.close();
                 } catch (SQLException e) {
                     throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public int getCountMultiSignAddress(String tokenid) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(COUNT_MULTISIGNADDRESS_SQL);
+            preparedStatement.setString(1, tokenid);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getInt("count");
+            }
+            return 0;
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public Tokens getTokensInfo(String tokenid) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_MULTISIGNADDRESS_SQL);
+            preparedStatement.setString(1, tokenid);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            Tokens tokens = null;
+            if (resultSet.next()) {
+                tokens = new Tokens();
+                tokens.setTokenid(resultSet.getString("tokenid"));
+                tokens.setTokenname(resultSet.getString("tokenname"));
+                tokens.setDescription(resultSet.getString("description"));
+                tokens.setAsmarket(resultSet.getBoolean("asmarket"));
+                tokens.setSignnumber(resultSet.getLong("signnumber"));
+                tokens.setMultiserial(resultSet.getBoolean("multiserial"));
+                tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
+                tokens.setUrl(resultSet.getString("url"));
+            }
+            return tokens;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
                 }
             }
         }
