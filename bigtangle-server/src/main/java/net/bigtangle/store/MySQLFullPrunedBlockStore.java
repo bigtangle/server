@@ -85,12 +85,35 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    CONSTRAINT blockevaluation_pk PRIMARY KEY (blockhash)  USING BTREE )\n";
     
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n" +
-            "    tokenid varbinary(255) NOT NULL  ,\n" +
+            "    tokenid varchar(255) NOT NULL  ,\n" +
             "    tokenname varchar(255) ,\n" + 
-            "    amount bigint(20) ,\n" +
             "    description varchar(255) ,\n" + 
-            "    blocktype bigint ,\n" +
+            "    url varchar(255) ,\n" + 
+            "    signnumber bigint NOT NULL   ,\n" +
+            "    multiserial boolean,\n" +
+            "    asmarket boolean,\n" +
+             "   tokenstop boolean,\n" +
             "    PRIMARY KEY (tokenid) \n)";
+              
+ private static final String CREATE_MULTISIGNADDRESS_TABLE = "CREATE TABLE multisignaddress (\n" +
+            "    tokenid varchar(255) NOT NULL  ,\n" +
+            "    address varchar(35),\n" +
+            "    PRIMARY KEY (tokenid, address) \n)"; 
+            
+                      
+  private static final String CREATE_TOKENSERIAL_TABLE = "CREATE TABLE tokenserial (\n" +
+            "    tokenid varchar(255) NOT NULL  ,\n" +
+            "    tokenindex bigint NOT NULL   ,\n" +
+            "    amount bigint(20) ,\n" +
+            "    PRIMARY KEY (tokenid, tokenindex) \n)";
+
+
+            
+ private static final String CREATE_MULTISIGNBY_TABLE = "CREATE TABLE multisignby (\n" +
+            "    tokenid varchar(255) NOT NULL  ,\n" +
+            "    tokenindex bigint NOT NULL   ,\n" +
+            "    address varchar(35),\n" +
+            "    PRIMARY KEY (tokenid,tokenindex, address) \n)";  
     
     
     private static final String CREATE_ORDERPUBLISH_TABLE = "CREATE TABLE orderpublish (\n" +
@@ -164,6 +187,10 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_ORDERPUBLISH_TABLE);
         sqlStatements.add(CREATE_ORDERMATCH_TABLE);
         sqlStatements.add(CREATE_EXCHANGE_TABLE);
+        
+        sqlStatements.add(CREATE_MULTISIGNADDRESS_TABLE);
+        sqlStatements.add(CREATE_TOKENSERIAL_TABLE);
+        sqlStatements.add(CREATE_MULTISIGNBY_TABLE);
         return sqlStatements;
     }
 

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Tokens;
+import net.bigtangle.core.Utils;
 import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.GetTokensResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -25,12 +26,9 @@ public class TokensService {
         List<Tokens> list = new ArrayList<Tokens>();
 
         Tokens tokens = new Tokens();
-        tokens.setTokenid(NetworkParameters.BIGNETCOIN_TOKENID);
+        tokens.setTokenid(Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID));
         tokens.setTokenname(MonetaryFormat.CODE_BTC);
-        tokens.setAmount(100000L);
-        // tokens.setDescription("default");
-        tokens.setBlocktype((int) NetworkParameters.BLOCKTYPE_GENESIS);
-
+        
         list.add(tokens);
         list.addAll(store.getTokensList());
 
@@ -41,11 +39,8 @@ public class TokensService {
         List<Tokens> list = new ArrayList<Tokens>();
 
         Tokens tokens = new Tokens();
-        tokens.setTokenid(NetworkParameters.BIGNETCOIN_TOKENID);
+        tokens.setTokenid(Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID));
         tokens.setTokenname(MonetaryFormat.CODE_BTC);
-        tokens.setAmount(100000L);
-        // tokens.setDescription("default");
-        tokens.setBlocktype((int) NetworkParameters.BLOCKTYPE_GENESIS);
 
         list.add(tokens);
         list.addAll(store.getTokensList(name));

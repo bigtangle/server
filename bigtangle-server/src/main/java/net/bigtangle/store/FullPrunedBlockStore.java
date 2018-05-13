@@ -13,11 +13,14 @@ import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Exchange;
+import net.bigtangle.core.MultiSignAddress;
+import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.OrderMatch;
 import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.StoredUndoableBlock;
+import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UTXOProvider;
@@ -251,8 +254,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void saveTokens(Tokens tokens) throws BlockStoreException;
 
-    public void saveTokens(byte[] tokenid, String tokenname, long amount, String description, int blocktype)
-            throws BlockStoreException;
+    public void saveTokens(String tokenid, String tokenname, String description, String url, long signnumber, 
+            boolean multiserial, boolean asmarket, boolean tokenstop) throws BlockStoreException;
 
     public void saveOrderPublish(OrderPublish orderPublish) throws BlockStoreException;
 
@@ -284,4 +287,14 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void  streamBlocks(long heightstart, KafkaMessageProducer kafkaMessageProducer)  throws BlockStoreException;
 
     public List<OrderPublish> getOrderPublishListWithNotMatch() throws BlockStoreException;
+    
+    public List<MultiSignAddress> getMultiSignAddressListByTokenid(String tokenid) throws BlockStoreException;
+    
+    public void insertMultiSignAddress(MultiSignAddress multiSignAddress) throws BlockStoreException;
+    
+    public void deleteMultiSignAddress(String tokenid, String address) throws BlockStoreException;
+    
+    public void insertTokenSerial(TokenSerial tokenSerial) throws BlockStoreException;
+    
+    public void insertMultisignby(MultiSignBy multisignby) throws BlockStoreException;
 }

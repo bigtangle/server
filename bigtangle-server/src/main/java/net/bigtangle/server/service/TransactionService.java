@@ -106,16 +106,14 @@ public class TransactionService {
         Block block = createGenesisBlock(coin, tokenid, pubKey, blocktype);
         block.toString();
         // log.debug(networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize()).toString());
-        Tokens tokens = new Tokens();
-        tokens.setTokenid(tokenid);
-        tokens.setTokenname(tokenname);
-        tokens.setAmount(amount);
-        if (blocktype) {
-            tokens.setBlocktype((int) NetworkParameters.BLOCKTYPE_GENESIS);
-        } else {
-            tokens.setBlocktype((int) NetworkParameters.BLOCKTYPE_GENESIS_MULTIPLE);
-        }
-        tokens.setDescription(description);
+        
+        String url = request.containsKey("url") ? (String) request.get("url") : "";
+        long signnumber = request.containsKey("signnumber") ? Long.parseLong(request.get("signnumber").toString()) : 0L;
+        boolean multiserial = request.containsKey("multiserial") ? Boolean.parseBoolean(request.get("multiserial").toString()) : false;
+        boolean asmarket = request.containsKey("asmarket") ? Boolean.parseBoolean(request.get("asmarket").toString()) : false;
+        boolean tokenstop = request.containsKey("tokenstop") ? Boolean.parseBoolean(request.get("tokenstop").toString()) : false;
+        
+        Tokens tokens = new Tokens(tokenHex, tokenname, description, url, signnumber, multiserial, asmarket, tokenstop);
         store.saveTokens(tokens);
 
         return block.bitcoinSerialize();
