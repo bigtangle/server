@@ -53,7 +53,7 @@
 		</VBox>
 		<HBox alignment="CENTER" prefHeight="68.0" prefWidth="701.0" styleClass="title-banner">
 			<children>
-				<Label prefHeight="66.0" prefWidth="139.0" styleClass="title-label" text="%Transfer">
+				<Label prefHeight="66.0" prefWidth="139.0" styleClass="title-label" alignment="CENTER" text="%Transfer">
 					<font>
 						<Font size="25.0" />
 					</font>

@@ -107,7 +107,7 @@
 						</AnchorPane>
 					</content>
 				</Tab>
-				<Tab closable="false" text="%search">
+				<Tab closable="false" text="%sign">
 					<content>
 						<AnchorPane maxHeight="550.0" maxWidth="1000.0" minHeight="550.0" minWidth="1000.0" prefHeight="550.0" prefWidth="1000.0">
 							<children>
@@ -135,7 +135,7 @@
 		</TabPane>
 		<HBox alignment="CENTER" prefHeight="68.0" prefWidth="1000.0" styleClass="title-banner">
 			<children>
-				<Label maxHeight="1.7976931348623157E308" styleClass="title-label" text="%market">
+				<Label maxHeight="1.7976931348623157E308" styleClass="title-label"  alignment="CENTER" text="%market">
 					<font>
 						<Font size="30.0" />
 					</font>

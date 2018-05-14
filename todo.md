@@ -15,15 +15,15 @@
 
 
 data in transaction:
-	Structure data into transaction ofr transfer, see Email PGP
+	Structure data into transaction for transfer, see Email PGP
 	transfer encrpyte ddata into tangle with  owner private key.
-	It must remove the usgae of public key hash, but public key.
+	It must remove the usage of public key hash, but public key.
 	
      Shareable data enable to add my post address:
   Structure data post address as avro/protobuf into data, see Email PGP
   data is secured by signed by private key
    transfer my data to other:  signed the data by other public key
-   postaddress + public encrypted
+   post address + public encrypted
    
   	  
 merge  tables heards and blockevaluation into single table blocks, avoid join for milestone  
