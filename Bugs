@@ -90,3 +90,14 @@ Change the size of transactions in block
 The data for token must be treated as UTXO table plus the other data
 
 
+## add memo into transaction 
+
+UI payment add field for payment memo:
+add this to the  SendRequest->setMemo
+
+On the server change the Transaction to add serialized
+
+change uxto description to mem write to UTXO -> 
+
+
+

@@ -4531,7 +4531,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
             req.tx.setPurpose(Transaction.Purpose.USER_PAYMENT);
             // Record the exchange rate that was valid when the transaction was
             // completed.
-            req.tx.setExchangeRate(req.exchangeRate);
+       
             req.tx.setMemo(req.memo);
             req.completed = true;
             log.info("  completed: {}", req.tx);
