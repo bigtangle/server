@@ -202,6 +202,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String INSERT_TOKENS_SQL = getInsert()
             + "  INTO tokens (tokenid, tokenname, description, url, signnumber, multiserial, asmarket, tokenstop) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     protected String SELECT_TOKENS_SQL = "select tokenid, tokenname, description, url, signnumber, multiserial, asmarket, tokenstop from tokens";
+    protected String SELECT_TOKENS_INFO_SQL = "select tokenid, tokenname, description, url, signnumber, multiserial, asmarket, tokenstop from tokens where tokenid = ?";
 
     protected String INSERT_ORDERPUBLISH_SQL = getInsert()
             + "  INTO orderpublish (orderid, address, tokenid, type, validateto, validatefrom,"
@@ -2920,7 +2921,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_MULTISIGNADDRESS_SQL);
+            preparedStatement = conn.get().prepareStatement(SELECT_TOKENS_INFO_SQL);
             preparedStatement.setString(1, tokenid);
             ResultSet resultSet = preparedStatement.executeQuery();
             Tokens tokens = null;
@@ -2986,6 +2987,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_MULTISIGNADDRESSINFO_SQL);
             preparedStatement.setString(1, tokenid);
+            preparedStatement.setString(2, address);
             ResultSet resultSet = preparedStatement.executeQuery();
             MultiSignAddress multiSignAddress = null;
             if (resultSet.next()) {

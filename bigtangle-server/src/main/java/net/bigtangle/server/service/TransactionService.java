@@ -19,6 +19,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.ECKey;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
@@ -114,14 +115,15 @@ public class TransactionService {
         Tokens tokens = new Tokens(tokenHex, tokenname, description, url, signnumber, multiserial, asmarket, tokenstop);
         store.saveTokens(tokens);
         
-        // TODO pubKeyHex == address ?
-        MultiSignAddress multiSignAddress = new MultiSignAddress(tokenHex, pubKeyHex);
+        ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(pubKeyHex));
+        String address = ecKey.toAddress(this.networkParameters).toString();
+        MultiSignAddress multiSignAddress = new MultiSignAddress(tokenHex, address);
         store.insertMultiSignAddress(multiSignAddress);
         
         TokenSerial tokenSerial = new TokenSerial(tokenHex, 0L, amount);
         store.insertTokenSerial(tokenSerial);
 
-        MultiSignBy multiSignBy = new MultiSignBy(tokenHex, 0L, pubKeyHex);
+        MultiSignBy multiSignBy = new MultiSignBy(tokenHex, 0L, address);
         store.insertMultisignby(multiSignBy);
         
         if (tokens.getSignnumber() == 1L) {

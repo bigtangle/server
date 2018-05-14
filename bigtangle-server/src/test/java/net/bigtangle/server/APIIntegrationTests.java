@@ -15,6 +15,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.BlockStoreException;
@@ -31,23 +43,10 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.script.Script;
-import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.Wallet;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -74,8 +73,8 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     @Autowired
     private MilestoneService milestoneService;
 
-    @Autowired
-    private BlockService blockService;
+//    @Autowired
+//    private BlockService blockService;
 
     // @Test
     public void createECKey() {
@@ -201,12 +200,45 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         requestParam.put("description", "Test");
         requestParam.put("blocktype", true);
         requestParam.put("tokenHex", Utils.HEX.encode(outKey.getPubKeyHash()));
+        requestParam.put("signnumber", 3);
+        OkHttp3Util.post(contextRoot + ReqCmd.createGenesisBlock.name(), Json.jsonmapper().writeValueAsString(requestParam));
 
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.createGenesisBlock.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        logger.info("createGenesisBlock resp : " + block);
-        testRequestBlock(block);
+        requestParam.clear();
+        requestParam.put("tokenid", Utils.HEX.encode(outKey.getPubKeyHash()));
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultisignaddress.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        logger.info("getMultisignaddress resp : " + resp);
+        
+        ECKey ecKey = new ECKey();
+        requestParam.clear();
+        requestParam.put("tokenid", Utils.HEX.encode(outKey.getPubKeyHash()));
+        requestParam.put("address", ecKey.toAddress(this.networkParameters).toString());
+        resp = OkHttp3Util.postString(contextRoot + ReqCmd.addMultisignaddress.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        logger.info("addMultisignaddress resp : " + resp);
+        
+        requestParam.clear();
+        requestParam.put("tokenid", Utils.HEX.encode(outKey.getPubKeyHash()));
+        resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultisignaddress.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        logger.info("getMultisignaddress resp : " + resp);
+        
+        requestParam.clear();
+        requestParam.put("tokenid", Utils.HEX.encode(outKey.getPubKeyHash()));
+        requestParam.put("address", ecKey.toAddress(this.networkParameters).toString());
+        requestParam.put("tokenindex", 0);
+        resp = OkHttp3Util.postString(contextRoot + ReqCmd.multiSign.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        logger.info("addMultisignaddress resp : " + resp);
+        
+        requestParam.clear();
+        requestParam.put("tokenid", Utils.HEX.encode(outKey.getPubKeyHash()));
+        resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultisignaddress.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        logger.info("getMultisignaddress resp : " + resp);
+    }
+    
+    @Test
+    public void testECKey() {
+        ECKey outKey = new ECKey();
+        System.out.println(Utils.HEX.encode(outKey.getPubKeyHash()));
+        ECKey ecKey = ECKey.fromPublicOnly(outKey.getPubKey());
+        System.out.println(Utils.HEX.encode(ecKey.getPubKeyHash()));
     }
 
     public void testRequestBlock(Block block) throws Exception {
