@@ -69,7 +69,7 @@
 				</Tab>
 			</tabs>
 		</TabPane>
-		<HBox prefHeight="68.0" prefWidth="1000.0" styleClass="title-banner">
+		<HBox alignment="CENTER" prefHeight="68.0" prefWidth="1000.0" styleClass="title-banner">
 			<children>
 				<Label maxHeight="1.7976931348623157E308" styleClass="title-label" text="%Token">
 					<font>
