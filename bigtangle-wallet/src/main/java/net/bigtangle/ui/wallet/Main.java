@@ -36,7 +36,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -48,6 +47,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
@@ -242,7 +242,7 @@ public class Main extends Application {
         // after we start it.
         setupWalletKit(null);
         mainWindow.getIcons().add(new Image(getClass().getResourceAsStream("bitcoin_logo_plain.png")));
-        
+
         mainWindow.show();
 
         WalletSetPasswordController.estimateKeyDerivationTimeMsec();
@@ -540,7 +540,6 @@ public class Main extends Application {
 
     }
 
-
     public static List<UTXO> getUTXOWithECKeyList(List<ECKey> ecKeys, String tokenid) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
@@ -556,7 +555,7 @@ public class Main extends Application {
             }
             for (Map<String, Object> object : outputs) {
                 UTXO utxo = MapToBeanMapperUtil.parseUTXO(object);
-                if (! (utxo.getTokenid().equals( tokenid))) {
+                if (!(utxo.getTokenid().equals(tokenid))) {
                     continue;
                 }
                 if (utxo.getValue().getValue() > 0) {
@@ -582,7 +581,7 @@ public class Main extends Application {
         }
         for (Map<String, Object> object : outputs) {
             UTXO utxo = MapToBeanMapperUtil.parseUTXO(object);
-            if (! utxo.getTokenid().equals( tokenid)) {
+            if (!utxo.getTokenid().equals(tokenid)) {
                 continue;
             }
             if (utxo.getValue().getValue() > 0) {
@@ -641,6 +640,18 @@ public class Main extends Application {
         // producerConfig.setProperty(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
         // configuration.getSchemaRegistryUrl());
         return producerConfig;
+    }
+
+    /**
+     * is HH:mm:ss
+     * 
+     * @param time
+     * @return
+     */
+    public static boolean isTime(String time) {
+        Pattern p = Pattern
+                .compile("((((0?[0-9])|([1][0-9])|([2][0-4]))\\:([0-5]?[0-9])((\\s)|(\\:([0-5]?[0-9])))))?$");
+        return p.matcher(time).matches();
     }
 
 }

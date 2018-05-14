@@ -4,6 +4,8 @@
  *******************************************************************************/
 package net.bigtangle.ui.wallet;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
@@ -32,10 +34,18 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
+import net.bigtangle.ui.wallet.utils.TextFieldValidator;
+import net.bigtangle.ui.wallet.utils.WTUtils;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.OrderState;
 
 public class OrderController extends ExchangeController {
+
+    @FXML
+    public TextField fromTimeTF;
+    @FXML
+    public TextField toTimeTF;
+
     @FXML
     public TextField limitTextField;
     @FXML
@@ -95,7 +105,7 @@ public class OrderController extends ExchangeController {
     @FXML
     public TableColumn<Map<String, Object>, String> amountCol;
 
-   // public Main.OverlayUI<?> overlayUI;
+    // public Main.OverlayUI<?> overlayUI;
 
     @FXML
     public void initialize() {
@@ -124,6 +134,9 @@ public class OrderController extends ExchangeController {
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             initComboBox(true);
             initTable(requestParam);
+            super.initialize();
+            new TextFieldValidator(fromTimeTF, text -> !WTUtils.didThrow(() -> checkState(Main.isTime(text))));
+            new TextFieldValidator(toTimeTF, text -> !WTUtils.didThrow(() -> checkState(Main.isTime(text))));
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
@@ -264,8 +277,8 @@ public class OrderController extends ExchangeController {
         long price = Coin.parseCoinValue(this.limitTextField.getText());
         requestParam.put("price", price);
         requestParam.put("amount", amount);
-        requestParam.put("validateto", validdateTo);
-        requestParam.put("validatefrom", validdateFrom);
+        requestParam.put("validateto", validdateTo+" "+toTimeTF.getText());
+        requestParam.put("validatefrom", validdateFrom+" "+fromTimeTF.getText());
         // TODO xiao mi change
         String market = marketComboBox.getValue();
         requestParam.put("market", market);
