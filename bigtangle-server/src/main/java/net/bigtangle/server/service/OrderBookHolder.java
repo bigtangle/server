@@ -27,8 +27,8 @@ public class OrderBookHolder {
             GetTokensResponse getTokensResponse = (GetTokensResponse) tokensService.getTokensList();
             ConcurrentHashMap<String, OrderBook> dataMap = new ConcurrentHashMap<String, OrderBook>();
             for (Tokens tokens : getTokensResponse.getTokens()) {
-                this.putOrderBook(dataMap, tokens.getTokenHex(), this.createOrderBook());
-                logger.info("add order book tokenHex : {}, success", tokens.getTokenHex());
+                this.putOrderBook(dataMap, tokens.getTokenid(), this.createOrderBook());
+                logger.info("add order book tokenHex : {}, success", tokens.getTokenid());
             }
             this.dataMap = dataMap;
             List<OrderPublish> orderPublishs = this.orderPublishService.getOrderPublishListWithNotMatch();

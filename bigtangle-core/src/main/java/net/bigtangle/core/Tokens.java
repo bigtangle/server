@@ -103,8 +103,4 @@ public class Tokens implements java.io.Serializable {
     public void setTokenstop(boolean tokenstop) {
         this.tokenstop = tokenstop;
     }
-
-    public String getTokenHex() {
-        return this.tokenid;
-    }
 }
