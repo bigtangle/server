@@ -6,54 +6,33 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane maxHeight="700.0" maxWidth="1000.0" minHeight="700.0"
-	minWidth="1000.0" prefHeight="700.0" prefWidth="1000.0"
-	style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/8"
-	xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.bigtangle.ui.wallet.BlockEvaluationController">
+<AnchorPane maxHeight="700.0" maxWidth="1000.0" minHeight="700.0" minWidth="1000.0" prefHeight="700.0" prefWidth="1000.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.bigtangle.ui.wallet.BlockEvaluationController">
 	<children>
-		<TableView fx:id="blockEvaluationTable" editable="true"
-			layoutX="6.0" layoutY="155.0" prefHeight="455.0" prefWidth="980.0">
+		<TableView fx:id="blockEvaluationTable" editable="true" layoutX="6.0" layoutY="155.0" prefHeight="455.0" prefWidth="980.0">
 			<columns>
-				<TableColumn fx:id="blockhashColumn" prefWidth="196.0"
-					text="%blockhash" />
+				<TableColumn fx:id="blockhashColumn" prefWidth="196.0" text="%blockhash" />
 				<TableColumn fx:id="ratingColumn" prefWidth="90.0" text="%rating" />
 				<TableColumn fx:id="depthColumn" prefWidth="61.0" text="%depth" />
-				<TableColumn fx:id="cumulativeWeightColumn" prefWidth="155.0"
-					text="%cumulativeWeight" />
+				<TableColumn fx:id="cumulativeWeightColumn" prefWidth="155.0" text="%cumulativeWeight" />
 				<TableColumn fx:id="heightColumn" prefWidth="60.0" text="%height" />
-				<TableColumn fx:id="milestoneDepthColumn" prefWidth="68.0"
-					text="%milestoneDepth" />
+				<TableColumn fx:id="milestoneDepthColumn" prefWidth="68.0" text="%milestoneDepth" />
 				<TableColumn fx:id="solidColumn" prefWidth="53.0" text="%solid" />
-				<TableColumn fx:id="milestoneColumn" prefWidth="79.0"
-					text="%milestone" />
-				<TableColumn fx:id="maintainedColumn" prefWidth="50.0"
-					text="%maintained" />
-				<TableColumn fx:id="rewardValidColumn" prefWidth="50.0"
-					text="%rewardValid" />
-				<TableColumn fx:id="milestoneLastUpdateTimeColumn"
-					prefWidth="50.0" text="%milestoneLastUpdateTime" />
-				<TableColumn fx:id="insertTimeColumn" prefWidth="59.0"
-					text="%insertTime" />
+				<TableColumn fx:id="milestoneColumn" prefWidth="79.0" text="%milestone" />
+				<TableColumn fx:id="maintainedColumn" prefWidth="50.0" text="%maintained" />
+				<TableColumn fx:id="rewardValidColumn" prefWidth="50.0" text="%rewardValid" />
+				<TableColumn fx:id="milestoneLastUpdateTimeColumn" prefWidth="50.0" text="%milestoneLastUpdateTime" />
+				<TableColumn fx:id="insertTimeColumn" prefWidth="59.0" text="%insertTime" />
 			</columns>
 		</TableView>
-		<Button cancelButton="true" layoutX="929.0" layoutY="624.0"
-			mnemonicParsing="false" onAction="#closeUI" text="%close" />
-		<Label layoutX="40.0" layoutY="99.0" prefHeight="15.0"
-			prefWidth="126.0" text="%address" />
-		<ComboBox fx:id="addressComboBox" editable="true" layoutX="173.0"
-			layoutY="95.0" prefHeight="23.0" prefWidth="299.0" />
-		<Button defaultButton="true" layoutX="658.0" layoutY="95.0"
-			mnemonicParsing="false" onAction="#searchBlock" prefHeight="23.0"
-			prefWidth="111.0" text="%search" />
-		<TextField fx:id="latestAmountTextField" layoutX="480.0"
-			layoutY="95.0" promptText="%lastest" />
-		<Button defaultButton="true" layoutX="808.0" layoutY="624.0"
-			mnemonicParsing="false" onAction="#showBlock" text="%showBlock" />
-		<HBox alignment="CENTER" prefHeight="68.0" prefWidth="1000.0"
-			styleClass="title-banner">
+		<Button cancelButton="true" layoutX="927.0" layoutY="624.0" maxWidth="60.0" minWidth="60.0" mnemonicParsing="false" onAction="#closeUI" prefWidth="60.0" text="%close" />
+		<Label layoutX="40.0" layoutY="99.0" prefHeight="15.0" prefWidth="126.0" text="%address" />
+		<ComboBox fx:id="addressComboBox" editable="true" layoutX="173.0" layoutY="95.0" prefHeight="23.0" prefWidth="299.0" />
+		<Button defaultButton="true" layoutX="658.0" layoutY="95.0" mnemonicParsing="false" onAction="#searchBlock" prefHeight="23.0" prefWidth="111.0" text="%search" />
+		<TextField fx:id="latestAmountTextField" layoutX="480.0" layoutY="95.0" promptText="%lastest" />
+		<Button defaultButton="true" layoutX="808.0" layoutY="624.0" mnemonicParsing="false" onAction="#showBlock" text="%showBlock" />
+		<HBox alignment="CENTER" prefHeight="68.0" prefWidth="1000.0" styleClass="title-banner">
 			<children>
-				<Label maxHeight="1.7976931348623157E308" styleClass="title-label"
-					text="%Blocks">
+				<Label maxHeight="1.7976931348623157E308" styleClass="title-label" text="%Blocks">
 					<font>
 						<Font size="30.0" />
 					</font>
