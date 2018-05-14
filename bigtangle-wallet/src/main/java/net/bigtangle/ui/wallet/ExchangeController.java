@@ -90,9 +90,9 @@ public class ExchangeController {
     public TableColumn<Map<String, Object>, String> toSignCol;
     public TableColumn<Map<String, Object>, String> fromSignCol;
 
-    private Transaction mTransaction;
+    public Transaction mTransaction;
 
-    private String mOrderid;
+    public String mOrderid;
 
     @FXML
     public void initialize() {

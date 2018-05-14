@@ -35,7 +35,7 @@ import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.OrderState;
 
-public class OrderController {
+public class OrderController extends ExchangeController {
     @FXML
     public TextField limitTextField;
     @FXML
@@ -95,7 +95,7 @@ public class OrderController {
     @FXML
     public TableColumn<Map<String, Object>, String> amountCol;
 
-    public Main.OverlayUI<?> overlayUI;
+   // public Main.OverlayUI<?> overlayUI;
 
     @FXML
     public void initialize() {

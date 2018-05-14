@@ -58,8 +58,8 @@
 								<Label layoutX="24.0" layoutY="436.0" prefHeight="15.0" prefWidth="120.0" text="%market" GridPane.rowIndex="7" />
 								<ComboBox fx:id="addressComboBox" editable="true" layoutX="227.0" layoutY="43.0" prefHeight="23.0" prefWidth="394.0" GridPane.columnIndex="1" />
 								<TextField fx:id="limitTextField" layoutX="227.0" layoutY="155.0" prefWidth="394.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-								<Button layoutX="566.0" layoutY="487.0" mnemonicParsing="false" onAction="#closeUI" text="%close" GridPane.columnIndex="1" GridPane.rowIndex="8" />
-								<Button layoutX="461.0" layoutY="487.0" mnemonicParsing="false" onAction="#buy" text="%save" GridPane.rowIndex="8" />
+								<Button cancelButton="true" layoutX="566.0" layoutY="487.0" mnemonicParsing="false" onAction="#closeUI" text="%close" GridPane.columnIndex="1" GridPane.rowIndex="8" />
+								<Button defaultButton="true" layoutX="461.0" layoutY="487.0" mnemonicParsing="false" onAction="#buy" text="%save" GridPane.rowIndex="8" />
 								<ComboBox fx:id="tokenComboBox" editable="true" layoutX="227.0" layoutY="99.0" prefHeight="23.0" prefWidth="394.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
 								<Label layoutX="24.0" layoutY="159.0" prefHeight="15.0" prefWidth="120.0" text="%limit" GridPane.rowIndex="2" />
 								<Label layoutX="24.0" layoutY="103.0" prefHeight="15.0" prefWidth="120.0" text="%token" textAlignment="CENTER" GridPane.rowIndex="1" />
@@ -80,16 +80,65 @@
 						</AnchorPane>
 					</content>
 				</Tab>
+				<Tab closable="false" text="%Exchange">
+					<content>
+						<AnchorPane>
+							<children>
+								<ComboBox fx:id="toAddressComboBox" editable="true" layoutX="225.0" layoutY="25.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" GridPane.columnIndex="1" />
+								<Label layoutX="25.0" layoutY="244.0" maxWidth="300.0" minWidth="150.0" prefWidth="150.0" text="%from_Address" GridPane.rowIndex="3" />
+								<TextField fx:id="fromAmountTextField" layoutX="225.0" layoutY="382.0" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+								<Label layoutX="25.0" layoutY="29.0" maxWidth="300.0" minWidth="150.0" prefHeight="15.0" prefWidth="150.0" text="%to_Address" />
+								<Button cancelButton="true" layoutX="571.0" layoutY="433.0" mnemonicParsing="false" onAction="#closeUI" text="%close" GridPane.columnIndex="2" GridPane.rowIndex="6" />
+								<ComboBox fx:id="fromTokenHexComboBox" editable="true" layoutX="225.0" layoutY="311.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+								<ComboBox fx:id="fromAddressComboBox" editable="true" layoutX="225.0" layoutY="240.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+								<Label layoutX="25.0" layoutY="101.0" maxWidth="300.0" minWidth="150.0" prefHeight="15.0" prefWidth="150.0" text="%to_tokenid" GridPane.rowIndex="1" />
+								<TextField fx:id="toAmountTextField" layoutX="225.0" layoutY="169.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+								<Label layoutX="25.0" layoutY="173.0" maxWidth="300.0" minWidth="150.0" prefWidth="150.0" text="%to_tokenAmount" GridPane.rowIndex="2" />
+								<ComboBox fx:id="toTokenHexComboBox" editable="true" layoutX="225.0" layoutY="97.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+								<Label layoutX="25.0" layoutY="386.0" maxWidth="300.0" minWidth="150.0" prefWidth="150.0" text="%from_Amount" GridPane.rowIndex="5" />
+								<Label layoutX="25.0" layoutY="315.0" maxWidth="300.0" minWidth="150.0" prefWidth="150.0" text="%from_Tokenid" GridPane.rowIndex="4" />
+								<Button defaultButton="true" layoutX="225.0" layoutY="433.0" mnemonicParsing="false" onAction="#exchangeCoin" text="%Exchange" />
+								<Button defaultButton="true" layoutX="406.0" layoutY="433.0" mnemonicParsing="false" onAction="#exportBlock" text="%export" GridPane.columnIndex="2" />
+								<Button defaultButton="true" layoutX="324.0" layoutY="433.0" mnemonicParsing="false" onAction="#importBlock" text="%import" GridPane.columnIndex="1" />
+								<Button defaultButton="true" layoutX="495.0" layoutY="433.0" mnemonicParsing="false" onAction="#refund" text="%refund" GridPane.columnIndex="3" />
+							</children>
+						</AnchorPane>
+					</content>
+				</Tab>
+				<Tab closable="false" text="%search">
+					<content>
+						<AnchorPane maxHeight="550.0" maxWidth="1000.0" minHeight="550.0" minWidth="1000.0" prefHeight="550.0" prefWidth="1000.0">
+							<children>
+								<TableView fx:id="exchangeTable" layoutX="14.0" layoutY="14.0" prefHeight="460.0" prefWidth="977.0">
+									<columns>
+										<TableColumn fx:id="orderidsCol" prefWidth="1.0" text="%orderid" visible="false" />
+										<TableColumn fx:id="dataHexCol" prefWidth="1.0" text="%dataHex" visible="false" />
+										<TableColumn fx:id="fromAddressCol" prefWidth="128.0" text="%from_Address" />
+										<TableColumn fx:id="fromTokenidCol" prefWidth="159.0" text="%from_Tokenid" />
+										<TableColumn fx:id="fromAmountCol" prefWidth="110.0" text="%from_Amount" />
+										<TableColumn fx:id="toAddressCol" prefWidth="137.0" text="%to_Address" />
+										<TableColumn fx:id="toTokenidCol" prefWidth="138.0" text="%to_tokenid" />
+										<TableColumn fx:id="toAmountCol" prefWidth="122.0" text="%to_tokenAmount" />
+										<TableColumn fx:id="toSignCol" prefWidth="71.0" text="%to_sign" />
+										<TableColumn fx:id="fromSignCol" prefWidth="102.0" text="%from_sign" />
+									</columns>
+								</TableView>
+								<Button cancelButton="true" layoutX="937.0" layoutY="494.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />
+								<Button defaultButton="true" layoutX="818.0" layoutY="494.0" mnemonicParsing="false" onAction="#signExchange" text="%sign" />
+							</children>
+						</AnchorPane>
+					</content>
+				</Tab>
 			</tabs>
 		</TabPane>
-      <HBox alignment="CENTER" prefHeight="68.0" prefWidth="1000.0" styleClass="title-banner">
-         <children>
-            <Label maxHeight="1.7976931348623157E308" styleClass="title-label" text="%market">
-               <font>
-                  <Font size="30.0" />
-               </font>
-            </Label>
-         </children>
-      </HBox>
+		<HBox alignment="CENTER" prefHeight="68.0" prefWidth="1000.0" styleClass="title-banner">
+			<children>
+				<Label maxHeight="1.7976931348623157E308" styleClass="title-label" text="%market">
+					<font>
+						<Font size="30.0" />
+					</font>
+				</Label>
+			</children>
+		</HBox>
 	</children>
 </AnchorPane>
