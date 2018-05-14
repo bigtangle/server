@@ -37,6 +37,7 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderMatch;
 import net.bigtangle.core.PrunedException;
+import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
@@ -161,6 +162,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Transaction t = new Transaction(networkParameters);
         t.addOutput(new TransactionOutput(networkParameters, t, amount, toKey));
         t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
+        t.setTokens(new Tokens(Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID), "J", "J", "", 100L, true, true, true));
 
         rollingBlock.addTransaction(t);
         rollingBlock.solve();

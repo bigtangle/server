@@ -33,6 +33,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
@@ -219,7 +220,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         milestoneService.update();
     }
 
-    // TODO no money@Test
+    @Test
     public void createTransaction() throws Exception {
         milestoneService.update();
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -233,6 +234,10 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         Coin amount = Coin.parseCoin("0.02", NetworkParameters.BIGNETCOIN_TOKENID);
         SendRequest request = SendRequest.to(destination, amount);
         walletAppKit.wallet().completeTx(request);
+        request.tx.setMemo("memo");
+        request.tx.setDataType(10000);
+        request.tx.setTokens(new Tokens(Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID),
+                "J", "J", "", 100, true, true, true));
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
 
@@ -240,6 +245,11 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         logger.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
 
         testTransactionAndGetBalances();
+        
+        Transaction transaction = (Transaction) networkParameters.getDefaultSerializer().makeTransaction(request.tx.bitcoinSerialize());
+        logger.info("transaction, memo : " + transaction.getMemo());
+        logger.info("transaction, tokens : " + transaction.getTokens());
+        logger.info("transaction, datatype : " + transaction.getDataType());
     }
 
     @SuppressWarnings("deprecation")

@@ -160,12 +160,8 @@ public class Transaction extends ChildMessage {
     private long version;
     private ArrayList<TransactionInput> inputs;
     private ArrayList<TransactionOutput> outputs;
-   //This is the generated serialized data, for token creation and other file data, must be on the tangle to 
-    //It must be treated as transaction output save to UTXO in milestone 
-    private byte[] data;
     
     private long lockTime;
-    
     
     // This is either the time the transaction was broadcast as measured from
     // the local clock, or the time from the
@@ -248,8 +244,14 @@ public class Transaction extends ChildMessage {
     @Nullable
     private String memo;
 
+    //This is the generated serialized data, for token creation and other file data, must be on the tangle to 
+    //It must be treated as transaction output save to UTXO in milestone 
+    @Nullable
+    private Tokens tokens;
     
-    
+    @Nullable
+    private long dataType;
+
     public Transaction(NetworkParameters params  ) {
         super(params);
         version = 1;
@@ -661,6 +663,33 @@ public class Transaction extends ChildMessage {
         }
         lockTime = readUint32();
         optimalEncodingMessageSize += 4;
+        
+        long len = readUint32();
+        optimalEncodingMessageSize += 4;
+        
+        if (len > 0) {
+            byte[] data = readBytes((int) len);
+            this.memo = new String(data);
+            optimalEncodingMessageSize += len;
+        }
+        
+        this.dataType = readUint32();
+        optimalEncodingMessageSize += 4;
+        
+        len = readUint32();
+        optimalEncodingMessageSize += 4;
+        
+        if (len > 0) {
+            try {
+                byte[] data = readBytes((int) len);
+                String jsonStr = new String(data);
+                this.tokens = Json.jsonmapper().readValue(jsonStr, Tokens.class);
+                optimalEncodingMessageSize += len;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        
         length = cursor - offset;
     }
 
@@ -1258,6 +1287,25 @@ public class Transaction extends ChildMessage {
         for (TransactionOutput out : outputs)
             out.bitcoinSerialize(stream);
         uint32ToByteStreamLE(lockTime, stream);
+        
+        if (this.memo == null || this.memo.equals("")) {
+            uint32ToByteStreamLE(0L, stream);
+        }
+        else {
+            byte[] data = this.memo.getBytes();
+            uint32ToByteStreamLE(data.length, stream);
+            stream.write(data);
+        }
+        uint32ToByteStreamLE(this.dataType, stream);
+        if (this.tokens == null) {
+            uint32ToByteStreamLE(0L, stream);
+        }
+        else {
+            String jsonStr = Json.jsonmapper().writeValueAsString(this.tokens);
+            byte[] data = jsonStr.getBytes();
+            uint32ToByteStreamLE(data.length, stream);
+            stream.write(data);
+        }
     }
 
     /**
@@ -1584,5 +1632,22 @@ public class Transaction extends ChildMessage {
      */
     public void setMemo(String memo) {
         this.memo = memo;
+    }
+    
+    
+    public Tokens getTokens() {
+        return tokens;
+    }
+
+    public void setTokens(Tokens tokens) {
+        this.tokens = tokens;
+    }
+
+    public long getDataType() {
+        return dataType;
+    }
+
+    public void setDataType(long dataType) {
+        this.dataType = dataType;
     }
 }

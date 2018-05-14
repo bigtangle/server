@@ -90,6 +90,10 @@ public class Utils {
         out[offset + 6] = (byte) (0xFF & (val >> 48));
         out[offset + 7] = (byte) (0xFF & (val >> 56));
     }
+    
+    public static void bytesToByteStream(byte[] b, OutputStream stream) throws IOException {
+        stream.write(b);
+    }
 
     public static void uint32ToByteStreamLE(long val, OutputStream stream) throws IOException {
         stream.write((int) (0xFF & val));

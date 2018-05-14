@@ -103,4 +103,13 @@ public class Tokens implements java.io.Serializable {
     public void setTokenstop(boolean tokenstop) {
         this.tokenstop = tokenstop;
     }
+
+    @Override
+    public String toString() {
+        return "Tokens [tokenid=" + tokenid + ", tokenname=" + tokenname + ", description=" + description + ", url="
+                + url + ", signnumber=" + signnumber + ", multiserial=" + multiserial + ", asmarket=" + asmarket
+                + ", tokenstop=" + tokenstop + "]";
+    }
+    
+    
 }
