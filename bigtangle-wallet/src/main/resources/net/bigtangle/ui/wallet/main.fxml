@@ -59,8 +59,6 @@
 					onAction="#orders" text="%market" />
 				<Button fx:id="stock" defaultButton="true" onAction="#stockPublish"
 					text="%Token" />
-				<Button fx:id="exchange" defaultButton="true"
-					mnemonicParsing="false" onAction="#exchangeCoin" text="%Exchange" />
 				<Button defaultButton="true" mnemonicParsing="false"
 					onAction="#modyfySIgn" text="%multiSign" />
 				<Button defaultButton="true" mnemonicParsing="false"

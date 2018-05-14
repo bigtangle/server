@@ -160,7 +160,10 @@ public class Transaction extends ChildMessage {
     private long version;
     private ArrayList<TransactionInput> inputs;
     private ArrayList<TransactionOutput> outputs;
-
+   //This is the generated serialized data, for token creation and other file data, must be on the tangle to 
+    //It must be treated as transaction output save to UTXO in milestone 
+    private byte[] data;
+    
     private long lockTime;
     
     
@@ -237,12 +240,6 @@ public class Transaction extends ChildMessage {
 
     private Purpose purpose = Purpose.UNKNOWN;
 
-    /**
-     * This field can be used by applications to record the exchange rate that
-     * was valid when the transaction happened. It's optional.
-     */
-    @Nullable
-    private ExchangeRate exchangeRate;
 
     /**
      * This field can be used to record the memo of the payment request that
@@ -1573,21 +1570,7 @@ public class Transaction extends ChildMessage {
         this.purpose = purpose;
     }
 
-    /**
-     * Getter for {@link #exchangeRate}.
-     */
-    @Nullable
-    public ExchangeRate getExchangeRate() {
-        return exchangeRate;
-    }
-
-    /**
-     * Setter for {@link #exchangeRate}.
-     */
-    public void setExchangeRate(ExchangeRate exchangeRate) {
-        this.exchangeRate = exchangeRate;
-    }
-
+  
     /**
      * Returns the transaction {@link #memo}.
      */

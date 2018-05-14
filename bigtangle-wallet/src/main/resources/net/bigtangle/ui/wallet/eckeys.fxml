@@ -27,7 +27,7 @@
 		<Button defaultButton="true" layoutX="808.0" layoutY="649.0" mnemonicParsing="false" onAction="#showPrivateKey" text="%shwoPrivKey" />
       <HBox alignment="CENTER" prefHeight="68.0" prefWidth="1000.0" styleClass="title-banner">
          <children>
-            <Label maxHeight="1.7976931348623157E308" styleClass="title-label" text="%Keys">
+            <Label maxHeight="1.7976931348623157E308" styleClass="title-label" alignment="CENTER" text="%Keys">
                <font>
                   <Font size="30.0" />
                </font>
