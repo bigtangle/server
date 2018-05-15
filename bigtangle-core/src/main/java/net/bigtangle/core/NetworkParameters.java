@@ -55,8 +55,8 @@ public abstract class NetworkParameters {
     public static final String ID_UNITTESTNET = "net.bigtangle.unittest";
 
     // Token id for System Coin  
-    public static final String BIGNETCOIN_TOKENID_String = "0000000000000000000000000000000000000000";
-    public static final byte[] BIGNETCOIN_TOKENID = HEX.decode(BIGNETCOIN_TOKENID_String);
+    public static final String BIGNETCOIN_TOKENID_STRING = "0000000000000000000000000000000000000000";
+    public static final byte[] BIGNETCOIN_TOKENID = HEX.decode(BIGNETCOIN_TOKENID_STRING);
 
     // DUMMY Token id byte[20]
     public static final byte[] DUMMY_TOKENID = HEX.decode("1111111111111111111111111111111111111111");

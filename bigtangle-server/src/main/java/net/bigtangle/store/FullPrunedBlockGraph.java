@@ -37,6 +37,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.StoredUndoableBlock;
+import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -345,6 +346,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 					// TODO save token
 					txOutsCreated.add(newOut);
 				}
+				if (tx.getTokens() != null) {
+				    this.synchronizationToken(tx.getTokens());
+				}
 				if (!checkOutput(valueOut))
 					throw new VerificationException("Transaction output value out of range");
 				if (isCoinBase) {
@@ -393,7 +397,23 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 		return new TransactionOutputChanges(txOutsCreated, txOutsSpent);
 	}
 
-	public boolean checkOutput(Map<String, Coin> valueOut) {
+	private void synchronizationToken(Tokens tokens) throws BlockStoreException {
+	    if (tokens.getTokenid().equals(NetworkParameters.BIGNETCOIN_TOKENID_STRING)) {
+	        return;
+	    }
+	    String tokenid = tokens.getTokenid();
+	    Tokens newToken = this.blockStore.getTokensInfo(tokenid);
+	    if (newToken == null) {
+	        newToken = new Tokens().copy(tokens);
+	        this.blockStore.saveTokens(newToken);
+	    }
+	    else if (!newToken.compare(tokens)) {
+	        newToken.copy(tokens);
+	        this.blockStore.updateTokens(newToken);
+	    }
+    }
+
+    public boolean checkOutput(Map<String, Coin> valueOut) {
 
 		for (Map.Entry<String, Coin> entry : valueOut.entrySet()) {
 			// System.out.println(entry.getKey() + "/" + entry.getValue());

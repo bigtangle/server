@@ -2319,6 +2319,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
+    public void updateTokens(Tokens newToken) {
+        // TODO update token
+    }
+
+    @Override
     public void saveOrderPublish(OrderPublish orderPublish) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;

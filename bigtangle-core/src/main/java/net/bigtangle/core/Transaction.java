@@ -634,6 +634,32 @@ public class Transaction extends ChildMessage {
     @Override
     protected void parse() throws ProtocolException {
         cursor = offset;
+        
+        long len = readUint32();
+        optimalEncodingMessageSize += 4;
+        
+        if (len > 0) {
+            byte[] data = readBytes((int) len);
+            this.memo = new String(data);
+            optimalEncodingMessageSize += len;
+        }
+        
+        this.dataType = readUint32();
+        optimalEncodingMessageSize += 4;
+        
+        len = readUint32();
+        optimalEncodingMessageSize += 4;
+        
+        if (len > 0) {
+            try {
+                byte[] data = readBytes((int) len);
+                String jsonStr = new String(data);
+                this.tokens = Json.jsonmapper().readValue(jsonStr, Tokens.class);
+                optimalEncodingMessageSize += len;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
         version = readUint32();
         optimalEncodingMessageSize = 4;
@@ -664,31 +690,7 @@ public class Transaction extends ChildMessage {
         lockTime = readUint32();
         optimalEncodingMessageSize += 4;
         
-        long len = readUint32();
-        optimalEncodingMessageSize += 4;
-        
-        if (len > 0) {
-            byte[] data = readBytes((int) len);
-            this.memo = new String(data);
-            optimalEncodingMessageSize += len;
-        }
-        
-        this.dataType = readUint32();
-        optimalEncodingMessageSize += 4;
-        
-        len = readUint32();
-        optimalEncodingMessageSize += 4;
-        
-        if (len > 0) {
-            try {
-                byte[] data = readBytes((int) len);
-                String jsonStr = new String(data);
-                this.tokens = Json.jsonmapper().readValue(jsonStr, Tokens.class);
-                optimalEncodingMessageSize += len;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+
         
         length = cursor - offset;
     }
@@ -1279,15 +1281,6 @@ public class Transaction extends ChildMessage {
 
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        uint32ToByteStreamLE(version, stream);
-        stream.write(new VarInt(inputs.size()).encode());
-        for (TransactionInput in : inputs)
-            in.bitcoinSerialize(stream);
-        stream.write(new VarInt(outputs.size()).encode());
-        for (TransactionOutput out : outputs)
-            out.bitcoinSerialize(stream);
-        uint32ToByteStreamLE(lockTime, stream);
-        
         if (this.memo == null || this.memo.equals("")) {
             uint32ToByteStreamLE(0L, stream);
         }
@@ -1306,6 +1299,18 @@ public class Transaction extends ChildMessage {
             uint32ToByteStreamLE(data.length, stream);
             stream.write(data);
         }
+        
+        uint32ToByteStreamLE(version, stream);
+        stream.write(new VarInt(inputs.size()).encode());
+        for (TransactionInput in : inputs)
+            in.bitcoinSerialize(stream);
+        stream.write(new VarInt(outputs.size()).encode());
+        for (TransactionOutput out : outputs)
+            out.bitcoinSerialize(stream);
+        
+        uint32ToByteStreamLE(lockTime, stream);
+        
+
     }
 
     /**

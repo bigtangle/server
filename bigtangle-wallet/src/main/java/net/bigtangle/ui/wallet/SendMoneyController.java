@@ -118,7 +118,7 @@ public class SendMoneyController {
                     for (String temp : tokens) {
                         // ONLY log System.out.println("temp:" + temp);
                         if ((!temp.equals("") && temp.contains(tokenHex))
-                                || NetworkParameters.BIGNETCOIN_TOKENID_String.equalsIgnoreCase(tokenHex)
+                                || NetworkParameters.BIGNETCOIN_TOKENID_STRING.equalsIgnoreCase(tokenHex)
                                 || isMyTokens(tokenHex)) {
                             if (!tokenData.contains(tokenHex)) {
                                 tokenData.add(tokenHex);

@@ -4,6 +4,8 @@
  *******************************************************************************/
 package net.bigtangle.core;
 
+import java.lang.reflect.Field;
+
 public class Tokens implements java.io.Serializable {
     
     private static final long serialVersionUID = 6992138619113601243L;
@@ -110,6 +112,36 @@ public class Tokens implements java.io.Serializable {
                 + url + ", signnumber=" + signnumber + ", multiserial=" + multiserial + ", asmarket=" + asmarket
                 + ", tokenstop=" + tokenstop + "]";
     }
-    
-    
+
+    public Tokens copy(Tokens tokens) {
+        this.tokenid = tokens.getTokenid();
+        this.tokenname = tokens.getTokenname();
+        this.description = tokens.getDescription();
+        this.url = tokens.getUrl();
+        this.signnumber = tokens.getSignnumber();
+        this.multiserial = tokens.isMultiserial();
+        this.asmarket = tokens.isAsmarket();
+        this.tokenstop = tokens.isTokenstop();
+        return this;
+    }
+
+    public boolean compare(Tokens token) {
+        try {
+            Class<?> clazz1 = this.getClass();
+            Class<?> clazz2 = token.getClass();
+            for (Field field : clazz1.getDeclaredFields()) {
+                String fieldName = field.getName();
+                String value1 = String.valueOf(field.get(this));
+                Field field2 = clazz2.getDeclaredField(fieldName);
+                String value2 = String.valueOf(field2.get(token));
+                if (value1.equals(value2) == false) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        catch (Exception e) {
+            return true;
+        }
+    }
 }

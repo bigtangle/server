@@ -726,6 +726,7 @@ public class Block extends Message {
     }
 
     private void checkMerkleRoot() throws VerificationException {
+        System.out.println("merkleRoot >>>>>>>>>>>>>>>> " + merkleRoot);
         Sha256Hash calculatedRoot = calculateMerkleRoot();
         if (!calculatedRoot.equals(merkleRoot)) {
             log.error("Merkle tree did not verify");
@@ -926,6 +927,7 @@ public class Block extends Message {
             // TODO check if this is really necessary.
             unCacheHeader();
             merkleRoot = calculateMerkleRoot();
+            System.out.println("merkleRoot >>>>>>>>>>>>>>>> " + merkleRoot);
         }
         return merkleRoot;
     }
