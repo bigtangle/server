@@ -233,11 +233,11 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
         Coin amount = Coin.parseCoin("0.02", NetworkParameters.BIGNETCOIN_TOKENID);
         SendRequest request = SendRequest.to(destination, amount);
+        request.tx.setMemo("memo");
         walletAppKit.wallet().completeTx(request);
-//        request.tx.setMemo("memo");
-//        request.tx.setDataType(10000);
-//        request.tx.setTokens(new Tokens(Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID),
-//                "J", "J", "", 100, true, true, true));
+        request.tx.setDataType(10000);
+        request.tx.setTokens(new Tokens(Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID),
+                "J", "J", "", 100, true, true, true));
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
 

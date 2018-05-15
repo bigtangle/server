@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -28,6 +29,7 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Ints;
@@ -325,10 +327,28 @@ public class Transaction extends ChildMessage {
     @Override
     public Sha256Hash getHash() {
         if (hash == null) {
-            hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(unsafeBitcoinSerialize()));
+            byte[] buf = unsafeBitcoinSerialize();
+            hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(buf, 0, buf.length - calculateOtherDataLen()));
         }
         return hash;
     }
+
+    private int calculateOtherDataLen() {
+        int len = 12;
+        if (this.memo != null && !this.memo.equals("")) {
+            len += this.memo.getBytes().length;
+        }
+        if (this.tokens != null) {
+            try {
+                String jsonStr;
+                jsonStr = Json.jsonmapper().writeValueAsString(this.tokens);
+                len += jsonStr.getBytes().length;
+            } catch (JsonProcessingException e) {
+            }
+        }
+        return len;
+    }
+
 
     /**
      * Used by BitcoinSerializer. The serializer has to calculate a hash for
