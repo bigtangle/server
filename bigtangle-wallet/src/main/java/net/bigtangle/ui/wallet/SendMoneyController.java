@@ -361,7 +361,7 @@ public class SendMoneyController {
     public void checkContact(ActionEvent event) throws Exception {
 
         String homedir = Main.keyFileDirectory;
-        String addresses = Main.getString4file(homedir + "/addresses.txt");
+        String addresses = Main.getString4file(homedir + Main.contactFile);
         if (!addresses.contains(!addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
                 : addressComboBox.getValue().split(",")[1])) {
             TextInputDialog dialog = new TextInputDialog();
