@@ -70,6 +70,8 @@ public class SendMoneyController {
     public ComboBox<String> addressComboBox;
     @FXML
     public TextField linknameTextField;
+    @FXML
+    public TextField memoTF;
 
     public Label titleLabel;
     public TextField amountEdit;
@@ -334,6 +336,7 @@ public class SendMoneyController {
             long factor = 1;
             amount = amount.multiply(factor);
             SendRequest request = SendRequest.to(destination, amount);
+            request.memo = memoTF.getText();
             try {
                 wallet.completeTx(request);
                 rollingBlock.addTransaction(request.tx);
