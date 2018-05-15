@@ -23,7 +23,6 @@ import static com.google.common.base.Preconditions.checkState;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +44,6 @@ import javafx.stage.FileChooser;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
-import net.bigtangle.core.ECKey;
 import net.bigtangle.core.InsufficientMoneyException;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
@@ -58,7 +56,6 @@ import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.ui.wallet.utils.WTUtils;
-import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.SendRequest;
@@ -118,9 +115,14 @@ public class SendMoneyController {
                 if (tokens != null && !tokens.isEmpty()) {
                     for (String temp : tokens) {
                         // ONLY log System.out.println("temp:" + temp);
-                        if (!temp.equals("") && temp.contains(tokenHex)) {
-                            tokenData.add(tokenHex);
-                            names.add(map.get("tokenname").toString());
+                        if ((!temp.equals("") && temp.contains(tokenHex))
+                                || NetworkParameters.BIGNETCOIN_TOKENID_String.equalsIgnoreCase(tokenHex)
+                                || isMyTokens(tokenHex)) {
+                            if (!tokenData.contains(tokenHex)) {
+                                tokenData.add(tokenHex);
+                                names.add(map.get("tokenname").toString());
+                            }
+
                         }
                     }
                 }
@@ -134,6 +136,20 @@ public class SendMoneyController {
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
+
+    }
+
+    public boolean isMyTokens(String tokenHex) {
+        ObservableList<CoinModel> list = Main.instance.getCoinData();
+        if (list != null && !list.isEmpty()) {
+            for (CoinModel coinModel : list) {
+                String temp = coinModel.getTokenid();
+                if (tokenHex.equalsIgnoreCase(temp)) {
+                    return true;
+                }
+            }
+        }
+        return false;
 
     }
 
@@ -244,8 +260,7 @@ public class SendMoneyController {
         try {
             List<UTXO> outputs = new ArrayList<UTXO>();
             outputs.addAll(Main.getUTXOWithPubKeyHash(toAddress00.getHash160(), null));
-            outputs.addAll(Main.getUTXOWithECKeyList(Main.bitcoin.wallet().walletKeys(aesKey),
-                    toCoin.getTokenHex() ));
+            outputs.addAll(Main.getUTXOWithECKeyList(Main.bitcoin.wallet().walletKeys(aesKey), toCoin.getTokenHex()));
 
             SendRequest req = SendRequest.to(toAddress00, toCoin);
 
