@@ -33,6 +33,8 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
@@ -126,7 +128,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         List<UTXO> ulist = testTransactionAndGetBalances();
         UTXO myutxo = null;
         for (UTXO u : ulist) {
-            if (Arrays.equals(u.getTokenid(), NetworkParameters.BIGNETCOIN_TOKENID)) {
+            if (Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGNETCOIN_TOKENID)) {
                 myutxo = u;
             }
         }
@@ -202,7 +204,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         UTXO utxo = null;
         List<UTXO> ulist = testTransactionAndGetBalances();
         for (UTXO u : ulist) {
-            if (!Arrays.equals(u.getTokenid(), NetworkParameters.BIGNETCOIN_TOKENID)) {
+            if (!Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGNETCOIN_TOKENID)) {
                 utxo = u;
             }
         }
@@ -219,7 +221,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         milestoneService.update();
     }
 
-    // TODO no money@Test
+    @Test
     public void createTransaction() throws Exception {
         milestoneService.update();
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -232,7 +234,10 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
         Coin amount = Coin.parseCoin("0.02", NetworkParameters.BIGNETCOIN_TOKENID);
         SendRequest request = SendRequest.to(destination, amount);
+        request.tx.setMemo("memo");
         walletAppKit.wallet().completeTx(request);
+        request.tx.setDataType(10000);
+        
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
 
@@ -240,6 +245,11 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         logger.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
 
         testTransactionAndGetBalances();
+        
+        Transaction transaction = (Transaction) networkParameters.getDefaultSerializer().makeTransaction(request.tx.bitcoinSerialize());
+        logger.info("transaction, memo : " + transaction.getMemo());
+//        logger.info("transaction, tokens : " + Json.jsonmapper().writeValueAsString(transaction.getTokenInfo()));
+        logger.info("transaction, datatype : " + transaction.getDataType());
     }
 
     @SuppressWarnings("deprecation")
@@ -257,14 +267,14 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         List<UTXO> ulist = testTransactionAndGetBalances();
         UTXO myutxo = null;
         for (UTXO u : ulist) {
-            if (Arrays.equals(u.getTokenid(), NetworkParameters.BIGNETCOIN_TOKENID)) {
+            if (Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGNETCOIN_TOKENID)) {
                 myutxo = u;
             }
         }
 
         HashMap<String, Object> request = new HashMap<String, Object>();
         request.put("address", yourutxo.getAddress());
-        request.put("tokenid", Utils.HEX.encode(yourutxo.getTokenid()));
+        request.put("tokenid", yourutxo.getTokenid());
         request.put("type", 1);
         request.put("price", 1000);
         request.put("amount", 1000);
@@ -275,7 +285,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
 
         request.put("address", myutxo.getAddress());
-        request.put("tokenid", Utils.HEX.encode(yourutxo.getTokenid()));
+        request.put("tokenid", yourutxo.getTokenid());
         request.put("type", 2);
         request.put("price", 1000);
         request.put("amount", 1000);

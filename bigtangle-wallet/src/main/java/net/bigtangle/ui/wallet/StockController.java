@@ -38,6 +38,14 @@ public class StockController extends TokensController {
 
     @FXML
     public CheckBox firstPublishCheckBox;
+
+    @FXML
+    public CheckBox multiserialCheckBox;
+    @FXML
+    public CheckBox asmarketCheckBox;
+    @FXML
+    public CheckBox tokenstopCheckBox;
+
     @FXML
     public ComboBox<String> tokenid;
 
@@ -46,6 +54,12 @@ public class StockController extends TokensController {
 
     @FXML
     public TextField stockAmount;
+
+    @FXML
+    public TextField urlTF;
+    @FXML
+    public TextField signnumberTF;
+
     @FXML
     public TextArea stockDescription;
 
@@ -128,9 +142,14 @@ public class StockController extends TokensController {
             requestParam.put("amount",
                     Coin.parseCoin(stockAmount.getText(), Utils.HEX.decode(tokenid.getValue())).getValue());
             requestParam.put("tokenname", stockName.getText());
+            requestParam.put("url", urlTF.getText());
+            requestParam.put("signnumber", signnumberTF.getText());
             requestParam.put("description", stockDescription.getText());
             requestParam.put("tokenHex", tokenid.getValue());
             requestParam.put("blocktype", firstPublishCheckBox.selectedProperty().get());
+            requestParam.put("multiserial", multiserialCheckBox.selectedProperty().get());
+            requestParam.put("asmarket", asmarketCheckBox.selectedProperty().get());
+            requestParam.put("tokenstop", tokenstopCheckBox.selectedProperty().get());
 
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "createGenesisBlock",
                     Json.jsonmapper().writeValueAsString(requestParam));

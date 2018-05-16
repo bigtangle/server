@@ -28,6 +28,7 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Ints;
@@ -39,7 +40,6 @@ import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.script.ScriptOpCodes;
 import net.bigtangle.signers.TransactionSigner;
-import net.bigtangle.utils.ExchangeRate;
 import net.bigtangle.wallet.Wallet;
 import net.bigtangle.wallet.WalletTransaction.Pool;
 
@@ -160,9 +160,8 @@ public class Transaction extends ChildMessage {
     private long version;
     private ArrayList<TransactionInput> inputs;
     private ArrayList<TransactionOutput> outputs;
-
-    private long lockTime;
     
+    private long lockTime;
     
     // This is either the time the transaction was broadcast as measured from
     // the local clock, or the time from the
@@ -237,12 +236,6 @@ public class Transaction extends ChildMessage {
 
     private Purpose purpose = Purpose.UNKNOWN;
 
-    /**
-     * This field can be used by applications to record the exchange rate that
-     * was valid when the transaction happened. It's optional.
-     */
-    @Nullable
-    private ExchangeRate exchangeRate;
 
     /**
      * This field can be used to record the memo of the payment request that
@@ -251,8 +244,14 @@ public class Transaction extends ChildMessage {
     @Nullable
     private String memo;
 
+    //This is the generated serialized data, for token creation and other file data, must be on the tangle to 
+    //It must be treated as transaction output save to UTXO in milestone 
+    @Nullable
+    private TokenInfo tokenInfo;
     
-    
+    @Nullable
+    private long dataType;
+
     public Transaction(NetworkParameters params  ) {
         super(params);
         version = 1;
@@ -326,10 +325,28 @@ public class Transaction extends ChildMessage {
     @Override
     public Sha256Hash getHash() {
         if (hash == null) {
-            hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(unsafeBitcoinSerialize()));
+            byte[] buf = unsafeBitcoinSerialize();
+            hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(buf, 0, buf.length - calculateOtherDataLen()));
         }
         return hash;
     }
+
+    private int calculateOtherDataLen() {
+        int len = 12;
+        if (this.memo != null && !this.memo.equals("")) {
+            len += this.memo.getBytes().length;
+        }
+        if (this.tokenInfo != null) {
+            try {
+                String jsonStr;
+                jsonStr = Json.jsonmapper().writeValueAsString(this.tokenInfo);
+                len += jsonStr.getBytes().length;
+            } catch (JsonProcessingException e) {
+            }
+        }
+        return len;
+    }
+
 
     /**
      * Used by BitcoinSerializer. The serializer has to calculate a hash for
@@ -635,7 +652,7 @@ public class Transaction extends ChildMessage {
     @Override
     protected void parse() throws ProtocolException {
         cursor = offset;
-
+        
         version = readUint32();
         optimalEncodingMessageSize = 4;
 
@@ -664,6 +681,33 @@ public class Transaction extends ChildMessage {
         }
         lockTime = readUint32();
         optimalEncodingMessageSize += 4;
+        
+        long len = readUint32();
+        optimalEncodingMessageSize += 4;
+        
+        if (len > 0) {
+            byte[] data = readBytes((int) len);
+            this.memo = new String(data);
+            optimalEncodingMessageSize += len;
+        }
+        
+        this.dataType = readUint32();
+        optimalEncodingMessageSize += 4;
+        
+        len = readUint32();
+        optimalEncodingMessageSize += 4;
+        
+        if (len > 0) {
+            try {
+                byte[] data = readBytes((int) len);
+                String jsonStr = new String(data);
+                this.tokenInfo = Json.jsonmapper().readValue(jsonStr, TokenInfo.class);
+                optimalEncodingMessageSize += len;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        
         length = cursor - offset;
     }
 
@@ -1260,7 +1304,26 @@ public class Transaction extends ChildMessage {
         stream.write(new VarInt(outputs.size()).encode());
         for (TransactionOutput out : outputs)
             out.bitcoinSerialize(stream);
+        
         uint32ToByteStreamLE(lockTime, stream);
+        if (this.memo == null || this.memo.equals("")) {
+            uint32ToByteStreamLE(0L, stream);
+        }
+        else {
+            byte[] data = this.memo.getBytes();
+            uint32ToByteStreamLE(data.length, stream);
+            stream.write(data);
+        }
+        uint32ToByteStreamLE(this.dataType, stream);
+        if (this.tokenInfo == null) {
+            uint32ToByteStreamLE(0L, stream);
+        }
+        else {
+            String jsonStr = Json.jsonmapper().writeValueAsString(this.tokenInfo);
+            byte[] data = jsonStr.getBytes();
+            uint32ToByteStreamLE(data.length, stream);
+            stream.write(data);
+        }
     }
 
     /**
@@ -1573,21 +1636,7 @@ public class Transaction extends ChildMessage {
         this.purpose = purpose;
     }
 
-    /**
-     * Getter for {@link #exchangeRate}.
-     */
-    @Nullable
-    public ExchangeRate getExchangeRate() {
-        return exchangeRate;
-    }
-
-    /**
-     * Setter for {@link #exchangeRate}.
-     */
-    public void setExchangeRate(ExchangeRate exchangeRate) {
-        this.exchangeRate = exchangeRate;
-    }
-
+  
     /**
      * Returns the transaction {@link #memo}.
      */
@@ -1601,5 +1650,21 @@ public class Transaction extends ChildMessage {
      */
     public void setMemo(String memo) {
         this.memo = memo;
+    }
+
+    public TokenInfo getTokenInfo() {
+        return tokenInfo;
+    }
+
+    public void setTokenInfo(TokenInfo tokenInfo) {
+        this.tokenInfo = tokenInfo;
+    }
+
+    public long getDataType() {
+        return dataType;
+    }
+
+    public void setDataType(long dataType) {
+        this.dataType = dataType;
     }
 }

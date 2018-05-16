@@ -17,20 +17,15 @@ import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockStoreException;
-import net.bigtangle.core.Coin;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.ProtocolException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
-import net.bigtangle.core.UTXO;
-import net.bigtangle.core.UTXOProviderException;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
-import net.bigtangle.script.Script;
 
 /**
  * <p>
@@ -192,8 +187,8 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             s.setString(5, Utils.HEX.encode(storedBlock.getHeader().getPrevBlockHash().getBytes()));
             s.setString(6, Utils.HEX.encode(storedBlock.getHeader().getPrevBranchBlockHash().getBytes()));
             s.setBytes(7, storedBlock.getHeader().getMineraddress());
-            s.setBytes(8, storedBlock.getHeader().getTokenid());
-            s.setLong(9, storedBlock.getHeader().getBlocktype());
+       
+            s.setLong(8, storedBlock.getHeader().getBlocktype());
             s.executeUpdate();
             s.close();
             log.info("add block hexStr : " + storedBlock.getHeader().getHash().toString());
@@ -214,9 +209,13 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         maybeConnect();
         PreparedStatement s = null;
         try {
+            String SELECT_SOLID_APPROVER_HEADERS_SQL = "SELECT  headers.height, header, wasundoable,prevblockhash,"
+                    + "prevbranchblockhash,mineraddress,tokenid,blocktype FROM headers INNER JOIN blockevaluation"
+                    + " ON headers.hash=blockevaluation.blockhash WHERE blockevaluation.solid = true AND (prevblockhash = ?)"
+                    + afterSelect();
             s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_HEADERS_SQL);
             s.setString(1, Utils.HEX.encode(hash.getBytes()));
-            s.setString(2, Utils.HEX.encode(hash.getBytes()));
+//            s.setString(2, Utils.HEX.encode(hash.getBytes()));
             ResultSet results = s.executeQuery();
             while (results.next()) {
                 // Parse it.
@@ -225,7 +224,6 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
                 b.verifyHeader();
                 storedBlocks.add(new StoredBlock(b, height));
             }
-            return storedBlocks;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } catch (ProtocolException e) {
@@ -244,6 +242,41 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
                 }
             }
         }
+        try {
+            String SELECT_SOLID_APPROVER_HEADERS_SQL = "SELECT  headers.height, header, wasundoable,prevblockhash,"
+                    + "prevbranchblockhash,mineraddress,tokenid,blocktype FROM headers INNER JOIN blockevaluation"
+                    + " ON headers.hash=blockevaluation.blockhash WHERE blockevaluation.solid = true AND (prevbranchblockhash = ?)"
+                    + afterSelect();
+            s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_HEADERS_SQL);
+            s.setString(1, Utils.HEX.encode(hash.getBytes()));
+//            s.setString(2, Utils.HEX.encode(hash.getBytes()));
+            ResultSet results = s.executeQuery();
+            while (results.next()) {
+                // Parse it.
+                int height = results.getInt(1);
+                Block b = params.getDefaultSerializer().makeBlock(results.getBytes(2));
+                b.verifyHeader();
+                storedBlocks.add(new StoredBlock(b, height));
+            }
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            // Corrupted database.
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            // Should not be able to happen unless the database contains bad
+            // blocks.
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+        return storedBlocks;
     }
     
     @Override
@@ -252,14 +285,17 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         maybeConnect();
         PreparedStatement s = null;
         try {
+            String SELECT_SOLID_APPROVER_HASHES_SQL = "SELECT headers.hash FROM headers INNER JOIN"
+                    + " blockevaluation ON headers.hash=blockevaluation.blockhash "
+                    + "WHERE blockevaluation.solid = true AND (headers.prevblockhash = ?)"
+                    + afterSelect();
             s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_HASHES_SQL);
             s.setString(1, Utils.HEX.encode(hash.getBytes()));
-            s.setString(2, Utils.HEX.encode(hash.getBytes()));
+//            s.setString(2, Utils.HEX.encode(hash.getBytes()));
             ResultSet results = s.executeQuery();
             while (results.next()) {
                 storedBlockHash.add(Sha256Hash.wrap(results.getBytes(1)));
             }
-            return storedBlockHash;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } catch (ProtocolException e) {
@@ -278,41 +314,27 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
                 }
             }
         }
-    }
-    
-    @Override
-    public UTXO getTransactionOutput(Sha256Hash hash, long index) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(getSelectOpenoutputsSQL());
-            s.setBytes(1, hash.getBytes());
-            // index is actually an unsigned int
-            s.setLong(2, index);
+            String SELECT_SOLID_APPROVER_HASHES_SQL = "SELECT headers.hash FROM headers INNER JOIN"
+                    + " blockevaluation ON headers.hash=blockevaluation.blockhash "
+                    + "WHERE blockevaluation.solid = true AND (headers.prevbranchblockhash = ?)"
+                    + afterSelect();
+            s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_HASHES_SQL);
+            s.setString(1, Utils.HEX.encode(hash.getBytes()));
+//            s.setString(2, Utils.HEX.encode(hash.getBytes()));
             ResultSet results = s.executeQuery();
-            if (!results.next()) {
-                return null;
+            while (results.next()) {
+                storedBlockHash.add(Sha256Hash.wrap(results.getBytes(1)));
             }
-            // Parse it.
-            long height = results.getLong(1);
-            Coin coinvalue = Coin.valueOf(results.getLong(2), Utils.HEX.decode(results.getString(8)));
-            byte[] scriptBytes = results.getBytes(3);
-            boolean coinbase = results.getBoolean(4);
-            String address = results.getString(5);
-            Sha256Hash blockhash = Sha256Hash.wrap(results.getBytes(7));
-
-            String fromaddress = results.getString(9);
-            String description = results.getString(10);
-            boolean spent = results.getBoolean(11);
-            boolean confirmed = results.getBoolean(12);
-            boolean spendPending = results.getBoolean(13);
-            String tokenid = results.getString("tokenid");
-            UTXO txout = new UTXO(hash, index, coinvalue, height, coinbase, new Script(scriptBytes), address, blockhash,
-                    fromaddress, description, Utils.HEX.decode(tokenid), spent, confirmed, spendPending);
-            return txout;
         } catch (SQLException ex) {
-            ex.printStackTrace();
             throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            // Corrupted database.
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            // Should not be able to happen unless the database contains bad
+            // blocks.
+            throw new BlockStoreException(e);
         } finally {
             if (s != null) {
                 try {
@@ -322,148 +344,12 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
                 }
             }
         }
-    }
-    
-    @Override
-    public void addUnspentTransactionOutput(UTXO out) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement s = null;
-        try {
-            s = conn.get().prepareStatement(getInsertOpenoutputsSQL());
-            s.setBytes(1, out.getHash().getBytes());
-            // index is actually an unsigned int
-            s.setLong(2, out.getIndex());
-            s.setLong(3, out.getHeight());
-            s.setLong(4, out.getValue().value);
-            s.setBytes(5, out.getScript().getProgram());
-            s.setString(6, out.getAddress());
-            s.setLong(7, out.getScript().getScriptType().ordinal());
-            s.setBoolean(8, out.isCoinbase());
-            s.setBytes(9, out.getBlockhash().getBytes());
-            s.setString(10, Utils.HEX.encode(out.getValue().tokenid));
-            s.setString(11, out.getFromaddress());
-            s.setString(12, out.getDescription());
-            s.setBoolean(13, out.isSpent());
-            s.setBoolean(14, out.isConfirmed());
-            s.setBoolean(15, out.isSpendPending());
-            s.executeUpdate();
-            s.close();
-        } catch (SQLException e) {
-            if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
-                throw new BlockStoreException(e);
-        } finally {
-            if (s != null) {
-                try {
-                    if (s.getConnection() != null)
-                        s.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException(e);
-                }
-            }
-        }
-    }
-    
-    @Override
-    public List<UTXO> getOpenTransactionOutputs(List<Address> addresses) throws UTXOProviderException {
-        PreparedStatement s = null;
-        List<UTXO> outputs = new ArrayList<UTXO>();
-        try {
-            maybeConnect();
-            s = conn.get().prepareStatement(getTransactionOutputSelectSQL());
-            for (Address address : addresses) {
-                s.setString(1, address.toString());
-                ResultSet rs = s.executeQuery();
-                while (rs.next()) {
-                    Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));
-                    Coin amount = Coin.valueOf(rs.getLong(2), Utils.HEX.decode(rs.getString(10)));
-                    byte[] scriptBytes = rs.getBytes(3);
-                    int height = rs.getInt(4);
-                    int index = rs.getInt(5);
-                    boolean coinbase = rs.getBoolean(6);
-                    String toAddress = rs.getString(7);
-                    // addresstargetable =rs.getBytes(8);
-                    Sha256Hash blockhash = Sha256Hash.wrap(rs.getBytes(9));
-
-                    String fromaddress = rs.getString(11);
-                    String description = rs.getString(12);
-                    boolean spent = rs.getBoolean(13);
-                    boolean confirmed = rs.getBoolean(14);
-                    boolean spendPending = rs.getBoolean(15);
-                    String tokenid = rs.getString("tokenid");
-                    UTXO output = new UTXO(hash, index, amount, height, coinbase, new Script(scriptBytes), toAddress,
-                            blockhash, fromaddress, description, Utils.HEX.decode(tokenid), spent, confirmed, spendPending);
-                    outputs.add(output);
-                }
-            }
-            return outputs;
-        } catch (SQLException ex) {
-        	log.error("getOpenTransactionOutputs sql error, ", ex);
-            throw new UTXOProviderException(ex);
-        } catch (BlockStoreException bse) {
-            throw new UTXOProviderException(bse);
-        } finally {
-            if (s != null)
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                	log.error("Could not close statement", e);
-                    throw new UTXOProviderException("Could not close statement", e);
-                }
-        }
-    }
-    
-    @Override
-    public List<UTXO> getOpenTransactionOutputs(List<Address> addresses, byte[] tokenid00)
-            throws UTXOProviderException {
-        PreparedStatement s = null;
-        List<UTXO> outputs = new ArrayList<UTXO>();
-        try {
-            maybeConnect();
-            s = conn.get().prepareStatement(getTransactionOutputTokenSelectSQL());
-            for (Address address : addresses) {
-                s.setString(1, address.toString());
-                s.setBytes(2, tokenid00);
-                ResultSet rs = s.executeQuery();
-                while (rs.next()) {
-                    Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));
-                    Coin amount = Coin.valueOf(rs.getLong(2), rs.getBytes(10));
-                    byte[] scriptBytes = rs.getBytes(3);
-                    int height = rs.getInt(4);
-                    int index = rs.getInt(5);
-                    boolean coinbase = rs.getBoolean(6);
-                    String toAddress = rs.getString(7);
-                    // addresstargetable =rs.getBytes(8);
-                    Sha256Hash blockhash = Sha256Hash.wrap(rs.getBytes(9));
-
-                    String fromaddress = rs.getString(11);
-                    String description = rs.getString(12);
-                    boolean spent = rs.getBoolean(13);
-                    boolean confirmed = rs.getBoolean(14);
-                    boolean spendPending = rs.getBoolean(15);
-                    String tokenid = rs.getString("tokenid");
-                    UTXO output = new UTXO(hash, index, amount, height, coinbase, new Script(scriptBytes), toAddress,
-                            blockhash, fromaddress, description, Utils.HEX.decode(tokenid), spent, confirmed, spendPending);
-                    outputs.add(output);
-                }
-            }
-            return outputs;
-        } catch (SQLException ex) {
-            throw new UTXOProviderException(ex);
-        } catch (BlockStoreException bse) {
-            throw new UTXOProviderException(bse);
-        } finally {
-            if (s != null)
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    throw new UTXOProviderException("Could not close statement", e);
-                }
-        }
+        return storedBlockHash;
     }
     
     private static final String MYSQL_DUPLICATE_KEY_ERROR_CODE = "23000";
     private static final String DATABASE_DRIVER_CLASS = "org.apache.phoenix.queryserver.client.Driver";
-    private static final String DATABASE_CONNECTION_URL_PREFIX = "jdbc:phoenix:thin:url=http://";
+    private static final String DATABASE_CONNECTION_URL_PREFIX = "jdbc:log4jdbc:phoenix:thin:url=http://";
 
     // create table SQL
     public static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" 
@@ -664,7 +550,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         Sha256Hash hash = chainHead.getHeader().getHash();
         this.chainHeadHash = hash;
         this.chainHeadBlock = chainHead;
-        System.out.println("bbb > " + Utils.HEX.encode(hash.getBytes()));
+       // System.out.println("bbb > " + Utils.HEX.encode(hash.getBytes()));
         maybeConnect();
         try {
             PreparedStatement s = conn.get().prepareStatement(getUpdateSettingsSLQ());
@@ -724,7 +610,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     
     @Override
     public String getUpdateBlockEvaluationMilestoneSQL() {
-        return getUpdate() +" blockevaluation (milestone, blockhash) VALUES (?, ?)";
+        return getUpdate() +" blockevaluation (milestone,milestonelastupdate, blockhash) VALUES (?, ?, ?)";
     }
     
     @Override
@@ -737,11 +623,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         return getUpdate() +" blockevaluation (solid, blockhash) VALUES (?, ?)";
     }
     
-    @Override
-    protected String getUpdateBlockEvaluationMilestoneLastUpdateTimeSQL() {
-        return getUpdate() +" blockevaluation (milestonelastupdate, blockhash) VALUES (?, ?)";
-    }
-    
+   
     @Override
     protected String getUpdateBlockEvaluationMilestoneDepthSQL() {
         return getUpdate() +" blockevaluation (milestonedepth, blockhash) VALUES (?, ?)";

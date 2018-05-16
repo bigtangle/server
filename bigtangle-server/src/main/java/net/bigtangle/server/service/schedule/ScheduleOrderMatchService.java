@@ -62,7 +62,7 @@ public class ScheduleOrderMatchService {
             logger.info("cal order match start");
             GetTokensResponse getTokensResponse = (GetTokensResponse) tokensService.getTokensList();
             for (Tokens tokens : getTokensResponse.getTokens()) {
-                String tokenSTR = tokens.getTokenHex();
+                String tokenSTR = tokens.getTokenid();
                 // System.out.println(tokenSTR);
                 OrderBook orderBook = orderBookHolder.getOrderBookWithTokenId(tokenSTR);
                 if (orderBook == null) {

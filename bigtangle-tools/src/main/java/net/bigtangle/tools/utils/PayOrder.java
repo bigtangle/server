@@ -216,7 +216,7 @@ public class PayOrder {
         }
         for (Map<String, Object> object : outputs) {
             UTXO utxo = MapToBeanMapperUtil.parseUTXO(object);
-            if (!Arrays.equals(utxo.getTokenid(), tokenid)) {
+            if (!Arrays.equals(utxo.getTokenidBuf(), tokenid)) {
                 continue;
             }
             if (utxo.getValue().getValue() > 0) {
@@ -241,7 +241,7 @@ public class PayOrder {
             }
             for (Map<String, Object> object : outputs) {
                 UTXO utxo = MapToBeanMapperUtil.parseUTXO(object);
-                if (!Arrays.equals(utxo.getTokenid(), tokenid)) {
+                if (!Arrays.equals(utxo.getTokenidBuf(), tokenid)) {
                     continue;
                 }
                 if (utxo.getValue().getValue() > 0) {

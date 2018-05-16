@@ -252,10 +252,7 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
         return getUpdate() +" blockevaluation SET solid = ? WHERE blockhash = ?";
     }
     
-    @Override
-    protected String getUpdateBlockEvaluationMilestoneLastUpdateTimeSQL() {
-        return  getUpdate() +" blockevaluation SET milestonelastupdate = ? WHERE blockhash = ?";
-    }
+     
     
     @Override
     protected String getUpdateBlockEvaluationMilestoneDepthSQL() {

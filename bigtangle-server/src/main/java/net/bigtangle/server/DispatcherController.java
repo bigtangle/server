@@ -35,6 +35,7 @@ import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.GetBlockEvaluationsResponse;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.ExchangeService;
+import net.bigtangle.server.service.MultiSignAddressService;
 import net.bigtangle.server.service.OrderPublishService;
 import net.bigtangle.server.service.TokensService;
 import net.bigtangle.server.service.TransactionService;
@@ -67,6 +68,8 @@ public class DispatcherController {
 
     @Autowired
     private KafkaConfiguration kafkaConfiguration;
+    
+    @Autowired MultiSignAddressService multiSignAddressService;
 
     @SuppressWarnings("unchecked")
 	@RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
@@ -231,6 +234,39 @@ public class DispatcherController {
                             (String) request.get("kafka"));
                     this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
                 }
+            }
+                break;
+                
+            case getMultisignaddress: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String tokenid = (String) request.get("tokenid");
+                AbstractResponse response = this.multiSignAddressService.getMultiSignAddressList(tokenid);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+            
+            case addMultisignaddress: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                this.multiSignAddressService.addMultiSignAddress(request);
+                this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
+            }
+                break;
+            
+            case delMultisignaddress: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                this.multiSignAddressService.delMultiSignAddress(request);
+                this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
+            }
+                break;
+                
+            case multiSign: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                this.transactionService.multiSign(request);
+                this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
             }
                 break;
             }

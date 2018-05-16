@@ -20,7 +20,12 @@ allprojects {
 
     repositories {
       //  mavenLocal() 
-        mavenCentral()
+  
+     // maven { url "http://repo.spring.io/plugins-release/" }
+      
+     mavenCentral()
+      maven { url "https://dl.bintray.com/spark-jobserver/maven/" }
+     
     }
 
 
@@ -35,9 +40,9 @@ allprojects {
 subprojects {
 
     apply plugin: 'java'
-    apply plugin: 'idea'
     apply plugin: 'eclipse'
     apply plugin: 'project-report'
+    apply plugin: 'scala'
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
     tasks.withType(JavaCompile) {

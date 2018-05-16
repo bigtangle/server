@@ -2,7 +2,6 @@ plugins {
     id 'org.sonarqube' version '2.2.1'
     id 'jacoco'
     id 'application'
-    id 'idea'
 }
 
 

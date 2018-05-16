@@ -81,6 +81,11 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     public static Coin valueOf(final long satoshis, byte[] tokenid) {
         return new Coin(satoshis, tokenid);
     }
+    
+    public static Coin valueOf(final long satoshis, String tokenid) {
+        byte[] buf = Utils.HEX.decode(tokenid);
+        return new Coin(satoshis, buf);
+    }
 
     @Override
     public int smallestUnitExponent() {

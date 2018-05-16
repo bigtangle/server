@@ -28,15 +28,21 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import ch.qos.logback.core.subst.Token;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
+import net.bigtangle.core.MultiSignAddress;
+import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.StoredUndoableBlock;
+import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.TokenSerial;
+import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -339,9 +345,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 					// in future.
 					Script script = getScript(out.getScriptBytes());
 					UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), height, isCoinBase, script, getScriptAddress(script), block.getHash(),
-							out.getFromaddress(), out.getDescription(), block.getTokenid(), false, false, false);
+							out.getFromaddress(), out.getDescription(),  Utils.HEX.encode(out.getValue().getTokenid()), false, false, false);
 					blockStore.addUnspentTransactionOutput(newOut);
+					
+					// TODO save token
 					txOutsCreated.add(newOut);
+				}
+				if (tx.getTokenInfo() != null) {
+				    this.synchronizationToken(tx.getTokenInfo());
 				}
 				if (!checkOutput(valueOut))
 					throw new VerificationException("Transaction output value out of range");
@@ -391,7 +402,52 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 		return new TransactionOutputChanges(txOutsCreated, txOutsSpent);
 	}
 
-	public boolean checkOutput(Map<String, Coin> valueOut) {
+	private void synchronizationToken(TokenInfo tokenInfo) throws BlockStoreException {
+	    Tokens token = tokenInfo.getTokens();
+	    if (token == null) {
+	        return;
+	    }
+	    if (token.getTokenid().equals(NetworkParameters.BIGNETCOIN_TOKENID_STRING)) {
+	        return;
+	    }
+	    Tokens token0 = this.blockStore.getTokensInfo(token.getTokenid());
+	    if (token0 == null) {
+	        token0 = new Tokens().copy(token);
+	        this.blockStore.saveTokens(token0);
+	    }
+	    else {
+	        token0.copy(token);
+	        this.blockStore.updateTokens(token0);
+	    }
+	    for (MultiSignAddress multiSignAddress : tokenInfo.getMultiSignAddresses()) {
+	        MultiSignAddress multiSignAddress0 = this.blockStore.getMultiSignAddressInfo(
+	                multiSignAddress.getTokenid(), multiSignAddress.getAddress());
+	        if (multiSignAddress0 == null) {
+	            multiSignAddress0 = new MultiSignAddress().copy(multiSignAddress);
+	            blockStore.insertMultiSignAddress(multiSignAddress0);
+	        }
+	    }
+	    for (TokenSerial tokenSerial : tokenInfo.getTokenSerials()) {
+	        TokenSerial tokenSerial0 = this.blockStore.getTokenSerialInfo(tokenSerial.getTokenid(), tokenSerial.getTokenindex()); 
+	        if (tokenSerial0 == null) {
+	            tokenSerial0 = new TokenSerial().copy(tokenSerial);
+	            blockStore.insertTokenSerial(tokenSerial);
+	        }
+	        else {
+	            tokenSerial0.copy(tokenSerial);
+	            blockStore.updateTokenSerial(tokenSerial0);
+	        }
+	    }
+	    for (MultiSignBy multiSignBy : tokenInfo.getMultiSignBies()) {
+	        MultiSignBy multiSignBy0 = this.blockStore.getMultiSignByInfo(multiSignBy.getTokenid(), multiSignBy.getTokenindex(), multiSignBy.getAddress());
+	        if (multiSignBy0 == null) {
+	            multiSignBy0 = new MultiSignBy().copy(multiSignBy);
+	            blockStore.insertMultisignby(multiSignBy);
+	        }
+	    }
+    }
+
+    public boolean checkOutput(Map<String, Coin> valueOut) {
 
 		for (Map.Entry<String, Coin> entry : valueOut.entrySet()) {
 			// System.out.println(entry.getKey() + "/" + entry.getValue());

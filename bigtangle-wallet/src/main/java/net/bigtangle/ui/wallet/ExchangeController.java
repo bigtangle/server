@@ -90,9 +90,9 @@ public class ExchangeController {
     public TableColumn<Map<String, Object>, String> toSignCol;
     public TableColumn<Map<String, Object>, String> fromSignCol;
 
-    private Transaction mTransaction;
+    public Transaction mTransaction;
 
-    private String mOrderid;
+    public String mOrderid;
 
     @FXML
     public void initialize() {
@@ -501,9 +501,9 @@ public class ExchangeController {
         try {
             List<UTXO> outputs = new ArrayList<UTXO>();
             outputs.addAll(
-                    Main.getUTXOWithPubKeyHash(toAddress00.getHash160(), Utils.HEX.decode(fromCoin.getTokenHex())));
-            outputs.addAll(this.getUTXOWithECKeyList(Main.bitcoin.wallet().walletKeys(aesKey),
-                    Utils.HEX.decode(toCoin.getTokenHex())));
+                    Main.getUTXOWithPubKeyHash(toAddress00.getHash160(), fromCoin.getTokenHex()));
+            outputs.addAll( Main.getUTXOWithECKeyList(Main.bitcoin.wallet().walletKeys(aesKey),
+                    toCoin.getTokenHex()));
 
             SendRequest req = SendRequest.to(toAddress00, toCoin);
             req.tx.addOutput(fromCoin, fromAddress00);
@@ -552,32 +552,7 @@ public class ExchangeController {
         overlayUI.done();
     }
 
-    @SuppressWarnings("unchecked")
-    public List<UTXO> getUTXOWithECKeyList(List<ECKey> ecKeys, byte[] tokenid) throws Exception {
-        List<UTXO> listUTXO = new ArrayList<UTXO>();
-        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
-        for (ECKey ecKey : ecKeys) {
-            String response = OkHttp3Util.post(ContextRoot + "getOutputs", ecKey.getPubKeyHash());
-            final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-            if (data == null || data.isEmpty()) {
-                return listUTXO;
-            }
-            List<Map<String, Object>> outputs = (List<Map<String, Object>>) data.get("outputs");
-            if (outputs == null || outputs.isEmpty()) {
-                return listUTXO;
-            }
-            for (Map<String, Object> object : outputs) {
-                UTXO utxo = MapToBeanMapperUtil.parseUTXO(object);
-                if (!Arrays.equals(utxo.getTokenid(), tokenid)) {
-                    continue;
-                }
-                if (utxo.getValue().getValue() > 0) {
-                    listUTXO.add(utxo);
-                }
-            }
-        }
-        return listUTXO;
-    }
+
 
     public Coin getCoin(String toAmount, String toTokenHex, boolean decimal) {
         if (decimal) {

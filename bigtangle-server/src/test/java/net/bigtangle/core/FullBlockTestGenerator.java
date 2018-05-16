@@ -927,7 +927,7 @@ public class FullBlockTestGenerator {
         TransactionOutPointWithValue out14 = spendableOutputs.poll();
 
         // A valid block created exactly like b44 to make sure the creation itself works
-        Block b44 = new Block(params, Block.BLOCK_VERSION_GENESIS, NetworkParameters.BIGNETCOIN_TOKENID,
+        Block b44 = new Block(params, Block.BLOCK_VERSION_GENESIS, 
                 NetworkParameters.BLOCKTYPE_TRANSFER);
         byte[] outScriptBytes = ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(coinbaseOutKeyPubKey)).getProgram();
         {
@@ -952,7 +952,7 @@ public class FullBlockTestGenerator {
         TransactionOutPointWithValue out15 = spendableOutputs.poll();
 
         // A block with a non-coinbase as the first tx
-        Block b45 =   new Block(params, Block.BLOCK_VERSION_GENESIS, NetworkParameters.BIGNETCOIN_TOKENID,
+        Block b45 =   new Block(params, Block.BLOCK_VERSION_GENESIS, 
                 NetworkParameters.BLOCKTYPE_TRANSFER);
         {
             //b45.setDifficultyTarget(b44.getDifficultyTarget());
@@ -979,7 +979,7 @@ public class FullBlockTestGenerator {
         blocks.add(new BlockAndValidity(b45, false, true, b44.getHash(), chainHeadHeight + 15, "b45"));
 
         // A block with no txn
-        Block b46 = new   Block(params, Block.BLOCK_VERSION_GENESIS, NetworkParameters.BIGNETCOIN_TOKENID,
+        Block b46 = new   Block(params, Block.BLOCK_VERSION_GENESIS, 
                 NetworkParameters.BLOCKTYPE_TRANSFER);
         {
             b46.transactions = new ArrayList<Transaction>();

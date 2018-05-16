@@ -4,35 +4,49 @@
  *******************************************************************************/
 package net.bigtangle.core;
 
-public class Tokens {
+import java.lang.reflect.Field;
 
-    private byte[] tokenid;
+public class Tokens implements java.io.Serializable {
+    
+    private static final long serialVersionUID = 6992138619113601243L;
+
+    public Tokens(String tokenid, String tokenname, String description, String url, long signnumber,
+            boolean multiserial, boolean asmarket, boolean tokenstop) {
+        this.tokenid = tokenid;
+        this.tokenname = tokenname;
+        this.description = description;
+        this.url = url;
+        this.signnumber = signnumber;
+        this.multiserial = multiserial;
+        this.asmarket = asmarket;
+        this.tokenstop = tokenstop;
+    }
+    
+    public Tokens() {
+        super();
+    }
+
+    private String tokenid;
     
     private String tokenname;
     
-    private long amount;
-    
     private String description;
     
-    private int blocktype;
+    private String url;
     
-    public int getBlocktype() {
-        return blocktype;
-    }
+    private long signnumber;
+    
+    private boolean multiserial;
+    
+    private boolean asmarket;
+    
+    private boolean tokenstop;
 
-    public void setBlocktype(int blocktype) {
-        this.blocktype = blocktype;
-    }
-
-    public String getTokenHex() {
-        return Utils.HEX.encode(this.tokenid);
-    }
-
-    public byte[] getTokenid() {
+    public String getTokenid() {
         return tokenid;
     }
 
-    public void setTokenid(byte[] tokenid) {
+    public void setTokenid(String tokenid) {
         this.tokenid = tokenid;
     }
 
@@ -44,19 +58,70 @@ public class Tokens {
         this.tokenname = tokenname;
     }
 
-    public long getAmount() {
-        return amount;
-    }
-
-    public void setAmount(long amount) {
-        this.amount = amount;
-    }
-
     public String getDescription() {
         return description;
     }
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public long getSignnumber() {
+        return signnumber;
+    }
+
+    public void setSignnumber(long signnumber) {
+        this.signnumber = signnumber;
+    }
+
+    public boolean isMultiserial() {
+        return multiserial;
+    }
+
+    public void setMultiserial(boolean multiserial) {
+        this.multiserial = multiserial;
+    }
+
+    public boolean isAsmarket() {
+        return asmarket;
+    }
+
+    public void setAsmarket(boolean asmarket) {
+        this.asmarket = asmarket;
+    }
+
+    public boolean isTokenstop() {
+        return tokenstop;
+    }
+
+    public void setTokenstop(boolean tokenstop) {
+        this.tokenstop = tokenstop;
+    }
+
+    @Override
+    public String toString() {
+        return "Tokens [tokenid=" + tokenid + ", tokenname=" + tokenname + ", description=" + description + ", url="
+                + url + ", signnumber=" + signnumber + ", multiserial=" + multiserial + ", asmarket=" + asmarket
+                + ", tokenstop=" + tokenstop + "]";
+    }
+
+    public Tokens copy(Tokens tokens) {
+        this.tokenid = tokens.getTokenid();
+        this.tokenname = tokens.getTokenname();
+        this.description = tokens.getDescription();
+        this.url = tokens.getUrl();
+        this.signnumber = tokens.getSignnumber();
+        this.multiserial = tokens.isMultiserial();
+        this.asmarket = tokens.isAsmarket();
+        this.tokenstop = tokens.isTokenstop();
+        return this;
     }
 }

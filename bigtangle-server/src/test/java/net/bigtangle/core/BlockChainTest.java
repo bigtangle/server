@@ -119,7 +119,7 @@ public class BlockChainTest {
         assertTrue(testNetChain.add(getBlock1()));
         Block b2 = getBlock2();
         assertTrue(testNetChain.add(b2));
-        Block bad = new Block(testNet, Block.BLOCK_VERSION_GENESIS, NetworkParameters.BIGNETCOIN_TOKENID,
+        Block bad = new Block(testNet, Block.BLOCK_VERSION_GENESIS, 
                 NetworkParameters.BLOCKTYPE_TRANSFER);
         // Merkle root can be anything here, doesn't matter.
         bad.setMerkleRoot(Sha256Hash.wrap("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
@@ -321,7 +321,7 @@ public class BlockChainTest {
 
     // Some blocks from the test net.
     private static Block getBlock2() throws Exception {
-        Block b2 = new Block(testNet, Block.BLOCK_VERSION_GENESIS, NetworkParameters.BIGNETCOIN_TOKENID,
+        Block b2 = new Block(testNet, Block.BLOCK_VERSION_GENESIS, 
                 NetworkParameters.BLOCKTYPE_TRANSFER);
         b2.setMerkleRoot(Sha256Hash.wrap("addc858a17e21e68350f968ccd384d6439b64aafa6c193c8b9dd66320470838b"));
         b2.setNonce(2642058077L);
@@ -333,7 +333,7 @@ public class BlockChainTest {
     }
 
     private static Block getBlock1() throws Exception {
-        Block b1 = new Block(testNet, Block.BLOCK_VERSION_GENESIS, NetworkParameters.BIGNETCOIN_TOKENID,
+        Block b1 = new Block(testNet, Block.BLOCK_VERSION_GENESIS, 
                 NetworkParameters.BLOCKTYPE_TRANSFER);
         b1.setMerkleRoot(Sha256Hash.wrap("0e8e58ecdacaa7b3c6304a35ae4ffff964816d2b80b62b58558866ce4e648c10"));
         b1.setNonce(236038445);

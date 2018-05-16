@@ -23,7 +23,6 @@ import static com.google.common.base.Preconditions.checkState;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +44,6 @@ import javafx.stage.FileChooser;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
-import net.bigtangle.core.ECKey;
 import net.bigtangle.core.InsufficientMoneyException;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
@@ -58,7 +56,6 @@ import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.ui.wallet.utils.WTUtils;
-import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.SendRequest;
@@ -73,6 +70,8 @@ public class SendMoneyController {
     public ComboBox<String> addressComboBox;
     @FXML
     public TextField linknameTextField;
+    @FXML
+    public TextField memoTF;
 
     public Label titleLabel;
     public TextField amountEdit;
@@ -118,9 +117,14 @@ public class SendMoneyController {
                 if (tokens != null && !tokens.isEmpty()) {
                     for (String temp : tokens) {
                         // ONLY log System.out.println("temp:" + temp);
-                        if (!temp.equals("") && temp.contains(tokenHex)) {
-                            tokenData.add(tokenHex);
-                            names.add(map.get("tokenname").toString());
+                        if ((!temp.equals("") && temp.contains(tokenHex))
+                                || NetworkParameters.BIGNETCOIN_TOKENID_STRING.equalsIgnoreCase(tokenHex)
+                                || isMyTokens(tokenHex)) {
+                            if (!tokenData.contains(tokenHex)) {
+                                tokenData.add(tokenHex);
+                                names.add(map.get("tokenname").toString());
+                            }
+
                         }
                     }
                 }
@@ -134,6 +138,20 @@ public class SendMoneyController {
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
+
+    }
+
+    public boolean isMyTokens(String tokenHex) {
+        ObservableList<CoinModel> list = Main.instance.getCoinData();
+        if (list != null && !list.isEmpty()) {
+            for (CoinModel coinModel : list) {
+                String temp = coinModel.getTokenid();
+                if (tokenHex.equalsIgnoreCase(temp)) {
+                    return true;
+                }
+            }
+        }
+        return false;
 
     }
 
@@ -244,8 +262,7 @@ public class SendMoneyController {
         try {
             List<UTXO> outputs = new ArrayList<UTXO>();
             outputs.addAll(Main.getUTXOWithPubKeyHash(toAddress00.getHash160(), null));
-            outputs.addAll(this.getUTXOWithECKeyList(Main.bitcoin.wallet().walletKeys(aesKey),
-                    Utils.HEX.decode(toCoin.getTokenHex())));
+            outputs.addAll(Main.getUTXOWithECKeyList(Main.bitcoin.wallet().walletKeys(aesKey), toCoin.getTokenHex()));
 
             SendRequest req = SendRequest.to(toAddress00, toCoin);
 
@@ -280,32 +297,6 @@ public class SendMoneyController {
         byteBuffer.putInt(buf.length).put(buf);
         // System.out.println("tx len : " + buf.length);
         return byteBuffer.array();
-    }
-
-    public List<UTXO> getUTXOWithECKeyList(List<ECKey> ecKeys, byte[] tokenid) throws Exception {
-        List<UTXO> listUTXO = new ArrayList<UTXO>();
-        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
-        for (ECKey ecKey : ecKeys) {
-            String response = OkHttp3Util.post(ContextRoot + "getOutputs", ecKey.getPubKeyHash());
-            final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-            if (data == null || data.isEmpty()) {
-                return listUTXO;
-            }
-            List<Map<String, Object>> outputs = (List<Map<String, Object>>) data.get("outputs");
-            if (outputs == null || outputs.isEmpty()) {
-                return listUTXO;
-            }
-            for (Map<String, Object> object : outputs) {
-                UTXO utxo = MapToBeanMapperUtil.parseUTXO(object);
-                if (!Arrays.equals(utxo.getTokenid(), tokenid)) {
-                    continue;
-                }
-                if (utxo.getValue().getValue() > 0) {
-                    listUTXO.add(utxo);
-                }
-            }
-        }
-        return listUTXO;
     }
 
     public void cancel(ActionEvent event) {
@@ -345,6 +336,7 @@ public class SendMoneyController {
             long factor = 1;
             amount = amount.multiply(factor);
             SendRequest request = SendRequest.to(destination, amount);
+            request.memo = memoTF.getText();
             try {
                 wallet.completeTx(request);
                 rollingBlock.addTransaction(request.tx);
@@ -369,7 +361,7 @@ public class SendMoneyController {
     public void checkContact(ActionEvent event) throws Exception {
 
         String homedir = Main.keyFileDirectory;
-        String addresses = Main.getString4file(homedir + "/addresses.txt");
+        String addresses = Main.getString4file(homedir + Main.contactFile);
         if (!addresses.contains(!addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
                 : addressComboBox.getValue().split(",")[1])) {
             TextInputDialog dialog = new TextInputDialog();
