@@ -241,7 +241,7 @@ public class Main extends Application {
         // Create the app kit. It won't do any heavyweight initialization until
         // after we start it.
         setupWalletKit(null);
-        mainWindow.getIcons().add(new Image(getClass().getResourceAsStream("bitcoin_logo_plain.png")));
+        mainWindow.getIcons().add(new Image(getClass().getResourceAsStream("bigtangle_logo_plain.png")));
 
         mainWindow.show();
 
