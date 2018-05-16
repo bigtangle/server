@@ -75,8 +75,8 @@
                         <Label layoutX="24.0" layoutY="138.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_amount" GridPane.rowIndex="3" />
                         <TextArea fx:id="stockDescription1" layoutX="279.0" layoutY="335.0" prefHeight="160.0" prefWidth="267.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
                         <TextField fx:id="stockAmount1" layoutX="279.0" layoutY="134.0" prefHeight="23.0" prefWidth="265.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                        <Button fx:id="save1" alignment="CENTER" defaultButton="true" layoutX="288.0" layoutY="512.0" mnemonicParsing="false" nodeOrientation="LEFT_TO_RIGHT" onAction="#saveStock" text="%save" GridPane.halignment="CENTER" GridPane.rowIndex="5" GridPane.valignment="TOP" />
-                        <Button fx:id="closeButton1" cancelButton="true" layoutX="386.0" layoutY="512.0" mnemonicParsing="false" onAction="#closeUI" text="%close" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+                        <Button fx:id="save1" alignment="CENTER" defaultButton="true" layoutX="400.0" layoutY="512.0" mnemonicParsing="false" nodeOrientation="LEFT_TO_RIGHT" onAction="#saveStock" text="%save" GridPane.halignment="CENTER" GridPane.rowIndex="5" GridPane.valignment="TOP" />
+                        <Button fx:id="closeButton1" cancelButton="true" layoutX="498.0" layoutY="512.0" mnemonicParsing="false" onAction="#closeUI" text="%close" GridPane.columnIndex="1" GridPane.rowIndex="5" />
                         <CheckBox fx:id="firstPublishCheckBox1" layoutX="280.0" layoutY="23.0" mnemonicParsing="false" text="%first_publish" GridPane.columnIndex="1" />
                         <Label contentDisplay="CENTER" layoutX="24.0" layoutY="328.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_description" GridPane.rowIndex="4" />
                         <ComboBox fx:id="tokenid1" editable="true" layoutX="279.0" layoutY="93.0" prefHeight="23.0" prefWidth="260.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
