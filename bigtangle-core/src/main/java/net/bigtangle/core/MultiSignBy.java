@@ -42,4 +42,11 @@ public class MultiSignBy implements java.io.Serializable {
 
     public MultiSignBy() {
     }
+
+    public MultiSignBy copy(MultiSignBy multiSignBy) {
+        this.tokenid = multiSignBy.getTokenid();
+        this.tokenindex = multiSignBy.getTokenindex();
+        this.address = multiSignBy.getAddress();
+        return this;
+    }
 }

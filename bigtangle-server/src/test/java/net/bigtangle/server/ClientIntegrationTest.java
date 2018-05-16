@@ -33,6 +33,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.UTXO;
@@ -236,8 +237,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         request.tx.setMemo("memo");
         walletAppKit.wallet().completeTx(request);
         request.tx.setDataType(10000);
-        request.tx.setTokens(new Tokens(Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID),
-                "J", "J", "", 100, true, true, true));
+        
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
 
@@ -248,7 +248,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         
         Transaction transaction = (Transaction) networkParameters.getDefaultSerializer().makeTransaction(request.tx.bitcoinSerialize());
         logger.info("transaction, memo : " + transaction.getMemo());
-        logger.info("transaction, tokens : " + transaction.getTokens());
+//        logger.info("transaction, tokens : " + Json.jsonmapper().writeValueAsString(transaction.getTokenInfo()));
         logger.info("transaction, datatype : " + transaction.getDataType());
     }
 

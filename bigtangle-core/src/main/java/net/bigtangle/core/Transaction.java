@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -41,7 +40,6 @@ import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.script.ScriptOpCodes;
 import net.bigtangle.signers.TransactionSigner;
-import net.bigtangle.utils.ExchangeRate;
 import net.bigtangle.wallet.Wallet;
 import net.bigtangle.wallet.WalletTransaction.Pool;
 
@@ -249,7 +247,7 @@ public class Transaction extends ChildMessage {
     //This is the generated serialized data, for token creation and other file data, must be on the tangle to 
     //It must be treated as transaction output save to UTXO in milestone 
     @Nullable
-    private Tokens tokens;
+    private TokenInfo tokenInfo;
     
     @Nullable
     private long dataType;
@@ -338,10 +336,10 @@ public class Transaction extends ChildMessage {
         if (this.memo != null && !this.memo.equals("")) {
             len += this.memo.getBytes().length;
         }
-        if (this.tokens != null) {
+        if (this.tokenInfo != null) {
             try {
                 String jsonStr;
-                jsonStr = Json.jsonmapper().writeValueAsString(this.tokens);
+                jsonStr = Json.jsonmapper().writeValueAsString(this.tokenInfo);
                 len += jsonStr.getBytes().length;
             } catch (JsonProcessingException e) {
             }
@@ -703,7 +701,7 @@ public class Transaction extends ChildMessage {
             try {
                 byte[] data = readBytes((int) len);
                 String jsonStr = new String(data);
-                this.tokens = Json.jsonmapper().readValue(jsonStr, Tokens.class);
+                this.tokenInfo = Json.jsonmapper().readValue(jsonStr, TokenInfo.class);
                 optimalEncodingMessageSize += len;
             } catch (IOException e) {
                 e.printStackTrace();
@@ -1317,11 +1315,11 @@ public class Transaction extends ChildMessage {
             stream.write(data);
         }
         uint32ToByteStreamLE(this.dataType, stream);
-        if (this.tokens == null) {
+        if (this.tokenInfo == null) {
             uint32ToByteStreamLE(0L, stream);
         }
         else {
-            String jsonStr = Json.jsonmapper().writeValueAsString(this.tokens);
+            String jsonStr = Json.jsonmapper().writeValueAsString(this.tokenInfo);
             byte[] data = jsonStr.getBytes();
             uint32ToByteStreamLE(data.length, stream);
             stream.write(data);
@@ -1653,14 +1651,13 @@ public class Transaction extends ChildMessage {
     public void setMemo(String memo) {
         this.memo = memo;
     }
-    
-    
-    public Tokens getTokens() {
-        return tokens;
+
+    public TokenInfo getTokenInfo() {
+        return tokenInfo;
     }
 
-    public void setTokens(Tokens tokens) {
-        this.tokens = tokens;
+    public void setTokenInfo(TokenInfo tokenInfo) {
+        this.tokenInfo = tokenInfo;
     }
 
     public long getDataType() {

@@ -124,24 +124,4 @@ public class Tokens implements java.io.Serializable {
         this.tokenstop = tokens.isTokenstop();
         return this;
     }
-
-    public boolean compare(Tokens token) {
-        try {
-            Class<?> clazz1 = this.getClass();
-            Class<?> clazz2 = token.getClass();
-            for (Field field : clazz1.getDeclaredFields()) {
-                String fieldName = field.getName();
-                String value1 = String.valueOf(field.get(this));
-                Field field2 = clazz2.getDeclaredField(fieldName);
-                String value2 = String.valueOf(field2.get(token));
-                if (value1.equals(value2) == false) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        catch (Exception e) {
-            return true;
-        }
-    }
 }

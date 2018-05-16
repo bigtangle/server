@@ -43,6 +43,9 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.TokenSerial;
+import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
@@ -226,8 +229,14 @@ public abstract class AbstractIntegrationTest {
         // Address address = new Address(PARAMS, toKey.getPubKeyHash());
 
         Transaction t = new Transaction(networkParameters);
+        TokenInfo tokenInfo = new TokenInfo();
+        tokenInfo.setTokens(new Tokens(Utils.HEX.encode(myKey.getPubKeyHash()), "JH", "JH", "", 1, true, true, true));
+        tokenInfo.getTokenSerials().add(new TokenSerial(Utils.HEX.encode(myKey.getPubKeyHash()), 0, -100));
+        t.setTokenInfo(tokenInfo);
+
         t.addOutput(new TransactionOutput(networkParameters, t, amount, myKey.toAddress(networkParameters)));
         t.addSignedInput(spendableOutput, transaction.getOutputs().get(0).getScriptPubKey(), outKey);
+        
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
         blockgraph.add(rollingBlock);

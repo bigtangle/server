@@ -201,6 +201,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String SELECT_MAX_TOKENID_SQL = "select max(tokenid) from tokens";
     protected String INSERT_TOKENS_SQL = getInsert()
             + "  INTO tokens (tokenid, tokenname, description, url, signnumber, multiserial, asmarket, tokenstop) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    
+    protected String UPDATE_TOKENS_SQL = getUpdate()
+            + "  tokens set tokenname = ?, description = ?, url = ?, signnumber = ?, multiserial = ?, asmarket = ?, tokenstop = ? WHERE tokenid = ?";
+    
     protected String SELECT_TOKENS_SQL = "select tokenid, tokenname, description, url, signnumber, multiserial, asmarket, tokenstop from tokens";
     protected String SELECT_TOKENS_INFO_SQL = "select tokenid, tokenname, description, url, signnumber, multiserial, asmarket, tokenstop from tokens where tokenid = ?";
 
@@ -280,11 +284,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String SELECT_MULTISIGNADDRESSINFO_SQL = "SELECT tokenid, address FROM multisignaddress WHERE tokenid = ? AND address = ?";
     
     protected String INSERT_TOKENSERIAL_SQL = "INSERT INTO tokenserial (tokenid, tokenindex, amount) VALUES (?, ?, ?)";
+    protected String UPDATE_TOKENSERIAL_SQL = "UPDATE tokenserial SET amount = ? WHERE tokenid = ? AND tokenindex = ?";
     protected String SELECT_TOKENSERIAL_SQL = "SELECT tokenid, tokenindex, amount FROM tokenserial WHERE tokenid = ? AND tokenindex = ?";
+    protected String SELECT_TOKENSERIAL0_SQL = "SELECT tokenid, tokenindex, amount FROM tokenserial WHERE tokenid = ?";
 
     protected String INSERT_MULTISIGNBY_SQL = "INSERT INTO multisignby (tokenid, tokenindex, address) VALUES (?, ?, ?)";
     protected String SELECT_MULTISIGNBY_SQL = "SELECT COUNT(*) as count FROM multisignby WHERE tokenid = ? AND tokenindex = ? AND address = ?";
     protected String SELECT_MULTISIGNBY0_SQL = "SELECT COUNT(*) as count FROM multisignby WHERE tokenid = ? AND tokenindex = ?";
+    protected String SELECT_MULTISIGNBY000_SQL = "SELECT tokenid, tokenindex, address FROM multisignby WHERE tokenid = ? AND tokenindex = ? AND address = ?";
 
     protected Sha256Hash chainHeadHash;
     protected StoredBlock chainHeadBlock;
@@ -2319,8 +2326,31 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void updateTokens(Tokens newToken) {
-        // TODO update token
+    public void updateTokens(Tokens tokens) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(UPDATE_TOKENS_SQL);
+            preparedStatement.setString(1, tokens.getTokenname());
+            preparedStatement.setString(2, tokens.getDescription());
+            preparedStatement.setString(3, tokens.getUrl());
+            preparedStatement.setLong(4, tokens.getSignnumber());
+            preparedStatement.setBoolean(5, tokens.isMultiserial());
+            preparedStatement.setBoolean(6, tokens.isAsmarket());
+            preparedStatement.setBoolean(7, tokens.isTokenstop());
+            preparedStatement.setString(8, tokens.getTokenid());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
     }
 
     @Override
@@ -3055,6 +3085,60 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 return resultSet.getInt("count");
             }
             return 0;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void updateTokenSerial(TokenSerial tokenSerial0) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(UPDATE_TOKENSERIAL_SQL);
+            preparedStatement.setLong(1, tokenSerial0.getAmount());
+            preparedStatement.setString(2, tokenSerial0.getTokenid());
+            preparedStatement.setLong(3, tokenSerial0.getTokenindex());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public MultiSignBy getMultiSignByInfo(String tokenid, long tokenindex, String address) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_MULTISIGNBY000_SQL);
+            preparedStatement.setString(1, tokenid);
+            preparedStatement.setLong(2, tokenindex);
+            preparedStatement.setString(3, address);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            MultiSignBy multiSignBy = null;
+            if (resultSet.next()) {
+                String tokenid0 = resultSet.getString("tokenid");
+                String address0 = resultSet.getString("address");
+                Long tokenindex0 = resultSet.getLong("tokenindex");
+                multiSignBy = new MultiSignBy(tokenid0, tokenindex0, address0);
+            }
+            return multiSignBy;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } finally {

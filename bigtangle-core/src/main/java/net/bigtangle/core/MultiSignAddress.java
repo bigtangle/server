@@ -31,4 +31,10 @@ public class MultiSignAddress implements java.io.Serializable {
 
     public MultiSignAddress() {
     }
+
+    public MultiSignAddress copy(MultiSignAddress multiSignAddress) {
+        this.tokenid = multiSignAddress.getTokenid();
+        this.address = multiSignAddress.getAddress();
+        return this;
+    }
 }

@@ -1056,9 +1056,18 @@ public class Block extends Message {
      */
 
     public void addCoinbaseTransaction(byte[] pubKeyTo, Coin value) {
+        this.addCoinbaseTransaction(pubKeyTo, value, null);
+    }
+    
+    public void addCoinbaseTransaction(byte[] pubKeyTo, Coin value, TokenInfo tokenInfo) {
         unCacheTransactions();
         transactions = new ArrayList<Transaction>();
+        
         Transaction coinbase = new Transaction(params);
+        if (tokenInfo != null) {
+            coinbase.setTokenInfo(tokenInfo);
+        }
+        
         // coinbase.tokenid = value.tokenid;
         final ScriptBuilder inputBuilder = new ScriptBuilder();
 

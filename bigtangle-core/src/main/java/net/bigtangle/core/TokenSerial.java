@@ -42,4 +42,11 @@ public class TokenSerial implements java.io.Serializable {
 
     public TokenSerial() {
     }
+
+    public TokenSerial copy(TokenSerial tokenSerial) {
+        this.tokenid = tokenSerial.getTokenid();
+        this.tokenindex = tokenSerial.getTokenindex();
+        this.amount = tokenSerial.getAmount();
+        return this;
+    }
 }
