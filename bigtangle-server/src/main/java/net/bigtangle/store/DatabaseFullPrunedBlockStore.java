@@ -94,11 +94,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String INSERT_SETTINGS_SQL = getInsert() + "  INTO settings(name, settingvalue) VALUES(?, ?)";
 
     protected String SELECT_HEADERS_SQL = "SELECT  height, header, wasundoable,prevblockhash,prevbranchblockhash,mineraddress,"
-            + "tokenid,blocktype FROM headers WHERE hash = ?" + afterSelect();
+            + "blocktype FROM headers WHERE hash = ?" + afterSelect();
     protected String SELECT_HEADERS_HEIGHT_SQL = "SELECT header FROM headers WHERE height >= ?" + afterSelect()
             + " order by height asc ";
     protected String SELECT_SOLID_APPROVER_HEADERS_SQL = "SELECT  headers.height, header, wasundoable,prevblockhash,"
-            + "prevbranchblockhash,mineraddress,tokenid,blocktype FROM headers INNER JOIN blockevaluation"
+            + "prevbranchblockhash,mineraddress,blocktype FROM headers INNER JOIN blockevaluation"
             + " ON headers.hash=blockevaluation.blockhash WHERE blockevaluation.solid = true AND (prevblockhash = ? OR prevbranchblockhash = ?)"
             + afterSelect();
     protected String SELECT_SOLID_APPROVER_HASHES_SQL = "SELECT headers.hash FROM headers INNER JOIN"
@@ -108,7 +108,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String INSERT_HEADERS_SQL = getInsert()
             + "  INTO headers(hash,  height, header, wasundoable,prevblockhash,"
-            + "prevbranchblockhash,mineraddress,tokenid,blocktype ) VALUES(?, ?, ?, ?, ?,?, ?, ?, ?)";
+            + "prevbranchblockhash,mineraddress,blocktype ) VALUES(?, ?, ?, ?, ?,?,  ?, ?)";
 
     protected String SELECT_OUTPUTS_COUNT_SQL = "SELECT COUNT(*) FROM outputs WHERE hash = ?";
     protected String INSERT_OUTPUTS_SQL = getInsert()
@@ -773,8 +773,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setBytes(5, block.getPrevBlockHash().getBytes());
             s.setBytes(6, block.getPrevBranchBlockHash().getBytes());
             s.setBytes(7, block.getMineraddress());
-            s.setBytes(8, block.getTokenid());
-            s.setLong(9, block.getBlocktype());
+ 
+            s.setLong(8, block.getBlocktype());
             s.executeUpdate();
             s.close();
             log.info("add block hexStr : " + block.getHash().toString());

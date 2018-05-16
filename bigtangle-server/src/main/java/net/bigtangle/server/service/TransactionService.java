@@ -92,7 +92,7 @@ public class TransactionService {
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
         Block r2 = blockService.getBlock(tipsToApprove.getRight());
 
-        return new Block(this.networkParameters, r1.getHash(), r2.getHash(), NetworkParameters.BIGNETCOIN_TOKENID,
+        return new Block(this.networkParameters, r1.getHash(), r2.getHash(), 
                 NetworkParameters.BLOCKTYPE_TRANSFER, Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
 
     }
@@ -196,7 +196,7 @@ public class TransactionService {
         Block r2 = blockService.getBlock(tipsToApprove.getRight());
         long blocktype0 = blocktype ? NetworkParameters.BLOCKTYPE_GENESIS
                 : NetworkParameters.BLOCKTYPE_GENESIS_MULTIPLE;
-        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), tokenid, blocktype0,
+        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(),blocktype0,
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
         block.addCoinbaseTransaction(pubKey, coin, tokenInfo);
         block.solve();

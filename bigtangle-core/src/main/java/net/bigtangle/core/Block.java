@@ -69,7 +69,7 @@ public class Block extends Message {
      * How many bytes are required to represent a block header WITHOUT the
      * trailing 00 length byte.
      */
-    public static final int HEADER_SIZE = 80 + 32 + 20 + 20;
+    public static final int HEADER_SIZE = 80 + 32 + 20 ;
 
     static final long ALLOWED_TIME_DRIFT = 2 * 60 * 60; // Same value as Bitcoin
                                                         // Core.
@@ -124,8 +124,7 @@ public class Block extends Message {
     private long nonce;
     // Utils.sha256hash160
     private byte[] mineraddress;
-    // Utils.sha256hash160, but toString() diplay with "$:"+ Addresse.totring()
-    private byte[] tokenid;
+
     private long blocktype;
 
     // TODO: Get rid of all the direct accesses to this field. It's a long-since
@@ -134,8 +133,6 @@ public class Block extends Message {
     @Nullable
     List<Transaction> transactions;
 
-    
-    
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
     private Sha256Hash hash;
 
@@ -152,19 +149,16 @@ public class Block extends Message {
 
     Block(NetworkParameters params, long setVersion) {
 
-        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, NetworkParameters.DUMMY_TOKENID,
-                NetworkParameters.BLOCKTYPE_TRANSFER,0);
+        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, NetworkParameters.BLOCKTYPE_TRANSFER, 0);
     }
 
-    public Block(NetworkParameters params, long blockVersionGenesis, byte[] tokenid, long blocktypeTransfer) {
+    public Block(NetworkParameters params, long blockVersionGenesis, long blocktypeTransfer) {
 
-        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, tokenid, NetworkParameters.BLOCKTYPE_TRANSFER,0);
+        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, NetworkParameters.BLOCKTYPE_TRANSFER, 0);
     }
 
-    
-   
-    public Block(NetworkParameters params, Sha256Hash prevBlockHash, Sha256Hash prevBranchBlockHash, byte[] tokenid,
-            long blocktype, long minTime ) {
+    public Block(NetworkParameters params, Sha256Hash prevBlockHash, Sha256Hash prevBranchBlockHash, long blocktype,
+            long minTime) {
         super(params);
         // Set up a few basic things. We are not complete after this though.
         version = Block.BLOCK_VERSION_GENESIS;
@@ -174,24 +168,11 @@ public class Block extends Message {
             this.time = minTime;
         this.prevBlockHash = prevBlockHash;
         this.prevBranchBlockHash = prevBranchBlockHash;
-        this.tokenid = tokenid;
+
         this.blocktype = blocktype;
         mineraddress = new byte[20];
         length = HEADER_SIZE;
         this.transactions = new ArrayList<>();
-    }
-
-    Block(NetworkParameters params, long setVersion, byte[] tokenid) {
-        this(params, setVersion);
-        this.tokenid = tokenid;
-    }
-
-    public String getTokenHex() {
-        if (tokenid == null) {
-            return "";
-        }
-        return Utils.HEX.encode(this.tokenid);
-
     }
 
     /**
@@ -366,7 +347,7 @@ public class Block extends Message {
         // difficultyTarget = readUint32();
         nonce = readUint32();
         mineraddress = readBytes(20);
-        tokenid = readBytes(20);
+
         blocktype = readUint32();
         hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(payload, offset, cursor - offset));
         headerBytesValid = serializer.isParseRetainMode();
@@ -401,7 +382,7 @@ public class Block extends Message {
         // Utils.uint32ToByteStreamLE(difficultyTarget, stream);
         Utils.uint32ToByteStreamLE(nonce, stream);
         stream.write(mineraddress);
-        stream.write(tokenid);
+
         Utils.uint32ToByteStreamLE(blocktype, stream);
     }
 
@@ -592,7 +573,7 @@ public class Block extends Message {
         block.time = time;
         // block.difficultyTarget = difficultyTarget
         block.mineraddress = mineraddress;
-        block.tokenid = tokenid;
+
         block.blocktype = blocktype;
         block.transactions = null;
         block.hash = getHash();
@@ -604,7 +585,7 @@ public class Block extends Message {
      */
     @Override
     public String toString() {
-        StringBuilder s = new StringBuilder(); 
+        StringBuilder s = new StringBuilder();
         s.append("block hash: ").append(getHashAsString()).append('\n');
         if (transactions != null && transactions.size() > 0) {
             s.append("   ").append(transactions.size()).append(" transaction(s):\n");
@@ -627,9 +608,9 @@ public class Block extends Message {
         s.append("   nonce: ").append(nonce).append("\n");
         if (mineraddress != null)
             s.append("   mineraddress: ").append(new Address(params, mineraddress)).append("\n");
-        s.append("   tokenid: ").append(new Address(params, tokenid)).append("\n");
+
         s.append("   blocktype: ").append(blocktype).append("\n");
- 
+
         return s.toString();
     }
 
@@ -875,8 +856,8 @@ public class Block extends Message {
         // valid block from the network and simply replace the transactions in
         // it with their own fictional
         // transactions that reference spent or non-existant inputs.
-     //   if (transactions.isEmpty())
-     //       throw new VerificationException("Block had no transactions");
+        // if (transactions.isEmpty())
+        // throw new VerificationException("Block had no transactions");
         if (this.getOptimalEncodingMessageSize() > MAX_BLOCK_SIZE)
             throw new VerificationException("Block larger than MAX_BLOCK_SIZE");
         // CUI checkTransactions(height, flags);
@@ -1058,16 +1039,16 @@ public class Block extends Message {
     public void addCoinbaseTransaction(byte[] pubKeyTo, Coin value) {
         this.addCoinbaseTransaction(pubKeyTo, value, null);
     }
-    
+
     public void addCoinbaseTransaction(byte[] pubKeyTo, Coin value, TokenInfo tokenInfo) {
         unCacheTransactions();
         transactions = new ArrayList<Transaction>();
-        
+
         Transaction coinbase = new Transaction(params);
         if (tokenInfo != null) {
             coinbase.setTokenInfo(tokenInfo);
         }
-        
+
         // coinbase.tokenid = value.tokenid;
         final ScriptBuilder inputBuilder = new ScriptBuilder();
 
@@ -1084,7 +1065,7 @@ public class Block extends Message {
         coinbase.addInput(new TransactionInput(params, coinbase, inputBuilder.build().getProgram()));
         coinbase.addOutput(new TransactionOutput(params, coinbase, value,
                 ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
-        
+
         transactions.add(coinbase);
         coinbase.setParent(this);
         coinbase.length = coinbase.unsafeBitcoinSerialize().length;
@@ -1104,7 +1085,7 @@ public class Block extends Message {
     public Block createNextBlock(@Nullable final Address to, final long version, @Nullable TransactionOutPoint prevOut,
             final long time, final byte[] pubKey, final Coin coinbaseValue, final int height,
             Sha256Hash prevBranchBlockHash, byte[] mineraddress) {
-        Block b = new Block(params, version, coinbaseValue.tokenid);
+        Block b = new Block(params, version);
         // b.setDifficultyTarget(difficultyTarget);
         b.addCoinbaseTransaction(pubKey, coinbaseValue);
         b.setMineraddress(mineraddress);
@@ -1134,15 +1115,15 @@ public class Block extends Message {
 
         b.setPrevBlockHash(getHash());
         b.setPrevBranchBlockHash(prevBranchBlockHash);
-        
+
         // Don't let timestamp go backwards
         if (getTimeSeconds() >= time)
             b.setTime(getTimeSeconds() + 1);
         else
             b.setTime(time);
-        
+
         // TODO Also don't let timestamp go backwards from prevbranchblockhash
-        
+
         b.solve();
         try {
             b.verifyHeader();
@@ -1209,16 +1190,6 @@ public class Block extends Message {
     public void setMineraddress(byte[] mineraddress) {
         unCacheHeader();
         this.mineraddress = mineraddress;
-        this.hash = null;
-    }
-
-    public byte[] getTokenid() {
-        return tokenid;
-    }
-
-    public void setTokenid(byte[] tokenid) {
-        unCacheHeader();
-        this.tokenid = tokenid;
         this.hash = null;
     }
 

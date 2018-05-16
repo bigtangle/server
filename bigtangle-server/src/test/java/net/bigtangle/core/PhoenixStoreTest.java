@@ -22,7 +22,7 @@ import net.bigtangle.store.PhoenixBlockStore;
 /**
  * A MySQL implementation of the {@link AbstractFullPrunedBlockChainTest}
  */
-
+@Ignore
  //("enable the mysql driver dependency in the maven POM")
 public class PhoenixStoreTest extends AbstractFullPrunedBlockChainTest {
 

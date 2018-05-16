@@ -119,7 +119,7 @@ public abstract class NetworkParameters {
     }
 
     public static Block createGenesis(NetworkParameters n) {
-        Block genesisBlock = new Block(n, Block.BLOCK_VERSION_GENESIS, BIGNETCOIN_TOKENID, BLOCKTYPE_GENESIS);
+        Block genesisBlock = new Block(n, Block.BLOCK_VERSION_GENESIS, BLOCKTYPE_GENESIS);
         // TODO read first transaction from ICO file
         // Transaction t = new Transaction(n);
         // try {

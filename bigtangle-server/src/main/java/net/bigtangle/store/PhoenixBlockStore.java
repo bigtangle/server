@@ -187,8 +187,8 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             s.setString(5, Utils.HEX.encode(storedBlock.getHeader().getPrevBlockHash().getBytes()));
             s.setString(6, Utils.HEX.encode(storedBlock.getHeader().getPrevBranchBlockHash().getBytes()));
             s.setBytes(7, storedBlock.getHeader().getMineraddress());
-            s.setBytes(8, storedBlock.getHeader().getTokenid());
-            s.setLong(9, storedBlock.getHeader().getBlocktype());
+       
+            s.setLong(8, storedBlock.getHeader().getBlocktype());
             s.executeUpdate();
             s.close();
             log.info("add block hexStr : " + storedBlock.getHeader().getHash().toString());
