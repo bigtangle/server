@@ -356,7 +356,6 @@ public abstract class AbstractBlockGraph {
     private boolean add(Block block, boolean tryConnecting,
                         @Nullable List<Sha256Hash> filteredTxHashList, @Nullable Map<Sha256Hash, Transaction> filteredTxn)
             throws BlockStoreException, VerificationException, PrunedException {
-        // TODO: Use read/write locks to ensure that during tangle download properties are still low latency.
         lock.lock();
         try {
             // If we want to verify transactions (ie we are running with full blocks), verify that block has transactions
