@@ -326,7 +326,7 @@ public class Transaction extends ChildMessage {
     public Sha256Hash getHash() {
         if (hash == null) {
             byte[] buf = unsafeBitcoinSerialize();
-            hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(buf, 0, buf.length - calculateOtherDataLen()));
+            hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(buf, 0, buf.length ));
         }
         return hash;
     }
