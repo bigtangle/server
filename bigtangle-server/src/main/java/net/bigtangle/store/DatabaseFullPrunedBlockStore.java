@@ -114,19 +114,19 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String SELECT_OUTPUTS_COUNT_SQL = "SELECT COUNT(*) FROM outputs WHERE hash = ?";
     protected String INSERT_OUTPUTS_SQL = getInsert()
             + " INTO outputs (hash, outputindex, height, coinvalue, scriptbytes, toaddress, addresstargetable,"
-            + " coinbase, blockhash, tokenid, fromaddress, description, spent, confirmed, spendpending)"
+            + " coinbase, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending)"
             + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?)";
     protected String SELECT_OUTPUTS_SQL = "SELECT height, coinvalue, scriptbytes, coinbase, toaddress,"
-            + " addresstargetable, blockhash, tokenid, fromaddress, description, spent, confirmed, "
+            + " addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, "
             + "spendpending FROM outputs WHERE hash = ? AND outputindex = ?";
     protected String DELETE_OUTPUTS_SQL = "DELETE FROM outputs WHERE hash = ? AND outputindex= ?";
 
     protected String SELECT_TRANSACTION_OUTPUTS_SQL = "SELECT hash, coinvalue, scriptbytes, height, "
             + "outputindex, coinbase, toaddress, addresstargetable, blockhash, tokenid, "
-            + "fromaddress, description, spent, confirmed, spendpending FROM outputs where toaddress = ?";
+            + "fromaddress, memo, spent, confirmed, spendpending FROM outputs where toaddress = ?";
     protected String SELECT_TRANSACTION_OUTPUTS_TOKEN_SQL = "SELECT hash, coinvalue, "
             + "scriptbytes, height, outputindex, coinbase, toaddress, addresstargetable,"
-            + " blockhash, tokenid, fromaddress, description, spent, confirmed, spendpending "
+            + " blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending "
             + "FROM outputs where toaddress = ? and tokenid = ?";
 
     // Dump table SQL (this is just for data sizing statistics).
@@ -1093,13 +1093,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             Sha256Hash blockhash = Sha256Hash.wrap(results.getBytes(7));
 
             String fromaddress = results.getString(9);
-            String description = results.getString(10);
+            String memo = results.getString(10);
             boolean spent = results.getBoolean(11);
             boolean confirmed = results.getBoolean(12);
             boolean spendPending = results.getBoolean(13);
             String tokenid = results.getString("tokenid");
             UTXO txout = new UTXO(hash, index, coinvalue, height, coinbase, new Script(scriptBytes), address, blockhash,
-                    fromaddress, description, tokenid, spent, confirmed, spendPending);
+                    fromaddress, memo, tokenid, spent, confirmed, spendPending);
             return txout;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
@@ -1132,7 +1132,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setBytes(9, out.getBlockhash().getBytes());
             s.setString(10, Utils.HEX.encode(out.getValue().tokenid));
             s.setString(11, out.getFromaddress());
-            s.setString(12, out.getDescription());
+            s.setString(12, out.getMemo());
             s.setBoolean(13, out.isSpent());
             s.setBoolean(14, out.isConfirmed());
             s.setBoolean(15, out.isSpendPending());
@@ -1325,13 +1325,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     Sha256Hash blockhash = Sha256Hash.wrap(rs.getBytes(9));
 
                     String fromaddress = rs.getString(11);
-                    String description = rs.getString(12);
+                    String memo = rs.getString(12);
                     boolean spent = rs.getBoolean(13);
                     boolean confirmed = rs.getBoolean(14);
                     boolean spendPending = rs.getBoolean(15);
                     String tokenid = rs.getString("tokenid");
                     UTXO output = new UTXO(hash, index, amount, height, coinbase, new Script(scriptBytes), toAddress,
-                            blockhash, fromaddress, description, tokenid, spent, confirmed, spendPending);
+                            blockhash, fromaddress, memo, tokenid, spent, confirmed, spendPending);
                     outputs.add(output);
                 }
             }
@@ -1374,13 +1374,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     Sha256Hash blockhash = Sha256Hash.wrap(rs.getBytes(9));
 
                     String fromaddress = rs.getString(11);
-                    String description = rs.getString(12);
+                    String memo = rs.getString(12);
                     boolean spent = rs.getBoolean(13);
                     boolean confirmed = rs.getBoolean(14);
                     boolean spendPending = rs.getBoolean(15);
                     String tokenid = rs.getString("tokenid");
                     UTXO output = new UTXO(hash, index, amount, height, coinbase, new Script(scriptBytes), toAddress,
-                            blockhash, fromaddress, description, tokenid, spent, confirmed, spendPending);
+                            blockhash, fromaddress, memo, tokenid, spent, confirmed, spendPending);
                     outputs.add(output);
                 }
             }

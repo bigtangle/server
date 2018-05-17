@@ -32,7 +32,7 @@ public class UTXO {
     private String address;
     private Sha256Hash blockhash;
     private String fromaddress;
-    private String description;
+    private String memo;
     private boolean spent;
     private boolean confirmed;
     private boolean spendPending;
@@ -68,7 +68,7 @@ public class UTXO {
      *            The address.
      */
     public UTXO(Sha256Hash hash, long index, Coin value, long height, boolean coinbase, Script script, String address,
-            Sha256Hash blockhash, String fromaddress, String description, String tokenid, boolean spent, boolean confirmed, boolean spendPending) {
+            Sha256Hash blockhash, String fromaddress, String memo, String tokenid, boolean spent, boolean confirmed, boolean spendPending) {
         this.hash = hash;
         this.index = index;
         this.value = value;
@@ -77,7 +77,7 @@ public class UTXO {
         this.coinbase = coinbase;
         this.blockhash = blockhash;
         this.fromaddress = fromaddress;
-        this.description = description;
+        this.memo = memo;
         this.address = address;
         this.spent = spent;
         this.tokenid = tokenid;
@@ -233,12 +233,12 @@ public class UTXO {
         this.fromaddress = fromaddress;
     }
 
-    public String getDescription() {
-        return description;
+    public String getMemo() {
+        return memo;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setMemo(String memo) {
+        this.memo = memo;
     }
 
     public boolean isSpent() {

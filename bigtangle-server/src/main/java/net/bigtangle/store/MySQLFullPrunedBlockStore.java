@@ -42,7 +42,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    coinvalue bigint NOT NULL,\n" + "    scriptbytes mediumblob NOT NULL,\n"
             + "    toaddress varchar(35),\n" + "    addresstargetable bigint,\n" + "    coinbase boolean,\n"
             + "    blockhash  varbinary(32)  NOT NULL,\n" + "    tokenid varchar(255),\n"
-            + "    fromaddress varchar(35),\n" + "    description varchar(80),\n" + "    spent boolean NOT NULL,\n"
+            + "    fromaddress varchar(35),\n" + "    memo varchar(80),\n" + "    spent boolean NOT NULL,\n"
             + "    confirmed boolean NOT NULL,\n" + "    spendpending boolean NOT NULL,\n"
             + "    spenderblockhash  varbinary(32),\n"
             + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex) USING BTREE \n" + ")\n";

@@ -233,6 +233,7 @@ public abstract class AbstractIntegrationTest {
         tokenInfo.setTokens(new Tokens(Utils.HEX.encode(myKey.getPubKeyHash()), "JH", "JH", "", 1, true, true, true));
         tokenInfo.getTokenSerials().add(new TokenSerial(Utils.HEX.encode(myKey.getPubKeyHash()), 0, -100));
         t.setTokenInfo(tokenInfo);
+        t.setMemo("test memo");
 
         t.addOutput(new TransactionOutput(networkParameters, t, amount, myKey.toAddress(networkParameters)));
         t.addSignedInput(spendableOutput, transaction.getOutputs().get(0).getScriptPubKey(), outKey);
