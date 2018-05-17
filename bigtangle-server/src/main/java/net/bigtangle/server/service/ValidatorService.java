@@ -38,7 +38,7 @@ public class ValidatorService {
     private TransactionService transactionService;
 
     public boolean assessMiningRewardBlock(Block header) {
-        // TODO begin task for checking local validity assessment
+        // TODO begin task for checking local validity assessment of mining
         return true;
     }
 

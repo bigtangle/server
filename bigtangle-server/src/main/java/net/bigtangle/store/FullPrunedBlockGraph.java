@@ -71,425 +71,440 @@ import net.bigtangle.wallet.WalletExtension;
  */
 @Service
 public class FullPrunedBlockGraph extends AbstractBlockGraph {
-	private static final Logger log = LoggerFactory.getLogger(FullPrunedBlockGraph.class);
+    private static final Logger log = LoggerFactory.getLogger(FullPrunedBlockGraph.class);
 
-	@Autowired
-	public FullPrunedBlockGraph(NetworkParameters networkParameters, FullPrunedBlockStore blockStore) throws BlockStoreException {
-		this(Context.getOrCreate(networkParameters), blockStore);
-	}
+    @Autowired
+    public FullPrunedBlockGraph(NetworkParameters networkParameters, FullPrunedBlockStore blockStore)
+            throws BlockStoreException {
+        this(Context.getOrCreate(networkParameters), blockStore);
+    }
 
-	/**
-	 * Keeps a map of block hashes to StoredBlocks.
-	 */
-	protected final FullPrunedBlockStore blockStore;
-	@Autowired
-	private BlockRequester blockRequester;
+    /**
+     * Keeps a map of block hashes to StoredBlocks.
+     */
+    protected final FullPrunedBlockStore blockStore;
+    @Autowired
+    private BlockRequester blockRequester;
 
-	// Whether or not to execute scriptPubKeys before accepting a transaction
-	// (i.e.
-	// check signatures).
-	private boolean runScripts = true;
+    // Whether or not to execute scriptPubKeys before accepting a transaction
+    // (i.e.
+    // check signatures).
+    private boolean runScripts = true;
 
-	/**
-	 * Constructs a block chain connected to the given wallet and store. To obtain a
-	 * {@link Wallet} you can construct one from scratch, or you can deserialize a
-	 * saved wallet from disk using
-	 * {@link Wallet#loadFromFile(java.io.File, WalletExtension...)}
-	 */
-	public FullPrunedBlockGraph(Context context, Wallet wallet, FullPrunedBlockStore blockStore) throws BlockStoreException {
-		this(context, new ArrayList<Wallet>(), blockStore);
-		addWallet(wallet);
-	}
+    /**
+     * Constructs a block chain connected to the given wallet and store. To
+     * obtain a {@link Wallet} you can construct one from scratch, or you can
+     * deserialize a saved wallet from disk using
+     * {@link Wallet#loadFromFile(java.io.File, WalletExtension...)}
+     */
+    public FullPrunedBlockGraph(Context context, Wallet wallet, FullPrunedBlockStore blockStore)
+            throws BlockStoreException {
+        this(context, new ArrayList<Wallet>(), blockStore);
+        addWallet(wallet);
+    }
 
-	/**
-	 * Constructs a block chain connected to the given wallet and store. To obtain a
-	 * {@link Wallet} you can construct one from scratch, or you can deserialize a
-	 * saved wallet from disk using
-	 * {@link Wallet#loadFromFile(java.io.File, WalletExtension...)}
-	 */
-	public FullPrunedBlockGraph(NetworkParameters params, Wallet wallet, FullPrunedBlockStore blockStore) throws BlockStoreException {
-		this(Context.getOrCreate(params), wallet, blockStore);
-	}
+    /**
+     * Constructs a block chain connected to the given wallet and store. To
+     * obtain a {@link Wallet} you can construct one from scratch, or you can
+     * deserialize a saved wallet from disk using
+     * {@link Wallet#loadFromFile(java.io.File, WalletExtension...)}
+     */
+    public FullPrunedBlockGraph(NetworkParameters params, Wallet wallet, FullPrunedBlockStore blockStore)
+            throws BlockStoreException {
+        this(Context.getOrCreate(params), wallet, blockStore);
+    }
 
-	/**
-	 * Constructs a block chain connected to the given store.
-	 */
-	public FullPrunedBlockGraph(Context context, FullPrunedBlockStore blockStore) throws BlockStoreException {
-		this(context, new ArrayList<Wallet>(), blockStore);
-	}
+    /**
+     * Constructs a block chain connected to the given store.
+     */
+    public FullPrunedBlockGraph(Context context, FullPrunedBlockStore blockStore) throws BlockStoreException {
+        this(context, new ArrayList<Wallet>(), blockStore);
+    }
 
-	/**
-	 * Constructs a block chain connected to the given list of wallets and a store.
-	 */
-	public FullPrunedBlockGraph(Context context, List<Wallet> listeners, FullPrunedBlockStore blockStore) throws BlockStoreException {
-		super(context, listeners, blockStore);
-		this.blockStore = blockStore;
-		// Ignore upgrading for now
-		this.chainHead = blockStore.getVerifiedChainHead();
-	}
+    /**
+     * Constructs a block chain connected to the given list of wallets and a
+     * store.
+     */
+    public FullPrunedBlockGraph(Context context, List<Wallet> listeners, FullPrunedBlockStore blockStore)
+            throws BlockStoreException {
+        super(context, listeners, blockStore);
+        this.blockStore = blockStore;
+        // Ignore upgrading for now
+        this.chainHead = blockStore.getVerifiedChainHead();
+    }
 
-	/**
-	 * See {@link #FullPrunedBlockChain(Context, List, FullPrunedBlockStore)}
-	 */
-	public FullPrunedBlockGraph(NetworkParameters params, List<Wallet> listeners, FullPrunedBlockStore blockStore) throws BlockStoreException {
-		this(Context.getOrCreate(params), listeners, blockStore);
-	}
+    /**
+     * See {@link #FullPrunedBlockChain(Context, List, FullPrunedBlockStore)}
+     */
+    public FullPrunedBlockGraph(NetworkParameters params, List<Wallet> listeners, FullPrunedBlockStore blockStore)
+            throws BlockStoreException {
+        this(Context.getOrCreate(params), listeners, blockStore);
+    }
 
-	@Override
-	protected StoredBlock addToBlockStore(StoredBlock storedPrev, StoredBlock storedPrevBranch, Block header, TransactionOutputChanges txOutChanges)
-			throws BlockStoreException, VerificationException {
-		StoredBlock newBlock = StoredBlock. build(header,storedPrev,storedPrevBranch);
-		blockStore.put(newBlock, new StoredUndoableBlock(newBlock.getHeader().getHash(), txOutChanges));
-		return newBlock;
-	}
+    @Override
+    protected StoredBlock addToBlockStore(StoredBlock storedPrev, StoredBlock storedPrevBranch, Block header,
+            TransactionOutputChanges txOutChanges) throws BlockStoreException, VerificationException {
+        StoredBlock newBlock = StoredBlock.build(header, storedPrev, storedPrevBranch);
+        blockStore.put(newBlock, new StoredUndoableBlock(newBlock.getHeader().getHash(), txOutChanges));
+        return newBlock;
+    }
 
-	@Override
-	protected StoredBlock addToBlockStore(StoredBlock storedPrev, StoredBlock storedPrevBranch, Block block) throws BlockStoreException, VerificationException {
-		StoredBlock newBlock = StoredBlock. build(block,storedPrev,storedPrevBranch);
-		blockStore.put(newBlock, new StoredUndoableBlock(newBlock.getHeader().getHash(), block.getTransactions()));
-		return newBlock;
-	}
+    @Override
+    protected StoredBlock addToBlockStore(StoredBlock storedPrev, StoredBlock storedPrevBranch, Block block)
+            throws BlockStoreException, VerificationException {
+        StoredBlock newBlock = StoredBlock.build(block, storedPrev, storedPrevBranch);
+        blockStore.put(newBlock, new StoredUndoableBlock(newBlock.getHeader().getHash(), block.getTransactions()));
+        return newBlock;
+    }
 
-	@Override
-	protected void rollbackBlockStore(int height) throws BlockStoreException {
-		throw new BlockStoreException("Unsupported");
-	}
+    @Override
+    protected void rollbackBlockStore(int height) throws BlockStoreException {
+        throw new BlockStoreException("Unsupported");
+    }
 
-	@Override
-	public boolean shouldVerifyTransactions() {
-		return true;
-	}
+    @Override
+    public boolean shouldVerifyTransactions() {
+        return true;
+    }
 
-	/**
-	 * Whether or not to run scripts whilst accepting blocks (i.e. checking
-	 * signatures, for most transactions). If you're accepting data from an
-	 * untrusted node, such as one found via the P2P network, this should be set to
-	 * true (which is the default). If you're downloading a chain from a node you
-	 * control, script execution is redundant because you know the connected node
-	 * won't relay bad data to you. In that case it's safe to set this to false and
-	 * obtain a significant speedup.
-	 */
-	public void setRunScripts(boolean value) {
-		this.runScripts = value;
-	}
+    /**
+     * Whether or not to run scripts whilst accepting blocks (i.e. checking
+     * signatures, for most transactions). If you're accepting data from an
+     * untrusted node, such as one found via the P2P network, this should be set
+     * to true (which is the default). If you're downloading a chain from a node
+     * you control, script execution is redundant because you know the connected
+     * node won't relay bad data to you. In that case it's safe to set this to
+     * false and obtain a significant speedup.
+     */
+    public void setRunScripts(boolean value) {
+        this.runScripts = value;
+    }
 
-	ExecutorService scriptVerificationExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(),
-			new ContextPropagatingThreadFactory("Script verification"));
+    ExecutorService scriptVerificationExecutor = Executors.newFixedThreadPool(
+            Runtime.getRuntime().availableProcessors(), new ContextPropagatingThreadFactory("Script verification"));
 
-	/**
-	 * A job submitted to the executor which verifies signatures.
-	 */
-	private static class Verifier implements Callable<VerificationException> {
-		final Transaction tx;
-		final List<Script> prevOutScripts;
-		final Set<VerifyFlag> verifyFlags;
+    /**
+     * A job submitted to the executor which verifies signatures.
+     */
+    private static class Verifier implements Callable<VerificationException> {
+        final Transaction tx;
+        final List<Script> prevOutScripts;
+        final Set<VerifyFlag> verifyFlags;
 
-		public Verifier(final Transaction tx, final List<Script> prevOutScripts, final Set<VerifyFlag> verifyFlags) {
-			this.tx = tx;
-			this.prevOutScripts = prevOutScripts;
-			this.verifyFlags = verifyFlags;
-		}
+        public Verifier(final Transaction tx, final List<Script> prevOutScripts, final Set<VerifyFlag> verifyFlags) {
+            this.tx = tx;
+            this.prevOutScripts = prevOutScripts;
+            this.verifyFlags = verifyFlags;
+        }
 
-		@Nullable
-		@Override
-		public VerificationException call() throws Exception {
-			try {
-				ListIterator<Script> prevOutIt = prevOutScripts.listIterator();
-				for (int index = 0; index < tx.getInputs().size(); index++) {
-					tx.getInputs().get(index).getScriptSig().correctlySpends(tx, index, prevOutIt.next(), verifyFlags);
-				}
-			} catch (VerificationException e) {
-				return e;
-			}
-			return null;
-		}
-	}
+        @Nullable
+        @Override
+        public VerificationException call() throws Exception {
+            try {
+                ListIterator<Script> prevOutIt = prevOutScripts.listIterator();
+                for (int index = 0; index < tx.getInputs().size(); index++) {
+                    tx.getInputs().get(index).getScriptSig().correctlySpends(tx, index, prevOutIt.next(), verifyFlags);
+                }
+            } catch (VerificationException e) {
+                return e;
+            }
+            return null;
+        }
+    }
 
-	/**
-	 * Get the {@link Script} from the script bytes or return Script of empty byte
-	 * array.
-	 */
-	private Script getScript(byte[] scriptBytes) {
-		try {
-			return new Script(scriptBytes);
-		} catch (Exception e) {
-			return new Script(new byte[0]);
-		}
-	}
+    /**
+     * Get the {@link Script} from the script bytes or return Script of empty
+     * byte array.
+     */
+    private Script getScript(byte[] scriptBytes) {
+        try {
+            return new Script(scriptBytes);
+        } catch (Exception e) {
+            return new Script(new byte[0]);
+        }
+    }
 
-	/**
-	 * Get the address from the {@link Script} if it exists otherwise return empty
-	 * string "".
-	 *
-	 * @param script
-	 *            The script.
-	 * @return The address.
-	 */
-	private String getScriptAddress(@Nullable Script script) {
-		String address = "";
-		try {
-			if (script != null) {
-				address = script.getToAddress(params, true).toString();
-			}
-		} catch (Exception e) {
-		}
-		return address;
-	}
+    /**
+     * Get the address from the {@link Script} if it exists otherwise return
+     * empty string "".
+     *
+     * @param script
+     *            The script.
+     * @return The address.
+     */
+    private String getScriptAddress(@Nullable Script script) {
+        String address = "";
+        try {
+            if (script != null) {
+                address = script.getToAddress(params, true).toString();
+            }
+        } catch (Exception e) {
+        }
+        return address;
+    }
 
-	@Override
-	protected TransactionOutputChanges connectTransactions(long height, Block block) throws VerificationException, BlockStoreException {
-	    return null;
-	}
+    @Override
+    protected TransactionOutputChanges connectTransactions(long height, Block block)
+            throws VerificationException, BlockStoreException {
+        return null;
+    }
 
-	private void synchronizationToken(TokenInfo tokenInfo) throws BlockStoreException {
-	    Tokens token = tokenInfo.getTokens();
-	    if (token == null) {
-	        return;
-	    }
-	    if (token.getTokenid().equals(NetworkParameters.BIGNETCOIN_TOKENID_STRING)) {
-	        return;
-	    }
-	    Tokens token0 = this.blockStore.getTokensInfo(token.getTokenid());
-	    if (token0 == null) {
-	        token0 = new Tokens().copy(token);
-	        this.blockStore.saveTokens(token0);
-	    }
-	    else {
-	        token0.copy(token);
-	        this.blockStore.updateTokens(token0);
-	    }
-	    for (MultiSignAddress multiSignAddress : tokenInfo.getMultiSignAddresses()) {
-	        MultiSignAddress multiSignAddress0 = this.blockStore.getMultiSignAddressInfo(
-	                multiSignAddress.getTokenid(), multiSignAddress.getAddress());
-	        if (multiSignAddress0 == null) {
-	            multiSignAddress0 = new MultiSignAddress().copy(multiSignAddress);
-	            blockStore.insertMultiSignAddress(multiSignAddress0);
-	        }
-	    }
-	    for (TokenSerial tokenSerial : tokenInfo.getTokenSerials()) {
-	        TokenSerial tokenSerial0 = this.blockStore.getTokenSerialInfo(tokenSerial.getTokenid(), tokenSerial.getTokenindex()); 
-	        if (tokenSerial0 == null) {
-	            tokenSerial0 = new TokenSerial().copy(tokenSerial);
-	            blockStore.insertTokenSerial(tokenSerial);
-	        }
-	        else {
-	            tokenSerial0.copy(tokenSerial);
-	            blockStore.updateTokenSerial(tokenSerial0);
-	        }
-	    }
-	    for (MultiSignBy multiSignBy : tokenInfo.getMultiSignBies()) {
-	        MultiSignBy multiSignBy0 = this.blockStore.getMultiSignByInfo(multiSignBy.getTokenid(), multiSignBy.getTokenindex(), multiSignBy.getAddress());
-	        if (multiSignBy0 == null) {
-	            multiSignBy0 = new MultiSignBy().copy(multiSignBy);
-	            blockStore.insertMultisignby(multiSignBy);
-	        }
-	    }
+    private void synchronizationToken(TokenInfo tokenInfo) throws BlockStoreException {
+        Tokens token = tokenInfo.getTokens();
+        if (token == null) {
+            return;
+        }
+        if (token.getTokenid().equals(NetworkParameters.BIGNETCOIN_TOKENID_STRING)) {
+            return;
+        }
+        Tokens token0 = this.blockStore.getTokensInfo(token.getTokenid());
+        if (token0 == null) {
+            token0 = new Tokens().copy(token);
+            this.blockStore.saveTokens(token0);
+        } else {
+            token0.copy(token);
+            this.blockStore.updateTokens(token0);
+        }
+        for (MultiSignAddress multiSignAddress : tokenInfo.getMultiSignAddresses()) {
+            MultiSignAddress multiSignAddress0 = this.blockStore.getMultiSignAddressInfo(multiSignAddress.getTokenid(),
+                    multiSignAddress.getAddress());
+            if (multiSignAddress0 == null) {
+                multiSignAddress0 = new MultiSignAddress().copy(multiSignAddress);
+                blockStore.insertMultiSignAddress(multiSignAddress0);
+            }
+        }
+        for (TokenSerial tokenSerial : tokenInfo.getTokenSerials()) {
+            TokenSerial tokenSerial0 = this.blockStore.getTokenSerialInfo(tokenSerial.getTokenid(),
+                    tokenSerial.getTokenindex());
+            if (tokenSerial0 == null) {
+                tokenSerial0 = new TokenSerial().copy(tokenSerial);
+                blockStore.insertTokenSerial(tokenSerial);
+            } else {
+                tokenSerial0.copy(tokenSerial);
+                blockStore.updateTokenSerial(tokenSerial0);
+            }
+        }
+        for (MultiSignBy multiSignBy : tokenInfo.getMultiSignBies()) {
+            MultiSignBy multiSignBy0 = this.blockStore.getMultiSignByInfo(multiSignBy.getTokenid(),
+                    multiSignBy.getTokenindex(), multiSignBy.getAddress());
+            if (multiSignBy0 == null) {
+                multiSignBy0 = new MultiSignBy().copy(multiSignBy);
+                blockStore.insertMultisignby(multiSignBy);
+            }
+        }
     }
 
     public boolean checkOutput(Map<String, Coin> valueOut) {
 
-		for (Map.Entry<String, Coin> entry : valueOut.entrySet()) {
-			// System.out.println(entry.getKey() + "/" + entry.getValue());
-			if (entry.getValue().signum() < 0) {
-				return false;
-			}
-		}
-		return true;
-	}
+        for (Map.Entry<String, Coin> entry : valueOut.entrySet()) {
+            // System.out.println(entry.getKey() + "/" + entry.getValue());
+            if (entry.getValue().signum() < 0) {
+                return false;
+            }
+        }
+        return true;
+    }
 
-	public boolean checkInputOutput(Map<String, Coin> valueInput, Map<String, Coin> valueOut) {
+    public boolean checkInputOutput(Map<String, Coin> valueInput, Map<String, Coin> valueOut) {
 
-		for (Map.Entry<String, Coin> entry : valueOut.entrySet()) {
-			if (!valueInput.containsKey(entry.getKey())) {
-				return false;
-			} else {
-				if (valueInput.get(entry.getKey()).compareTo(entry.getValue()) < 0)
-					return false;
-			}
-		}
-		return true;
-	}
+        for (Map.Entry<String, Coin> entry : valueOut.entrySet()) {
+            if (!valueInput.containsKey(entry.getKey())) {
+                return false;
+            } else {
+                if (valueInput.get(entry.getKey()).compareTo(entry.getValue()) < 0)
+                    return false;
+            }
+        }
+        return true;
+    }
 
-	/**
-	 * Adds the specified block and all approved blocks to the milestone. This will
-	 * connect all transactions of the block by marking used UTXOs spent and adding
-	 * new UTXOs to the db.
-	 * 
-	 * @param blockEvaluation
-	 * @throws BlockStoreException
-	 */
-	public void addBlockToMilestone(BlockEvaluation blockEvaluation) throws BlockStoreException {
-		blockEvaluation = blockStore.getBlockEvaluation(blockEvaluation.getBlockhash());
-		Block block = blockStore.get(blockEvaluation.getBlockhash()).getHeader();
+    /**
+     * Adds the specified block and all approved blocks to the milestone. This
+     * will connect all transactions of the block by marking used UTXOs spent
+     * and adding new UTXOs to the db.
+     * 
+     * @param blockEvaluation
+     * @throws BlockStoreException
+     */
+    public void addBlockToMilestone(BlockEvaluation blockEvaluation) throws BlockStoreException {
+        blockEvaluation = blockStore.getBlockEvaluation(blockEvaluation.getBlockhash());
+        Block block = blockStore.get(blockEvaluation.getBlockhash()).getHeader();
 
-		// If already connected, return
-		if (blockEvaluation.isMilestone())
-			return;
+        // If already connected, return
+        if (blockEvaluation.isMilestone())
+            return;
 
-		// Set milestone true and update latestMilestoneUpdateTime first to stop
-		// infinite recursions
-		blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockhash(), true);
+        // Set milestone true and update latestMilestoneUpdateTime first to stop
+        // infinite recursions
+        blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockhash(), true);
 
-		// Connect all approved blocks first (not actually needed)
-		addBlockToMilestone(blockStore.getBlockEvaluation(block.getPrevBlockHash()));
-		addBlockToMilestone(blockStore.getBlockEvaluation(block.getPrevBranchBlockHash()));
+        // Connect all approved blocks first (not actually needed)
+        addBlockToMilestone(blockStore.getBlockEvaluation(block.getPrevBlockHash()));
+        addBlockToMilestone(blockStore.getBlockEvaluation(block.getPrevBranchBlockHash()));
 
-		// Now update the block's transactions in db
-		for (final Transaction tx : block.getTransactions()) {
-			// For each used input, set its corresponding UTXO to spent
-			if (!tx.isCoinBase()) {
-				for (TransactionInput in : tx.getInputs()) {
-					UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(), in.getOutpoint().getIndex());
-					if (prevOut == null || prevOut.isSpent() || !prevOut.isConfirmed())
-						throw new VerificationException("Attempted to spend a non-existent, already spent or unconfirmed output!");
-					blockStore.updateTransactionOutputSpent(prevOut.getHash(), prevOut.getIndex(), true, block.getHash());
-				}
-			}
-			
+        // Now update the block's transactions in db
+        for (final Transaction tx : block.getTransactions()) {
+            // For each used input, set its corresponding UTXO to spent
+            if (!tx.isCoinBase()) {
+                for (TransactionInput in : tx.getInputs()) {
+                    UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(),
+                            in.getOutpoint().getIndex());
+                    if (prevOut == null || prevOut.isSpent() || !prevOut.isConfirmed())
+                        throw new VerificationException(
+                                "Attempted to spend a non-existent, already spent or unconfirmed output!");
+                    blockStore.updateTransactionOutputSpent(prevOut.getHash(), prevOut.getIndex(), true,
+                            block.getHash());
+                }
+            }
+
             // TODO save token here (confirmed block)
 
-			// For each output, mark as confirmed now
-			for (TransactionOutput out : tx.getOutputs()) {
-				blockStore.updateTransactionOutputConfirmed(tx.getHash(), out.getIndex(), true);
-			}
-		}
-	}
+            // For each output, mark as confirmed now
+            for (TransactionOutput out : tx.getOutputs()) {
+                blockStore.updateTransactionOutputConfirmed(tx.getHash(), out.getIndex(), true);
+            }
+        }
+    }
 
-	/**
-	 * Removes the specified block and all its output spenders and approvers from
-	 * the milestone. This will disconnect all transactions of the block by marking
-	 * used UTXOs unspent and removing UTXOs of the block from the db.
-	 * 
-	 * @param blockEvaluation
-	 * @throws BlockStoreException
-	 */
-	public void removeBlockFromMilestone(BlockEvaluation blockEvaluation) throws BlockStoreException {
-		blockEvaluation = blockStore.getBlockEvaluation(blockEvaluation.getBlockhash());
-		Block block = blockStore.get(blockEvaluation.getBlockhash()).getHeader();
+    /**
+     * Removes the specified block and all its output spenders and approvers
+     * from the milestone. This will disconnect all transactions of the block by
+     * marking used UTXOs unspent and removing UTXOs of the block from the db.
+     * 
+     * @param blockEvaluation
+     * @throws BlockStoreException
+     */
+    public void removeBlockFromMilestone(BlockEvaluation blockEvaluation) throws BlockStoreException {
+        blockEvaluation = blockStore.getBlockEvaluation(blockEvaluation.getBlockhash());
+        Block block = blockStore.get(blockEvaluation.getBlockhash()).getHeader();
 
-		// If already disconnected, return
-		if (!blockEvaluation.isMilestone())
-			return;
+        // If already disconnected, return
+        if (!blockEvaluation.isMilestone())
+            return;
 
-		// Set milestone false and update latestMilestoneUpdateTime
-		blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockhash(), false);
+        // Set milestone false and update latestMilestoneUpdateTime
+        blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockhash(), false);
 
-		// Disconnect all approver blocks first
-		for (StoredBlock approver : blockStore.getSolidApproverBlocks(blockEvaluation.getBlockhash())) {
-			removeBlockFromMilestone(blockStore.getBlockEvaluation(approver.getHeader().getHash()));
-		}
+        // Disconnect all approver blocks first
+        for (StoredBlock approver : blockStore.getSolidApproverBlocks(blockEvaluation.getBlockhash())) {
+            removeBlockFromMilestone(blockStore.getBlockEvaluation(approver.getHeader().getHash()));
+        }
 
-		removeTransactionsFromMilestone(block);
-	}
+        removeTransactionsFromMilestone(block);
+    }
 
-	@Override
-	public void removeTransactionsFromMilestone(Block block) throws BlockStoreException {
-		// CUI checkState(lock.isHeldByCurrentThread());
-		// blockStore.beginDatabaseBatchWrite();
-		try {
-			for (Transaction tx : block.getTransactions()) {
-				// Mark all outputs used by tx input as unspent
-				for (TransactionInput txin : tx.getInputs()) {
-					if (!txin.isCoinBase()) {
-						blockStore.updateTransactionOutputSpent(txin.getOutpoint().getHash(), txin.getOutpoint().getIndex(), false, Sha256Hash.ZERO_HASH);
-					}
-				}
-	            
-	            // TODO revert token here (unconfirmed block)
+    @Override
+    public void removeTransactionsFromMilestone(Block block) throws BlockStoreException {
+        // CUI checkState(lock.isHeldByCurrentThread());
+        // blockStore.beginDatabaseBatchWrite();
+        try {
+            for (Transaction tx : block.getTransactions()) {
+                // Mark all outputs used by tx input as unspent
+                for (TransactionInput txin : tx.getInputs()) {
+                    if (!txin.isCoinBase()) {
+                        blockStore.updateTransactionOutputSpent(txin.getOutpoint().getHash(),
+                                txin.getOutpoint().getIndex(), false, Sha256Hash.ZERO_HASH);
+                    }
+                }
 
-				// Mark unconfirmed all tx outputs in db and disconnect their
-				// spending blocks
-				for (TransactionOutput txout : tx.getOutputs()) {
-					if (blockStore.getTransactionOutput(tx.getHash(), txout.getIndex()).isSpent()) {
-						removeBlockFromMilestone(blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()));
-					}
-					blockStore.updateTransactionOutputConfirmed(tx.getHash(), txout.getIndex(), false);
-				}
-			}
-		} catch (BlockStoreException e) {
-			blockStore.abortDatabaseBatchWrite();
-			throw e;
-		}
-	}
+                // TODO revert token here (unconfirmed block)
 
-	@Override
-	protected void doSetChainHead(StoredBlock chainHead) throws BlockStoreException {
-		checkState(lock.isHeldByCurrentThread());
-		blockStore.commitDatabaseBatchWrite();
-	}
+                // Mark unconfirmed all tx outputs in db and disconnect their
+                // spending blocks
+                for (TransactionOutput txout : tx.getOutputs()) {
+                    if (blockStore.getTransactionOutput(tx.getHash(), txout.getIndex()).isSpent()) {
+                        removeBlockFromMilestone(
+                                blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()));
+                    }
+                    blockStore.updateTransactionOutputConfirmed(tx.getHash(), txout.getIndex(), false);
+                }
+            }
+        } catch (BlockStoreException e) {
+            blockStore.abortDatabaseBatchWrite();
+            throw e;
+        }
+    }
 
-	@Override
-	protected void notSettingChainHead() throws BlockStoreException {
-		blockStore.abortDatabaseBatchWrite();
-	}
+    @Override
+    protected void doSetChainHead(StoredBlock chainHead) throws BlockStoreException {
+        checkState(lock.isHeldByCurrentThread());
+        blockStore.commitDatabaseBatchWrite();
+    }
 
-	@Override
-	protected StoredBlock getStoredBlockInCurrentScope(Sha256Hash hash) throws BlockStoreException {
-		//checkState(lock.isHeldByCurrentThread());
-		return blockStore.get(hash);
-	}
+    @Override
+    protected void notSettingChainHead() throws BlockStoreException {
+        blockStore.abortDatabaseBatchWrite();
+    }
 
-	@Override
-	protected void tryFirstSetSolidityAndHeight(Block block) throws BlockStoreException {
-		// Check previous blocks exist
-		BlockEvaluation prevBlockEvaluation = blockStore.getBlockEvaluation(block.getPrevBlockHash());
-		if (prevBlockEvaluation == null) {
-			blockRequester.requestBlock(block.getPrevBlockHash());
-			log.warn("previous block does not exist for solidity update, requesting...");
-		}
+    @Override
+    protected StoredBlock getStoredBlockInCurrentScope(Sha256Hash hash) throws BlockStoreException {
+        // checkState(lock.isHeldByCurrentThread());
+        return blockStore.get(hash);
+    }
 
-		BlockEvaluation prevBranchBlockEvaluation = blockStore.getBlockEvaluation(block.getPrevBranchBlockHash());
-		if (prevBranchBlockEvaluation == null) {
-			blockRequester.requestBlock(block.getPrevBranchBlockHash());
-			log.warn("previous block does not exist for solidity update, requesting...");
-		}
+    @Override
+    protected void tryFirstSetSolidityAndHeight(Block block) throws BlockStoreException {
+        // Check previous blocks exist
+        BlockEvaluation prevBlockEvaluation = blockStore.getBlockEvaluation(block.getPrevBlockHash());
+        if (prevBlockEvaluation == null) {
+            blockRequester.requestBlock(block.getPrevBlockHash());
+            log.warn("previous block does not exist for solidity update, requesting...");
+        }
 
-		if (prevBlockEvaluation == null || prevBranchBlockEvaluation == null) {
-			return;
-		}
+        BlockEvaluation prevBranchBlockEvaluation = blockStore.getBlockEvaluation(block.getPrevBranchBlockHash());
+        if (prevBranchBlockEvaluation == null) {
+            blockRequester.requestBlock(block.getPrevBranchBlockHash());
+            log.warn("previous block does not exist for solidity update, requesting...");
+        }
 
-		// If both previous blocks are solid, our block should be solidified
-		if (prevBlockEvaluation.isSolid() && prevBranchBlockEvaluation.isSolid()) {
-			trySolidify(block, prevBlockEvaluation, prevBranchBlockEvaluation);
-		}
-	}
+        if (prevBlockEvaluation == null || prevBranchBlockEvaluation == null) {
+            return;
+        }
 
-	public boolean trySolidify(Block block, BlockEvaluation prev, BlockEvaluation prevBranch) throws BlockStoreException {
-		StoredBlock storedPrev = blockStore.get(block.getPrevBlockHash());
-		StoredBlock storedPrevBranch = blockStore.get(block.getPrevBranchBlockHash());
+        // If both previous blocks are solid, our block should be solidified
+        if (prevBlockEvaluation.isSolid() && prevBranchBlockEvaluation.isSolid()) {
+            solidify(block, prevBlockEvaluation, prevBranchBlockEvaluation);
+        }
+    }
+
+    public boolean solidify(Block block, BlockEvaluation prev, BlockEvaluation prevBranch) throws BlockStoreException {
+        StoredBlock storedPrev = blockStore.get(block.getPrevBlockHash());
+        StoredBlock storedPrevBranch = blockStore.get(block.getPrevBranchBlockHash());
         long height = Math.max(prev.getHeight() + 1, prevBranch.getHeight() + 1);
 
+        // Fails if verification fails, for now tries to solidify again later
         try {
-		if (!checkSolidity(block, storedPrev, storedPrevBranch, height)) {
-			return false;
-		}
-        }
-        catch (VerificationException e) {
+            if (!checkSolidity(block, storedPrev, storedPrevBranch, height)) {
+                return false;
+            }
+        } catch (VerificationException e) {
             log.info(e.getMessage());
             return false;
         }
 
-		// Update evaluations
+        // Update evaluations
         blockStore.updateBlockEvaluationHeight(block.getHash(), height);
-		blockStore.updateBlockEvaluationSolid(block.getHash(), true);
+        blockStore.updateBlockEvaluationSolid(block.getHash(), true);
 
-		// Update tips table
-		blockStore.deleteTip(block.getPrevBlockHash());
-		blockStore.deleteTip(block.getPrevBranchBlockHash());
-		blockStore.deleteTip(block.getHash());
-		blockStore.insertTip(block.getHash());
+        // Update tips table
+        blockStore.deleteTip(block.getPrevBlockHash());
+        blockStore.deleteTip(block.getPrevBranchBlockHash());
+        blockStore.deleteTip(block.getHash());
+        blockStore.insertTip(block.getHash());
         return true;
-	}
+    }
 
-    private boolean checkSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height) throws BlockStoreException, VerificationException {
+    private boolean checkSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height)
+            throws BlockStoreException, VerificationException {
 
-        // TODO optimization validity check : -1, 0, 1 if definitely false / unknown / true
-        
-        if (block.getTimeSeconds() < storedPrev.getHeader().getTimeSeconds() || block.getTimeSeconds() < storedPrevBranch.getHeader().getTimeSeconds())
+        // TODO stop trying to solidify eventually?
+
+        if (block.getTimeSeconds() < storedPrev.getHeader().getTimeSeconds()
+                || block.getTimeSeconds() < storedPrevBranch.getHeader().getTimeSeconds())
             return false;
 
         // TODO block.checkTransactions(height) for block types;
-        
+
         blockStore.beginDatabaseBatchWrite();
         LinkedList<UTXO> txOutsSpent = new LinkedList<UTXO>();
         LinkedList<UTXO> txOutsCreated = new LinkedList<UTXO>();
@@ -498,7 +513,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         if (scriptVerificationExecutor.isShutdown())
             scriptVerificationExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-        List<Future<VerificationException>> listScriptVerificationResults = new ArrayList<Future<VerificationException>>(block.getTransactions().size());
+        List<Future<VerificationException>> listScriptVerificationResults = new ArrayList<Future<VerificationException>>(
+                block.getTransactions().size());
         try {
             if (!params.isCheckpoint(height)) {
                 // BIP30 violator blocks are ones that contain a duplicated
@@ -510,9 +526,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 // BIP30 document for more details on this:
                 // https://github.com/bitcoin/bips/blob/master/bip-0030.mediawiki
                 for (Transaction tx : block.getTransactions()) {
-                    final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx, getVersionTally());
-                    // We already check non-BIP16 sigops in Block.verifyTransactions(true)
-                    if (verifyFlags.contains(VerifyFlag.P2SH)) 
+                    final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx,
+                            getVersionTally());
+                    // We already check non-BIP16 sigops in
+                    // Block.verifyTransactions(true)
+                    if (verifyFlags.contains(VerifyFlag.P2SH))
                         sigOps += tx.getSigOpCount();
                 }
             }
@@ -523,17 +541,19 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 Map<String, Coin> valueOut = new HashMap<String, Coin>();
 
                 final List<Script> prevOutScripts = new LinkedList<Script>();
-                final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx, getVersionTally());
+                final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx,
+                        getVersionTally());
                 if (!isCoinBase) {
                     for (int index = 0; index < tx.getInputs().size(); index++) {
                         TransactionInput in = tx.getInputs().get(index);
-                        UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(), in.getOutpoint().getIndex());
+                        UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(),
+                                in.getOutpoint().getIndex());
                         if (prevOut == null)
                             throw new VerificationException("Block attempts to spend a not yet existent output!");
 
                         if (valueIn.containsKey(Utils.HEX.encode(prevOut.getValue().getTokenid()))) {
-                            valueIn.put(Utils.HEX.encode(prevOut.getValue().getTokenid()),
-                                    valueIn.get(Utils.HEX.encode(prevOut.getValue().getTokenid())).add(prevOut.getValue()));
+                            valueIn.put(Utils.HEX.encode(prevOut.getValue().getTokenid()), valueIn
+                                    .get(Utils.HEX.encode(prevOut.getValue().getTokenid())).add(prevOut.getValue()));
                         } else {
                             valueIn.put(Utils.HEX.encode(prevOut.getValue().getTokenid()), prevOut.getValue());
 
@@ -561,10 +581,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     // it can be consumed
                     // in future.
                     Script script = getScript(out.getScriptBytes());
-                    UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), height, isCoinBase, script, getScriptAddress(script), block.getHash(),
-                            out.getFromaddress(), out.getDescription(),  Utils.HEX.encode(out.getValue().getTokenid()), false, false, false);
+                    UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), height, isCoinBase, script,
+                            getScriptAddress(script), block.getHash(), out.getFromaddress(), out.getDescription(),
+                            Utils.HEX.encode(out.getValue().getTokenid()), false, false, false);
                     blockStore.addUnspentTransactionOutput(newOut);
-                    
+
                     txOutsCreated.add(newOut);
                 }
                 if (tx.getTokenInfo() != null) {
@@ -583,7 +604,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 if (!isCoinBase && runScripts) {
                     // Because correctlySpends modifies transactions, this must
                     // come after we are done with tx
-                    FutureTask<VerificationException> future = new FutureTask<VerificationException>(new Verifier(tx, prevOutScripts, verifyFlags));
+                    FutureTask<VerificationException> future = new FutureTask<VerificationException>(
+                            new Verifier(tx, prevOutScripts, verifyFlags));
                     scriptVerificationExecutor.execute(future);
                     listScriptVerificationResults.add(future);
                 }
@@ -596,7 +618,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     throw new RuntimeException(thrownE); // Shouldn't happen
                 } catch (ExecutionException thrownE) {
                     log.error("Script.correctlySpends threw a non-normal exception: " + thrownE.getCause());
-                    throw new VerificationException("Bug in Script.correctlySpends, likely script malformed in some new and interesting way.", thrownE);
+                    throw new VerificationException(
+                            "Bug in Script.correctlySpends, likely script malformed in some new and interesting way.",
+                            thrownE);
                 }
                 if (e != null)
                     throw e;
