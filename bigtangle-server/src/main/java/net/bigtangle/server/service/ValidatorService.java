@@ -106,10 +106,8 @@ public class ValidatorService {
      * @throws BlockStoreException
      */
     public void resolveUndoableConflicts(Collection<BlockEvaluation> blockEvaluationsToAdd) throws BlockStoreException {
-        // TODO replace all transactionOutPoints in this class with new class
-        // conflictpoints (equals of transactionoutpoints, token issuance ids,
-        // mining reward height intervals)
-        HashSet<Pair<BlockEvaluation, TransactionOutPoint>> conflictingOutPoints = new HashSet<Pair<BlockEvaluation, TransactionOutPoint>>();
+        // TODO dynamic conflictpoints: token issuance ids, mining reward height intervals
+        HashSet<Pair<BlockEvaluation, ConflictPoint>> conflictingOutPoints = new HashSet<Pair<BlockEvaluation, ConflictPoint>>();
         HashSet<BlockEvaluation> conflictingMilestoneBlocks = new HashSet<BlockEvaluation>();
         List<Block> blocksToAdd = blockService
                 .getBlocks(blockEvaluationsToAdd.stream().map(e -> e.getBlockhash()).collect(Collectors.toList()));
@@ -134,7 +132,7 @@ public class ValidatorService {
         // For candidates that have been eliminated (conflictingOutPoints in
         // blocksToAdd
         // \ winningBlocks) remove them from blocksToAdd
-        for (Pair<BlockEvaluation, TransactionOutPoint> b : conflictingOutPoints.stream()
+        for (Pair<BlockEvaluation, ConflictPoint> b : conflictingOutPoints.stream()
                 .filter(b -> blockEvaluationsToAdd.contains(b.getLeft()) && losingBlocks.contains(b.getLeft()))
                 .collect(Collectors.toList())) {
             blockService.removeBlockAndApproversFrom(blockEvaluationsToAdd, b.getLeft());
@@ -151,7 +149,7 @@ public class ValidatorService {
      * @throws BlockStoreException
      */
     public Pair<HashSet<BlockEvaluation>, HashSet<BlockEvaluation>> resolveConflictsByDescendingRating(
-            Collection<Pair<BlockEvaluation, TransactionOutPoint>> conflictingOutPoints) throws BlockStoreException {
+            Collection<Pair<BlockEvaluation, ConflictPoint>> conflictingOutPoints) throws BlockStoreException {
         // Initialize blocks that will survive the conflict resolution
         HashSet<BlockEvaluation> winningBlocksSingle = conflictingOutPoints.stream().map(p -> p.getLeft())
                 .collect(Collectors.toCollection(HashSet::new));
@@ -164,48 +162,48 @@ public class ValidatorService {
 
         // Sort conflicts internally by descending rating, then cumulative
         // weight
-        Comparator<Pair<BlockEvaluation, TransactionOutPoint>> byDescendingRating = Comparator
-                .comparingLong((Pair<BlockEvaluation, TransactionOutPoint> e) -> e.getLeft().getRating())
-                .thenComparingLong((Pair<BlockEvaluation, TransactionOutPoint> e) -> e.getLeft().getCumulativeWeight())
-                .thenComparingLong((Pair<BlockEvaluation, TransactionOutPoint> e) -> -e.getLeft().getInsertTime())
-                .thenComparing((Pair<BlockEvaluation, TransactionOutPoint> e) -> e.getLeft().getBlockhash()).reversed();
+        Comparator<Pair<BlockEvaluation, ConflictPoint>> byDescendingRating = Comparator
+                .comparingLong((Pair<BlockEvaluation, ConflictPoint> e) -> e.getLeft().getRating())
+                .thenComparingLong((Pair<BlockEvaluation, ConflictPoint> e) -> e.getLeft().getCumulativeWeight())
+                .thenComparingLong((Pair<BlockEvaluation, ConflictPoint> e) -> -e.getLeft().getInsertTime())
+                .thenComparing((Pair<BlockEvaluation, ConflictPoint> e) -> e.getLeft().getBlockhash()).reversed();
 
-        Supplier<TreeSet<Pair<BlockEvaluation, TransactionOutPoint>>> conflictTreeSetSupplier = () -> new TreeSet<Pair<BlockEvaluation, TransactionOutPoint>>(
+        Supplier<TreeSet<Pair<BlockEvaluation, ConflictPoint>>> conflictTreeSetSupplier = () -> new TreeSet<Pair<BlockEvaluation, ConflictPoint>>(
                 byDescendingRating);
 
-        Map<Object, TreeSet<Pair<BlockEvaluation, TransactionOutPoint>>> conflicts = conflictingOutPoints.stream()
+        Map<Object, TreeSet<Pair<BlockEvaluation, ConflictPoint>>> conflicts = conflictingOutPoints.stream()
                 .collect(Collectors.groupingBy(Pair::getRight, Collectors.toCollection(conflictTreeSetSupplier)));
 
         // Sort conflicts among each other by descending max(rating)
-        Comparator<TreeSet<Pair<BlockEvaluation, TransactionOutPoint>>> byDescendingSetRating = Comparator
+        Comparator<TreeSet<Pair<BlockEvaluation, ConflictPoint>>> byDescendingSetRating = Comparator
                 .comparingLong(
-                        (TreeSet<Pair<BlockEvaluation, TransactionOutPoint>> s) -> s.first().getLeft().getRating())
-                .thenComparingLong((TreeSet<Pair<BlockEvaluation, TransactionOutPoint>> s) -> s.first().getLeft()
+                        (TreeSet<Pair<BlockEvaluation, ConflictPoint>> s) -> s.first().getLeft().getRating())
+                .thenComparingLong((TreeSet<Pair<BlockEvaluation, ConflictPoint>> s) -> s.first().getLeft()
                         .getCumulativeWeight())
                 .thenComparingLong(
-                        (TreeSet<Pair<BlockEvaluation, TransactionOutPoint>> s) -> -s.first().getLeft().getInsertTime())
+                        (TreeSet<Pair<BlockEvaluation, ConflictPoint>> s) -> -s.first().getLeft().getInsertTime())
                 .thenComparing(
-                        (TreeSet<Pair<BlockEvaluation, TransactionOutPoint>> s) -> s.first().getLeft().getBlockhash())
+                        (TreeSet<Pair<BlockEvaluation, ConflictPoint>> s) -> s.first().getLeft().getBlockhash())
                 .reversed();
 
-        Supplier<TreeSet<TreeSet<Pair<BlockEvaluation, TransactionOutPoint>>>> conflictsTreeSetSupplier = () -> new TreeSet<TreeSet<Pair<BlockEvaluation, TransactionOutPoint>>>(
+        Supplier<TreeSet<TreeSet<Pair<BlockEvaluation, ConflictPoint>>>> conflictsTreeSetSupplier = () -> new TreeSet<TreeSet<Pair<BlockEvaluation, ConflictPoint>>>(
                 byDescendingSetRating);
 
-        TreeSet<TreeSet<Pair<BlockEvaluation, TransactionOutPoint>>> sortedConflicts = conflicts.values().stream()
+        TreeSet<TreeSet<Pair<BlockEvaluation, ConflictPoint>>> sortedConflicts = conflicts.values().stream()
                 .collect(Collectors.toCollection(conflictsTreeSetSupplier));
 
         // Now handle conflicts by descending max(rating)
-        for (TreeSet<Pair<BlockEvaluation, TransactionOutPoint>> conflict : sortedConflicts) {
+        for (TreeSet<Pair<BlockEvaluation, ConflictPoint>> conflict : sortedConflicts) {
             // Take the block with the maximum rating in this conflict that is
             // still in winning Blocks
-            Pair<BlockEvaluation, TransactionOutPoint> maxRatingPair = conflict.stream()
+            Pair<BlockEvaluation, ConflictPoint> maxRatingPair = conflict.stream()
                     .filter(p -> winningBlocks.contains(p.getLeft())).findFirst().orElse(null);
 
             // If such a block exists, this conflict is resolved by eliminating
             // all other
             // blocks in this conflict from winning Blocks
             if (maxRatingPair != null) {
-                for (Pair<BlockEvaluation, TransactionOutPoint> pair : conflict) {
+                for (Pair<BlockEvaluation, ConflictPoint> pair : conflict) {
                     if (pair.getLeft() != maxRatingPair.getLeft()) {
                         blockService.removeBlockAndApproversFrom(winningBlocks, pair.getLeft());
                     }
@@ -226,20 +224,20 @@ public class ValidatorService {
      * @throws BlockStoreException
      */
     public void findCandidateConflicts(Collection<Block> blocksToAdd,
-            Collection<Pair<BlockEvaluation, TransactionOutPoint>> conflictingOutPoints) throws BlockStoreException {
+            Collection<Pair<BlockEvaluation, ConflictPoint>> conflictingOutPoints) throws BlockStoreException {
         // Create pairs of blocks and used non-coinbase utxos from blocksToAdd
-        Stream<Pair<Block, TransactionOutPoint>> outPoints = blocksToAdd.stream()
+        Stream<Pair<Block, ConflictPoint>> outPoints = blocksToAdd.stream()
                 .flatMap(b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream())
-                        .filter(in -> !in.isCoinBase()).map(in -> Pair.of(b, in.getOutpoint())));
+                        .filter(in -> !in.isCoinBase()).map(in -> Pair.of(b, new ConflictPoint(in.getOutpoint()))));
 
         // Filter to only contain utxos that are spent more than once in the new
         // milestone candidates
-        List<Pair<Block, TransactionOutPoint>> candidateCandidateConflicts = outPoints
+        List<Pair<Block, ConflictPoint>> candidateCandidateConflicts = outPoints
                 .collect(Collectors.groupingBy(Pair::getRight)).values().stream().filter(l -> l.size() > 1)
                 .flatMap(l -> l.stream()).collect(Collectors.toList());
 
         // Add the conflicting candidates
-        for (Pair<Block, TransactionOutPoint> pair : candidateCandidateConflicts) {
+        for (Pair<Block, ConflictPoint> pair : candidateCandidateConflicts) {
             BlockEvaluation toAddEvaluation = blockService.getBlockEvaluation(pair.getLeft().getHash());
             conflictingOutPoints.add(Pair.of(toAddEvaluation, pair.getRight()));
         }
@@ -253,7 +251,7 @@ public class ValidatorService {
      * @throws BlockStoreException
      */
     public void findMilestoneConflicts(Collection<Block> blocksToAdd,
-            Collection<Pair<BlockEvaluation, TransactionOutPoint>> conflictingOutPoints,
+            Collection<Pair<BlockEvaluation, ConflictPoint>> conflictingOutPoints,
             Collection<BlockEvaluation> conflictingMilestoneBlocks) throws BlockStoreException {
         // Create pairs of blocks and used non-coinbase utxos from blocksToAdd
         Stream<Pair<Block, TransactionInput>> outPoints = blocksToAdd.stream().flatMap(b -> b.getTransactions().stream()
@@ -271,8 +269,8 @@ public class ValidatorService {
         for (Pair<Block, TransactionInput> pair : candidatesConflictingWithMilestone) {
             BlockEvaluation milestoneEvaluation = transactionService.getUTXOSpender(pair.getRight().getOutpoint());
             BlockEvaluation toAddEvaluation = blockService.getBlockEvaluation(pair.getLeft().getHash());
-            conflictingOutPoints.add(Pair.of(toAddEvaluation, pair.getRight().getOutpoint()));
-            conflictingOutPoints.add(Pair.of(milestoneEvaluation, pair.getRight().getOutpoint()));
+            conflictingOutPoints.add(Pair.of(toAddEvaluation, new ConflictPoint(pair.getRight().getOutpoint())));
+            conflictingOutPoints.add(Pair.of(milestoneEvaluation, new ConflictPoint(pair.getRight().getOutpoint())));
             conflictingMilestoneBlocks.add(milestoneEvaluation);
             // addMilestoneApprovers(conflictingMilestoneBlocks,
             // milestoneEvaluation);
