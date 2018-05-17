@@ -52,6 +52,18 @@ public class StockController extends TokensController {
     public TextField stockAmount;
 
     @FXML
+    public ComboBox<String> tokenid1;
+
+    @FXML
+    public TextField stockName1;
+
+    @FXML
+    public TextField stockAmount1;
+
+    @FXML
+    public TextArea stockDescription1;
+
+    @FXML
     public TextField urlTF;
     @FXML
     public TextField signnumberTF;
@@ -114,6 +126,7 @@ public class StockController extends TokensController {
             }
         }
         tokenid.setItems(tokenData);
+        tokenid1.setItems(tokenData);
         // tokenid.getSelectionModel().selectedIndexProperty().addListener((ov,
         // oldv, newv) -> {
         // stockName.setText(names.get(newv.intValue()));
