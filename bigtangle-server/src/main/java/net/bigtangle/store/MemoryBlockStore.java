@@ -8,6 +8,8 @@ package net.bigtangle.store;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.apache.commons.lang.NotImplementedException;
+
 import net.bigtangle.core.*;
 
 /**

@@ -92,29 +92,8 @@ public abstract class AbstractBlockGraph {
     /** Keeps a map of block hashes to StoredBlocks. */
     private final BlockStore blockStore;
 
-    /**
-     * Tracks the top of the best known tangle.<p>
-     *
-     * Following this one down to the genesis block produces the story of the economy from the creation of Bitcoin
-     * until the present day. The tangle head can change if a new set of blocks is received that results in a tangle of
-     * greater work than the one obtained by following this one down. In that case a reorganize is triggered,
-     * potentially invalidating transactions in our wallet.
-     */
-    protected StoredBlock chainHead;
-
-    // The tangleHead field is read/written synchronized with this object rather than BlockTangle. However writing is
-    // also guaranteed to happen whilst BlockTangle is synchronized (see setTangleHead). The goal of this is to let
-    // clients quickly access the tangle head even whilst the block tangle is downloading and thus the BlockTangle is
-    // locked most of the time.
-    private final Object chainHeadLock = new Object();
-
     protected final NetworkParameters params;
-    private final CopyOnWriteArrayList<ListenerRegistration<NewBestBlockListener>> newBestBlockListeners;
-    private final CopyOnWriteArrayList<ListenerRegistration<ReorganizeListener>> reorganizeListeners;
    
- 
-  
-
     /** False positive estimation uses a double exponential moving average. */
     public static final double FP_ESTIMATOR_ALPHA = 0.0001;
     /** False positive estimation uses a double exponential moving average. */
@@ -140,89 +119,9 @@ public abstract class AbstractBlockGraph {
         this.blockStore = blockStore;
         this.params = context.getParams();
 
-        this.newBestBlockListeners = new CopyOnWriteArrayList<ListenerRegistration<NewBestBlockListener>>();
-        this.reorganizeListeners = new CopyOnWriteArrayList<ListenerRegistration<ReorganizeListener>>();
-
- 
-
         this.versionTally = new VersionTally(context.getParams());
-        //this.versionTally.initialize(blockStore, chainHead);
     }
 
-    /**
-     * Add a wallet to the BlockTangle. Note that the wallet will be unaffected by any blocks received while it
-     * was not part of this BlockTangle. This method is useful if the wallet has just been created, and its keys
-     * have never been in use, or if the wallet has been loaded along with the BlockTangle. Note that adding multiple
-     * wallets is not well tested!
-     */
-    public final void addWallet(Wallet wallet) {
-
-        int walletHeight = wallet.getLastBlockSeenHeight();
-        long chainHeight = getBestChainHeight();
-        if (walletHeight != chainHeight) {
-            log.warn("Wallet/chain height mismatch: {} vs {}", walletHeight, chainHeight);
-            log.warn("Hashes: {} vs {}", wallet.getLastBlockSeenHash(), getChainHead().getHeader().getHash());
-
-            // This special case happens when the VM crashes because of a transaction received. It causes the updated
-            // block store to persist, but not the wallet. In order to fix the issue, we roll back the block store to
-            // the wallet height to make it look like as if the block has never been received.
-            if (walletHeight < chainHeight && walletHeight > 0) {
-                try {
-                    rollbackBlockStore(walletHeight);
-                    log.info("Rolled back block store to height {}.", walletHeight);
-                } catch (BlockStoreException x) {
-                    log.warn("Rollback of block store failed, continuing with mismatched heights. This can happen due to a replay.");
-                }
-            }
-        }
-    }
-  
-
-    /**
-     * Adds a {@link NewBestBlockListener} listener to the tangle.
-     */
-    public void addNewBestBlockListener(NewBestBlockListener listener) {
-        addNewBestBlockListener(Threading.USER_THREAD, listener);
-    }
-
-    /**
-     * Adds a {@link NewBestBlockListener} listener to the tangle.
-     */
-    public final void addNewBestBlockListener(Executor executor, NewBestBlockListener listener) {
-        newBestBlockListeners.add(new ListenerRegistration<NewBestBlockListener>(listener, executor));
-    }
-
-    /**
-     * Adds a generic {@link ReorganizeListener} listener to the tangle.
-     */
-    public void addReorganizeListener(ReorganizeListener listener) {
-        addReorganizeListener(Threading.USER_THREAD, listener);
-    }
-
-    /**
-     * Adds a generic {@link ReorganizeListener} listener to the tangle.
-     */
-    public final void addReorganizeListener(Executor executor, ReorganizeListener listener) {
-        reorganizeListeners.add(new ListenerRegistration<ReorganizeListener>(listener, executor));
-    }
-
-  
-  
-    /**
-     * Removes the given {@link NewBestBlockListener} from the tangle.
-     */
-    public void removeNewBestBlockListener(NewBestBlockListener listener) {
-        ListenerRegistration.removeFromList(listener, newBestBlockListeners);
-    }
-
-    /**
-     * Removes the given {@link ReorganizeListener} from the tangle.
-     */
-    public void removeReorganizeListener(ReorganizeListener listener) {
-        ListenerRegistration.removeFromList(listener, reorganizeListeners);
-    }
-
-   
     /**
      * Returns the {@link BlockStore} the tangle was constructed with. You can use this to iterate over the tangle.
      */
@@ -254,14 +153,6 @@ public abstract class AbstractBlockGraph {
             throws BlockStoreException, VerificationException;
 
     /**
-     * Rollback the block store to a given height. This is currently only supported by {@link BlockGraph} instances.
-     * 
-     * @throws BlockStoreException
-     *             if the operation fails or is unsupported.
-     */
-    protected abstract void rollbackBlockStore(int height) throws BlockStoreException;
-
-    /**
      * Called before setting tangle head in memory.
      * Should write the new head to block store and then commit any database transactions
      * that were started by disconnectTransactions/connectTransactions.
@@ -269,8 +160,6 @@ public abstract class AbstractBlockGraph {
     protected abstract void doSetChainHead(StoredBlock chainHead) throws BlockStoreException;
     
     /**
-     * Called if we (possibly) previously called disconnectTransaction/connectTransactions,
-     * but will not be calling preSetChainHead as a block failed verification.
      * Can be used to abort database transactions that were started by
      * disconnectTransactions/connectTransactions.
      */
@@ -421,56 +310,6 @@ public abstract class AbstractBlockGraph {
      */
     protected abstract void removeTransactionsFromMilestone(Block block) throws PrunedException, BlockStoreException;
 
-
-    
-    // TODO Remove these
-    /**
-     * @return the height of the best known chain, convenience for <tt>getChainHead().getHeight()</tt>.
-     */
-    public final long getBestChainHeight() {
-        return getChainHead().getHeight();
-    }
-
-    public enum NewBlockType {
-        BEST_CHAIN,
-        SIDE_CHAIN
-    }
-
-    protected void setChainHead(StoredBlock chainHead) throws BlockStoreException {
-        doSetChainHead(chainHead);
-        synchronized (chainHeadLock) {
-            this.chainHead = chainHead;
-        }
-    }
-
-    /**
-     * Returns the block at the head of the current best chain. This is the block which represents the greatest
-     * amount of cumulative work done.
-     */
-    public StoredBlock getChainHead() {
-        synchronized (chainHeadLock) {
-            return chainHead;
-        }
-    }
-
-    /**
-     * Returns a future that completes when the block chain has reached the given height. Yields the
-     * {@link StoredBlock} of the block that reaches that height first. The future completes on a peer thread.
-     */
-    public ListenableFuture<StoredBlock> getHeightFuture(final int height) {
-        final SettableFuture<StoredBlock> result = SettableFuture.create();
-        addNewBestBlockListener(Threading.SAME_THREAD, new NewBestBlockListener() {
-            @Override
-            public void notifyNewBestBlock(StoredBlock block) throws VerificationException {
-                if (block.getHeight() >= height) {
-                    removeNewBestBlockListener(this);
-                    result.set(block);
-                }
-            }
-        });
-        return result;
-    }
-
     /**
      * The false positive rate is the average over all blockchain transactions of:
      *
@@ -534,5 +373,12 @@ public abstract class AbstractBlockGraph {
         return versionTally;
     }
 
-    
+    public long getMaxHeight() {
+        try {
+            return ((FullPrunedBlockStore) blockStore).getMaxSolidHeight();
+        } catch (BlockStoreException e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
 }

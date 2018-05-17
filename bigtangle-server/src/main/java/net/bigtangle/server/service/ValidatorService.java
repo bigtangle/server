@@ -106,13 +106,13 @@ public class ValidatorService {
      * @throws BlockStoreException
      */
     public void resolveUndoableConflicts(Collection<BlockEvaluation> blockEvaluationsToAdd) throws BlockStoreException {
-        // TODO dynamic conflictpoints: token issuance ids, mining reward height intervals
         HashSet<Pair<BlockEvaluation, ConflictPoint>> conflictingOutPoints = new HashSet<Pair<BlockEvaluation, ConflictPoint>>();
         HashSet<BlockEvaluation> conflictingMilestoneBlocks = new HashSet<BlockEvaluation>();
         List<Block> blocksToAdd = blockService
                 .getBlocks(blockEvaluationsToAdd.stream().map(e -> e.getBlockhash()).collect(Collectors.toList()));
 
         // Find all conflicts between milestone and candidates
+        // TODO merge, dynamic conflictpoints: token issuance ids, mining reward height intervals
         findMilestoneConflicts(blocksToAdd, conflictingOutPoints, conflictingMilestoneBlocks);
         findCandidateConflicts(blocksToAdd, conflictingOutPoints);
 

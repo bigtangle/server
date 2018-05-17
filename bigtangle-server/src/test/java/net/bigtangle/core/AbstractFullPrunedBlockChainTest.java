@@ -81,55 +81,55 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
     public abstract void resetStore(FullPrunedBlockStore store) throws BlockStoreException;
 
-   //TODO @Test
-    public void testGeneratedChain() throws Exception {
-        // Tests various test cases from FullBlockTestGenerator
-        FullBlockTestGenerator generator = new FullBlockTestGenerator(PARAMS);
-        RuleList blockList = generator.getBlocksToTest(false, false, null);
-        
-        store = createStore(PARAMS, blockList.maximumReorgBlockCount);
-        blockgraph = new FullPrunedBlockGraph(PARAMS, store);
-
-        for (Rule rule : blockList.list) {
-            if (!(rule instanceof FullBlockTestGenerator.BlockAndValidity))
-                continue;
-            FullBlockTestGenerator.BlockAndValidity block = (FullBlockTestGenerator.BlockAndValidity) rule;
-            log.info("Testing rule " + block.ruleName + " with block hash " + block.block.getHash());
-            boolean threw = false;
-            try {
-                if (blockgraph.add(block.block) != block.connects) {
-                    log.error("Block didn't match connects flag on block " + block.ruleName);
-                    fail();
-                }
-            } catch (VerificationException e) {
-                threw = true;
-                if (!block.throwsException) {
-                    log.error("Block didn't match throws flag on block " + block.ruleName);
-                    throw e;
-                }
-                if (block.connects) {
-             
-                	log.error("Block didn't match connects flag on block " + block.ruleName);
-                    fail();
-                }
-            }
-            if (!threw && block.throwsException) {
-                log.error("Block didn't match throws flag on block " + block.ruleName);
-                fail();
-            }
-            if (!blockgraph.getChainHead().getHeader().getHash().equals(block.hashChainTipAfterBlock)) {
-                log.error("New block head didn't match the correct value after block " + block.ruleName);
-             //   fail();
-            }
-            if (blockgraph.getChainHead().getHeight() != block.heightAfterBlock) {
-                log.error("New block head didn't match the correct height after block " + block.ruleName);
-              //  fail();
-            }
-        }
-        try {
-            store.close();
-        } catch (Exception e) {}
-    }
+//   //TODO @Test
+//    public void testGeneratedChain() throws Exception {
+//        // Tests various test cases from FullBlockTestGenerator
+//        FullBlockTestGenerator generator = new FullBlockTestGenerator(PARAMS);
+//        RuleList blockList = generator.getBlocksToTest(false, false, null);
+//        
+//        store = createStore(PARAMS, blockList.maximumReorgBlockCount);
+//        blockgraph = new FullPrunedBlockGraph(PARAMS, store);
+//
+//        for (Rule rule : blockList.list) {
+//            if (!(rule instanceof FullBlockTestGenerator.BlockAndValidity))
+//                continue;
+//            FullBlockTestGenerator.BlockAndValidity block = (FullBlockTestGenerator.BlockAndValidity) rule;
+//            log.info("Testing rule " + block.ruleName + " with block hash " + block.block.getHash());
+//            boolean threw = false;
+//            try {
+//                if (blockgraph.add(block.block) != block.connects) {
+//                    log.error("Block didn't match connects flag on block " + block.ruleName);
+//                    fail();
+//                }
+//            } catch (VerificationException e) {
+//                threw = true;
+//                if (!block.throwsException) {
+//                    log.error("Block didn't match throws flag on block " + block.ruleName);
+//                    throw e;
+//                }
+//                if (block.connects) {
+//             
+//                	log.error("Block didn't match connects flag on block " + block.ruleName);
+//                    fail();
+//                }
+//            }
+//            if (!threw && block.throwsException) {
+//                log.error("Block didn't match throws flag on block " + block.ruleName);
+//                fail();
+//            }
+//            if (!blockgraph.getChainHead().getHeader().getHash().equals(block.hashChainTipAfterBlock)) {
+//                log.error("New block head didn't match the correct value after block " + block.ruleName);
+//             //   fail();
+//            }
+//            if (blockgraph.getChainHead().getHeight() != block.heightAfterBlock) {
+//                log.error("New block head didn't match the correct height after block " + block.ruleName);
+//              //  fail();
+//            }
+//        }
+//        try {
+//            store.close();
+//        } catch (Exception e) {}
+//    }
 
     @Test
     public void skipScripts() throws Exception {

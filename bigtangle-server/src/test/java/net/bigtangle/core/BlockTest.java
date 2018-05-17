@@ -27,27 +27,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.io.ByteStreams;
 
-import net.bigtangle.core.Block;
-import net.bigtangle.core.Coin;
-import net.bigtangle.core.Context;
-import net.bigtangle.core.DumpedPrivateKey;
-import net.bigtangle.core.ECKey;
-import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.StoredBlock;
-import net.bigtangle.core.Transaction;
-import net.bigtangle.core.TransactionInput;
-import net.bigtangle.core.TransactionOutPoint;
-import net.bigtangle.core.TransactionOutput;
-import net.bigtangle.core.VerificationException;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.TestNet2Params;
 import net.bigtangle.params.TestNet3Params;
 import net.bigtangle.params.UnitTestParams;
 import net.bigtangle.script.ScriptOpCodes;
-import net.bigtangle.store.AbstractBlockGraph.NewBlockType;
 import net.bigtangle.wallet.Wallet;
-import net.bigtangle.wallet.Wallet.BalanceType;
 //TODO no binary blockBytes
 @Ignore
 public class BlockTest {
