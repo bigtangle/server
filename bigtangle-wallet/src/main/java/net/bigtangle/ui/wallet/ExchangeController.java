@@ -184,7 +184,7 @@ public class ExchangeController {
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> tokens = (List<Map<String, Object>>) data.get("tokens");
         for (Map<String, Object> map : tokens) {
-            String tokenHex = (String) map.get("tokenHex");
+            String tokenHex = (String) map.get("tokenid");
             String tokenname = (String) map.get("tokenname");
             tokenData.add(tokenname + " : " + tokenHex);
         }

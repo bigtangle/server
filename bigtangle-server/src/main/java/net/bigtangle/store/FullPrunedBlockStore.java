@@ -226,8 +226,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void updateBlockEvaluationMilestone(Sha256Hash blockhash, boolean b) throws BlockStoreException;
 
-    
-
     public void updateBlockEvaluationMilestoneDepth(Sha256Hash blockhash, long i) throws BlockStoreException;
 
     public void updateBlockEvaluationMaintained(Sha256Hash blockhash, boolean b) throws BlockStoreException;
@@ -250,11 +248,14 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public int getMaxTokenId() throws BlockStoreException;
 
     public List<Tokens> getTokensList() throws BlockStoreException;
+
     public List<Tokens> getTokensList(String name) throws BlockStoreException;
+
+    public Map<String,Long> getTokenAmountMap(String name) throws BlockStoreException;
 
     public void saveTokens(Tokens tokens) throws BlockStoreException;
 
-    public void saveTokens(String tokenid, String tokenname, String description, String url, long signnumber, 
+    public void saveTokens(String tokenid, String tokenname, String description, String url, long signnumber,
             boolean multiserial, boolean asmarket, boolean tokenstop) throws BlockStoreException;
 
     public void saveOrderPublish(OrderPublish orderPublish) throws BlockStoreException;
@@ -284,18 +285,18 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void updateUnmaintainAll() throws BlockStoreException;
 
-    public void  streamBlocks(long heightstart, KafkaMessageProducer kafkaMessageProducer)  throws BlockStoreException;
+    public void streamBlocks(long heightstart, KafkaMessageProducer kafkaMessageProducer) throws BlockStoreException;
 
     public List<OrderPublish> getOrderPublishListWithNotMatch() throws BlockStoreException;
-    
+
     public List<MultiSignAddress> getMultiSignAddressListByTokenid(String tokenid) throws BlockStoreException;
-    
+
     public void insertMultiSignAddress(MultiSignAddress multiSignAddress) throws BlockStoreException;
-    
+
     public void deleteMultiSignAddress(String tokenid, String address) throws BlockStoreException;
-    
+
     public void insertTokenSerial(TokenSerial tokenSerial) throws BlockStoreException;
-    
+
     public void insertMultisignby(MultiSignBy multisignby) throws BlockStoreException;
 
     public int getCountMultiSignAddress(String tokenid) throws BlockStoreException;
@@ -306,7 +307,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public MultiSignAddress getMultiSignAddressInfo(String tokenid, String address) throws BlockStoreException;
 
-    public int getCountMultiSignByTokenIndexAndAddress(String tokenid, long tokenindex, String address) throws BlockStoreException;
+    public int getCountMultiSignByTokenIndexAndAddress(String tokenid, long tokenindex, String address)
+            throws BlockStoreException;
 
     public int getCountMultiSignByAlready(String tokenid, long tokenindex) throws BlockStoreException;
 
@@ -316,7 +318,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public MultiSignBy getMultiSignByInfo(String tokenid, long tokenindex, String address) throws BlockStoreException;
 
-//    public List<TokenSerial> getTokenSerialListByTokenid(String tokenid);
-//
-//    public List<MultiSignBy> getMultiSignByListByTokenid(String tokenid);
+    // public List<TokenSerial> getTokenSerialListByTokenid(String tokenid);
+    //
+    // public List<MultiSignBy> getMultiSignByListByTokenid(String tokenid);
 }

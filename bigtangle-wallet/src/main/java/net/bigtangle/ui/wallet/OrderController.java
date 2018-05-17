@@ -214,7 +214,7 @@ public class OrderController extends ExchangeController {
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
         for (Map<String, Object> map : list) {
-            String tokenHex = (String) map.get("tokenHex");
+            String tokenHex = (String) map.get("tokenid");
             if (!buy) {
                 if (Main.validTokenMap.containsKey(tokenHex)) {
                     String tokenname = (String) map.get("tokenname");

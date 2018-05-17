@@ -6,6 +6,7 @@ package net.bigtangle.server.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,7 @@ public class TokensService {
         Tokens tokens = new Tokens();
         tokens.setTokenid(Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID));
         tokens.setTokenname(MonetaryFormat.CODE_BTC);
-        
+
         list.add(tokens);
         list.addAll(store.getTokensList());
 
@@ -44,8 +45,8 @@ public class TokensService {
 
         list.add(tokens);
         list.addAll(store.getTokensList(name));
-
-        return GetTokensResponse.create(list);
+        Map<String, Long> map = store.getTokenAmountMap(name);
+        return GetTokensResponse.create(list, map);
     }
 
     @Autowired

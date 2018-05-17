@@ -37,9 +37,9 @@ import net.bigtangle.core.VerificationException;
  */
 
 public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
-    
+
     private static final Logger log = LoggerFactory.getLogger(DatabaseFullPrunedBlockStore.class);
-    
+
     @Override
     public void updateOrderPublishState(String orderid, int state) throws BlockStoreException {
         maybeConnect();
@@ -62,17 +62,16 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             }
         }
     }
-    
+
     @Override
     public List<Exchange> getExchangeListWithAddress(String address) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         List<Exchange> list = new ArrayList<Exchange>();
         try {
-        	String SELECT_EXCHANGE_SQL = "SELECT orderid, fromAddress, "
+            String SELECT_EXCHANGE_SQL = "SELECT orderid, fromAddress, "
                     + "fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, "
-                    + "data, toSign, fromSign, toOrderId, fromOrderId "
-                    + "FROM exchange WHERE (fromAddress = ?)";
+                    + "data, toSign, fromSign, toOrderId, fromOrderId " + "FROM exchange WHERE (fromAddress = ?)";
             preparedStatement = conn.get().prepareStatement(SELECT_EXCHANGE_SQL);
             preparedStatement.setString(1, address);
             // preparedStatement.setString(2, address);
@@ -92,7 +91,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
                 exchange.setToOrderId(resultSet.getString("toOrderId"));
                 exchange.setFromOrderId(resultSet.getString("fromOrderId"));
                 if (exchange.getToSign() != 1 || exchange.getFromSign() != 1) {
-                	list.add(exchange);
+                    list.add(exchange);
                 }
             }
         } catch (SQLException ex) {
@@ -107,10 +106,9 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             }
         }
         try {
-        	String SELECT_EXCHANGE_SQL = "SELECT orderid, fromAddress, "
+            String SELECT_EXCHANGE_SQL = "SELECT orderid, fromAddress, "
                     + "fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, "
-                    + "data, toSign, fromSign, toOrderId, fromOrderId "
-                    + "FROM exchange WHERE (toAddress = ?)";
+                    + "data, toSign, fromSign, toOrderId, fromOrderId " + "FROM exchange WHERE (toAddress = ?)";
             preparedStatement = conn.get().prepareStatement(SELECT_EXCHANGE_SQL);
             preparedStatement.setString(1, address);
             // preparedStatement.setString(2, address);
@@ -130,7 +128,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
                 exchange.setToOrderId(resultSet.getString("toOrderId"));
                 exchange.setFromOrderId(resultSet.getString("fromOrderId"));
                 if (exchange.getToSign() != 1 || exchange.getFromSign() != 1) {
-                	list.add(exchange);
+                    list.add(exchange);
                 }
             }
         } catch (SQLException ex) {
@@ -146,7 +144,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         }
         return list;
     }
-    
+
     @Override
     public void updateExchangeSign(String orderid, String signtype, byte[] data) throws BlockStoreException {
         maybeConnect();
@@ -174,7 +172,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             }
         }
     }
-    
+
     @Override
     protected void putUpdateStoredBlock(StoredBlock storedBlock, boolean wasUndoable) throws SQLException {
         try {
@@ -187,7 +185,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             s.setString(5, Utils.HEX.encode(storedBlock.getHeader().getPrevBlockHash().getBytes()));
             s.setString(6, Utils.HEX.encode(storedBlock.getHeader().getPrevBranchBlockHash().getBytes()));
             s.setBytes(7, storedBlock.getHeader().getMineraddress());
-       
+
             s.setLong(8, storedBlock.getHeader().getBlocktype());
             s.executeUpdate();
             s.close();
@@ -202,7 +200,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             s.close();
         }
     }
-    
+
     @Override
     public List<StoredBlock> getSolidApproverBlocks(Sha256Hash hash) throws BlockStoreException {
         List<StoredBlock> storedBlocks = new ArrayList<StoredBlock>();
@@ -215,7 +213,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
                     + afterSelect();
             s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_HEADERS_SQL);
             s.setString(1, Utils.HEX.encode(hash.getBytes()));
-//            s.setString(2, Utils.HEX.encode(hash.getBytes()));
+            // s.setString(2, Utils.HEX.encode(hash.getBytes()));
             ResultSet results = s.executeQuery();
             while (results.next()) {
                 // Parse it.
@@ -249,7 +247,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
                     + afterSelect();
             s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_HEADERS_SQL);
             s.setString(1, Utils.HEX.encode(hash.getBytes()));
-//            s.setString(2, Utils.HEX.encode(hash.getBytes()));
+            // s.setString(2, Utils.HEX.encode(hash.getBytes()));
             ResultSet results = s.executeQuery();
             while (results.next()) {
                 // Parse it.
@@ -278,7 +276,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         }
         return storedBlocks;
     }
-    
+
     @Override
     public List<Sha256Hash> getSolidApproverBlockHashes(Sha256Hash hash) throws BlockStoreException {
         List<Sha256Hash> storedBlockHash = new ArrayList<Sha256Hash>();
@@ -287,11 +285,10 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         try {
             String SELECT_SOLID_APPROVER_HASHES_SQL = "SELECT headers.hash FROM headers INNER JOIN"
                     + " blockevaluation ON headers.hash=blockevaluation.blockhash "
-                    + "WHERE blockevaluation.solid = true AND (headers.prevblockhash = ?)"
-                    + afterSelect();
+                    + "WHERE blockevaluation.solid = true AND (headers.prevblockhash = ?)" + afterSelect();
             s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_HASHES_SQL);
             s.setString(1, Utils.HEX.encode(hash.getBytes()));
-//            s.setString(2, Utils.HEX.encode(hash.getBytes()));
+            // s.setString(2, Utils.HEX.encode(hash.getBytes()));
             ResultSet results = s.executeQuery();
             while (results.next()) {
                 storedBlockHash.add(Sha256Hash.wrap(results.getBytes(1)));
@@ -317,11 +314,10 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         try {
             String SELECT_SOLID_APPROVER_HASHES_SQL = "SELECT headers.hash FROM headers INNER JOIN"
                     + " blockevaluation ON headers.hash=blockevaluation.blockhash "
-                    + "WHERE blockevaluation.solid = true AND (headers.prevbranchblockhash = ?)"
-                    + afterSelect();
+                    + "WHERE blockevaluation.solid = true AND (headers.prevbranchblockhash = ?)" + afterSelect();
             s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_HASHES_SQL);
             s.setString(1, Utils.HEX.encode(hash.getBytes()));
-//            s.setString(2, Utils.HEX.encode(hash.getBytes()));
+            // s.setString(2, Utils.HEX.encode(hash.getBytes()));
             ResultSet results = s.executeQuery();
             while (results.next()) {
                 storedBlockHash.add(Sha256Hash.wrap(results.getBytes(1)));
@@ -346,122 +342,67 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         }
         return storedBlockHash;
     }
-    
+
     private static final String MYSQL_DUPLICATE_KEY_ERROR_CODE = "23000";
     private static final String DATABASE_DRIVER_CLASS = "org.apache.phoenix.queryserver.client.Driver";
     private static final String DATABASE_CONNECTION_URL_PREFIX = "jdbc:log4jdbc:phoenix:thin:url=http://";
 
     // create table SQL
-    public static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" 
-            + "    name varchar(32) not null,\n"
-            + "    settingvalue VARBINARY(10000),\n"
-            + "    CONSTRAINT setting_pk PRIMARY KEY (name)  \n"
-            + ")\n";
+    public static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" + "    name varchar(32) not null,\n"
+            + "    settingvalue VARBINARY(10000),\n" + "    CONSTRAINT setting_pk PRIMARY KEY (name)  \n" + ")\n";
 
-    public static final String CREATE_HEADERS_TABLE = "CREATE TABLE headers (\n"
-            + "    hash BINARY(32) not null,\n"
-            + "    height bigint ,\n" 
-            + "    header VARBINARY(4000) ,\n" 
-            + "    wasundoable boolean ,\n"
-            + "    prevblockhash VARCHAR(255) ,\n" 
-            + "    prevbranchblockhash VARCHAR(255) ,\n"
-            + "    mineraddress VARBINARY(255),\n" 
-            + "    tokenid VARBINARY(255),\n" 
-            + "    blocktype bigint ,\n"
+    public static final String CREATE_HEADERS_TABLE = "CREATE TABLE headers (\n" + "    hash BINARY(32) not null,\n"
+            + "    height bigint ,\n" + "    header VARBINARY(4000) ,\n" + "    wasundoable boolean ,\n"
+            + "    prevblockhash VARCHAR(255) ,\n" + "    prevbranchblockhash VARCHAR(255) ,\n"
+            + "    mineraddress VARBINARY(255),\n" + "    tokenid VARBINARY(255),\n" + "    blocktype bigint ,\n"
             + "    CONSTRAINT headers_pk PRIMARY KEY (hash)  \n" + ")";
 
     public static final String CREATE_UNDOABLE_TABLE = "CREATE TABLE undoableblocks (\n"
-            + "    hash VARBINARY(32) not null,\n" 
-            + "    height bigint ,\n" 
-            + "    txoutchanges VARBINARY(4000),\n"
-            + "    transactions VARBINARY(4000),\n" 
-            + "    CONSTRAINT undoableblocks_pk PRIMARY KEY (hash)  \n" + ")\n";
+            + "    hash VARBINARY(32) not null,\n" + "    height bigint ,\n" + "    txoutchanges VARBINARY(4000),\n"
+            + "    transactions VARBINARY(4000),\n" + "    CONSTRAINT undoableblocks_pk PRIMARY KEY (hash)  \n" + ")\n";
 
- 
-    public static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" 
-            + "    hash binary(32) not null,\n"
-            + "    outputindex bigint not null,\n" 
-            + "    height bigint ,\n" 
-            + "    coinvalue bigint ,\n"
-            + "    scriptbytes VARBINARY(4000) ,\n" 
-            + "    toaddress varchar(255),\n" 
-            + "    addresstargetable bigint,\n"
-            + "    coinbase boolean,\n" 
-            + "    blockhash  VARBINARY(32)  ,\n" 
-            + "    tokenid varchar(255),\n"
-            + "    fromaddress varchar(35),\n" 
-            + "    description varchar(80),\n" 
-            + "    spent boolean ,\n"
-            + "    confirmed boolean ,\n" 
-            + "    spendpending boolean ,\n" 
-            + "    spenderblockhash  VARBINARY(32),\n"
-            + "    CONSTRAINT outputs_pk PRIMARY KEY (hash,outputindex)  \n" + ")\n";
-
-    public static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" 
-            + "    hash VARBINARY(32) not null,\n"
-            + "    CONSTRAINT tips_pk PRIMARY KEY (hash)  \n" 
+    public static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" + "    hash binary(32) not null,\n"
+            + "    outputindex bigint not null,\n" + "    height bigint ,\n" + "    coinvalue bigint ,\n"
+            + "    scriptbytes VARBINARY(4000) ,\n" + "    toaddress varchar(255),\n"
+            + "    addresstargetable bigint,\n" + "    coinbase boolean,\n" + "    blockhash  VARBINARY(32)  ,\n"
+            + "    tokenid varchar(255),\n" + "    fromaddress varchar(35),\n" + "    description varchar(80),\n"
+            + "    spent boolean ,\n" + "    confirmed boolean ,\n" + "    spendpending boolean ,\n"
+            + "    spenderblockhash  VARBINARY(32),\n" + "    CONSTRAINT outputs_pk PRIMARY KEY (hash,outputindex)  \n"
             + ")\n";
 
+    public static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" + "    hash VARBINARY(32) not null,\n"
+            + "    CONSTRAINT tips_pk PRIMARY KEY (hash)  \n" + ")\n";
+
     public static final String CREATE_BLOCKEVALUATION_TABLE = "CREATE TABLE blockevaluation (\n"
-            + "    blockhash BINARY(32) not null,\n" 
-            + "    rating bigint ,\n" 
-            + "    depth bigint,\n"
-            + "    cumulativeweight  bigint ,\n" 
-            + "    solid boolean ,\n"
-            + "    height bigint,\n"
-            + "    milestone boolean,\n"
-            + "    milestonelastupdate bigint,\n" 
-            + "    milestonedepth bigint,\n"
-            + "    inserttime bigint,\n" 
-            + "    maintained boolean,\n"
-            + "    rewardvalidityassessment boolean,\n"
+            + "    blockhash BINARY(32) not null,\n" + "    rating bigint ,\n" + "    depth bigint,\n"
+            + "    cumulativeweight  bigint ,\n" + "    solid boolean ,\n" + "    height bigint,\n"
+            + "    milestone boolean,\n" + "    milestonelastupdate bigint,\n" + "    milestonedepth bigint,\n"
+            + "    inserttime bigint,\n" + "    maintained boolean,\n" + "    rewardvalidityassessment boolean,\n"
             + "    CONSTRAINT blockevaluation_pk PRIMARY KEY (blockhash) )\n";
 
-    public static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n" 
-            + "    tokenid VARBINARY(255) not null ,\n"
-            + "    tokenname varchar(255)  ,\n" 
-            + "    amount bigint ,\n" 
-            + "    description varchar(255),\n"
-            + "    blocktype integer ,\n" 
+    public static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
+            + "    tokenid VARBINARY(255) not null ,\n" + "    tokenname varchar(255)  ,\n" + "    amount bigint ,\n"
+            + "    description varchar(255),\n" + "    blocktype integer ,\n"
             + "    CONSTRAINT tokenid_pk PRIMARY KEY (tokenid) \n)";
 
     public static final String CREATE_ORDERPUBLISH_TABLE = "CREATE TABLE orderpublish (\n"
-            + "   orderid VARBINARY(255) not null,\n" 
-            + "   address VARBINARY(255),\n" 
-            + "   tokenid VARBINARY(255),\n"
-            + "   type integer,\n" 
-            + "   validateto DATE,\n" 
-            + "   validatefrom DATE,\n"
-            + "   price bigint,\n"
-            + "   amount bigint,\n" 
-            + "   state integer,\n" 
-            + "   market VARBINARY(255),\n"
+            + "   orderid VARBINARY(255) not null,\n" + "   address VARBINARY(255),\n" + "   tokenid VARBINARY(255),\n"
+            + "   type integer,\n" + "   validateto DATE,\n" + "   validatefrom DATE,\n" + "   price bigint,\n"
+            + "   amount bigint,\n" + "   state integer,\n" + "   market VARBINARY(255),\n"
             + "   CONSTRAINT orderid_pk PRIMARY KEY (orderid) )";
 
     public static final String CREATE_ORDERMATCH_TABLE = "CREATE TABLE ordermatch (\n"
-            + "   matchid varchar(255) not null,\n" 
-            + "   restingOrderId varchar(255),\n"
-            + "   incomingOrderId varchar(255),\n"
-            + "   type integer,\n" 
-            + "   price bigint,\n"
-            + "   executedQuantity bigint,\n" 
-            + "   remainingQuantity bigint,\n"
+            + "   matchid varchar(255) not null,\n" + "   restingOrderId varchar(255),\n"
+            + "   incomingOrderId varchar(255),\n" + "   type integer,\n" + "   price bigint,\n"
+            + "   executedQuantity bigint,\n" + "   remainingQuantity bigint,\n"
             + "   CONSTRAINT matchid_pk PRIMARY KEY (matchid) )";
 
     public static final String CREATE_EXCHANGE_TABLE = "CREATE TABLE exchange (\n"
-            + "   orderid varchar(255) not null,\n" 
-            + "   fromAddress varchar(255),\n"
-            + "   fromTokenHex varchar(255),\n" 
-            + "   fromAmount varchar(255),\n"
-            + "   toAddress varchar(255),\n"
-            + "   toTokenHex varchar(255),\n" 
-            + "   toAmount varchar(255),\n" 
-            + "   data VARBINARY(5000) ,\n"
-            + "   toSign integer,\n" 
-            + "   fromSign integer,\n" 
-            + "   toOrderId varchar(255),\n"
-            + "   fromOrderId varchar(255),\n" 
-            + "   CONSTRAINT orderid_pk PRIMARY KEY (orderid) )";
+            + "   orderid varchar(255) not null,\n" + "   fromAddress varchar(255),\n"
+            + "   fromTokenHex varchar(255),\n" + "   fromAmount varchar(255),\n" + "   toAddress varchar(255),\n"
+            + "   toTokenHex varchar(255),\n" + "   toAmount varchar(255),\n" + "   data VARBINARY(5000) ,\n"
+            + "   toSign integer,\n" + "   fromSign integer,\n" + "   toOrderId varchar(255),\n"
+            + "   fromOrderId varchar(255),\n" + "   CONSTRAINT orderid_pk PRIMARY KEY (orderid) )";
 
     public PhoenixBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
             String username, String password) throws BlockStoreException {
@@ -513,7 +454,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON orderpublish (orderid)");
         return sqlStatements;
     }
-    
+
     @Override
     protected List<String> getDropIndexsSQL() {
         List<String> sqlStatements = new ArrayList<String>();
@@ -534,13 +475,15 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     protected String getInsert() {
         return "upsert ";
     }
+
     protected String getUpdate() {
         return "UPSERT INTO ";
     }
-    
+
     protected String getUpdateHeadersSQL() {
         return INSERT_HEADERS_SQL;
     }
+
     protected String getUpdateSettingsSLQ() {
         return INSERT_SETTINGS_SQL;
     }
@@ -550,7 +493,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         Sha256Hash hash = chainHead.getHeader().getHash();
         this.chainHeadHash = hash;
         this.chainHeadBlock = chainHead;
-       // System.out.println("bbb > " + Utils.HEX.encode(hash.getBytes()));
+        // System.out.println("bbb > " + Utils.HEX.encode(hash.getBytes()));
         maybeConnect();
         try {
             PreparedStatement s = conn.get().prepareStatement(getUpdateSettingsSLQ());
@@ -562,6 +505,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             throw new BlockStoreException(ex);
         }
     }
+
     @Override
     public void setVerifiedChainHead(StoredBlock chainHead) throws BlockStoreException {
         Sha256Hash hash = chainHead.getHeader().getHash();
@@ -579,9 +523,9 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         }
         if (this.chainHeadBlock.getHeight() < chainHead.getHeight())
             setChainHead(chainHead);
-      
+
     }
-    
+
     @Override
     protected synchronized void maybeConnect() throws BlockStoreException {
         super.maybeConnect();
@@ -592,73 +536,72 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             e.printStackTrace();
         }
     }
-    
+
     @Override
     protected String getUpdateBlockEvaluationCumulativeweightSQL() {
-        return getUpdate() +" blockevaluation (cumulativeweight, blockhash) VALUES (?, ?)";
+        return getUpdate() + " blockevaluation (cumulativeweight, blockhash) VALUES (?, ?)";
     }
-    
+
     @Override
     protected String getUpdateBlockEvaluationDepthSQL() {
-        return getUpdate() +" blockevaluation (depth, blockhash) VALUES (?, ?)";
+        return getUpdate() + " blockevaluation (depth, blockhash) VALUES (?, ?)";
     }
-    
+
     @Override
     public String getUpdateBlockEvaluationHeightSQL() {
-        return getUpdate() +" blockevaluation (height, blockhash) VALUES (?, ?)";
+        return getUpdate() + " blockevaluation (height, blockhash) VALUES (?, ?)";
     }
-    
+
     @Override
     public String getUpdateBlockEvaluationMilestoneSQL() {
-        return getUpdate() +" blockevaluation (milestone,milestonelastupdate, blockhash) VALUES (?, ?, ?)";
+        return getUpdate() + " blockevaluation (milestone,milestonelastupdate, blockhash) VALUES (?, ?, ?)";
     }
-    
+
     @Override
     protected String getUpdateBlockEvaluationRatingSQL() {
-        return getUpdate() +" blockevaluation (rating, blockhash) VALUES (?, ?)";
+        return getUpdate() + " blockevaluation (rating, blockhash) VALUES (?, ?)";
     }
-    
+
     @Override
     protected String getUpdateBlockEvaluationSolidSQL() {
-        return getUpdate() +" blockevaluation (solid, blockhash) VALUES (?, ?)";
+        return getUpdate() + " blockevaluation (solid, blockhash) VALUES (?, ?)";
     }
-    
-   
+
     @Override
     protected String getUpdateBlockEvaluationMilestoneDepthSQL() {
-        return getUpdate() +" blockevaluation (milestonedepth, blockhash) VALUES (?, ?)";
+        return getUpdate() + " blockevaluation (milestonedepth, blockhash) VALUES (?, ?)";
     }
-    
+
     @Override
     protected String getUpdateBlockEvaluationMaintainedSQL() {
-        return getUpdate() +" blockevaluation (maintained, blockhash) VALUES (?, ?)";
+        return getUpdate() + " blockevaluation (maintained, blockhash) VALUES (?, ?)";
     }
-    
+
     @Override
     protected String getUpdateBlockEvaluationRewardValidItyassessmentSQL() {
-        return getUpdate() +" blockevaluation (rewardvalidityassessment, blockhash) VALUES (?, ?)";
+        return getUpdate() + " blockevaluation (rewardvalidityassessment, blockhash) VALUES (?, ?)";
     }
-    
+
     @Override
     protected String getUpdateOutputsSpentSQL() {
-        return getUpdate() +" outputs (spent, spenderblockhash, hash, outputindex) VALUES (?, ?, ?, ?)";
+        return getUpdate() + " outputs (spent, spenderblockhash, hash, outputindex) VALUES (?, ?, ?, ?)";
     }
-    
+
     @Override
     protected String getUpdateOutputsConfirmedSQL() {
-        return getUpdate() +" outputs (confirmed, hash, outputindex) VALUES (?, ?, ?)";
+        return getUpdate() + " outputs (confirmed, hash, outputindex) VALUES (?, ?, ?)";
     }
-    
+
     @Override
     protected String getUpdateOutputsSpendPendingSQL() {
-        return getUpdate() +" outputs (spendpending, hash, outputindex) VALUES (?, ?, ?)";
+        return getUpdate() + " outputs (spendpending, hash, outputindex) VALUES (?, ?, ?)";
     }
 
     @Override
     protected String getUpdateBlockevaluationUnmaintainAllSQL() {
         return getUpdate() + " blockevaluation (maintained) VALUES (false)";
     }
-    
+
     @Override
     public void updateUnmaintainAll() throws BlockStoreException {
         maybeConnect();
@@ -673,8 +616,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             }
         } catch (SQLException e) {
             throw new BlockStoreException(e);
-        }
-        finally {
+        } finally {
             if (preparedStatement != null) {
                 try {
                     preparedStatement.close();
@@ -686,7 +628,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         if (buf.isEmpty()) {
             return;
         }
-//        PreparedStatement preparedStatement = null;
+        // PreparedStatement preparedStatement = null;
         try {
             for (byte[] b : buf) {
                 String sql = getUpdate() + " blockevaluation (blockhash, maintained) VALUES (?, false)";
@@ -706,4 +648,5 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             }
         }
     }
+
 }

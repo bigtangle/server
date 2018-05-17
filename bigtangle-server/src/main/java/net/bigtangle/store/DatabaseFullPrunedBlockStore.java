@@ -14,6 +14,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -201,11 +202,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String SELECT_MAX_TOKENID_SQL = "select max(tokenid) from tokens";
     protected String INSERT_TOKENS_SQL = getInsert()
             + "  INTO tokens (tokenid, tokenname, description, url, signnumber, multiserial, asmarket, tokenstop) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-    
+
     protected String UPDATE_TOKENS_SQL = getUpdate()
             + "  tokens set tokenname = ?, description = ?, url = ?, signnumber = ?, multiserial = ?, asmarket = ?, tokenstop = ? WHERE tokenid = ?";
-    
+
     protected String SELECT_TOKENS_SQL = "select tokenid, tokenname, description, url, signnumber, multiserial, asmarket, tokenstop from tokens";
+
+    protected String SELECT_TOKENS_ACOUNT_MAP_SQL = "select tokenid,sum(amount) as amount from tokenserial GROUP BY tokenid";
+
     protected String SELECT_TOKENS_INFO_SQL = "select tokenid, tokenname, description, url, signnumber, multiserial, asmarket, tokenstop from tokens where tokenid = ?";
 
     protected String INSERT_ORDERPUBLISH_SQL = getInsert()
@@ -276,13 +280,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " blockevaluation SET rewardvalidityassessment = ? WHERE blockhash = ?";
 
     protected abstract String getUpdateBlockevaluationUnmaintainAllSQL();
-    
+
     protected String SELECT_MULTISIGNADDRESS_SQL = "SELECT tokenid, address FROM multisignaddress WHERE tokenid = ?";
     protected String INSERT_MULTISIGNADDRESS_SQL = "INSERT INTO multisignaddress (tokenid, address) VALUES (?, ?)";
     protected String DELETE_MULTISIGNADDRESS_SQL = "DELETE FROM multisignaddress WHERE tokenid = ? AND address = ?";
     protected String COUNT_MULTISIGNADDRESS_SQL = "SELECT COUNT(*) as count FROM multisignaddress WHERE tokenid = ?";
     protected String SELECT_MULTISIGNADDRESSINFO_SQL = "SELECT tokenid, address FROM multisignaddress WHERE tokenid = ? AND address = ?";
-    
+
     protected String INSERT_TOKENSERIAL_SQL = "INSERT INTO tokenserial (tokenid, tokenindex, amount) VALUES (?, ?, ?)";
     protected String UPDATE_TOKENSERIAL_SQL = "UPDATE tokenserial SET amount = ? WHERE tokenid = ? AND tokenindex = ?";
     protected String SELECT_TOKENSERIAL_SQL = "SELECT tokenid, tokenindex, amount FROM tokenserial WHERE tokenid = ? AND tokenindex = ?";
@@ -773,7 +777,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setBytes(5, block.getPrevBlockHash().getBytes());
             s.setBytes(6, block.getPrevBranchBlockHash().getBytes());
             s.setBytes(7, block.getMineraddress());
- 
+
             s.setLong(8, block.getBlocktype());
             s.executeUpdate();
             s.close();
@@ -1900,7 +1904,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
 
-        
     }
 
     protected abstract String getUpdateBlockEvaluationRatingSQL();
@@ -1952,7 +1955,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
- 
 
     protected abstract String getUpdateBlockEvaluationMilestoneDepthSQL();
 
@@ -2253,6 +2255,33 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
+    public Map<String, Long> getTokenAmountMap(String name) throws BlockStoreException {
+        Map<String, Long> map = new HashMap<String, Long>();
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+
+            preparedStatement = conn.get().prepareStatement(SELECT_TOKENS_ACOUNT_MAP_SQL);
+            ResultSet resultSet = preparedStatement.executeQuery();
+           
+            while (resultSet.next()) {
+                map.put(resultSet.getString("tokenid"), resultSet.getLong("amount"));
+
+            }
+            return map;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
     @Override
     public List<Tokens> getTokensList(String name) throws BlockStoreException {
         List<Tokens> list = new ArrayList<Tokens>();
@@ -2292,13 +2321,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public void saveTokens(Tokens tokens) throws BlockStoreException {
-        this.saveTokens(tokens.getTokenid(), tokens.getTokenname(), 
-                tokens.getDescription(), tokens.getUrl(), tokens.getSignnumber(), tokens.isMultiserial(), tokens.isAsmarket(), tokens.isTokenstop());
+        this.saveTokens(tokens.getTokenid(), tokens.getTokenname(), tokens.getDescription(), tokens.getUrl(),
+                tokens.getSignnumber(), tokens.isMultiserial(), tokens.isAsmarket(), tokens.isTokenstop());
     }
 
     @Override
-    public void saveTokens(String tokenid, String tokenname, String description, String url, long signnumber, boolean multiserial, boolean asmarket, boolean tokenstop)
-            throws BlockStoreException {
+    public void saveTokens(String tokenid, String tokenname, String description, String url, long signnumber,
+            boolean multiserial, boolean asmarket, boolean tokenstop) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -2996,8 +3025,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             ResultSet resultSet = preparedStatement.executeQuery();
             TokenSerial tokenSerial = null;
             if (resultSet.next()) {
-//                String tokenid = resultSet.getString("tokenid");
-//                long tokenindex = resultSet.getLong("tokenindex");
+                // String tokenid = resultSet.getString("tokenid");
+                // long tokenindex = resultSet.getLong("tokenindex");
                 long amount = resultSet.getLong("amount");
                 tokenSerial = new TokenSerial(tokenid, tokenindex, amount);
             }

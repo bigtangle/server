@@ -260,7 +260,7 @@ public class Main extends Application {
         if (list != null && !list.isEmpty()) {
             Map<String, String> temp = new HashMap<String, String>();
             for (Map<String, Object> map : list) {
-                temp.put(Main.getString(map.get("tokenHex")), Main.getString(map.get("tokenname")));
+                temp.put(Main.getString(map.get("tokenid")), Main.getString(map.get("tokenname")));
             }
             return temp;
         }

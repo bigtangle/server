@@ -21,9 +21,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.MapValueFactory;
 import net.bigtangle.core.Coin;
-import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
-import net.bigtangle.core.Utils;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
 
@@ -58,6 +56,7 @@ public class TokensController {
             initTableView();
             initPositveTableView();
         } catch (Exception e) {
+            e.printStackTrace();
             GuiUtils.crashAlert(e);
         }
     }
@@ -117,20 +116,25 @@ public class TokensController {
         String name = nameTextField.getText();
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ObservableList<Map> tokenData = FXCollections.observableArrayList();
-      
+
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("name", Main.getString(name));
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens",
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-
+        System.out.println(response);
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
+        Map<String, Long> amountMap = (Map<String, Long>) data.get("amountMap");
         if (list != null) {
             for (Map<String, Object> map : list) {
-                Coin fromAmount = Coin.valueOf(Long.parseLong(map.get("amount").toString()),
-                        Utils.HEX.decode((String) map.get("tokenHex")));
-                map.put("amount", fromAmount.toPlainString());
+                if (amountMap.containsKey(map.get("tokenid"))) {
+                    Coin fromAmount = Coin.valueOf(amountMap.get((String) map.get("tokenid")),
+                            (String) map.get("tokenid"));
+                    map.put("amount", fromAmount.toPlainString());
+                }else {
+                    map.put("amount", "0");
+                }
+
                 tokenData.add(map);
             }
         }
@@ -138,7 +142,7 @@ public class TokensController {
         amountColumn.setCellValueFactory(new MapValueFactory("amount"));
         descriptionColumn.setCellValueFactory(new MapValueFactory("description"));
         blocktypeColumn.setCellValueFactory(new MapValueFactory("blocktype"));
-        tokenHexColumn.setCellValueFactory(new MapValueFactory("tokenHex"));
+        tokenHexColumn.setCellValueFactory(new MapValueFactory("tokenid"));
         tokensTable.setItems(tokenData);
     }
 }

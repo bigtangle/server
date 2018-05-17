@@ -113,7 +113,7 @@ public class SendMoneyController {
             List<String> tokens = Main.initToken4file();
             for (Map<String, Object> map : list) {
 
-                String tokenHex = (String) map.get("tokenHex");
+                String tokenHex = (String) map.get("tokenid");
                 if (tokens != null && !tokens.isEmpty()) {
                     for (String temp : tokens) {
                         // ONLY log System.out.println("temp:" + temp);

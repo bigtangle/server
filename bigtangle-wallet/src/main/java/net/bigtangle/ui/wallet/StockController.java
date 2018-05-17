@@ -107,7 +107,7 @@ public class StockController extends TokensController {
             String temp = Utils.HEX.encode(key.getPubKeyHash());
             for (Map<String, Object> map : list) {
 
-                String tokenHex = (String) map.get("tokenHex");
+                String tokenHex = (String) map.get("tokenid");
                 int blocktype = (int) map.get("blocktype");
                 if (blocktype == NetworkParameters.BLOCKTYPE_GENESIS && !temp.equals(tokenHex)
                         && !tokenData.contains(temp)) {
