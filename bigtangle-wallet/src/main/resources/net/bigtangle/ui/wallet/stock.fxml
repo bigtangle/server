@@ -21,6 +21,11 @@
 										<TableColumn fx:id="amountColumn" prefWidth="95.0" text="%Amount" />
 										<TableColumn fx:id="blocktypeColumn" prefWidth="105.0" text="%blocktype" />
 										<TableColumn fx:id="descriptionColumn" prefWidth="387.0" text="%description" />
+                              <TableColumn fx:id="urlColumn" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" text="%url" />
+                              <TableColumn fx:id="signnumberColumn" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" text="%signnumber" />
+                              <TableColumn fx:id="multiserialColumn" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" text="%multiserial" />
+                              <TableColumn fx:id="asmarketColumn" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" text="%asmarket" />
+                              <TableColumn fx:id="tokenstopColumn" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" text="%tokenstop" />
 									</columns>
 								</TableView>
 								<Button cancelButton="true" layoutX="926.0" layoutY="500.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />

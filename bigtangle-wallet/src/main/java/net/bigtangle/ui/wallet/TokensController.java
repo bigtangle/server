@@ -38,6 +38,16 @@ public class TokensController {
     public TableColumn<Map, Number> blocktypeColumn;
     @FXML
     public TableColumn<Map, String> descriptionColumn;
+    @FXML
+    public TableColumn<Map, String> urlColumn;
+    @FXML
+    public TableColumn<Map, Number> signnumberColumn;
+    @FXML
+    public TableColumn<Map, Boolean> multiserialColumn;
+    @FXML
+    public TableColumn<Map, Boolean> asmarketColumn;
+    @FXML
+    public TableColumn<Map, Boolean> tokenstopColumn;
 
     @FXML
     public TableView<Map> positveTokensTable;
@@ -131,7 +141,7 @@ public class TokensController {
                     Coin fromAmount = Coin.valueOf(amountMap.get((String) map.get("tokenid")),
                             (String) map.get("tokenid"));
                     map.put("amount", fromAmount.toPlainString());
-                }else {
+                } else {
                     map.put("amount", "0");
                 }
 
@@ -143,6 +153,13 @@ public class TokensController {
         descriptionColumn.setCellValueFactory(new MapValueFactory("description"));
         blocktypeColumn.setCellValueFactory(new MapValueFactory("blocktype"));
         tokenHexColumn.setCellValueFactory(new MapValueFactory("tokenid"));
+        
+        urlColumn.setCellValueFactory(new MapValueFactory("url"));
+        signnumberColumn.setCellValueFactory(new MapValueFactory("signnumber"));
+        multiserialColumn.setCellValueFactory(new MapValueFactory("multiserial"));
+        asmarketColumn.setCellValueFactory(new MapValueFactory("asmarket"));
+        tokenstopColumn.setCellValueFactory(new MapValueFactory("tokenstop"));
+        
         tokensTable.setItems(tokenData);
     }
 }
