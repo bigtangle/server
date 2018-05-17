@@ -43,11 +43,11 @@ public class TokensController {
     @FXML
     public TableColumn<Map, Number> signnumberColumn;
     @FXML
-    public TableColumn<Map, Boolean> multiserialColumn;
+    public TableColumn<Map, String> multiserialColumn;
     @FXML
-    public TableColumn<Map, Boolean> asmarketColumn;
+    public TableColumn<Map, String> asmarketColumn;
     @FXML
-    public TableColumn<Map, Boolean> tokenstopColumn;
+    public TableColumn<Map, String> tokenstopColumn;
 
     @FXML
     public TableView<Map> positveTokensTable;
@@ -137,6 +137,12 @@ public class TokensController {
         Map<String, Long> amountMap = (Map<String, Long>) data.get("amountMap");
         if (list != null) {
             for (Map<String, Object> map : list) {
+                String temp = ((boolean) map.get("multiserial")) ? Main.getText("yes") : Main.getText("no");
+                String temp1 = ((boolean) map.get("asmarket")) ? Main.getText("yes") : Main.getText("no");
+                String temp2 = ((boolean) map.get("tokenstop")) ? Main.getText("yes") : Main.getText("no");
+                map.put("multiserial", temp);
+                map.put("asmarket", temp1);
+                map.put("tokenstop", temp2);
                 if (amountMap.containsKey(map.get("tokenid"))) {
                     Coin fromAmount = Coin.valueOf(amountMap.get((String) map.get("tokenid")),
                             (String) map.get("tokenid"));
@@ -153,13 +159,13 @@ public class TokensController {
         descriptionColumn.setCellValueFactory(new MapValueFactory("description"));
         blocktypeColumn.setCellValueFactory(new MapValueFactory("blocktype"));
         tokenHexColumn.setCellValueFactory(new MapValueFactory("tokenid"));
-        
+
         urlColumn.setCellValueFactory(new MapValueFactory("url"));
         signnumberColumn.setCellValueFactory(new MapValueFactory("signnumber"));
         multiserialColumn.setCellValueFactory(new MapValueFactory("multiserial"));
         asmarketColumn.setCellValueFactory(new MapValueFactory("asmarket"));
         tokenstopColumn.setCellValueFactory(new MapValueFactory("tokenstop"));
-        
+
         tokensTable.setItems(tokenData);
     }
 }

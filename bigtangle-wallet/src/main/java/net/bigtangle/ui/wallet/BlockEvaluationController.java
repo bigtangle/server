@@ -50,13 +50,13 @@ public class BlockEvaluationController {
     public TableColumn<Map, Number> heightColumn;
 
     @FXML
-    public TableColumn<Map, Boolean> solidColumn;
+    public TableColumn<Map, String> solidColumn;
     @FXML
-    public TableColumn<Map, Boolean> milestoneColumn;
+    public TableColumn<Map, String> milestoneColumn;
     @FXML
-    public TableColumn<Map, Boolean> maintainedColumn;
+    public TableColumn<Map, String> maintainedColumn;
     @FXML
-    public TableColumn<Map, Boolean> rewardValidColumn;
+    public TableColumn<Map, String> rewardValidColumn;
     @FXML
     public TableColumn<Map, String> milestoneLastUpdateTimeColumn;
     @FXML
@@ -156,11 +156,11 @@ public class BlockEvaluationController {
                 dataRow.put("cumulativeWeight", blockEvaluation.getCumulativeWeight());
                 dataRow.put("height", blockEvaluation.getHeight());
 
-                dataRow.put("solid", blockEvaluation.isSolid());
-                dataRow.put("milestone", blockEvaluation.isMilestone());
+                dataRow.put("solid", blockEvaluation.isSolid() ? Main.getText("yes") : Main.getText("no"));
+                dataRow.put("milestone", blockEvaluation.isMilestone() ? Main.getText("yes") : Main.getText("no"));
                 dataRow.put("milestoneDepth", blockEvaluation.getMilestoneDepth());
-                dataRow.put("maintained", blockEvaluation.isMaintained());
-                dataRow.put("rewardValid", blockEvaluation.isRewardValid());
+                dataRow.put("maintained", blockEvaluation.isMaintained() ? Main.getText("yes") : Main.getText("no"));
+                dataRow.put("rewardValid", blockEvaluation.isRewardValid() ? Main.getText("yes") : Main.getText("no"));
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 java.util.Date date = new Date(blockEvaluation.getMilestoneLastUpdateTime());
                 String str = sdf.format(date);
