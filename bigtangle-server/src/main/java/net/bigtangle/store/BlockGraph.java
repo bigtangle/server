@@ -77,31 +77,6 @@ public class BlockGraph extends AbstractBlockGraph {
     }
 
     @Override
-    protected void rollbackBlockStore(int height) throws BlockStoreException {
-        lock.lock();
-        try {
-            long currentHeight = getBestChainHeight();
-            checkArgument(height >= 0 && height <= currentHeight, "Bad height: %s", height);
-            if (height == currentHeight)
-                return; // nothing to do
-
-            // Look for the block we want to be the new chain head
-            StoredBlock newChainHead = blockStore.getChainHead();
-            while (newChainHead.getHeight() > height) {
-                newChainHead = newChainHead.getPrev(blockStore);
-                if (newChainHead == null)
-                    throw new BlockStoreException("Unreachable height");
-            }
-
-            // Modify store directly
-            blockStore.put(newChainHead);
-            this.setChainHead(newChainHead);
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    @Override
     public boolean shouldVerifyTransactions() {
         return false;
     }

@@ -92,29 +92,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     private boolean runScripts = true;
 
     /**
-     * Constructs a block chain connected to the given wallet and store. To
-     * obtain a {@link Wallet} you can construct one from scratch, or you can
-     * deserialize a saved wallet from disk using
-     * {@link Wallet#loadFromFile(java.io.File, WalletExtension...)}
-     */
-    public FullPrunedBlockGraph(Context context, Wallet wallet, FullPrunedBlockStore blockStore)
-            throws BlockStoreException {
-        this(context, new ArrayList<Wallet>(), blockStore);
-        addWallet(wallet);
-    }
-
-    /**
-     * Constructs a block chain connected to the given wallet and store. To
-     * obtain a {@link Wallet} you can construct one from scratch, or you can
-     * deserialize a saved wallet from disk using
-     * {@link Wallet#loadFromFile(java.io.File, WalletExtension...)}
-     */
-    public FullPrunedBlockGraph(NetworkParameters params, Wallet wallet, FullPrunedBlockStore blockStore)
-            throws BlockStoreException {
-        this(Context.getOrCreate(params), wallet, blockStore);
-    }
-
-    /**
      * Constructs a block chain connected to the given store.
      */
     public FullPrunedBlockGraph(Context context, FullPrunedBlockStore blockStore) throws BlockStoreException {
@@ -129,8 +106,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             throws BlockStoreException {
         super(context, listeners, blockStore);
         this.blockStore = blockStore;
-        // Ignore upgrading for now
-        this.chainHead = blockStore.getVerifiedChainHead();
     }
 
     /**
@@ -155,11 +130,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         StoredBlock newBlock = StoredBlock.build(block, storedPrev, storedPrevBranch);
         blockStore.put(newBlock, new StoredUndoableBlock(newBlock.getHeader().getHash(), block.getTransactions()));
         return newBlock;
-    }
-
-    @Override
-    protected void rollbackBlockStore(int height) throws BlockStoreException {
-        throw new BlockStoreException("Unsupported");
     }
 
     @Override

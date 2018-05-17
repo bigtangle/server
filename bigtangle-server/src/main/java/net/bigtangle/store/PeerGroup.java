@@ -594,7 +594,7 @@ public class PeerGroup implements TransactionBroadcaster {
         // - using connectTo() will increment it by one
         maxConnections = 0;
 
-        long height = chain == null ? 0 : chain.getBestChainHeight();
+        long height = chain == null ? 0 : chain.getMaxHeight();
         versionMessage = new VersionMessage(params, height);
         // We never request that the remote node wait for a bloom filter yet, as
         // we have no wallets
@@ -892,7 +892,7 @@ public class PeerGroup implements TransactionBroadcaster {
     public void setUserAgent(String name, String version, @Nullable String comments) {
         // TODO Check that height is needed here (it wasnt, but it should be,
         // no?)
-        long height = chain == null ? 0 : chain.getBestChainHeight();
+        long height = chain == null ? 0 : chain.getMaxHeight();
         VersionMessage ver = new VersionMessage(params, height);
         ver.relayTxesBeforeFilter = false;
         updateVersionMessageRelayTxesBeforeFilter(ver);
@@ -1835,7 +1835,7 @@ public class PeerGroup implements TransactionBroadcaster {
     protected Peer connectTo(PeerAddress address, boolean incrementMaxConnections, int connectTimeoutMillis) {
         checkState(lock.isHeldByCurrentThread());
         VersionMessage ver = getVersionMessage().duplicate();
-        ver.bestHeight = chain == null ? 0 : chain.getBestChainHeight();
+        ver.bestHeight = chain == null ? 0 : chain.getMaxHeight();
         ver.time = Utils.currentTimeSeconds();
 
         Peer peer = createPeer(address, ver);
@@ -2334,7 +2334,7 @@ public class PeerGroup implements TransactionBroadcaster {
                     warmupSeconds = 15;
                 }
 
-                boolean behindPeers = chain != null && chain.getBestChainHeight() < getMostCommonChainHeight();
+                boolean behindPeers = chain != null && chain.getMaxHeight() < getMostCommonChainHeight();
                 if (!behindPeers)
                     syncDone = true;
                 if (!syncDone) {
