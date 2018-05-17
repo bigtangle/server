@@ -100,20 +100,17 @@ public class StockController extends TokensController {
         List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aeskey);
         for (ECKey key : keys) {
             String temp = Utils.HEX.encode(key.getPubKeyHash());
+            boolean flag = true;
             for (Map<String, Object> map : list) {
-
                 String tokenHex = (String) map.get("tokenid");
-                if (!(boolean) map.get("multiserial") && !temp.equals(tokenHex) && !tokenData.contains(temp)) {
-                    tokenData.add(temp);
-                    break;
-                    // names.add(map.get("tokenname").toString());
+                if (temp.equals(tokenHex)) {
+                    if (!(boolean) map.get("multiserial")) {
+                        flag = false;
+                    }
                 }
-                if ((boolean) map.get("multiserial") && !tokenData.contains(temp)) {
-                    tokenData.add(temp);
-                    break;
-                    // names.add(map.get("tokenname").toString());
-                }
-
+            }
+            if (flag && !tokenData.contains(temp)) {
+                tokenData.add(temp);
             }
         }
         tokenid.setItems(tokenData);
