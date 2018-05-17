@@ -1544,6 +1544,7 @@ public class Transaction extends ChildMessage {
                 if (output.getValue().signum() < 0) // getValue() can throw
                                                     // IllegalStateException
                     throw new VerificationException.NegativeValueOutput();
+                // TODO why is there no max money?
 //                valueOut = valueOut.add(output.getValue());
 //                if (params.hasMaxMoney() && valueOut.compareTo(params.getMaxMoney()) > 0)
 //                    throw new IllegalArgumentException();

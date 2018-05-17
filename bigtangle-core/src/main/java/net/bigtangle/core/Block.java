@@ -798,9 +798,10 @@ public class Block extends Message {
      *             if there was an error verifying the block.
      */
     @SuppressWarnings("unused")
-    private void checkTransactions(final int height, final EnumSet<VerifyFlag> flags) throws VerificationException {
+    public void checkTransactions(final int height, final EnumSet<VerifyFlag> flags) throws VerificationException {
         // The first transaction in a block must always be a coinbase
         // transaction.
+        // TODO check for each block type
         if (!transactions.get(0).isCoinBase())
             throw new VerificationException("First tx is not coinbase");
         if (flags.contains(Block.VerifyFlag.HEIGHT_IN_COINBASE) && height >= BLOCK_HEIGHT_GENESIS) {
@@ -860,7 +861,6 @@ public class Block extends Message {
         // throw new VerificationException("Block had no transactions");
         if (this.getOptimalEncodingMessageSize() > MAX_BLOCK_SIZE)
             throw new VerificationException("Block larger than MAX_BLOCK_SIZE");
-        // CUI checkTransactions(height, flags);
         checkMerkleRoot();
         checkSigOps();
         for (Transaction transaction : transactions)

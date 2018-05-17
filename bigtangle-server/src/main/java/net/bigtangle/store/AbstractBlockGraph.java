@@ -358,37 +358,22 @@ public abstract class AbstractBlockGraph {
             throws BlockStoreException, VerificationException, PrunedException {
         lock.lock();
         try {
-            // If we want to verify transactions (ie we are running with full blocks), verify that block has transactions
-            if (shouldVerifyTransactions() && block.getTransactions() == null)
-                throw new VerificationException("Got a block header while running in full-block mode");
-
-            // Check for already-seen block, but only for full pruned mode, where the DB is
-            // more likely able to handle these queries quickly.
-//            if (shouldVerifyTransactions() && blockStore.get(block.getHash()) != null) {
-//                return true;
-//            }
-
             final StoredBlock storedPrev;
             final StoredBlock storedPrevBranch;
             final long height;
             final EnumSet<Block.VerifyFlag> flags;
 
-            // Prove the block is internally valid: hash is lower than target, etc. This only checks the block contents
-            // if there is a tx sending or receiving coins using an address in one of our wallets. And those transactions
-            // are only lightly verified: presence in a valid connecting block is taken as proof of validity. See the
-            // article here for more details: https://bitcoinj.github.io/security-model
+            // Check the block is formally valid
             try {
                 block.verifyHeader();
                 storedPrev = getStoredBlockInCurrentScope(block.getPrevBlockHash());
                 storedPrevBranch = getStoredBlockInCurrentScope(block.getPrevBranchBlockHash());
-                
                 
                 if (storedPrev != null && storedPrevBranch != null) {
                     height = Math.max(storedPrev.getHeight(), storedPrevBranch.getHeight()) + 1;
                 } else {
                     height = Block.BLOCK_HEIGHT_UNKNOWN;
                 }
-                 
                 
                 flags = params.getBlockVerificationFlags(block, versionTally, height);
                 if (shouldVerifyTransactions())
@@ -399,15 +384,10 @@ public abstract class AbstractBlockGraph {
                 throw e;
             }
 
-            // Try linking it to a place in the currently known blocks.
-
-           
-                checkState(lock.isHeldByCurrentThread());
-                // It connects to somewhere on the tangle. Not necessarily the top of the best known tangle.
-               //  params.checkDifficultyTransitions(storedPrev, block, blockStore);
-                connectBlock(block, storedPrev,storedPrevBranch,  shouldVerifyTransactions(), filteredTxHashList, filteredTxn);
+            // Write to DB
+            checkState(lock.isHeldByCurrentThread());
+            connectBlock(block, storedPrev,storedPrevBranch,  shouldVerifyTransactions(), filteredTxHashList, filteredTxn);
             
- 
             return true;
         }
         catch (Exception exception) {
@@ -427,11 +407,7 @@ public abstract class AbstractBlockGraph {
                               @Nullable final Map<Sha256Hash, Transaction> filteredTxn) throws BlockStoreException, VerificationException, PrunedException {
         checkState(lock.isHeldByCurrentThread());
 
-        // This block connects to the best known block, it is a normal continuation of the system.
-        TransactionOutputChanges txOutChanges = null;
-        if (shouldVerifyTransactions())
-            txOutChanges = connectTransactions(Math.max( storedPrev.getHeight(),storedPrevBranch.getHeight()) + 1, block);
-        StoredBlock newStoredBlock = addToBlockStore(storedPrev,storedPrevBranch, block, txOutChanges);
+        StoredBlock newStoredBlock = addToBlockStore(storedPrev,storedPrevBranch, block);
         tryFirstSetSolidityAndHeight(newStoredBlock.getHeader());
 		doSetChainHead(newStoredBlock);
     }
