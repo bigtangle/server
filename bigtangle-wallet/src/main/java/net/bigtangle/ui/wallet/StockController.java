@@ -170,6 +170,42 @@ public class StockController extends TokensController {
 
     }
 
+    public void saveMultiToken(ActionEvent event) {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
+
+        try {
+            byte[] pubKey = outKey.getPubKey();
+            HashMap<String, Object> requestParam = new HashMap<String, Object>();
+            requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
+            requestParam.put("amount",
+                    Coin.parseCoin(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue())).getValue());
+            requestParam.put("tokenname", stockName1.getText());
+            requestParam.put("url", urlTF.getText());
+            requestParam.put("signnumber", signnumberTF.getText());
+            requestParam.put("description", stockDescription1.getText());
+            requestParam.put("tokenHex", tokenid1.getValue());
+            requestParam.put("multiserial", multiserialCheckBox.selectedProperty().get());
+            requestParam.put("asmarket", asmarketCheckBox.selectedProperty().get());
+            requestParam.put("tokenstop", tokenstopCheckBox.selectedProperty().get());
+
+            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "createGenesisBlock",
+                    Json.jsonmapper().writeValueAsString(requestParam));
+            Block block = Main.params.getDefaultSerializer().makeBlock(data);
+            // TODO no post to off tangle data, send it to kafka for broadcast
+            Main.instance.sendMessage(block.bitcoinSerialize());
+
+            GuiUtils.informationalAlert(Main.getText("s_c_m"), Main.getText("s_c_m"));
+            Main.instance.controller.initTableView();
+            checkGuiThread();
+            initTableView();
+            overlayUI.done();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+
+    }
+
     public void add2positve(ActionEvent event) {
         Map<String, Object> rowData = tokensTable.getSelectionModel().getSelectedItem();
         if (rowData == null || rowData.isEmpty()) {
