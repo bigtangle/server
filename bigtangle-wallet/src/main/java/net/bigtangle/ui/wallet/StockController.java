@@ -26,7 +26,6 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
-import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -35,9 +34,6 @@ import net.bigtangle.utils.OkHttp3Util;
 public class StockController extends TokensController {
     @FXML
     public TabPane tabPane;
-
-    @FXML
-    public CheckBox firstPublishCheckBox;
 
     @FXML
     public CheckBox multiserialCheckBox;
@@ -67,7 +63,6 @@ public class StockController extends TokensController {
 
     @FXML
     public void initialize() {
-        firstPublishCheckBox.setAllowIndeterminate(false);
         try {
             tabPane.getSelectionModel().selectedItemProperty().addListener((ov, t, t1) -> {
                 try {
@@ -144,7 +139,6 @@ public class StockController extends TokensController {
             requestParam.put("signnumber", signnumberTF.getText());
             requestParam.put("description", stockDescription.getText());
             requestParam.put("tokenHex", tokenid.getValue());
-            requestParam.put("blocktype", firstPublishCheckBox.selectedProperty().get());
             requestParam.put("multiserial", multiserialCheckBox.selectedProperty().get());
             requestParam.put("asmarket", asmarketCheckBox.selectedProperty().get());
             requestParam.put("tokenstop", tokenstopCheckBox.selectedProperty().get());
