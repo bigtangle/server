@@ -231,6 +231,5 @@ public class CheckpointManager {
         CheckpointManager manager = new CheckpointManager(params, stream);
         StoredBlock checkpoint = manager.getCheckpointBefore(time);
         store.put(checkpoint);
-        store.setChainHead(checkpoint);
     }
 }

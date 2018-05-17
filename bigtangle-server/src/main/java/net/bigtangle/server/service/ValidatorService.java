@@ -111,10 +111,8 @@ public class ValidatorService {
         List<Block> blocksToAdd = blockService
                 .getBlocks(blockEvaluationsToAdd.stream().map(e -> e.getBlockhash()).collect(Collectors.toList()));
 
-        // Find all conflicts between milestone and candidates
-        // TODO merge, dynamic conflictpoints: token issuance ids, mining reward height intervals
-        findMilestoneConflicts(blocksToAdd, conflictingOutPoints, conflictingMilestoneBlocks);
-        findCandidateConflicts(blocksToAdd, conflictingOutPoints);
+        // Find all conflicts in the new blocks
+        findConflicts(blocksToAdd, conflictingOutPoints, conflictingMilestoneBlocks);
 
         // Resolve all conflicts by grouping by UTXO ordered by descending
         // rating
@@ -217,13 +215,29 @@ public class ValidatorService {
     }
 
     /**
-     * Finds conflicts among blocks to add
+     * Finds conflicts in blocksToAdd
      * 
      * @param blocksToAdd
      * @param conflictingOutPoints
      * @throws BlockStoreException
      */
-    public void findCandidateConflicts(Collection<Block> blocksToAdd,
+    public void findConflicts(Collection<Block> blocksToAdd,
+            Collection<Pair<BlockEvaluation, ConflictPoint>> conflictingOutPoints,
+            Collection<BlockEvaluation> conflictingMilestoneBlocks) throws BlockStoreException {
+
+        // TODO dynamic conflictpoints: token issuance ids, mining reward height intervals
+        findMilestoneConflicts(blocksToAdd, conflictingOutPoints, conflictingMilestoneBlocks);
+        findCandidateConflicts(blocksToAdd, conflictingOutPoints);
+    }
+
+    /**
+     * Finds conflicts among blocks to add themselves
+     * 
+     * @param blocksToAdd
+     * @param conflictingOutPoints
+     * @throws BlockStoreException
+     */
+    private void findCandidateConflicts(Collection<Block> blocksToAdd,
             Collection<Pair<BlockEvaluation, ConflictPoint>> conflictingOutPoints) throws BlockStoreException {
         // Create pairs of blocks and used non-coinbase utxos from blocksToAdd
         Stream<Pair<Block, ConflictPoint>> outPoints = blocksToAdd.stream()
@@ -250,7 +264,7 @@ public class ValidatorService {
      * @param conflictingOutPoints
      * @throws BlockStoreException
      */
-    public void findMilestoneConflicts(Collection<Block> blocksToAdd,
+    private void findMilestoneConflicts(Collection<Block> blocksToAdd,
             Collection<Pair<BlockEvaluation, ConflictPoint>> conflictingOutPoints,
             Collection<BlockEvaluation> conflictingMilestoneBlocks) throws BlockStoreException {
         // Create pairs of blocks and used non-coinbase utxos from blocksToAdd

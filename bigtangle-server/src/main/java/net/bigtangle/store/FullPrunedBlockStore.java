@@ -135,29 +135,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     boolean hasUnspentOutputs(Sha256Hash hash, int numOutputs) throws BlockStoreException;
 
     /**
-     * Returns the {@link StoredBlock} that represents the top of the chain of
-     * greatest total work that has been fully verified and the point in the
-     * chain at which the unspent transaction output set in this store
-     * represents.
-     */
-    StoredBlock getVerifiedChainHead() throws BlockStoreException;
-
-    /**
-     * Sets the {@link StoredBlock} that represents the top of the chain of
-     * greatest total work that has been fully verified. It should generally be
-     * set after a batch of updates to the transaction unspent output set,
-     * before a call to commitDatabaseBatchWrite.
-     * 
-     * If chainHead has a greater height than the non-verified chain head (ie
-     * that set with {@link BlockStore#setChainHead}) the non-verified chain
-     * head should be set to the one set here. In this way a class using a
-     * FullPrunedBlockStore only in full-verification mode can ignore the
-     * regular {@link BlockStore} functions implemented as a part of a
-     * FullPrunedBlockStore.
-     */
-    void setVerifiedChainHead(StoredBlock chainHead) throws BlockStoreException;
-
-    /**
      * <p>
      * Begins/Commits/Aborts a database transaction.
      * </p>

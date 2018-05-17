@@ -7,6 +7,7 @@ package net.bigtangle.store;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -365,45 +366,26 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     @Override
     public void removeTransactionsFromMilestone(Block block) throws BlockStoreException {
-        // CUI checkState(lock.isHeldByCurrentThread());
-        // blockStore.beginDatabaseBatchWrite();
-        try {
-            for (Transaction tx : block.getTransactions()) {
-                // Mark all outputs used by tx input as unspent
-                for (TransactionInput txin : tx.getInputs()) {
-                    if (!txin.isCoinBase()) {
-                        blockStore.updateTransactionOutputSpent(txin.getOutpoint().getHash(),
-                                txin.getOutpoint().getIndex(), false, Sha256Hash.ZERO_HASH);
-                    }
-                }
-
-                // TODO revert token here (unconfirmed block)
-
-                // Mark unconfirmed all tx outputs in db and disconnect their
-                // spending blocks
-                for (TransactionOutput txout : tx.getOutputs()) {
-                    if (blockStore.getTransactionOutput(tx.getHash(), txout.getIndex()).isSpent()) {
-                        removeBlockFromMilestone(
-                                blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()));
-                    }
-                    blockStore.updateTransactionOutputConfirmed(tx.getHash(), txout.getIndex(), false);
+        for (Transaction tx : block.getTransactions()) {
+            // Mark all outputs used by tx input as unspent
+            for (TransactionInput txin : tx.getInputs()) {
+                if (!txin.isCoinBase()) {
+                    blockStore.updateTransactionOutputSpent(txin.getOutpoint().getHash(), txin.getOutpoint().getIndex(),
+                            false, Sha256Hash.ZERO_HASH);
                 }
             }
-        } catch (BlockStoreException e) {
-            blockStore.abortDatabaseBatchWrite();
-            throw e;
+
+            // TODO revert token here (unconfirmed block)
+
+            // Mark unconfirmed all tx outputs in db and disconnect their
+            // spending blocks
+            for (TransactionOutput txout : tx.getOutputs()) {
+                if (blockStore.getTransactionOutput(tx.getHash(), txout.getIndex()).isSpent()) {
+                    removeBlockFromMilestone(blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()));
+                }
+                blockStore.updateTransactionOutputConfirmed(tx.getHash(), txout.getIndex(), false);
+            }
         }
-    }
-
-    @Override
-    protected void doSetChainHead(StoredBlock chainHead) throws BlockStoreException {
-        checkState(lock.isHeldByCurrentThread());
-        blockStore.commitDatabaseBatchWrite();
-    }
-
-    @Override
-    protected void notSettingChainHead() throws BlockStoreException {
-        blockStore.abortDatabaseBatchWrite();
     }
 
     @Override
@@ -466,26 +448,30 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     private boolean checkSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height)
             throws BlockStoreException, VerificationException {
-
-        // TODO stop trying to solidify eventually?
-
+        // Check timestamp
         if (block.getTimeSeconds() < storedPrev.getHeader().getTimeSeconds()
                 || block.getTimeSeconds() < storedPrevBranch.getHeader().getTimeSeconds())
             return false;
 
-        // TODO block.checkTransactions(height) for block types;
+        // Check formal correctness of TX
+        try {
+            block.checkTransactions(height);
+        } catch (VerificationException e) {
+            return false;
+        }
 
         blockStore.beginDatabaseBatchWrite();
         LinkedList<UTXO> txOutsSpent = new LinkedList<UTXO>();
         LinkedList<UTXO> txOutsCreated = new LinkedList<UTXO>();
         long sigOps = 0;
 
-        if (scriptVerificationExecutor.isShutdown())
-            scriptVerificationExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-
-        List<Future<VerificationException>> listScriptVerificationResults = new ArrayList<Future<VerificationException>>(
-                block.getTransactions().size());
         try {
+            if (scriptVerificationExecutor.isShutdown())
+                scriptVerificationExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+            List<Future<VerificationException>> listScriptVerificationResults = new ArrayList<Future<VerificationException>>(
+                    block.getTransactions().size());
+
             if (!params.isCheckpoint(height)) {
                 // BIP30 violator blocks are ones that contain a duplicated
                 // transaction. They
@@ -603,6 +589,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             scriptVerificationExecutor.shutdownNow();
             blockStore.abortDatabaseBatchWrite();
             throw e;
+        } finally {
+            try {
+                blockStore.commitDatabaseBatchWrite();
+            } catch (BlockStoreException e) {
+                e.printStackTrace();
+            }
         }
         return true;
     }

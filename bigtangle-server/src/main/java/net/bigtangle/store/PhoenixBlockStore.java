@@ -489,44 +489,6 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     }
 
     @Override
-    public void setChainHead(StoredBlock chainHead) throws BlockStoreException {
-        Sha256Hash hash = chainHead.getHeader().getHash();
-        this.chainHeadHash = hash;
-        this.chainHeadBlock = chainHead;
-        // System.out.println("bbb > " + Utils.HEX.encode(hash.getBytes()));
-        maybeConnect();
-        try {
-            PreparedStatement s = conn.get().prepareStatement(getUpdateSettingsSLQ());
-            s.setString(1, CHAIN_HEAD_SETTING);
-            s.setBytes(2, hash.getBytes());
-            s.executeUpdate();
-            s.close();
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        }
-    }
-
-    @Override
-    public void setVerifiedChainHead(StoredBlock chainHead) throws BlockStoreException {
-        Sha256Hash hash = chainHead.getHeader().getHash();
-        this.verifiedChainHeadHash = hash;
-        this.verifiedChainHeadBlock = chainHead;
-        maybeConnect();
-        try {
-            PreparedStatement s = conn.get().prepareStatement(getUpdateSettingsSLQ());
-            s.setString(1, VERIFIED_CHAIN_HEAD_SETTING);
-            s.setBytes(2, hash.getBytes());
-            s.executeUpdate();
-            s.close();
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        }
-        if (this.chainHeadBlock.getHeight() < chainHead.getHeight())
-            setChainHead(chainHead);
-
-    }
-
-    @Override
     protected synchronized void maybeConnect() throws BlockStoreException {
         super.maybeConnect();
         Connection connection = this.getConnection().get();

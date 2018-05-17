@@ -3548,7 +3548,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         UTXOProvider utxoProvider = checkNotNull(vUTXOProvider, "No UTXO provider has been set");
         LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
         try {
-            long chainHeight = utxoProvider.getChainHeadHeight();
+            // TODO fix this by putting depth into FreeStandingTransactionOutput
+            long chainHeight = 0;
             for (UTXO output : getStoredOutputsFromUTXOProvider()) {
                 boolean coinbase = output.isCoinbase();
                 long depth = chainHeight - output.getHeight() + 1; // the

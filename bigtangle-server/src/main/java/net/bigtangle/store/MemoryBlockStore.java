@@ -22,7 +22,6 @@ public class MemoryBlockStore implements BlockStore {
             return blockMap.size() > 5000;
         }
     };
-    private StoredBlock chainHead;
     private NetworkParameters params;
 
     public MemoryBlockStore(NetworkParameters params) {
@@ -31,7 +30,6 @@ public class MemoryBlockStore implements BlockStore {
             Block genesisHeader = params.getGenesisBlock().cloneAsHeader();
             StoredBlock storedGenesis = new StoredBlock(genesisHeader,  0);
             put(storedGenesis);
-            setChainHead(storedGenesis);
             this.params = params;
         } catch (BlockStoreException e) {
             throw new RuntimeException(e);  // Cannot happen.
@@ -53,17 +51,6 @@ public class MemoryBlockStore implements BlockStore {
         return blockMap.get(hash);
     }
 
-    @Override
-    public StoredBlock getChainHead() throws BlockStoreException {
-        if (blockMap == null) throw new BlockStoreException("MemoryBlockStore is closed");
-        return chainHead;
-    }
-
-    @Override
-    public final void setChainHead(StoredBlock chainHead) throws BlockStoreException {
-        if (blockMap == null) throw new BlockStoreException("MemoryBlockStore is closed");
-        this.chainHead = chainHead;
-    }
     
     @Override
     public void close() {

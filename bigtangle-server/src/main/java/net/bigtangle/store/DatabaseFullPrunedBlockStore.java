@@ -70,8 +70,6 @@ import net.bigtangle.utils.OrderState;
 public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockStore {
     private static final Logger log = LoggerFactory.getLogger(DatabaseFullPrunedBlockStore.class);
 
-    protected String CHAIN_HEAD_SETTING = "chainhead";
-    protected String VERIFIED_CHAIN_HEAD_SETTING = "verifiedchainhead";
     protected String VERSION_SETTING = "version";
 
     // Drop table SQL.
@@ -297,10 +295,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String SELECT_MULTISIGNBY0_SQL = "SELECT COUNT(*) as count FROM multisignby WHERE tokenid = ? AND tokenindex = ?";
     protected String SELECT_MULTISIGNBY000_SQL = "SELECT tokenid, tokenindex, address FROM multisignby WHERE tokenid = ? AND tokenindex = ? AND address = ?";
 
-    protected Sha256Hash chainHeadHash;
-    protected StoredBlock chainHeadBlock;
-    protected Sha256Hash verifiedChainHeadHash;
-    protected StoredBlock verifiedChainHeadBlock;
     protected NetworkParameters params;
     protected ThreadLocal<Connection> conn;
     protected List<Connection> allConnections;
@@ -713,12 +707,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
         // insert the initial settings for this store
         PreparedStatement ps = conn.get().prepareStatement(getInsertSettingsSQL());
-        ps.setString(1, CHAIN_HEAD_SETTING);
-        ps.setNull(2, Types.BINARY);
-        ps.execute();
-        ps.setString(1, VERIFIED_CHAIN_HEAD_SETTING);
-        ps.setNull(2, Types.BINARY);
-        ps.execute();
         ps.setString(1, VERSION_SETTING);
         ps.setBytes(2, "03".getBytes());
         ps.execute();
@@ -748,8 +736,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             StoredUndoableBlock storedGenesis = new StoredUndoableBlock(params.getGenesisBlock().getHash(),
                     genesisTransactions);
             put(storedGenesisHeader, storedGenesis);
-            setChainHead(storedGenesisHeader);
-            setVerifiedChainHead(storedGenesisHeader);
 
             updateBlockEvaluationMilestone(params.getGenesisBlock().getHash(), true);
             updateBlockEvaluationSolid(params.getGenesisBlock().getHash(), true);
@@ -857,11 +843,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     public StoredBlock get(Sha256Hash hash, boolean wasUndoableOnly) throws BlockStoreException {
-        // Optimize for chain head
-        if (chainHeadHash != null && chainHeadHash.equals(hash))
-            return chainHeadBlock;
-        if (verifiedChainHeadHash != null && verifiedChainHeadHash.equals(hash))
-            return verifiedChainHeadBlock;
         StoredBlockBinary r = getBinary(hash, wasUndoableOnly);
         if (r == null)
             return null;
@@ -1020,55 +1001,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public StoredBlock getOnceUndoableStoredBlock(Sha256Hash hash) throws BlockStoreException {
         return get(hash, true);
-    }
-
-    @Override
-    public StoredBlock getChainHead() throws BlockStoreException {
-        return chainHeadBlock;
-    }
-
-    @Override
-    public void setChainHead(StoredBlock chainHead) throws BlockStoreException {
-        Sha256Hash hash = chainHead.getHeader().getHash();
-        this.chainHeadHash = hash;
-        this.chainHeadBlock = chainHead;
-        maybeConnect();
-        // System.out.println("bbb > " + Utils.HEX.encode(hash.getBytes()));
-        try {
-            PreparedStatement s = conn.get().prepareStatement(getUpdateSettingsSLQ());
-            s.setString(2, CHAIN_HEAD_SETTING);
-            s.setBytes(1, hash.getBytes());
-            s.executeUpdate();
-            s.close();
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        }
-    }
-
-    @Override
-    public StoredBlock getVerifiedChainHead() throws BlockStoreException {
-        return verifiedChainHeadBlock;
-    }
-
-    @Override
-    public void setVerifiedChainHead(StoredBlock chainHead) throws BlockStoreException {
-        Sha256Hash hash = chainHead.getHeader().getHash();
-        this.verifiedChainHeadHash = hash;
-        this.verifiedChainHeadBlock = chainHead;
-        maybeConnect();
-        try {
-            PreparedStatement s = conn.get().prepareStatement(getUpdateSettingsSLQ());
-            s.setString(2, VERIFIED_CHAIN_HEAD_SETTING);
-            s.setBytes(1, hash.getBytes());
-            s.executeUpdate();
-            s.close();
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        }
-        if (this.chainHeadBlock.getHeight() < chainHead.getHeight())
-            setChainHead(chainHead);
-        // removeUndoableBlocksWhereHeightIsLessThan(chainHead.getHeight() -
-        // fullStoreDepth);
     }
 
     @Override
@@ -1243,15 +1175,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public NetworkParameters getParams() {
         return params;
-    }
-
-    @Override
-    public long getChainHeadHeight() throws UTXOProviderException {
-        try {
-            return getVerifiedChainHead().getHeight();
-        } catch (BlockStoreException e) {
-            throw new UTXOProviderException(e);
-        }
     }
 
     /**

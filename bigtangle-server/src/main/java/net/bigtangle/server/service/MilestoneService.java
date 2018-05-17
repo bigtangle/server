@@ -63,11 +63,16 @@ public class MilestoneService {
 
         // TODO rebuild fct
         // TODO reattach fct
-        
+        // TODO check for reorg and go back with rating threshold until
+        // bifurcation for reevaluation
+
+
+        // TODO add maintained only to all
         try {
             log.info("Milestone Update started");
 //            clearCacheBlockEvaluations();
             Stopwatch watch = Stopwatch.createStarted();
+            // TODO only for maintained
             updateSolidityAndHeight();
             log.info("Solidity and height update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
             
@@ -431,9 +436,6 @@ public class MilestoneService {
      * @throws BlockStoreException
      */
     private void updateMaintained() throws BlockStoreException {
-        // TODO check for reorg and go back with rating threshold until
-        // bifurcation for reevaluation
-
         // Set all unmaintained
         store.updateUnmaintainAll();
         PriorityQueue<BlockEvaluation> blocks = getRatingEntryPointsAscendingAsPriorityQueue();

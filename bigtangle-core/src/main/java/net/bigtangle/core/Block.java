@@ -127,8 +127,6 @@ public class Block extends Message {
 
     private long blocktype;
 
-    // TODO: Get rid of all the direct accesses to this field. It's a long-since
-    // unnecessary holdover from the Dalvik days.
     /** If null, it means this object holds only the headers. */
     @Nullable
     List<Transaction> transactions;
@@ -244,7 +242,6 @@ public class Block extends Message {
      */
     public Block(NetworkParameters params, byte[] payloadBytes, int offset, @Nullable Message parent,
             MessageSerializer serializer, int length) throws ProtocolException {
-        // TODO: Keep the parent
         super(params, payloadBytes, offset, serializer, length);
     }
 
@@ -797,20 +794,25 @@ public class Block extends Message {
      * @throws VerificationException
      *             if there was an error verifying the block.
      */
-    @SuppressWarnings("unused")
-    public void checkTransactions(final int height, final EnumSet<VerifyFlag> flags) throws VerificationException {
-        // The first transaction in a block must always be a coinbase
-        // transaction.
-        // TODO check for each block type
-        if (!transactions.get(0).isCoinBase())
-            throw new VerificationException("First tx is not coinbase");
-        if (flags.contains(Block.VerifyFlag.HEIGHT_IN_COINBASE) && height >= BLOCK_HEIGHT_GENESIS) {
-            transactions.get(0).checkCoinBaseHeight(height);
+    public void checkTransactions(final long height) throws VerificationException {
+        // The transactions must adhere to their block type rules
+        if (blocktype == NetworkParameters.BLOCKTYPE_TRANSFER) {
+            // TODO for int i = 0 and fix generation such that no coinbase is generated
+            for (int i = 1; i < transactions.size(); i++) {
+                if (transactions.get(i).isCoinBase())
+                    throw new VerificationException("TX " + i + " is coinbase when it should not be.");
+            }
+            // TODO implement 
         }
-        // The rest must not be.
-        for (int i = 1; i < transactions.size(); i++) {
-            if (transactions.get(i).isCoinBase())
-                throw new VerificationException("TX " + i + " is coinbase when it should not be.");
+        else if (blocktype == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
+            for (int i = 0; i < transactions.size(); i++) {
+                if (!transactions.get(i).isCoinBase())
+                    throw new VerificationException("TX " + i + " is not coinbase when it should be.");
+            }
+            // TODO implement 
+        }
+        else if (blocktype == NetworkParameters.BLOCKTYPE_REWARD) {
+            // TODO implement 
         }
     }
 
@@ -904,7 +906,6 @@ public class Block extends Message {
      */
     public Sha256Hash getMerkleRoot() {
         if (merkleRoot == null) {
-            // TODO check if this is really necessary.
             unCacheHeader();
             merkleRoot = calculateMerkleRoot();
         }
@@ -1121,8 +1122,6 @@ public class Block extends Message {
             b.setTime(getTimeSeconds() + 1);
         else
             b.setTime(time);
-
-        // TODO Also don't let timestamp go backwards from prevbranchblockhash
 
         b.solve();
         try {

@@ -248,8 +248,6 @@ public abstract class MemoryFullPrunedBlockStore implements FullPrunedBlockStore
     private TransactionalHashMap<Sha256Hash, StoredBlockAndWasUndoableFlag> blockMap;
     private TransactionalMultiKeyHashMap<Sha256Hash, Long, StoredUndoableBlock> fullBlockMap;
     private TransactionalHashMap<StoredTransactionOutPoint, UTXO> transactionOutputMap;
-    private StoredBlock chainHead;
-    private StoredBlock verifiedChainHead;
     private int fullStoreDepth;
     private NetworkParameters params;
     
@@ -270,8 +268,6 @@ public abstract class MemoryFullPrunedBlockStore implements FullPrunedBlockStore
             List<Transaction> genesisTransactions = Lists.newLinkedList();
             StoredUndoableBlock storedGenesis = new StoredUndoableBlock(params.getGenesisBlock().getHash(), genesisTransactions);
             put(storedGenesisHeader, storedGenesis);
-            setChainHead(storedGenesisHeader);
-            setVerifiedChainHead(storedGenesisHeader);
             this.params = params;
         } catch (BlockStoreException e) {
             throw new RuntimeException(e);  // Cannot happen.
@@ -311,35 +307,6 @@ public abstract class MemoryFullPrunedBlockStore implements FullPrunedBlockStore
         return (storedBlock != null && storedBlock.wasUndoable) ? storedBlock.block : null;
     }
     
-   
-    @Override
-    public synchronized StoredBlock getChainHead() throws BlockStoreException {
-        Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
-        return chainHead;
-    }
-
-    @Override
-    public synchronized final void setChainHead(StoredBlock chainHead) throws BlockStoreException {
-        Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
-        this.chainHead = chainHead;
-    }
-    
-    @Override
-    public synchronized StoredBlock getVerifiedChainHead() throws BlockStoreException {
-        Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
-        return verifiedChainHead;
-    }
-
-    @Override
-    public synchronized final void setVerifiedChainHead(StoredBlock chainHead) throws BlockStoreException {
-        Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
-        this.verifiedChainHead = chainHead;
-        if (this.chainHead.getHeight() < chainHead.getHeight())
-            setChainHead(chainHead);
-        // Potential leak here if not all blocks get setChainHead'd
-        // Though the FullPrunedBlockStore allows for this, the current AbstractBlockChain will not do it.
-        fullBlockMap.removeByMultiKey(chainHead.getHeight() - fullStoreDepth);
-    }
     
     @Override
     public void close() {
@@ -400,15 +367,6 @@ public abstract class MemoryFullPrunedBlockStore implements FullPrunedBlockStore
     @Override
     public NetworkParameters getParams() {
         return params;
-    }
-
-    @Override
-    public long getChainHeadHeight() throws UTXOProviderException {
-        try {
-            return getVerifiedChainHead().getHeight();
-        } catch (BlockStoreException e) {
-            throw new UTXOProviderException(e);
-        }
     }
 
     @Override

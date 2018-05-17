@@ -151,19 +151,6 @@ public abstract class AbstractBlockGraph {
     protected abstract StoredBlock addToBlockStore(StoredBlock storedPrev,StoredBlock storedBlockPrevBranch,  Block header,
                                                    @Nullable TransactionOutputChanges txOutputChanges)
             throws BlockStoreException, VerificationException;
-
-    /**
-     * Called before setting tangle head in memory.
-     * Should write the new head to block store and then commit any database transactions
-     * that were started by disconnectTransactions/connectTransactions.
-     */
-    protected abstract void doSetChainHead(StoredBlock chainHead) throws BlockStoreException;
-    
-    /**
-     * Can be used to abort database transactions that were started by
-     * disconnectTransactions/connectTransactions.
-     */
-    protected abstract void notSettingChainHead() throws BlockStoreException;
     
     /**
      * For a standard BlockChain, this should return blockStore.get(hash),
@@ -185,11 +172,6 @@ public abstract class AbstractBlockGraph {
             throw new RuntimeException(e);
         } catch (VerificationException e) {
             e.printStackTrace();
-            try {
-                notSettingChainHead();
-            } catch (BlockStoreException e1) {
-                throw new RuntimeException(e1);
-            }
             throw new VerificationException("Could not verify block:\n" +
                     block.toString(), e);
         }
@@ -213,11 +195,6 @@ public abstract class AbstractBlockGraph {
         } catch (BlockStoreException e) {
             throw new RuntimeException(e);
         } catch (VerificationException e) {
-            try {
-                notSettingChainHead();
-            } catch (BlockStoreException e1) {
-                throw new RuntimeException(e1);
-            }
             throw new VerificationException("Could not verify block " + block.getHash().toString() + "\n" +
                     block.toString(), e);
         }
@@ -294,10 +271,8 @@ public abstract class AbstractBlockGraph {
                               @Nullable final List<Sha256Hash> filteredTxHashList,
                               @Nullable final Map<Sha256Hash, Transaction> filteredTxn) throws BlockStoreException, VerificationException, PrunedException {
         checkState(lock.isHeldByCurrentThread());
-
         StoredBlock newStoredBlock = addToBlockStore(storedPrev,storedPrevBranch, block);
         tryFirstSetSolidityAndHeight(newStoredBlock.getHeader());
-		doSetChainHead(newStoredBlock);
     }
     
     protected abstract void tryFirstSetSolidityAndHeight(Block block) throws BlockStoreException;

@@ -87,8 +87,6 @@ public class TipsService {
 			Sha256Hash selectedBlock1 = b1.getLeft();
 			Sha256Hash selectedBlock2 = b2.getLeft();
 
-			// TODO refactor and test, deduplicate (milestoneservice resolve is
-			// different)
 			// Get all blocks that are approved together
 			TreeSet<BlockEvaluation> approvedNonMilestoneBlockEvaluations = new TreeSet<>(b1.getRight());
 			approvedNonMilestoneBlockEvaluations.addAll(b2.getRight());
@@ -98,8 +96,7 @@ public class TipsService {
 			HashSet<BlockEvaluation> conflictingMilestoneBlocks = new HashSet<BlockEvaluation>();
 
 			// Find all conflicts
-			validatorService.findMilestoneConflicts(approvedNonMilestoneBlocks, conflictingOutPoints, conflictingMilestoneBlocks);
-			validatorService.findCandidateConflicts(approvedNonMilestoneBlocks, conflictingOutPoints);
+			validatorService.findConflicts(approvedNonMilestoneBlocks, conflictingOutPoints, conflictingMilestoneBlocks);
 
 			// Resolve all conflicts by grouping by UTXO ordered by descending
 			// rating for most likely consensus
@@ -138,9 +135,6 @@ public class TipsService {
 			Sha256Hash selectedBlock = getMCMCResultBlock(entryPoint, seed);
 			BlockEvaluation selectedBlockEvaluation = blockService.getBlockEvaluation(selectedBlock);
 
-			// TODO refactor and test, deduplicate (milestoneservice resolve is
-			// different)
-
 			// Get all non-milestone blocks that are to be approved by this
 			// selection
 			Comparator<BlockEvaluation> byDescendingHeightMultiple = Comparator.comparingLong((BlockEvaluation e) -> e.getHeight())
@@ -159,8 +153,7 @@ public class TipsService {
 			HashSet<BlockEvaluation> conflictingMilestoneBlocks = new HashSet<BlockEvaluation>();
 
 			// Find all conflicts
-			validatorService.findMilestoneConflicts(approvedNonMilestoneBlocks, conflictingOutPoints, conflictingMilestoneBlocks);
-			validatorService.findCandidateConflicts(approvedNonMilestoneBlocks, conflictingOutPoints);
+			validatorService.findConflicts(approvedNonMilestoneBlocks, conflictingOutPoints, conflictingMilestoneBlocks);
 
 			// Resolve all conflicts by grouping by UTXO ordered by descending
 			// rating for most likely consensus

@@ -25,12 +25,6 @@ public interface UTXOProvider {
     List<UTXO> getOpenTransactionOutputs(List<Address> addresses) throws UTXOProviderException;
     
     List<UTXO> getOpenTransactionOutputs(List<Address> addresses, byte[] tokenid) throws UTXOProviderException;
-    /**
-     * Get the height of the chain head.
-     * @return The chain head height.
-     * @throws UTXOProvider If there is an error.
-     */
-    long getChainHeadHeight() throws UTXOProviderException;
 
     /**
      * The {@link NetworkParameters} of this provider.

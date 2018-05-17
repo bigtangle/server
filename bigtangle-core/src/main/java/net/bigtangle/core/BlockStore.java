@@ -28,19 +28,6 @@ public interface BlockStore {
      * parameter. If no such block is found, returns null.
      */
     StoredBlock get(Sha256Hash hash) throws BlockStoreException;
-
-    /**
-     * Returns the {@link StoredBlock} that represents the top of the chain of greatest total work. Note that this
-     * can be arbitrarily expensive, you probably should use {@link org.bitcoinj.core.BlockChain#getChainHead()}
-     * or perhaps {@link org.bitcoinj.core.BlockChain#getBestChainHeight()} which will run in constant time and
-     * not take any heavyweight locks.
-     */
-    StoredBlock getChainHead() throws BlockStoreException;
-
-    /**
-     * Sets the {@link StoredBlock} that represents the top of the chain of greatest total work.
-     */
-    void setChainHead(StoredBlock chainHead) throws BlockStoreException;
     
     /** Closes the store. */
     void close() throws BlockStoreException;
