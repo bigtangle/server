@@ -163,7 +163,7 @@ public class MilestoneService {
         if (prevBlockSolid && prevBranchBlockSolid) {
             prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
             prevBranchBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
-            blockGraphService.solidifyBlock(block, prevBlockEvaluation, prevBranchBlockEvaluation);
+            blockGraphService.trySolidify(block, prevBlockEvaluation, prevBranchBlockEvaluation);
             return true;
         }
         return false;
