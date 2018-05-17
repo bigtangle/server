@@ -19,7 +19,7 @@
 										<TableColumn fx:id="tokenHexColumn" prefWidth="300.0" text="%Token" />
 										<TableColumn fx:id="tokennameColumn" prefWidth="89.0" text="%tokenname" />
 										<TableColumn fx:id="amountColumn" prefWidth="95.0" text="%Amount" />
-										<TableColumn fx:id="blocktypeColumn" prefWidth="105.0" text="%blocktype" />
+										<TableColumn fx:id="blocktypeColumn" editable="false" maxWidth="1.0" minWidth="1.0" prefWidth="1.0" sortable="false" text="%blocktype" visible="false" />
 										<TableColumn fx:id="descriptionColumn" prefWidth="387.0" text="%description" />
                               <TableColumn fx:id="urlColumn" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" text="%url" />
                               <TableColumn fx:id="signnumberColumn" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" text="%signnumber" />

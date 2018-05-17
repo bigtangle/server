@@ -194,8 +194,7 @@ public class TransactionService {
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
         Block r2 = blockService.getBlock(tipsToApprove.getRight());
-        long blocktype0 = blocktype ? NetworkParameters.BLOCKTYPE_GENESIS
-                : NetworkParameters.BLOCKTYPE_GENESIS_MULTIPLE;
+        long blocktype0 =  NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
         Block block = new Block(networkParameters, r1.getHash(), r2.getHash(),blocktype0,
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
         block.addCoinbaseTransaction(pubKey, coin, tokenInfo);

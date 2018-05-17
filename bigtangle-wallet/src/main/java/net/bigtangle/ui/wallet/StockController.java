@@ -108,14 +108,12 @@ public class StockController extends TokensController {
             for (Map<String, Object> map : list) {
 
                 String tokenHex = (String) map.get("tokenid");
-                int blocktype = (int) map.get("blocktype");
-                if (blocktype == NetworkParameters.BLOCKTYPE_GENESIS && !temp.equals(tokenHex)
-                        && !tokenData.contains(temp)) {
+                if (!(boolean) map.get("multiserial") && !temp.equals(tokenHex) && !tokenData.contains(temp)) {
                     tokenData.add(temp);
                     break;
                     // names.add(map.get("tokenname").toString());
                 }
-                if (blocktype == NetworkParameters.BLOCKTYPE_GENESIS_MULTIPLE && !tokenData.contains(temp)) {
+                if ((boolean) map.get("multiserial") && !tokenData.contains(temp)) {
                     tokenData.add(temp);
                     break;
                     // names.add(map.get("tokenname").toString());

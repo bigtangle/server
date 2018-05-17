@@ -57,6 +57,7 @@ public class TokensController {
     public TableColumn<Map, String> positveTokennameColumn;
     @FXML
     public TextField nameTextField;
+    public static Map<String, Boolean> multiMap = new HashMap<String, Boolean>();
     private static final Logger log = LoggerFactory.getLogger(TokensController.class);
 
     @FXML
@@ -66,13 +67,13 @@ public class TokensController {
             initTableView();
             initPositveTableView();
         } catch (Exception e) {
-            e.printStackTrace();
             GuiUtils.crashAlert(e);
         }
     }
 
     public void searchTokens(ActionEvent event) {
         try {
+            
             initTableView();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
@@ -132,11 +133,11 @@ public class TokensController {
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens",
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-        System.out.println(response);
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
         Map<String, Long> amountMap = (Map<String, Long>) data.get("amountMap");
         if (list != null) {
             for (Map<String, Object> map : list) {
+                multiMap.put((String) map.get("tokenid"), (boolean) map.get("multiserial"));
                 String temp = ((boolean) map.get("multiserial")) ? Main.getText("yes") : Main.getText("no");
                 String temp1 = ((boolean) map.get("asmarket")) ? Main.getText("yes") : Main.getText("no");
                 String temp2 = ((boolean) map.get("tokenstop")) ? Main.getText("yes") : Main.getText("no");

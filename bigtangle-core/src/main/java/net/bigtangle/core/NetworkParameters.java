@@ -65,7 +65,7 @@ public abstract class NetworkParameters {
     public static final long BLOCKTYPE_GENESIS = 0; // Genesis Block for a
                                                     // token, only onetime
     public static final long BLOCKTYPE_TRANSFER = 1; // normal transfer of token
-    public static final long BLOCKTYPE_GENESIS_MULTIPLE = 3; // Genesis Block
+    public static final long BLOCKTYPE_TOKEN_CREATION= 3; // Genesis Block
                                                              // for a token,
                                                              // multiple times
                                                              // // value
