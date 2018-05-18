@@ -5,10 +5,22 @@ public class MultiSignBy implements java.io.Serializable {
     private static final long serialVersionUID = 3478025339600098446L;
 
     private String tokenid;
-    
+
     private long tokenindex;
-    
+
     private String address;
+    private String publickey;
+
+    public MultiSignBy(String tokenid, long tokenindex, String address, String publickey, String signature) {
+        super();
+        this.tokenid = tokenid;
+        this.tokenindex = tokenindex;
+        this.address = address;
+        this.publickey = publickey;
+        this.signature = signature;
+    }
+
+    private String signature;
 
     public String getTokenid() {
         return tokenid;
@@ -47,6 +59,25 @@ public class MultiSignBy implements java.io.Serializable {
         this.tokenid = multiSignBy.getTokenid();
         this.tokenindex = multiSignBy.getTokenindex();
         this.address = multiSignBy.getAddress();
+        this.publickey = multiSignBy.publickey;
+        this.signature = multiSignBy.signature;
         return this;
     }
+
+    public String getPublickey() {
+        return publickey;
+    }
+
+    public void setPublickey(String publickey) {
+        this.publickey = publickey;
+    }
+
+    public String getSignature() {
+        return signature;
+    }
+
+    public void setSignature(String signature) {
+        this.signature = signature;
+    }
+
 }
