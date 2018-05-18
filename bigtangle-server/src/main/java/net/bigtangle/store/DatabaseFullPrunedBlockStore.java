@@ -12,7 +12,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -289,6 +288,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String UPDATE_TOKENSERIAL_SQL = "UPDATE tokenserial SET amount = ? WHERE tokenid = ? AND tokenindex = ?";
     protected String SELECT_TOKENSERIAL_SQL = "SELECT tokenid, tokenindex, amount FROM tokenserial WHERE tokenid = ? AND tokenindex = ?";
     protected String SELECT_TOKENSERIAL0_SQL = "SELECT tokenid, tokenindex, amount FROM tokenserial WHERE tokenid = ?";
+    protected String SELECT_SEARCH_TOKENSERIAL_SQL = "SELECT tokenid, tokenindex, amount FROM tokenserial ";
 
     protected String INSERT_MULTISIGNBY_SQL = "INSERT INTO multisignby (tokenid, tokenindex, address) VALUES (?, ?, ?)";
     protected String SELECT_MULTISIGNBY_SQL = "SELECT COUNT(*) as count FROM multisignby WHERE tokenid = ? AND tokenindex = ? AND address = ?";
@@ -2186,7 +2186,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
             preparedStatement = conn.get().prepareStatement(SELECT_TOKENS_ACOUNT_MAP_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
-           
+
             while (resultSet.next()) {
                 map.put(resultSet.getString("tokenid"), resultSet.getLong("amount"));
 
@@ -2924,6 +2924,41 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setUrl(resultSet.getString("url"));
             }
             return tokens;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    public List<TokenSerial> getSearchTokenSerialInfo(String tokenid) throws BlockStoreException {
+        List<TokenSerial> list = new ArrayList<TokenSerial>();
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        if (tokenid != null && !tokenid.trim().isEmpty()) {
+            SELECT_SEARCH_TOKENSERIAL_SQL += " WHERE tokenid=?";
+        }
+        SELECT_SEARCH_TOKENSERIAL_SQL += " ORDER BY tokenid,tokenindex";
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_SEARCH_TOKENSERIAL_SQL);
+            if (tokenid != null && !tokenid.trim().isEmpty()) {
+                preparedStatement.setString(1, tokenid);
+            }
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                String tokenid0 = resultSet.getString("tokenid");
+                long tokenindex = resultSet.getLong("tokenindex");
+                long amount = resultSet.getLong("amount");
+                TokenSerial tokenSerial = new TokenSerial(tokenid0, tokenindex, amount);
+                list.add(tokenSerial);
+            }
+            return list;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } finally {

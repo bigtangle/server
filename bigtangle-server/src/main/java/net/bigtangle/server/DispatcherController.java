@@ -153,7 +153,13 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-
+            case getTokenSerials: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                AbstractResponse response = tokensService.getTokenSerialListById((String) request.get("tokenid"));
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
             case outputsWiteToken: {
                 ByteBuffer byteBuffer = ByteBuffer.wrap(bodyByte);
                 byte[] pubKey = new byte[byteBuffer.getInt()];

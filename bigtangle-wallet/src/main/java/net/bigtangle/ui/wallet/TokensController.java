@@ -55,6 +55,16 @@ public class TokensController {
     public TableColumn<Map, String> positveTokenHexColumn;
     @FXML
     public TableColumn<Map, String> positveTokennameColumn;
+
+    @FXML
+    public TableView<Map> tokenserialTable;
+    @FXML
+    public TableColumn<Map, String> tokenidColumn;
+    @FXML
+    public TableColumn<Map, Number> tokenindexColumn;
+    @FXML
+    public TableColumn<Map, String> tokenAmountColumn;
+
     @FXML
     public TextField nameTextField;
     public static Map<String, Boolean> multiMap = new HashMap<String, Boolean>();
@@ -73,7 +83,7 @@ public class TokensController {
 
     public void searchTokens(ActionEvent event) {
         try {
-            
+
             initTableView();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
@@ -120,6 +130,29 @@ public class TokensController {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void initSerialTableView() throws Exception {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        ObservableList<Map> tokenData = FXCollections.observableArrayList();
+
+        Map<String, Object> requestParam = new HashMap<String, Object>();
+        String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokenSerials",
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokenSerials");
+
+        if (list != null) {
+            for (Map<String, Object> map : list) {
+                Coin fromAmount = Coin.valueOf((long) map.get("amount"), (String) map.get("tokenid"));
+                map.put("amount", fromAmount.toPlainString());
+                tokenData.add(map);
+            }
+        }
+        tokenidColumn.setCellValueFactory(new MapValueFactory("tokenid"));
+        tokenindexColumn.setCellValueFactory(new MapValueFactory("tokenindex"));
+        tokenAmountColumn.setCellValueFactory(new MapValueFactory("amount"));
+        tokenserialTable.setItems(tokenData);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })

@@ -228,7 +228,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public List<Tokens> getTokensList(String name) throws BlockStoreException;
 
-    public Map<String,Long> getTokenAmountMap(String name) throws BlockStoreException;
+    public Map<String, Long> getTokenAmountMap(String name) throws BlockStoreException;
 
     public void saveTokens(Tokens tokens) throws BlockStoreException;
 
@@ -279,6 +279,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public int getCountMultiSignAddress(String tokenid) throws BlockStoreException;
 
     public Tokens getTokensInfo(String tokenid) throws BlockStoreException;
+
+    public List<TokenSerial> getSearchTokenSerialInfo(String tokenid) throws BlockStoreException;
 
     public TokenSerial getTokenSerialInfo(String tokenid, long tokenindex) throws BlockStoreException;
 

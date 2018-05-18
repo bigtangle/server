@@ -21,7 +21,10 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
@@ -39,11 +42,9 @@ import net.bigtangle.utils.OkHttp3Util;
 public class StockController extends TokensController {
     @FXML
     public TabPane tabPane;
+    @FXML
+    public Tab multiPublishTab;
 
-    @FXML
-    public CheckBox multiserialCheckBox;
-    @FXML
-    public CheckBox asmarketCheckBox;
     @FXML
     public CheckBox tokenstopCheckBox;
 
@@ -76,6 +77,22 @@ public class StockController extends TokensController {
     @FXML
     public TextArea stockDescription;
 
+    @FXML
+    public TextField marketName;
+    @FXML
+    public ComboBox<String> marketid;
+    @FXML
+    public TextField marketurl;
+    @FXML
+    public TextArea marketDescription;
+
+    @FXML
+    public TableView<Map> signAddressTable;
+    @FXML
+    public TableColumn<Map, String> addressColumn;
+    @FXML
+    public TableColumn<Map, String> signColumn;
+
     public Main.OverlayUI overlayUI;
 
     @FXML
@@ -92,11 +109,29 @@ public class StockController extends TokensController {
             });
             initTableView();
             initPositveTableView();
+            initSerialTableView();
             initCombobox();
 
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
+    }
+
+    public void editToken(ActionEvent event) throws Exception {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        Map<String, Object> rowData = tokenserialTable.getSelectionModel().getSelectedItem();
+        if (rowData == null || rowData.isEmpty()) {
+            GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_m1"));
+            return;
+        }
+        String tokenid = (String) rowData.get("tokenid");
+        Map<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("tokenid", tokenid);
+        String resp = OkHttp3Util.postString(CONTEXT_ROOT + "getTokenById",
+                Json.jsonmapper().writeValueAsString(requestParam));
+        tabPane.getSelectionModel().clearAndSelect(3);
+        tokenid1.setValue(tokenid);
+
     }
 
     public void addSIgnAddress(ActionEvent event) {
@@ -164,6 +199,7 @@ public class StockController extends TokensController {
         }
         tokenid.setItems(tokenData);
         tokenid1.setItems(tokenData);
+        marketid.setItems(tokenData);
         tokenid1.getSelectionModel().selectedItemProperty().addListener((ov, oldv, newv) -> {
             try {
                 showToken(newv);
@@ -201,13 +237,46 @@ public class StockController extends TokensController {
             requestParam.put("amount",
                     Coin.parseCoin(stockAmount.getText(), Utils.HEX.decode(tokenid.getValue())).getValue());
             requestParam.put("tokenname", stockName.getText());
-            requestParam.put("url", urlTF.getText());
-            requestParam.put("signnumber", signnumberTF.getText());
             requestParam.put("description", stockDescription.getText());
             requestParam.put("tokenHex", tokenid.getValue());
-            requestParam.put("multiserial", multiserialCheckBox.selectedProperty().get());
-            requestParam.put("asmarket", asmarketCheckBox.selectedProperty().get());
-            requestParam.put("tokenstop", tokenstopCheckBox.selectedProperty().get());
+            requestParam.put("multiserial", false);
+            requestParam.put("asmarket", false);
+            // requestParam.put("tokenstop",
+            // tokenstopCheckBox.selectedProperty().get());
+
+            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "createGenesisBlock",
+                    Json.jsonmapper().writeValueAsString(requestParam));
+            Block block = Main.params.getDefaultSerializer().makeBlock(data);
+            // TODO no post to off tangle data, send it to kafka for broadcast
+            Main.instance.sendMessage(block.bitcoinSerialize());
+
+            GuiUtils.informationalAlert(Main.getText("s_c_m"), Main.getText("s_c_m"));
+            Main.instance.controller.initTableView();
+            checkGuiThread();
+            initTableView();
+            overlayUI.done();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+
+    }
+
+    public void saveMarket(ActionEvent event) {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
+
+        try {
+            byte[] pubKey = outKey.getPubKey();
+            HashMap<String, Object> requestParam = new HashMap<String, Object>();
+            requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
+
+            requestParam.put("tokenname", marketName.getText());
+            requestParam.put("url", marketurl.getText());
+            requestParam.put("description", marketDescription.getText());
+            requestParam.put("tokenHex", marketid.getValue());
+            requestParam.put("multiserial", false);
+            requestParam.put("asmarket", true);
+            requestParam.put("tokenstop", false);
 
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "createGenesisBlock",
                     Json.jsonmapper().writeValueAsString(requestParam));
@@ -241,8 +310,8 @@ public class StockController extends TokensController {
             requestParam.put("signnumber", signnumberTF.getText());
             requestParam.put("description", stockDescription1.getText());
             requestParam.put("tokenHex", tokenid1.getValue());
-            requestParam.put("multiserial", multiserialCheckBox.selectedProperty().get());
-            requestParam.put("asmarket", asmarketCheckBox.selectedProperty().get());
+            requestParam.put("multiserial", true);
+            requestParam.put("asmarket", false);
             requestParam.put("tokenstop", tokenstopCheckBox.selectedProperty().get());
 
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "createGenesisBlock",
