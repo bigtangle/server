@@ -4,12 +4,14 @@
  *******************************************************************************/
 package net.bigtangle.ui.wallet;
 
+import static com.google.common.base.Preconditions.checkState;
 import static net.bigtangle.ui.wallet.utils.GuiUtils.checkGuiThread;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.spongycastle.crypto.params.KeyParameter;
 
@@ -22,6 +24,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
@@ -29,6 +32,8 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
+import net.bigtangle.ui.wallet.utils.TextFieldValidator;
+import net.bigtangle.ui.wallet.utils.WTUtils;
 import net.bigtangle.utils.OkHttp3Util;
 
 public class StockController extends TokensController {
@@ -76,6 +81,8 @@ public class StockController extends TokensController {
     @FXML
     public void initialize() {
         try {
+            new TextFieldValidator(signnumberTF,
+                    text -> !WTUtils.didThrow(() -> checkState(text.matches("[1-9]\\d*"))));
             tabPane.getSelectionModel().selectedItemProperty().addListener((ov, t, t1) -> {
                 try {
                     initPositveTableView();
@@ -86,8 +93,38 @@ public class StockController extends TokensController {
             initTableView();
             initPositveTableView();
             initCombobox();
+
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
+        }
+    }
+
+    public void addSIgnAddress(ActionEvent event) {
+        try {
+            showAddAddressDialog();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+    }
+
+    public void showAddAddressDialog() throws Exception {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        int signnumber = Integer.parseInt(signnumberTF.getText());
+        if (signnumber > 1) {
+            TextInputDialog dialog = new TextInputDialog();
+            dialog.setTitle(Main.getText("Address"));
+            dialog.setHeaderText(null);
+            dialog.setContentText(Main.getText("Address"));
+            dialog.setWidth(900);
+            Optional<String> result = dialog.showAndWait();
+            if (result.isPresent()) {
+                HashMap<String, Object> requestParam = new HashMap<String, Object>();
+                String address = result.get();
+                requestParam.put("tokenid", tokenid1.getValue());
+                requestParam.put("address", address);
+                String resp = OkHttp3Util.postString(CONTEXT_ROOT + "addMultisignaddress",
+                        Json.jsonmapper().writeValueAsString(requestParam));
+            }
         }
     }
 
@@ -127,11 +164,30 @@ public class StockController extends TokensController {
         }
         tokenid.setItems(tokenData);
         tokenid1.setItems(tokenData);
-        // tokenid.getSelectionModel().selectedIndexProperty().addListener((ov,
-        // oldv, newv) -> {
-        // stockName.setText(names.get(newv.intValue()));
-        // });
+        tokenid1.getSelectionModel().selectedItemProperty().addListener((ov, oldv, newv) -> {
+            try {
+                showToken(newv);
+            } catch (Exception e) {
+                GuiUtils.crashAlert(e);
+            }
+        });
 
+    }
+
+    public void showToken(String tokenid) throws Exception {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        HashMap<String, Object> request = new HashMap<String, Object>();
+        request.put("tokenid", tokenid);
+        String resp = OkHttp3Util.postString(CONTEXT_ROOT + "getTokenById",
+                Json.jsonmapper().writeValueAsString(request));
+        final Map<String, Object> data = Json.jsonmapper().readValue(resp, Map.class);
+        if (data.containsKey("token")) {
+            Map<String, Object> map = (Map<String, Object>) data.get("token");
+            if (map != null && !map.isEmpty()) {
+                stockName1.setText(Main.getString(map.get("tokenname")));
+                stockName1.setEditable(false);
+            }
+        }
     }
 
     public void saveStock(ActionEvent event) {

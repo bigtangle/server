@@ -21,7 +21,7 @@ public class MultiSignAddressService {
         GetMultiSignAddressResponse response = GetMultiSignAddressResponse.create(list);
         return response;
     }
-    
+
     @Autowired
     protected FullPrunedBlockStore store;
 

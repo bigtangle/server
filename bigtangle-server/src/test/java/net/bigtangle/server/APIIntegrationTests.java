@@ -99,6 +99,14 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             logger.info("c->eckey pubKeyHash : " + Utils.HEX.encode(toKey.getPubKeyHash()));
         }
     }
+    
+    @Test
+    public void testGetTokenById() throws Exception {
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("tokenid", "b5c5ef754de00444775ef7247d51f48d6e13cbdf");
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        logger.info("getTokenById resp : " + resp);
+    }
 
     // @Before
     public Block getRollingBlock(ECKey outKey) throws Exception {

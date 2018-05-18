@@ -68,11 +68,12 @@ public class DispatcherController {
 
     @Autowired
     private KafkaConfiguration kafkaConfiguration;
-    
-    @Autowired MultiSignAddressService multiSignAddressService;
+
+    @Autowired
+    MultiSignAddressService multiSignAddressService;
 
     @SuppressWarnings("unchecked")
-	@RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
+    @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
     public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] bodyByte,
             HttpServletResponse httpServletResponse) throws Exception {
         try {
@@ -137,6 +138,13 @@ public class DispatcherController {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = tokensService.getTokensList((String) request.get("name"));
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+            case getTokenById: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                AbstractResponse response = tokensService.getTokenById((String) request.get("tokenid"));
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
@@ -236,7 +244,7 @@ public class DispatcherController {
                 }
             }
                 break;
-                
+
             case getMultisignaddress: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -245,7 +253,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-            
+
             case addMultisignaddress: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -253,7 +261,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
             }
                 break;
-            
+
             case delMultisignaddress: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -261,7 +269,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
             }
                 break;
-                
+
             case multiSign: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -296,10 +304,10 @@ public class DispatcherController {
     public void brodcastBlock(byte[] data) {
         try {
             if ("".equalsIgnoreCase(kafkaConfiguration.getBootstrapServers()))
-                return  ;
+                return;
             KafkaMessageProducer kafkaMessageProducer = new KafkaMessageProducer(kafkaConfiguration);
             kafkaMessageProducer.sendMessage(data);
-        } catch (InterruptedException | ExecutionException e) { 
+        } catch (InterruptedException | ExecutionException e) {
             Log.warn("", e);
         }
     }

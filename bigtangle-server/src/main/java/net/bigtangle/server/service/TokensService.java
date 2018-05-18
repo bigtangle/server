@@ -22,6 +22,11 @@ import net.bigtangle.utils.MonetaryFormat;
 
 @Service
 public class TokensService {
+    public AbstractResponse getTokenById(String tokenid) throws BlockStoreException {
+        Tokens tokens = this.store.getTokensInfo(tokenid);
+        AbstractResponse response = GetTokensResponse.create(tokens);
+        return response;
+    }
 
     public AbstractResponse getTokensList() throws BlockStoreException {
         List<Tokens> list = new ArrayList<Tokens>();
