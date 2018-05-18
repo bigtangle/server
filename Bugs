@@ -63,11 +63,16 @@ display  total only in balance and UTXO as dialog for details
             "    PRIMARY KEY (tokenid, tokenindex) \n)";
 
 
-            
+  
+  
+  datasignature
+           
  private static final String CREATE_MULTISIGNBY_TABLE = "CREATE TABLE multisignby (\n" +
             "    tokenid varchar(255) NOT NULL  ,\n" +
             "    tokenindex bigint NOT NULL   ,\n" +
        		"    address varchar(35),\n" +
+       		"    publickey  varchar(35),\n" +
+            "    signature  varchar(35),\n" +
             "    PRIMARY KEY (tokenid,tokenindex, address) \n)";  
 
 Check block validation:
@@ -97,7 +102,13 @@ add this to the  SendRequest->setMemo
 
 On the server change the Transaction to add serialized
 
-change uxto description to mem write to UTXO -> 
+change uxto description to memo write to UTXO -> 
+
+add memo and fromadresse in UTXO
+
+problem with conflict of token creation
+1) token creation of same token can not have same previous block of same token
+2) the selection follows the MCMC
 
 
 

@@ -131,7 +131,7 @@ public class TransactionService {
         TokenInfo tokenInfo = new TokenInfo();
         tokenInfo.setTokens(tokens);
         tokenInfo.getMultiSignAddresses().add(multiSignAddress);
-        tokenInfo.getMultiSignBies().add(multiSignBy);
+       // tokenInfo.getMultiSignBies().add(multiSignBy);
         tokenInfo.getTokenSerials().add(tokenSerial);
         
         if (tokens.getSignnumber() == 1L) {

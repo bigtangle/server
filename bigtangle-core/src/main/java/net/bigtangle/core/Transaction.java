@@ -244,6 +244,12 @@ public class Transaction extends ChildMessage {
     @Nullable
     private String memo;
 
+    @Nullable
+    private byte[] data;
+    
+    @Nullable
+    private byte[] datasignatire;
+    
     //This is the generated serialized data, for token creation and other file data, must be on the tangle to 
     //It must be treated as transaction output save to UTXO in milestone 
     @Nullable

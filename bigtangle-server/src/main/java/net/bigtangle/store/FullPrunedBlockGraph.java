@@ -255,14 +255,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 blockStore.updateTokenSerial(tokenSerial0);
             }
         }
-        for (MultiSignBy multiSignBy : tokenInfo.getMultiSignBies()) {
-            MultiSignBy multiSignBy0 = this.blockStore.getMultiSignByInfo(multiSignBy.getTokenid(),
-                    multiSignBy.getTokenindex(), multiSignBy.getAddress());
-            if (multiSignBy0 == null) {
-                multiSignBy0 = new MultiSignBy().copy(multiSignBy);
-                blockStore.insertMultisignby(multiSignBy);
-            }
-        }
+  
     }
 
     public boolean checkOutput(Map<String, Coin> valueOut) {

@@ -4,17 +4,23 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
+import static net.bigtangle.core.Utils.HEX;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.hamcrest.core.IsNot;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -26,24 +32,32 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.collect.ImmutableList;
 
+import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
+import net.bigtangle.core.DumpedPrivateKey;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderMatch;
 import net.bigtangle.core.PrunedException;
+import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.Transaction.SigHash;
+import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
+import net.bigtangle.script.ScriptBuilder;
+import net.bigtangle.script.ScriptChunk;
 import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
@@ -74,8 +88,8 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     @Autowired
     private MilestoneService milestoneService;
 
-//    @Autowired
-//    private BlockService blockService;
+    // @Autowired
+    // private BlockService blockService;
 
     // @Test
     public void createECKey() {
@@ -99,12 +113,13 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             logger.info("c->eckey pubKeyHash : " + Utils.HEX.encode(toKey.getPubKeyHash()));
         }
     }
-    
+
     @Test
     public void testGetTokenById() throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", "b5c5ef754de00444775ef7247d51f48d6e13cbdf");
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
         logger.info("getTokenById resp : " + resp);
     }
 
@@ -198,9 +213,41 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         logger.info("testGetBalances resp : " + data);
     }
 
+    public void testCreateMultiSig() throws JsonProcessingException, Exception {
+        // Setup transaction and signatures
+
+        List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
+        ECKey key1 = keys.get(0);
+        ECKey key2 = keys.get(1);
+        ECKey key3 = keys.get(2);
+
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
+        
+        //get hash of transaction without signature of 
+        Sha256Hash sighash = rollingBlock.getTransactions().get(0).getHash();
+        
+        ECKey.ECDSASignature party1Signature = key1.sign(sighash);
+        ECKey.ECDSASignature party2Signature = key2.sign(sighash);
+        
+        // rollingBlock.getTransactions(). add signature data 
+        
+        TransactionSignature party1TransactionSignature = new TransactionSignature(party1Signature, SigHash.ALL, false);
+        TransactionSignature party2TransactionSignature = new TransactionSignature(party2Signature, SigHash.ALL, false);
+
+        //check 
+    }
+
     @Test
     public void testSpringBootCreateGenesisBlock() throws Exception {
-        ECKey outKey = new ECKey();
+        List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
+        testSpringBootCreateGenesisBlock(keys.get(0));
+        testSpringBootCreateGenesisBlock(keys.get(1));
+    }
+
+    public void testSpringBootCreateGenesisBlock(ECKey outKey) throws Exception {
         byte[] pubKey = outKey.getPubKey();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
@@ -210,38 +257,44 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         requestParam.put("blocktype", true);
         requestParam.put("tokenHex", Utils.HEX.encode(outKey.getPubKeyHash()));
         requestParam.put("signnumber", 3);
-        OkHttp3Util.post(contextRoot + ReqCmd.createGenesisBlock.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        OkHttp3Util.post(contextRoot + ReqCmd.createGenesisBlock.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
 
         requestParam.clear();
         requestParam.put("tokenid", Utils.HEX.encode(outKey.getPubKeyHash()));
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultisignaddress.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultisignaddress.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
         logger.info("getMultisignaddress resp : " + resp);
-        
+
         ECKey ecKey = new ECKey();
         requestParam.clear();
         requestParam.put("tokenid", Utils.HEX.encode(outKey.getPubKeyHash()));
         requestParam.put("address", ecKey.toAddress(this.networkParameters).toString());
-        resp = OkHttp3Util.postString(contextRoot + ReqCmd.addMultisignaddress.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        resp = OkHttp3Util.postString(contextRoot + ReqCmd.addMultisignaddress.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
         logger.info("addMultisignaddress resp : " + resp);
-        
+
         requestParam.clear();
         requestParam.put("tokenid", Utils.HEX.encode(outKey.getPubKeyHash()));
-        resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultisignaddress.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultisignaddress.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
         logger.info("getMultisignaddress resp : " + resp);
-        
+
         requestParam.clear();
         requestParam.put("tokenid", Utils.HEX.encode(outKey.getPubKeyHash()));
         requestParam.put("address", ecKey.toAddress(this.networkParameters).toString());
         requestParam.put("tokenindex", 0);
-        resp = OkHttp3Util.postString(contextRoot + ReqCmd.multiSign.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        resp = OkHttp3Util.postString(contextRoot + ReqCmd.multiSign.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
         logger.info("addMultisignaddress resp : " + resp);
-        
+
         requestParam.clear();
         requestParam.put("tokenid", Utils.HEX.encode(outKey.getPubKeyHash()));
-        resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultisignaddress.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultisignaddress.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
         logger.info("getMultisignaddress resp : " + resp);
     }
-    
+
     @Test
     public void testECKey() {
         ECKey outKey = new ECKey();

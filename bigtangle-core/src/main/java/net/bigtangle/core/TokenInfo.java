@@ -12,8 +12,7 @@ public class TokenInfo implements java.io.Serializable {
     private List<TokenSerial> tokenSerials;
     
     private List<MultiSignAddress> multiSignAddresses;
-    
-    private List<MultiSignBy> multiSignBies;
+   
 
     public Tokens getTokens() {
         return tokens;
@@ -39,17 +38,10 @@ public class TokenInfo implements java.io.Serializable {
         this.multiSignAddresses = multiSignAddresses;
     }
 
-    public List<MultiSignBy> getMultiSignBies() {
-        return multiSignBies;
-    }
-
-    public void setMultiSignBies(List<MultiSignBy> multiSignBies) {
-        this.multiSignBies = multiSignBies;
-    }
-
+    
     public TokenInfo() {
         this.tokenSerials = new ArrayList<>();
         this.multiSignAddresses = new ArrayList<>();
-        this.multiSignBies = new ArrayList<>();
+ 
     }
 }
