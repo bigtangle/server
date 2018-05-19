@@ -10,17 +10,27 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Sha256Hash;
 
 public class EquihashSolverTest {
-	
-	private Sha256Hash hash = Sha256Hash.of("asd1".getBytes());
+	private Sha256Hash hash1 = Sha256Hash.of("aaasdasda1".getBytes());
+	private Sha256Hash hash2 = Sha256Hash.of("asd1".getBytes());
 	
 	@Test 
 	public void RunProofSolver() {
-		EquihashSolver.calculateProof(hash);
+		EquihashSolver.calculateProof(hash2);
 	}	
 	
 	@Test
 	public void RunProofSolverAndTestResultValidity() {
-		EquihashProof proof = EquihashSolver.calculateProof(hash);
-		assertEquals(true, EquihashSolver.testProof(hash, proof));
+		EquihashProof proof = EquihashSolver.calculateProof(hash2);
+		assertEquals(true, EquihashSolver.testProof(hash2, proof));
+	}
+	
+	@Test
+	public void InvalidWithOtherSeed() {
+		EquihashProof proof1 = EquihashSolver.calculateProof(hash1);
+		EquihashProof proof2 = EquihashSolver.calculateProof(hash2);
+		assertEquals(false, EquihashSolver.testProof(hash2, proof1));
+		assertEquals(false, EquihashSolver.testProof(hash1, proof2));
+		assertEquals(true, EquihashSolver.testProof(hash2, proof2));
+		assertEquals(true, EquihashSolver.testProof(hash1, proof1));
 	}
 }

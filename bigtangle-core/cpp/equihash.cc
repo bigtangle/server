@@ -10,7 +10,7 @@ std::vector<uint32_t> deserializeIntVector(JNIEnv * env, jintArray intArray, int
   std::vector<uint32_t> v;
   jint* elements = env->GetIntArrayElements(intArray, NULL);
 
-  for(int i = 0; i < SEED_LENGTH;i++) {
+  for(int i = 0; i < size;i++) {
     uint32_t currentInt = (uint32_t)elements[i];
     v.push_back(currentInt);
   }
@@ -34,8 +34,9 @@ JNIEXPORT jobject JNICALL Java_net_bigtangle_equihash_EquihashSolver_findProof
       }
 
       jint inputContent[p.inputs.size()];
-
+      std::cout << "Found " << p.inputs.size() << " inputs: ";
       for(int i = 0; i < p.inputs.size(); i++) {
+        std::cout << p.inputs[i] << " ";
         inputContent[i] = (jint)p.inputs[i];
       }
 
@@ -58,7 +59,13 @@ JNIEXPORT jobject JNICALL Java_net_bigtangle_equihash_EquihashSolver_findProof
  */
 JNIEXPORT jboolean JNICALL Java_net_bigtangle_equihash_EquihashSolver_validate
   (JNIEnv *env, jclass clazz, jint n, jint k, jintArray seed, jint nonce, jintArray inputs){
-    std::vector<uint32_t> inputVector = deserializeIntVector(env, inputs, SEED_LENGTH);
+    std::vector<uint32_t> inputVector = deserializeIntVector(env, inputs, SEED_LENGTH * 4);
+
+    std::cout << "nonce for test: " << nonce << "\nInputs for test: ";
+    for(int i = 0; i < inputVector.size(); i++) {
+      std::cout << inputVector[i] << " ";
+    }
+
     Proof p = Proof((uint32_t)n, (uint32_t)k, get_seed(env, seed),(uint32_t)nonce, inputVector);
     return p.Test();
   }
