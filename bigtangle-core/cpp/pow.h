@@ -12,7 +12,7 @@ CC0 license
 #include <jni.h>
 
 
-const int SEED_LENGTH=4; //Length of seed in dwords ;
+const int SEED_LENGTH=8; //Length of seed in dwords ;
 const int NONCE_LENGTH=24; //Length of nonce in bytes;
 const int MAX_NONCE = 0xFFFFF;
 const int MAX_N = 32; //Max length of n in bytes, should not exceed 32

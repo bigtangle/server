@@ -215,7 +215,7 @@ bool Proof::Test()
         b &= (blocks[j] == 0);
     }
     if (b && inputs.size()!=0)    {
-        printf("Solution found:\n");
+        printf("Solution valid:\n");
         for (unsigned i = 0; i < inputs.size(); ++i) {
             printf(" %x ", inputs[i]);
         }

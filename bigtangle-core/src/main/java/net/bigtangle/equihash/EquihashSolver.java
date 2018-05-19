@@ -9,12 +9,19 @@ public class EquihashSolver {
 	public final static int K = 5;
 	
 	public static EquihashProof calculateProof(Sha256Hash seed) {
-		
-		EquihashProof proof = findProof(N, K, convertSeed(seed));	
-		
-		System.out.print("nonce from java " + proof.getNonce());
-		
-		return null;
+		int[] seedInts = convertSeed(seed);
+		EquihashProof proof = findProof(N, K, seedInts);	
+		/*
+		System.out.println("");
+		System.out.print("inputs: ");
+		for(int input : proof.getInputs())
+			System.out.print(Integer.toHexString(input) + " ");*/
+		return proof;
+	}
+	
+	public static boolean testProof(Sha256Hash seed, EquihashProof proof) {
+		int[] seedInts = convertSeed(seed);
+		return validate(N, K, seedInts, proof.getNonce(), proof.getInputs());
 	}
 	
 	private static int[] convertSeed(Sha256Hash seed) {
@@ -22,11 +29,13 @@ public class EquihashSolver {
 		ByteBuffer buffer = ByteBuffer.wrap(bytes);
 		int[] result = new int[8];
 		
+		/*
+		System.out.print("java seed: ");
 		for(int i = 0; i < 8; i++) {
 			result[i] = buffer.getInt();
-			System.out.println(result[i]);
+			System.out.print(result[i] + " ");
 		}
-		
+		System.out.println("");*/
 		return result;
 	}
 	
@@ -35,11 +44,6 @@ public class EquihashSolver {
 	
 	static {
 		Runtime.getRuntime().loadLibrary("equihash");
-		System.out.println("loaded equihash library");
-	}
-	
-	class SolverResult {
-		public int[] inputs;
-		public int nonce;
+		//System.out.println("loaded equihash library");
 	}
 }
