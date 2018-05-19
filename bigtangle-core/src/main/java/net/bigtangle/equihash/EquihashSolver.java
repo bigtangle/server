@@ -1,10 +1,10 @@
 package net.bigtangle.equihash;
 
 public class EquihashSolver {
-	public static EquihashProof calculateProof() {
-		EquihashProof proof = runProofSolver(100, 5, 33);	
+	public static EquihashProof calculateProof(int n, int k, int seed) {
+		EquihashProof proof = runProofSolver(n, k, seed);	
 		
-		System.out.print(proof.getNonce());
+		System.out.print("nonce from java " + proof.getNonce());
 		
 		return null;
 	}
@@ -13,6 +13,7 @@ public class EquihashSolver {
 	
 	static {
 		Runtime.getRuntime().loadLibrary("equihash");
+		System.out.println("loaded equihash library");
 	}
 	
 	class SolverResult {

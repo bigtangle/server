@@ -10,7 +10,7 @@ extern "C" {
 /*
  * Class:     net_bigtangle_equihash_EquihashSolver
  * Method:    runProofSolver
- * Signature: (III)Lnet/bigtangle/equihash/EquihashSolver/SolverResult;
+ * Signature: (III)Lnet/bigtangle/equihash/EquihashProof;
  */
 JNIEXPORT jobject JNICALL Java_net_bigtangle_equihash_EquihashSolver_runProofSolver
   (JNIEnv *, jclass, jint, jint, jint);

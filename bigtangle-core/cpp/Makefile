@@ -7,4 +7,4 @@ JAVAINC = -I"$(JHOME)/include" -I"$(JHOME)/include/linux"
 
 all: 
 	#$(CC) $(CFLAGS) "pow-test.cc" $(EQUI)  -o equihash 
-	$(CC) $(CFLAGS) $(JAVAINC) -shared -fPIC  -std=c++11 $(EQUI) "equihash.cc" -o libequihash.so
+	$(CC) $(CFLAGS) $(JAVAINC) $(EQUI) -g -shared -fPIC  "equihash.cc" -o libequihash.so
