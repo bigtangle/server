@@ -7,13 +7,25 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#undef net_bigtangle_equihash_EquihashSolver_N
+#define net_bigtangle_equihash_EquihashSolver_N 100L
+#undef net_bigtangle_equihash_EquihashSolver_K
+#define net_bigtangle_equihash_EquihashSolver_K 5L
 /*
  * Class:     net_bigtangle_equihash_EquihashSolver
- * Method:    runProofSolver
- * Signature: (III)Lnet/bigtangle/equihash/EquihashProof;
+ * Method:    findProof
+ * Signature: (II[B)Lnet/bigtangle/equihash/EquihashProof;
  */
-JNIEXPORT jobject JNICALL Java_net_bigtangle_equihash_EquihashSolver_runProofSolver
-  (JNIEnv *, jclass, jint, jint, jint);
+JNIEXPORT jobject JNICALL Java_net_bigtangle_equihash_EquihashSolver_findProof
+  (JNIEnv *, jclass, jint, jint, jintArray);
+
+/*
+ * Class:     net_bigtangle_equihash_EquihashSolver
+ * Method:    validate
+ * Signature: (II[BI[I)Z
+ */
+JNIEXPORT jboolean JNICALL Java_net_bigtangle_equihash_EquihashSolver_validate
+  (JNIEnv *, jclass, jint, jint, jintArray, jint, jintArray);
 
 #ifdef __cplusplus
 }
