@@ -9,6 +9,7 @@ CC0 license
 
 #include <vector>
 #include <cstdio>
+#include <jni.h>
 
 
 const int SEED_LENGTH=4; //Length of seed in dwords ;
@@ -29,6 +30,11 @@ namespace _POW{
 		Seed(){
 			v.resize(SEED_LENGTH,0);
 		}
+
+        Seed(std::vector<uint32_t> seed) {
+            v = seed;
+        }
+
 		explicit Seed(uint32_t x){
             v.resize(SEED_LENGTH, x);
 		}

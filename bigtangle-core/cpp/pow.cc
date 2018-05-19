@@ -5,7 +5,7 @@ CC0 license
 #include "pow.h"
 #include "blake/blake2.h"
 #include <algorithm>
-
+#include <inttypes.h>
 
 static uint64_t rdtsc(void) {
 #ifdef _MSC_VER
@@ -136,8 +136,15 @@ void Equihash::ResolveCollisions(bool store) {
 }
 
 Proof Equihash::FindProof(){
-    FILE* fp = fopen("proof.log", "w+");
-    fclose(fp);
+    //FILE* fp = fopen("proof.log", "w+");
+    //fclose(fp);
+    /*
+    printf("SEED: ");
+    for (unsigned i = 0; i < SEED_LENGTH; ++i) {
+        printf(" \t%" PRIu32 " ", seed[i]);
+    }
+    printf("\n"); */
+
     this->nonce = 1;
     while (nonce < MAX_NONCE) {
         nonce++;
