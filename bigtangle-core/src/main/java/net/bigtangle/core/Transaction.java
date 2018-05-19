@@ -28,7 +28,6 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Ints;
@@ -76,7 +75,7 @@ import net.bigtangle.wallet.WalletTransaction.Pool;
  */
 public class Transaction extends ChildMessage {
     
-    private static final long serialVersionUID = -1834484825483010857L;
+    // private static final long serialVersionUID = -1834484825483010857L;
 
     @SuppressWarnings("deprecation")
     public Transaction() {
@@ -250,11 +249,6 @@ public class Transaction extends ChildMessage {
     @Nullable
     private byte[] datasignatire;
     
-    //This is the generated serialized data, for token creation and other file data, must be on the tangle to 
-    //It must be treated as transaction output save to UTXO in milestone 
-    @Nullable
-    private TokenInfo tokenInfo;
-    
     @Nullable
     private long dataType;
 
@@ -332,27 +326,18 @@ public class Transaction extends ChildMessage {
     public Sha256Hash getHash() {
         if (hash == null) {
             byte[] buf = unsafeBitcoinSerialize();
-            hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(buf, 0, buf.length ));
+            hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(buf, 0, buf.length - calculateDataSignatireLen()));
         }
         return hash;
     }
 
-    private int calculateOtherDataLen() {
-        int len = 12;
-        if (this.memo != null && !this.memo.equals("")) {
-            len += this.memo.getBytes().length;
-        }
-        if (this.tokenInfo != null) {
-            try {
-                String jsonStr;
-                jsonStr = Json.jsonmapper().writeValueAsString(this.tokenInfo);
-                len += jsonStr.getBytes().length;
-            } catch (JsonProcessingException e) {
-            }
+    public int calculateDataSignatireLen() {
+        int len = 4;
+        if (this.datasignatire != null) {
+            len += this.datasignatire.length;
         }
         return len;
     }
-
 
     /**
      * Used by BitcoinSerializer. The serializer has to calculate a hash for
@@ -702,16 +687,16 @@ public class Transaction extends ChildMessage {
         
         len = readUint32();
         optimalEncodingMessageSize += 4;
-        
         if (len > 0) {
-            try {
-                byte[] data = readBytes((int) len);
-                String jsonStr = new String(data);
-                this.tokenInfo = Json.jsonmapper().readValue(jsonStr, TokenInfo.class);
-                optimalEncodingMessageSize += len;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            this.data = readBytes((int) len);
+            optimalEncodingMessageSize += len;
+        }
+        
+        len = readUint32();
+        optimalEncodingMessageSize += 4;
+        if (len > 0) {
+            this.datasignatire = readBytes((int) len);
+            optimalEncodingMessageSize += len;
         }
         
         length = cursor - offset;
@@ -1321,14 +1306,21 @@ public class Transaction extends ChildMessage {
             stream.write(data);
         }
         uint32ToByteStreamLE(this.dataType, stream);
-        if (this.tokenInfo == null) {
+        
+        if (this.data == null) {
             uint32ToByteStreamLE(0L, stream);
         }
         else {
-            String jsonStr = Json.jsonmapper().writeValueAsString(this.tokenInfo);
-            byte[] data = jsonStr.getBytes();
-            uint32ToByteStreamLE(data.length, stream);
-            stream.write(data);
+            uint32ToByteStreamLE(this.data.length, stream);
+            stream.write(this.data);
+        }
+        
+        if (this.datasignatire == null) {
+            uint32ToByteStreamLE(0L, stream);
+        }
+        else {
+            uint32ToByteStreamLE(this.datasignatire.length, stream);
+            stream.write(this.datasignatire);
         }
     }
 
@@ -1659,13 +1651,25 @@ public class Transaction extends ChildMessage {
         this.memo = memo;
     }
 
-    public TokenInfo getTokenInfo() {
-        return tokenInfo;
+    public byte[] getData() {
+        return data;
     }
 
-    public void setTokenInfo(TokenInfo tokenInfo) {
-        this.tokenInfo = tokenInfo;
+
+    public void setData(byte[] data) {
+        this.data = data;
     }
+
+
+    public byte[] getDatasignatire() {
+        return datasignatire;
+    }
+
+
+    public void setDatasignatire(byte[] datasignatire) {
+        this.datasignatire = datasignatire;
+    }
+
 
     public long getDataType() {
         return dataType;
