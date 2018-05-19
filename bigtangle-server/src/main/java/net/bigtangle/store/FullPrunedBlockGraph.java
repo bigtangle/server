@@ -537,8 +537,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
                     txOutsCreated.add(newOut);
                 }
-                if (tx.getTokenInfo() != null) {
-                    this.synchronizationToken(tx.getTokenInfo());
+                if (tx.getData() != null) {
+                    byte[] buf = tx.getData();
+                    TokenInfo tokenInfo = new TokenInfo().parse(buf);
+                    this.synchronizationToken(tokenInfo);
                 }
                 if (!checkOutput(valueOut))
                     throw new VerificationException("Transaction output value out of range");

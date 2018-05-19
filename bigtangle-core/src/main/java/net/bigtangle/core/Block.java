@@ -1047,7 +1047,8 @@ public class Block extends Message {
 
         Transaction coinbase = new Transaction(params);
         if (tokenInfo != null) {
-            coinbase.setTokenInfo(tokenInfo);
+            byte[] buf = tokenInfo.toByteArray();
+            coinbase.setData(buf);
         }
 
         // coinbase.tokenid = value.tokenid;
