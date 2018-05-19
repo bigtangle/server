@@ -11,6 +11,9 @@ import java.util.Properties
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.ByteArraySerializer
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
+import org.apache.spark.sql.SparkSession
+import net.bigtangle.params.UnitTestParams
+import net.bigtangle.core.Block
 
 object BlockKafka {
 
@@ -27,6 +30,8 @@ object BlockKafka {
 
     Logs.setStreamingLogLevels()
 
+     val   params = UnitTestParams.get();
+    
     val Array(brokers, topics) = args
 
     // Create context with 2 second batch interval
@@ -52,6 +57,13 @@ object BlockKafka {
       LocationStrategies.PreferConsistent,
       ConsumerStrategies.Subscribe[String,  Array[Byte]](topicsSet, kafkaParams))
 
+      messages.map   { msg => 
+                val rollingBlock = params.getDefaultSerializer().makeBlock( msg.value());
+                println(rollingBlock)
+         
+         }
+     //  messages.map((key, value) => Person(attributes(0), attributes(1).trim.toInt))
+       
     // Get the lines, split them into words, count the words and print
 //    val lines = messages.map(_.value)
 //    val words = lines.flatMap(_.split(" "))
@@ -62,5 +74,21 @@ object BlockKafka {
     ssc.start()
     ssc.awaitTermination()
 
+  }
+  
+    private def runJdbcDatasetExample(spark: SparkSession): Unit = {
+    // $example on:jdbc_dataset$
+    // Note: JDBC loading and saving can be achieved via either the load/save or jdbc methods
+    // Loading data from a JDBC source
+    val jdbcDF = spark.read
+      .format("jdbc")
+      .option("url", "jdbc:postgresql:dbserver")
+      .option("dbtable", "schema.tablename")
+      .option("user", "username")
+      .option("password", "password")
+      .load()
+
+ 
+     
   }
 }

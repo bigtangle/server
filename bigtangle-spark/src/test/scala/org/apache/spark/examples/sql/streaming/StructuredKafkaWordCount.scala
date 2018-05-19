@@ -61,7 +61,7 @@ object StructuredKafkaWordCount {
 
     val spark = SparkSession
       .builder
-      .appName("StructuredKafkaWordCount")
+      .appName("StructuredKafkaWordCount").master("local[2]")
       .getOrCreate()
 
     import spark.implicits._
@@ -73,14 +73,14 @@ object StructuredKafkaWordCount {
       .option("kafka.bootstrap.servers", bootstrapServers)
       .option(subscribeType, topics)
       .load()
-      .selectExpr("CAST(value AS STRING)")
-      .as[String]
+      //.selectExpr("CAST(value AS  Array[Byte] )")
+     // .as[ Array[Byte]]
 
     // Generate running word count
-    val wordCounts = lines.flatMap(_.split(" ")).groupBy("value").count()
+      println(lines.count())
 
     // Start running the query that prints the running counts to the console
-    val query = wordCounts.writeStream
+    val query = lines.writeStream
       .outputMode("complete")
       .format("console")
       .option("checkpointLocation", checkpointLocation)

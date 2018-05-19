@@ -5,6 +5,7 @@
 
 package net.bigtangle.params;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 
 import net.bigtangle.core.*;
@@ -13,7 +14,11 @@ import net.bigtangle.core.*;
  * Network parameters used by the bitcoinj unit tests (and potentially your own). This lets you solve a block using
  * {@link net.bigtangle.core.Block#solve()} by setting difficulty to the easiest possible.
  */
-public class UnitTestParams extends AbstractBitcoinNetParams {
+public class UnitTestParams extends AbstractBitcoinNetParams implements Serializable {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     public static final int UNITNET_MAJORITY_WINDOW = 8;
     public static final int TESTNET_MAJORITY_REJECT_BLOCK_OUTDATED = 6;
     public static final int TESTNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 4;
