@@ -29,13 +29,13 @@ public class EquihashSolver {
 		ByteBuffer buffer = ByteBuffer.wrap(bytes);
 		int[] result = new int[8];
 		
-		/*
-		System.out.print("java seed: ");
+		
+		//System.out.print("java seed: ");
 		for(int i = 0; i < 8; i++) {
 			result[i] = buffer.getInt();
-			System.out.print(result[i] + " ");
+			//System.out.print(result[i] + " ");
 		}
-		System.out.println("");*/
+		//System.out.println("");*/
 		return result;
 	}
 	

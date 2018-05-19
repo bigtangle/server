@@ -25,12 +25,10 @@ public class EquihashSolverTest {
 	}
 	
 	@Test
-	public void InvalidWithOtherSeed() {
+	public void CrossTest() {
 		EquihashProof proof1 = EquihashSolver.calculateProof(hash1);
 		EquihashProof proof2 = EquihashSolver.calculateProof(hash2);
 		assertEquals(false, EquihashSolver.testProof(hash2, proof1));
 		assertEquals(false, EquihashSolver.testProof(hash1, proof2));
-		assertEquals(true, EquihashSolver.testProof(hash2, proof2));
-		assertEquals(true, EquihashSolver.testProof(hash1, proof1));
 	}
 }
