@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
 import net.bigtangle.kafka.KafkaConfiguration;
@@ -35,7 +36,7 @@ import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.GetBlockEvaluationsResponse;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.ExchangeService;
-import net.bigtangle.server.service.MultiSignAddressService;
+import net.bigtangle.server.service.MultiSignService;
 import net.bigtangle.server.service.OrderPublishService;
 import net.bigtangle.server.service.TokensService;
 import net.bigtangle.server.service.TransactionService;
@@ -70,7 +71,7 @@ public class DispatcherController {
     private KafkaConfiguration kafkaConfiguration;
 
     @Autowired
-    MultiSignAddressService multiSignAddressService;
+    private MultiSignService multiSignService;
 
     @SuppressWarnings("unchecked")
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
@@ -153,13 +154,6 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-            case getTokenSerials: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                AbstractResponse response = tokensService.getTokenSerialListById((String) request.get("tokenid"));
-                this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
             case outputsWiteToken: {
                 ByteBuffer byteBuffer = ByteBuffer.wrap(bodyByte);
                 byte[] pubKey = new byte[byteBuffer.getInt()];
@@ -236,7 +230,6 @@ public class DispatcherController {
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 if (request.get("hashHex") != null) {
                     Block block = this.blockService.getBlock(Sha256Hash.wrap(request.get("hashHex").toString()));
-
                     this.outPointBinaryArray(httpServletResponse, block.bitcoinSerialize());
                 }
             }
@@ -251,15 +244,20 @@ public class DispatcherController {
             }
                 break;
 
-            case getMultisignaddress: {
+            case getMultiSignWithAddress: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                String tokenid = (String) request.get("tokenid");
-                AbstractResponse response = this.multiSignAddressService.getMultiSignAddressList(tokenid);
+                String address = (String) request.get("address");
+                AbstractResponse response = this.multiSignService.getMultiSignListWithAddress(address);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-
+            case multiSign: {
+                Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
+                this.multiSignService.multiSign(block);
+                this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
+            }
+                break;
  
             }
         } catch (Exception exception) {
@@ -284,6 +282,9 @@ public class DispatcherController {
         printWriter.flush();
         printWriter.close();
     }
+    
+    @Autowired
+    private NetworkParameters networkParameters;
 
     public void brodcastBlock(byte[] data) {
         try {

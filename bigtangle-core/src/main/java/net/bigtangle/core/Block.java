@@ -1044,6 +1044,36 @@ public class Block extends Message {
         this.addCoinbaseTransaction(pubKeyTo, value, null);
     }
 
+    public void addCoinbaseTransactionData(byte[] pubKeyTo, Coin value, byte[] data) {
+        unCacheTransactions();
+        transactions = new ArrayList<Transaction>();
+
+        Transaction coinbase = new Transaction(params);
+        coinbase.setData(data);
+
+        // coinbase.tokenid = value.tokenid;
+        final ScriptBuilder inputBuilder = new ScriptBuilder();
+
+        inputBuilder.data(new byte[] { (byte) txCounter, (byte) (txCounter++ >> 8) });
+
+        // A real coinbase transaction has some stuff in the scriptSig like the
+        // extraNonce and difficulty. The
+        // transactions are distinguished by every TX output going to a
+        // different key.
+        //
+        // Here we will do things a bit differently so a new address isn't
+        // needed every time. We'll put a simple
+        // counter in the scriptSig so every transaction has a different hash.
+        coinbase.addInput(new TransactionInput(params, coinbase, inputBuilder.build().getProgram()));
+        coinbase.addOutput(new TransactionOutput(params, coinbase, value,
+                ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
+
+        transactions.add(coinbase);
+        coinbase.setParent(this);
+        coinbase.length = coinbase.unsafeBitcoinSerialize().length;
+        adjustLength(transactions.size(), coinbase.length);
+    }
+    
     public void addCoinbaseTransaction(byte[] pubKeyTo, Coin value, TokenInfo tokenInfo) {
         unCacheTransactions();
         transactions = new ArrayList<Transaction>();

@@ -2,8 +2,8 @@ package net.bigtangle.core;
 
 public class MultiSign implements java.io.Serializable {
 
-    private static final long serialVersionUID = -8690336614680749494L;
-    
+    private static final long serialVersionUID = 571782646849163955L;
+
     private String id;
 
     private String tokenid;
@@ -13,6 +13,24 @@ public class MultiSign implements java.io.Serializable {
     private byte[] blockhash;
     
     private String address;
+    
+    private int sign;
+    
+    public int getSign() {
+        return sign;
+    }
+
+    public void setSign(int sign) {
+        this.sign = sign;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public String getTokenid() {
         return tokenid;
