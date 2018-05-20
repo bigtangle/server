@@ -4,8 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.core;
 
-import java.lang.reflect.Field;
-
 public class Tokens implements java.io.Serializable {
     
     private static final long serialVersionUID = 6992138619113601243L;
