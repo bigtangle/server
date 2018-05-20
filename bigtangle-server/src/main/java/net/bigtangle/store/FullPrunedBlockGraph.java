@@ -321,7 +321,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 }
             }
 
-            // TODO save token here (confirmed block)
+            // TODO save token here (since block is confirmed here)
+
+            // TODO confirm mining reward here (since block is confirmed here)
 
             // For each output, mark as confirmed now
             for (TransactionOutput out : tx.getOutputs()) {
@@ -369,6 +371,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
 
             // TODO revert token here (unconfirmed block)
+
+            // TODO unconfirm mining reward here (since block is confirmed here)
 
             // Mark unconfirmed all tx outputs in db and disconnect their
             // spending blocks

@@ -357,15 +357,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         milestoneService.update();
     }
 
-    // TODO test blocks without existing UTXO should not be added even if in
-    // milestonetoAdd
-    // TODO (multiconflict test)
-
-    // TODO after dynamic validity test dynamically invalid blocks
-
-    // TODO after pruning test pruned conflicts should be handled correctly in
-    // all
-    // cases
+    // TODO more tests
 
     private Block createAndAddNextBlockCoinbase(Block b1, long bVersion, byte[] pubKey, Sha256Hash b2)
             throws VerificationException, PrunedException {

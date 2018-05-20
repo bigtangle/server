@@ -69,7 +69,7 @@ public class Block extends Message {
      * How many bytes are required to represent a block header WITHOUT the
      * trailing 00 length byte.
      */
-    public static final int HEADER_SIZE = 80 + 32 + 20 ;
+    public static final int HEADER_SIZE = 80 + 32 + 20;
 
     static final long ALLOWED_TIME_DRIFT = 2 * 60 * 60; // Same value as Bitcoin
                                                         // Core.
@@ -644,7 +644,7 @@ public class Block extends Message {
      */
     public BigInteger getDifficultyTargetAsInteger() throws VerificationException {
         BigInteger target = Utils.decodeCompactBits(EASIEST_DIFFICULTY_TARGET);
-        // TODO Utils.encodeCompactBits(target.divide(new BigInteger("2")));
+        // Utils.encodeCompactBits(target.divide(new BigInteger("2")));
         if (target.signum() < 0 || target.compareTo(params.maxTarget) > 0)
             throw new VerificationException("Difficulty target is bad: " + target.toString());
         return target;
@@ -797,22 +797,25 @@ public class Block extends Message {
     public void checkTransactions(final long height) throws VerificationException {
         // The transactions must adhere to their block type rules
         if (blocktype == NetworkParameters.BLOCKTYPE_TRANSFER) {
-            // TODO for int i = 0 and fix generation such that no coinbase is generated
+            // TODO change to for int i = 0 and fix generation such that no
+            // coinbase is generated
             for (int i = 1; i < transactions.size(); i++) {
                 if (transactions.get(i).isCoinBase())
                     throw new VerificationException("TX " + i + " is coinbase when it should not be.");
             }
-            // TODO implement 
-        }
-        else if (blocktype == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
+        } else if (blocktype == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
             for (int i = 0; i < transactions.size(); i++) {
                 if (!transactions.get(i).isCoinBase())
                     throw new VerificationException("TX " + i + " is not coinbase when it should be.");
             }
-            // TODO implement 
-        }
-        else if (blocktype == NetworkParameters.BLOCKTYPE_REWARD) {
-            // TODO implement 
+            /*
+             * TODO implement: there must be only one tx coinbase transaction
+             * token ids must be equal to blocks token id token issuance sum
+             * must not overflow (less than x...) signature for coinbases must
+             * be correct (equal to pubkey hash of tokenid)
+             */
+        } else if (blocktype == NetworkParameters.BLOCKTYPE_REWARD) {
+            // TODO sanity check: validity set to true means reward has been calculated locally
         }
     }
 
