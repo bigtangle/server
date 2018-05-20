@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.Stack;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -54,7 +55,7 @@ public class TipsService {
 		List<Sha256Hash> results = new ArrayList<>();
 
 		for (Sha256Hash entryPoint : entryPoints) {
-			results.add(getMCMCResultBlock(entryPoint, seed));
+			results.add(getMCMCResultBlock(entryPoint, seed).peek());
 		}
 
 		watch.stop();
@@ -76,16 +77,16 @@ public class TipsService {
 		Stopwatch watch = Stopwatch.createStarted();
 		SecureRandom seed = new SecureRandom();
 
-		List<Pair<Sha256Hash, TreeSet<BlockEvaluation>>> blocks = getValidatedBlocks(2 * count, seed);
+		List<Pair<Stack<Sha256Hash>, TreeSet<BlockEvaluation>>> blocks = getValidatedBlocks(2 * count, seed);
 		List<Pair<Sha256Hash, Sha256Hash>> results = new ArrayList<>();
 
 		for (int index = 0; index < count; index++) {
-			Pair<Sha256Hash, TreeSet<BlockEvaluation>> b1 = blocks.get(index);
-			Pair<Sha256Hash, TreeSet<BlockEvaluation>> b2 = blocks.get(count + index);
-			BlockEvaluation e1 = blockService.getBlockEvaluation(b1.getLeft());
-			BlockEvaluation e2 = blockService.getBlockEvaluation(b2.getLeft());
-			Sha256Hash selectedBlock1 = b1.getLeft();
-			Sha256Hash selectedBlock2 = b2.getLeft();
+			Pair<Stack<Sha256Hash>, TreeSet<BlockEvaluation>> b1 = blocks.get(index);
+			Pair<Stack<Sha256Hash>, TreeSet<BlockEvaluation>> b2 = blocks.get(count + index);
+			BlockEvaluation e1 = blockService.getBlockEvaluation(b1.getLeft().peek());
+			BlockEvaluation e2 = blockService.getBlockEvaluation(b2.getLeft().peek());
+			Stack<Sha256Hash> selectedBlock1 = b1.getLeft();
+			Stack<Sha256Hash> selectedBlock2 = b2.getLeft();
 
 			// Get all blocks that are approved together
 			TreeSet<BlockEvaluation> approvedNonMilestoneBlockEvaluations = new TreeSet<>(b1.getRight());
@@ -114,7 +115,7 @@ public class TipsService {
 				selectedBlock2 = walkBackwardsUntilNotContained(b2.getLeft(), seed, losingBlockHashes);
 			}
 
-			results.add(Pair.of(selectedBlock1, selectedBlock2));
+			results.add(Pair.of(selectedBlock1.peek(), selectedBlock2.peek()));
 		}
 
 		watch.stop();
@@ -127,13 +128,13 @@ public class TipsService {
 	// candidate-candidate-conflicts and reverse until there are no such
 	// conflicts
 	// Also returns all approved non-milestone blocks in topological ordering
-	private List<Pair<Sha256Hash, TreeSet<BlockEvaluation>>> getValidatedBlocks(int count, Random seed) throws Exception {
-		List<Pair<Sha256Hash, TreeSet<BlockEvaluation>>> results = new ArrayList<>();
+	private List<Pair<Stack<Sha256Hash>, TreeSet<BlockEvaluation>>> getValidatedBlocks(int count, Random seed) throws Exception {
+		List<Pair<Stack<Sha256Hash>, TreeSet<BlockEvaluation>>> results = new ArrayList<>();
 		List<Sha256Hash> entryPoints = getValidationEntryPoints(count, seed);
 
 		for (Sha256Hash entryPoint : entryPoints) {
-			Sha256Hash selectedBlock = getMCMCResultBlock(entryPoint, seed);
-			BlockEvaluation selectedBlockEvaluation = blockService.getBlockEvaluation(selectedBlock);
+		    Stack<Sha256Hash> selectedBlock = getMCMCResultBlock(entryPoint, seed);
+			BlockEvaluation selectedBlockEvaluation = blockService.getBlockEvaluation(selectedBlock.peek());
 
 			// Get all non-milestone blocks that are to be approved by this
 			// selection
@@ -166,7 +167,7 @@ public class TipsService {
 			if (losingBlocks.contains(selectedBlockEvaluation)) {
 				selectedBlock = walkBackwardsUntilNotContained(selectedBlock, seed,
 						losingBlocks.stream().map(e -> e.getBlockhash()).collect(Collectors.toSet()));
-				selectedBlockEvaluation = blockService.getBlockEvaluation(selectedBlock);
+				selectedBlockEvaluation = blockService.getBlockEvaluation(selectedBlock.peek());
 				approvedNonMilestoneBlockEvaluations.clear();
 				blockService.addApprovedNonMilestoneBlocksTo(approvedNonMilestoneBlockEvaluations, selectedBlockEvaluation);
 			}
@@ -177,7 +178,7 @@ public class TipsService {
 		return results;
 	}
 
-	private Sha256Hash getMCMCResultBlock(Sha256Hash entryPoint, Random seed) throws Exception {
+	private Stack<Sha256Hash> getMCMCResultBlock(Sha256Hash entryPoint, Random seed) throws Exception {
 		return randomWalk(entryPoint, seed);
 	}
 
@@ -217,12 +218,14 @@ public class TipsService {
 		return results;
 	}
 
-	private Sha256Hash randomWalk(Sha256Hash blockHash, Random seed) throws Exception {
+	private Stack<Sha256Hash> randomWalk(Sha256Hash blockHash, Random seed) throws Exception {
 		// Repeatedly perform transitions until the final tip is found
+	    Stack<Sha256Hash> path = new Stack<Sha256Hash>();
 		while (blockHash != null) {
-			List<Sha256Hash> approverHashes = blockService.getSolidApproverBlockHashes(blockHash);
+            path.add(blockHash)
+;			List<Sha256Hash> approverHashes = blockService.getSolidApproverBlockHashes(blockHash);
 			if (approverHashes.size() == 0) {
-				return blockHash;
+				return path;
 			} else if (approverHashes.size() == 1) {
 				blockHash = approverHashes.get(0);
 			} else {
@@ -252,27 +255,36 @@ public class TipsService {
 			}
 		}
 
-		return blockHash;
+		return path;
 	}
 
-	private Sha256Hash walkBackwardsUntilNotContained(Sha256Hash blockHash, Random seed, Set<Sha256Hash> losers) throws Exception {
-	    // TODO supply path taken and reverse on taken path instead 
-		// Repeatedly perform transitions until a block in targets is found
-		while (blockHash != null) {
+	private Stack<Sha256Hash> walkBackwardsUntilNotContained(Stack<Sha256Hash> blockHashes, Random seed, Set<Sha256Hash> losers) throws Exception {
+	    // Pop stack until top hash is not contained anymore
+	    while (blockHashes.size() > 1) {
+	        if (losers.contains(blockHashes.peek()))
+	            blockHashes.pop();
+	        else 
+	            return blockHashes;
+	    }
+	    
+		// If there is only one left in stack, repeatedly perform transitions backwards
+	    Sha256Hash blockHash;
+		while ((blockHash = blockHashes.peek()) != null) {
 			Block block = blockService.getBlock(blockHash);
 			if (!losers.contains(blockHash)) {
-				return blockHash;
+				return blockHashes;
 			} else {
 				// Randomly select one of the two approved blocks to go to
 				double transitionRealization = seed.nextDouble();
+				blockHashes.pop();
 				if (transitionRealization <= 0.5) {
-					blockHash = block.getPrevBlockHash();
+				    blockHashes.push(block.getPrevBlockHash());
 				} else {
-					blockHash = block.getPrevBranchBlockHash();
+                    blockHashes.push(block.getPrevBranchBlockHash());
 				}
 			}
 		}
 
-		return blockHash;
+		throw new IllegalStateException("Failed to find non-losing blocks.");
 	}
 }

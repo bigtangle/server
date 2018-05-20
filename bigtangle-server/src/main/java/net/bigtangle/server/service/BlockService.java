@@ -71,7 +71,7 @@ public class BlockService {
         return store.getBlockEvaluation(hash);
     }
 
-    public List<BlockEvaluation> getBlockEvaluations(List<Sha256Hash> hashes) throws BlockStoreException {
+    public List<BlockEvaluation> getBlockEvaluations(Collection<Sha256Hash> hashes) throws BlockStoreException {
         List<BlockEvaluation> blocks = new ArrayList<BlockEvaluation>();
         for (Sha256Hash hash : hashes) {
             blocks.add(getBlockEvaluation(hash));
