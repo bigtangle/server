@@ -38,6 +38,7 @@ import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Exchange;
+import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
@@ -86,6 +87,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_MULTISIGNADDRESS_TABLE = "DROP TABLE multisignaddress";
     public static String DROP_TOKENSERIAL_TABLE = "DROP TABLE tokenserial";
     public static String DROP_MULTISIGNBY_TABLE = "DROP TABLE multisignby";
+    
+    public static String DROP_MULTISIGN_TABLE = "DROP TABLE multisign";
 
     // Queries SQL.
     protected String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
@@ -464,6 +467,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_MULTISIGNADDRESS_TABLE);
         sqlStatements.add(DROP_TOKENSERIAL_TABLE);
         sqlStatements.add(DROP_MULTISIGNBY_TABLE);
+        sqlStatements.add(DROP_MULTISIGN_TABLE);
         return sqlStatements;
     }
 
@@ -3137,5 +3141,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 }
             }
         }
+    }
+
+    @Override
+    public List<MultiSign> getMultiSignListByAddress(String address) throws BlockStoreException {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

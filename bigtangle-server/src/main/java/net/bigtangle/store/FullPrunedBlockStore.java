@@ -13,6 +13,7 @@ import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Exchange;
+import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.OrderMatch;
@@ -296,6 +297,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void updateTokenSerial(TokenSerial tokenSerial0) throws BlockStoreException;
 
     public MultiSignBy getMultiSignByInfo(String tokenid, long tokenindex, String address) throws BlockStoreException;
+
+    public List<MultiSign> getMultiSignListByAddress(String address) throws BlockStoreException;
 
     // public List<TokenSerial> getTokenSerialListByTokenid(String tokenid);
     //

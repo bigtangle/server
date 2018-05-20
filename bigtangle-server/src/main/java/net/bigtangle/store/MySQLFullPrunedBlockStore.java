@@ -74,6 +74,15 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_MULTISIGNBY_TABLE = "CREATE TABLE multisignby (\n"
             + "    tokenid varchar(255) NOT NULL  ,\n" + "    tokenindex bigint NOT NULL   ,\n"
             + "    address varchar(255),\n" + "    PRIMARY KEY (tokenid,tokenindex, address) \n)";
+    
+    private static final String CREATE_MULTISIGN_TABLE = "CREATE TABLE multisign (\n"
+            + "    id varchar(255) NOT NULL  ,\n" 
+            + "    tokenid varchar(255) NOT NULL  ,\n" 
+            + "    tokenindex bigint NOT NULL   ,\n"
+            + "    address varchar(255),\n"
+            + "    blockhash  varbinary(32) NOT NULL,\n"
+            + "    sign int(11) NOT NULL,\n"
+            + "    PRIMARY KEY (id) \n)";
 
     private static final String CREATE_ORDERPUBLISH_TABLE = "CREATE TABLE orderpublish (\n"
             + "   orderid varchar(255) NOT NULL,\n" + "   address varchar(255),\n" + "   tokenid varchar(255),\n"
@@ -131,6 +140,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_MULTISIGNADDRESS_TABLE);
         sqlStatements.add(CREATE_TOKENSERIAL_TABLE);
         sqlStatements.add(CREATE_MULTISIGNBY_TABLE);
+        
+        sqlStatements.add(CREATE_MULTISIGN_TABLE);
         return sqlStatements;
     }
 
