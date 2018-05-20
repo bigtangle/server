@@ -66,13 +66,10 @@ public class MilestoneService {
         // TODO check for reorg and go back with rating threshold until
         // bifurcation for reevaluation
 
-
-        // TODO add maintained only to all
         try {
             log.info("Milestone Update started");
 //            clearCacheBlockEvaluations();
             Stopwatch watch = Stopwatch.createStarted();
-            // TODO only for maintained
             updateSolidityAndHeight();
             log.info("Solidity and height update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
             
