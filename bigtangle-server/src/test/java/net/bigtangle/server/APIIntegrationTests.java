@@ -4,24 +4,17 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
-import static net.bigtangle.core.Utils.HEX;
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.log4j.rewrite.RewriteAppender;
-import org.hamcrest.core.IsNot;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -33,18 +26,16 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.collect.ImmutableList;
 
-import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
-import net.bigtangle.core.DumpedPrivateKey;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
+import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderMatch;
 import net.bigtangle.core.PrunedException;
@@ -53,15 +44,13 @@ import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.Transaction.SigHash;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.Transaction.SigHash;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
-import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.script.ScriptChunk;
 import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
@@ -266,15 +255,62 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         resp = OkHttp3Util.postString(contextRoot + "getMultiSignWithAddress", Json.jsonmapper().writeValueAsString(requestParam));
         System.out.println(resp);
         
-//        ECKey.ECDSASignature party1Signature = key1.sign(sighash);
-//        ECKey.ECDSASignature party2Signature = key2.sign(sighash);
+        requestParam.clear();
+        requestParam.put("hashHex", Utils.HEX.encode(block.getHash().getBytes()));
+        data = OkHttp3Util.post(contextRoot + "getBlock", Json.jsonmapper().writeValueAsString(requestParam));
         
-        // rollingBlock.getTransactions(). add signature data 
+        block = networkParameters.getDefaultSerializer().makeBlock(data);
+        Transaction transaction = block.getTransactions().get(0);
         
-//        TransactionSignature party1TransactionSignature = new TransactionSignature(party1Signature, SigHash.ALL, false);
-//        TransactionSignature party2TransactionSignature = new TransactionSignature(party2Signature, SigHash.ALL, false);
+        requestParam.clear();
+        data = OkHttp3Util.post(contextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+        Block signBlock = networkParameters.getDefaultSerializer().makeBlock(data);
+        signBlock.addCoinbaseTransactionData(key1.getPubKey(), basecoin, transaction.getData());
 
-        //check 
+        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+        
+        Sha256Hash sighash = transaction.getHash();
+        ECKey.ECDSASignature party1Signature = key1.sign(sighash);
+        ECKey.ECDSASignature party2Signature = key2.sign(sighash);
+        ECKey.ECDSASignature party3Signature = key3.sign(sighash);
+        byte[] buf1 = party1Signature.encodeToDER();
+        byte[] buf2 = party2Signature.encodeToDER();
+        byte[] buf3 = party3Signature.encodeToDER();
+        
+        MultiSignBy multiSignBy0 = new MultiSignBy();
+        multiSignBy0.setTokenid(tokenid);
+        multiSignBy0.setTokenindex(0);
+        multiSignBy0.setAddress(key1.toAddress(networkParameters).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(key1.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+        multiSignBies.add(multiSignBy0);
+        
+        MultiSignBy multiSignBy1 = new MultiSignBy();
+        multiSignBy1.setTokenid(tokenid);
+        multiSignBy1.setTokenindex(0);
+        multiSignBy1.setAddress(key2.toAddress(networkParameters).toBase58());
+        multiSignBy1.setPublickey(Utils.HEX.encode(key2.getPubKey()));
+        multiSignBy1.setSignature(Utils.HEX.encode(buf2));
+        multiSignBies.add(multiSignBy1);
+        
+        MultiSignBy multiSignBy2 = new MultiSignBy();
+        multiSignBy2.setTokenid(tokenid);
+        multiSignBy2.setTokenindex(0);
+        multiSignBy2.setAddress(key3.toAddress(networkParameters).toBase58());
+        multiSignBy2.setPublickey(Utils.HEX.encode(key3.getPubKey()));
+        multiSignBy2.setSignature(Utils.HEX.encode(buf3));
+        multiSignBies.add(multiSignBy2);
+        
+        byte[] datasignatire = Json.jsonmapper().writeValueAsBytes(multiSignBies);
+        signBlock.getTransactions().get(0).setDatasignatire(datasignatire);
+
+        OkHttp3Util.post(contextRoot + "multiSign", signBlock.bitcoinSerialize());
+
+        TransactionSignature party1TransactionSignature = new TransactionSignature(party1Signature, SigHash.ALL, false);
+        TransactionSignature party2TransactionSignature = new TransactionSignature(party2Signature, SigHash.ALL, false);
+        TransactionSignature party3TransactionSignature = new TransactionSignature(party3Signature, SigHash.ALL, false);
+        
+
     }
 
 //    @Test

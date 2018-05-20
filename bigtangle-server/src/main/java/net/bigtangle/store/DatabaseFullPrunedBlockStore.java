@@ -3119,7 +3119,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    @Override
+    /* @Override
     public MultiSignBy getMultiSignByInfo(String tokenid, long tokenindex, String address) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -3148,7 +3148,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 }
             }
         }
-    }
+    }*/
 
     @Override
     public List<MultiSign> getMultiSignListByAddress(String address) throws BlockStoreException {

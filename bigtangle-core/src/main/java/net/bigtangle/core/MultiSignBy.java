@@ -9,16 +9,8 @@ public class MultiSignBy implements java.io.Serializable {
     private long tokenindex;
 
     private String address;
+    
     private String publickey;
-
-    public MultiSignBy(String tokenid, long tokenindex, String address, String publickey, String signature) {
-        super();
-        this.tokenid = tokenid;
-        this.tokenindex = tokenindex;
-        this.address = address;
-        this.publickey = publickey;
-        this.signature = signature;
-    }
 
     private String signature;
 
@@ -46,22 +38,7 @@ public class MultiSignBy implements java.io.Serializable {
         this.address = address;
     }
 
-    public MultiSignBy(String tokenid, long tokenindex, String address) {
-        this.tokenid = tokenid;
-        this.tokenindex = tokenindex;
-        this.address = address;
-    }
-
     public MultiSignBy() {
-    }
-
-    public MultiSignBy copy(MultiSignBy multiSignBy) {
-        this.tokenid = multiSignBy.getTokenid();
-        this.tokenindex = multiSignBy.getTokenindex();
-        this.address = multiSignBy.getAddress();
-        this.publickey = multiSignBy.publickey;
-        this.signature = multiSignBy.signature;
-        return this;
     }
 
     public String getPublickey() {

@@ -5,7 +5,6 @@
 package net.bigtangle.server.service;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -22,7 +21,6 @@ import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.MultiSignAddress;
-import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
@@ -125,7 +123,7 @@ public class TransactionService {
         TokenSerial tokenSerial = new TokenSerial(tokenHex, 0L, amount);
         //store.insertTokenSerial(tokenSerial);
 
-        MultiSignBy multiSignBy = new MultiSignBy(tokenHex, 0L, address);
+        // MultiSignBy multiSignBy = new MultiSignBy(tokenHex, 0L, address);
         //store.insertMultisignby(multiSignBy);
         
         TokenInfo tokenInfo = new TokenInfo();
