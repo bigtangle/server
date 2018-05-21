@@ -868,6 +868,7 @@ public class Block extends Message {
             throw new VerificationException("Block larger than MAX_BLOCK_SIZE");
         checkMerkleRoot();
         checkSigOps();
+        //genesis blocktype? check signature
         for (Transaction transaction : transactions)
             transaction.verify();
     }
@@ -1086,7 +1087,7 @@ public class Block extends Message {
 
         // coinbase.tokenid = value.tokenid;
         final ScriptBuilder inputBuilder = new ScriptBuilder();
-
+      
         inputBuilder.data(new byte[] { (byte) txCounter, (byte) (txCounter++ >> 8) });
 
         // A real coinbase transaction has some stuff in the scriptSig like the
@@ -1100,7 +1101,7 @@ public class Block extends Message {
         coinbase.addInput(new TransactionInput(params, coinbase, inputBuilder.build().getProgram()));
         coinbase.addOutput(new TransactionOutput(params, coinbase, value,
                 ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
-
+    //TODO  Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, walletKeys);
         transactions.add(coinbase);
         coinbase.setParent(this);
         coinbase.length = coinbase.unsafeBitcoinSerialize().length;
