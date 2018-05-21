@@ -68,7 +68,7 @@ public class MultiSignService {
                     String tokenid = (String) multiSignBy.get("tokenid");
                     int tokenindex = (Integer) multiSignBy.get("tokenindex");
                     String address = (String) multiSignBy.get("address");
-                    this.store.updateMultiSign(tokenid, tokenindex, address, block.getHash().getBytes(), 1);
+                    this.store.updateMultiSign(tokenid, tokenindex, address, block.bitcoinSerialize(), 1);
                 }
             }
             catch (Exception e) {
