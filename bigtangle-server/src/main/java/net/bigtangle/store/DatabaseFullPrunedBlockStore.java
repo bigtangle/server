@@ -301,6 +301,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String SELECT_MULTISIGN_ADDRESS_SQL = "SELECT id, tokenid, tokenindex, address, blockhash, sign FROM multisign WHERE address = ?";
     protected String INSERT_MULTISIGN_SQL = "INSERT INTO multisign (tokenid, tokenindex, address, blockhash, sign, id) VALUES (?, ?, ?, ?, ?, ?)";
     protected String UPDATE_MULTISIGN_SQL = "UPDATE multisign SET blockhash = ?, sign = ? WHERE tokenid = ? AND tokenindex = ? AND address = ?";
+    protected String UPDATE_MULTISIGN0_SQL = "UPDATE multisign SET blockhash = ? WHERE tokenid = ? AND tokenindex = ? AND address = ?";
     protected String SELECT_COUNT_MULTISIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = ? AND tokenindex = ? AND address = ?";
 
     
@@ -3227,7 +3228,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setString(1, multiSign.getTokenid());
             preparedStatement.setLong(2, multiSign.getTokenindex());
             preparedStatement.setString(3, multiSign.getAddress());
-            preparedStatement.setBytes(4, new byte[0]);
+            preparedStatement.setBytes(4, multiSign.getBlockhash());
             preparedStatement.setInt(5, 0);
             preparedStatement.setString(6, multiSign.getId());
             preparedStatement.executeUpdate();
@@ -3255,6 +3256,30 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setString(3, tokenid);
             preparedStatement.setLong(4, tokenindex);
             preparedStatement.setString(5, address);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void updateMultiSignBlockHash(String tokenid, long tokenindex, String address, byte[] blockhash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(UPDATE_MULTISIGN0_SQL);
+            preparedStatement.setBytes(1, blockhash);
+            preparedStatement.setString(2, tokenid);
+            preparedStatement.setLong(3, tokenindex);
+            preparedStatement.setString(4, address);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);

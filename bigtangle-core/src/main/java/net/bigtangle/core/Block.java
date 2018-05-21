@@ -18,6 +18,7 @@ import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import javax.annotation.Nullable;
 
@@ -854,6 +855,7 @@ public class Block extends Message {
      * @throws VerificationException
      *             if there was an error verifying the block.
      */
+    @SuppressWarnings("unchecked")
     public void verifyTransactions(final long height, final EnumSet<VerifyFlag> flags) throws VerificationException {
         // Now we need to check that the body of the block actually matches the
         // headers. The network won't generate
@@ -869,6 +871,28 @@ public class Block extends Message {
         checkMerkleRoot();
         checkSigOps();
         //genesis blocktype? check signature
+        if (this.blocktype == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
+            byte[] datasignatire = this.transactions.get(0).getDatasignatire();
+            if (datasignatire != null) {
+                Sha256Hash hash = this.transactions.get(0).getHash();
+                List<Map<String, Object>> multiSignBies;
+                try {
+                    multiSignBies = Json.jsonmapper().readValue(datasignatire, List.class);
+                }
+                catch (Exception e) {
+                    throw new VerificationException("Block transaction json format error");
+                }
+                for (Map<String, Object> multiSignBy : multiSignBies) {
+                    byte[] pubKey = Utils.HEX.decode((String) multiSignBy.get("publickey"));
+                    byte[] data = hash.getBytes();
+                    byte[] signature = Utils.HEX.decode((String) multiSignBy.get("signature"));
+                    boolean success = ECKey.verify(data, signature, pubKey);
+                    if (!success) {
+                        throw new VerificationException("Block transaction sign error");
+                    }
+                }
+            }
+        }
         for (Transaction transaction : transactions)
             transaction.verify();
     }

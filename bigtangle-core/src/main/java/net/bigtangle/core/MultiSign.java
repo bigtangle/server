@@ -14,6 +14,13 @@ public class MultiSign implements java.io.Serializable {
     
     private String address;
     
+    public String getBlockhashHex() {
+        if (this.blockhash == null) {
+            return "";
+        }
+        return Utils.HEX.encode(this.blockhash);
+    }
+    
     private int sign;
     
     public int getSign() {

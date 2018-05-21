@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +26,9 @@ import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
+import net.bigtangle.core.Utils;
 import net.bigtangle.server.response.AbstractResponse;
+import net.bigtangle.server.response.GenesisBlockLRResponse;
 import net.bigtangle.server.response.GetBlockEvaluationsResponse;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -305,5 +308,15 @@ public class BlockService {
 
     public List<BlockEvaluation> getValidationEntryPointCandidates() throws BlockStoreException {
         return store.getBlocksInMilestoneDepthInterval(0, NetworkParameters.ENTRYPOINT_TIPSELECTION_DEPTH_CUTOFF);
+    }
+    
+    @Autowired
+    private TipsService tipService;
+
+    public AbstractResponse getGenesisBlockLR() throws Exception {
+        Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
+        Block r1 = getBlock(tipsToApprove.getLeft());
+        Block r2 = getBlock(tipsToApprove.getRight());
+        return GenesisBlockLRResponse.create(Utils.HEX.encode(r1.bitcoinSerialize()), Utils.HEX.encode(r2.bitcoinSerialize()));
     }
 }

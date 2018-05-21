@@ -8,12 +8,15 @@ import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenSerial;
+import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.Utils;
 import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.MultiSignResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -52,13 +55,19 @@ public class MultiSignService {
                     multiSign.setTokenid(tokenid);
                     multiSign.setTokenindex(tokenindex);
                     multiSign.setAddress(address);
-                    multiSign.setBlockhash(block.getHash().getBytes());
+                    multiSign.setBlockhash(block.bitcoinSerialize());
                     multiSign.setId(UUIDUtil.randomUUID());
                     this.store.saveMultiSign(multiSign);
                 }
+                else {
+//                    String tokenid = (String) multiSignBy.get("tokenid");
+//                    int tokenindex = (Integer) multiSignBy.get("tokenindex");
+//                    String address = (String) multiSignBy.get("address");
+                    this.store.updateMultiSignBlockHash(tokenid, tokenindex, address, block.bitcoinSerialize());
+                }
             }
         }
-        
+        int signCount = 0;
         if (transaction.getDatasignatire() != null) {
             try {
                 String jsonStr = new String(transaction.getDatasignatire());
@@ -69,14 +78,27 @@ public class MultiSignService {
                     int tokenindex = (Integer) multiSignBy.get("tokenindex");
                     String address = (String) multiSignBy.get("address");
                     this.store.updateMultiSign(tokenid, tokenindex, address, block.bitcoinSerialize(), 1);
+
+                    byte[] pubKey = Utils.HEX.decode((String) multiSignBy.get("publickey"));
+                    byte[] data = transaction.getHash().getBytes();
+                    byte[] signature = Utils.HEX.decode((String) multiSignBy.get("signature"));
+                    boolean success = ECKey.verify(data, signature, pubKey);
+                    if (success) {
+                        signCount ++;
+                    }
                 }
             }
             catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        // save block
-        blockService.saveBlock(block);
+        
+        Tokens tokens = tokenInfo.getTokens();
+        // check sign number
+        if (tokens.getSignnumber() == signCount) {
+            // save block
+            blockService.saveBlock(block);
+        }
     }
     
     @Autowired

@@ -258,6 +258,12 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
             }
                 break;
+                
+            case getGenesisBlockLR: {
+                    AbstractResponse response = this.blockService.getGenesisBlockLR();
+                    this.outPrintJSONString(httpServletResponse, response);
+            }
+                 break;
  
             }
         } catch (Exception exception) {

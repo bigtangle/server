@@ -14,5 +14,5 @@ public enum ReqCmd {
 
     saveExchange, getExchange, signTransaction, searchBlock, getBlock, streamBlocks,
 
-    getMultiSignWithAddress, multiSign;
+    getMultiSignWithAddress, multiSign, getGenesisBlockLR;
 }

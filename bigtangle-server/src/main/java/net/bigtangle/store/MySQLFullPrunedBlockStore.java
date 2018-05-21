@@ -80,7 +80,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    tokenid varchar(255) NOT NULL  ,\n" 
             + "    tokenindex bigint NOT NULL   ,\n"
             + "    address varchar(255),\n"
-            + "    blockhash  varbinary(32) NOT NULL,\n"
+            + "    blockhash  mediumblob NOT NULL,\n"
             + "    sign int(11) NOT NULL,\n"
             + "    PRIMARY KEY (id) \n)";
 
