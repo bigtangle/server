@@ -20,6 +20,7 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.MultiSignResponse;
+import net.bigtangle.server.response.TokenSerialIndexResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.UUIDUtil;
 
@@ -32,6 +33,11 @@ public class MultiSignService {
     public AbstractResponse getMultiSignListWithAddress(String address) throws BlockStoreException {
         List<MultiSign> multiSigns = this.store.getMultiSignListByAddress(address);
         return MultiSignResponse.createMultiSignResponse(multiSigns);
+    }
+    
+    public AbstractResponse getNextTokenSerialIndex(String tokenid) throws BlockStoreException {
+        int count = this.store.getCountTokenSerialNumber(tokenid);
+        return TokenSerialIndexResponse.createTokenSerialIndexResponse(count + 1);
     }
     
     public void multiSign(Block block) throws Exception {

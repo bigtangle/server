@@ -10,17 +10,12 @@ import static com.google.common.base.Preconditions.checkState;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockStore;
@@ -35,9 +30,6 @@ import net.bigtangle.core.StoredUndoableBlock;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutputChanges;
 import net.bigtangle.core.VerificationException;
-import net.bigtangle.core.listeners.NewBestBlockListener;
-import net.bigtangle.core.listeners.ReorganizeListener;
-import net.bigtangle.utils.ListenerRegistration;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.utils.VersionTally;
 import net.bigtangle.wallet.Wallet;

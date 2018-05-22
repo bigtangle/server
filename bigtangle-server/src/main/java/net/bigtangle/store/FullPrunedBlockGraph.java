@@ -230,6 +230,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             token0.copy(token);
             this.blockStore.updateTokens(token0);
         }
+        if (tokenInfo.getMultiSignAddresses().size() > 0) {
+            this.blockStore.deleteMultiSignAddressByTokenid(token.getTokenid());
+        }
         for (MultiSignAddress multiSignAddress : tokenInfo.getMultiSignAddresses()) {
             MultiSignAddress multiSignAddress0 = this.blockStore.getMultiSignAddressInfo(multiSignAddress.getTokenid(),
                     multiSignAddress.getAddress());
@@ -243,7 +246,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 tokenSerial.getTokenindex());
         if (tokenSerial0 == null) {
             tokenSerial0 = new TokenSerial().copy(tokenSerial);
-            blockStore.insertTokenSerial(tokenSerial);
+            blockStore.insertTokenSerial(tokenSerial0);
         } else {
             tokenSerial0.copy(tokenSerial);
             blockStore.updateTokenSerial(tokenSerial0);

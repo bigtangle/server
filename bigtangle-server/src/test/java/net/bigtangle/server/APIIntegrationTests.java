@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.bouncycastle.asn1.eac.PublicKeyDataObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -203,9 +204,16 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String data = mvcResult.getResponse().getContentAsString();
         logger.info("testGetBalances resp : " + data);
     }
+    
+    @Test
+    public void testCreateMultiSigList() throws Exception {
+        for (int i = 0; i < 4; i ++) {
+            testCreateMultiSig();
+//            Thread.sleep(2000);
+        }
+    }
 
     @SuppressWarnings("unchecked")
-    @Test
     public void testCreateMultiSig() throws JsonProcessingException, Exception {
         // Setup transaction and signatures
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
@@ -213,7 +221,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String tokenid = Utils.HEX.encode(keys.get(0).getPubKeyHash());
         
         TokenInfo tokenInfo = new TokenInfo();
-        Tokens tokens = new Tokens(tokenid, "Test", "Test", "", 3, true, true, true);
+        Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true, true, true);
         tokenInfo.setTokens(tokens);
         
         ECKey key1 = keys.get(0);
@@ -227,8 +235,15 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
-//        tokenInfo.getTokenSerials().add(new TokenSerial(tokenid, 0, 100000000));
-        tokenInfo.setTokenSerial(new TokenSerial(tokenid, 0, 100000000));
+
+        
+        HashMap<String, String> requestParam00 = new HashMap<String, String>();
+        requestParam00.put("tokenid", tokenid);
+        String resp2 = OkHttp3Util.postString(contextRoot + "getCalTokenIndex", Json.jsonmapper().writeValueAsString(requestParam00));
+        HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp2, HashMap.class);
+        Integer tokenindex_ = (Integer) result2.get("tokenindex");
+        
+        tokenInfo.setTokenSerial(new TokenSerial(tokenid, tokenindex_, 100000000));
         
         HashMap<String, String> requestParam = new HashMap<String, String>();
         String resp000 = OkHttp3Util.postString(contextRoot + "getGenesisBlockLR", Json.jsonmapper().writeValueAsString(requestParam));
@@ -244,6 +259,8 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
         block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
         block.solve();
+        
+        System.out.println("block hash : " + block.getHashAsString());
         
         // save block
         OkHttp3Util.post(contextRoot + "multiSign", block.bitcoinSerialize());
@@ -261,7 +278,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             
             HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
             List<HashMap<String, Object>> multiSigns = (List<HashMap<String, Object>>) result.get("multiSigns");
-            byte[] payloadBytes = Utils.HEX.decode((String) multiSigns.get(0).get("blockhashHex"));
+            byte[] payloadBytes = Utils.HEX.decode((String) multiSigns.get((int) tokenindex_ - 1).get("blockhashHex"));
             Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
             Transaction transaction = block0.getTransactions().get(0);
             
@@ -278,8 +295,8 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             
             MultiSignBy multiSignBy0 = new MultiSignBy();
             multiSignBy0.setTokenid(tokenid);
-            multiSignBy0.setTokenindex(0);
-            multiSignBy0.setAddress(key1.toAddress(networkParameters).toBase58());
+            multiSignBy0.setTokenindex(tokenindex_);
+            multiSignBy0.setAddress(ecKey.toAddress(networkParameters).toBase58());
             multiSignBy0.setPublickey(Utils.HEX.encode(ecKey.getPubKey()));
             multiSignBy0.setSignature(Utils.HEX.encode(buf1));
             multiSignBies.add(multiSignBy0);

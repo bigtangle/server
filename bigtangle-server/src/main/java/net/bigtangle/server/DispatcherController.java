@@ -271,6 +271,15 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
+                
+            case getCalTokenIndex: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String tokenid = (String) request.get("tokenid");
+                AbstractResponse response = this.multiSignService.getNextTokenSerialIndex(tokenid);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
 
             }
         } catch (Exception exception) {

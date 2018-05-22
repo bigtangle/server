@@ -43,9 +43,6 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.TokenSerial;
-import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
@@ -163,6 +160,7 @@ public abstract class AbstractIntegrationTest {
     }
 
     // get balance for the walleKeys
+    @SuppressWarnings("unchecked")
     public List<UTXO> testTransactionAndGetBalances(boolean withZero, List<ECKey> keys) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         for (ECKey toKey : keys) {
@@ -228,12 +226,12 @@ public abstract class AbstractIntegrationTest {
         // Address address = new Address(PARAMS, toKey.getPubKeyHash());
 
         Transaction t = new Transaction(networkParameters);
-        TokenInfo tokenInfo = new TokenInfo();
-        tokenInfo.setTokens(new Tokens(Utils.HEX.encode(myKey.getPubKeyHash()), "JH", "JH", "", 1, true, true, true));
+//        TokenInfo tokenInfo = new TokenInfo();
+//        tokenInfo.setTokens(new Tokens(Utils.HEX.encode(myKey.getPubKeyHash()), "JH", "JH", "", 1, true, true, true));
 //        tokenInfo.getTokenSerials().add(new TokenSerial(Utils.HEX.encode(myKey.getPubKeyHash()), 0, -100));
-        tokenInfo.setTokenSerial(new TokenSerial(Utils.HEX.encode(myKey.getPubKeyHash()), 0, -100));
+//        tokenInfo.setTokenSerial(new TokenSerial(Utils.HEX.encode(myKey.getPubKeyHash()), 0, -100));
 //        t.setTokenInfo(tokenInfo);
-        t.setData(tokenInfo.toByteArray());
+//        t.setData(tokenInfo.toByteArray());
         t.setMemo("test memo");
 
         t.addOutput(new TransactionOutput(networkParameters, t, amount, myKey.toAddress(networkParameters)));
