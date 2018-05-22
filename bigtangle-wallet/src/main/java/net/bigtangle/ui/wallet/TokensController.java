@@ -64,6 +64,14 @@ public class TokensController {
     public TableColumn<Map, Number> tokenindexColumn;
     @FXML
     public TableColumn<Map, String> tokenAmountColumn;
+    @FXML
+    public TableColumn<Map, String> signnumColumn;
+    @FXML
+    public TableColumn<Map, Number> realSignnumColumn;
+    @FXML
+    public TableColumn<Map, String> isSignAllColumn;
+    @FXML
+    public TableColumn<Map, String> isMySignColumn;
 
     @FXML
     public TextField nameTextField;

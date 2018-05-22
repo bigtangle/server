@@ -102,9 +102,13 @@
 							<children>
 								<TableView fx:id="tokenserialTable" layoutY="70.0" maxWidth="980.0" minHeight="400.0" minWidth="980.0" prefHeight="400.0" prefWidth="980.0">
 									<columns>
-										<TableColumn fx:id="tokenidColumn" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" text="%Token" />
+										<TableColumn fx:id="tokenidColumn" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" text="%Token" />
 										<TableColumn fx:id="tokenindexColumn" maxWidth="100.0" minWidth="100.0" prefWidth="100.0" text="%tokenindex" />
-										<TableColumn fx:id="tokenAmountColumn" maxWidth="380.0" minWidth="380.0" prefWidth="380.0" text="%Amount" />
+										<TableColumn fx:id="tokenAmountColumn" maxWidth="100.0" minWidth="100.0" prefWidth="100.0" text="%Amount" />
+                              <TableColumn fx:id="signnumColumn" prefWidth="75.0" text="%signnumber" />
+                              <TableColumn fx:id="realSignnumColumn" prefWidth="115.0" text="%realSignnum" />
+                              <TableColumn fx:id="isSignAllColumn" prefWidth="93.0" text="%isSignAll" />
+                              <TableColumn fx:id="isMySignColumn" prefWidth="83.0" text="%isMySign" />
 									</columns>
 								</TableView>
 								<Button layoutX="905.0" layoutY="486.0" mnemonicParsing="false" onAction="#doMultiSign" text="%multiSign" />
