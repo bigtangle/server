@@ -5,9 +5,6 @@
 
 package net.bigtangle.store;
 
-import static com.google.common.base.Preconditions.checkState;
-
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -29,14 +26,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import ch.qos.logback.core.subst.Token;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.MultiSignAddress;
-import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
@@ -56,7 +51,6 @@ import net.bigtangle.script.Script.VerifyFlag;
 import net.bigtangle.server.service.BlockRequester;
 import net.bigtangle.utils.ContextPropagatingThreadFactory;
 import net.bigtangle.wallet.Wallet;
-import net.bigtangle.wallet.WalletExtension;
 
 /**
  * <p>
@@ -244,18 +238,16 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 blockStore.insertMultiSignAddress(multiSignAddress0);
             }
         }
-        for (TokenSerial tokenSerial : tokenInfo.getTokenSerials()) {
-            TokenSerial tokenSerial0 = this.blockStore.getTokenSerialInfo(tokenSerial.getTokenid(),
-                    tokenSerial.getTokenindex());
-            if (tokenSerial0 == null) {
-                tokenSerial0 = new TokenSerial().copy(tokenSerial);
-                blockStore.insertTokenSerial(tokenSerial);
-            } else {
-                tokenSerial0.copy(tokenSerial);
-                blockStore.updateTokenSerial(tokenSerial0);
-            }
+        TokenSerial tokenSerial = tokenInfo.getTokenSerial();
+        TokenSerial tokenSerial0 = this.blockStore.getTokenSerialInfo(tokenSerial.getTokenid(),
+                tokenSerial.getTokenindex());
+        if (tokenSerial0 == null) {
+            tokenSerial0 = new TokenSerial().copy(tokenSerial);
+            blockStore.insertTokenSerial(tokenSerial);
+        } else {
+            tokenSerial0.copy(tokenSerial);
+            blockStore.updateTokenSerial(tokenSerial0);
         }
-  
     }
 
     public boolean checkOutput(Map<String, Coin> valueOut) {

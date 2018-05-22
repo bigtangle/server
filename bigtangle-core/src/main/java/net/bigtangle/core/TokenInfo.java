@@ -9,7 +9,7 @@ public class TokenInfo implements java.io.Serializable {
 
     private Tokens tokens;
     
-    private List<TokenSerial> tokenSerials;
+    private TokenSerial tokenSerial;
     
     private List<MultiSignAddress> multiSignAddresses;
    
@@ -29,8 +29,7 @@ public class TokenInfo implements java.io.Serializable {
             TokenInfo tokenInfo = Json.jsonmapper().readValue(jsonStr, TokenInfo.class);
             if (tokenInfo == null) return this;
             this.tokens = tokenInfo.getTokens();
-            this.tokenSerials.clear();
-            this.tokenSerials.addAll(tokenInfo.getTokenSerials());
+            this.tokenSerial = tokenInfo.getTokenSerial();
             this.multiSignAddresses.clear();
             this.multiSignAddresses.addAll(tokenInfo.getMultiSignAddresses());
         } catch (Exception e) {
@@ -46,13 +45,13 @@ public class TokenInfo implements java.io.Serializable {
     public void setTokens(Tokens tokens) {
         this.tokens = tokens;
     }
-
-    public List<TokenSerial> getTokenSerials() {
-        return tokenSerials;
+    
+    public TokenSerial getTokenSerial() {
+        return tokenSerial;
     }
 
-    public void setTokenSerials(List<TokenSerial> tokenSerials) {
-        this.tokenSerials = tokenSerials;
+    public void setTokenSerial(TokenSerial tokenSerial) {
+        this.tokenSerial = tokenSerial;
     }
 
     public List<MultiSignAddress> getMultiSignAddresses() {
@@ -65,7 +64,6 @@ public class TokenInfo implements java.io.Serializable {
 
     
     public TokenInfo() {
-        this.tokenSerials = new ArrayList<>();
         this.multiSignAddresses = new ArrayList<>();
     }
 }

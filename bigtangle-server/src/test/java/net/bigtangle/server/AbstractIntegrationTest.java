@@ -53,7 +53,6 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.server.config.DBStoreConfiguration;
-import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -95,8 +94,8 @@ public abstract class AbstractIntegrationTest {
     @Autowired
     protected FullPrunedBlockStore store;
 
-    @Autowired
-    private BlockService blockService;
+//    @Autowired
+//    private BlockService blockService;
 
     @Autowired
     private MilestoneService milestoneService;
@@ -231,7 +230,8 @@ public abstract class AbstractIntegrationTest {
         Transaction t = new Transaction(networkParameters);
         TokenInfo tokenInfo = new TokenInfo();
         tokenInfo.setTokens(new Tokens(Utils.HEX.encode(myKey.getPubKeyHash()), "JH", "JH", "", 1, true, true, true));
-        tokenInfo.getTokenSerials().add(new TokenSerial(Utils.HEX.encode(myKey.getPubKeyHash()), 0, -100));
+//        tokenInfo.getTokenSerials().add(new TokenSerial(Utils.HEX.encode(myKey.getPubKeyHash()), 0, -100));
+        tokenInfo.setTokenSerial(new TokenSerial(Utils.HEX.encode(myKey.getPubKeyHash()), 0, -100));
 //        t.setTokenInfo(tokenInfo);
         t.setData(tokenInfo.toByteArray());
         t.setMemo("test memo");

@@ -27,7 +27,6 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import ch.qos.logback.classic.pattern.Util;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.BlockStoreException;
@@ -45,12 +44,10 @@ import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
-import net.bigtangle.core.Transaction.SigHash;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
-import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.utils.MapToBeanMapperUtil;
@@ -230,7 +227,8 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
-        tokenInfo.getTokenSerials().add(new TokenSerial(tokenid, 0, 100000000));
+//        tokenInfo.getTokenSerials().add(new TokenSerial(tokenid, 0, 100000000));
+        tokenInfo.setTokenSerial(new TokenSerial(tokenid, 0, 100000000));
         
         HashMap<String, String> requestParam = new HashMap<String, String>();
         String resp000 = OkHttp3Util.postString(contextRoot + "getGenesisBlockLR", Json.jsonmapper().writeValueAsString(requestParam));
