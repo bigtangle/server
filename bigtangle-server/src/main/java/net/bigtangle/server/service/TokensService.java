@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Utils;
 import net.bigtangle.server.response.AbstractResponse;
@@ -47,6 +48,11 @@ public class TokensService {
         list.addAll(store.getTokensList(name));
         Map<String, Long> map = store.getTokenAmountMap(name);
         return GetTokensResponse.create(list, map);
+    }
+    public AbstractResponse getTokenSerialListById(String tokenid) throws BlockStoreException {
+        List<TokenSerial> tokenSerials = this.store.getSearchTokenSerialInfo(tokenid);
+        AbstractResponse response = GetTokensResponse.createTokenSerial(tokenSerials);
+        return response;
     }
 
     @Autowired

@@ -16,6 +16,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -75,6 +76,11 @@ public class TokensController {
 
     @FXML
     public TextField nameTextField;
+    
+    @FXML
+    public TextField tokenidTF;
+    @FXML
+    public CheckBox isSignCheckBox;
     public static Map<String, Boolean> multiMap = new HashMap<String, Boolean>();
     private static final Logger log = LoggerFactory.getLogger(TokensController.class);
 
@@ -145,6 +151,7 @@ public class TokensController {
         ObservableList<Map> tokenData = FXCollections.observableArrayList();
 
         Map<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("tokenid", tokenidTF.getText());
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokenSerials",
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);

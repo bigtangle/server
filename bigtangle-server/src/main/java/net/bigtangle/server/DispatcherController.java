@@ -258,7 +258,13 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
             }
                 break;
-                
+            case getTokenSerials: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                AbstractResponse response = tokensService.getTokenSerialListById((String) request.get("tokenid"));
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
             case getGenesisBlockLR: {
                     AbstractResponse response = this.blockService.getGenesisBlockLR();
                     this.outPrintJSONString(httpServletResponse, response);

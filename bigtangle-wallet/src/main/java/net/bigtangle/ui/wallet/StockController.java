@@ -103,10 +103,6 @@ public class StockController extends TokensController {
     public TableColumn<Map, String> addressColumn;
     @FXML
     public TableColumn<Map, String> signColumn;
-    @FXML
-    public TextField addressTF;
-    @FXML
-    public CheckBox isSignCheckBox;
 
     public Main.OverlayUI overlayUI;
 
