@@ -92,6 +92,7 @@
 								<TextField fx:id="signnumberTF" layoutX="279.0" layoutY="433.0" maxWidth="255.0" minWidth="255.0" prefHeight="23.0" prefWidth="255.0" />
 								<Button layoutX="562.0" layoutY="433.0" mnemonicParsing="false" onAction="#addSIgnAddress" text="%addSignAddr" />
                         <ChoiceBox fx:id="signAddrChoiceBox" layoutX="279.0" layoutY="470.0" prefHeight="23.0" prefWidth="255.0" />
+                        <Label layoutX="24.0" layoutY="474.0" prefHeight="15.0" prefWidth="101.0" text="%Address" />
 							</children>
 						</AnchorPane>
 					</content>
