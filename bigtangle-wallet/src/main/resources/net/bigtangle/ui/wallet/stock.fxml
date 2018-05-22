@@ -112,7 +112,7 @@
                               <TableColumn fx:id="isMySignColumn" prefWidth="83.0" text="%isMySign" />
 									</columns>
 								</TableView>
-								<Button layoutX="905.0" layoutY="486.0" mnemonicParsing="false" onAction="#doMultiSign" text="%multiSign" />
+								<Button layoutX="905.0" layoutY="486.0" mnemonicParsing="false" onAction="#multiSign" text="%multiSign" />
                         <TextField fx:id="tokenidTF" layoutX="144.0" layoutY="28.0" prefHeight="23.0" prefWidth="229.0" />
                         <Label layoutX="22.0" layoutY="32.0" prefHeight="15.0" prefWidth="111.0" text="%token_id" />
                         <CheckBox fx:id="isSignCheckBox" layoutX="391.0" layoutY="32.0" mnemonicParsing="false" text="%isSignAll" />
