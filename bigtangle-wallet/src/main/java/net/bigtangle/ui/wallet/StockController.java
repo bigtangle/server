@@ -172,7 +172,7 @@ public class StockController extends TokensController {
                 Optional<String> result = dialog.showAndWait();
                 if (result.isPresent()) {
                     String address = result.get();
-                    if (!signAddrChoiceBox.getItems().contains(address)) {
+                    if (address != null && !address.isEmpty() && !signAddrChoiceBox.getItems().contains(address)) {
                         signAddrChoiceBox.getItems().add(address);
                     }
 
