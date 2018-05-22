@@ -180,6 +180,8 @@ public class TokensController {
         tokenidColumn.setCellValueFactory(new MapValueFactory("tokenid"));
         tokenindexColumn.setCellValueFactory(new MapValueFactory("tokenindex"));
         tokenAmountColumn.setCellValueFactory(new MapValueFactory("amount"));
+        signnumColumn.setCellValueFactory(new MapValueFactory("signnumber"));
+        realSignnumColumn.setCellValueFactory(new MapValueFactory("count"));
         tokenserialTable.setItems(tokenData);
     }
 

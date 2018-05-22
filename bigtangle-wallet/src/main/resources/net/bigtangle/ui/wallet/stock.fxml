@@ -89,7 +89,7 @@
 								<TextField fx:id="urlTF" layoutX="279.0" layoutY="209.0" maxWidth="255.0" minWidth="255.0" prefHeight="23.0" prefWidth="255.0" />
 								<Label layoutX="24.0" layoutY="213.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%url" />
 								<Label layoutX="24.0" layoutY="437.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%signnumber" />
-								<TextField fx:id="signnumberTF" layoutX="279.0" layoutY="433.0" maxWidth="255.0" minWidth="255.0" prefHeight="23.0" prefWidth="255.0" />
+								<TextField fx:id="signnumberTF" layoutX="279.0" layoutY="433.0" maxWidth="255.0" minWidth="255.0" prefHeight="23.0" prefWidth="255.0" text="2" />
 								<Button layoutX="562.0" layoutY="433.0" mnemonicParsing="false" onAction="#addSIgnAddress" text="%addSignAddr" />
                         <ChoiceBox fx:id="signAddrChoiceBox" layoutX="279.0" layoutY="470.0" prefHeight="23.0" prefWidth="255.0" />
                         <Label layoutX="24.0" layoutY="474.0" prefHeight="15.0" prefWidth="101.0" text="%Address" />

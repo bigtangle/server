@@ -320,7 +320,10 @@ public class StockController extends TokensController {
     public void saveMultiToken(ActionEvent event) {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
-
+        if (!signnumberTF.getText().equals(signAddrChoiceBox.getItems().size())) {
+            GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
+            return;
+        }
         try {
             byte[] pubKey = outKey.getPubKey();
             HashMap<String, Object> requestParam = new HashMap<String, Object>();

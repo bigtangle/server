@@ -5,10 +5,12 @@ public class TokenSerial implements java.io.Serializable {
     private static final long serialVersionUID = -1523724625828286333L;
 
     private String tokenid;
-    
+
     private long tokenindex;
-    
+
     private long amount;
+    private long signnumber;
+    private long count;
 
     public String getTokenid() {
         return tokenid;
@@ -34,12 +36,18 @@ public class TokenSerial implements java.io.Serializable {
         this.amount = amount;
     }
 
+    public TokenSerial(String tokenid, long tokenindex, long amount,long signnumber,long count) {
+        this.tokenid = tokenid;
+        this.tokenindex = tokenindex;
+        this.amount = amount;
+        this.signnumber=signnumber;
+        this.count=count;
+    }
     public TokenSerial(String tokenid, long tokenindex, long amount) {
         this.tokenid = tokenid;
         this.tokenindex = tokenindex;
         this.amount = amount;
     }
-
     public TokenSerial() {
     }
 
@@ -48,5 +56,21 @@ public class TokenSerial implements java.io.Serializable {
         this.tokenindex = tokenSerial.getTokenindex();
         this.amount = tokenSerial.getAmount();
         return this;
+    }
+
+    public long getSignnumber() {
+        return signnumber;
+    }
+
+    public void setSignnumber(long signnumber) {
+        this.signnumber = signnumber;
+    }
+
+    public long getCount() {
+        return count;
+    }
+
+    public void setCount(long count) {
+        this.count = count;
     }
 }

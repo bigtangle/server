@@ -2982,7 +2982,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 String tokenid0 = resultSet.getString("tokenid");
                 long tokenindex = resultSet.getLong("tokenindex");
                 long amount = resultSet.getLong("amount");
-                TokenSerial tokenSerial = new TokenSerial(tokenid0, tokenindex, amount);
+                TokenSerial tokenSerial = new TokenSerial(tokenid0, tokenindex, amount, resultSet.getLong("signnumber"),
+                        resultSet.getLong("count"));
                 list.add(tokenSerial);
             }
             return list;
