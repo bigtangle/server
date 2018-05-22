@@ -318,9 +318,19 @@ public class StockController extends TokensController {
     }
 
     public void saveMultiToken(ActionEvent event) {
-        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
-        if (!signnumberTF.getText().equals(signAddrChoiceBox.getItems().size())) {
+        if (signnumberTF.getText() == null || signnumberTF.getText().trim().isEmpty()) {
+            GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
+            return;
+        }
+        if (!signnumberTF.getText().matches("[1-9]\\d*")) {
+            GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
+            return;
+        }
+        if (signnumberTF.getText() != null && !signnumberTF.getText().trim().isEmpty()
+                && signnumberTF.getText().matches("[1-9]\\d*")
+                && Long.parseLong(signnumberTF.getText().trim()) != signAddrChoiceBox.getItems().size()) {
+
             GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
             return;
         }
