@@ -311,6 +311,10 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     void updateMultiSignBlockHash(String tokenid, long tokenindex, String address, byte[] bytes)
             throws BlockStoreException;
 
+    void deleteMultiSignAddressByTokenid(String tokenid) throws BlockStoreException;
+
+    int getCountTokenSerialNumber(String tokenid) throws BlockStoreException;
+
     // public List<TokenSerial> getTokenSerialListByTokenid(String tokenid);
     //
     // public List<MultiSignBy> getMultiSignByListByTokenid(String tokenid);

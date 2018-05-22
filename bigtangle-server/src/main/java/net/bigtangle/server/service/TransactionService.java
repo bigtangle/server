@@ -115,12 +115,12 @@ public class TransactionService {
         Tokens tokens = new Tokens(tokenHex, tokenname, description, url, signnumber, multiserial, asmarket, tokenstop);
         // store.saveTokens(tokens);
         
-        ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(pubKeyHex));
-        String address = ecKey.toAddress(this.networkParameters).toString();
-        MultiSignAddress multiSignAddress = new MultiSignAddress(tokenHex, address);
+        //ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(pubKeyHex));
+        // String address = ecKey.toAddress(this.networkParameters).toString();
+        //MultiSignAddress multiSignAddress = new MultiSignAddress(tokenHex, address);
         //store.insertMultiSignAddress(multiSignAddress);
         
-        TokenSerial tokenSerial = new TokenSerial(tokenHex, 0L, amount);
+        //TokenSerial tokenSerial = new TokenSerial(tokenHex, 0L, amount);
         //store.insertTokenSerial(tokenSerial);
 
         // MultiSignBy multiSignBy = new MultiSignBy(tokenHex, 0L, address);
@@ -128,15 +128,15 @@ public class TransactionService {
         
         TokenInfo tokenInfo = new TokenInfo();
         tokenInfo.setTokens(tokens);
-        tokenInfo.getMultiSignAddresses().add(multiSignAddress);
-       // tokenInfo.getMultiSignBies().add(multiSignBy);
-        tokenInfo.getTokenSerials().add(tokenSerial);
+        // tokenInfo.getMultiSignAddresses().add(multiSignAddress);
+        // tokenInfo.getMultiSignBies().add(multiSignBy);
+        // tokenInfo.setTokenSerial(tokenSerial);
         
         if (tokens.getSignnumber() == 1L) {
             byte[] pubKey = Utils.HEX.decode(pubKeyHex);
             byte[] tokenid = Utils.HEX.decode(tokenHex);
             Coin coin = Coin.valueOf(amount, tokenid);
-            Block block = createGenesisBlock(coin, tokenid, pubKey, blocktype, tokenInfo);
+            Block block = createGenesisBlock(coin, tokenid, pubKey, blocktype, null);
             block.toString();
             return block.bitcoinSerialize();
         }
