@@ -100,6 +100,10 @@ public class StockController extends TokensController {
     public TableColumn<Map, String> addressColumn;
     @FXML
     public TableColumn<Map, String> signColumn;
+    @FXML
+    public TextField addressTF;
+    @FXML
+    public CheckBox isSignCheckBox;
 
     public Main.OverlayUI overlayUI;
 
@@ -123,6 +127,10 @@ public class StockController extends TokensController {
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
+    }
+
+    public void searchTokenSerial(ActionEvent event) throws Exception {
+
     }
 
     public void editToken(ActionEvent event) throws Exception {
@@ -333,7 +341,6 @@ public class StockController extends TokensController {
     }
 
     public void doMultiSign(ActionEvent event) {
-
     }
 
     public void noSignBlock(HashMap<String, Object> map) throws Exception {

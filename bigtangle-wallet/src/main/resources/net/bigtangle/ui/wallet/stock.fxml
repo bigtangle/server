@@ -111,6 +111,7 @@
                         <TextField fx:id="addressTF" layoutX="144.0" layoutY="28.0" prefHeight="23.0" prefWidth="229.0" />
                         <Label layoutX="22.0" layoutY="32.0" prefHeight="15.0" prefWidth="111.0" text="%Address" />
                         <CheckBox fx:id="isSignCheckBox" layoutX="391.0" layoutY="32.0" mnemonicParsing="false" text="%isSignAll" />
+                        <Button layoutX="518.0" layoutY="29.0" mnemonicParsing="false" onAction="#searchTokenSerial" text="%search" />
 							</children>
 						</AnchorPane>
 					</content>
