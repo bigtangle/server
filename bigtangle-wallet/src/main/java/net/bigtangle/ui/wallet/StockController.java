@@ -128,8 +128,12 @@ public class StockController extends TokensController {
         }
     }
 
-    public void searchTokenSerial(ActionEvent event) throws Exception {
-
+    public void searchTokenSerial(ActionEvent event) {
+        try {
+            initSerialTableView();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
     }
 
     public void editToken(ActionEvent event) throws Exception {
@@ -392,6 +396,7 @@ public class StockController extends TokensController {
         OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
 
         for (ECKey ecKey : keys) {
+
             HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
             requestParam0.put("address", ecKey.toAddress(Main.params).toBase58());
             String resp = OkHttp3Util.postString(CONTEXT_ROOT + "getMultiSignWithAddress",

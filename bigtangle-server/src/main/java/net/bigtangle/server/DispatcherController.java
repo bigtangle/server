@@ -261,16 +261,17 @@ public class DispatcherController {
             case getTokenSerials: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                AbstractResponse response = tokensService.getTokenSerialListById((String) request.get("tokenid"));
+                AbstractResponse response = tokensService.getTokenSerialListById((String) request.get("tokenid"),
+                        (List<String>) request.get("addresses"));
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
             case getGenesisBlockLR: {
-                    AbstractResponse response = this.blockService.getGenesisBlockLR();
-                    this.outPrintJSONString(httpServletResponse, response);
+                AbstractResponse response = this.blockService.getGenesisBlockLR();
+                this.outPrintJSONString(httpServletResponse, response);
             }
-                 break;
- 
+                break;
+
             }
         } catch (Exception exception) {
             logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, Utils.HEX.encode(bodyByte), exception);
@@ -294,7 +295,7 @@ public class DispatcherController {
         printWriter.flush();
         printWriter.close();
     }
-    
+
     @Autowired
     private NetworkParameters networkParameters;
 

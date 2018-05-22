@@ -8,9 +8,11 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -22,7 +24,9 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.MapValueFactory;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
 
@@ -76,7 +80,7 @@ public class TokensController {
 
     @FXML
     public TextField nameTextField;
-    
+
     @FXML
     public TextField tokenidTF;
     @FXML
@@ -147,11 +151,20 @@ public class TokensController {
     }
 
     public void initSerialTableView() throws Exception {
+        KeyParameter aesKey = null;
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ObservableList<Map> tokenData = FXCollections.observableArrayList();
 
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", tokenidTF.getText());
+        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
+        List<String> addresses = keys.stream().map(key -> key.toAddress(Main.params).toBase58())
+                .collect(Collectors.toList());
+        requestParam.put("addresses", addresses);
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokenSerials",
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);

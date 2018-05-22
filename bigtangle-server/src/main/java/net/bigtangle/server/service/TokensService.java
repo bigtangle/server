@@ -49,8 +49,9 @@ public class TokensService {
         Map<String, Long> map = store.getTokenAmountMap(name);
         return GetTokensResponse.create(list, map);
     }
-    public AbstractResponse getTokenSerialListById(String tokenid) throws BlockStoreException {
-        List<TokenSerial> tokenSerials = this.store.getSearchTokenSerialInfo(tokenid);
+
+    public AbstractResponse getTokenSerialListById(String tokenid, List<String> addresses) throws BlockStoreException {
+        List<TokenSerial> tokenSerials = this.store.getSearchTokenSerialInfo(tokenid,addresses);
         AbstractResponse response = GetTokensResponse.createTokenSerial(tokenSerials);
         return response;
     }

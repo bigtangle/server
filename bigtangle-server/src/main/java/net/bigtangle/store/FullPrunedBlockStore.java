@@ -281,7 +281,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public Tokens getTokensInfo(String tokenid) throws BlockStoreException;
 
-    public List<TokenSerial> getSearchTokenSerialInfo(String tokenid) throws BlockStoreException;
+    public List<TokenSerial> getSearchTokenSerialInfo(String tokenid, List<String> addresses)
+            throws BlockStoreException;
 
     public TokenSerial getTokenSerialInfo(String tokenid, long tokenindex) throws BlockStoreException;
 
@@ -296,17 +297,19 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void updateTokenSerial(TokenSerial tokenSerial0) throws BlockStoreException;
 
-    // public MultiSignBy getMultiSignByInfo(String tokenid, long tokenindex, String address) throws BlockStoreException;
-
+    // public MultiSignBy getMultiSignByInfo(String tokenid, long tokenindex,
+    // String address) throws BlockStoreException;
     public List<MultiSign> getMultiSignListByAddress(String address) throws BlockStoreException;
 
     int getCountMultiSignAlready(String tokenid, long tokenindex, String address) throws BlockStoreException;
 
     void saveMultiSign(MultiSign multiSign) throws BlockStoreException;
 
-    void updateMultiSign(String tokenid, int tokenindex, String address, byte[] bytes, int sign) throws BlockStoreException;
+    void updateMultiSign(String tokenid, int tokenindex, String address, byte[] bytes, int sign)
+            throws BlockStoreException;
 
-    void updateMultiSignBlockHash(String tokenid, long tokenindex, String address, byte[] bytes) throws BlockStoreException;
+    void updateMultiSignBlockHash(String tokenid, long tokenindex, String address, byte[] bytes)
+            throws BlockStoreException;
 
     // public List<TokenSerial> getTokenSerialListByTokenid(String tokenid);
     //
