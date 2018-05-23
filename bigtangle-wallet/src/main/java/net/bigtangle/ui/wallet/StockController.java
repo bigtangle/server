@@ -474,21 +474,20 @@ public class StockController extends TokensController {
 
         // save block
         OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
-        // List<ECKey> ecKeys=new ArrayList<ECKey>();
+        List<ECKey> myEcKeys = new ArrayList<ECKey>();
+        if (signAddrChoiceBox.getItems() != null && !signAddrChoiceBox.getItems().isEmpty()) {
+            ObservableList<String> addresses = signAddrChoiceBox.getItems();
+            for (ECKey ecKey : keys) {
+                if (addresses.contains(ecKey.toAddress(Main.params).toBase58())) {
+                    System.out.println("============");
+                    System.out.println(ecKey.toAddress(Main.params).toBase58());
+                    System.out.println("============");
+                    myEcKeys.add(ecKey);
+                }
+            }
+        }
 
-        for (ECKey ecKey : keys) {
-
-            // List<MultiSignAddress>
-            // multiSignAddresses=tokenInfo.getMultiSignAddresses();
-            // if(multiSignAddresses==null&&multiSignAddresses.isEmpty())
-            // return;
-            // else {
-            // for (MultiSignAddress multiSignAddress : multiSignAddresses) {
-            // if (mul) {
-            //
-            // }
-            // }
-            // }
+        for (ECKey ecKey : myEcKeys) {
 
             HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
             requestParam0.put("address", ecKey.toAddress(Main.params).toBase58());
@@ -498,6 +497,9 @@ public class StockController extends TokensController {
 
             HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
             List<HashMap<String, Object>> multiSigns = (List<HashMap<String, Object>>) result.get("multiSigns");
+            if (multiSigns == null || multiSigns.isEmpty()) {
+                continue;
+            }
             byte[] payloadBytes = Utils.HEX.decode((String) multiSigns.get(0).get("blockhashHex"));
             Block block0 = Main.params.getDefaultSerializer().makeBlock(payloadBytes);
             Transaction transaction = block0.getTransactions().get(0);
