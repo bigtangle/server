@@ -110,6 +110,8 @@
                               <TableColumn fx:id="realSignnumColumn" prefWidth="115.0" text="%realSignnum" />
                               <TableColumn fx:id="isSignAllColumn" prefWidth="93.0" text="%isSignAll" />
                               <TableColumn fx:id="isMySignColumn" prefWidth="83.0" text="%isMySign" />
+                              <TableColumn fx:id="blockhashHexColumn" maxWidth="1.0" minWidth="1.0" prefWidth="1.0" visible="false" />
+                              <TableColumn fx:id="multisignAddressColumn" maxWidth="1.0" minWidth="1.0" prefWidth="1.0" visible="false" />
 									</columns>
 								</TableView>
 								<Button layoutX="905.0" layoutY="486.0" mnemonicParsing="false" onAction="#multiSign" text="%multiSign" />

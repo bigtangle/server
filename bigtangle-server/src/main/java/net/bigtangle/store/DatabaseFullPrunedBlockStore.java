@@ -295,17 +295,17 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String SELECT_SEARCH_TOKENSERIAL_SQL = "SELECT tokenid, tokenindex, amount FROM tokenserial ";
     protected String COUNT_TOKENSERIAL0_SQL = "SELECT COUNT(*) as count FROM tokenserial WHERE tokenid = ?";
 
-    protected String SELECT_SEARCH_TOKENSERIAL_ALL_SQL = "SELECT tokenid, tokenindex, amount,signnumber,"
-            + "(select count(address) FROM multisignby ms WHERE tokenid=ms.tokenid and tokenindex=ms.tokenindex ) as count FROM tokenserial  "
-            + "LEFT JOIN multisignaddress msa ON tokenid=msa.tokenid "
-            + "LEFT JOIN tokens t ON tokenid=t.tokenid WHERE 1=1 ";
+    protected String SELECT_SEARCH_TOKENSERIAL_ALL_SQL = "SELECT ts.tokenid as tokenid, tokenindex, amount,signnumber,"
+            + "(select count(address) FROM multisign ms WHERE ts.tokenid=ms.tokenid and ts.tokenindex=ms.tokenindex AND ms.sign=1) as count "
+            + "FROM tokenserial ts  " + "LEFT JOIN multisignaddress msa ON ts.tokenid=msa.tokenid "
+            + "LEFT JOIN tokens t ON ts.tokenid=t.tokenid WHERE 1=1 ";
 
     protected String INSERT_MULTISIGNBY_SQL = "INSERT INTO multisignby (tokenid, tokenindex, address) VALUES (?, ?, ?)";
     protected String SELECT_MULTISIGNBY_SQL = "SELECT COUNT(*) as count FROM multisignby WHERE tokenid = ? AND tokenindex = ? AND address = ?";
     protected String SELECT_MULTISIGNBY0_SQL = "SELECT COUNT(*) as count FROM multisignby WHERE tokenid = ? AND tokenindex = ?";
     protected String SELECT_MULTISIGNBY000_SQL = "SELECT tokenid, tokenindex, address FROM multisignby WHERE tokenid = ? AND tokenindex = ? AND address = ?";
 
-    protected String SELECT_MULTISIGN_ADDRESS_ALL_SQL = "SELECT id, tokenid, tokenindex, address, blockhash, sign FROM multisign JOIN WHERE 1=1 ";
+    protected String SELECT_MULTISIGN_ADDRESS_ALL_SQL = "SELECT id, tokenid, tokenindex, address, blockhash, sign FROM multisign  WHERE 1=1 ";
     protected String SELECT_MULTISIGN_ADDRESS_SQL = "SELECT id, tokenid, tokenindex, address, blockhash, sign FROM multisign WHERE address = ? ORDER BY tokenindex ASC";
     protected String INSERT_MULTISIGN_SQL = "INSERT INTO multisign (tokenid, tokenindex, address, blockhash, sign, id) VALUES (?, ?, ?, ?, ?, ?)";
     protected String UPDATE_MULTISIGN_SQL = "UPDATE multisign SET blockhash = ?, sign = ? WHERE tokenid = ? AND tokenindex = ? AND address = ?";
@@ -2965,7 +2965,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         if (addresses != null && !addresses.isEmpty()) {
             String addressString = " AND address IN(";
             for (String address : addresses) {
-                addressString += address + ",";
+                addressString += "'" + address + "',";
             }
             addressString = addressString.substring(0, addressString.length() - 1) + ") ";
             sql += addressString;
@@ -3177,6 +3177,63 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 multiSign.setId(id);
                 multiSign.setTokenindex(tokenindex);
                 multiSign.setTokenid(tokenid);
+                multiSign.setAddress(address0);
+                multiSign.setBlockhash(blockhash);
+                multiSign.setSign(sign);
+
+                list.add(multiSign);
+            }
+            return list;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<MultiSign> getMultiSignListByTokenid(String tokenid, List<String> addresses)
+            throws BlockStoreException {
+        List<MultiSign> list = new ArrayList<MultiSign>();
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        String sql = SELECT_MULTISIGN_ADDRESS_ALL_SQL;
+        if (addresses != null && !addresses.isEmpty()) {
+            String addressString = " AND address IN(";
+            for (String address : addresses) {
+                addressString += "'" + address + "',";
+            }
+            addressString = addressString.substring(0, addressString.length() - 1) + ") ";
+            sql += addressString;
+        }
+        if (tokenid != null && !tokenid.trim().isEmpty()) {
+            sql += " AND tokenid=?";
+        }
+        sql += " ORDER BY tokenid,tokenindex";
+        try {
+            preparedStatement = conn.get().prepareStatement(sql);
+            if (tokenid != null && !tokenid.isEmpty()) {
+                preparedStatement.setString(1, tokenid.trim());
+            }
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                String id = resultSet.getString("id");
+                String tokenid0 = resultSet.getString("tokenid");
+                Long tokenindex = resultSet.getLong("tokenindex");
+                String address0 = resultSet.getString("address");
+                byte[] blockhash = resultSet.getBytes("blockhash");
+                int sign = resultSet.getInt("sign");
+
+                MultiSign multiSign = new MultiSign();
+                multiSign.setId(id);
+                multiSign.setTokenindex(tokenindex);
+                multiSign.setTokenid(tokenid0);
                 multiSign.setAddress(address0);
                 multiSign.setBlockhash(blockhash);
                 multiSign.setSign(sign);

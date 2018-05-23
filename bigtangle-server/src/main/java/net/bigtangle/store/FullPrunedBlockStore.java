@@ -299,6 +299,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     // public MultiSignBy getMultiSignByInfo(String tokenid, long tokenindex,
     // String address) throws BlockStoreException;
+    public List<MultiSign> getMultiSignListByTokenid(String tokenid,List<String> addresses) throws BlockStoreException;
     public List<MultiSign> getMultiSignListByAddress(String address) throws BlockStoreException;
 
     int getCountMultiSignAlready(String tokenid, long tokenindex, String address) throws BlockStoreException;

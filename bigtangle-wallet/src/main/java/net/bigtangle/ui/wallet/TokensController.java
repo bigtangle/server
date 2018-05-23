@@ -23,9 +23,13 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.MapValueFactory;
+import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.Transaction;
+import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
@@ -38,7 +42,7 @@ public class TokensController {
     @FXML
     public TableColumn<Map, String> tokennameColumn;
     @FXML
-    public TableColumn<Map, Number> amountColumn;
+    public TableColumn<Map, String> amountColumn;
     @FXML
     public TableColumn<Map, Number> blocktypeColumn;
     @FXML
@@ -77,6 +81,11 @@ public class TokensController {
     public TableColumn<Map, String> isSignAllColumn;
     @FXML
     public TableColumn<Map, String> isMySignColumn;
+   
+    @FXML
+    public TableColumn<Map, String> blockhashHexColumn;
+    @FXML
+    public TableColumn<Map, String> multisignAddressColumn;
 
     @FXML
     public TextField nameTextField;
@@ -195,12 +204,14 @@ public class TokensController {
         requestParam.put("name", Main.getString(name));
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens",
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+        System.out.println(response);
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
-        Map<String, Long> amountMap = (Map<String, Long>) data.get("amountMap");
+        Map<String, Object> amountMap = (Map<String, Object>) data.get("amountMap");
         if (list != null) {
             for (Map<String, Object> map : list) {
-                multiMap.put((String) map.get("tokenid"), (boolean) map.get("multiserial"));
+                 multiMap.put((String) map.get("tokenid"), (boolean) map.get("multiserial"));
                 String temp = ((boolean) map.get("multiserial")) ? Main.getText("yes") : Main.getText("no");
                 String temp1 = ((boolean) map.get("asmarket")) ? Main.getText("yes") : Main.getText("no");
                 String temp2 = ((boolean) map.get("tokenstop")) ? Main.getText("yes") : Main.getText("no");
@@ -208,8 +219,8 @@ public class TokensController {
                 map.put("asmarket", temp1);
                 map.put("tokenstop", temp2);
                 if (amountMap.containsKey(map.get("tokenid"))) {
-                    Coin fromAmount = Coin.valueOf(amountMap.get((String) map.get("tokenid")),
-                            (String) map.get("tokenid"));
+                    long count = Long.parseLong(amountMap.get((String) map.get("tokenid")).toString());
+                    Coin fromAmount = Coin.valueOf(count, (String) map.get("tokenid"));
                     map.put("amount", fromAmount.toPlainString());
                 } else {
                     map.put("amount", "0");
@@ -231,5 +242,50 @@ public class TokensController {
         tokenstopColumn.setCellValueFactory(new MapValueFactory("tokenstop"));
 
         tokensTable.setItems(tokenData);
+    }
+
+    public void initMultisignTableView() throws Exception {
+        KeyParameter aesKey = null;
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        ObservableList<Map> tokenData = FXCollections.observableArrayList();
+
+        Map<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("tokenid", tokenidTF.getText());
+        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
+        List<String> addresses = keys.stream().map(key -> key.toAddress(Main.params).toBase58())
+                .collect(Collectors.toList());
+        requestParam.put("addresses", addresses);
+        String response = OkHttp3Util.post(CONTEXT_ROOT + "getMultiSignWithTokenid",
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+        System.out.println(response);
+        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("multiSigns");
+        if (list != null) {
+            for (Map<String, Object> map : list) {
+                Block block = Main.params.getDefaultSerializer()
+                        .makeBlock(Utils.HEX.decode((String) map.get("blockhashHex")));
+                Transaction transaction = block.getTransactions().get(0);
+                byte[] buf = transaction.getData();
+                TokenInfo tokenInfo = new TokenInfo().parse(buf);
+
+                Coin fromAmount = Coin.valueOf(tokenInfo.getTokenSerial().getAmount(), (String) map.get("tokenid"));
+                map.put("amount", fromAmount.toPlainString());
+                map.put("signnumber", tokenInfo.getTokens().getSignnumber());
+                tokenData.add(map);
+            }
+        }
+        tokenidColumn.setCellValueFactory(new MapValueFactory("tokenid"));
+        tokenindexColumn.setCellValueFactory(new MapValueFactory("tokenindex"));
+        tokenAmountColumn.setCellValueFactory(new MapValueFactory("amount"));
+        signnumColumn.setCellValueFactory(new MapValueFactory("signnumber"));
+        isMySignColumn.setCellValueFactory(new MapValueFactory("sign"));
+        blockhashHexColumn.setCellValueFactory(new MapValueFactory("blockhashHex"));
+        multisignAddressColumn.setCellValueFactory(new MapValueFactory("address"));
+        // realSignnumColumn.setCellValueFactory(new MapValueFactory("count"));
+        tokenserialTable.setItems(tokenData);
     }
 }
