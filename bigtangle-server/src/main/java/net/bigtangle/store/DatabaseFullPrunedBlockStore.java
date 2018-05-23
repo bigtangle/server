@@ -296,7 +296,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String COUNT_TOKENSERIAL0_SQL = "SELECT COUNT(*) as count FROM tokenserial WHERE tokenid = ?";
 
     protected String SELECT_SEARCH_TOKENSERIAL_ALL_SQL = "SELECT ts.tokenid as tokenid, tokenindex, amount,signnumber,"
-            + "(select count(address) FROM multisignby ms WHERE ts.tokenid=ms.tokenid and ts.tokenindex=ms.tokenindex ) as count "
+            + "(select count(address) FROM multisign ms WHERE ts.tokenid=ms.tokenid and ts.tokenindex=ms.tokenindex AND ms.sign=1) as count "
             + "FROM tokenserial ts  "
             + "LEFT JOIN multisignaddress msa ON ts.tokenid=msa.tokenid "
             + "LEFT JOIN tokens t ON ts.tokenid=t.tokenid WHERE 1=1 ";
