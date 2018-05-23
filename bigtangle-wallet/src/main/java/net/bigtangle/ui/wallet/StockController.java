@@ -408,7 +408,7 @@ public class StockController extends TokensController {
 
         HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
         List<HashMap<String, Object>> multiSigns = (List<HashMap<String, Object>>) result.get("multiSigns");
-        byte[] payloadBytes = Utils.HEX.decode((String) multiSigns.get(0).get("blockhashHex"));
+        byte[] payloadBytes = Utils.HEX.decode((String)rowdata.get("blockhashHex"));
         Block block0 = Main.params.getDefaultSerializer().makeBlock(payloadBytes);
         Transaction transaction = block0.getTransactions().get(0);
 
