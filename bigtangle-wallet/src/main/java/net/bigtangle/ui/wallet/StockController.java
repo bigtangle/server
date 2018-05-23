@@ -169,11 +169,13 @@ public class StockController extends TokensController {
 
             int signnumber = Integer.parseInt(temp);
             if (signnumber > 1) {
+                
                 TextInputDialog dialog = new TextInputDialog();
                 dialog.setTitle(Main.getText("Address"));
                 dialog.setHeaderText(null);
                 dialog.setContentText(Main.getText("Address"));
-                dialog.setWidth(900);
+                dialog.setWidth(500);
+                dialog.getDialogPane().setPrefWidth(500);
                 Optional<String> result = dialog.showAndWait();
                 if (result.isPresent()) {
                     String address = result.get();
