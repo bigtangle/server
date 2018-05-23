@@ -444,7 +444,16 @@ public class StockController extends TokensController {
         }
         long amount = Coin.parseCoin(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue())).getValue();
         Coin basecoin = Coin.valueOf(amount, Main.getString(map.get("tokenHex")).trim());
-        tokenInfo.getTokenSerials().add(new TokenSerial(Main.getString(map.get("tokenHex")).trim(), 0, amount));
+
+        HashMap<String, String> requestParam00 = new HashMap<String, String>();
+        requestParam00.put("tokenid", Main.getString(map.get("tokenHex")).trim());
+        String resp2 = OkHttp3Util.postString(CONTEXT_ROOT + "getCalTokenIndex",
+                Json.jsonmapper().writeValueAsString(requestParam00));
+        HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp2, HashMap.class);
+        Integer tokenindex_ = (Integer) result2.get("tokenindex");
+
+        tokenInfo.setTokenSerial(new TokenSerial(Main.getString(map.get("tokenHex")).trim(), tokenindex_, amount));
+
         HashMap<String, String> requestParam = new HashMap<String, String>();
         String resp000 = OkHttp3Util.postString(CONTEXT_ROOT + "getGenesisBlockLR",
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -458,14 +467,26 @@ public class StockController extends TokensController {
         long blocktype0 = NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
         Block block = new Block(Main.params, r1.getHash(), r2.getHash(), blocktype0,
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
-        ECKey key1 = keys.get(0);
+        ECKey key1 =  Main.bitcoin.wallet().currentReceiveKey();
         block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
         block.solve();
 
         // save block
         OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
+//List<ECKey> ecKeys=new ArrayList<ECKey>();
 
         for (ECKey ecKey : keys) {
+            
+//            List<MultiSignAddress> multiSignAddresses=tokenInfo.getMultiSignAddresses();
+//            if(multiSignAddresses==null&&multiSignAddresses.isEmpty())
+//                return;
+//            else {
+//                for (MultiSignAddress multiSignAddress : multiSignAddresses) {
+//                    if (mul) {
+//                        
+//                    }
+//                }
+//            }
 
             HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
             requestParam0.put("address", ecKey.toAddress(Main.params).toBase58());
