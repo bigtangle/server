@@ -38,7 +38,7 @@ public class TokensController {
     @FXML
     public TableColumn<Map, String> tokennameColumn;
     @FXML
-    public TableColumn<Map, Number> amountColumn;
+    public TableColumn<Map, String> amountColumn;
     @FXML
     public TableColumn<Map, Number> blocktypeColumn;
     @FXML
@@ -195,9 +195,11 @@ public class TokensController {
         requestParam.put("name", Main.getString(name));
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens",
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+        System.out.println(response);
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
-        Map<String, Long> amountMap = (Map<String, Long>) data.get("amountMap");
+        Map<String, Object> amountMap = (Map<String, Object>) data.get("amountMap");
         if (list != null) {
             for (Map<String, Object> map : list) {
                 multiMap.put((String) map.get("tokenid"), (boolean) map.get("multiserial"));
@@ -208,8 +210,8 @@ public class TokensController {
                 map.put("asmarket", temp1);
                 map.put("tokenstop", temp2);
                 if (amountMap.containsKey(map.get("tokenid"))) {
-                    Coin fromAmount = Coin.valueOf(amountMap.get((String) map.get("tokenid")),
-                            (String) map.get("tokenid"));
+                    long count = Long.parseLong(amountMap.get((String) map.get("tokenid")).toString());
+                    Coin fromAmount = Coin.valueOf(count, (String) map.get("tokenid"));
                     map.put("amount", fromAmount.toPlainString());
                 } else {
                     map.put("amount", "0");

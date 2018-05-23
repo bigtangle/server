@@ -109,6 +109,7 @@ public class StockController extends TokensController {
     @FXML
     public void initialize() {
         try {
+            initCombobox();
             new TextFieldValidator(signnumberTF,
                     text -> !WTUtils.didThrow(() -> checkState(text.matches("[1-9]\\d*"))));
             tabPane.getSelectionModel().selectedItemProperty().addListener((ov, t, t1) -> {
@@ -121,9 +122,9 @@ public class StockController extends TokensController {
             initTableView();
             initPositveTableView();
             initSerialTableView();
-            initCombobox();
 
         } catch (Exception e) {
+            e.printStackTrace();
             GuiUtils.crashAlert(e);
         }
     }
@@ -467,26 +468,27 @@ public class StockController extends TokensController {
         long blocktype0 = NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
         Block block = new Block(Main.params, r1.getHash(), r2.getHash(), blocktype0,
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
-        ECKey key1 =  Main.bitcoin.wallet().currentReceiveKey();
+        ECKey key1 = Main.bitcoin.wallet().currentReceiveKey();
         block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
         block.solve();
 
         // save block
         OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
-//List<ECKey> ecKeys=new ArrayList<ECKey>();
+        // List<ECKey> ecKeys=new ArrayList<ECKey>();
 
         for (ECKey ecKey : keys) {
-            
-//            List<MultiSignAddress> multiSignAddresses=tokenInfo.getMultiSignAddresses();
-//            if(multiSignAddresses==null&&multiSignAddresses.isEmpty())
-//                return;
-//            else {
-//                for (MultiSignAddress multiSignAddress : multiSignAddresses) {
-//                    if (mul) {
-//                        
-//                    }
-//                }
-//            }
+
+            // List<MultiSignAddress>
+            // multiSignAddresses=tokenInfo.getMultiSignAddresses();
+            // if(multiSignAddresses==null&&multiSignAddresses.isEmpty())
+            // return;
+            // else {
+            // for (MultiSignAddress multiSignAddress : multiSignAddresses) {
+            // if (mul) {
+            //
+            // }
+            // }
+            // }
 
             HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
             requestParam0.put("address", ecKey.toAddress(Main.params).toBase58());
