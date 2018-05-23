@@ -29,17 +29,23 @@ public class MultiSignService {
 
     @Autowired
     protected FullPrunedBlockStore store;
-    
+
     public AbstractResponse getMultiSignListWithAddress(String address) throws BlockStoreException {
         List<MultiSign> multiSigns = this.store.getMultiSignListByAddress(address);
         return MultiSignResponse.createMultiSignResponse(multiSigns);
     }
-    
+
+    public AbstractResponse getMultiSignListWithTokenid(String tokenid, List<String> addresses)
+            throws BlockStoreException {
+        List<MultiSign> multiSigns = this.store.getMultiSignListByTokenid(tokenid, addresses);
+        return MultiSignResponse.createMultiSignResponse(multiSigns);
+    }
+
     public AbstractResponse getNextTokenSerialIndex(String tokenid) throws BlockStoreException {
         int count = this.store.getCountTokenSerialNumber(tokenid);
         return TokenSerialIndexResponse.createTokenSerialIndexResponse(count + 1);
     }
-    
+
     public void multiSign(Block block) throws Exception {
         if (block.getTransactions() == null || block.getTransactions().isEmpty()) {
             return;
@@ -82,12 +88,11 @@ public class MultiSignService {
                 multiSign.setBlockhash(block.bitcoinSerialize());
                 multiSign.setId(UUIDUtil.randomUUID());
                 this.store.saveMultiSign(multiSign);
-            }
-            else {
+            } else {
                 this.store.updateMultiSignBlockHash(tokenid, tokenindex, address, block.bitcoinSerialize());
             }
         }
-        
+
         int signCount = 0;
         if (transaction.getDatasignatire() != null) {
             try {
@@ -110,7 +115,7 @@ public class MultiSignService {
                     byte[] signature = Utils.HEX.decode((String) multiSignBy.get("signature"));
                     boolean success = ECKey.verify(data, signature, pubKey);
                     if (success) {
-                        signCount ++;
+                        signCount++;
                     }
                 }
                 for (MultiSignAddress multiSignAddress : multiSignAddressRes.values()) {
@@ -120,8 +125,7 @@ public class MultiSignService {
                         break;
                     }
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -131,7 +135,7 @@ public class MultiSignService {
             blockService.saveBlock(block);
         }
     }
-    
+
     @Autowired
     private BlockService blockService;
 }

@@ -23,9 +23,12 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.MapValueFactory;
+import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.Transaction;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
@@ -233,5 +236,44 @@ public class TokensController {
         tokenstopColumn.setCellValueFactory(new MapValueFactory("tokenstop"));
 
         tokensTable.setItems(tokenData);
+    }
+
+    public void initMultisignTableView() throws Exception {
+        KeyParameter aesKey = null;
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        ObservableList<Map> tokenData = FXCollections.observableArrayList();
+
+        Map<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("tokenid", tokenidTF.getText());
+        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
+        List<String> addresses = keys.stream().map(key -> key.toAddress(Main.params).toBase58())
+                .collect(Collectors.toList());
+        requestParam.put("addresses", addresses);
+        String response = OkHttp3Util.post(CONTEXT_ROOT + "getMultiSignWithTokenid",
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("multiSigns");
+        if (list != null) {
+            for (Map<String, Object> map : list) {
+                Block block = Main.params.getDefaultSerializer().makeBlock((byte[]) map.get("blockhash"));
+                Transaction transaction = block.getTransactions().get(0);
+                byte[] buf = transaction.getData();
+                TokenInfo tokenInfo = new TokenInfo().parse(buf);
+
+                Coin fromAmount = Coin.valueOf(tokenInfo.getTokenSerial().getAmount(), (String) map.get("tokenid"));
+                map.put("amount", fromAmount.toPlainString());
+                tokenData.add(map);
+            }
+        }
+        tokenidColumn.setCellValueFactory(new MapValueFactory("tokenid"));
+        tokenindexColumn.setCellValueFactory(new MapValueFactory("tokenindex"));
+        tokenAmountColumn.setCellValueFactory(new MapValueFactory("amount"));
+        // signnumColumn.setCellValueFactory(new MapValueFactory("signnumber"));
+        // realSignnumColumn.setCellValueFactory(new MapValueFactory("count"));
+        tokenserialTable.setItems(tokenData);
     }
 }

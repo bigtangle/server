@@ -252,6 +252,15 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
+            case getMultiSignWithTokenid: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String tokenid = (String) request.get("tokenid");
+                AbstractResponse response = this.multiSignService.getMultiSignListWithTokenid(tokenid,
+                        (List<String>) request.get("addresses"));
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
             case multiSign: {
                 Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
                 this.multiSignService.multiSign(block);
@@ -271,7 +280,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-                
+
             case getCalTokenIndex: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
