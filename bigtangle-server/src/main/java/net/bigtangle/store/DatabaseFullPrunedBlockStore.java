@@ -295,10 +295,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String SELECT_SEARCH_TOKENSERIAL_SQL = "SELECT tokenid, tokenindex, amount FROM tokenserial ";
     protected String COUNT_TOKENSERIAL0_SQL = "SELECT COUNT(*) as count FROM tokenserial WHERE tokenid = ?";
 
-    protected String SELECT_SEARCH_TOKENSERIAL_ALL_SQL = "SELECT tokenid, tokenindex, amount,signnumber,"
-            + "(select count(address) FROM multisignby ms WHERE tokenid=ms.tokenid and tokenindex=ms.tokenindex ) as count FROM tokenserial  "
-            + "LEFT JOIN multisignaddress msa ON tokenid=msa.tokenid "
-            + "LEFT JOIN tokens t ON tokenid=t.tokenid WHERE 1=1 ";
+    protected String SELECT_SEARCH_TOKENSERIAL_ALL_SQL = "SELECT ts.tokenid as tokenid, tokenindex, amount,signnumber,"
+            + "(select count(address) FROM multisignby ms WHERE ts.tokenid=ms.tokenid and ts.tokenindex=ms.tokenindex ) as count "
+            + "FROM tokenserial ts  "
+            + "LEFT JOIN multisignaddress msa ON ts.tokenid=msa.tokenid "
+            + "LEFT JOIN tokens t ON ts.tokenid=t.tokenid WHERE 1=1 ";
 
     protected String INSERT_MULTISIGNBY_SQL = "INSERT INTO multisignby (tokenid, tokenindex, address) VALUES (?, ?, ?)";
     protected String SELECT_MULTISIGNBY_SQL = "SELECT COUNT(*) as count FROM multisignby WHERE tokenid = ? AND tokenindex = ? AND address = ?";
@@ -2965,7 +2966,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         if (addresses != null && !addresses.isEmpty()) {
             String addressString = " AND address IN(";
             for (String address : addresses) {
-                addressString += address + ",";
+                addressString += "'"+address + "',";
             }
             addressString = addressString.substring(0, addressString.length() - 1) + ") ";
             sql += addressString;
