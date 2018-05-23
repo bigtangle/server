@@ -211,7 +211,7 @@ public class TokensController {
         Map<String, Object> amountMap = (Map<String, Object>) data.get("amountMap");
         if (list != null) {
             for (Map<String, Object> map : list) {
-                multiMap.put((String) map.get("tokenid"), (boolean) map.get("multiserial"));
+                 multiMap.put((String) map.get("tokenid"), (boolean) map.get("multiserial"));
                 String temp = ((boolean) map.get("multiserial")) ? Main.getText("yes") : Main.getText("no");
                 String temp1 = ((boolean) map.get("asmarket")) ? Main.getText("yes") : Main.getText("no");
                 String temp2 = ((boolean) map.get("tokenstop")) ? Main.getText("yes") : Main.getText("no");

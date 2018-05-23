@@ -408,7 +408,13 @@ public class StockController extends TokensController {
 
         HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
         List<HashMap<String, Object>> multiSigns = (List<HashMap<String, Object>>) result.get("multiSigns");
-        byte[] payloadBytes = Utils.HEX.decode((String)rowdata.get("blockhashHex"));
+        HashMap<String, Object> multiSign000 = null;
+        for (HashMap<String, Object> multiSign : multiSigns) {
+            if (multiSign.get("id").toString().equals(rowdata.get("id").toString())) {
+                multiSign000 = multiSign;
+            }
+        }
+        byte[] payloadBytes = Utils.HEX.decode((String) multiSign000.get("blockhashHex"));
         Block block0 = Main.params.getDefaultSerializer().makeBlock(payloadBytes);
         Transaction transaction = block0.getTransactions().get(0);
 
@@ -425,7 +431,7 @@ public class StockController extends TokensController {
         MultiSignBy multiSignBy0 = new MultiSignBy();
 
         multiSignBy0.setTokenid(Main.getString(rowdata.get("tokenid")).trim());
-        multiSignBy0.setTokenindex(0);
+        multiSignBy0.setTokenindex((Integer) multiSign000.get("tokenindex"));
         multiSignBy0.setAddress(rowdata.get("address").toString());
         multiSignBy0.setPublickey(Utils.HEX.encode(myKey.getPubKey()));
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
@@ -488,6 +494,7 @@ public class StockController extends TokensController {
         if (signAddrChoiceBox.getItems() != null && !signAddrChoiceBox.getItems().isEmpty()) {
             ObservableList<String> addresses = signAddrChoiceBox.getItems();
             for (ECKey ecKey : keys) {
+                // System.out.println(ecKey.toAddress(Main.params).toBase58());
                 if (addresses.contains(ecKey.toAddress(Main.params).toBase58())) {
                     myEcKeys.add(ecKey);
                 }
@@ -499,45 +506,6 @@ public class StockController extends TokensController {
 
         // save block
         OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
-
-        for (ECKey ecKey : myEcKeys) {
-
-            HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
-            requestParam0.put("address", ecKey.toAddress(Main.params).toBase58());
-            String resp = OkHttp3Util.postString(CONTEXT_ROOT + "getMultiSignWithAddress",
-                    Json.jsonmapper().writeValueAsString(requestParam0));
-            System.out.println(resp);
-
-            HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
-            List<HashMap<String, Object>> multiSigns = (List<HashMap<String, Object>>) result.get("multiSigns");
-            if (multiSigns == null || multiSigns.isEmpty()) {
-                continue;
-            }
-            byte[] payloadBytes = Utils.HEX.decode((String) multiSigns.get(0).get("blockhashHex"));
-            Block block0 = Main.params.getDefaultSerializer().makeBlock(payloadBytes);
-            Transaction transaction = block0.getTransactions().get(0);
-
-            List<MultiSignBy> multiSignBies = null;
-            if (transaction.getDatasignatire() == null) {
-                multiSignBies = new ArrayList<MultiSignBy>();
-            } else {
-                multiSignBies = Json.jsonmapper().readValue(transaction.getDatasignatire(), List.class);
-            }
-            Sha256Hash sighash = transaction.getHash();
-            ECKey.ECDSASignature party1Signature = ecKey.sign(sighash);
-            byte[] buf1 = party1Signature.encodeToDER();
-
-            MultiSignBy multiSignBy0 = new MultiSignBy();
-            multiSignBy0.setTokenid(Main.getString(map.get("tokenHex")).trim());
-            multiSignBy0.setTokenindex(0);
-            multiSignBy0.setAddress(ecKey.toAddress(Main.params).toBase58());
-            multiSignBy0.setPublickey(Utils.HEX.encode(ecKey.getPubKey()));
-            multiSignBy0.setSignature(Utils.HEX.encode(buf1));
-            multiSignBies.add(multiSignBy0);
-
-            transaction.setDatasignatire(Json.jsonmapper().writeValueAsBytes(multiSignBies));
-            OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block0.bitcoinSerialize());
-        }
     }
 
     public void add2positve(ActionEvent event) {
