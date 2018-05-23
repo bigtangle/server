@@ -469,11 +469,6 @@ public class StockController extends TokensController {
         Block block = new Block(Main.params, r1.getHash(), r2.getHash(), blocktype0,
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
         ECKey key1 = Main.bitcoin.wallet().currentReceiveKey();
-        block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
-        block.solve();
-
-        // save block
-        OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
         List<ECKey> myEcKeys = new ArrayList<ECKey>();
         if (signAddrChoiceBox.getItems() != null && !signAddrChoiceBox.getItems().isEmpty()) {
             ObservableList<String> addresses = signAddrChoiceBox.getItems();
@@ -485,7 +480,13 @@ public class StockController extends TokensController {
                     myEcKeys.add(ecKey);
                 }
             }
+            key1 = myEcKeys.get(0);
         }
+        block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
+        block.solve();
+
+        // save block
+        OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
 
         for (ECKey ecKey : myEcKeys) {
 
@@ -517,7 +518,7 @@ public class StockController extends TokensController {
             MultiSignBy multiSignBy0 = new MultiSignBy();
             multiSignBy0.setTokenid(Main.getString(map.get("tokenHex")).trim());
             multiSignBy0.setTokenindex(0);
-            multiSignBy0.setAddress(key1.toAddress(Main.params).toBase58());
+            multiSignBy0.setAddress(ecKey.toAddress(Main.params).toBase58());
             multiSignBy0.setPublickey(Utils.HEX.encode(ecKey.getPubKey()));
             multiSignBy0.setSignature(Utils.HEX.encode(buf1));
             multiSignBies.add(multiSignBy0);
