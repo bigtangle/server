@@ -121,7 +121,8 @@ public class StockController extends TokensController {
             });
             initTableView();
             initPositveTableView();
-            initSerialTableView();
+            initMultisignTableView();
+            // initSerialTableView();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -131,7 +132,8 @@ public class StockController extends TokensController {
 
     public void searchTokenSerial(ActionEvent event) {
         try {
-            initSerialTableView();
+            // initSerialTableView();
+            initMultisignTableView();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
@@ -169,7 +171,7 @@ public class StockController extends TokensController {
 
             int signnumber = Integer.parseInt(temp);
             if (signnumber > 1) {
-                
+
                 TextInputDialog dialog = new TextInputDialog();
                 dialog.setTitle(Main.getText("Address"));
                 dialog.setHeaderText(null);

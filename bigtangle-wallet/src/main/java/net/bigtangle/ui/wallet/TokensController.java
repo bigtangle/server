@@ -29,6 +29,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
@@ -255,24 +256,27 @@ public class TokensController {
         requestParam.put("addresses", addresses);
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getMultiSignWithTokenid",
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+        System.out.println(response);
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("multiSigns");
         if (list != null) {
             for (Map<String, Object> map : list) {
-                Block block = Main.params.getDefaultSerializer().makeBlock((byte[]) map.get("blockhash"));
+                Block block = Main.params.getDefaultSerializer()
+                        .makeBlock(Utils.HEX.decode((String) map.get("blockhashHex")));
                 Transaction transaction = block.getTransactions().get(0);
                 byte[] buf = transaction.getData();
                 TokenInfo tokenInfo = new TokenInfo().parse(buf);
 
                 Coin fromAmount = Coin.valueOf(tokenInfo.getTokenSerial().getAmount(), (String) map.get("tokenid"));
                 map.put("amount", fromAmount.toPlainString());
+                map.put("signnumber",tokenInfo.getTokens().getSignnumber());
                 tokenData.add(map);
             }
         }
         tokenidColumn.setCellValueFactory(new MapValueFactory("tokenid"));
         tokenindexColumn.setCellValueFactory(new MapValueFactory("tokenindex"));
         tokenAmountColumn.setCellValueFactory(new MapValueFactory("amount"));
-        // signnumColumn.setCellValueFactory(new MapValueFactory("signnumber"));
+         signnumColumn.setCellValueFactory(new MapValueFactory("signnumber"));
         // realSignnumColumn.setCellValueFactory(new MapValueFactory("count"));
         tokenserialTable.setItems(tokenData);
     }
