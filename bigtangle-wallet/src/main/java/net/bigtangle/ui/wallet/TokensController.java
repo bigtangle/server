@@ -81,6 +81,11 @@ public class TokensController {
     public TableColumn<Map, String> isSignAllColumn;
     @FXML
     public TableColumn<Map, String> isMySignColumn;
+   
+    @FXML
+    public TableColumn<Map, String> blockhashHexColumn;
+    @FXML
+    public TableColumn<Map, String> multisignAddressColumn;
 
     @FXML
     public TextField nameTextField;
@@ -269,14 +274,17 @@ public class TokensController {
 
                 Coin fromAmount = Coin.valueOf(tokenInfo.getTokenSerial().getAmount(), (String) map.get("tokenid"));
                 map.put("amount", fromAmount.toPlainString());
-                map.put("signnumber",tokenInfo.getTokens().getSignnumber());
+                map.put("signnumber", tokenInfo.getTokens().getSignnumber());
                 tokenData.add(map);
             }
         }
         tokenidColumn.setCellValueFactory(new MapValueFactory("tokenid"));
         tokenindexColumn.setCellValueFactory(new MapValueFactory("tokenindex"));
         tokenAmountColumn.setCellValueFactory(new MapValueFactory("amount"));
-         signnumColumn.setCellValueFactory(new MapValueFactory("signnumber"));
+        signnumColumn.setCellValueFactory(new MapValueFactory("signnumber"));
+        isMySignColumn.setCellValueFactory(new MapValueFactory("sign"));
+        blockhashHexColumn.setCellValueFactory(new MapValueFactory("blockhashHex"));
+        multisignAddressColumn.setCellValueFactory(new MapValueFactory("address"));
         // realSignnumColumn.setCellValueFactory(new MapValueFactory("count"));
         tokenserialTable.setItems(tokenData);
     }
