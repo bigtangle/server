@@ -101,7 +101,7 @@ public class TransactionService {
         String tokenname = (String) request.get("tokenname");
         String description = (String) request.get("description");
         String tokenHex = (String) request.get("tokenHex");
-        boolean blocktype = (Boolean) request.get("blocktype");
+        boolean blocktype = (Boolean) request.get("multiserial");
 
         String url = request.containsKey("url") ? (String) request.get("url") : "";
         long signnumber = request.containsKey("signnumber") ? Long.parseLong(request.get("signnumber").toString()) : 1L;

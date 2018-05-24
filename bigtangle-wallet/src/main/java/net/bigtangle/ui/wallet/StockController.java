@@ -305,6 +305,8 @@ public class StockController extends TokensController {
             requestParam.put("asmarket", true);
             requestParam.put("tokenstop", false);
 
+            requestParam.put("amount", 0);
+
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "createGenesisBlock",
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
