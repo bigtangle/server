@@ -21,7 +21,8 @@ data in transaction:
 	
 Shareable data enable to add my post address:
   Structure data post address as json into data   
-  data is secured by encrypted with AES by private key
+  data is secured by encrypted by private key
+  
    transfer my data to other:  signed the data by other public key
    post address + public encrypted
    
@@ -30,7 +31,7 @@ Wait to use spark X
 merge  tables headers and blockevaluation into single table blocks, avoid join for milestone  ?
 
 
-
+check of data typ to avoid misusage (dese/ser)
 
 
 11) Spark implementation of milestone:
