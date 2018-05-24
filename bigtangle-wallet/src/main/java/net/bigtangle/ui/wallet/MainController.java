@@ -157,6 +157,7 @@ public class MainController {
 
         String response = OkHttp3Util.post(CONTEXT_ROOT + "batchGetBalances",
                 Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
+        System.out.println(response);
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         if (data == null || data.isEmpty()) {
             return;
@@ -176,14 +177,18 @@ public class MainController {
             Main.validAddressSet.clear();
             Main.validAddressSet.add(address);
             boolean spendPending = u.isSpendPending();
-            if (myPositvleTokens != null && !"".equals(myPositvleTokens.trim()) && !myPositvleTokens.trim().isEmpty()
-                    && myPositvleTokens.contains(Utils.HEX.encode(tokenid))) {
-                Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending,
-                        Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid)))));
-            }
-            if (myPositvleTokens == null || myPositvleTokens.isEmpty() || "".equals(myPositvleTokens.trim()))
-                Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending,
-                        Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid)))));
+            // if (myPositvleTokens != null &&
+            // !"".equals(myPositvleTokens.trim()) &&
+            // !myPositvleTokens.trim().isEmpty()
+            // && myPositvleTokens.contains(Utils.HEX.encode(tokenid))) {
+            Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending,
+                    Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid)))));
+            // }
+            // if (myPositvleTokens == null || myPositvleTokens.isEmpty() ||
+            // "".equals(myPositvleTokens.trim()))
+            // Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid,
+            // address, spendPending,
+            // Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid)))));
         }
         list = (List<Map<String, Object>>) data.get("tokens");
         if (list == null || list.isEmpty()) {
@@ -195,14 +200,18 @@ public class MainController {
             Main.validTokenMap.put(Utils.HEX.encode(coin2.tokenid), true);
 
             if (!coin2.isZero()) {
-                if (myPositvleTokens != null && !"".equals(myPositvleTokens.trim())
-                        && !myPositvleTokens.trim().isEmpty()
-                        && myPositvleTokens.contains(Utils.HEX.encode(coin2.tokenid)))
-                    Main.instance.getCoinData().add(new CoinModel(coin2.toFriendlyString(), coin2.tokenid,
-                            Main.getString(hashNameMap.get(Utils.HEX.encode(coin2.tokenid)))));
-                if (myPositvleTokens == null || myPositvleTokens.isEmpty() || "".equals(myPositvleTokens.trim()))
-                    Main.instance.getCoinData().add(new CoinModel(coin2.toFriendlyString(), coin2.tokenid,
-                            Main.getString(hashNameMap.get(Utils.HEX.encode(coin2.tokenid)))));
+                // if (myPositvleTokens != null &&
+                // !"".equals(myPositvleTokens.trim())
+                // && !myPositvleTokens.trim().isEmpty()
+                // &&
+                // myPositvleTokens.contains(Utils.HEX.encode(coin2.tokenid)))
+                Main.instance.getCoinData().add(new CoinModel(coin2.toFriendlyString(), coin2.tokenid,
+                        Main.getString(hashNameMap.get(Utils.HEX.encode(coin2.tokenid)))));
+                // if (myPositvleTokens == null || myPositvleTokens.isEmpty() ||
+                // "".equals(myPositvleTokens.trim()))
+                // Main.instance.getCoinData().add(new
+                // CoinModel(coin2.toFriendlyString(), coin2.tokenid,
+                // Main.getString(hashNameMap.get(Utils.HEX.encode(coin2.tokenid)))));
             }
         }
     }
