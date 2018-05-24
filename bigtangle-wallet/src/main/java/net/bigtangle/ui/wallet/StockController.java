@@ -141,18 +141,51 @@ public class StockController extends TokensController {
 
     public void editToken(ActionEvent event) throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
-        Map<String, Object> rowData = tokenserialTable.getSelectionModel().getSelectedItem();
-        if (rowData == null || rowData.isEmpty()) {
-            GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_m1"));
+        Map<String, Object> rowdata = tokenserialTable.getSelectionModel().getSelectedItem();
+        if (rowdata == null || rowdata.isEmpty()) {
+            GuiUtils.informationalAlert("", Main.getText("pleaseSelect"), "");
             return;
         }
-        String tokenid = (String) rowData.get("tokenid");
-        Map<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("tokenid", tokenid);
-        String resp = OkHttp3Util.postString(CONTEXT_ROOT + "getTokenById",
-                Json.jsonmapper().writeValueAsString(requestParam));
+        if (!"0".equals(rowdata.get("sign").toString())) {
+            return;
+        }
+        String tokenid = (String) rowdata.get("tokenid");
+        HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
+        requestParam0.put("address", rowdata.get("address").toString());
+        String resp = OkHttp3Util.postString(CONTEXT_ROOT + "getMultiSignWithAddress",
+                Json.jsonmapper().writeValueAsString(requestParam0));
+
+        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
+        List<HashMap<String, Object>> multiSigns = (List<HashMap<String, Object>>) result.get("multiSigns");
+        HashMap<String, Object> multiSign000 = null;
+        for (HashMap<String, Object> multiSign : multiSigns) {
+            if (multiSign.get("id").toString().equals(rowdata.get("id").toString())) {
+                multiSign000 = multiSign;
+            }
+        }
+        byte[] payloadBytes = Utils.HEX.decode((String) multiSign000.get("blockhashHex"));
+        Block block0 = Main.params.getDefaultSerializer().makeBlock(payloadBytes);
+        Transaction transaction = block0.getTransactions().get(0);
+
+        byte[] buf = transaction.getData();
+        TokenInfo tokenInfo = new TokenInfo().parse(buf);
+
         tabPane.getSelectionModel().clearAndSelect(3);
+        stockName1.setText(Main.getString(tokenInfo.getTokens().getTokenname()).trim());
         tokenid1.setValue(tokenid);
+        stockAmount1.setText(Main.getString(tokenInfo.getTokenSerial().getAmount()));
+        tokenstopCheckBox.setSelected(tokenInfo.getTokens().isTokenstop());
+        urlTF.setText(Main.getString(tokenInfo.getTokens().getUrl()).trim());
+        stockDescription1.setText(Main.getString(tokenInfo.getTokens().getDescription()).trim());
+        signnumberTF.setText(Main.getString(tokenInfo.getTokens().getSignnumber()).trim());
+        boolean flag = false;
+        signAddrChoiceBox.getItems().clear();
+        List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
+        if (multiSignAddresses != null && !multiSignAddresses.isEmpty()) {
+            for (MultiSignAddress msa : multiSignAddresses) {
+                signAddrChoiceBox.getItems().add(msa.getAddress());
+            }
+        }
 
     }
 
