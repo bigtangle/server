@@ -519,7 +519,7 @@ public class StockController extends TokensController {
             return;
         }
         String tokeninfo = "";
-        tokeninfo += Main.getString(rowData.get("tokenHex")) + "," + Main.getString(rowData.get("tokenname"));
+        tokeninfo += Main.getString(rowData.get("tokenid")) + "," + Main.getString(rowData.get("tokenname"));
         try {
             Main.addText2file(tokeninfo, Main.keyFileDirectory + Main.positiveFile);
         } catch (Exception e) {

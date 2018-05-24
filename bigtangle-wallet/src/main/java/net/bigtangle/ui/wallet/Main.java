@@ -88,6 +88,7 @@ import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.utils.BriefLogFormatter;
 import net.bigtangle.utils.MapToBeanMapperUtil;
+import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.DeterministicSeed;
@@ -490,6 +491,13 @@ public class Main extends Application {
             if (args.length >= 4) {
                 kafka = args[3];
             }
+        }
+        String tokeninfo = "";
+        tokeninfo += NetworkParameters.BIGNETCOIN_TOKENID_STRING + "," + MonetaryFormat.CODE_BTC;
+        try {
+            Main.addText2file(tokeninfo, Main.keyFileDirectory + Main.positiveFile);
+        } catch (Exception e) {
+
         }
         launch(args);
     }
