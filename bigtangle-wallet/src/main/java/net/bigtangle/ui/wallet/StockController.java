@@ -358,7 +358,9 @@ public class StockController extends TokensController {
             Main.instance.controller.initTableView();
             checkGuiThread();
             initTableView();
-            overlayUI.done();
+            initMultisignTableView();
+            // overlayUI.done();
+            tabPane.getSelectionModel().clearAndSelect(4);
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
@@ -374,15 +376,14 @@ public class StockController extends TokensController {
     }
 
     public void doMultiSign() throws Exception {
-        
+
         KeyParameter aesKey = null;
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
         List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
-       
-        
+
         Map<String, Object> rowdata = tokenserialTable.getSelectionModel().getSelectedItem();
         if (rowdata == null || rowdata.isEmpty()) {
             GuiUtils.informationalAlert("", Main.getText("pleaseSelect"), "");
@@ -391,10 +392,10 @@ public class StockController extends TokensController {
         if (!"0".equals(rowdata.get("sign").toString())) {
             return;
         }
-        ECKey myKey=null;
+        ECKey myKey = null;
         for (ECKey ecKey : keys) {
             if (rowdata.get("address").toString().equals((ecKey.toAddress(Main.params).toBase58()))) {
-                myKey=ecKey;
+                myKey = ecKey;
                 break;
             }
         }
@@ -439,6 +440,9 @@ public class StockController extends TokensController {
 
         transaction.setDatasignatire(Json.jsonmapper().writeValueAsBytes(multiSignBies));
         OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block0.bitcoinSerialize());
+        Main.instance.controller.initTableView();
+        initTableView();
+        initMultisignTableView();
 
     }
 
