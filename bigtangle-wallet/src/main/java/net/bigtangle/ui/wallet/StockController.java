@@ -141,18 +141,51 @@ public class StockController extends TokensController {
 
     public void editToken(ActionEvent event) throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
-        Map<String, Object> rowData = tokenserialTable.getSelectionModel().getSelectedItem();
-        if (rowData == null || rowData.isEmpty()) {
-            GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_m1"));
+        Map<String, Object> rowdata = tokenserialTable.getSelectionModel().getSelectedItem();
+        if (rowdata == null || rowdata.isEmpty()) {
+            GuiUtils.informationalAlert("", Main.getText("pleaseSelect"), "");
             return;
         }
-        String tokenid = (String) rowData.get("tokenid");
-        Map<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("tokenid", tokenid);
-        String resp = OkHttp3Util.postString(CONTEXT_ROOT + "getTokenById",
-                Json.jsonmapper().writeValueAsString(requestParam));
+        if (!"0".equals(rowdata.get("sign").toString())) {
+            return;
+        }
+        String tokenid = (String) rowdata.get("tokenid");
+        HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
+        requestParam0.put("address", rowdata.get("address").toString());
+        String resp = OkHttp3Util.postString(CONTEXT_ROOT + "getMultiSignWithAddress",
+                Json.jsonmapper().writeValueAsString(requestParam0));
+
+        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
+        List<HashMap<String, Object>> multiSigns = (List<HashMap<String, Object>>) result.get("multiSigns");
+        HashMap<String, Object> multiSign000 = null;
+        for (HashMap<String, Object> multiSign : multiSigns) {
+            if (multiSign.get("id").toString().equals(rowdata.get("id").toString())) {
+                multiSign000 = multiSign;
+            }
+        }
+        byte[] payloadBytes = Utils.HEX.decode((String) multiSign000.get("blockhashHex"));
+        Block block0 = Main.params.getDefaultSerializer().makeBlock(payloadBytes);
+        Transaction transaction = block0.getTransactions().get(0);
+
+        byte[] buf = transaction.getData();
+        TokenInfo tokenInfo = new TokenInfo().parse(buf);
+
         tabPane.getSelectionModel().clearAndSelect(3);
+        stockName1.setText(Main.getString(tokenInfo.getTokens().getTokenname()).trim());
         tokenid1.setValue(tokenid);
+        stockAmount1.setText(Main.getString(tokenInfo.getTokenSerial().getAmount()));
+        tokenstopCheckBox.setSelected(tokenInfo.getTokens().isTokenstop());
+        urlTF.setText(Main.getString(tokenInfo.getTokens().getUrl()).trim());
+        stockDescription1.setText(Main.getString(tokenInfo.getTokens().getDescription()).trim());
+        signnumberTF.setText(Main.getString(tokenInfo.getTokens().getSignnumber()).trim());
+        boolean flag = false;
+        signAddrChoiceBox.getItems().clear();
+        List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
+        if (multiSignAddresses != null && !multiSignAddresses.isEmpty()) {
+            for (MultiSignAddress msa : multiSignAddresses) {
+                signAddrChoiceBox.getItems().add(msa.getAddress());
+            }
+        }
 
     }
 
@@ -305,6 +338,8 @@ public class StockController extends TokensController {
             requestParam.put("asmarket", true);
             requestParam.put("tokenstop", false);
 
+            requestParam.put("amount", 0);
+
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "createGenesisBlock",
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
@@ -358,7 +393,9 @@ public class StockController extends TokensController {
             Main.instance.controller.initTableView();
             checkGuiThread();
             initTableView();
-            overlayUI.done();
+            initMultisignTableView();
+            // overlayUI.done();
+            tabPane.getSelectionModel().clearAndSelect(4);
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
@@ -374,15 +411,14 @@ public class StockController extends TokensController {
     }
 
     public void doMultiSign() throws Exception {
-        
+
         KeyParameter aesKey = null;
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
         List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
-       
-        
+
         Map<String, Object> rowdata = tokenserialTable.getSelectionModel().getSelectedItem();
         if (rowdata == null || rowdata.isEmpty()) {
             GuiUtils.informationalAlert("", Main.getText("pleaseSelect"), "");
@@ -391,10 +427,10 @@ public class StockController extends TokensController {
         if (!"0".equals(rowdata.get("sign").toString())) {
             return;
         }
-        ECKey myKey=null;
+        ECKey myKey = null;
         for (ECKey ecKey : keys) {
             if (rowdata.get("address").toString().equals((ecKey.toAddress(Main.params).toBase58()))) {
-                myKey=ecKey;
+                myKey = ecKey;
                 break;
             }
         }
@@ -439,6 +475,9 @@ public class StockController extends TokensController {
 
         transaction.setDatasignatire(Json.jsonmapper().writeValueAsBytes(multiSignBies));
         OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block0.bitcoinSerialize());
+        Main.instance.controller.initTableView();
+        initTableView();
+        initMultisignTableView();
 
     }
 
@@ -515,7 +554,7 @@ public class StockController extends TokensController {
             return;
         }
         String tokeninfo = "";
-        tokeninfo += Main.getString(rowData.get("tokenHex")) + "," + Main.getString(rowData.get("tokenname"));
+        tokeninfo += Main.getString(rowData.get("tokenid")) + "," + Main.getString(rowData.get("tokenname"));
         try {
             Main.addText2file(tokeninfo, Main.keyFileDirectory + Main.positiveFile);
         } catch (Exception e) {

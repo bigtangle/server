@@ -33,6 +33,8 @@ import org.spongycastle.crypto.params.KeyParameter;
 import javafx.animation.FadeTransition;
 import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -157,6 +159,7 @@ public class MainController {
 
         String response = OkHttp3Util.post(CONTEXT_ROOT + "batchGetBalances",
                 Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
+        System.out.println(response);
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         if (data == null || data.isEmpty()) {
             return;
@@ -166,6 +169,7 @@ public class MainController {
             return;
         }
         Map<String, String> hashNameMap = Main.getTokenHexNameMap();
+        ObservableList<UTXOModel> subutxos = FXCollections.observableArrayList();
         for (Map<String, Object> object : list) {
             UTXO u = MapToBeanMapperUtil.parseUTXO(object);
             Coin c = u.getValue();
@@ -176,19 +180,26 @@ public class MainController {
             Main.validAddressSet.clear();
             Main.validAddressSet.add(address);
             boolean spendPending = u.isSpendPending();
-            if (myPositvleTokens != null && !"".equals(myPositvleTokens.trim()) && !myPositvleTokens.trim().isEmpty()
-                    && myPositvleTokens.contains(Utils.HEX.encode(tokenid))) {
-                Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending,
-                        Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid)))));
+            if (myPositvleTokens != null && !"".equals(myPositvleTokens.trim()) && !myPositvleTokens.trim().isEmpty()) {
+                if (myPositvleTokens.contains(Utils.HEX.encode(tokenid))) {
+                    Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending,
+                            Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid)))));
+                } else {
+                    subutxos.add(new UTXOModel(balance, tokenid, address, spendPending,
+                            Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid)))));
+                }
+
             }
             if (myPositvleTokens == null || myPositvleTokens.isEmpty() || "".equals(myPositvleTokens.trim()))
                 Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending,
                         Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid)))));
         }
+        Main.instance.getUtxoData().addAll(subutxos);
         list = (List<Map<String, Object>>) data.get("tokens");
         if (list == null || list.isEmpty()) {
             return;
         }
+        ObservableList<CoinModel> subcoins = FXCollections.observableArrayList();
         for (Map<String, Object> map : list) {
             Coin coin2 = MapToBeanMapperUtil.parseCoin(map);
             Main.validTokenMap.clear();
@@ -196,15 +207,22 @@ public class MainController {
 
             if (!coin2.isZero()) {
                 if (myPositvleTokens != null && !"".equals(myPositvleTokens.trim())
-                        && !myPositvleTokens.trim().isEmpty()
-                        && myPositvleTokens.contains(Utils.HEX.encode(coin2.tokenid)))
-                    Main.instance.getCoinData().add(new CoinModel(coin2.toFriendlyString(), coin2.tokenid,
-                            Main.getString(hashNameMap.get(Utils.HEX.encode(coin2.tokenid)))));
+                        && !myPositvleTokens.trim().isEmpty()) {
+                    if (myPositvleTokens.contains(Utils.HEX.encode(coin2.tokenid))) {
+                        Main.instance.getCoinData().add(new CoinModel(coin2.toFriendlyString(), coin2.tokenid,
+                                Main.getString(hashNameMap.get(Utils.HEX.encode(coin2.tokenid)))));
+
+                    } else {
+                        subcoins.add(new CoinModel(coin2.toFriendlyString(), coin2.tokenid,
+                                Main.getString(hashNameMap.get(Utils.HEX.encode(coin2.tokenid)))));
+                    }
+                }
                 if (myPositvleTokens == null || myPositvleTokens.isEmpty() || "".equals(myPositvleTokens.trim()))
                     Main.instance.getCoinData().add(new CoinModel(coin2.toFriendlyString(), coin2.tokenid,
                             Main.getString(hashNameMap.get(Utils.HEX.encode(coin2.tokenid)))));
             }
         }
+        Main.instance.getCoinData().addAll(subcoins);
     }
 
     public void initTableView() {
