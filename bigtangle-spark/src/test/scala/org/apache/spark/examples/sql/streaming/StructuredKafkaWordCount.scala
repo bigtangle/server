@@ -21,6 +21,7 @@ package org.apache.spark.examples.sql.streaming
 import java.util.UUID
 
 import org.apache.spark.sql.SparkSession
+import net.bigtangle.params.UnitTestParams
 
 /**
  * Consumes messages from one or more topics in Kafka and does wordcount.
@@ -67,25 +68,31 @@ object StructuredKafkaWordCount {
     import spark.implicits._
 
     // Create DataSet representing the stream of input lines from kafka
-    val lines = spark
+    val messages = spark
       .readStream
       .format("kafka")
       .option("kafka.bootstrap.servers", bootstrapServers)
       .option(subscribeType, topics)
       .load()
-      //.selectExpr("CAST(value AS  Array[Byte] )")
-     // .as[ Array[Byte]]
+    //.selectExpr("(CAST( value) AS  Array[Byte] ) ")
+    // .as[Array[Byte]]
+    val params = UnitTestParams.get();
 
     // Generate running word count
-      println(lines.count())
+    // println(lines.count())
 
     // Start running the query that prints the running counts to the console
-    val query = lines.writeStream
+    val query = messages.writeStream
       .outputMode("complete")
       .format("console")
       .option("checkpointLocation", checkpointLocation)
       .start()
+    messages.foreach { msg =>
+      println(msg)
+      // val rollingBlock = params.getDefaultSerializer().makeBlock(msg);
+      //  println(rollingBlock)
 
+    }
     query.awaitTermination()
   }
 

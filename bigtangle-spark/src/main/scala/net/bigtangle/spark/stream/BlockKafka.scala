@@ -14,6 +14,8 @@ import org.apache.kafka.common.serialization.ByteArrayDeserializer
 import org.apache.spark.sql.SparkSession
 import net.bigtangle.params.UnitTestParams
 import net.bigtangle.core.Block
+ 
+ 
 
 object BlockKafka {
 
@@ -30,8 +32,6 @@ object BlockKafka {
 
     Logs.setStreamingLogLevels()
 
-     val   params = UnitTestParams.get();
-    
     val Array(brokers, topics) = args
 
     // Create context with 2 second batch interval
@@ -52,43 +52,42 @@ object BlockKafka {
       "auto.offset.reset" -> "latest",
       "enable.auto.commit" -> (false: java.lang.Boolean))
 
-    val messages = KafkaUtils.createDirectStream[String,  Array[Byte]](
+    val messages = KafkaUtils.createDirectStream[String, Array[Byte]](
       ssc,
       LocationStrategies.PreferConsistent,
-      ConsumerStrategies.Subscribe[String,  Array[Byte]](topicsSet, kafkaParams))
+      ConsumerStrategies.Subscribe[String, Array[Byte]](topicsSet, kafkaParams))
 
-      messages.map   { msg => 
-                val rollingBlock = params.getDefaultSerializer().makeBlock( msg.value());
-                println(rollingBlock)
-         
-         }
-     //  messages.map((key, value) => Person(attributes(0), attributes(1).trim.toInt))
-       
+    val f = messages.map { msg =>
+      val rollingBlock = UnitTestParams.get().getDefaultSerializer().makeBlock(msg.value());
+      println(rollingBlock)
+
+    }
+    //  messages.map((key, value) => Person(attributes(0), attributes(1).trim.toInt))
+
     // Get the lines, split them into words, count the words and print
-//    val lines = messages.map(_.value)
-//    val words = lines.flatMap(_.split(" "))
-//    val wordCounts = words.map(x => (x, 1L)).reduceByKey(_ + _)
-  //  wordCounts.print()
-
+    //    val lines = messages.map(_.value)
+    //    val words = lines.flatMap(_.split(" "))
+    //    val wordCounts = words.map(x => (x, 1L)).reduceByKey(_ + _)
+    //  wordCounts.print()
+    f.count().print()
     // Start the computation
     ssc.start()
     ssc.awaitTermination()
 
   }
-  
-    private def runJdbcDatasetExample(spark: SparkSession): Unit = {
+
+  private def runJdbcDatasetExample(spark: SparkSession): Any = {
     // $example on:jdbc_dataset$
     // Note: JDBC loading and saving can be achieved via either the load/save or jdbc methods
     // Loading data from a JDBC source
     val jdbcDF = spark.read
       .format("jdbc")
-      .option("url", "jdbc:postgresql:dbserver")
-      .option("dbtable", "schema.tablename")
-      .option("user", "username")
-      .option("password", "password")
+      .option("url", "jdbc:mysql://localhost:3306/info")
+      .option("dbtable", "info.headers")
+      .option("user", "root")
+      .option("password", "test1234")
       .load()
 
- 
-     
+    jdbcDF.select("select * ")
   }
 }

@@ -20,8 +20,8 @@ data in transaction:
 	It must remove the usage of public key hash, but public key.
 	
 Shareable data enable to add my post address:
-  Structure data post address as json into data, see Email PGP
-  data is secured by signed by private key
+  Structure data post address as json into data   
+  data is secured by encrypted with AES by private key
    transfer my data to other:  signed the data by other public key
    post address + public encrypted
    

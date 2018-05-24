@@ -111,4 +111,15 @@ problem with conflict of token creation
 2) the selection follows the MCMC
 
 
+Use case for token creation
+
+1) simple create a token one times and market.
+check for the same address can only one token exists. Token is unique
+conflicts check, create a token on different network and the MCMC selection will work only with one.
+ 
+2) create multiple token with multi signs
+
+
+
+
 
