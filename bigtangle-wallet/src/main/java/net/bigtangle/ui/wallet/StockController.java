@@ -19,6 +19,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
@@ -104,6 +105,9 @@ public class StockController extends TokensController {
     @FXML
     public TableColumn<Map, String> signColumn;
 
+    @FXML
+    public Button save1;
+
     public Main.OverlayUI overlayUI;
 
     @FXML
@@ -178,13 +182,24 @@ public class StockController extends TokensController {
         urlTF.setText(Main.getString(tokenInfo.getTokens().getUrl()).trim());
         stockDescription1.setText(Main.getString(tokenInfo.getTokens().getDescription()).trim());
         signnumberTF.setText(Main.getString(tokenInfo.getTokens().getSignnumber()).trim());
-        boolean flag = false;
         signAddrChoiceBox.getItems().clear();
         List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
         if (multiSignAddresses != null && !multiSignAddresses.isEmpty()) {
             for (MultiSignAddress msa : multiSignAddresses) {
                 signAddrChoiceBox.getItems().add(msa.getAddress());
             }
+        }
+        requestParam0 = new HashMap<String, Object>();
+        requestParam0.put("tokenid", rowdata.get("tokenid").toString());
+        requestParam0.put("tokenindex", Long.parseLong(rowdata.get("tokenindex").toString()));
+        requestParam0.put("sign", 0);
+        resp = OkHttp3Util.postString(CONTEXT_ROOT + "getMultiSignWithAddress",
+                Json.jsonmapper().writeValueAsString(requestParam0));
+
+        result = Json.jsonmapper().readValue(resp, HashMap.class);
+        int count = (int) result.get("signCount");
+        if (count > 0) {
+            save1.setDisable(true);
         }
 
     }
