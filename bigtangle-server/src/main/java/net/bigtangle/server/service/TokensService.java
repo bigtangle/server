@@ -11,10 +11,14 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Tokens;
+import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.GetTokensResponse;
@@ -55,6 +59,44 @@ public class TokensService {
         AbstractResponse response = GetTokensResponse.createTokenSerial(tokenSerials);
         return response;
     }
+    
+    public void updateTokenInfo(Block block) throws Exception {
+        if (block.getTransactions() == null || block.getTransactions().isEmpty()) {
+            return;
+        }
+        Transaction transaction = block.getTransactions().get(0);
+        if (transaction.getData() == null) {
+            return;
+        }
+        byte[] buf = transaction.getData();
+        TokenInfo tokenInfo = new TokenInfo().parse(buf);
+        
+        final String tokenid = tokenInfo.getTokens().getTokenid();
+        Tokens tokens = this.store.getTokensInfo(tokenid);
+        if (tokens != null) {
+            throw new BlockStoreException("token can't update");
+        }
+        
+        TokenSerial tokenSerial = tokenInfo.getTokenSerial();
+        List<MultiSign> multiSigns = this.store.getMultiSignListByTokenid(tokenid, tokenSerial.getTokenindex());
+        int signnumber = 0;
+        for (MultiSign multiSign : multiSigns) {
+            if (multiSign.getSign() == 1) {
+                signnumber ++;
+            }
+        }
+        if (signnumber >= multiSigns.size()) {
+            throw new BlockStoreException("token can't update");
+        }
+        this.store.deleteMultiSign(tokenid);
+        multiSignService.multiSign(block);
+    }
+    
+    @Autowired
+    private MultiSignService multiSignService;
+    
+    @Autowired
+    protected NetworkParameters networkParameters;
 
     @Autowired
     protected FullPrunedBlockStore store;

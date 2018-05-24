@@ -101,46 +101,15 @@ public class TransactionService {
         String tokenname = (String) request.get("tokenname");
         String description = (String) request.get("description");
         String tokenHex = (String) request.get("tokenHex");
-        boolean blocktype = (Boolean) request.get("multiserial");
+        
+        Tokens tokens = new Tokens(tokenHex, tokenname, description, "", 1, false, false, false);
+         store.saveTokens(tokens);
 
-        String url = request.containsKey("url") ? (String) request.get("url") : "";
-        long signnumber = request.containsKey("signnumber") ? Long.parseLong(request.get("signnumber").toString()) : 1L;
-        if (signnumber <= 0) {
-            throw new BlockStoreException("signnumber error");
-        }
-        boolean multiserial = request.containsKey("multiserial") ? Boolean.parseBoolean(request.get("multiserial").toString()) : false;
-        boolean asmarket = request.containsKey("asmarket") ? Boolean.parseBoolean(request.get("asmarket").toString()) : false;
-        boolean tokenstop = request.containsKey("tokenstop") ? Boolean.parseBoolean(request.get("tokenstop").toString()) : false;
-        
-        Tokens tokens = new Tokens(tokenHex, tokenname, description, url, signnumber, multiserial, asmarket, tokenstop);
-        // store.saveTokens(tokens);
-        
-        //ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(pubKeyHex));
-        // String address = ecKey.toAddress(this.networkParameters).toString();
-        //MultiSignAddress multiSignAddress = new MultiSignAddress(tokenHex, address);
-        //store.insertMultiSignAddress(multiSignAddress);
-        
-        //TokenSerial tokenSerial = new TokenSerial(tokenHex, 0L, amount);
-        //store.insertTokenSerial(tokenSerial);
-
-        // MultiSignBy multiSignBy = new MultiSignBy(tokenHex, 0L, address);
-        //store.insertMultisignby(multiSignBy);
-        
-        TokenInfo tokenInfo = new TokenInfo();
-        tokenInfo.setTokens(tokens);
-        // tokenInfo.getMultiSignAddresses().add(multiSignAddress);
-        // tokenInfo.getMultiSignBies().add(multiSignBy);
-        // tokenInfo.setTokenSerial(tokenSerial);
-        
-        if (tokens.getSignnumber() == 1L) {
-            byte[] pubKey = Utils.HEX.decode(pubKeyHex);
-            byte[] tokenid = Utils.HEX.decode(tokenHex);
-            Coin coin = Coin.valueOf(amount, tokenid);
-            Block block = createGenesisBlock(coin, tokenid, pubKey, blocktype, null);
-            block.toString();
-            return block.bitcoinSerialize();
-        }
-        return new byte[0];
+        byte[] pubKey = Utils.HEX.decode(pubKeyHex);
+        byte[] tokenid = Utils.HEX.decode(tokenHex);
+        Coin coin = Coin.valueOf(amount, tokenid);
+        Block block = createGenesisBlock(coin, tokenid, pubKey, null);
+        return block.bitcoinSerialize();
     }
     
     public void multiSign(Map<String, Object> request) throws BlockStoreException {
@@ -188,7 +157,7 @@ public class TransactionService {
         return false;
     }
 
-    public Block createGenesisBlock(Coin coin, byte[] tokenid, byte[] pubKey, boolean blocktype, TokenInfo tokenInfo) throws Exception {
+    public Block createGenesisBlock(Coin coin, byte[] tokenid, byte[] pubKey, TokenInfo tokenInfo) throws Exception {
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
         Block r2 = blockService.getBlock(tipsToApprove.getRight());

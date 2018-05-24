@@ -413,5 +413,84 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String data = mvcResult.getResponse().getContentAsString();
         logger.info("testSaveBlock resp : " + data);
     }
+    
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testUpdateMultiSig() throws JsonProcessingException, Exception {
+        // Setup transaction and signatures
+        List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
+        String tokenid = Utils.HEX.encode(keys.get(7).getPubKeyHash());
+        TokenInfo tokenInfo = new TokenInfo();
+        Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true, true, true);
+        tokenInfo.setTokens(tokens);
+        ECKey key1 = keys.get(0);
+        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, key1.toAddress(networkParameters).toBase58()));
+        ECKey key2 = keys.get(1);
+        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, key2.toAddress(networkParameters).toBase58()));
+        ECKey key3 = keys.get(2);
+        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, key3.toAddress(networkParameters).toBase58()));
+        int amount = 100000000;
+        Coin basecoin = Coin.valueOf(amount, tokenid);
+        HashMap<String, String> requestParam00 = new HashMap<String, String>();
+        requestParam00.put("tokenid", tokenid);
+        String resp2 = OkHttp3Util.postString(contextRoot + "getCalTokenIndex", Json.jsonmapper().writeValueAsString(requestParam00));
+        HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp2, HashMap.class);
+        Integer tokenindex_ = (Integer) result2.get("tokenindex");
+        tokenInfo.setTokenSerial(new TokenSerial(tokenid, tokenindex_, 100000000));
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        String resp000 = OkHttp3Util.postString(contextRoot + "getGenesisBlockLR", Json.jsonmapper().writeValueAsString(requestParam));
+        HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
+        String leftBlockHex = (String) result000.get("leftBlockHex");
+        String rightBlockHex = (String) result000.get("rightBlockHex");
+        Block r1 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(leftBlockHex));
+        Block r2 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
+        long blocktype0 =  NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
+        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(),blocktype0, Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+        block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
+        block.solve();
+        // save block
+        OkHttp3Util.post(contextRoot + "multiSign", block.bitcoinSerialize());
+        
+        HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
+        requestParam0.put("address", key1.toAddress(networkParameters).toBase58());
+        String resp = OkHttp3Util.postString(contextRoot + "getMultiSignWithAddress", Json.jsonmapper().writeValueAsString(requestParam0));
+        
+        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
+        List<HashMap<String, Object>> multiSigns = (List<HashMap<String, Object>>) result.get("multiSigns");
+        byte[] payloadBytes = Utils.HEX.decode((String) multiSigns.get((int) tokenindex_ - 1).get("blockhashHex"));
+        Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
+        Transaction transaction = block0.getTransactions().get(0);
+        
+        TokenInfo updateTokenInfo = new TokenInfo().parse(transaction.getData());
+        updateTokenInfo.getTokens().setTokenname("UPDATE_TOKEN");
+        ECKey key4 = keys.get(3);
+        updateTokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, key4.toAddress(networkParameters).toBase58()));
+        
+        HashMap<String, String> requestParam_ = new HashMap<String, String>();
+        String resp000_ = OkHttp3Util.postString(contextRoot + "getGenesisBlockLR", Json.jsonmapper().writeValueAsString(requestParam_));
+        HashMap<String, Object> result000_ = Json.jsonmapper().readValue(resp000_, HashMap.class);
+        String leftBlockHex_ = (String) result000_.get("leftBlockHex");
+        String rightBlockHex_ = (String) result000_.get("rightBlockHex");
+        Block r1_ = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(leftBlockHex_));
+        Block r2_ = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex_));
+        Block block_ = new Block(networkParameters, r1_.getHash(), r2_.getHash(), blocktype0, Math.max(r1_.getTimeSeconds(), r2_.getTimeSeconds()));
+        block_.addCoinbaseTransaction(key4.getPubKey(), basecoin, updateTokenInfo);
+        block_.solve();
+        // save block
+        OkHttp3Util.post(contextRoot + "updateTokenInfo", block_.bitcoinSerialize());
+        
+        
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
 }

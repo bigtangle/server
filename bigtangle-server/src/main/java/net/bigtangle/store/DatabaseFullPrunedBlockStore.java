@@ -311,6 +311,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String UPDATE_MULTISIGN_SQL = "UPDATE multisign SET blockhash = ?, sign = ? WHERE tokenid = ? AND tokenindex = ? AND address = ?";
     protected String UPDATE_MULTISIGN0_SQL = "UPDATE multisign SET blockhash = ? WHERE tokenid = ? AND tokenindex = ? AND address = ?";
     protected String SELECT_COUNT_MULTISIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = ? AND tokenindex = ? AND address = ?";
+    protected String DELETE_MULTISIGN_SQL = "DELETE FROM multisign WHERE tokenid = ?";
 
     protected String SELECT_COUNT_MULTISIGN_SIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = ? AND tokenindex = ? AND sign = ?";
 
@@ -3427,6 +3428,68 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     preparedStatement.close();
                 } catch (SQLException e) {
                     throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<MultiSign> getMultiSignListByTokenid(String tokenid, long tokenindex) throws BlockStoreException {
+        List<MultiSign> list = new ArrayList<MultiSign>();
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        String sql = SELECT_MULTISIGN_ADDRESS_ALL_SQL + " AND tokenid=? AND tokenindex = ?";
+        try {
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setString(1, tokenid.trim());
+            preparedStatement.setLong(2, tokenindex);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                String id = resultSet.getString("id");
+                String tokenid0 = resultSet.getString("tokenid");
+                Long tokenindex0 = resultSet.getLong("tokenindex");
+                String address0 = resultSet.getString("address");
+                byte[] blockhash = resultSet.getBytes("blockhash");
+                int sign = resultSet.getInt("sign");
+                MultiSign multiSign = new MultiSign();
+                multiSign.setId(id);
+                multiSign.setTokenindex(tokenindex0);
+                multiSign.setTokenid(tokenid0);
+                multiSign.setAddress(address0);
+                multiSign.setBlockhash(blockhash);
+                multiSign.setSign(sign);
+                list.add(multiSign);
+            }
+            return list;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void deleteMultiSign(String tokenid) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(DELETE_MULTISIGN_SQL);
+            preparedStatement.setString(1, tokenid);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
                 }
             }
         }

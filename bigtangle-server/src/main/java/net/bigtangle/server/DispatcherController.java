@@ -299,7 +299,12 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-
+            case updateTokenInfo: {
+                Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
+                this.tokensService.updateTokenInfo(block);
+                this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
+            }
+                break;
             }
         } catch (Exception exception) {
             logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, Utils.HEX.encode(bodyByte), exception);
