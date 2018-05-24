@@ -35,6 +35,11 @@ public class MultiSignService {
         return MultiSignResponse.createMultiSignResponse(multiSigns);
     }
 
+    public AbstractResponse getCountMultiSign(String tokenid, long tokenindex, int sign) throws BlockStoreException {
+        int count = this.store.getCountMultiSignNoSign(tokenid, tokenindex, sign);
+        return MultiSignResponse.createMultiSignResponse(count);
+    }
+
     public AbstractResponse getMultiSignListWithTokenid(String tokenid, List<String> addresses)
             throws BlockStoreException {
         List<MultiSign> multiSigns = this.store.getMultiSignListByTokenid(tokenid, addresses);

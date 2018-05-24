@@ -252,6 +252,16 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
+            case getCountSign: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String tokenid = (String) request.get("tokenid");
+                long tokenindex = Long.parseLong((String) request.get("tokenindex"));
+                int sign = Integer.parseInt(((String) request.get("sign")));
+                AbstractResponse response = this.multiSignService.getCountMultiSign(tokenid, tokenindex, sign);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
             case getMultiSignWithTokenid: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
