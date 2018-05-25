@@ -607,7 +607,7 @@ public class StockController extends TokensController {
         TokenInfo tokenInfo = new TokenInfo();
         Tokens tokens = new Tokens(Main.getString(map.get("tokenHex")).trim(),
                 Main.getString(map.get("tokenname")).trim(), Main.getString(map.get("description")).trim(),
-                Main.getString(map.get("url")).trim(), signAddrChoiceBox.getItems().size(), true, false,
+                Main.getString(map.get("url")).trim(), Long.parseLong(this.signnumberTF.getText().trim()), true, false,
                 (boolean) map.get("tokenstop"));
         tokenInfo.setTokens(tokens);
         if (signAddrChoiceBox.getItems() != null && !signAddrChoiceBox.getItems().isEmpty()) {
