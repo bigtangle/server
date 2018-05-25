@@ -45,7 +45,7 @@ public class TipsService {
 
 	public List<Sha256Hash> getRatingTips(int count) throws Exception {
 	    // TODO include different time snapshots (max(time) - timeInterval) to be robust against attacks (low pass filter)
-	    // Also set receivetime of genesis block to 0
+	    // overload getmcmc, stop when overtime or finished
 	    
 		Stopwatch watch = Stopwatch.createStarted();
 		SecureRandom seed = new SecureRandom();

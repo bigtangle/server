@@ -101,6 +101,17 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   toTokenHex varchar(255),\n" + "   toAmount varchar(255),\n" + "   data varbinary(5000) NOT NULL,\n"
             + "   toSign boolean,\n" + "   fromSign integer,\n" + "   toOrderId varchar(255),\n"
             + "   fromOrderId varchar(255),\n" + "   PRIMARY KEY (orderid) )";
+    
+    private static final String CREATE_TX_REWARD_TABLE = "CREATE TABLE txreward (\n"
+            + "   blockhash varbinary(32) NOT NULL,\n" 
+            + "   rewardamount bigint NOT NULL,\n"
+            + "   PRIMARY KEY (blockhash) )";
+    
+    private static final String CREATE_MINING_REWARD_CALCULATIONS_TABLE = "CREATE TABLE miningrewardcalculations (\n"
+            + "   blockhash varbinary(32) NOT NULL,\n" 
+            + "   mineraddress varbinary(255) NOT NULL,\n"
+            + "   rewardamount bigint NOT NULL,\n"
+            + "   PRIMARY KEY (blockhash, mineraddress) )";
 
     // Some indexes to speed up inserts
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_height_toaddress_idx ON outputs (hash, outputindex, height, toaddress) USING btree";
@@ -142,6 +153,10 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_MULTISIGNBY_TABLE);
         
         sqlStatements.add(CREATE_MULTISIGN_TABLE);
+        
+        sqlStatements.add(CREATE_TX_REWARD_TABLE);
+        sqlStatements.add(CREATE_MINING_REWARD_CALCULATIONS_TABLE);
+        
         return sqlStatements;
     }
 

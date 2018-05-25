@@ -169,7 +169,6 @@ public class TransactionOutput extends ChildMessage {
         checkNotNull(scriptBytes);
         Utils.int64ToByteStreamLE(value.value, stream);
         stream.write(value.tokenid);
-        // TODO: Move script serialization into the Script class, where it belongs.
         stream.write(new VarInt(scriptBytes.length).encode());
         stream.write(scriptBytes);
     }

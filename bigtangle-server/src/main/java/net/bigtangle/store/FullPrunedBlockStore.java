@@ -8,7 +8,11 @@ package net.bigtangle.store;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 
+import org.apache.commons.lang3.tuple.Triple;
+
+import net.bigtangle.core.Address;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.BlockStoreException;
@@ -133,7 +137,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
      * @param numOutputs
      *            the number of outputs the given transaction has
      */
-    boolean hasUnspentOutputs(Sha256Hash hash, int numOutputs) throws BlockStoreException;
+    boolean hasUnspentOutputs(Sha256Hash hash) throws BlockStoreException;
 
     /**
      * <p>
@@ -298,7 +302,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void updateTokenSerial(TokenSerial tokenSerial0) throws BlockStoreException;
 
     public List<MultiSign> getMultiSignListByTokenid(String tokenid, List<String> addresses) throws BlockStoreException;
-    
+
     public List<MultiSign> getMultiSignListByTokenid(String tokenid, long tokenindex) throws BlockStoreException;
 
     public List<MultiSign> getMultiSignListByAddress(String address) throws BlockStoreException;
@@ -322,6 +326,14 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     void deleteMultiSign(String tokenid) throws BlockStoreException;
 
     long getCountMilestoneBlocksInInterval(long fromHeight, long toHeight) throws BlockStoreException;
+
+    long getTxReward(Sha256Hash hash) throws BlockStoreException;
+
+    void insertTxReward(Sha256Hash hash, long nextPerTxReward) throws BlockStoreException;
+
+    PriorityQueue<Triple<Sha256Hash, byte[], Long>> getSortedMiningRewardCalculations(Sha256Hash hash) throws BlockStoreException;
+    
+    void insertMiningRewardCalculation(Sha256Hash hash, Address key, long l) throws BlockStoreException;
 
     // public List<TokenSerial> getTokenSerialListByTokenid(String tokenid);
     //

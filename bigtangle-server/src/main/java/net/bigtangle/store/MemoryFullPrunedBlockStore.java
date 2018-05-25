@@ -357,10 +357,10 @@ public abstract class MemoryFullPrunedBlockStore implements FullPrunedBlockStore
     }
 
     @Override
-    public synchronized boolean hasUnspentOutputs(Sha256Hash hash, int numOutputs) throws BlockStoreException {
-        for (int i = 0; i < numOutputs; i++)
-            if (getTransactionOutput(hash, i) != null)
-                return true;
+    public synchronized boolean hasUnspentOutputs(Sha256Hash hash) throws BlockStoreException {
+//        for (int i = 0; i < numOutputs; i++)
+//            if (getTransactionOutput(hash, i) != null)
+//                return true;
         return false;
     }
 
