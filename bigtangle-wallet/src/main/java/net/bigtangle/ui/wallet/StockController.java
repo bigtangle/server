@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.spongycastle.crypto.params.KeyParameter;
 
@@ -34,6 +35,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
@@ -48,6 +50,7 @@ import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.ui.wallet.utils.WTUtils;
 import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.utils.UUIDUtil;
 
 public class StockController extends TokensController {
     @FXML
@@ -428,6 +431,22 @@ public class StockController extends TokensController {
             block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo);
             block.solve();
 
+            Transaction transaction = block.getTransactions().get(0);
+            
+            Sha256Hash sighash = transaction.getHash();
+            ECKey.ECDSASignature party1Signature = outKey.sign(sighash);
+            byte[] buf1 = party1Signature.encodeToDER();
+            
+            List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+            MultiSignBy multiSignBy0 = new MultiSignBy();
+            multiSignBy0.setTokenid(Main.getString(tokenid.getValue()).trim());
+            multiSignBy0.setTokenindex(0);
+            multiSignBy0.setAddress(outKey.toAddress(Main.params).toBase58());
+            multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
+            multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+            multiSignBies.add(multiSignBy0);
+            transaction.setDatasignatire(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+            
             // save block
             OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
             Main.instance.sendMessage(block.bitcoinSerialize());
