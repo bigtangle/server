@@ -76,7 +76,7 @@ public class TokensController {
     @FXML
     public TableColumn<Map, String> signnumColumn;
     @FXML
-    public TableColumn<Map, Number> realSignnumColumn;
+    public TableColumn<Map, String> realSignnumColumn;
     @FXML
     public TableColumn<Map, String> isSignAllColumn;
     @FXML
@@ -281,6 +281,7 @@ public class TokensController {
         tokenAmountColumn.setCellValueFactory(new MapValueFactory("amount"));
         signnumColumn.setCellValueFactory(new MapValueFactory("signnumber"));
         isMySignColumn.setCellValueFactory(new MapValueFactory("sign"));
+        realSignnumColumn.setCellValueFactory(new MapValueFactory("count"));
 
         // realSignnumColumn.setCellValueFactory(new MapValueFactory("count"));
         tokenserialTable.setItems(tokenData);
