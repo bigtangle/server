@@ -303,13 +303,27 @@ public class StockController extends TokensController {
         signAddrChoiceBox.getItems().remove(signAddrChoiceBox.getValue());
     }
 
-    public void showToken(String tokenid) throws Exception {
+    public void showToken(String newtokenid) throws Exception {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+
+        Map<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("tokenid", tokenid.getValue());
+        String response = OkHttp3Util.post(CONTEXT_ROOT + "getMultiSignWithTokenid",
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("multiSigns");
+        if (list != null && !list.isEmpty()) {
+            Map<String, Object> multisignMap = list.get(0);
+            tokenUUID = multisignMap.get("id").toString();
+        } else {
+            tokenUUID = null;
+        }
         if (tokenUUID != null && !tokenUUID.isEmpty()) {
-            if (!tokenid.equals(tokenidString)) {
+            if (!newtokenid.equals(tokenidString)) {
                 tabPane.getSelectionModel().clearSelection();
-                save1.setDisable(false);
+                // save1.setDisable(false);
             } else {
-                save1.setDisable(true);
+                // save1.setDisable(true);
             }
         } else {
 
