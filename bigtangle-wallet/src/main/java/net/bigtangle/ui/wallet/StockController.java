@@ -401,25 +401,35 @@ public class StockController extends TokensController {
     public void saveStock(ActionEvent event) {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
-
         try {
-            byte[] pubKey = outKey.getPubKey();
-            HashMap<String, Object> requestParam = new HashMap<String, Object>();
-            requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
-            requestParam.put("amount",
-                    Coin.parseCoin(stockAmount.getText(), Utils.HEX.decode(tokenid.getValue())).getValue());
-            requestParam.put("tokenname", stockName.getText());
-            requestParam.put("description", stockDescription.getText());
-            requestParam.put("tokenHex", tokenid.getValue());
-            requestParam.put("multiserial", false);
-            requestParam.put("asmarket", false);
-            // requestParam.put("tokenstop",
-            // tokenstopCheckBox.selectedProperty().get());
+            TokenInfo tokenInfo = new TokenInfo();
+            Tokens tokens = new Tokens(tokenid.getValue().trim(), stockName.getText().trim(), stockDescription.getText().trim(), "", signAddrChoiceBox.getItems().size(), false, false, false);
+            tokenInfo.setTokens(tokens);
+            
+            // add MultiSignAddress item
+            tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokens.getTokenid(), outKey.toAddress(Main.params).toBase58()));
+            
+            Coin basecoin = Coin.parseCoin(stockAmount.getText(), Utils.HEX.decode(tokenid.getValue()));
 
-            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "createGenesisBlock",
-                    Json.jsonmapper().writeValueAsString(requestParam));
-            Block block = Main.params.getDefaultSerializer().makeBlock(data);
-            // TODO no post to off tangle data, send it to kafka for broadcast
+            long amount = basecoin.getValue();
+            tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
+
+            String resp000 = OkHttp3Util.postString(CONTEXT_ROOT + "getGenesisBlockLR", Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
+            @SuppressWarnings("unchecked")
+            HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
+            String leftBlockHex = (String) result000.get("leftBlockHex");
+            String rightBlockHex = (String) result000.get("rightBlockHex");
+
+            Block r1 = Main.params.getDefaultSerializer().makeBlock(Utils.HEX.decode(leftBlockHex));
+            Block r2 = Main.params.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
+            
+            long blocktype0 = NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
+            Block block = new Block(Main.params, r1.getHash(), r2.getHash(), blocktype0, Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+            block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo);
+            block.solve();
+
+            // save block
+            OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
             Main.instance.sendMessage(block.bitcoinSerialize());
 
             GuiUtils.informationalAlert(Main.getText("s_c_m"), Main.getText("s_c_m"));
@@ -430,7 +440,6 @@ public class StockController extends TokensController {
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
-
     }
 
     public void saveMarket(ActionEvent event) {
