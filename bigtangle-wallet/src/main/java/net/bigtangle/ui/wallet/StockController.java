@@ -108,6 +108,9 @@ public class StockController extends TokensController {
     @FXML
     public Button save1;
 
+    public String address;
+    public String tokenUUID;
+    public String tokenidString;
     public Main.OverlayUI overlayUI;
 
     @FXML
@@ -156,6 +159,9 @@ public class StockController extends TokensController {
         String tokenid = (String) rowdata.get("tokenid");
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
         requestParam0.put("address", rowdata.get("address").toString());
+        address = rowdata.get("address").toString();
+        tokenUUID = rowdata.get("id").toString();
+        tokenidString = rowdata.get("tokenid").toString();
         String resp = OkHttp3Util.postString(CONTEXT_ROOT + "getMultiSignWithAddress",
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
@@ -193,12 +199,12 @@ public class StockController extends TokensController {
         requestParam0.put("tokenid", rowdata.get("tokenid").toString());
         requestParam0.put("tokenindex", Long.parseLong(rowdata.get("tokenindex").toString()));
         requestParam0.put("sign", 0);
-        resp = OkHttp3Util.postString(CONTEXT_ROOT + "getMultiSignWithAddress",
+        resp = OkHttp3Util.postString(CONTEXT_ROOT + "getCountSign",
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
         result = Json.jsonmapper().readValue(resp, HashMap.class);
         int count = (int) result.get("signCount");
-        if (count > 0) {
+        if (count == 0) {
             save1.setDisable(true);
         }
 
@@ -285,20 +291,22 @@ public class StockController extends TokensController {
 
     }
 
+    public void removeSignAddress(ActionEvent event) {
+        signAddrChoiceBox.getItems().remove(signAddrChoiceBox.getValue());
+    }
+
     public void showToken(String tokenid) throws Exception {
-        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
-        HashMap<String, Object> request = new HashMap<String, Object>();
-        request.put("tokenid", tokenid);
-        String resp = OkHttp3Util.postString(CONTEXT_ROOT + "getTokenById",
-                Json.jsonmapper().writeValueAsString(request));
-        final Map<String, Object> data = Json.jsonmapper().readValue(resp, Map.class);
-        if (data.containsKey("token")) {
-            Map<String, Object> map = (Map<String, Object>) data.get("token");
-            if (map != null && !map.isEmpty()) {
-                stockName1.setText(Main.getString(map.get("tokenname")));
-                stockName1.setEditable(false);
+        if (tokenUUID != null && !tokenUUID.isEmpty()) {
+            if (!tokenid.equals(tokenidString)) {
+                tabPane.getSelectionModel().clearSelection();
+                save1.setDisable(false);
+            } else {
+                save1.setDisable(true);
             }
+        } else {
+
         }
+
     }
 
     public void saveStock(ActionEvent event) {
@@ -463,6 +471,7 @@ public class StockController extends TokensController {
         for (HashMap<String, Object> multiSign : multiSigns) {
             if (multiSign.get("id").toString().equals(rowdata.get("id").toString())) {
                 multiSign000 = multiSign;
+                break;
             }
         }
         byte[] payloadBytes = Utils.HEX.decode((String) multiSign000.get("blockhashHex"));

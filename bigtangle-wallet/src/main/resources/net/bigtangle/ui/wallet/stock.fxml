@@ -93,6 +93,7 @@
 								<Button layoutX="562.0" layoutY="433.0" mnemonicParsing="false" onAction="#addSIgnAddress" text="%addSignAddr" />
                         <ChoiceBox fx:id="signAddrChoiceBox" layoutX="279.0" layoutY="470.0" prefHeight="23.0" prefWidth="255.0" />
                         <Label layoutX="24.0" layoutY="474.0" prefHeight="15.0" prefWidth="101.0" text="%Address" />
+                        <Button layoutX="562.0" layoutY="478.0" mnemonicParsing="false" onAction="#removeSignAddress" text="%removeAddress" />
 							</children>
 						</AnchorPane>
 					</content>

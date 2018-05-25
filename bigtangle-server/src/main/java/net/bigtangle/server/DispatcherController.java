@@ -256,8 +256,8 @@ public class DispatcherController {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String tokenid = (String) request.get("tokenid");
-                long tokenindex = Long.parseLong((String) request.get("tokenindex"));
-                int sign = Integer.parseInt(((String) request.get("sign")));
+                long tokenindex = Long.parseLong(request.get("tokenindex") + "");
+                int sign = Integer.parseInt(request.get("sign") + "");
                 AbstractResponse response = this.multiSignService.getCountMultiSign(tokenid, tokenindex, sign);
                 this.outPrintJSONString(httpServletResponse, response);
             }
