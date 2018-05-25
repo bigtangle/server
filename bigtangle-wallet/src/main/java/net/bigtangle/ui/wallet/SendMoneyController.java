@@ -116,7 +116,7 @@ public class SendMoneyController {
                 String tokenHex = (String) map.get("tokenid");
                 if (tokens != null && !tokens.isEmpty()) {
                     for (String temp : tokens) {
-                        // ONLY log System.out.println("temp:" + temp);
+                        // ONLY log log.debug("temp:" + temp);
                         if ((!temp.equals("") && temp.contains(tokenHex))
                                 || NetworkParameters.BIGNETCOIN_TOKENID_STRING.equalsIgnoreCase(tokenHex)
                                 || isMyTokens(tokenHex)) {
@@ -295,7 +295,7 @@ public class SendMoneyController {
         byteBuffer.putInt(toCoin.toPlainString().getBytes().length).put(toCoin.toPlainString().getBytes());
         byteBuffer.putInt(this.mOrderid.getBytes().length).put(this.mOrderid.getBytes());
         byteBuffer.putInt(buf.length).put(buf);
-        // System.out.println("tx len : " + buf.length);
+        // log.debug("tx len : " + buf.length);
         return byteBuffer.array();
     }
 

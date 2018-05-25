@@ -159,7 +159,7 @@ public class MainController {
 
         String response = OkHttp3Util.post(CONTEXT_ROOT + "batchGetBalances",
                 Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
-        System.out.println(response);
+        log.debug(response);
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         if (data == null || data.isEmpty()) {
             return;

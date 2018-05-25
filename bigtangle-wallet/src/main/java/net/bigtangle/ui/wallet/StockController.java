@@ -12,8 +12,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import javafx.collections.FXCollections;
@@ -35,7 +36,6 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
-import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
@@ -50,9 +50,11 @@ import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.ui.wallet.utils.WTUtils;
 import net.bigtangle.utils.OkHttp3Util;
-import net.bigtangle.utils.UUIDUtil;
 
 public class StockController extends TokensController {
+    
+    private static final Logger log = LoggerFactory.getLogger(StockController.class);
+    
     @FXML
     public TabPane tabPane;
     @FXML
@@ -581,7 +583,7 @@ public class StockController extends TokensController {
         requestParam0.put("address", rowdata.get("address").toString());
         String resp = OkHttp3Util.postString(CONTEXT_ROOT + "getMultiSignWithAddress",
                 Json.jsonmapper().writeValueAsString(requestParam0));
-        System.out.println(resp);
+        log.debug(resp);
 
         HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
         List<HashMap<String, Object>> multiSigns = (List<HashMap<String, Object>>) result.get("multiSigns");
@@ -676,7 +678,7 @@ public class StockController extends TokensController {
         if (signAddrChoiceBox.getItems() != null && !signAddrChoiceBox.getItems().isEmpty()) {
             ObservableList<String> addresses = signAddrChoiceBox.getItems();
             for (ECKey ecKey : keys) {
-                // System.out.println(ecKey.toAddress(Main.params).toBase58());
+                // log.debug(ecKey.toAddress(Main.params).toBase58());
                 if (addresses.contains(ecKey.toAddress(Main.params).toBase58())) {
                     myEcKeys.add(ecKey);
                 }
