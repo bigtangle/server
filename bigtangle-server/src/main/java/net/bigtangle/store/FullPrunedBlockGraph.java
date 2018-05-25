@@ -318,7 +318,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
             // TODO save token here (since block is confirmed here)
 
-            // TODO confirm mining reward here (since block is confirmed here)
+            // TODO confirm mining reward here by converting 
+            // tuple(header.getHash(), entry.key, entry.value * per-tx
+            // reward) in db to UTXOs in db
+            // TODO abort if reward calculation fails and is invalid
 
             // For each output, mark as confirmed now
             for (TransactionOutput out : tx.getOutputs()) {
@@ -367,7 +370,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
             // TODO revert token here (unconfirmed block)
 
-            // TODO unconfirm mining reward here (since block is confirmed here)
+            // TODO unconfirm mining reward here by removing UTXOs where 
+            // tuple(header.getHash(), entry.key, entry.value * per-tx
+            // reward) exists in db
 
             // Mark unconfirmed all tx outputs in db and disconnect their
             // spending blocks

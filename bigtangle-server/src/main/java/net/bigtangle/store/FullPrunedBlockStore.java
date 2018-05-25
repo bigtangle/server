@@ -321,6 +321,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     void deleteMultiSign(String tokenid) throws BlockStoreException;
 
+    long getCountMilestoneBlocksInInterval(long fromHeight, long toHeight) throws BlockStoreException;
+
     // public List<TokenSerial> getTokenSerialListByTokenid(String tokenid);
     //
     // public List<MultiSignBy> getMultiSignByListByTokenid(String tokenid);

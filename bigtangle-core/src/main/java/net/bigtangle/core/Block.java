@@ -817,6 +817,8 @@ public class Block extends Message {
              */
         } else if (blocktype == NetworkParameters.BLOCKTYPE_REWARD) {
             // TODO sanity check: validity set to true means reward has been calculated locally
+            // TODO check that there is only one empty tx with correct data (long fromheight)
+            // TODO check that fromHeight is valid (c * rewardInterval)
         }
     }
 

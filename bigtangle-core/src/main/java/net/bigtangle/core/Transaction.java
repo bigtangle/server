@@ -247,7 +247,7 @@ public class Transaction extends ChildMessage {
     private byte[] data;
     
     @Nullable
-    private byte[] datasignatire;
+    private byte[] datasignature;
     
     @Nullable
     private long dataType;
@@ -333,8 +333,8 @@ public class Transaction extends ChildMessage {
 
     public int calculateDataSignatireLen() {
         int len = 4;
-        if (this.datasignatire != null) {
-            len += this.datasignatire.length;
+        if (this.datasignature != null) {
+            len += this.datasignature.length;
         }
         return len;
     }
@@ -695,7 +695,7 @@ public class Transaction extends ChildMessage {
         len = readUint32();
         optimalEncodingMessageSize += 4;
         if (len > 0) {
-            this.datasignatire = readBytes((int) len);
+            this.datasignature = readBytes((int) len);
             optimalEncodingMessageSize += len;
         }
         
@@ -1315,12 +1315,12 @@ public class Transaction extends ChildMessage {
             stream.write(this.data);
         }
         
-        if (this.datasignatire == null) {
+        if (this.datasignature == null) {
             uint32ToByteStreamLE(0L, stream);
         }
         else {
-            uint32ToByteStreamLE(this.datasignatire.length, stream);
-            stream.write(this.datasignatire);
+            uint32ToByteStreamLE(this.datasignature.length, stream);
+            stream.write(this.datasignature);
         }
     }
 
@@ -1529,7 +1529,8 @@ public class Transaction extends ChildMessage {
             throw new VerificationException.EmptyInputsOrOutputs();
         if (this.getMessageSize() > Block.MAX_BLOCK_SIZE)
             throw new VerificationException.LargerThanMaxBlockSize();
-        
+
+        // TODO why is there no max money check below?
         Coin valueOut = Coin.valueOf(0, NetworkParameters.BIGNETCOIN_TOKENID);
         HashSet<TransactionOutPoint> outpoints = new HashSet<TransactionOutPoint>();
         for (TransactionInput input : inputs) {
@@ -1542,7 +1543,7 @@ public class Transaction extends ChildMessage {
                 if (output.getValue().signum() < 0) // getValue() can throw
                                                     // IllegalStateException
                     throw new VerificationException.NegativeValueOutput();
-                // TODO why is there no max money?
+                // TODO why is there no max money check?
 //                valueOut = valueOut.add(output.getValue());
 //                if (params.hasMaxMoney() && valueOut.compareTo(params.getMaxMoney()) > 0)
 //                    throw new IllegalArgumentException();
@@ -1662,12 +1663,12 @@ public class Transaction extends ChildMessage {
 
 
     public byte[] getDatasignatire() {
-        return datasignatire;
+        return datasignature;
     }
 
 
     public void setDatasignatire(byte[] datasignatire) {
-        this.datasignatire = datasignatire;
+        this.datasignature = datasignatire;
     }
 
 

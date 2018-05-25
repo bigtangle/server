@@ -18,7 +18,6 @@ import com.google.common.base.Objects;
 
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.RegTestParams;
-import net.bigtangle.params.TestNet2Params;
 import net.bigtangle.params.TestNet3Params;
 import net.bigtangle.params.UnitTestParams;
 import net.bigtangle.script.Script;
@@ -170,6 +169,8 @@ public abstract class NetworkParameters {
     public static final long ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF = 60;
 
     public static final long ENTRYPOINT_TIPSELECTION_DEPTH_CUTOFF = 20;
+    
+    public static final int REWARD_HEIGHT_INTERVAL = 100;
 
     /**
      * The maximum number of coins to be generated
@@ -541,5 +542,9 @@ public abstract class NetworkParameters {
         public int getBitcoinProtocolVersion() {
             return bitcoinProtocol;
         }
+    }
+
+    public long getRewardHeightInterval() {
+        return REWARD_HEIGHT_INTERVAL;
     }
 }

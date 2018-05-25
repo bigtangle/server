@@ -158,6 +158,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "milestone, milestonelastupdate, milestonedepth, inserttime, maintained, "
             + "rewardvalidityassessment) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
+    protected String SELECT_COUNT_MILESTONE_SQL = "SELECT COUNT(*) as count FROM blockevaluation WHERE milestone = true AND height >= ? AND height <= ?";
     protected String SELECT_SOLID_BLOCKEVALUATIONS_SQL = "SELECT  blockhash, rating, depth, "
             + "cumulativeweight, solid, height, milestone, milestonelastupdate,"
             + " milestonedepth, inserttime, maintained, rewardvalidityassessment "
@@ -3244,6 +3245,32 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 list.add(multiSign);
             }
             return list;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public long getCountMilestoneBlocksInInterval(long fromHeight, long toHeight) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_COUNT_MILESTONE_SQL);
+            preparedStatement.setLong(1, fromHeight);
+            preparedStatement.setLong(2, toHeight);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getLong("count");
+            }
+            return 0;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } finally {
