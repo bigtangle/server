@@ -119,7 +119,7 @@ public class TokensController {
         ObservableList<Map> tokenData = FXCollections.observableArrayList();
         if (tokens != null && !tokens.isEmpty()) {
             for (String temp : tokens) {
-                // ONLY log System.out.println("temp:" + temp);
+                // ONLY log log.debug("temp:" + temp);
                 if (!temp.equals("")) {
                     Map map = new HashMap();
                     map.put("tokenHex", temp.split(",")[0]);
@@ -201,7 +201,7 @@ public class TokensController {
         requestParam.put("name", Main.getString(name));
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens",
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        System.out.println(response);
+        log.debug(response);
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
 
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
@@ -258,7 +258,7 @@ public class TokensController {
         requestParam.put("addresses", addresses);
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getMultiSignWithTokenid",
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        System.out.println(response);
+        log.debug(response);
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("multiSigns");
         if (list != null) {

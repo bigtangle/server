@@ -301,10 +301,10 @@ public class ExchangeController {
         byteBuffer.get(orderid);
 
         mOrderid = new String(orderid);
-        // System.out.println("orderid : " + new String(orderid));
+        // log.debug("orderid : " + new String(orderid));
 
         int len = byteBuffer.getInt();
-        // System.out.println("tx len : " + len);
+        // log.debug("tx len : " + len);
         byte[] data = new byte[len];
         byteBuffer.get(data);
         try {
@@ -458,7 +458,7 @@ public class ExchangeController {
         byteBuffer.putInt(toCoin.toPlainString().getBytes().length).put(toCoin.toPlainString().getBytes());
         byteBuffer.putInt(this.mOrderid.getBytes().length).put(this.mOrderid.getBytes());
         byteBuffer.putInt(buf.length).put(buf);
-        // System.out.println("tx len : " + buf.length);
+        // log.debug("tx len : " + buf.length);
         return byteBuffer.array();
     }
 
