@@ -44,15 +44,16 @@ display  total only in balance and UTXO as dialog for details
             "    tokenname varchar(255) ,\n" + 
             "    description varchar(255) ,\n" + 
             "    url varchar(255) ,\n" + 
-            "    signnumber bigint NOT NULL   ,\n" +
-            "    multiserial boolean,\n" +
-            "    asmarket boolean,\n" +
+            "    classname varchar(255),\n" +
+             "   datatype varchar(255),\n" +
+            "    data mediumblob,\n" +
              "   tokenstop boolean,\n" +
             "    PRIMARY KEY (tokenid) \n)";
               
  private static final String CREATE_MULTISIGNADDRESS_TABLE = "CREATE TABLE multisignaddress (\n" +
             "    tokenid varchar(255) NOT NULL  ,\n" +
        		"    address varchar(35),\n" +
+       		"    tokenindex bigint NOT NULL   ,\n" +
             "    PRIMARY KEY (tokenid, address) \n)"; 
             
                       
@@ -60,6 +61,7 @@ display  total only in balance and UTXO as dialog for details
             "    tokenid varchar(255) NOT NULL  ,\n" +
             "    tokenindex bigint NOT NULL   ,\n" +
             "    amount bigint(20) ,\n" +
+            "    signnumber bigint NOT NULL   ,\n" +
             "    PRIMARY KEY (tokenid, tokenindex) \n)";
 
 
