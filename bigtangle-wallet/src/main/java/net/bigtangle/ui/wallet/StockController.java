@@ -185,7 +185,8 @@ public class StockController extends TokensController {
         tabPane.getSelectionModel().clearAndSelect(3);
         stockName1.setText(Main.getString(tokenInfo.getTokens().getTokenname()).trim());
         tokenid1.setValue(tokenid);
-        stockAmount1.setText(Main.getString(tokenInfo.getTokenSerial().getAmount()));
+        String amountString = Coin.valueOf(tokenInfo.getTokenSerial().getAmount(), tokenid).toPlainString();
+        stockAmount1.setText(amountString);
         tokenstopCheckBox.setSelected(tokenInfo.getTokens().isTokenstop());
         urlTF.setText(Main.getString(tokenInfo.getTokens().getUrl()).trim());
         stockDescription1.setText(Main.getString(tokenInfo.getTokens().getDescription()).trim());
