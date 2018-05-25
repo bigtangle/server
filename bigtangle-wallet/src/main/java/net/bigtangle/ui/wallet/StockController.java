@@ -455,6 +455,7 @@ public class StockController extends TokensController {
             return;
         }
         if (!"0".equals(rowdata.get("sign").toString())) {
+            GuiUtils.informationalAlert("", Main.getText("mySignExist"), "");
             return;
         }
         ECKey myKey = null;
