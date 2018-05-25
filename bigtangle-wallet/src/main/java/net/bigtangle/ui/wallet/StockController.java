@@ -156,7 +156,7 @@ public class StockController extends TokensController {
             return;
         }
         if (!"0".equals(rowdata.get("sign").toString())) {
-           // return;
+            // return;
         }
         String tokenid = (String) rowdata.get("tokenid");
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
@@ -221,7 +221,7 @@ public class StockController extends TokensController {
             return;
         }
         if (!"0".equals(rowdata.get("sign").toString())) {
-           // return;
+            // return;
         }
         String tokenid = (String) rowdata.get("tokenid");
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
@@ -250,8 +250,10 @@ public class StockController extends TokensController {
         tabPane.getSelectionModel().clearAndSelect(3);
         stockName1.setText(Main.getString(tokenInfo.getTokens().getTokenname()).trim());
         tokenid1.setValue(tokenid);
-//        String amountString = Coin.valueOf(tokenInfo.getTokenSerial().getAmount(), tokenid).toPlainString();
-//        stockAmount1.setText(amountString);
+        // String amountString =
+        // Coin.valueOf(tokenInfo.getTokenSerial().getAmount(),
+        // tokenid).toPlainString();
+        // stockAmount1.setText(amountString);
         tokenstopCheckBox.setSelected(tokenInfo.getTokens().isTokenstop());
         urlTF.setText(Main.getString(tokenInfo.getTokens().getUrl()).trim());
         stockDescription1.setText(Main.getString(tokenInfo.getTokens().getDescription()).trim());
@@ -277,8 +279,7 @@ public class StockController extends TokensController {
         }
 
     }
-    
-    
+
     public void addSIgnAddress(ActionEvent event) {
         try {
             showAddAddressDialog();
@@ -642,6 +643,7 @@ public class StockController extends TokensController {
         Block block = new Block(Main.params, r1.getHash(), r2.getHash(), blocktype0,
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
         ECKey key1 = Main.bitcoin.wallet().currentReceiveKey();
+        signAddrChoiceBox.getItems().add(key1.toAddress(Main.params).toBase58());
         List<ECKey> myEcKeys = new ArrayList<ECKey>();
         if (signAddrChoiceBox.getItems() != null && !signAddrChoiceBox.getItems().isEmpty()) {
             ObservableList<String> addresses = signAddrChoiceBox.getItems();
@@ -656,6 +658,7 @@ public class StockController extends TokensController {
             }
 
         }
+
         block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
         block.solve();
 
