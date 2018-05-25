@@ -156,7 +156,7 @@ public class StockController extends TokensController {
             return;
         }
         if (!"0".equals(rowdata.get("sign").toString())) {
-            return;
+           // return;
         }
         String tokenid = (String) rowdata.get("tokenid");
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
@@ -213,6 +213,72 @@ public class StockController extends TokensController {
 
     }
 
+    public void againPublish(ActionEvent event) throws Exception {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        Map<String, Object> rowdata = tokenserialTable.getSelectionModel().getSelectedItem();
+        if (rowdata == null || rowdata.isEmpty()) {
+            GuiUtils.informationalAlert("", Main.getText("pleaseSelect"), "");
+            return;
+        }
+        if (!"0".equals(rowdata.get("sign").toString())) {
+           // return;
+        }
+        String tokenid = (String) rowdata.get("tokenid");
+        HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
+        requestParam0.put("address", rowdata.get("address").toString());
+        address = rowdata.get("address").toString();
+        tokenUUID = rowdata.get("id").toString();
+        tokenidString = rowdata.get("tokenid").toString();
+        String resp = OkHttp3Util.postString(CONTEXT_ROOT + "getMultiSignWithAddress",
+                Json.jsonmapper().writeValueAsString(requestParam0));
+
+        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
+        List<HashMap<String, Object>> multiSigns = (List<HashMap<String, Object>>) result.get("multiSigns");
+        HashMap<String, Object> multiSign000 = null;
+        for (HashMap<String, Object> multiSign : multiSigns) {
+            if (multiSign.get("id").toString().equals(rowdata.get("id").toString())) {
+                multiSign000 = multiSign;
+            }
+        }
+        byte[] payloadBytes = Utils.HEX.decode((String) multiSign000.get("blockhashHex"));
+        Block block0 = Main.params.getDefaultSerializer().makeBlock(payloadBytes);
+        Transaction transaction = block0.getTransactions().get(0);
+
+        byte[] buf = transaction.getData();
+        TokenInfo tokenInfo = new TokenInfo().parse(buf);
+
+        tabPane.getSelectionModel().clearAndSelect(3);
+        stockName1.setText(Main.getString(tokenInfo.getTokens().getTokenname()).trim());
+        tokenid1.setValue(tokenid);
+//        String amountString = Coin.valueOf(tokenInfo.getTokenSerial().getAmount(), tokenid).toPlainString();
+//        stockAmount1.setText(amountString);
+        tokenstopCheckBox.setSelected(tokenInfo.getTokens().isTokenstop());
+        urlTF.setText(Main.getString(tokenInfo.getTokens().getUrl()).trim());
+        stockDescription1.setText(Main.getString(tokenInfo.getTokens().getDescription()).trim());
+        signnumberTF.setText(Main.getString(tokenInfo.getTokens().getSignnumber()).trim());
+        signAddrChoiceBox.getItems().clear();
+        List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
+        if (multiSignAddresses != null && !multiSignAddresses.isEmpty()) {
+            for (MultiSignAddress msa : multiSignAddresses) {
+                signAddrChoiceBox.getItems().add(msa.getAddress());
+            }
+        }
+        requestParam0 = new HashMap<String, Object>();
+        requestParam0.put("tokenid", rowdata.get("tokenid").toString());
+        requestParam0.put("tokenindex", Long.parseLong(rowdata.get("tokenindex").toString()));
+        requestParam0.put("sign", 0);
+        resp = OkHttp3Util.postString(CONTEXT_ROOT + "getCountSign",
+                Json.jsonmapper().writeValueAsString(requestParam0));
+
+        result = Json.jsonmapper().readValue(resp, HashMap.class);
+        int count = (int) result.get("signCount");
+        if (count == 0) {
+            save1.setDisable(true);
+        }
+
+    }
+    
+    
     public void addSIgnAddress(ActionEvent event) {
         try {
             showAddAddressDialog();
