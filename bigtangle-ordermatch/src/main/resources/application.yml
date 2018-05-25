@@ -1,0 +1,34 @@
+server:
+  neighbors: 
+  port: ${SERVER_PORT:8088}
+  udp_receiver_port: 
+  tcp_receiver_port: 
+  net: ${SERVER_NET:Unittest}
+  remote: ${SERVER_REMOTE:0.0.0.0}
+  remote_auth: 
+  remote_limit_api: ${SERVER_REMOTE_LIMIT_API:5000}
+  mineraddress:  ${SERVER_MINERADDRESS:mjWvzPZz4YJtWqb7ux7cdgq5G7rzkg3bXG}
+
+db:
+  dbtype: ${DBTYPE:mysql}
+  hostname: ${DB_HOSTNAME:localhost}
+  port: ${DB_PORT:3306}
+  dbName: ${DB_NAME:info}
+  username: ${DB_USERNAME:root}
+  password: ${DB_PASSWORD:test1234}
+
+service:
+  milestoneschedule:
+    rate: ${SERVICE_MILESTONE_RATE:15000}
+    active: ${SERVICE_MILESTONE_ACTIVE:false}
+  orderMatchService:
+    rate: ${SERVICE_ORDERMATCH_RATE:10000}
+    active: ${SERVICE_ORDERMATCH_ACTIVE:false}
+    
+kafka:
+  bootstrapServers: ${BOOT_STRAP_SERVERS:}
+  topicOutName: ${TOPIC_OUT_NAME:bigtangle}
+spring:
+  cache:
+    jcache:
+      config: classpath:ehcache.xml
