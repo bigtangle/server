@@ -1,4 +1,4 @@
-package de.gd.analytics.sparkjob
+package net.bigtangle.sparkjob
 
 import scala.util.parsing.json.JSON
 

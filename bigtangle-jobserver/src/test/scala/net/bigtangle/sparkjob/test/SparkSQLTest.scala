@@ -1,4 +1,4 @@
-package de.gd.analytics.test
+package net.bigtangle.sparkjob.test
 
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
@@ -6,9 +6,10 @@ import org.apache.spark.sql.SQLContext
 
 import com.typesafe.config.ConfigFactory
 
-import de.gd.analytics.sparkjob.SparkSQLData
+ 
 import java.text.SimpleDateFormat
 import java.sql.Timestamp
+import net.bigtangle.sparkjob.SparkSQLData
 
 object SparkSQLTest {
   def main(args: Array[String]) {

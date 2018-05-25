@@ -1,4 +1,4 @@
-package de.gd.analytics.test
+package net.bigtangle.sparkjob.test
 
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext

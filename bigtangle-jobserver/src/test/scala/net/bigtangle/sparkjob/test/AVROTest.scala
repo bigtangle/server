@@ -1,4 +1,4 @@
-package de.gd.analytics.test
+package net.bigtangle.sparkjob.test
 
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
@@ -6,8 +6,9 @@ import org.apache.spark.sql.SQLContext
 
 import com.typesafe.config.ConfigFactory
 
-import de.gd.analytics.sparkjob.SparkSQLData
+ 
 import org.apache.spark.sql.SaveMode
+import net.bigtangle.sparkjob.SparkSQLData
 
 object AVROTest {
   def main(args: Array[String]) {
