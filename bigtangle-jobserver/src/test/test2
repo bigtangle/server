@@ -1,0 +1,54 @@
+  
+#curl -d 'jsonRequest={"operation":"get", "path":"/" }' 'localhost:8090/jobs?appName=test&classPath=de.gd.analytics.sparkjob.Hdfs&sync=true'
+ 
+ curl -d 'jsonRequest={"operation":"register", "table":"banknote","format":"csv", "skip":"false","filePathName":"hdfs://quickstart.cloudera:8020/user/archiv/Poznan_Banknote/BNList_1000191_20151223_112418_1.txt"}' 'localhost:8090/jobs?appName=test&classPath=de.gd.analytics.sparkjob.SqlJob&sync=true&context=mytestcontext'
+ 
+ curl -d 'jsonRequest={"operation":"register", "table":"labour","format":"csv", "skip":"false","filePathName":"hdfs://quickstart.cloudera:8020/user/archiv/Poland_Labour/Poland_Labour.csv"}' 'localhost:8090/jobs?appName=test&classPath=de.gd.analytics.sparkjob.SqlJob&sync=true&context=mytestcontext'
+ 
+ curl -d 'jsonRequest={"operation":"schema", "table":"labour" }' 'localhost:8090/jobs?appName=test&classPath=de.gd.analytics.sparkjob.SqlJob&sync=true&context=mytestcontext'
+ 
+  curl -d 'jsonRequest={"operation":"registerUDF"}' 'localhost:8090/jobs?appName=test&classPath=de.gd.analytics.sparkjob.SqlJob&sync=true&context=mytestcontext'
+ 
+ 
+# curl -d 'jsonRequest={"operation":"sql", "sqlQuery":"select  *   from  banknote ,labour   where   getYearMonth(banknote.TimeStart) = labour.ECONOMIC_PROPERTY"}' 'localhost:8090/jobs?appName=test&classPath=de.gd.analytics.sparkjob.SqlJob&sync=true&context=mytestcontext'
+ 
+  
+ curl -d 'jsonRequest={"operation":"deregister", "table":"healthexpenditure_newtest" }' 'localhost:8090/jobs?appName=test&classPath=de.gd.analytics.sparkjob.SqlJob&sync=true&context=mytestcontext'
+ 
+ curl -d 'jsonRequest={"operation":"deletePath", "uri":"hdfs://quickstart.cloudera:8020", "filePathName":"/user/archiv/parquet/healthexpenditure_newtest"}' 'localhost:8090/jobs?appName=test&classPath=de.gd.analytics.sparkjob.SqlJob&sync=true&context=mytestcontext'
+ 
+ curl -d 'jsonRequest={"operation":"write", "table":"healthexpenditure_new", "tabledata":"{\"financial_year\":\"2004-05\",\"state\":\"TAS\",\"area_of_expenditure\":\"Community health\",\"broad_source_of_funding\":\"Government\",\"detailed_source_of_funding\":\"Australian Government\",\"real_expenditure_millions\":\"13\"}",
+"format":"parquet","filePathName":"hdfs://quickstart.cloudera:8020/user/archiv/parquet/healthexpenditure_newtest"}' 'localhost:8090/jobs?appName=test&classPath=de.gd.analytics.sparkjob.SqlJob&sync=true&context=mytestcontext'
+ 
+ curl -d 'jsonRequest={"operation":"register", "table":"healthexpenditure_newtest","format":"parquet", "skip":"false","filePathName":"hdfs://quickstart.cloudera:8020/user/archiv/parquet/healthexpenditure_newtest"}' 'localhost:8090/jobs?appName=test&classPath=de.gd.analytics.sparkjob.SqlJob&sync=true&context=mytestcontext'
+ 
+ curl -d 'jsonRequest={"operation":"schema", "table":"healthexpenditure_newtest" }' 'localhost:8090/jobs?appName=test&classPath=de.gd.analytics.sparkjob.SqlJob&sync=true&context=mytestcontext'
+ 
+ curl -d 'jsonRequest={"operation":"sql", "sqlQuery":"select detailed_source_of_funding  from  healthexpenditure_newtest"}' 'localhost:8090/jobs?appName=test&classPath=de.gd.analytics.sparkjob.SqlJob&sync=true&context=mytestcontext'
+ 
+ 
+ 
+  curl -d 'jsonRequest={"operation":"deregister", "table":"healthexpenditure_newtest_json" }' 'localhost:8090/jobs?appName=test&classPath=de.gd.analytics.sparkjob.SqlJob&sync=true&context=mytestcontext'
+ 
+ curl -d 'jsonRequest={"operation":"deletePath", "uri":"hdfs://quickstart.cloudera:8020", "filePathName":"/user/archiv/json/healthexpenditure_newtest"}' 'localhost:8090/jobs?appName=test&classPath=de.gd.analytics.sparkjob.SqlJob&sync=true&context=mytestcontext'
+ 
+ curl -d 'jsonRequest={"operation":"write", "table":"healthexpenditure_new", "tabledata":"{\"financial_year\":\"2004-05\",\"state\":\"TAS\",\"area_of_expenditure\":\"Community health\",\"broad_source_of_funding\":\"Government\",\"detailed_source_of_funding\":\"Australian Government\",\"real_expenditure_millions\":\"13\"}",
+"format":"json","filePathName":"hdfs://quickstart.cloudera:8020/user/archiv/json/healthexpenditure_newtest"}' 'localhost:8090/jobs?appName=test&classPath=de.gd.analytics.sparkjob.SqlJob&sync=true&context=mytestcontext'
+ 
+ curl -d 'jsonRequest={"operation":"register", "table":"healthexpenditure_newtest_json","format":"json", "skip":"false","filePathName":"hdfs://quickstart.cloudera:8020/user/archiv/json/healthexpenditure_newtest"}' 'localhost:8090/jobs?appName=test&classPath=de.gd.analytics.sparkjob.SqlJob&sync=true&context=mytestcontext'
+ 
+ curl -d 'jsonRequest={"operation":"schema", "table":"healthexpenditure_newtest_json" }' 'localhost:8090/jobs?appName=test&classPath=de.gd.analytics.sparkjob.SqlJob&sync=true&context=mytestcontext'
+ 
+ curl -d 'jsonRequest={"operation":"sql", "sqlQuery":"select detailed_source_of_funding  from  healthexpenditure_newtest_json"}' 'localhost:8090/jobs?appName=test&classPath=de.gd.analytics.sparkjob.SqlJob&sync=true&context=mytestcontext'
+ 
+ 
+   
+  curl -d 'jsonRequest={"operation":"sql", "sqlQuery":"select  Quality, count(banknote.TimeStart), max(banknote.TimeStart) ,  min(banknote.TimeStart),  avg(COOPERATIVE_SECTOR_WAGE_GROWTH) from  banknote ,labour   where   getYearMonth(banknote.TimeStart) = labour.ECONOMIC_PROPERTY group by Quality"}' 'localhost:8090/jobs?appName=test&classPath=de.gd.analytics.sparkjob.SqlJob&sync=true&context=mytestcontext'
+ 
+ 
+  curl -d 'jsonRequest={"operation":"register", "table":"healthexpenditure_newtest","format":"parquet", "skip":"false","filePathName":"hdfs://quickstart.cloudera:8020/user/archiv/parquet/healthexpenditure_newtest"}' 'localhost:8090/jobs?appName=test&classPath=de.gd.analytics.sparkjob.SqlJob&sync=true&context=mytestcontext'
+ 
+ curl -d 'jsonRequest={"operation":"saveTable", "table":"healthexpenditure_newtest",   
+"format":"csv","filePathName":"hdfs://10.15.20.85:8020/user/archiv/csv/healthexpenditure_csvtest"}' 'localhost:8090/jobs?appName=test&classPath=de.gd.analytics.sparkjob.SqlJob&sync=true&context=mytestcontext'
+ 
+ 

@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.spongycastle.crypto.params.KeyParameter;
 
@@ -34,6 +35,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
@@ -48,6 +50,7 @@ import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.ui.wallet.utils.WTUtils;
 import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.utils.UUIDUtil;
 
 public class StockController extends TokensController {
     @FXML
@@ -156,7 +159,7 @@ public class StockController extends TokensController {
             return;
         }
         if (!"0".equals(rowdata.get("sign").toString())) {
-            return;
+            // return;
         }
         String tokenid = (String) rowdata.get("tokenid");
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
@@ -185,7 +188,75 @@ public class StockController extends TokensController {
         tabPane.getSelectionModel().clearAndSelect(3);
         stockName1.setText(Main.getString(tokenInfo.getTokens().getTokenname()).trim());
         tokenid1.setValue(tokenid);
-        stockAmount1.setText(Main.getString(tokenInfo.getTokenSerial().getAmount()));
+        String amountString = Coin.valueOf(tokenInfo.getTokenSerial().getAmount(), tokenid).toPlainString();
+        stockAmount1.setText(amountString);
+        tokenstopCheckBox.setSelected(tokenInfo.getTokens().isTokenstop());
+        urlTF.setText(Main.getString(tokenInfo.getTokens().getUrl()).trim());
+        stockDescription1.setText(Main.getString(tokenInfo.getTokens().getDescription()).trim());
+        signnumberTF.setText(Main.getString(tokenInfo.getTokens().getSignnumber()).trim());
+        signAddrChoiceBox.getItems().clear();
+        List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
+        if (multiSignAddresses != null && !multiSignAddresses.isEmpty()) {
+            for (MultiSignAddress msa : multiSignAddresses) {
+                signAddrChoiceBox.getItems().add(msa.getAddress());
+            }
+        }
+        requestParam0 = new HashMap<String, Object>();
+        requestParam0.put("tokenid", rowdata.get("tokenid").toString());
+        requestParam0.put("tokenindex", Long.parseLong(rowdata.get("tokenindex").toString()));
+        requestParam0.put("sign", 0);
+        resp = OkHttp3Util.postString(CONTEXT_ROOT + "getCountSign",
+                Json.jsonmapper().writeValueAsString(requestParam0));
+
+        result = Json.jsonmapper().readValue(resp, HashMap.class);
+        int count = (int) result.get("signCount");
+        if (count == 0) {
+            save1.setDisable(true);
+        }
+
+    }
+
+    public void againPublish(ActionEvent event) throws Exception {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        Map<String, Object> rowdata = tokenserialTable.getSelectionModel().getSelectedItem();
+        if (rowdata == null || rowdata.isEmpty()) {
+            GuiUtils.informationalAlert("", Main.getText("pleaseSelect"), "");
+            return;
+        }
+        if (!"0".equals(rowdata.get("sign").toString())) {
+            // return;
+        }
+        String tokenid = (String) rowdata.get("tokenid");
+        HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
+        requestParam0.put("address", rowdata.get("address").toString());
+        address = rowdata.get("address").toString();
+        tokenUUID = rowdata.get("id").toString();
+        tokenidString = rowdata.get("tokenid").toString();
+        String resp = OkHttp3Util.postString(CONTEXT_ROOT + "getMultiSignWithAddress",
+                Json.jsonmapper().writeValueAsString(requestParam0));
+
+        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
+        List<HashMap<String, Object>> multiSigns = (List<HashMap<String, Object>>) result.get("multiSigns");
+        HashMap<String, Object> multiSign000 = null;
+        for (HashMap<String, Object> multiSign : multiSigns) {
+            if (multiSign.get("id").toString().equals(rowdata.get("id").toString())) {
+                multiSign000 = multiSign;
+            }
+        }
+        byte[] payloadBytes = Utils.HEX.decode((String) multiSign000.get("blockhashHex"));
+        Block block0 = Main.params.getDefaultSerializer().makeBlock(payloadBytes);
+        Transaction transaction = block0.getTransactions().get(0);
+
+        byte[] buf = transaction.getData();
+        TokenInfo tokenInfo = new TokenInfo().parse(buf);
+
+        tabPane.getSelectionModel().clearAndSelect(3);
+        stockName1.setText(Main.getString(tokenInfo.getTokens().getTokenname()).trim());
+        tokenid1.setValue(tokenid);
+        // String amountString =
+        // Coin.valueOf(tokenInfo.getTokenSerial().getAmount(),
+        // tokenid).toPlainString();
+        // stockAmount1.setText(amountString);
         tokenstopCheckBox.setSelected(tokenInfo.getTokens().isTokenstop());
         urlTF.setText(Main.getString(tokenInfo.getTokens().getUrl()).trim());
         stockDescription1.setText(Main.getString(tokenInfo.getTokens().getDescription()).trim());
@@ -302,13 +373,27 @@ public class StockController extends TokensController {
         signAddrChoiceBox.getItems().remove(signAddrChoiceBox.getValue());
     }
 
-    public void showToken(String tokenid) throws Exception {
+    public void showToken(String newtokenid) throws Exception {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+
+        Map<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("tokenid", tokenid.getValue());
+        String response = OkHttp3Util.post(CONTEXT_ROOT + "getMultiSignWithTokenid",
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("multiSigns");
+        if (list != null && !list.isEmpty()) {
+            Map<String, Object> multisignMap = list.get(0);
+            tokenUUID = multisignMap.get("id").toString();
+        } else {
+            tokenUUID = null;
+        }
         if (tokenUUID != null && !tokenUUID.isEmpty()) {
-            if (!tokenid.equals(tokenidString)) {
+            if (!newtokenid.equals(tokenidString)) {
                 tabPane.getSelectionModel().clearSelection();
-                save1.setDisable(false);
+                // save1.setDisable(false);
             } else {
-                save1.setDisable(true);
+                // save1.setDisable(true);
             }
         } else {
 
@@ -319,25 +404,51 @@ public class StockController extends TokensController {
     public void saveStock(ActionEvent event) {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
-
         try {
-            byte[] pubKey = outKey.getPubKey();
-            HashMap<String, Object> requestParam = new HashMap<String, Object>();
-            requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
-            requestParam.put("amount",
-                    Coin.parseCoin(stockAmount.getText(), Utils.HEX.decode(tokenid.getValue())).getValue());
-            requestParam.put("tokenname", stockName.getText());
-            requestParam.put("description", stockDescription.getText());
-            requestParam.put("tokenHex", tokenid.getValue());
-            requestParam.put("multiserial", false);
-            requestParam.put("asmarket", false);
-            // requestParam.put("tokenstop",
-            // tokenstopCheckBox.selectedProperty().get());
+            TokenInfo tokenInfo = new TokenInfo();
+            Tokens tokens = new Tokens(tokenid.getValue().trim(), stockName.getText().trim(), stockDescription.getText().trim(), "", signAddrChoiceBox.getItems().size(), false, false, false);
+            tokenInfo.setTokens(tokens);
+            
+            // add MultiSignAddress item
+            tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokens.getTokenid(), outKey.toAddress(Main.params).toBase58()));
+            
+            Coin basecoin = Coin.parseCoin(stockAmount.getText(), Utils.HEX.decode(tokenid.getValue()));
 
-            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "createGenesisBlock",
-                    Json.jsonmapper().writeValueAsString(requestParam));
-            Block block = Main.params.getDefaultSerializer().makeBlock(data);
-            // TODO no post to off tangle data, send it to kafka for broadcast
+            long amount = basecoin.getValue();
+            tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
+
+            String resp000 = OkHttp3Util.postString(CONTEXT_ROOT + "getGenesisBlockLR", Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
+            @SuppressWarnings("unchecked")
+            HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
+            String leftBlockHex = (String) result000.get("leftBlockHex");
+            String rightBlockHex = (String) result000.get("rightBlockHex");
+
+            Block r1 = Main.params.getDefaultSerializer().makeBlock(Utils.HEX.decode(leftBlockHex));
+            Block r2 = Main.params.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
+            
+            long blocktype0 = NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
+            Block block = new Block(Main.params, r1.getHash(), r2.getHash(), blocktype0, Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+            block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo);
+            block.solve();
+
+            Transaction transaction = block.getTransactions().get(0);
+            
+            Sha256Hash sighash = transaction.getHash();
+            ECKey.ECDSASignature party1Signature = outKey.sign(sighash);
+            byte[] buf1 = party1Signature.encodeToDER();
+            
+            List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+            MultiSignBy multiSignBy0 = new MultiSignBy();
+            multiSignBy0.setTokenid(Main.getString(tokenid.getValue()).trim());
+            multiSignBy0.setTokenindex(0);
+            multiSignBy0.setAddress(outKey.toAddress(Main.params).toBase58());
+            multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
+            multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+            multiSignBies.add(multiSignBy0);
+            transaction.setDatasignatire(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+            
+            // save block
+            OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
             Main.instance.sendMessage(block.bitcoinSerialize());
 
             GuiUtils.informationalAlert(Main.getText("s_c_m"), Main.getText("s_c_m"));
@@ -348,7 +459,6 @@ public class StockController extends TokensController {
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
-
     }
 
     public void saveMarket(ActionEvent event) {
@@ -525,7 +635,7 @@ public class StockController extends TokensController {
         TokenInfo tokenInfo = new TokenInfo();
         Tokens tokens = new Tokens(Main.getString(map.get("tokenHex")).trim(),
                 Main.getString(map.get("tokenname")).trim(), Main.getString(map.get("description")).trim(),
-                Main.getString(map.get("url")).trim(), signAddrChoiceBox.getItems().size(), true, false,
+                Main.getString(map.get("url")).trim(), Long.parseLong(this.signnumberTF.getText().trim()), true, false,
                 (boolean) map.get("tokenstop"));
         tokenInfo.setTokens(tokens);
         if (signAddrChoiceBox.getItems() != null && !signAddrChoiceBox.getItems().isEmpty()) {
@@ -561,6 +671,7 @@ public class StockController extends TokensController {
         Block block = new Block(Main.params, r1.getHash(), r2.getHash(), blocktype0,
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
         ECKey key1 = Main.bitcoin.wallet().currentReceiveKey();
+        signAddrChoiceBox.getItems().add(key1.toAddress(Main.params).toBase58());
         List<ECKey> myEcKeys = new ArrayList<ECKey>();
         if (signAddrChoiceBox.getItems() != null && !signAddrChoiceBox.getItems().isEmpty()) {
             ObservableList<String> addresses = signAddrChoiceBox.getItems();
@@ -570,8 +681,12 @@ public class StockController extends TokensController {
                     myEcKeys.add(ecKey);
                 }
             }
-            key1 = myEcKeys.get(0);
+            if (!myEcKeys.isEmpty()) {
+                key1 = myEcKeys.get(0);
+            }
+
         }
+
         block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
         block.solve();
 

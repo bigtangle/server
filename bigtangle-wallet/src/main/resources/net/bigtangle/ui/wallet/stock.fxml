@@ -93,7 +93,7 @@
 								<Button layoutX="562.0" layoutY="433.0" mnemonicParsing="false" onAction="#addSIgnAddress" text="%addSignAddr" />
                         <ChoiceBox fx:id="signAddrChoiceBox" layoutX="279.0" layoutY="470.0" prefHeight="23.0" prefWidth="255.0" />
                         <Label layoutX="24.0" layoutY="474.0" prefHeight="15.0" prefWidth="101.0" text="%Address" />
-                        <Button layoutX="562.0" layoutY="478.0" mnemonicParsing="false" onAction="#removeSignAddress" text="%removeAddress" />
+                        <Button layoutX="562.0" layoutY="470.0" mnemonicParsing="false" onAction="#removeSignAddress" text="%removeAddress" />
 							</children>
 						</AnchorPane>
 					</content>
@@ -111,8 +111,6 @@
                               <TableColumn fx:id="realSignnumColumn" prefWidth="115.0" text="%realSignnum" />
                               <TableColumn fx:id="isSignAllColumn" prefWidth="93.0" text="%isSignAll" />
                               <TableColumn fx:id="isMySignColumn" prefWidth="83.0" text="%isMySign" />
-                              <TableColumn fx:id="blockhashHexColumn" maxWidth="1.0" minWidth="1.0" prefWidth="1.0" visible="false" />
-                              <TableColumn fx:id="multisignAddressColumn" maxWidth="1.0" minWidth="1.0" prefWidth="1.0" visible="false" />
                               <TableColumn fx:id="multiTokennameColumn" maxWidth="100.0" minWidth="100.0" prefWidth="100.0" text="%tokenname" />
 									</columns>
 								</TableView>
@@ -122,6 +120,7 @@
                         <CheckBox fx:id="isSignCheckBox" layoutX="391.0" layoutY="32.0" mnemonicParsing="false" text="%isSignAll" />
                         <Button layoutX="518.0" layoutY="29.0" mnemonicParsing="false" onAction="#searchTokenSerial" text="%search" />
                         <Button layoutX="746.0" layoutY="486.0" mnemonicParsing="false" onAction="#editToken" text="%editToken" />
+                        <Button layoutX="580.0" layoutY="486.0" mnemonicParsing="false" onAction="#againPublish" text="%multiPublish" />
 							</children>
 						</AnchorPane>
 					</content>

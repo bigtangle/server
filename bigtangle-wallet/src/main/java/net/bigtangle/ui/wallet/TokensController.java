@@ -76,16 +76,11 @@ public class TokensController {
     @FXML
     public TableColumn<Map, String> signnumColumn;
     @FXML
-    public TableColumn<Map, Number> realSignnumColumn;
+    public TableColumn<Map, String> realSignnumColumn;
     @FXML
     public TableColumn<Map, String> isSignAllColumn;
     @FXML
     public TableColumn<Map, String> isMySignColumn;
-
-    @FXML
-    public TableColumn<Map, String> blockhashHexColumn;
-    @FXML
-    public TableColumn<Map, String> multisignAddressColumn;
     @FXML
     public TableColumn<Map, String> multiTokennameColumn;
 
@@ -286,8 +281,8 @@ public class TokensController {
         tokenAmountColumn.setCellValueFactory(new MapValueFactory("amount"));
         signnumColumn.setCellValueFactory(new MapValueFactory("signnumber"));
         isMySignColumn.setCellValueFactory(new MapValueFactory("sign"));
-        blockhashHexColumn.setCellValueFactory(new MapValueFactory("blockhashHex"));
-        multisignAddressColumn.setCellValueFactory(new MapValueFactory("address"));
+        realSignnumColumn.setCellValueFactory(new MapValueFactory("count"));
+
         // realSignnumColumn.setCellValueFactory(new MapValueFactory("count"));
         tokenserialTable.setItems(tokenData);
     }

@@ -9,20 +9,21 @@ public class MultiSign implements java.io.Serializable {
     private String tokenid;
 
     private long tokenindex;
-    
+
     private byte[] blockhash;
-    
+
     private String address;
-    
+    private long count;
+
     public String getBlockhashHex() {
         if (this.blockhash == null) {
             return "";
         }
         return Utils.HEX.encode(this.blockhash);
     }
-    
+
     private int sign;
-    
+
     public int getSign() {
         return sign;
     }
@@ -69,5 +70,13 @@ public class MultiSign implements java.io.Serializable {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public long getCount() {
+        return count;
+    }
+
+    public void setCount(long count) {
+        this.count = count;
     }
 }

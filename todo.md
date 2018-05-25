@@ -7,31 +7,16 @@
 7) Cassandra
 8) validation of different blocks
 9) add market as option, enable the strict caution
-10) enable stop mutiple token issance 
+10) enable stop multiple token issance 
 
 
 
-## 
-
-
-data in transaction:
-	Structure data into transaction for transfer, see Email PGP
-	transfer encrpyte ddata into tangle with  owner private key.
-	It must remove the usage of public key hash, but public key.
-	
-Shareable data enable to add my post address:
-  Structure data post address as json into data   
-  data is secured by encrypted by private key
-  
-   transfer my data to other:  signed the data by other public key
-   post address + public encrypted
-   
   	  
 Wait to use spark X
 merge  tables headers and blockevaluation into single table blocks, avoid join for milestone  ?
 
 
-check of data typ to avoid misusage (dese/ser)
+check of data typ usage (dese/ser)
 
 
 11) Spark implementation of milestone:
@@ -45,4 +30,17 @@ check of data typ to avoid misusage (dese/ser)
 
 
 12) move the block-> tokenid to transaction out
+
+
 13) refactoring 
+a) remove unused code
+b) more tests
+c) performance test
+d) split server into part
+e) move order match service into own project
+
+
+14) complete the quick start 
+
+
+15) application monitoring heath check  and metrics
