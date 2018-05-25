@@ -3218,7 +3218,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         if (tokenid != null && !tokenid.trim().isEmpty()) {
             sql += " AND tokenid=?";
         }
-        sql += " ORDER BY tokenid,tokenindex";
+        sql += " ORDER BY tokenid,tokenindex DESC";
         try {
             preparedStatement = conn.get().prepareStatement(sql);
             if (tokenid != null && !tokenid.isEmpty()) {

@@ -54,6 +54,8 @@ public class StockController extends TokensController {
     public TabPane tabPane;
     @FXML
     public Tab multiPublishTab;
+    @FXML
+    public Tab multisignTab;
 
     @FXML
     public CheckBox tokenstopCheckBox;
@@ -224,7 +226,7 @@ public class StockController extends TokensController {
         if (temp != null && !temp.isEmpty() && temp.matches("[1-9]\\d*")) {
 
             int signnumber = Integer.parseInt(temp);
-            if (signnumber > 1) {
+            if (signnumber >= 1) {
 
                 TextInputDialog dialog = new TextInputDialog();
                 dialog.setTitle(Main.getText("Address"));
@@ -237,10 +239,15 @@ public class StockController extends TokensController {
                     String address = result.get();
                     if (address != null && !address.isEmpty() && !signAddrChoiceBox.getItems().contains(address)) {
                         signAddrChoiceBox.getItems().add(address);
+                        signAddrChoiceBox.getSelectionModel().selectLast();
                     }
 
                 }
+            } else {
+                GuiUtils.informationalAlert("", "", "");
             }
+        } else {
+            GuiUtils.informationalAlert("", "", "");
         }
     }
 
@@ -392,7 +399,7 @@ public class StockController extends TokensController {
         }
         if (signnumberTF.getText() != null && !signnumberTF.getText().trim().isEmpty()
                 && signnumberTF.getText().matches("[1-9]\\d*")
-                && Long.parseLong(signnumberTF.getText().trim()) != signAddrChoiceBox.getItems().size()) {
+                && Long.parseLong(signnumberTF.getText().trim()) > signAddrChoiceBox.getItems().size()) {
 
             GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
             return;
@@ -418,7 +425,7 @@ public class StockController extends TokensController {
             initTableView();
             initMultisignTableView();
             // overlayUI.done();
-            tabPane.getSelectionModel().clearAndSelect(4);
+            // tabPane.getSelectionModel().clearAndSelect(4);
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }

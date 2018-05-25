@@ -273,7 +273,8 @@ public class MainController {
     }
 
     public void sendMoneyOut(ActionEvent event) {
-
+        Main.IpAddress = Server.getText();
+        Main.port = IPPort.getText();
         Main.instance.overlayUI("send_money.fxml");
     }
 
@@ -283,6 +284,8 @@ public class MainController {
     }
 
     public void orders(ActionEvent event) {
+        Main.IpAddress = Server.getText();
+        Main.port = IPPort.getText();
         Main.OverlayUI<OrderController> order = Main.instance.overlayUI("orders.fxml");
         if (utxoTable.getSelectionModel().getSelectedItem() != null) {
             String address = utxoTable.getSelectionModel().getSelectedItem().getAddress();
@@ -297,17 +300,20 @@ public class MainController {
     }
 
     public void blockEvaluation(ActionEvent event) {
-
+        Main.IpAddress = Server.getText();
+        Main.port = IPPort.getText();
         Main.instance.overlayUI("blockEvaluation.fxml");
     }
 
     public void stockPublish(ActionEvent event) {
-
+        Main.IpAddress = Server.getText();
+        Main.port = IPPort.getText();
         Main.instance.overlayUI("stock.fxml");
     }
 
     public void eckeyList(ActionEvent event) {
-
+        Main.IpAddress = Server.getText();
+        Main.port = IPPort.getText();
         Main.instance.overlayUI("eckeys.fxml");
     }
 
@@ -331,6 +337,8 @@ public class MainController {
     }
 
     public void settingsClicked(ActionEvent event) {
+        Main.IpAddress = Server.getText();
+        Main.port = IPPort.getText();
         Main.instance.overlayUI("wallet_set_password.fxml");
     }
 
