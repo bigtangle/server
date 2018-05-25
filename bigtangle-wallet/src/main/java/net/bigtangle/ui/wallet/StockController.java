@@ -585,7 +585,10 @@ public class StockController extends TokensController {
                     myEcKeys.add(ecKey);
                 }
             }
-            key1 = myEcKeys.get(0);
+            if (!myEcKeys.isEmpty()) {
+                key1 = myEcKeys.get(0);
+            }
+
         }
         block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
         block.solve();
