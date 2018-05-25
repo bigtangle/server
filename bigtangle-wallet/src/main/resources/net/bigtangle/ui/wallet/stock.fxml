@@ -111,8 +111,6 @@
                               <TableColumn fx:id="realSignnumColumn" prefWidth="115.0" text="%realSignnum" />
                               <TableColumn fx:id="isSignAllColumn" prefWidth="93.0" text="%isSignAll" />
                               <TableColumn fx:id="isMySignColumn" prefWidth="83.0" text="%isMySign" />
-                              <TableColumn fx:id="blockhashHexColumn" maxWidth="1.0" minWidth="1.0" prefWidth="1.0" visible="false" />
-                              <TableColumn fx:id="multisignAddressColumn" maxWidth="1.0" minWidth="1.0" prefWidth="1.0" visible="false" />
                               <TableColumn fx:id="multiTokennameColumn" maxWidth="100.0" minWidth="100.0" prefWidth="100.0" text="%tokenname" />
 									</columns>
 								</TableView>
