@@ -52,7 +52,7 @@ dependencies {
     compile project(':bigtangle-core')
     compile group: 'org.springframework', name: 'spring-web', version: ver.spring
     compile group: 'org.springframework', name: 'spring-jdbc', version:  ver.spring
-    compile project(':bigtangle-orchid')      
+  
     /**
      * test dependencies
      */
