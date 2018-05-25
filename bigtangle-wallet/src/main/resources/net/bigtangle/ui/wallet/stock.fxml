@@ -98,13 +98,13 @@
 						</AnchorPane>
 					</content>
 				</Tab>
-				<Tab fx:id="multisignTab" closable="false" text="%tokenserial">
+				<Tab fx:id="multisignTab" closable="false" text="%multiSign">
 					<content>
 						<AnchorPane maxHeight="580.0" maxWidth="990.0" minHeight="580.0" minWidth="990.0" prefHeight="580.0" prefWidth="990.0" style="-fx-background-color: white;">
 							<children>
 								<TableView fx:id="tokenserialTable" layoutY="70.0" maxWidth="980.0" minHeight="400.0" minWidth="980.0" prefHeight="400.0" prefWidth="980.0">
 									<columns>
-										<TableColumn fx:id="tokenidColumn" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" text="%Token" />
+										<TableColumn fx:id="tokenidColumn" maxWidth="300.0" minWidth="300.0" prefWidth="300.0" text="%Token" />
 										<TableColumn fx:id="tokenindexColumn" maxWidth="100.0" minWidth="100.0" prefWidth="100.0" text="%tokenindex" />
 										<TableColumn fx:id="tokenAmountColumn" maxWidth="100.0" minWidth="100.0" prefWidth="100.0" text="%Amount" />
                               <TableColumn fx:id="signnumColumn" prefWidth="75.0" text="%signnumber" />
@@ -113,6 +113,7 @@
                               <TableColumn fx:id="isMySignColumn" prefWidth="83.0" text="%isMySign" />
                               <TableColumn fx:id="blockhashHexColumn" maxWidth="1.0" minWidth="1.0" prefWidth="1.0" visible="false" />
                               <TableColumn fx:id="multisignAddressColumn" maxWidth="1.0" minWidth="1.0" prefWidth="1.0" visible="false" />
+                              <TableColumn fx:id="multiTokennameColumn" maxWidth="100.0" minWidth="100.0" prefWidth="100.0" text="%tokenname" />
 									</columns>
 								</TableView>
 								<Button layoutX="905.0" layoutY="486.0" mnemonicParsing="false" onAction="#multiSign" text="%multiSign" />

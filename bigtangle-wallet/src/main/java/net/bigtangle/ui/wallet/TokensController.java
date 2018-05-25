@@ -81,11 +81,13 @@ public class TokensController {
     public TableColumn<Map, String> isSignAllColumn;
     @FXML
     public TableColumn<Map, String> isMySignColumn;
-   
+
     @FXML
     public TableColumn<Map, String> blockhashHexColumn;
     @FXML
     public TableColumn<Map, String> multisignAddressColumn;
+    @FXML
+    public TableColumn<Map, String> multiTokennameColumn;
 
     @FXML
     public TextField nameTextField;
@@ -211,7 +213,7 @@ public class TokensController {
         Map<String, Object> amountMap = (Map<String, Object>) data.get("amountMap");
         if (list != null) {
             for (Map<String, Object> map : list) {
-                 multiMap.put((String) map.get("tokenid"), (boolean) map.get("multiserial"));
+                multiMap.put((String) map.get("tokenid"), (boolean) map.get("multiserial"));
                 String temp = ((boolean) map.get("multiserial")) ? Main.getText("yes") : Main.getText("no");
                 String temp1 = ((boolean) map.get("asmarket")) ? Main.getText("yes") : Main.getText("no");
                 String temp2 = ((boolean) map.get("tokenstop")) ? Main.getText("yes") : Main.getText("no");
@@ -271,13 +273,14 @@ public class TokensController {
                 Transaction transaction = block.getTransactions().get(0);
                 byte[] buf = transaction.getData();
                 TokenInfo tokenInfo = new TokenInfo().parse(buf);
-
+                map.put("tokenname", tokenInfo.getTokens().getTokenname());
                 Coin fromAmount = Coin.valueOf(tokenInfo.getTokenSerial().getAmount(), (String) map.get("tokenid"));
                 map.put("amount", fromAmount.toPlainString());
                 map.put("signnumber", tokenInfo.getTokens().getSignnumber());
                 tokenData.add(map);
             }
         }
+        multiTokennameColumn.setCellValueFactory(new MapValueFactory("tokenname"));
         tokenidColumn.setCellValueFactory(new MapValueFactory("tokenid"));
         tokenindexColumn.setCellValueFactory(new MapValueFactory("tokenindex"));
         tokenAmountColumn.setCellValueFactory(new MapValueFactory("amount"));
