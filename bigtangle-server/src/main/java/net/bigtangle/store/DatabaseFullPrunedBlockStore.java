@@ -317,6 +317,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String INSERT_MULTISIGN_SQL = "INSERT INTO multisign (tokenid, tokenindex, address, blockhash, sign, id) VALUES (?, ?, ?, ?, ?, ?)";
     protected String UPDATE_MULTISIGN_SQL = "UPDATE multisign SET blockhash = ?, sign = ? WHERE tokenid = ? AND tokenindex = ? AND address = ?";
     protected String UPDATE_MULTISIGN0_SQL = "UPDATE multisign SET blockhash = ? WHERE tokenid = ? AND tokenindex = ? AND address = ?";
+    protected String UPDATE_MULTISIGN1_SQL = "UPDATE multisign SET blockhash = ? WHERE tokenid = ? AND tokenindex = ?";
     protected String SELECT_COUNT_MULTISIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = ? AND tokenindex = ? AND address = ?";
     protected String DELETE_MULTISIGN_SQL = "DELETE FROM multisign WHERE tokenid = ?";
 
@@ -3212,12 +3213,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<MultiSign> getMultiSignListByTokenid(String tokenid, List<String> addresses)
+    public List<MultiSign> getMultiSignListByTokenid(String tokenid, List<String> addresses, boolean isSign)
             throws BlockStoreException {
         List<MultiSign> list = new ArrayList<MultiSign>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
-        String sql = SELECT_MULTISIGN_ADDRESS_ALL_SQL;
+        String sql = "SELECT id, tokenid, tokenindex, address, blockhash, sign FROM multisign WHERE 1 = 1 ";
         if (addresses != null && !addresses.isEmpty()) {
             String addressString = " AND address IN(";
             for (String address : addresses) {
@@ -3229,8 +3230,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         if (tokenid != null && !tokenid.trim().isEmpty()) {
             sql += " AND tokenid=?";
         }
+        if (!isSign) {
+            sql += " AND sign = 0";
+        }
         sql += " ORDER BY tokenid,tokenindex DESC";
         try {
+            log.info("sql : " + sql);
             preparedStatement = conn.get().prepareStatement(sql);
             if (tokenid != null && !tokenid.isEmpty()) {
                 preparedStatement.setString(1, tokenid.trim());
@@ -3251,8 +3256,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 multiSign.setAddress(address0);
                 multiSign.setBlockhash(blockhash);
                 multiSign.setSign(sign);
-                multiSign.setCount(resultSet.getLong("count"));
-
                 list.add(multiSign);
             }
             return list;
@@ -3614,6 +3617,29 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setBytes(1, hash.getBytes());
             preparedStatement.setBytes(2, address.getHash160());
             preparedStatement.setLong(3, l);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void updateMultiSignBlockBitcoinSerialize(String tokenid, long tokenindex, byte[] bytes) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(UPDATE_MULTISIGN1_SQL);
+            preparedStatement.setBytes(1, bytes);
+            preparedStatement.setString(2, tokenid);
+            preparedStatement.setLong(3, tokenindex);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);

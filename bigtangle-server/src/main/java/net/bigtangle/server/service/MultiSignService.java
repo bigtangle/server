@@ -1,5 +1,6 @@
 package net.bigtangle.server.service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,10 +10,12 @@ import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
+import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Tokens;
@@ -20,6 +23,7 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.MultiSignResponse;
+import net.bigtangle.server.response.SearchMultiSignResponse;
 import net.bigtangle.server.response.TokenSerialIndexResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.UUIDUtil;
@@ -40,11 +44,46 @@ public class MultiSignService {
         return MultiSignResponse.createMultiSignResponse(count);
     }
 
-    public AbstractResponse getMultiSignListWithTokenid(String tokenid, List<String> addresses)
-            throws BlockStoreException {
-        List<MultiSign> multiSigns = this.store.getMultiSignListByTokenid(tokenid, addresses);
-        return MultiSignResponse.createMultiSignResponse(multiSigns);
+    public AbstractResponse getMultiSignListWithTokenid(String tokenid, List<String> addresses, boolean isSign)
+            throws Exception {
+        List<MultiSign> multiSigns = this.store.getMultiSignListByTokenid(tokenid, addresses, isSign);
+//        HashSet<String> tokenIdSet = new HashSet<String>();
+//        for (MultiSign multiSign : multiSigns) tokenIdSet.add(multiSign.getTokenid());
+//        HashSet<Tokens> tokensSet = this.store.getTokensHashsetByIdSet(tokenIdSet);
+        List<Map<String, Object>> multiSignList = new ArrayList<Map<String, Object>>();
+        for (MultiSign multiSign : multiSigns) {
+            HashMap<String, Object> map = new HashMap<String, Object>();
+            map.put("id", multiSign.getId());
+            map.put("tokenid", multiSign.getTokenid());
+            map.put("tokenindex", multiSign.getTokenindex());
+            map.put("blockhashHex", multiSign.getBlockhashHex());
+            map.put("sign", multiSign.getSign());
+            map.put("address", multiSign.getAddress());
+            Block block = this.networkParameters.getDefaultSerializer().makeBlock(multiSign.getBlockhash());
+            Transaction transaction = block.getTransactions().get(0);
+            TokenInfo tokenInfo = new TokenInfo().parse(transaction.getData());
+            map.put("signnumber", tokenInfo.getTokens().getSignnumber());
+            map.put("tokenname", tokenInfo.getTokens().getTokenname());
+            Coin fromAmount = Coin.valueOf(tokenInfo.getTokenSerial().getAmount(), multiSign.getTokenid());
+            map.put("amount", fromAmount.toPlainString());
+            int signcount = 0;
+            if (transaction.getDatasignatire() == null) {
+                signcount = 0;
+            }
+            else {
+                String jsonStr = new String(transaction.getDatasignatire());
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> multiSignBies = Json.jsonmapper().readValue(jsonStr, List.class);
+                signcount = multiSignBies.size();
+            }
+            map.put("signcount", signcount);
+            multiSignList.add(map);
+        }
+        return SearchMultiSignResponse.createSearchMultiSignResponse(multiSignList);
     }
+    
+    @Autowired
+    private NetworkParameters networkParameters;
 
     public AbstractResponse getNextTokenSerialIndex(String tokenid) throws BlockStoreException {
         int count = this.store.getCountTokenSerialNumber(tokenid);
@@ -63,6 +102,10 @@ public class MultiSignService {
         TokenInfo tokenInfo = new TokenInfo().parse(buf);
         final Tokens tokens = tokenInfo.getTokens();
         if (tokens == null) {
+            return;
+        }
+        Tokens tokens_ = this.store.getTokensInfo(tokens.getTokenid());
+        if (tokens_ != null && tokens_.isTokenstop()) {
             return;
         }
         final TokenSerial tokenSerial = tokenInfo.getTokenSerial();
@@ -109,6 +152,7 @@ public class MultiSignService {
                     String address = (String) multiSignBy.get("address");
                     multiSignBiesRes.put(address, multiSignBy);
                 }
+                this.store.updateMultiSignBlockBitcoinSerialize(tokens.getTokenid(), tokenSerial.getTokenindex(), block.bitcoinSerialize());
                 for (Map<String, Object> multiSignBy : multiSignBiesRes.values()) {
                     String tokenid = (String) multiSignBy.get("tokenid");
                     int tokenindex = (Integer) multiSignBy.get("tokenindex");

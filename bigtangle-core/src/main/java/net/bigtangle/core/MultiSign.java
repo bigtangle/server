@@ -13,7 +13,6 @@ public class MultiSign implements java.io.Serializable {
     private byte[] blockhash;
 
     private String address;
-    private long count;
 
     public String getBlockhashHex() {
         if (this.blockhash == null) {
@@ -70,13 +69,5 @@ public class MultiSign implements java.io.Serializable {
 
     public void setAddress(String address) {
         this.address = address;
-    }
-
-    public long getCount() {
-        return count;
-    }
-
-    public void setCount(long count) {
-        this.count = count;
     }
 }

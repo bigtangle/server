@@ -301,7 +301,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void updateTokenSerial(TokenSerial tokenSerial0) throws BlockStoreException;
 
-    public List<MultiSign> getMultiSignListByTokenid(String tokenid, List<String> addresses) throws BlockStoreException;
+    public List<MultiSign> getMultiSignListByTokenid(String tokenid, List<String> addresses, boolean isSign) throws BlockStoreException;
 
     public List<MultiSign> getMultiSignListByTokenid(String tokenid, long tokenindex) throws BlockStoreException;
 
@@ -334,6 +334,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     PriorityQueue<Triple<Sha256Hash, byte[], Long>> getSortedMiningRewardCalculations(Sha256Hash hash) throws BlockStoreException;
     
     void insertMiningRewardCalculation(Sha256Hash hash, Address key, long l) throws BlockStoreException;
+
+    void updateMultiSignBlockBitcoinSerialize(String tokenid, long tokenindex, byte[] bytes) throws BlockStoreException;
 
     // public List<TokenSerial> getTokenSerialListByTokenid(String tokenid);
     //

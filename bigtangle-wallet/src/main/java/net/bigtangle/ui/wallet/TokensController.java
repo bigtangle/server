@@ -96,7 +96,7 @@ public class TokensController {
 
     @FXML
     public void initialize() {
-
+        this.isSignCheckBox.setSelected(true);
         try {
             initTableView();
             initPositveTableView();
@@ -241,6 +241,7 @@ public class TokensController {
         tokensTable.setItems(tokenData);
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public void initMultisignTableView() throws Exception {
         KeyParameter aesKey = null;
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
@@ -256,22 +257,23 @@ public class TokensController {
         List<String> addresses = keys.stream().map(key -> key.toAddress(Main.params).toBase58())
                 .collect(Collectors.toList());
         requestParam.put("addresses", addresses);
+        requestParam.put("isSign", isSignCheckBox.isSelected());
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getMultiSignWithTokenid",
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         log.debug(response);
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("multiSigns");
+        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("multiSignList");
+        
         if (list != null) {
             for (Map<String, Object> map : list) {
-                Block block = Main.params.getDefaultSerializer()
-                        .makeBlock(Utils.HEX.decode((String) map.get("blockhashHex")));
-                Transaction transaction = block.getTransactions().get(0);
-                byte[] buf = transaction.getData();
-                TokenInfo tokenInfo = new TokenInfo().parse(buf);
-                map.put("tokenname", tokenInfo.getTokens().getTokenname());
-                Coin fromAmount = Coin.valueOf(tokenInfo.getTokenSerial().getAmount(), (String) map.get("tokenid"));
-                map.put("amount", fromAmount.toPlainString());
-                map.put("signnumber", tokenInfo.getTokens().getSignnumber());
+                int signnumber = (Integer) map.get("signnumber");
+                int signcount = (Integer) map.get("signcount");
+                if (signnumber <= signcount) {
+                    map.put("isSignAll", "true");
+                }
+                else {
+                    map.put("isSignAll", "false");
+                }
                 tokenData.add(map);
             }
         }
@@ -281,9 +283,8 @@ public class TokensController {
         tokenAmountColumn.setCellValueFactory(new MapValueFactory("amount"));
         signnumColumn.setCellValueFactory(new MapValueFactory("signnumber"));
         isMySignColumn.setCellValueFactory(new MapValueFactory("sign"));
-        realSignnumColumn.setCellValueFactory(new MapValueFactory("count"));
-
-        // realSignnumColumn.setCellValueFactory(new MapValueFactory("count"));
+        realSignnumColumn.setCellValueFactory(new MapValueFactory("signcount"));
+        isSignAllColumn.setCellValueFactory(new MapValueFactory("isSignAll"));
         tokenserialTable.setItems(tokenData);
     }
 }
