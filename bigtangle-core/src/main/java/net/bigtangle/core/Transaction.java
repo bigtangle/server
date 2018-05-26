@@ -1301,9 +1301,9 @@ public class Transaction extends ChildMessage {
             uint32ToByteStreamLE(0L, stream);
         }
         else {
-            byte[] data = this.memo.getBytes();
-            uint32ToByteStreamLE(data.length, stream);
-            stream.write(data);
+            byte[] membyte = this.memo.getBytes();
+            uint32ToByteStreamLE(membyte.length, stream);
+            stream.write(membyte);
         }
         uint32ToByteStreamLE(this.dataType, stream);
         

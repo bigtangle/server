@@ -318,7 +318,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     throw new VerificationException(
                             "Requested mining reward block cannot be added to milestone: Invalid");
 
-            Transaction tx = generateMiningTX(block);
+            Transaction tx = generateMiningRewardTX(block);
 
             if (!blockStore.hasUnspentOutputs(tx.getHash())) {
                 insertConfirmedUTXOs(blockEvaluation, block, tx);
@@ -327,13 +327,19 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
         }
 
-        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_GENESIS) {
-            // TODO save token here (since block is confirmed here)
+        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
+            Transaction tx = block.getTransactions().get(0);
+            if (tx.getData() != null) {
+                byte[] buf = tx.getData();
+                TokenInfo tokenInfo = new TokenInfo().parse(buf);
+                this.synchronizationToken(tokenInfo);
+            }
         }
 
         // Update default block's transactions in db
         if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TRANSFER
-                || block.getBlocktype() == NetworkParameters.BLOCKTYPE_GENESIS) {
+                || block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION
+                || block.getBlocktype() == NetworkParameters.BLOCKTYPE_INITIAL) {
             for (final Transaction tx : block.getTransactions()) {
                 // For each used input, set its corresponding UTXO to spent
                 if (!tx.isCoinBase()) {
@@ -403,16 +409,17 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     @Override
     public void removeTransactionsFromMilestone(Block block) throws BlockStoreException {
         if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD) {
-            Transaction tx = generateMiningTX(block);
+            Transaction tx = generateMiningRewardTX(block);
             removeUTXOs(tx);
         }
 
-        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_GENESIS) {
+        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
             // TODO revert token here (unconfirmed block)
         }
 
         if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TRANSFER
-                || block.getBlocktype() == NetworkParameters.BLOCKTYPE_GENESIS) {
+                || block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION
+                || block.getBlocktype() == NetworkParameters.BLOCKTYPE_INITIAL) {
             for (Transaction tx : block.getTransactions()) {
                 // Mark all outputs used by tx input as unspent
                 for (TransactionInput txin : tx.getInputs()) {
@@ -428,7 +435,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     // In ascending order of miner addresses, we create UTXOs deterministically
-    private Transaction generateMiningTX(Block block) throws BlockStoreException {
+    private Transaction generateMiningRewardTX(Block block) throws BlockStoreException {
         Transaction tx = new Transaction(networkParameters);
         Triple<Sha256Hash, byte[], Long> utxoData;
         while ((utxoData = blockStore.getSortedMiningRewardCalculations(block.getHash()).poll()) != null) {
@@ -479,7 +486,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    public boolean trySolidify(Block block, BlockEvaluation prev, BlockEvaluation prevBranch) throws BlockStoreException {
+    public boolean trySolidify(Block block, BlockEvaluation prev, BlockEvaluation prevBranch)
+            throws BlockStoreException {
         StoredBlock storedPrev = blockStore.get(block.getPrevBlockHash());
         StoredBlock storedPrevBranch = blockStore.get(block.getPrevBranchBlockHash());
         long height = Math.max(prev.getHeight() + 1, prevBranch.getHeight() + 1);
@@ -519,6 +527,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         } catch (VerificationException e) {
             return false;
         }
+        
+        // TODO add check previous serial number must exist, current must not exist in db
+        // TODO add check for if signing keys are in db
 
         blockStore.beginDatabaseBatchWrite();
         LinkedList<UTXO> txOutsSpent = new LinkedList<UTXO>();
@@ -603,11 +614,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     blockStore.addUnspentTransactionOutput(newOut);
 
                     txOutsCreated.add(newOut);
-                }
-                if (tx.getData() != null) {
-                    byte[] buf = tx.getData();
-                    TokenInfo tokenInfo = new TokenInfo().parse(buf);
-                    this.synchronizationToken(tokenInfo);
                 }
                 if (!checkOutput(valueOut))
                     throw new VerificationException("Transaction output value out of range");
