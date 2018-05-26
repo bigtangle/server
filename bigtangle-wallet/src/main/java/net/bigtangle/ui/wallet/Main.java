@@ -41,27 +41,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
-import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ser.std.StringSerializer;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -122,8 +112,7 @@ public class Main extends Application {
     public static Map<String, Boolean> validTokenMap = new HashMap<String, Boolean>();
     public static Set<String> validAddressSet = new HashSet<String>();
 
-    public String blockTopic = "bigtangle";
-    public static String kafka = "";
+ 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
     public static String positiveFile = "/bigtangle-wachted.txt";
     public static String contactFile = "/bigtangle-contact.txt";
@@ -197,16 +186,11 @@ public class Main extends Application {
 
         // set local kafka to send
         if (!Locale.CHINESE.equals(locale)) {
-            if (kafka.equals("")) {
-                kafka = "de.kafka.bigtangle.net:9092";
-            }
-
+            
             if ("".equals(IpAddress))
                 IpAddress = "de.server.bigtangle.net";
         } else {
-            if (kafka.equals("")) {
-                kafka = "cn.kafka.bigtangle.net:9092";
-            }
+             
             if ("".equals(IpAddress))
                 IpAddress = "cn.server.bigtangle.net";
 
@@ -488,9 +472,7 @@ public class Main extends Application {
             if (args.length >= 3) {
                 IpAddress = args[2];
             }
-            if (args.length >= 4) {
-                kafka = args[3];
-            }
+            
         }
         String tokeninfo = "";
         tokeninfo += NetworkParameters.BIGNETCOIN_TOKENID_STRING + "," + MonetaryFormat.CODE_BTC;
@@ -619,37 +601,7 @@ public class Main extends Application {
         // return sendMessage(data, this.blockTopic, this.kafka);
     }
 
-    public boolean sendMessage(byte[] data, String topic, String bootstrapServers)
-            throws InterruptedException, ExecutionException {
-        final String key = UUID.randomUUID().toString();
-        KafkaProducer<String, byte[]> messageProducer = new KafkaProducer<String, byte[]>(
-                producerConfig(bootstrapServers, true));
-        ProducerRecord<String, byte[]> producerRecord = null;
-        producerRecord = new ProducerRecord<String, byte[]>(topic, key, data);
-        final Future<RecordMetadata> result = messageProducer.send(producerRecord);
-        RecordMetadata mdata = result.get();
-        log.debug(" sendMessage " + key + "kafka server " + bootstrapServers);
-        messageProducer.close();
-        return mdata != null;
-
-    }
-
-    public Properties producerConfig(String bootstrapServers, boolean binaryMessageKey) {
-        Properties producerConfig = new Properties();
-        producerConfig.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        producerConfig.setProperty(ProducerConfig.ACKS_CONFIG, "all");
-        producerConfig.setProperty(ProducerConfig.RETRIES_CONFIG, "0");
-        producerConfig.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
-                binaryMessageKey ? ByteArraySerializer.class.getName() : StringSerializer.class.getName());
-        producerConfig.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-        producerConfig.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer");
-        // producerConfig.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-        // KafkaAvroSerializer.class.getName());
-        // producerConfig.setProperty(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
-        // configuration.getSchemaRegistryUrl());
-        return producerConfig;
-    }
-
+ 
     /**
      * is HH:mm:ss
      * 

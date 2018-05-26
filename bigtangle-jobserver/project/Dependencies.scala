@@ -15,8 +15,10 @@ object Dependencies {
   lazy val sparkExtraDeps = Seq(
   //        "org.apache.hadoop" % "hadoop-client" % hadoop % Provided excludeAll(excludeNettyIo),
     "org.apache.spark" %% "spark-mllib" % spark % Provided excludeAll(excludeNettyIo),
+    "org.apache.spark" %% "spark-graphx" % spark % Provided excludeAll(excludeNettyIo),
     "org.apache.spark" %% "spark-sql" % spark % Provided excludeAll(excludeNettyIo),
     "org.apache.spark" %% "spark-streaming" % spark % Provided excludeAll(excludeNettyIo),
+    "org.apache.spark" %% "spark-streaming-kafka-0-10" % spark % Provided excludeAll(excludeNettyIo),
    
   //  "org.apache.spark" %% "spark-sql" % spark % "provided" withSources () withJavadoc () excludeAll (excludeNettyIo),
   //  "org.apache.spark" %% "spark-hive" % spark % "provided" withSources () withJavadoc () excludeAll (excludeNettyIo),

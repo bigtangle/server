@@ -23,10 +23,7 @@ dependencies {
      compile group: 'de.jensd', name: 'fontawesomefx', version:'8.0.0'
      compile group: 'net.glxn', name: 'qrgen', version:'1.3'
      compile group: 'com.google.code.findbugs', name: 'jsr305', version:ver.jsr305
-     compile (group: 'org.apache.kafka', name: 'kafka-streams', version:ver.kafka)
-       {  
-       exclude group: "org.rocksdb", module: "rocksdbjni"
-     }
+ 
        compile group: 'ch.qos.logback', name: 'logback-classic', version:'1.0.0'
     compile project(':bigtangle-core')
    
