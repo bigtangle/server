@@ -13,22 +13,23 @@ object Dependencies {
     "io.netty" % "netty-all" % netty)
 
   lazy val sparkExtraDeps = Seq(
-  //        "org.apache.hadoop" % "hadoop-client" % hadoop % Provided excludeAll(excludeNettyIo),
-    "org.apache.spark" %% "spark-mllib" % spark % Provided excludeAll(excludeNettyIo),
-    "org.apache.spark" %% "spark-graphx" % spark % Provided excludeAll(excludeNettyIo),
-    "org.apache.spark" %% "spark-sql" % spark % Provided excludeAll(excludeNettyIo),
-    "org.apache.spark" %% "spark-streaming" % spark % Provided excludeAll(excludeNettyIo),
-    "org.apache.spark" %% "spark-streaming-kafka-0-10" % spark % Provided excludeAll(excludeNettyIo),
-   
-  //  "org.apache.spark" %% "spark-sql" % spark % "provided" withSources () withJavadoc () excludeAll (excludeNettyIo),
-  //  "org.apache.spark" %% "spark-hive" % spark % "provided" withSources () withJavadoc () excludeAll (excludeNettyIo),
-  //  "org.apache.spark" %% "spark-streaming" % spark % "provided" withSources () withJavadoc () excludeAll (excludeNettyIo),
+    //        "org.apache.hadoop" % "hadoop-client" % hadoop % Provided excludeAll(excludeNettyIo),
+    "org.apache.spark" %% "spark-mllib" % spark % Provided excludeAll (excludeNettyIo),
+    "org.apache.spark" %% "spark-graphx" % spark % Provided excludeAll (excludeNettyIo),
+    "org.apache.spark" %% "spark-sql" % spark % Provided excludeAll (excludeNettyIo),
+    "org.apache.spark" %% "spark-streaming" % spark % Provided excludeAll (excludeNettyIo),
+    "org.apache.spark" %% "spark-streaming-kafka-0-10" % spark % Provided excludeAll (excludeNettyIo),
+
+    //  "org.apache.spark" %% "spark-sql" % spark % "provided" withSources () withJavadoc () excludeAll (excludeNettyIo),
+    //  "org.apache.spark" %% "spark-hive" % spark % "provided" withSources () withJavadoc () excludeAll (excludeNettyIo),
+    //  "org.apache.spark" %% "spark-streaming" % spark % "provided" withSources () withJavadoc () excludeAll (excludeNettyIo),
     "com.databricks" %% "spark-csv" % "1.5.0" withSources () withJavadoc (),
-  //  "com.databricks" %% "spark-avro" % "1.0.0" withSources () withJavadoc (),
-  //  "org.apache.hbase" % "hbase-client" % "1.0.0" % "provided" excludeAll ExclusionRule(organization = "org.mortbay.jetty"),
-  //  "org.apache.hbase" % "hbase-common" % "1.0.0" % "provided" excludeAll ExclusionRule(organization = "org.mortbay.jetty"),
-  //  "org.apache.hbase" % "hbase-server" % "1.0.0" % "provided" excludeAll ExclusionRule(organization = "org.mortbay.jetty"),
+    //  "com.databricks" %% "spark-avro" % "1.0.0" withSources () withJavadoc (),
+    //  "org.apache.hbase" % "hbase-client" % "1.0.0" % "provided" excludeAll ExclusionRule(organization = "org.mortbay.jetty"),
+    //  "org.apache.hbase" % "hbase-common" % "1.0.0" % "provided" excludeAll ExclusionRule(organization = "org.mortbay.jetty"),
+    //  "org.apache.hbase" % "hbase-server" % "1.0.0" % "provided" excludeAll ExclusionRule(organization = "org.mortbay.jetty"),
     "com.google.code.gson" % "gson" % "2.2.4",
+    "net.bigtangle" % "bigtangle-core" % "0.1.0",
     "org.mongodb.spark" %% "mongo-spark-connector" % "1.0.0" excludeAll ExclusionRule(organization = "org.apache.hadoop"))
 
   lazy val jobserverDeps = Seq(

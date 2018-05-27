@@ -3,7 +3,7 @@ apply from: "dependencies.gradle"
 
 allprojects {
 
-    project.group = 'com.bigtangle'
+    project.group = 'net.bigtangle'
     project.version = '0.1.0'
 
     ext {
@@ -19,7 +19,7 @@ allprojects {
     }
 
     repositories {
-      //  mavenLocal() 
+       mavenLocal() 
   
      // maven { url "http://repo.spring.io/plugins-release/" }
       

@@ -13,11 +13,11 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @ComponentScan(basePackages = { "net.bigtangle"   })
 @EnableScheduling
 //@EnableCaching
-public class ServerStart {
+public class OrdermatchStart {
 
     public static void main(String[] args) {
 //        SpringApplication.run(ServerStart.class, args);
-        SpringApplication springApplication = new SpringApplication(ServerStart.class);
+        SpringApplication springApplication = new SpringApplication(OrdermatchStart.class);
         springApplication.addListeners(new BeforeStartup());
         springApplication.run(args);
     }
