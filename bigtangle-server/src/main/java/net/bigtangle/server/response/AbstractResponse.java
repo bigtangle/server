@@ -15,10 +15,20 @@ public abstract class AbstractResponse {
     }
 
     private Integer duration;
+    
+    private String message;
 
     @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 
     @Override

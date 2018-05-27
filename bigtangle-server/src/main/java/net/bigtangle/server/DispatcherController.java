@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
@@ -307,10 +308,17 @@ public class DispatcherController {
             }
                 break;
             }
+        } catch (BlockStoreException e) {
+            logger.error("reqCmd : {}, reqHex : {}, block store ex.", reqCmd, Utils.HEX.encode(bodyByte), e);
+            AbstractResponse resp = AbstractResponse.createEmptyResponse();
+            resp.setDuration(101);
+            resp.setMessage(e.getMessage());
+            this.outPrintJSONString(httpServletResponse, resp);
         } catch (Exception exception) {
             logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, Utils.HEX.encode(bodyByte), exception);
             AbstractResponse resp = AbstractResponse.createEmptyResponse();
             resp.setDuration(100);
+            resp.setMessage("unkown error");
             this.outPrintJSONString(httpServletResponse, resp);
         }
     }
