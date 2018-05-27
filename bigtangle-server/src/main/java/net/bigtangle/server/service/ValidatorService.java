@@ -75,7 +75,7 @@ public class ValidatorService {
         ByteBuffer bb = ByteBuffer.wrap(header.getTransactions().get(0).getData());
         long fromHeight = bb.getLong();
         long toHeight = fromHeight + networkParameters.getRewardHeightInterval() - 1;
-        if (toHeight >= blockEvaluation.getHeight())
+        if (blockEvaluation.getHeight() <= toHeight + networkParameters.getRewardHeightInterval())
             return false;
 
         // Count how many blocks from the reward interval are approved

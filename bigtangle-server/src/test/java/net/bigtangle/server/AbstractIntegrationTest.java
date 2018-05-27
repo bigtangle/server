@@ -253,7 +253,9 @@ public abstract class AbstractIntegrationTest {
         requestParam.put("amount", 164385643856L);
         requestParam.put("tokenname", "Test");
         requestParam.put("description", "Test");
-        requestParam.put("blocktype", false);
+        requestParam.put("multiserial", false);
+        requestParam.put("asmarket", false);
+        requestParam.put("tokenstop", false);
         requestParam.put("tokenHex", Utils.HEX.encode(outKey.getPubKeyHash()));
 
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.createGenesisBlock.name(),

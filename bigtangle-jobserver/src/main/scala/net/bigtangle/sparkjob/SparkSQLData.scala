@@ -3,43 +3,36 @@ package net.bigtangle.sparkjob
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 
+
+
+import org.apache.spark.graphx.Edge
+import org.apache.spark.graphx.Graph
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.SaveMode
-import org.apache.spark.sql.api.java.UDF1
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.storage.StorageLevel
+import org.scalactic._
 
 import com.typesafe.config.Config
 
+import akka.actor.ActorSystem
 import spark.jobserver.DataFramePersister
+import spark.jobserver.JobServerNamedObjects
 import spark.jobserver.NamedDataFrame
 import spark.jobserver.NamedObjectPersister
+import spark.jobserver.NamedObjects
 import spark.jobserver.NamedRDD
 import spark.jobserver.RDDPersister
-import spark.jobserver.SparkJobValid
-import spark.jobserver.SparkJobValidation
+import spark.jobserver.SparkSessionJob
+import spark.jobserver.api.JobEnvironment
+import spark.jobserver.api.ValidationProblem
 
-import org.apache.spark.sql.types.StringType
-import org.apache.spark.sql.types.IntegerType
-import spark.jobserver.SparkSessionJob
-import spark.jobserver.NamedObjectSupport
-import spark.jobserver.NamedObjects
-import spark.jobserver.SparkSessionJob
-import spark.jobserver.api.{ JobEnvironment, SingleProblem, ValidationProblem }
-import scala.util.Try
-import org.apache.spark.sql.SparkSession
-import org.scalactic.Bad
-import com.typesafe.config.Config
-import org.apache.spark.sql.SparkSession
-import org.scalactic._
-import spark.jobserver.SparkSessionJob
-import spark.jobserver.api.{ JobEnvironment, SingleProblem, ValidationProblem }
-import scala.util.Try
-import com.typesafe.config.ConfigRenderOptions
-import spark.jobserver.JobServerNamedObjects
-import akka.actor.ActorSystem
+import org.apache.spark.sql.Row
+import org.apache.spark.graphx.{Graph, Edge}
 
-object SparkSQLData extends SparkSessionJob   {
+object SparkSQLData extends SparkSessionJob {
 
   type JobData = String
   type JobOutput = Any
@@ -50,13 +43,13 @@ object SparkSQLData extends SparkSessionJob   {
   val doAs = "hdfs";
 
   override def validate(sparkSession: SparkSession, runtime: JobEnvironment, config: Config): JobData Or Every[ValidationProblem] = {
- 
+
     Good("")
   }
 
   def runJob(sparkSession: SparkSession, runtime: JobEnvironment, data: JobData): JobOutput = {
     try {
-       namedObjects = new JobServerNamedObjects (ActorSystem("NamedObjectsSpec")) 
+      namedObjects = new JobServerNamedObjects(ActorSystem("NamedObjectsSpec"))
       doRunJob(sparkSession.sqlContext, runtime, data)
     } catch {
       case t: Throwable => {
@@ -197,7 +190,7 @@ object SparkSQLData extends SparkSessionJob   {
     // $example on:jdbc_dataset$
     // Note: JDBC loading and saving can be achieved via either the load/save or jdbc methods
     // Loading data from a JDBC source
-    val textFileTable = sqlContext.read 
+    val textFileTable = sqlContext.read
       .format("jdbc")
       .option("url", "jdbc:mysql://localhost:3306/info")
       .option("dbtable", "info.headers")
@@ -241,5 +234,14 @@ object SparkSQLData extends SparkSessionJob   {
 
     sqlContext.table(tablename)
   }
+  def createGraph(dfMaster: DataFrame ): Unit = {
+    val edgeDF = dfMaster.select( ).distinct()
 
+//    val edgeRDD = edgeDF.map {
+//      case Row(srcId: Double, dstId: Double, wgt: Double) => Edge[Double](srcId.toLong, dstId.toLong, wgt)
+//    }
+//
+//    val graph = Graph.fromEdges[Int, Double](edgesRDD, 0)
+
+  }
 }
