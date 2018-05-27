@@ -18,10 +18,39 @@ defaultTasks 'clean', 'build'
  
  
 dependencies {
-
-   compile group: 'it.unimi.dsi', name: 'fastutil', version:'8.1.0'
+    compile group: 'it.unimi.dsi', name: 'fastutil', version:'8.1.0'
     compile project(':bigtangle-core')
-  
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-web', version:  ver.spring_boot
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version:   ver.spring_boot
+    compile group: 'org.springframework.boot', name: 'spring-boot-configuration-processor', version:  ver.spring_boot
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-cache', version:  ver.spring_boot
+    compile group: 'org.aspectj', name: 'aspectjrt',   version:ver.aspectjrt
+    compile group: 'org.aspectj', name: 'aspectjweaver', version:ver.aspectjweaver
+    compile group: 'org.apache.commons', name: 'commons-lang3', version:ver.commons_lang3
+    compile group: 'org.apache.kafka', name: 'kafka-streams', version:ver.kafka
+    compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version:ver.bcprov_jdk15on
+    compile group: 'it.unimi.dsi', name: 'fastutil', version:'8.1.0'
+    compile group: 'commons-io', name: 'commons-io', version:ver.commons_io
+    compile group: 'mysql', name: 'mysql-connector-java', version:ver.mysql_connector_java
+    compile group: 'org.bgee.log4jdbc-log4j2', name: 'log4jdbc-log4j2-jdbc4.1', version: '1.16'
+    compile group: 'org.apache-extras.cassandra-jdbc', name: 'cassandra-jdbc', version: '1.2.5'
+    compile (group: 'org.apache.phoenix', name: 'phoenix-queryserver-client', version: '4.13.0-HBase-1.3')
+    {
+        exclude group: "org.slf4j", module: "slf4j-log4j12"
+    }
+    compile group: 'org.ehcache', name: 'ehcache', version:  ver.ehcache
+    compile group: 'javax.cache', name: 'cache-api', version: '1.1.0'
+    compile group: 'joda-time', name: 'joda-time', version:  '2.9.8'
+    compile group: 'com.mchange', name: 'c3p0', version:  ver.c3p0
+    compile group: 'com.google.code.gson', name: 'gson', version:ver.gson
+    compile project(':bigtangle-core')
+    compile group: 'org.springframework', name: 'spring-web', version: ver.spring
+    compile group: 'org.springframework', name: 'spring-jdbc', version:  ver.spring
+    testCompile group: 'org.mockito', name: 'mockito-all', version:  ver.mockito_all
+    testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
+    testCompile group: 'junit', name: 'junit',version:ver.junit
+    testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
+    testCompile group: 'org.easymock', name: 'easymock', version:  ver.easymock
 }
 
 mainClassName = "net.bigtangle.server.ServerStart"

@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.order.match;
+package net.bigtangle.server.ordermatch.bean;
 
 /**
  * The interface for outbound events from an order book.

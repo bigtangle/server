@@ -10,13 +10,11 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
-@ComponentScan(basePackages = { "net.bigtangle"   })
+@ComponentScan(basePackages = { "net.bigtangle" })
 @EnableScheduling
-//@EnableCaching
 public class OrdermatchStart {
 
     public static void main(String[] args) {
-//        SpringApplication.run(ServerStart.class, args);
         SpringApplication springApplication = new SpringApplication(OrdermatchStart.class);
         springApplication.addListeners(new BeforeStartup());
         springApplication.run(args);

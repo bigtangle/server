@@ -309,13 +309,13 @@ public class DispatcherController {
                 break;
             }
         } catch (BlockStoreException e) {
-            logger.error("reqCmd : {}, reqHex : {}, block store ex.", reqCmd, Utils.HEX.encode(bodyByte), e);
+            logger.error("reqCmd : {}, reqHex : {}, block store ex.", reqCmd, Utils.HEX.encode(bodyByte));
             AbstractResponse resp = AbstractResponse.createEmptyResponse();
             resp.setDuration(101);
             resp.setMessage(e.getMessage());
             this.outPrintJSONString(httpServletResponse, resp);
         } catch (Exception exception) {
-            logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, Utils.HEX.encode(bodyByte), exception);
+            logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, Utils.HEX.encode(bodyByte));
             AbstractResponse resp = AbstractResponse.createEmptyResponse();
             resp.setDuration(100);
             resp.setMessage("unkown error");

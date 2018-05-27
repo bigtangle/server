@@ -4,20 +4,15 @@
  *******************************************************************************/
 package net.bigtangle.server.config;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.store.FullPrunedBlockGraph;
-import net.bigtangle.store.FullPrunedBlockStore;
-import net.bigtangle.store.MySQLFullPrunedBlockStore;
-import net.bigtangle.store.PhoenixBlockStore;
+import net.bigtangle.server.store.FullPrunedBlockStore;
+import net.bigtangle.server.store.MySQLFullPrunedBlockStore;
 
 @Configuration
 public class DBStoreConfiguration {
@@ -44,32 +39,14 @@ public class DBStoreConfiguration {
     @Autowired
     NetworkParameters networkParameters;
 
-    private static final Logger logger = LoggerFactory.getLogger(DBStoreConfiguration.class);
-
     @Bean
     public FullPrunedBlockStore store() throws BlockStoreException {
-        if ("phoenix".equalsIgnoreCase(dbtype))
-            return createPhoenixBlockStore();
-        if ("cassandra".equalsIgnoreCase(dbtype))
-            return createCassandraBlockStore();
-        else
-            return createMysqlBlockStore();
-    }
-
-    private FullPrunedBlockStore createCassandraBlockStore() {
-        return null;
+        return createMysqlBlockStore();
     }
 
     public FullPrunedBlockStore createMysqlBlockStore() throws BlockStoreException {
         MySQLFullPrunedBlockStore store = new MySQLFullPrunedBlockStore(networkParameters, fullStoreDepth,
                 hostname + ":" + port, dbName, username, password);
-
-        return store;
-    }
-
-    public FullPrunedBlockStore createPhoenixBlockStore() throws BlockStoreException {
-        PhoenixBlockStore store = new PhoenixBlockStore(networkParameters, fullStoreDepth, hostname + ":" + port, "",
-                null, null);
 
         return store;
     }

@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.order.match;
+package net.bigtangle.server.ordermatch.bean;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectRBTreeMap;
 import it.unimi.dsi.fastutil.longs.LongComparators;

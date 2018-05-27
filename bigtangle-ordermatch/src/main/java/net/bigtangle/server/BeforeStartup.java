@@ -4,10 +4,10 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
-import net.bigtangle.server.service.OrderBookHolder;
-
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
+
+import net.bigtangle.server.ordermatch.context.OrderBookHolder;
 
 public class BeforeStartup implements ApplicationListener<ContextRefreshedEvent> {
 
