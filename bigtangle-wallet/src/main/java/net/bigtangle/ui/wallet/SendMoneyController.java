@@ -77,6 +77,18 @@ public class SendMoneyController {
     public TextField amountEdit;
     @FXML
     public Label btcLabel;
+    
+    @FXML
+    public ComboBox<String> addressComboBox1;
+ 
+    @FXML
+    public TextField memoTF1;
+
+    @FXML
+    public TextField amountEdit1;
+    @FXML
+    public Label btcLabel1;
+    
     // @FXML
     // public ToggleGroup unitToggleGroup;
     // @FXML
@@ -88,6 +100,8 @@ public class SendMoneyController {
 
     @FXML
     public ChoiceBox<Object> tokeninfo;
+    @FXML
+    public ChoiceBox<Object> tokeninfo1;
 
     public Main.OverlayUI<?> overlayUI;
 
@@ -131,10 +145,15 @@ public class SendMoneyController {
 
             }
             tokeninfo.setItems(tokenData);
+            tokeninfo1.setItems(tokenData);
             tokeninfo.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
                 btcLabel.setText(names.get(newv.intValue()));
             });
+            tokeninfo1.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
+                btcLabel1.setText(names.get(newv.intValue()));
+            });
             tokeninfo.getSelectionModel().selectFirst();
+            tokeninfo1.getSelectionModel().selectFirst();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
@@ -184,17 +203,17 @@ public class SendMoneyController {
         {
             byte[] dst = new byte[byteBuffer.getInt()];
             byteBuffer.get(dst);
-            addressComboBox.setValue(new String(dst));
+            addressComboBox1.setValue(new String(dst));
         }
         {
             byte[] dst = new byte[byteBuffer.getInt()];
             byteBuffer.get(dst);
-            tokeninfo.setValue(new String(dst));
+            tokeninfo1.setValue(new String(dst));
         }
         {
             byte[] dst = new byte[byteBuffer.getInt()];
             byteBuffer.get(dst);
-            amountEdit.setText(new String(dst));
+            amountEdit1.setText(new String(dst));
         }
         byte[] orderid = new byte[byteBuffer.getInt()];
         byteBuffer.get(orderid);
@@ -219,10 +238,10 @@ public class SendMoneyController {
     }
 
     public void exportSign(ActionEvent event) {
-        String toAddress = !addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
-                : addressComboBox.getValue().split(",")[1];
-        String toTokenHex = tokeninfo.getValue().toString().trim();
-        String toAmount = amountEdit.getText();
+        String toAddress = !addressComboBox1.getValue().contains(",") ? addressComboBox1.getValue()
+                : addressComboBox1.getValue().split(",")[1];
+        String toTokenHex = tokeninfo1.getValue().toString().trim();
+        String toAmount = amountEdit1.getText();
         this.mOrderid = UUIDUtil.randomUUID();
         boolean decial = true;
 

@@ -453,7 +453,7 @@ public class StockController extends TokensController {
             OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
             Main.instance.sendMessage(block.bitcoinSerialize());
 
-            GuiUtils.informationalAlert(Main.getText("s_c_m"), Main.getText("s_c_m"));
+            GuiUtils.informationalAlert("", Main.getText("s_c_m"));
             Main.instance.controller.initTableView();
             checkGuiThread();
             initTableView();
@@ -488,7 +488,7 @@ public class StockController extends TokensController {
             // TODO no post to off tangle data, send it to kafka for broadcast
             Main.instance.sendMessage(block.bitcoinSerialize());
 
-            GuiUtils.informationalAlert(Main.getText("s_c_m"), Main.getText("s_c_m"));
+            GuiUtils.informationalAlert("", Main.getText("s_c_m"));
             Main.instance.controller.initTableView();
             checkGuiThread();
             initTableView();
@@ -531,7 +531,7 @@ public class StockController extends TokensController {
             requestParam.put("asmarket", false);
             requestParam.put("tokenstop", tokenstopCheckBox.selectedProperty().get());
             noSignBlock(requestParam);
-            GuiUtils.informationalAlert(Main.getText("s_c_m"), Main.getText("s_c_m"));
+            GuiUtils.informationalAlert("", Main.getText("s_c_m"));
             Main.instance.controller.initTableView();
             checkGuiThread();
             initTableView();

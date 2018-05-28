@@ -96,7 +96,7 @@ public class BlockEvaluationController {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         Map<String, Object> rowData = blockEvaluationTable.getSelectionModel().getSelectedItem();
         if (rowData == null || rowData.isEmpty()) {
-            GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_m1"));
+            GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("ex_c_m1"));
             return;
         }
         Map<String, Object> requestParam = new HashMap<String, Object>();

@@ -255,7 +255,7 @@ public class OrderController extends ExchangeController {
         long amount = Coin.parseCoinValue(this.amountTextField.getText());
 
         if (coin.getValue() < amount) {
-            GuiUtils.informationalAlert(Main.getText("o_c_m"), Main.getText("o_c_d"));
+            GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("o_c_d"));
             return;
         }
 
