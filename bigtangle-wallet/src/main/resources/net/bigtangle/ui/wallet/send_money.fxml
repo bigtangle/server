@@ -34,12 +34,6 @@
             						<Label fx:id="btcLabel" layoutX="65.0" prefHeight="23.0" prefWidth="307.0" />
             					</children>
             				</HBox>
-            				<HBox maxWidth="700.0" minWidth="700.0" prefHeight="23.0" prefWidth="700.0" spacing="50.0">
-            					<children>
-            						<Label prefWidth="150.0" text="%memo" />
-            						<TextField fx:id="memoTF" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" />
-            					</children>
-            				</HBox>
             
             				<HBox alignment="CENTER_LEFT" maxWidth="700.0" minWidth="700.0" prefWidth="700.0" spacing="50.0">
             					<children>
@@ -47,10 +41,16 @@
             						<ComboBox fx:id="addressComboBox" editable="true" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
             					</children>
             				</HBox>
+            				<HBox maxWidth="700.0" minWidth="700.0" prefHeight="23.0" prefWidth="700.0" spacing="50.0">
+            					<children>
+            						<Label prefWidth="150.0" text="%memo" />
+            						<TextField fx:id="memoTF" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" />
+            					</children>
+            				</HBox>
             				<HBox alignment="CENTER_RIGHT" fillHeight="true" maxWidth="700.0" minWidth="700.0" prefHeight="30.0" prefWidth="700.0" spacing="15.0" VBox.vgrow="NEVER">
             					<children>
-            						<Button fx:id="cancelBtn" cancelButton="true" mnemonicParsing="false" onAction="#cancel" prefWidth="79.0" text="%Cancel" />
             						<Button fx:id="sendBtn" defaultButton="true" mnemonicParsing="false" onAction="#send" prefWidth="79.0" text="%Send" />
+            						<Button fx:id="cancelBtn" cancelButton="true" mnemonicParsing="false" onAction="#cancel" prefWidth="79.0" text="%Cancel" />
             					</children>
             				</HBox>
             			</children>
@@ -63,7 +63,7 @@
             		</VBox>
                </content>
             </Tab>
-            <Tab text="%multiSign">
+            <Tab text="%multiSignAddressPay">
               <content>
                   <VBox alignment="CENTER_LEFT" maxHeight="600.0" maxWidth="1000.0" minHeight="600.0" minWidth="1000.0" prefHeight="600.0" prefWidth="1000.0" spacing="20.0" style="-fx-background-color: white;">
                      <children>
@@ -85,16 +85,16 @@
                               <Label fx:id="btcLabel1" maxHeight="1.7976931348623157E308" prefHeight="15.0" prefWidth="300.0" />
                            </children>
                         </HBox>
-                        <HBox maxWidth="700.0" minWidth="700.0" prefHeight="23.0" prefWidth="700.0" spacing="50.0">
-                           <children>
-                              <Label prefWidth="150.0" text="%memo" />
-                              <TextField fx:id="memoTF1" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" />
-                           </children>
-                        </HBox>
                         <HBox alignment="CENTER_LEFT" maxWidth="700.0" minWidth="700.0" prefWidth="701.0" spacing="50.0">
                            <children>
                               <Label prefWidth="150.0" text="%to" />
                               <ComboBox fx:id="addressComboBox1" editable="true" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
+                           </children>
+                        </HBox>
+                        <HBox maxWidth="700.0" minWidth="700.0" prefHeight="23.0" prefWidth="700.0" spacing="50.0">
+                           <children>
+                              <Label prefWidth="150.0" text="%memo" />
+                              <TextField fx:id="memoTF1" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" />
                            </children>
                         </HBox>
                         <HBox alignment="CENTER_RIGHT" fillHeight="true" maxWidth="700.0" minWidth="700.0" prefHeight="30.0" prefWidth="700.0" spacing="15.0" VBox.vgrow="NEVER">
