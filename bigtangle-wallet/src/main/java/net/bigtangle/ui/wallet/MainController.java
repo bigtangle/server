@@ -104,6 +104,8 @@ public class MainController {
     public TableColumn<UTXOModel, String> addressColumn;
     @FXML
     public TableColumn<UTXOModel, String> spendPendingColumn;
+    @FXML
+    public TableColumn<UTXOModel, String> memoColumn;
 
     @FXML
     public TextField Server;
@@ -183,16 +185,16 @@ public class MainController {
             if (myPositvleTokens != null && !"".equals(myPositvleTokens.trim()) && !myPositvleTokens.trim().isEmpty()) {
                 if (myPositvleTokens.contains(Utils.HEX.encode(tokenid))) {
                     Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending,
-                            Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid)))));
+                            Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid))), u.getMemo()));
                 } else {
                     subutxos.add(new UTXOModel(balance, tokenid, address, spendPending,
-                            Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid)))));
+                            Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid))), u.getMemo()));
                 }
 
             }
             if (myPositvleTokens == null || myPositvleTokens.isEmpty() || "".equals(myPositvleTokens.trim()))
                 Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending,
-                        Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid)))));
+                        Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid))), u.getMemo()));
         }
         Main.instance.getUtxoData().addAll(subutxos);
         list = (List<Map<String, Object>>) data.get("tokens");
@@ -235,6 +237,7 @@ public class MainController {
             balanceColumn.setCellValueFactory(cellData -> cellData.getValue().balance());
             tokentypeColumnA.setCellValueFactory(cellData -> cellData.getValue().tokenid());
             addressColumn.setCellValueFactory(cellData -> cellData.getValue().address());
+            memoColumn.setCellValueFactory(cellData -> cellData.getValue().memo());
             spendPendingColumn.setCellValueFactory(cellData -> cellData.getValue().spendPending());
             addressColumn.setCellFactory(TextFieldTableCell.<UTXOModel>forTableColumn());
 

@@ -11,10 +11,12 @@ public class UTXOModel {
     private SimpleStringProperty balance;
     private SimpleStringProperty tokentype;
     private SimpleStringProperty address;
+    private SimpleStringProperty memo;
     private SimpleStringProperty tokenid;
     private SimpleStringProperty spendPending;
 
-    public UTXOModel(String balance, byte[] tokenid, String address, boolean spendPending, String tokenname) {
+    public UTXOModel(String balance, byte[] tokenid, String address, boolean spendPending, String tokenname,
+            String memo) {
         this.balance = new SimpleStringProperty(balance);
         this.tokenid = new SimpleStringProperty(tokenname + ":" + Utils.HEX.encode(tokenid));
         this.tokentype = new SimpleStringProperty(tokenname);
@@ -24,6 +26,10 @@ public class UTXOModel {
 
     public SimpleStringProperty balance() {
         return balance;
+    }
+
+    public SimpleStringProperty memo() {
+        return memo;
     }
 
     public SimpleStringProperty tokentype() {
@@ -40,6 +46,14 @@ public class UTXOModel {
 
     public SimpleStringProperty spendPending() {
         return spendPending;
+    }
+
+    public String getMemo() {
+        return memo.get();
+    }
+
+    public void setMemo(String memo) {
+        this.memo.set(memo);
     }
 
     public String getBalance() {
