@@ -33,6 +33,12 @@ public class TokensService {
         return response;
     }
 
+    public AbstractResponse getMarketTokensList() throws BlockStoreException {
+        List<Tokens> list = new ArrayList<Tokens>();
+
+        list.addAll(store.getMarketTokenList());
+        return GetTokensResponse.create(list);
+    }
     public AbstractResponse getTokensList() throws BlockStoreException {
         List<Tokens> list = new ArrayList<Tokens>();
         Tokens tokens = new Tokens();
@@ -42,7 +48,6 @@ public class TokensService {
         list.addAll(store.getTokensList());
         return GetTokensResponse.create(list);
     }
-
     public AbstractResponse getTokensList(String name) throws BlockStoreException {
         List<Tokens> list = new ArrayList<Tokens>();
         Tokens tokens = new Tokens();

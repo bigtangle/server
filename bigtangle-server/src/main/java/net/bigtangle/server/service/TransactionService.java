@@ -19,7 +19,6 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
-import net.bigtangle.core.ECKey;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
@@ -90,8 +89,8 @@ public class TransactionService {
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
         Block r2 = blockService.getBlock(tipsToApprove.getRight());
 
-        return new Block(this.networkParameters, r1.getHash(), r2.getHash(), 
-                NetworkParameters.BLOCKTYPE_TRANSFER, Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+        return new Block(this.networkParameters, r1.getHash(), r2.getHash(), NetworkParameters.BLOCKTYPE_TRANSFER,
+                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
 
     }
 
@@ -101,9 +100,14 @@ public class TransactionService {
         String tokenname = (String) request.get("tokenname");
         String description = (String) request.get("description");
         String tokenHex = (String) request.get("tokenHex");
+        boolean asmarket = (boolean) request.get("asmarket");
+        boolean multiserial = (boolean) request.get("multiserial");
         
-        Tokens tokens = new Tokens(tokenHex, tokenname, description, "", 1, false, false, false);
-         store.saveTokens(tokens);
+        boolean tokenstop = (boolean) request.get("tokenstop");
+        String url = (String) request.get("url");
+        long signnumber = new Long(request.get("signnumber").toString());
+        Tokens tokens = new Tokens(tokenHex, tokenname, description, url, signnumber, multiserial, asmarket, tokenstop);
+        store.saveTokens(tokens);
 
         byte[] pubKey = Utils.HEX.decode(pubKeyHex);
         byte[] tokenid = Utils.HEX.decode(tokenHex);
@@ -111,7 +115,7 @@ public class TransactionService {
         Block block = createGenesisBlock(coin, tokenid, pubKey, null);
         return block.bitcoinSerialize();
     }
-    
+
     public void multiSign(Map<String, Object> request) throws BlockStoreException {
         String tokenid = (String) request.get("tokenid");
         String address = (String) request.get("address");
@@ -132,20 +136,25 @@ public class TransactionService {
         if (count > 0) {
             return;
         }
-//        MultiSignBy multiSignBy = new MultiSignBy(tokenid, tokenSerial.getTokenindex(), address);
+        // MultiSignBy multiSignBy = new MultiSignBy(tokenid,
+        // tokenSerial.getTokenindex(), address);
         // store.insertMultisignby(multiSignBy);
         if (canCreateGenesisBlock(tokens, tokenSerial.getTokenindex())) {
-//            TokenInfo tokenInfo = new TokenInfo();
-//            tokenInfo.setTokens(tokens);
-//            List<TokenSerial> tokenSerials = this.store.getTokenSerialListByTokenid(tokenid);
-//            List<MultiSignAddress> multiSignAddresses = this.store.getMultiSignAddressListByTokenid(tokenid);
-//            List<MultiSignBy> multiSignBies = this.store.getMultiSignByListByTokenid(tokenid);
-//            tokenInfo.setMultiSignAddresses(multiSignAddresses);
-//            tokenInfo.setMultiSignBies(multiSignBies);
-//            tokenInfo.setTokenSerials(tokenSerials);
+            // TokenInfo tokenInfo = new TokenInfo();
+            // tokenInfo.setTokens(tokens);
+            // List<TokenSerial> tokenSerials =
+            // this.store.getTokenSerialListByTokenid(tokenid);
+            // List<MultiSignAddress> multiSignAddresses =
+            // this.store.getMultiSignAddressListByTokenid(tokenid);
+            // List<MultiSignBy> multiSignBies =
+            // this.store.getMultiSignByListByTokenid(tokenid);
+            // tokenInfo.setMultiSignAddresses(multiSignAddresses);
+            // tokenInfo.setMultiSignBies(multiSignBies);
+            // tokenInfo.setTokenSerials(tokenSerials);
             // long amount = tokenSerial.getAmount();
             // Coin coin = Coin.valueOf(amount, tokenid);
-            // Block block = createGenesisBlock(coin, tokenid, pubKey, NetworkParameters.BLOCKTYPE_GENESIS_MULTIPLE, tokenInfo);
+            // Block block = createGenesisBlock(coin, tokenid, pubKey,
+            // NetworkParameters.BLOCKTYPE_GENESIS_MULTIPLE, tokenInfo);
         }
     }
 
@@ -161,8 +170,8 @@ public class TransactionService {
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
         Block r2 = blockService.getBlock(tipsToApprove.getRight());
-        long blocktype0 =  NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
-        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(),blocktype0,
+        long blocktype0 = NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
+        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), blocktype0,
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
         block.addCoinbaseTransaction(pubKey, coin, tokenInfo);
         block.solve();
@@ -206,7 +215,7 @@ public class TransactionService {
                 // if(!block.getTransactions().isEmpty() && emptyBlock)
                 // saveEmptyBlock(3);
                 return Optional.of(block);
-            }else {
+            } else {
                 logger.debug("addConnected   BlockExists " + block);
             }
         } catch (VerificationException e) {

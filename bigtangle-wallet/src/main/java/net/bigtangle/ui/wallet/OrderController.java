@@ -115,6 +115,7 @@ public class OrderController extends ExchangeController {
             stateRB1.setUserData("publish");
             stateRB2.setUserData("match");
             stateRB3.setUserData("finish");
+            initMarketComboBox();
             buySellTG.selectedToggleProperty().addListener((ov, o, n) -> {
                 String temp = n.getUserData().toString();
                 if ("sell".equalsIgnoreCase(temp)) {
@@ -198,6 +199,24 @@ public class OrderController extends ExchangeController {
         orderTable.setItems(orderData);
     }
 
+    public void initMarketComboBox() throws Exception {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        ObservableList<String> tokenData = FXCollections.observableArrayList();
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        String response = OkHttp3Util.post(CONTEXT_ROOT + "getMarkets",
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
+        for (Map<String, Object> map : list) {
+            String tokenHex = (String) map.get("tokenid");
+            String tokenname = (String) map.get("tokenname");
+            tokenData.add(tokenname + " : " + tokenHex);
+
+        }
+        marketComboBox.setItems(tokenData);
+
+    }
+
     /**
      * 
      * @param all
@@ -277,11 +296,12 @@ public class OrderController extends ExchangeController {
         long price = Coin.parseCoinValue(this.limitTextField.getText());
         requestParam.put("price", price);
         requestParam.put("amount", amount);
-        requestParam.put("validateto", validdateTo+" "+toTimeTF.getText());
-        requestParam.put("validatefrom", validdateFrom+" "+fromTimeTF.getText());
+        requestParam.put("validateto", validdateTo + " " + toTimeTF.getText());
+        requestParam.put("validatefrom", validdateFrom + " " + fromTimeTF.getText());
         // TODO xiao mi change
         String market = marketComboBox.getValue();
-        requestParam.put("market", market);
+        String temp = market.contains(":") ? market.substring(market.indexOf(":") + 1).trim() : market.trim();
+        requestParam.put("market", temp);
         OkHttp3Util.post(ContextRoot + "saveOrder", Json.jsonmapper().writeValueAsString(requestParam));
         overlayUI.done();
     }

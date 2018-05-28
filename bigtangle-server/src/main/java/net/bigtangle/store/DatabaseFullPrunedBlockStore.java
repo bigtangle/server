@@ -13,6 +13,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -22,7 +23,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Properties;
-import java.util.Comparator;
 
 import javax.annotation.Nullable;
 
@@ -215,6 +215,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String SELECT_TOKENS_SQL = "select tokenid, tokenname, description, url, signnumber, multiserial, asmarket, tokenstop from tokens";
 
+    protected String SELECT_MARKET_TOKENS_SQL = "select tokenid, tokenname, description, url, signnumber, multiserial, asmarket, tokenstop from tokens WHERE asmarket=true";
+
     protected String SELECT_TOKENS_ACOUNT_MAP_SQL = "select tokenid,sum(amount) as amount from tokenserial GROUP BY tokenid";
 
     protected String SELECT_TOKENS_INFO_SQL = "select tokenid, tokenname, description, url, signnumber, multiserial, asmarket, tokenstop from tokens where tokenid = ?";
@@ -323,14 +325,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String SELECT_COUNT_MULTISIGN_SIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = ? AND tokenindex = ? AND sign = ?";
 
-    protected String INSERT_TX_REWARD_SQL = getInsert()
-            + "  INTO txreward (blockhash, rewardamount) VALUES (?, ?)";
-    protected String SELECT_TX_REWARD_SQL = "SELECT rewardamount "
-            + "FROM txreward WHERE blockhash = ?";
-    
+    protected String INSERT_TX_REWARD_SQL = getInsert() + "  INTO txreward (blockhash, rewardamount) VALUES (?, ?)";
+    protected String SELECT_TX_REWARD_SQL = "SELECT rewardamount " + "FROM txreward WHERE blockhash = ?";
+
     protected String INSERT_MINING_REWARD_CALCULATIONS_SQL = getInsert()
-            + "  INTO miningrewardcalculations (blockhash, mineraddress, rewardamount)"
-            + "VALUES (?, ?, ?)";
+            + "  INTO miningrewardcalculations (blockhash, mineraddress, rewardamount)" + "VALUES (?, ?, ?)";
     protected String SELECT_MINING_REWARD_CALCULATIONS_SQL = "SELECT blockhash, mineraddress, rewardamount"
             + "FROM miningrewardcalculations WHERE blockhash = ?";
 
@@ -504,10 +503,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_TOKENSERIAL_TABLE);
         sqlStatements.add(DROP_MULTISIGNBY_TABLE);
         sqlStatements.add(DROP_MULTISIGN_TABLE);
-        
+
         sqlStatements.add(DROP_TX_REWARDS_TABLE);
         sqlStatements.add(DROP_MINING_REWARD_CALCULATIONS_TABLE);
-        
+
         return sqlStatements;
     }
 
@@ -2212,6 +2211,40 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
+    @Override
+    public List<Tokens> getMarketTokenList() throws BlockStoreException {
+        List<Tokens> list = new ArrayList<Tokens>();
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_MARKET_TOKENS_SQL);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                Tokens tokens = new Tokens();
+                tokens.setTokenid(resultSet.getString("tokenid"));
+                tokens.setTokenname(resultSet.getString("tokenname"));
+                tokens.setDescription(resultSet.getString("description"));
+                tokens.setAsmarket(resultSet.getBoolean("asmarket"));
+                tokens.setSignnumber(resultSet.getLong("signnumber"));
+                tokens.setMultiserial(resultSet.getBoolean("multiserial"));
+                tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
+                tokens.setUrl(resultSet.getString("url"));
+                list.add(tokens);
+            }
+            return list;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
     public Map<String, Long> getTokenAmountMap(String name) throws BlockStoreException {
         Map<String, Long> map = new HashMap<String, Long>();
         maybeConnect();
@@ -3271,7 +3304,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
+
     @Override
     public long getCountMilestoneBlocksInInterval(long fromHeight, long toHeight) throws BlockStoreException {
         maybeConnect();
@@ -3535,7 +3568,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
+
     @Override
     public long getTxReward(Sha256Hash hash) throws BlockStoreException {
         maybeConnect();
@@ -3557,7 +3590,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
+
     @Override
     public void insertTxReward(Sha256Hash hash, long nextPerTxReward) throws BlockStoreException {
         maybeConnect();
@@ -3579,9 +3612,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
+
     @Override
-    public PriorityQueue<Triple<Sha256Hash, byte[], Long>> getSortedMiningRewardCalculations(Sha256Hash hash) throws BlockStoreException {
+    public PriorityQueue<Triple<Sha256Hash, byte[], Long>> getSortedMiningRewardCalculations(Sha256Hash hash)
+            throws BlockStoreException {
         PriorityQueue<Triple<Sha256Hash, byte[], Long>> result = new PriorityQueue<Triple<Sha256Hash, byte[], Long>>(
                 Comparator.comparingLong(t -> t.getRight()));
         maybeConnect();
@@ -3590,8 +3624,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement = conn.get().prepareStatement(SELECT_MINING_REWARD_CALCULATIONS_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                Triple<Sha256Hash, byte[], Long> dataRow = Triple.of(
-                        Sha256Hash.wrap(resultSet.getBytes(1)), resultSet.getBytes(2), resultSet.getLong(3));
+                Triple<Sha256Hash, byte[], Long> dataRow = Triple.of(Sha256Hash.wrap(resultSet.getBytes(1)),
+                        resultSet.getBytes(2), resultSet.getLong(3));
                 result.add(dataRow);
             }
             return result;
@@ -3607,7 +3641,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
+
     @Override
     public void insertMiningRewardCalculation(Sha256Hash hash, Address address, long l) throws BlockStoreException {
         maybeConnect();
@@ -3632,7 +3666,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void updateMultiSignBlockBitcoinSerialize(String tokenid, long tokenindex, byte[] bytes) throws BlockStoreException {
+    public void updateMultiSignBlockBitcoinSerialize(String tokenid, long tokenindex, byte[] bytes)
+            throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {

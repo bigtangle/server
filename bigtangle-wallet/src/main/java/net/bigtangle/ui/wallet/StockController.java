@@ -483,7 +483,7 @@ public class StockController extends TokensController {
             requestParam.put("multiserial", false);
             requestParam.put("asmarket", true);
             requestParam.put("tokenstop", false);
-
+            requestParam.put("signnumber", 0);
             requestParam.put("amount", 0);
 
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "createGenesisBlock",
