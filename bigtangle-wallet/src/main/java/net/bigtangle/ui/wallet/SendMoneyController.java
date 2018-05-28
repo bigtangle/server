@@ -34,12 +34,17 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar.ButtonData;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
@@ -77,10 +82,12 @@ public class SendMoneyController {
     public TextField amountEdit;
     @FXML
     public Label btcLabel;
-    
+
     @FXML
     public ComboBox<String> addressComboBox1;
- 
+    @FXML
+    public ChoiceBox<String> addressChoiceBox;
+
     @FXML
     public TextField memoTF1;
 
@@ -88,7 +95,7 @@ public class SendMoneyController {
     public TextField amountEdit1;
     @FXML
     public Label btcLabel1;
-    
+
     // @FXML
     // public ToggleGroup unitToggleGroup;
     // @FXML
@@ -165,7 +172,7 @@ public class SendMoneyController {
         if (list != null && !list.isEmpty()) {
             for (CoinModel coinModel : list) {
                 String temp = coinModel.getTokenid();
-                String tempTokenid= temp.contains(":")?temp.substring( temp.indexOf(":")+1):temp;
+                String tempTokenid = temp.contains(":") ? temp.substring(temp.indexOf(":") + 1) : temp;
                 if (tokenHex.equalsIgnoreCase(tempTokenid.trim())) {
                     return true;
                 }
@@ -377,6 +384,22 @@ public class SendMoneyController {
         }
     }
 
+    public void sendMulti(ActionEvent event) {
+        try {
+
+            if (addressChoiceBox.getItems() == null || addressChoiceBox.getItems().isEmpty()) {
+                GuiUtils.informationalAlert(Main.getText("address_empty"), "", "");
+                return;
+            }
+            String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+
+            // TODO cui,jiang
+
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+    }
+
     // TODO Fix problem after send return to main
     public void checkContact(ActionEvent event) throws Exception {
 
@@ -398,5 +421,81 @@ public class SendMoneyController {
             }
         }
 
+    }
+
+    public void addSIgnAddress(ActionEvent event) {
+        try {
+            test();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+    }
+
+    public void showAddAddressDialog() throws Exception {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle(Main.getText("Address"));
+        dialog.setHeaderText(null);
+        dialog.setContentText(Main.getText("Address"));
+        dialog.setWidth(500);
+        dialog.getDialogPane().setPrefWidth(500);
+        Optional<String> result = dialog.showAndWait();
+        if (result.isPresent()) {
+            String address = result.get();
+            if (address != null && !address.isEmpty() && !addressChoiceBox.getItems().contains(address)) {
+                addressChoiceBox.getItems().add(address);
+                addressChoiceBox.getSelectionModel().selectLast();
+            }
+
+        }
+
+    }
+
+    public void removeSignAddress(ActionEvent event) {
+        addressChoiceBox.getItems().remove(addressChoiceBox.getValue());
+    }
+
+    public void test() throws Exception {
+        Dialog<String> dialog = new Dialog<>();
+        dialog.setTitle(Main.getText("Address"));
+        dialog.setHeaderText(null);
+
+        ButtonType loginButtonType = new ButtonType(Main.getText("OK"), ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(loginButtonType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+        ComboBox<String> addressComboBox = new ComboBox<String>();
+        addressComboBox.setEditable(true);
+        addressComboBox.setPrefWidth(300);
+        List<String> list = Main.initAddress4file();
+
+        ObservableList<String> addressData = FXCollections.observableArrayList(list);
+        addressComboBox.setItems(addressData);
+        grid.add(new Label(Main.getText("Address")), 0, 0);
+        grid.add(addressComboBox, 1, 0);
+
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == loginButtonType) {
+                return addressComboBox.getValue();
+            }
+            return "";
+        });
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(address -> {
+            try {
+                if (address != null && !address.isEmpty() && !addressChoiceBox.getItems().contains(address)) {
+                    addressChoiceBox.getItems().add(address);
+                    addressChoiceBox.getSelectionModel().selectLast();
+                }
+            } catch (Exception e) {
+                // GuiUtils.crashAlert(e);
+            }
+        });
     }
 }

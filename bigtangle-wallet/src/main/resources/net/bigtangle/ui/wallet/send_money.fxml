@@ -76,7 +76,7 @@
                         <HBox maxWidth="700.0" minWidth="700.0" prefHeight="26.0" prefWidth="700.0" spacing="50.0">
                            <children>
                               <Label prefWidth="150.0" text="%Token" />
-                              <ChoiceBox fx:id="tokeninfo1" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
+                              <ChoiceBox fx:id="tokeninfo1" layoutX="210.0" layoutY="10.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
                            </children>
                         </HBox>
                         <HBox prefHeight="23.0" prefWidth="200.0" spacing="50.0">
@@ -88,7 +88,7 @@
                         <HBox alignment="CENTER_LEFT" maxWidth="700.0" minWidth="700.0" prefWidth="701.0" spacing="50.0">
                            <children>
                               <Label prefWidth="150.0" text="%to" />
-                              <ComboBox fx:id="addressComboBox1" editable="true" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
+                              <ChoiceBox fx:id="addressChoiceBox" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
                            </children>
                         </HBox>
                         <HBox maxWidth="700.0" minWidth="700.0" prefHeight="23.0" prefWidth="700.0" spacing="50.0">
@@ -99,7 +99,9 @@
                         </HBox>
                         <HBox alignment="CENTER_RIGHT" fillHeight="true" maxWidth="700.0" minWidth="700.0" prefHeight="30.0" prefWidth="700.0" spacing="15.0" VBox.vgrow="NEVER">
                            <children>
-                              <Button fx:id="sendBtn1" defaultButton="true" mnemonicParsing="false" onAction="#send" prefWidth="79.0" text="%Send" />
+                              <Button defaultButton="true" mnemonicParsing="false" onAction="#addSIgnAddress" text="%addSignAddr" />
+                              <Button defaultButton="true" mnemonicParsing="false" onAction="#removeSignAddress" text="%removeAddress" />
+                              <Button fx:id="sendBtn1" defaultButton="true" mnemonicParsing="false" onAction="#sendMulti" prefWidth="79.0" text="%Send" />
                               <Button defaultButton="true" mnemonicParsing="false" onAction="#importSign" text="%import" />
                               <Button defaultButton="true" mnemonicParsing="false" onAction="#exportSign" text="%export" />
                               <Button fx:id="cancelBtn1" cancelButton="true" mnemonicParsing="false" onAction="#cancel" prefWidth="79.0" text="%Cancel" />
