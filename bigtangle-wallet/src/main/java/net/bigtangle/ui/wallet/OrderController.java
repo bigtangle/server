@@ -55,6 +55,8 @@ public class OrderController extends ExchangeController {
     public TextField orderid4searchTextField;
     @FXML
     public TextField address4searchTextField;
+    @FXML
+    public TextField market4searchTextField;
 
     @FXML
     public ComboBox<String> addressComboBox;
@@ -310,6 +312,8 @@ public class OrderController extends ExchangeController {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", orderid4searchTextField.getText());
         requestParam.put("address", address4searchTextField.getText());
+        requestParam.put("market", market4searchTextField.getText());
+
         requestParam.put("state", stateTG.getSelectedToggle().getUserData().toString());
         try {
             initTable(requestParam);

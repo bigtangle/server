@@ -16,7 +16,7 @@
 							<children>
 								<Label layoutX="40.0" layoutY="20.0" text="%orderid" />
 								<TextField fx:id="orderid4searchTextField" layoutX="116.0" layoutY="16.0" prefHeight="23.0" prefWidth="300.0" />
-								<Button defaultButton="true" layoutX="341.0" layoutY="150.0" mnemonicParsing="false" onAction="#search" prefHeight="23.0" prefWidth="77.0" text="%search" />
+								<Button defaultButton="true" layoutX="465.0" layoutY="150.0" mnemonicParsing="false" onAction="#search" prefHeight="23.0" prefWidth="77.0" text="%search" />
 								<TableView fx:id="orderTable" editable="true" layoutX="6.0" layoutY="195.0" prefHeight="351.0" prefWidth="977.0">
 									<columns>
 										<TableColumn fx:id="tokenidCol" prefWidth="175.0" text="%token_id" />
@@ -45,6 +45,8 @@
 								</RadioButton>
 								<RadioButton fx:id="stateRB2" layoutX="214.0" layoutY="106.0" mnemonicParsing="false" text="%match" toggleGroup="$stateTG" />
 								<RadioButton fx:id="stateRB3" layoutX="310.0" layoutY="106.0" mnemonicParsing="false" text="%finish" toggleGroup="$stateTG" />
+                        <TextField fx:id="market4searchTextField" layoutX="116.0" layoutY="150.0" prefHeight="23.0" prefWidth="300.0" />
+                        <Label layoutX="40.0" layoutY="154.0" text="%market" />
 							</children>
 						</AnchorPane>
 					</content>
@@ -135,7 +137,7 @@
 		</TabPane>
 		<HBox alignment="CENTER" prefHeight="68.0" prefWidth="1000.0" styleClass="title-banner">
 			<children>
-				<Label maxHeight="1.7976931348623157E308" styleClass="title-label"  alignment="CENTER" text="%market">
+				<Label alignment="CENTER" maxHeight="1.7976931348623157E308" styleClass="title-label" text="%market">
 					<font>
 						<Font size="30.0" />
 					</font>
