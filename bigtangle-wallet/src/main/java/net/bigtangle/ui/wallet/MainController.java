@@ -275,6 +275,7 @@ public class MainController {
     public void sendMoneyOut(ActionEvent event) {
         Main.IpAddress = Server.getText();
         Main.port = IPPort.getText();
+        initTableView();
         Main.instance.overlayUI("send_money.fxml");
     }
 

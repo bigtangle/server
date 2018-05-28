@@ -52,9 +52,9 @@ import net.bigtangle.ui.wallet.utils.WTUtils;
 import net.bigtangle.utils.OkHttp3Util;
 
 public class StockController extends TokensController {
-    
+
     private static final Logger log = LoggerFactory.getLogger(StockController.class);
-    
+
     @FXML
     public TabPane tabPane;
     @FXML
@@ -408,18 +408,21 @@ public class StockController extends TokensController {
         ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
         try {
             TokenInfo tokenInfo = new TokenInfo();
-            Tokens tokens = new Tokens(tokenid.getValue().trim(), stockName.getText().trim(), stockDescription.getText().trim(), "", signAddrChoiceBox.getItems().size(), false, false, false);
+            Tokens tokens = new Tokens(tokenid.getValue().trim(), stockName.getText().trim(),
+                    stockDescription.getText().trim(), "", signAddrChoiceBox.getItems().size(), false, false, false);
             tokenInfo.setTokens(tokens);
-            
+
             // add MultiSignAddress item
-            tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokens.getTokenid(), outKey.toAddress(Main.params).toBase58()));
-            
+            tokenInfo.getMultiSignAddresses()
+                    .add(new MultiSignAddress(tokens.getTokenid(), outKey.toAddress(Main.params).toBase58()));
+
             Coin basecoin = Coin.parseCoin(stockAmount.getText(), Utils.HEX.decode(tokenid.getValue()));
 
             long amount = basecoin.getValue();
             tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
 
-            String resp000 = OkHttp3Util.postString(CONTEXT_ROOT + "getGenesisBlockLR", Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
+            String resp000 = OkHttp3Util.postString(CONTEXT_ROOT + "getGenesisBlockLR",
+                    Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
             @SuppressWarnings("unchecked")
             HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
             String leftBlockHex = (String) result000.get("leftBlockHex");
@@ -427,18 +430,19 @@ public class StockController extends TokensController {
 
             Block r1 = Main.params.getDefaultSerializer().makeBlock(Utils.HEX.decode(leftBlockHex));
             Block r2 = Main.params.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
-            
+
             long blocktype0 = NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
-            Block block = new Block(Main.params, r1.getHash(), r2.getHash(), blocktype0, Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+            Block block = new Block(Main.params, r1.getHash(), r2.getHash(), blocktype0,
+                    Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
             block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo);
             block.solve();
 
             Transaction transaction = block.getTransactions().get(0);
-            
+
             Sha256Hash sighash = transaction.getHash();
             ECKey.ECDSASignature party1Signature = outKey.sign(sighash);
             byte[] buf1 = party1Signature.encodeToDER();
-            
+
             List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
             MultiSignBy multiSignBy0 = new MultiSignBy();
             multiSignBy0.setTokenid(Main.getString(tokenid.getValue()).trim());
@@ -448,7 +452,7 @@ public class StockController extends TokensController {
             multiSignBy0.setSignature(Utils.HEX.encode(buf1));
             multiSignBies.add(multiSignBy0);
             transaction.setDatasignatire(Json.jsonmapper().writeValueAsBytes(multiSignBies));
-            
+
             // save block
             OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
             Main.instance.sendMessage(block.bitcoinSerialize());
@@ -536,7 +540,7 @@ public class StockController extends TokensController {
             checkGuiThread();
             initTableView();
             initMultisignTableView();
-            // overlayUI.done();
+            overlayUI.done();
             // tabPane.getSelectionModel().clearAndSelect(4);
         } catch (Exception e) {
             GuiUtils.crashAlert(e);

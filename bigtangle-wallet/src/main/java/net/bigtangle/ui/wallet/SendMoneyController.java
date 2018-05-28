@@ -165,7 +165,8 @@ public class SendMoneyController {
         if (list != null && !list.isEmpty()) {
             for (CoinModel coinModel : list) {
                 String temp = coinModel.getTokenid();
-                if (tokenHex.equalsIgnoreCase(temp)) {
+                String tempTokenid= temp.contains(":")?temp.substring( temp.indexOf(":")+1):temp;
+                if (tokenHex.equalsIgnoreCase(tempTokenid.trim())) {
                     return true;
                 }
             }
