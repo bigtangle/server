@@ -105,7 +105,7 @@ public class TransactionService {
         
         boolean tokenstop = (boolean) request.get("tokenstop");
         String url = (String) request.get("url");
-        long signnumber = new Long(request.get("signnumber").toString());
+        long signnumber = 1;
         Tokens tokens = new Tokens(tokenHex, tokenname, description, url, signnumber, multiserial, asmarket, tokenstop);
         store.saveTokens(tokens);
 

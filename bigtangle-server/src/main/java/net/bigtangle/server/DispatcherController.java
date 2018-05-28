@@ -144,8 +144,8 @@ public class DispatcherController {
             }
                 break;
             case getMarkets: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+//                String reqStr = new String(bodyByte, "UTF-8");
+//                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = tokensService.getMarketTokensList();
                 this.outPrintJSONString(httpServletResponse, response);
             }
@@ -316,14 +316,14 @@ public class DispatcherController {
                 break;
             }
         } catch (BlockStoreException e) {
-            e.printStackTrace();
+            // e.printStackTrace();
             logger.error("reqCmd : {}, reqHex : {}, block store ex.", reqCmd, Utils.HEX.encode(bodyByte));
             AbstractResponse resp = AbstractResponse.createEmptyResponse();
             resp.setDuration(101);
             resp.setMessage(e.getMessage());
             this.outPrintJSONString(httpServletResponse, resp);
         } catch (Exception exception) {
-            exception.printStackTrace();
+            // exception.printStackTrace();
             logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, Utils.HEX.encode(bodyByte));
             AbstractResponse resp = AbstractResponse.createEmptyResponse();
             resp.setDuration(100);
