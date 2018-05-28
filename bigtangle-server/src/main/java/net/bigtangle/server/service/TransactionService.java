@@ -19,11 +19,9 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
-import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
@@ -95,15 +93,18 @@ public class TransactionService {
     }
 
     public byte[] createGenesisBlock(Map<String, Object> request) throws Exception {
+        String tokenHex = (String) request.get("tokenHex");
+        Tokens tokens_ = this.store.getTokensInfo(tokenHex);
+        if (tokens_ != null) {
+            throw new BlockStoreException("tokens already existed");
+        }
         String pubKeyHex = (String) request.get("pubKeyHex");
         long amount = new Long(request.get("amount").toString());
         String tokenname = (String) request.get("tokenname");
         String description = (String) request.get("description");
-        String tokenHex = (String) request.get("tokenHex");
-        boolean asmarket = (boolean) request.get("asmarket");
-        boolean multiserial = (boolean) request.get("multiserial");
-        
-        boolean tokenstop = (boolean) request.get("tokenstop");
+        boolean asmarket = request.get("asmarket") == null ? false : (boolean) request.get("asmarket");
+        boolean multiserial = request.get("multiserial") == null ? false : (boolean) request.get("multiserial");
+        boolean tokenstop = request.get("tokenstop") == null ? false : (boolean) request.get("tokenstop");
         String url = (String) request.get("url");
         long signnumber = 1;
         Tokens tokens = new Tokens(tokenHex, tokenname, description, url, signnumber, multiserial, asmarket, tokenstop);
@@ -114,56 +115,6 @@ public class TransactionService {
         Coin coin = Coin.valueOf(amount, tokenid);
         Block block = createGenesisBlock(coin, tokenid, pubKey, null);
         return block.bitcoinSerialize();
-    }
-
-    public void multiSign(Map<String, Object> request) throws BlockStoreException {
-        String tokenid = (String) request.get("tokenid");
-        String address = (String) request.get("address");
-        long tokenindex = Long.parseLong(request.get("tokenindex").toString());
-        Tokens tokens = this.store.getTokensInfo(tokenid);
-        if (tokens == null) {
-            return;
-        }
-        TokenSerial tokenSerial = this.store.getTokenSerialInfo(tokenid, tokenindex);
-        if (tokenSerial == null) {
-            return;
-        }
-        MultiSignAddress multiSignAddress = this.store.getMultiSignAddressInfo(tokenid, address);
-        if (multiSignAddress == null) {
-            return;
-        }
-        int count = this.store.getCountMultiSignByTokenIndexAndAddress(tokenid, tokenSerial.getTokenindex(), address);
-        if (count > 0) {
-            return;
-        }
-        // MultiSignBy multiSignBy = new MultiSignBy(tokenid,
-        // tokenSerial.getTokenindex(), address);
-        // store.insertMultisignby(multiSignBy);
-        if (canCreateGenesisBlock(tokens, tokenSerial.getTokenindex())) {
-            // TokenInfo tokenInfo = new TokenInfo();
-            // tokenInfo.setTokens(tokens);
-            // List<TokenSerial> tokenSerials =
-            // this.store.getTokenSerialListByTokenid(tokenid);
-            // List<MultiSignAddress> multiSignAddresses =
-            // this.store.getMultiSignAddressListByTokenid(tokenid);
-            // List<MultiSignBy> multiSignBies =
-            // this.store.getMultiSignByListByTokenid(tokenid);
-            // tokenInfo.setMultiSignAddresses(multiSignAddresses);
-            // tokenInfo.setMultiSignBies(multiSignBies);
-            // tokenInfo.setTokenSerials(tokenSerials);
-            // long amount = tokenSerial.getAmount();
-            // Coin coin = Coin.valueOf(amount, tokenid);
-            // Block block = createGenesisBlock(coin, tokenid, pubKey,
-            // NetworkParameters.BLOCKTYPE_GENESIS_MULTIPLE, tokenInfo);
-        }
-    }
-
-    public boolean canCreateGenesisBlock(Tokens tokens, long tokenindex) throws BlockStoreException {
-        int count = this.store.getCountMultiSignByAlready(tokens.getTokenid(), tokenindex);
-        if (count >= tokens.getSignnumber()) {
-            return true;
-        }
-        return false;
     }
 
     public Block createGenesisBlock(Coin coin, byte[] tokenid, byte[] pubKey, TokenInfo tokenInfo) throws Exception {

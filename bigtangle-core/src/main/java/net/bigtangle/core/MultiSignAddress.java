@@ -7,6 +7,16 @@ public class MultiSignAddress implements java.io.Serializable {
     private String tokenid;
     
     private String address;
+    
+    private String pubKeyHex;
+    
+    public String getPubKeyHex() {
+        return pubKeyHex;
+    }
+
+    public void setPubKeyHex(String pubKeyHex) {
+        this.pubKeyHex = pubKeyHex;
+    }
 
     public String getTokenid() {
         return tokenid;
@@ -24,9 +34,10 @@ public class MultiSignAddress implements java.io.Serializable {
         this.address = address;
     }
 
-    public MultiSignAddress(String tokenid, String address) {
+    public MultiSignAddress(String tokenid, String address, String pubKeyHex) {
         this.tokenid = tokenid;
         this.address = address;
+        this.pubKeyHex = pubKeyHex;
     }
 
     public MultiSignAddress() {
@@ -35,6 +46,7 @@ public class MultiSignAddress implements java.io.Serializable {
     public MultiSignAddress copy(MultiSignAddress multiSignAddress) {
         this.tokenid = multiSignAddress.getTokenid();
         this.address = multiSignAddress.getAddress();
+        this.pubKeyHex = multiSignAddress.getPubKeyHex();
         return this;
     }
 }

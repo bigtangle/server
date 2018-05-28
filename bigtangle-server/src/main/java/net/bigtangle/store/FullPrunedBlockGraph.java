@@ -22,7 +22,6 @@ import java.util.concurrent.FutureTask;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.tuple.Triple;
-import org.apache.hadoop.io.UTF8.Comparator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,7 +50,6 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.script.Script;
-import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.script.Script.VerifyFlag;
 import net.bigtangle.server.service.BlockRequester;
 import net.bigtangle.server.service.ValidatorService;
@@ -244,6 +242,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             this.blockStore.deleteMultiSignAddressByTokenid(token.getTokenid());
         }
         for (MultiSignAddress multiSignAddress : tokenInfo.getMultiSignAddresses()) {
+            byte[] pubKey = Utils.HEX.decode(multiSignAddress.getPubKeyHex());
+            multiSignAddress.setAddress(ECKey.fromPublicOnly(pubKey).toAddress(networkParameters).toBase58());
             MultiSignAddress multiSignAddress0 = this.blockStore.getMultiSignAddressInfo(multiSignAddress.getTokenid(),
                     multiSignAddress.getAddress());
             if (multiSignAddress0 == null) {

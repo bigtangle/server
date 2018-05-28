@@ -1125,9 +1125,20 @@ public class Block extends Message {
         // needed every time. We'll put a simple
         // counter in the scriptSig so every transaction has a different hash.
         coinbase.addInput(new TransactionInput(params, coinbase, inputBuilder.build().getProgram()));
-        coinbase.addOutput(new TransactionOutput(params, coinbase, value,
-                ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
-    //TODO  Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, walletKeys);
+        if (tokenInfo == null) {
+            coinbase.addOutput(new TransactionOutput(params, coinbase, value,
+                    ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
+        }
+        else {
+            long signnumber = tokenInfo.getTokens().getSignnumber();
+            List<ECKey> walletKeys = new ArrayList<ECKey>();
+            for (MultiSignAddress multiSignAddress : tokenInfo.getMultiSignAddresses()) {
+                ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(multiSignAddress.getPubKeyHex()));
+                walletKeys.add(ecKey);
+            }
+            Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript((int) signnumber, walletKeys);
+            coinbase.addOutput(new TransactionOutput(params, coinbase, value, scriptPubKey.getProgram()));
+        }
         transactions.add(coinbase);
         coinbase.setParent(this);
         coinbase.length = coinbase.unsafeBitcoinSerialize().length;

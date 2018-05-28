@@ -290,8 +290,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected abstract String getUpdateBlockevaluationUnmaintainAllSQL();
 
-    protected String SELECT_MULTISIGNADDRESS_SQL = "SELECT tokenid, address FROM multisignaddress WHERE tokenid = ?";
-    protected String INSERT_MULTISIGNADDRESS_SQL = "INSERT INTO multisignaddress (tokenid, address) VALUES (?, ?)";
+    protected String SELECT_MULTISIGNADDRESS_SQL = "SELECT tokenid, address, pubKeyHex FROM multisignaddress WHERE tokenid = ?";
+    protected String INSERT_MULTISIGNADDRESS_SQL = "INSERT INTO multisignaddress (tokenid, address, pubKeyHex) VALUES (?, ?, ?)";
     protected String DELETE_MULTISIGNADDRESS_SQL = "DELETE FROM multisignaddress WHERE tokenid = ? AND address = ?";
     protected String COUNT_MULTISIGNADDRESS_SQL = "SELECT COUNT(*) as count FROM multisignaddress WHERE tokenid = ?";
     protected String SELECT_MULTISIGNADDRESSINFO_SQL = "SELECT tokenid, address FROM multisignaddress WHERE tokenid = ? AND address = ?";
@@ -2838,7 +2838,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             while (resultSet.next()) {
                 String tokenid0 = resultSet.getString("tokenid");
                 String address = resultSet.getString("address");
-                MultiSignAddress multiSignAddress = new MultiSignAddress(tokenid0, address);
+                String pubKeyHex = resultSet.getString("pubKeyHex");
+                MultiSignAddress multiSignAddress = new MultiSignAddress(tokenid0, address, pubKeyHex);
                 list.add(multiSignAddress);
             }
             return list;
@@ -2863,6 +2864,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement = conn.get().prepareStatement(INSERT_MULTISIGNADDRESS_SQL);
             preparedStatement.setString(1, multiSignAddress.getTokenid());
             preparedStatement.setString(2, multiSignAddress.getAddress());
+            preparedStatement.setString(3, multiSignAddress.getPubKeyHex());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -3094,7 +3096,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             if (resultSet.next()) {
                 String tokenid0 = resultSet.getString("tokenid");
                 String address0 = resultSet.getString("address");
-                multiSignAddress = new MultiSignAddress(tokenid0, address0);
+                String pubKeyHex = resultSet.getString("pubKeyHex");
+                multiSignAddress = new MultiSignAddress(tokenid0, address0, pubKeyHex);
             }
             return multiSignAddress;
         } catch (SQLException ex) {
