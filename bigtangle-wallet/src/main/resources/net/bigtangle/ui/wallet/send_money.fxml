@@ -63,7 +63,7 @@
             		</VBox>
                </content>
             </Tab>
-            <Tab text="%multiSignAddressPay">
+            <Tab closable="false" text="%multiSignAddressPay">
               <content>
                   <VBox alignment="CENTER_LEFT" maxHeight="600.0" maxWidth="1000.0" minHeight="600.0" minWidth="1000.0" prefHeight="600.0" prefWidth="1000.0" spacing="20.0" style="-fx-background-color: white;">
                      <children>
