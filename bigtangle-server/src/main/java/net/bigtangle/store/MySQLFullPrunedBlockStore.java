@@ -64,7 +64,9 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    PRIMARY KEY (tokenid) \n)";
 
     private static final String CREATE_MULTISIGNADDRESS_TABLE = "CREATE TABLE multisignaddress (\n"
-            + "    tokenid varchar(255) NOT NULL  ,\n" + "    address varchar(255),\n"
+            + "    tokenid varchar(255) NOT NULL  ,\n" 
+            + "    address varchar(255),\n"
+            + "    pubKey varbinary(255),\n"
             + "    PRIMARY KEY (tokenid, address) \n)";
 
     private static final String CREATE_TOKENSERIAL_TABLE = "CREATE TABLE tokenserial (\n"
