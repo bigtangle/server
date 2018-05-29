@@ -2278,10 +2278,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
+            String sql=SELECT_TOKENS_SQL+" WHERE asmarket=false";
             if (name != null && !"".equals(name.trim())) {
-                SELECT_TOKENS_SQL += " WHERE tokenname LIKE '%" + name + "%' OR description LIKE '%" + name + "%'";
+                sql += " AND (tokenname LIKE '%" + name + "%' OR description LIKE '%" + name + "%')";
             }
-            preparedStatement = conn.get().prepareStatement(SELECT_TOKENS_SQL);
+            preparedStatement = conn.get().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 Tokens tokens = new Tokens();
