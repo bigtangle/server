@@ -42,6 +42,8 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.GridPane;
@@ -114,6 +116,21 @@ public class SendMoneyController {
 
     private String mOrderid;
     private Transaction mTransaction;
+    @FXML
+    public TextField signnumberTF;
+    @FXML
+    public TextField signAddressTF;
+    @FXML
+    public ChoiceBox<Object> signAddressChoiceBox;;
+
+    public TableView<Map> signTable;
+    public TableColumn<Map, String> addressColumn;
+    public TableColumn<Map, String> signnumberColumn;
+    public TableColumn<Map, String> realSignnumColumn;
+    public TableColumn<Map, String> isSignAllColumn;
+
+    public TableColumn<Map, String> isMySignColumn;
+    public TableColumn<Map, String> amountColumn;
 
     public void initChoicebox() {
         // basicRadioButton.setUserData(1 + "");
@@ -497,5 +514,29 @@ public class SendMoneyController {
                 // GuiUtils.crashAlert(e);
             }
         });
+    }
+
+    public void addSignAddr(ActionEvent event) {
+        if (signAddressTF.getText() == null || signAddressTF.getText().isEmpty()) {
+            return;
+        }
+        signAddressChoiceBox.getItems().add(signAddressTF.getText());
+        signAddressChoiceBox.getSelectionModel().selectLast();
+    }
+
+    public void removeSignAddr(ActionEvent event) {
+        signAddressChoiceBox.getItems().remove(signAddressChoiceBox.getValue());
+    }
+
+    public void saveSetting(ActionEvent event) {
+
+    }
+
+    public void multiSign(ActionEvent event) {
+
+    }
+
+    public void editSign(ActionEvent event) {
+
     }
 }
