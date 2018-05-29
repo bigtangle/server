@@ -80,7 +80,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " toAmount, data, toSign, fromSign, toOrderId, fromOrderId FROM exchange WHERE orderid = ?";
     
     // Tables exist SQL.
-    protected String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM settings WHERE 1 = 2";
+    protected String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM orderpublish WHERE 1 = 2";
 
     protected NetworkParameters params;
     protected ThreadLocal<Connection> conn;
