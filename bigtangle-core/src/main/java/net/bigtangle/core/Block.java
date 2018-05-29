@@ -1131,12 +1131,12 @@ public class Block extends Message {
         }
         else {
             long signnumber = tokenInfo.getTokens().getSignnumber();
-            List<ECKey> walletKeys = new ArrayList<ECKey>();
+            List<ECKey> keys = new ArrayList<ECKey>();
             for (MultiSignAddress multiSignAddress : tokenInfo.getMultiSignAddresses()) {
                 ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(multiSignAddress.getPubKeyHex()));
-                walletKeys.add(ecKey);
+                keys.add(ecKey);
             }
-            Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript((int) signnumber, walletKeys);
+            Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript((int) signnumber, keys);
             coinbase.addOutput(new TransactionOutput(params, coinbase, value, scriptPubKey.getProgram()));
         }
         transactions.add(coinbase);
