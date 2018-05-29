@@ -92,10 +92,10 @@
 								<Label layoutX="24.0" layoutY="213.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%url" />
 								<Label layoutX="24.0" layoutY="437.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%signnumber" />
 								<TextField fx:id="signnumberTF" layoutX="279.0" layoutY="433.0" maxWidth="255.0" minWidth="255.0" prefHeight="23.0" prefWidth="255.0" text="2" />
-								<Button defaultButton="true" layoutX="562.0" layoutY="433.0" mnemonicParsing="false" onAction="#addSIgnAddress" text="%addSignAddr" />
+								<Button defaultButton="true" layoutX="562.0" layoutY="433.0" mnemonicParsing="false" onAction="#addSIgnAddress" text="%addSignPubkey" />
                         <ChoiceBox fx:id="signAddrChoiceBox" layoutX="279.0" layoutY="470.0" prefHeight="23.0" prefWidth="255.0" />
-                        <Label layoutX="24.0" layoutY="474.0" prefHeight="15.0" prefWidth="101.0" text="%Address" />
-                        <Button defaultButton="true" layoutX="562.0" layoutY="470.0" mnemonicParsing="false" onAction="#removeSignAddress" text="%removeAddress" />
+                        <Label layoutX="24.0" layoutY="474.0" prefHeight="15.0" prefWidth="101.0" text="%pubkey" />
+                        <Button defaultButton="true" layoutX="562.0" layoutY="470.0" mnemonicParsing="false" onAction="#removeSignAddress" text="%removePubkey" />
 							</children>
 						</AnchorPane>
 					</content>

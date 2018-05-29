@@ -344,7 +344,7 @@ public class StockController extends TokensController {
         }
         List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aeskey);
         for (ECKey key : keys) {
-            String temp = Utils.HEX.encode(key.getPubKeyHash());
+            String temp = Utils.HEX.encode(key.getPubKey());
             boolean flag = true;
             for (Map<String, Object> map : list) {
                 String tokenHex = (String) map.get("tokenid");
@@ -636,9 +636,9 @@ public class StockController extends TokensController {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
         List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
-//        for (ECKey ecKey : keys) {
-//            System.out.println(ecKey.getPublicKeyAsHex());
-//        }
+        // for (ECKey ecKey : keys) {
+        // System.out.println(ecKey.getPublicKeyAsHex());
+        // }
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
 
         TokenInfo tokenInfo = new TokenInfo();
@@ -650,7 +650,8 @@ public class StockController extends TokensController {
         if (signAddrChoiceBox.getItems() != null && !signAddrChoiceBox.getItems().isEmpty()) {
             for (String pubKeyHex : signAddrChoiceBox.getItems()) {
                 ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(pubKeyHex));
-                tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(Main.getString(map.get("tokenHex")).trim(), "", ecKey.getPublicKeyAsHex()));
+                tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(Main.getString(map.get("tokenHex")).trim(),
+                        "", ecKey.getPublicKeyAsHex()));
             }
         }
         long amount = Coin.parseCoin(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue())).getValue();

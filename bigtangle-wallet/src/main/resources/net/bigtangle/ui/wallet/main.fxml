@@ -21,8 +21,8 @@
 						<TableColumn fx:id="balanceColumn" prefWidth="70.0" text="%Amount" />
 						<TableColumn fx:id="tokentypeColumnA" prefWidth="232.0" text="%Token" />
 						<TableColumn fx:id="addressColumn" prefWidth="282.0" text="%Address" />
-                  <TableColumn fx:id="memoColumn" prefWidth="282.0" text="%memo" />
 						<TableColumn fx:id="spendPendingColumn" prefWidth="73.0" text="%pending" />
+                  <TableColumn fx:id="memoColumn" prefWidth="282.0" text="%memo" />
 					</columns>
 				</TableColumn>
 			</columns>
