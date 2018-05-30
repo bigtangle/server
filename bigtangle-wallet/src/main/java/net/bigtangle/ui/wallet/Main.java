@@ -51,7 +51,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -112,7 +114,6 @@ public class Main extends Application {
     public static Map<String, Boolean> validTokenMap = new HashMap<String, Boolean>();
     public static Set<String> validAddressSet = new HashSet<String>();
 
- 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
     public static String positiveFile = "/bigtangle-wachted.txt";
     public static String contactFile = "/bigtangle-contact.txt";
@@ -186,11 +187,11 @@ public class Main extends Application {
 
         // set local kafka to send
         if (!Locale.CHINESE.equals(locale)) {
-            
+
             if ("".equals(IpAddress))
                 IpAddress = "de.server.bigtangle.net";
         } else {
-             
+
             if ("".equals(IpAddress))
                 IpAddress = "cn.server.bigtangle.net";
 
@@ -234,6 +235,7 @@ public class Main extends Application {
 
     }
 
+    @SuppressWarnings("unchecked")
     public static Map<String, String> getTokenHexNameMap() throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         Map<String, Object> requestParam = new HashMap<String, Object>();
@@ -472,7 +474,7 @@ public class Main extends Application {
             if (args.length >= 3) {
                 IpAddress = args[2];
             }
-            
+
         }
         String tokeninfo = "";
         tokeninfo += NetworkParameters.BIGNETCOIN_TOKENID_STRING + "," + MonetaryFormat.CODE_BTC;
@@ -530,6 +532,7 @@ public class Main extends Application {
 
     }
 
+    @SuppressWarnings("unchecked")
     public static List<UTXO> getUTXOWithECKeyList(List<ECKey> ecKeys, String tokenid) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
@@ -601,7 +604,15 @@ public class Main extends Application {
         // return sendMessage(data, this.blockTopic, this.kafka);
     }
 
- 
+    public static boolean checkResponse(String resp) throws JsonParseException, JsonMappingException, IOException {
+        @SuppressWarnings("unchecked")
+        HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
+        int error = (Integer) result2.get("errorcode");
+        return error > 0;
+        // System.out.println("resp : " + resp);
+        // assertEquals(duration, 0);
+    }
+
     /**
      * is HH:mm:ss
      * 

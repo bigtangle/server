@@ -718,7 +718,8 @@ public class StockController extends TokensController {
         block.solve();
 
         // save block
-        OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
+       String resp = OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
+        Main.checkResponse(resp) ;
     }
 
     public void add2positve(ActionEvent event) {

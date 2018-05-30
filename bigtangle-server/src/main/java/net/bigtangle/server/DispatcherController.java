@@ -34,7 +34,9 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.kafka.KafkaConfiguration;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.response.AbstractResponse;
+import net.bigtangle.server.response.ErrorResponse;
 import net.bigtangle.server.response.GetBlockEvaluationsResponse;
+import net.bigtangle.server.response.OkResponse;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.ExchangeService;
 import net.bigtangle.server.service.MultiSignService;
@@ -99,7 +101,7 @@ public class DispatcherController {
             case saveBlock: {
                 blockService.saveBinaryArrayToBlock(bodyByte);
                 brodcastBlock(bodyByte);
-                this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
+                this.outPrintJSONString(httpServletResponse, OkResponse.create ());
             }
                 break;
 
@@ -247,7 +249,7 @@ public class DispatcherController {
                 if (request.get("heightstart") != null) {
                     this.transactionService.streamBlocks(Long.valueOf((String) request.get("heightstart")),
                             (String) request.get("kafka"));
-                    this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
+                    this.outPrintJSONString(httpServletResponse, OkResponse.create ());
                 }
             }
                 break;
@@ -283,7 +285,7 @@ public class DispatcherController {
             case multiSign: {
                 Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
                 this.multiSignService.multiSign(block);
-                this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
+                this.outPrintJSONString(httpServletResponse, OkResponse.create ());
             }
                 break;
             case getTokenSerials: {
@@ -311,22 +313,21 @@ public class DispatcherController {
             case updateTokenInfo: {
                 Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
                 this.tokensService.updateTokenInfo(block);
-                this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
+                this.outPrintJSONString(httpServletResponse,OkResponse.create ());
             }
                 break;
             }
         } catch (BlockStoreException e) {
             // e.printStackTrace();
             logger.error("reqCmd : {}, reqHex : {}, block store ex.", reqCmd, Utils.HEX.encode(bodyByte));
-            AbstractResponse resp = AbstractResponse.createEmptyResponse();
-            resp.setDuration(101);
+            AbstractResponse resp = ErrorResponse.create (101); 
+            resp.setErrorcode( 101);
             resp.setMessage(e.getMessage());
             this.outPrintJSONString(httpServletResponse, resp);
         } catch (Exception exception) {
             // exception.printStackTrace();
             logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, Utils.HEX.encode(bodyByte));
-            AbstractResponse resp = AbstractResponse.createEmptyResponse();
-            resp.setDuration(100);
+            AbstractResponse resp = ErrorResponse.create (100); 
             resp.setMessage("unkown error");
             this.outPrintJSONString(httpServletResponse, resp);
         }

@@ -4,15 +4,12 @@
  *******************************************************************************/
 package net.bigtangle.server.response;
 
-public class ErrorResponse extends AbstractResponse {
+public class OkResponse extends AbstractResponse {
 
-  
-
-    public static AbstractResponse create(int error) {
-        ErrorResponse res = new ErrorResponse();
-        res.setErrorcode(error);
+    public static AbstractResponse create() {
+        OkResponse res = new OkResponse();
+        res.setErrorcode(0);
         return res;
     }
 
-   
 }

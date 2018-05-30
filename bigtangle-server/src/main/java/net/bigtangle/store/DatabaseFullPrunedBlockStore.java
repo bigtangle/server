@@ -1154,7 +1154,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         if (log.isDebugEnabled())
             log.debug("Committing database batch write with connection: " + conn.get().toString());
         try {
-            conn.get().commit();
+          if(!conn.get().getAutoCommit())  conn.get().commit();
             conn.get().setAutoCommit(true);
         } catch (SQLException e) {
             throw new BlockStoreException(e);

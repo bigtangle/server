@@ -15,6 +15,7 @@ import net.bigtangle.order.match.OrderBook;
 import net.bigtangle.order.match.Side;
 import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.GetOrderResponse;
+import net.bigtangle.server.response.OkResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
 
 import org.apache.commons.lang3.StringUtils;
@@ -56,7 +57,7 @@ public class OrderPublishService {
             }
             orderBook.enter(order.getOrderid(), type == 1 ? Side.SELL : Side.BUY, price, amount);
         }
-        return AbstractResponse.createEmptyResponse();
+        return OkResponse.create ();
     }
     
     @Autowired

@@ -11,10 +11,8 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 
 public abstract class AbstractResponse {
 
-    private static class Emptyness extends AbstractResponse {
-    }
-
-    private Integer duration;
+   
+    private Integer errorcode;
     
     private String message;
 
@@ -41,15 +39,15 @@ public abstract class AbstractResponse {
         return EqualsBuilder.reflectionEquals(this, obj, false);
     }
 
-    public Integer getDuration() {
-        return duration == null ? 0 : this.duration;
+   
+
+    public Integer getErrorcode() {
+        return errorcode;
     }
 
-    public void setDuration(Integer duration) {
-        this.duration = duration;
+    public void setErrorcode(Integer errorcode) {
+        this.errorcode = errorcode;
     }
 
-    public static AbstractResponse createEmptyResponse() {
-        return new Emptyness();
-    }
+  
 }

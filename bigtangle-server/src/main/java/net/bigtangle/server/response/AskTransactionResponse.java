@@ -21,7 +21,7 @@ public class AskTransactionResponse extends AbstractResponse {
         Block b2 = result.get("r2");
         res.r1Hex = Utils.HEX.encode(b1.bitcoinSerialize());
         res.r2Hex = Utils.HEX.encode(b2.bitcoinSerialize());
-        res.setDuration(0);
+        res.setErrorcode(0);
         return res;
     }
 

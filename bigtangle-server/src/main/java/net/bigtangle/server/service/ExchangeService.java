@@ -13,6 +13,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.ExchangeInfoResponse;
 import net.bigtangle.server.response.GetExchangeResponse;
+import net.bigtangle.server.response.OkResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.OrderState;
 
@@ -37,23 +38,25 @@ public class ExchangeService {
         exchange.setOrderid(orderid);
         exchange.setFromSign(1);
         this.store.saveExchange(exchange);
-        return AbstractResponse.createEmptyResponse();
+        return OkResponse.create();
+
     }
-    
+
     public AbstractResponse signTransaction(Map<String, Object> request) throws BlockStoreException {
         String dataHex = (String) request.get("dataHex");
         String orderid = (String) request.get("orderid");
         String signtype = (String) request.get("signtype");
         byte[] data = Utils.HEX.decode(dataHex);
         this.store.updateExchangeSign(orderid, signtype, data);
-        
+
         Exchange exchange = this.store.getExchangeInfoByOrderid(orderid);
         if (exchange.getToSign() == 1 && exchange.getFromSign() == 1 && StringUtils.isNotBlank(exchange.getToOrderId())
                 && StringUtils.isNotBlank(exchange.getFromOrderId())) {
             this.store.updateOrderPublishState(exchange.getToOrderId(), OrderState.finish.ordinal());
             this.store.updateOrderPublishState(exchange.getFromOrderId(), OrderState.finish.ordinal());
         }
-        return AbstractResponse.createEmptyResponse();
+        return OkResponse.create();
+
     }
 
     @Autowired
