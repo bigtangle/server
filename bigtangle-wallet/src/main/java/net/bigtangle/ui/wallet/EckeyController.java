@@ -45,8 +45,8 @@ public class EckeyController {
     public TableColumn<EckeyModel, String> pubkeyColumn;
     @FXML
     public TableColumn<EckeyModel, String> addressColumn;
-    @FXML
-    public TableColumn<EckeyModel, String> privkeyColumn;
+    // @FXML
+    // public TableColumn<EckeyModel, String> privkeyColumn;
 
     @FXML
     public TextField keyFileDirTextField;
@@ -104,11 +104,12 @@ public class EckeyController {
             }
             issuedReceiveKeysTable.setItems(issuedKeyData);
             pubkeyColumn.setCellValueFactory(cellData -> cellData.getValue().pubkeyHex());
-            privkeyColumn.setCellValueFactory(cellData -> cellData.getValue().privkeyHex());
+            // privkeyColumn.setCellValueFactory(cellData ->
+            // cellData.getValue().privkeyHex());
             addressColumn.setCellValueFactory(cellData -> cellData.getValue().addressHex());
 
             pubkeyColumn.setCellFactory(TextFieldTableCell.<EckeyModel>forTableColumn());
-            privkeyColumn.setCellFactory(TextFieldTableCell.<EckeyModel>forTableColumn());
+            // privkeyColumn.setCellFactory(TextFieldTableCell.<EckeyModel>forTableColumn());
             addressColumn.setCellFactory(TextFieldTableCell.<EckeyModel>forTableColumn());
         }
 
