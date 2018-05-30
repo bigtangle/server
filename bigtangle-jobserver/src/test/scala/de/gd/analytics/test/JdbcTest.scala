@@ -2,12 +2,14 @@ package de.gd.analytics.test
 
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.Row
 import org.apache.spark.sql.SQLContext
-import org.apache.spark.sql.types.StringType
-import org.apache.spark.sql.types.StructField
 
 import com.typesafe.config.ConfigFactory
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.Row
+import org.apache.spark.graphx.Edge
+import org.apache.spark.graphx.Graph
+import net.bigtangle.core.Sha256Hash
 
 object JdbcTest {
   def main(args: Array[String]) {
@@ -17,7 +19,7 @@ object JdbcTest {
     System.setProperty("HADOOP_USER_NAME", "hdfs");
     val sql = new SQLContext(sc)
 
-    val tabledata = "{\"financial_year\":\"2004-05\",\"state\":\"TAS\",\"area_of_expenditure\":\"Community health\",\"broad_source_of_funding\":\"Government\",\"detailed_source_of_funding\":\"Australian Government\",\"real_expenditure_millions\":\"13\"}"
+    // val tabledata = "{\"financial_year\":\"2004-05\",\"state\":\"TAS\",\"area_of_expenditure\":\"Community health\",\"broad_source_of_funding\":\"Government\",\"detailed_source_of_funding\":\"Australian Government\",\"real_expenditure_millions\":\"13\"}"
 
     Class.forName("com.mysql.jdbc.Driver").newInstance
 
@@ -30,7 +32,31 @@ object JdbcTest {
       .option("password", "test1234")
       .option("dbtable", "headers")
       .load()
-      data.printSchema()
+    data.printSchema()
+
+    val df = data.select("hash", "prevblockhash", "prevbranchblockhash")
+
+    //as  Followers prevblockhash follows hash
+    //            prevbranchblockhash  follows hash
+    val rows: RDD[Row] = df.rdd
+         val bytestoLong  = (payload: Array[Byte]) =>  {
+     Sha256Hash.of(payload).toBigInteger().longValue()}
+    
+    val myVertices = rows.map(row => (bytestoLong(row.getAs[ Array[Byte]] (0)), ""))
+    val myEdges = rows.map(row =>
+      (Edge(bytestoLong(row.getAs[ Array[Byte]] (1)), bytestoLong(row.getAs[ Array[Byte]] (0)), "")))
+    val myGraph = Graph(myVertices, myEdges)
+
+    print(myGraph.vertices.collect)
+    //  df.foreach(  attributes => "Name: " + attributes(0))
+    //val myVertices = df.map( _.getByte(0).toLong )
+
+    // val edgeRDD = edgeDF.map { row => Edge(row.getByte(1).toLong, row.getByte(0).toLong, "") }
+
+    //
+    //    val graph = Graph.fromEdges[Int, Double](edgesRDD, 0)
+
   }
 
+  
 }

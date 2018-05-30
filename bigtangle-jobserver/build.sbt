@@ -31,7 +31,7 @@ lazy val rootSettings = Seq(
   test := {}
 )
 
-lazy val root = (project in file("."))
+lazy val root = (Sproject in file("."))
   .settings(
     commonSettings,
     rootSettings,

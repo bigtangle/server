@@ -212,26 +212,19 @@ public abstract class AbstractIntegrationTest {
             rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
                     outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
-        }
-        // Create bitcoin spend of 1 BTA.
-
+        } 
+        
         ECKey myKey = walletKeys.get(0);
         //TODO why no milestone, the program hangs here
         milestoneService.update();
-        Block b = createGenesisBlock(myKey);
+        Block b = createToken(myKey);
 
         rollingBlock = BlockForTest.createNextBlock(b, null, networkParameters.getGenesisBlock().getHash());
        
         Coin amount = Coin.valueOf(12345, NetworkParameters.BIGNETCOIN_TOKENID);
-        // Address address = new Address(PARAMS, toKey.getPubKeyHash());
 
         Transaction t = new Transaction(networkParameters);
-//        TokenInfo tokenInfo = new TokenInfo();
-//        tokenInfo.setTokens(new Tokens(Utils.HEX.encode(myKey.getPubKeyHash()), "JH", "JH", "", 1, true, true, true));
-//        tokenInfo.getTokenSerials().add(new TokenSerial(Utils.HEX.encode(myKey.getPubKeyHash()), 0, -100));
-//        tokenInfo.setTokenSerial(new TokenSerial(Utils.HEX.encode(myKey.getPubKeyHash()), 0, -100));
-//        t.setTokenInfo(tokenInfo);
-//        t.setData(tokenInfo.toByteArray());
+
         t.setMemo("test memo");
 
         t.addOutput(new TransactionOutput(networkParameters, t, amount, myKey.toAddress(networkParameters)));
@@ -242,10 +235,11 @@ public abstract class AbstractIntegrationTest {
         blockgraph.add(rollingBlock);
 
         milestoneService.update();
-        testTransactionAndGetBalances();
+        List<UTXO> utxos = testTransactionAndGetBalances();
+        
     }
 
-    public Block createGenesisBlock(ECKey outKey) throws Exception {
+    public Block createToken(ECKey outKey) throws Exception {
         byte[] pubKey = outKey.getPubKey();
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();

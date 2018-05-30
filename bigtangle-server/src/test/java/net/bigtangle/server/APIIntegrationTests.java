@@ -415,7 +415,8 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Block r2 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
         long blocktype0 =  NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
         Block block = new Block(networkParameters, r1.getHash(), r2.getHash(),blocktype0, Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
-        String tokenid = Utils.HEX.encode(keys.get(0).getPubKeyHash());
+        //Tokenid with keys.get(0) is already used in setup 
+        String tokenid = Utils.HEX.encode(keys.get(5).getPubKeyHash());
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
         
@@ -492,7 +493,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Block r2 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
         long blocktype0 =  NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
         Block block = new Block(networkParameters, r1.getHash(), r2.getHash(),blocktype0, Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
-        String tokenid = Utils.HEX.encode(keys.get(0).getPubKeyHash());
+        String tokenid = Utils.HEX.encode(keys.get(5).getPubKeyHash());
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
         
@@ -567,7 +568,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Block r2 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
         long blocktype0 =  NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
         Block block = new Block(networkParameters, r1.getHash(), r2.getHash(),blocktype0, Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
-        String tokenid = Utils.HEX.encode(keys.get(0).getPubKeyHash());
+        String tokenid = Utils.HEX.encode(keys.get(5).getPubKeyHash());
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
         
@@ -761,7 +762,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         // Setup transaction and signatures
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         
-        String tokenid = Utils.HEX.encode(keys.get(0).getPubKeyHash());
+        String tokenid = Utils.HEX.encode(keys.get(5).getPubKeyHash());
         
         TokenInfo tokenInfo = new TokenInfo();
         Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true, true, false);
