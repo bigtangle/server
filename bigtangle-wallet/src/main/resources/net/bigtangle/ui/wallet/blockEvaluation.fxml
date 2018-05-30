@@ -32,7 +32,7 @@
 		<Button defaultButton="true" layoutX="808.0" layoutY="624.0" mnemonicParsing="false" onAction="#showBlock" text="%showBlock" />
 		<HBox alignment="CENTER" prefHeight="68.0" prefWidth="1000.0" styleClass="title-banner">
 			<children>
-				<Label maxHeight="1.7976931348623157E308" styleClass="title-label" alignment="CENTER" text="%Blocks">
+				<Label alignment="CENTER" maxHeight="1.7976931348623157E308" prefHeight="66.0" prefWidth="139.0" styleClass="title-label" text="%Blocks">
 					<font>
 						<Font size="30.0" />
 					</font>
