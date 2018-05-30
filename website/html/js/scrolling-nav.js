@@ -73,7 +73,7 @@ function screw(active){
     //var next = active+1 == 7 ?1 : active+1;
     lastActive = active;
   }
-  screwInterval = window.setTimeout("screw("+next+")",5000);
+  screwInterval = window.setTimeout("screw("+next+")",50000);
 }
 
 function animateStuff(i){
