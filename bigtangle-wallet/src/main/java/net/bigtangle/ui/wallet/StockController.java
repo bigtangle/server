@@ -47,6 +47,7 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
+import net.bigtangle.ui.wallet.utils.IgnoreServiceException;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.ui.wallet.utils.WTUtils;
 import net.bigtangle.utils.OkHttp3Util;
@@ -472,9 +473,17 @@ public class StockController extends TokensController {
             transaction.setDatasignatire(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
             // save block
-            OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
-            Main.instance.sendMessage(block.bitcoinSerialize());
+            String resp = OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
+            @SuppressWarnings("unchecked")
+            HashMap<String, Object> respRes = Json.jsonmapper().readValue(resp, HashMap.class);
+            int errorcode = (Integer) respRes.get("errorcode");
+            if (errorcode > 0) {
+                String message = (String) respRes.get("message");
+                GuiUtils.informationalAlert("SIGN ERROR : " + message, Main.getText("ex_c_d1"));
+                return;
+            }
 
+            Main.instance.sendMessage(block.bitcoinSerialize());
             GuiUtils.informationalAlert("", Main.getText("s_c_m"));
             Main.instance.controller.initTableView();
             checkGuiThread();
@@ -506,10 +515,21 @@ public class StockController extends TokensController {
 
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "createGenesisBlock",
                     Json.jsonmapper().writeValueAsString(requestParam));
+
+            String resp = new String(data);
+            if (resp.startsWith("{") && resp.endsWith("}")) {
+                @SuppressWarnings("unchecked")
+                HashMap<String, Object> respRes = Json.jsonmapper().readValue(resp, HashMap.class);
+                int errorcode = (Integer) respRes.get("errorcode");
+                if (errorcode > 0) {
+                    String message = (String) respRes.get("message");
+                    GuiUtils.informationalAlert("", "SIGN ERROR : " + message);
+                    return;
+                }
+            }
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
             // TODO no post to off tangle data, send it to kafka for broadcast
             Main.instance.sendMessage(block.bitcoinSerialize());
-
             GuiUtils.informationalAlert("", Main.getText("s_c_m"));
             Main.instance.controller.initTableView();
             checkGuiThread();
@@ -560,10 +580,10 @@ public class StockController extends TokensController {
             initMultisignTableView();
             overlayUI.done();
             // tabPane.getSelectionModel().clearAndSelect(4);
+        } catch (IgnoreServiceException e) {
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
-
     }
 
     public void multiSign(ActionEvent event) {
@@ -718,8 +738,15 @@ public class StockController extends TokensController {
         block.solve();
 
         // save block
-       String resp = OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
-        Main.checkResponse(resp) ;
+        String resp = OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
+        @SuppressWarnings("unchecked")
+        HashMap<String, Object> respRes = Json.jsonmapper().readValue(resp, HashMap.class);
+        int errorcode = (Integer) respRes.get("errorcode");
+        if (errorcode > 0) {
+            String message = (String) respRes.get("message");
+            GuiUtils.informationalAlert("SIGN ERROR : " + message, Main.getText("ex_c_d1"));
+            throw new IgnoreServiceException();
+        }
     }
 
     public void add2positve(ActionEvent event) {

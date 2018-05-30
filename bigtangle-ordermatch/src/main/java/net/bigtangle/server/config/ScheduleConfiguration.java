@@ -15,7 +15,7 @@ public class ScheduleConfiguration {
     @Value("${milestoneschedule.active:false}")
     boolean milestone_active;
 
-    @Value("${orderMatchService.active:false}")
+    @Value("${orderMatchService.active:true}")
     boolean ordermatch_active;
 
     public boolean isMilestone_active() {

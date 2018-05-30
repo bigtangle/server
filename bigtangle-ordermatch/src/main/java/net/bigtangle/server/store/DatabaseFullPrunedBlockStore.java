@@ -69,15 +69,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String INSERT_EXCHANGE_SQL = getInsert()
             + "  INTO exchange (orderid, fromAddress, fromTokenHex, fromAmount,"
-            + " toAddress, toTokenHex, toAmount, data, toSign, fromSign, toOrderId, fromOrderId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            + " toAddress, toTokenHex, toAmount, data, toSign, fromSign, toOrderId, fromOrderId, market) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     protected String SELECT_EXCHANGE_SQL = "SELECT orderid, fromAddress, "
             + "fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, "
-            + "data, toSign, fromSign, toOrderId, fromOrderId "
+            + "data, toSign, fromSign, toOrderId, fromOrderId, market "
             + "FROM exchange WHERE (fromAddress = ? OR toAddress = ?) AND (toSign = false OR fromSign = false)"
             + afterSelect();
     protected String SELECT_EXCHANGE_ORDERID_SQL = "SELECT orderid,"
             + " fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex,"
-            + " toAmount, data, toSign, fromSign, toOrderId, fromOrderId FROM exchange WHERE orderid = ?";
+            + " toAmount, data, toSign, fromSign, toOrderId, fromOrderId, market FROM exchange WHERE orderid = ?";
     
     // Tables exist SQL.
     protected String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM orderpublish WHERE 1 = 2";
@@ -590,6 +590,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setInt(10, exchange.getFromSign());
             preparedStatement.setString(11, exchange.getToOrderId());
             preparedStatement.setString(12, exchange.getFromOrderId());
+            preparedStatement.setString(13, exchange.getMarket());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -628,6 +629,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 exchange.setFromSign(resultSet.getInt("fromSign"));
                 exchange.setToOrderId(resultSet.getString("toOrderId"));
                 exchange.setFromOrderId(resultSet.getString("fromOrderId"));
+                exchange.setMarket(resultSet.getString("market"));
                 list.add(exchange);
             }
             return list;
@@ -760,6 +762,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             exchange.setFromSign(resultSet.getInt("fromSign"));
             exchange.setToOrderId(resultSet.getString("toOrderId"));
             exchange.setFromOrderId(resultSet.getString("fromOrderId"));
+            exchange.setMarket(resultSet.getString("market"));
             return exchange;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);

@@ -8,13 +8,13 @@ public enum ReqCmd {
 
     getBalances, askTransaction, saveBlock, getOutputs,
 
-    createGenesisBlock, exchangeToken, getTokens,getMarkets, getTokenById, getAllEvaluations,
+    createGenesisBlock, exchangeToken, getTokens, getMarkets, getTokenById, getAllEvaluations,
 
     outputsWiteToken, saveOrder, getOrders, exchangeInfo, batchGetBalances,
 
     saveExchange, getExchange, signTransaction, searchBlock, getBlock, streamBlocks,
 
-    getMultiSignWithAddress, getMultiSignWithTokenid, 
-    
+    getMultiSignWithAddress, getMultiSignWithTokenid,
+
     multiSign, getGenesisBlockLR, getTokenSerials, getCalTokenIndex, getCountSign, updateTokenInfo;
 }

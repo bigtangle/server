@@ -98,11 +98,20 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   executedQuantity bigint,\n" + "   remainingQuantity bigint,\n" + "   PRIMARY KEY (matchid) )";
 
     private static final String CREATE_EXCHANGE_TABLE = "CREATE TABLE exchange (\n"
-            + "   orderid varchar(255) NOT NULL,\n" + "   fromAddress varchar(255),\n"
-            + "   fromTokenHex varchar(255),\n" + "   fromAmount varchar(255),\n" + "   toAddress varchar(255),\n"
-            + "   toTokenHex varchar(255),\n" + "   toAmount varchar(255),\n" + "   data varbinary(5000) NOT NULL,\n"
-            + "   toSign boolean,\n" + "   fromSign integer,\n" + "   toOrderId varchar(255),\n"
-            + "   fromOrderId varchar(255),\n" + "   PRIMARY KEY (orderid) )";
+            + "   orderid varchar(255) NOT NULL,\n" 
+            + "   fromAddress varchar(255),\n"
+            + "   fromTokenHex varchar(255),\n" 
+            + "   fromAmount varchar(255),\n" 
+            + "   toAddress varchar(255),\n"
+            + "   toTokenHex varchar(255),\n" 
+            + "   toAmount varchar(255),\n" 
+            + "   data varbinary(5000) NOT NULL,\n"
+            + "   toSign boolean,\n" 
+            + "   fromSign integer,\n" 
+            + "   toOrderId varchar(255),\n"
+            + "   fromOrderId varchar(255),\n" 
+            + "   market varchar(255),\n"
+            + "   PRIMARY KEY (orderid) )";
     
     private static final String CREATE_TX_REWARD_TABLE = "CREATE TABLE txreward (\n"
             + "   blockhash varbinary(32) NOT NULL,\n" 

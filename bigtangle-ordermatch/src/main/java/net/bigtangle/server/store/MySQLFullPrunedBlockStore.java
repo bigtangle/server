@@ -74,6 +74,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   fromSign integer,\n" 
             + "   toOrderId varchar(255),\n"
             + "   fromOrderId varchar(255),\n" 
+            + "   market varchar(255),\n"
             + "   PRIMARY KEY (orderid) )";
 
     private static final String CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX = "CREATE INDEX exchange_fromAddress_idx ON exchange (fromAddress) USING btree";

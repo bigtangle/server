@@ -43,7 +43,10 @@ public class EquihashSolver {
 	private native static boolean validate(int n, int k, int[] seed, int nonce, int[] inputs);
 	
 	static {
-		Runtime.getRuntime().loadLibrary("equihash");
-		//System.out.println("loaded equihash library");
+		if(System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
+			System.loadLibrary("equihash" + System.getProperty("sun.arch.data.model"));
+		} else {
+			System.loadLibrary("equihash" );
+		}
 	}
 }

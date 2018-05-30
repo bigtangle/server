@@ -40,6 +40,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
@@ -232,15 +233,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String INSERT_EXCHANGE_SQL = getInsert()
             + "  INTO exchange (orderid, fromAddress, fromTokenHex, fromAmount,"
-            + " toAddress, toTokenHex, toAmount, data, toSign, fromSign, toOrderId, fromOrderId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            + " toAddress, toTokenHex, toAmount, data, toSign, fromSign, toOrderId, fromOrderId, market) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     protected String SELECT_EXCHANGE_SQL = "SELECT orderid, fromAddress, "
             + "fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, "
-            + "data, toSign, fromSign, toOrderId, fromOrderId "
+            + "data, toSign, fromSign, toOrderId, fromOrderId, market "
             + "FROM exchange WHERE (fromAddress = ? OR toAddress = ?) AND (toSign = false OR fromSign = false)"
             + afterSelect();
     protected String SELECT_EXCHANGE_ORDERID_SQL = "SELECT orderid,"
             + " fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex,"
-            + " toAmount, data, toSign, fromSign, toOrderId, fromOrderId FROM exchange WHERE orderid = ?";
+            + " toAmount, data, toSign, fromSign, toOrderId, fromOrderId, market FROM exchange WHERE orderid = ?";
 
     protected String UPDATE_SETTINGS_SQL = getUpdate() + " settings SET settingvalue = ? WHERE name = ?";
     protected String UPDATE_HEADERS_SQL = getUpdate() + " headers SET wasundoable=? WHERE hash=?";
@@ -755,6 +756,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         ps.execute();
         ps.close();
         createNewStore(params);
+        
+        ECKey ecKey = new ECKey();
+        this.saveTokens(ecKey.getPublicKeyAsHex(), "default market", "default market", "http://localhost:8089/", 0, false, true, true);
     }
 
     /**
@@ -2474,6 +2478,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setInt(10, exchange.getFromSign());
             preparedStatement.setString(11, exchange.getToOrderId());
             preparedStatement.setString(12, exchange.getFromOrderId());
+            preparedStatement.setString(13, exchange.getMarket());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -2512,6 +2517,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 exchange.setFromSign(resultSet.getInt("fromSign"));
                 exchange.setToOrderId(resultSet.getString("toOrderId"));
                 exchange.setFromOrderId(resultSet.getString("fromOrderId"));
+                exchange.setMarket(resultSet.getString("market"));
                 list.add(exchange);
             }
             return list;
@@ -2664,6 +2670,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             exchange.setFromSign(resultSet.getInt("fromSign"));
             exchange.setToOrderId(resultSet.getString("toOrderId"));
             exchange.setFromOrderId(resultSet.getString("fromOrderId"));
+            exchange.setMarket(resultSet.getString("market"));
             return exchange;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);

@@ -124,7 +124,8 @@
 										<TableColumn fx:id="toTokenidCol" prefWidth="138.0" text="%to_tokenid" />
 										<TableColumn fx:id="toAmountCol" prefWidth="122.0" text="%to_tokenAmount" />
 										<TableColumn fx:id="toSignCol" prefWidth="71.0" text="%to_sign" />
-										<TableColumn fx:id="fromSignCol" prefWidth="102.0" text="%from_sign" />
+										<TableColumn fx:id="fromSignCol" prefWidth="51.0" text="%from_sign" />
+                                          <TableColumn fx:id="marketCol" prefWidth="51.0" text="market" />
 									</columns>
 								</TableView>
 								<Button cancelButton="true" layoutX="937.0" layoutY="494.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />

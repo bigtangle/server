@@ -36,7 +36,16 @@ public class Exchange implements java.io.Serializable {
     
     private String fromOrderId;
     
+    private String market;
     
+    public String getMarket() {
+        return market;
+    }
+
+    public void setMarket(String market) {
+        this.market = market;
+    }
+
     public String getToOrderId() {
         return toOrderId;
     }
@@ -82,10 +91,11 @@ public class Exchange implements java.io.Serializable {
     }
     
     public Exchange(String fromOrderId, String fromAddress, String fromTokenHex, String fromAmount, String toOrderId, String toAddress,
-            String toTokenHex, String toAmount, byte[] data) {
+            String toTokenHex, String toAmount, byte[] data, String market) {
         this(fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, data);
         this.toOrderId = toOrderId;
         this.fromOrderId = fromOrderId;
+        this.market = market;
     }
 
     public Exchange() {

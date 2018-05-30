@@ -609,8 +609,6 @@ public class Main extends Application {
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
         int error = (Integer) result2.get("errorcode");
         return error > 0;
-        // System.out.println("resp : " + resp);
-        // assertEquals(duration, 0);
     }
 
     /**

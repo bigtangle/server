@@ -90,7 +90,7 @@ public class ScheduleOrderMatchService {
                                         restingOrder.getOrderid(), restingOrder.getAddress(),
                                         Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID),
                                         String.valueOf(match.executedQuantity * match.price / Coin.COIN_VALUE),
-                                        new byte[0]);
+                                        new byte[0], incomingOrder.getMarket());
                                 this.store.saveExchange(exchange);
                             } else {
                                 Exchange exchange = new Exchange(restingOrder.getOrderid(), restingOrder.getAddress(),
@@ -98,7 +98,7 @@ public class ScheduleOrderMatchService {
                                         incomingOrder.getOrderid(), incomingOrder.getAddress(),
                                         Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID),
                                         String.valueOf(match.executedQuantity * match.price / Coin.COIN_VALUE),
-                                        new byte[0]);
+                                        new byte[0], restingOrder.getMarket());
                                 // add exchange to store
                                 this.store.saveExchange(exchange);
                             }

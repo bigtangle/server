@@ -156,32 +156,45 @@ public class OrderController extends ExchangeController {
             OrderState orderState = OrderState.valueOf(stateStr);
             requestParam.put("state", orderState.ordinal());
         }
-        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ObservableList<Map<String, Object>> orderData = FXCollections.observableArrayList();
-        // HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        String response = OkHttp3Util.post(CONTEXT_ROOT + "getOrders",
+
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String response = OkHttp3Util.post(CONTEXT_ROOT + "getMarkets",
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-
-        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-
-        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("orders");
-        if (list != null) {
-            for (Map<String, Object> map : list) {
-                if ((Integer) map.get("type") == 1) {
-                    map.put("type", Main.getText("SELL"));
-                } else {
-                    map.put("type", Main.getText("BUY"));
+        final Map<String, Object> getTokensResult = Json.jsonmapper().readValue(response, Map.class);
+        List<Map<String, Object>> tokensList = (List<Map<String, Object>>) getTokensResult.get("tokens");
+        for (Map<String, Object> tokenResult : tokensList) {
+            boolean asmarket = (boolean) tokenResult.get("asmarket");
+            if (!asmarket) {
+                continue;
+            }
+            String url = (String) tokenResult.get("url");
+            try {
+                response = OkHttp3Util.post(url + "getOrders",
+                        Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+            } catch (Exception e) {
+                continue;
+            }
+            final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+            List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("orders");
+            if (list != null) {
+                for (Map<String, Object> map : list) {
+                    if ((Integer) map.get("type") == 1) {
+                        map.put("type", Main.getText("SELL"));
+                    } else {
+                        map.put("type", Main.getText("BUY"));
+                    }
+                    int stateIndex = (int) map.get("state");
+                    OrderState orderState = OrderState.values()[stateIndex];
+                    map.put("state", Main.getText(orderState.name()));
+                    Coin fromAmount = Coin.valueOf(Long.parseLong(map.get("price").toString()),
+                            Utils.HEX.decode((String) map.get("tokenid")));
+                    Coin toAmount = Coin.valueOf(Long.parseLong(map.get("amount").toString()),
+                            Utils.HEX.decode((String) map.get("tokenid")));
+                    map.put("price", fromAmount.toPlainString());
+                    map.put("amount", toAmount.toPlainString());
+                    orderData.add(map);
                 }
-                int stateIndex = (int) map.get("state");
-                OrderState orderState = OrderState.values()[stateIndex];
-                map.put("state", Main.getText(orderState.name()));
-                Coin fromAmount = Coin.valueOf(Long.parseLong(map.get("price").toString()),
-                        Utils.HEX.decode((String) map.get("tokenid")));
-                Coin toAmount = Coin.valueOf(Long.parseLong(map.get("amount").toString()),
-                        Utils.HEX.decode((String) map.get("tokenid")));
-                map.put("price", fromAmount.toPlainString());
-                map.put("amount", toAmount.toPlainString());
-                orderData.add(map);
             }
         }
         orderidCol.setCellValueFactory(new MapValueFactory("orderid"));
@@ -213,10 +226,8 @@ public class OrderController extends ExchangeController {
             String tokenHex = (String) map.get("tokenid");
             String tokenname = (String) map.get("tokenname");
             tokenData.add(tokenname + " : " + tokenHex);
-
         }
         marketComboBox.setItems(tokenData);
-
     }
 
     /**
@@ -266,7 +277,9 @@ public class OrderController extends ExchangeController {
 
     }
 
+    @SuppressWarnings("unchecked")
     public void buy(ActionEvent event) throws Exception {
+        System.out.println(tokenComboBox.getValue());
         String tokenid = tokenComboBox.getValue().split(":")[1].trim();
         String typeStr = (String) buySellTG.getSelectedToggle().getUserData().toString();
 
@@ -304,7 +317,15 @@ public class OrderController extends ExchangeController {
         String market = marketComboBox.getValue();
         String temp = market.contains(":") ? market.substring(market.indexOf(":") + 1).trim() : market.trim();
         requestParam.put("market", temp);
-        OkHttp3Util.post(ContextRoot + "saveOrder", Json.jsonmapper().writeValueAsString(requestParam));
+
+        HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
+        requestParam0.put("tokenid", temp);
+        String resp = OkHttp3Util.postString(ContextRoot + "getTokenById", Json.jsonmapper().writeValueAsString(requestParam0));
+        HashMap<String, Object> res = Json.jsonmapper().readValue(resp, HashMap.class);
+        HashMap<String, Object> token_ = (HashMap<String, Object>) res.get("token");
+        
+        String url = (String) token_.get("url");
+        OkHttp3Util.post(url + "saveOrder", Json.jsonmapper().writeValueAsString(requestParam));
         overlayUI.done();
     }
 

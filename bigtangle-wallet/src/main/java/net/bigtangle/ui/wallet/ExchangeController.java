@@ -7,7 +7,6 @@ package net.bigtangle.ui.wallet;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +38,6 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
-import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.SendRequest;
@@ -89,10 +87,12 @@ public class ExchangeController {
     public TableColumn<Map<String, Object>, String> toAmountCol;
     public TableColumn<Map<String, Object>, String> toSignCol;
     public TableColumn<Map<String, Object>, String> fromSignCol;
+    public TableColumn<Map<String, Object>, String> marketCol;
 
     public Transaction mTransaction;
 
     public String mOrderid;
+    public String mTokenid;
 
     @FXML
     public void initialize() {
@@ -108,50 +108,62 @@ public class ExchangeController {
         }
         mTransaction = null;
         mOrderid = "";
+        mTokenid = "";
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void initTable() throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
-        KeyParameter aesKey = null;
-        // Main.initAeskey(aesKey);
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
-        if (!"".equals(Main.password.trim())) {
-            aesKey = keyCrypter.deriveKey(Main.password);
-        }
-        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
+        String response0 = OkHttp3Util.postString(CONTEXT_ROOT + "getMarkets", "{}");
+        final Map<String, Object> getTokensResult = Json.jsonmapper().readValue(response0, Map.class);
+        List<Map<String, Object>> tokensList = (List<Map<String, Object>>) getTokensResult.get("tokens");
         ObservableList<Map<String, Object>> exchangeData = FXCollections.observableArrayList();
-        for (ECKey key : keys) {
-            String address = key.toAddress(Main.params).toString();
-            HashMap<String, Object> requestParam = new HashMap<String, Object>();
-            requestParam.put("address", address);
-            String response = OkHttp3Util.post(CONTEXT_ROOT + "getExchange",
-                    Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-            final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-            List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("exchanges");
-            if (list == null) {
-                return;
+        for (Map<String, Object> tokenResult : tokensList) {
+            boolean asmarket = (boolean) tokenResult.get("asmarket");
+            if (!asmarket) {
+                continue;
             }
-            for (Map<String, Object> map : list) {
-                if ((Integer) map.get("toSign") == 1) {
-                    map.put("toSign", "*");
-                } else {
-                    map.put("toSign", "-");
+            String url = (String) tokenResult.get("url");
+            System.out.println(url);
+            KeyParameter aesKey = null;
+            // Main.initAeskey(aesKey);
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            if (!"".equals(Main.password.trim())) {
+                aesKey = keyCrypter.deriveKey(Main.password);
+            }
+            List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
+            for (ECKey key : keys) {
+                String address = key.toAddress(Main.params).toString();
+                HashMap<String, Object> requestParam = new HashMap<String, Object>();
+                requestParam.put("address", address);
+                String response = OkHttp3Util.post(url + "getExchange",
+                        Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+                final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+                List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("exchanges");
+                if (list == null) {
+                    return;
                 }
-                if ((Integer) map.get("fromSign") == 1) {
-                    map.put("fromSign", "*");
-                } else {
-                    map.put("fromSign", "-");
+                for (Map<String, Object> map : list) {
+                    if ((Integer) map.get("toSign") == 1) {
+                        map.put("toSign", "*");
+                    } else {
+                        map.put("toSign", "-");
+                    }
+                    if ((Integer) map.get("fromSign") == 1) {
+                        map.put("fromSign", "*");
+                    } else {
+                        map.put("fromSign", "-");
+                    }
+                    Coin fromAmount = Coin.valueOf(Long.parseLong((String) map.get("fromAmount")),
+                            Utils.HEX.decode((String) map.get("fromTokenHex")));
+                    Coin toAmount = Coin.valueOf(Long.parseLong((String) map.get("toAmount")),
+                            Utils.HEX.decode((String) map.get("toTokenHex")));
+    
+                    map.put("fromAmount", fromAmount.toPlainString());
+    
+                    map.put("toAmount", toAmount.toPlainString());
+                    exchangeData.add(map);
                 }
-                Coin fromAmount = Coin.valueOf(Long.parseLong((String) map.get("fromAmount")),
-                        Utils.HEX.decode((String) map.get("fromTokenHex")));
-                Coin toAmount = Coin.valueOf(Long.parseLong((String) map.get("toAmount")),
-                        Utils.HEX.decode((String) map.get("toTokenHex")));
-
-                map.put("fromAmount", fromAmount.toPlainString());
-
-                map.put("toAmount", toAmount.toPlainString());
-                exchangeData.add(map);
             }
         }
         orderidsCol.setCellValueFactory(new MapValueFactory("orderid"));
@@ -164,6 +176,7 @@ public class ExchangeController {
         toAmountCol.setCellValueFactory(new MapValueFactory("toAmount"));
         toSignCol.setCellValueFactory(new MapValueFactory("toSign"));
         fromSignCol.setCellValueFactory(new MapValueFactory("fromSign"));
+        marketCol.setCellValueFactory(new MapValueFactory("market"));
 
         fromAddressCol.setCellFactory(TextFieldTableCell.forTableColumn());
         fromTokenidCol.setCellFactory(TextFieldTableCell.forTableColumn());
@@ -210,6 +223,7 @@ public class ExchangeController {
         overlayUI.done();
     }
 
+    @SuppressWarnings("unchecked")
     private void exchange() throws Exception, JsonProcessingException {
         if (mTransaction == null) {
             GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("ex_c_d"));
@@ -226,7 +240,14 @@ public class ExchangeController {
         rollingBlock.solve();
         OkHttp3Util.post(ContextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
 
-        HashMap<String, Object> exchangeResult = this.getExchangeInfoResult(this.mOrderid);
+        HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
+        requestParam0.put("tokenid", this.mTokenid);
+        String resp = OkHttp3Util.postString(ContextRoot + "getTokenById", Json.jsonmapper().writeValueAsString(requestParam0));
+        HashMap<String, Object> res = Json.jsonmapper().readValue(resp, HashMap.class);
+        HashMap<String, Object> token_ = (HashMap<String, Object>) res.get("token");
+        String url = (String) token_.get("url");
+        
+        HashMap<String, Object> exchangeResult = this.getExchangeInfoResult(url, this.mOrderid);
         int toSign = (int) exchangeResult.get("toSign");
         int fromSign = (int) exchangeResult.get("fromSign");
         String toAddress = (String) exchangeResult.get("toAddress");
@@ -301,6 +322,7 @@ public class ExchangeController {
         byteBuffer.get(orderid);
 
         mOrderid = new String(orderid);
+        mTokenid = fromTokenHexComboBox.getValue();
         // log.debug("orderid : " + new String(orderid));
 
         int len = byteBuffer.getInt();
@@ -331,6 +353,7 @@ public class ExchangeController {
         String toAmount = toAmountTextField.getText();
 
         this.mOrderid = UUIDUtil.randomUUID();
+        this.mTokenid = fromTokenHex;
         byte[] buf = this.makeSignTransactionBuffer(fromAddress, getCoin(fromAmount, fromTokenHex, false), toAddress,
                 getCoin(toAmount, toTokenHex, false));
         if (buf == null) {
@@ -366,24 +389,35 @@ public class ExchangeController {
     }
 
     @SuppressWarnings("unchecked")
-    public HashMap<String, Object> getExchangeInfoResult(String orderid) throws Exception {
-        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+    public HashMap<String, Object> getExchangeInfoResult(String url, String orderid) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", orderid);
-        String respone = OkHttp3Util.postString(ContextRoot + "exchangeInfo",
+        String respone = OkHttp3Util.postString(url + "exchangeInfo",
                 Json.jsonmapper().writeValueAsString(requestParam));
         HashMap<String, Object> result = Json.jsonmapper().readValue(respone, HashMap.class);
         HashMap<String, Object> exchange = (HashMap<String, Object>) result.get("exchange");
         return exchange;
     }
 
+    @SuppressWarnings("unchecked")
     public void signExchange(ActionEvent event) throws Exception {
         Map<String, Object> rowData = exchangeTable.getSelectionModel().getSelectedItem();
+        String tokenid = (String) rowData.get("fromTokenHex");
+
+        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
+        requestParam0.put("tokenid", tokenid);
+        String resp = OkHttp3Util.postString(ContextRoot + "getTokenById", Json.jsonmapper().writeValueAsString(requestParam0));
+        HashMap<String, Object> res = Json.jsonmapper().readValue(resp, HashMap.class);
+        HashMap<String, Object> token_ = (HashMap<String, Object>) res.get("token");
+        String url = (String) token_.get("url");
+        
         if (rowData == null || rowData.isEmpty()) {
             GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_d1"));
         }
         this.mOrderid = stringValueOf(rowData.get("orderid"));
-        HashMap<String, Object> exchangeResult = getExchangeInfoResult(this.mOrderid);
+        this.mTokenid = tokenid;
+        HashMap<String, Object> exchangeResult = getExchangeInfoResult(url, this.mOrderid);
         String dataHex = (String) exchangeResult.get("dataHex");
         if (dataHex.isEmpty()) {
             byte[] buf = null;
@@ -410,7 +444,6 @@ public class ExchangeController {
             requestParam.put("orderid", this.mOrderid);
             requestParam.put("dataHex", Utils.HEX.encode(buf));
             requestParam.put("signtype", signtype);
-            String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
             OkHttp3Util.post(ContextRoot + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
             this.initTable();
             return;

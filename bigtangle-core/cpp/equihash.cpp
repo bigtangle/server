@@ -11,7 +11,7 @@ std::vector<uint32_t> deserializeIntVector(JNIEnv * env, jintArray intArray, int
   jint* elements = env->GetIntArrayElements(intArray, NULL);
 
   for(int i = 0; i < size;i++) {
-    uint32_t currentInt = (uint32_t)elements[i];
+      auto currentInt = (uint32_t)elements[i];
     v.push_back(currentInt);
   }
 
@@ -25,7 +25,7 @@ Seed get_seed(JNIEnv * env, jintArray intArray){
 JNIEXPORT jobject JNICALL Java_net_bigtangle_equihash_EquihashSolver_findProof
   (JNIEnv * env, jclass clazz,  jint n, jint k, jintArray seed) {
 
-      Equihash equihash((uint)n,(uint)k, get_seed(env,seed));
+      Equihash equihash((unsigned int)n,(unsigned int)k, get_seed(env,seed));
 	    Proof p = equihash.FindProof();
       
       if(!p.Test()) {
@@ -40,8 +40,8 @@ JNIEXPORT jobject JNICALL Java_net_bigtangle_equihash_EquihashSolver_findProof
         inputContent[i] = (jint)p.inputs[i];
       }
 
-      jintArray inputs = env->NewIntArray(p.inputs.size());      
-      env->SetIntArrayRegion(inputs,0, p.inputs.size(), inputContent);
+      jintArray inputs = env->NewIntArray(static_cast<jsize>(p.inputs.size()));
+      env->SetIntArrayRegion(inputs, 0, static_cast<jsize>(p.inputs.size()), inputContent);
 
       jclass resultClass = env->FindClass("net/bigtangle/equihash/EquihashProof");
       jmethodID constructorID = env->GetMethodID(resultClass, "<init>", "(I[I)V");
@@ -62,10 +62,10 @@ JNIEXPORT jboolean JNICALL Java_net_bigtangle_equihash_EquihashSolver_validate
     std::vector<uint32_t> inputVector = deserializeIntVector(env, inputs, SEED_LENGTH * 4);
 
     std::cout << "nonce for test: " << nonce << "\nInputs for test: ";
-    for(int i = 0; i < inputVector.size(); i++) {
-      std::cout << inputVector[i] << " ";
+    for (unsigned int i : inputVector) {
+      std::cout << i << " ";
     }
 
     Proof p = Proof((uint32_t)n, (uint32_t)k, get_seed(env, seed),(uint32_t)nonce, inputVector);
-    return p.Test();
+    return static_cast<jboolean>(p.Test());
   }
