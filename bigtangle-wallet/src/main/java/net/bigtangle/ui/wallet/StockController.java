@@ -114,6 +114,8 @@ public class StockController extends TokensController {
 
     @FXML
     public Button save1;
+    @FXML
+    public TextField signPubkeyTF;
 
     public String address;
     public String tokenUUID;
@@ -287,9 +289,25 @@ public class StockController extends TokensController {
 
     public void addSIgnAddress(ActionEvent event) {
         try {
-            showAddAddressDialog();
+            addPubkey();
+            // showAddAddressDialog();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
+        }
+    }
+
+    public void addPubkey() {
+        String temp = signnumberTF.getText();
+        if (temp != null && !temp.isEmpty() && temp.matches("[1-9]\\d*")) {
+
+            int signnumber = Integer.parseInt(temp);
+            if (signnumber >= 1) {
+                String address = signPubkeyTF.getText();
+                if (address != null && !address.isEmpty() && !signAddrChoiceBox.getItems().contains(address)) {
+                    signAddrChoiceBox.getItems().add(address);
+                    signAddrChoiceBox.getSelectionModel().selectLast();
+                }
+            }
         }
     }
 

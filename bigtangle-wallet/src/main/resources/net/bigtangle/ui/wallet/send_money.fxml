@@ -91,6 +91,12 @@
                               <ChoiceBox fx:id="addressChoiceBox" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
                            </children>
                         </HBox>
+                        <HBox alignment="CENTER_RIGHT" maxHeight="23.0" maxWidth="700.0" minHeight="23.0" minWidth="700.0" prefHeight="23.0" prefWidth="700.0" spacing="15.0">
+                           <children>
+                              <Button defaultButton="true" mnemonicParsing="false" onAction="#addSIgnAddress" text="%addSignAddr" />
+                              <Button defaultButton="true" mnemonicParsing="false" onAction="#removeSignAddress" text="%removeAddress" />
+                           </children>
+                        </HBox>
                         <HBox maxWidth="700.0" minWidth="700.0" prefHeight="23.0" prefWidth="700.0" spacing="50.0">
                            <children>
                               <Label prefWidth="150.0" text="%memo" />
@@ -99,8 +105,6 @@
                         </HBox>
                         <HBox alignment="CENTER_RIGHT" fillHeight="true" maxWidth="700.0" minWidth="700.0" prefHeight="30.0" prefWidth="700.0" spacing="15.0" VBox.vgrow="NEVER">
                            <children>
-                              <Button defaultButton="true" mnemonicParsing="false" onAction="#addSIgnAddress" text="%addSignAddr" />
-                              <Button defaultButton="true" mnemonicParsing="false" onAction="#removeSignAddress" text="%removeAddress" />
                               <Button fx:id="sendBtn1" defaultButton="true" mnemonicParsing="false" onAction="#sendMulti" prefWidth="79.0" text="%Send" />
                               <Button defaultButton="true" mnemonicParsing="false" onAction="#importSign" text="%import" />
                               <Button defaultButton="true" mnemonicParsing="false" onAction="#exportSign" text="%export" />
