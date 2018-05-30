@@ -816,8 +816,10 @@ public class Block extends Message {
              * be correct (equal to pubkey hash of tokenid)
              */
         } else if (blocktype == NetworkParameters.BLOCKTYPE_REWARD) {
-            // TODO sanity check: validity set to true means reward has been calculated locally
-            // TODO check that there is only one empty tx with correct data (long fromheight)
+            // TODO sanity check: validity set to true means reward has been
+            // calculated locally
+            // TODO check that there is only one empty tx with correct data
+            // (long fromheight)
             // TODO check that fromHeight is valid (c * rewardInterval)
         }
     }
@@ -872,7 +874,7 @@ public class Block extends Message {
             throw new VerificationException("Block larger than MAX_BLOCK_SIZE");
         checkMerkleRoot();
         checkSigOps();
-        //genesis blocktype? check signature
+        // genesis blocktype? check signature
         if (this.blocktype == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
             byte[] datasignatire = this.transactions.get(0).getDatasignatire();
             if (datasignatire != null) {
@@ -880,8 +882,7 @@ public class Block extends Message {
                 List<Map<String, Object>> multiSignBies;
                 try {
                     multiSignBies = Json.jsonmapper().readValue(datasignatire, List.class);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     throw new VerificationException("Block transaction json format error");
                 }
                 for (Map<String, Object> multiSignBy : multiSignBies) {
@@ -1100,7 +1101,7 @@ public class Block extends Message {
         coinbase.length = coinbase.unsafeBitcoinSerialize().length;
         adjustLength(transactions.size(), coinbase.length);
     }
-    
+
     public void addCoinbaseTransaction(byte[] pubKeyTo, Coin value, TokenInfo tokenInfo) {
         unCacheTransactions();
         transactions = new ArrayList<Transaction>();
@@ -1113,7 +1114,7 @@ public class Block extends Message {
 
         // coinbase.tokenid = value.tokenid;
         final ScriptBuilder inputBuilder = new ScriptBuilder();
-      
+
         inputBuilder.data(new byte[] { (byte) txCounter, (byte) (txCounter++ >> 8) });
 
         // A real coinbase transaction has some stuff in the scriptSig like the
@@ -1128,16 +1129,22 @@ public class Block extends Message {
         if (tokenInfo == null) {
             coinbase.addOutput(new TransactionOutput(params, coinbase, value,
                     ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
-        }
-        else {
-            long signnumber = tokenInfo.getTokens().getSignnumber();
-            List<ECKey> keys = new ArrayList<ECKey>();
-            for (MultiSignAddress multiSignAddress : tokenInfo.getMultiSignAddresses()) {
-                ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(multiSignAddress.getPubKeyHex()));
-                keys.add(ecKey);
+        } else {
+
+            if (tokenInfo.getTokens() == null||tokenInfo.getTokens().getSignnumber() ==0) {
+                coinbase.addOutput(new TransactionOutput(params, coinbase, value,
+                        ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
+
+            } else {
+                long signnumber = tokenInfo.getTokens().getSignnumber();
+                List<ECKey> keys = new ArrayList<ECKey>();
+                for (MultiSignAddress multiSignAddress : tokenInfo.getMultiSignAddresses()) {
+                    ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(multiSignAddress.getPubKeyHex()));
+                    keys.add(ecKey);
+                }
+                Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript((int) signnumber, keys);
+                coinbase.addOutput(new TransactionOutput(params, coinbase, value, scriptPubKey.getProgram()));
             }
-            Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript((int) signnumber, keys);
-            coinbase.addOutput(new TransactionOutput(params, coinbase, value, scriptPubKey.getProgram()));
         }
         transactions.add(coinbase);
         coinbase.setParent(this);
