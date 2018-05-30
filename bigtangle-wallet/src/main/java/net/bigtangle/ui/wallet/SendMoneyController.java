@@ -51,6 +51,7 @@ import javafx.stage.FileChooser;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.ECKey;
 import net.bigtangle.core.InsufficientMoneyException;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
@@ -87,6 +88,8 @@ public class SendMoneyController {
 
     @FXML
     public ComboBox<String> addressComboBox1;
+    @FXML
+    public ComboBox<String> myAddressComboBox;
     @FXML
     public ChoiceBox<String> addressChoiceBox;
 
@@ -178,6 +181,21 @@ public class SendMoneyController {
             });
             tokeninfo.getSelectionModel().selectFirst();
             tokeninfo1.getSelectionModel().selectFirst();
+
+            KeyParameter aesKey = null;
+            // Main.initAeskey(aesKey);
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            if (!"".equals(Main.password.trim())) {
+                aesKey = keyCrypter.deriveKey(Main.password);
+            }
+            List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
+            ObservableList<String> myAddressData = FXCollections.observableArrayList();
+            if (issuedKeys != null && !issuedKeys.isEmpty()) {
+                for (ECKey key : issuedKeys) {
+                    myAddressData.add(key.toAddress(Main.params).toBase58());
+                }
+                myAddressComboBox.setItems(myAddressData);
+            }
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }

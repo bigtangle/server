@@ -122,14 +122,16 @@
                 <AnchorPane maxHeight="600.0" maxWidth="1000.0" minHeight="600.0" minWidth="1000.0" prefHeight="600.0" prefWidth="1000.0">
                      <children>
                         <Label layoutX="71.0" layoutY="105.0" maxWidth="100.0" minWidth="100.0" prefHeight="15.0" prefWidth="100.0" text="%signnumber" />
-                        <Label layoutX="71.0" layoutY="149.0" maxWidth="100.0" minWidth="100.0" prefHeight="15.0" prefWidth="100.0" text="%Address" />
+                        <Label layoutX="71.0" layoutY="149.0" maxWidth="100.0" minWidth="100.0" prefHeight="15.0" prefWidth="100.0" text="%to_Address" />
                         <TextField fx:id="signnumberTF" layoutX="217.0" layoutY="101.0" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" />
                         <TextField fx:id="signAddressTF" layoutX="217.0" layoutY="145.0" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" />
-                        <ChoiceBox fx:id="signAddressChoiceBox" layoutX="217.0" layoutY="182.0" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" />
-                        <Button defaultButton="true" layoutX="217.0" layoutY="254.0" mnemonicParsing="false" onAction="#addSignAddr" text="%addSignPubkey" />
+                        <ChoiceBox fx:id="signAddressChoiceBox" layoutX="217.0" layoutY="216.0" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" />
+                        <Button defaultButton="true" layoutX="473.0" layoutY="183.0" maxWidth="120.0" minWidth="120.0" mnemonicParsing="false" onAction="#addSignAddr" prefWidth="120.0" text="%addSignPubkey" />
                         <Button cancelButton="true" layoutX="654.0" layoutY="254.0" mnemonicParsing="false" onAction="#cancel" text="%Cancel" />
-                        <Button defaultButton="true" layoutX="358.0" layoutY="254.0" mnemonicParsing="false" onAction="#removeSignAddr" text="%removePubkey" />
+                        <Button defaultButton="true" layoutX="597.0" layoutY="183.0" maxWidth="120.0" minWidth="120.0" mnemonicParsing="false" onAction="#removeSignAddr" prefWidth="120.0" text="%removePubkey" />
                         <Button defaultButton="true" layoutX="532.0" layoutY="254.0" mnemonicParsing="false" onAction="#saveSetting" text="%saveSetting" />
+                        <Label layoutX="71.0" layoutY="56.0" maxWidth="100.0" minWidth="100.0" prefWidth="100.0" text="%from_Address" />
+                        <ComboBox fx:id="myAddressComboBox" layoutX="217.0" layoutY="52.0" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" />
                      </children>
                   </AnchorPane>
               </content>
