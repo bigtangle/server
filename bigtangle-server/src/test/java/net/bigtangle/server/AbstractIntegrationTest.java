@@ -70,6 +70,7 @@ public abstract class AbstractIntegrationTest {
     private static final Logger log = LoggerFactory.getLogger(TipsServiceTest.class);
     public String contextRoot;
     public List<ECKey> walletKeys;
+    public List<ECKey> wallet1Keys;
     protected MockMvc mockMvc;
     WalletAppKit walletAppKit;
     protected static ObjectMapper objectMapper;
@@ -114,6 +115,7 @@ public abstract class AbstractIntegrationTest {
         walletKeys();
         testInitWallet();
         wallet1();
+         
     }
 
     public String toJson(Object object) throws JsonProcessingException {
@@ -143,12 +145,15 @@ public abstract class AbstractIntegrationTest {
         walletKeys = walletAppKit.wallet().walletKeys(aesKey);
     }
 
+     
     public void wallet1() throws Exception {
-
+        KeyParameter aesKey = null;
         walletAppKit1 = new WalletAppKit(networkParameters, new File("../bigtangle-wallet"), "bigtangle1");
         walletAppKit1.wallet().setServerURL(contextRoot);
-
+        
+        wallet1Keys = walletAppKit1.wallet().walletKeys(aesKey);
     }
+ 
 
     public List<UTXO> testTransactionAndGetBalances() throws Exception {
         return testTransactionAndGetBalances(false);
