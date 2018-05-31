@@ -1,8 +1,5 @@
 package net.bigtangle.equihash;
 
-import java.io.ByteArrayOutputStream;
-
-import net.bigtangle.core.UnsafeByteArrayOutputStream;
 import net.bigtangle.core.Utils;
 
 public class EquihashProof {

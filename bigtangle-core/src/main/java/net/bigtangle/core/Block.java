@@ -721,15 +721,13 @@ public class Block extends Message {
         // blocks.
 
         // Equihash
-        Sha256Hash powHash = calculatePoWHash();
-        if (NetworkParameters.USE_EQUIHASH) {
-            if (!EquihashSolver.testProof(params.equihashN, params.equihashK, powHash, getEquihashProof()))
+        if (NetworkParameters.USE_EQUIHASH) 
+            if (!EquihashSolver.testProof(params.equihashN, params.equihashK, getHash(), getEquihashProof()))
                 return false;
-        }
 
         BigInteger target = getDifficultyTargetAsInteger();
 
-        BigInteger h = powHash.toBigInteger();
+        BigInteger h = calculatePoWHash().toBigInteger();
         if (h.compareTo(target) > 0) {
             // Proof of work check failed!
             if (throwException)
