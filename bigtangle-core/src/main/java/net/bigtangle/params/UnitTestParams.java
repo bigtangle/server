@@ -31,10 +31,6 @@ public class UnitTestParams extends AbstractBitcoinNetParams implements Serializ
         p2shHeader = 196;
         acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
         maxTarget = new BigInteger("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
-        //genesisBlock.setTime(System.currentTimeMillis() / 1000);
-        genesisBlock.setTime(1231006505L);
-      //  genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
-        genesisBlock.solve();
         port = 18333;
         interval = 10;
         dumpedPrivateKeyHeader = 239;
@@ -50,6 +46,11 @@ public class UnitTestParams extends AbstractBitcoinNetParams implements Serializ
         majorityRejectBlockOutdated = 4;
         majorityWindow = 7;
         
+        // Equihash Settings
+        equihashN = 40;
+        equihashK = 4;
+
+        genesisBlock = createGenesis(this);
     }
 
     private static UnitTestParams instance;

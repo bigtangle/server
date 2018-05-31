@@ -30,6 +30,8 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
+import net.bigtangle.equihash.EquihashProof;
+import net.bigtangle.equihash.EquihashSolver;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 
@@ -70,7 +72,7 @@ public class Block extends Message {
      * How many bytes are required to represent a block header WITHOUT the
      * trailing 00 length byte.
      */
-    public static final int HEADER_SIZE = 80 + 32 + 20;
+    public static final int HEADER_SIZE = 80 + 32 + 20 + EquihashProof.BYTE_LENGTH;
 
     static final long ALLOWED_TIME_DRIFT = 2 * 60 * 60; // Same value as Bitcoin
                                                         // Core.
@@ -122,11 +124,18 @@ public class Block extends Message {
     private Sha256Hash merkleRoot;
     private long time;
     // private long difficultyTarget; // "nBits"
+    // TODO nonce unnecessary in case of Equihash PoW
     private long nonce;
     // Utils.sha256hash160
     private byte[] mineraddress;
 
     private long blocktype;
+
+    // If NetworkParameters.USE_EQUIHASH, this field will contain the PoW
+    // solution
+    /** If null, it means this PoW was not solved yet. */
+    @Nullable
+    private EquihashProof equihashProof;
 
     /** If null, it means this object holds only the headers. */
     @Nullable
@@ -325,7 +334,7 @@ public class Block extends Message {
             Transaction tx = new Transaction(params, payload, cursor, this, serializer, UNKNOWN_LENGTH);
             // Label the transaction as coming from the P2P network, so code
             // that cares where we first saw it knows.
-         //   tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
+            // tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
             transactions.add(tx);
             cursor += tx.getMessageSize();
             optimalEncodingMessageSize += tx.getOptimalEncodingMessageSize();
@@ -345,13 +354,17 @@ public class Block extends Message {
         // difficultyTarget = readUint32();
         nonce = readUint32();
         mineraddress = readBytes(20);
-
         blocktype = readUint32();
+
         hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(payload, offset, cursor - offset));
         headerBytesValid = serializer.isParseRetainMode();
 
+        // PoW
+        if (NetworkParameters.USE_EQUIHASH)
+            setEquihashProof(EquihashProof.from(readBytes(EquihashProof.BYTE_LENGTH)));
+
         // transactions
-        parseTransactions(offset + HEADER_SIZE);
+        parseTransactions(cursor);
         length = cursor - offset;
     }
 
@@ -382,6 +395,17 @@ public class Block extends Message {
         stream.write(mineraddress);
 
         Utils.uint32ToByteStreamLE(blocktype, stream);
+    }
+
+    void writePoW(OutputStream stream) throws IOException {
+        if (NetworkParameters.USE_EQUIHASH) {
+            if (getEquihashProof() != null) {
+                stream.write(getEquihashProof().serialize());
+            } else {
+                stream.write(EquihashProof.getDummy().serialize());
+                log.warn("serializing block with dummy PoW, ensure that PoW is computed before publishing");
+            }
+        }
     }
 
     private void writeTransactions(OutputStream stream) throws IOException {
@@ -433,6 +457,7 @@ public class Block extends Message {
                 length == UNKNOWN_LENGTH ? HEADER_SIZE + guessTransactionsLength() : length);
         try {
             writeHeader(stream);
+            writePoW(stream);
             writeTransactions(stream);
         } catch (IOException e) {
             // Cannot happen, we are serializing to a memory stream.
@@ -443,7 +468,8 @@ public class Block extends Message {
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         writeHeader(stream);
-        // We may only have enough data to write the header.
+        writePoW(stream);
+        // We may only have enough data to write the header and PoW.
         writeTransactions(stream);
     }
 
@@ -554,14 +580,14 @@ public class Block extends Message {
         return LARGEST_HASH.divide(target.add(BigInteger.ONE));
     }
 
-    /** Returns a copy of the block, but without any transactions. */
+    /** Returns a copy of the block */
     public Block cloneAsHeader() {
         Block block = new Block(params, BLOCK_VERSION_GENESIS);
         copyBitcoinHeaderTo(block);
         return block;
     }
 
-    /** Copy the block without transactions into the provided empty block. */
+    /** Copy the block into the provided block. */
     protected final void copyBitcoinHeaderTo(final Block block) {
         block.nonce = nonce;
         block.prevBlockHash = prevBlockHash;
@@ -571,6 +597,7 @@ public class Block extends Message {
         block.time = time;
         // block.difficultyTarget = difficultyTarget
         block.mineraddress = mineraddress;
+        block.equihashProof = equihashProof;
 
         block.blocktype = blocktype;
         block.transactions = null;
@@ -629,8 +656,14 @@ public class Block extends Message {
                 // Is our proof of work valid yet?
                 if (checkProofOfWork(false))
                     return;
-                // No, so increment the nonce and try again.
-                setNonce(getNonce() + 1);
+                
+                if (NetworkParameters.USE_EQUIHASH) {
+                    // Find Equihash solution
+                    equihashProof = EquihashSolver.calculateProof(params.equihashN, params.equihashK, getHash());
+                } else {
+                    // No, so increment the nonce and try again.
+                    setNonce(getNonce() + 1);
+                }
             } catch (VerificationException e) {
                 throw new RuntimeException(e); // Cannot happen.
             }
@@ -646,7 +679,7 @@ public class Block extends Message {
     public BigInteger getDifficultyTargetAsInteger() throws VerificationException {
         BigInteger target = Utils.decodeCompactBits(EASIEST_DIFFICULTY_TARGET);
         // Utils.encodeCompactBits(target.divide(new BigInteger("2")));
-        if (target.signum() < 0 || target.compareTo(params.maxTarget) > 0)
+        if (target.signum() < 0 || target.compareTo(NetworkParameters.MAX_TARGET) > 0)
             throw new VerificationException("Difficulty target is bad: " + target.toString());
         return target;
     }
@@ -670,6 +703,12 @@ public class Block extends Message {
         // the difficultyTarget
         // field is of the right value. This requires us to have the preceeding
         // blocks.
+
+        // Equihash
+        if (NetworkParameters.USE_EQUIHASH) {
+            return EquihashSolver.testProof(params.equihashN, params.equihashK, getHash(), getEquihashProof());
+        }
+
         BigInteger target = getDifficultyTargetAsInteger();
 
         BigInteger h = getHash().toBigInteger();
@@ -1131,7 +1170,7 @@ public class Block extends Message {
                     ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
         } else {
 
-            if (tokenInfo.getTokens() == null||tokenInfo.getTokens().getSignnumber() ==0) {
+            if (tokenInfo.getTokens() == null || tokenInfo.getTokens().getSignnumber() == 0) {
                 coinbase.addOutput(new TransactionOutput(params, coinbase, value,
                         ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
 
@@ -1281,6 +1320,16 @@ public class Block extends Message {
         this.hash = null;
     }
 
-   
-    
+    public EquihashProof getEquihashProof() {
+        if (equihashProof != null) {
+            return equihashProof;
+        } else {
+            return EquihashProof.getDummy();
+        }
+    }
+
+    public void setEquihashProof(EquihashProof equihashProof) {
+        this.equihashProof = equihashProof;
+    }
+
 }

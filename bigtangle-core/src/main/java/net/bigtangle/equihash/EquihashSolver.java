@@ -4,19 +4,16 @@ import java.nio.ByteBuffer;
 
 import net.bigtangle.core.Sha256Hash;
 
-public class EquihashSolver {
-	public final static int N = 100;
-	public final static int K = 4;
-	
-	public static EquihashProof calculateProof(Sha256Hash seed) {
+public class EquihashSolver {    	
+	public static EquihashProof calculateProof(int n, int k, Sha256Hash seed) {
 		int[] seedInts = convertSeed(seed);
-		EquihashProof proof = findProof(N, K, seedInts);	
+		EquihashProof proof = findProof(n, k, seedInts);	
 		return proof;
 	}
 	
-	public static boolean testProof(Sha256Hash seed, EquihashProof proof) {
+	public static boolean testProof(int n, int k, Sha256Hash seed, EquihashProof proof) {
 		int[] seedInts = convertSeed(seed);
-		return validate(N, K, seedInts, proof.getNonce(), proof.getInputs());
+		return validate(n, k, seedInts, proof.getNonce(), proof.getInputs());
 	}
 	
 	private static int[] convertSeed(Sha256Hash seed) {
