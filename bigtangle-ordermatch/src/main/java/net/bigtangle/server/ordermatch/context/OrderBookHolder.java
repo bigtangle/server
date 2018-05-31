@@ -17,9 +17,9 @@ import net.bigtangle.core.Tokens;
 import net.bigtangle.server.ordermatch.bean.OrderBook;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents;
 import net.bigtangle.server.ordermatch.bean.Side;
-import net.bigtangle.server.service.OrderPublishService;
-import net.bigtangle.server.service.TokensService;
-import net.bigtangle.server.service.response.GetTokensResponse;
+import net.bigtangle.server.ordermatch.service.OrderPublishService;
+import net.bigtangle.server.ordermatch.service.TokensService;
+import net.bigtangle.server.ordermatch.service.response.GetTokensResponse;
 
 @Component
 public class OrderBookHolder {

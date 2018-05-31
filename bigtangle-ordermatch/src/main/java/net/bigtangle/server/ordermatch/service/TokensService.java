@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.server.service;
+package net.bigtangle.server.ordermatch.service;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,9 +14,9 @@ import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Utils;
-import net.bigtangle.server.service.response.AbstractResponse;
-import net.bigtangle.server.service.response.GetTokensResponse;
-import net.bigtangle.server.store.FullPrunedBlockStore;
+import net.bigtangle.server.ordermatch.service.response.AbstractResponse;
+import net.bigtangle.server.ordermatch.service.response.GetTokensResponse;
+import net.bigtangle.server.ordermatch.store.FullPrunedBlockStore;
 import net.bigtangle.utils.MonetaryFormat;
 
 @Service

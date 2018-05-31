@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.server;
+package net.bigtangle.server.ordermatch;
 
 import java.io.PrintWriter;
 import java.util.Map;
@@ -21,9 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import net.bigtangle.core.Json;
 import net.bigtangle.core.Utils;
-import net.bigtangle.server.service.ExchangeService;
-import net.bigtangle.server.service.OrderPublishService;
-import net.bigtangle.server.service.response.AbstractResponse;
+import net.bigtangle.server.ordermatch.service.ExchangeService;
+import net.bigtangle.server.ordermatch.service.OrderPublishService;
+import net.bigtangle.server.ordermatch.service.response.AbstractResponse;
 
 @RestController
 @RequestMapping("/")

@@ -3,7 +3,7 @@
  *  
  *******************************************************************************/
 
-package net.bigtangle.server.store;
+package net.bigtangle.server.ordermatch.store;
 
 import java.util.List;
 import java.util.Map;

@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.server.service;
+package net.bigtangle.server.ordermatch.service;
 
 import java.util.List;
 import java.util.Map;
@@ -14,10 +14,10 @@ import org.springframework.stereotype.Service;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.Utils;
-import net.bigtangle.server.service.response.AbstractResponse;
-import net.bigtangle.server.service.response.ExchangeInfoResponse;
-import net.bigtangle.server.service.response.GetExchangeResponse;
-import net.bigtangle.server.store.FullPrunedBlockStore;
+import net.bigtangle.server.ordermatch.service.response.AbstractResponse;
+import net.bigtangle.server.ordermatch.service.response.ExchangeInfoResponse;
+import net.bigtangle.server.ordermatch.service.response.GetExchangeResponse;
+import net.bigtangle.server.ordermatch.store.FullPrunedBlockStore;
 import net.bigtangle.utils.OrderState;
 
 @Service

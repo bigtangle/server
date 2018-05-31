@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.server.service.response;
+package net.bigtangle.server.ordermatch.service.response;
 
 import java.util.List;
 

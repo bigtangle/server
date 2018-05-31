@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.server.service.schedule;
+package net.bigtangle.server.ordermatch.service.schedule;
 
 import java.util.Iterator;
 import java.util.UUID;
@@ -22,14 +22,14 @@ import net.bigtangle.core.OrderMatch;
 import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Utils;
-import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.ordermatch.bean.OrderBook;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents;
 import net.bigtangle.server.ordermatch.bean.Side;
+import net.bigtangle.server.ordermatch.config.ScheduleConfiguration;
 import net.bigtangle.server.ordermatch.context.OrderBookHolder;
-import net.bigtangle.server.service.TokensService;
-import net.bigtangle.server.service.response.GetTokensResponse;
-import net.bigtangle.server.store.FullPrunedBlockStore;
+import net.bigtangle.server.ordermatch.service.TokensService;
+import net.bigtangle.server.ordermatch.service.response.GetTokensResponse;
+import net.bigtangle.server.ordermatch.store.FullPrunedBlockStore;
 import net.bigtangle.utils.OrderState;
 
 @Component

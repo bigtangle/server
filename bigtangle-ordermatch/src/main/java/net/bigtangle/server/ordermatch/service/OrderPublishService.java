@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.server.service;
+package net.bigtangle.server.ordermatch.service;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -18,9 +18,9 @@ import net.bigtangle.core.OrderPublish;
 import net.bigtangle.server.ordermatch.bean.OrderBook;
 import net.bigtangle.server.ordermatch.bean.Side;
 import net.bigtangle.server.ordermatch.context.OrderBookHolder;
-import net.bigtangle.server.service.response.AbstractResponse;
-import net.bigtangle.server.service.response.GetOrderResponse;
-import net.bigtangle.server.store.FullPrunedBlockStore;
+import net.bigtangle.server.ordermatch.service.response.AbstractResponse;
+import net.bigtangle.server.ordermatch.service.response.GetOrderResponse;
+import net.bigtangle.server.ordermatch.store.FullPrunedBlockStore;
 
 @Service
 public class OrderPublishService {

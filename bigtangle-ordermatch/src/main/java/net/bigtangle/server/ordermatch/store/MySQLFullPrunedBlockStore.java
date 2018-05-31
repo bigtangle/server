@@ -3,7 +3,7 @@
  *  
  *******************************************************************************/
 
-package net.bigtangle.server.store;
+package net.bigtangle.server.ordermatch.store;
 
 import java.util.ArrayList;
 import java.util.Collections;

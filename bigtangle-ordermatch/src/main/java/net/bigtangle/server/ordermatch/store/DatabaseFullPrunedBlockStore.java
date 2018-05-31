@@ -3,7 +3,7 @@
  *  
  *******************************************************************************/
 
-package net.bigtangle.server.store;
+package net.bigtangle.server.ordermatch.store;
 
 import java.sql.Connection;
 import java.sql.Date;
