@@ -92,7 +92,7 @@ public class ExchangeController {
     public Transaction mTransaction;
 
     public String mOrderid;
-    public String mTokenid;
+//    public String mTokenid;
 
     @FXML
     public void initialize() {
@@ -108,7 +108,7 @@ public class ExchangeController {
         }
         mTransaction = null;
         mOrderid = "";
-        mTokenid = "";
+//        mTokenid = "";
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -219,12 +219,11 @@ public class ExchangeController {
     }
 
     public void exchangeCoin(ActionEvent event) throws Exception {
-        exchange();
+        exchange("");
         overlayUI.done();
     }
 
-    @SuppressWarnings("unchecked")
-    private void exchange() throws Exception, JsonProcessingException {
+    private void exchange(String marketURL) throws Exception, JsonProcessingException {
         if (mTransaction == null) {
             GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("ex_c_d"));
             return;
@@ -240,39 +239,32 @@ public class ExchangeController {
         rollingBlock.solve();
         OkHttp3Util.post(ContextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
 
-        HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
-        requestParam0.put("tokenid", this.mTokenid);
-        String resp = OkHttp3Util.postString(ContextRoot + "getTokenById", Json.jsonmapper().writeValueAsString(requestParam0));
-        HashMap<String, Object> res = Json.jsonmapper().readValue(resp, HashMap.class);
-        HashMap<String, Object> token_ = (HashMap<String, Object>) res.get("token");
-        String url = (String) token_.get("url");
-        
-        HashMap<String, Object> exchangeResult = this.getExchangeInfoResult(url, this.mOrderid);
-        int toSign = (int) exchangeResult.get("toSign");
-        int fromSign = (int) exchangeResult.get("fromSign");
-        String toAddress = (String) exchangeResult.get("toAddress");
-        String fromAddress = (String) exchangeResult.get("fromAddress");
-        String fromTokenHex = (String) exchangeResult.get("fromTokenHex");
-        String fromAmount = (String) exchangeResult.get("fromAmount");
-        String toTokenHex = (String) exchangeResult.get("toTokenHex");
-        String toAmount = (String) exchangeResult.get("toAmount");
-
-        String signtype = "";
-        if (toSign == 0 && calculatedAddressHit(toAddress)) {
-            signtype = "to";
-        } else if (fromSign == 0 && calculatedAddressHit(fromAddress)) {
-            signtype = "from";
+        if (marketURL != null && marketURL.equals("")) {
+            HashMap<String, Object> exchangeResult = this.getExchangeInfoResult(marketURL, this.mOrderid);
+            int toSign = (int) exchangeResult.get("toSign");
+            int fromSign = (int) exchangeResult.get("fromSign");
+            String toAddress = (String) exchangeResult.get("toAddress");
+            String fromAddress = (String) exchangeResult.get("fromAddress");
+            String fromTokenHex = (String) exchangeResult.get("fromTokenHex");
+            String fromAmount = (String) exchangeResult.get("fromAmount");
+            String toTokenHex = (String) exchangeResult.get("toTokenHex");
+            String toAmount = (String) exchangeResult.get("toAmount");
+    
+            String signtype = "";
+            if (toSign == 0 && calculatedAddressHit(toAddress)) {
+                signtype = "to";
+            } else if (fromSign == 0 && calculatedAddressHit(fromAddress)) {
+                signtype = "from";
+            }
+            byte[] buf = this.makeSignTransactionBuffer(fromAddress, getCoin(fromAmount, fromTokenHex, true), toAddress,
+                    getCoin(toAmount, toTokenHex, true), mTransaction.bitcoinSerialize());
+            HashMap<String, Object> requestParam = new HashMap<String, Object>();
+            String orderid = stringValueOf(mOrderid);
+            requestParam.put("orderid", orderid);
+            requestParam.put("dataHex", Utils.HEX.encode(buf));
+            requestParam.put("signtype", signtype);
+            OkHttp3Util.post(ContextRoot + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
         }
-        byte[] buf = this.makeSignTransactionBuffer(fromAddress, getCoin(fromAmount, fromTokenHex, true), toAddress,
-                getCoin(toAmount, toTokenHex, true), mTransaction.bitcoinSerialize());
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        String orderid = stringValueOf(mOrderid);
-        requestParam.put("orderid", orderid);
-        requestParam.put("dataHex", Utils.HEX.encode(buf));
-        requestParam.put("signtype", signtype);
-        OkHttp3Util.post(ContextRoot + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
-
-        // Main.sentEmpstyBlock(Main.numberOfEmptyBlocks);
     }
 
     public void importBlock(ActionEvent event) {
@@ -320,9 +312,12 @@ public class ExchangeController {
         }
         byte[] orderid = new byte[byteBuffer.getInt()];
         byteBuffer.get(orderid);
-
         mOrderid = new String(orderid);
-        mTokenid = fromTokenHexComboBox.getValue();
+        
+//        byte[] tokenid = new byte[byteBuffer.getInt()];
+//        byteBuffer.get(tokenid);
+//        mTokenid = new String(orderid);
+        
         // log.debug("orderid : " + new String(orderid));
 
         int len = byteBuffer.getInt();
@@ -353,7 +348,7 @@ public class ExchangeController {
         String toAmount = toAmountTextField.getText();
 
         this.mOrderid = UUIDUtil.randomUUID();
-        this.mTokenid = fromTokenHex;
+//        this.mTokenid = fromTokenHex;
         byte[] buf = this.makeSignTransactionBuffer(fromAddress, getCoin(fromAmount, fromTokenHex, false), toAddress,
                 getCoin(toAmount, toTokenHex, false));
         if (buf == null) {
@@ -367,20 +362,6 @@ public class ExchangeController {
         }
         // wirte file
         FileUtil.writeFile(file, buf);
-
-        /*
-         * HashMap<String, Object> requestParam = new HashMap<String, Object>();
-         * requestParam.put("orderid", this.mOrderid);
-         * requestParam.put("fromAddress", fromAddress);
-         * requestParam.put("fromTokenHex", fromTokenHex);
-         * requestParam.put("fromAmount", fromAmount);
-         * requestParam.put("toAddress", toAddress);
-         * requestParam.put("toTokenHex", toTokenHex);
-         * requestParam.put("toAmount", toAmount); requestParam.put("dataHex",
-         * Utils.HEX.encode(buf)); try { OkHttp3Util.post(ContextRoot +
-         * "saveExchange", Json.jsonmapper().writeValueAsBytes(requestParam)); }
-         * catch (Exception e) { GuiUtils.crashAlert(e); return; }
-         */
         overlayUI.done();
     }
 
@@ -402,7 +383,7 @@ public class ExchangeController {
     @SuppressWarnings("unchecked")
     public void signExchange(ActionEvent event) throws Exception {
         Map<String, Object> rowData = exchangeTable.getSelectionModel().getSelectedItem();
-        String tokenid = (String) rowData.get("fromTokenHex");
+        String tokenid = (String) rowData.get("market");
 
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
@@ -410,14 +391,14 @@ public class ExchangeController {
         String resp = OkHttp3Util.postString(ContextRoot + "getTokenById", Json.jsonmapper().writeValueAsString(requestParam0));
         HashMap<String, Object> res = Json.jsonmapper().readValue(resp, HashMap.class);
         HashMap<String, Object> token_ = (HashMap<String, Object>) res.get("token");
-        String url = (String) token_.get("url");
+        String marketURL = (String) token_.get("url");
         
         if (rowData == null || rowData.isEmpty()) {
             GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_d1"));
         }
         this.mOrderid = stringValueOf(rowData.get("orderid"));
-        this.mTokenid = tokenid;
-        HashMap<String, Object> exchangeResult = getExchangeInfoResult(url, this.mOrderid);
+//        this.mTokenid = tokenid;
+        HashMap<String, Object> exchangeResult = getExchangeInfoResult(marketURL, this.mOrderid);
         String dataHex = (String) exchangeResult.get("dataHex");
         if (dataHex.isEmpty()) {
             byte[] buf = null;
@@ -454,7 +435,7 @@ public class ExchangeController {
             GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("ex_c_d"));
             return;
         }
-        this.exchange();
+        this.exchange(marketURL);
         this.initTable();
         // overlayUI.done();
     }

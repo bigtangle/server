@@ -724,6 +724,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             orderPublish.setState(resultSet.getInt("state"));
             orderPublish.setValidateto(resultSet.getDate("validateto"));
             orderPublish.setValidatefrom(resultSet.getDate("validatefrom"));
+            orderPublish.setMarket(resultSet.getString("market"));
             return orderPublish;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
