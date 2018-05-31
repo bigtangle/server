@@ -2013,7 +2013,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
     private boolean isNotSpendingTxnsInConfidenceType(Transaction tx, ConfidenceType confidenceType) {
         for (TransactionInput txInput : tx.getInputs()) {
             Transaction connectedTx = this.getTransaction(txInput.getOutpoint().getHash());
-            if (connectedTx != null && connectedTx.getConfidence().getConfidenceType().equals(confidenceType)) {
+            if (connectedTx != null  ) {
                 return false;
             }
         }
@@ -2212,17 +2212,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
                 Transaction connected = deadInput.getConnectedTransaction();
                 if (connected == null)
                     continue;
-                if (connected.getConfidence().getConfidenceType() != ConfidenceType.DEAD
-                        && deadInput.getConnectedOutput().getSpentBy() != null
-                        && deadInput.getConnectedOutput().getSpentBy().equals(deadInput)) {
-                    checkState(myUnspents.add(deadInput.getConnectedOutput()));
-                    log.info("Added to UNSPENTS: {} in {}", deadInput.getConnectedOutput(),
-                            deadInput.getConnectedOutput().getParentTransaction().getHash());
-                }
+        
                 deadInput.disconnect();
                 maybeMovePool(connected, "kill");
             }
-            tx.getConfidence().setOverridingTransaction(overridingTx);
+          //  tx.getConfidence().setOverridingTransaction(overridingTx);
             confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.TYPE);
             // Now kill any transactions we have that depended on this one.
             for (TransactionOutput deadOutput : tx.getOutputs()) {
@@ -2674,7 +2668,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         try {
             LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
             for (Transaction tx : Iterables.concat(unspent.values(), pending.values())) {
-                if (excludeImmatureCoinbases && !tx.isMature())
+                if (excludeImmatureCoinbases  )
                     continue;
                 for (TransactionOutput output : tx.getOutputs()) {
                     if (!output.isAvailableForSpending())
@@ -3483,7 +3477,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
                     if (excludeUnsignable && !canSignFor(output.getScriptPubKey()))
                         continue;
                     Transaction transaction = checkNotNull(output.getParentTransaction());
-                    if (excludeImmatureCoinbases && !transaction.isMature())
+                    if (excludeImmatureCoinbases  )
                         continue;
                     candidates.add(output);
                 }
@@ -3577,7 +3571,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
             }
             // Add change outputs. Do not try and spend coinbases that were
             // mined too recently, the protocol forbids it.
-            if (!excludeImmatureCoinbases || tx.isMature()) {
+            if (!excludeImmatureCoinbases  ) {
                 for (TransactionOutput output : tx.getOutputs()) {
                     if (output.isAvailableForSpending() && output.isMine(this)) {
                         candidates.add(output);
@@ -3638,17 +3632,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         }
     }
 
-    /**
-     * Convenience wrapper for
-     * <tt>setCoinSelector(Wallet.AllowUnconfirmedCoinSelector.get())</tt>. If
-     * this method is called on the wallet then transactions will be used for
-     * spending regardless of their confidence. This can be dangerous - only use
-     * this if you absolutely know what you're doing!
-     */
-    public void allowSpendingUnconfirmedTransactions() {
-        setCoinSelector(AllowUnconfirmedCoinSelector.get());
-    }
-
+ 
     /**
      * Get the {@link UTXOProvider}.
      * 
@@ -3724,17 +3708,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
             return output;
         }
 
-        /**
-         * Get the depth withing the chain of the parent tx, depth is 1 if it
-         * the output height is the height of the latest block.
-         * 
-         * @return The depth.
-         */
-        @Override
-        public long getParentTransactionDepthInBlocks() {
-            return chainHeight - output.getHeight() + 1;
-        }
-
+     
         @Override
         public int getIndex() {
             return (int) output.getIndex();
@@ -3767,18 +3741,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         }
     }
 
-    /**
-     * Subtract the supplied depth from the given transactions.
-     */
-    private void subtractDepth(int depthToSubtract, Collection<Transaction> transactions) {
-        for (Transaction tx : transactions) {
-            if (tx.getConfidence().getConfidenceType() == ConfidenceType.BUILDING) {
-                tx.getConfidence().setDepthInBlocks(tx.getConfidence().getDepthInBlocks() - depthToSubtract);
-                confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.DEPTH);
-            }
-        }
-    }
-
+ 
     // endregion
 
     /******************************************************************************************************************/
@@ -4374,7 +4337,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
                 log.error("Failed to adjust rekey tx for fees.");
                 return null;
             }
-            rekeyTx.getConfidence().setSource(TransactionConfidence.Source.SELF);
+            //rekeyTx.getConfidence().setSource(TransactionConfidence.Source.SELF);
             rekeyTx.setPurpose(Transaction.Purpose.KEY_ROTATION);
             SendRequest req = SendRequest.forTx(rekeyTx);
             req.aesKey = aesKey;
@@ -4523,7 +4486,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
             // notifying listeners here as there's not much
             // point - the user isn't interested in a confidence transition they
             // made themselves.
-            req.tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
+          //  req.tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
             // Label the transaction as being a user requested payment. This can
             // be used to render GUI wallet
             // transaction lists more appropriately, especially when the wallet

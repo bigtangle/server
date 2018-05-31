@@ -289,7 +289,7 @@ public class FakeTxBuilder {
                     previousBlock.getHash());
             // Coinbase tx was already added.
             for (Transaction tx : transactions) {
-                tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
+           //     tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
                 b.addTransaction(tx);
             }
             b.solve();

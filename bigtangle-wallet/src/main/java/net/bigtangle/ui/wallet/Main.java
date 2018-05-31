@@ -598,10 +598,18 @@ public class Main extends Application {
 
     public boolean sendMessage(byte[] data) throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
-        OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", data);
-        sentEmpstyBlock(2);
+       String resp= OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", data);
+                @SuppressWarnings("unchecked")
+       HashMap<String, Object> respRes = Json.jsonmapper().readValue(resp, HashMap.class);
+       int errorcode = (Integer) respRes.get("errorcode");
+      if (errorcode > 0) {
+           String message = (String) respRes.get("message");
+           GuiUtils.informationalAlert( message, Main.getText("ex_c_d1"));
+           return false;
+       }
+       // sentEmpstyBlock(2);
         return true;
-        // return sendMessage(data, this.blockTopic, this.kafka);
+        
     }
 
     public static boolean checkResponse(String resp) throws JsonParseException, JsonMappingException, IOException {

@@ -322,13 +322,13 @@ public class DispatcherController {
             logger.error("reqCmd : {}, reqHex : {}, block store ex.", reqCmd, Utils.HEX.encode(bodyByte));
             AbstractResponse resp = ErrorResponse.create (101); 
             resp.setErrorcode( 101);
-            resp.setMessage(e.getMessage());
+            resp.setMessage(e.getLocalizedMessage());
             this.outPrintJSONString(httpServletResponse, resp);
-        } catch (Exception exception) {
+        } catch (Throwable exception) {
            logger.error("",exception);
             logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, Utils.HEX.encode(bodyByte));
             AbstractResponse resp = ErrorResponse.create (100); 
-            resp.setMessage("unkown error");
+            resp.setMessage(exception.getLocalizedMessage());
             this.outPrintJSONString(httpServletResponse, resp);
         }
     }

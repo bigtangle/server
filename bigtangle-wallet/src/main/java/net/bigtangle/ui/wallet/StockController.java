@@ -474,14 +474,14 @@ public class StockController extends TokensController {
 
             // save block
             String resp = OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
-            @SuppressWarnings("unchecked")
-            HashMap<String, Object> respRes = Json.jsonmapper().readValue(resp, HashMap.class);
-            int errorcode = (Integer) respRes.get("errorcode");
-            if (errorcode > 0) {
-                String message = (String) respRes.get("message");
-                GuiUtils.informationalAlert("SIGN ERROR : " + message, Main.getText("ex_c_d1"));
-                return;
-            }
+    //        @SuppressWarnings("unchecked")
+//            HashMap<String, Object> respRes = Json.jsonmapper().readValue(resp, HashMap.class);
+//            int errorcode = (Integer) respRes.get("errorcode");
+//            if (errorcode > 0) {
+//                String message = (String) respRes.get("message");
+//                GuiUtils.informationalAlert("SIGN ERROR : " + message, Main.getText("ex_c_d1"));
+//                return;
+//            }
 
             Main.instance.sendMessage(block.bitcoinSerialize());
             GuiUtils.informationalAlert("", Main.getText("s_c_m"));

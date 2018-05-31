@@ -69,9 +69,7 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
     @Nullable
     private Result analyzeIsFinal() {
         // Transactions we create ourselves are, by definition, not at risk of double spending against us.
-        if (tx.getConfidence().getSource() == TransactionConfidence.Source.SELF)
-            return Result.OK;
-
+   
         // We consider transactions that opt into replace-by-fee at risk of double spending.
         if (tx.isOptInFullRBF()) {
             nonFinal = tx;

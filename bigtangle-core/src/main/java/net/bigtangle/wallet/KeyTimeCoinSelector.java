@@ -44,7 +44,7 @@ public class KeyTimeCoinSelector implements CoinSelector {
             LinkedList<TransactionOutput> gathered = Lists.newLinkedList();
             Coin valueGathered = Coin.ZERO;
             for (TransactionOutput output : candidates) {
-                if (ignorePending && !isConfirmed(output))
+                if (ignorePending )
                     continue;
                 // Find the key that controls output, assuming it's a regular pay-to-pubkey or pay-to-address output.
                 // We ignore any other kind of exotic output on the assumption we can't spend it ourselves.
@@ -74,7 +74,5 @@ public class KeyTimeCoinSelector implements CoinSelector {
         }
     }
 
-    private boolean isConfirmed(TransactionOutput output) {
-        return output.getParentTransaction().getConfidence().getConfidenceType().equals(TransactionConfidence.ConfidenceType.BUILDING);
-    }
+  
 }

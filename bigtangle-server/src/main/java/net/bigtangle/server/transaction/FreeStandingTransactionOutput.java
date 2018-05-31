@@ -36,18 +36,7 @@ public class FreeStandingTransactionOutput extends TransactionOutput {
     public UTXO getUTXO() {
         return output;
     }
-
-    /**
-     * Get the depth withing the chain of the parent tx, depth is 1 if it
-     * the output height is the height of the latest block.
-     * 
-     * @return The depth.
-     */
-    @Override
-    public long getParentTransactionDepthInBlocks() {
-        return chainHeight - output.getHeight() + 1;
-    }
-
+ 
     @Override
     public int getIndex() {
         return (int) output.getIndex();

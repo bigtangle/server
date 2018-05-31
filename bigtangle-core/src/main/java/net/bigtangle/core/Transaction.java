@@ -30,10 +30,8 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 
-import net.bigtangle.core.TransactionConfidence.ConfidenceType;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
@@ -96,26 +94,7 @@ public class Transaction extends ChildMessage {
             return updateTimeComparison != 0 ? updateTimeComparison : tx1.getHash().compareTo(tx2.getHash());
         }
     };
-    /**
-     * A comparator that can be used to sort transactions by their chain height.
-     */
-    public static final Comparator<Transaction> SORT_TX_BY_HEIGHT = new Comparator<Transaction>() {
-        @Override
-        public int compare(final Transaction tx1, final Transaction tx2) {
-            final TransactionConfidence confidence1 = tx1.getConfidence();
-            final int height1 = confidence1.getConfidenceType() == ConfidenceType.BUILDING
-                    ? confidence1.getAppearedAtChainHeight()
-                    : Block.BLOCK_HEIGHT_UNKNOWN;
-            final TransactionConfidence confidence2 = tx2.getConfidence();
-            final int height2 = confidence2.getConfidenceType() == ConfidenceType.BUILDING
-                    ? confidence2.getAppearedAtChainHeight()
-                    : Block.BLOCK_HEIGHT_UNKNOWN;
-            final int heightComparison = -(Ints.compare(height1, height2));
-            // If height1==height2, compare by tx hash to make comparator
-            // consistent with equals
-            return heightComparison != 0 ? heightComparison : tx1.getHash().compareTo(tx2.getHash());
-        }
-    };
+ 
     private static final Logger log = LoggerFactory.getLogger(Transaction.class);
 
     /**
@@ -175,9 +154,7 @@ public class Transaction extends ChildMessage {
     // This is an in memory helper only.
     private Sha256Hash hash;
 
-    // Data about how confirmed this tx is. Serialized, may be null.
-    @Nullable
-    private TransactionConfidence confidence;
+    
 
     // Records a map of which blocks the transaction has appeared in (keys) to
     // an index within that block (values).
@@ -396,15 +373,7 @@ public class Transaction extends ChildMessage {
         return appearsInHashes != null ? ImmutableMap.copyOf(appearsInHashes) : null;
     }
 
-    /**
-     * Convenience wrapper around getConfidence().getConfidenceType()
-     * 
-     * @return true if this transaction hasn't been seen in any block yet.
-     */
-    public boolean isPending() {
-        return getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.PENDING;
-    }
-
+ 
  
 
     public void addBlockAppearance(final Sha256Hash blockHash, int relativityOffset) {
@@ -739,22 +708,7 @@ public class Transaction extends ChildMessage {
     public boolean isCoinBase() {
         return inputs.size() == 1 && inputs.get(0).isCoinBase();
     }
-
-    /**
-     * A transaction is mature if it is either a building coinbase tx that is as
-     * deep or deeper than the required coinbase depth, or a non-coinbase tx.
-     */
-    public boolean isMature() {
-        if (!isCoinBase())
-            return true;
-
-        if (getConfidence().getConfidenceType() != ConfidenceType.BUILDING)
-            return false;
-
-        return getConfidence().getDepthInBlocks() >= params.getSpendableCoinbaseDepth();
-    }
-
-  
+ 
     /**
      * A human readable version of the transaction useful for debugging. The
      * format is not guaranteed to be stable.
@@ -1421,38 +1375,8 @@ public class Transaction extends ChildMessage {
         return outputs.get((int) index);
     }
 
-    /**
-     * Returns the confidence object for this transaction from the
-     * {@link net.bigtangle.core.TxConfidenceTable} referenced by the implicit
-     * {@link Context}.
-     */
-    public TransactionConfidence getConfidence() {
-        return getConfidence(Context.get());
-    }
-
-    /**
-     * Returns the confidence object for this transaction from the
-     * {@link net.bigtangle.core.TxConfidenceTable} referenced by the given
-     * {@link Context}.
-     */
-    public TransactionConfidence getConfidence(Context context) {
-        return getConfidence(context.getConfidenceTable());
-    }
-
-    /**
-     * Returns the confidence object for this transaction from the
-     * {@link net.bigtangle.core.TxConfidenceTable}
-     */
-    public TransactionConfidence getConfidence(TxConfidenceTable table) {
-        if (confidence == null)
-            confidence = table.getOrCreate(getHash());
-        return confidence;
-    }
-
-    /** Check if the transaction has a known confidence */
-    public boolean hasConfidence() {
-        return getConfidence().getConfidenceType() != TransactionConfidence.ConfidenceType.UNKNOWN;
-    }
+ 
+  
 
     @Override
     public boolean equals(Object o) {

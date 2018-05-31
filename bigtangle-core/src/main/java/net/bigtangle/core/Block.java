@@ -325,7 +325,7 @@ public class Block extends Message {
             Transaction tx = new Transaction(params, payload, cursor, this, serializer, UNKNOWN_LENGTH);
             // Label the transaction as coming from the P2P network, so code
             // that cares where we first saw it knows.
-            tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
+         //   tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
             transactions.add(tx);
             cursor += tx.getMessageSize();
             optimalEncodingMessageSize += tx.getOptimalEncodingMessageSize();
@@ -1281,4 +1281,6 @@ public class Block extends Message {
         this.hash = null;
     }
 
+   
+    
 }

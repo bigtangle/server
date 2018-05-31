@@ -329,9 +329,7 @@ public class PeerGroup implements TransactionBroadcaster {
             // filter for next time.
             for (TransactionOutput output : tx.getOutputs()) {
                 if (output.getScriptPubKey().isSentToRawPubKey() && output.isMine(wallet)) {
-                    if (tx.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING)
-                        recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
-                    else
+                    
                         recalculateFastCatchupAndFilter(FilterRecalculateMode.DONT_SEND);
                     return;
                 }
@@ -2524,10 +2522,7 @@ public class PeerGroup implements TransactionBroadcaster {
         // If we don't have a record of where this tx came from already, set it
         // to be ourselves so Peer doesn't end up
         // redownloading it from the network redundantly.
-        if (tx.getConfidence().getSource().equals(TransactionConfidence.Source.UNKNOWN)) {
-            log.info("Transaction source unknown, setting to SELF: {}", tx.getHashAsString());
-            tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
-        }
+        
         final TransactionBroadcast broadcast = new TransactionBroadcast(this, tx);
         broadcast.setMinConnections(minConnections);
         // Send the TX to the wallet once we have a successful broadcast.

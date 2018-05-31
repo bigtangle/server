@@ -29,7 +29,7 @@ object Dependencies {
     //  "org.apache.hbase" % "hbase-common" % "1.0.0" % "provided" excludeAll ExclusionRule(organization = "org.mortbay.jetty"),
     //  "org.apache.hbase" % "hbase-server" % "1.0.0" % "provided" excludeAll ExclusionRule(organization = "org.mortbay.jetty"),
     "com.google.code.gson" % "gson" % "2.2.4",
-    "net.bigtangle" % "bigtangle-core" % "0.1.0",
+   // "net.bigtangle" % "bigtangle-core" % "0.1.0",
     // "graphframes" %  "graphframes" % "0.5.0-spark2.1-s_2.11",
     "org.mongodb.spark" %% "mongo-spark-connector" % "1.0.0" excludeAll ExclusionRule(organization = "org.apache.hadoop"))
 

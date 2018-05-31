@@ -382,23 +382,7 @@ public class TransactionOutput extends ChildMessage {
         return parent == null ? null : parent.getHash();
     }
 
-    /**
-     * Returns the depth in blocks of the parent tx.
-     *
-     * <p>If the transaction appears in the top block, the depth is one. If it's anything else (pending, dead, unknown)
-     * then -1.</p>
-     * @return The tx depth or -1.
-     */
-    public long getParentTransactionDepthInBlocks() {
-        if (getParentTransaction() != null) {
-            TransactionConfidence confidence = getParentTransaction().getConfidence();
-            if (confidence.getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING) {
-                return confidence.getDepthInBlocks();
-            }
-        }
-        return -1;
-    }
-
+   
     /**
      * Returns a new {@link TransactionOutPoint}, which is essentially a structure pointing to this output.
      * Requires that this output is not detached.
