@@ -20,15 +20,12 @@ import net.bigtangle.core.Exchange;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderMatch;
 import net.bigtangle.core.OrderPublish;
-import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Utils;
 import net.bigtangle.server.ordermatch.bean.OrderBook;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents;
 import net.bigtangle.server.ordermatch.bean.Side;
 import net.bigtangle.server.ordermatch.config.ScheduleConfiguration;
 import net.bigtangle.server.ordermatch.context.OrderBookHolder;
-import net.bigtangle.server.ordermatch.service.TokensService;
-import net.bigtangle.server.ordermatch.service.response.GetTokensResponse;
 import net.bigtangle.server.ordermatch.store.FullPrunedBlockStore;
 import net.bigtangle.utils.OrderState;
 
@@ -40,9 +37,6 @@ public class ScheduleOrderMatchService {
 
     @Autowired
     private OrderBookHolder orderBookHolder;
-
-    @Autowired
-    private TokensService tokensService;
 
     @Autowired
     protected FullPrunedBlockStore store;
@@ -60,15 +54,13 @@ public class ScheduleOrderMatchService {
 
         try {
             logger.info("cal order match start");
-            GetTokensResponse getTokensResponse = (GetTokensResponse) tokensService.getTokensList();
-            for (Tokens tokens : getTokensResponse.getTokens()) {
-                String tokenSTR = tokens.getTokenid();
-                // System.out.println(tokenSTR);
-                OrderBook orderBook = orderBookHolder.getOrderBookWithTokenId(tokenSTR);
-                if (orderBook == null) {
-                    orderBookHolder.addOrderBook(tokenSTR, orderBookHolder.createOrderBook());
-                    continue;
-                }
+            for (OrderBook orderBook : orderBookHolder.values()) {
+//                String tokenSTR = tokens.getTokenid();
+//                OrderBook orderBook = orderBookHolder.getOrderBookWithTokenId(tokenSTR);
+//                if (orderBook == null) {
+//                    orderBookHolder.addOrderBook(tokenSTR, orderBookHolder.createOrderBook());
+//                    continue;
+//                }
                 try {
                     orderBook.lock();
                     OrderBookEvents orderBookEvents = (OrderBookEvents) orderBook.listener();
