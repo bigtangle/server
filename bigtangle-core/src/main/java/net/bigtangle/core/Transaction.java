@@ -762,7 +762,7 @@ public class Transaction extends ChildMessage {
                     String scriptSigStr = in.getScriptSig().toString();
                     s.append(!Strings.isNullOrEmpty(scriptSigStr) ? scriptSigStr : "<no scriptSig>");
                     if (in.getValue() != null)
-                        s.append(" ").append(in.getValue().toFriendlyString());
+                        s.append(" ").append(in.getValue().toString());
                     s.append("\n          ");
                     s.append("outpoint:");
                     final TransactionOutPoint outpoint = in.getOutpoint();
@@ -796,7 +796,7 @@ public class Transaction extends ChildMessage {
                 String scriptPubKeyStr = out.getScriptPubKey().toString();
                 s.append(!Strings.isNullOrEmpty(scriptPubKeyStr) ? scriptPubKeyStr : "<no scriptPubKey>");
                 s.append(" ");
-                s.append(out.getValue().toFriendlyString());
+                s.append(out.getValue().toString());
                 if (!out.isAvailableForSpending()) {
                     s.append(" Spent");
                 }

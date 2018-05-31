@@ -22,7 +22,7 @@ public class InsufficientMoneyException extends Exception {
     }
 
     public InsufficientMoneyException(Coin missing) {
-        this(missing, "Insufficient money,  missing " + missing.toFriendlyString());
+        this(missing, "Insufficient money,  missing " + missing.toPlainString() + " " + missing.getTokenHex());
     }
 
     public InsufficientMoneyException(Coin missing, String message) {

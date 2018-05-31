@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,7 +35,9 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.bigtangle.core.Block;
@@ -55,7 +58,8 @@ import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
-
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {})
 
@@ -92,8 +96,8 @@ public abstract class AbstractIntegrationTest {
     @Autowired
     protected FullPrunedBlockStore store;
 
-//    @Autowired
-//    private BlockService blockService;
+    // @Autowired
+    // private BlockService blockService;
 
     @Autowired
     private MilestoneService milestoneService;
@@ -115,7 +119,7 @@ public abstract class AbstractIntegrationTest {
         walletKeys();
         testInitWallet();
         wallet1();
-         
+
     }
 
     public String toJson(Object object) throws JsonProcessingException {
@@ -145,15 +149,13 @@ public abstract class AbstractIntegrationTest {
         walletKeys = walletAppKit.wallet().walletKeys(aesKey);
     }
 
-     
     public void wallet1() throws Exception {
         KeyParameter aesKey = null;
         walletAppKit1 = new WalletAppKit(networkParameters, new File("../bigtangle-wallet"), "bigtangle1");
         walletAppKit1.wallet().setServerURL(contextRoot);
-        
+
         wallet1Keys = walletAppKit1.wallet().walletKeys(aesKey);
     }
- 
 
     public List<UTXO> testTransactionAndGetBalances() throws Exception {
         return testTransactionAndGetBalances(false);
@@ -217,15 +219,15 @@ public abstract class AbstractIntegrationTest {
             rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
                     outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
-        } 
-        
+        }
+
         ECKey myKey = walletKeys.get(0);
-        //TODO why no milestone, the program hangs here
+        // TODO why no milestone, the program hangs here
         milestoneService.update();
         Block b = createToken(myKey);
 
         rollingBlock = BlockForTest.createNextBlock(b, null, networkParameters.getGenesisBlock().getHash());
-       
+
         Coin amount = Coin.valueOf(12345, NetworkParameters.BIGNETCOIN_TOKENID);
 
         Transaction t = new Transaction(networkParameters);
@@ -234,14 +236,14 @@ public abstract class AbstractIntegrationTest {
 
         t.addOutput(new TransactionOutput(networkParameters, t, amount, myKey.toAddress(networkParameters)));
         t.addSignedInput(spendableOutput, transaction.getOutputs().get(0).getScriptPubKey(), outKey);
-        
+
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
         blockgraph.add(rollingBlock);
 
         milestoneService.update();
         List<UTXO> utxos = testTransactionAndGetBalances();
-        
+
     }
 
     public Block createToken(ECKey outKey) throws Exception {
@@ -255,7 +257,7 @@ public abstract class AbstractIntegrationTest {
         requestParam.put("multiserial", false);
         requestParam.put("asmarket", false);
         requestParam.put("tokenstop", false);
-        requestParam.put("tokenHex",  outKey.getPublicKeyAsHex());
+        requestParam.put("tokenHex", outKey.getPublicKeyAsHex());
 
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.createGenesisBlock.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -263,6 +265,13 @@ public abstract class AbstractIntegrationTest {
         log.info("createGenesisBlock resp : " + block);
 
         return block;
+    }
+
+    public void checkResponse(String resp) throws JsonParseException, JsonMappingException, IOException {
+        @SuppressWarnings("unchecked")
+        HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
+        int error = (Integer) result2.get("errorcode");
+        assertTrue(error == 0);
     }
 
 }

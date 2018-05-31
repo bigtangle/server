@@ -173,7 +173,7 @@ public class UTXO {
 
     @Override
     public String toString() {
-        return String.format(Locale.US, "Stored TxOut of %s (%s:%d)", value.toFriendlyString(), hash, index);
+        return String.format(Locale.US, "Stored TxOut of %s (%s:%d)", value.toString(), hash, index);
     }
 
     @Override

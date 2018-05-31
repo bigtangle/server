@@ -343,7 +343,7 @@ public class TransactionOutput extends ChildMessage {
         try {
             Script script = getScriptPubKey();
             StringBuilder buf = new StringBuilder("TxOut of ");
-            buf.append(value.toFriendlyString());
+            buf.append(value.toString());
             if (script.isSentToAddress() || script.isPayToScriptHash())
                 buf.append(" to ").append(script.getToAddress(params));
             else if (script.isSentToRawPubKey())

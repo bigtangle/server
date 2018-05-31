@@ -258,20 +258,7 @@ public class TransactionTest {
         tx.addSignedInput(fakeTx.getOutput(0).getOutPointFor(), script, key);
     }
 
-    @Test
-    public void testPrioSizeCalc() throws Exception {
-        Transaction tx1 = FakeTxBuilder.createFakeTx(PARAMS, Coin.COIN, ADDRESS);
-        int size1 = tx1.getMessageSize();
-        int size2 = tx1.getMessageSizeForPriorityCalc();
-        assertEquals(113, size1 - size2);
-        tx1.getInput(0).setScriptSig(new Script(new byte[109]));
-        assertEquals(138, tx1.getMessageSizeForPriorityCalc());
-        tx1.getInput(0).setScriptSig(new Script(new byte[110]));
-        assertEquals(138, tx1.getMessageSizeForPriorityCalc());
-        tx1.getInput(0).setScriptSig(new Script(new byte[111]));
-        assertEquals(139, tx1.getMessageSizeForPriorityCalc());
-    }
-
+ 
    // @Test
     public void testCoinbaseHeightCheck() throws VerificationException {
         // Coinbase transaction from block 300,000
