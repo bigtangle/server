@@ -30,9 +30,6 @@ public class TestNet2Params extends AbstractBitcoinNetParams {
         targetTimespan = TARGET_TIMESPAN;
         maxTarget = Utils.decodeCompactBits(0x1d0fffffL);
         dumpedPrivateKeyHeader = 239;
-        genesisBlock.setTime(1296688602L);
-      //  genesisBlock.setDifficultyTarget(0x1d07fff8L);
-      //  genesisBlock.setNonce(384568319);
         spendableCoinbaseDepth = 100;
         subsidyDecreaseBlockCount = 210000;
         String genesisHash = genesisBlock.getHashAsString();
@@ -45,6 +42,12 @@ public class TestNet2Params extends AbstractBitcoinNetParams {
         majorityEnforceBlockUpgrade = TESTNET_MAJORITY_ENFORCE_BLOCK_UPGRADE;
         majorityRejectBlockOutdated = TESTNET_MAJORITY_REJECT_BLOCK_OUTDATED;
         majorityWindow = TESTNET_MAJORITY_WINDOW;
+        
+        // Equihash Settings
+        equihashN = 40;
+        equihashK = 4;
+
+        genesisBlock = createGenesis(this);
     }
 
     private static TestNet2Params instance;

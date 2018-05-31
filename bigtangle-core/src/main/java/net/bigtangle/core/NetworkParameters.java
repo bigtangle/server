@@ -70,8 +70,9 @@ public abstract class NetworkParameters {
                                                              // // value
 
     public static final long BLOCKTYPE_REWARD = 2; // Reward of mining
-
-    // TODO: Seed nodes should be here as well.
+    
+    // Use Equihash
+    public static final boolean USE_EQUIHASH = false;
 
     protected Block genesisBlock;
     protected BigInteger maxTarget;
@@ -92,6 +93,10 @@ public abstract class NetworkParameters {
     protected int majorityEnforceBlockUpgrade;
     protected int majorityRejectBlockOutdated;
     protected int majorityWindow;
+    
+    // Equihash Parameters
+    protected int equihashN;
+    protected int equihashK;
 
     /**
      * See getId(). This may be null for old deserialized wallets. In that case
@@ -113,8 +118,6 @@ public abstract class NetworkParameters {
     protected transient MessageSerializer defaultSerializer = null;
 
     protected NetworkParameters() {
-
-        genesisBlock = createGenesis(this);
     }
 
     public static Block createGenesis(NetworkParameters n) {
@@ -142,6 +145,10 @@ public abstract class NetworkParameters {
         // throw new RuntimeException(e);
         // }
         // genesisBlock.addTransaction(t);
+
+        genesisBlock.setTime(1231006505L);
+        genesisBlock.solve();
+        
         return genesisBlock;
     }
 
@@ -171,6 +178,7 @@ public abstract class NetworkParameters {
     public static final long ENTRYPOINT_TIPSELECTION_DEPTH_CUTOFF = 20;
     
     public static final int REWARD_HEIGHT_INTERVAL = 100;
+    public static final BigInteger MAX_TARGET = Utils.decodeCompactBits(0x207fFFFFL);
 
     /**
      * The maximum number of coins to be generated
