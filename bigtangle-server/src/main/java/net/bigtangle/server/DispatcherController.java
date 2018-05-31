@@ -325,7 +325,7 @@ public class DispatcherController {
             resp.setMessage(e.getMessage());
             this.outPrintJSONString(httpServletResponse, resp);
         } catch (Exception exception) {
-            // exception.printStackTrace();
+           logger.error("",exception);
             logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, Utils.HEX.encode(bodyByte));
             AbstractResponse resp = ErrorResponse.create (100); 
             resp.setMessage("unkown error");

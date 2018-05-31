@@ -101,6 +101,15 @@ public class SendMoneyController {
     @FXML
     public Label btcLabel1;
 
+    @FXML
+    public TextField memoTF11;
+    @FXML
+    public TextField amountEdit11;
+    @FXML
+    public Label btcLabel11;
+    @FXML
+    public TextField signnumberTF1;
+
     // @FXML
     // public ToggleGroup unitToggleGroup;
     // @FXML
@@ -114,6 +123,8 @@ public class SendMoneyController {
     public ChoiceBox<Object> tokeninfo;
     @FXML
     public ChoiceBox<Object> tokeninfo1;
+    @FXML
+    public ChoiceBox<Object> tokeninfo11;
 
     public Main.OverlayUI<?> overlayUI;
 
@@ -173,6 +184,7 @@ public class SendMoneyController {
             }
             tokeninfo.setItems(tokenData);
             tokeninfo1.setItems(tokenData);
+            tokeninfo11.setItems(tokenData);
             tokeninfo.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
                 btcLabel.setText(names.get(newv.intValue()));
             });
@@ -224,8 +236,11 @@ public class SendMoneyController {
 
         ObservableList<String> addressData = FXCollections.observableArrayList(list);
         addressComboBox.setItems(addressData);
+        addressComboBox1.setItems(addressData);
         // new BitcoinAddressValidator(Main.params, addressComboBox, sendBtn);
         new TextFieldValidator(amountEdit, text -> !WTUtils
+                .didThrow(() -> checkState(Coin.parseCoin(text, NetworkParameters.BIGNETCOIN_TOKENID).isPositive())));
+        new TextFieldValidator(amountEdit1, text -> !WTUtils
                 .didThrow(() -> checkState(Coin.parseCoin(text, NetworkParameters.BIGNETCOIN_TOKENID).isPositive())));
 
     }
