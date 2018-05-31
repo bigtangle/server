@@ -153,11 +153,11 @@ public class TransactionOutput extends ChildMessage {
 
     @Override
     protected void parse() throws ProtocolException {
-       
-        
-        value =  Coin.valueOf(readInt64(), readBytes(20));
+        int len = (int) readInt64();
+        long v = readInt64();
+        value =  Coin.valueOf(v, readBytes(len));
         scriptLen = (int) readVarInt();
-        length = cursor - offset + scriptLen;
+        length = cursor - offset + scriptLen + len;
         
         scriptBytes = readBytes(scriptLen);
        
@@ -167,6 +167,7 @@ public class TransactionOutput extends ChildMessage {
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
     
         checkNotNull(scriptBytes);
+        Utils.int64ToByteStreamLE(value.tokenid.length, stream);
         Utils.int64ToByteStreamLE(value.value, stream);
         stream.write(value.tokenid);
         stream.write(new VarInt(scriptBytes.length).encode());
