@@ -4098,7 +4098,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
 
         if (selection3 == null && selection2 == null && selection1 == null) {
             checkNotNull(valueMissing);
-            log.warn("Insufficient value in wallet for send: needed {} more", valueMissing.toFriendlyString());
+            log.warn("Insufficient value in wallet for send: needed {} more", valueMissing.toString());
             throw new InsufficientMoneyException(valueMissing);
         }
 
@@ -4427,7 +4427,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
             }
 
             log.info("Completing send tx with {} outputs totalling {} and a fee of {}/kB", req.tx.getOutputs().size(),
-                    value.toString(), req.feePerKb.toFriendlyString());
+                    value.toString(), req.feePerKb.toString());
 
             // If any inputs have already been added, we don't need to get their
             // value from wallet
@@ -4525,7 +4525,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
             
             if (bestChangeOutput != null) {
                 req.tx.addOutput(bestChangeOutput);
-                log.info("  with {} change", bestChangeOutput.getValue().toFriendlyString());
+                log.info("  with {} change", bestChangeOutput.getValue().toString());
             }
         }
     }

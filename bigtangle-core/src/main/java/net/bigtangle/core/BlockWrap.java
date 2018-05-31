@@ -24,7 +24,7 @@ public class BlockWrap implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Block block;
-
+    private BlockEvaluation blockEvaluation;
       NetworkParameters params;
 
     // Setters and Getters

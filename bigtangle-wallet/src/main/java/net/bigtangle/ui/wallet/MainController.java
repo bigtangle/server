@@ -175,7 +175,7 @@ public class MainController {
         for (Map<String, Object> object : list) {
             UTXO u = MapToBeanMapperUtil.parseUTXO(object);
             Coin c = u.getValue();
-            String balance = c.toFriendlyString();
+            String balance = c.toPlainString();
             byte[] tokenid = c.tokenid;
             String address = u.getAddress();
 
@@ -211,16 +211,16 @@ public class MainController {
                 if (myPositvleTokens != null && !"".equals(myPositvleTokens.trim())
                         && !myPositvleTokens.trim().isEmpty()) {
                     if (myPositvleTokens.contains(Utils.HEX.encode(coin2.tokenid))) {
-                        Main.instance.getCoinData().add(new CoinModel(coin2.toFriendlyString(), coin2.tokenid,
+                        Main.instance.getCoinData().add(new CoinModel(coin2.toPlainString(), coin2.tokenid,
                                 Main.getString(hashNameMap.get(Utils.HEX.encode(coin2.tokenid)))));
 
                     } else {
-                        subcoins.add(new CoinModel(coin2.toFriendlyString(), coin2.tokenid,
+                        subcoins.add(new CoinModel(coin2.toPlainString(), coin2.tokenid,
                                 Main.getString(hashNameMap.get(Utils.HEX.encode(coin2.tokenid)))));
                     }
                 }
                 if (myPositvleTokens == null || myPositvleTokens.isEmpty() || "".equals(myPositvleTokens.trim()))
-                    Main.instance.getCoinData().add(new CoinModel(coin2.toFriendlyString(), coin2.tokenid,
+                    Main.instance.getCoinData().add(new CoinModel(coin2.toPlainString(), coin2.tokenid,
                             Main.getString(hashNameMap.get(Utils.HEX.encode(coin2.tokenid)))));
             }
         }

@@ -404,7 +404,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     
     @SuppressWarnings("unchecked")
     @Test
-    public void testMultiSigMultiSignDatasignatireAddress() throws Exception {
+    public void testMultiSigMultiSignDatasignatureAddress() throws Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
         String resp000 = OkHttp3Util.postString(contextRoot + "getGenesisBlockLR", Json.jsonmapper().writeValueAsString(requestParam));
@@ -416,7 +416,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         long blocktype0 =  NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
         Block block = new Block(networkParameters, r1.getHash(), r2.getHash(),blocktype0, Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
         //Tokenid with keys.get(0) is already used in setup 
-        String tokenid = Utils.HEX.encode(keys.get(5).getPubKeyHash());
+        String tokenid =  keys.get(5).getPublicKeyAsHex() ;
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
         
@@ -493,7 +493,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Block r2 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
         long blocktype0 =  NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
         Block block = new Block(networkParameters, r1.getHash(), r2.getHash(),blocktype0, Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
-        String tokenid = Utils.HEX.encode(keys.get(5).getPubKeyHash());
+        String tokenid = keys.get(5).getPublicKeyAsHex() ;
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
         
@@ -568,7 +568,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Block r2 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
         long blocktype0 =  NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
         Block block = new Block(networkParameters, r1.getHash(), r2.getHash(),blocktype0, Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
-        String tokenid = Utils.HEX.encode(keys.get(5).getPubKeyHash());
+        String tokenid =  keys.get(5).getPublicKeyAsHex();
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
         
@@ -645,7 +645,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             requestParam.put("tokenname", "Test");
             requestParam.put("description", "Test");
             requestParam.put("blocktype", true);
-            requestParam.put("tokenHex", Utils.HEX.encode(outKey.getPubKeyHash()));
+            requestParam.put("tokenHex", outKey.getPublicKeyAsHex());
             requestParam.put("signnumber", 3);
             OkHttp3Util.postString(contextRoot + ReqCmd.createGenesisBlock.name(), Json.jsonmapper().writeValueAsString(requestParam));
 //            HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -663,7 +663,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     @SuppressWarnings("unchecked")
     public void testCreateMultiSigTokenIndexCheckTokenExist() throws JsonProcessingException, Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
-        String tokenid = Utils.HEX.encode(keys.get(5).getPubKeyHash());
+        String tokenid =  keys.get(5).getPublicKeyAsHex();
         for (int i = 1; i <= 2; i ++) {
             TokenInfo tokenInfo = new TokenInfo();
             Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true, true, false);
@@ -762,7 +762,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         // Setup transaction and signatures
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         
-        String tokenid = Utils.HEX.encode(keys.get(5).getPubKeyHash());
+        String tokenid =  keys.get(5).getPublicKeyAsHex() ;
         
         TokenInfo tokenInfo = new TokenInfo();
         Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true, true, false);
@@ -857,54 +857,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 //        testSpringBootCreateGenesisBlock(keys.get(1));
 //    }
 
-    /*public void testSpringBootCreateGenesisBlock(ECKey outKey) throws Exception {
-        byte[] pubKey = outKey.getPubKey();
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
-        requestParam.put("amount", 100000L);
-        requestParam.put("tokenname", "Test");
-        requestParam.put("description", "Test");
-        requestParam.put("blocktype", true);
-        requestParam.put("tokenHex", Utils.HEX.encode(outKey.getPubKeyHash()));
-        requestParam.put("signnumber", 3);
-        OkHttp3Util.post(contextRoot + ReqCmd.createGenesisBlock.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-
-        requestParam.clear();
-        requestParam.put("tokenid", Utils.HEX.encode(outKey.getPubKeyHash()));
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultisignaddress.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        logger.info("getMultisignaddress resp : " + resp);
-
-        ECKey ecKey = new ECKey();
-        requestParam.clear();
-        requestParam.put("tokenid", Utils.HEX.encode(outKey.getPubKeyHash()));
-        requestParam.put("address", ecKey.toAddress(this.networkParameters).toString());
-        resp = OkHttp3Util.postString(contextRoot + ReqCmd.addMultisignaddress.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        logger.info("addMultisignaddress resp : " + resp);
-
-        requestParam.clear();
-        requestParam.put("tokenid", Utils.HEX.encode(outKey.getPubKeyHash()));
-        resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultisignaddress.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        logger.info("getMultisignaddress resp : " + resp);
-
-        requestParam.clear();
-        requestParam.put("tokenid", Utils.HEX.encode(outKey.getPubKeyHash()));
-        requestParam.put("address", ecKey.toAddress(this.networkParameters).toString());
-        requestParam.put("tokenindex", 0);
-        resp = OkHttp3Util.postString(contextRoot + ReqCmd.multiSign.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        logger.info("addMultisignaddress resp : " + resp);
-
-        requestParam.clear();
-        requestParam.put("tokenid", Utils.HEX.encode(outKey.getPubKeyHash()));
-        resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultisignaddress.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        logger.info("getMultisignaddress resp : " + resp);
-    }*/
-
+    
     @Test
     public void testECKey() {
         ECKey outKey = new ECKey();
@@ -926,11 +879,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
     }
 
-    @Test
-    public void testSpringBootSaveBlock() throws Exception {
-        Block block = networkParameters.getGenesisBlock();
-        reqCmdSaveBlock(block);
-    }
+ 
 
     public Block nextBlockSerializer(ByteBuffer byteBuffer) {
         int len = byteBuffer.getInt();
@@ -956,6 +905,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
         String data = mvcResult.getResponse().getContentAsString();
         logger.info("testSaveBlock resp : " + data);
+        checkResponse(data);
     }
     
     @SuppressWarnings("unchecked")
@@ -963,7 +913,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public void testUpdateMultiSig() throws JsonProcessingException, Exception {
         // Setup transaction and signatures
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
-        String tokenid = Utils.HEX.encode(keys.get(7).getPubKeyHash());
+        String tokenid = keys.get(7).getPublicKeyAsHex();
         TokenInfo tokenInfo = new TokenInfo();
         Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true, true, true);
         tokenInfo.setTokens(tokens);

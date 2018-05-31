@@ -635,11 +635,9 @@ public class Transaction extends ChildMessage {
         for (long i = 0; i < numOutputs; i++) {
             TransactionOutput output = new TransactionOutput(params, this, payload, cursor, serializer);
             outputs.add(output);
-            int _cursor = cursor;
-            long t = readInt64();
-            cursor = _cursor;
-            long scriptLen = readVarInt(8 + 8 + (int) t);
-            optimalEncodingMessageSize += 8 +8+ VarInt.sizeOf(scriptLen) + scriptLen + t;
+            long t = readVarInt(8);
+            long scriptLen = readVarInt((int) t);
+            optimalEncodingMessageSize += 8 +8+8+ VarInt.sizeOf(scriptLen) + scriptLen +VarInt.sizeOf(t)+ t;
             cursor += scriptLen;
         }
         lockTime = readUint32();
@@ -764,7 +762,7 @@ public class Transaction extends ChildMessage {
                     String scriptSigStr = in.getScriptSig().toString();
                     s.append(!Strings.isNullOrEmpty(scriptSigStr) ? scriptSigStr : "<no scriptSig>");
                     if (in.getValue() != null)
-                        s.append(" ").append(in.getValue().toFriendlyString());
+                        s.append(" ").append(in.getValue().toString());
                     s.append("\n          ");
                     s.append("outpoint:");
                     final TransactionOutPoint outpoint = in.getOutpoint();
@@ -798,7 +796,7 @@ public class Transaction extends ChildMessage {
                 String scriptPubKeyStr = out.getScriptPubKey().toString();
                 s.append(!Strings.isNullOrEmpty(scriptPubKeyStr) ? scriptPubKeyStr : "<no scriptPubKey>");
                 s.append(" ");
-                s.append(out.getValue().toFriendlyString());
+                s.append(out.getValue().toString());
                 if (!out.isAvailableForSpending()) {
                     s.append(" Spent");
                 }

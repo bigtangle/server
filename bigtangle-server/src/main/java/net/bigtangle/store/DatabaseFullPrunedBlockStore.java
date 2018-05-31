@@ -792,7 +792,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         putBinary(new StoredBlockBinary(storedBlock.getHeader().bitcoinSerialize(), storedBlock.getHeight()));
     }
 
-    @CachePut(cacheNames = "Blocks")
+ 
     protected void putBinary(StoredBlockBinary r) throws SQLException {
         try {
             Block block = params.getDefaultSerializer().makeBlock(r.getBlockBytes());
