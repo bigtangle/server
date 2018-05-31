@@ -45,7 +45,7 @@ public class TransactionOutput extends ChildMessage {
     @Nullable private TransactionInput spentBy;
 
     private int scriptLen;
-
+    private int tokenLen;
     
    
     private String fromaddress;
@@ -104,7 +104,7 @@ public class TransactionOutput extends ChildMessage {
         this.scriptBytes = scriptBytes;
         setParent(parent);
         availableForSpending = true;
-        length = 8 +8 + VarInt.sizeOf(scriptBytes.length) + scriptBytes.length;
+        length = 8 +this.value.tokenid.length+VarInt.sizeOf(this.value.tokenid.length)+  VarInt.sizeOf(scriptBytes.length) + scriptBytes.length;
     }
 
     public Script getScriptPubKey() throws ScriptException {
@@ -152,12 +152,12 @@ public class TransactionOutput extends ChildMessage {
     }
 
     @Override
-    protected void parse() throws ProtocolException {
-        int len = (int) readInt64();
+    protected void parse() throws ProtocolException { 
         long v = readInt64();
-        value =  Coin.valueOf(v, readBytes(len));
+        tokenLen = (int) readVarInt();
+        value =  Coin.valueOf(v, readBytes(tokenLen));
         scriptLen = (int) readVarInt();
-        length = cursor - offset + scriptLen + len;
+        length = cursor - offset + scriptLen  ;
         
         scriptBytes = readBytes(scriptLen);
        
@@ -167,8 +167,8 @@ public class TransactionOutput extends ChildMessage {
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
     
         checkNotNull(scriptBytes);
-        Utils.int64ToByteStreamLE(value.tokenid.length, stream);
         Utils.int64ToByteStreamLE(value.value, stream);
+        stream.write(new VarInt(value.tokenid.length).encode()); 
         stream.write(value.tokenid);
         stream.write(new VarInt(scriptBytes.length).encode());
         stream.write(scriptBytes);

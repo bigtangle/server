@@ -255,7 +255,7 @@ public abstract class AbstractIntegrationTest {
         requestParam.put("multiserial", false);
         requestParam.put("asmarket", false);
         requestParam.put("tokenstop", false);
-        requestParam.put("tokenHex", Utils.HEX.encode(outKey.getPubKeyHash()));
+        requestParam.put("tokenHex",  outKey.getPublicKeyAsHex());
 
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.createGenesisBlock.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));

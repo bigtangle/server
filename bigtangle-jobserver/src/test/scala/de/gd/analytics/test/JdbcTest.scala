@@ -28,16 +28,37 @@ object JdbcTest {
 
     val sqlContext = new SQLContext(sc)
 
-    val data = sqlContext.read
+    val headers = sqlContext.read
       .format("jdbc")
       .option("url", "jdbc:mysql://localhost:3306/info")
       .option("user", "root")
       .option("password", "test1234")
       .option("dbtable", "headers")
       .load()
-    data.printSchema()
+    headers.printSchema()
 
-    val df = data.select("hash", "prevblockhash", "prevbranchblockhash", "header")
+    val blockevaluation = sqlContext.read
+      .format("jdbc")
+      .option("url", "jdbc:mysql://localhost:3306/info")
+      .option("user", "root")
+      .option("password", "test1234")
+      .option("dbtable", "blockevaluation")
+      .load()
+    blockevaluation.printSchema()
+
+    headers.createOrReplaceTempView("headers")
+    blockevaluation.createOrReplaceTempView("blockevaluation")
+
+    val SELECT1_SQL = "SELECT  hash ,  prevblockhash ,  prevbranchblockhash ,  header, rating, depth, cumulativeweight, " +
+      "solid, blockevaluation.height, milestone, milestonelastupdate, milestonedepth, inserttime," +
+      "maintained, rewardvalidityassessment FROM headers LEFT JOIN blockevaluation on headers.hash = blockevaluation.blockhash"
+
+      
+      
+    val SELECT_SQL = "SELECT  hash ,  prevblockhash ,  prevbranchblockhash ,  header FROM headers "
+
+      
+    val df = sqlContext.sql(SELECT_SQL)
 
     //as  Followers prevblockhash follows hash
     //            prevbranchblockhash  follows hash
@@ -47,13 +68,15 @@ object JdbcTest {
     }
 
     val bytestoBlock = (data: Array[Byte]) =>
-      {  new BlockWrap( data, UnitTestParams.get()) };
+      { new BlockWrap(data, UnitTestParams.get()) };
 
     val myVertices = rows.map(
-        row => (bytestoLong(row.getAs[Array[Byte]](0)), bytestoBlock(row.getAs[Array[Byte]](3))))
+      row => (bytestoLong(row.getAs[Array[Byte]](0)), bytestoBlock(row.getAs[Array[Byte]](3))))
     val myEdges = rows.map(row =>
       (Edge(bytestoLong(row.getAs[Array[Byte]](1)), bytestoLong(row.getAs[Array[Byte]](0)), "")))
-    val myGraph = Graph(myVertices, myEdges)
+    val myEdges2 = rows.map(row =>
+      (Edge(bytestoLong(row.getAs[Array[Byte]](2)), bytestoLong(row.getAs[Array[Byte]](0)), "")))
+    val myGraph = Graph(myVertices, myEdges.union(myEdges2))
 
     myGraph.vertices.collect
 

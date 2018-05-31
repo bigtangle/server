@@ -762,7 +762,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         // Setup transaction and signatures
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         
-        String tokenid = Utils.HEX.encode(keys.get(5).getPubKeyHash());
+        String tokenid =  keys.get(5).getPublicKeyAsHex() ;
         
         TokenInfo tokenInfo = new TokenInfo();
         Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true, true, false);
@@ -963,7 +963,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public void testUpdateMultiSig() throws JsonProcessingException, Exception {
         // Setup transaction and signatures
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
-        String tokenid = Utils.HEX.encode(keys.get(7).getPubKeyHash());
+        String tokenid = keys.get(7).getPublicKeyAsHex();
         TokenInfo tokenInfo = new TokenInfo();
         Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true, true, true);
         tokenInfo.setTokens(tokens);

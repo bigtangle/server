@@ -635,11 +635,9 @@ public class Transaction extends ChildMessage {
         for (long i = 0; i < numOutputs; i++) {
             TransactionOutput output = new TransactionOutput(params, this, payload, cursor, serializer);
             outputs.add(output);
-            int _cursor = cursor;
-            long t = readInt64();
-            cursor = _cursor;
-            long scriptLen = readVarInt(8 + 8 + (int) t);
-            optimalEncodingMessageSize += 8 +8+ VarInt.sizeOf(scriptLen) + scriptLen + t;
+            long t = readVarInt(8);
+            long scriptLen = readVarInt((int) t);
+            optimalEncodingMessageSize += 8 +8+8+ VarInt.sizeOf(scriptLen) + scriptLen +VarInt.sizeOf(t)+ t;
             cursor += scriptLen;
         }
         lockTime = readUint32();
