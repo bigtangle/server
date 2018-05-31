@@ -124,7 +124,6 @@ public class Block extends Message {
     private Sha256Hash merkleRoot;
     private long time;
     // private long difficultyTarget; // "nBits"
-    // TODO nonce unnecessary in case of Equihash PoW
     private long nonce;
     // Utils.sha256hash160
     private byte[] mineraddress;
@@ -540,6 +539,23 @@ public class Block extends Message {
     }
 
     /**
+     * Calculates the hash relevant for PoW difficulty checks.
+     */
+    private Sha256Hash calculatePoWHash() {
+        try {
+            ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(HEADER_SIZE);
+            writeHeader(bos);
+
+            if (NetworkParameters.USE_EQUIHASH)
+                writePoW(bos);
+
+            return Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bos.toByteArray()));
+        } catch (IOException e) {
+            throw new RuntimeException(e); // Cannot happen.
+        }
+    }
+
+    /**
      * Returns the hash of the block (which for a valid, solved block should be
      * below the target) in the form seen on the block explorer. If you call
      * this on block 1 in the mainnet chain you will get
@@ -657,13 +673,13 @@ public class Block extends Message {
                 if (checkProofOfWork(false))
                     return;
                 
+                // No, so increment the nonce and try again.
+                setNonce(getNonce() + 1);
+
+                // Find Equihash solution for this configuration
                 if (NetworkParameters.USE_EQUIHASH) {
-                    // Find Equihash solution
                     equihashProof = EquihashSolver.calculateProof(params.equihashN, params.equihashK, getHash());
-                } else {
-                    // No, so increment the nonce and try again.
-                    setNonce(getNonce() + 1);
-                }
+                } 
             } catch (VerificationException e) {
                 throw new RuntimeException(e); // Cannot happen.
             }
@@ -705,13 +721,15 @@ public class Block extends Message {
         // blocks.
 
         // Equihash
+        Sha256Hash powHash = calculatePoWHash();
         if (NetworkParameters.USE_EQUIHASH) {
-            return EquihashSolver.testProof(params.equihashN, params.equihashK, getHash(), getEquihashProof());
+            if (!EquihashSolver.testProof(params.equihashN, params.equihashK, powHash, getEquihashProof()))
+                return false;
         }
 
         BigInteger target = getDifficultyTargetAsInteger();
 
-        BigInteger h = getHash().toBigInteger();
+        BigInteger h = powHash.toBigInteger();
         if (h.compareTo(target) > 0) {
             // Proof of work check failed!
             if (throwException)

@@ -29,6 +29,7 @@ public class EquihashProof {
 		return nonce;
 	}
 	
+	// TODO Optimize serialization see e. g. ZCash
     public byte[] serialize() {
        int cursor = 0;
        byte[] outArray = new byte[BYTE_LENGTH];
