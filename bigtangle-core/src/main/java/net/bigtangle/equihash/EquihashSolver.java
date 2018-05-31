@@ -6,16 +6,11 @@ import net.bigtangle.core.Sha256Hash;
 
 public class EquihashSolver {
 	public final static int N = 100;
-	public final static int K = 5;
+	public final static int K = 4;
 	
 	public static EquihashProof calculateProof(Sha256Hash seed) {
 		int[] seedInts = convertSeed(seed);
 		EquihashProof proof = findProof(N, K, seedInts);	
-		/*
-		System.out.println("");
-		System.out.print("inputs: ");
-		for(int input : proof.getInputs())
-			System.out.print(Integer.toHexString(input) + " ");*/
 		return proof;
 	}
 	
@@ -29,13 +24,10 @@ public class EquihashSolver {
 		ByteBuffer buffer = ByteBuffer.wrap(bytes);
 		int[] result = new int[8];
 		
-		
-		//System.out.print("java seed: ");
 		for(int i = 0; i < 8; i++) {
 			result[i] = buffer.getInt();
-			//System.out.print(result[i] + " ");
 		}
-		//System.out.println("");*/
+		
 		return result;
 	}
 	
