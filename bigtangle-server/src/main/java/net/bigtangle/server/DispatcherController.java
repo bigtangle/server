@@ -101,7 +101,7 @@ public class DispatcherController {
             case saveBlock: {
                 blockService.saveBinaryArrayToBlock(bodyByte);
                 brodcastBlock(bodyByte);
-                this.outPrintJSONString(httpServletResponse, OkResponse.create ());
+                this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
                 break;
 
@@ -145,9 +145,17 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
+            case getTokensNoMarket: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                AbstractResponse response = tokensService.getTokensList();
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
             case getMarkets: {
-//                String reqStr = new String(bodyByte, "UTF-8");
-//                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                // String reqStr = new String(bodyByte, "UTF-8");
+                // Map<String, Object> request =
+                // Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = tokensService.getMarketTokensList();
                 this.outPrintJSONString(httpServletResponse, response);
             }
@@ -249,7 +257,7 @@ public class DispatcherController {
                 if (request.get("heightstart") != null) {
                     this.transactionService.streamBlocks(Long.valueOf((String) request.get("heightstart")),
                             (String) request.get("kafka"));
-                    this.outPrintJSONString(httpServletResponse, OkResponse.create ());
+                    this.outPrintJSONString(httpServletResponse, OkResponse.create());
                 }
             }
                 break;
@@ -285,7 +293,7 @@ public class DispatcherController {
             case multiSign: {
                 Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
                 this.multiSignService.multiSign(block);
-                this.outPrintJSONString(httpServletResponse, OkResponse.create ());
+                this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
                 break;
             case getTokenSerials: {
@@ -313,21 +321,21 @@ public class DispatcherController {
             case updateTokenInfo: {
                 Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
                 this.tokensService.updateTokenInfo(block);
-                this.outPrintJSONString(httpServletResponse,OkResponse.create ());
+                this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
                 break;
             }
         } catch (BlockStoreException e) {
             // e.printStackTrace();
             logger.error("reqCmd : {}, reqHex : {}, block store ex.", reqCmd, Utils.HEX.encode(bodyByte));
-            AbstractResponse resp = ErrorResponse.create (101); 
-            resp.setErrorcode( 101);
+            AbstractResponse resp = ErrorResponse.create(101);
+            resp.setErrorcode(101);
             resp.setMessage(e.getLocalizedMessage());
             this.outPrintJSONString(httpServletResponse, resp);
         } catch (Throwable exception) {
-           logger.error("",exception);
+            logger.error("", exception);
             logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, Utils.HEX.encode(bodyByte));
-            AbstractResponse resp = ErrorResponse.create (100); 
+            AbstractResponse resp = ErrorResponse.create(100);
             resp.setMessage(exception.getLocalizedMessage());
             this.outPrintJSONString(httpServletResponse, resp);
         }

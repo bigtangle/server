@@ -30,7 +30,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 
 import com.google.common.collect.Lists;
@@ -756,9 +755,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         ps.execute();
         ps.close();
         createNewStore(params);
-        
+
         ECKey ecKey = new ECKey();
-        this.saveTokens(ecKey.getPublicKeyAsHex(), "default market", "default market", "http://localhost:8089/", 0, false, true, true);
+        this.saveTokens(ecKey.getPublicKeyAsHex(), "default market", "default market", "http://localhost:8089/", 0,
+                false, true, true);
     }
 
     /**
@@ -772,7 +772,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      */
     private void createNewStore(NetworkParameters params) throws BlockStoreException {
         try {
-            // Set up the genesis block. 
+            // Set up the genesis block.
             StoredBlock storedGenesisHeader = new StoredBlock(params.getGenesisBlock(), 0);
             List<Transaction> genesisTransactions = Lists.newLinkedList();
             StoredUndoableBlock storedGenesis = new StoredUndoableBlock(params.getGenesisBlock().getHash(),
@@ -792,7 +792,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         putBinary(new StoredBlockBinary(storedBlock.getHeader().bitcoinSerialize(), storedBlock.getHeight()));
     }
 
- 
     protected void putBinary(StoredBlockBinary r) throws SQLException {
         try {
             Block block = params.getDefaultSerializer().makeBlock(r.getBlockBytes());
@@ -1153,7 +1152,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         if (log.isDebugEnabled())
             log.debug("Committing database batch write with connection: " + conn.get().toString());
         try {
-          if(!conn.get().getAutoCommit())  conn.get().commit();
+            if (!conn.get().getAutoCommit())
+                conn.get().commit();
             conn.get().setAutoCommit(true);
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -2182,7 +2182,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TOKENS_SQL);
+            String sql = SELECT_TOKENS_SQL + " WHERE asmarket=false ";
+            preparedStatement = conn.get().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 Tokens tokens = new Tokens();
@@ -2277,7 +2278,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            String sql=SELECT_TOKENS_SQL+" WHERE 1=1";
+            String sql = SELECT_TOKENS_SQL + " WHERE 1=1";
             if (name != null && !"".equals(name.trim())) {
                 sql += " AND (tokenname LIKE '%" + name + "%' OR description LIKE '%" + name + "%')";
             }
