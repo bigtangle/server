@@ -15,7 +15,6 @@ import net.bigtangle.core.OrderMatch;
 import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.StoredUndoableBlock;
-import net.bigtangle.core.Tokens;
 import net.bigtangle.core.UTXOProvider;
 
 /**
@@ -74,8 +73,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     void abortDatabaseBatchWrite() throws BlockStoreException;
 
-    public List<Tokens> getTokensList() throws BlockStoreException;
-
     public void saveOrderPublish(OrderPublish orderPublish) throws BlockStoreException;
 
     public void saveOrderMatch(OrderMatch orderMatch) throws BlockStoreException;
@@ -97,6 +94,4 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void resetStore() throws BlockStoreException;
 
     public List<OrderPublish> getOrderPublishListWithNotMatch() throws BlockStoreException;
-
-    public Tokens getTokensInfo(String tokenid) throws BlockStoreException;
 }
