@@ -50,6 +50,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_OUTPUT_MULTI_TABLE = "CREATE TABLE outputsmulti (\n" + "    hash varbinary(32) NOT NULL,\n"
             + "    outputindex bigint NOT NULL,\n" 
             + "    toaddress varchar(255) NOT NULL,\n"
+            + "    minimumsign bigint NOT NULL,\n"
             + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex, toaddress) USING BTREE \n" + ")\n";
 
     private static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" + "    hash varbinary(32) NOT NULL,\n"
