@@ -249,10 +249,11 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
 
         SendRequest request = SendRequest.forTx(multiSigTransaction);
         walletAppKit.wallet().completeTx(request);
+        rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
         OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
 
-        testTransactionAndGetBalances();
+        checkBalance(NetworkParameters.BIGNETCOIN_TOKENID_STRING, wallet1Keys);
         
         
          data = OkHttp3Util.post(contextRoot + "askTransaction",
