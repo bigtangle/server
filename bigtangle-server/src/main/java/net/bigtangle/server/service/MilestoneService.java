@@ -68,21 +68,21 @@ public class MilestoneService {
 
         try {
             log.info("Milestone Update started");
-//            clearCacheBlockEvaluations();
+            // clearCacheBlockEvaluations();
             Stopwatch watch = Stopwatch.createStarted();
             updateSolidityAndHeight();
             log.info("Solidity and height update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-            
+
             watch.stop();
             watch = Stopwatch.createStarted();
             updateCumulativeWeightAndDepth();
             log.info("Weight and depth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-            
+
             watch.stop();
             watch = Stopwatch.createStarted();
             updateRating();
             log.info("Rating update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-         
+
             watch.stop();
             watch = Stopwatch.createStarted();
             updateMilestone();
@@ -106,12 +106,10 @@ public class MilestoneService {
         }
     }
 
-    
-     @CacheEvict(cacheNames = "BlockEvaluations", allEntries=true)
+    @CacheEvict(cacheNames = "BlockEvaluations", allEntries = true)
     private void clearCacheBlockEvaluations() throws Exception {
     }
-   
-    
+
     /**
      * Update solid, true if all directly or indirectly approved blocks exist.
      * If solid, update height to be the max of previous heights + 1
@@ -385,44 +383,33 @@ public class MilestoneService {
     private void updateMilestone() throws BlockStoreException {
         // First remove any blocks that should no longer be in the milestone
         HashSet<BlockEvaluation> blocksToRemove = blockService.getBlocksToRemoveFromMilestone();
-        for (BlockEvaluation block : blocksToRemove) {
+        for (BlockEvaluation block : blocksToRemove)
             blockService.unconfirm(block);
-        }
 
         for (int i = 0; true; i++) {
             // Now try to find blocks that can be added to the milestone
             HashSet<BlockEvaluation> blocksToAdd = blockService.getBlocksToAddToMilestone();
 
-            // Optional steps from later to lower computational cost
-            if (blocksToAdd.isEmpty())
-                break;
-            validatorService.removeWhereUTXONotFoundOrUnconfirmed(blocksToAdd);
+            /** VALIDITY CHECKS START **/
+            // Remove blocks and their approvers that have at least one input
+            // with its corresponding output not confirmed yet / nonexistent
+            validatorService.removeWhereInputNotFoundOrUnconfirmed(blocksToAdd);
 
-            // Resolve conflicting UTXO spends that have been approved by the
-            // network
-            // (improbable to occur)
+            // Resolve conflicting block combinations
             validatorService.resolvePrunedConflicts(blocksToAdd);
             validatorService.resolveUndoableConflicts(blocksToAdd);
+            /** VALIDITY CHECKS END **/
 
-            // Remove blocks from blocksToAdd that have at least one transaction
-            // input with
-            // its corresponding output not found in the outputs table and
-            // remove their
-            // approvers recursively too
-            validatorService.removeWhereUTXONotFoundOrUnconfirmed(blocksToAdd);
+            // Finally add the found new milestone blocks to the milestone
+            for (BlockEvaluation block : blocksToAdd)
+                blockService.confirm(block);
 
             // Exit condition: there are no more blocks to add
             if (blocksToAdd.isEmpty())
                 break;
 
-            // Finally add the found new milestone blocks to the milestone
-            for (BlockEvaluation block : blocksToAdd) {
-                blockService.confirm(block);
-            }
-
-            if (i == WARNING_MILESTONE_UPDATE_LOOPS) {
+            if (i == WARNING_MILESTONE_UPDATE_LOOPS)
                 log.warn("High amount of milestone updates per scheduled update. Can't keep up or reorganizing!");
-            }
         }
     }
 

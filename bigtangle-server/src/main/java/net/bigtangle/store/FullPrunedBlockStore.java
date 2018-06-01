@@ -334,11 +334,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     void insertTxReward(Sha256Hash hash, long nextPerTxReward) throws BlockStoreException;
 
-    PriorityQueue<Triple<Sha256Hash, byte[], Long>> getSortedMiningRewardCalculations(Sha256Hash hash)
-            throws BlockStoreException;
-
-    void insertMiningRewardCalculation(Sha256Hash hash, Address key, long l) throws BlockStoreException;
-
     void updateMultiSignBlockBitcoinSerialize(String tokenid, long tokenindex, byte[] bytes) throws BlockStoreException;
 
     // public List<TokenSerial> getTokenSerialListByTokenid(String tokenid);

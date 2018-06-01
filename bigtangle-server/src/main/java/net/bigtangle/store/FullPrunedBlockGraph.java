@@ -21,13 +21,11 @@ import java.util.concurrent.FutureTask;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
@@ -52,7 +50,6 @@ import net.bigtangle.core.VerificationException;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.Script.VerifyFlag;
 import net.bigtangle.server.service.BlockRequester;
-import net.bigtangle.server.service.ValidatorService;
 import net.bigtangle.utils.ContextPropagatingThreadFactory;
 import net.bigtangle.wallet.Wallet;
 
@@ -84,8 +81,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     protected final FullPrunedBlockStore blockStore;
     @Autowired
     private BlockRequester blockRequester;
-    @Autowired
-    private ValidatorService validatorService;
     @Autowired
     protected NetworkParameters networkParameters;
 
@@ -310,23 +305,24 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Connect all approved blocks first (check if actually needed)
         addBlockToMilestone(blockStore.getBlockEvaluation(block.getPrevBlockHash()));
         addBlockToMilestone(blockStore.getBlockEvaluation(block.getPrevBranchBlockHash()));
+//
+//        // Deterministically handle reward block type
+//        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD) {
+//            if (blockEvaluation.isRewardValid() == false)
+//                if (!validatorService.calculateMiningReward(block))
+//                    throw new VerificationException(
+//                            "Requested mining reward block cannot be added to milestone: Invalid");
+//
+//            Transaction tx = generateMiningRewardTX(block);
+//
+//            if (!blockStore.hasUnspentOutputs(tx.getHash())) {
+//                insertConfirmedUTXOs(blockEvaluation, block, tx);
+//            } else {
+//                confirmUTXOs(tx);
+//            }
+//        }
 
-        // Deterministically handle reward block type
-        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD) {
-            if (blockEvaluation.isRewardValid() == false)
-                if (!validatorService.calculateMiningReward(block))
-                    throw new VerificationException(
-                            "Requested mining reward block cannot be added to milestone: Invalid");
-
-            Transaction tx = generateMiningRewardTX(block);
-
-            if (!blockStore.hasUnspentOutputs(tx.getHash())) {
-                insertConfirmedUTXOs(blockEvaluation, block, tx);
-            } else {
-                confirmUTXOs(tx);
-            }
-        }
-
+        // For token creations, update token db
         if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
             Transaction tx = block.getTransactions().get(0);
             if (tx.getData() != null) {
@@ -336,41 +332,56 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
         }
 
-        // Update default block's transactions in db
-        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TRANSFER
-                || block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION
-                || block.getBlocktype() == NetworkParameters.BLOCKTYPE_INITIAL) {
-            for (final Transaction tx : block.getTransactions()) {
-                // For each used input, set its corresponding UTXO to spent
-                if (!tx.isCoinBase()) {
-                    for (TransactionInput in : tx.getInputs()) {
-                        UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(),
-                                in.getOutpoint().getIndex());
-                        if (prevOut == null || prevOut.isSpent() || !prevOut.isConfirmed())
-                            throw new VerificationException(
-                                    "Attempted to spend a non-existent, already spent or unconfirmed output!");
-                        blockStore.updateTransactionOutputSpent(prevOut.getHash(), prevOut.getIndex(), true,
-                                block.getHash());
-                    }
+        // Update block's transactions in db
+        for (final Transaction tx : block.getTransactions()) {
+            // For each used input, set its corresponding UTXO to spent
+            if (!tx.isCoinBase()) {
+                for (TransactionInput in : tx.getInputs()) {
+                    UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(),
+                            in.getOutpoint().getIndex());
+                    if (prevOut == null || prevOut.isSpent() || !prevOut.isConfirmed())
+                        throw new VerificationException(
+                                "Attempted to spend a non-existent, already spent or unconfirmed output!");
+                    blockStore.updateTransactionOutputSpent(prevOut.getHash(), prevOut.getIndex(), true,
+                            block.getHash());
                 }
-
-                confirmUTXOs(tx);
             }
+
+            confirmUTXOs(tx);
         }
     }
 
-    // Since mining reward UTXOs are not pre-added, we need to add them if they
-    // don't exist
-    private void insertConfirmedUTXOs(BlockEvaluation blockEvaluation, Block block, Transaction tx)
-            throws BlockStoreException {
-        for (TransactionOutput out : tx.getOutputs()) {
-            Script script = getScript(out.getScriptBytes());
-            UTXO newOut = new UTXO(tx.getHash(), out.getIndex(), out.getValue(), blockEvaluation.getHeight(), true,
-                    script, getScriptAddress(script), block.getHash(), out.getFromaddress(), tx.getMemo(),
-                    Utils.HEX.encode(out.getValue().getTokenid()), false, true, false);
-            blockStore.addUnspentTransactionOutput(newOut);
+    @Override
+    public void removeTransactionsFromMilestone(Block block) throws BlockStoreException {
+        
+        // For token creations, update token db
+        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
+            // TODO revert token db changes here
+        }
+
+        for (Transaction tx : block.getTransactions()) {
+            // Mark all outputs used by tx input as unspent
+            if (!tx.isCoinBase()) {
+                for (TransactionInput txin : tx.getInputs()) {
+                    blockStore.updateTransactionOutputSpent(txin.getOutpoint().getHash(),
+                            txin.getOutpoint().getIndex(), false, Sha256Hash.ZERO_HASH);
+                }
+            }
+
+            removeUTXOs(tx);
         }
     }
+
+//    private void insertConfirmedUTXOs(BlockEvaluation blockEvaluation, Block block, Transaction tx)
+//            throws BlockStoreException {
+//        for (TransactionOutput out : tx.getOutputs()) {
+//            Script script = getScript(out.getScriptBytes());
+//            UTXO newOut = new UTXO(tx.getHash(), out.getIndex(), out.getValue(), blockEvaluation.getHeight(), true,
+//                    script, getScriptAddress(script), block.getHash(), out.getFromaddress(), tx.getMemo(),
+//                    Utils.HEX.encode(out.getValue().getTokenid()), false, true, false);
+//            blockStore.addUnspentTransactionOutput(newOut);
+//        }
+//    }
 
     // For each output, mark as confirmed
     private void confirmUTXOs(final Transaction tx) throws BlockStoreException {
@@ -404,44 +415,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
 
         removeTransactionsFromMilestone(block);
-    }
-
-    @Override
-    public void removeTransactionsFromMilestone(Block block) throws BlockStoreException {
-        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD) {
-            Transaction tx = generateMiningRewardTX(block);
-            removeUTXOs(tx);
-        }
-
-        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
-            // TODO revert token here (unconfirmed block)
-        }
-
-        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TRANSFER
-                || block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION
-                || block.getBlocktype() == NetworkParameters.BLOCKTYPE_INITIAL) {
-            for (Transaction tx : block.getTransactions()) {
-                // Mark all outputs used by tx input as unspent
-                for (TransactionInput txin : tx.getInputs()) {
-                    if (!txin.isCoinBase()) {
-                        blockStore.updateTransactionOutputSpent(txin.getOutpoint().getHash(),
-                                txin.getOutpoint().getIndex(), false, Sha256Hash.ZERO_HASH);
-                    }
-                }
-
-                removeUTXOs(tx);
-            }
-        }
-    }
-
-    // In ascending order of miner addresses, we create UTXOs deterministically
-    private Transaction generateMiningRewardTX(Block block) throws BlockStoreException {
-        Transaction tx = new Transaction(networkParameters);
-        Triple<Sha256Hash, byte[], Long> utxoData;
-        while ((utxoData = blockStore.getSortedMiningRewardCalculations(block.getHash()).poll()) != null) {
-            tx.addOutput(Coin.SATOSHI.times(utxoData.getRight()), new Address(networkParameters, utxoData.getMiddle()));
-        }
-        return tx;
     }
 
     // Mark unconfirmed all tx outputs in db and unconfirm their
@@ -523,13 +496,16 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Check formal correctness of TX
         try {
-            block.checkTransactions(height);
+            block.checkTransactionSolidity(height);
         } catch (VerificationException e) {
             return false;
         }
+
+        // TODO reward: open reward interval must be correct
+        // TODO reward: Reward Validity set to true means reward has been assessed locally. try assessing here maybe
         
-        // TODO add check previous serial number must exist, current must not exist in db
-        // TODO add check for if signing keys are in db
+        // TODO token: add check previous serial number must exist, current must not exist in db
+        // TODO token: add check for if signing keys are in db
 
         blockStore.beginDatabaseBatchWrite();
         LinkedList<UTXO> txOutsSpent = new LinkedList<UTXO>();

@@ -19,6 +19,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,9 +29,13 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.Coin;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.UTXO;
+import net.bigtangle.script.Script;
 import net.bigtangle.store.FullPrunedBlockStore;
 
 @Service
@@ -42,6 +49,8 @@ public class ValidatorService {
     protected NetworkParameters networkParameters;
     @Autowired
     private TransactionService transactionService;
+
+    private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
     // Tries to update validity according to the mining consensus rules
     // Assumes reward block to not necessarily be valid
@@ -59,6 +68,115 @@ public class ValidatorService {
         return assessMiningRewardBlock(header, true);
     }
 
+    // In ascending order of miner addresses, we create reward tx
+    // deterministically
+    public Transaction generateMiningRewardTX(Block header, long fromHeight) throws BlockStoreException {
+        long toHeight = fromHeight + networkParameters.getRewardHeightInterval() - 1;
+
+        // Count how many blocks from miners in the reward interval are approved
+        // and build rewards
+        long approveCount = 0;
+        Block prevRewardBlock = null;
+        PriorityQueue<BlockEvaluation> blockQueue = new PriorityQueue<BlockEvaluation>(
+                Comparator.comparingLong(BlockEvaluation::getHeight).reversed());
+        HashSet<BlockEvaluation> queuedBlocks = new HashSet<>();
+        HashMap<Address, Long> rewardCount = new HashMap<>();
+        blockQueue.add(blockService.getBlockEvaluation(header.getPrevBlockHash()));
+        blockQueue.add(blockService.getBlockEvaluation(header.getPrevBranchBlockHash()));
+        queuedBlocks.add(blockService.getBlockEvaluation(header.getPrevBlockHash()));
+        queuedBlocks.add(blockService.getBlockEvaluation(header.getPrevBranchBlockHash()));
+
+        // Initial reward block must be defined
+        if (fromHeight == 0)
+            prevRewardBlock = networkParameters.getGenesisBlock();
+
+        // Go backwards by height
+        BlockEvaluation currentBlock = null;
+        while ((currentBlock = blockQueue.poll()) != null) {
+            Block block = blockService.getBlock(currentBlock.getBlockhash());
+
+            // Stop criterion: Block height lower than approved interval height
+            if (currentBlock.getHeight() < fromHeight)
+                continue;
+
+            if (currentBlock.getHeight() <= toHeight) {
+                // Count rewards, try to find prevRewardBlock
+                approveCount++;
+                Address miner = new Address(networkParameters, block.getMineraddress());
+                if (!rewardCount.containsKey(miner))
+                    rewardCount.put(miner, 1L);
+                else
+                    rewardCount.put(miner, rewardCount.get(miner) + 1);
+
+                if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD) {
+                    ByteBuffer prevBb = ByteBuffer.wrap(block.getTransactions().get(0).getData());
+                    long prevFromHeight = prevBb.getLong();
+
+                    if (prevFromHeight == fromHeight - networkParameters.getRewardHeightInterval()) {
+                        // Failure if there are multiple prevRewardBlocks
+                        if (prevRewardBlock != null)
+                            logger.error(
+                                    "Failed in creating reward block here, try resolving conflicts with rewarding in mind");
+
+                        prevRewardBlock = block;
+                    }
+                }
+            }
+
+            // Continue with approved blocks
+            BlockEvaluation prevBlock = blockService.getBlockEvaluation(block.getPrevBlockHash());
+            if (!queuedBlocks.contains(prevBlock)) {
+                queuedBlocks.add(prevBlock);
+                blockQueue.add(prevBlock);
+            }
+
+            BlockEvaluation prevBranchBlock = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
+            if (!queuedBlocks.contains(prevBranchBlock)) {
+                queuedBlocks.add(prevBranchBlock);
+                blockQueue.add(prevBranchBlock);
+            }
+        }
+
+        // If the previous one has not been assessed yet, we need to assess
+        // the previous one first
+        if (!blockService.getBlockEvaluation(prevRewardBlock.getHash()).isRewardValid()) {
+            if (!assessMiningRewardBlock(prevRewardBlock)) {
+                logger.error("Not ready for new mining reward block: Make sure the previous one is confirmed first!");
+            }
+        }
+
+        // TX reward adjustments for next rewards
+        long perTxReward = store.getTxReward(prevRewardBlock.getHash());
+        long nextPerTxReward = Math.max(1, 20000000 * 365 * 24 * 60 * 60 / approveCount
+                / (header.getTimeSeconds() - prevRewardBlock.getTimeSeconds()));
+        nextPerTxReward = Math.max(nextPerTxReward, perTxReward / 4);
+        nextPerTxReward = Math.min(nextPerTxReward, perTxReward * 4);
+        store.insertTxReward(header.getHash(), nextPerTxReward);
+
+        // Calculate rewards
+        PriorityQueue<Triple<Sha256Hash, Address, Long>> sortedMiningRewardCalculations = new PriorityQueue<>(
+                Comparator.comparingLong(t -> t.getRight()));
+        for (Entry<Address, Long> entry : rewardCount.entrySet())
+            sortedMiningRewardCalculations
+                    .add(Triple.of(header.getHash(), entry.getKey(), entry.getValue() * perTxReward));
+
+        Transaction tx = new Transaction(networkParameters);
+        Triple<Sha256Hash, Address, Long> utxoData;
+        while ((utxoData = sortedMiningRewardCalculations.poll()) != null) {
+            tx.addOutput(Coin.SATOSHI.times(utxoData.getRight()), utxoData.getMiddle());
+        }
+
+        // The input does not really need to be a valid signature, as long
+        // as it has the right general form.
+        TransactionInput input = new TransactionInput(networkParameters, tx,
+                Script.createInputScript(Block.EMPTY_BYTES, Block.EMPTY_BYTES));
+        tx.addInput(input);
+
+        return tx;
+    }
+
+    // TODO rewrite this to batched computation of relevant reward block only,
+    // e. g. go forward until confirmed reward block is found or up to the end
     private boolean assessMiningRewardBlock(Block header, boolean assumeMilestone) throws BlockStoreException {
         BlockEvaluation blockEvaluation = blockService.getBlockEvaluation(header.getHash());
 
@@ -67,8 +185,7 @@ public class ValidatorService {
             return true;
 
         // Only solid mining reward blocks
-        if (!assumeMilestone && header.getBlocktype() != NetworkParameters.BLOCKTYPE_REWARD
-                || !blockEvaluation.isSolid())
+        if (header.getBlocktype() != NetworkParameters.BLOCKTYPE_REWARD || !blockEvaluation.isSolid())
             return false;
 
         // Get interval height from tx data
@@ -88,7 +205,7 @@ public class ValidatorService {
         HashMap<Address, Long> rewardCount = new HashMap<>();
         blockQueue.add(blockEvaluation);
         queuedBlocks.add(blockEvaluation);
-        
+
         // Initial reward block must be defined
         if (fromHeight == 0)
             prevRewardBlock = networkParameters.getGenesisBlock();
@@ -157,21 +274,23 @@ public class ValidatorService {
                 }
             }
 
-            // Calculate rewards and store them for later
+            // TX reward adjustments for next rewards
             long perTxReward = store.getTxReward(prevRewardBlock.getHash());
-            for (Entry<Address, Long> entry : rewardCount.entrySet()) {
-                store.insertMiningRewardCalculation(header.getHash(), entry.getKey(), entry.getValue() * perTxReward);
-            }
-
-            // TX reward adjustments
-            long nextPerTxReward = Math.max(1, 20000000 * 365 * 24 * 60 * 60 / approveCount / (header.getTimeSeconds() - prevRewardBlock.getTimeSeconds()));
+            long nextPerTxReward = Math.max(1, 20000000 * 365 * 24 * 60 * 60 / approveCount
+                    / (header.getTimeSeconds() - prevRewardBlock.getTimeSeconds()));
             nextPerTxReward = Math.max(nextPerTxReward, perTxReward / 4);
             nextPerTxReward = Math.min(nextPerTxReward, perTxReward * 4);
             store.insertTxReward(header.getHash(), nextPerTxReward);
 
-            // Set valid
-            store.updateBlockEvaluationRewardValid(header.getHash(), true);
-            return true;
+            // Set valid if generated TX is equal to the block's TX
+            // TODO this is still unnecessarily traversing twice
+            if (generateMiningRewardTX(header, fromHeight).getHash().equals(header.getHash())) {
+                store.updateBlockEvaluationRewardValid(header.getHash(), true);
+                return true;
+            } else {
+                // TODO else set invalid forever
+                return false;
+            }
         } else {
             return false;
         }
@@ -185,7 +304,7 @@ public class ValidatorService {
      * @param blocksToAdd
      * @throws BlockStoreException
      */
-    public void removeWhereUTXONotFoundOrUnconfirmed(Collection<BlockEvaluation> blocksToAdd)
+    public void removeWhereInputNotFoundOrUnconfirmed(Collection<BlockEvaluation> blocksToAdd)
             throws BlockStoreException {
         for (BlockEvaluation e : new HashSet<BlockEvaluation>(blocksToAdd)) {
             Block block = blockService.getBlock(e.getBlockhash());
@@ -208,12 +327,18 @@ public class ValidatorService {
      * @throws BlockStoreException
      */
     public void resolvePrunedConflicts(Collection<BlockEvaluation> blocksToAdd) throws BlockStoreException {
+        // TODO where this is called, we need the full check of validity as
+        // found in milestoneservice
+
         // Get the blocks to add as actual blocks from blockService
         List<Block> blocks = blockService
                 .getBlocks(blocksToAdd.stream().map(e -> e.getBlockhash()).collect(Collectors.toList()));
 
         // TODO dynamic conflictpoints: token issuance ids, mining reward height
         // intervals
+
+        // TODO flatout reject conflicts where the block to be created is in
+        // conflict (e. g. same reward)
 
         // To check for unundoable conflicts, we do the following:
         // Create tuples (block, txinput) of all blocksToAdd

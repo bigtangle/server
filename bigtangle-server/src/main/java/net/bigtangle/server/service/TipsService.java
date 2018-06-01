@@ -144,7 +144,7 @@ public class TipsService {
 
 			// Drop all approved blocks that cannot be added due to current
 			// milestone
-			validatorService.removeWhereUTXONotFoundOrUnconfirmed(approvedNonMilestoneBlockEvaluations);
+			validatorService.removeWhereInputNotFoundOrUnconfirmed(approvedNonMilestoneBlockEvaluations);
 			validatorService.resolvePrunedConflicts(approvedNonMilestoneBlockEvaluations);
 
 			List<Block> approvedNonMilestoneBlocks = blockService
