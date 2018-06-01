@@ -121,7 +121,7 @@
                 <AnchorPane maxHeight="600.0" maxWidth="1000.0" minHeight="600.0" minWidth="1000.0" prefHeight="600.0" prefWidth="1000.0">
                      <children>
                         <Label layoutX="71.0" layoutY="105.0" maxWidth="100.0" minWidth="100.0" prefHeight="15.0" prefWidth="100.0" text="%signnumber" />
-                        <Label layoutX="71.0" layoutY="149.0" maxWidth="100.0" minWidth="100.0" prefHeight="15.0" prefWidth="100.0" text="%to_Address" />
+                        <Label layoutX="71.0" layoutY="149.0" maxWidth="100.0" minWidth="100.0" prefHeight="15.0" prefWidth="100.0" text="%pubkey" />
                         <TextField fx:id="signnumberTF" layoutX="217.0" layoutY="101.0" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" />
                         <TextField fx:id="signAddressTF" layoutX="217.0" layoutY="145.0" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" />
                         <ChoiceBox fx:id="signAddressChoiceBox" layoutX="217.0" layoutY="216.0" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" />
@@ -181,19 +181,25 @@
                         <HBox maxWidth="700.0" minWidth="700.0" prefHeight="27.0" prefWidth="700.0" spacing="50.0">
                            <children>
                               <Label maxWidth="150.0" minWidth="150.0" prefWidth="150.0" text="%signnumber" />
-                              <TextField fx:id="signnumberTF1" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" />
+                              <TextField fx:id="signnumberTF1" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" promptText="1" />
+                           </children>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" maxHeight="23.0" maxWidth="700.0" minHeight="23.0" minWidth="700.0" prefHeight="23.0" prefWidth="700.0" spacing="50.0">
+                           <children>
+                              <Label maxWidth="150.0" minWidth="150.0" prefHeight="15.0" prefWidth="150.0" text="%pubkey" />
+                              <TextField fx:id="signAddressTF1" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" />
+                           </children>
+                        </HBox>
+                        <HBox alignment="CENTER_RIGHT" maxHeight="23.0" maxWidth="700.0" minHeight="23.0" minWidth="700.0" prefHeight="23.0" prefWidth="700.0" spacing="15.0">
+                           <children>
+                              <Button defaultButton="true" mnemonicParsing="false" onAction="#addSignAddrA" text="%addSignPubkey" />
+                              <Button defaultButton="true" mnemonicParsing="false" onAction="#removeSignAddrA" text="%removePubkey" />
                            </children>
                         </HBox>
                         <HBox alignment="CENTER_LEFT" maxWidth="700.0" minWidth="700.0" prefWidth="701.0" spacing="50.0">
                            <children>
                               <Label prefWidth="150.0" text="%to" />
                               <ChoiceBox fx:id="addressChoiceBox" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
-                           </children>
-                        </HBox>
-                        <HBox alignment="CENTER_RIGHT" maxHeight="23.0" maxWidth="700.0" minHeight="23.0" minWidth="700.0" prefHeight="23.0" prefWidth="700.0" spacing="15.0">
-                           <children>
-                              <Button defaultButton="true" mnemonicParsing="false" onAction="#addSIgnAddress" text="%addSignAddr" />
-                              <Button defaultButton="true" mnemonicParsing="false" onAction="#removeSignAddress" text="%removeAddress" />
                            </children>
                         </HBox>
                         <HBox maxWidth="700.0" minWidth="700.0" prefHeight="23.0" prefWidth="700.0" spacing="50.0">
@@ -205,8 +211,6 @@
                         <HBox alignment="CENTER_RIGHT" fillHeight="true" maxWidth="700.0" minWidth="700.0" prefHeight="30.0" prefWidth="700.0" spacing="15.0" VBox.vgrow="NEVER">
                            <children>
                               <Button fx:id="sendBtn11" defaultButton="true" mnemonicParsing="false" onAction="#sendMulti" prefWidth="79.0" text="%Send" />
-                              <Button defaultButton="true" mnemonicParsing="false" onAction="#importSign" text="%import" />
-                              <Button defaultButton="true" mnemonicParsing="false" onAction="#exportSign" text="%export" />
                               <Button fx:id="cancelBtn11" cancelButton="true" mnemonicParsing="false" onAction="#cancel" prefWidth="79.0" text="%Cancel" />
                            </children>
                         </HBox>
