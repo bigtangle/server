@@ -40,12 +40,17 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" + "    hash varbinary(32) NOT NULL,\n"
             + "    outputindex bigint NOT NULL,\n" + "    height bigint NOT NULL,\n"
             + "    coinvalue bigint NOT NULL,\n" + "    scriptbytes mediumblob NOT NULL,\n"
-            + "    toaddress varchar(35),\n" + "    addresstargetable bigint,\n" + "    coinbase boolean,\n"
+            + "    toaddress varchar(255),\n" + "    addresstargetable bigint,\n" + "    coinbase boolean,\n"
             + "    blockhash  varbinary(32)  NOT NULL,\n" + "    tokenid varchar(255),\n"
-            + "    fromaddress varchar(35),\n" + "    memo varchar(80),\n" + "    spent boolean NOT NULL,\n"
+            + "    fromaddress varchar(255),\n" + "    memo varchar(80),\n" + "    spent boolean NOT NULL,\n"
             + "    confirmed boolean NOT NULL,\n" + "    spendpending boolean NOT NULL,\n"
             + "    spenderblockhash  varbinary(32),\n"
             + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex) USING BTREE \n" + ")\n";
+    
+    private static final String CREATE_OUTPUT_MULTI_TABLE = "CREATE TABLE outputsmulti (\n" + "    hash varbinary(32) NOT NULL,\n"
+            + "    outputindex bigint NOT NULL,\n" 
+            + "    toaddress varchar(255) NOT NULL,\n"
+            + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex, toaddress) USING BTREE \n" + ")\n";
 
     private static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" + "    hash varbinary(32) NOT NULL,\n"
             + "    CONSTRAINT tips_pk PRIMARY KEY (hash) USING BTREE \n" + ")\n";
