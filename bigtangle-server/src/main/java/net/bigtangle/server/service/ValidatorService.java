@@ -349,7 +349,7 @@ public class ValidatorService {
         // milestone where the corresponding block has already been pruned or is
         // unmaintained...
         Stream<Pair<Block, TransactionInput>> irresolvableConflicts = blockInputTuples
-                .filter(pair -> transactionService.getUTXOSpent(pair.getRight())
+                .filter(pair -> transactionService.getUTXOSpent(pair.getRight().getOutpoint())
                         && (transactionService.getUTXOSpender(pair.getRight().getOutpoint()) == null
                                 || !transactionService.getUTXOSpender(pair.getRight().getOutpoint()).isMaintained()));
 
@@ -505,7 +505,7 @@ public class ValidatorService {
                         .filter(in -> !in.isCoinBase()).map(in -> Pair.of(b, new ConflictPoint(in.getOutpoint()))));
 
         // TODO dynamic conflictpoints: token issuance ids, mining reward height
-        // intervals
+        // intervals see below
 
         // Filter to only contain conflicts that are spent more than once in the
         // new
@@ -531,31 +531,43 @@ public class ValidatorService {
     private void findMilestoneConflicts(Collection<Block> blocksToAdd,
             Collection<Pair<BlockEvaluation, ConflictPoint>> conflictingOutPoints,
             Collection<BlockEvaluation> conflictingMilestoneBlocks) throws BlockStoreException {
-        // Create pairs of blocks and used non-coinbase utxos from blocksToAdd
-        Stream<Pair<Block, TransactionInput>> outPoints = blocksToAdd.stream().flatMap(b -> b.getTransactions().stream()
-                .flatMap(t -> t.getInputs().stream()).filter(in -> !in.isCoinBase()).map(in -> Pair.of(b, in)));
-
-        // TODO dynamic conflictpoints: token issuance ids, mining reward height
-        // intervals
-
-        // Filter to only contain conflicts that were already spent by
-        // maintained
-        // milestone blocks.
-        List<Pair<Block, TransactionInput>> candidatesConflictingWithMilestone = outPoints
-                .filter(pair -> transactionService.getUTXOSpent(pair.getRight())
+        // Create pairs of blocks and outpoints from blocksToAdd where already
+        // spent by maintained milestone blocks.
+        Stream<Pair<Block, ConflictPoint>> transferConflictPoints = blocksToAdd.stream()
+                .flatMap(b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream())
+                        .filter(in -> !in.isCoinBase()).map(in -> Pair.of(b, new ConflictPoint(in.getOutpoint()))))
+                .filter(pair -> transactionService.getUTXOSpent(pair.getRight().getOutpoint())
                         && transactionService.getUTXOSpender(pair.getRight().getOutpoint()) != null
-                        && transactionService.getUTXOSpender(pair.getRight().getOutpoint()).isMaintained())
-                .collect(Collectors.toList());
+                        && transactionService.getUTXOSpender(pair.getRight().getOutpoint()).isMaintained());
+
+        // Dynamic conflicts: mining reward height intervals
+//        Stream<Pair<Block, ConflictPoint>> rewardConflictPoints = blocksToAdd.stream()
+//                .filter(b -> b.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD)
+//                .map(b -> Pair.of(b, Utils.readInt64(b.getTransactions().get(0).getData(), 0)))
+//                .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight()))).filter(pair -> false);
+        // TODO where reward has been issued already (issuing block selectable
+        // see above)
+
+        // Dynamic conflicts: token issuance ids
+//        Stream<Pair<Block, ConflictPoint>> issuanceConflictPoints = blocksToAdd.stream()
+//                .filter(b -> b.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION)
+//                .map(b -> Pair.of(b, new TokenInfo().parse(b.getTransactions().get(0).getData())))
+//                .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight().getTokenSerial())))
+//                .filter(pair -> false);
+        // TODO where token has been issued already (issuing block selectable
+        // see above)
 
         // Add the conflicting candidates and milestone blocks
-        for (Pair<Block, TransactionInput> pair : candidatesConflictingWithMilestone) {
-            BlockEvaluation milestoneEvaluation = transactionService.getUTXOSpender(pair.getRight().getOutpoint());
+        for (Pair<Block, ConflictPoint> pair : Stream
+                .of(transferConflictPoints/*, rewardConflictPoints, issuanceConflictPoints*/).flatMap(i -> i)
+                .collect(Collectors.toList())) {
             BlockEvaluation toAddEvaluation = blockService.getBlockEvaluation(pair.getLeft().getHash());
-            conflictingOutPoints.add(Pair.of(toAddEvaluation, new ConflictPoint(pair.getRight().getOutpoint())));
-            conflictingOutPoints.add(Pair.of(milestoneEvaluation, new ConflictPoint(pair.getRight().getOutpoint())));
+            conflictingOutPoints.add(Pair.of(toAddEvaluation, pair.getRight()));
+
+            // Select the milestone block that is conflicting with a switch
+            BlockEvaluation milestoneEvaluation = transactionService.getUTXOSpender(pair.getRight().getOutpoint());
+            conflictingOutPoints.add(Pair.of(milestoneEvaluation, pair.getRight()));
             conflictingMilestoneBlocks.add(milestoneEvaluation);
-            // addMilestoneApprovers(conflictingMilestoneBlocks,
-            // milestoneEvaluation);
         }
     }
 }

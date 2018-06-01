@@ -206,6 +206,14 @@ public class TransactionOutPoint extends ChildMessage {
         this.index = index;
     }
 
+    /**
+     * Coinbase transactions have special outPoints with hashes of zero. If this is such an outPoint, returns true.
+     */
+    public boolean isCoinBase() {
+        return getHash().equals(Sha256Hash.ZERO_HASH) &&
+                (getIndex() & 0xFFFFFFFFL) == 0xFFFFFFFFL;  // -1 but all is serialized to the wire as unsigned int.
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -64,7 +64,7 @@ public class TransactionService {
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
     protected CoinSelector coinSelector = new DefaultCoinSelector();
-    
+
     @Autowired
     TaskExecutor taskExecutor;
 
@@ -142,12 +142,11 @@ public class TransactionService {
         return block;
     }
 
-    public boolean getUTXOSpent(TransactionInput txinput) {
+    public boolean getUTXOSpent(TransactionOutPoint txout) {
         try {
-            if (txinput.isCoinBase())
+            if (txout.isCoinBase())
                 return false;
-            return store.getTransactionOutput(txinput.getOutpoint().getHash(), txinput.getOutpoint().getIndex())
-                    .isSpent();
+            return store.getTransactionOutput(txout.getHash(), txout.getIndex()).isSpent();
         } catch (BlockStoreException e) {
             logger.debug("", e);
         }

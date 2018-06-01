@@ -305,22 +305,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Connect all approved blocks first (check if actually needed)
         addBlockToMilestone(blockStore.getBlockEvaluation(block.getPrevBlockHash()));
         addBlockToMilestone(blockStore.getBlockEvaluation(block.getPrevBranchBlockHash()));
-//
-//        // Deterministically handle reward block type
-//        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD) {
-//            if (blockEvaluation.isRewardValid() == false)
-//                if (!validatorService.calculateMiningReward(block))
-//                    throw new VerificationException(
-//                            "Requested mining reward block cannot be added to milestone: Invalid");
-//
-//            Transaction tx = generateMiningRewardTX(block);
-//
-//            if (!blockStore.hasUnspentOutputs(tx.getHash())) {
-//                insertConfirmedUTXOs(blockEvaluation, block, tx);
-//            } else {
-//                confirmUTXOs(tx);
-//            }
-//        }
 
         // For token creations, update token db
         if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
