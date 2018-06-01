@@ -43,8 +43,7 @@ import net.bigtangle.wallet.Wallet;
  *
  * <p>An AbstractBlockTangle implementation must be connected to a {@link BlockStore} implementation. The tangle object
  * by itself doesn't store any data, that's delegated to the store. Which store you use is a decision best made by
- * reading the getting started guide, but briefly, fully validating block tangles need fully validating stores. In
- * the lightweight SPV mode, a {@link org.bitcoinj.store.SPVBlockStore} is the right choice.</p>
+ * reading the getting started guide, but briefly, fully validating block tangles need fully validating stores. 
  *
  * <p>This class implements an abstract class which makes it simple to create a BlockTangle that does/doesn't do full
  * verification.  It verifies headers and is implements most of what is required to implement SPV mode, but
@@ -97,12 +96,7 @@ public abstract class AbstractBlockGraph {
 
     private final VersionTally versionTally;
 
-    /** See {@link #AbstractBlockTangle(Context, List, BlockStore)} */
-    public AbstractBlockGraph(NetworkParameters params, List<? extends Wallet> transactionReceivedListeners,
-                              BlockStore blockStore) throws BlockStoreException {
-        this(Context.getOrCreate(params), transactionReceivedListeners, blockStore);
-    }
-
+ 
     /**
      * Constructs a BlockTangle connected to the given list of listeners (eg, wallets) and a store.
      */

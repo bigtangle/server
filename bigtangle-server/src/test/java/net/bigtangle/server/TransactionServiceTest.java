@@ -22,6 +22,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import net.bigtangle.core.Address;
@@ -32,13 +33,15 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
+import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.server.ReqCmd;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.utils.OkHttp3Util;
@@ -249,25 +252,55 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
 
         SendRequest request = SendRequest.forTx(multiSigTransaction);
         walletAppKit.wallet().completeTx(request);
+        rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
         OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        //tis is failed, becuase the address is empty for createMultiSigOutputScript
+        //TODO add new table for UTXO as outputmultisign _> 
+       // checkBalance(NetworkParameters.BIGNETCOIN_TOKENID_STRING, wallet1Keys);
+        
+        //find the transaction as input
+      
+        TransactionOutput multisigOutput = request.tx.getOutput(1);
+        TransactionOutput o = request.tx.getOutput(0);
+        
+        Script multisigScript = o.getScriptPubKey();
+        Script multisigScript1 = multisigOutput.getScriptPubKey();
+       
+        
+       if( multisigScript.isSentToMultiSig()) multisigOutput=o;
+ 
 
-        testTransactionAndGetBalances();
+        Coin amount = multisigOutput.getValue();
         
         
+        ECKey receiverkey = walletKeys.get(1);
+        
+        Transaction spendtx = new Transaction(networkParameters);
+        spendtx.addOutput(amount, receiverkey);
+       
+        TransactionInput input = spendtx.addInput(multisigOutput);
+        
+        Sha256Hash sighash = spendtx.hashForSignature(0, multisigScript, Transaction.SigHash.ALL, false);
+     
+        TransactionSignature tsrecsig = new TransactionSignature(wallet1Keys.get(0).sign(sighash), Transaction.SigHash.ALL, false);
+        TransactionSignature tsintsig = new TransactionSignature(wallet1Keys.get(1).sign(sighash), Transaction.SigHash.ALL, false);
+        
+        Script inputScript = ScriptBuilder.createMultiSigInputScript(ImmutableList.of(tsrecsig, tsintsig));
+        
+        input.setScriptSig(inputScript);
+      
          data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
          rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
 
-        Coin amount = Coin.parseCoin("0.01", NetworkParameters.BIGNETCOIN_TOKENID);
-         request = SendRequest.to(walletKeys.get(1).toAddress(networkParameters), amount);
-        walletAppKit1.wallet().completeTx(request);
-        rollingBlock.addTransaction(request.tx);
+ 
+        rollingBlock.addTransaction(spendtx);
         rollingBlock.solve();
 
         OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
 
-        
+        //TODO remainder
     }
 
     @Test
