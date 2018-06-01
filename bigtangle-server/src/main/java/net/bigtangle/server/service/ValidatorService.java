@@ -32,9 +32,11 @@ import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.UTXO;
+import net.bigtangle.core.Utils;
 import net.bigtangle.script.Script;
 import net.bigtangle.store.FullPrunedBlockStore;
 
@@ -146,12 +148,12 @@ public class ValidatorService {
         }
 
         // TX reward adjustments for next rewards
-        long perTxReward = store.getTxReward(prevRewardBlock.getHash());
+        long perTxReward = store.getTxRewardValue(prevRewardBlock.getHash());
         long nextPerTxReward = Math.max(1, 20000000 * 365 * 24 * 60 * 60 / approveCount
                 / (header.getTimeSeconds() - prevRewardBlock.getTimeSeconds()));
         nextPerTxReward = Math.max(nextPerTxReward, perTxReward / 4);
         nextPerTxReward = Math.min(nextPerTxReward, perTxReward * 4);
-        store.insertTxReward(header.getHash(), nextPerTxReward);
+        // store.insertTxReward(header.getHash(), nextPerTxReward);
 
         // Calculate rewards
         PriorityQueue<Triple<Sha256Hash, Address, Long>> sortedMiningRewardCalculations = new PriorityQueue<>(
@@ -275,12 +277,12 @@ public class ValidatorService {
             }
 
             // TX reward adjustments for next rewards
-            long perTxReward = store.getTxReward(prevRewardBlock.getHash());
+            long perTxReward = store.getTxRewardValue(prevRewardBlock.getHash());
             long nextPerTxReward = Math.max(1, 20000000 * 365 * 24 * 60 * 60 / approveCount
                     / (header.getTimeSeconds() - prevRewardBlock.getTimeSeconds()));
             nextPerTxReward = Math.max(nextPerTxReward, perTxReward / 4);
             nextPerTxReward = Math.min(nextPerTxReward, perTxReward * 4);
-            store.insertTxReward(header.getHash(), nextPerTxReward);
+            store.insertTxReward(header.getHash(), nextPerTxReward, fromHeight);
 
             // Set valid if generated TX is equal to the block's TX
             // TODO this is still unnecessarily traversing twice
@@ -288,7 +290,8 @@ public class ValidatorService {
                 store.updateBlockEvaluationRewardValid(header.getHash(), true);
                 return true;
             } else {
-                // TODO else set invalid forever
+                // TODO else set invalid forever to not assess this again and
+                // again
                 return false;
             }
         } else {
@@ -327,9 +330,7 @@ public class ValidatorService {
      * @throws BlockStoreException
      */
     public void resolvePrunedConflicts(Collection<BlockEvaluation> blocksToAdd) throws BlockStoreException {
-        // TODO where this is called, we need the full check of validity as
-        // found in milestoneservice
-
+        // TODO refactor this to use same code as below
         // Get the blocks to add as actual blocks from blockService
         List<Block> blocks = blockService
                 .getBlocks(blocksToAdd.stream().map(e -> e.getBlockhash()).collect(Collectors.toList()));
@@ -500,17 +501,27 @@ public class ValidatorService {
     private void findCandidateConflicts(Collection<Block> blocksToAdd,
             Collection<Pair<BlockEvaluation, ConflictPoint>> conflictingOutPoints) throws BlockStoreException {
         // Create pairs of blocks and used non-coinbase utxos from blocksToAdd
-        Stream<Pair<Block, ConflictPoint>> outPoints = blocksToAdd.stream()
+        Stream<Pair<Block, ConflictPoint>> transferConflictPoints = blocksToAdd.stream()
                 .flatMap(b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream())
                         .filter(in -> !in.isCoinBase()).map(in -> Pair.of(b, new ConflictPoint(in.getOutpoint()))));
 
-        // TODO dynamic conflictpoints: token issuance ids, mining reward height
-        // intervals see below
+        // Dynamic conflicts: mining reward height intervals
+        Stream<Pair<Block, ConflictPoint>> rewardConflictPoints = blocksToAdd.stream()
+                .filter(b -> b.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD)
+                .map(b -> Pair.of(b, Utils.readInt64(b.getTransactions().get(0).getData(), 0)))
+                .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight()))).filter(pair -> false);
+
+        // Dynamic conflicts: token issuance ids
+        Stream<Pair<Block, ConflictPoint>> issuanceConflictPoints = blocksToAdd.stream().filter(t -> false) // TEMP
+                .filter(b -> b.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION)
+                .map(b -> Pair.of(b, new TokenInfo().parse(b.getTransactions().get(0).getData())))
+                .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight().getTokenSerial())))
+                .filter(pair -> false);
 
         // Filter to only contain conflicts that are spent more than once in the
-        // new
-        // milestone candidates
-        List<Pair<Block, ConflictPoint>> candidateCandidateConflicts = outPoints
+        // new milestone candidates
+        List<Pair<Block, ConflictPoint>> candidateCandidateConflicts = Stream
+                .of(transferConflictPoints, rewardConflictPoints, issuanceConflictPoints).flatMap(i -> i)
                 .collect(Collectors.groupingBy(Pair::getRight)).values().stream().filter(l -> l.size() > 1)
                 .flatMap(l -> l.stream()).collect(Collectors.toList());
 
@@ -536,35 +547,44 @@ public class ValidatorService {
         Stream<Pair<Block, ConflictPoint>> transferConflictPoints = blocksToAdd.stream()
                 .flatMap(b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream())
                         .filter(in -> !in.isCoinBase()).map(in -> Pair.of(b, new ConflictPoint(in.getOutpoint()))))
+                // Filter such that it has already been spent in addition to
+                // above
                 .filter(pair -> transactionService.getUTXOSpent(pair.getRight().getOutpoint())
                         && transactionService.getUTXOSpender(pair.getRight().getOutpoint()) != null
                         && transactionService.getUTXOSpender(pair.getRight().getOutpoint()).isMaintained());
 
         // Dynamic conflicts: mining reward height intervals
-//        Stream<Pair<Block, ConflictPoint>> rewardConflictPoints = blocksToAdd.stream()
-//                .filter(b -> b.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD)
-//                .map(b -> Pair.of(b, Utils.readInt64(b.getTransactions().get(0).getData(), 0)))
-//                .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight()))).filter(pair -> false);
-        // TODO where reward has been issued already (issuing block selectable
-        // see above)
+        Stream<Pair<Block, ConflictPoint>> rewardConflictPoints = blocksToAdd.stream()
+                .filter(b -> b.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD)
+                .map(b -> Pair.of(b, Utils.readInt64(b.getTransactions().get(0).getData(), 0)))
+                .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight()))).filter(pair -> false)
+                // Filter such that it has already been spent in addition to
+                // above
+                .filter(pair -> {
+                    try {
+                        return pair.getRight().getHeight() != store.getMaxPrevTxRewardHeight() + NetworkParameters.REWARD_HEIGHT_INTERVAL;
+                    } catch (BlockStoreException e) {
+                        return false;
+                    }
+                });
 
         // Dynamic conflicts: token issuance ids
-//        Stream<Pair<Block, ConflictPoint>> issuanceConflictPoints = blocksToAdd.stream()
-//                .filter(b -> b.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION)
-//                .map(b -> Pair.of(b, new TokenInfo().parse(b.getTransactions().get(0).getData())))
-//                .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight().getTokenSerial())))
-//                .filter(pair -> false);
+        Stream<Pair<Block, ConflictPoint>> issuanceConflictPoints = blocksToAdd.stream().filter(t -> false) // TEMP
+                .filter(b -> b.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION)
+                .map(b -> Pair.of(b, new TokenInfo().parse(b.getTransactions().get(0).getData())))
+                .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight().getTokenSerial())))
+                .filter(pair -> false);
         // TODO where token has been issued already (issuing block selectable
         // see above)
 
         // Add the conflicting candidates and milestone blocks
         for (Pair<Block, ConflictPoint> pair : Stream
-                .of(transferConflictPoints/*, rewardConflictPoints, issuanceConflictPoints*/).flatMap(i -> i)
+                .of(transferConflictPoints, rewardConflictPoints, issuanceConflictPoints).flatMap(i -> i)
                 .collect(Collectors.toList())) {
             BlockEvaluation toAddEvaluation = blockService.getBlockEvaluation(pair.getLeft().getHash());
             conflictingOutPoints.add(Pair.of(toAddEvaluation, pair.getRight()));
 
-            // Select the milestone block that is conflicting with a switch
+            // TODO Select the milestone block that is conflicting with a switch
             BlockEvaluation milestoneEvaluation = transactionService.getUTXOSpender(pair.getRight().getOutpoint());
             conflictingOutPoints.add(Pair.of(milestoneEvaluation, pair.getRight()));
             conflictingMilestoneBlocks.add(milestoneEvaluation);

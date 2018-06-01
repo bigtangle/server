@@ -45,7 +45,6 @@ public class TipsService {
 
 	public List<Sha256Hash> getRatingTips(int count) throws Exception {
 	    // TODO include different time snapshots (max(time) - timeInterval) to be robust against attacks (low pass filter)
-	    // overload getmcmc, stop when overtime or finished
 	    
 		Stopwatch watch = Stopwatch.createStarted();
 		SecureRandom seed = new SecureRandom();
@@ -72,6 +71,7 @@ public class TipsService {
 		return pairs.get(0);
 	}
 
+	// TODO refactor this trash and make sure it adheres to all validity rules, see milestoneservice
 	public List<Pair<Sha256Hash, Sha256Hash>> getValidatedBlockPairs(int count) throws Exception {
 		Stopwatch watch = Stopwatch.createStarted();
 		SecureRandom seed = new SecureRandom();

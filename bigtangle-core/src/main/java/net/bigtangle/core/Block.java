@@ -865,7 +865,7 @@ public class Block extends Message {
             if (!transactions.get(0).isCoinBase())
                 throw new VerificationException("TX is not coinbase when it should be.");
 
-            // TODO token ids must be equal to blocks token id
+            // TODO token ids of tx must be equal to blocks token id
             // TODO token issuance sum must not overflow
             // TODO signature for coinbases must be correct (equal to pubkey
             // hash of tokenid)
@@ -878,7 +878,7 @@ public class Block extends Message {
 
             // Check that the tx has correct data (long fromHeight)
             try {
-                long u = Utils.readInt64(transactions.get(0).getData(), BLOCK_HEIGHT_GENESIS);
+                long u = Utils.readInt64(transactions.get(0).getData(), 0);
                 if (u % NetworkParameters.REWARD_HEIGHT_INTERVAL != 0)
                     throw new VerificationException("Invalid fromHeight");
             } catch (ArrayIndexOutOfBoundsException e) {

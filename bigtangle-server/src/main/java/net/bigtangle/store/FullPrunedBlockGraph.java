@@ -305,7 +305,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Connect all approved blocks first (check if actually needed)
         addBlockToMilestone(blockStore.getBlockEvaluation(block.getPrevBlockHash()));
         addBlockToMilestone(blockStore.getBlockEvaluation(block.getPrevBranchBlockHash()));
-
+        
+        // For rewards, update reward db
+        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD) {
+            blockStore.updateTxRewardConfirmed(block.getHash(), true);
+        }
+        
         // For token creations, update token db
         if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
             Transaction tx = block.getTransactions().get(0);
@@ -337,6 +342,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     @Override
     public void removeTransactionsFromMilestone(Block block) throws BlockStoreException {
+        
+        // For rewards, update reward db
+        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD) {
+            blockStore.updateTxRewardConfirmed(block.getHash(), false);
+        }
         
         // For token creations, update token db
         if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
@@ -478,18 +488,35 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 || block.getTimeSeconds() < storedPrevBranch.getHeader().getTimeSeconds())
             return false;
 
-        // Check formal correctness of TX
+        // Check formal correctness of TXs and their data
         try {
             block.checkTransactionSolidity(height);
         } catch (VerificationException e) {
             return false;
         }
 
-        // TODO reward: open reward interval must be correct
-        // TODO reward: Reward Validity set to true means reward has been assessed locally. try assessing here maybe
-        
-        // TODO token: add check previous serial number must exist, current must not exist in db
-        // TODO token: add check for if signing keys are in db
+        // Check reward block specific solidity
+        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD) {
+            // Open reward interval must be this one to be solid
+            try {
+                long prevFromHeight = blockStore.getMaxPrevTxRewardHeight();
+                long fromHeight = Utils.readInt64(block.getTransactions().get(0).getData(), 0);
+                if (prevFromHeight + NetworkParameters.REWARD_HEIGHT_INTERVAL != fromHeight)
+                    return false;
+            } catch (ArrayIndexOutOfBoundsException e) {
+                return false;
+            }
+            
+            // Reward must have been assessed locally. 
+            if (!blockStore.getBlockEvaluation(block.getHash()).isRewardValid())
+                return false;
+        }
+
+        // Check issuance block specific validity
+        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD) {
+            // TODO token: add check previous serial number must exist, current must not exist in db
+            // TODO token: add check for if signing keys are in db
+        }
 
         blockStore.beginDatabaseBatchWrite();
         LinkedList<UTXO> txOutsSpent = new LinkedList<UTXO>();

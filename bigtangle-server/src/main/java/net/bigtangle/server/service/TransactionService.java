@@ -109,6 +109,7 @@ public class TransactionService {
         byte[] pubKey = Utils.HEX.decode(pubKeyHex);
         byte[] tokenid = Utils.HEX.decode(tokenHex);
         Coin coin = Coin.valueOf(amount, tokenid);
+        // TODO why is there no TokenInfo here?
         Block block = createGenesisBlock(coin, tokenid, pubKey, null);
         return block.bitcoinSerialize();
     }
