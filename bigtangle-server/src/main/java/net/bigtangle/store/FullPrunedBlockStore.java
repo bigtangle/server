@@ -338,6 +338,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     long getMaxPrevTxRewardHeight() throws BlockStoreException;
 
+    long getMaxImportTime() throws BlockStoreException;
+
     // public List<TokenSerial> getTokenSerialListByTokenid(String tokenid);
     //
     // public List<MultiSignBy> getMultiSignByListByTokenid(String tokenid);

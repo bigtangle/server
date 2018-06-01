@@ -201,6 +201,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "milestonedepth, inserttime, maintained, rewardvalidityassessment "
             + "FROM blockevaluation INNER JOIN outputs ON outputs.spenderblockhash=blockevaluation.blockhash"
             + " WHERE solid = true and hash = ? AND outputindex= ?" + afterSelect();
+    protected String SELECT_MAX_IMPORT_TIME_SQL = "SELECT MAX(inserttime) " + "FROM blockevaluation WHERE solid = true";
 
     protected String SELECT_MAX_TOKENID_SQL = "select max(tokenid) from tokens";
     protected String INSERT_TOKENS_SQL = getInsert()
@@ -323,7 +324,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String INSERT_TX_REWARD_SQL = getInsert() + "  INTO txreward (blockhash, rewardamount, prevheight, confirmed) VALUES (?, ?, ?, ?)";
     protected String SELECT_TX_REWARD_SQL = "SELECT rewardamount " + "FROM txreward WHERE blockhash = ?";
-    protected String SELECT_HIGHEST_TX_REWARD_HEIGHT_SQL = "SELECT MAX(prevheight) " + "FROM txreward WHERE confirmed = true";
+    protected String SELECT_MAX_TX_REWARD_HEIGHT_SQL = "SELECT MAX(prevheight) " + "FROM txreward WHERE confirmed = true";
     protected String SELECT_TX_REWARD_CONFIRMED_SQL = "SELECT confirmed " + "FROM txreward WHERE blockhash = ?";
     protected String UPDATE_TX_REWARD_CONFIRMED_SQL = "UPDATE txreward SET confirmed = ? WHERE blockhash = ?";
 
@@ -3596,7 +3597,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_HIGHEST_TX_REWARD_HEIGHT_SQL);
+            preparedStatement = conn.get().prepareStatement(SELECT_MAX_TX_REWARD_HEIGHT_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
             return resultSet.getLong(1);
@@ -3634,7 +3635,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-
+    
     @Override
     public void insertTxReward(Sha256Hash hash, long nextPerTxReward, long prevHeight) throws BlockStoreException {
         maybeConnect();
@@ -3700,6 +3701,28 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     preparedStatement.close();
                 } catch (SQLException e) {
                     throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public long getMaxImportTime() throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_MAX_IMPORT_TIME_SQL);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            return resultSet.getLong(1);
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
                 }
             }
         }
