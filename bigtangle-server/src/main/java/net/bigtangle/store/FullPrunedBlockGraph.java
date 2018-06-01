@@ -212,6 +212,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 address = script.getToAddress(params, true).toString();
             }
         } catch (Exception e) {
+            // e.printStackTrace();
         }
         return address;
     }

@@ -884,8 +884,8 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             transaction.setDatasignatire(Json.jsonmapper().writeValueAsBytes(multiSignBies));
             checkResponse(OkHttp3Util.post(contextRoot + "multiSign", block0.bitcoinSerialize()));
             
-            checkBalance(tokenid, ecKeys );  
         }
+        //checkBalance(tokenid, ecKeys );  
     }
 
     @Test

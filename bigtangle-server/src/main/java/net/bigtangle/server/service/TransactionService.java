@@ -156,10 +156,17 @@ public class TransactionService {
         return blockStore.getTransactionOutput(out.getHash(), out.getIndex());
     }
 
+    @Autowired
+    private MultiSignService multiSignService;
+
     public Optional<Block> addConnected(byte[] bytes, boolean emptyBlock) {
         try {
             Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bytes);
             if (!checkBlockExists(block)) {
+                if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION
+                        && !this.multiSignService.checkMultiSignPre(block, this.store)) {
+                    throw new BlockStoreException("block multisign error");
+                }
                 FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
                 blockgraph.add(block);
                 logger.debug("addConnected from kafka " + block);
@@ -180,8 +187,8 @@ public class TransactionService {
     }
 
     /*
-     * check before add Block from kafka , the block can be already exists. TODO
-     * the block may be cached for performance
+     * check before add Block from kafka , the block can be already exists. TODO the
+     * block may be cached for performance
      */
     public boolean checkBlockExists(Block block) throws BlockStoreException {
         return store.get(block.getHash()) != null;

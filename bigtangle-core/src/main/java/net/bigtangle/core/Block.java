@@ -930,27 +930,6 @@ public class Block extends Message {
         checkMerkleRoot();
         checkSigOps();
         // genesis blocktype? check signature
-        if (this.blocktype == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
-            byte[] datasignatire = this.transactions.get(0).getDatasignatire();
-            if (datasignatire != null) {
-                Sha256Hash hash = this.transactions.get(0).getHash();
-                List<Map<String, Object>> multiSignBies;
-                try {
-                    multiSignBies = Json.jsonmapper().readValue(datasignatire, List.class);
-                } catch (Exception e) {
-                    throw new VerificationException("Block transaction json format error");
-                }
-                for (Map<String, Object> multiSignBy : multiSignBies) {
-                    byte[] pubKey = Utils.HEX.decode((String) multiSignBy.get("publickey"));
-                    byte[] data = hash.getBytes();
-                    byte[] signature = Utils.HEX.decode((String) multiSignBy.get("signature"));
-                    boolean success = ECKey.verify(data, signature, pubKey);
-                    if (!success) {
-                        throw new VerificationException("Block transaction sign error");
-                    }
-                }
-            }
-        }
         for (Transaction transaction : transactions)
             transaction.verify();
     }

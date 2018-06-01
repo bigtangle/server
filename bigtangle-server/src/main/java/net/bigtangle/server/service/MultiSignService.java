@@ -47,11 +47,6 @@ public class MultiSignService {
     public AbstractResponse getMultiSignListWithTokenid(String tokenid, List<String> addresses, boolean isSign)
             throws Exception {
         List<MultiSign> multiSigns = this.store.getMultiSignListByTokenid(tokenid, addresses, isSign);
-        // HashSet<String> tokenIdSet = new HashSet<String>();
-        // for (MultiSign multiSign : multiSigns)
-        // tokenIdSet.add(multiSign.getTokenid());
-        // HashSet<Tokens> tokensSet =
-        // this.store.getTokensHashsetByIdSet(tokenIdSet);
         List<Map<String, Object>> multiSignList = new ArrayList<Map<String, Object>>();
         for (MultiSign multiSign : multiSigns) {
             HashMap<String, Object> map = new HashMap<String, Object>();
@@ -91,7 +86,7 @@ public class MultiSignService {
         return TokenSerialIndexResponse.createTokenSerialIndexResponse(count + 1);
     }
 
-    public void multiSign(Block block) throws Exception {
+    public boolean checkMultiSignPre(Block block, FullPrunedBlockStore store) throws BlockStoreException, Exception {
         if (block.getTransactions() == null || block.getTransactions().isEmpty()) {
             throw new BlockStoreException("block transaction is empty");
         }
@@ -105,7 +100,7 @@ public class MultiSignService {
         if (tokens == null) {
             throw new BlockStoreException("tokeninfo is null");
         }
-        Tokens tokens_ = this.store.getTokensInfo(tokens.getTokenid());
+        Tokens tokens_ = store.getTokensInfo(tokens.getTokenid());
         if (tokens_ != null && tokens_.isTokenstop()) {
             throw new BlockStoreException("tokeninfo can not mutil sign");
         }
@@ -122,7 +117,7 @@ public class MultiSignService {
             throw new BlockStoreException("tokens already existed");
         }
 
-        List<MultiSignAddress> multiSignAddresses = this.store.getMultiSignAddressListByTokenid(tokens.getTokenid());
+        List<MultiSignAddress> multiSignAddresses = store.getMultiSignAddressListByTokenid(tokens.getTokenid());
         if (multiSignAddresses.size() == 0) {
             multiSignAddresses = tokenInfo.getMultiSignAddresses();
         }
@@ -138,7 +133,7 @@ public class MultiSignService {
             String tokenid = multiSignAddress.getTokenid();
             long tokenindex = tokenSerial.getTokenindex();
             String address = multiSignAddress.getAddress();
-            int count = this.store.getCountMultiSignAlready(tokenid, tokenindex, address);
+            int count = store.getCountMultiSignAlready(tokenid, tokenindex, address);
             if (count == 0) {
                 MultiSign multiSign = new MultiSign();
                 multiSign.setTokenid(tokenid);
@@ -146,9 +141,9 @@ public class MultiSignService {
                 multiSign.setAddress(address);
                 multiSign.setBlockhash(block.bitcoinSerialize());
                 multiSign.setId(UUIDUtil.randomUUID());
-                this.store.saveMultiSign(multiSign);
+                store.saveMultiSign(multiSign);
             } else {
-                this.store.updateMultiSignBlockHash(tokenid, tokenindex, address, block.bitcoinSerialize());
+                store.updateMultiSignBlockHash(tokenid, tokenindex, address, block.bitcoinSerialize());
             }
         }
 
@@ -162,7 +157,6 @@ public class MultiSignService {
         }
         int signCount = 0;
         if (transaction.getDatasignatire() != null) {
-
             String jsonStr = new String(transaction.getDatasignatire());
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> multiSignBies = Json.jsonmapper().readValue(jsonStr, List.class);
@@ -192,9 +186,9 @@ public class MultiSignService {
                 String tokenid = (String) multiSignBy.get("tokenid");
                 int tokenindex = (Integer) multiSignBy.get("tokenindex");
                 String address = (String) multiSignBy.get("address");
-                this.store.updateMultiSign(tokenid, tokenindex, address, block.bitcoinSerialize(), 1);
+                store.updateMultiSign(tokenid, tokenindex, address, block.bitcoinSerialize(), 1);
             }
-            this.store.updateMultiSignBlockBitcoinSerialize(tokens.getTokenid(), tokenSerial.getTokenindex(),
+            store.updateMultiSignBlockBitcoinSerialize(tokens.getTokenid(), tokenSerial.getTokenindex(),
                     block.bitcoinSerialize());
             for (MultiSignAddress multiSignAddress : multiSignAddressRes.values()) {
                 String address = multiSignAddress.getAddress();
@@ -204,9 +198,12 @@ public class MultiSignService {
                 }
             }
         }
-        // check sign number
-        if (multiSignAddresses.size() == signCount) {
-            // save block
+        int signnumber = (int) (tokens_ == null ? tokens.getSignnumber() : tokens_.getSignnumber());
+        return signCount >= signnumber;
+    }
+
+    public void multiSign(Block block) throws Exception {
+        if (this.checkMultiSignPre(block, this.store)) {
             blockService.saveBlock(block);
         }
     }
