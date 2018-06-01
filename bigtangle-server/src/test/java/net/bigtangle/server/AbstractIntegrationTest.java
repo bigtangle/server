@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
+import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -40,6 +41,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.Coin;
@@ -58,8 +60,7 @@ import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {})
 
@@ -275,4 +276,15 @@ public abstract class AbstractIntegrationTest {
         assertTrue(error == 0);
     }
 
+    public void checkBalance(String tokenid, List<ECKey> a) throws Exception {
+        List<UTXO> ulist = testTransactionAndGetBalances(false, a);
+        UTXO myutxo = null;
+        for (UTXO u : ulist) {
+            if (tokenid.equals(  u.getTokenid() )) {
+                myutxo = u;
+                break;
+            }
+        }
+        assertTrue(myutxo != null);
+    }
 }

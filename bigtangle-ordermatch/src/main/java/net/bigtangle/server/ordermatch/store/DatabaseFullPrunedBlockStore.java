@@ -33,7 +33,6 @@ import net.bigtangle.core.OrderMatch;
 import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
-import net.bigtangle.core.Tokens;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UTXOProviderException;
 import net.bigtangle.utils.OrderState;
@@ -54,9 +53,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_ORDERPUBLISH_TABLE = "DROP TABLE orderpublish";
     public static String DROP_ORDERMATCH_TABLE = "DROP TABLE ordermatch";
     public static String DROP_EXCHANGE_TABLE = "DROP TABLE exchange";
-
-    protected String SELECT_TOKENS_SQL = "select tokenid, tokenname, description, url, signnumber, multiserial, asmarket, tokenstop from tokens";
-    protected String SELECT_TOKENS_INFO_SQL = "select tokenid, tokenname, description, url, signnumber, multiserial, asmarket, tokenstop from tokens where tokenid = ?";
 
     protected String INSERT_ORDERPUBLISH_SQL = getInsert()
             + "  INTO orderpublish (orderid, address, tokenid, type, validateto, validatefrom,"
@@ -456,40 +452,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<Tokens> getTokensList() throws BlockStoreException {
-        List<Tokens> list = new ArrayList<Tokens>();
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TOKENS_SQL);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                Tokens tokens = new Tokens();
-                tokens.setTokenid(resultSet.getString("tokenid"));
-                tokens.setTokenname(resultSet.getString("tokenname"));
-                tokens.setDescription(resultSet.getString("description"));
-                tokens.setAsmarket(resultSet.getBoolean("asmarket"));
-                tokens.setSignnumber(resultSet.getLong("signnumber"));
-                tokens.setMultiserial(resultSet.getBoolean("multiserial"));
-                tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
-                tokens.setUrl(resultSet.getString("url"));
-                list.add(tokens);
-            }
-            return list;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
-    @Override
     public void saveOrderPublish(OrderPublish orderPublish) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -826,40 +788,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 list.add(orderPublish);
             }
             return list;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-    
-    @Override
-    public Tokens getTokensInfo(String tokenid) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TOKENS_INFO_SQL);
-            preparedStatement.setString(1, tokenid);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            Tokens tokens = null;
-            if (resultSet.next()) {
-                tokens = new Tokens();
-                tokens.setTokenid(resultSet.getString("tokenid"));
-                tokens.setTokenname(resultSet.getString("tokenname"));
-                tokens.setDescription(resultSet.getString("description"));
-                tokens.setAsmarket(resultSet.getBoolean("asmarket"));
-                tokens.setSignnumber(resultSet.getLong("signnumber"));
-                tokens.setMultiserial(resultSet.getBoolean("multiserial"));
-                tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
-                tokens.setUrl(resultSet.getString("url"));
-            }
-            return tokens;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } finally {

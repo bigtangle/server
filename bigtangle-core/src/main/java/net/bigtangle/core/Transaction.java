@@ -744,7 +744,7 @@ public class Transaction extends ChildMessage {
             String script2;
             try {
                 script = inputs.get(0).getScriptSig().toString();
-                script2 = outputs.get(0).getScriptPubKey().toString();
+                script2 = outputs.get(0).toString();
             } catch (ScriptException e) {
                 script = "???";
                 script2 = "???";

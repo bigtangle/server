@@ -8,7 +8,7 @@ public enum ReqCmd {
 
     getBalances, askTransaction, saveBlock, getOutputs,
 
-    createGenesisBlock, exchangeToken, getTokens, getMarkets, getTokenById, getAllEvaluations,
+    createGenesisBlock, exchangeToken, getTokens, getTokensNoMarket, getMarkets, getTokenById, getAllEvaluations,
 
     outputsWiteToken, saveOrder, getOrders, exchangeInfo, batchGetBalances,
 

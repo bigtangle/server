@@ -60,6 +60,8 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
+import net.bigtangle.script.Script;
+import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
@@ -134,6 +136,8 @@ public class SendMoneyController {
     public TextField signnumberTF;
     @FXML
     public TextField signAddressTF;
+    @FXML
+    public TextField signAddressTF1;
     @FXML
     public ChoiceBox<Object> signAddressChoiceBox;;
 
@@ -438,12 +442,38 @@ public class SendMoneyController {
         try {
 
             if (addressChoiceBox.getItems() == null || addressChoiceBox.getItems().isEmpty()) {
-                GuiUtils.informationalAlert(Main.getText("address_empty"), "", "");
+                GuiUtils.informationalAlert(Main.getText("signnumNull"), "", "");
                 return;
             }
             String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
 
             // TODO cui,jiang
+
+            int signnum = signnumberTF1.getText() == null || signnumberTF1.getText().isEmpty() ? 1
+                    : Integer.parseInt(signnumberTF1.getText().trim());
+            if (signnum > addressChoiceBox.getItems().size()) {
+                GuiUtils.informationalAlert(Main.getText("signnumberNoEq"), "", "");
+                return;
+            }
+            List<ECKey> keys = new ArrayList<ECKey>();
+            for (String keyString : addressChoiceBox.getItems()) {
+                keys.add(ECKey.fromPublicOnly(Utils.HEX.decode(keyString)));
+            }
+            Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(signnum, keys);
+
+            Coin amount0 = Coin.parseCoin(amountEdit11.getText(), Utils.HEX.decode(tokeninfo11.getValue().toString()));
+            Transaction multiSigTransaction = new Transaction(Main.params);
+            multiSigTransaction.addOutput(amount0, scriptPubKey);
+            // get new Block to be used from server
+            HashMap<String, String> requestParam = new HashMap<String, String>();
+            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
+                    Json.jsonmapper().writeValueAsString(requestParam));
+            Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
+
+            SendRequest request = SendRequest.forTx(multiSigTransaction);
+            Main.bitcoin.wallet().completeTx(request);
+            rollingBlock.solve();
+            OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
 
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
@@ -557,8 +587,24 @@ public class SendMoneyController {
         signAddressChoiceBox.getSelectionModel().selectLast();
     }
 
+    public void addSignAddrA(ActionEvent event) {
+        if (signAddressTF1.getText() == null || signAddressTF1.getText().isEmpty()) {
+            return;
+        }
+        addressChoiceBox.getItems().add(signAddressTF1.getText());
+        addressChoiceBox.getSelectionModel().selectLast();
+    }
+
+    public void sign(ActionEvent event) {
+
+    }
+
     public void removeSignAddr(ActionEvent event) {
         signAddressChoiceBox.getItems().remove(signAddressChoiceBox.getValue());
+    }
+
+    public void removeSignAddrA(ActionEvent event) {
+        addressChoiceBox.getItems().remove(addressChoiceBox.getValue());
     }
 
     public void saveSetting(ActionEvent event) {
