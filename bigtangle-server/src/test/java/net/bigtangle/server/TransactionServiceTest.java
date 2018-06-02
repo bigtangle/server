@@ -242,7 +242,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
 
         Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, wallet1Keys);
 
-        Coin amount0 = Coin.parseCoin("0.01", NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin amount0 = Coin.parseCoin("0.15", NetworkParameters.BIGNETCOIN_TOKENID);
         multiSigTransaction.addOutput(amount0, scriptPubKey);
         // get new Block to be used from server
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -256,7 +256,9 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         rollingBlock.solve();
         OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
         //tis is failed, becuase the address is empty for createMultiSigOutputScript
-        //TODO add new table for UTXO as outputmultisign _> 
+        //TODO add new table for UTXO as outputsmulti _> 
+        //UTXO write 
+        //join and make this correct
        // checkBalance(NetworkParameters.BIGNETCOIN_TOKENID_STRING, wallet1Keys);
         
         //find the transaction as input
@@ -282,7 +284,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         TransactionInput input = spendtx.addInput(multisigOutput);
         
         Sha256Hash sighash = spendtx.hashForSignature(0, multisigScript, Transaction.SigHash.ALL, false);
-     
+       // split steps for sign and use table to sign
         TransactionSignature tsrecsig = new TransactionSignature(wallet1Keys.get(0).sign(sighash), Transaction.SigHash.ALL, false);
         TransactionSignature tsintsig = new TransactionSignature(wallet1Keys.get(1).sign(sighash), Transaction.SigHash.ALL, false);
         
