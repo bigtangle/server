@@ -776,6 +776,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             updateBlockEvaluationMilestone(params.getGenesisBlock().getHash(), true);
             updateBlockEvaluationSolid(params.getGenesisBlock().getHash(), true);
             insertTip(params.getGenesisBlock().getHash());
+            insertTxReward(params.getGenesisBlock().getHash(), NetworkParameters.INITIAL_TX_REWARD, -NetworkParameters.REWARD_HEIGHT_INTERVAL);
         } catch (VerificationException e) {
             throw new RuntimeException(e); // Cannot happen.
         }
@@ -3576,6 +3577,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_SQL);
+            preparedStatement.setBytes(1, hash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
             return resultSet.getLong(1);

@@ -11,6 +11,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -34,6 +35,8 @@ import net.bigtangle.core.VerificationException;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
+import net.bigtangle.server.service.TipsService;
+import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 
@@ -47,12 +50,15 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     @Autowired
     private MilestoneService milestoneService;
     @Autowired
+    private TransactionService transactionService;
+    @Autowired
     private NetworkParameters networkParameters;
     @Autowired
     protected FullPrunedBlockStore store;
-
+    @Autowired
+    private TipsService tipsManager;
+    
     ECKey outKey = new ECKey();
-    int LinearTangle = 10;
 
     public List<Block> createMultiLinearTangle1() throws Exception {
 
@@ -78,25 +84,21 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         return blocks;
     }
 
-    public List<Block> createLinearTangle1() throws Exception {
-
+    public List<Block> createLinearTangle(int blockCount) throws Exception {
         List<Block> blocks = new ArrayList<Block>();
+        
         Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
                 Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0, networkParameters.getGenesisBlock().getHash());
         blocks.add(rollingBlock);
-        for (int i = 0; i < LinearTangle; i++) {
+        blockgraph.add(rollingBlock);
+        
+        for (int i = 0; i < blockCount; i++) {
             rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
                     outKey.getPubKey(), 0, rollingBlock.getHash());
             blocks.add(rollingBlock);
+            blockgraph.add(rollingBlock);
         }
 
-        int i = 0;
-        for (Block block : blocks) {
-            this.blockgraph.add(block);
-         //   log.debug("create  " + i + " block:" + block.getHashAsString());
-            i++;
-
-        }
         return blocks;
     }
 
@@ -104,13 +106,6 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     public void testMilestoneTestTangle1() throws Exception {
         store.resetStore();
         blockgraph = new FullPrunedBlockGraph(networkParameters, store);
-
-        // Add genesis block
-        // blockgraph.add(networkParameters.getGenesisBlock());
-        BlockEvaluation genesisEvaluation = blockService
-                .getBlockEvaluation(networkParameters.getGenesisBlock().getHash());
-        store.updateBlockEvaluationMilestone(genesisEvaluation.getBlockhash(), true);
-        blockService.updateSolid(genesisEvaluation, true);
 
         Block b1 = createAndAddNextBlockCoinbase(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
                 outKey.getPubKey(), networkParameters.getGenesisBlock().getHash());
@@ -340,14 +335,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         store.resetStore();
         blockgraph = new FullPrunedBlockGraph(networkParameters, store);
 
-        // Add genesis block
-        // blockgraph.add(networkParameters.getGenesisBlock());
-        BlockEvaluation genesisEvaluation = blockService
-                .getBlockEvaluation(networkParameters.getGenesisBlock().getHash());
-        store.updateBlockEvaluationMilestone(genesisEvaluation.getBlockhash(), true);
-        blockService.updateSolid(genesisEvaluation, true);
-
-        List<Block> blocks = createLinearTangle1();
+        List<Block> blocks = createLinearTangle(80);
         milestoneService.update();
 
         Block rollingBlock = blocks.get(blocks.size() - 1);
@@ -357,7 +345,23 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         milestoneService.update();
     }
 
-    // TODO more tests
+    @Test
+    public void testMiningReward() throws Exception {
+        store.resetStore();
+        blockgraph = new FullPrunedBlockGraph(networkParameters, store);
+
+        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
+                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0, networkParameters.getGenesisBlock().getHash());
+        blockgraph.add(rollingBlock);        
+        for (int i = 0; i < 110; i++) {
+            rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
+                    outKey.getPubKey(), 0, rollingBlock.getHash());
+            blockgraph.add(rollingBlock);
+        }
+        
+        transactionService.createMiningRewardBlock(0);
+        milestoneService.update();
+    }
 
     private Block createAndAddNextBlockCoinbase(Block b1, long bVersion, byte[] pubKey, Sha256Hash b2)
             throws VerificationException, PrunedException {

@@ -95,7 +95,7 @@ public class ValidatorService {
         // Go backwards by height
         BlockEvaluation currentBlock = null;
         while ((currentBlock = blockQueue.poll()) != null) {
-            Block block = blockService.getBlock(currentBlock.getBlockhash());
+            Block block = currentBlock.getBlockhash().equals(header.getHash()) ? header : blockService.getBlock(currentBlock.getBlockhash());
 
             // Stop criterion: Block height lower than approved interval height
             if (currentBlock.getHeight() < fromHeight)
@@ -127,13 +127,13 @@ public class ValidatorService {
 
             // Continue with approved blocks
             BlockEvaluation prevBlock = blockService.getBlockEvaluation(block.getPrevBlockHash());
-            if (!queuedBlocks.contains(prevBlock)) {
+            if (!queuedBlocks.contains(prevBlock) && prevBlock != null) {
                 queuedBlocks.add(prevBlock);
                 blockQueue.add(prevBlock);
             }
 
             BlockEvaluation prevBranchBlock = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
-            if (!queuedBlocks.contains(prevBranchBlock)) {
+            if (!queuedBlocks.contains(prevBranchBlock) && prevBlock != null) {
                 queuedBlocks.add(prevBranchBlock);
                 blockQueue.add(prevBranchBlock);
             }
@@ -557,7 +557,7 @@ public class ValidatorService {
         Stream<Pair<Block, ConflictPoint>> rewardConflictPoints = blocksToAdd.stream()
                 .filter(b -> b.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD)
                 .map(b -> Pair.of(b, Utils.readInt64(b.getTransactions().get(0).getData(), 0)))
-                .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight()))).filter(pair -> false)
+                .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight())))
                 // Filter such that it has already been spent in addition to
                 // above
                 .filter(pair -> {

@@ -508,7 +508,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 return false;
             }
             
-            // Reward must have been assessed locally. 
+            // Reward must have been assessed locally and passed. 
             if (!blockStore.getBlockEvaluation(block.getHash()).isRewardValid())
                 return false;
         }
