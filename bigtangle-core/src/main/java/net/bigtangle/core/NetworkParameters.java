@@ -7,6 +7,8 @@ package net.bigtangle.core;
 
 import static net.bigtangle.core.Utils.HEX;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.math.BigInteger;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -73,6 +75,8 @@ public abstract class NetworkParameters {
     
     // Use Equihash
     public static final boolean USE_EQUIHASH = false;
+    
+    public static final long INITIAL_TX_REWARD = 10L;
 
     protected Block genesisBlock;
     protected BigInteger maxTarget;
@@ -122,9 +126,24 @@ public abstract class NetworkParameters {
 
     public static Block createGenesis(NetworkParameters n) {
         Block genesisBlock = new Block(n, Block.BLOCK_VERSION_GENESIS, BLOCKTYPE_INITIAL);
-        // TODO read first transaction from ICO file
-        // Transaction t = new Transaction(n);
+        genesisBlock.setTime(1231006505L);
+        
+//        // Mining reward initialization
+//        Transaction t = new Transaction(n);
+//        
+//        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//        DataOutputStream dos = new DataOutputStream(baos);
+//        dos.writeLong(INITIAL_TX_REWARD);
+//        dos.close();
+//        byte[] longBytes = baos.toByteArray();
+//        t.setData(longBytes);
+//        genesisBlock.addTransaction();
+        
+        genesisBlock.solve();
+        return genesisBlock;
+        
         // try {
+        // TODO read first transaction from ICO file
         // // A script containing the difficulty bits and the following
         // // message:
         // //
@@ -145,11 +164,6 @@ public abstract class NetworkParameters {
         // throw new RuntimeException(e);
         // }
         // genesisBlock.addTransaction(t);
-
-        genesisBlock.setTime(1231006505L);
-        genesisBlock.solve();
-        
-        return genesisBlock;
     }
 
     public static final int TARGET_TIMESPAN = 14 * 24 * 60 * 60; // 2 weeks per

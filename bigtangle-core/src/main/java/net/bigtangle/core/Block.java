@@ -672,14 +672,14 @@ public class Block extends Message {
                 // Is our proof of work valid yet?
                 if (checkProofOfWork(false))
                     return;
-                
+
                 // No, so increment the nonce and try again.
                 setNonce(getNonce() + 1);
 
                 // Find Equihash solution for this configuration
                 if (NetworkParameters.USE_EQUIHASH) {
                     equihashProof = EquihashSolver.calculateProof(params.equihashN, params.equihashK, getHash());
-                } 
+                }
             } catch (VerificationException e) {
                 throw new RuntimeException(e); // Cannot happen.
             }
@@ -721,7 +721,7 @@ public class Block extends Message {
         // blocks.
 
         // Equihash
-        if (NetworkParameters.USE_EQUIHASH) 
+        if (NetworkParameters.USE_EQUIHASH)
             if (!EquihashSolver.testProof(params.equihashN, params.equihashK, getHash(), getEquihashProof()))
                 return false;
 
@@ -842,7 +842,7 @@ public class Block extends Message {
     }
 
     /**
-     * Verify the transactions on a block.
+     * Verify the transactions on a block partly (for solidity).
      *
      * @param height
      *            block height, if known, or -1 otherwise. If provided, used to
@@ -850,32 +850,40 @@ public class Block extends Message {
      * @throws VerificationException
      *             if there was an error verifying the block.
      */
-    public void checkTransactions(final long height) throws VerificationException {
+    public void checkTransactionSolidity(final long height) throws VerificationException {
         // The transactions must adhere to their block type rules
         if (blocktype == NetworkParameters.BLOCKTYPE_TRANSFER) {
-            // TODO change to for int i = 0 and fix generation such that no
-            // coinbase is generated
+            // TODO no coinbases
             for (int i = 1; i < transactions.size(); i++) {
                 if (transactions.get(i).isCoinBase())
                     throw new VerificationException("TX " + i + " is coinbase when it should not be.");
             }
         } else if (blocktype == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
-            for (int i = 0; i < transactions.size(); i++) {
-                if (!transactions.get(i).isCoinBase())
-                    throw new VerificationException("TX " + i + " is not coinbase when it should be.");
-            }
-            /*
-             * TODO implement: there must be only one tx coinbase transaction
-             * token ids must be equal to blocks token id token issuance sum
-             * must not overflow (less than x...) signature for coinbases must
-             * be correct (equal to pubkey hash of tokenid)
-             */
+            if (transactions.size() != 1)
+                throw new VerificationException("Too many or too few transactions for token creation.");
+
+            if (!transactions.get(0).isCoinBase())
+                throw new VerificationException("TX is not coinbase when it should be.");
+
+            // TODO token ids of tx must be equal to blocks token id
+            // TODO token issuance sum must not overflow
+            // TODO signature for coinbases must be correct (equal to pubkey
+            // hash of tokenid)
         } else if (blocktype == NetworkParameters.BLOCKTYPE_REWARD) {
-            // TODO sanity check: validity set to true means reward has been
-            // calculated locally
-            // TODO check that there is only one empty tx with correct data
-            // (long fromheight)
-            // TODO check that fromHeight is valid (c * rewardInterval)
+            if (transactions.size() != 1)
+                throw new VerificationException("Too many or too few transactions for token creation.");
+
+            if (!transactions.get(0).isCoinBase())
+                throw new VerificationException("TX is not coinbase when it should be.");
+
+            // Check that the tx has correct data (long fromHeight)
+            try {
+                long u = Utils.readInt64(transactions.get(0).getData(), 0);
+                if (u % NetworkParameters.REWARD_HEIGHT_INTERVAL != 0)
+                    throw new VerificationException("Invalid fromHeight");
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw new VerificationException(e);
+            }
         }
     }
 
@@ -1186,7 +1194,7 @@ public class Block extends Message {
         adjustLength(transactions.size(), coinbase.length);
     }
 
-    static final byte[] EMPTY_BYTES = new byte[32];
+    public static final byte[] EMPTY_BYTES = new byte[32];
 
     /**
      * Returns a solved block that builds on top of this one. This exists for
@@ -1201,6 +1209,7 @@ public class Block extends Message {
             Sha256Hash prevBranchBlockHash, byte[] mineraddress) {
         Block b = new Block(params, version);
         // b.setDifficultyTarget(difficultyTarget);
+        // TODO clear coinbases
         b.addCoinbaseTransaction(pubKey, coinbaseValue);
         b.setMineraddress(mineraddress);
         if (to != null) {

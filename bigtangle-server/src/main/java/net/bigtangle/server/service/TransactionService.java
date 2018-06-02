@@ -45,29 +45,25 @@ import net.bigtangle.wallet.DefaultCoinSelector;
  */
 @Service
 public class TransactionService {
-    @Autowired
-    protected FullPrunedBlockStore blockStore;
-
-    @Autowired
-    private TipsService tipService;
-
-    protected CoinSelector coinSelector = new DefaultCoinSelector();
-
-    @Autowired
-    private BlockService blockService;
 
     @Autowired
     protected FullPrunedBlockStore store;
-
+    @Autowired
+    private BlockService blockService;
+    @Autowired
+    protected TipsService tipService;
+    @Autowired
+    protected MilestoneService milestoneService;
+    @Autowired
+    private ValidatorService validatorService;
     @Autowired
     protected NetworkParameters networkParameters;
     @Autowired
-    private KafkaConfiguration kafkaConfiguration;
-
-    @Autowired
-    MilestoneService milestoneService;
+    protected KafkaConfiguration kafkaConfiguration;
 
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
+
+    protected CoinSelector coinSelector = new DefaultCoinSelector();
 
     @Autowired
     TaskExecutor taskExecutor;
@@ -113,6 +109,7 @@ public class TransactionService {
         byte[] pubKey = Utils.HEX.decode(pubKeyHex);
         byte[] tokenid = Utils.HEX.decode(tokenHex);
         Coin coin = Coin.valueOf(amount, tokenid);
+        // TODO why is there no TokenInfo here?
         Block block = createGenesisBlock(coin, tokenid, pubKey, null);
         return block.bitcoinSerialize();
     }
@@ -131,12 +128,26 @@ public class TransactionService {
         return block;
     }
 
-    public boolean getUTXOSpent(TransactionInput txinput) {
+    public Block createMiningRewardBlock(long fromHeight) throws Exception {
+        Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
+        Block r1 = blockService.getBlock(tipsToApprove.getLeft());
+        Block r2 = blockService.getBlock(tipsToApprove.getRight());
+        long blocktype0 = NetworkParameters.BLOCKTYPE_REWARD;
+        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), blocktype0,
+                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+
+        FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
+        block.addTransaction(validatorService.generateMiningRewardTX(block, fromHeight));
+        block.solve();
+        blockgraph.add(block);
+        return block;
+    }
+
+    public boolean getUTXOSpent(TransactionOutPoint txout) {
         try {
-            if (txinput.isCoinBase())
+            if (txout.isCoinBase())
                 return false;
-            return blockStore.getTransactionOutput(txinput.getOutpoint().getHash(), txinput.getOutpoint().getIndex())
-                    .isSpent();
+            return store.getTransactionOutput(txout.getHash(), txout.getIndex()).isSpent();
         } catch (BlockStoreException e) {
             logger.debug("", e);
         }
@@ -145,7 +156,7 @@ public class TransactionService {
 
     public BlockEvaluation getUTXOSpender(TransactionOutPoint txout) {
         try {
-            return blockStore.getTransactionOutputSpender(txout.getHash(), txout.getIndex());
+            return store.getTransactionOutputSpender(txout.getHash(), txout.getIndex());
         } catch (BlockStoreException e) {
             e.printStackTrace();
         }
@@ -153,7 +164,7 @@ public class TransactionService {
     }
 
     public UTXO getUTXO(TransactionOutPoint out) throws BlockStoreException {
-        return blockStore.getTransactionOutput(out.getHash(), out.getIndex());
+        return store.getTransactionOutput(out.getHash(), out.getIndex());
     }
 
     @Autowired

@@ -148,8 +148,7 @@ public class TransactionInput extends ChildMessage {
      * Coinbase transactions have special inputs with hashes of zero. If this is such an input, returns true.
      */
     public boolean isCoinBase() {
-        return outpoint.getHash().equals(Sha256Hash.ZERO_HASH) &&
-                (outpoint.getIndex() & 0xFFFFFFFFL) == 0xFFFFFFFFL;  // -1 but all is serialized to the wire as unsigned int.
+        return outpoint.isCoinBase();  // -1 but all is serialized to the wire as unsigned int.
     }
 
     /**

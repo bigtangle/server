@@ -40,12 +40,18 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" + "    hash varbinary(32) NOT NULL,\n"
             + "    outputindex bigint NOT NULL,\n" + "    height bigint NOT NULL,\n"
             + "    coinvalue bigint NOT NULL,\n" + "    scriptbytes mediumblob NOT NULL,\n"
-            + "    toaddress varchar(35),\n" + "    addresstargetable bigint,\n" + "    coinbase boolean,\n"
+            + "    toaddress varchar(255),\n" + "    addresstargetable bigint,\n" + "    coinbase boolean,\n"
             + "    blockhash  varbinary(32)  NOT NULL,\n" + "    tokenid varchar(255),\n"
-            + "    fromaddress varchar(35),\n" + "    memo varchar(80),\n" + "    spent boolean NOT NULL,\n"
+            + "    fromaddress varchar(255),\n" + "    memo varchar(80),\n" + "    spent boolean NOT NULL,\n"
             + "    confirmed boolean NOT NULL,\n" + "    spendpending boolean NOT NULL,\n"
             + "    spenderblockhash  varbinary(32),\n"
             + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex) USING BTREE \n" + ")\n";
+    
+    private static final String CREATE_OUTPUT_MULTI_TABLE = "CREATE TABLE outputsmulti (\n" + "    hash varbinary(32) NOT NULL,\n"
+            + "    outputindex bigint NOT NULL,\n" 
+            + "    toaddress varchar(255) NOT NULL,\n"
+            + "    minimumsign bigint NOT NULL,\n"
+            + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex, toaddress) USING BTREE \n" + ")\n";
 
     private static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" + "    hash varbinary(32) NOT NULL,\n"
             + "    CONSTRAINT tips_pk PRIMARY KEY (hash) USING BTREE \n" + ")\n";
@@ -116,13 +122,9 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_TX_REWARD_TABLE = "CREATE TABLE txreward (\n"
             + "   blockhash varbinary(32) NOT NULL,\n" 
             + "   rewardamount bigint NOT NULL,\n"
+            + "   prevheight bigint NOT NULL,\n"
+            + "   confirmed boolean NOT NULL,\n" 
             + "   PRIMARY KEY (blockhash) )";
-    
-    private static final String CREATE_MINING_REWARD_CALCULATIONS_TABLE = "CREATE TABLE miningrewardcalculations (\n"
-            + "   blockhash varbinary(32) NOT NULL,\n" 
-            + "   mineraddress varbinary(255) NOT NULL,\n"
-            + "   rewardamount bigint NOT NULL,\n"
-            + "   PRIMARY KEY (blockhash, mineraddress) )";
 
     // Some indexes to speed up inserts
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_height_toaddress_idx ON outputs (hash, outputindex, height, toaddress) USING btree";
@@ -166,7 +168,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_MULTISIGN_TABLE);
         
         sqlStatements.add(CREATE_TX_REWARD_TABLE);
-        sqlStatements.add(CREATE_MINING_REWARD_CALCULATIONS_TABLE);
         
         return sqlStatements;
     }

@@ -203,6 +203,7 @@ public abstract class AbstractIntegrationTest {
         ECKey outKey = new ECKey();
         int height = 1;
 
+        // TODO no more spendable mining outputs...
         // Build some blocks on genesis block to create a spendable output
         Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
                 Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,
