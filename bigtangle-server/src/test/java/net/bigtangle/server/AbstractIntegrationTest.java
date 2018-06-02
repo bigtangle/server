@@ -41,7 +41,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.Coin;
@@ -92,13 +91,10 @@ public abstract class AbstractIntegrationTest {
         contextRoot = String.format(CONTEXT_ROOT_TEMPLATE, port);
     }
 
+    @Autowired
     protected FullPrunedBlockGraph blockgraph;
-
     @Autowired
     protected FullPrunedBlockStore store;
-
-    // @Autowired
-    // private BlockService blockService;
 
     @Autowired
     private MilestoneService milestoneService;
@@ -114,8 +110,6 @@ public abstract class AbstractIntegrationTest {
 
         store = dbConfiguration.store();
         store.resetStore();
-
-        blockgraph = new FullPrunedBlockGraph(networkParameters, store);
 
         walletKeys();
         testInitWallet();

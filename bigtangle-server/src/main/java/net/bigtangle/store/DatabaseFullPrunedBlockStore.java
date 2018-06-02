@@ -778,6 +778,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             updateBlockEvaluationRewardValid(params.getGenesisBlock().getHash(), true);
             insertTip(params.getGenesisBlock().getHash());
             insertTxReward(params.getGenesisBlock().getHash(), NetworkParameters.INITIAL_TX_REWARD, -NetworkParameters.REWARD_HEIGHT_INTERVAL);
+            updateTxRewardConfirmed(params.getGenesisBlock().getHash(), true);
         } catch (VerificationException e) {
             throw new RuntimeException(e); // Cannot happen.
         }

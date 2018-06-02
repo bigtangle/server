@@ -8,7 +8,6 @@ package net.bigtangle.core;
 import static net.bigtangle.core.Coin.FIFTY_COINS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import java.io.File;
@@ -25,21 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.collect.Lists;
 
-import net.bigtangle.core.Address;
-import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockStoreException;
-import net.bigtangle.core.Coin;
-import net.bigtangle.core.Context;
-import net.bigtangle.core.ECKey;
-import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.StoredUndoableBlock;
-import net.bigtangle.core.Transaction;
-import net.bigtangle.core.TransactionInput;
-import net.bigtangle.core.TransactionOutPoint;
-import net.bigtangle.core.TransactionOutput;
-import net.bigtangle.core.TransactionOutputChanges;
-import net.bigtangle.core.UTXO;
-import net.bigtangle.core.VerificationException;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.UnitTestParams;
 import net.bigtangle.script.Script;
@@ -66,6 +50,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
             return 10000;
         }
     };
+    @Autowired
     protected FullPrunedBlockGraph blockgraph;
     protected FullPrunedBlockStore store;
 
@@ -134,7 +119,6 @@ public abstract class AbstractFullPrunedBlockChainTest {
     @Test
     public void skipScripts() throws Exception {
         store = createStore(PARAMS, 10);
-        blockgraph = new FullPrunedBlockGraph(PARAMS, store);
 
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
@@ -174,7 +158,6 @@ public abstract class AbstractFullPrunedBlockChainTest {
     public void testFinalizedBlocks() throws Exception {
         final int UNDOABLE_BLOCKS_STORED = 10;
         store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
-        blockgraph = new FullPrunedBlockGraph(PARAMS, store);
         
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
@@ -236,7 +219,6 @@ public abstract class AbstractFullPrunedBlockChainTest {
         final int UNDOABLE_BLOCKS_STORED = 10;
         store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
         resetStore(store);
-        blockgraph = new FullPrunedBlockGraph(PARAMS, store);
 
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
@@ -291,7 +273,6 @@ public abstract class AbstractFullPrunedBlockChainTest {
     public void testUTXOProviderWithWallet() throws Exception {
         final int UNDOABLE_BLOCKS_STORED = 1000;
         store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
-        blockgraph = new FullPrunedBlockGraph(PARAMS, store);
 
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)

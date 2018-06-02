@@ -50,6 +50,8 @@ import net.bigtangle.core.VerificationException;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.Script.VerifyFlag;
 import net.bigtangle.server.service.BlockRequester;
+import net.bigtangle.server.service.TransactionService;
+import net.bigtangle.server.service.ValidatorService;
 import net.bigtangle.utils.ContextPropagatingThreadFactory;
 import net.bigtangle.wallet.Wallet;
 
@@ -83,6 +85,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     private BlockRequester blockRequester;
     @Autowired
     protected NetworkParameters networkParameters;
+    @Autowired
+    private ValidatorService validatorService;
 
     // Whether or not to execute scriptPubKeys before accepting a transaction
     // (i.e.
@@ -509,7 +513,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
             
             // Reward must have been assessed locally and passed. 
-            if (!blockStore.getBlockEvaluation(block.getHash()).isRewardValid())
+            // TODO don't assess here but do batched assessment
+            if (!blockStore.getBlockEvaluation(block.getHash()).isRewardValid() && !validatorService.assessMiningRewardBlock(block, height))
                 return false;
         }
 

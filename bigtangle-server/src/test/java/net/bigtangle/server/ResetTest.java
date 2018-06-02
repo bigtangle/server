@@ -12,7 +12,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.store.FullPrunedBlockGraph;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -26,11 +25,7 @@ public class ResetTest extends AbstractIntegrationTest {
     @Test
     //init 
     public void testReset() throws Exception {
-
         store = dbConfiguration.store();
         store.resetStore();
-
-        blockgraph = new FullPrunedBlockGraph(networkParameters, store);
-
     }
 }

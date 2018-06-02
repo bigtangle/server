@@ -57,8 +57,8 @@ public class ValidatorService {
     // Tries to update validity according to the mining consensus rules
     // Assumes reward block to not necessarily be valid
     // Returns true if block rewards are valid
-    public boolean assessMiningRewardBlock(Block header) throws BlockStoreException {
-        return assessMiningRewardBlock(header, false);
+    public boolean assessMiningRewardBlock(Block header, long height) throws BlockStoreException {
+        return assessMiningRewardBlock(header, height, false);
     }
 
     // If rewardvalid = false but it is still about to be added to the
@@ -66,8 +66,8 @@ public class ValidatorService {
     // we must calculate rewards anyways.
     // Assumes reward block to be valid, which is the case when trying to add to
     // milestone.
-    public boolean calculateMiningReward(Block header) throws BlockStoreException {
-        return assessMiningRewardBlock(header, true);
+    public boolean calculateMiningReward(Block header, long height) throws BlockStoreException {
+        return assessMiningRewardBlock(header, height, true);
     }
 
     // In ascending order of miner addresses, we create reward tx
@@ -133,7 +133,7 @@ public class ValidatorService {
             }
 
             BlockEvaluation prevBranchBlock = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
-            if (!queuedBlocks.contains(prevBranchBlock) && prevBlock != null) {
+            if (!queuedBlocks.contains(prevBranchBlock) && prevBranchBlock != null) {
                 queuedBlocks.add(prevBranchBlock);
                 blockQueue.add(prevBranchBlock);
             }
@@ -142,9 +142,7 @@ public class ValidatorService {
         // If the previous one has not been assessed yet, we need to assess
         // the previous one first
         if (!blockService.getBlockEvaluation(prevRewardBlock.getHash()).isRewardValid()) {
-            if (!assessMiningRewardBlock(prevRewardBlock)) {
-                logger.error("Not ready for new mining reward block: Make sure the previous one is confirmed first!");
-            }
+            logger.error("Not ready for new mining reward block: Make sure the previous one is confirmed first!");
         }
 
         // TX reward adjustments for next rewards
@@ -184,22 +182,23 @@ public class ValidatorService {
 
     // TODO rewrite this to batched computation of relevant reward block only,
     // e. g. go forward until confirmed reward block is found or up to the end
-    private boolean assessMiningRewardBlock(Block header, boolean assumeMilestone) throws BlockStoreException {
+    // Use above code not this one
+    private boolean assessMiningRewardBlock(Block header, long height, boolean assumeMilestone) throws BlockStoreException {
         BlockEvaluation blockEvaluation = blockService.getBlockEvaluation(header.getHash());
 
         // Once set valid, always valid
         if (blockEvaluation.isRewardValid())
             return true;
 
-        // Only solid mining reward blocks
-        if (header.getBlocktype() != NetworkParameters.BLOCKTYPE_REWARD || !blockEvaluation.isSolid())
+        // Only mining reward blocks
+        if (header.getBlocktype() != NetworkParameters.BLOCKTYPE_REWARD)
             return false;
 
         // Get interval height from tx data
         ByteBuffer bb = ByteBuffer.wrap(header.getTransactions().get(0).getData());
         long fromHeight = bb.getLong();
         long toHeight = fromHeight + networkParameters.getRewardHeightInterval() - 1;
-        if (blockEvaluation.getHeight() <= toHeight + networkParameters.getRewardHeightInterval())
+        if (height <= toHeight)
             return false;
 
         // Count how many blocks from the reward interval are approved
@@ -210,8 +209,10 @@ public class ValidatorService {
                 Comparator.comparingLong(BlockEvaluation::getHeight).reversed());
         HashSet<BlockEvaluation> queuedBlocks = new HashSet<>();
         HashMap<Address, Long> rewardCount = new HashMap<>();
-        blockQueue.add(blockEvaluation);
-        queuedBlocks.add(blockEvaluation);
+        blockQueue.add(blockService.getBlockEvaluation(header.getPrevBlockHash()));
+        blockQueue.add(blockService.getBlockEvaluation(header.getPrevBranchBlockHash()));
+        queuedBlocks.add(blockService.getBlockEvaluation(header.getPrevBlockHash()));
+        queuedBlocks.add(blockService.getBlockEvaluation(header.getPrevBranchBlockHash()));
 
         // Initial reward block must be defined
         if (fromHeight == 0)
@@ -257,13 +258,13 @@ public class ValidatorService {
 
             // Continue with approved blocks
             BlockEvaluation prevBlock = blockService.getBlockEvaluation(block.getPrevBlockHash());
-            if (!queuedBlocks.contains(prevBlock)) {
+            if (!queuedBlocks.contains(prevBlock) && prevBlock != null) {
                 queuedBlocks.add(prevBlock);
                 blockQueue.add(prevBlock);
             }
 
             BlockEvaluation prevBranchBlock = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
-            if (!queuedBlocks.contains(prevBranchBlock)) {
+            if (!queuedBlocks.contains(prevBranchBlock) && prevBranchBlock != null) {
                 queuedBlocks.add(prevBranchBlock);
                 blockQueue.add(prevBranchBlock);
             }
@@ -276,9 +277,7 @@ public class ValidatorService {
             // If the previous one has not been assessed yet, we need to assess
             // the previous one first
             if (!blockService.getBlockEvaluation(prevRewardBlock.getHash()).isRewardValid()) {
-                if (!assessMiningRewardBlock(prevRewardBlock, assumeMilestone)) {
-                    return false;
-                }
+                return false;
             }
 
             // TX reward adjustments for next rewards
@@ -291,7 +290,7 @@ public class ValidatorService {
 
             // Set valid if generated TX is equal to the block's TX
             // TODO this is still unnecessarily traversing twice
-            if (generateMiningRewardTX(header, fromHeight).getHash().equals(header.getHash())) {
+            if (generateMiningRewardTX(header, fromHeight).getHash().equals(header.getTransactions().get(0).getHash())) {
                 store.updateBlockEvaluationRewardValid(header.getHash(), true);
                 return true;
             } else {

@@ -70,8 +70,13 @@ public class MilestoneService {
             log.info("Milestone Update started");
             // clearCacheBlockEvaluations();
             Stopwatch watch = Stopwatch.createStarted();
-            updateSolidityAndHeight();
+            updateSolidityAndHeight(); 
             log.info("Solidity and height update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+
+            watch.stop();
+            watch = Stopwatch.createStarted();
+            updateMaintained();
+            log.info("Maintained update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
             watch.stop();
             watch = Stopwatch.createStarted();
@@ -92,11 +97,6 @@ public class MilestoneService {
             watch = Stopwatch.createStarted();
             updateMilestoneDepth();
             log.info("Milestonedepth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-
-            watch.stop();
-            watch = Stopwatch.createStarted();
-            updateMaintained();
-            log.info("Maintained update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
             // Optional: Trigger batched tip pair selection here
 

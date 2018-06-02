@@ -105,7 +105,6 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     @Test
     public void testMilestoneTestTangle1() throws Exception {
         store.resetStore();
-        blockgraph = new FullPrunedBlockGraph(networkParameters, store);
 
         Block b1 = createAndAddNextBlockCoinbase(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
                 outKey.getPubKey(), networkParameters.getGenesisBlock().getHash());
@@ -333,7 +332,6 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     @Test
     public void testMilestoneTestTangle2() throws Exception {
         store.resetStore();
-        blockgraph = new FullPrunedBlockGraph(networkParameters, store);
 
         List<Block> blocks = createLinearTangle(80);
         milestoneService.update();
@@ -348,7 +346,6 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     @Test
     public void testMiningReward() throws Exception {
         store.resetStore();
-        blockgraph = new FullPrunedBlockGraph(networkParameters, store);
 
         Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
                 Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0, networkParameters.getGenesisBlock().getHash());
@@ -360,6 +357,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         }
         
         transactionService.createMiningRewardBlock(0);
+        milestoneService.update();
         milestoneService.update();
     }
 

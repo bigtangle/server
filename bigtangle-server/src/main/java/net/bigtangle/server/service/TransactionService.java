@@ -49,6 +49,8 @@ public class TransactionService {
     @Autowired
     protected FullPrunedBlockStore store;
     @Autowired
+    protected FullPrunedBlockGraph blockgraph;
+    @Autowired
     private BlockService blockService;
     @Autowired
     protected TipsService tipService;
@@ -136,7 +138,6 @@ public class TransactionService {
         Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), blocktype0,
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
 
-        FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
         block.addTransaction(validatorService.generateMiningRewardTX(block, fromHeight));
         block.solve();
         blockgraph.add(block);
