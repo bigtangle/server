@@ -878,6 +878,8 @@ public class Block extends Message {
 
             // Check that the tx has correct data (long fromHeight)
             try {
+                if (transactions.get(0).getData() == null)
+                    throw new VerificationException("Missing fromHeight");
                 long u = Utils.readInt64(transactions.get(0).getData(), 0);
                 if (u % NetworkParameters.REWARD_HEIGHT_INTERVAL != 0)
                     throw new VerificationException("Invalid fromHeight");

@@ -173,6 +173,11 @@ public class ValidatorService {
         TransactionInput input = new TransactionInput(networkParameters, tx,
                 Script.createInputScript(Block.EMPTY_BYTES, Block.EMPTY_BYTES));
         tx.addInput(input);
+        
+        // Add the type-specific data (fromHeight)
+        byte[] data = new byte[8];
+        Utils.uint64ToByteArrayLE(fromHeight, data, 0);
+        tx.setData(data);
 
         return tx;
     }

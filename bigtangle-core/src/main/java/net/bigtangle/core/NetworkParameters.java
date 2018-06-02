@@ -74,7 +74,7 @@ public abstract class NetworkParameters {
     public static final long BLOCKTYPE_REWARD = 2; // Reward of mining
     
     // Use Equihash
-    public static final boolean USE_EQUIHASH = true;
+    public static final boolean USE_EQUIHASH = false;
     
     public static final long INITIAL_TX_REWARD = 10L;
 
