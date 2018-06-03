@@ -63,15 +63,13 @@ public abstract class NetworkParameters {
     public static final byte[] DUMMY_TOKENID = HEX.decode("1111111111111111111111111111111111111111");
 
     // BLOCKTYPE
-    public static final long BLOCKTYPE_INITIAL = 0; // Genesis Block for a
-                                                    // token, only onetime
+    public static final long BLOCKTYPE_INITIAL = 0; // Genesis Block of system 
     public static final long BLOCKTYPE_TRANSFER = 1; // normal transfer of token
-    public static final long BLOCKTYPE_TOKEN_CREATION= 3; // Genesis Block
-                                                             // for a token,
-                                                             // multiple times
-                                                             // // value
+    public static final long BLOCKTYPE_TOKEN_CREATION= 3; // custom token creation
 
     public static final long BLOCKTYPE_REWARD = 2; // Reward of mining
+    
+    public static final long BLOCKTYPE_USERDATA = 4; // user defined data 
     
     // Use Equihash
     public static final boolean USE_EQUIHASH = false;
