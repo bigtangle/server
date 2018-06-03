@@ -35,6 +35,10 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    wasundoable boolean NOT NULL,\n" + "    prevblockhash  varbinary(32) NOT NULL,\n"
             + "    prevbranchblockhash  varbinary(32) NOT NULL,\n" + "    mineraddress varbinary(255),\n"
             + "    tokenid varbinary(255),\n" + "    blocktype bigint NOT NULL,\n"
+            + "    rating bigint ,\n" + "    depth bigint,\n"
+            + "    cumulativeweight  bigint ,\n" + "    solid boolean ,\n" 
+            + "    milestone boolean,\n" + "    milestonelastupdate bigint,\n" + "    milestonedepth bigint,\n"
+            + "    inserttime bigint,\n" + "    maintained boolean,\n" + "    rewardvalidityassessment boolean,\n"
             + "    CONSTRAINT headers_pk PRIMARY KEY (hash) USING BTREE \n" + ")";
 
     private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" + "    hash varbinary(32) NOT NULL,\n"
@@ -57,12 +61,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" + "    hash varbinary(32) NOT NULL,\n"
             + "    CONSTRAINT tips_pk PRIMARY KEY (hash) USING BTREE \n" + ")\n";
 
-    private static final String CREATE_BLOCKEVALUATION_TABLE = "CREATE TABLE blockevaluation (\n"
-            + "    blockhash varbinary(32) NOT NULL,\n" + "    rating bigint ,\n" + "    depth bigint,\n"
-            + "    cumulativeweight  bigint ,\n" + "    solid boolean NOT NULL,\n" + "    height bigint,\n"
-            + "    milestone boolean,\n" + "    milestonelastupdate bigint,\n" + "    milestonedepth bigint,\n"
-            + "    inserttime bigint,\n" + "    maintained boolean,\n" + "    rewardvalidityassessment boolean,\n"
-            + "    CONSTRAINT blockevaluation_pk PRIMARY KEY (blockhash)  USING BTREE )\n";
+ 
 
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
             + "    tokenid varchar(255) NOT NULL  ,\n" + "    tokenname varchar(255) ,\n"
@@ -146,7 +145,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_OUTPUT_TABLE);
         sqlStatements.add(CREATE_OUTPUT_MULTI_TABLE);
         sqlStatements.add(CREATE_TIPS_TABLE);
-        sqlStatements.add(CREATE_BLOCKEVALUATION_TABLE);
+     
         sqlStatements.add(CREATE_TOKENS_TABLE);
  
         sqlStatements.add(CREATE_EXCHANGE_TABLE);
@@ -208,11 +207,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         return UPDATE_BLOCKEVALUATION_DEPTH_SQL;
     }
 
-    @Override
-    public String getUpdateBlockEvaluationHeightSQL() {
-        return UPDATE_BLOCKEVALUATION_HEIGHT_SQL;
-    }
-
+   
     @Override
     public String getUpdateBlockEvaluationMilestoneSQL() {
         return UPDATE_BLOCKEVALUATION_MILESTONE_SQL;

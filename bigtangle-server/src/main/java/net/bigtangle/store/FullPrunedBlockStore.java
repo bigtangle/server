@@ -170,10 +170,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public BlockEvaluation getBlockEvaluation(Sha256Hash hash) throws BlockStoreException;
 
-    public void insertBlockEvaluation(BlockEvaluation blockEvaluation) throws BlockStoreException;
-
-    public void removeBlockEvaluation(Sha256Hash hash) throws BlockStoreException;
-
     public long getMaxSolidHeight() throws BlockStoreException;
 
     public List<Sha256Hash> getNonSolidBlocks() throws BlockStoreException;
@@ -195,7 +191,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void updateBlockEvaluationSolid(Sha256Hash blockhash, boolean b) throws BlockStoreException;
 
-    public void updateBlockEvaluationHeight(Sha256Hash blockhash, long i) throws BlockStoreException;
+     
 
     public void updateBlockEvaluationCumulativeweight(Sha256Hash blockhash, long i) throws BlockStoreException;
 

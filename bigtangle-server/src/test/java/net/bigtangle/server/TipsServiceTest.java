@@ -68,13 +68,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         assertEquals(true, blockEvaluation.isSolid());
         assertEquals(0, blockEvaluation.getMilestoneDepth());
             
-        int i = 0;
-        for (Block block : blocks) {
-            if (i % 2 == 0) {
-                this.store.removeBlockEvaluation(block.getHash());
-            }
-            i++;
-        }
+    
     }
 
     @Autowired

@@ -400,14 +400,7 @@ public abstract class MemoryFullPrunedBlockStore implements FullPrunedBlockStore
         return null;
     }
 
-    @Override
-    public void insertBlockEvaluation(BlockEvaluation blockEvaluation) throws BlockStoreException {
-    }
-
-    @Override
-    public void removeBlockEvaluation(Sha256Hash hash) throws BlockStoreException {
-    }
-
+ 
 	@Override
 	public long getMaxSolidHeight() throws BlockStoreException {
 		return 0;
@@ -442,10 +435,7 @@ public abstract class MemoryFullPrunedBlockStore implements FullPrunedBlockStore
 	public void updateBlockEvaluationSolid(Sha256Hash blockhash, boolean b) {
 	}
 
-	@Override
-	public void updateBlockEvaluationHeight(Sha256Hash blockhash, long i) {
-	}
-
+	 
 	@Override
 	public void updateBlockEvaluationCumulativeweight(Sha256Hash blockhash, long i) {
 	}

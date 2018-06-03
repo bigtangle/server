@@ -171,11 +171,7 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
         return getUpdate() + " blockevaluation SET depth = ? WHERE blockhash = ?";
     }
 
-    @Override
-    public String getUpdateBlockEvaluationHeightSQL() {
-        return getUpdate() + " blockevaluation SET height = ? WHERE blockhash = ?";
-    }
-
+   
     @Override
     public String getUpdateBlockEvaluationMilestoneSQL() {
         return getUpdate() + " blockevaluation SET milestone = ? WHERE blockhash = ?";

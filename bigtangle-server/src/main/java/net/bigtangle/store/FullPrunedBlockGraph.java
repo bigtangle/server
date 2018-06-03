@@ -477,7 +477,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
 
         // Update evaluations
-        blockStore.updateBlockEvaluationHeight(block.getHash(), height);
         blockStore.updateBlockEvaluationSolid(block.getHash(), true);
 
         // Update tips table
