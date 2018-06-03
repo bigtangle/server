@@ -72,6 +72,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.UTXO;
+import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.UnitTestParams;
@@ -534,36 +535,28 @@ public class Main extends Application {
 
     @SuppressWarnings("unchecked")
     public static List<UTXO> getUTXOWithECKeyList(List<ECKey> ecKeys, String tokenid) throws Exception {
-        List<UTXO> listUTXO = new ArrayList<UTXO>();
-        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        List<String> pubKeyHashs = new ArrayList<String>();
+
         for (ECKey ecKey : ecKeys) {
-            String response = OkHttp3Util.post(ContextRoot + "getOutputs", ecKey.getPubKeyHash());
-            final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-            if (data == null || data.isEmpty()) {
-                return listUTXO;
-            }
-            List<Map<String, Object>> outputs = (List<Map<String, Object>>) data.get("outputs");
-            if (outputs == null || outputs.isEmpty()) {
-                return listUTXO;
-            }
-            for (Map<String, Object> object : outputs) {
-                UTXO utxo = MapToBeanMapperUtil.parseUTXO(object);
-                if (!(utxo.getTokenid().equals(tokenid))) {
-                    continue;
-                }
-                if (utxo.getValue().getValue() > 0) {
-                    listUTXO.add(utxo);
-                }
-            }
+            pubKeyHashs.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
         }
-        return listUTXO;
+        return getUTXOWithPubKeyHash(pubKeyHashs, tokenid);
     }
 
     @SuppressWarnings("unchecked")
     public static List<UTXO> getUTXOWithPubKeyHash(byte[] pubKeyHash, String tokenid) throws Exception {
+        List<String> pubKeyHashs = new ArrayList<String>();
+        pubKeyHashs.add(Utils.HEX.encode(pubKeyHash));
+        return getUTXOWithPubKeyHash(pubKeyHashs, tokenid);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static List<UTXO> getUTXOWithPubKeyHash(List<String> pubKeyHashs, String tokenid) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
-        String response = OkHttp3Util.post(ContextRoot + "getOutputs", pubKeyHash);
+
+        String response = OkHttp3Util.post(ContextRoot + "getOutputs",
+                Json.jsonmapper().writeValueAsString(pubKeyHashs).getBytes());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         if (data == null || data.isEmpty()) {
             return listUTXO;
@@ -585,7 +578,10 @@ public class Main extends Application {
     }
 
     public static Coin calculateTotalUTXOList(byte[] pubKeyHash, String tokenid) throws Exception {
-        List<UTXO> listUTXO = getUTXOWithPubKeyHash(pubKeyHash, tokenid);
+        List<String> pubKeyHashs = new ArrayList<String>();
+        pubKeyHashs.add(Utils.HEX.encode(pubKeyHash));
+
+        List<UTXO> listUTXO = getUTXOWithPubKeyHash(pubKeyHashs, tokenid);
         Coin amount = Coin.valueOf(0, tokenid);
         if (listUTXO == null || listUTXO.isEmpty()) {
             return amount;
@@ -598,18 +594,18 @@ public class Main extends Application {
 
     public boolean sendMessage(byte[] data) throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
-       String resp= OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", data);
-                @SuppressWarnings("unchecked")
-       HashMap<String, Object> respRes = Json.jsonmapper().readValue(resp, HashMap.class);
-       int errorcode = (Integer) respRes.get("errorcode");
-      if (errorcode > 0) {
-           String message = (String) respRes.get("message");
-           GuiUtils.informationalAlert( message, Main.getText("ex_c_d1"));
-           return false;
-       }
-       // sentEmpstyBlock(2);
+        String resp = OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", data);
+        @SuppressWarnings("unchecked")
+        HashMap<String, Object> respRes = Json.jsonmapper().readValue(resp, HashMap.class);
+        int errorcode = (Integer) respRes.get("errorcode");
+        if (errorcode > 0) {
+            String message = (String) respRes.get("message");
+            GuiUtils.informationalAlert(message, Main.getText("ex_c_d1"));
+            return false;
+        }
+        // sentEmpstyBlock(2);
         return true;
-        
+
     }
 
     public static boolean checkResponse(String resp) throws JsonParseException, JsonMappingException, IOException {

@@ -99,8 +99,12 @@ public class DispatcherController {
                 break;
 
             case getOutputs: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                List<String> keyStrHex000 = Json.jsonmapper().readValue(reqStr, List.class);
                 Set<byte[]> pubKeyHashs = new HashSet<byte[]>();
-                pubKeyHashs.add(bodyByte);
+                for (String keyStrHex : keyStrHex000) {
+                    pubKeyHashs.add(Utils.HEX.decode(keyStrHex));
+                }
                 AbstractResponse response = walletService.getAccountOutputs(pubKeyHashs);
                 this.outPrintJSONString(httpServletResponse, response);
             }

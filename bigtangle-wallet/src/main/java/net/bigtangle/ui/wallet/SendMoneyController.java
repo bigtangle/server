@@ -342,7 +342,10 @@ public class SendMoneyController {
         byte[] buf = null;
         try {
             List<UTXO> outputs = new ArrayList<UTXO>();
-            outputs.addAll(Main.getUTXOWithPubKeyHash(toAddress00.getHash160(), null));
+            List<String> pubKeyHashs = new ArrayList<String>();
+            pubKeyHashs.add(Utils.HEX.encode(toAddress00.getHash160()));
+
+            outputs.addAll(Main.getUTXOWithPubKeyHash(pubKeyHashs, null));
             outputs.addAll(Main.getUTXOWithECKeyList(Main.bitcoin.wallet().walletKeys(aesKey), toCoin.getTokenHex()));
 
             SendRequest req = SendRequest.to(toAddress00, toCoin);

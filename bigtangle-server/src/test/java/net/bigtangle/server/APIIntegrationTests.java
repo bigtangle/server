@@ -134,7 +134,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public void testCreateTransaction() throws Exception {
         byte[] data = getAskTransactionBlock();
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        //no solve  get error code
+        // no solve get error code
         MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.saveBlock.name())
                 .content(block.bitcoinSerialize());
         MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
@@ -148,13 +148,14 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public void testTransactionAndGetOutputs() throws Exception {
         ECKey toKey = createWalletAndAddCoin();
 
-        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getOutputs.name())
-                .content(toKey.getPubKeyHash());
-        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
-        String response = mvcResult.getResponse().getContentAsString();
-        logger.info("testGetBalances resp : " + response);
+        List<String> pubKeyHashs = new ArrayList<String>();
+        pubKeyHashs.add(Utils.HEX.encode(toKey.getPubKeyHash()));
+
+        String response = OkHttp3Util.post(contextRoot + "getOutputs",
+                Json.jsonmapper().writeValueAsString(pubKeyHashs).getBytes("UTF-8"));
 
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+
         List<Map<String, Object>> outputs0 = (List<Map<String, Object>>) data.get("outputs");
         List<UTXO> outputs = new ArrayList<UTXO>();
         for (Map<String, Object> map : outputs0) {
@@ -190,7 +191,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         milestoneService.update();
         return toKey;
     }
- 
+
     @Test
     public void testSpringBootGetBlockEvaluations() throws Exception {
         ECKey ecKey = new ECKey();
@@ -879,9 +880,9 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
             transaction.setDatasignatire(Json.jsonmapper().writeValueAsBytes(multiSignBies));
             checkResponse(OkHttp3Util.post(contextRoot + "multiSign", block0.bitcoinSerialize()));
-            
+
         }
-        //checkBalance(tokenid, ecKeys );  
+        // checkBalance(tokenid, ecKeys );
     }
 
     @Test

@@ -4364,9 +4364,18 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         try {
      
             List<TransactionOutput> candidates = new ArrayList<TransactionOutput>();
-            for (ECKey ecKey : walletKeys(null)) {
+            
+            List<String> pubKeyHashs = new ArrayList<String>();
 
-                String response = OkHttp3Util.post(this.serverurl + "getOutputs", ecKey.getPubKeyHash());
+            for (ECKey ecKey :  walletKeys(null)) {
+  
+                pubKeyHashs.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
+            }
+           
+            String response = OkHttp3Util.post(this.serverurl + "getOutputs",
+                    Json.jsonmapper().writeValueAsString(pubKeyHashs).getBytes("UTF-8"));
+            
+           
                 final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
                 List<UTXO> outputs = new ArrayList<UTXO>();
                 for (Map<String, Object> map : (List<Map<String, Object>>) data.get("outputs")) {
@@ -4377,7 +4386,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
                 for (UTXO output : outputs) {
                     candidates.add(new FreeStandingTransactionOutput(this.params, output, 0));  
                 }
-            }
+             
             return candidates;
         } catch (Exception e) {
             e.printStackTrace();
