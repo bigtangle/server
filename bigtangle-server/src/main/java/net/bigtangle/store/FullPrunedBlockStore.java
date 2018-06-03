@@ -239,23 +239,18 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void saveTokens(String tokenid, String tokenname, String description, String url, long signnumber,
             boolean multiserial, boolean asmarket, boolean tokenstop) throws BlockStoreException;
 
-    public void saveOrderPublish(OrderPublish orderPublish) throws BlockStoreException;
-
-    public void saveOrderMatch(OrderMatch orderMatch) throws BlockStoreException;
-
-    public List<OrderPublish> getOrderPublishListWithCondition(Map<String, Object> request) throws BlockStoreException;
-
+ 
     public void saveExchange(Exchange exchange) throws BlockStoreException;
 
     public List<Exchange> getExchangeListWithAddress(String address) throws BlockStoreException;
 
     public void updateExchangeSign(String orderid, String signtype, byte[] data) throws BlockStoreException;
 
-    public OrderPublish getOrderPublishByOrderid(String orderid) throws BlockStoreException;
+    
 
     public Exchange getExchangeInfoByOrderid(String orderid) throws BlockStoreException;
 
-    public void updateOrderPublishState(String orderid, int state) throws BlockStoreException;
+    
 
     public List<BlockEvaluation> getSearchBlockEvaluations(List<String> address) throws BlockStoreException;
 
@@ -268,8 +263,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void streamBlocks(long heightstart, KafkaMessageProducer kafkaMessageProducer) throws BlockStoreException;
 
-    public List<OrderPublish> getOrderPublishListWithNotMatch() throws BlockStoreException;
-
+    
     public List<MultiSignAddress> getMultiSignAddressListByTokenid(String tokenid) throws BlockStoreException;
 
     public void insertMultiSignAddress(MultiSignAddress multiSignAddress) throws BlockStoreException;

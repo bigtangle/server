@@ -92,8 +92,7 @@ public class PhoenixStoreTest extends AbstractFullPrunedBlockChainTest {
         sqlStatements.add(DatabaseFullPrunedBlockStore.DROP_TIPS_TABLE);
         sqlStatements.add(DatabaseFullPrunedBlockStore.DROP_BLOCKEVALUATION_TABLE);
         sqlStatements.add(DatabaseFullPrunedBlockStore.DROP_TOKENS_TABLE);
-        sqlStatements.add(DatabaseFullPrunedBlockStore.DROP_ORDERPUBLISH_TABLE);
-        sqlStatements.add(DatabaseFullPrunedBlockStore.DROP_ORDERMATCH_TABLE);
+      
         sqlStatements.add(DatabaseFullPrunedBlockStore.DROP_EXCHANGE_TABLE);
         return sqlStatements;
     }

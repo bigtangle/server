@@ -57,11 +57,7 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
             + "    tokenid blob  ,\n" + "    tokenname text ,\n" + "    amount bigint ,\n" + "    description text ,\n"
             + "    blocktype bigint ,\n" + "    PRIMARY KEY (tokenid) \n)";
 
-    private static final String CREATE_ORDERPUBLISH_TABLE = "CREATE TABLE IF NOT EXISTS  " + " bigtangle."
-            + "orderpublish (\n" + "   orderid text ,\n" + "   address text,\n" + "   tokenid text,\n"
-            + "   type bigint,\n" + "   validateto timestamp,\n" + "   validatefrom timestamp,\n" + "   price bigint,\n"
-            + "   amount bigint,\n" + "   state bigint,\n" + "   market text,\n" + "   PRIMARY KEY (orderid) )";
-
+    
     private static final String CREATE_ORDERMATCH_TABLE = "CREATE TABLE IF NOT EXISTS  " + " bigtangle."
             + "ordermatch (\n" + "   matchid text ,\n" + "   restingOrderId text,\n" + "   incomingOrderId text,\n"
             + "   type bigint,\n" + "   price bigint,\n" + "   executedQuantity bigint,\n"
@@ -108,7 +104,7 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_TIPS_TABLE);
         sqlStatements.add(CREATE_BLOCKEVALUATION_TABLE);
         sqlStatements.add(CREATE_TOKENS_TABLE);
-        sqlStatements.add(CREATE_ORDERPUBLISH_TABLE);
+ 
         sqlStatements.add(CREATE_ORDERMATCH_TABLE);
         sqlStatements.add(CREATE_EXCHANGE_TABLE);
         return sqlStatements;

@@ -40,28 +40,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseFullPrunedBlockStore.class);
 
-    @Override
-    public void updateOrderPublishState(String orderid, int state) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            String sql = "UPSERT INTO  orderpublish (state, orderid) VALUES (?, ?)";
-            preparedStatement = conn.get().prepareStatement(sql);
-            preparedStatement.setInt(1, state);
-            preparedStatement.setString(2, orderid);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
+    
 
     @Override
     public List<Exchange> getExchangeListWithAddress(String address) throws BlockStoreException {

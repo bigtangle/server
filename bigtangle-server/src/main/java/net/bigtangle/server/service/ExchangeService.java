@@ -52,8 +52,8 @@ public class ExchangeService {
         Exchange exchange = this.store.getExchangeInfoByOrderid(orderid);
         if (exchange.getToSign() == 1 && exchange.getFromSign() == 1 && StringUtils.isNotBlank(exchange.getToOrderId())
                 && StringUtils.isNotBlank(exchange.getFromOrderId())) {
-            this.store.updateOrderPublishState(exchange.getToOrderId(), OrderState.finish.ordinal());
-            this.store.updateOrderPublishState(exchange.getFromOrderId(), OrderState.finish.ordinal());
+     //FIXME remote update       this.store.updateOrderPublishState(exchange.getToOrderId(), OrderState.finish.ordinal());
+     //       this.store.updateOrderPublishState(exchange.getFromOrderId(), OrderState.finish.ordinal());
         }
         return OkResponse.create();
 

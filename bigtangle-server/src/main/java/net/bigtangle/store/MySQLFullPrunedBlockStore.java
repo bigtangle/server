@@ -93,17 +93,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    sign int(11) NOT NULL,\n"
             + "    PRIMARY KEY (id) \n)";
 
-    private static final String CREATE_ORDERPUBLISH_TABLE = "CREATE TABLE orderpublish (\n"
-            + "   orderid varchar(255) NOT NULL,\n" + "   address varchar(255),\n" + "   tokenid varchar(255),\n"
-            + "   type integer,\n" + "   validateto datetime,\n" + "   validatefrom datetime,\n" + "   price bigint,\n"
-            + "   amount bigint,\n" + "   state integer,\n" + "   market varchar(255),\n"
-            + "   PRIMARY KEY (orderid) )";
-
-    private static final String CREATE_ORDERMATCH_TABLE = "CREATE TABLE ordermatch (\n"
-            + "   matchid varchar(255) NOT NULL,\n" + "   restingOrderId varchar(255),\n"
-            + "   incomingOrderId varchar(255),\n" + "   type integer,\n" + "   price bigint,\n"
-            + "   executedQuantity bigint,\n" + "   remainingQuantity bigint,\n" + "   PRIMARY KEY (matchid) )";
-
+ 
+ 
     private static final String CREATE_EXCHANGE_TABLE = "CREATE TABLE exchange (\n"
             + "   orderid varchar(255) NOT NULL,\n" 
             + "   fromAddress varchar(255),\n"
@@ -134,9 +125,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_OUTPUTS_HASH_INDEX = "CREATE INDEX outputs_hash_idx ON outputs (hash) USING btree";
     private static final String CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX = "CREATE INDEX exchange_fromAddress_idx ON exchange (fromAddress) USING btree";
     private static final String CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX = "CREATE INDEX exchange_toAddress_idx ON exchange (toAddress) USING btree";
-    private static final String CREATE_ORDERMATCH_RESTINGORDERID_TABLE_INDEX = "CREATE INDEX ordermatch_restingOrderId_idx ON ordermatch (restingOrderId) USING btree";
-    private static final String CREATE_ORDERMATCH_INCOMINGORDERID_TABLE_INDEX = "CREATE INDEX ordermatch_incomingOrderId_idx ON ordermatch (incomingOrderId) USING btree";
-
+  
     public MySQLFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
             String username, String password) throws BlockStoreException {
         super(params, DATABASE_CONNECTION_URL_PREFIX + hostname + "/" + dbName, fullStoreDepth, username, password,
@@ -159,8 +148,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_TIPS_TABLE);
         sqlStatements.add(CREATE_BLOCKEVALUATION_TABLE);
         sqlStatements.add(CREATE_TOKENS_TABLE);
-        sqlStatements.add(CREATE_ORDERPUBLISH_TABLE);
-        sqlStatements.add(CREATE_ORDERMATCH_TABLE);
+ 
         sqlStatements.add(CREATE_EXCHANGE_TABLE);
 
         sqlStatements.add(CREATE_MULTISIGNADDRESS_TABLE);
@@ -184,8 +172,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_OUTPUTS_TOADDRESS_INDEX);
         sqlStatements.add(CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX);
         sqlStatements.add(CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX);
-        sqlStatements.add(CREATE_ORDERMATCH_INCOMINGORDERID_TABLE_INDEX);
-        sqlStatements.add(CREATE_ORDERMATCH_RESTINGORDERID_TABLE_INDEX);
+ 
         return sqlStatements;
     }
 

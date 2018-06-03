@@ -40,7 +40,6 @@ import net.bigtangle.server.response.OkResponse;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.ExchangeService;
 import net.bigtangle.server.service.MultiSignService;
-import net.bigtangle.server.service.OrderPublishService;
 import net.bigtangle.server.service.TokensService;
 import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.server.service.WalletService;
@@ -62,9 +61,7 @@ public class DispatcherController {
     @Autowired
     private TokensService tokensService;
 
-    @Autowired
-    private OrderPublishService orderPublishService;
-
+ 
     @Autowired
     private ExchangeService exchangeService;
 
@@ -179,22 +176,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-
-            case saveOrder: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                AbstractResponse response = orderPublishService.saveOrderPublish(request);
-                this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
-
-            case getOrders: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                AbstractResponse response = orderPublishService.getOrderPublishListWithCondition(request);
-                this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
+ 
 
             case batchGetBalances: {
                 String reqStr = new String(bodyByte, "UTF-8");
