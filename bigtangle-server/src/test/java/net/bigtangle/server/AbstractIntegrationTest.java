@@ -165,30 +165,34 @@ public abstract class AbstractIntegrationTest {
     @SuppressWarnings("unchecked")
     public List<UTXO> testTransactionAndGetBalances(boolean withZero, List<ECKey> keys) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
-        for (ECKey toKey : keys) {
-            MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name())
-                    .content(toKey.getPubKeyHash());
-            MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk())
-                    .andReturn();
-            String response = mvcResult.getResponse().getContentAsString();
-            final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-            if (data != null && !data.isEmpty()) {
-                List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("outputs");
-                if (list != null && !list.isEmpty()) {
-                    for (Map<String, Object> object : list) {
-                        UTXO u = MapToBeanMapperUtil.parseUTXO(object);
-                        if (withZero) {
-                            listUTXO.add(u);
-                        } else {
-                            if (u.getValue().getValue() > 0)
-                                listUTXO.add(u);
-                        }
+        List<String> keyStrHex000 = new ArrayList<String>();
 
-                    }
-                }
-
-            }
+        for (ECKey ecKey : keys) {
+            // keyStrHex000.add(ecKey.toAddress(networkParameters).toString());
+            keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
         }
+        String response = OkHttp3Util.post(contextRoot + "batchGetBalances",
+                Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
+
+        // String response = mvcResult.getResponse().getContentAsString();
+        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+        if (data != null && !data.isEmpty()) {
+            List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("outputs");
+            if (list != null && !list.isEmpty()) {
+                for (Map<String, Object> object : list) {
+                    UTXO u = MapToBeanMapperUtil.parseUTXO(object);
+                    if (withZero) {
+                        listUTXO.add(u);
+                    } else {
+                        if (u.getValue().getValue() > 0)
+                            listUTXO.add(u);
+                    }
+
+                }
+            }
+
+        }
+
         return listUTXO;
     }
 
@@ -204,30 +208,16 @@ public abstract class AbstractIntegrationTest {
                 networkParameters.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock);
 
-        log.debug(rollingBlock.getTransactions().get(0).getOutputs().toString());
-        Block block = networkParameters.getDefaultSerializer().makeBlock(rollingBlock.bitcoinSerialize());
-        log.debug(block.getTransactions().get(0).getOutputs().toString());
-
-        Transaction transaction = rollingBlock.getTransactions().get(0);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
-
-        for (int i = 1; i < 3; i++) {
-            rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
-                    outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
-            blockgraph.add(rollingBlock);
-        }
-
         ECKey myKey = walletKeys.get(0);
+        Block b = createToken(myKey);
         // TODO why no milestone, the program hangs here
         milestoneService.update();
-        Block b = createToken(myKey);
-
+        // pay from outKey to mykey
+        Transaction transaction = rollingBlock.getTransactions().get(0);
+        TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
         rollingBlock = BlockForTest.createNextBlock(b, null, networkParameters.getGenesisBlock().getHash());
-
         Coin amount = Coin.valueOf(12345, NetworkParameters.BIGNETCOIN_TOKENID);
-
         Transaction t = new Transaction(networkParameters);
-
         t.setMemo("test memo");
 
         t.addOutput(new TransactionOutput(networkParameters, t, amount, myKey.toAddress(networkParameters)));
@@ -238,8 +228,11 @@ public abstract class AbstractIntegrationTest {
         blockgraph.add(rollingBlock);
 
         milestoneService.update();
-        List<UTXO> utxos = testTransactionAndGetBalances();
-
+        List<UTXO> ux = testTransactionAndGetBalances();
+        assertTrue(!ux.isEmpty());
+        for (UTXO u : ux) {
+            log.debug(u.toString());
+        }
     }
 
     public Block createToken(ECKey outKey) throws Exception {
@@ -264,17 +257,21 @@ public abstract class AbstractIntegrationTest {
     }
 
     public void checkResponse(String resp) throws JsonParseException, JsonMappingException, IOException {
+        checkResponse(resp, 0);
+    }
+
+    public void checkResponse(String resp, int code) throws JsonParseException, JsonMappingException, IOException {
         @SuppressWarnings("unchecked")
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
         int error = (Integer) result2.get("errorcode");
-        assertTrue(error == 0);
+        assertTrue(error == code);
     }
 
     public void checkBalance(String tokenid, List<ECKey> a) throws Exception {
         List<UTXO> ulist = testTransactionAndGetBalances(false, a);
         UTXO myutxo = null;
         for (UTXO u : ulist) {
-            if (tokenid.equals(  u.getTokenid() )) {
+            if (tokenid.equals(u.getTokenid())) {
                 myutxo = u;
                 break;
             }
