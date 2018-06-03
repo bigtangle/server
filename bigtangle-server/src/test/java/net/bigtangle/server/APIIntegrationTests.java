@@ -134,7 +134,13 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public void testCreateTransaction() throws Exception {
         byte[] data = getAskTransactionBlock();
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        reqCmdSaveBlock(block);
+        //no solve  get error code
+        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.saveBlock.name())
+                .content(block.bitcoinSerialize());
+        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
+        String r = mvcResult.getResponse().getContentAsString();
+        logger.info("testSaveBlock resp : " + r);
+        checkResponse(r, 100);
     }
 
     @SuppressWarnings("unchecked")
@@ -184,17 +190,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         milestoneService.update();
         return toKey;
     }
-
-    @Test
-    public void testSpringBootGetBalances() throws Exception {
-        ECKey ecKey = new ECKey();
-        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name())
-                .content(ecKey.getPubKeyHash());
-        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
-        String data = mvcResult.getResponse().getContentAsString();
-        logger.info("testGetBalances resp : " + data);
-    }
-
+ 
     @Test
     public void testSpringBootGetBlockEvaluations() throws Exception {
         ECKey ecKey = new ECKey();

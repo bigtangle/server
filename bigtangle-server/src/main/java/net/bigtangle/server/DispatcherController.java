@@ -84,13 +84,6 @@ public class DispatcherController {
             logger.info("reqCmd : {}, reqHex : {}, started.", reqCmd, Utils.HEX.encode(bodyByte));
             ReqCmd reqCmd0000 = ReqCmd.valueOf(reqCmd);
             switch (reqCmd0000) {
-            case getBalances: {
-                Set<byte[]> pubKeyHashs = new HashSet<byte[]>();
-                pubKeyHashs.add(bodyByte);
-                AbstractResponse response = walletService.getAccountBalanceInfo(pubKeyHashs);
-                this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
 
             case askTransaction: {
                 byte[] data = transactionService.askTransaction().array();

@@ -63,100 +63,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
     @Autowired
     private BlockService blockService;
 
-    @Test
-    public void getaaaBalance() throws Exception {
-        ECKey outKey = new ECKey();
-        int height = 1;
 
-        BlockEvaluation genesisEvaluation = blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash());
-        store.updateBlockEvaluationMilestone(genesisEvaluation.getBlockhash(), true);
-        blockService.updateSolid(genesisEvaluation, true);
-
-        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
-        blockgraph.add(rollingBlock);
-
-        // get the coinbase to spend
-        Transaction transaction = rollingBlock.getTransactions().get(0);
-        byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
-        for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
-            rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
-                    outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
-            blockgraph.add(rollingBlock);
-        }
-        rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
-                outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
-
-        milestoneService.update();
-        {
-            MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name())
-                    .content(outKey.getPubKeyHash());
-            MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk())
-                    .andReturn();
-            String response = mvcResult.getResponse().getContentAsString();
-            logger.info("outKey > testGetBalances resp : " + response);
-        }
-
-        ECKey toKey = new ECKey();
-        Coin amount0 = Coin.valueOf(3, NetworkParameters.BIGNETCOIN_TOKENID);
-        Coin amount1 = Coin.valueOf(2, NetworkParameters.BIGNETCOIN_TOKENID);
-
-        TransactionOutPoint spendableOutput0 = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
-        TransactionOutPoint spendableOutput1 = new TransactionOutPoint(networkParameters, 1, transaction.getHash());
-
-        // ImmutableList<ECKey> keys = ImmutableList.of(outKey, toKey);
-        // Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2,
-        // keys);
-
-        Transaction t = new Transaction(networkParameters);
-        t.addOutput(amount1, toKey);
-        t.addSignedInput(spendableOutput0, new Script(spendableOutputScriptPubKey), outKey);
-
-        // t.addOutput(amount0, outKey);
-        // t.addSignedInput(spendableOutput1, new
-        // Script(spendableOutputScriptPubKey), toKey);
-
-        // t.addOutput(new TransactionOutput(networkParameters, t, amount1,
-        // scriptPubKey.getProgram()));
-        // t.addSignedInput(spendableOutput1, scriptPubKey, toKey);
-
-        rollingBlock.addTransaction(t);
-        rollingBlock.solve();
-
-        blockgraph.add(rollingBlock);
-        milestoneService.update();
-
-        rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
-                outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
-        Transaction t0 = new Transaction(networkParameters);
-        t0.addOutput(amount0, outKey);
-        t0.addSignedInput(spendableOutput1, new Script(spendableOutputScriptPubKey), toKey);
-        rollingBlock.addTransaction(t0);
-        rollingBlock.solve();
-        try {
-            blockgraph.add(rollingBlock);
-        } catch (Exception e) {
-            // TODO: handle exception
-        }
-        milestoneService.update();
-
-        {
-            MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name())
-                    .content(toKey.getPubKeyHash());
-            MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk())
-                    .andReturn();
-            String response = mvcResult.getResponse().getContentAsString();
-            logger.info("toKey > testGetBalances resp : " + response);
-        }
-        {
-            MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getBalances.name())
-                    .content(outKey.getPubKeyHash());
-            MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk())
-                    .andReturn();
-            String response = mvcResult.getResponse().getContentAsString();
-            logger.info("outKey > testGetBalances resp : " + response);
-        }
-    }
 
     @Test
     public void getBalance() throws Exception {
@@ -164,12 +71,6 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
         ECKey outKey = new ECKey();
         int height = 1;
-        logger.debug(outKey.getPublicKeyAsHex());
-
-        
-        BlockEvaluation genesisEvaluation = blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash());
-        store.updateBlockEvaluationMilestone(genesisEvaluation.getBlockhash(), true);
-        blockService.updateSolid(genesisEvaluation, true);
 
         // Build some blocks on genesis block to create a spendable output
         Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
@@ -178,11 +79,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
         byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
-        for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
-            rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
-                    outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
-            blockgraph.add(rollingBlock);
-        }
+
         rollingBlock = BlockForTest.createNextBlock(rollingBlock, null, networkParameters.getGenesisBlock().getHash());
 
         // Create bitcoin spend of 1 BTA.
