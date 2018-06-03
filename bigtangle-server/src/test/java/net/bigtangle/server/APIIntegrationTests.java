@@ -135,10 +135,9 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         byte[] data = getAskTransactionBlock();
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         // no solve get error code
-        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.saveBlock.name())
-                .content(block.bitcoinSerialize());
-        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
-        String r = mvcResult.getResponse().getContentAsString();
+         String r = OkHttp3Util.post(contextRoot +  ReqCmd.saveBlock.name(),
+                Json.jsonmapper().writeValueAsString(block.bitcoinSerialize()).getBytes("UTF-8"));
+
         logger.info("testSaveBlock resp : " + r);
         checkResponse(r, 100);
     }
@@ -192,16 +191,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         return toKey;
     }
 
-    @Test
-    public void testSpringBootGetBlockEvaluations() throws Exception {
-        ECKey ecKey = new ECKey();
-        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getAllEvaluations.name())
-                .content(ecKey.getPubKeyHash());
-        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
-        String data = mvcResult.getResponse().getContentAsString();
-        logger.info("testGetBalances resp : " + data);
-    }
-
+  
     @Test
     public void testCreateMultiSigList() throws Exception {
         for (int i = 0; i < 4; i++) {
@@ -917,18 +907,14 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
     public byte[] getAskTransactionBlock() throws JsonProcessingException, Exception {
         final Map<String, Object> request = new HashMap<String, Object>();
-        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.askTransaction.name())
-                .content(toJson(request));
-        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
-        byte[] data = mvcResult.getResponse().getContentAsByteArray();
+          byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+                Json.jsonmapper().writeValueAsString(request));
         return data;
     }
 
     public void reqCmdSaveBlock(Block block) throws Exception, UnsupportedEncodingException {
-        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.saveBlock.name())
-                .content(block.bitcoinSerialize());
-        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
-        String data = mvcResult.getResponse().getContentAsString();
+             String data =  OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(),
+                block.bitcoinSerialize());
         logger.info("testSaveBlock resp : " + data);
         checkResponse(data);
     }

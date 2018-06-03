@@ -75,7 +75,7 @@ public abstract class AbstractIntegrationTest {
     public String contextRoot;
     public List<ECKey> walletKeys;
     public List<ECKey> wallet1Keys;
-    protected MockMvc mockMvc;
+ 
     WalletAppKit walletAppKit;
     protected static ObjectMapper objectMapper;
 
@@ -105,7 +105,7 @@ public abstract class AbstractIntegrationTest {
 
     @Before
     public void setUp() throws Exception {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webContext).build();
+       
         objectMapper = new ObjectMapper();
 
         store = dbConfiguration.store();
@@ -133,10 +133,7 @@ public abstract class AbstractIntegrationTest {
         return applicationContext;
     }
 
-    public MockMvc getMockMvc() {
-        return mockMvc;
-    }
-
+  
     public void walletKeys() throws Exception {
         KeyParameter aesKey = null;
         walletAppKit = new WalletAppKit(networkParameters, new File("../bigtangle-wallet"), "bigtangle");

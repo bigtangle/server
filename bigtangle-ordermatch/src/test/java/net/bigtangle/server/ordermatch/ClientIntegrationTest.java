@@ -81,4 +81,141 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         logger.info("getOrders resp : " + response);
     }
 
+    @SuppressWarnings("deprecation")
+    @Test
+    public void exchangeOrder() throws Exception {
+
+        // get token from wallet to spent
+        ECKey yourKey = walletAppKit1.wallet().walletKeys(null).get(0);
+
+        payToken(yourKey);
+        List<ECKey> keys = new ArrayList<ECKey>();
+        keys.add(yourKey);
+        List<UTXO> utxos = testTransactionAndGetBalances(false, keys);
+        UTXO yourutxo = utxos.get(0);
+        List<UTXO> ulist = testTransactionAndGetBalances();
+        UTXO myutxo = null;
+        for (UTXO u : ulist) {
+            if (Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGNETCOIN_TOKENID)) {
+                myutxo = u;
+            }
+        }
+
+        HashMap<String, Object> request = new HashMap<String, Object>();
+        request.put("address", yourutxo.getAddress());
+        request.put("tokenid", yourutxo.getTokenid());
+        request.put("type", 1);
+        request.put("price", 1000);
+        request.put("amount", 1000);
+        System.out.println("req : " + request);
+        // sell token order
+        String response = OkHttp3Util.post(contextRoot + ReqCmd.saveOrder.name(),
+                Json.jsonmapper().writeValueAsString(request).getBytes());
+        
+        request.put("address", myutxo.getAddress());
+        request.put("tokenid", yourutxo.getTokenid());
+        request.put("type", 2);
+        request.put("price", 1000);
+        request.put("amount", 1000);
+        System.out.println("req : " + request);
+        // buy token order
+          response = OkHttp3Util.post(contextRoot + ReqCmd.saveOrder.name(),
+                Json.jsonmapper().writeValueAsString(request).getBytes());
+
+        scheduleOrderMatchService.updateMatch();
+
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("address", myutxo.getAddress());
+          response = OkHttp3Util.post(contextRoot + "getExchange",
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("exchanges");
+        assertTrue(list.size() >= 1);
+        Map<String, Object> exchangemap = list.get(0);
+
+        
+        Address fromAddress00 = new Address(networkParameters, (String) exchangemap.get("fromAddress"));
+        Address toAddress00 = new Address(networkParameters, (String) exchangemap.get("toAddress"));
+        Coin fromAmount = Coin.valueOf( 
+                Long.parseLong( (String) exchangemap.get("fromAmount")), Utils.HEX.decode((String) exchangemap.get("fromTokenHex")));
+        Coin toAmount =  Coin.valueOf( 
+                        Long.parseLong( (String) exchangemap.get("toAmount")), Utils.HEX.decode((String) exchangemap.get("toTokenHex")));
+                   
+        SendRequest req = SendRequest.to(toAddress00,toAmount  );
+        req.tx.addOutput(fromAmount , fromAddress00 );
+        
+        HashMap<String, Address> addressResult = new HashMap<String, Address>();
+        addressResult.put((String) exchangemap.get("fromTokenHex"), toAddress00);
+        addressResult.put((String) exchangemap.get("toTokenHex"), fromAddress00);
+        
+        req.missingSigsMode = MissingSigsMode.USE_OP_ZERO;
+        ulist.addAll(utxos);
+        walletAppKit.wallet().completeTx(req, walletAppKit.wallet().transforSpendCandidates(ulist), false, addressResult);
+        walletAppKit.wallet().signTransaction(req);
+
+        byte[] a = req.tx.bitcoinSerialize();
+        HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
+        requestParam0.put("orderid", (String) exchangemap.get("orderid"));
+        requestParam0.put("dataHex", Utils.HEX.encode(a));
+        requestParam0.put("signtype", "to");
+
+        OkHttp3Util.post(contextRoot + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam0));
+  
+
+        Transaction transaction = (Transaction) networkParameters.getDefaultSerializer().makeTransaction(a);
+
+        // byte[] buf = BeanSerializeUtil.serializer(req.tx);
+        // Transaction transaction = BeanSerializeUtil.deserialize(buf,
+        // Transaction.class);
+
+        req = SendRequest.forTx(transaction);
+        walletAppKit1.wallet().signTransaction(req);
+        exchangeTokenComplete(req.tx); 
+        
+        HashMap<String, Object> requestParam1 = new HashMap<String, Object>();
+        requestParam1.put("orderid", (String) exchangemap.get("orderid"));
+        requestParam1.put("dataHex", Utils.HEX.encode(transaction.bitcoinSerialize()));
+        requestParam1.put("signtype", "from");
+        OkHttp3Util.post(contextRoot + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam1));
+    }
+    
+    public void exchangeTokenComplete(Transaction tx) throws Exception {
+        // get new Block to be used from server
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
+        rollingBlock.addTransaction(tx);
+        rollingBlock.solve();
+
+        String res = OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        System.out.println(res);
+    }
+
+    public void payToken(ECKey outKey) throws Exception {
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
+        logger.info("resp block, hex : " + Utils.HEX.encode(data));
+        // get other tokenid from wallet
+        UTXO utxo = null;
+        List<UTXO> ulist = testTransactionAndGetBalances();
+        for (UTXO u : ulist) {
+            if (!Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGNETCOIN_TOKENID)) {
+                utxo = u;
+            }
+        }
+        System.out.println(utxo.getValue());
+        //Coin baseCoin = utxo.getValue().subtract(Coin.parseCoin("10000", utxo.getValue().getTokenid()));
+        //System.out.println(baseCoin);
+        Address destination = outKey.toAddress(networkParameters);
+        SendRequest request = SendRequest.to(destination, utxo.getValue());
+        walletAppKit.wallet().completeTx(request);
+        rollingBlock.addTransaction(request.tx);
+        rollingBlock.solve();
+        OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        logger.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
+  
+    }
 }
