@@ -70,37 +70,8 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         String response = mvcResult.getResponse().getContentAsString();
         logger.info("searchBlock resp : " + response);
     }
-
-    @Test
-    public void saveOrder() throws Exception {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        HashMap<String, Object> request = new HashMap<String, Object>();
-        request.put("address", "111111111111111111111111111111111111111111111111111111");
-        request.put("tokenid", "222222222222222222222222222222222222222222222222222222");
-        request.put("type", 1);
-        request.put("price", 1);
-        request.put("amount", 100);
-        request.put("validateto", simpleDateFormat.format(new Date()));
-        request.put("validatefrom", simpleDateFormat.format(new Date()));
-
-        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.saveOrder.name())
-                .content(Json.jsonmapper().writeValueAsString(request));
-        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
-        String response = mvcResult.getResponse().getContentAsString();
-        logger.info("saveOrder resp : " + response);
-        this.getOrders();
-    }
-
-    @Test
-    public void getOrders() throws Exception {
-        HashMap<String, Object> request = new HashMap<String, Object>();
-        MockHttpServletRequestBuilder httpServletRequestBuilder = post(contextRoot + ReqCmd.getOrders.name())
-                .content(Json.jsonmapper().writeValueAsString(request));
-        MvcResult mvcResult = getMockMvc().perform(httpServletRequestBuilder).andExpect(status().isOk()).andReturn();
-        String response = mvcResult.getResponse().getContentAsString();
-        logger.info("getOrders resp : " + response);
-    }
-
+ 
+ 
     @Test
     public void getTokens() throws Exception {
         ECKey ecKey = new ECKey();
