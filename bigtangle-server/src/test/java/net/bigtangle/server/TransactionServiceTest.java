@@ -9,6 +9,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -44,6 +45,7 @@ import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
+import net.bigtangle.server.transaction.FreeStandingTransactionOutput;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.SendRequest;
 
@@ -240,7 +242,10 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
 
         Transaction multiSigTransaction = new Transaction(networkParameters);
 
-        Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, wallet1Keys);
+        List<ECKey> wallet1Keys_ = new ArrayList<ECKey>();
+        wallet1Keys_.add(wallet1Keys.get(0));
+        wallet1Keys_.add(wallet1Keys.get(1));
+        Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, wallet1Keys_);
 
         Coin amount0 = Coin.parseCoin("0.15", NetworkParameters.BIGNETCOIN_TOKENID);
         multiSigTransaction.addOutput(amount0, scriptPubKey);
@@ -259,11 +264,15 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         //TODO add new table for UTXO as outputsmulti _> 
         //UTXO write 
         //join and make this correct
-       // checkBalance(NetworkParameters.BIGNETCOIN_TOKENID_STRING, wallet1Keys);
+       checkBalance(NetworkParameters.BIGNETCOIN_TOKENID_STRING, wallet1Keys_);
         
         //find the transaction as input
       
-        TransactionOutput multisigOutput = request.tx.getOutput(1);
+       List<UTXO> ulist = testTransactionAndGetBalances(false, wallet1Keys_);
+       
+       TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, ulist.get(0), 0);
+       
+        //TransactionOutput multisigOutput = request.tx.getOutput(1);
         TransactionOutput o = request.tx.getOutput(0);
         
         Script multisigScript = o.getScriptPubKey();

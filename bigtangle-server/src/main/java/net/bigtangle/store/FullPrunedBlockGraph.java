@@ -34,6 +34,7 @@ import net.bigtangle.core.Context;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.StoredUndoableBlock;
@@ -75,6 +76,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     public FullPrunedBlockGraph(NetworkParameters networkParameters, FullPrunedBlockStore blockStore)
             throws BlockStoreException {
         this(Context.getOrCreate(networkParameters), blockStore);
+        this.networkParameters = networkParameters;
     }
 
     /**
@@ -606,6 +608,15 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                             Utils.HEX.encode(out.getValue().getTokenid()), false, false, false);
                     blockStore.addUnspentTransactionOutput(newOut);
 
+                    
+                    if (script.isSentToMultiSig()) {
+                        for (ECKey ecKey : script.getPubKeys()) {
+                            String toaddress = ecKey.toAddress(networkParameters).toBase58();
+                            OutputsMulti outputsMulti = new OutputsMulti(newOut.getHash(), toaddress, newOut.getIndex(), 0);
+                            this.blockStore.insertOutputsMulti(outputsMulti);
+                        }
+                    }
+                    
                     txOutsCreated.add(newOut);
                 }
                 if (!checkOutput(valueOut))

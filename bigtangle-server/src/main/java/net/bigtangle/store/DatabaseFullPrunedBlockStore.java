@@ -44,6 +44,7 @@ import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderMatch;
 import net.bigtangle.core.OrderPublish;
+import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.ProtocolException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
@@ -77,6 +78,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_HEADERS_TABLE = "DROP TABLE headers";
     public static String DROP_UNDOABLE_TABLE = "DROP TABLE undoableblocks";
     public static String DROP_OPEN_OUTPUT_TABLE = "DROP TABLE outputs";
+    public static String DROP_OUTPUTSMULTI_TABLE = "DROP TABLE outputsmulti";
     public static String DROP_TIPS_TABLE = "DROP TABLE tips";
     public static String DROP_BLOCKEVALUATION_TABLE = "DROP TABLE blockevaluation";
     public static String DROP_TOKENS_TABLE = "DROP TABLE tokens";
@@ -118,18 +120,39 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " INTO outputs (hash, outputindex, height, coinvalue, scriptbytes, toaddress, addresstargetable,"
             + " coinbase, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending)"
             + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?)";
+    
     protected String SELECT_OUTPUTS_SQL = "SELECT height, coinvalue, scriptbytes, coinbase, toaddress,"
             + " addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, "
             + "spendpending FROM outputs WHERE hash = ? AND outputindex = ?";
+    
     protected String DELETE_OUTPUTS_SQL = "DELETE FROM outputs WHERE hash = ? AND outputindex= ?";
 
-    protected String SELECT_TRANSACTION_OUTPUTS_SQL = "SELECT hash, coinvalue, scriptbytes, height, "
-            + "outputindex, coinbase, toaddress, addresstargetable, blockhash, tokenid, "
-            + "fromaddress, memo, spent, confirmed, spendpending FROM outputs where toaddress = ?";
-    protected String SELECT_TRANSACTION_OUTPUTS_TOKEN_SQL = "SELECT hash, coinvalue, "
-            + "scriptbytes, height, outputindex, coinbase, toaddress, addresstargetable,"
+//    protected String SELECT_TRANSACTION_OUTPUTS_SQL = "SELECT hash, coinvalue, scriptbytes, height, "
+//            + "outputindex, coinbase, toaddress, addresstargetable, blockhash, tokenid, "
+//            + "fromaddress, memo, spent, confirmed, spendpending FROM outputs where toaddress = ?";
+    
+    protected String SELECT_TRANSACTION_OUTPUTS_SQL = "SELECT " + "outputs.hash, coinvalue, scriptbytes, height, "
+            + " outputs.outputindex, coinbase, outputs.toaddress, addresstargetable, blockhash, tokenid, "
+            + " fromaddress, memo, spent, confirmed, spendpending "
+            + " FROM outputs LEFT JOIN outputsmulti "
+            + " ON outputs.hash = outputsmulti.hash AND outputs.outputindex = outputsmulti.outputindex "
+            + " WHERE outputs.toaddress = ? "
+            + " OR outputsmulti.toaddress = ?";
+    
+//    protected String SELECT_TRANSACTION_OUTPUTS_TOKEN_SQL = "SELECT hash, coinvalue, "
+//            + "scriptbytes, height, outputindex, coinbase, toaddress, addresstargetable,"
+//            + " blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending "
+//            + "FROM outputs where toaddress = ? and tokenid = ?";
+    
+    protected String SELECT_TRANSACTION_OUTPUTS_TOKEN_SQL = "SELECT "
+            + " outputs.hash, coinvalue, "
+            + " scriptbytes, height, outputs.outputindex, coinbase, outputs.toaddress, addresstargetable,"
             + " blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending "
-            + "FROM outputs where toaddress = ? and tokenid = ?";
+            + " FROM outputs LEFT JOIN outputsmulti "
+            + " ON outputs.hash = outputsmulti.hash AND outputs.outputindex = outputsmulti.outputindex "
+            + " WHERE (outputs.toaddress = ? "
+            + " OR outputsmulti.toaddress = ?) " 
+            + " AND tokenid = ?";
 
     // Dump table SQL (this is just for data sizing statistics).
     protected String SELECT_DUMP_SETTINGS_SQL = "SELECT name, coinvalue FROM settings";
@@ -327,6 +350,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String SELECT_MAX_TX_REWARD_HEIGHT_SQL = "SELECT MAX(prevheight) " + "FROM txreward WHERE confirmed = true";
     protected String SELECT_TX_REWARD_CONFIRMED_SQL = "SELECT confirmed " + "FROM txreward WHERE blockhash = ?";
     protected String UPDATE_TX_REWARD_CONFIRMED_SQL = "UPDATE txreward SET confirmed = ? WHERE blockhash = ?";
+    
+    protected String INSERT_OUTPUTSMULTI_SQL = "insert into outputsmulti (hash, toaddress, outputindex, minimumsign) values (?, ?, ?, ?)";
 
     protected NetworkParameters params;
     protected ThreadLocal<Connection> conn;
@@ -487,6 +512,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_HEADERS_TABLE);
 
         sqlStatements.add(DROP_OPEN_OUTPUT_TABLE);
+        sqlStatements.add(DROP_OUTPUTSMULTI_TABLE);
         sqlStatements.add(DROP_TIPS_TABLE);
         sqlStatements.add(DROP_BLOCKEVALUATION_TABLE);
         sqlStatements.add(DROP_TOKENS_TABLE);
@@ -1263,6 +1289,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s = conn.get().prepareStatement(getTransactionOutputSelectSQL());
             for (Address address : addresses) {
                 s.setString(1, address.toString());
+                s.setString(2, address.toString());
                 ResultSet rs = s.executeQuery();
                 while (rs.next()) {
                     Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));
@@ -1311,7 +1338,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s = conn.get().prepareStatement(getTransactionOutputTokenSelectSQL());
             for (Address address : addresses) {
                 s.setString(1, address.toString());
-                s.setBytes(2, tokenid00);
+                s.setString(2, address.toString());
+                s.setBytes(3, tokenid00);
                 ResultSet rs = s.executeQuery();
                 while (rs.next()) {
                     Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));
@@ -3727,6 +3755,30 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     preparedStatement.close();
                 } catch (SQLException e) {
                     throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void insertOutputsMulti(OutputsMulti outputsMulti) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(INSERT_OUTPUTSMULTI_SQL);
+            preparedStatement.setBytes(1, outputsMulti.getHash().getBytes());
+            preparedStatement.setString(2, outputsMulti.getToaddress());
+            preparedStatement.setLong(3, outputsMulti.getOutputindex());
+            preparedStatement.setLong(4, outputsMulti.getMinimumsign());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
                 }
             }
         }

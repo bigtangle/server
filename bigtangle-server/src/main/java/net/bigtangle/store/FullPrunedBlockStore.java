@@ -18,6 +18,7 @@ import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.OrderMatch;
 import net.bigtangle.core.OrderPublish;
+import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.StoredUndoableBlock;
@@ -343,4 +344,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     // public List<TokenSerial> getTokenSerialListByTokenid(String tokenid);
     //
     // public List<MultiSignBy> getMultiSignByListByTokenid(String tokenid);
+    
+    public void insertOutputsMulti(OutputsMulti outputsMulti) throws BlockStoreException;
 }

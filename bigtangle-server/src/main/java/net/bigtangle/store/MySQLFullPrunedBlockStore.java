@@ -47,7 +47,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    spenderblockhash  varbinary(32),\n"
             + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex) USING BTREE \n" + ")\n";
     
-    private static final String CREATE_OUTPUT_MULTI_TABLE = "CREATE TABLE outputsmulti (\n" + "    hash varbinary(32) NOT NULL,\n"
+    private static final String CREATE_OUTPUT_MULTI_TABLE = "CREATE TABLE outputsmulti (\n" 
+            + "    hash varbinary(32) NOT NULL,\n"
             + "    outputindex bigint NOT NULL,\n" 
             + "    toaddress varchar(255) NOT NULL,\n"
             + "    minimumsign bigint NOT NULL,\n"
@@ -154,6 +155,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_HEADERS_TABLE);
 
         sqlStatements.add(CREATE_OUTPUT_TABLE);
+        sqlStatements.add(CREATE_OUTPUT_MULTI_TABLE);
         sqlStatements.add(CREATE_TIPS_TABLE);
         sqlStatements.add(CREATE_BLOCKEVALUATION_TABLE);
         sqlStatements.add(CREATE_TOKENS_TABLE);
