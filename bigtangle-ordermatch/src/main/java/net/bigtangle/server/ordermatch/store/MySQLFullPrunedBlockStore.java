@@ -26,18 +26,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String DATABASE_DRIVER_CLASS = "com.mysql.jdbc.Driver";
     private static final String DATABASE_CONNECTION_URL_PREFIX = "jdbc:log4jdbc:mysql://";
 
-    private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
-            + "    tokenid varchar(255) NOT NULL  ,\n" 
-            + "    tokenname varchar(255) ,\n"
-            + "    description varchar(255) ,\n" 
-            + "    url varchar(255) ,\n" 
-            + "    signnumber bigint NOT NULL   ,\n"
-            + "    multiserial boolean,\n" 
-            + "    asmarket boolean,\n" 
-            + "   tokenstop boolean,\n"
-            + "    PRIMARY KEY (tokenid) \n)";
-
-
+  
     private static final String CREATE_ORDERPUBLISH_TABLE = "CREATE TABLE orderpublish (\n"
             + "   orderid varchar(255) NOT NULL,\n" 
             + "   address varchar(255),\n" 
@@ -96,7 +85,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     @Override
     protected List<String> getCreateTablesSQL() {
         List<String> sqlStatements = new ArrayList<String>();
-        sqlStatements.add(CREATE_TOKENS_TABLE);
+   
         sqlStatements.add(CREATE_ORDERPUBLISH_TABLE);
         sqlStatements.add(CREATE_ORDERMATCH_TABLE);
         sqlStatements.add(CREATE_EXCHANGE_TABLE);
