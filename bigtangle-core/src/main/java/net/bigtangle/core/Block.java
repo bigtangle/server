@@ -18,7 +18,6 @@ import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import javax.annotation.Nullable;
 
@@ -1116,12 +1115,13 @@ public class Block extends Message {
         this.addCoinbaseTransaction(pubKeyTo, value, null);
     }
 
-    public void addCoinbaseTransactionData(byte[] pubKeyTo, Coin value, byte[] data) {
+    public void addCoinbaseTransactionData(byte[] pubKeyTo, Coin value, DataClassName dataClassName, byte[] data) {
         unCacheTransactions();
         transactions = new ArrayList<Transaction>();
 
         Transaction coinbase = new Transaction(params);
         coinbase.setData(data);
+        coinbase.setDataclassname(dataClassName.name());
 
         // coinbase.tokenid = value.tokenid;
         final ScriptBuilder inputBuilder = new ScriptBuilder();

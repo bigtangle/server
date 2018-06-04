@@ -7,8 +7,6 @@ package net.bigtangle.core;
 
 import static net.bigtangle.core.Utils.HEX;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.math.BigInteger;
 import java.util.EnumSet;
 import java.util.HashMap;

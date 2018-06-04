@@ -227,7 +227,7 @@ public class Transaction extends ChildMessage {
     private byte[] datasignature;
     
     @Nullable
-    private long dataType;
+    private String dataclassname;
 
     public Transaction(NetworkParameters params  ) {
         super(params);
@@ -652,8 +652,14 @@ public class Transaction extends ChildMessage {
             optimalEncodingMessageSize += len;
         }
         
-        this.dataType = readUint32();
+        long dataclassnameLen = readUint32();
         optimalEncodingMessageSize += 4;
+        
+        if (dataclassnameLen > 0) {
+            byte[] buf = readBytes((int) dataclassnameLen);
+            this.dataclassname = new String(buf);
+            optimalEncodingMessageSize += dataclassnameLen;
+        }
         
         len = readUint32();
         optimalEncodingMessageSize += 4;
@@ -1260,7 +1266,13 @@ public class Transaction extends ChildMessage {
             uint32ToByteStreamLE(membyte.length, stream);
             stream.write(membyte);
         }
-        uint32ToByteStreamLE(this.dataType, stream);
+        if (this.dataclassname == null) {
+            uint32ToByteStreamLE(0L, stream);
+        }
+        else {
+            uint32ToByteStreamLE(this.dataclassname.length(), stream);
+            stream.write(this.dataclassname.getBytes());
+        }
         
         if (this.data == null) {
             uint32ToByteStreamLE(0L, stream);
@@ -1581,7 +1593,6 @@ public class Transaction extends ChildMessage {
         return data;
     }
 
-
     public void setData(byte[] data) {
         this.data = data;
     }
@@ -1596,12 +1607,11 @@ public class Transaction extends ChildMessage {
         this.datasignature = datasignatire;
     }
 
-
-    public long getDataType() {
-        return dataType;
+    public String getDataclassname() {
+        return dataclassname;
     }
 
-    public void setDataType(long dataType) {
-        this.dataType = dataType;
+    public void setDataclassname(String dataclassname) {
+        this.dataclassname = dataclassname;
     }
 }

@@ -116,6 +116,13 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   prevheight bigint NOT NULL,\n"
             + "   confirmed boolean NOT NULL,\n" 
             + "   PRIMARY KEY (blockhash) )";
+    
+    private static final String CREATE_USERDATA_TABLE = "CREATE TABLE userdata (\n" 
+            + "    blockhash varbinary(32) NOT NULL,\n"
+            + "    dataclassname varchar(255) NOT NULL,\n" 
+            + "    data mediumblob NOT NULL,\n"
+            + "    pubKey varchar(255),\n" 
+             + "   CONSTRAINT userdata_pk PRIMARY KEY (dataclassname, pubKey) USING BTREE \n" + ")";
 
     // Some indexes to speed up inserts
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_height_toaddress_idx ON outputs (hash, outputindex, height, toaddress) USING btree";
@@ -141,30 +148,23 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         List<String> sqlStatements = new ArrayList<String>();
         sqlStatements.add(CREATE_SETTINGS_TABLE);
         sqlStatements.add(CREATE_HEADERS_TABLE);
-
         sqlStatements.add(CREATE_OUTPUT_TABLE);
         sqlStatements.add(CREATE_OUTPUT_MULTI_TABLE);
         sqlStatements.add(CREATE_TIPS_TABLE);
-     
         sqlStatements.add(CREATE_TOKENS_TABLE);
- 
         sqlStatements.add(CREATE_EXCHANGE_TABLE);
-
         sqlStatements.add(CREATE_MULTISIGNADDRESS_TABLE);
         sqlStatements.add(CREATE_TOKENSERIAL_TABLE);
         sqlStatements.add(CREATE_MULTISIGNBY_TABLE);
-        
         sqlStatements.add(CREATE_MULTISIGN_TABLE);
-        
         sqlStatements.add(CREATE_TX_REWARD_TABLE);
-        
+        sqlStatements.add(CREATE_USERDATA_TABLE);
         return sqlStatements;
     }
 
     @Override
     protected List<String> getCreateIndexesSQL() {
         List<String> sqlStatements = new ArrayList<String>();
-
         sqlStatements.add(CREATE_OUTPUTS_ADDRESS_MULTI_INDEX);
         sqlStatements.add(CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX);
         sqlStatements.add(CREATE_OUTPUTS_HASH_INDEX);
@@ -260,7 +260,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
 
     @Override
     protected String getUpdateBlockevaluationUnmaintainAllSQL() {
-        return getUpdate() + " blockevaluation SET maintained = false WHERE maintained = true";
+        return getUpdate() + " headers SET maintained = false WHERE maintained = true";
     }
 
 }

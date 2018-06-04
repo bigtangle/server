@@ -16,8 +16,6 @@ import net.bigtangle.core.Exchange;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
-import net.bigtangle.core.OrderMatch;
-import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
@@ -26,6 +24,7 @@ import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UTXOProvider;
+import net.bigtangle.core.UserData;
 import net.bigtangle.kafka.KafkaMessageProducer;
 
 /**
@@ -336,4 +335,10 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     // public List<MultiSignBy> getMultiSignByListByTokenid(String tokenid);
     
     public void insertOutputsMulti(OutputsMulti outputsMulti) throws BlockStoreException;
+
+    UserData getUserDataByPrimaryKey(String dataclassname, String pubKey) throws BlockStoreException;
+
+    void insertUserData(UserData userData) throws BlockStoreException;
+
+    void updateUserData(UserData userData) throws BlockStoreException;
 }
