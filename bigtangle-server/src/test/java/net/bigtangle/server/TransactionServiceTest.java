@@ -170,26 +170,23 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
        TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, ulist.get(0), 0);
        
         //TransactionOutput multisigOutput = request.tx.getOutput(1);
-        TransactionOutput o = request.tx.getOutput(0);
-        
-        Script multisigScript = o.getScriptPubKey();
-        Script multisigScript1 = multisigOutput.getScriptPubKey();
        
         
-       if( multisigScript.isSentToMultiSig()) multisigOutput=o;
- 
-
-        Coin amount = multisigOutput.getValue();
+       
+        Script multisigScript1 = multisigOutput.getScriptPubKey();
+       
+        Coin amount1 = Coin.parseCoin("0.05", NetworkParameters.BIGNETCOIN_TOKENID);
         
+        Coin amount2 = multisigOutput.getValue().subtract(amount1);
         
         ECKey receiverkey = walletKeys.get(1);
         
         Transaction spendtx = new Transaction(networkParameters);
-        spendtx.addOutput(amount, receiverkey);
+        spendtx.addOutput(amount1, receiverkey);
        
         TransactionInput input = spendtx.addInput(multisigOutput);
         
-        Sha256Hash sighash = spendtx.hashForSignature(0, multisigScript, Transaction.SigHash.ALL, false);
+        Sha256Hash sighash = spendtx.hashForSignature(0, multisigScript1, Transaction.SigHash.ALL, false);
        // split steps for sign and use table to sign
         TransactionSignature tsrecsig = new TransactionSignature(wallet1Keys.get(0).sign(sighash), Transaction.SigHash.ALL, false);
         TransactionSignature tsintsig = new TransactionSignature(wallet1Keys.get(1).sign(sighash), Transaction.SigHash.ALL, false);
