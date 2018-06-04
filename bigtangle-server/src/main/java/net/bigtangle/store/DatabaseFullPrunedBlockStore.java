@@ -129,7 +129,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 //            + "fromaddress, memo, spent, confirmed, spendpending FROM outputs where toaddress = ?";
     
     protected String SELECT_TRANSACTION_OUTPUTS_SQL = "SELECT " + "outputs.hash, coinvalue, scriptbytes, height, "
-            + " outputs.outputindex, coinbase, outputs.toaddress, addresstargetable, blockhash, tokenid, "
+            + " outputs.outputindex, coinbase, "
+            + "case  when outputs.toaddress ='' then outputsmulti.toaddress "
+            + "when outputs.toaddress is null then outputsmulti.toaddress "
+            + " else outputs.toaddress end, addresstargetable, blockhash, tokenid, "
             + " fromaddress, memo, spent, confirmed, spendpending "
             + " FROM outputs LEFT JOIN outputsmulti "
             + " ON outputs.hash = outputsmulti.hash AND outputs.outputindex = outputsmulti.outputindex "
