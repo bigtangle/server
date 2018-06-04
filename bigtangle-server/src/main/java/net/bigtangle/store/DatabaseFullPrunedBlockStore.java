@@ -33,6 +33,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.MultiSign;
@@ -50,6 +51,7 @@ import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UTXOProviderException;
+import net.bigtangle.core.UserData;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.kafka.KafkaMessageProducer;
@@ -86,6 +88,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_MULTISIGN_TABLE = "DROP TABLE multisign";
 
     public static String DROP_TX_REWARDS_TABLE = "DROP TABLE txreward";
+    public static String DROP_USERDATA_TABLE = "DROP TABLE userdata";
 
     // Queries SQL.
     protected String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
@@ -341,6 +344,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String UPDATE_TX_REWARD_CONFIRMED_SQL = "UPDATE txreward SET confirmed = ? WHERE blockhash = ?";
     
     protected String INSERT_OUTPUTSMULTI_SQL = "insert into outputsmulti (hash, toaddress, outputindex, minimumsign) values (?, ?, ?, ?)";
+    
+    protected String SELECT_USERDATA_SQL = "SELECT blockhash, dataclassname, data, pubKey FROM userdata WHERE dataclassname = ? and pubKey = ?";
+    protected String INSERT_USERDATA_SQL = "INSERT INTO userdata (blockhash, dataclassname, data, pubKey) VALUES (?, ?, ?, ?)";
+    protected String UPDATE_USERDATA_SQL = "UPDATE userdata SET blockhash = ?, data = ? WHERE dataclassname = ? and pubKey = ?";
 
     protected NetworkParameters params;
     protected ThreadLocal<Connection> conn;
@@ -499,22 +506,17 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         List<String> sqlStatements = new ArrayList<String>();
         sqlStatements.add(DROP_SETTINGS_TABLE);
         sqlStatements.add(DROP_HEADERS_TABLE);
-
         sqlStatements.add(DROP_OPEN_OUTPUT_TABLE);
         sqlStatements.add(DROP_OUTPUTSMULTI_TABLE);
         sqlStatements.add(DROP_TIPS_TABLE);
- 
         sqlStatements.add(DROP_TOKENS_TABLE);
- 
         sqlStatements.add(DROP_EXCHANGE_TABLE);
-
         sqlStatements.add(DROP_MULTISIGNADDRESS_TABLE);
         sqlStatements.add(DROP_TOKENSERIAL_TABLE);
         sqlStatements.add(DROP_MULTISIGNBY_TABLE);
         sqlStatements.add(DROP_MULTISIGN_TABLE);
-
         sqlStatements.add(DROP_TX_REWARDS_TABLE);
-
+        sqlStatements.add(DROP_USERDATA_TABLE);
         return sqlStatements;
     }
 
@@ -3490,6 +3492,86 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setString(2, outputsMulti.getToaddress());
             preparedStatement.setLong(3, outputsMulti.getOutputindex());
             preparedStatement.setLong(4, outputsMulti.getMinimumsign());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public UserData getUserDataByPrimaryKey(String dataclassname, String pubKey) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_USERDATA_SQL);
+            preparedStatement.setString(1, dataclassname);
+            preparedStatement.setString(2, pubKey);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (!resultSet.next()) {
+                return null;
+            }
+            UserData userData = new UserData();
+            Sha256Hash blockhash = Sha256Hash.wrap(resultSet.getBytes("blockhash"));
+            userData.setBlockhash(blockhash);
+            userData.setData(resultSet.getBytes("data"));
+            userData.setDataclassname(resultSet.getString("dataclassname"));
+            userData.setPubKey(resultSet.getString("pubKey"));
+            return userData;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void insertUserData(UserData userData) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(INSERT_USERDATA_SQL);
+            preparedStatement.setBytes(1, userData.getBlockhash().getBytes());
+            preparedStatement.setString(2, userData.getDataclassname());
+            preparedStatement.setBytes(3, userData.getData());
+            preparedStatement.setString(4, userData.getPubKey());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void updateUserData(UserData userData) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(UPDATE_USERDATA_SQL);
+            preparedStatement.setBytes(1, userData.getBlockhash().getBytes());
+            preparedStatement.setBytes(2, userData.getData());
+            preparedStatement.setString(3, userData.getDataclassname());
+            preparedStatement.setString(4, userData.getPubKey());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);

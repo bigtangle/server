@@ -31,6 +31,7 @@ import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
+import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
@@ -46,12 +47,12 @@ import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.TransactionOutputChanges;
 import net.bigtangle.core.UTXO;
+import net.bigtangle.core.UserData;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.Script.VerifyFlag;
 import net.bigtangle.server.service.BlockRequester;
-import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.server.service.ValidatorService;
 import net.bigtangle.utils.ContextPropagatingThreadFactory;
 import net.bigtangle.wallet.Wallet;
@@ -264,6 +265,22 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             blockStore.updateTokenSerial(tokenSerial0);
         }
     }
+    
+    private void synchronizationUserData(Sha256Hash blockhash, DataClassName dataClassName, byte[] data, String pubKey) throws BlockStoreException {
+        UserData userData = this.blockStore.getUserDataByPrimaryKey(dataClassName.name(), pubKey);
+        if (userData == null) {
+            userData = new UserData();
+            userData.setBlockhash(blockhash);
+            userData.setData(data);
+            userData.setDataclassname(dataClassName.name());
+            userData.setPubKey(pubKey);
+            this.blockStore.insertUserData(userData);
+            return;
+        }
+        userData.setBlockhash(blockhash);
+        userData.setData(data);
+        this.blockStore.updateUserData(userData);
+    }
 
     public boolean checkOutput(Map<String, Coin> valueOut) {
 
@@ -325,6 +342,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 byte[] buf = tx.getData();
                 TokenInfo tokenInfo = new TokenInfo().parse(buf);
                 this.synchronizationToken(tokenInfo);
+            }
+        } else if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_USERDATA) {
+            Transaction tx = block.getTransactions().get(0);
+            if (tx.getData() != null) {
+                byte[] data = tx.getData();
+                String pubKey = "";
+                this.synchronizationUserData(block.getHash(), DataClassName.valueOf(tx.getDataclassname()), data, pubKey);
             }
         }
 

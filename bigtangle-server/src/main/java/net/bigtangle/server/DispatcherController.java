@@ -38,10 +38,10 @@ import net.bigtangle.server.response.ErrorResponse;
 import net.bigtangle.server.response.GetBlockEvaluationsResponse;
 import net.bigtangle.server.response.OkResponse;
 import net.bigtangle.server.service.BlockService;
-import net.bigtangle.server.service.ExchangeService;
 import net.bigtangle.server.service.MultiSignService;
 import net.bigtangle.server.service.TokensService;
 import net.bigtangle.server.service.TransactionService;
+import net.bigtangle.server.service.UserDataService;
 import net.bigtangle.server.service.WalletService;
 
 @RestController
@@ -60,10 +60,6 @@ public class DispatcherController {
 
     @Autowired
     private TokensService tokensService;
-
- 
-    @Autowired
-    private ExchangeService exchangeService;
 
     public static int numberOfEmptyBlocks = 3;
 
@@ -123,15 +119,6 @@ public class DispatcherController {
             }
                 break;
 
-            case exchangeInfo: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                String orderid = (String) request.get("orderid");
-                AbstractResponse response = this.exchangeService.getExchangeByOrderid(orderid);
-                this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
-
             case getTokens: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -140,8 +127,8 @@ public class DispatcherController {
             }
                 break;
             case getTokensNoMarket: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                // String reqStr = new String(bodyByte, "UTF-8");
+                // Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = tokensService.getTokensList();
                 this.outPrintJSONString(httpServletResponse, response);
             }
@@ -186,32 +173,6 @@ public class DispatcherController {
                     pubKeyHashs.add(Utils.HEX.decode(keyStrHex));
                 }
                 AbstractResponse response = walletService.getAccountBalanceInfo(pubKeyHashs);
-                this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
-
-            case saveExchange: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                AbstractResponse response = exchangeService.saveExchange(request);
-
-                this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
-
-            case getExchange: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                String address = (String) request.get("address");
-                AbstractResponse response = exchangeService.getExchangeListWithAddress(address);
-                this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
-
-            case signTransaction: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                AbstractResponse response = exchangeService.signTransaction(request);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
@@ -303,6 +264,16 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
                 break;
+                
+            case getUserData: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String dataclassname = (String) request.get("dataclassname");
+                String pubKey = (String) request.get("pubKey");
+                byte[] buf = this.userDataService.getUserData(dataclassname, pubKey);
+                this.outPointBinaryArray(httpServletResponse, buf);
+            }
+                break;
             }
         } catch (BlockStoreException e) {
             // e.printStackTrace();
@@ -337,6 +308,9 @@ public class DispatcherController {
 
     @Autowired
     private NetworkParameters networkParameters;
+    
+    @Autowired
+    private UserDataService userDataService;
 
     public void brodcastBlock(byte[] data) {
         try {
