@@ -40,6 +40,7 @@ import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
+import net.bigtangle.core.Transaction.SigHash;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
@@ -165,47 +166,49 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         
         //find the transaction as input
       
+       ECKey receiverkey = walletAppKit.wallet().currentReceiveKey();
+       List<UTXO> ulist0 = testTransactionAndGetBalances(true, receiverkey);
        List<UTXO> ulist = testTransactionAndGetBalances(false, wallet1Keys_);
        
        TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, ulist.get(0), 0);
-       
-        //TransactionOutput multisigOutput = request.tx.getOutput(1);
-       
-        
-       
         Script multisigScript1 = multisigOutput.getScriptPubKey();
        
         Coin amount1 = Coin.parseCoin("0.05", NetworkParameters.BIGNETCOIN_TOKENID);
         
-        Coin amount2 = multisigOutput.getValue().subtract(amount1);
         
-        ECKey receiverkey = walletKeys.get(1);
-        
-        Transaction spendtx = new Transaction(networkParameters);
-        spendtx.addOutput(amount1, receiverkey);
-       
-        TransactionInput input = spendtx.addInput(multisigOutput);
-        
-        Sha256Hash sighash = spendtx.hashForSignature(0, multisigScript1, Transaction.SigHash.ALL, false);
-       // split steps for sign and use table to sign
+        Transaction transaction0 = new Transaction(networkParameters);
+        transaction0.addOutput(amount1, receiverkey);
+        TransactionInput input = transaction0.addInput(multisigOutput);
+        Sha256Hash sighash = transaction0.hashForSignature(0, multisigScript1, Transaction.SigHash.ALL, false);
         TransactionSignature tsrecsig = new TransactionSignature(wallet1Keys.get(0).sign(sighash), Transaction.SigHash.ALL, false);
         TransactionSignature tsintsig = new TransactionSignature(wallet1Keys.get(1).sign(sighash), Transaction.SigHash.ALL, false);
-        
         Script inputScript = ScriptBuilder.createMultiSigInputScript(ImmutableList.of(tsrecsig, tsintsig));
-        
         input.setScriptSig(inputScript);
-      
-         data = OkHttp3Util.post(contextRoot + "askTransaction",
-                Json.jsonmapper().writeValueAsString(requestParam));
-         rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
 
- 
-        rollingBlock.addTransaction(spendtx);
+//        TransactionOutput transactionOutput = new FreeStandingTransactionOutput(this.networkParameters, ulist.get(0), 0);
+        List<TransactionOutput> candidates = walletAppKit.wallet().calculateAllSpendCandidates();
+        Coin amount2 = multisigOutput.getValue().subtract(amount1);
+        
+        Transaction transaction1 = new Transaction(networkParameters);
+        transaction1.addOutput(amount2, scriptPubKey);
+        transaction1.addInput(candidates.get(1));
+        SendRequest req = SendRequest.forTx(transaction1);
+        walletAppKit.wallet().signTransaction(req);
+        
+//        Transaction multiSigTransaction_ = new Transaction(networkParameters);
+//        Script scriptPubKey_ = ScriptBuilder.createMultiSigOutputScript(2, wallet1Keys_);
+//        multiSigTransaction_.addOutput(amount2, scriptPubKey_);
+//        request = SendRequest.forTx(multiSigTransaction_);
+//        walletAppKit.wallet().completeTx(request);
+        
+        data = OkHttp3Util.post(contextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+        rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
+        rollingBlock.addTransaction(transaction0);
+        rollingBlock.addTransaction(transaction1);
+//        rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
 
         OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
-
-        //TODO remainder
     }
 
     @Test

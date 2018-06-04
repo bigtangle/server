@@ -185,6 +185,12 @@ public abstract class AbstractIntegrationTest {
 
         return listUTXO;
     }
+    
+    public List<UTXO> testTransactionAndGetBalances(boolean withZero,ECKey ecKey) throws Exception {
+        List<ECKey> keys = new ArrayList<ECKey>();
+        keys.add(ecKey);
+        return testTransactionAndGetBalances(withZero, keys);
+    }
 
     public void testInitWallet() throws Exception {
 
