@@ -5,8 +5,6 @@
 package net.bigtangle.server;
 
 import static org.junit.Assert.assertTrue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,10 +28,6 @@ import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import org.springframework.test.context.support.DirtiesContextTestExecutionListener;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -75,7 +69,7 @@ public abstract class AbstractIntegrationTest {
     public String contextRoot;
     public List<ECKey> walletKeys;
     public List<ECKey> wallet1Keys;
- 
+
     WalletAppKit walletAppKit;
     protected static ObjectMapper objectMapper;
 
@@ -105,7 +99,7 @@ public abstract class AbstractIntegrationTest {
 
     @Before
     public void setUp() throws Exception {
-       
+
         objectMapper = new ObjectMapper();
 
         store = dbConfiguration.store();
@@ -133,7 +127,6 @@ public abstract class AbstractIntegrationTest {
         return applicationContext;
     }
 
-  
     public void walletKeys() throws Exception {
         KeyParameter aesKey = null;
         walletAppKit = new WalletAppKit(networkParameters, new File("../bigtangle-wallet"), "bigtangle");
@@ -274,5 +267,6 @@ public abstract class AbstractIntegrationTest {
             }
         }
         assertTrue(myutxo != null);
+        assertTrue(myutxo.getAddress() != null && !myutxo.getAddress().isEmpty());
     }
 }
