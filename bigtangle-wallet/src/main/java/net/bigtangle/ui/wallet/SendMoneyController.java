@@ -195,6 +195,9 @@ public class SendMoneyController {
             tokeninfo1.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
                 btcLabel1.setText(names.get(newv.intValue()));
             });
+            tokeninfo11.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
+                btcLabel11.setText(names.get(newv.intValue()));
+            });
             tokeninfo.getSelectionModel().selectFirst();
             tokeninfo1.getSelectionModel().selectFirst();
 
