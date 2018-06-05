@@ -92,8 +92,19 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    sign int(11) NOT NULL,\n"
             + "    PRIMARY KEY (id) \n)";
 
- 
- 
+    private static final String CREATE_PAYMULTISIGN_TABLE = "CREATE TABLE paymultisign (\n"
+            + "    orderid varchar(255) NOT NULL  ,\n" 
+            + "    tokenid varchar(255) NOT NULL  ,\n" 
+            + "    blockhash mediumblob NOT NULL,\n"
+            + "    amount bigint(20) ,\n"
+            + "    PRIMARY KEY (orderid) \n)";
+    
+    private static final String CREATE_PAYMULTISIGNADDRESS_TABLE = "CREATE TABLE paymultisignaddress (\n"
+            + "    orderid varchar(255) NOT NULL  ,\n" 
+            + "    address varchar(255),\n"
+            + "    sign int(11) NOT NULL,\n"
+            + "    PRIMARY KEY (orderid, address) \n)";
+
     private static final String CREATE_EXCHANGE_TABLE = "CREATE TABLE exchange (\n"
             + "   orderid varchar(255) NOT NULL,\n" 
             + "   fromAddress varchar(255),\n"
@@ -159,6 +170,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_MULTISIGN_TABLE);
         sqlStatements.add(CREATE_TX_REWARD_TABLE);
         sqlStatements.add(CREATE_USERDATA_TABLE);
+        sqlStatements.add(CREATE_PAYMULTISIGN_TABLE);
+        sqlStatements.add(CREATE_PAYMULTISIGNADDRESS_TABLE);
         return sqlStatements;
     }
 

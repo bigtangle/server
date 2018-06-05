@@ -75,19 +75,16 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_OPEN_OUTPUT_TABLE = "DROP TABLE outputs";
     public static String DROP_OUTPUTSMULTI_TABLE = "DROP TABLE outputsmulti";
     public static String DROP_TIPS_TABLE = "DROP TABLE tips";
-
     public static String DROP_TOKENS_TABLE = "DROP TABLE tokens";
-
     public static String DROP_EXCHANGE_TABLE = "DROP TABLE exchange";
-
     public static String DROP_MULTISIGNADDRESS_TABLE = "DROP TABLE multisignaddress";
     public static String DROP_TOKENSERIAL_TABLE = "DROP TABLE tokenserial";
     public static String DROP_MULTISIGNBY_TABLE = "DROP TABLE multisignby";
-
     public static String DROP_MULTISIGN_TABLE = "DROP TABLE multisign";
-
     public static String DROP_TX_REWARDS_TABLE = "DROP TABLE txreward";
     public static String DROP_USERDATA_TABLE = "DROP TABLE userdata";
+    public static String DROP_PAYMULTISIGN_TABLE = "DROP TABLE paymultisign";
+    public static String DROP_PAYMULTISIGNADDRESS_TABLE = "DROP TABLE paymultisignaddress";
 
     // Queries SQL.
     protected String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
@@ -504,6 +501,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_MULTISIGN_TABLE);
         sqlStatements.add(DROP_TX_REWARDS_TABLE);
         sqlStatements.add(DROP_USERDATA_TABLE);
+        sqlStatements.add(DROP_PAYMULTISIGN_TABLE);
+        sqlStatements.add(DROP_PAYMULTISIGNADDRESS_TABLE);
         return sqlStatements;
     }
 
