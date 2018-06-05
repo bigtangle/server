@@ -175,9 +175,12 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
        
         Coin amount1 = Coin.parseCoin("0.05", NetworkParameters.BIGNETCOIN_TOKENID);
         
+        Coin amount2 = multisigOutput.getValue().subtract(amount1);
         
         Transaction transaction0 = new Transaction(networkParameters);
         transaction0.addOutput(amount1, receiverkey);
+        //add remainder back
+        transaction0.addOutput(amount2, scriptPubKey);
         TransactionInput input = transaction0.addInput(multisigOutput);
         Sha256Hash sighash = transaction0.hashForSignature(0, multisigScript1, Transaction.SigHash.ALL, false);
         TransactionSignature tsrecsig = new TransactionSignature(wallet1Keys.get(0).sign(sighash), Transaction.SigHash.ALL, false);
@@ -186,14 +189,14 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         input.setScriptSig(inputScript);
 
 //        TransactionOutput transactionOutput = new FreeStandingTransactionOutput(this.networkParameters, ulist.get(0), 0);
-        List<TransactionOutput> candidates = walletAppKit.wallet().calculateAllSpendCandidates();
-        Coin amount2 = multisigOutput.getValue().subtract(amount1);
+       
         
-        Transaction transaction1 = new Transaction(networkParameters);
-        transaction1.addOutput(amount2, scriptPubKey);
-        transaction1.addInput(candidates.get(1));
-        SendRequest req = SendRequest.forTx(transaction1);
-        walletAppKit.wallet().signTransaction(req);
+    //    Transaction transaction1 = new Transaction(networkParameters);
+    //    transaction1.addOutput(amount2, scriptPubKey);
+     //   transaction1.addInput(candidates.get(1));
+     //   transaction1.addInput(multisigOutput);
+     //   SendRequest req = SendRequest.forTx(transaction1);
+     //   walletAppKit.wallet().signTransaction(req);
         
 //        Transaction multiSigTransaction_ = new Transaction(networkParameters);
 //        Script scriptPubKey_ = ScriptBuilder.createMultiSigOutputScript(2, wallet1Keys_);
@@ -204,11 +207,14 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         data = OkHttp3Util.post(contextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
         rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(transaction0);
-        rollingBlock.addTransaction(transaction1);
+     //   rollingBlock.addTransaction(transaction1);
 //        rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
 
-        OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+       checkResponse( OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize()));
+       
+       List<TransactionOutput> candidates = walletAppKit.wallet().calculateAllSpendCandidates();
+       
     }
 
     @Test

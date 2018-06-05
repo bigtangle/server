@@ -1198,6 +1198,11 @@ public class Block extends Message {
 
     public static final byte[] EMPTY_BYTES = new byte[32];
 
+    public boolean allowCoinbaseTransaction() {
+        return blocktype == NetworkParameters.BLOCKTYPE_INITIAL
+                || blocktype == NetworkParameters.BLOCKTYPE_TOKEN_CREATION
+               ||  blocktype == NetworkParameters.BLOCKTYPE_REWARD;
+    }
     /**
      * Returns a solved block that builds on top of this one. This exists for
      * unit tests. In this variant you can specify a public key (pubkey) for use
@@ -1206,12 +1211,13 @@ public class Block extends Message {
      * @param height
      *            block height, if known, or -1 otherwise.
      */
+
     public Block createNextBlock(@Nullable final Address to, final long version, @Nullable TransactionOutPoint prevOut,
             final long time, final byte[] pubKey, final Coin coinbaseValue, final int height,
             Sha256Hash prevBranchBlockHash, byte[] mineraddress) {
         Block b = new Block(params, version);
         // b.setDifficultyTarget(difficultyTarget);
-        // TODO clear coinbases
+        //only  BLOCKTYPE_TOKEN_CREATION, BLOCKTYPE_REWARD, BLOCKTYPE_INITIAL
         b.addCoinbaseTransaction(pubKey, coinbaseValue);
         b.setMineraddress(mineraddress);
         if (to != null) {

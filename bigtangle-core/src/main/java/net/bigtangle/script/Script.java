@@ -273,7 +273,7 @@ public class Script {
      * @throws ScriptException if the script is none of the named forms.
      */
     public byte[] getPubKey() throws ScriptException {
-        if (chunks.size() != 2) {
+        if (chunks.size()  < 2) {
             throw new ScriptException("Script not of right size, expecting 2 but got " + chunks.size());
         }
         final ScriptChunk chunk0 = chunks.get(0);

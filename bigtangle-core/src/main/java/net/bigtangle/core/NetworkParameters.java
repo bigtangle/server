@@ -123,18 +123,7 @@ public abstract class NetworkParameters {
     public static Block createGenesis(NetworkParameters n) {
         Block genesisBlock = new Block(n, Block.BLOCK_VERSION_GENESIS, BLOCKTYPE_INITIAL);
         genesisBlock.setTime(1231006505L);
-        
-//        // Mining reward initialization
-//        Transaction t = new Transaction(n);
-//        
-//        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//        DataOutputStream dos = new DataOutputStream(baos);
-//        dos.writeLong(INITIAL_TX_REWARD);
-//        dos.close();
-//        byte[] longBytes = baos.toByteArray();
-//        t.setData(longBytes);
-//        genesisBlock.addTransaction();
-        
+    
         genesisBlock.solve();
         return genesisBlock;
         

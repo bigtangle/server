@@ -93,7 +93,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         walletAppKit.wallet().signTransaction(req);
 
         byte[] a = req.tx.bitcoinSerialize();
-
+/*
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("fromAddress", "fromAddress");
         requestParam.put("fromTokenHex", "fromTokenHex");
@@ -106,7 +106,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         String data = OkHttp3Util.post(contextRoot + "saveExchange",
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         logger.info("testGetBalances resp : " + data);
-
+*/
         Transaction transaction = (Transaction) networkParameters.getDefaultSerializer().makeTransaction(a);
 
         // byte[] buf = BeanSerializeUtil.serializer(req.tx);
@@ -117,13 +117,13 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         walletAppKit1.wallet().signTransaction(request);
         exchangeTokenComplete(request.tx);
 
-        requestParam.clear();
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("address", "fromAddress");
 
-        String response = OkHttp3Util.post(contextRoot + "getExchange",
-                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+     //   String response = OkHttp3Util.post(contextRoot + "getExchange",
+     //           Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
-        logger.info("getExchange resp : " + requestParam);
+     //   logger.info("getExchange resp : " + requestParam);
     }
 
     public void exchangeTokenComplete(Transaction tx) throws Exception {
@@ -162,9 +162,11 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         walletAppKit.wallet().completeTx(request);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
-        OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        checkResponse( OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize()));
         logger.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
         milestoneService.update();
+        
+        checkBalance(utxo.getValue().getTokenHex(), walletAppKit1.wallet().walletKeys(null) );
     }
     
     @SuppressWarnings("unchecked")

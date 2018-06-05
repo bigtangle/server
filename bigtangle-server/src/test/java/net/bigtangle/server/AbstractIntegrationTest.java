@@ -236,7 +236,7 @@ public abstract class AbstractIntegrationTest {
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
-        requestParam.put("amount", 164385643856L);
+        requestParam.put("amount", 77777L);
         requestParam.put("tokenname", "Test");
         requestParam.put("description", "Test");
         requestParam.put("multiserial", false);

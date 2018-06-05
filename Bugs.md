@@ -1,8 +1,7 @@
 
 
 
-# remove a token from my positive list
- 
+
  
 ## add new key generation in key window
  
@@ -27,12 +26,19 @@
     Transaction datatype to string 
   b) UI save the data as block API 
 
+# positive list and contact list as UserData with structure and Json to save
+ 
 
-
-  
-## consolidate server api, balance use batchbalance 
-
-
-## merge table headers and blockevaluation -> blocks
 
 ## address change to public keys
+
+## create first block with a list of coinbase transaction with format
+amount_0, publikey01, publickey02,  publickey03
+amount_1, publikey11, publickey12
+
+
+## remove coinbase from BlockType  Transfer, 
+    add check allow only BLOCKTYPE_TOKEN_CREATION, BLOCKTYPE_REWARD, BLOCKTYPE_INITIAL
+
+## mark of multi signs in UTXO    ( display   minimal sign number and signs address )
+    
