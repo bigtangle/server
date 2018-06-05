@@ -212,7 +212,7 @@ public abstract class AbstractIntegrationTest {
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
         rollingBlock = BlockForTest.createNextBlock(b, null, networkParameters.getGenesisBlock().getHash());
-        Coin amount = Coin.valueOf(12345, NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin amount = Coin.valueOf(10000, NetworkParameters.BIGNETCOIN_TOKENID);
         Transaction t = new Transaction(networkParameters);
         t.setMemo("test memo");
 

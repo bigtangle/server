@@ -12,20 +12,27 @@ public class UTXOModel {
     private SimpleStringProperty tokentype;
     private SimpleStringProperty address;
     private SimpleStringProperty memo;
+    private SimpleStringProperty minimumsign;
     private SimpleStringProperty tokenid;
     private SimpleStringProperty spendPending;
 
     public UTXOModel(String balance, byte[] tokenid, String address, boolean spendPending, String tokenname,
-            String memo) {
+            String memo, String minimumsign) {
         this.balance = new SimpleStringProperty(balance);
         this.tokenid = new SimpleStringProperty(tokenname + ":" + Utils.HEX.encode(tokenid));
         this.tokentype = new SimpleStringProperty(tokenname);
         this.address = new SimpleStringProperty(address);
         this.spendPending = spendPending ? new SimpleStringProperty("*") : new SimpleStringProperty("");
+        this.memo = new SimpleStringProperty(memo);
+        this.minimumsign = new SimpleStringProperty(minimumsign);
     }
 
     public SimpleStringProperty balance() {
         return balance;
+    }
+
+    public SimpleStringProperty minimumsign() {
+        return minimumsign;
     }
 
     public SimpleStringProperty memo() {
@@ -46,6 +53,14 @@ public class UTXOModel {
 
     public SimpleStringProperty spendPending() {
         return spendPending;
+    }
+
+    public String getMinimumsign() {
+        return minimumsign.get();
+    }
+
+    public void setMinimumsign(String minimumsign) {
+        this.minimumsign.set(minimumsign);
     }
 
     public String getMemo() {

@@ -106,7 +106,8 @@ public class MainController {
     public TableColumn<UTXOModel, String> spendPendingColumn;
     @FXML
     public TableColumn<UTXOModel, String> memoColumn;
-
+    @FXML
+    public TableColumn<UTXOModel, String> minimumsignColumn;
     @FXML
     public TextField Server;
     @FXML
@@ -178,23 +179,25 @@ public class MainController {
             String balance = c.toPlainString();
             byte[] tokenid = c.tokenid;
             String address = u.getAddress();
+            String tokenname = Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid)));
+            String memo = u.getMemo();
+            String minimumsign = Main.getString(u.getMinimumsign()).trim();
 
             Main.validAddressSet.clear();
             Main.validAddressSet.add(address);
             boolean spendPending = u.isSpendPending();
             if (myPositvleTokens != null && !"".equals(myPositvleTokens.trim()) && !myPositvleTokens.trim().isEmpty()) {
                 if (myPositvleTokens.contains(Utils.HEX.encode(tokenid))) {
-                    Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending,
-                            Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid))), u.getMemo()));
+                    Main.instance.getUtxoData()
+                            .add(new UTXOModel(balance, tokenid, address, spendPending, tokenname, memo, minimumsign));
                 } else {
-                    subutxos.add(new UTXOModel(balance, tokenid, address, spendPending,
-                            Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid))), u.getMemo()));
+                    subutxos.add(new UTXOModel(balance, tokenid, address, spendPending, tokenname, memo, minimumsign));
                 }
 
             }
             if (myPositvleTokens == null || myPositvleTokens.isEmpty() || "".equals(myPositvleTokens.trim()))
-                Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending,
-                        Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid))), u.getMemo()));
+                Main.instance.getUtxoData()
+                        .add(new UTXOModel(balance, tokenid, address, spendPending, tokenname, memo, minimumsign));
         }
         Main.instance.getUtxoData().addAll(subutxos);
         list = (List<Map<String, Object>>) data.get("tokens");
@@ -240,6 +243,7 @@ public class MainController {
             memoColumn.setCellValueFactory(cellData -> cellData.getValue().memo());
             spendPendingColumn.setCellValueFactory(cellData -> cellData.getValue().spendPending());
             addressColumn.setCellFactory(TextFieldTableCell.<UTXOModel>forTableColumn());
+            minimumsignColumn.setCellValueFactory(cellData -> cellData.getValue().minimumsign());
 
             valueColumn.setCellValueFactory(cellData -> cellData.getValue().value());
             tokentypeColumn.setCellValueFactory(cellData -> cellData.getValue().tokenid());

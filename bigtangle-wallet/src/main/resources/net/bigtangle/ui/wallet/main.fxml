@@ -23,6 +23,7 @@
 						<TableColumn fx:id="addressColumn" prefWidth="282.0" text="%Address" />
 						<TableColumn fx:id="spendPendingColumn" prefWidth="73.0" text="%pending" />
                   <TableColumn fx:id="memoColumn" prefWidth="282.0" text="%memo" />
+                  <TableColumn fx:id="minimumsignColumn" maxWidth="50.0" minWidth="50.0" prefWidth="50.0" text="%minimumsign" />
 					</columns>
 				</TableColumn>
 			</columns>
