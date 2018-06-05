@@ -91,6 +91,12 @@
                               <ComboBox fx:id="addressComboBox1" editable="true" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
                            </children>
                         </HBox>
+                        <HBox maxHeight="26.0" maxWidth="700.0" minHeight="26.0" minWidth="700.0" prefHeight="26.0" prefWidth="700.0" spacing="50.0">
+                           <children>
+                              <Label prefWidth="150.0" text="%details" />
+                              <ChoiceBox fx:id="multiUtxoChoiceBox" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" />
+                           </children>
+                        </HBox>
                         <HBox maxWidth="700.0" minWidth="700.0" prefHeight="23.0" prefWidth="700.0" spacing="50.0">
                            <children>
                               <Label prefWidth="150.0" text="%memo" />

@@ -94,6 +94,8 @@ public class SendMoneyController {
     public ComboBox<String> myAddressComboBox;
     @FXML
     public ChoiceBox<String> addressChoiceBox;
+    @FXML
+    public ChoiceBox<String> multiUtxoChoiceBox;
 
     @FXML
     public TextField memoTF1;
