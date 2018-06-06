@@ -639,16 +639,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     blockStore.addUnspentTransactionOutput(newOut);
 
                     if (script.isSentToMultiSig()) {
-                        String dataclassname0 = tx.getDataclassname();
-                        DataClassName dataClassName = DataClassName.valueOf(dataclassname0);
-                        if (dataClassName == DataClassName.TOKEN) {
-                            TokenInfo tokens = new TokenInfo().parse(tx.getData());
-                            for (ECKey ecKey : script.getPubKeys()) {
-                                String toaddress = ecKey.toAddress(networkParameters).toBase58();
-                                OutputsMulti outputsMulti = new OutputsMulti(newOut.getHash(), toaddress, newOut.getIndex(),
-                                        tokens.getTokens().getSignnumber());
-                                this.blockStore.insertOutputsMulti(outputsMulti);
-                            }
+                        int minsignnumber = script.getNumberOfSignaturesRequiredToSpend();
+                        for (ECKey ecKey : script.getPubKeys()) {
+                            String toaddress = ecKey.toAddress(networkParameters).toBase58();
+                            OutputsMulti outputsMulti = new OutputsMulti(newOut.getHash(), toaddress, newOut.getIndex(), minsignnumber);
+                            this.blockStore.insertOutputsMulti(outputsMulti);
                         }
                     }
 
