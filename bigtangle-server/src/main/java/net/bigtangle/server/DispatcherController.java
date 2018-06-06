@@ -294,8 +294,7 @@ public class DispatcherController {
                 break;
             }
         } catch (BlockStoreException e) {
-            // e.printStackTrace();
-            logger.error("reqCmd : {}, reqHex : {}, block store ex.", reqCmd, Utils.HEX.encode(bodyByte));
+            logger.error("", e);
             AbstractResponse resp = ErrorResponse.create(101);
             resp.setErrorcode(101);
             resp.setMessage(e.getLocalizedMessage());
