@@ -2521,7 +2521,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         String sql = "";
         StringBuffer stringBuffer = new StringBuffer();
         if (!"0".equalsIgnoreCase(lastestAmount) && !"".equalsIgnoreCase(lastestAmount)) {
-            sql += "SELECT headers.* FROM  headers ";
+            sql +=   "SELECT hash, rating, depth, cumulativeweight, "
+                    + "solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained,"
+                    + " rewardvalidityassessment" + "  FROM  headers ";
             sql += " ORDER BY insertTime desc ";
             Integer a = Integer.valueOf(lastestAmount);
             if (a > 1000) {
@@ -2529,7 +2531,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
             sql += " LIMIT " + a;
         } else {
-            sql += "SELECT headers.* FROM outputs LEFT JOIN headers " + "ON outputs.blockhash = headers.blockhash  ";
+            sql += "SELECT hash, rating, depth, cumulativeweight, "
+                            + "solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained,"
+                            + " rewardvalidityassessment" 
+                    + "FROM outputs LEFT JOIN headers " + "ON outputs.blockhash = headers.hash  ";
             sql += "WHERE outputs.toaddress in ";
             for (String str : address)
                 stringBuffer.append(",").append("'" + str + "'");
