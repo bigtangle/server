@@ -468,7 +468,7 @@ public class SendMoneyController {
             }
             String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
 
-            // TODO cui,jiang
+            Main.bitcoin.wallet().setServerURL(CONTEXT_ROOT);
 
             int signnum = signnumberTF1.getText() == null || signnumberTF1.getText().isEmpty() ? 1
                     : Integer.parseInt(signnumberTF1.getText().trim());
