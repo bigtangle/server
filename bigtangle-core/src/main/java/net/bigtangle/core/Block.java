@@ -1181,13 +1181,19 @@ public class Block extends Message {
 
             } else {
                 long signnumber = tokenInfo.getTokens().getSignnumber();
+
                 List<ECKey> keys = new ArrayList<ECKey>();
                 for (MultiSignAddress multiSignAddress : tokenInfo.getMultiSignAddresses()) {
                     ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(multiSignAddress.getPubKeyHex()));
                     keys.add(ecKey);
                 }
-                Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript((int) signnumber, keys);
-                coinbase.addOutput(new TransactionOutput(params, coinbase, value, scriptPubKey.getProgram()));
+                if (signnumber <= 1 && keys.size() <= 1) {
+                    coinbase.addOutput(new TransactionOutput(params, coinbase, value,
+                            ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
+                } else {
+                    Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript((int) signnumber, keys);
+                    coinbase.addOutput(new TransactionOutput(params, coinbase, value, scriptPubKey.getProgram()));
+                }
             }
         }
         transactions.add(coinbase);
@@ -1201,8 +1207,9 @@ public class Block extends Message {
     public boolean allowCoinbaseTransaction() {
         return blocktype == NetworkParameters.BLOCKTYPE_INITIAL
                 || blocktype == NetworkParameters.BLOCKTYPE_TOKEN_CREATION
-               ||  blocktype == NetworkParameters.BLOCKTYPE_REWARD;
+                || blocktype == NetworkParameters.BLOCKTYPE_REWARD;
     }
+
     /**
      * Returns a solved block that builds on top of this one. This exists for
      * unit tests. In this variant you can specify a public key (pubkey) for use
@@ -1217,7 +1224,7 @@ public class Block extends Message {
             Sha256Hash prevBranchBlockHash, byte[] mineraddress) {
         Block b = new Block(params, version);
         // b.setDifficultyTarget(difficultyTarget);
-        //only  BLOCKTYPE_TOKEN_CREATION, BLOCKTYPE_REWARD, BLOCKTYPE_INITIAL
+        // only BLOCKTYPE_TOKEN_CREATION, BLOCKTYPE_REWARD, BLOCKTYPE_INITIAL
         b.addCoinbaseTransaction(pubKey, coinbaseValue);
         b.setMineraddress(mineraddress);
         if (to != null) {

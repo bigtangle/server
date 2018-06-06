@@ -40,6 +40,12 @@ public class UTXO {
 
     private long  minimumsign;;
     
+    
+    public boolean isMultiSig() {
+        return minimumsign > 1l;
+    }
+    
+    
     public String getTokenid() {
         return tokenid;
     }

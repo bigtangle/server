@@ -3435,61 +3435,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         return !output.isDust();
     }
 
-    /**
-     * Returns a list of the outputs that can potentially be spent, i.e. that we
-     * have the keys for and are unspent according to our knowledge of the block
-     * chain.
-     */
-    /*
-     * public List<TransactionOutput> calculateAllSpendCandidates() { return
-     * calculateAllSpendCandidates(true, true); }
-     */
-    /**
-     * @deprecated Use {@link #calculateAllSpendCandidates(boolean, boolean)} or
-     *             the zero-parameter form instead.
-     */
-    @Deprecated
-    public List<TransactionOutput> calculateAllSpendCandidates(boolean excludeImmatureCoinbases) {
-        return calculateAllSpendCandidates(excludeImmatureCoinbases, true);
-    }
-
-    /**
-     * Returns a list of all outputs that are being tracked by this wallet
-     * either from the {@link UTXOProvider} (in this case the existence or not
-     * of private keys is ignored), or the wallets internal storage (the
-     * default) taking into account the flags.
-     *
-     * @param excludeImmatureCoinbases
-     *            Whether to ignore coinbase outputs that we will be able to
-     *            spend in future once they mature.
-     * @param excludeUnsignable
-     *            Whether to ignore outputs that we are tracking but don't have
-     *            the keys to sign for.
-     */
-    public List<TransactionOutput> calculateAllSpendCandidates(boolean excludeImmatureCoinbases,
-            boolean excludeUnsignable) {
-        lock.lock();
-        try {
-            List<TransactionOutput> candidates;
-            if (vUTXOProvider == null) {
-                candidates = new ArrayList<TransactionOutput>(myUnspents.size());
-                for (TransactionOutput output : myUnspents) {
-                    if (excludeUnsignable && !canSignFor(output.getScriptPubKey()))
-                        continue;
-                    Transaction transaction = checkNotNull(output.getParentTransaction());
-                    if (excludeImmatureCoinbases  )
-                        continue;
-                    candidates.add(output);
-                }
-            } else {
-                candidates = calculateAllSpendCandidatesFromUTXOProvider(excludeImmatureCoinbases);
-            }
-            return candidates;
-        } finally {
-            lock.unlock();
-        }
-    }
-
+  
     /**
      * Returns true if this wallet has at least one of the private keys needed
      * to sign for this scriptPubKey. Returns false if the form of the script is
@@ -4241,125 +4187,15 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         long time = vKeyRotationTimestamp;
         return time != 0 && key.getCreationTimeSeconds() < time;
     }
-
-    // Checks to see if any coins are controlled by rotating keys and if so,
-    // spends them.
-    @GuardedBy("keyChainGroupLock")
-    private List<Transaction> maybeRotateKeys(@Nullable KeyParameter aesKey, boolean sign)
-            throws DeterministicUpgradeRequiresPassword {
-        checkState(lock.isHeldByCurrentThread());
-        checkState(keyChainGroupLock.isHeldByCurrentThread());
-        List<Transaction> results = Lists.newLinkedList();
-        // TODO: Handle chain replays here.
-        final long keyRotationTimestamp = vKeyRotationTimestamp;
-        if (keyRotationTimestamp == 0)
-            return results; // Nothing to do.
-
-        // We might have to create a new HD hierarchy if the previous ones are
-        // now rotating.
-        boolean allChainsRotating = true;
-        for (DeterministicKeyChain chain : keyChainGroup.getDeterministicKeyChains()) {
-            if (chain.getEarliestKeyCreationTime() >= keyRotationTimestamp) {
-                allChainsRotating = false;
-                break;
-            }
-        }
-        if (allChainsRotating) {
-            try {
-                if (keyChainGroup.getImportedKeys().isEmpty()) {
-                    log.info(
-                            "All HD chains are currently rotating and we have no random keys, creating fresh HD chain ...");
-                    keyChainGroup.createAndActivateNewHDChain();
-                } else {
-                    log.info(
-                            "All HD chains are currently rotating, attempting to create a new one from the next oldest non-rotating key material ...");
-                    keyChainGroup.upgradeToDeterministic(keyRotationTimestamp, aesKey);
-                    log.info(" ... upgraded to HD again, based on next best oldest key.");
-                }
-            } catch (AllRandomKeysRotating rotating) {
-                log.info(
-                        " ... no non-rotating random keys available, generating entirely new HD tree: backup required after this.");
-                keyChainGroup.createAndActivateNewHDChain();
-            }
-            saveNow();
-        }
-
-        // Because transactions are size limited, we might not be able to re-key
-        // the entire wallet in one go. So
-        // loop around here until we no longer produce transactions with the max
-        // number of inputs. That means we're
-        // fully done, at least for now (we may still get more transactions
-        // later and this method will be reinvoked).
-        Transaction tx;
-        do {
-            tx = rekeyOneBatch(keyRotationTimestamp, aesKey, results, sign);
-            if (tx != null)
-                results.add(tx);
-        } while (tx != null && tx.getInputs().size() == KeyTimeCoinSelector.MAX_SIMULTANEOUS_INPUTS);
-        return results;
-    }
-
-    @Nullable
-    private Transaction rekeyOneBatch(long timeSecs, @Nullable KeyParameter aesKey, List<Transaction> others,
-            boolean sign) {
-        lock.lock();
-        try {
-            // Build the transaction using some custom logic for our special
-            // needs. Last parameter to
-            // KeyTimeCoinSelector is whether to ignore pending transactions or
-            // not.
-            //
-            // We ignore pending outputs because trying to rotate these is
-            // basically racing an attacker, and
-            // we're quite likely to lose and create stuck double spends. Also,
-            // some users who have 0.9 wallets
-            // have already got stuck double spends in their wallet due to the
-            // Bloom-filtering block reordering
-            // bug that was fixed in 0.10, thus, making a re-key transaction
-            // depend on those would cause it to
-            // never confirm at all.
-            CoinSelector keyTimeSelector = new KeyTimeCoinSelector(this, timeSecs, true);
-            FilteringCoinSelector selector = new FilteringCoinSelector(keyTimeSelector);
-            for (Transaction other : others)
-                selector.excludeOutputsSpentBy(other);
-            // TODO: Make this use the standard SendRequest.
-            CoinSelection toMove = selector.select(Coin.ZERO, calculateAllSpendCandidates());
-            if (toMove.valueGathered.equals(Coin.ZERO))
-                return null; // Nothing to do.
-            maybeUpgradeToHD(aesKey);
-            Transaction rekeyTx = new Transaction(params);
-            for (TransactionOutput output : toMove.gathered) {
-                rekeyTx.addInput(output);
-            }
-            // When not signing, don't waste addresses.
-            rekeyTx.addOutput(toMove.valueGathered, sign ? freshReceiveAddress() : currentReceiveAddress());
-            if (!adjustOutputDownwardsForFee(rekeyTx, toMove, Transaction.DEFAULT_TX_FEE, true)) {
-                log.error("Failed to adjust rekey tx for fees.");
-                return null;
-            }
-            //rekeyTx.getConfidence().setSource(TransactionConfidence.Source.SELF);
-            rekeyTx.setPurpose(Transaction.Purpose.KEY_ROTATION);
-            SendRequest req = SendRequest.forTx(rekeyTx);
-            req.aesKey = aesKey;
-            if (sign)
-                signTransaction(req);
-            // KeyTimeCoinSelector should never select enough inputs to push us
-            // oversize.
-            checkState(rekeyTx.unsafeBitcoinSerialize().length < Transaction.MAX_STANDARD_TX_SIZE);
-            return rekeyTx;
-        } catch (VerificationException e) {
-            throw new RuntimeException(e); // Cannot happen.
-        } finally {
-            lock.unlock();
-        }
-    }
+ 
+     
     // endregion
 
     // changes
 
     @SuppressWarnings("unchecked")
 
-    public List<TransactionOutput> calculateAllSpendCandidates() {
+    public List<TransactionOutput> calculateAllSpendCandidates(boolean multisigns) {
         lock.lock();
         try {
      
@@ -4384,7 +4220,14 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
                 }
 
                 for (UTXO output : outputs) {
+                    if(multisigns  )
+                    {
                     candidates.add(new FreeStandingTransactionOutput(this.params, output, 0));  
+                    }else {
+                       if( !output. isMultiSig()) {
+                           candidates.add(new FreeStandingTransactionOutput(this.params, output, 0));   
+                       }
+                    }
                 }
              
             return candidates;
@@ -4412,7 +4255,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         // can customize coin selection policies. The call below will ignore
         // immature coinbases and outputs
         // we don't have the keys for.
-        List<TransactionOutput> candidates = calculateAllSpendCandidates();
+        List<TransactionOutput> candidates = calculateAllSpendCandidates(false);
         completeTx(req, candidates, true);
     }
     

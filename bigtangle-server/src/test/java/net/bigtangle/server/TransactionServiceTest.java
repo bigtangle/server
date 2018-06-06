@@ -213,7 +213,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
 
        checkResponse( OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize()));
        
-       List<TransactionOutput> candidates = walletAppKit.wallet().calculateAllSpendCandidates();
+       List<TransactionOutput> candidates = walletAppKit.wallet().calculateAllSpendCandidates(true);
        
     }
 
