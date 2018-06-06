@@ -40,6 +40,8 @@ import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OutputsMulti;
+import net.bigtangle.core.PayMultiSign;
+import net.bigtangle.core.PayMultiSignAddress;
 import net.bigtangle.core.ProtocolException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
@@ -3567,5 +3569,32 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 }
             }
         }
+    }
+
+    @Override
+    public void insertPayPayMultiSign(PayMultiSign payMultiSign) throws BlockStoreException {
+    }
+
+    @Override
+    public void insertPayMultiSignAddress(PayMultiSignAddress payMultiSignAddress) throws BlockStoreException {
+    }
+
+    @Override
+    public void updatePayMultiSignAddressSign(String orderid, String pubKeyStr, int sign) throws BlockStoreException {
+        
+    }
+
+    @Override
+    public PayMultiSign getPayMultiSignWithOrderid(String orderid) throws BlockStoreException {
+        return null;
+    }
+
+    @Override
+    public List<PayMultiSignAddress> getPayMultiSignAddressWithOrderid(String orderid) {
+        return null;
+    }
+
+    @Override
+    public void updatePayMultiSignBlockhash(String orderid, byte[] blockhash) {
     }
 }

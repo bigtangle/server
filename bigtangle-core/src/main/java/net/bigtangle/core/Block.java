@@ -1152,6 +1152,7 @@ public class Block extends Message {
 
         Transaction coinbase = new Transaction(params);
         if (tokenInfo != null) {
+            coinbase.setDataclassname(DataClassName.TOKEN.name());
             byte[] buf = tokenInfo.toByteArray();
             coinbase.setData(buf);
         }

@@ -39,6 +39,7 @@ import net.bigtangle.server.response.GetBlockEvaluationsResponse;
 import net.bigtangle.server.response.OkResponse;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MultiSignService;
+import net.bigtangle.server.service.PayMultiSignService;
 import net.bigtangle.server.service.TokensService;
 import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.server.service.UserDataService;
@@ -68,6 +69,9 @@ public class DispatcherController {
 
     @Autowired
     private MultiSignService multiSignService;
+    
+    @Autowired
+    private PayMultiSignService payMultiSignService;
 
     @SuppressWarnings("unchecked")
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
@@ -273,6 +277,20 @@ public class DispatcherController {
                 byte[] buf = this.userDataService.getUserData(dataclassname, pubKey);
                 this.outPointBinaryArray(httpServletResponse, buf);
             }
+                break;
+                
+            case launchPayMultiSign: {
+                    Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
+                    this.payMultiSignService.launchPayMultiSign(block);
+                    this.outPrintJSONString(httpServletResponse, OkResponse.create());
+                }
+                break;
+                
+            case payMultiSign: {
+                    Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
+                    this.payMultiSignService.launchPayMultiSign(block);
+                    this.outPrintJSONString(httpServletResponse, OkResponse.create());
+                }
                 break;
             }
         } catch (BlockStoreException e) {

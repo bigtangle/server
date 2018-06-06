@@ -95,13 +95,16 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_PAYMULTISIGN_TABLE = "CREATE TABLE paymultisign (\n"
             + "    orderid varchar(255) NOT NULL  ,\n" 
             + "    tokenid varchar(255) NOT NULL  ,\n" 
+            + "    toaddress varchar(255) NOT NULL,\n"
+            + "    outputhash varchar(255) NOT NULL,\n"
             + "    blockhash mediumblob NOT NULL,\n"
             + "    amount bigint(20) ,\n"
+            + "    minsignnumber bigint(20) ,\n"
             + "    PRIMARY KEY (orderid) \n)";
     
     private static final String CREATE_PAYMULTISIGNADDRESS_TABLE = "CREATE TABLE paymultisignaddress (\n"
             + "    orderid varchar(255) NOT NULL  ,\n" 
-            + "    address varchar(255),\n"
+            + "    pubKey varchar(255),\n"
             + "    sign int(11) NOT NULL,\n"
             + "    PRIMARY KEY (orderid, address) \n)";
 

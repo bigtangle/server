@@ -638,7 +638,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                             Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0);
                     blockStore.addUnspentTransactionOutput(newOut);
 
-                    if (script.isSentToMultiSig()) {
+                    String dataclassname0 = tx.getDataclassname();
+                    DataClassName dataClassName = DataClassName.valueOf(dataclassname0);
+                    if (script.isSentToMultiSig() && dataClassName == DataClassName.TOKEN) {
                         TokenInfo tokens = new TokenInfo().parse(tx.getData());
                         for (ECKey ecKey : script.getPubKeys()) {
                             String toaddress = ecKey.toAddress(networkParameters).toBase58();

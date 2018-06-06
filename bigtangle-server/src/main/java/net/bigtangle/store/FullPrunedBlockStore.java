@@ -17,6 +17,8 @@ import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.OutputsMulti;
+import net.bigtangle.core.PayMultiSign;
+import net.bigtangle.core.PayMultiSignAddress;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.StoredUndoableBlock;
@@ -341,4 +343,16 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     void insertUserData(UserData userData) throws BlockStoreException;
 
     void updateUserData(UserData userData) throws BlockStoreException;
+
+    void insertPayPayMultiSign(PayMultiSign payMultiSign) throws BlockStoreException;
+
+    void insertPayMultiSignAddress(PayMultiSignAddress payMultiSignAddress) throws BlockStoreException;
+
+    void updatePayMultiSignAddressSign(String orderid, String pubKeyStr, int sign) throws BlockStoreException;
+
+    PayMultiSign getPayMultiSignWithOrderid(String orderid) throws BlockStoreException;
+
+    List<PayMultiSignAddress> getPayMultiSignAddressWithOrderid(String orderid);
+
+    void updatePayMultiSignBlockhash(String orderid, byte[] blockhash);
 }
