@@ -75,5 +75,6 @@
 				<Image url="@bigtangle_logo_plain.png" />
 			</image>
 		</ImageView>
+      <Button layoutX="604.0" layoutY="668.0" mnemonicParsing="false" onAction="#showBlock" text="%showBlock" />
 	</children>
 </AnchorPane>
