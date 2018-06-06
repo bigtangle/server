@@ -26,7 +26,7 @@
     Transaction datatype to string 
   b) UI save the data as block API 
 
-# positive list and contact list as UserData with structure and Json to save
+#  positive list and contact list as UserData with structure and Json to save
  
 
 
