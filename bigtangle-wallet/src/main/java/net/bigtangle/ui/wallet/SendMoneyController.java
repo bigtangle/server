@@ -113,6 +113,8 @@ public class SendMoneyController {
     public Label btcLabel11;
     @FXML
     public TextField signnumberTF1;
+    @FXML
+    public TextField signnumberTFA;
 
     // @FXML
     // public ToggleGroup unitToggleGroup;
@@ -141,7 +143,7 @@ public class SendMoneyController {
     @FXML
     public TextField signAddressTF1;
     @FXML
-    public ChoiceBox<Object> signAddressChoiceBox;;
+    public ChoiceBox<String> signAddressChoiceBox;;
 
     public TableView<Map> signTable;
     public TableColumn<Map, String> addressColumn;
@@ -242,6 +244,12 @@ public class SendMoneyController {
     public void initialize() throws Exception {
         initChoicebox();
         List<String> list = Main.initAddress4file();
+        ObservableList<UTXOModel> utxoModels = Main.instance.getUtxoData();
+        if (utxoModels != null && !utxoModels.isEmpty()) {
+            for (UTXOModel utxoModel : utxoModels) {
+                multiUtxoChoiceBox.getItems().add(utxoModel.getAddress());
+            }
+        }
 
         ObservableList<String> addressData = FXCollections.observableArrayList(list);
         addressComboBox.setItems(addressData);
@@ -591,16 +599,24 @@ public class SendMoneyController {
         if (signAddressTF.getText() == null || signAddressTF.getText().isEmpty()) {
             return;
         }
-        signAddressChoiceBox.getItems().add(signAddressTF.getText());
-        signAddressChoiceBox.getSelectionModel().selectLast();
+        if (!signAddressChoiceBox.getItems().contains(signAddressTF.getText())) {
+            signAddressChoiceBox.getItems().add(signAddressTF.getText());
+            signAddressChoiceBox.getSelectionModel().selectLast();
+        }
+
+        signAddressTF.setText("");
     }
 
     public void addSignAddrA(ActionEvent event) {
         if (signAddressTF1.getText() == null || signAddressTF1.getText().isEmpty()) {
             return;
         }
-        addressChoiceBox.getItems().add(signAddressTF1.getText());
-        addressChoiceBox.getSelectionModel().selectLast();
+        if (!addressChoiceBox.getItems().contains(signAddressTF1.getText())) {
+            addressChoiceBox.getItems().add(signAddressTF1.getText());
+            addressChoiceBox.getSelectionModel().selectLast();
+        }
+
+        signAddressTF1.setText("");
     }
 
     public void sign(ActionEvent event) {

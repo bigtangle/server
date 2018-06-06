@@ -142,51 +142,55 @@ public class BlockEvaluationController {
                 Json.jsonmapper().writeValueAsString(requestParam));
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> temp = (List<Map<String, Object>>) data.get("evaluations");
+        if (temp != null && !temp.isEmpty()) {
 
-        List<BlockEvaluation> list = temp.stream().map(map -> MapToBeanMapperUtil.parseBlockEvaluation(map))
-                .collect(Collectors.toList());
-        ObservableList<Map> allData = FXCollections.observableArrayList();
-        if (list != null && !list.isEmpty()) {
-            for (BlockEvaluation blockEvaluation : list) {
-                Map<String, Object> dataRow = new HashMap<>();
-                dataRow.put("hash",
-                        blockEvaluation.getBlockhash() == null ? "" : blockEvaluation.getBlockhash().toString());
-                dataRow.put("rating", blockEvaluation.getRating());
-                dataRow.put("depth", blockEvaluation.getDepth());
-                dataRow.put("cumulativeWeight", blockEvaluation.getCumulativeWeight());
-                dataRow.put("height", blockEvaluation.getHeight());
+            List<BlockEvaluation> list = temp.stream().map(map -> MapToBeanMapperUtil.parseBlockEvaluation(map))
+                    .collect(Collectors.toList());
+            ObservableList<Map> allData = FXCollections.observableArrayList();
+            if (list != null && !list.isEmpty()) {
+                for (BlockEvaluation blockEvaluation : list) {
+                    Map<String, Object> dataRow = new HashMap<>();
+                    dataRow.put("hash",
+                            blockEvaluation.getBlockhash() == null ? "" : blockEvaluation.getBlockhash().toString());
+                    dataRow.put("rating", blockEvaluation.getRating());
+                    dataRow.put("depth", blockEvaluation.getDepth());
+                    dataRow.put("cumulativeWeight", blockEvaluation.getCumulativeWeight());
+                    dataRow.put("height", blockEvaluation.getHeight());
 
-                dataRow.put("solid", blockEvaluation.isSolid() ? Main.getText("yes") : Main.getText("no"));
-                dataRow.put("milestone", blockEvaluation.isMilestone() ? Main.getText("yes") : Main.getText("no"));
-                dataRow.put("milestoneDepth", blockEvaluation.getMilestoneDepth());
-                dataRow.put("maintained", blockEvaluation.isMaintained() ? Main.getText("yes") : Main.getText("no"));
-                dataRow.put("rewardValid", blockEvaluation.isRewardValid() ? Main.getText("yes") : Main.getText("no"));
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                java.util.Date date = new Date(blockEvaluation.getMilestoneLastUpdateTime());
-                String str = sdf.format(date);
-                dataRow.put("milestoneLastUpdateTime", str);
-                date = new Date(blockEvaluation.getInsertTime());
-                str = sdf.format(date);
-                dataRow.put("insertTime", str);
+                    dataRow.put("solid", blockEvaluation.isSolid() ? Main.getText("yes") : Main.getText("no"));
+                    dataRow.put("milestone", blockEvaluation.isMilestone() ? Main.getText("yes") : Main.getText("no"));
+                    dataRow.put("milestoneDepth", blockEvaluation.getMilestoneDepth());
+                    dataRow.put("maintained",
+                            blockEvaluation.isMaintained() ? Main.getText("yes") : Main.getText("no"));
+                    dataRow.put("rewardValid",
+                            blockEvaluation.isRewardValid() ? Main.getText("yes") : Main.getText("no"));
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    java.util.Date date = new Date(blockEvaluation.getMilestoneLastUpdateTime());
+                    String str = sdf.format(date);
+                    dataRow.put("milestoneLastUpdateTime", str);
+                    date = new Date(blockEvaluation.getInsertTime());
+                    str = sdf.format(date);
+                    dataRow.put("insertTime", str);
 
-                allData.add(dataRow);
+                    allData.add(dataRow);
+                }
+                blockhashColumn.setCellValueFactory(new MapValueFactory("hash"));
+                ratingColumn.setCellValueFactory(new MapValueFactory("rating"));
+                depthColumn.setCellValueFactory(new MapValueFactory("depth"));
+                cumulativeWeightColumn.setCellValueFactory(new MapValueFactory("cumulativeWeight"));
+                heightColumn.setCellValueFactory(new MapValueFactory("height"));
+
+                solidColumn.setCellValueFactory(new MapValueFactory("solid"));
+                milestoneColumn.setCellValueFactory(new MapValueFactory("milestone"));
+                milestoneDepthColumn.setCellValueFactory(new MapValueFactory("milestoneDepth"));
+                maintainedColumn.setCellValueFactory(new MapValueFactory("maintained"));
+                rewardValidColumn.setCellValueFactory(new MapValueFactory("rewardValid"));
+                milestoneLastUpdateTimeColumn.setCellValueFactory(new MapValueFactory("milestoneLastUpdateTime"));
+                insertTimeColumn.setCellValueFactory(new MapValueFactory("insertTime"));
+
+                blockhashColumn.setCellFactory(TextFieldTableCell.forTableColumn());
             }
-            blockhashColumn.setCellValueFactory(new MapValueFactory("hash"));
-            ratingColumn.setCellValueFactory(new MapValueFactory("rating"));
-            depthColumn.setCellValueFactory(new MapValueFactory("depth"));
-            cumulativeWeightColumn.setCellValueFactory(new MapValueFactory("cumulativeWeight"));
-            heightColumn.setCellValueFactory(new MapValueFactory("height"));
-
-            solidColumn.setCellValueFactory(new MapValueFactory("solid"));
-            milestoneColumn.setCellValueFactory(new MapValueFactory("milestone"));
-            milestoneDepthColumn.setCellValueFactory(new MapValueFactory("milestoneDepth"));
-            maintainedColumn.setCellValueFactory(new MapValueFactory("maintained"));
-            rewardValidColumn.setCellValueFactory(new MapValueFactory("rewardValid"));
-            milestoneLastUpdateTimeColumn.setCellValueFactory(new MapValueFactory("milestoneLastUpdateTime"));
-            insertTimeColumn.setCellValueFactory(new MapValueFactory("insertTime"));
-
-            blockhashColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+            blockEvaluationTable.setItems(allData);
         }
-        blockEvaluationTable.setItems(allData);
     }
 }
