@@ -5,6 +5,7 @@
 
 package net.bigtangle.store;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -26,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import ch.qos.logback.classic.pattern.Util;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
@@ -347,8 +349,16 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         } else if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_USERDATA) {
             Transaction tx = block.getTransactions().get(0);
             if (tx.getData() != null) {
-                byte[] data = tx.getData();
-                String pubKey = "";
+                ByteBuffer byteBuffer = ByteBuffer.wrap(tx.getData());
+                int plen = byteBuffer.getInt();
+                byte[] pubKeyBytes = new byte[plen];
+                byteBuffer.get(pubKeyBytes);
+                
+                int dlen = byteBuffer.getInt();
+                byte[] data = new byte[dlen];
+                byteBuffer.get(data);
+                
+                String pubKey = Utils.HEX.encode(pubKeyBytes);
                 this.synchronizationUserData(block.getHash(), DataClassName.valueOf(tx.getDataclassname()), data,
                         pubKey);
             }

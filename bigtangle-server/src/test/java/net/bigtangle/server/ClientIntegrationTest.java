@@ -194,7 +194,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         
         requestParam.clear();
         requestParam.put("dataclassname", DataClassName.USERDATA.name());
-        requestParam.put("pubKey", "");
+        requestParam.put("pubKey", Utils.HEX.encode(pubKeyTo.getPubKey()));
         byte[] buf = OkHttp3Util.post(contextRoot + "getUserData", Json.jsonmapper().writeValueAsString(requestParam));
         
         System.out.println(Utils.HEX.encode(buf));

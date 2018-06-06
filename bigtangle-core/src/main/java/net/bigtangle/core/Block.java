@@ -12,6 +12,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
@@ -1120,7 +1121,13 @@ public class Block extends Message {
         transactions = new ArrayList<Transaction>();
 
         Transaction coinbase = new Transaction(params);
-        coinbase.setData(data);
+        
+        ByteBuffer byteBuffer = ByteBuffer.allocate(pubKeyTo.length + 4 + data.length + 4);
+        byteBuffer.putInt(pubKeyTo.length);
+        byteBuffer.put(pubKeyTo);
+        byteBuffer.putInt(data.length);
+        byteBuffer.put(data);
+        coinbase.setData(byteBuffer.array());
         coinbase.setDataclassname(dataClassName.name());
 
         // coinbase.tokenid = value.tokenid;
