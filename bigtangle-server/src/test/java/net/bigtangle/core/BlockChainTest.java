@@ -6,21 +6,9 @@
 package net.bigtangle.core;
 
 import static net.bigtangle.core.Coin.COIN;
-import static net.bigtangle.core.Coin.FIFTY_COINS;
-import static net.bigtangle.core.Coin.ZERO;
 import static net.bigtangle.core.Coin.valueOf;
-import static net.bigtangle.testing.FakeTxBuilder.createFakeBlock;
-import static net.bigtangle.testing.FakeTxBuilder.createFakeTx;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.math.BigInteger;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 
 import org.junit.Before;
 import org.junit.Ignore;
@@ -28,20 +16,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import net.bigtangle.core.Address;
-import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockStore;
-import net.bigtangle.core.Coin;
-import net.bigtangle.core.Context;
-import net.bigtangle.core.ECKey;
-import net.bigtangle.core.InsufficientMoneyException;
-import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.StoredBlock;
-import net.bigtangle.core.Transaction;
-import net.bigtangle.core.VerificationException;
-import net.bigtangle.params.MainNetParams;
-import net.bigtangle.params.TestNet2Params;
 import net.bigtangle.params.UnitTestParams;
 import net.bigtangle.store.AbstractBlockGraph;
 import net.bigtangle.store.BlockGraph;
@@ -49,7 +23,6 @@ import net.bigtangle.store.MemoryBlockStore;
 import net.bigtangle.testing.FakeTxBuilder;
 import net.bigtangle.utils.BriefLogFormatter;
 import net.bigtangle.wallet.Wallet;
-import net.bigtangle.wallet.Wallet.BalanceType;
 
 // Handling of chain splits/reorgs are in ChainSplitTests.
 @Ignore
@@ -67,13 +40,7 @@ public class BlockChainTest {
     private final StoredBlock[] block = new StoredBlock[1];
     private Transaction coinbaseTransaction;
 
-    private static class TweakableTestNet2Params extends TestNet2Params {
-        public void setMaxTarget(BigInteger limit) {
-            maxTarget = limit;
-        }
-    }
-
-    private static final TweakableTestNet2Params testNet = new TweakableTestNet2Params();
+  
 
     private void resetBlockStore() {
         blockStore = new MemoryBlockStore(PARAMS);
@@ -82,9 +49,7 @@ public class BlockChainTest {
     @Before
     public void setUp() throws Exception {
         BriefLogFormatter.initVerbose();
-        Context.propagate(new Context(testNet, 100, Coin.ZERO, false));
-        testNetChain = new BlockGraph(testNet,   new MemoryBlockStore(testNet));
-        Context.propagate(new Context(PARAMS, 100, Coin.ZERO, false));
+         Context.propagate(new Context(PARAMS, 100, Coin.ZERO, false));
         wallet = new Wallet(PARAMS) {
          
         };
@@ -112,54 +77,7 @@ public class BlockChainTest {
 //        assertEquals(chain.getChainHead().getHeader(), b3.cloneAsHeader());
 //    }
 
-    @Test
-    public void badDifficulty() throws Exception {
-        assertTrue(testNetChain.add(getBlock1()));
-        Block b2 = getBlock2();
-        assertTrue(testNetChain.add(b2));
-        Block bad = new Block(testNet, Block.BLOCK_VERSION_GENESIS, 
-                NetworkParameters.BLOCKTYPE_TRANSFER);
-        // Merkle root can be anything here, doesn't matter.
-        bad.setMerkleRoot(Sha256Hash.wrap("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
-        // Nonce was just some number that made the hash < difficulty limit set
-        // below, it can be anything.
-        bad.setNonce(140548933);
-        bad.setTime(1279242649);
-        bad.setPrevBlockHash(b2.getHash());
-        // We're going to make this block so easy 50% of solutions will pass,
-        // and check it gets rejected for having a
-        // bad difficulty target. Unfortunately the encoding mechanism means we
-        // cannot make one that accepts all
-        // solutions.
-        // bad.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
-        try {
-            testNetChain.add(bad);
-            // The difficulty target above should be rejected on the grounds of
-            // being easier than the networks
-            // allowable difficulty.
-            fail();
-        } catch (VerificationException e) {
-            assertTrue(e.getMessage(), e.getCause().getMessage().contains("Difficulty target is bad"));
-        }
-
-        // Accept any level of difficulty now.
-        BigInteger oldVal = testNet.getMaxTarget();
-        testNet.setMaxTarget(new BigInteger("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16));
-        try {
-            testNetChain.add(bad);
-            // We should not get here as the difficulty target should not be
-            // changing at this point.
-            fail();
-        } catch (VerificationException e) {
-            assertTrue(e.getMessage(), e.getCause().getMessage().contains("Unexpected change in difficulty"));
-        }
-        testNet.setMaxTarget(oldVal);
-
-        // TODO: Test difficulty change is not out of range when a transition
-        // period becomes valid.
-    }
-
-  
+ 
     private void testDeprecatedBlockVersion(final long deprecatedVersion, final long newVersion) throws Exception {
         final BlockStore versionBlockStore = new MemoryBlockStore(PARAMS);
         final BlockGraph versionChain = new BlockGraph(PARAMS, versionBlockStore);
@@ -317,31 +235,7 @@ public class BlockChainTest {
 // 
 //    }
 
-    // Some blocks from the test net.
-    private static Block getBlock2() throws Exception {
-        Block b2 = new Block(testNet, Block.BLOCK_VERSION_GENESIS, 
-                NetworkParameters.BLOCKTYPE_TRANSFER);
-        b2.setMerkleRoot(Sha256Hash.wrap("addc858a17e21e68350f968ccd384d6439b64aafa6c193c8b9dd66320470838b"));
-        b2.setNonce(2642058077L);
-        b2.setTime(1296734343L);
-        b2.setPrevBlockHash(Sha256Hash.wrap("000000033cc282bc1fa9dcae7a533263fd7fe66490f550d80076433340831604"));
-        assertEquals("000000037b21cac5d30fc6fda2581cf7b2612908aed2abbcc429c45b0557a15f", b2.getHashAsString());
-        b2.verifyHeader();
-        return b2;
-    }
-
-    private static Block getBlock1() throws Exception {
-        Block b1 = new Block(testNet, Block.BLOCK_VERSION_GENESIS, 
-                NetworkParameters.BLOCKTYPE_TRANSFER);
-        b1.setMerkleRoot(Sha256Hash.wrap("0e8e58ecdacaa7b3c6304a35ae4ffff964816d2b80b62b58558866ce4e648c10"));
-        b1.setNonce(236038445);
-        b1.setTime(1296734340);
-        b1.setPrevBlockHash(Sha256Hash.wrap("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008"));
-        assertEquals("000000033cc282bc1fa9dcae7a533263fd7fe66490f550d80076433340831604", b1.getHashAsString());
-        b1.verifyHeader();
-        return b1;
-    }
-
+ 
     @Test
     public void falsePositives() throws Exception {
         double decay = AbstractBlockGraph.FP_ESTIMATOR_ALPHA;

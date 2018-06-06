@@ -19,7 +19,6 @@ import javax.annotation.Nullable;
 import com.google.common.base.Objects;
 
 import net.bigtangle.params.MainNetParams;
-import net.bigtangle.params.RegTestParams;
 import net.bigtangle.params.TestNet3Params;
 import net.bigtangle.params.UnitTestParams;
 import net.bigtangle.script.Script;
@@ -225,9 +224,7 @@ public abstract class NetworkParameters {
             return TestNet3Params.get();
         } else if (id.equals(ID_UNITTESTNET)) {
             return UnitTestParams.get();
-        } else if (id.equals(ID_REGTEST)) {
-            return RegTestParams.get();
-        } else {
+        }else {
             return null;
         }
     }

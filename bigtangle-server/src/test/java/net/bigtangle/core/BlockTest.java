@@ -28,7 +28,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.io.ByteStreams;
 
 import net.bigtangle.params.MainNetParams;
-import net.bigtangle.params.TestNet2Params;
 import net.bigtangle.params.TestNet3Params;
 import net.bigtangle.params.UnitTestParams;
 import net.bigtangle.script.ScriptOpCodes;
@@ -36,7 +35,7 @@ import net.bigtangle.wallet.Wallet;
 //TODO no binary blockBytes
 @Ignore
 public class BlockTest {
-    private static final NetworkParameters PARAMS = TestNet2Params.get();
+    private static final NetworkParameters PARAMS = TestNet3Params.get();
 
     public static final byte[] blockBytes;
 
