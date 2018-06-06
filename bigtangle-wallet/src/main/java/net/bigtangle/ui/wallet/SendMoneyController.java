@@ -170,11 +170,12 @@ public class SendMoneyController {
 
             List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
             List<String> names = new ArrayList<String>();
+            // xiao mi
             List<String> tokens = Main.initToken4file();
             for (Map<String, Object> map : list) {
 
                 String tokenHex = (String) map.get("tokenid");
-                if (tokens != null && !tokens.isEmpty()) {
+                /*if (tokens != null && !tokens.isEmpty()) {
                     for (String temp : tokens) {
                         // ONLY log log.debug("temp:" + temp);
                         if ((!temp.equals("") && temp.contains(tokenHex))
@@ -187,8 +188,12 @@ public class SendMoneyController {
 
                         }
                     }
+                }*/
+                if (NetworkParameters.BIGNETCOIN_TOKENID_STRING.equalsIgnoreCase(tokenHex)
+                                || isMyTokens(tokenHex)) {
+                    tokenData.add(tokenHex);
+                    names.add(map.get("tokenname").toString());
                 }
-
             }
             tokeninfo.setItems(tokenData);
             tokeninfo1.setItems(tokenData);
