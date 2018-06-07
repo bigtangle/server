@@ -252,7 +252,8 @@ public class SendMoneyController {
         ObservableList<UTXOModel> utxoModels = Main.instance.getUtxoData();
         if (utxoModels != null && !utxoModels.isEmpty()) {
             for (UTXOModel utxoModel : utxoModels) {
-                if (!"".equals(utxoModel.getMinimumsign().trim()) && !utxoModel.getMinimumsign().trim().equals("0")) {
+                if (!"".equals(utxoModel.getMinimumsign().trim()) && !utxoModel.getMinimumsign().trim().equals("0")
+                        && !utxoModel.getMinimumsign().trim().equals("1")) {
                     String temp = utxoModel.getBalance() + "," + utxoModel.getTokenid() + ","
                             + utxoModel.getMinimumsign();
                     multiUtxoChoiceBox.getItems().add(temp);
