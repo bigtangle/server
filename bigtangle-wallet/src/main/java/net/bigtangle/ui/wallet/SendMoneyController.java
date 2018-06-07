@@ -127,8 +127,8 @@ public class SendMoneyController {
 
     @FXML
     public ChoiceBox<Object> tokeninfo;
-    @FXML
-    public ChoiceBox<Object> tokeninfo1;
+    // @FXML
+    // public ChoiceBox<Object> tokeninfo1;
     @FXML
     public ChoiceBox<Object> tokeninfo11;
 
@@ -175,55 +175,55 @@ public class SendMoneyController {
             for (Map<String, Object> map : list) {
 
                 String tokenHex = (String) map.get("tokenid");
-                /*if (tokens != null && !tokens.isEmpty()) {
-                    for (String temp : tokens) {
-                        // ONLY log log.debug("temp:" + temp);
-                        if ((!temp.equals("") && temp.contains(tokenHex))
-                                || NetworkParameters.BIGNETCOIN_TOKENID_STRING.equalsIgnoreCase(tokenHex)
-                                || isMyTokens(tokenHex)) {
-                            if (!tokenData.contains(tokenHex)) {
-                                tokenData.add(tokenHex);
-                                names.add(map.get("tokenname").toString());
-                            }
-
-                        }
-                    }
-                }*/
-                if (NetworkParameters.BIGNETCOIN_TOKENID_STRING.equalsIgnoreCase(tokenHex)
-                                || isMyTokens(tokenHex)) {
+                /*
+                 * if (tokens != null && !tokens.isEmpty()) { for (String temp :
+                 * tokens) { // ONLY log log.debug("temp:" + temp); if
+                 * ((!temp.equals("") && temp.contains(tokenHex)) ||
+                 * NetworkParameters.BIGNETCOIN_TOKENID_STRING.equalsIgnoreCase(
+                 * tokenHex) || isMyTokens(tokenHex)) { if
+                 * (!tokenData.contains(tokenHex)) { tokenData.add(tokenHex);
+                 * names.add(map.get("tokenname").toString()); }
+                 * 
+                 * } } }
+                 */
+                if (NetworkParameters.BIGNETCOIN_TOKENID_STRING.equalsIgnoreCase(tokenHex) || isMyTokens(tokenHex)) {
                     tokenData.add(tokenHex);
                     names.add(map.get("tokenname").toString());
                 }
             }
             tokeninfo.setItems(tokenData);
-            tokeninfo1.setItems(tokenData);
+            // tokeninfo1.setItems(tokenData);
             tokeninfo11.setItems(tokenData);
             tokeninfo.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
                 btcLabel.setText(names.get(newv.intValue()));
             });
-            tokeninfo1.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
-                btcLabel1.setText(names.get(newv.intValue()));
-            });
+            // tokeninfo1.getSelectionModel().selectedIndexProperty().addListener((ov,
+            // oldv, newv) -> {
+            // btcLabel1.setText(names.get(newv.intValue()));
+            // });
             tokeninfo11.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
                 btcLabel11.setText(names.get(newv.intValue()));
             });
             tokeninfo.getSelectionModel().selectFirst();
-            tokeninfo1.getSelectionModel().selectFirst();
+            // tokeninfo1.getSelectionModel().selectFirst();
 
-            KeyParameter aesKey = null;
-            // Main.initAeskey(aesKey);
-            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
-            if (!"".equals(Main.password.trim())) {
-                aesKey = keyCrypter.deriveKey(Main.password);
-            }
-            List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
-            ObservableList<String> myAddressData = FXCollections.observableArrayList();
-            if (issuedKeys != null && !issuedKeys.isEmpty()) {
-                for (ECKey key : issuedKeys) {
-                    myAddressData.add(key.toAddress(Main.params).toBase58());
-                }
-                myAddressComboBox.setItems(myAddressData);
-            }
+            // KeyParameter aesKey = null;
+            // // Main.initAeskey(aesKey);
+            // final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt)
+            // Main.bitcoin.wallet().getKeyCrypter();
+            // if (!"".equals(Main.password.trim())) {
+            // aesKey = keyCrypter.deriveKey(Main.password);
+            // }
+            // List<ECKey> issuedKeys =
+            // Main.bitcoin.wallet().walletKeys(aesKey);
+            // ObservableList<String> myAddressData =
+            // FXCollections.observableArrayList();
+            // if (issuedKeys != null && !issuedKeys.isEmpty()) {
+            // for (ECKey key : issuedKeys) {
+            // myAddressData.add(key.toAddress(Main.params).toBase58());
+            // }
+            // myAddressComboBox.setItems(myAddressData);
+            // }
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
@@ -252,8 +252,20 @@ public class SendMoneyController {
         ObservableList<UTXOModel> utxoModels = Main.instance.getUtxoData();
         if (utxoModels != null && !utxoModels.isEmpty()) {
             for (UTXOModel utxoModel : utxoModels) {
-                multiUtxoChoiceBox.getItems().add(utxoModel.getAddress());
+                if (!"".equals(utxoModel.getMinimumsign().trim()) && !utxoModel.getMinimumsign().trim().equals("0")) {
+                    String temp = utxoModel.getBalance() + "," + utxoModel.getTokenid() + ","
+                            + utxoModel.getMinimumsign();
+                    multiUtxoChoiceBox.getItems().add(temp);
+                }
+
             }
+            multiUtxoChoiceBox.getSelectionModel().selectedItemProperty().addListener((ov, oldv, newv) -> {
+                if (newv != null && !newv.trim().equals("")) {
+                    amountEdit1.setText(newv.split(",")[0]);
+                    signnumberTFA.setText(newv.split(",")[2]);
+                    btcLabel1.setText(newv.split(",")[1]);
+                }
+            });
         }
 
         ObservableList<String> addressData = FXCollections.observableArrayList(list);
@@ -288,7 +300,7 @@ public class SendMoneyController {
         {
             byte[] dst = new byte[byteBuffer.getInt()];
             byteBuffer.get(dst);
-            tokeninfo1.setValue(new String(dst));
+            // tokeninfo1.setValue(new String(dst));
         }
         {
             byte[] dst = new byte[byteBuffer.getInt()];
@@ -320,15 +332,16 @@ public class SendMoneyController {
     public void exportSign(ActionEvent event) {
         String toAddress = !addressComboBox1.getValue().contains(",") ? addressComboBox1.getValue()
                 : addressComboBox1.getValue().split(",")[1];
-        String toTokenHex = tokeninfo1.getValue().toString().trim();
+        // String toTokenHex = tokeninfo1.getValue().toString().trim();
         String toAmount = amountEdit1.getText();
         this.mOrderid = UUIDUtil.randomUUID();
         boolean decial = true;
 
-        byte[] buf = this.makeSignTransactionBuffer(toAddress, getCoin(toAmount, toTokenHex, decial));
-        if (buf == null) {
-            return;
-        }
+        // byte[] buf = this.makeSignTransactionBuffer(toAddress,
+        // getCoin(toAmount, toTokenHex, decial));
+        // if (buf == null) {
+        // return;
+        // }
 
         final FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showSaveDialog(null);
@@ -336,7 +349,7 @@ public class SendMoneyController {
             return;
         }
 
-        FileUtil.writeFile(file, buf);
+        // FileUtil.writeFile(file, buf);
         overlayUI.done();
     }
 
