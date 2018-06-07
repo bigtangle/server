@@ -924,7 +924,6 @@ public class Block extends Message {
      * @throws VerificationException
      *             if there was an error verifying the block.
      */
-    @SuppressWarnings("unchecked")
     public void verifyTransactions(final long height, final EnumSet<VerifyFlag> flags) throws VerificationException {
         // Now we need to check that the body of the block actually matches the
         // headers. The network won't generate
@@ -1115,8 +1114,40 @@ public class Block extends Message {
     public void addCoinbaseTransaction(byte[] pubKeyTo, Coin value) {
         this.addCoinbaseTransaction(pubKeyTo, value, null);
     }
-
+    
     public void addCoinbaseTransactionData(byte[] pubKeyTo, Coin value, DataClassName dataClassName, byte[] data) {
+        unCacheTransactions();
+        transactions = new ArrayList<Transaction>();
+
+        Transaction coinbase = new Transaction(params);
+        
+        coinbase.setData(data);
+        coinbase.setDataclassname(dataClassName.name());
+
+        // coinbase.tokenid = value.tokenid;
+        final ScriptBuilder inputBuilder = new ScriptBuilder();
+
+        inputBuilder.data(new byte[] { (byte) txCounter, (byte) (txCounter++ >> 8) });
+
+        // A real coinbase transaction has some stuff in the scriptSig like the
+        // extraNonce and difficulty. The
+        // transactions are distinguished by every TX output going to a
+        // different key.
+        //
+        // Here we will do things a bit differently so a new address isn't
+        // needed every time. We'll put a simple
+        // counter in the scriptSig so every transaction has a different hash.
+        coinbase.addInput(new TransactionInput(params, coinbase, inputBuilder.build().getProgram()));
+        coinbase.addOutput(new TransactionOutput(params, coinbase, value,
+                ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
+
+        transactions.add(coinbase);
+        coinbase.setParent(this);
+        coinbase.length = coinbase.unsafeBitcoinSerialize().length;
+        adjustLength(transactions.size(), coinbase.length);
+    }
+
+    public void addCoinbaseTransactionPubKeyData(byte[] pubKeyTo, Coin value, DataClassName dataClassName, byte[] data) {
         unCacheTransactions();
         transactions = new ArrayList<Transaction>();
 

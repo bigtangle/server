@@ -17,6 +17,13 @@ public class PayMultiSign implements java.io.Serializable {
     private long amount;
     
     private long minsignnumber;
+    
+    public String getBlockhashHex() {
+        if (blockhash == null) {
+            return null;
+        }
+        return Utils.HEX.encode(this.blockhash);
+    }
 
     public String getOrderid() {
         return orderid;

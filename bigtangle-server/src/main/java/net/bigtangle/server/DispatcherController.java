@@ -280,17 +280,25 @@ public class DispatcherController {
                 break;
                 
             case launchPayMultiSign: {
-                    Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
-                    this.payMultiSignService.launchPayMultiSign(block);
-                    this.outPrintJSONString(httpServletResponse, OkResponse.create());
-                }
+                Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
+                this.payMultiSignService.launchPayMultiSign(block);
+                this.outPrintJSONString(httpServletResponse, OkResponse.create());
+            }
                 break;
                 
             case payMultiSign: {
-                    Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
-                    this.payMultiSignService.launchPayMultiSign(block);
-                    this.outPrintJSONString(httpServletResponse, OkResponse.create());
-                }
+                Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
+                this.payMultiSignService.payMultiSign(block);
+                this.outPrintJSONString(httpServletResponse, OkResponse.create());
+            }
+                break;
+                
+            case getPayMultiSignList: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                List<String> keyStrHex000 = Json.jsonmapper().readValue(reqStr, List.class);
+                AbstractResponse response = this.payMultiSignService.getPayMultiSignList(keyStrHex000);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
                 break;
             }
         } catch (BlockStoreException e) {

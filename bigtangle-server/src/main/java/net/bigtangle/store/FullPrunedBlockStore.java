@@ -355,4 +355,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     List<PayMultiSignAddress> getPayMultiSignAddressWithOrderid(String orderid) throws BlockStoreException;
 
     void updatePayMultiSignBlockhash(String orderid, byte[] blockhash) throws BlockStoreException;
+
+    List<PayMultiSign> getPayMultiSignList(List<String> pubKeys) throws BlockStoreException;
 }

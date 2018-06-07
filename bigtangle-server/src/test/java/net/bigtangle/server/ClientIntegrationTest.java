@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -187,7 +186,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         ECKey pubKeyTo = new ECKey();
         
         Coin value = Coin.parseCoin("0.02", NetworkParameters.BIGNETCOIN_TOKENID);
-        block.addCoinbaseTransactionData(pubKeyTo.getPubKey(), value, DataClassName.USERDATA, new byte[] {0x00, 0x00, 0x00, 0x00});
+        block.addCoinbaseTransactionPubKeyData(pubKeyTo.getPubKey(), value, DataClassName.USERDATA, new byte[] {0x00, 0x00, 0x00, 0x00});
         block.solve();
         
         OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());

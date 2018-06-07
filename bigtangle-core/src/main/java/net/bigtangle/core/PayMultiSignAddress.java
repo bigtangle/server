@@ -8,8 +8,6 @@ public class PayMultiSignAddress implements java.io.Serializable {
     
     private String pubKey;
 
-    private String signature;
-    
     private int sign;
 
     public String getOrderid() {
@@ -26,14 +24,6 @@ public class PayMultiSignAddress implements java.io.Serializable {
 
     public void setPubKey(String pubKey) {
         this.pubKey = pubKey;
-    }
-
-    public String getSignature() {
-        return signature;
-    }
-
-    public void setSignature(String signature) {
-        this.signature = signature;
     }
 
     public int getSign() {

@@ -20,6 +20,8 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
+import net.bigtangle.server.response.AbstractResponse;
+import net.bigtangle.server.response.PayMultiSignListResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
 
 @Service
@@ -45,8 +47,10 @@ public class PayMultiSignService {
         if (multiSignAddresses.isEmpty()) 
             throw new BlockStoreException("multisignaddress list is empty");
         
+        payMultiSign.setBlockhash(block.bitcoinSerialize());
         // check param
         this.store.insertPayPayMultiSign(payMultiSign);
+        
         for (MultiSignAddress multiSignAddress : multiSignAddresses) {
             PayMultiSignAddress payMultiSignAddress = new PayMultiSignAddress();
             payMultiSignAddress.setOrderid(payMultiSign.getOrderid());
@@ -89,12 +93,12 @@ public class PayMultiSignService {
             }
         }
         for (Map<String, Object> payMultiSignAddress : payMultiSignAddresses) {
-            String pubKeyStr = (String) payMultiSignAddress.get("pubKey");
-            this.store.updatePayMultiSignAddressSign(orderid, pubKeyStr, 1);
+            String pubKey = (String) payMultiSignAddress.get("pubKey");
+            this.store.updatePayMultiSignAddressSign(orderid, pubKey, 1);
         }
         this.store.updatePayMultiSignBlockhash(orderid, block.bitcoinSerialize());
         if (signCount >= payMultiSign.getMinsignnumber()) {
-            
+            System.out.println("pay mu");
         }
         // todo
     }
@@ -138,7 +142,13 @@ public class PayMultiSignService {
         if (data == null || data.length == 0) {
             throw new BlockStoreException("transaction data error");
         }
-        PayMultiSign payMultiSign = Json.jsonmapper().readValue(data, PayMultiSign.class);
+        String jsonStr = new String(data);
+        PayMultiSign payMultiSign = Json.jsonmapper().readValue(jsonStr, PayMultiSign.class);
         return payMultiSign;
+    }
+
+    public AbstractResponse getPayMultiSignList(List<String> pubKeys) throws BlockStoreException {
+        List<PayMultiSign> payMultiSigns = this.store.getPayMultiSignList(pubKeys);
+        return PayMultiSignListResponse.create(payMultiSigns);
     }
 }
