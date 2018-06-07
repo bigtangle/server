@@ -1259,17 +1259,17 @@ public class Block extends Message {
      */
 
     public Block createNextBlock(@Nullable final Address to, final long version, @Nullable TransactionOutPoint prevOut,
-            final long time, final byte[] pubKey, final Coin coinbaseValue, final int height,
+            final long time, final byte[] pubKey,  final int height,
             Sha256Hash prevBranchBlockHash, byte[] mineraddress) {
         Block b = new Block(params, version);
         // b.setDifficultyTarget(difficultyTarget);
         // only BLOCKTYPE_TOKEN_CREATION, BLOCKTYPE_REWARD, BLOCKTYPE_INITIAL
-        b.addCoinbaseTransaction(pubKey, coinbaseValue);
+       
         b.setMineraddress(mineraddress);
         if (to != null) {
             // Add a transaction paying 50 coins to the "to" address.
             Transaction t = new Transaction(params);
-            t.addOutput(new TransactionOutput(params, t, coinbaseValue, to));
+         
             // The input does not really need to be a valid signature, as long
             // as it has the right general form.
             TransactionInput input;

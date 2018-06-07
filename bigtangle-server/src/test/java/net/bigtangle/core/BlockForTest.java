@@ -28,31 +28,21 @@ public class BlockForTest {
     public static Block createNextBlock(Block block, @Nullable Address to, TransactionOutPoint prevOut,
             Sha256Hash prevBranchBlockHash) {
         return block.createNextBlock(to, Block.BLOCK_VERSION_GENESIS, prevOut, block.getTimeSeconds() + 5,
-                keyForTesting.getPubKey(), FIFTY_COINS, Block.BLOCK_HEIGHT_UNKNOWN, prevBranchBlockHash,
+                keyForTesting.getPubKey(),  Block.BLOCK_HEIGHT_UNKNOWN, prevBranchBlockHash,
                 keyForTesting.getPubKeyHash());
     }
 
-    public static Block createNextBlock(Block block, @Nullable Address to, Coin value, Sha256Hash prevBranchBlockHash) {
+    public static Block createNextBlock(Block block, @Nullable Address to,  Sha256Hash prevBranchBlockHash) {
         return block.createNextBlock(to, Block.BLOCK_VERSION_GENESIS, null, block.getTimeSeconds() + 5,
-                keyForTesting.getPubKey(), value, Block.BLOCK_HEIGHT_UNKNOWN, prevBranchBlockHash,
+                keyForTesting.getPubKey(),   Block.BLOCK_HEIGHT_UNKNOWN, prevBranchBlockHash,
                 keyForTesting.getPubKeyHash());
     }
 
-    @VisibleForTesting
-    public static Block createNextBlock(Block block, @Nullable Address to, Sha256Hash prevBranchBlockHash) {
-        return createNextBlock(block, to, FIFTY_COINS, prevBranchBlockHash);
-    }
-
-    public static Block createNextBlockWithCoinbase(Block block, long version, byte[] pubKey, Coin coinbaseValue,
-            final int height, Sha256Hash prevBranchBlockHash) {
-        return block.createNextBlock(null, version, (TransactionOutPoint) null, Utils.currentTimeSeconds(), pubKey,
-                coinbaseValue, height, prevBranchBlockHash, keyForTesting.getPubKeyHash()
-                );
-    }
-
+   
+ 
     public static Block createNextBlock(Block block, Address to, long version, long time, int blockHeight,
             Sha256Hash prevBranchBlockHash) {
-        return block.createNextBlock(to, version, null, time, keyForTesting.getPubKey(), FIFTY_COINS, blockHeight,
+        return block.createNextBlock(to, version, null, time, keyForTesting.getPubKey(),  blockHeight,
                 prevBranchBlockHash, keyForTesting.getPubKeyHash());
     }
 
@@ -64,14 +54,14 @@ public class BlockForTest {
     public static Block createNextBlockWithCoinbase(Block block, long version, byte[] pubKey, final int height,
             Sha256Hash prevBranchBlockHash) {
         return block.createNextBlock(null, version, (TransactionOutPoint) null, Utils.currentTimeSeconds(), pubKey,
-                Coin.FIFTY_COINS, height, prevBranchBlockHash, keyForTesting.getPubKeyHash() 
+                 height, prevBranchBlockHash, keyForTesting.getPubKeyHash() 
                 );
     }
 
     public static Block createNextBlock(Block block, long version, byte[] pubKey, final int height,
             Sha256Hash prevBranchBlockHash) {
         return block.createNextBlock(null, version, (TransactionOutPoint) null, Utils.currentTimeSeconds(), pubKey,
-                Coin.ZERO, height, prevBranchBlockHash, keyForTesting.getPubKeyHash() 
+                  height, prevBranchBlockHash, keyForTesting.getPubKeyHash() 
                 );
     }
 

@@ -50,6 +50,7 @@ import net.bigtangle.core.StoredUndoableBlock;
 import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UTXOProviderException;
 import net.bigtangle.core.UserData;
@@ -776,7 +777,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             StoredUndoableBlock storedGenesis = new StoredUndoableBlock(params.getGenesisBlock().getHash(),
                     genesisTransactions);
             put(storedGenesisHeader, storedGenesis);
-
+            saveGenesisTransactionOutput(params.getGenesisBlock());
             updateBlockEvaluationMilestone(params.getGenesisBlock().getHash(), true);
             updateBlockEvaluationSolid(params.getGenesisBlock().getHash(), true);
             updateBlockEvaluationRewardValid(params.getGenesisBlock().getHash(), true);
@@ -786,6 +787,33 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             updateTxRewardConfirmed(params.getGenesisBlock().getHash(), true);
         } catch (VerificationException e) {
             throw new RuntimeException(e); // Cannot happen.
+        }
+    }
+
+
+    public void saveGenesisTransactionOutput(Block block) throws BlockStoreException {
+
+        for (TransactionOutput out : block.getTransactions().get(0).getOutputs()) {
+            // For each output, add it to the set of unspent outputs so
+            // it can be consumed
+            // in future.
+            Script script = new Script(out.getScriptBytes());
+            UTXO newOut = new UTXO(block.getTransactions().get(0).getHash(), out.getIndex(), out.getValue(), 0, true,
+                    script, script.getToAddress(params, true).toString(), block.getHash(), out.getFromaddress(),
+                    block.getTransactions().get(0).getMemo(), Utils.HEX.encode(out.getValue().getTokenid()), false,
+                    true, false, 0);
+            addUnspentTransactionOutput(newOut);
+
+            if (script.isSentToMultiSig()) {
+                int minsignnumber = script.getNumberOfSignaturesRequiredToSpend();
+                for (ECKey ecKey : script.getPubKeys()) {
+                    String toaddress = ecKey.toAddress(params).toBase58();
+                    OutputsMulti outputsMulti = new OutputsMulti(newOut.getHash(), toaddress, newOut.getIndex(),
+                            minsignnumber);
+                    this.insertOutputsMulti(outputsMulti);
+                }
+            }
+
         }
     }
 

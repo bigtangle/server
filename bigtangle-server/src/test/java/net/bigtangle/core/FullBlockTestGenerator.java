@@ -1808,7 +1808,7 @@ public class FullBlockTestGenerator {
         Coin coinbaseValue = FIFTY_COINS.shiftRight(nextBlockHeight / params.getSubsidyDecreaseBlockCount())
                 .add((prevOut != null ? prevOut.value.subtract(SATOSHI) : ZERO))
                 .add(additionalCoinbaseValue == null ? ZERO : additionalCoinbaseValue);
-        Block block = BlockForTest.createNextBlockWithCoinbase(baseBlock,Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey, coinbaseValue, nextBlockHeight,params.getGenesisBlock().getHash());
+        Block block = BlockForTest.createNextBlockWithCoinbase(baseBlock,Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey,   nextBlockHeight,params.getGenesisBlock().getHash());
         Transaction t = new Transaction(params);
         if (prevOut != null) {
             // Entirely invalid scriptPubKey to ensure we aren't pre-verifying too much
