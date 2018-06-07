@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,14 +37,10 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.Transaction;
-import net.bigtangle.core.TransactionOutPoint;
-import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.kits.WalletAppKit;
@@ -53,6 +50,8 @@ import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.wallet.SendRequest;
+import net.bigtangle.wallet.Wallet;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {})
@@ -109,6 +108,7 @@ public abstract class AbstractIntegrationTest {
         store.resetStore();
 
         walletKeys();
+        
         testInitWallet();
         wallet1();
 
@@ -196,19 +196,40 @@ public abstract class AbstractIntegrationTest {
     }
 
     public void testInitWallet() throws Exception {
-
+   
         ECKey myKey = walletKeys.get(0);
         Block b = createToken(myKey);
 
         milestoneService.update();
-
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPiv), Utils.HEX.decode(testPub));
-        walletAppKit.wallet().importKey(testKey);
-        List<UTXO> ux = testTransactionAndGetBalances();
+ 
+       List<UTXO> ux = testTransactionAndGetBalances();
         assertTrue(!ux.isEmpty());
         for (UTXO u : ux) {
             log.debug(u.toString());
         }
+        
+        testInitTransferWallet();
+    }
+ 
+    // transfer the coin deon test key to address in wallet
+    public void testInitTransferWallet() throws Exception {
+
+        Wallet coinbaseWallet = new Wallet(networkParameters);
+        coinbaseWallet.importKey(new ECKey(Utils.HEX.decode(testPiv), Utils.HEX.decode(testPub)));
+        coinbaseWallet .setServerURL(contextRoot);
+        // get new Block to be used from server
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
+
+        Coin amount = Coin.parseCoin("5", NetworkParameters.BIGNETCOIN_TOKENID);
+        SendRequest request = SendRequest.to(walletKeys.get(1).toAddress(networkParameters), amount);
+        coinbaseWallet.completeTx(request);
+        rollingBlock.addTransaction(request.tx);
+        rollingBlock.solve();
+
+        OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
     }
 
     public Block createToken(ECKey outKey) throws Exception {
