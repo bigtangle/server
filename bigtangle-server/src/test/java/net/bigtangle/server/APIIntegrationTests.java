@@ -4,9 +4,8 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -23,8 +22,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -38,7 +35,8 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderMatch;
+import net.bigtangle.core.PayMultiSign;
+import net.bigtangle.core.PayMultiSignAddress;
 import net.bigtangle.core.PrunedException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
@@ -53,6 +51,7 @@ import net.bigtangle.script.Script;
 import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.Wallet;
 
 @RunWith(SpringRunner.class)
@@ -64,6 +63,42 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
     private static final Logger logger = LoggerFactory.getLogger(APIIntegrationTests.class);
 
+    @Test
+    public void testPayMultiSignToStore() throws BlockStoreException {
+        ECKey outKey = new ECKey();
+        PayMultiSign payMultiSign = new PayMultiSign();
+        payMultiSign.setOrderid(UUIDUtil.randomUUID());
+        payMultiSign.setTokenid(Utils.HEX.encode(outKey.getPubKey()));
+        payMultiSign.setOutputhash(Utils.HEX.encode(outKey.getPubKey()));
+        payMultiSign.setToaddress(outKey.toAddress(networkParameters).toBase58());
+        payMultiSign.setBlockhash(outKey.getPubKey());
+        payMultiSign.setAmount(1000);
+        payMultiSign.setMinsignnumber(3);
+        this.store.insertPayPayMultiSign(payMultiSign);
+        
+        PayMultiSign payMultiSign_ = this.store.getPayMultiSignWithOrderid(payMultiSign.getOrderid());
+        assertEquals(payMultiSign.getOrderid(), payMultiSign_.getOrderid());
+        
+        PayMultiSignAddress payMultiSignAddress = new PayMultiSignAddress();
+        payMultiSignAddress.setOrderid(payMultiSign.getOrderid());
+        payMultiSignAddress.setPubKey(outKey.getPublicKeyAsHex());
+        payMultiSignAddress.setSign(0);
+        payMultiSignAddress.setSignature(outKey.getPublicKeyAsHex());
+        this.store.insertPayMultiSignAddress(payMultiSignAddress);
+        
+        List<PayMultiSignAddress> payMultiSignAddresses = this.store.getPayMultiSignAddressWithOrderid(payMultiSign.getOrderid());
+        assertEquals(payMultiSignAddresses.get(0).getPubKey(), payMultiSignAddress.getPubKey());
+        
+        this.store.updatePayMultiSignAddressSign(payMultiSign.getOrderid(), outKey.getPublicKeyAsHex(), 1);
+        payMultiSignAddresses = this.store.getPayMultiSignAddressWithOrderid(payMultiSign.getOrderid());
+        assertEquals(payMultiSignAddresses.get(0).getSign(), 1);
+        
+        ECKey ecKey = new ECKey();
+        this.store.updatePayMultiSignBlockhash(payMultiSign.getOrderid(), ecKey.getPubKey());
+        
+        payMultiSign_ = this.store.getPayMultiSignWithOrderid(payMultiSign.getOrderid());
+        assertArrayEquals(payMultiSign_.getBlockhash(), ecKey.getPubKey());
+    }
  
     @Autowired
     private MilestoneService milestoneService;
