@@ -185,8 +185,6 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
         ECKey pubKeyTo = new ECKey();
         
-        Coin value = Coin.parseCoin("0.02", NetworkParameters.BIGNETCOIN_TOKENID);
-        block.addCoinbaseTransactionPubKeyData(pubKeyTo.getPubKey(), value, DataClassName.USERDATA, new byte[] {0x00, 0x00, 0x00, 0x00});
         block.solve();
         
         OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());

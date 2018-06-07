@@ -223,13 +223,16 @@ public abstract class AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
 
-        Coin amount = Coin.parseCoin("5", NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin amount = Coin.parseCoin("3", NetworkParameters.BIGNETCOIN_TOKENID);
         SendRequest request = SendRequest.to(walletKeys.get(1).toAddress(networkParameters), amount);
         coinbaseWallet.completeTx(request);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
 
-        OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        checkResponse(OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize()));
+        
+        checkBalance(NetworkParameters.BIGNETCOIN_TOKENID_STRING,walletKeys );
+        
     }
 
     public Block createToken(ECKey outKey) throws Exception {
