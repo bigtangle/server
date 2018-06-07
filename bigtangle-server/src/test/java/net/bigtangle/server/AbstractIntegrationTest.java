@@ -97,6 +97,9 @@ public abstract class AbstractIntegrationTest {
     @Autowired
     NetworkParameters networkParameters;
 
+    static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
+    static String testPiv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
+
     @Before
     public void setUp() throws Exception {
 
@@ -185,8 +188,8 @@ public abstract class AbstractIntegrationTest {
 
         return listUTXO;
     }
-    
-    public List<UTXO> testTransactionAndGetBalances(boolean withZero,ECKey ecKey) throws Exception {
+
+    public List<UTXO> testTransactionAndGetBalances(boolean withZero, ECKey ecKey) throws Exception {
         List<ECKey> keys = new ArrayList<ECKey>();
         keys.add(ecKey);
         return testTransactionAndGetBalances(withZero, keys);
@@ -194,36 +197,13 @@ public abstract class AbstractIntegrationTest {
 
     public void testInitWallet() throws Exception {
 
-        ECKey outKey = new ECKey();
-        int height = 1;
-
-        // TODO no more spendable mining outputs...
-        // Build some blocks on genesis block to create a spendable output
-        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,
-                networkParameters.getGenesisBlock().getHash());
-        blockgraph.add(rollingBlock);
-
         ECKey myKey = walletKeys.get(0);
         Block b = createToken(myKey);
-        // TODO why no milestone, the program hangs here
-        milestoneService.update();
-        // pay from outKey to mykey
-        Transaction transaction = rollingBlock.getTransactions().get(0);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
-        rollingBlock = BlockForTest.createNextBlock(b, null, networkParameters.getGenesisBlock().getHash());
-        Coin amount = Coin.valueOf(10000, NetworkParameters.BIGNETCOIN_TOKENID);
-        Transaction t = new Transaction(networkParameters);
-        t.setMemo("test memo");
-
-        t.addOutput(new TransactionOutput(networkParameters, t, amount, myKey.toAddress(networkParameters)));
-        t.addSignedInput(spendableOutput, transaction.getOutputs().get(0).getScriptPubKey(), outKey);
-
-        rollingBlock.addTransaction(t);
-        rollingBlock.solve();
-        blockgraph.add(rollingBlock);
 
         milestoneService.update();
+
+        ECKey testKey = new ECKey(Utils.HEX.decode(testPiv), Utils.HEX.decode(testPub));
+        walletAppKit.wallet().importKey(testKey);
         List<UTXO> ux = testTransactionAndGetBalances();
         assertTrue(!ux.isEmpty());
         for (UTXO u : ux) {

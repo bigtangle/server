@@ -68,20 +68,6 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     @Autowired
     private MilestoneService milestoneService;
 
-    // @Autowired
-    // private BlockService blockService;
-
-    // @Test
-    public void createECKey() {
-        ECKey ecKey = new ECKey();
-        logger.info("pubKey : " + Utils.HEX.encode(ecKey.getPubKey()));
-        logger.info("pubKeyHash : " + Utils.HEX.encode(ecKey.getPubKeyHash()));
-        // pubKey =
-        // 032f46420523938d355d1a539e849cf2903a314dce13c32562c0dec456757c9dce
-        ECKey toKey = ECKey.fromPublicOnly(ecKey.getPubKey());
-        logger.info("pubKey : " + Utils.HEX.encode(ecKey.getPubKey()));
-        logger.info("pubKeyHash : " + Utils.HEX.encode(toKey.getPubKeyHash()));
-    }
 
     @Test
     public void testWalletWrapperECKey() {
@@ -866,9 +852,9 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     @Test
     public void testECKey() {
         ECKey outKey = new ECKey();
-        System.out.println(Utils.HEX.encode(outKey.getPubKeyHash()));
-        ECKey ecKey = ECKey.fromPublicOnly(outKey.getPubKey());
-        System.out.println(Utils.HEX.encode(ecKey.getPubKeyHash()));
+        logger.debug( "pubkey= "+ Utils.HEX.encode(outKey.getPubKey()));
+     //  ECKey ecKey = ECKey.fromPublicOnly(outKey.getPubKey());
+        logger.debug( "pivkey= "+outKey.getPrivateKeyAsHex());
     }
 
     public void testRequestBlock(Block block) throws Exception {

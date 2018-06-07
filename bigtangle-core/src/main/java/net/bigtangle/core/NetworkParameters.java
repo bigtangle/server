@@ -120,6 +120,9 @@ public abstract class NetworkParameters {
     protected Map<Long, Sha256Hash> checkpoints = new HashMap<Long, Sha256Hash>();
     protected transient MessageSerializer defaultSerializer = null;
 
+    static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
+    static String testPiv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
+
     protected NetworkParameters() {
     }
 
@@ -128,13 +131,13 @@ public abstract class NetworkParameters {
         genesisBlock.setTime(1231006505L);
 
         Transaction coinbase = new Transaction(params);
-        // coinbase.tokenid = value.tokenid;
         final ScriptBuilder inputBuilder = new ScriptBuilder();
         coinbase.addInput(new TransactionInput(params, coinbase, inputBuilder.build().getProgram()));
-
+       add(params, "10000," +testPub , coinbase);
+       genesisBlock.addTransaction(coinbase);
         genesisBlock.solve();
         return genesisBlock;
- 
+
     }
 
     public static void add(NetworkParameters params, String account, Transaction coinbase) {
@@ -143,15 +146,15 @@ public abstract class NetworkParameters {
         Coin base = Coin.valueOf(Long.valueOf(list[0]), BIGNETCOIN_TOKENID);
         List<ECKey> keys = new ArrayList<ECKey>();
         for (int i = 1; i < list.length; i++) {
-            keys.add(ECKey.fromPublicOnly(Utils.HEX.decode(list[i])));
+            keys.add(ECKey.fromPublicOnly(Utils.HEX.decode(list[i].trim())));
         }
-        if (keys.size() <= 1) { 
+        if (keys.size() <= 1) {
             coinbase.addOutput(new TransactionOutput(params, coinbase, base,
                     ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(keys.get(0).getPubKey())).getProgram()));
         } else {
             Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript((int) keys.size() - 1, keys);
             coinbase.addOutput(new TransactionOutput(params, coinbase, base, scriptPubKey.getProgram()));
-        } 
+        }
     }
 
     public static final int TARGET_TIMESPAN = 14 * 24 * 60 * 60; // 2 weeks per
@@ -224,7 +227,7 @@ public abstract class NetworkParameters {
             return TestNet3Params.get();
         } else if (id.equals(ID_UNITTESTNET)) {
             return UnitTestParams.get();
-        }else {
+        } else {
             return null;
         }
     }

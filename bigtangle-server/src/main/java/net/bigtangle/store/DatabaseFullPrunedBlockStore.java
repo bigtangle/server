@@ -2531,10 +2531,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
             sql += " LIMIT " + a;
         } else {
-            sql += "SELECT hash, rating, depth, cumulativeweight, "
-                            + "solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained,"
-                            + " rewardvalidityassessment" 
-                    + "FROM outputs LEFT JOIN headers " + "ON outputs.blockhash = headers.hash  ";
+            sql += "SELECT headers.hash, rating, depth, cumulativeweight, "
+                            + "solid, headers.height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained,"
+                            + " rewardvalidityassessment " 
+                    + " FROM outputs LEFT JOIN headers " + "ON outputs.blockhash = headers.hash  ";
             sql += "WHERE outputs.toaddress in ";
             for (String str : address)
                 stringBuffer.append(",").append("'" + str + "'");
