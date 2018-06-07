@@ -127,12 +127,12 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     // @Before
     public Block getRollingBlock(ECKey outKey) throws Exception {
         Context.propagate(new Context(networkParameters));
-        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
+        Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
                 Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,
                 networkParameters.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock);
         for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
-            rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS,
                     outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
         }
@@ -151,32 +151,13 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         checkResponse(r, 100);
     }
 
-    @SuppressWarnings("unchecked")
-    @Test
-    public void testTransactionAndGetOutputs() throws Exception {
-        ECKey toKey = createWalletAndAddCoin();
 
-        List<String> pubKeyHashs = new ArrayList<String>();
-        pubKeyHashs.add(Utils.HEX.encode(toKey.getPubKeyHash()));
-
-        String response = OkHttp3Util.post(contextRoot + "getOutputs",
-                Json.jsonmapper().writeValueAsString(pubKeyHashs).getBytes("UTF-8"));
-
-        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-
-        List<Map<String, Object>> outputs0 = (List<Map<String, Object>>) data.get("outputs");
-        List<UTXO> outputs = new ArrayList<UTXO>();
-        for (Map<String, Object> map : outputs0) {
-            UTXO utxo = MapToBeanMapperUtil.parseUTXO(map);
-            outputs.add(utxo);
-        }
-    }
 
     public ECKey createWalletAndAddCoin() throws Exception, PrunedException {
         ECKey outKey = new ECKey();
         Block rollingBlock = this.getRollingBlock(outKey);
 
-        rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
+        rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS,
                 outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
 
         Transaction transaction = rollingBlock.getTransactions().get(0);

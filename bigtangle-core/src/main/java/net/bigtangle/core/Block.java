@@ -26,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
@@ -106,14 +105,6 @@ public class Block extends Message {
     public static final int BLOCK_HEIGHT_GENESIS = 0;
 
     public static final long BLOCK_VERSION_GENESIS = 1;
-    /** Block version introduced in BIP 34: Height in coinbase */
-    public static final long BLOCK_VERSION_BIP34 = 2;
-    /** Block version introduced in BIP 66: Strict DER signatures */
-    public static final long BLOCK_VERSION_BIP66 = 3;
-    /** Block version introduced in BIP 65: OP_CHECKLOCKTIMEVERIFY */
-    public static final long BLOCK_VERSION_BIP65 = 4;
-    // we use new Version
-    public static final long BLOCK_VERSION_BIG1 = 5;
 
     // Fields defined as part of the protocol format.
     private long version;
@@ -635,14 +626,10 @@ public class Block extends Message {
             }
         }
         s.append("   version: ").append(version);
-        String bips = Joiner.on(", ").skipNulls().join(isBIP34() ? "BIP34" : null, isBIP66() ? "BIP66" : null,
-                isBIP65() ? "BIP65" : null);
-        if (!bips.isEmpty())
-            s.append(" (").append(bips).append(')');
         s.append('\n');
-        s.append("   previous block: ").append(getPrevBlockHash()).append("\n");
-        s.append("   branch block: ").append(getPrevBranchBlockHash()).append("\n");
-        s.append("   merkle root: ").append(getMerkleRoot()).append("\n");
+        s.append("   previous: ").append(getPrevBlockHash()).append("\n");
+        s.append("   branch: ").append(getPrevBranchBlockHash()).append("\n");
+        s.append("   merkle: ").append(getMerkleRoot()).append("\n");
         s.append("   time: ").append(time).append(" (").append(Utils.dateTimeFormat(time * 1000)).append(")\n");
         // s.append(" difficulty target (nBits):
         // ").append(difficultyTarget).append("\n");
@@ -939,8 +926,12 @@ public class Block extends Message {
         checkMerkleRoot();
         checkSigOps();
         // genesis blocktype? check signature
-        for (Transaction transaction : transactions)
+        for (Transaction transaction : transactions) {
+            if (!allowCoinbaseTransaction() && transaction.isCoinBase()) {
+                throw new VerificationException("Coinbase Transaction is not allowed for this block type");
+            }
             transaction.verify();
+        }
     }
 
     /**
@@ -1114,13 +1105,13 @@ public class Block extends Message {
     public void addCoinbaseTransaction(byte[] pubKeyTo, Coin value) {
         this.addCoinbaseTransaction(pubKeyTo, value, null);
     }
-    
+
     public void addCoinbaseTransactionData(byte[] pubKeyTo, Coin value, DataClassName dataClassName, byte[] data) {
         unCacheTransactions();
         transactions = new ArrayList<Transaction>();
 
         Transaction coinbase = new Transaction(params);
-        
+
         coinbase.setData(data);
         coinbase.setDataclassname(dataClassName.name());
 
@@ -1147,12 +1138,13 @@ public class Block extends Message {
         adjustLength(transactions.size(), coinbase.length);
     }
 
-    public void addCoinbaseTransactionPubKeyData(byte[] pubKeyTo, Coin value, DataClassName dataClassName, byte[] data) {
+    public void addCoinbaseTransactionPubKeyData(byte[] pubKeyTo, Coin value, DataClassName dataClassName,
+            byte[] data) {
         unCacheTransactions();
         transactions = new ArrayList<Transaction>();
 
         Transaction coinbase = new Transaction(params);
-        
+
         ByteBuffer byteBuffer = ByteBuffer.allocate(pubKeyTo.length + 4 + data.length + 4);
         byteBuffer.putInt(pubKeyTo.length);
         byteBuffer.put(pubKeyTo);
@@ -1259,17 +1251,17 @@ public class Block extends Message {
      */
 
     public Block createNextBlock(@Nullable final Address to, final long version, @Nullable TransactionOutPoint prevOut,
-            final long time, final byte[] pubKey,  final int height,
-            Sha256Hash prevBranchBlockHash, byte[] mineraddress) {
+            final long time, final byte[] pubKey, final int height, Sha256Hash prevBranchBlockHash,
+            byte[] mineraddress) {
         Block b = new Block(params, version);
         // b.setDifficultyTarget(difficultyTarget);
         // only BLOCKTYPE_TOKEN_CREATION, BLOCKTYPE_REWARD, BLOCKTYPE_INITIAL
-       
+
         b.setMineraddress(mineraddress);
         if (to != null) {
             // Add a transaction paying 50 coins to the "to" address.
             Transaction t = new Transaction(params);
-         
+
             // The input does not really need to be a valid signature, as long
             // as it has the right general form.
             TransactionInput input;
@@ -1333,30 +1325,13 @@ public class Block extends Message {
 
     /**
      * Returns whether this block conforms to <a href=
-     * "https://github.com/bitcoin/bips/blob/master/bip-0034.mediawiki">BIP34:
-     * Height in Coinbase</a>.
-     */
-    public boolean isBIP34() {
-        return version >= BLOCK_VERSION_BIP34;
-    }
-
-    /**
-     * Returns whether this block conforms to <a href=
      * "https://github.com/bitcoin/bips/blob/master/bip-0066.mediawiki">BIP66:
      * Strict DER signatures</a>.
-     */
-    public boolean isBIP66() {
-        return version >= BLOCK_VERSION_BIP66;
-    }
-
-    /**
+     * 
      * Returns whether this block conforms to <a href=
      * "https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki">BIP65:
      * OP_CHECKLOCKTIMEVERIFY</a>.
      */
-    public boolean isBIP65() {
-        return version >= BLOCK_VERSION_BIP65;
-    }
 
     public byte[] getMineraddress() {
         return mineraddress;

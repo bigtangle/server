@@ -308,7 +308,7 @@ public class FakeTxBuilder {
 
     public static BlockPair createFakeBlock(BlockStore blockStore, StoredBlock previousStoredBlock, int height,
             Transaction... transactions) {
-        return createFakeBlock(blockStore, previousStoredBlock, Block.BLOCK_VERSION_BIP66, Utils.currentTimeSeconds(),
+        return createFakeBlock(blockStore, previousStoredBlock, Block.BLOCK_VERSION_GENESIS, Utils.currentTimeSeconds(),
                 height, transactions);
     }
 

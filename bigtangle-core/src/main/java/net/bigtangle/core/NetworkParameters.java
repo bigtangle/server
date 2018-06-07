@@ -501,12 +501,7 @@ public abstract class NetworkParameters {
             final long height) {
         final EnumSet<Block.VerifyFlag> flags = EnumSet.noneOf(Block.VerifyFlag.class);
 
-        if (block.isBIP34()) {
-            final Integer count = tally.getCountAtOrAbove(Block.BLOCK_VERSION_BIP34);
-            if (null != count && count >= getMajorityEnforceBlockUpgrade()) {
-                flags.add(Block.VerifyFlag.HEIGHT_IN_COINBASE);
-            }
-        }
+   
         return flags;
     }
 
@@ -531,10 +526,9 @@ public abstract class NetworkParameters {
 
         // Start enforcing CHECKLOCKTIMEVERIFY, (BIP65) for block.nVersion=4
         // blocks, when 75% of the network has upgraded:
-        if (block.getVersion() >= Block.BLOCK_VERSION_BIP65
-                && tally.getCountAtOrAbove(Block.BLOCK_VERSION_BIP65) > this.getMajorityEnforceBlockUpgrade()) {
+  
             verifyFlags.add(Script.VerifyFlag.CHECKLOCKTIMEVERIFY);
-        }
+    
 
         return verifyFlags;
     }

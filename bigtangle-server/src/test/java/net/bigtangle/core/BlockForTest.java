@@ -51,18 +51,12 @@ public class BlockForTest {
      * static key specified. This method is intended for test use only.
      */
 
-    public static Block createNextBlockWithCoinbase(Block block, long version, byte[] pubKey, final int height,
+    public static Block createNextBlock(Block block, long version, byte[] pubKey, final int height,
             Sha256Hash prevBranchBlockHash) {
         return block.createNextBlock(null, version, (TransactionOutPoint) null, Utils.currentTimeSeconds(), pubKey,
                  height, prevBranchBlockHash, keyForTesting.getPubKeyHash() 
                 );
     }
-
-    public static Block createNextBlock(Block block, long version, byte[] pubKey, final int height,
-            Sha256Hash prevBranchBlockHash) {
-        return block.createNextBlock(null, version, (TransactionOutPoint) null, Utils.currentTimeSeconds(), pubKey,
-                  height, prevBranchBlockHash, keyForTesting.getPubKeyHash() 
-                );
-    }
+ 
 
 }
