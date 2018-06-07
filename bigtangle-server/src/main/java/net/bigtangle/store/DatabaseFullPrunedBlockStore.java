@@ -335,7 +335,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String SELECT_USERDATA_SQL = "SELECT blockhash, dataclassname, data, pubKey FROM userdata WHERE dataclassname = ? and pubKey = ?";
     protected String INSERT_USERDATA_SQL = "INSERT INTO userdata (blockhash, dataclassname, data, pubKey) VALUES (?, ?, ?, ?)";
     protected String UPDATE_USERDATA_SQL = "UPDATE userdata SET blockhash = ?, data = ? WHERE dataclassname = ? and pubKey = ?";
-
+    
     protected NetworkParameters params;
     protected ThreadLocal<Connection> conn;
     protected List<Connection> allConnections;
@@ -760,6 +760,37 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 false, true, true);
     }
 
+    /**
+     * Create a new store for the given
+     * {@link net.bigtangle.core.NetworkParameters}.
+     * 
+     * @param params
+     *            The network.
+     * @throws BlockStoreException
+     *             If the store couldn't be created.
+     */
+    private void createNewStore(NetworkParameters params) throws BlockStoreException {
+        try {
+            // Set up the genesis block.
+            StoredBlock storedGenesisHeader = new StoredBlock(params.getGenesisBlock(), 0);
+            List<Transaction> genesisTransactions = Lists.newLinkedList();
+            StoredUndoableBlock storedGenesis = new StoredUndoableBlock(params.getGenesisBlock().getHash(),
+                    genesisTransactions);
+            put(storedGenesisHeader, storedGenesis);
+            saveGenesisTransactionOutput(params.getGenesisBlock());
+            updateBlockEvaluationMilestone(params.getGenesisBlock().getHash(), true);
+            updateBlockEvaluationSolid(params.getGenesisBlock().getHash(), true);
+            updateBlockEvaluationRewardValid(params.getGenesisBlock().getHash(), true);
+            insertTip(params.getGenesisBlock().getHash());
+            insertTxReward(params.getGenesisBlock().getHash(), NetworkParameters.INITIAL_TX_REWARD,
+                    -NetworkParameters.REWARD_HEIGHT_INTERVAL);
+            updateTxRewardConfirmed(params.getGenesisBlock().getHash(), true);
+        } catch (VerificationException e) {
+            throw new RuntimeException(e); // Cannot happen.
+        }
+    }
+
+
     public void saveGenesisTransactionOutput(Block block) throws BlockStoreException {
 
         for (TransactionOutput out : block.getTransactions().get(0).getOutputs()) {
@@ -783,37 +814,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 }
             }
 
-        }
-    }
-
-    /**
-     * Create a new store for the given
-     * {@link net.bigtangle.core.NetworkParameters}.
-     * 
-     * @param params
-     *            The network.
-     * @throws BlockStoreException
-     *             If the store couldn't be created.
-     */
-    private void createNewStore(NetworkParameters params) throws BlockStoreException {
-        try {
-            // Set up the genesis block.
-            StoredBlock storedGenesisHeader = new StoredBlock(params.getGenesisBlock(), 0);
-            List<Transaction> genesisTransactions = Lists.newLinkedList();
-            StoredUndoableBlock storedGenesis = new StoredUndoableBlock(params.getGenesisBlock().getHash(),
-                    genesisTransactions);
-            put(storedGenesisHeader, storedGenesis);
-            saveGenesisTransactionOutput(params.getGenesisBlock());
-            updateBlockEvaluationMilestone(params.getGenesisBlock().getHash(), true);
-            updateBlockEvaluationSolid(params.getGenesisBlock().getHash(), true);
-         
-            updateBlockEvaluationRewardValid(params.getGenesisBlock().getHash(), true);
-            insertTip(params.getGenesisBlock().getHash());
-            insertTxReward(params.getGenesisBlock().getHash(), NetworkParameters.INITIAL_TX_REWARD,
-                    -NetworkParameters.REWARD_HEIGHT_INTERVAL);
-            updateTxRewardConfirmed(params.getGenesisBlock().getHash(), true);
-        } catch (VerificationException e) {
-            throw new RuntimeException(e); // Cannot happen.
         }
     }
 
@@ -2549,7 +2549,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         String sql = "";
         StringBuffer stringBuffer = new StringBuffer();
         if (!"0".equalsIgnoreCase(lastestAmount) && !"".equalsIgnoreCase(lastestAmount)) {
-            sql += "SELECT hash, rating, depth, cumulativeweight, "
+            sql +=   "SELECT hash, rating, depth, cumulativeweight, "
                     + "solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained,"
                     + " rewardvalidityassessment" + "  FROM  headers ";
             sql += " ORDER BY insertTime desc ";
@@ -2560,9 +2560,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             sql += " LIMIT " + a;
         } else {
             sql += "SELECT headers.hash, rating, depth, cumulativeweight, "
-                    + "solid, headers.height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained,"
-                    + " rewardvalidityassessment " + " FROM outputs LEFT JOIN headers "
-                    + "ON outputs.blockhash = headers.hash  ";
+                            + "solid, headers.height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained,"
+                            + " rewardvalidityassessment " 
+                    + " FROM outputs LEFT JOIN headers " + "ON outputs.blockhash = headers.hash  ";
             sql += "WHERE outputs.toaddress in ";
             for (String str : address)
                 stringBuffer.append(",").append("'" + str + "'");
@@ -3606,28 +3606,167 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public void insertPayPayMultiSign(PayMultiSign payMultiSign) throws BlockStoreException {
+        String sql = "insert into paymultisign (orderid, tokenid, toaddress, outputhash, blockhash, amount, minsignnumber) values (?, ?, ?, ?, ?, ?, ?)";
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setString(1, payMultiSign.getOrderid());
+            preparedStatement.setString(2, payMultiSign.getTokenid());
+            preparedStatement.setString(3, payMultiSign.getToaddress());
+            preparedStatement.setString(4, payMultiSign.getOutputhash());
+            preparedStatement.setBytes(5, payMultiSign.getBlockhash());
+            preparedStatement.setLong(6, payMultiSign.getAmount());
+            preparedStatement.setLong(7, payMultiSign.getMinsignnumber());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
     }
-
+    
     @Override
     public void insertPayMultiSignAddress(PayMultiSignAddress payMultiSignAddress) throws BlockStoreException {
+        String sql = "insert into paymultisignaddress (orderid, pubKey, signature, sign) values (?, ?, ?, ?)";
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setString(1, payMultiSignAddress.getOrderid());
+            preparedStatement.setString(2, payMultiSignAddress.getPubKey());
+            preparedStatement.setString(3, payMultiSignAddress.getSignature());
+            preparedStatement.setInt(4, payMultiSignAddress.getSign());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
     }
 
     @Override
-    public void updatePayMultiSignAddressSign(String orderid, String pubKeyStr, int sign) throws BlockStoreException {
-
+    public void updatePayMultiSignAddressSign(String orderid, String pubKey, int sign) throws BlockStoreException {
+        String sql = "update paymultisignaddress set sign = ? where orderid = ? and pubKey = ?";
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setInt(1, sign);
+            preparedStatement.setString(2, orderid);
+            preparedStatement.setString(3, pubKey);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
     }
 
     @Override
     public PayMultiSign getPayMultiSignWithOrderid(String orderid) throws BlockStoreException {
-        return null;
+        String sql = "select orderid, tokenid, toaddress, outputhash, blockhash, amount, minsignnumber from paymultisign where orderid = ?";
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setString(1, orderid.trim());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (!resultSet.next()) {
+                return null;
+            }
+            PayMultiSign payMultiSign = new PayMultiSign();
+            payMultiSign.setAmount(resultSet.getLong("amount"));
+            payMultiSign.setBlockhash(resultSet.getBytes("blockhash"));
+            payMultiSign.setMinsignnumber(resultSet.getLong("minsignnumber"));
+            payMultiSign.setOrderid(resultSet.getString("orderid"));
+            payMultiSign.setOutputhash(resultSet.getString("outputhash"));
+            payMultiSign.setToaddress(resultSet.getString("toaddress"));
+            payMultiSign.setTokenid(resultSet.getString("tokenid"));
+            return payMultiSign;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
     }
 
     @Override
-    public List<PayMultiSignAddress> getPayMultiSignAddressWithOrderid(String orderid) {
-        return null;
+    public List<PayMultiSignAddress> getPayMultiSignAddressWithOrderid(String orderid) throws BlockStoreException {
+        String sql = "select orderid, pubKey, signature, sign from paymultisignaddress where orderid = ?";
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setString(1, orderid.trim());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            List<PayMultiSignAddress> list = new ArrayList<PayMultiSignAddress>();
+            while (resultSet.next()) {
+                PayMultiSignAddress payMultiSignAddress = new PayMultiSignAddress();
+                payMultiSignAddress.setOrderid(resultSet.getString("orderid"));
+                payMultiSignAddress.setPubKey(resultSet.getString("pubKey"));
+                payMultiSignAddress.setSign(resultSet.getInt("sign"));
+                payMultiSignAddress.setSignature(resultSet.getString("signature"));
+                list.add(payMultiSignAddress);
+            }
+            return list;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
     }
 
     @Override
-    public void updatePayMultiSignBlockhash(String orderid, byte[] blockhash) {
+    public void updatePayMultiSignBlockhash(String orderid, byte[] blockhash) throws BlockStoreException {
+        String sql = "update paymultisign set blockhash = ? where orderid = ?";
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setBytes(1, blockhash);
+            preparedStatement.setString(2, orderid);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
     }
 }
