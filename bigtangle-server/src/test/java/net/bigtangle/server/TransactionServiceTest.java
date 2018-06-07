@@ -65,75 +65,8 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
     private BlockService blockService;
 
 
-
-    @Test
-    public void getBalance() throws Exception {
-        // Check that we aren't accidentally leaving any references
-        // to the full StoredUndoableBlock's lying around (ie memory leaks)
-        ECKey outKey = new ECKey();
-        int height = 1;
-
-        // Build some blocks on genesis block to create a spendable output
-        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
-        blockgraph.add(rollingBlock);
-        Transaction transaction = rollingBlock.getTransactions().get(0);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
-        byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
-
-        rollingBlock = BlockForTest.createNextBlock(rollingBlock, null, networkParameters.getGenesisBlock().getHash());
-
-        // Create bitcoin spend of 1 BTA.
-        ECKey toKey = new ECKey();
-        Coin amount = Coin.valueOf(11123, NetworkParameters.BIGNETCOIN_TOKENID);
-        Address address = new Address(networkParameters, toKey.getPubKeyHash());
-        Coin totalAmount = Coin.ZERO;
-
-        Transaction t = new Transaction(networkParameters);
-        t.addOutput(new TransactionOutput(networkParameters, t, amount, toKey));
-        t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
-        rollingBlock.addTransaction(t);
-        rollingBlock.solve();
-        blockgraph.add(rollingBlock);
-        totalAmount = totalAmount.add(amount);
-
-        milestoneService.update(); // ADDED
-        List<UTXO> outputs = store.getOpenTransactionOutputs(Lists.newArrayList(address));
-        assertNotNull(outputs);
-        assertEquals("Wrong Number of Outputs", 1, outputs.size());
-        UTXO output = outputs.get(0);
-        assertEquals("The address is not equal", address.toString(), output.getAddress());
-        assertEquals("The amount is not equal", totalAmount.getValue(), output.getValue().getValue());
-        outputs = null;
-
-        try {
-            store.close();
-        } catch (Exception e) {
-        }
-    }
-
-    @Test
-    public void testUTXOProviderWithWallet() throws Exception {
-        // Check that we aren't accidentally leaving any references
-        // to the full StoredUndoableBlock's lying around (ie memory leaks)
-        ECKey outKey = new ECKey();
-        int height = 1;
-
-        // Build some blocks on genesis block to create a spendable output.
-        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
-        blockgraph.add(rollingBlock);
-        Transaction transaction = rollingBlock.getTransactions().get(0);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
-        byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
-        for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
-            rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
-                    outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
-            blockgraph.add(rollingBlock);
-        }
-        rollingBlock = BlockForTest.createNextBlock(rollingBlock, null, networkParameters.getGenesisBlock().getHash());
-    }
-
+ 
+ 
     @Test
     // transfer the coin to address with multisign for spent
     public void testMultiSigOutputToString() throws Exception {

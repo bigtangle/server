@@ -151,56 +151,8 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         checkResponse(r, 100);
     }
 
-    @SuppressWarnings("unchecked")
-    @Test
-    public void testTransactionAndGetOutputs() throws Exception {
-        ECKey toKey = createWalletAndAddCoin();
-
-        List<String> pubKeyHashs = new ArrayList<String>();
-        pubKeyHashs.add(Utils.HEX.encode(toKey.getPubKeyHash()));
-
-        String response = OkHttp3Util.post(contextRoot + "getOutputs",
-                Json.jsonmapper().writeValueAsString(pubKeyHashs).getBytes("UTF-8"));
-
-        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-
-        List<Map<String, Object>> outputs0 = (List<Map<String, Object>>) data.get("outputs");
-        List<UTXO> outputs = new ArrayList<UTXO>();
-        for (Map<String, Object> map : outputs0) {
-            UTXO utxo = MapToBeanMapperUtil.parseUTXO(map);
-            outputs.add(utxo);
-        }
-    }
-
-    public ECKey createWalletAndAddCoin() throws Exception, PrunedException {
-        ECKey outKey = new ECKey();
-        Block rollingBlock = this.getRollingBlock(outKey);
-
-        rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
-                outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
-
-        Transaction transaction = rollingBlock.getTransactions().get(0);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
-        byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
-
-        Wallet wallet = new Wallet(networkParameters);
-        wallet.setUTXOProvider(store);
-
-        ECKey toKey = wallet.freshReceiveKey();
-        Coin amount = Coin.valueOf(100, NetworkParameters.BIGNETCOIN_TOKENID);
-
-        Transaction t = new Transaction(networkParameters);
-        t.addOutput(new TransactionOutput(networkParameters, t, amount, toKey));
-        t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
-
-        rollingBlock.addTransaction(t);
-        rollingBlock.solve();
-        blockgraph.add(rollingBlock);
-        milestoneService.update();
-        return toKey;
-    }
-
-  
+ 
+ 
     @Test
     public void testCreateMultiSigList() throws Exception {
         for (int i = 0; i < 4; i++) {
