@@ -540,7 +540,7 @@ public class SendMoneyController {
 
     public void addSIgnAddress(ActionEvent event) {
         try {
-            test();
+            //TODO cui,jiang
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
@@ -655,6 +655,7 @@ public class SendMoneyController {
     }
 
     public void multiSign(ActionEvent event) {
+        //TODO cui,jiang
 
     }
 
