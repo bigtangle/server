@@ -46,8 +46,7 @@ import net.bigtangle.wallet.WalletTransaction.Pool;
  * </p>
  *
  * <p>
- * Transactions are the fundamental atoms and have many powerful
- * features. 
+ * Transactions are the fundamental atoms and have many powerful features.
  * </p>
  *
  * <p>
@@ -435,7 +434,6 @@ public class Transaction extends ChildMessage {
         return result;
     }
 
- 
     /**
      * Returns true if any of the outputs is marked as spent.
      */
@@ -1383,8 +1381,6 @@ public class Transaction extends ChildMessage {
         if (this.getMessageSize() > Block.MAX_BLOCK_SIZE)
             throw new VerificationException.LargerThanMaxBlockSize();
 
-        // TODO why is there no max money check below?
-        Coin valueOut = Coin.valueOf(0, NetworkParameters.BIGNETCOIN_TOKENID);
         HashSet<TransactionOutPoint> outpoints = new HashSet<TransactionOutPoint>();
         for (TransactionInput input : inputs) {
             if (outpoints.contains(input.getOutpoint()))
@@ -1396,11 +1392,6 @@ public class Transaction extends ChildMessage {
                 if (output.getValue().signum() < 0) // getValue() can throw
                                                     // IllegalStateException
                     throw new VerificationException.NegativeValueOutput();
-                // TODO why is there no max money check?
-                // valueOut = valueOut.add(output.getValue());
-                // if (params.hasMaxMoney() &&
-                // valueOut.compareTo(params.getMaxMoney()) > 0)
-                // throw new IllegalArgumentException();
             }
         } catch (IllegalStateException e) {
             throw new VerificationException.ExcessiveValue();

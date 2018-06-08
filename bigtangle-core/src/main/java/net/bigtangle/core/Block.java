@@ -925,12 +925,14 @@ public class Block extends Message {
             throw new VerificationException("Block larger than MAX_BLOCK_SIZE");
         checkMerkleRoot();
         checkSigOps();
-        // genesis blocktype? check signature
+      
         for (Transaction transaction : transactions) {
             if (!allowCoinbaseTransaction() && transaction.isCoinBase()) {
                 throw new VerificationException("Coinbase Transaction is not allowed for this block type");
             }
+            if(blocktype != NetworkParameters.BLOCKTYPE_USERDATA) {
             transaction.verify();
+            }
         }
     }
 
