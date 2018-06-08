@@ -28,13 +28,13 @@
                         <Button defaultButton="true" layoutX="346.0" layoutY="605.0" mnemonicParsing="false" onAction="#removeToken" text="%remove" />
                         <Button defaultButton="true" layoutX="673.0" layoutY="605.0" mnemonicParsing="false" onAction="#removeLinkman" text="%remove" />
                         <Button cancelButton="true" layoutX="766.0" layoutY="605.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />
+                        <Label layoutX="35.0" layoutY="43.0" prefHeight="15.0" prefWidth="98.0" text="%linkname" />
+                        <Label layoutX="288.0" layoutY="44.0" prefHeight="15.0" prefWidth="72.0" text="%Address" />
+                        <TextField fx:id="nameTF" layoutX="137.0" layoutY="40.0" />
+                        <TextField fx:id="addressTF" layoutX="376.0" layoutY="40.0" onAction="#addContact" prefHeight="23.0" prefWidth="287.0" />
+                        <Button layoutX="686.0" layoutY="40.0" mnemonicParsing="false" onAction="#saveUserdata" text="%add" />
                      </children>
                   </AnchorPane>
-               </content>
-            </Tab>
-          <Tab closable="false" text="%add">
-               <content>
-                  <AnchorPane maxHeight="690.0" maxWidth="1000.0" minHeight="690.0" minWidth="1000.0" prefHeight="690.0" prefWidth="1000.0" style="-fx-background-color: white;" />
                </content>
             </Tab>
         </tabs>
