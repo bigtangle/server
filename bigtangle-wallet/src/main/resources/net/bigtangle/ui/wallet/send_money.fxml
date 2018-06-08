@@ -105,7 +105,7 @@
                         </HBox>
                         <HBox alignment="CENTER_RIGHT" fillHeight="true" maxWidth="700.0" minWidth="700.0" prefHeight="30.0" prefWidth="700.0" spacing="15.0" VBox.vgrow="NEVER">
                            <children>
-                              <Button defaultButton="true" mnemonicParsing="false" onAction="#addSIgnAddress" text="%save" />
+                              <Button defaultButton="true" mnemonicParsing="false" onAction="#sign" text="%save" />
                               <Button fx:id="cancelBtn1" cancelButton="true" mnemonicParsing="false" onAction="#cancel" prefWidth="79.0" text="%Cancel" />
                            </children>
                         </HBox>

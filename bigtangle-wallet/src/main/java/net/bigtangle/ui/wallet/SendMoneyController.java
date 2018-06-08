@@ -540,7 +540,6 @@ public class SendMoneyController {
 
     public void addSIgnAddress(ActionEvent event) {
         try {
-            //TODO cui,jiang
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
@@ -639,7 +638,7 @@ public class SendMoneyController {
     }
 
     public void sign(ActionEvent event) {
-
+        //TODO cui,jiang
     }
 
     public void removeSignAddr(ActionEvent event) {
@@ -655,6 +654,7 @@ public class SendMoneyController {
     }
 
     public void multiSign(ActionEvent event) {
+        Map<String, Object> map=signTable.getSelectionModel().getSelectedItem();
         //TODO cui,jiang
 
     }
