@@ -1,13 +1,13 @@
 package net.bigtangle.core;
 
 import java.io.IOException;
+import java.util.List;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
 public class ContactInfo {
-    private String name;
-    private String address;
+    private List<Contact> contactList;
 
     public byte[] toByteArray() {
         try {
@@ -21,31 +21,21 @@ public class ContactInfo {
 
     public ContactInfo parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
         String jsonStr = new String(buf);
-        
-            ContactInfo contactInfo = Json.jsonmapper().readValue(jsonStr, ContactInfo.class);
-            if (contactInfo == null)
-                return this;
-            this.name = contactInfo.getName();
-            this.address = contactInfo.getAddress();
-       
-      
+
+        ContactInfo contactInfo = Json.jsonmapper().readValue(jsonStr, ContactInfo.class);
+        if (contactInfo == null)
+            return this;
+        this.contactList = contactInfo.getContactList();
+
         return this;
     }
 
-    public String getName() {
-        return name;
-    }
- 
-    public void setName(String name) {
-        this.name = name;
+    public List<Contact> getContactList() {
+        return contactList;
     }
 
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
+    public void setContactList(List<Contact> contactList) {
+        this.contactList = contactList;
     }
 
 }

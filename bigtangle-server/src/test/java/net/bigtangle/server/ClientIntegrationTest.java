@@ -20,6 +20,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.Contact;
 import net.bigtangle.core.ContactInfo;
 import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
@@ -187,9 +188,14 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         ECKey pubKeyTo = new ECKey();
 
         Transaction coinbase = new Transaction(networkParameters);
+        Contact contact = new Contact();
+        contact.setName("testname1");
+        contact.setAddress(pubKeyTo.toAddress(networkParameters).toBase58());
         ContactInfo contactInfo = new ContactInfo();
-        contactInfo.setName("testname1");
-        contactInfo.setAddress(pubKeyTo.toAddress(networkParameters).toBase58());
+        List<Contact> list = new ArrayList<Contact>();
+        list.add(contact);
+        contactInfo.setContactList(list);
+
         coinbase.setDataclassname(DataClassName.USERDATA.name());
         byte[] buf1 = contactInfo.toByteArray();
         coinbase.setData(buf1);
