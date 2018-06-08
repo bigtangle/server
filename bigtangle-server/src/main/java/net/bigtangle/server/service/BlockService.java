@@ -52,9 +52,7 @@ public class BlockService {
     @Autowired
     protected NetworkParameters networkParameters;
     @Autowired
-    FullPrunedBlockGraph blockGraphService;
-
- 
+    FullPrunedBlockGraph blockgraph;
 
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
@@ -154,7 +152,6 @@ public class BlockService {
     }
 
     public void saveBlock(Block block) throws Exception {
-        FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
         blockgraph.add(block);
         try {
             milestoneService.update();
@@ -183,7 +180,7 @@ public class BlockService {
      * @throws BlockStoreException
      */
     public void confirm(BlockEvaluation blockEvaluation) throws BlockStoreException {
-        blockGraphService.addBlockToMilestone(blockEvaluation);
+        blockgraph.addBlockToMilestone(blockEvaluation);
     }
 
     /**
@@ -195,7 +192,7 @@ public class BlockService {
      * @throws BlockStoreException
      */
     public void unconfirm(BlockEvaluation blockEvaluation) throws BlockStoreException {
-        blockGraphService.removeBlockFromMilestone(blockEvaluation);
+        blockgraph.removeBlockFromMilestone(blockEvaluation);
     }
 
     public List<BlockEvaluation> getSolidBlockEvaluations() throws BlockStoreException {

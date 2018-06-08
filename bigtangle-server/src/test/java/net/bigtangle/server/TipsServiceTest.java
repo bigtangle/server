@@ -150,6 +150,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
+    //fixme dead lock
     public void getBlockToApproveTest2() throws Exception {
         createBlock();
         ECKey outKey = new ECKey();

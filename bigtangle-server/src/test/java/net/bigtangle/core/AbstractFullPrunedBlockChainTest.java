@@ -335,7 +335,6 @@ public abstract class AbstractFullPrunedBlockChainTest {
         final int UNDOABLE_BLOCKS_STORED = PARAMS.getMajorityEnforceBlockUpgrade() + 1;
         store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
         try {
-            blockgraph = new FullPrunedBlockGraph(PARAMS, store);
             ECKey outKey = new ECKey();
             int height = 1;
             Block chainHead = PARAMS.getGenesisBlock();

@@ -51,6 +51,7 @@ import net.bigtangle.core.VerificationException;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.Script.VerifyFlag;
 import net.bigtangle.server.service.BlockRequester;
+import net.bigtangle.server.service.MultiSignService;
 import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.server.service.ValidatorService;
 import net.bigtangle.utils.ContextPropagatingThreadFactory;
@@ -89,6 +90,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     protected NetworkParameters networkParameters;
     @Autowired
     private ValidatorService validatorService;
+
+    @Autowired
+    private MultiSignService multiSignService;
 
     // Whether or not to execute scriptPubKeys before accepting a transaction
     // (i.e.
@@ -312,12 +316,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Connect all approved blocks first (check if actually needed)
         addBlockToMilestone(blockStore.getBlockEvaluation(block.getPrevBlockHash()));
         addBlockToMilestone(blockStore.getBlockEvaluation(block.getPrevBranchBlockHash()));
-        
+
         // For rewards, update reward db
         if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD) {
             blockStore.updateTxRewardConfirmed(block.getHash(), true);
         }
-        
+
         // For token creations, update token db
         if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
             Transaction tx = block.getTransactions().get(0);
@@ -349,12 +353,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     @Override
     public void removeTransactionsFromMilestone(Block block) throws BlockStoreException {
-        
+
         // For rewards, update reward db
         if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD) {
             blockStore.updateTxRewardConfirmed(block.getHash(), false);
         }
-        
+
         // For token creations, update token db
         if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
             // TODO revert token db changes here
@@ -364,8 +368,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             // Mark all outputs used by tx input as unspent
             if (!tx.isCoinBase()) {
                 for (TransactionInput txin : tx.getInputs()) {
-                    blockStore.updateTransactionOutputSpent(txin.getOutpoint().getHash(),
-                            txin.getOutpoint().getIndex(), false, Sha256Hash.ZERO_HASH);
+                    blockStore.updateTransactionOutputSpent(txin.getOutpoint().getHash(), txin.getOutpoint().getIndex(),
+                            false, Sha256Hash.ZERO_HASH);
                 }
             }
 
@@ -373,16 +377,19 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-//    private void insertConfirmedUTXOs(BlockEvaluation blockEvaluation, Block block, Transaction tx)
-//            throws BlockStoreException {
-//        for (TransactionOutput out : tx.getOutputs()) {
-//            Script script = getScript(out.getScriptBytes());
-//            UTXO newOut = new UTXO(tx.getHash(), out.getIndex(), out.getValue(), blockEvaluation.getHeight(), true,
-//                    script, getScriptAddress(script), block.getHash(), out.getFromaddress(), tx.getMemo(),
-//                    Utils.HEX.encode(out.getValue().getTokenid()), false, true, false);
-//            blockStore.addUnspentTransactionOutput(newOut);
-//        }
-//    }
+    // private void insertConfirmedUTXOs(BlockEvaluation blockEvaluation, Block
+    // block, Transaction tx)
+    // throws BlockStoreException {
+    // for (TransactionOutput out : tx.getOutputs()) {
+    // Script script = getScript(out.getScriptBytes());
+    // UTXO newOut = new UTXO(tx.getHash(), out.getIndex(), out.getValue(),
+    // blockEvaluation.getHeight(), true,
+    // script, getScriptAddress(script), block.getHash(), out.getFromaddress(),
+    // tx.getMemo(),
+    // Utils.HEX.encode(out.getValue().getTokenid()), false, true, false);
+    // blockStore.addUnspentTransactionOutput(newOut);
+    // }
+    // }
 
     // For each output, mark as confirmed
     private void confirmUTXOs(final Transaction tx) throws BlockStoreException {
@@ -513,17 +520,25 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             } catch (ArrayIndexOutOfBoundsException e) {
                 return false;
             }
-            
-            // Reward must have been assessed locally and passed. 
+
+            // Reward must have been assessed locally and passed.
             // TODO don't assess here but do batched assessment
-            if (!blockStore.getBlockEvaluation(block.getHash()).isRewardValid() && !validatorService.assessMiningRewardBlock(block, height))
+            if (!blockStore.getBlockEvaluation(block.getHash()).isRewardValid()
+                    && !validatorService.assessMiningRewardBlock(block, height))
                 return false;
         }
 
         // Check issuance block specific validity
-        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD) {
-            // TODO token: add check previous serial number must exist, current must not exist in db
-            // TODO token: add check for if signing keys are in db
+        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
+            if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION)
+                try {
+                    if (!this.multiSignService.checkMultiSignPre(block, blockStore)) {
+                        return false;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return false;
+                }
         }
 
         blockStore.beginDatabaseBatchWrite();
@@ -608,15 +623,15 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                             Utils.HEX.encode(out.getValue().getTokenid()), false, false, false);
                     blockStore.addUnspentTransactionOutput(newOut);
 
-                    
                     if (script.isSentToMultiSig()) {
                         for (ECKey ecKey : script.getPubKeys()) {
                             String toaddress = ecKey.toAddress(networkParameters).toBase58();
-                            OutputsMulti outputsMulti = new OutputsMulti(newOut.getHash(), toaddress, newOut.getIndex(), 0);
+                            OutputsMulti outputsMulti = new OutputsMulti(newOut.getHash(), toaddress, newOut.getIndex(),
+                                    0);
                             this.blockStore.insertOutputsMulti(outputsMulti);
                         }
                     }
-                    
+
                     txOutsCreated.add(newOut);
                 }
                 if (!checkOutput(valueOut))

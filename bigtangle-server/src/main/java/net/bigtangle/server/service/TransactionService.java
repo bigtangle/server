@@ -125,7 +125,6 @@ public class TransactionService {
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
         block.addCoinbaseTransaction(pubKey, coin, tokenInfo);
         block.solve();
-        FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
         blockgraph.add(block);
         return block;
     }
@@ -168,18 +167,11 @@ public class TransactionService {
         return store.getTransactionOutput(out.getHash(), out.getIndex());
     }
 
-    @Autowired
-    private MultiSignService multiSignService;
-
+    // TODO use add instead of addConnected?
     public Optional<Block> addConnected(byte[] bytes, boolean emptyBlock) {
         try {
             Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bytes);
             if (!checkBlockExists(block)) {
-                if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION
-                        && !this.multiSignService.checkMultiSignPre(block, this.store)) {
-                    throw new BlockStoreException("block multisign error");
-                }
-                FullPrunedBlockGraph blockgraph = new FullPrunedBlockGraph(networkParameters, store);
                 blockgraph.add(block);
                 logger.debug("addConnected from kafka " + block);
                 // if(!block.getTransactions().isEmpty() && emptyBlock)
