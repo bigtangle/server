@@ -277,6 +277,10 @@ public class SendMoneyController {
                 .didThrow(() -> checkState(Coin.parseCoin(text, NetworkParameters.BIGNETCOIN_TOKENID).isPositive())));
         new TextFieldValidator(amountEdit1, text -> !WTUtils
                 .didThrow(() -> checkState(Coin.parseCoin(text, NetworkParameters.BIGNETCOIN_TOKENID).isPositive())));
+        initSignTable();
+    }
+
+    public void initSignTable() {
 
     }
 
@@ -638,7 +642,7 @@ public class SendMoneyController {
     }
 
     public void sign(ActionEvent event) {
-        //TODO cui,jiang
+        // TODO cui,jiang
     }
 
     public void removeSignAddr(ActionEvent event) {
@@ -654,8 +658,8 @@ public class SendMoneyController {
     }
 
     public void multiSign(ActionEvent event) {
-        Map<String, Object> map=signTable.getSelectionModel().getSelectedItem();
-        //TODO cui,jiang
+        Map<String, Object> map = signTable.getSelectionModel().getSelectedItem();
+        // TODO cui,jiang
 
     }
 
