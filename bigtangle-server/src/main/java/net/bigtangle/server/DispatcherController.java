@@ -280,16 +280,16 @@ public class DispatcherController {
                 break;
                 
             case launchPayMultiSign: {
-                Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
-                this.payMultiSignService.launchPayMultiSign(block);
+                this.payMultiSignService.launchPayMultiSign(bodyByte);
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
                 break;
                 
             case payMultiSign: {
-                Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
-                this.payMultiSignService.payMultiSign(block);
-                this.outPrintJSONString(httpServletResponse, OkResponse.create());
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                AbstractResponse response = this.payMultiSignService.payMultiSign(request);
+                this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
                 
@@ -297,6 +297,14 @@ public class DispatcherController {
                 String reqStr = new String(bodyByte, "UTF-8");
                 List<String> keyStrHex000 = Json.jsonmapper().readValue(reqStr, List.class);
                 AbstractResponse response = this.payMultiSignService.getPayMultiSignList(keyStrHex000);
+                this.outPrintJSONString(httpServletResponse, response);
+                break;
+            }
+            case getPayMultiSignAddressList: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String orderid = (String) request.get("orderid");
+                AbstractResponse response = this.payMultiSignService.getPayMultiSignAddressList(orderid);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;

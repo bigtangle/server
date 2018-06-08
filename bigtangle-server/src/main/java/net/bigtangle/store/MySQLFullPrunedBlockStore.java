@@ -96,7 +96,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    orderid varchar(255) NOT NULL  ,\n" 
             + "    tokenid varchar(255) NOT NULL  ,\n" 
             + "    toaddress varchar(255) NOT NULL,\n"
-            + "    outputhash varchar(255) NOT NULL,\n"
             + "    blockhash mediumblob NOT NULL,\n"
             + "    amount bigint(20) ,\n"
             + "    minsignnumber bigint(20) ,\n"
@@ -106,6 +105,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    orderid varchar(255) NOT NULL  ,\n" 
             + "    pubKey varchar(255),\n"
             + "    sign int(11) NOT NULL,\n"
+            + "    signInputData mediumblob,\n"
             + "    PRIMARY KEY (orderid, pubKey) \n)";
 
     private static final String CREATE_EXCHANGE_TABLE = "CREATE TABLE exchange (\n"

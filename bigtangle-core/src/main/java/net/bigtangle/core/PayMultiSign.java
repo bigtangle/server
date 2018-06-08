@@ -10,7 +10,7 @@ public class PayMultiSign implements java.io.Serializable {
     
     private String toaddress;
     
-    private String outputhash;
+    private String blockhashHex;
     
     private byte[] blockhash;
     
@@ -18,13 +18,6 @@ public class PayMultiSign implements java.io.Serializable {
     
     private long minsignnumber;
     
-    public String getBlockhashHex() {
-        if (blockhash == null) {
-            return null;
-        }
-        return Utils.HEX.encode(this.blockhash);
-    }
-
     public String getOrderid() {
         return orderid;
     }
@@ -49,22 +42,6 @@ public class PayMultiSign implements java.io.Serializable {
         this.toaddress = toaddress;
     }
 
-    public String getOutputhash() {
-        return outputhash;
-    }
-
-    public void setOutputhash(String outputhash) {
-        this.outputhash = outputhash;
-    }
-
-    public byte[] getBlockhash() {
-        return blockhash;
-    }
-
-    public void setBlockhash(byte[] blockhash) {
-        this.blockhash = blockhash;
-    }
-
     public long getAmount() {
         return amount;
     }
@@ -79,5 +56,21 @@ public class PayMultiSign implements java.io.Serializable {
 
     public void setMinsignnumber(long minsignnumber) {
         this.minsignnumber = minsignnumber;
+    }
+
+    public String getBlockhashHex() {
+        return blockhashHex;
+    }
+
+    public void setBlockhashHex(String blockhashHex) {
+        this.blockhashHex = blockhashHex;
+    }
+
+    public byte[] getBlockhash() {
+        return blockhash;
+    }
+
+    public void setBlockhash(byte[] blockhash) {
+        this.blockhash = blockhash;
     }
 }
