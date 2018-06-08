@@ -45,6 +45,7 @@
 				<Button fx:id="stock" defaultButton="true" onAction="#stockPublish" text="%Token" />
 				<Button defaultButton="true" mnemonicParsing="false" onAction="#blockEvaluation" text="%Blocks" />
 				<Button defaultButton="true" mnemonicParsing="false" onAction="#eckeyList" text="%Keys" />
+            <Button defaultButton="true" mnemonicParsing="false" onAction="#userdataList" text="%userdata" />
 				<Button defaultButton="true" onAction="#settingsClicked" text="%Settings" />
 			</children>
 		</HBox>
@@ -75,6 +76,6 @@
 				<Image url="@bigtangle_logo_plain.png" />
 			</image>
 		</ImageView>
-      <Button layoutX="594.0" layoutY="672.0" mnemonicParsing="false" onAction="#showBlock" text="%showBlock" />
+      <Button defaultButton="true" layoutX="594.0" layoutY="672.0" mnemonicParsing="false" onAction="#showBlock" text="%showBlock" />
 	</children>
 </AnchorPane>

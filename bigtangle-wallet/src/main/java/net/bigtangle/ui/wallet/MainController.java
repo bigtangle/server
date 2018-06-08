@@ -313,6 +313,12 @@ public class MainController {
         initialize();
     }
 
+    public void userdataList(ActionEvent event) {
+        Main.IpAddress = Server.getText();
+        Main.port = IPPort.getText();
+        Main.instance.overlayUI("userdata.fxml");
+    }
+
     public void blockEvaluation(ActionEvent event) {
         Main.IpAddress = Server.getText();
         Main.port = IPPort.getText();
