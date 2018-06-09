@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.server.transaction;
+package net.bigtangle.wallet;
 
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;

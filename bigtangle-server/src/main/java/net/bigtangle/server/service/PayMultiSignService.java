@@ -1,5 +1,6 @@
 package net.bigtangle.server.service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,11 +15,13 @@ import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.PayMultiSignAddress;
+import net.bigtangle.core.PayMultiSignExt;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.PayMultiSignAddressListResponse;
+import net.bigtangle.server.response.PayMultiSignDetailsResponse;
 import net.bigtangle.server.response.PayMultiSignListResponse;
 import net.bigtangle.server.response.PayMultiSignResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -28,6 +31,11 @@ public class PayMultiSignService {
     
     @Autowired
     protected FullPrunedBlockStore store;
+    
+    public AbstractResponse getPayMultiSignDetails(String orderid) throws BlockStoreException {
+        PayMultiSign payMultiSign = this.store.getPayMultiSignWithOrderid(orderid);
+        return PayMultiSignDetailsResponse.create(payMultiSign);
+    }
 
     public void launchPayMultiSign(byte[] data) throws BlockStoreException, Exception {
         PayMultiSign payMultiSign = convertTransactionDataToPayMultiSign(data);
@@ -104,7 +112,21 @@ public class PayMultiSignService {
 
     public AbstractResponse getPayMultiSignList(List<String> pubKeys) throws BlockStoreException {
         List<PayMultiSign> payMultiSigns = this.store.getPayMultiSignList(pubKeys);
-        return PayMultiSignListResponse.create(payMultiSigns);
+        List<PayMultiSignExt> payMultiSignExts = new ArrayList<PayMultiSignExt>();
+        for (PayMultiSign payMultiSign : payMultiSigns) {
+            PayMultiSignExt payMultiSignExt = new PayMultiSignExt();
+            payMultiSignExt.setAmount(payMultiSign.getAmount());
+            payMultiSignExt.setBlockhash(payMultiSign.getBlockhash());
+            payMultiSignExt.setBlockhashHex(payMultiSign.getBlockhashHex());
+            payMultiSignExt.setMinsignnumber(payMultiSign.getMinsignnumber());
+            payMultiSignExt.setOrderid(payMultiSign.getOrderid());
+            payMultiSignExt.setToaddress(payMultiSign.getToaddress());
+            payMultiSignExt.setTokenid(payMultiSign.getTokenid());
+            payMultiSignExt.setSign(1);
+            payMultiSignExt.setRealSignnumber(100);
+            payMultiSignExts.add(payMultiSignExt);
+        }
+        return PayMultiSignListResponse.create(payMultiSignExts);
     }
 
     public AbstractResponse getPayMultiSignAddressList(String orderid) throws BlockStoreException {

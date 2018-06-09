@@ -18,6 +18,26 @@ public class PayMultiSign implements java.io.Serializable {
     
     private long minsignnumber;
     
+    private String pubKeyHex;
+    
+    private String outpusHashHex;
+    
+    public String getOutpusHashHex() {
+        return outpusHashHex;
+    }
+
+    public void setOutpusHashHex(String outpusHashHex) {
+        this.outpusHashHex = outpusHashHex;
+    }
+
+    public String getPubKeyHex() {
+        return pubKeyHex;
+    }
+
+    public void setPubKeyHex(String pubKeyHex) {
+        this.pubKeyHex = pubKeyHex;
+    }
+
     public String getOrderid() {
         return orderid;
     }

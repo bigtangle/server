@@ -6,7 +6,7 @@ package net.bigtangle.server;
 
 public enum ReqCmd {
 
-    askTransaction, saveBlock, getOutputs,
+    askTransaction, saveBlock, getOutputs, outpusWithHexStr,
 
     createGenesisBlock, exchangeToken, getTokens, getTokensNoMarket, getMarkets, getTokenById, getAllEvaluations,
 
@@ -16,5 +16,5 @@ public enum ReqCmd {
 
     multiSign, getGenesisBlockLR, getTokenSerials, getCalTokenIndex, getCountSign, updateTokenInfo, getUserData,
     
-    launchPayMultiSign, payMultiSign, getPayMultiSignList, getPayMultiSignAddressList;
+    launchPayMultiSign, payMultiSign, getPayMultiSignList, getPayMultiSignAddressList, payMultiSignDetails;
 }

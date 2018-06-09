@@ -3606,7 +3606,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public void insertPayPayMultiSign(PayMultiSign payMultiSign) throws BlockStoreException {
-        String sql = "insert into paymultisign (orderid, tokenid, toaddress, blockhash, amount, minsignnumber) values (?, ?, ?, ?, ?, ?)";
+        String sql = "insert into paymultisign (orderid, tokenid, toaddress, blockhash, amount, minsignnumber, outpusHashHex) values (?, ?, ?, ?, ?, ?, ?)";
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -3617,6 +3617,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setBytes(4, payMultiSign.getBlockhash());
             preparedStatement.setLong(5, payMultiSign.getAmount());
             preparedStatement.setLong(6, payMultiSign.getMinsignnumber());
+            preparedStatement.setString(7, payMultiSign.getOutpusHashHex());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -3683,7 +3684,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public PayMultiSign getPayMultiSignWithOrderid(String orderid) throws BlockStoreException {
-        String sql = "select orderid, tokenid, toaddress, blockhash, amount, minsignnumber from paymultisign where orderid = ?";
+        String sql = "select orderid, tokenid, toaddress, blockhash, amount, minsignnumber, outpusHashHex from paymultisign where orderid = ?";
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -3701,6 +3702,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             payMultiSign.setToaddress(resultSet.getString("toaddress"));
             payMultiSign.setTokenid(resultSet.getString("tokenid"));
             payMultiSign.setBlockhashHex(Utils.HEX.encode(payMultiSign.getBlockhash()));
+            payMultiSign.setOutpusHashHex(resultSet.getString("outpusHashHex"));
             return payMultiSign;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
@@ -3775,7 +3777,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         if (pubKeys.isEmpty()) {
             return new ArrayList<PayMultiSign>();
         }
-        String sql = "SELECT paymultisign.orderid, tokenid, toaddress, blockhash, amount, minsignnumber"
+        String sql = "SELECT paymultisign.orderid, tokenid, toaddress, blockhash, amount, minsignnumber, outpusHashHex"
                 + " FROM paymultisign LEFT JOIN paymultisignaddress ON paymultisign.orderid = paymultisignaddress.orderid "
                 + " WHERE paymultisignaddress.pubKey ";
         StringBuffer stringBuffer = new StringBuffer();
@@ -3796,6 +3798,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 payMultiSign.setToaddress(resultSet.getString("toaddress"));
                 payMultiSign.setTokenid(resultSet.getString("tokenid"));
                 payMultiSign.setBlockhashHex(Utils.HEX.encode(payMultiSign.getBlockhash()));
+                payMultiSign.setOutpusHashHex(resultSet.getString("outpusHashHex"));
                 list.add(payMultiSign);
             }
             return list;
@@ -3836,4 +3839,52 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
+
+    @Override
+    public UTXO getOutputsWithHexStr(byte[] hash) throws BlockStoreException {
+        String sql = "SELECT height, coinvalue, scriptbytes, coinbase, toaddress,"
+                + " addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, "
+                + " spendpending FROM outputs WHERE hash = ?";
+        
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setBytes(1, hash);
+            ResultSet results = preparedStatement.executeQuery();
+            if (!results.next()) {
+                return null;
+            }
+            // Parse it.
+            long height = results.getLong(1);
+            Coin coinvalue = Coin.valueOf(results.getLong(2), results.getString(8));
+            byte[] scriptBytes = results.getBytes(3);
+            boolean coinbase = results.getBoolean(4);
+            String address = results.getString(5);
+            Sha256Hash blockhash = Sha256Hash.wrap(results.getBytes(7));
+
+            String fromaddress = results.getString(9);
+            String memo = results.getString(10);
+            boolean spent = results.getBoolean(11);
+            boolean confirmed = results.getBoolean(12);
+            boolean spendPending = results.getBoolean(13);
+            String tokenid = results.getString("tokenid");
+            
+            UTXO utxo = new UTXO(Sha256Hash.wrap(hash), -1L, coinvalue, height, coinbase, new Script(scriptBytes), address, blockhash,
+                    fromaddress, memo, tokenid, spent, confirmed, spendPending, 0);
+            return utxo;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+    
+    
 }

@@ -99,6 +99,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    blockhash mediumblob NOT NULL,\n"
             + "    amount bigint(20) ,\n"
             + "    minsignnumber bigint(20) ,\n"
+            + "    outpusHashHex varchar(255) ,\n"
             + "    PRIMARY KEY (orderid) \n)";
     
     private static final String CREATE_PAYMULTISIGNADDRESS_TABLE = "CREATE TABLE paymultisignaddress (\n"

@@ -18,16 +18,19 @@ import org.springframework.stereotype.Service;
 import com.google.common.collect.Lists;
 
 import net.bigtangle.core.Address;
+import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UTXOProviderException;
+import net.bigtangle.core.Utils;
 import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.GetBalancesResponse;
 import net.bigtangle.server.response.GetOutputsResponse;
-import net.bigtangle.server.transaction.FreeStandingTransactionOutput;
+import net.bigtangle.server.response.OutputsDetailsResponse;
+import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.wallet.CoinSelector;
 import net.bigtangle.wallet.DefaultCoinSelector;
@@ -159,5 +162,16 @@ public class WalletService {
             outputs.add(freeStandingTransactionOutput.getUTXO());
         }
         return GetOutputsResponse.create(outputs);
+    }
+
+    public AbstractResponse getOutputsWithHexStr(String hexStr) throws BlockStoreException {
+        UTXO output = getStoredOutputsWithHexStr(hexStr);
+        return OutputsDetailsResponse.create(output);
+    }
+
+    private UTXO getStoredOutputsWithHexStr(String hexStr) throws BlockStoreException {
+        byte[] hash = Utils.HEX.decode(hexStr);
+        UTXO utxo = store.getOutputsWithHexStr(hash);
+        return utxo;
     }
 }

@@ -13,9 +13,9 @@ db:
   dbtype: ${DBTYPE:mysql}
   hostname: ${DB_HOSTNAME:localhost}
   port: ${DB_PORT:3306}
-  dbName: ${DB_NAME:bitcoinj_test}
+  dbName: ${DB_NAME:info}
   username: ${DB_USERNAME:root}
-  password: ${DB_PASSWORD:adminroot}
+  password: ${DB_PASSWORD:test1234}
 
 service:
   milestoneschedule:

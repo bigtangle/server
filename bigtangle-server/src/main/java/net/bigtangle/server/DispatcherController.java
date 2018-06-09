@@ -131,16 +131,11 @@ public class DispatcherController {
             }
                 break;
             case getTokensNoMarket: {
-                // String reqStr = new String(bodyByte, "UTF-8");
-                // Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = tokensService.getTokensList();
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
             case getMarkets: {
-                // String reqStr = new String(bodyByte, "UTF-8");
-                // Map<String, Object> request =
-                // Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = tokensService.getMarketTokensList();
                 this.outPrintJSONString(httpServletResponse, response);
             }
@@ -305,6 +300,22 @@ public class DispatcherController {
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String orderid = (String) request.get("orderid");
                 AbstractResponse response = this.payMultiSignService.getPayMultiSignAddressList(orderid);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+            case payMultiSignDetails: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String orderid = (String) request.get("orderid");
+                AbstractResponse response = this.payMultiSignService.getPayMultiSignDetails(orderid);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+            case outpusWithHexStr: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String hexStr = (String) request.get("hexStr");
+                AbstractResponse response = walletService.getOutputsWithHexStr(hexStr);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;

@@ -125,6 +125,7 @@
                      <children>
                         <TableView fx:id="signTable" layoutX="14.0" layoutY="88.0" maxWidth="900.0" minWidth="900.0" prefHeight="436.0" prefWidth="900.0">
                           <columns>
+                            <TableColumn fx:id="orderidColumn" prefWidth="279.0" text="orderid" />
                             <TableColumn fx:id="addressColumn" prefWidth="279.0" text="%Address" />
                             <TableColumn fx:id="signnumberColumn" prefWidth="82.0" text="%signnumber" />
                               <TableColumn fx:id="realSignnumColumn" prefWidth="110.0" text="%realSignnum" />

@@ -46,7 +46,7 @@ import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
-import net.bigtangle.server.transaction.FreeStandingTransactionOutput;
+import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.SendRequest;
 

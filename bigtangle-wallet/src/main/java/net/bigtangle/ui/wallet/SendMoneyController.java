@@ -46,6 +46,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.cell.MapValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
 import net.bigtangle.core.Address;
@@ -55,22 +56,26 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.InsufficientMoneyException;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
+import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.ui.wallet.utils.WTUtils;
+import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
+import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 public class SendMoneyController {
     public Button sendBtn;
@@ -150,9 +155,9 @@ public class SendMoneyController {
     public TableColumn<Map, String> signnumberColumn;
     public TableColumn<Map, String> realSignnumColumn;
     public TableColumn<Map, String> isSignAllColumn;
-
     public TableColumn<Map, String> isMySignColumn;
     public TableColumn<Map, String> amountColumn;
+    public TableColumn<Map, String> orderidColumn;
 
     public void initChoicebox() {
         // basicRadioButton.setUserData(1 + "");
@@ -280,8 +285,31 @@ public class SendMoneyController {
         initSignTable();
     }
 
-    public void initSignTable() {
-
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public void initSignTable() throws Exception {
+        KeyParameter aesKey = null;
+        List<String> pubKeys = new ArrayList<String>();
+        for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
+            pubKeys.add(ecKey.getPublicKeyAsHex());
+        }
+        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String resp = OkHttp3Util.postString(ContextRoot + "getPayMultiSignList", Json.jsonmapper().writeValueAsString(pubKeys));
+        HashMap<String, Object> data = Json.jsonmapper().readValue(resp, HashMap.class);
+        List<HashMap<String, Object>> payMultiSigns = (List<HashMap<String, Object>>) data.get("payMultiSigns");
+        ObservableList<Map> signData = FXCollections.observableArrayList();
+        for (HashMap<String, Object> payMultiSign : payMultiSigns) {
+            int sign = (int) payMultiSign.get("sign");
+            payMultiSign.put("signFlag", sign == 0 ? "-" : "*");
+            signData.add(payMultiSign);
+        }
+        addressColumn.setCellValueFactory(new MapValueFactory("toaddress"));
+        signnumberColumn.setCellValueFactory(new MapValueFactory("minsignnumber"));
+        isMySignColumn.setCellValueFactory(new MapValueFactory("sign"));
+        amountColumn.setCellValueFactory(new MapValueFactory("amount"));
+        isMySignColumn.setCellValueFactory(new MapValueFactory("signFlag"));
+        realSignnumColumn.setCellValueFactory(new MapValueFactory("realSignnumber"));
+        orderidColumn.setCellValueFactory(new MapValueFactory("orderid"));
+        this.signTable.setItems(signData);
     }
 
     public void importSign(ActionEvent event) {
@@ -657,10 +685,63 @@ public class SendMoneyController {
 
     }
 
-    public void multiSign(ActionEvent event) {
+    @SuppressWarnings("unchecked")
+    public void multiSign(ActionEvent event) throws Exception {
         Map<String, Object> map = signTable.getSelectionModel().getSelectedItem();
-        // TODO cui,jiang
-
+        String orderid = (String) map.get("orderid");
+        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("orderid", orderid);
+        String resp = OkHttp3Util.postString(ContextRoot + "payMultiSignDetails", Json.jsonmapper().writeValueAsString(requestParam));
+        HashMap<String, Object> data = Json.jsonmapper().readValue(resp, HashMap.class);
+        HashMap<String, Object> payMultiSign_ = (HashMap<String, Object>) data.get("payMultiSign");
+        
+        HashMap<String, Object> requestParam00 = new HashMap<String, Object>();
+        requestParam00.put("hexStr", payMultiSign_.get("outpusHashHex"));
+        String resp0 = OkHttp3Util.postString(ContextRoot + "outpusWithHexStr", Json.jsonmapper().writeValueAsString(requestParam00));
+        System.out.println(resp0);
+        
+        HashMap<String, Object> outputs_ = Json.jsonmapper().readValue(resp0, HashMap.class);
+        UTXO u = MapToBeanMapperUtil.parseUTXO((HashMap<String, Object>) outputs_.get("outputs"));
+        TransactionOutput multisigOutput = new FreeStandingTransactionOutput(Main.params, u, 0);
+        Script multisigScript = multisigOutput.getScriptPubKey();
+        
+        byte[] payloadBytes = Utils.HEX.decode((String) payMultiSign_.get("blockhashHex"));
+        Transaction transaction = Main.params.getDefaultSerializer().makeTransaction(payloadBytes);
+        Sha256Hash sighash = transaction.hashForSignature(0, multisigScript, Transaction.SigHash.ALL, false);
+        
+        requestParam.clear();
+        requestParam.put("orderid", (String) payMultiSign_.get("orderid"));
+        resp = OkHttp3Util.postString(ContextRoot + "getPayMultiSignAddressList", Json.jsonmapper().writeValueAsString(requestParam));
+        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
+        List<HashMap<String, Object>> payMultiSignAddresses = (List<HashMap<String, Object>>) result.get("payMultiSignAddresses");
+        
+        KeyParameter aesKey = null;
+        ECKey currentECKey = null;
+        
+        for (HashMap<String, Object> payMultiSignAddress : payMultiSignAddresses) {
+            if ((Integer) payMultiSignAddress.get("sign") == 1) {
+                continue;
+            }
+            for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
+                if (ecKey.getPublicKeyAsHex().equals((String) payMultiSignAddress.get("pubKey"))) {
+                    currentECKey = ecKey;
+                    break;
+                }
+            }
+        }
+        TransactionSignature transactionSignature = new TransactionSignature(currentECKey.sign(sighash), Transaction.SigHash.ALL, false);
+        
+        ECKey.ECDSASignature party1Signature = currentECKey.sign(transaction.getHash());
+        byte[] buf1 = party1Signature.encodeToDER();
+        
+        requestParam.clear();
+        requestParam.put("orderid", (String) payMultiSign_.get("orderid"));
+        requestParam.put("pubKey", currentECKey.getPublicKeyAsHex());
+        requestParam.put("signature", Utils.HEX.encode(buf1));
+        requestParam.put("signInputData", Utils.HEX.encode(transactionSignature.encodeToBitcoin()));
+        resp = OkHttp3Util.postString(ContextRoot + "payMultiSign", Json.jsonmapper().writeValueAsString(requestParam));
+        System.out.println(resp);
     }
 
     public void editSign(ActionEvent event) {
