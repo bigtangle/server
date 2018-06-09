@@ -567,15 +567,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Check issuance block specific validity
         if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
-            if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION)
-                try {
-                    if (!this.multiSignService.checkMultiSignPre(block, blockStore)) {
-                        return false;
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
+            try {
+                if (!this.multiSignService.checkMultiSignPre(block, blockStore)) {
                     return false;
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
         }
 
         blockStore.beginDatabaseBatchWrite();

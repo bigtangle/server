@@ -92,6 +92,7 @@ public class MultiSignService {
         }
         Transaction transaction = block.getTransactions().get(0);
         if (transaction.getData() == null) {
+            // FIXME this transaction data is not serialized properly. 
             throw new BlockStoreException("block transaction data is null");
         }
         byte[] buf = transaction.getData();
