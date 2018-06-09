@@ -1502,11 +1502,11 @@ public class Transaction extends ChildMessage {
         this.data = data;
     }
 
-    public byte[] getDatasignatire() {
+    public byte[] getDatasignature() {
         return datasignature;
     }
 
-    public void setDatasignatire(byte[] datasignatire) {
+    public void setDatasignature(byte[] datasignatire) {
         this.datasignature = datasignatire;
     }
 

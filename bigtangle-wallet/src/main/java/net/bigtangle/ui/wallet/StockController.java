@@ -461,7 +461,7 @@ public class StockController extends TokensController {
             multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
             multiSignBy0.setSignature(Utils.HEX.encode(buf1));
             multiSignBies.add(multiSignBy0);
-            transaction.setDatasignatire(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+            transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
             // save block
             block.solve();
@@ -632,10 +632,10 @@ public class StockController extends TokensController {
         Transaction transaction = block0.getTransactions().get(0);
 
         List<MultiSignBy> multiSignBies = null;
-        if (transaction.getDatasignatire() == null) {
+        if (transaction.getDatasignature() == null) {
             multiSignBies = new ArrayList<MultiSignBy>();
         } else {
-            multiSignBies = Json.jsonmapper().readValue(transaction.getDatasignatire(), List.class);
+            multiSignBies = Json.jsonmapper().readValue(transaction.getDatasignature(), List.class);
         }
         Sha256Hash sighash = transaction.getHash();
         ECKey.ECDSASignature party1Signature = myKey.sign(sighash);
@@ -650,7 +650,7 @@ public class StockController extends TokensController {
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
 
-        transaction.setDatasignatire(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
         OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block0.bitcoinSerialize());
         Main.instance.controller.initTableView();
         initTableView();

@@ -532,10 +532,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
         Transaction transaction = block0.getTransactions().get(0);
         List<MultiSignBy> multiSignBies = null;
-        if (transaction.getDatasignatire() == null) {
+        if (transaction.getDatasignature() == null) {
             multiSignBies = new ArrayList<MultiSignBy>();
         } else {
-            multiSignBies = Json.jsonmapper().readValue(transaction.getDatasignatire(), List.class);
+            multiSignBies = Json.jsonmapper().readValue(transaction.getDatasignature(), List.class);
         }
         Sha256Hash sighash = transaction.getHash();
         ECKey.ECDSASignature party1Signature = keys.get(3).sign(sighash);
@@ -549,7 +549,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
 
-        transaction.setDatasignatire(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
         resp = OkHttp3Util.post(contextRoot + "multiSign", block0.bitcoinSerialize());
 
         result2 = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -608,10 +608,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
         Transaction transaction = block0.getTransactions().get(0);
         List<MultiSignBy> multiSignBies = null;
-        if (transaction.getDatasignatire() == null) {
+        if (transaction.getDatasignature() == null) {
             multiSignBies = new ArrayList<MultiSignBy>();
         } else {
-            multiSignBies = Json.jsonmapper().readValue(transaction.getDatasignatire(), List.class);
+            multiSignBies = Json.jsonmapper().readValue(transaction.getDatasignature(), List.class);
         }
         byte[] buf1 = new byte[] { (byte) 0, (byte) 1, (byte) 2, (byte) 3 };
 
@@ -623,7 +623,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
 
-        transaction.setDatasignatire(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
         resp = OkHttp3Util.post(contextRoot + "multiSign", block0.bitcoinSerialize());
 
         result2 = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -681,10 +681,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
         Transaction transaction = block0.getTransactions().get(0);
         List<MultiSignBy> multiSignBies = null;
-        if (transaction.getDatasignatire() == null) {
+        if (transaction.getDatasignature() == null) {
             multiSignBies = new ArrayList<MultiSignBy>();
         } else {
-            multiSignBies = Json.jsonmapper().readValue(transaction.getDatasignatire(), List.class);
+            multiSignBies = Json.jsonmapper().readValue(transaction.getDatasignature(), List.class);
         }
         Sha256Hash sighash = transaction.getHash();
         ECKey.ECDSASignature party1Signature = keys.get(0).sign(sighash);
@@ -698,7 +698,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
 
-        transaction.setDatasignatire(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
         resp = OkHttp3Util.post(contextRoot + "multiSign", block0.bitcoinSerialize());
 
         result2 = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -804,10 +804,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 Transaction transaction = block0.getTransactions().get(0);
 
                 List<MultiSignBy> multiSignBies = null;
-                if (transaction.getDatasignatire() == null) {
+                if (transaction.getDatasignature() == null) {
                     multiSignBies = new ArrayList<MultiSignBy>();
                 } else {
-                    multiSignBies = Json.jsonmapper().readValue(transaction.getDatasignatire(), List.class);
+                    multiSignBies = Json.jsonmapper().readValue(transaction.getDatasignature(), List.class);
                 }
                 Sha256Hash sighash = transaction.getHash();
                 ECKey.ECDSASignature party1Signature = ecKey.sign(sighash);
@@ -821,7 +821,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 multiSignBy0.setSignature(Utils.HEX.encode(buf1));
                 multiSignBies.add(multiSignBy0);
 
-                transaction.setDatasignatire(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+                transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
                 resp = OkHttp3Util.post(contextRoot + "multiSign", block0.bitcoinSerialize());
                 System.out.println("resp : " + resp);
             }
@@ -893,10 +893,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             Transaction transaction = block0.getTransactions().get(0);
 
             List<MultiSignBy> multiSignBies = null;
-            if (transaction.getDatasignatire() == null) {
+            if (transaction.getDatasignature() == null) {
                 multiSignBies = new ArrayList<MultiSignBy>();
             } else {
-                multiSignBies = Json.jsonmapper().readValue(transaction.getDatasignatire(), List.class);
+                multiSignBies = Json.jsonmapper().readValue(transaction.getDatasignature(), List.class);
             }
             Sha256Hash sighash = transaction.getHash();
             ECKey.ECDSASignature party1Signature = ecKey.sign(sighash);
@@ -910,7 +910,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             multiSignBy0.setSignature(Utils.HEX.encode(buf1));
             multiSignBies.add(multiSignBy0);
 
-            transaction.setDatasignatire(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+            transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
             checkResponse(OkHttp3Util.post(contextRoot + "multiSign", block0.bitcoinSerialize()));
 
         }

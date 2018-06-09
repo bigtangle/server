@@ -307,10 +307,10 @@ public abstract class AbstractIntegrationTest {
             Transaction transaction = block0.getTransactions().get(0);
 
             List<MultiSignBy> multiSignBies = null;
-            if (transaction.getDatasignatire() == null) {
+            if (transaction.getDatasignature() == null) {
                 multiSignBies = new ArrayList<MultiSignBy>();
             } else {
-                multiSignBies = Json.jsonmapper().readValue(transaction.getDatasignatire(), List.class);
+                multiSignBies = Json.jsonmapper().readValue(transaction.getDatasignature(), List.class);
             }
             Sha256Hash sighash = transaction.getHash();
             ECKey.ECDSASignature party1Signature = ecKey.sign(sighash);
@@ -324,7 +324,7 @@ public abstract class AbstractIntegrationTest {
             multiSignBy0.setSignature(Utils.HEX.encode(buf1));
             multiSignBies.add(multiSignBy0);
 
-            transaction.setDatasignatire(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+            transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
             checkResponse(OkHttp3Util.post(contextRoot + "multiSign", block0.bitcoinSerialize()));
 
         }
