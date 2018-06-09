@@ -23,6 +23,7 @@
 						<TableColumn fx:id="addressColumn" prefWidth="282.0" text="%Address" />
 						<TableColumn fx:id="spendPendingColumn" prefWidth="73.0" text="%pending" />
                   <TableColumn fx:id="memoColumn" prefWidth="282.0" text="%memo" />
+                  <TableColumn fx:id="minimumsignColumn" maxWidth="50.0" minWidth="50.0" prefWidth="50.0" text="%minimumsign" />
 					</columns>
 				</TableColumn>
 			</columns>
@@ -44,6 +45,7 @@
 				<Button fx:id="stock" defaultButton="true" onAction="#stockPublish" text="%Token" />
 				<Button defaultButton="true" mnemonicParsing="false" onAction="#blockEvaluation" text="%Blocks" />
 				<Button defaultButton="true" mnemonicParsing="false" onAction="#eckeyList" text="%Keys" />
+            <Button defaultButton="true" mnemonicParsing="false" onAction="#userdataList" text="%userdata" />
 				<Button defaultButton="true" onAction="#settingsClicked" text="%Settings" />
 			</children>
 		</HBox>
@@ -74,5 +76,6 @@
 				<Image url="@bigtangle_logo_plain.png" />
 			</image>
 		</ImageView>
+      <Button defaultButton="true" layoutX="594.0" layoutY="672.0" mnemonicParsing="false" onAction="#showBlock" text="%showBlock" />
 	</children>
 </AnchorPane>

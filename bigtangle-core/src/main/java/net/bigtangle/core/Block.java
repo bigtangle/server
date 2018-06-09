@@ -12,13 +12,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import javax.annotation.Nullable;
 
@@ -26,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
@@ -106,14 +105,6 @@ public class Block extends Message {
     public static final int BLOCK_HEIGHT_GENESIS = 0;
 
     public static final long BLOCK_VERSION_GENESIS = 1;
-    /** Block version introduced in BIP 34: Height in coinbase */
-    public static final long BLOCK_VERSION_BIP34 = 2;
-    /** Block version introduced in BIP 66: Strict DER signatures */
-    public static final long BLOCK_VERSION_BIP66 = 3;
-    /** Block version introduced in BIP 65: OP_CHECKLOCKTIMEVERIFY */
-    public static final long BLOCK_VERSION_BIP65 = 4;
-    // we use new Version
-    public static final long BLOCK_VERSION_BIG1 = 5;
 
     // Fields defined as part of the protocol format.
     private long version;
@@ -635,14 +626,10 @@ public class Block extends Message {
             }
         }
         s.append("   version: ").append(version);
-        String bips = Joiner.on(", ").skipNulls().join(isBIP34() ? "BIP34" : null, isBIP66() ? "BIP66" : null,
-                isBIP65() ? "BIP65" : null);
-        if (!bips.isEmpty())
-            s.append(" (").append(bips).append(')');
         s.append('\n');
-        s.append("   previous block: ").append(getPrevBlockHash()).append("\n");
-        s.append("   branch block: ").append(getPrevBranchBlockHash()).append("\n");
-        s.append("   merkle root: ").append(getMerkleRoot()).append("\n");
+        s.append("   previous: ").append(getPrevBlockHash()).append("\n");
+        s.append("   branch: ").append(getPrevBranchBlockHash()).append("\n");
+        s.append("   merkle: ").append(getMerkleRoot()).append("\n");
         s.append("   time: ").append(time).append(" (").append(Utils.dateTimeFormat(time * 1000)).append(")\n");
         // s.append(" difficulty target (nBits):
         // ").append(difficultyTarget).append("\n");
@@ -924,7 +911,6 @@ public class Block extends Message {
      * @throws VerificationException
      *             if there was an error verifying the block.
      */
-    @SuppressWarnings("unchecked")
     public void verifyTransactions(final long height, final EnumSet<VerifyFlag> flags) throws VerificationException {
         // Now we need to check that the body of the block actually matches the
         // headers. The network won't generate
@@ -939,9 +925,15 @@ public class Block extends Message {
             throw new VerificationException("Block larger than MAX_BLOCK_SIZE");
         checkMerkleRoot();
         checkSigOps();
-        // genesis blocktype? check signature
-        for (Transaction transaction : transactions)
+      
+        for (Transaction transaction : transactions) {
+            if (!allowCoinbaseTransaction() && transaction.isCoinBase()) {
+                throw new VerificationException("Coinbase Transaction is not allowed for this block type");
+            }
+            if(blocktype != NetworkParameters.BLOCKTYPE_USERDATA) {
             transaction.verify();
+            }
+        }
     }
 
     /**
@@ -1116,12 +1108,52 @@ public class Block extends Message {
         this.addCoinbaseTransaction(pubKeyTo, value, null);
     }
 
-    public void addCoinbaseTransactionData(byte[] pubKeyTo, Coin value, byte[] data) {
+    public void addCoinbaseTransactionData(byte[] pubKeyTo, Coin value, DataClassName dataClassName, byte[] data) {
         unCacheTransactions();
         transactions = new ArrayList<Transaction>();
 
         Transaction coinbase = new Transaction(params);
+
         coinbase.setData(data);
+        coinbase.setDataclassname(dataClassName.name());
+
+        // coinbase.tokenid = value.tokenid;
+        final ScriptBuilder inputBuilder = new ScriptBuilder();
+
+        inputBuilder.data(new byte[] { (byte) txCounter, (byte) (txCounter++ >> 8) });
+
+        // A real coinbase transaction has some stuff in the scriptSig like the
+        // extraNonce and difficulty. The
+        // transactions are distinguished by every TX output going to a
+        // different key.
+        //
+        // Here we will do things a bit differently so a new address isn't
+        // needed every time. We'll put a simple
+        // counter in the scriptSig so every transaction has a different hash.
+        coinbase.addInput(new TransactionInput(params, coinbase, inputBuilder.build().getProgram()));
+        coinbase.addOutput(new TransactionOutput(params, coinbase, value,
+                ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
+
+        transactions.add(coinbase);
+        coinbase.setParent(this);
+        coinbase.length = coinbase.unsafeBitcoinSerialize().length;
+        adjustLength(transactions.size(), coinbase.length);
+    }
+
+    public void addCoinbaseTransactionPubKeyData(byte[] pubKeyTo, Coin value, DataClassName dataClassName,
+            byte[] data) {
+        unCacheTransactions();
+        transactions = new ArrayList<Transaction>();
+
+        Transaction coinbase = new Transaction(params);
+
+        ByteBuffer byteBuffer = ByteBuffer.allocate(pubKeyTo.length + 4 + data.length + 4);
+        byteBuffer.putInt(pubKeyTo.length);
+        byteBuffer.put(pubKeyTo);
+        byteBuffer.putInt(data.length);
+        byteBuffer.put(data);
+        coinbase.setData(byteBuffer.array());
+        coinbase.setDataclassname(dataClassName.name());
 
         // coinbase.tokenid = value.tokenid;
         final ScriptBuilder inputBuilder = new ScriptBuilder();
@@ -1152,6 +1184,7 @@ public class Block extends Message {
 
         Transaction coinbase = new Transaction(params);
         if (tokenInfo != null) {
+            coinbase.setDataclassname(DataClassName.TOKEN.name());
             byte[] buf = tokenInfo.toByteArray();
             coinbase.setData(buf);
         }
@@ -1181,13 +1214,19 @@ public class Block extends Message {
 
             } else {
                 long signnumber = tokenInfo.getTokens().getSignnumber();
+
                 List<ECKey> keys = new ArrayList<ECKey>();
                 for (MultiSignAddress multiSignAddress : tokenInfo.getMultiSignAddresses()) {
                     ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(multiSignAddress.getPubKeyHex()));
                     keys.add(ecKey);
                 }
-                Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript((int) signnumber, keys);
-                coinbase.addOutput(new TransactionOutput(params, coinbase, value, scriptPubKey.getProgram()));
+                if (signnumber <= 1 && keys.size() <= 1) {
+                    coinbase.addOutput(new TransactionOutput(params, coinbase, value,
+                            ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
+                } else {
+                    Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript((int) signnumber, keys);
+                    coinbase.addOutput(new TransactionOutput(params, coinbase, value, scriptPubKey.getProgram()));
+                }
             }
         }
         transactions.add(coinbase);
@@ -1198,6 +1237,12 @@ public class Block extends Message {
 
     public static final byte[] EMPTY_BYTES = new byte[32];
 
+    public boolean allowCoinbaseTransaction() {
+        return blocktype == NetworkParameters.BLOCKTYPE_INITIAL
+                || blocktype == NetworkParameters.BLOCKTYPE_TOKEN_CREATION
+                || blocktype == NetworkParameters.BLOCKTYPE_REWARD;
+    }
+
     /**
      * Returns a solved block that builds on top of this one. This exists for
      * unit tests. In this variant you can specify a public key (pubkey) for use
@@ -1206,18 +1251,19 @@ public class Block extends Message {
      * @param height
      *            block height, if known, or -1 otherwise.
      */
+
     public Block createNextBlock(@Nullable final Address to, final long version, @Nullable TransactionOutPoint prevOut,
-            final long time, final byte[] pubKey, final Coin coinbaseValue, final int height,
-            Sha256Hash prevBranchBlockHash, byte[] mineraddress) {
+            final long time, final byte[] pubKey, final int height, Sha256Hash prevBranchBlockHash,
+            byte[] mineraddress) {
         Block b = new Block(params, version);
         // b.setDifficultyTarget(difficultyTarget);
-        // TODO clear coinbases
-        b.addCoinbaseTransaction(pubKey, coinbaseValue);
+        // only BLOCKTYPE_TOKEN_CREATION, BLOCKTYPE_REWARD, BLOCKTYPE_INITIAL
+
         b.setMineraddress(mineraddress);
         if (to != null) {
             // Add a transaction paying 50 coins to the "to" address.
             Transaction t = new Transaction(params);
-            t.addOutput(new TransactionOutput(params, t, coinbaseValue, to));
+
             // The input does not really need to be a valid signature, as long
             // as it has the right general form.
             TransactionInput input;
@@ -1281,30 +1327,13 @@ public class Block extends Message {
 
     /**
      * Returns whether this block conforms to <a href=
-     * "https://github.com/bitcoin/bips/blob/master/bip-0034.mediawiki">BIP34:
-     * Height in Coinbase</a>.
-     */
-    public boolean isBIP34() {
-        return version >= BLOCK_VERSION_BIP34;
-    }
-
-    /**
-     * Returns whether this block conforms to <a href=
      * "https://github.com/bitcoin/bips/blob/master/bip-0066.mediawiki">BIP66:
      * Strict DER signatures</a>.
-     */
-    public boolean isBIP66() {
-        return version >= BLOCK_VERSION_BIP66;
-    }
-
-    /**
+     * 
      * Returns whether this block conforms to <a href=
      * "https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki">BIP65:
      * OP_CHECKLOCKTIMEVERIFY</a>.
      */
-    public boolean isBIP65() {
-        return version >= BLOCK_VERSION_BIP65;
-    }
 
     public byte[] getMineraddress() {
         return mineraddress;

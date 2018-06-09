@@ -38,6 +38,14 @@ public class UTXO {
     private boolean spendPending;
     private String tokenid;
 
+    private long  minimumsign;;
+    
+    
+    public boolean isMultiSig() {
+        return minimumsign > 1l;
+    }
+    
+    
     public String getTokenid() {
         return tokenid;
     }
@@ -68,7 +76,7 @@ public class UTXO {
      *            The address.
      */
     public UTXO(Sha256Hash hash, long index, Coin value, long height, boolean coinbase, Script script, String address,
-            Sha256Hash blockhash, String fromaddress, String memo, String tokenid, boolean spent, boolean confirmed, boolean spendPending) {
+            Sha256Hash blockhash, String fromaddress, String memo, String tokenid, boolean spent, boolean confirmed, boolean spendPending,long minimumsign) {
         this.hash = hash;
         this.index = index;
         this.value = value;
@@ -83,6 +91,7 @@ public class UTXO {
         this.tokenid = tokenid;
         this.confirmed = confirmed;
         this.spendPending = spendPending;
+        this.minimumsign=minimumsign;
     }
 
     public UTXO(InputStream in) throws IOException {
@@ -264,5 +273,13 @@ public class UTXO {
 	public void setSpendPending(boolean spendPending) {
 		this.spendPending = spendPending;
 	}
+
+    public long getMinimumsign() {
+        return minimumsign;
+    }
+
+    public void setMinimumsign(long minimumsign) {
+        this.minimumsign = minimumsign;
+    }
 
 }

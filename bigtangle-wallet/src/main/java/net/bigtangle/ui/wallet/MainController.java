@@ -23,6 +23,7 @@ import static net.bigtangle.ui.wallet.Main.params;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,6 +38,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
@@ -48,6 +51,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.util.Duration;
 import net.bigtangle.core.Address;
+import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
@@ -106,7 +110,8 @@ public class MainController {
     public TableColumn<UTXOModel, String> spendPendingColumn;
     @FXML
     public TableColumn<UTXOModel, String> memoColumn;
-
+    @FXML
+    public TableColumn<UTXOModel, String> minimumsignColumn;
     @FXML
     public TextField Server;
     @FXML
@@ -178,23 +183,27 @@ public class MainController {
             String balance = c.toPlainString();
             byte[] tokenid = c.tokenid;
             String address = u.getAddress();
+            String tokenname = Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid)));
+            String memo = u.getMemo();
+            String minimumsign = Main.getString(u.getMinimumsign()).trim();
+            String hashHex = (String) object.get("blockHashHex");
 
             Main.validAddressSet.clear();
             Main.validAddressSet.add(address);
             boolean spendPending = u.isSpendPending();
             if (myPositvleTokens != null && !"".equals(myPositvleTokens.trim()) && !myPositvleTokens.trim().isEmpty()) {
                 if (myPositvleTokens.contains(Utils.HEX.encode(tokenid))) {
-                    Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending,
-                            Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid))), u.getMemo()));
+                    Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending, tokenname,
+                            memo, minimumsign, hashHex));
                 } else {
-                    subutxos.add(new UTXOModel(balance, tokenid, address, spendPending,
-                            Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid))), u.getMemo()));
+                    subutxos.add(new UTXOModel(balance, tokenid, address, spendPending, tokenname, memo, minimumsign,
+                            hashHex));
                 }
 
             }
             if (myPositvleTokens == null || myPositvleTokens.isEmpty() || "".equals(myPositvleTokens.trim()))
-                Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending,
-                        Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid))), u.getMemo()));
+                Main.instance.getUtxoData().add(
+                        new UTXOModel(balance, tokenid, address, spendPending, tokenname, memo, minimumsign, hashHex));
         }
         Main.instance.getUtxoData().addAll(subutxos);
         list = (List<Map<String, Object>>) data.get("tokens");
@@ -240,6 +249,7 @@ public class MainController {
             memoColumn.setCellValueFactory(cellData -> cellData.getValue().memo());
             spendPendingColumn.setCellValueFactory(cellData -> cellData.getValue().spendPending());
             addressColumn.setCellFactory(TextFieldTableCell.<UTXOModel>forTableColumn());
+            minimumsignColumn.setCellValueFactory(cellData -> cellData.getValue().minimumsign());
 
             valueColumn.setCellValueFactory(cellData -> cellData.getValue().value());
             tokentypeColumn.setCellValueFactory(cellData -> cellData.getValue().tokenid());
@@ -301,6 +311,12 @@ public class MainController {
         Main.IpAddress = Server.getText();
         Main.port = IPPort.getText();
         initialize();
+    }
+
+    public void userdataList(ActionEvent event) {
+        Main.IpAddress = Server.getText();
+        Main.port = IPPort.getText();
+        Main.instance.overlayUI("userdata.fxml");
     }
 
     public void blockEvaluation(ActionEvent event) {
@@ -376,5 +392,27 @@ public class MainController {
         group.setDelay(NotificationBarPane.ANIM_OUT_DURATION);
         group.setCycleCount(1);
         group.play();
+    }
+
+    public void showBlock(ActionEvent event) throws Exception {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        UTXOModel utxoModel = utxoTable.getSelectionModel().getSelectedItem();
+        if (utxoModel == null) {
+            return;
+        }
+        Map<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("hashHex", Main.getString(utxoModel.getHashHex()));
+
+        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "getBlock", Json.jsonmapper().writeValueAsString(requestParam));
+        Block re = Main.params.getDefaultSerializer().makeBlock(data);
+        Alert alert = new Alert(AlertType.INFORMATION);
+        alert.setHeight(800);
+        alert.setWidth(800);
+        alert.setTitle("");
+        alert.setHeaderText(null);
+        alert.setResizable(true);
+        alert.setContentText(re.toString());
+
+        alert.showAndWait();
     }
 }

@@ -5,6 +5,7 @@
 
 package net.bigtangle.store;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -26,11 +27,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.ContactInfo;
 import net.bigtangle.core.Context;
+import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
@@ -46,6 +52,7 @@ import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.TransactionOutputChanges;
 import net.bigtangle.core.UTXO;
+import net.bigtangle.core.UserData;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.script.Script;
@@ -269,6 +276,23 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
+    private void synchronizationUserData(Sha256Hash blockhash, DataClassName dataClassName, byte[] data, String pubKey)
+            throws BlockStoreException {
+        UserData userData = this.blockStore.getUserDataByPrimaryKey(dataClassName.name(), pubKey);
+        if (userData == null) {
+            userData = new UserData();
+            userData.setBlockhash(blockhash);
+            userData.setData(data);
+            userData.setDataclassname(dataClassName.name());
+            userData.setPubKey(pubKey);
+            this.blockStore.insertUserData(userData);
+            return;
+        }
+        userData.setBlockhash(blockhash);
+        userData.setData(data);
+        this.blockStore.updateUserData(userData);
+    }
+
     public boolean checkOutput(Map<String, Coin> valueOut) {
 
         for (Map.Entry<String, Coin> entry : valueOut.entrySet()) {
@@ -329,6 +353,20 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 byte[] buf = tx.getData();
                 TokenInfo tokenInfo = new TokenInfo().parse(buf);
                 this.synchronizationToken(tokenInfo);
+            }
+        } else if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_USERDATA) {
+            Transaction tx = block.getTransactions().get(0);
+            if (tx.getData() != null) {
+                byte[] buf = tx.getData();
+                try {
+                    ContactInfo contactInfo = new ContactInfo().parse(buf);
+                } catch (Exception e) {
+                    throw new BlockStoreException(e);
+                }
+
+                // TODO get datasignature for public key
+                this.synchronizationUserData(block.getHash(), DataClassName.valueOf(tx.getDataclassname()),
+                        tx.getData(), "");
             }
         }
 
@@ -484,7 +522,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
 
         // Update evaluations
-        blockStore.updateBlockEvaluationHeight(block.getHash(), height);
         blockStore.updateBlockEvaluationSolid(block.getHash(), true);
 
         // Update tips table
@@ -620,14 +657,15 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     Script script = getScript(out.getScriptBytes());
                     UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), height, isCoinBase, script,
                             getScriptAddress(script), block.getHash(), out.getFromaddress(), tx.getMemo(),
-                            Utils.HEX.encode(out.getValue().getTokenid()), false, false, false);
+                            Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0);
                     blockStore.addUnspentTransactionOutput(newOut);
 
                     if (script.isSentToMultiSig()) {
+                        int minsignnumber = script.getNumberOfSignaturesRequiredToSpend();
                         for (ECKey ecKey : script.getPubKeys()) {
                             String toaddress = ecKey.toAddress(networkParameters).toBase58();
                             OutputsMulti outputsMulti = new OutputsMulti(newOut.getHash(), toaddress, newOut.getIndex(),
-                                    0);
+                                    minsignnumber);
                             this.blockStore.insertOutputsMulti(outputsMulti);
                         }
                     }

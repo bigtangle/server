@@ -68,13 +68,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         assertEquals(true, blockEvaluation.isSolid());
         assertEquals(0, blockEvaluation.getMilestoneDepth());
             
-        int i = 0;
-        for (Block block : blocks) {
-            if (i % 2 == 0) {
-                this.store.removeBlockEvaluation(block.getHash());
-            }
-            i++;
-        }
+    
     }
 
     @Autowired
@@ -88,7 +82,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
  
     public List<Block> createLinearBlock() throws Exception {
         List<Block> blocks = new ArrayList<Block>();
-        Block rollingBlock1 = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
+        Block rollingBlock1 = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
                 Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock1);
         blocks.add(rollingBlock1);
@@ -96,7 +90,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         Block rollingBlock = rollingBlock1;
         for (int i = 1; i < 5; i++) {
-            rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS,
                     outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
             blockgraph.add(rollingBlock);
            log.debug("create block, hash : " + rollingBlock.getHashAsString());
@@ -108,17 +102,17 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
     public List<Block> createBlock() throws Exception {
 
-        Block b0 = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
+        Block b0 = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
                 outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
-        Block b1 = BlockForTest.createNextBlockWithCoinbase(b0, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+        Block b1 = BlockForTest.createNextBlock(b0, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                 height++, networkParameters.getGenesisBlock().getHash());
-        Block b2 = BlockForTest.createNextBlockWithCoinbase(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+        Block b2 = BlockForTest.createNextBlock(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                 height++, b0.getHash());
-        Block b3 = BlockForTest.createNextBlockWithCoinbase(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+        Block b3 = BlockForTest.createNextBlock(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                 height++, b2.getHash());
-        Block b4 = BlockForTest.createNextBlockWithCoinbase(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+        Block b4 = BlockForTest.createNextBlock(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                 height++, b2.getHash());
-        Block b5 = BlockForTest.createNextBlockWithCoinbase(b4, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+        Block b5 = BlockForTest.createNextBlock(b4, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                 height++, b1.getHash());
         List<Block> blocks = new ArrayList<Block>();
         blocks.add(b0);
@@ -160,7 +154,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         	Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsManager.getValidatedBlockPair();
             Block r1 = blockService.getBlock(tipsToApprove.getLeft());
             Block r2 = blockService.getBlock(tipsToApprove.getRight());
-            Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(r2, Block.BLOCK_VERSION_GENESIS,
+            Block rollingBlock = BlockForTest.createNextBlock(r2, Block.BLOCK_VERSION_GENESIS,
                     outKey.getPubKey(), height++, r1.getHash());
             blockgraph.add(rollingBlock);
            log.debug("create block  : " + i + " " + rollingBlock);

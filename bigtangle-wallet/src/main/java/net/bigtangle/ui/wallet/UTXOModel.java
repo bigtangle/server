@@ -12,20 +12,30 @@ public class UTXOModel {
     private SimpleStringProperty tokentype;
     private SimpleStringProperty address;
     private SimpleStringProperty memo;
+    private SimpleStringProperty minimumsign;
     private SimpleStringProperty tokenid;
     private SimpleStringProperty spendPending;
 
+    private String hashHex;
+
     public UTXOModel(String balance, byte[] tokenid, String address, boolean spendPending, String tokenname,
-            String memo) {
+            String memo, String minimumsign, String hashHex) {
         this.balance = new SimpleStringProperty(balance);
         this.tokenid = new SimpleStringProperty(tokenname + ":" + Utils.HEX.encode(tokenid));
         this.tokentype = new SimpleStringProperty(tokenname);
         this.address = new SimpleStringProperty(address);
         this.spendPending = spendPending ? new SimpleStringProperty("*") : new SimpleStringProperty("");
+        this.memo = new SimpleStringProperty(memo);
+        this.minimumsign = new SimpleStringProperty(minimumsign);
+        this.hashHex = hashHex;
     }
 
     public SimpleStringProperty balance() {
         return balance;
+    }
+
+    public SimpleStringProperty minimumsign() {
+        return minimumsign;
     }
 
     public SimpleStringProperty memo() {
@@ -46,6 +56,14 @@ public class UTXOModel {
 
     public SimpleStringProperty spendPending() {
         return spendPending;
+    }
+
+    public String getMinimumsign() {
+        return minimumsign.get();
+    }
+
+    public void setMinimumsign(String minimumsign) {
+        this.minimumsign.set(minimumsign);
     }
 
     public String getMemo() {
@@ -94,6 +112,14 @@ public class UTXOModel {
 
     public void setSpendPending(boolean spendPending) {
         this.spendPending.set(spendPending ? "*" : "");
+    }
+
+    public String getHashHex() {
+        return hashHex;
+    }
+
+    public void setHashHex(String hashHex) {
+        this.hashHex = hashHex;
     }
 
 }

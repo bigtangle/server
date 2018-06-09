@@ -5,7 +5,6 @@
 
 package net.bigtangle.core;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static net.bigtangle.core.Utils.uint32ToByteStreamLE;
 
@@ -43,42 +42,25 @@ import net.bigtangle.wallet.WalletTransaction.Pool;
 /**
  * <p>
  * A transaction represents the movement of coins from some addresses to some
- * other addresses. It can also represent the minting of new coins. A
- * Transaction object corresponds to the equivalent in the Bitcoin C++
- * implementation.
+ * other addresses.
  * </p>
  *
  * <p>
- * Transactions are the fundamental atoms of Bitcoin and have many powerful
- * features. Read
- * <a href="https://bitcoinj.github.io/working-with-transactions">"Working with
- * transactions"</a> in the documentation to learn more about how to use this
- * class.
+ * Transactions are the fundamental atoms and have many powerful features.
  * </p>
  *
- * <p>
- * All Bitcoin transactions are at risk of being reversed, though the risk is
- * much less than with traditional payment systems. Transactions have
- * <i>confidence levels</i>, which help you decide whether to trust a
- * transaction or not. Whether to trust a transaction is something that needs to
- * be decided on a case by case basis - a rule that makes sense for selling MP3s
- * might not make sense for selling cars, or accepting payments from a family
- * member. If you are building a wallet, how to present confidence to your users
- * is something to consider carefully.
- * </p>
- * 
  * <p>
  * Instances of this class are not safe for use by multiple threads.
  * </p>
  */
 public class Transaction extends ChildMessage {
-    
+
     // private static final long serialVersionUID = -1834484825483010857L;
 
     @SuppressWarnings("deprecation")
     public Transaction() {
     }
-    
+
     /**
      * A comparator that can be used to sort transactions by their updateTime
      * field. The ordering goes from most recent into the past.
@@ -94,7 +76,7 @@ public class Transaction extends ChildMessage {
             return updateTimeComparison != 0 ? updateTimeComparison : tx1.getHash().compareTo(tx2.getHash());
         }
     };
- 
+
     private static final Logger log = LoggerFactory.getLogger(Transaction.class);
 
     /**
@@ -117,14 +99,15 @@ public class Transaction extends ChildMessage {
      * were no fee.
      */
     public static final Coin REFERENCE_DEFAULT_MIN_TX_FEE = Coin.valueOf(5000, NetworkParameters.BIGNETCOIN_TOKENID); // 0.05
-                                                                                // mBTC
+    // mBTC
 
     /**
      * If using this feePerKb, transactions will get confirmed within the next
      * couple of blocks. This should be adjusted from time to time. Last
      * adjustment: February 2017.
      */
-    public static final Coin DEFAULT_TX_FEE = Coin.valueOf(100000, NetworkParameters.BIGNETCOIN_TOKENID); // 1 mBTC
+    public static final Coin DEFAULT_TX_FEE = Coin.valueOf(100000, NetworkParameters.BIGNETCOIN_TOKENID); // 1
+                                                                                                          // mBTC
 
     /**
      * Any standard (ie pay-to-address) output smaller than this value (in
@@ -138,9 +121,9 @@ public class Transaction extends ChildMessage {
     private long version;
     private ArrayList<TransactionInput> inputs;
     private ArrayList<TransactionOutput> outputs;
-    
+
     private long lockTime;
-    
+
     // This is either the time the transaction was broadcast as measured from
     // the local clock, or the time from the
     // block in which it was included. Note that this can be changed by re-orgs
@@ -153,8 +136,6 @@ public class Transaction extends ChildMessage {
 
     // This is an in memory helper only.
     private Sha256Hash hash;
-
-    
 
     // Records a map of which blocks the transaction has appeared in (keys) to
     // an index within that block (values).
@@ -212,7 +193,6 @@ public class Transaction extends ChildMessage {
 
     private Purpose purpose = Purpose.UNKNOWN;
 
-
     /**
      * This field can be used to record the memo of the payment request that
      * initiated the transaction. It's optional.
@@ -222,14 +202,14 @@ public class Transaction extends ChildMessage {
 
     @Nullable
     private byte[] data;
-    
+
     @Nullable
     private byte[] datasignature;
-    
-    @Nullable
-    private long dataType;
 
-    public Transaction(NetworkParameters params  ) {
+    @Nullable
+    private String dataclassname;
+
+    public Transaction(NetworkParameters params) {
         super(params);
         version = 1;
         inputs = new ArrayList<TransactionInput>();
@@ -237,10 +217,9 @@ public class Transaction extends ChildMessage {
         // We don't initialize appearsIn deliberately as it's only useful for
         // transactions stored in the wallet.
         length = 8; // 8 for std fields
-        
+
     }
 
-    
     /**
      * Creates a transaction from the given serialized bytes, eg, from a block
      * or a tx network message.
@@ -373,9 +352,6 @@ public class Transaction extends ChildMessage {
         return appearsInHashes != null ? ImmutableMap.copyOf(appearsInHashes) : null;
     }
 
- 
- 
-
     public void addBlockAppearance(final Sha256Hash blockHash, int relativityOffset) {
         if (appearsInHashes == null) {
             // TODO: This could be a lot more memory efficient as we'll
@@ -456,28 +432,6 @@ public class Transaction extends ChildMessage {
             cachedForBag = wallet;
         }
         return result;
-    }
-
-    /**
-     * The transaction fee is the difference of the value of all inputs and the
-     * value of all outputs. Currently, the fee can only be determined for
-     * transactions created by us.
-     *
-     * @return fee, or null if it cannot be determined
-     */
-    public Coin getFee() {
-        Coin fee = Coin.ZERO;
-        if (inputs.isEmpty() || outputs.isEmpty()) // Incomplete transaction
-            return null;
-        for (TransactionInput input : inputs) {
-            if (input.getValue() == null)
-                return null;
-            fee = fee.add(input.getValue());
-        }
-        for (TransactionOutput output : outputs) {
-            fee = fee.subtract(output.getValue());
-        }
-        return fee;
     }
 
     /**
@@ -612,7 +566,7 @@ public class Transaction extends ChildMessage {
     @Override
     protected void parse() throws ProtocolException {
         cursor = offset;
-        
+
         version = readUint32();
         optimalEncodingMessageSize = 4;
 
@@ -624,8 +578,10 @@ public class Transaction extends ChildMessage {
             TransactionInput input = new TransactionInput(params, this, payload, cursor, serializer);
             inputs.add(input);
             long scriptLen = readVarInt(TransactionOutPoint.MESSAGE_LENGTH);
-            int addLen = 4 + (input.getOutpoint().connectedOutput == null ? 0 : input.getOutpoint().connectedOutput.getMessageSize());
-            optimalEncodingMessageSize += TransactionOutPoint.MESSAGE_LENGTH + addLen + VarInt.sizeOf(scriptLen) + scriptLen + 4;
+            int addLen = 4 + (input.getOutpoint().connectedOutput == null ? 0
+                    : input.getOutpoint().connectedOutput.getMessageSize());
+            optimalEncodingMessageSize += TransactionOutPoint.MESSAGE_LENGTH + addLen + VarInt.sizeOf(scriptLen)
+                    + scriptLen + 4;
             cursor += scriptLen + 4 + addLen;
         }
         // Now the outputs
@@ -637,38 +593,44 @@ public class Transaction extends ChildMessage {
             outputs.add(output);
             long t = readVarInt(8);
             long scriptLen = readVarInt((int) t);
-            optimalEncodingMessageSize += 8 +8+8+ VarInt.sizeOf(scriptLen) + scriptLen +VarInt.sizeOf(t)+ t;
+            optimalEncodingMessageSize += 8 + 8 + 8 + VarInt.sizeOf(scriptLen) + scriptLen + VarInt.sizeOf(t) + t;
             cursor += scriptLen;
         }
         lockTime = readUint32();
         optimalEncodingMessageSize += 4;
-        
+
         long len = readUint32();
         optimalEncodingMessageSize += 4;
-        
+
         if (len > 0) {
             byte[] data = readBytes((int) len);
             this.memo = new String(data);
             optimalEncodingMessageSize += len;
         }
-        
-        this.dataType = readUint32();
+
+        long dataclassnameLen = readUint32();
         optimalEncodingMessageSize += 4;
-        
+
+        if (dataclassnameLen > 0) {
+            byte[] buf = readBytes((int) dataclassnameLen);
+            this.dataclassname = new String(buf);
+            optimalEncodingMessageSize += dataclassnameLen;
+        }
+
         len = readUint32();
         optimalEncodingMessageSize += 4;
         if (len > 0) {
             this.data = readBytes((int) len);
             optimalEncodingMessageSize += len;
         }
-        
+
         len = readUint32();
         optimalEncodingMessageSize += 4;
         if (len > 0) {
             this.datasignature = readBytes((int) len);
             optimalEncodingMessageSize += len;
         }
-        
+
         length = cursor - offset;
     }
 
@@ -699,17 +661,12 @@ public class Transaction extends ChildMessage {
     }
 
     /**
-     * A coinbase transaction is one that creates a new coin. They are the first
-     * transaction in each block and their value is determined by a formula that
-     * all implementations of Bitcoin share. In 2011 the value of a coinbase
-     * transaction is 50 coins, but in future it will be less. A coinbase
-     * transaction is defined not only by its position in a block but by the
-     * data in the inputs.
+     * A coinbase transaction is one that creates a new coin.
      */
     public boolean isCoinBase() {
         return inputs.size() == 1 && inputs.get(0).isCoinBase();
     }
- 
+
     /**
      * A human readable version of the transaction useful for debugging. The
      * format is not guaranteed to be stable.
@@ -719,7 +676,7 @@ public class Transaction extends ChildMessage {
      *            be null.
      */
     @Override
-    public String toString( ) {
+    public String toString() {
         StringBuilder s = new StringBuilder();
         s.append("  ").append(getHashAsString()).append('\n');
         if (updatedAt != null)
@@ -730,7 +687,7 @@ public class Transaction extends ChildMessage {
             s.append("  time locked until ");
             if (lockTime < LOCKTIME_THRESHOLD) {
                 s.append("block ").append(lockTime);
-                
+
             } else {
                 s.append(Utils.dateTimeFormat(lockTime * 1000));
             }
@@ -749,7 +706,7 @@ public class Transaction extends ChildMessage {
                 script = "???";
                 script2 = "???";
             }
-            s.append("     == COINBASE TXN (scriptSig ").append(script).append(")  (scriptPubKey ").append(script2)
+            s.append("     == COINBASE (scriptSig ").append(script).append(")  (scriptPubKey ").append(script2)
                     .append(")\n");
             return s.toString();
         }
@@ -795,7 +752,7 @@ public class Transaction extends ChildMessage {
             try {
                 String scriptPubKeyStr = out.getScriptPubKey().toString();
                 s.append(!Strings.isNullOrEmpty(scriptPubKeyStr) ? scriptPubKeyStr : "<no scriptPubKey>");
-                s.append(" ");
+                s.append("\n ");
                 s.append(out.getValue().toString());
                 if (!out.isAvailableForSpending()) {
                     s.append(" Spent");
@@ -809,14 +766,8 @@ public class Transaction extends ChildMessage {
             }
             s.append('\n');
         }
-//        final Coin fee =  getFee();
-//        if (fee != null) {
-//            final int size = unsafeBitcoinSerialize().length;
-//            s.append("     fee  ").append(fee.multiply(1000).divide(size).toFriendlyString()).append("/kB, ")
-//                    .append(fee.toFriendlyString()).append(" for ").append(size).append(" bytes\n");
-//        }
         if (purpose != null)
-            s.append("     prps ").append(purpose).append('\n');
+            s.append("   purpose ").append(purpose).append('\n');
         return s.toString();
     }
 
@@ -893,7 +844,7 @@ public class Transaction extends ChildMessage {
         Sha256Hash hash = hashForSignature(inputs.size() - 1, scriptPubKey, sigHash, anyoneCanPay);
         ECKey.ECDSASignature ecSig = sigKey.sign(hash);
         TransactionSignature txSig = new TransactionSignature(ecSig, sigHash, anyoneCanPay);
-        if (scriptPubKey.isSentToRawPubKey())
+        if (scriptPubKey.isSentToRawPubKey() || scriptPubKey.isSentToMultiSig())
             input.setScriptSig(ScriptBuilder.createInputScript(txSig));
         else if (scriptPubKey.isSentToAddress())
             input.setScriptSig(ScriptBuilder.createInputScript(txSig, sigKey));
@@ -1250,30 +1201,32 @@ public class Transaction extends ChildMessage {
         stream.write(new VarInt(outputs.size()).encode());
         for (TransactionOutput out : outputs)
             out.bitcoinSerialize(stream);
-        
+
         uint32ToByteStreamLE(lockTime, stream);
         if (this.memo == null || this.memo.equals("")) {
             uint32ToByteStreamLE(0L, stream);
-        }
-        else {
+        } else {
             byte[] membyte = this.memo.getBytes();
             uint32ToByteStreamLE(membyte.length, stream);
             stream.write(membyte);
         }
-        uint32ToByteStreamLE(this.dataType, stream);
-        
+        if (this.dataclassname == null) {
+            uint32ToByteStreamLE(0L, stream);
+        } else {
+            uint32ToByteStreamLE(this.dataclassname.length(), stream);
+            stream.write(this.dataclassname.getBytes());
+        }
+
         if (this.data == null) {
             uint32ToByteStreamLE(0L, stream);
-        }
-        else {
+        } else {
             uint32ToByteStreamLE(this.data.length, stream);
             stream.write(this.data);
         }
-        
+
         if (this.datasignature == null) {
             uint32ToByteStreamLE(0L, stream);
-        }
-        else {
+        } else {
             uint32ToByteStreamLE(this.datasignature.length, stream);
             stream.write(this.datasignature);
         }
@@ -1376,9 +1329,6 @@ public class Transaction extends ChildMessage {
         return outputs.get((int) index);
     }
 
- 
-  
-
     @Override
     public boolean equals(Object o) {
         if (this == o)
@@ -1403,30 +1353,6 @@ public class Transaction extends ChildMessage {
         for (TransactionOutput output : outputs)
             sigOps += Script.getSigOpCount(output.getScriptBytes());
         return sigOps;
-    }
-
-    /**
-     * Check block height is in coinbase input script, for use after BIP 34
-     * enforcement is enabled.
-     */
-    public void checkCoinBaseHeight(final int height) throws VerificationException {
-        checkArgument(height >= Block.BLOCK_HEIGHT_GENESIS);
-        checkState(isCoinBase());
-
-        // Check block height is in coinbase input script
-        final TransactionInput in = this.getInputs().get(0);
-        final ScriptBuilder builder = new ScriptBuilder();
-        builder.number(height);
-        final byte[] expected = builder.build().getProgram();
-        final byte[] actual = in.getScriptBytes();
-        if (actual.length < expected.length) {
-            throw new VerificationException.CoinbaseHeightMismatch("Block height mismatch in coinbase.");
-        }
-        for (int scriptIdx = 0; scriptIdx < expected.length; scriptIdx++) {
-            if (actual[scriptIdx] != expected[scriptIdx]) {
-                throw new VerificationException.CoinbaseHeightMismatch("Block height mismatch in coinbase.");
-            }
-        }
     }
 
     /**
@@ -1455,8 +1381,6 @@ public class Transaction extends ChildMessage {
         if (this.getMessageSize() > Block.MAX_BLOCK_SIZE)
             throw new VerificationException.LargerThanMaxBlockSize();
 
-        // TODO why is there no max money check below?
-        Coin valueOut = Coin.valueOf(0, NetworkParameters.BIGNETCOIN_TOKENID);
         HashSet<TransactionOutPoint> outpoints = new HashSet<TransactionOutPoint>();
         for (TransactionInput input : inputs) {
             if (outpoints.contains(input.getOutpoint()))
@@ -1468,10 +1392,6 @@ public class Transaction extends ChildMessage {
                 if (output.getValue().signum() < 0) // getValue() can throw
                                                     // IllegalStateException
                     throw new VerificationException.NegativeValueOutput();
-                // TODO why is there no max money check?
-//                valueOut = valueOut.add(output.getValue());
-//                if (params.hasMaxMoney() && valueOut.compareTo(params.getMaxMoney()) > 0)
-//                    throw new IllegalArgumentException();
             }
         } catch (IllegalStateException e) {
             throw new VerificationException.ExcessiveValue();
@@ -1541,8 +1461,6 @@ public class Transaction extends ChildMessage {
         return time < (time < LOCKTIME_THRESHOLD ? height : blockTimeSeconds) || !isTimeLocked();
     }
 
-     
-
     /**
      * Returns the purpose for which this transaction was created. See the
      * javadoc for {@link Purpose} for more information on the point of this
@@ -1561,7 +1479,6 @@ public class Transaction extends ChildMessage {
         this.purpose = purpose;
     }
 
-  
     /**
      * Returns the transaction {@link #memo}.
      */
@@ -1581,27 +1498,23 @@ public class Transaction extends ChildMessage {
         return data;
     }
 
-
     public void setData(byte[] data) {
         this.data = data;
     }
-
 
     public byte[] getDatasignatire() {
         return datasignature;
     }
 
-
     public void setDatasignatire(byte[] datasignatire) {
         this.datasignature = datasignatire;
     }
 
-
-    public long getDataType() {
-        return dataType;
+    public String getDataclassname() {
+        return dataclassname;
     }
 
-    public void setDataType(long dataType) {
-        this.dataType = dataType;
+    public void setDataclassname(String dataclassname) {
+        this.dataclassname = dataclassname;
     }
 }

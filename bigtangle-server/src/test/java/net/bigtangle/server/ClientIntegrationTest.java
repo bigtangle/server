@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,6 +20,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.Contact;
+import net.bigtangle.core.ContactInfo;
+import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
@@ -92,20 +94,19 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         walletAppKit.wallet().signTransaction(req);
 
         byte[] a = req.tx.bitcoinSerialize();
-
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("fromAddress", "fromAddress");
-        requestParam.put("fromTokenHex", "fromTokenHex");
-        requestParam.put("fromAmount", "22");
-        requestParam.put("toAddress", "toAddress");
-        requestParam.put("toTokenHex", "toTokenHex");
-        requestParam.put("toAmount", "33");
-        requestParam.put("orderid", UUID.randomUUID().toString());
-        requestParam.put("dataHex", Utils.HEX.encode(a));
-        String data = OkHttp3Util.post(contextRoot + ReqCmd.saveExchange.name(),
-                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        logger.info("testGetBalances resp : " + data);
-
+        /*
+         * HashMap<String, Object> requestParam = new HashMap<String, Object>();
+         * requestParam.put("fromAddress", "fromAddress");
+         * requestParam.put("fromTokenHex", "fromTokenHex");
+         * requestParam.put("fromAmount", "22"); requestParam.put("toAddress",
+         * "toAddress"); requestParam.put("toTokenHex", "toTokenHex");
+         * requestParam.put("toAmount", "33"); requestParam.put("orderid",
+         * UUID.randomUUID().toString()); requestParam.put("dataHex",
+         * Utils.HEX.encode(a)); String data = OkHttp3Util.post(contextRoot +
+         * "saveExchange",
+         * Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+         * logger.info("testGetBalances resp : " + data);
+         */
         Transaction transaction = (Transaction) networkParameters.getDefaultSerializer().makeTransaction(a);
 
         // byte[] buf = BeanSerializeUtil.serializer(req.tx);
@@ -116,13 +117,13 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         walletAppKit1.wallet().signTransaction(request);
         exchangeTokenComplete(request.tx);
 
-        requestParam.clear();
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("address", "fromAddress");
 
-        String response = OkHttp3Util.post(contextRoot + ReqCmd.getExchange.name(),
-                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+        // String response = OkHttp3Util.post(contextRoot + "getExchange",
+        // Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
-        logger.info("getExchange resp : " + requestParam);
+        // logger.info("getExchange resp : " + requestParam);
     }
 
     public void exchangeTokenComplete(Transaction tx) throws Exception {
@@ -161,9 +162,55 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         walletAppKit.wallet().completeTx(request);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
-        OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        checkResponse(OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize()));
         logger.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
         milestoneService.update();
+
+        checkBalance(utxo.getValue().getTokenHex(), walletAppKit1.wallet().walletKeys(null));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testSaveUserData() throws Exception {
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        String resp000 = OkHttp3Util.postString(contextRoot + "getGenesisBlockLR",
+                Json.jsonmapper().writeValueAsString(requestParam));
+
+        HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
+        String leftBlockHex = (String) result000.get("leftBlockHex");
+        String rightBlockHex = (String) result000.get("rightBlockHex");
+
+        Block r1 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(leftBlockHex));
+        Block r2 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
+        long blocktype0 = NetworkParameters.BLOCKTYPE_USERDATA;
+        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), blocktype0,
+                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+        ECKey pubKeyTo = new ECKey();
+
+        Transaction coinbase = new Transaction(networkParameters);
+        Contact contact = new Contact();
+        contact.setName("testname1");
+        contact.setAddress(pubKeyTo.toAddress(networkParameters).toBase58());
+        ContactInfo contactInfo = new ContactInfo();
+        List<Contact> list = new ArrayList<Contact>();
+        list.add(contact);
+        contactInfo.setContactList(list);
+
+        coinbase.setDataclassname(DataClassName.USERDATA.name());
+        byte[] buf1 = contactInfo.toByteArray();
+        coinbase.setData(buf1);
+
+        block.addTransaction(coinbase);
+        block.solve();
+
+        OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
+
+        requestParam.clear();
+        requestParam.put("dataclassname", DataClassName.USERDATA.name());
+        requestParam.put("pubKey", Utils.HEX.encode(pubKeyTo.getPubKey()));
+        byte[] buf = OkHttp3Util.post(contextRoot + "getUserData", Json.jsonmapper().writeValueAsString(requestParam));
+
+        System.out.println(Utils.HEX.encode(buf));
     }
 
     @Test
@@ -181,7 +228,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         SendRequest request = SendRequest.to(destination, amount);
         request.tx.setMemo("memo");
         walletAppKit.wallet().completeTx(request);
-        request.tx.setDataType(10000);
+        request.tx.setDataclassname(DataClassName.USERDATA.name());
 
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
@@ -196,7 +243,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         logger.info("transaction, memo : " + transaction.getMemo());
         // logger.info("transaction, tokens : " +
         // Json.jsonmapper().writeValueAsString(transaction.getTokenInfo()));
-        logger.info("transaction, datatype : " + transaction.getDataType());
+        logger.info("transaction, datatype : " + transaction.getDataclassname());
     }
 
 }

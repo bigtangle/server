@@ -52,8 +52,9 @@ public abstract class MapToBeanMapperUtil {
         boolean confirmed = (Boolean) map.get("confirmed");
         boolean spendPending = (Boolean) map.get("spendPending");
         String memo = (String) map.get("memo");
+        long minimumsign = Long.parseLong( map.get("minimumsign")+"");
         UTXO output = new UTXO(hash, index, amount, height, coinbase, new Script(Utils.HEX.decode(scriptHex)), address,
-                blockhash, fromaddress, memo, tokenHex, spent, confirmed, spendPending);
+                blockhash, fromaddress, memo, tokenHex, spent, confirmed, spendPending, minimumsign);
         return output;
     }
 

@@ -40,12 +40,13 @@ import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
+import net.bigtangle.core.Transaction.SigHash;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
-import net.bigtangle.server.transaction.FreeStandingTransactionOutput;
+import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.SendRequest;
 
@@ -64,75 +65,8 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
     private BlockService blockService;
 
 
-
-    @Test
-    public void getBalance() throws Exception {
-        // Check that we aren't accidentally leaving any references
-        // to the full StoredUndoableBlock's lying around (ie memory leaks)
-        ECKey outKey = new ECKey();
-        int height = 1;
-
-        // Build some blocks on genesis block to create a spendable output
-        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
-        blockgraph.add(rollingBlock);
-        Transaction transaction = rollingBlock.getTransactions().get(0);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
-        byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
-
-        rollingBlock = BlockForTest.createNextBlock(rollingBlock, null, networkParameters.getGenesisBlock().getHash());
-
-        // Create bitcoin spend of 1 BTA.
-        ECKey toKey = new ECKey();
-        Coin amount = Coin.valueOf(11123, NetworkParameters.BIGNETCOIN_TOKENID);
-        Address address = new Address(networkParameters, toKey.getPubKeyHash());
-        Coin totalAmount = Coin.ZERO;
-
-        Transaction t = new Transaction(networkParameters);
-        t.addOutput(new TransactionOutput(networkParameters, t, amount, toKey));
-        t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
-        rollingBlock.addTransaction(t);
-        rollingBlock.solve();
-        blockgraph.add(rollingBlock);
-        totalAmount = totalAmount.add(amount);
-
-        milestoneService.update(); // ADDED
-        List<UTXO> outputs = store.getOpenTransactionOutputs(Lists.newArrayList(address));
-        assertNotNull(outputs);
-        assertEquals("Wrong Number of Outputs", 1, outputs.size());
-        UTXO output = outputs.get(0);
-        assertEquals("The address is not equal", address.toString(), output.getAddress());
-        assertEquals("The amount is not equal", totalAmount.getValue(), output.getValue().getValue());
-        outputs = null;
-
-        try {
-            store.close();
-        } catch (Exception e) {
-        }
-    }
-
-    @Test
-    public void testUTXOProviderWithWallet() throws Exception {
-        // Check that we aren't accidentally leaving any references
-        // to the full StoredUndoableBlock's lying around (ie memory leaks)
-        ECKey outKey = new ECKey();
-        int height = 1;
-
-        // Build some blocks on genesis block to create a spendable output.
-        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
-        blockgraph.add(rollingBlock);
-        Transaction transaction = rollingBlock.getTransactions().get(0);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
-        byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
-        for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
-            rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
-                    outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
-            blockgraph.add(rollingBlock);
-        }
-        rollingBlock = BlockForTest.createNextBlock(rollingBlock, null, networkParameters.getGenesisBlock().getHash());
-    }
-
+ 
+ 
     @Test
     // transfer the coin to address with multisign for spent
     public void testMultiSigOutputToString() throws Exception {
@@ -165,50 +99,60 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         
         //find the transaction as input
       
+       ECKey receiverkey = walletAppKit.wallet().currentReceiveKey();
+       List<UTXO> ulist0 = testTransactionAndGetBalances(true, receiverkey);
        List<UTXO> ulist = testTransactionAndGetBalances(false, wallet1Keys_);
        
        TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, ulist.get(0), 0);
-       
-        //TransactionOutput multisigOutput = request.tx.getOutput(1);
-        TransactionOutput o = request.tx.getOutput(0);
-        
-        Script multisigScript = o.getScriptPubKey();
         Script multisigScript1 = multisigOutput.getScriptPubKey();
        
+        Coin amount1 = Coin.parseCoin("0.05", NetworkParameters.BIGNETCOIN_TOKENID);
         
-       if( multisigScript.isSentToMultiSig()) multisigOutput=o;
- 
-
-        Coin amount = multisigOutput.getValue();
+        Coin amount2 = multisigOutput.getValue().subtract(amount1);
         
+        Transaction transaction0 = new Transaction(networkParameters);
+        transaction0.addOutput(amount1, receiverkey);
+        //add remainder back
+        transaction0.addOutput(amount2, scriptPubKey);
+        TransactionInput input = transaction0.addInput(multisigOutput);
         
-        ECKey receiverkey = walletKeys.get(1);
+        Transaction transaction_ = networkParameters.getDefaultSerializer().makeTransaction(transaction0.bitcoinSerialize());
+        transaction0 = transaction_;
+        TransactionInput input2 = transaction0.getInput(0);
         
-        Transaction spendtx = new Transaction(networkParameters);
-        spendtx.addOutput(amount, receiverkey);
-       
-        TransactionInput input = spendtx.addInput(multisigOutput);
-        
-        Sha256Hash sighash = spendtx.hashForSignature(0, multisigScript, Transaction.SigHash.ALL, false);
-       // split steps for sign and use table to sign
+        Sha256Hash sighash = transaction0.hashForSignature(0, multisigScript1, Transaction.SigHash.ALL, false);
         TransactionSignature tsrecsig = new TransactionSignature(wallet1Keys.get(0).sign(sighash), Transaction.SigHash.ALL, false);
         TransactionSignature tsintsig = new TransactionSignature(wallet1Keys.get(1).sign(sighash), Transaction.SigHash.ALL, false);
-        
         Script inputScript = ScriptBuilder.createMultiSigInputScript(ImmutableList.of(tsrecsig, tsintsig));
-        
-        input.setScriptSig(inputScript);
-      
-         data = OkHttp3Util.post(contextRoot + "askTransaction",
-                Json.jsonmapper().writeValueAsString(requestParam));
-         rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
+        input2.setScriptSig(inputScript);
 
- 
-        rollingBlock.addTransaction(spendtx);
+//        TransactionOutput transactionOutput = new FreeStandingTransactionOutput(this.networkParameters, ulist.get(0), 0);
+       
+        
+    //    Transaction transaction1 = new Transaction(networkParameters);
+    //    transaction1.addOutput(amount2, scriptPubKey);
+     //   transaction1.addInput(candidates.get(1));
+     //   transaction1.addInput(multisigOutput);
+     //   SendRequest req = SendRequest.forTx(transaction1);
+     //   walletAppKit.wallet().signTransaction(req);
+        
+//        Transaction multiSigTransaction_ = new Transaction(networkParameters);
+//        Script scriptPubKey_ = ScriptBuilder.createMultiSigOutputScript(2, wallet1Keys_);
+//        multiSigTransaction_.addOutput(amount2, scriptPubKey_);
+//        request = SendRequest.forTx(multiSigTransaction_);
+//        walletAppKit.wallet().completeTx(request);
+        
+        data = OkHttp3Util.post(contextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+        rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
+        rollingBlock.addTransaction(transaction0);
+     //   rollingBlock.addTransaction(transaction1);
+//        rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
 
-        OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
-
-        //TODO remainder
+       checkResponse( OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize()));
+       
+       List<TransactionOutput> candidates = walletAppKit.wallet().calculateAllSpendCandidates(true);
+       
     }
 
     @Test

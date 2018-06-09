@@ -7,11 +7,11 @@ package net.bigtangle.core;
 
 import static net.bigtangle.core.Utils.HEX;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nullable;
@@ -19,10 +19,10 @@ import javax.annotation.Nullable;
 import com.google.common.base.Objects;
 
 import net.bigtangle.params.MainNetParams;
-import net.bigtangle.params.RegTestParams;
 import net.bigtangle.params.TestNet3Params;
 import net.bigtangle.params.UnitTestParams;
 import net.bigtangle.script.Script;
+import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.VersionTally;
 
@@ -55,7 +55,7 @@ public abstract class NetworkParameters {
     /** Unit test network. */
     public static final String ID_UNITTESTNET = "net.bigtangle.unittest";
 
-    // Token id for System Coin  
+    // Token id for System Coin
     public static final String BIGNETCOIN_TOKENID_STRING = "0000000000000000000000000000000000000000";
     public static final byte[] BIGNETCOIN_TOKENID = HEX.decode(BIGNETCOIN_TOKENID_STRING);
 
@@ -63,17 +63,18 @@ public abstract class NetworkParameters {
     public static final byte[] DUMMY_TOKENID = HEX.decode("1111111111111111111111111111111111111111");
 
     // BLOCKTYPE
-    public static final long BLOCKTYPE_INITIAL = 0; // Genesis Block of system 
+    public static final long BLOCKTYPE_INITIAL = 0; // Genesis Block of system
     public static final long BLOCKTYPE_TRANSFER = 1; // normal transfer of token
-    public static final long BLOCKTYPE_TOKEN_CREATION= 3; // custom token creation
+    public static final long BLOCKTYPE_TOKEN_CREATION = 3; // custom token
+                                                           // creation
 
     public static final long BLOCKTYPE_REWARD = 2; // Reward of mining
-    
-    public static final long BLOCKTYPE_USERDATA = 4; // user defined data 
-    
+
+    public static final long BLOCKTYPE_USERDATA = 4; // user defined data
+
     // Use Equihash
     public static final boolean USE_EQUIHASH = false;
-    
+
     public static final long INITIAL_TX_REWARD = 10L;
 
     protected Block genesisBlock;
@@ -95,7 +96,7 @@ public abstract class NetworkParameters {
     protected int majorityEnforceBlockUpgrade;
     protected int majorityRejectBlockOutdated;
     protected int majorityWindow;
-    
+
     // Equihash Parameters
     protected int equihashN;
     protected int equihashK;
@@ -119,49 +120,41 @@ public abstract class NetworkParameters {
     protected Map<Long, Sha256Hash> checkpoints = new HashMap<Long, Sha256Hash>();
     protected transient MessageSerializer defaultSerializer = null;
 
+    static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
+    static String testPiv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
+
     protected NetworkParameters() {
     }
 
-    public static Block createGenesis(NetworkParameters n) {
-        Block genesisBlock = new Block(n, Block.BLOCK_VERSION_GENESIS, BLOCKTYPE_INITIAL);
+    public static Block createGenesis(NetworkParameters params) {
+        Block genesisBlock = new Block(params, Block.BLOCK_VERSION_GENESIS, BLOCKTYPE_INITIAL);
         genesisBlock.setTime(1231006505L);
-        
-//        // Mining reward initialization
-//        Transaction t = new Transaction(n);
-//        
-//        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//        DataOutputStream dos = new DataOutputStream(baos);
-//        dos.writeLong(INITIAL_TX_REWARD);
-//        dos.close();
-//        byte[] longBytes = baos.toByteArray();
-//        t.setData(longBytes);
-//        genesisBlock.addTransaction();
-        
+
+        Transaction coinbase = new Transaction(params);
+        final ScriptBuilder inputBuilder = new ScriptBuilder();
+        coinbase.addInput(new TransactionInput(params, coinbase, inputBuilder.build().getProgram()));
+       add(params, "10000," +testPub , coinbase);
+       genesisBlock.addTransaction(coinbase);
         genesisBlock.solve();
         return genesisBlock;
-        
-        // try {
-        // TODO read first transaction from ICO file
-        // // A script containing the difficulty bits and the following
-        // // message:
-        // //
-        // // "The Times 03/Jan/2009 Chancellor on brink of second bailout for
-        // // banks"
-        // byte[] bytes = Utils.HEX.decode(
-        // "04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73");
-        // t.addInput(new TransactionInput(n, t, bytes));
-        // ByteArrayOutputStream scriptPubKeyBytes = new
-        // ByteArrayOutputStream();
-        // Script.writeBytes(scriptPubKeyBytes, Utils.HEX.decode(
-        // "04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"));
-        // scriptPubKeyBytes.write(ScriptOpCodes.OP_CHECKSIG);
-        // t.addOutput(new TransactionOutput(n, t, FIFTY_COINS,
-        // scriptPubKeyBytes.toByteArray()));
-        // } catch (Exception e) {
-        // // Cannot happen.
-        // throw new RuntimeException(e);
-        // }
-        // genesisBlock.addTransaction(t);
+
+    }
+
+    public static void add(NetworkParameters params, String account, Transaction coinbase) {
+        // account space seperate lis with amount, many public keys
+        String[] list = account.split(",");
+        Coin base = Coin.valueOf(Long.valueOf(list[0]), BIGNETCOIN_TOKENID);
+        List<ECKey> keys = new ArrayList<ECKey>();
+        for (int i = 1; i < list.length; i++) {
+            keys.add(ECKey.fromPublicOnly(Utils.HEX.decode(list[i].trim())));
+        }
+        if (keys.size() <= 1) {
+            coinbase.addOutput(new TransactionOutput(params, coinbase, base,
+                    ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(keys.get(0).getPubKey())).getProgram()));
+        } else {
+            Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript((int) keys.size() - 1, keys);
+            coinbase.addOutput(new TransactionOutput(params, coinbase, base, scriptPubKey.getProgram()));
+        }
     }
 
     public static final int TARGET_TIMESPAN = 14 * 24 * 60 * 60; // 2 weeks per
@@ -188,7 +181,7 @@ public abstract class NetworkParameters {
     public static final long ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF = 60;
 
     public static final long ENTRYPOINT_TIPSELECTION_DEPTH_CUTOFF = 20;
-    
+
     public static final int REWARD_HEIGHT_INTERVAL = 100;
     public static final BigInteger MAX_TARGET = Utils.decodeCompactBits(0x207fFFFFL);
 
@@ -234,8 +227,6 @@ public abstract class NetworkParameters {
             return TestNet3Params.get();
         } else if (id.equals(ID_UNITTESTNET)) {
             return UnitTestParams.get();
-        } else if (id.equals(ID_REGTEST)) {
-            return RegTestParams.get();
         } else {
             return null;
         }
@@ -510,12 +501,7 @@ public abstract class NetworkParameters {
             final long height) {
         final EnumSet<Block.VerifyFlag> flags = EnumSet.noneOf(Block.VerifyFlag.class);
 
-        if (block.isBIP34()) {
-            final Integer count = tally.getCountAtOrAbove(Block.BLOCK_VERSION_BIP34);
-            if (null != count && count >= getMajorityEnforceBlockUpgrade()) {
-                flags.add(Block.VerifyFlag.HEIGHT_IN_COINBASE);
-            }
-        }
+   
         return flags;
     }
 
@@ -540,10 +526,9 @@ public abstract class NetworkParameters {
 
         // Start enforcing CHECKLOCKTIMEVERIFY, (BIP65) for block.nVersion=4
         // blocks, when 75% of the network has upgraded:
-        if (block.getVersion() >= Block.BLOCK_VERSION_BIP65
-                && tally.getCountAtOrAbove(Block.BLOCK_VERSION_BIP65) > this.getMajorityEnforceBlockUpgrade()) {
+  
             verifyFlags.add(Script.VerifyFlag.CHECKLOCKTIMEVERIFY);
-        }
+    
 
         return verifyFlags;
     }

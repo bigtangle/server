@@ -324,22 +324,7 @@ public class WalletProtobufSerializerTest {
         assertEquals(checkNotNull(tx2).getVersion(), 2);
     }
 
-   // @Test
-    public void coinbaseTxns() throws Exception {
-        // Covers issue 420 where the outpoint index of a coinbase tx input was being mis-serialized.
-        Block b = BlockForTest.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(),Block.BLOCK_VERSION_GENESIS, myKey.getPubKey(), FIFTY_COINS, Block.BLOCK_HEIGHT_GENESIS,  PARAMS.getGenesisBlock().getHash());
-        Transaction coinbase = b.getTransactions().get(0);
-        assertTrue(coinbase.isCoinBase());
-        BlockGraph chain = new BlockGraph(PARAMS,   new MemoryBlockStore(PARAMS));
-        assertTrue(chain.add(b));
-        // Wallet now has a coinbase tx in it.
-        assertEquals(1, myWallet.getTransactions(true).size());
-        assertTrue(myWallet.getTransaction(coinbase.getHash()).isCoinBase());
-        Wallet wallet2 = roundTrip(myWallet);
-        assertEquals(1, wallet2.getTransactions(true).size());
-        assertTrue(wallet2.getTransaction(coinbase.getHash()).isCoinBase());
-    }
-
+ 
     @Test
     public void tags() throws Exception {
         myWallet.setTag("foo", ByteString.copyFromUtf8("bar"));

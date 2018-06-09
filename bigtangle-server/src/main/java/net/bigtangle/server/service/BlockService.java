@@ -121,11 +121,7 @@ public class BlockService {
         store.updateBlockEvaluationSolid(blockEvaluation.getBlockhash(), b);
     }
 
-    public void updateHeight(BlockEvaluation blockEvaluation, long i) throws BlockStoreException {
-        blockEvaluation.setHeight(i);
-        store.updateBlockEvaluationHeight(blockEvaluation.getBlockhash(), i);
-    }
-
+ 
     public void updateCumulativeWeight(BlockEvaluation blockEvaluation, long i) throws BlockStoreException {
         blockEvaluation.setCumulativeWeight(i);
         store.updateBlockEvaluationCumulativeweight(blockEvaluation.getBlockhash(), i);
@@ -158,7 +154,7 @@ public class BlockService {
       
         } catch (Exception e) {
             // TODO: handle exception
-            logger.warn(" saveBlock problem after save ", e);
+            logger.warn(" saveBlock problem after save milestoneService  ", e);
         }
 
     }

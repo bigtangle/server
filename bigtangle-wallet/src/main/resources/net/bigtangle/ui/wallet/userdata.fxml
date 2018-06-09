@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane maxHeight="700.0" maxWidth="1000.0" minHeight="700.0" minWidth="1000.0" prefHeight="700.0" prefWidth="1000.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.bigtangle.ui.wallet.UserdataController">
+   <children>
+      <TabPane maxHeight="700.0" maxWidth="1000.0" minHeight="700.0" minWidth="1000.0" prefHeight="700.0" prefWidth="1000.0" tabClosingPolicy="UNAVAILABLE">
+        <tabs>
+          <Tab closable="false" text="%search">
+               <content>
+                  <AnchorPane maxHeight="690.0" maxWidth="1000.0" minHeight="690.0" minWidth="1000.0" prefHeight="690.0" prefWidth="1000.0" style="-fx-background-color: white;">
+                     <children>
+                        <TableView fx:id="wachtedTokenTableview" layoutX="14.0" layoutY="95.0" maxHeight="500.0" maxWidth="400.0" minHeight="500.0" minWidth="400.0" prefHeight="500.0" prefWidth="400.0">
+                          <columns>
+                            <TableColumn fx:id="tokennameColumn" prefWidth="126.0" text="%Token" />
+                            <TableColumn fx:id="tokenidColumn" prefWidth="272.0" text="%Token" />
+                          </columns>
+                        </TableView>
+                        <TableView fx:id="linkmanTableview" layoutX="421.0" layoutY="95.0" maxHeight="500.0" maxWidth="400.0" minHeight="500.0" minWidth="400.0" prefHeight="500.0" prefWidth="400.0">
+                           <columns>
+                              <TableColumn fx:id="linkmanColumn" prefWidth="126.0" text="%linkname" />
+                              <TableColumn fx:id="linkaddressColumn" prefWidth="272.0" text="%Address" />
+                           </columns>
+                        </TableView>
+                        <Button defaultButton="true" layoutX="346.0" layoutY="605.0" mnemonicParsing="false" onAction="#removeToken" text="%remove" />
+                        <Button defaultButton="true" layoutX="673.0" layoutY="605.0" mnemonicParsing="false" onAction="#removeLinkman" text="%remove" />
+                        <Button cancelButton="true" layoutX="766.0" layoutY="605.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />
+                        <Label layoutX="35.0" layoutY="43.0" prefHeight="15.0" prefWidth="98.0" text="%linkname" />
+                        <Label layoutX="288.0" layoutY="44.0" prefHeight="15.0" prefWidth="72.0" text="%Address" />
+                        <TextField fx:id="nameTF" layoutX="137.0" layoutY="40.0" />
+                        <TextField fx:id="addressTF" layoutX="376.0" layoutY="40.0" onAction="#addContact" prefHeight="23.0" prefWidth="287.0" />
+                        <Button layoutX="686.0" layoutY="40.0" mnemonicParsing="false" onAction="#saveUserdata" text="%add" />
+                     </children>
+                  </AnchorPane>
+               </content>
+            </Tab>
+        </tabs>
+      </TabPane>
+   </children>
+</AnchorPane>

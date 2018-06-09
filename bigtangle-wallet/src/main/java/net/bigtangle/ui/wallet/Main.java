@@ -1,4 +1,5 @@
 /*******************************************************************************
+
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
@@ -118,6 +119,8 @@ public class Main extends Application {
     private static final Logger log = LoggerFactory.getLogger(Main.class);
     public static String positiveFile = "/bigtangle-wachted.txt";
     public static String contactFile = "/bigtangle-contact.txt";
+
+    public static List<String> userdataList = new ArrayList<String>();
 
     @Override
     public void start(Stage mainWindow) throws Exception {

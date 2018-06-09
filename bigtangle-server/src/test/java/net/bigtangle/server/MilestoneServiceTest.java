@@ -64,11 +64,11 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         List<Block> blocks = new ArrayList<Block>();
         for (int j = 0; j < 30; j++) {
-            Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
+            Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
                     Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0, networkParameters.getGenesisBlock().getHash());
             blocks.add(rollingBlock);
             for (int i = 0; i < 30; i++) {
-                rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
+                rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS,
                         outKey.getPubKey(), 0, rollingBlock.getHash());
                 blocks.add(rollingBlock);
             }
@@ -87,13 +87,13 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     public List<Block> createLinearTangle(int blockCount) throws Exception {
         List<Block> blocks = new ArrayList<Block>();
         
-        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
+        Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
                 Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0, networkParameters.getGenesisBlock().getHash());
         blocks.add(rollingBlock);
         blockgraph.add(rollingBlock);
         
         for (int i = 0; i < blockCount; i++) {
-            rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS,
                     outKey.getPubKey(), 0, rollingBlock.getHash());
             blocks.add(rollingBlock);
             blockgraph.add(rollingBlock);
@@ -126,8 +126,8 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
 
         // Create blocks with a conflict
-        Block b5 = createAndAddNextBlockWithTransaction(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                b3.getHash(), t);
+        Block b5 = createAndAddNextBlockCoinbase(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+                b3.getHash() );
         Block b5link = createAndAddNextBlockCoinbase(b5, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b5.getHash());
         Block b6 = createAndAddNextBlockCoinbase(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b3.getHash());
         Block b7 = createAndAddNextBlockCoinbase(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b3.getHash());
@@ -337,7 +337,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         milestoneService.update();
 
         Block rollingBlock = blocks.get(blocks.size() - 1);
-        blockgraph.add(BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
+        blockgraph.add(BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS,
                 outKey.getPubKey(), 0, rollingBlock.getHash()));
 
         milestoneService.update();
@@ -347,11 +347,11 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     public void testMiningReward() throws Exception {
         store.resetStore();
 
-        Block rollingBlock = BlockForTest.createNextBlockWithCoinbase(networkParameters.getGenesisBlock(),
+        Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
                 Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0, networkParameters.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock);        
         for (int i = 0; i < 110; i++) {
-            rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS,
                     outKey.getPubKey(), 0, rollingBlock.getHash());
             blockgraph.add(rollingBlock);
         }
@@ -363,7 +363,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
     private Block createAndAddNextBlockCoinbase(Block b1, long bVersion, byte[] pubKey, Sha256Hash b2)
             throws VerificationException, PrunedException {
-        Block block = BlockForTest.createNextBlockWithCoinbase(b1, bVersion, pubKey, 0, b2);
+        Block block = BlockForTest.createNextBlock(b1, bVersion, pubKey, 0, b2);
         this.blockgraph.add(block);
         log.debug("created block:" + block.getHashAsString());
         return block;
@@ -371,7 +371,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
     private Block createAndAddNextBlockWithTransaction(Block b1, long bVersion, byte[] pubKey, Sha256Hash b2,
             Transaction prevOut) throws VerificationException, PrunedException {
-        Block block = BlockForTest.createNextBlockWithCoinbase(b1, bVersion, pubKey, 0, b2);
+        Block block = BlockForTest.createNextBlock(b1, bVersion, pubKey, 0, b2);
         block.addTransaction(prevOut);
         block.solve();
         this.blockgraph.add(block);

@@ -16,9 +16,9 @@ import net.bigtangle.core.Exchange;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
-import net.bigtangle.core.OrderMatch;
-import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.OutputsMulti;
+import net.bigtangle.core.PayMultiSign;
+import net.bigtangle.core.PayMultiSignAddress;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.StoredUndoableBlock;
@@ -26,6 +26,7 @@ import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UTXOProvider;
+import net.bigtangle.core.UserData;
 import net.bigtangle.kafka.KafkaMessageProducer;
 
 /**
@@ -170,10 +171,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public BlockEvaluation getBlockEvaluation(Sha256Hash hash) throws BlockStoreException;
 
-    public void insertBlockEvaluation(BlockEvaluation blockEvaluation) throws BlockStoreException;
-
-    public void removeBlockEvaluation(Sha256Hash hash) throws BlockStoreException;
-
     public long getMaxSolidHeight() throws BlockStoreException;
 
     public List<Sha256Hash> getNonSolidBlocks() throws BlockStoreException;
@@ -195,7 +192,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void updateBlockEvaluationSolid(Sha256Hash blockhash, boolean b) throws BlockStoreException;
 
-    public void updateBlockEvaluationHeight(Sha256Hash blockhash, long i) throws BlockStoreException;
+     
 
     public void updateBlockEvaluationCumulativeweight(Sha256Hash blockhash, long i) throws BlockStoreException;
 
@@ -340,4 +337,28 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     // public List<MultiSignBy> getMultiSignByListByTokenid(String tokenid);
     
     public void insertOutputsMulti(OutputsMulti outputsMulti) throws BlockStoreException;
+
+    UserData getUserDataByPrimaryKey(String dataclassname, String pubKey) throws BlockStoreException;
+
+    void insertUserData(UserData userData) throws BlockStoreException;
+
+    void updateUserData(UserData userData) throws BlockStoreException;
+
+    void insertPayPayMultiSign(PayMultiSign payMultiSign) throws BlockStoreException;
+
+    void insertPayMultiSignAddress(PayMultiSignAddress payMultiSignAddress) throws BlockStoreException;
+
+    void updatePayMultiSignAddressSign(String orderid, String pubKey, int sign, byte[] signInputData) throws BlockStoreException;
+
+    PayMultiSign getPayMultiSignWithOrderid(String orderid) throws BlockStoreException;
+
+    List<PayMultiSignAddress> getPayMultiSignAddressWithOrderid(String orderid) throws BlockStoreException;
+
+    void updatePayMultiSignBlockhash(String orderid, byte[] blockhash) throws BlockStoreException;
+
+    List<PayMultiSign> getPayMultiSignList(List<String> pubKeys) throws BlockStoreException;
+
+    int getCountPayMultiSignAddressStatus(String orderid) throws BlockStoreException;
+
+    UTXO getOutputsWithHexStr(byte[] hash) throws BlockStoreException;
 }

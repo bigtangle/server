@@ -38,10 +38,11 @@ import net.bigtangle.server.response.ErrorResponse;
 import net.bigtangle.server.response.GetBlockEvaluationsResponse;
 import net.bigtangle.server.response.OkResponse;
 import net.bigtangle.server.service.BlockService;
-import net.bigtangle.server.service.ExchangeService;
 import net.bigtangle.server.service.MultiSignService;
+import net.bigtangle.server.service.PayMultiSignService;
 import net.bigtangle.server.service.TokensService;
 import net.bigtangle.server.service.TransactionService;
+import net.bigtangle.server.service.UserDataService;
 import net.bigtangle.server.service.WalletService;
 
 @RestController
@@ -61,10 +62,6 @@ public class DispatcherController {
     @Autowired
     private TokensService tokensService;
 
- 
-    @Autowired
-    private ExchangeService exchangeService;
-
     public static int numberOfEmptyBlocks = 3;
 
     @Autowired
@@ -72,6 +69,9 @@ public class DispatcherController {
 
     @Autowired
     private MultiSignService multiSignService;
+    
+    @Autowired
+    private PayMultiSignService payMultiSignService;
 
     @SuppressWarnings("unchecked")
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
@@ -123,15 +123,6 @@ public class DispatcherController {
             }
                 break;
 
-            case exchangeInfo: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                String orderid = (String) request.get("orderid");
-                AbstractResponse response = this.exchangeService.getExchangeByOrderid(orderid);
-                this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
-
             case getTokens: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -140,16 +131,11 @@ public class DispatcherController {
             }
                 break;
             case getTokensNoMarket: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = tokensService.getTokensList();
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
             case getMarkets: {
-                // String reqStr = new String(bodyByte, "UTF-8");
-                // Map<String, Object> request =
-                // Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = tokensService.getMarketTokensList();
                 this.outPrintJSONString(httpServletResponse, response);
             }
@@ -186,32 +172,6 @@ public class DispatcherController {
                     pubKeyHashs.add(Utils.HEX.decode(keyStrHex));
                 }
                 AbstractResponse response = walletService.getAccountBalanceInfo(pubKeyHashs);
-                this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
-
-            case saveExchange: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                AbstractResponse response = exchangeService.saveExchange(request);
-
-                this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
-
-            case getExchange: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                String address = (String) request.get("address");
-                AbstractResponse response = exchangeService.getExchangeListWithAddress(address);
-                this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
-
-            case signTransaction: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                AbstractResponse response = exchangeService.signTransaction(request);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
@@ -303,10 +263,65 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
                 break;
+                
+            case getUserData: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String dataclassname = (String) request.get("dataclassname");
+                String pubKey = (String) request.get("pubKey");
+                byte[] buf = this.userDataService.getUserData(dataclassname, pubKey);
+                this.outPointBinaryArray(httpServletResponse, buf);
+            }
+                break;
+                
+            case launchPayMultiSign: {
+                this.payMultiSignService.launchPayMultiSign(bodyByte);
+                this.outPrintJSONString(httpServletResponse, OkResponse.create());
+            }
+                break;
+                
+            case payMultiSign: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                AbstractResponse response = this.payMultiSignService.payMultiSign(request);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+                
+            case getPayMultiSignList: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                List<String> keyStrHex000 = Json.jsonmapper().readValue(reqStr, List.class);
+                AbstractResponse response = this.payMultiSignService.getPayMultiSignList(keyStrHex000);
+                this.outPrintJSONString(httpServletResponse, response);
+                break;
+            }
+            case getPayMultiSignAddressList: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String orderid = (String) request.get("orderid");
+                AbstractResponse response = this.payMultiSignService.getPayMultiSignAddressList(orderid);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+            case payMultiSignDetails: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String orderid = (String) request.get("orderid");
+                AbstractResponse response = this.payMultiSignService.getPayMultiSignDetails(orderid);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+            case outpusWithHexStr: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String hexStr = (String) request.get("hexStr");
+                AbstractResponse response = walletService.getOutputsWithHexStr(hexStr);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
             }
         } catch (BlockStoreException e) {
-            // e.printStackTrace();
-            logger.error("reqCmd : {}, reqHex : {}, block store ex.", reqCmd, Utils.HEX.encode(bodyByte));
+            logger.error("", e);
             AbstractResponse resp = ErrorResponse.create(101);
             resp.setErrorcode(101);
             resp.setMessage(e.getLocalizedMessage());
@@ -337,6 +352,9 @@ public class DispatcherController {
 
     @Autowired
     private NetworkParameters networkParameters;
+    
+    @Autowired
+    private UserDataService userDataService;
 
     public void brodcastBlock(byte[] data) {
         try {

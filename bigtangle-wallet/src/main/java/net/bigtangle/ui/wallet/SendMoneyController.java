@@ -46,6 +46,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.cell.MapValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
 import net.bigtangle.core.Address;
@@ -55,22 +56,27 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.InsufficientMoneyException;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
+import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.ui.wallet.utils.WTUtils;
+import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
+import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 public class SendMoneyController {
     public Button sendBtn;
@@ -94,6 +100,8 @@ public class SendMoneyController {
     public ComboBox<String> myAddressComboBox;
     @FXML
     public ChoiceBox<String> addressChoiceBox;
+    @FXML
+    public ChoiceBox<String> multiUtxoChoiceBox;
 
     @FXML
     public TextField memoTF1;
@@ -111,6 +119,8 @@ public class SendMoneyController {
     public Label btcLabel11;
     @FXML
     public TextField signnumberTF1;
+    @FXML
+    public TextField signnumberTFA;
 
     // @FXML
     // public ToggleGroup unitToggleGroup;
@@ -123,8 +133,8 @@ public class SendMoneyController {
 
     @FXML
     public ChoiceBox<Object> tokeninfo;
-    @FXML
-    public ChoiceBox<Object> tokeninfo1;
+    // @FXML
+    // public ChoiceBox<Object> tokeninfo1;
     @FXML
     public ChoiceBox<Object> tokeninfo11;
 
@@ -139,16 +149,16 @@ public class SendMoneyController {
     @FXML
     public TextField signAddressTF1;
     @FXML
-    public ChoiceBox<Object> signAddressChoiceBox;;
+    public ChoiceBox<String> signAddressChoiceBox;;
 
     public TableView<Map> signTable;
     public TableColumn<Map, String> addressColumn;
     public TableColumn<Map, String> signnumberColumn;
     public TableColumn<Map, String> realSignnumColumn;
     public TableColumn<Map, String> isSignAllColumn;
-
     public TableColumn<Map, String> isMySignColumn;
     public TableColumn<Map, String> amountColumn;
+    public TableColumn<Map, String> orderidColumn;
 
     public void initChoicebox() {
         // basicRadioButton.setUserData(1 + "");
@@ -166,52 +176,60 @@ public class SendMoneyController {
 
             List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
             List<String> names = new ArrayList<String>();
+            // xiao mi
             List<String> tokens = Main.initToken4file();
             for (Map<String, Object> map : list) {
 
                 String tokenHex = (String) map.get("tokenid");
-                if (tokens != null && !tokens.isEmpty()) {
-                    for (String temp : tokens) {
-                        // ONLY log log.debug("temp:" + temp);
-                        if ((!temp.equals("") && temp.contains(tokenHex))
-                                || NetworkParameters.BIGNETCOIN_TOKENID_STRING.equalsIgnoreCase(tokenHex)
-                                || isMyTokens(tokenHex)) {
-                            if (!tokenData.contains(tokenHex)) {
-                                tokenData.add(tokenHex);
-                                names.add(map.get("tokenname").toString());
-                            }
-
-                        }
-                    }
+                /*
+                 * if (tokens != null && !tokens.isEmpty()) { for (String temp :
+                 * tokens) { // ONLY log log.debug("temp:" + temp); if
+                 * ((!temp.equals("") && temp.contains(tokenHex)) ||
+                 * NetworkParameters.BIGNETCOIN_TOKENID_STRING.equalsIgnoreCase(
+                 * tokenHex) || isMyTokens(tokenHex)) { if
+                 * (!tokenData.contains(tokenHex)) { tokenData.add(tokenHex);
+                 * names.add(map.get("tokenname").toString()); }
+                 * 
+                 * } } }
+                 */
+                if (NetworkParameters.BIGNETCOIN_TOKENID_STRING.equalsIgnoreCase(tokenHex) || isMyTokens(tokenHex)) {
+                    tokenData.add(tokenHex);
+                    names.add(map.get("tokenname").toString());
                 }
-
             }
             tokeninfo.setItems(tokenData);
-            tokeninfo1.setItems(tokenData);
+            // tokeninfo1.setItems(tokenData);
             tokeninfo11.setItems(tokenData);
             tokeninfo.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
                 btcLabel.setText(names.get(newv.intValue()));
             });
-            tokeninfo1.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
-                btcLabel1.setText(names.get(newv.intValue()));
+            // tokeninfo1.getSelectionModel().selectedIndexProperty().addListener((ov,
+            // oldv, newv) -> {
+            // btcLabel1.setText(names.get(newv.intValue()));
+            // });
+            tokeninfo11.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
+                btcLabel11.setText(names.get(newv.intValue()));
             });
             tokeninfo.getSelectionModel().selectFirst();
-            tokeninfo1.getSelectionModel().selectFirst();
+            // tokeninfo1.getSelectionModel().selectFirst();
 
-            KeyParameter aesKey = null;
-            // Main.initAeskey(aesKey);
-            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
-            if (!"".equals(Main.password.trim())) {
-                aesKey = keyCrypter.deriveKey(Main.password);
-            }
-            List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
-            ObservableList<String> myAddressData = FXCollections.observableArrayList();
-            if (issuedKeys != null && !issuedKeys.isEmpty()) {
-                for (ECKey key : issuedKeys) {
-                    myAddressData.add(key.toAddress(Main.params).toBase58());
-                }
-                myAddressComboBox.setItems(myAddressData);
-            }
+            // KeyParameter aesKey = null;
+            // // Main.initAeskey(aesKey);
+            // final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt)
+            // Main.bitcoin.wallet().getKeyCrypter();
+            // if (!"".equals(Main.password.trim())) {
+            // aesKey = keyCrypter.deriveKey(Main.password);
+            // }
+            // List<ECKey> issuedKeys =
+            // Main.bitcoin.wallet().walletKeys(aesKey);
+            // ObservableList<String> myAddressData =
+            // FXCollections.observableArrayList();
+            // if (issuedKeys != null && !issuedKeys.isEmpty()) {
+            // for (ECKey key : issuedKeys) {
+            // myAddressData.add(key.toAddress(Main.params).toBase58());
+            // }
+            // myAddressComboBox.setItems(myAddressData);
+            // }
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
@@ -237,6 +255,25 @@ public class SendMoneyController {
     public void initialize() throws Exception {
         initChoicebox();
         List<String> list = Main.initAddress4file();
+        ObservableList<UTXOModel> utxoModels = Main.instance.getUtxoData();
+        if (utxoModels != null && !utxoModels.isEmpty()) {
+            for (UTXOModel utxoModel : utxoModels) {
+                if (!"".equals(utxoModel.getMinimumsign().trim()) && !utxoModel.getMinimumsign().trim().equals("0")
+                        && !utxoModel.getMinimumsign().trim().equals("1")) {
+                    String temp = utxoModel.getBalance() + "," + utxoModel.getTokenid() + ","
+                            + utxoModel.getMinimumsign();
+                    multiUtxoChoiceBox.getItems().add(temp);
+                }
+
+            }
+            multiUtxoChoiceBox.getSelectionModel().selectedItemProperty().addListener((ov, oldv, newv) -> {
+                if (newv != null && !newv.trim().equals("")) {
+                    amountEdit1.setText(newv.split(",")[0]);
+                    signnumberTFA.setText(newv.split(",")[2]);
+                    btcLabel1.setText(newv.split(",")[1]);
+                }
+            });
+        }
 
         ObservableList<String> addressData = FXCollections.observableArrayList(list);
         addressComboBox.setItems(addressData);
@@ -246,7 +283,34 @@ public class SendMoneyController {
                 .didThrow(() -> checkState(Coin.parseCoin(text, NetworkParameters.BIGNETCOIN_TOKENID).isPositive())));
         new TextFieldValidator(amountEdit1, text -> !WTUtils
                 .didThrow(() -> checkState(Coin.parseCoin(text, NetworkParameters.BIGNETCOIN_TOKENID).isPositive())));
+        initSignTable();
+    }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public void initSignTable() throws Exception {
+        KeyParameter aesKey = null;
+        List<String> pubKeys = new ArrayList<String>();
+        for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
+            pubKeys.add(ecKey.getPublicKeyAsHex());
+        }
+        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String resp = OkHttp3Util.postString(ContextRoot + "getPayMultiSignList", Json.jsonmapper().writeValueAsString(pubKeys));
+        HashMap<String, Object> data = Json.jsonmapper().readValue(resp, HashMap.class);
+        List<HashMap<String, Object>> payMultiSigns = (List<HashMap<String, Object>>) data.get("payMultiSigns");
+        ObservableList<Map> signData = FXCollections.observableArrayList();
+        for (HashMap<String, Object> payMultiSign : payMultiSigns) {
+            int sign = (int) payMultiSign.get("sign");
+            payMultiSign.put("signFlag", sign == 0 ? "-" : "*");
+            signData.add(payMultiSign);
+        }
+        addressColumn.setCellValueFactory(new MapValueFactory("toaddress"));
+        signnumberColumn.setCellValueFactory(new MapValueFactory("minsignnumber"));
+        isMySignColumn.setCellValueFactory(new MapValueFactory("sign"));
+        amountColumn.setCellValueFactory(new MapValueFactory("amount"));
+        isMySignColumn.setCellValueFactory(new MapValueFactory("signFlag"));
+        realSignnumColumn.setCellValueFactory(new MapValueFactory("realSignnumber"));
+        orderidColumn.setCellValueFactory(new MapValueFactory("orderid"));
+        this.signTable.setItems(signData);
     }
 
     public void importSign(ActionEvent event) {
@@ -270,7 +334,7 @@ public class SendMoneyController {
         {
             byte[] dst = new byte[byteBuffer.getInt()];
             byteBuffer.get(dst);
-            tokeninfo1.setValue(new String(dst));
+            // tokeninfo1.setValue(new String(dst));
         }
         {
             byte[] dst = new byte[byteBuffer.getInt()];
@@ -302,15 +366,16 @@ public class SendMoneyController {
     public void exportSign(ActionEvent event) {
         String toAddress = !addressComboBox1.getValue().contains(",") ? addressComboBox1.getValue()
                 : addressComboBox1.getValue().split(",")[1];
-        String toTokenHex = tokeninfo1.getValue().toString().trim();
+        // String toTokenHex = tokeninfo1.getValue().toString().trim();
         String toAmount = amountEdit1.getText();
         this.mOrderid = UUIDUtil.randomUUID();
         boolean decial = true;
 
-        byte[] buf = this.makeSignTransactionBuffer(toAddress, getCoin(toAmount, toTokenHex, decial));
-        if (buf == null) {
-            return;
-        }
+        // byte[] buf = this.makeSignTransactionBuffer(toAddress,
+        // getCoin(toAmount, toTokenHex, decial));
+        // if (buf == null) {
+        // return;
+        // }
 
         final FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showSaveDialog(null);
@@ -318,7 +383,7 @@ public class SendMoneyController {
             return;
         }
 
-        FileUtil.writeFile(file, buf);
+        // FileUtil.writeFile(file, buf);
         overlayUI.done();
     }
 
@@ -450,7 +515,7 @@ public class SendMoneyController {
             }
             String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
 
-            // TODO cui,jiang
+            Main.bitcoin.wallet().setServerURL(CONTEXT_ROOT);
 
             int signnum = signnumberTF1.getText() == null || signnumberTF1.getText().isEmpty() ? 1
                     : Integer.parseInt(signnumberTF1.getText().trim());
@@ -508,7 +573,6 @@ public class SendMoneyController {
 
     public void addSIgnAddress(ActionEvent event) {
         try {
-            test();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
@@ -586,20 +650,28 @@ public class SendMoneyController {
         if (signAddressTF.getText() == null || signAddressTF.getText().isEmpty()) {
             return;
         }
-        signAddressChoiceBox.getItems().add(signAddressTF.getText());
-        signAddressChoiceBox.getSelectionModel().selectLast();
+        if (!signAddressChoiceBox.getItems().contains(signAddressTF.getText())) {
+            signAddressChoiceBox.getItems().add(signAddressTF.getText());
+            signAddressChoiceBox.getSelectionModel().selectLast();
+        }
+
+        signAddressTF.setText("");
     }
 
     public void addSignAddrA(ActionEvent event) {
         if (signAddressTF1.getText() == null || signAddressTF1.getText().isEmpty()) {
             return;
         }
-        addressChoiceBox.getItems().add(signAddressTF1.getText());
-        addressChoiceBox.getSelectionModel().selectLast();
+        if (!addressChoiceBox.getItems().contains(signAddressTF1.getText())) {
+            addressChoiceBox.getItems().add(signAddressTF1.getText());
+            addressChoiceBox.getSelectionModel().selectLast();
+        }
+
+        signAddressTF1.setText("");
     }
 
     public void sign(ActionEvent event) {
-
+        // TODO cui,jiang
     }
 
     public void removeSignAddr(ActionEvent event) {
@@ -614,8 +686,94 @@ public class SendMoneyController {
 
     }
 
-    public void multiSign(ActionEvent event) {
-
+    @SuppressWarnings("unchecked")
+    public void multiSign(ActionEvent event) throws Exception {
+        Map<String, Object> map = signTable.getSelectionModel().getSelectedItem();
+        String orderid = (String) map.get("orderid");
+        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("orderid", orderid);
+        String resp = OkHttp3Util.postString(ContextRoot + "payMultiSignDetails", Json.jsonmapper().writeValueAsString(requestParam));
+        HashMap<String, Object> data = Json.jsonmapper().readValue(resp, HashMap.class);
+        HashMap<String, Object> payMultiSign_ = (HashMap<String, Object>) data.get("payMultiSign");
+        
+        HashMap<String, Object> requestParam00 = new HashMap<String, Object>();
+        requestParam00.put("hexStr", payMultiSign_.get("outpusHashHex"));
+        String resp0 = OkHttp3Util.postString(ContextRoot + "outpusWithHexStr", Json.jsonmapper().writeValueAsString(requestParam00));
+        System.out.println(resp0);
+        
+        HashMap<String, Object> outputs_ = Json.jsonmapper().readValue(resp0, HashMap.class);
+        UTXO u = MapToBeanMapperUtil.parseUTXO((HashMap<String, Object>) outputs_.get("outputs"));
+        TransactionOutput multisigOutput = new FreeStandingTransactionOutput(Main.params, u, 0);
+        Script multisigScript = multisigOutput.getScriptPubKey();
+        
+        byte[] payloadBytes = Utils.HEX.decode((String) payMultiSign_.get("blockhashHex"));
+        Transaction transaction = Main.params.getDefaultSerializer().makeTransaction(payloadBytes);
+        Sha256Hash sighash = transaction.hashForSignature(0, multisigScript, Transaction.SigHash.ALL, false);
+        
+        requestParam.clear();
+        requestParam.put("orderid", (String) payMultiSign_.get("orderid"));
+        resp = OkHttp3Util.postString(ContextRoot + "getPayMultiSignAddressList", Json.jsonmapper().writeValueAsString(requestParam));
+        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
+        List<HashMap<String, Object>> payMultiSignAddresses = (List<HashMap<String, Object>>) result.get("payMultiSignAddresses");
+        
+        KeyParameter aesKey = null;
+        ECKey currentECKey = null;
+        
+        for (HashMap<String, Object> payMultiSignAddress : payMultiSignAddresses) {
+            if ((Integer) payMultiSignAddress.get("sign") == 1) {
+                continue;
+            }
+            for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
+                if (ecKey.getPublicKeyAsHex().equals((String) payMultiSignAddress.get("pubKey"))) {
+                    currentECKey = ecKey;
+                    break;
+                }
+            }
+        }
+        if (currentECKey == null) {
+            GuiUtils.informationalAlert("not found eckey sign", "sign error");
+            return;
+        }
+        TransactionSignature transactionSignature = new TransactionSignature(currentECKey.sign(sighash), Transaction.SigHash.ALL, false);
+        
+        ECKey.ECDSASignature party1Signature = currentECKey.sign(transaction.getHash());
+        byte[] buf1 = party1Signature.encodeToDER();
+        
+        requestParam.clear();
+        requestParam.put("orderid", (String) payMultiSign_.get("orderid"));
+        requestParam.put("pubKey", currentECKey.getPublicKeyAsHex());
+        requestParam.put("signature", Utils.HEX.encode(buf1));
+        requestParam.put("signInputData", Utils.HEX.encode(transactionSignature.encodeToBitcoin()));
+        resp = OkHttp3Util.postString(ContextRoot + "payMultiSign", Json.jsonmapper().writeValueAsString(requestParam));
+        
+        this.initSignTable();
+        System.out.println(resp);
+        
+        result = Json.jsonmapper().readValue(resp, HashMap.class);
+        boolean success = (boolean) result.get("success");
+        if (success) {
+            requestParam.clear();
+            requestParam.put("orderid", (String) payMultiSign_.get("orderid"));
+            resp = OkHttp3Util.postString(ContextRoot + "getPayMultiSignAddressList", Json.jsonmapper().writeValueAsString(requestParam));
+            System.out.println(resp);
+            result = Json.jsonmapper().readValue(resp, HashMap.class);
+            List<HashMap<String, Object>> payMultiSignAddresses_ = (List<HashMap<String, Object>>) result.get("payMultiSignAddresses");
+            List<byte[]> sigs = new ArrayList<byte[]>();
+            for (HashMap<String, Object> payMultiSignAddress : payMultiSignAddresses_) {
+                String signInputDataHex = (String) payMultiSignAddress.get("signInputDataHex");
+                sigs.add(Utils.HEX.decode(signInputDataHex));
+            }
+            TransactionInput input = transaction.getInput(0);
+            Script inputScript = ScriptBuilder.createMultiSigInputScriptBytes(sigs, null);
+            input.setScriptSig(inputScript);
+            
+            byte[] buf = OkHttp3Util.post(ContextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+            Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(buf);
+            rollingBlock.addTransaction(transaction);
+            rollingBlock.solve();
+            OkHttp3Util.post(ContextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        }
     }
 
     public void editSign(ActionEvent event) {

@@ -35,6 +35,10 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    wasundoable boolean NOT NULL,\n" + "    prevblockhash  varbinary(32) NOT NULL,\n"
             + "    prevbranchblockhash  varbinary(32) NOT NULL,\n" + "    mineraddress varbinary(255),\n"
             + "    tokenid varbinary(255),\n" + "    blocktype bigint NOT NULL,\n"
+            + "    rating bigint ,\n" + "    depth bigint,\n"
+            + "    cumulativeweight  bigint ,\n" + "    solid boolean ,\n" 
+            + "    milestone boolean,\n" + "    milestonelastupdate bigint,\n" + "    milestonedepth bigint,\n"
+            + "    inserttime bigint,\n" + "    maintained boolean,\n" + "    rewardvalidityassessment boolean,\n"
             + "    CONSTRAINT headers_pk PRIMARY KEY (hash) USING BTREE \n" + ")";
 
     private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" + "    hash varbinary(32) NOT NULL,\n"
@@ -57,12 +61,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" + "    hash varbinary(32) NOT NULL,\n"
             + "    CONSTRAINT tips_pk PRIMARY KEY (hash) USING BTREE \n" + ")\n";
 
-    private static final String CREATE_BLOCKEVALUATION_TABLE = "CREATE TABLE blockevaluation (\n"
-            + "    blockhash varbinary(32) NOT NULL,\n" + "    rating bigint ,\n" + "    depth bigint,\n"
-            + "    cumulativeweight  bigint ,\n" + "    solid boolean NOT NULL,\n" + "    height bigint,\n"
-            + "    milestone boolean,\n" + "    milestonelastupdate bigint,\n" + "    milestonedepth bigint,\n"
-            + "    inserttime bigint,\n" + "    maintained boolean,\n" + "    rewardvalidityassessment boolean,\n"
-            + "    CONSTRAINT blockevaluation_pk PRIMARY KEY (blockhash)  USING BTREE )\n";
+ 
 
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
             + "    tokenid varchar(255) NOT NULL  ,\n" + "    tokenname varchar(255) ,\n"
@@ -93,8 +92,23 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    sign int(11) NOT NULL,\n"
             + "    PRIMARY KEY (id) \n)";
 
- 
- 
+    private static final String CREATE_PAYMULTISIGN_TABLE = "CREATE TABLE paymultisign (\n"
+            + "    orderid varchar(255) NOT NULL  ,\n" 
+            + "    tokenid varchar(255) NOT NULL  ,\n" 
+            + "    toaddress varchar(255) NOT NULL,\n"
+            + "    blockhash mediumblob NOT NULL,\n"
+            + "    amount bigint(20) ,\n"
+            + "    minsignnumber bigint(20) ,\n"
+            + "    outpusHashHex varchar(255) ,\n"
+            + "    PRIMARY KEY (orderid) \n)";
+    
+    private static final String CREATE_PAYMULTISIGNADDRESS_TABLE = "CREATE TABLE paymultisignaddress (\n"
+            + "    orderid varchar(255) NOT NULL  ,\n" 
+            + "    pubKey varchar(255),\n"
+            + "    sign int(11) NOT NULL,\n"
+            + "    signInputData mediumblob,\n"
+            + "    PRIMARY KEY (orderid, pubKey) \n)";
+
     private static final String CREATE_EXCHANGE_TABLE = "CREATE TABLE exchange (\n"
             + "   orderid varchar(255) NOT NULL,\n" 
             + "   fromAddress varchar(255),\n"
@@ -117,6 +131,13 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   prevheight bigint NOT NULL,\n"
             + "   confirmed boolean NOT NULL,\n" 
             + "   PRIMARY KEY (blockhash) )";
+    
+    private static final String CREATE_USERDATA_TABLE = "CREATE TABLE userdata (\n" 
+            + "    blockhash varbinary(32) NOT NULL,\n"
+            + "    dataclassname varchar(255) NOT NULL,\n" 
+            + "    data mediumblob NOT NULL,\n"
+            + "    pubKey varchar(255),\n" 
+             + "   CONSTRAINT userdata_pk PRIMARY KEY (dataclassname, pubKey) USING BTREE \n" + ")";
 
     // Some indexes to speed up inserts
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_height_toaddress_idx ON outputs (hash, outputindex, height, toaddress) USING btree";
@@ -142,30 +163,25 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         List<String> sqlStatements = new ArrayList<String>();
         sqlStatements.add(CREATE_SETTINGS_TABLE);
         sqlStatements.add(CREATE_HEADERS_TABLE);
-
         sqlStatements.add(CREATE_OUTPUT_TABLE);
         sqlStatements.add(CREATE_OUTPUT_MULTI_TABLE);
         sqlStatements.add(CREATE_TIPS_TABLE);
-        sqlStatements.add(CREATE_BLOCKEVALUATION_TABLE);
         sqlStatements.add(CREATE_TOKENS_TABLE);
- 
         sqlStatements.add(CREATE_EXCHANGE_TABLE);
-
         sqlStatements.add(CREATE_MULTISIGNADDRESS_TABLE);
         sqlStatements.add(CREATE_TOKENSERIAL_TABLE);
         sqlStatements.add(CREATE_MULTISIGNBY_TABLE);
-        
         sqlStatements.add(CREATE_MULTISIGN_TABLE);
-        
         sqlStatements.add(CREATE_TX_REWARD_TABLE);
-        
+        sqlStatements.add(CREATE_USERDATA_TABLE);
+        sqlStatements.add(CREATE_PAYMULTISIGN_TABLE);
+        sqlStatements.add(CREATE_PAYMULTISIGNADDRESS_TABLE);
         return sqlStatements;
     }
 
     @Override
     protected List<String> getCreateIndexesSQL() {
         List<String> sqlStatements = new ArrayList<String>();
-
         sqlStatements.add(CREATE_OUTPUTS_ADDRESS_MULTI_INDEX);
         sqlStatements.add(CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX);
         sqlStatements.add(CREATE_OUTPUTS_HASH_INDEX);
@@ -208,11 +224,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         return UPDATE_BLOCKEVALUATION_DEPTH_SQL;
     }
 
-    @Override
-    public String getUpdateBlockEvaluationHeightSQL() {
-        return UPDATE_BLOCKEVALUATION_HEIGHT_SQL;
-    }
-
+   
     @Override
     public String getUpdateBlockEvaluationMilestoneSQL() {
         return UPDATE_BLOCKEVALUATION_MILESTONE_SQL;
@@ -265,7 +277,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
 
     @Override
     protected String getUpdateBlockevaluationUnmaintainAllSQL() {
-        return getUpdate() + " blockevaluation SET maintained = false WHERE maintained = true";
+        return getUpdate() + " headers SET maintained = false WHERE maintained = true";
     }
 
 }
