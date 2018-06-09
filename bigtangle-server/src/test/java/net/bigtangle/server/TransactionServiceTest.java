@@ -115,11 +115,16 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         //add remainder back
         transaction0.addOutput(amount2, scriptPubKey);
         TransactionInput input = transaction0.addInput(multisigOutput);
+        
+        Transaction transaction_ = networkParameters.getDefaultSerializer().makeTransaction(transaction0.bitcoinSerialize());
+        transaction0 = transaction_;
+        TransactionInput input2 = transaction0.getInput(0);
+        
         Sha256Hash sighash = transaction0.hashForSignature(0, multisigScript1, Transaction.SigHash.ALL, false);
         TransactionSignature tsrecsig = new TransactionSignature(wallet1Keys.get(0).sign(sighash), Transaction.SigHash.ALL, false);
         TransactionSignature tsintsig = new TransactionSignature(wallet1Keys.get(1).sign(sighash), Transaction.SigHash.ALL, false);
         Script inputScript = ScriptBuilder.createMultiSigInputScript(ImmutableList.of(tsrecsig, tsintsig));
-        input.setScriptSig(inputScript);
+        input2.setScriptSig(inputScript);
 
 //        TransactionOutput transactionOutput = new FreeStandingTransactionOutput(this.networkParameters, ulist.get(0), 0);
        

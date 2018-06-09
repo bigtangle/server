@@ -88,9 +88,10 @@ public class PayMultiSignService {
         byte[] data = transaction.getHash().getBytes();
         byte[] signature = Utils.HEX.decode((String) request.get("signature"));
         boolean success = ECKey.verify(data, signature, pubKey);
-        if (!success) {
-            throw new BlockStoreException("multisign signature error");
-        }
+//        if (!success) {
+//            throw new BlockStoreException("multisign signature error");
+//        }
+        System.out.println(" " + request.get("signInputData"));
         byte[] signInputData = Utils.HEX.decode((String) request.get("signInputData"));
         this.store.updatePayMultiSignAddressSign(orderid, pubKey0, 1, signInputData);
         
