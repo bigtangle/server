@@ -243,12 +243,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-            case getGenesisBlockLR: {
-                AbstractResponse response = this.blockService.getGenesisBlockLR();
-                this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
-
+          
             case getCalTokenIndex: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);

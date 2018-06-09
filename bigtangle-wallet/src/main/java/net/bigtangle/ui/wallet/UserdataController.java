@@ -63,18 +63,10 @@ public class UserdataController {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         try {
             HashMap<String, String> requestParam = new HashMap<String, String>();
-            String resp000 = OkHttp3Util.postString(CONTEXT_ROOT + "getGenesisBlockLR",
+            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
                     Json.jsonmapper().writeValueAsString(requestParam));
-
-            HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
-            String leftBlockHex = (String) result000.get("leftBlockHex");
-            String rightBlockHex = (String) result000.get("rightBlockHex");
-
-            Block r1 = Main.params.getDefaultSerializer().makeBlock(Utils.HEX.decode(leftBlockHex));
-            Block r2 = Main.params.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
-            long blocktype0 = NetworkParameters.BLOCKTYPE_USERDATA;
-            Block block = new Block(Main.params, r1.getHash(), r2.getHash(), blocktype0,
-                    Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+            Block block = Main.params.getDefaultSerializer().makeBlock(data);
+            block.setBlocktype( NetworkParameters.BLOCKTYPE_USERDATA);
 
             Transaction coinbase = new Transaction(Main.params);
             Contact contact = new Contact();

@@ -303,13 +303,5 @@ public class BlockService {
         return store.getBlocksInMilestoneDepthInterval(0, NetworkParameters.ENTRYPOINT_TIPSELECTION_DEPTH_CUTOFF);
     }
     
-    @Autowired
-    private TipsService tipService;
-
-    public AbstractResponse getGenesisBlockLR() throws Exception {
-        Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
-        Block r1 = getBlock(tipsToApprove.getLeft());
-        Block r2 = getBlock(tipsToApprove.getRight());
-        return GenesisBlockLRResponse.create(Utils.HEX.encode(r1.bitcoinSerialize()), Utils.HEX.encode(r2.bitcoinSerialize()));
-    }
+ 
 }

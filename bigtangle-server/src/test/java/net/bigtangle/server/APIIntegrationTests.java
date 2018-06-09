@@ -141,16 +141,16 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         return rollingBlock;
     }
 
-    @Test
+    @Test  (expected = RuntimeException.class)
     public void testCreateTransaction() throws Exception {
         byte[] data = getAskTransactionBlock();
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         // no solve get error code
+        
          String r = OkHttp3Util.post(contextRoot +  ReqCmd.saveBlock.name(),
                 Json.jsonmapper().writeValueAsString(block.bitcoinSerialize()).getBytes("UTF-8"));
 
-        logger.info("testSaveBlock resp : " + r);
-        checkResponse(r, 100);
+       
     }
 
 
@@ -315,16 +315,11 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public void testMultiSigTokenIsNull() throws Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        String resp000 = OkHttp3Util.postString(contextRoot + "getGenesisBlockLR",
+        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
-        HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
-        String leftBlockHex = (String) result000.get("leftBlockHex");
-        String rightBlockHex = (String) result000.get("rightBlockHex");
-        Block r1 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(leftBlockHex));
-        Block r2 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
-        long blocktype0 = NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
-        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), blocktype0,
-                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+        block.setBlocktype( NetworkParameters.BLOCKTYPE_TOKEN_CREATION );
+     
         String tokenid = Utils.HEX.encode(keys.get(0).getPubKeyHash());
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
@@ -343,16 +338,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public void testMultiSigTokenInfoIsNull() throws Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        String resp000 = OkHttp3Util.postString(contextRoot + "getGenesisBlockLR",
+        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
-        HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
-        String leftBlockHex = (String) result000.get("leftBlockHex");
-        String rightBlockHex = (String) result000.get("rightBlockHex");
-        Block r1 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(leftBlockHex));
-        Block r2 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
-        long blocktype0 = NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
-        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), blocktype0,
-                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+        block.setBlocktype( NetworkParameters.BLOCKTYPE_TOKEN_CREATION );
         String tokenid = Utils.HEX.encode(keys.get(0).getPubKeyHash());
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
@@ -371,16 +360,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public void testMultiSigTokenInfoSignnumberZero() throws Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        String resp000 = OkHttp3Util.postString(contextRoot + "getGenesisBlockLR",
+        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
-        HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
-        String leftBlockHex = (String) result000.get("leftBlockHex");
-        String rightBlockHex = (String) result000.get("rightBlockHex");
-        Block r1 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(leftBlockHex));
-        Block r2 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
-        long blocktype0 = NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
-        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), blocktype0,
-                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+        block.setBlocktype( NetworkParameters.BLOCKTYPE_TOKEN_CREATION );
         String tokenid = Utils.HEX.encode(keys.get(0).getPubKeyHash());
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
@@ -404,16 +387,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public void testMultiSigTokenSerialIsNull() throws Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        String resp000 = OkHttp3Util.postString(contextRoot + "getGenesisBlockLR",
+        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
-        HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
-        String leftBlockHex = (String) result000.get("leftBlockHex");
-        String rightBlockHex = (String) result000.get("rightBlockHex");
-        Block r1 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(leftBlockHex));
-        Block r2 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
-        long blocktype0 = NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
-        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), blocktype0,
-                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+        block.setBlocktype( NetworkParameters.BLOCKTYPE_TOKEN_CREATION );
         String tokenid = Utils.HEX.encode(keys.get(0).getPubKeyHash());
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
@@ -437,16 +414,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public void testMultiSigMultiSignAddressSizeZero() throws Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        String resp000 = OkHttp3Util.postString(contextRoot + "getGenesisBlockLR",
+        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
-        HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
-        String leftBlockHex = (String) result000.get("leftBlockHex");
-        String rightBlockHex = (String) result000.get("rightBlockHex");
-        Block r1 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(leftBlockHex));
-        Block r2 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
-        long blocktype0 = NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
-        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), blocktype0,
-                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+        block.setBlocktype( NetworkParameters.BLOCKTYPE_TOKEN_CREATION );
         String tokenid = Utils.HEX.encode(keys.get(0).getPubKeyHash());
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
@@ -478,16 +449,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public void testMultiSigMultiSignAddressSizeSignnumber() throws Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        String resp000 = OkHttp3Util.postString(contextRoot + "getGenesisBlockLR",
+        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
-        HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
-        String leftBlockHex = (String) result000.get("leftBlockHex");
-        String rightBlockHex = (String) result000.get("rightBlockHex");
-        Block r1 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(leftBlockHex));
-        Block r2 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
-        long blocktype0 = NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
-        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), blocktype0,
-                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+        block.setBlocktype( NetworkParameters.BLOCKTYPE_TOKEN_CREATION );
         String tokenid = keys.get(0).getPublicKeyAsHex();
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
@@ -522,16 +487,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public void testMultiSigMultiSignDatasignatureAddress() throws Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        String resp000 = OkHttp3Util.postString(contextRoot + "getGenesisBlockLR",
+        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
-        HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
-        String leftBlockHex = (String) result000.get("leftBlockHex");
-        String rightBlockHex = (String) result000.get("rightBlockHex");
-        Block r1 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(leftBlockHex));
-        Block r2 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
-        long blocktype0 = NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
-        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), blocktype0,
-                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+        block.setBlocktype( NetworkParameters.BLOCKTYPE_TOKEN_CREATION );
         // Tokenid with keys.get(0) is already used in setup
         String tokenid = keys.get(5).getPublicKeyAsHex();
         int amount = 100000000;
@@ -600,20 +559,15 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     }
 
     @SuppressWarnings("unchecked")
-    @Test
+    @Test(expected = RuntimeException.class)
     public void testMultiSigMultiSignSignatureError() throws Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        String resp000 = OkHttp3Util.postString(contextRoot + "getGenesisBlockLR",
+        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
-        HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
-        String leftBlockHex = (String) result000.get("leftBlockHex");
-        String rightBlockHex = (String) result000.get("rightBlockHex");
-        Block r1 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(leftBlockHex));
-        Block r2 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
-        long blocktype0 = NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
-        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), blocktype0,
-                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+        block.setBlocktype( NetworkParameters.BLOCKTYPE_TOKEN_CREATION );
+        
         String tokenid = keys.get(5).getPublicKeyAsHex();
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
@@ -683,16 +637,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public void testMultiSigMultiSignSignatureSuccess() throws Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        String resp000 = OkHttp3Util.postString(contextRoot + "getGenesisBlockLR",
+        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
-        HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
-        String leftBlockHex = (String) result000.get("leftBlockHex");
-        String rightBlockHex = (String) result000.get("rightBlockHex");
-        Block r1 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(leftBlockHex));
-        Block r2 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
-        long blocktype0 = NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
-        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), blocktype0,
-                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+        block.setBlocktype( NetworkParameters.BLOCKTYPE_TOKEN_CREATION );
         String tokenid = keys.get(5).getPublicKeyAsHex();
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
@@ -816,26 +764,18 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             tokenInfo.setTokenSerial(new TokenSerial(tokenid, tokenindex_, 100000000));
 
             HashMap<String, String> requestParam = new HashMap<String, String>();
-            String resp000 = OkHttp3Util.postString(contextRoot + "getGenesisBlockLR",
+            byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                     Json.jsonmapper().writeValueAsString(requestParam));
-
-            HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
-            String leftBlockHex = (String) result000.get("leftBlockHex");
-            String rightBlockHex = (String) result000.get("rightBlockHex");
-
-            Block r1 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(leftBlockHex));
-            Block r2 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
-            long blocktype0 = NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
-            Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), blocktype0,
-                    Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+            Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+            block.setBlocktype( NetworkParameters.BLOCKTYPE_TOKEN_CREATION );
             block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
             block.solve();
 
             System.out.println("block hash : " + block.getHashAsString());
 
             // save block
-            resp000 = OkHttp3Util.post(contextRoot + "multiSign", block.bitcoinSerialize());
-            result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
+            String resp000 = OkHttp3Util.post(contextRoot + "multiSign", block.bitcoinSerialize());
+            HashMap result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
             int duration = (Integer) result000.get("errorcode");
             System.out.println("resp : " + resp000);
             if (i == 1) {
@@ -922,18 +862,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         tokenInfo.setTokenSerial(new TokenSerial(tokenid, tokenindex_, 100000000));
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        String resp000 = OkHttp3Util.postString(contextRoot + "getGenesisBlockLR",
+        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
-
-        HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
-        String leftBlockHex = (String) result000.get("leftBlockHex");
-        String rightBlockHex = (String) result000.get("rightBlockHex");
-
-        Block r1 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(leftBlockHex));
-        Block r2 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
-        long blocktype0 = NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
-        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), blocktype0,
-                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+        block.setBlocktype( NetworkParameters.BLOCKTYPE_TOKEN_CREATION );
         block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
         block.solve();
 
@@ -1055,16 +987,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Integer tokenindex_ = (Integer) result2.get("tokenindex");
         tokenInfo.setTokenSerial(new TokenSerial(tokenid, tokenindex_, 100000000));
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        String resp000 = OkHttp3Util.postString(contextRoot + "getGenesisBlockLR",
+        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
-        HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
-        String leftBlockHex = (String) result000.get("leftBlockHex");
-        String rightBlockHex = (String) result000.get("rightBlockHex");
-        Block r1 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(leftBlockHex));
-        Block r2 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
-        long blocktype0 = NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
-        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), blocktype0,
-                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+        block.setBlocktype( NetworkParameters.BLOCKTYPE_TOKEN_CREATION );
         block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
         block.solve();
         // save block
@@ -1085,17 +1011,11 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         updateTokenInfo.getTokens().setTokenname("UPDATE_TOKEN");
         ECKey key4 = keys.get(3);
         updateTokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key4.getPublicKeyAsHex()));
-
-        HashMap<String, String> requestParam_ = new HashMap<String, String>();
-        String resp000_ = OkHttp3Util.postString(contextRoot + "getGenesisBlockLR",
-                Json.jsonmapper().writeValueAsString(requestParam_));
-        HashMap<String, Object> result000_ = Json.jsonmapper().readValue(resp000_, HashMap.class);
-        String leftBlockHex_ = (String) result000_.get("leftBlockHex");
-        String rightBlockHex_ = (String) result000_.get("rightBlockHex");
-        Block r1_ = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(leftBlockHex_));
-        Block r2_ = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex_));
-        Block block_ = new Block(networkParameters, r1_.getHash(), r2_.getHash(), blocktype0,
-                Math.max(r1_.getTimeSeconds(), r2_.getTimeSeconds()));
+        requestParam = new HashMap<String, String>();
+          data = OkHttp3Util.post(contextRoot + "askTransaction",
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block block_ = networkParameters.getDefaultSerializer().makeBlock(data);
+        block.setBlocktype( NetworkParameters.BLOCKTYPE_TOKEN_CREATION );
         block_.addCoinbaseTransaction(key4.getPubKey(), basecoin, updateTokenInfo);
         block_.solve();
         // save block

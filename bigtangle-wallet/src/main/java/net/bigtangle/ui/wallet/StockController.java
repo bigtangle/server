@@ -440,19 +440,11 @@ public class StockController extends TokensController {
             long amount = basecoin.getValue();
             tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
 
-            String resp000 = OkHttp3Util.postString(CONTEXT_ROOT + "getGenesisBlockLR",
-                    Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
-            @SuppressWarnings("unchecked")
-            HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
-            String leftBlockHex = (String) result000.get("leftBlockHex");
-            String rightBlockHex = (String) result000.get("rightBlockHex");
-
-            Block r1 = Main.params.getDefaultSerializer().makeBlock(Utils.HEX.decode(leftBlockHex));
-            Block r2 = Main.params.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
-
-            long blocktype0 = NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
-            Block block = new Block(Main.params, r1.getHash(), r2.getHash(), blocktype0,
-                    Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+            HashMap<String, String> requestParam = new HashMap<String, String>();
+            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
+                    Json.jsonmapper().writeValueAsString(requestParam));
+            Block block = Main.params.getDefaultSerializer().makeBlock(data);
+            block.setBlocktype(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
             block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo);
 
             Transaction transaction = block.getTransactions().get(0);
@@ -475,14 +467,14 @@ public class StockController extends TokensController {
             block.solve();
             String resp = OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
             @SuppressWarnings("unchecked")
-             HashMap<String, Object> respRes = Json.jsonmapper().readValue(resp, HashMap.class);
-             int errorcode = (Integer) respRes.get("errorcode");
+            HashMap<String, Object> respRes = Json.jsonmapper().readValue(resp, HashMap.class);
+            int errorcode = (Integer) respRes.get("errorcode");
             if (errorcode > 0) {
-                 String message = (String) respRes.get("message");
-                 GuiUtils.informationalAlert("SIGN ERROR : " + message, Main.getText("ex_c_d1"));
-                 return;
-             }
- 
+                String message = (String) respRes.get("message");
+                GuiUtils.informationalAlert("SIGN ERROR : " + message, Main.getText("ex_c_d1"));
+                return;
+            }
+
             GuiUtils.informationalAlert("", Main.getText("s_c_m"));
             Main.instance.controller.initTableView();
             checkGuiThread();
@@ -704,18 +696,10 @@ public class StockController extends TokensController {
         tokenInfo.setTokenSerial(new TokenSerial(Main.getString(map.get("tokenHex")).trim(), tokenindex_, amount));
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        String resp000 = OkHttp3Util.postString(CONTEXT_ROOT + "getGenesisBlockLR",
+        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
-
-        HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
-        String leftBlockHex = (String) result000.get("leftBlockHex");
-        String rightBlockHex = (String) result000.get("rightBlockHex");
-
-        Block r1 = Main.params.getDefaultSerializer().makeBlock(Utils.HEX.decode(leftBlockHex));
-        Block r2 = Main.params.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
-        long blocktype0 = NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
-        Block block = new Block(Main.params, r1.getHash(), r2.getHash(), blocktype0,
-                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+        Block block = Main.params.getDefaultSerializer().makeBlock(data);
+        block.setBlocktype(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
         ECKey key1 = Main.bitcoin.wallet().currentReceiveKey();
         signAddrChoiceBox.getItems().add(key1.toAddress(Main.params).toBase58());
         List<ECKey> myEcKeys = new ArrayList<ECKey>();

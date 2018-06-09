@@ -173,18 +173,10 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     @Test
     public void testSaveUserData() throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        String resp000 = OkHttp3Util.postString(contextRoot + "getGenesisBlockLR",
+        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
-
-        HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
-        String leftBlockHex = (String) result000.get("leftBlockHex");
-        String rightBlockHex = (String) result000.get("rightBlockHex");
-
-        Block r1 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(leftBlockHex));
-        Block r2 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
-        long blocktype0 = NetworkParameters.BLOCKTYPE_USERDATA;
-        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), blocktype0,
-                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+        block.setBlocktype( NetworkParameters.BLOCKTYPE_USERDATA);
         ECKey pubKeyTo = new ECKey();
 
         Transaction coinbase = new Transaction(networkParameters);
@@ -228,7 +220,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         SendRequest request = SendRequest.to(destination, amount);
         request.tx.setMemo("memo");
         walletAppKit.wallet().completeTx(request);
-        request.tx.setDataclassname(DataClassName.USERDATA.name());
+       // request.tx.setDataclassname(DataClassName.USERDATA.name());
 
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();

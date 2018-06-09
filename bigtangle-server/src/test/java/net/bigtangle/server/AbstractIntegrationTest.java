@@ -275,18 +275,11 @@ public abstract class AbstractIntegrationTest {
         tokenInfo.setTokenSerial(new TokenSerial(tokenid, tokenindex_, 100000000));
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        String resp000 = OkHttp3Util.postString(contextRoot + "getGenesisBlockLR",
+        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
-
-        HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
-        String leftBlockHex = (String) result000.get("leftBlockHex");
-        String rightBlockHex = (String) result000.get("rightBlockHex");
-
-        Block r1 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(leftBlockHex));
-        Block r2 = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(rightBlockHex));
-        long blocktype0 = NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
-        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), blocktype0,
-                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+        block.setBlocktype( NetworkParameters.BLOCKTYPE_TOKEN_CREATION );
+       
         block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
         block.solve();
 
