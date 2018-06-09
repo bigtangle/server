@@ -97,8 +97,7 @@ public class PayMultiSignService {
         int count = this.store.getCountPayMultiSignAddressStatus(orderid);
         if (payMultiSign_.getMinsignnumber() <= count) {
             return PayMultiSignResponse.create(true);
-        }
-        else {
+        } else {
             return PayMultiSignResponse.create(false);
         }
     }
