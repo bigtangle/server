@@ -107,15 +107,7 @@ public class DispatcherController {
             }
                 break;
 
-            case createGenesisBlock: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                byte[] data = transactionService.createGenesisBlock(request);
-                brodcastBlock(data);
-                this.outPointBinaryArray(httpServletResponse, data);
-            }
-                break;
-
+  
             case exchangeToken: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);

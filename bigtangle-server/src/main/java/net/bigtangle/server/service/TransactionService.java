@@ -89,7 +89,7 @@ public class TransactionService {
 
     }
 
-    public byte[] createGenesisBlock(Map<String, Object> request) throws Exception {
+    public byte[] createTokenBlock(Map<String, Object> request) throws Exception {
         String tokenHex = (String) request.get("tokenHex");
         Tokens tokens_ = this.store.getTokensInfo(tokenHex);
         if (tokens_ != null) {
@@ -111,11 +111,11 @@ public class TransactionService {
         byte[] tokenid = Utils.HEX.decode(tokenHex);
         Coin coin = Coin.valueOf(amount, tokenid);
         // TODO why is there no TokenInfo here?
-        Block block = createGenesisBlock(coin, tokenid, pubKey, null);
+        Block block = createTokenBlock(coin, tokenid, pubKey, null);
         return block.bitcoinSerialize();
     }
 
-    public Block createGenesisBlock(Coin coin, byte[] tokenid, byte[] pubKey, TokenInfo tokenInfo) throws Exception {
+    public Block createTokenBlock(Coin coin, byte[] tokenid, byte[] pubKey, TokenInfo tokenInfo) throws Exception {
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
         Block r2 = blockService.getBlock(tipsToApprove.getRight());

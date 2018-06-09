@@ -423,12 +423,16 @@ public class StockController extends TokensController {
     }
 
     public void saveStock(ActionEvent event) {
+        saveToken(event, false);
+    }
+
+    public void saveToken(ActionEvent event, boolean market) {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
         try {
             TokenInfo tokenInfo = new TokenInfo();
             Tokens tokens = new Tokens(tokenid.getValue().trim(), stockName.getText().trim(),
-                    stockDescription.getText().trim(), "", 1, false, false, false);
+                    stockDescription.getText().trim(), "", 1, false, market, false);
             tokenInfo.setTokens(tokens);
 
             // add MultiSignAddress item
@@ -465,15 +469,7 @@ public class StockController extends TokensController {
 
             // save block
             block.solve();
-            String resp = OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
-            @SuppressWarnings("unchecked")
-            HashMap<String, Object> respRes = Json.jsonmapper().readValue(resp, HashMap.class);
-            int errorcode = (Integer) respRes.get("errorcode");
-            if (errorcode > 0) {
-                String message = (String) respRes.get("message");
-                GuiUtils.informationalAlert("SIGN ERROR : " + message, Main.getText("ex_c_d1"));
-                return;
-            }
+            OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
 
             GuiUtils.informationalAlert("", Main.getText("s_c_m"));
             Main.instance.controller.initTableView();
@@ -486,50 +482,7 @@ public class StockController extends TokensController {
     }
 
     public void saveMarket(ActionEvent event) {
-        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
-        ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
-
-        try {
-            byte[] pubKey = outKey.getPubKey();
-            HashMap<String, Object> requestParam = new HashMap<String, Object>();
-            requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
-
-            requestParam.put("tokenname", marketName.getText());
-            requestParam.put("url", marketurl.getText());
-            requestParam.put("description", marketDescription.getText());
-            requestParam.put("tokenHex", marketid.getValue());
-            requestParam.put("multiserial", false);
-            requestParam.put("asmarket", true);
-            requestParam.put("tokenstop", false);
-            requestParam.put("signnumber", 0);
-            requestParam.put("amount", 0);
-
-            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "createGenesisBlock",
-                    Json.jsonmapper().writeValueAsString(requestParam));
-
-            String resp = new String(data);
-            if (resp.startsWith("{") && resp.endsWith("}")) {
-                @SuppressWarnings("unchecked")
-                HashMap<String, Object> respRes = Json.jsonmapper().readValue(resp, HashMap.class);
-                int errorcode = (Integer) respRes.get("errorcode");
-                if (errorcode > 0) {
-                    String message = (String) respRes.get("message");
-                    GuiUtils.informationalAlert("", "SIGN ERROR : " + message);
-                    return;
-                }
-            }
-            Block block = Main.params.getDefaultSerializer().makeBlock(data);
-            // TODO no post to off tangle data, send it to kafka for broadcast
-            Main.instance.sendMessage(block.bitcoinSerialize());
-            GuiUtils.informationalAlert("", Main.getText("s_c_m"));
-            Main.instance.controller.initTableView();
-            checkGuiThread();
-            initTableView();
-            overlayUI.done();
-        } catch (Exception e) {
-            GuiUtils.crashAlert(e);
-        }
-
+        saveToken(event, true);
     }
 
     public void saveMultiToken(ActionEvent event) {
