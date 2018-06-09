@@ -58,6 +58,7 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
@@ -730,6 +731,10 @@ public class SendMoneyController {
                 }
             }
         }
+        if (currentECKey == null) {
+            GuiUtils.informationalAlert("not found eckey sign", "sign error");
+            return;
+        }
         TransactionSignature transactionSignature = new TransactionSignature(currentECKey.sign(sighash), Transaction.SigHash.ALL, false);
         
         ECKey.ECDSASignature party1Signature = currentECKey.sign(transaction.getHash());
@@ -741,7 +746,34 @@ public class SendMoneyController {
         requestParam.put("signature", Utils.HEX.encode(buf1));
         requestParam.put("signInputData", Utils.HEX.encode(transactionSignature.encodeToBitcoin()));
         resp = OkHttp3Util.postString(ContextRoot + "payMultiSign", Json.jsonmapper().writeValueAsString(requestParam));
+        
+        this.initSignTable();
         System.out.println(resp);
+        
+        result = Json.jsonmapper().readValue(resp, HashMap.class);
+        boolean success = (boolean) result.get("success");
+        if (success) {
+            requestParam.clear();
+            requestParam.put("orderid", (String) payMultiSign_.get("orderid"));
+            resp = OkHttp3Util.postString(ContextRoot + "getPayMultiSignAddressList", Json.jsonmapper().writeValueAsString(requestParam));
+            System.out.println(resp);
+            result = Json.jsonmapper().readValue(resp, HashMap.class);
+            List<HashMap<String, Object>> payMultiSignAddresses_ = (List<HashMap<String, Object>>) result.get("payMultiSignAddresses");
+            List<byte[]> sigs = new ArrayList<byte[]>();
+            for (HashMap<String, Object> payMultiSignAddress : payMultiSignAddresses_) {
+                String signInputDataHex = (String) payMultiSignAddress.get("signInputDataHex");
+                sigs.add(Utils.HEX.decode(signInputDataHex));
+            }
+            TransactionInput input = transaction.getInput(0);
+            Script inputScript = ScriptBuilder.createMultiSigInputScriptBytes(sigs, null);
+            input.setScriptSig(inputScript);
+            
+            byte[] buf = OkHttp3Util.post(ContextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+            Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(buf);
+            rollingBlock.addTransaction(transaction);
+            rollingBlock.solve();
+            OkHttp3Util.post(ContextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        }
     }
 
     public void editSign(ActionEvent event) {
