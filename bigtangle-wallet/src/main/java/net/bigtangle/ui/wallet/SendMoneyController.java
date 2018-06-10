@@ -688,6 +688,7 @@ public class SendMoneyController {
     }
 
     public void launchPayMultiSign(NetworkParameters networkParameters, String contextRoot) throws Exception {
+        //multiUtxoChoiceBox
         UTXO utxo = null;
 
         TransactionOutput multisigOutput = new FreeStandingTransactionOutput(networkParameters, utxo, 0);
