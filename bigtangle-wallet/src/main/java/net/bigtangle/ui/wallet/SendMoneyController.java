@@ -30,6 +30,8 @@ import java.util.Optional;
 
 import org.spongycastle.crypto.params.KeyParameter;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -56,6 +58,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.InsufficientMoneyException;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutput;
@@ -669,9 +672,43 @@ public class SendMoneyController {
         signAddressTF1.setText("");
     }
 
-    public void sign(ActionEvent event) {
-        // TODO cui,jiang
+    public void sign(ActionEvent event) throws Exception {
+        //multiUtxoChoiceBox
+        // amountEdit1
+        // addressComboBox1
+        // signnumberTFA
+        // memoTF1
+        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        this.launchPayMultiSign(Main.params, ContextRoot);
     }
+    
+    public void launchPayMultiSign(NetworkParameters networkParameters, String contextRoot) throws Exception {
+        UTXO utxo = null;
+        
+        TransactionOutput multisigOutput = new FreeStandingTransactionOutput(networkParameters, utxo, 0);
+        Transaction transaction = new Transaction(Main.params);
+        
+        Coin amount = Coin.parseCoin(amountEdit1.getText(), utxo.getValue().tokenid);
+        
+        Address address = Address.fromBase58(networkParameters, addressComboBox1.getValue());
+        transaction.addOutput(amount, address);
+        transaction.addInput(multisigOutput);
+        transaction.setMemo(memoTF1.getText());
+        
+        PayMultiSign payMultiSign = new PayMultiSign();
+        payMultiSign.setOrderid(UUIDUtil.randomUUID());
+        payMultiSign.setTokenid(utxo.getValue().getTokenHex());
+        payMultiSign.setBlockhashHex(Utils.HEX.encode(transaction.bitcoinSerialize()));
+        payMultiSign.setToaddress(address.toBase58());
+        payMultiSign.setAmount(amount.getValue());
+        
+        int signnumber = Integer.parseInt(signnumberTFA.getText());
+        payMultiSign.setMinsignnumber(signnumber);
+        payMultiSign.setOutpusHashHex(utxo.getHashHex());
+
+        OkHttp3Util.post(contextRoot + "launchPayMultiSign", Json.jsonmapper().writeValueAsString(payMultiSign));
+    }
+   
 
     public void removeSignAddr(ActionEvent event) {
         signAddressChoiceBox.getItems().remove(signAddressChoiceBox.getValue());
@@ -714,11 +751,11 @@ public class SendMoneyController {
             GuiUtils.informationalAlert("not found eckey sign", "sign error");
             return;
         }
-        this.sign(currentECKey, orderid, Main.params, ContextRoot);
+        this.payMultiSign(currentECKey, orderid, Main.params, ContextRoot);
     }
     
     @SuppressWarnings("unchecked")
-    public void sign(ECKey ecKey, String orderid, NetworkParameters networkParameters, String contextRoot) throws Exception {
+    public void payMultiSign(ECKey ecKey, String orderid, NetworkParameters networkParameters, String contextRoot) throws Exception {
         List<String> pubKeys = new ArrayList<String>();
         pubKeys.add(ecKey.getPublicKeyAsHex());
         
