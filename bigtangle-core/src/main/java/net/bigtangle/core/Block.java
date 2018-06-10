@@ -839,13 +839,7 @@ public class Block extends Message {
      */
     public void checkTransactionSolidity(final long height) throws VerificationException {
         // The transactions must adhere to their block type rules
-        if (blocktype == NetworkParameters.BLOCKTYPE_TRANSFER) {
-            // TODO no coinbases
-            for (int i = 1; i < transactions.size(); i++) {
-                if (transactions.get(i).isCoinBase())
-                    throw new VerificationException("TX " + i + " is coinbase when it should not be.");
-            }
-        } else if (blocktype == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
+            if (blocktype == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
             if (transactions.size() != 1)
                 throw new VerificationException("Too many or too few transactions for token creation.");
 

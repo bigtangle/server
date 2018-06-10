@@ -20,6 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.google.common.collect.ImmutableList;
+
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockForTest;
@@ -29,16 +31,21 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.PrunedException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
+import net.bigtangle.core.UTXO;
 import net.bigtangle.core.VerificationException;
+import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
+import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.server.service.TipsService;
 import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -106,48 +113,53 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     public void testMilestoneTestTangle1() throws Exception {
         store.resetStore();
 
-        Block b1 = createAndAddNextBlockCoinbase(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
+        Block b1 = createAndAddNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
                 outKey.getPubKey(), networkParameters.getGenesisBlock().getHash());
-        Block b2 = createAndAddNextBlockCoinbase(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
+        Block b2 = createAndAddNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
                 outKey.getPubKey(), networkParameters.getGenesisBlock().getHash());
-        Block b3 = createAndAddNextBlockCoinbase(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b2.getHash());
+        Block b3 = createAndAddNextBlock(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b2.getHash());
         milestoneService.update();
         assertTrue(blockService.getBlockEvaluation(b1.getHash()).isMilestone());
         assertTrue(blockService.getBlockEvaluation(b2.getHash()).isMilestone());
         assertTrue(blockService.getBlockEvaluation(b3.getHash()).isMilestone());
 
-        Transaction transaction = b1.getTransactions().get(0);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
-        byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
-        Coin amount = Coin.valueOf(2, NetworkParameters.BIGNETCOIN_TOKENID);
-
-        Transaction t = new Transaction(networkParameters);
-        t.addOutput(new TransactionOutput(networkParameters, t, amount, outKey));
-        t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
+        
+        //use UTXO to create double spending, this can not be created with wallet
+        List<UTXO> outputs = testTransactionAndGetBalances(false, walletKeys);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0), 0);
+         Coin amount = Coin.valueOf(2, NetworkParameters.BIGNETCOIN_TOKENID);
+        Transaction doublespent = new Transaction(networkParameters);
+        doublespent.addOutput(new TransactionOutput(networkParameters, doublespent, amount, outKey));
+        TransactionInput input = doublespent.addInput(spendableOutput);
+       Sha256Hash sighash = doublespent.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+ 
+        TransactionSignature tsrecsig = new TransactionSignature(wallet1Keys.get(0).sign(sighash), Transaction.SigHash.ALL, false);
+        Script inputScript = ScriptBuilder.createInputScript( tsrecsig);
+        input.setScriptSig(inputScript);
 
         // Create blocks with a conflict
-        Block b5 = createAndAddNextBlockCoinbase(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                b3.getHash() );
-        Block b5link = createAndAddNextBlockCoinbase(b5, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b5.getHash());
-        Block b6 = createAndAddNextBlockCoinbase(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b3.getHash());
-        Block b7 = createAndAddNextBlockCoinbase(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b3.getHash());
+        Block b5 = createAndAddNextBlockWithTransaction(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+                b3.getHash() ,doublespent);
+        Block b5link = createAndAddNextBlock(b5, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b5.getHash());
+        Block b6 = createAndAddNextBlock(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b3.getHash());
+        Block b7 = createAndAddNextBlock(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b3.getHash());
         Block b8 = createAndAddNextBlockWithTransaction(b6, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                b7.getHash(), t);
-        Block b8link = createAndAddNextBlockCoinbase(b8, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8.getHash());
-        Block b9 = createAndAddNextBlockCoinbase(b5link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b6.getHash());
-        Block b10 = createAndAddNextBlockCoinbase(b9, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+                b7.getHash(), doublespent);
+        Block b8link = createAndAddNextBlock(b8, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8.getHash());
+        Block b9 = createAndAddNextBlock(b5link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b6.getHash());
+        Block b10 = createAndAddNextBlock(b9, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                 b8link.getHash());
-        Block b11 = createAndAddNextBlockCoinbase(b9, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+        Block b11 = createAndAddNextBlock(b9, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                 b8link.getHash());
-        Block b12 = createAndAddNextBlockCoinbase(b5link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+        Block b12 = createAndAddNextBlock(b5link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                 b8link.getHash());
-        Block b13 = createAndAddNextBlockCoinbase(b5link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+        Block b13 = createAndAddNextBlock(b5link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                 b8link.getHash());
-        Block b14 = createAndAddNextBlockCoinbase(b5link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+        Block b14 = createAndAddNextBlock(b5link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                 b8link.getHash());
-        Block bOrphan1 = createAndAddNextBlockCoinbase(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+        Block bOrphan1 = createAndAddNextBlock(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                 b1.getHash());
-        Block bOrphan5 = createAndAddNextBlockCoinbase(b5link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+        Block bOrphan5 = createAndAddNextBlock(b5link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                 b5link.getHash());
         milestoneService.update();
         assertTrue(blockService.getBlockEvaluation(b1.getHash()).isMilestone());
@@ -171,13 +183,13 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         // Now make block 8 heavier and higher rated than b5 to make it
         // disconnect block
         // 5+link and connect block 8+link instead
-        Block b8weight1 = createAndAddNextBlockCoinbase(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+        Block b8weight1 = createAndAddNextBlock(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                 b8link.getHash());
-        Block b8weight2 = createAndAddNextBlockCoinbase(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+        Block b8weight2 = createAndAddNextBlock(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                 b8link.getHash());
-        Block b8weight3 = createAndAddNextBlockCoinbase(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+        Block b8weight3 = createAndAddNextBlock(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                 b8link.getHash());
-        Block b8weight4 = createAndAddNextBlockCoinbase(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+        Block b8weight4 = createAndAddNextBlock(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                 b8link.getHash());
         milestoneService.update();
         assertTrue(blockService.getBlockEvaluation(b1.getHash()).isMilestone());
@@ -361,7 +373,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         milestoneService.update();
     }
 
-    private Block createAndAddNextBlockCoinbase(Block b1, long bVersion, byte[] pubKey, Sha256Hash b2)
+    private Block createAndAddNextBlock(Block b1, long bVersion, byte[] pubKey, Sha256Hash b2)
             throws VerificationException, PrunedException {
         Block block = BlockForTest.createNextBlock(b1, bVersion, pubKey, 0, b2);
         this.blockgraph.add(block);
