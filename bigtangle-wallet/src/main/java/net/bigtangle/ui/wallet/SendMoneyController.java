@@ -30,8 +30,6 @@ import java.util.Optional;
 
 import org.spongycastle.crypto.params.KeyParameter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -161,6 +159,7 @@ public class SendMoneyController {
     public TableColumn<Map, String> isMySignColumn;
     public TableColumn<Map, String> amountColumn;
     public TableColumn<Map, String> orderidColumn;
+    String utxoKey;
 
     public void initChoicebox() {
         // basicRadioButton.setUserData(1 + "");
@@ -259,12 +258,14 @@ public class SendMoneyController {
         List<String> list = Main.initAddress4file();
         ObservableList<UTXOModel> utxoModels = Main.instance.getUtxoData();
         if (utxoModels != null && !utxoModels.isEmpty()) {
+            List<String> hashHexList = new ArrayList<String>();
             for (UTXOModel utxoModel : utxoModels) {
                 if (!"".equals(utxoModel.getMinimumsign().trim()) && !utxoModel.getMinimumsign().trim().equals("0")
                         && !utxoModel.getMinimumsign().trim().equals("1")) {
                     String temp = utxoModel.getBalance() + "," + utxoModel.getTokenid() + ","
                             + utxoModel.getMinimumsign();
                     multiUtxoChoiceBox.getItems().add(temp);
+                    hashHexList.add(utxoModel.getHashHex());
                 }
 
             }
@@ -274,6 +275,9 @@ public class SendMoneyController {
                     signnumberTFA.setText(newv.split(",")[2]);
                     btcLabel1.setText(newv.split(",")[1]);
                 }
+            });
+            multiUtxoChoiceBox.getSelectionModel().selectedIndexProperty().addListener((ov, oldindex, newindex) -> {
+                utxoKey = hashHexList.get(newindex.intValue());// hash,index....
             });
         }
 
@@ -296,7 +300,8 @@ public class SendMoneyController {
             pubKeys.add(ecKey.getPublicKeyAsHex());
         }
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
-        String resp = OkHttp3Util.postString(ContextRoot + "getPayMultiSignList", Json.jsonmapper().writeValueAsString(pubKeys));
+        String resp = OkHttp3Util.postString(ContextRoot + "getPayMultiSignList",
+                Json.jsonmapper().writeValueAsString(pubKeys));
         HashMap<String, Object> data = Json.jsonmapper().readValue(resp, HashMap.class);
         List<HashMap<String, Object>> payMultiSigns = (List<HashMap<String, Object>>) data.get("payMultiSigns");
         ObservableList<Map> signData = FXCollections.observableArrayList();
@@ -673,7 +678,7 @@ public class SendMoneyController {
     }
 
     public void sign(ActionEvent event) throws Exception {
-        //multiUtxoChoiceBox
+        // multiUtxoChoiceBox
         // amountEdit1
         // addressComboBox1
         // signnumberTFA
@@ -681,34 +686,33 @@ public class SendMoneyController {
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
         this.launchPayMultiSign(Main.params, ContextRoot);
     }
-    
+
     public void launchPayMultiSign(NetworkParameters networkParameters, String contextRoot) throws Exception {
         UTXO utxo = null;
-        
+
         TransactionOutput multisigOutput = new FreeStandingTransactionOutput(networkParameters, utxo, 0);
         Transaction transaction = new Transaction(Main.params);
-        
+
         Coin amount = Coin.parseCoin(amountEdit1.getText(), utxo.getValue().tokenid);
-        
+
         Address address = Address.fromBase58(networkParameters, addressComboBox1.getValue());
         transaction.addOutput(amount, address);
         transaction.addInput(multisigOutput);
         transaction.setMemo(memoTF1.getText());
-        
+
         PayMultiSign payMultiSign = new PayMultiSign();
         payMultiSign.setOrderid(UUIDUtil.randomUUID());
         payMultiSign.setTokenid(utxo.getValue().getTokenHex());
         payMultiSign.setBlockhashHex(Utils.HEX.encode(transaction.bitcoinSerialize()));
         payMultiSign.setToaddress(address.toBase58());
         payMultiSign.setAmount(amount.getValue());
-        
+
         int signnumber = Integer.parseInt(signnumberTFA.getText());
         payMultiSign.setMinsignnumber(signnumber);
         payMultiSign.setOutpusHashHex(utxo.getHashHex());
 
         OkHttp3Util.post(contextRoot + "launchPayMultiSign", Json.jsonmapper().writeValueAsString(payMultiSign));
     }
-   
 
     public void removeSignAddr(ActionEvent event) {
         signAddressChoiceBox.getItems().remove(signAddressChoiceBox.getValue());
@@ -729,13 +733,15 @@ public class SendMoneyController {
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", orderid);
-        String resp = OkHttp3Util.postString(ContextRoot + "getPayMultiSignAddressList", Json.jsonmapper().writeValueAsString(requestParam));
+        String resp = OkHttp3Util.postString(ContextRoot + "getPayMultiSignAddressList",
+                Json.jsonmapper().writeValueAsString(requestParam));
         HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
-        List<HashMap<String, Object>> payMultiSignAddresses = (List<HashMap<String, Object>>) result.get("payMultiSignAddresses");
-        
+        List<HashMap<String, Object>> payMultiSignAddresses = (List<HashMap<String, Object>>) result
+                .get("payMultiSignAddresses");
+
         KeyParameter aesKey = null;
         ECKey currentECKey = null;
-        
+
         for (HashMap<String, Object> payMultiSignAddress : payMultiSignAddresses) {
             if ((Integer) payMultiSignAddress.get("sign") == 1) {
                 continue;
@@ -753,38 +759,42 @@ public class SendMoneyController {
         }
         this.payMultiSign(currentECKey, orderid, Main.params, ContextRoot);
     }
-    
+
     @SuppressWarnings("unchecked")
-    public void payMultiSign(ECKey ecKey, String orderid, NetworkParameters networkParameters, String contextRoot) throws Exception {
+    public void payMultiSign(ECKey ecKey, String orderid, NetworkParameters networkParameters, String contextRoot)
+            throws Exception {
         List<String> pubKeys = new ArrayList<String>();
         pubKeys.add(ecKey.getPublicKeyAsHex());
-        
+
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.clear();
         requestParam.put("orderid", orderid);
-        String resp = OkHttp3Util.postString(contextRoot + "payMultiSignDetails", Json.jsonmapper().writeValueAsString(requestParam));
+        String resp = OkHttp3Util.postString(contextRoot + "payMultiSignDetails",
+                Json.jsonmapper().writeValueAsString(requestParam));
         HashMap<String, Object> data = Json.jsonmapper().readValue(resp, HashMap.class);
         HashMap<String, Object> payMultiSign_ = (HashMap<String, Object>) data.get("payMultiSign");
-        
+
         requestParam.clear();
         requestParam.put("hexStr", payMultiSign_.get("outpusHashHex"));
-        resp = OkHttp3Util.postString(contextRoot + "outpusWithHexStr", Json.jsonmapper().writeValueAsString(requestParam));
+        resp = OkHttp3Util.postString(contextRoot + "outpusWithHexStr",
+                Json.jsonmapper().writeValueAsString(requestParam));
         System.out.println(resp);
-        
+
         HashMap<String, Object> outputs_ = Json.jsonmapper().readValue(resp, HashMap.class);
         UTXO u = MapToBeanMapperUtil.parseUTXO((HashMap<String, Object>) outputs_.get("outputs"));
         TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(networkParameters, u, 0);
         Script multisigScript_ = multisigOutput_.getScriptPubKey();
-        
+
         byte[] payloadBytes = Utils.HEX.decode((String) payMultiSign_.get("blockhashHex"));
         Transaction transaction0 = networkParameters.getDefaultSerializer().makeTransaction(payloadBytes);
-        
+
         Sha256Hash sighash = transaction0.hashForSignature(0, multisigScript_, Transaction.SigHash.ALL, false);
-        TransactionSignature transactionSignature = new TransactionSignature(ecKey.sign(sighash), Transaction.SigHash.ALL, false);
-        
+        TransactionSignature transactionSignature = new TransactionSignature(ecKey.sign(sighash),
+                Transaction.SigHash.ALL, false);
+
         ECKey.ECDSASignature party1Signature = ecKey.sign(transaction0.getHash());
         byte[] buf1 = party1Signature.encodeToDER();
-        
+
         requestParam.clear();
         requestParam.put("orderid", (String) payMultiSign_.get("orderid"));
         requestParam.put("pubKey", ecKey.getPublicKeyAsHex());
@@ -792,16 +802,18 @@ public class SendMoneyController {
         requestParam.put("signInputData", Utils.HEX.encode(transactionSignature.encodeToBitcoin()));
         resp = OkHttp3Util.postString(contextRoot + "payMultiSign", Json.jsonmapper().writeValueAsString(requestParam));
         System.out.println(resp);
-        
+
         HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
         boolean success = (boolean) result.get("success");
         if (success) {
             requestParam.clear();
             requestParam.put("orderid", (String) payMultiSign_.get("orderid"));
-            resp = OkHttp3Util.postString(contextRoot + "getPayMultiSignAddressList", Json.jsonmapper().writeValueAsString(requestParam));
+            resp = OkHttp3Util.postString(contextRoot + "getPayMultiSignAddressList",
+                    Json.jsonmapper().writeValueAsString(requestParam));
             System.out.println(resp);
             result = Json.jsonmapper().readValue(resp, HashMap.class);
-            List<HashMap<String, Object>> payMultiSignAddresses = (List<HashMap<String, Object>>) result.get("payMultiSignAddresses");
+            List<HashMap<String, Object>> payMultiSignAddresses = (List<HashMap<String, Object>>) result
+                    .get("payMultiSignAddresses");
             List<byte[]> sigs = new ArrayList<byte[]>();
             for (HashMap<String, Object> payMultiSignAddress : payMultiSignAddresses) {
                 String signInputDataHex = (String) payMultiSignAddress.get("signInputDataHex");
@@ -810,8 +822,9 @@ public class SendMoneyController {
 
             Script inputScript = ScriptBuilder.createMultiSigInputScriptBytes(sigs);
             transaction0.getInput(0).setScriptSig(inputScript);
-            
-            byte[] buf = OkHttp3Util.post(contextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+
+            byte[] buf = OkHttp3Util.post(contextRoot + "askTransaction",
+                    Json.jsonmapper().writeValueAsString(requestParam));
             Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
             rollingBlock.addTransaction(transaction0);
             rollingBlock.solve();
