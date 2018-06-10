@@ -3870,16 +3870,17 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public UTXO getOutputsWithHexStr(byte[] hash) throws BlockStoreException {
+    public UTXO getOutputsWithHexStr(byte[] hash, long outputindex) throws BlockStoreException {
         String sql = "SELECT height, coinvalue, scriptbytes, coinbase, toaddress,"
                 + " addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, "
-                + " spendpending FROM outputs WHERE hash = ?";
+                + " spendpending FROM outputs WHERE hash = ? and outputindex = ?";
         
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(sql);
             preparedStatement.setBytes(1, hash);
+            preparedStatement.setLong(2, outputindex);
             ResultSet results = preparedStatement.executeQuery();
             if (!results.next()) {
                 return null;

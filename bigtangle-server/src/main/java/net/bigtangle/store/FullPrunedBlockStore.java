@@ -362,5 +362,5 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     int getCountPayMultiSignAddressStatus(String orderid) throws BlockStoreException;
 
-    UTXO getOutputsWithHexStr(byte[] hash) throws BlockStoreException;
+    UTXO getOutputsWithHexStr(byte[] hash, long outputindex) throws BlockStoreException;
 }

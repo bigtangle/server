@@ -187,23 +187,27 @@ public class MainController {
             String memo = u.getMemo();
             String minimumsign = Main.getString(u.getMinimumsign()).trim();
             String hashHex = (String) object.get("blockHashHex");
-
+            String hash = u.getHashHex();
+            long outputindex = u.getIndex();
+                    
+                    
             Main.validAddressSet.clear();
             Main.validAddressSet.add(address);
             boolean spendPending = u.isSpendPending();
             if (myPositvleTokens != null && !"".equals(myPositvleTokens.trim()) && !myPositvleTokens.trim().isEmpty()) {
                 if (myPositvleTokens.contains(Utils.HEX.encode(tokenid))) {
                     Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending, tokenname,
-                            memo, minimumsign, hashHex));
+                            memo, minimumsign, hashHex, hash, outputindex));
                 } else {
                     subutxos.add(new UTXOModel(balance, tokenid, address, spendPending, tokenname, memo, minimumsign,
-                            hashHex));
+                            hashHex, hash, outputindex));
                 }
 
             }
             if (myPositvleTokens == null || myPositvleTokens.isEmpty() || "".equals(myPositvleTokens.trim()))
                 Main.instance.getUtxoData().add(
-                        new UTXOModel(balance, tokenid, address, spendPending, tokenname, memo, minimumsign, hashHex));
+                        new UTXOModel(balance, tokenid, address, spendPending, tokenname, memo, minimumsign, hashHex,
+                                hash, outputindex));
         }
         Main.instance.getUtxoData().addAll(subutxos);
         list = (List<Map<String, Object>>) data.get("tokens");

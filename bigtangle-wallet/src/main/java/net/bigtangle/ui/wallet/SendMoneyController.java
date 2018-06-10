@@ -30,6 +30,8 @@ import java.util.Optional;
 
 import org.spongycastle.crypto.params.KeyParameter;
 
+import com.sun.corba.se.spi.ior.ObjectKey;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -252,20 +254,21 @@ public class SendMoneyController {
 
     }
 
+    private List<String> hashHexList = new ArrayList<String>();
+
     @FXML
     public void initialize() throws Exception {
         initChoicebox();
         List<String> list = Main.initAddress4file();
         ObservableList<UTXOModel> utxoModels = Main.instance.getUtxoData();
         if (utxoModels != null && !utxoModels.isEmpty()) {
-            List<String> hashHexList = new ArrayList<String>();
             for (UTXOModel utxoModel : utxoModels) {
                 if (!"".equals(utxoModel.getMinimumsign().trim()) && !utxoModel.getMinimumsign().trim().equals("0")
                         && !utxoModel.getMinimumsign().trim().equals("1")) {
                     String temp = utxoModel.getBalance() + "," + utxoModel.getTokenid() + ","
                             + utxoModel.getMinimumsign();
                     multiUtxoChoiceBox.getItems().add(temp);
-                    hashHexList.add(utxoModel.getHashHex());
+                    hashHexList.add(utxoModel.getHash() + ":" + utxoModel.getOutputindex());
                 }
 
             }
@@ -276,9 +279,9 @@ public class SendMoneyController {
                     btcLabel1.setText(newv.split(",")[1]);
                 }
             });
-            multiUtxoChoiceBox.getSelectionModel().selectedIndexProperty().addListener((ov, oldindex, newindex) -> {
-                utxoKey = hashHexList.get(newindex.intValue());// hash,index....
-            });
+//            multiUtxoChoiceBox.getSelectionModel().selectedIndexProperty().addListener((ov, oldindex, newindex) -> {
+//                utxoKey = hashHexList.get(newindex.intValue());// hash,index....
+//            });
         }
 
         ObservableList<String> addressData = FXCollections.observableArrayList(list);
@@ -687,9 +690,16 @@ public class SendMoneyController {
         this.launchPayMultiSign(Main.params, ContextRoot);
     }
 
+    @SuppressWarnings("unchecked")
     public void launchPayMultiSign(NetworkParameters networkParameters, String contextRoot) throws Exception {
-        //multiUtxoChoiceBox
-        UTXO utxo = null;
+        int index = multiUtxoChoiceBox.getSelectionModel().getSelectedIndex();
+        String outputStr = this.hashHexList.get(index);
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("hexStr", outputStr);
+        String resp = OkHttp3Util.postString(contextRoot + "outpusWithHexStr", Json.jsonmapper().writeValueAsString(requestParam));
+
+        HashMap<String, Object> outputs_ = Json.jsonmapper().readValue(resp, HashMap.class);
+        UTXO utxo = MapToBeanMapperUtil.parseUTXO((HashMap<String, Object>) outputs_.get("outputs"));
 
         TransactionOutput multisigOutput = new FreeStandingTransactionOutput(networkParameters, utxo, 0);
         Transaction transaction = new Transaction(Main.params);

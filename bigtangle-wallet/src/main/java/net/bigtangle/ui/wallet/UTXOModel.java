@@ -17,9 +17,27 @@ public class UTXOModel {
     private SimpleStringProperty spendPending;
 
     private String hashHex;
+    private String hash;
+    private long outputindex;
+    
+    public String getHash() {
+        return hash;
+    }
+
+    public void setHash(String hash) {
+        this.hash = hash;
+    }
+
+    public long getOutputindex() {
+        return outputindex;
+    }
+
+    public void setOutputindex(long outputindex) {
+        this.outputindex = outputindex;
+    }
 
     public UTXOModel(String balance, byte[] tokenid, String address, boolean spendPending, String tokenname,
-            String memo, String minimumsign, String hashHex) {
+            String memo, String minimumsign, String hashHex, String hash, long outputindex) {
         this.balance = new SimpleStringProperty(balance);
         this.tokenid = new SimpleStringProperty(tokenname + ":" + Utils.HEX.encode(tokenid));
         this.tokentype = new SimpleStringProperty(tokenname);
@@ -28,6 +46,8 @@ public class UTXOModel {
         this.memo = new SimpleStringProperty(memo);
         this.minimumsign = new SimpleStringProperty(minimumsign);
         this.hashHex = hashHex;
+        this.hash = hash;
+        this.outputindex = outputindex;
     }
 
     public SimpleStringProperty balance() {

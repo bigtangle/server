@@ -170,8 +170,10 @@ public class WalletService {
     }
 
     private UTXO getStoredOutputsWithHexStr(String hexStr) throws BlockStoreException {
-        byte[] hash = Utils.HEX.decode(hexStr);
-        UTXO utxo = store.getOutputsWithHexStr(hash);
+        String[] strs = hexStr.split(":");
+        byte[] hash = Utils.HEX.decode(strs[0]);
+        long outputindex = Long.parseLong(strs[1]);
+        UTXO utxo = store.getOutputsWithHexStr(hash, outputindex);
         return utxo;
     }
 }

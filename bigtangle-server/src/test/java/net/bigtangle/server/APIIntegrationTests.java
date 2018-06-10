@@ -246,7 +246,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         payMultiSign.setToaddress(outKey.toAddress(networkParameters).toBase58());
         payMultiSign.setAmount(amount.getValue());
         payMultiSign.setMinsignnumber(3);
-        payMultiSign.setOutpusHashHex(outputs.get(0).getHashHex());
+        payMultiSign.setOutpusHashHex(outputs.get(0).getHashHex() + ":" + outputs.get(0).getIndex());
 
         OkHttp3Util.post(contextRoot + "launchPayMultiSign", Json.jsonmapper().writeValueAsString(payMultiSign));
         return payMultiSign;
