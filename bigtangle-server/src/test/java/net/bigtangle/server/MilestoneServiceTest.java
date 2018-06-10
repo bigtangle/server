@@ -35,6 +35,7 @@ import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
+import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
@@ -123,9 +124,9 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(b2.getHash()).isMilestone());
         assertTrue(blockService.getBlockEvaluation(b3.getHash()).isMilestone());
 
-        
+        ECKey genesiskey = new ECKey(Utils.HEX.decode(testPiv), Utils.HEX.decode(testPub));
         //use UTXO to create double spending, this can not be created with wallet
-        List<UTXO> outputs = testTransactionAndGetBalances(false, walletKeys);
+        List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0), 0);
          Coin amount = Coin.valueOf(2, NetworkParameters.BIGNETCOIN_TOKENID);
         Transaction doublespent = new Transaction(networkParameters);
@@ -133,7 +134,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         TransactionInput input = doublespent.addInput(spendableOutput);
        Sha256Hash sighash = doublespent.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
  
-        TransactionSignature tsrecsig = new TransactionSignature(wallet1Keys.get(0).sign(sighash), Transaction.SigHash.ALL, false);
+        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL, false);
         Script inputScript = ScriptBuilder.createInputScript( tsrecsig);
         input.setScriptSig(inputScript);
 
