@@ -237,6 +237,11 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0), 0);
         Transaction transaction = new Transaction(networkParameters);
         transaction.addOutput(amount, outKey);
+        
+        Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(3, ecKeys);
+        Coin amount2 = multisigOutput.getValue().subtract(amount);
+        transaction.addOutput(amount2, scriptPubKey);
+        
         transaction.addInput(multisigOutput);
         
         PayMultiSign payMultiSign = new PayMultiSign();
