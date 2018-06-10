@@ -58,6 +58,7 @@ public class PayMultiSignService {
             payMultiSignAddress.setOrderid(payMultiSign.getOrderid());
             payMultiSignAddress.setSign(0);
             payMultiSignAddress.setPubKey(multiSignAddress.getPubKeyHex());
+            payMultiSignAddress.setSignIndex(multiSignAddress.getPosIndex());
             this.store.insertPayMultiSignAddress(payMultiSignAddress);
         }
     }
@@ -88,10 +89,13 @@ public class PayMultiSignService {
         byte[] data = transaction.getHash().getBytes();
         byte[] signature = Utils.HEX.decode((String) request.get("signature"));
         boolean success = ECKey.verify(data, signature, pubKey);
-//        if (!success) {
-//            throw new BlockStoreException("multisign signature error");
-//        }
-        System.out.println(" " + request.get("signInputData"));
+        if (!success) {
+            throw new BlockStoreException("multisign signature error");
+        }
+        
+//        int signIndex = this.store.getMaxPayMultiSignAddressSignIndex(orderid);
+//        signIndex++;
+        
         byte[] signInputData = Utils.HEX.decode((String) request.get("signInputData"));
         this.store.updatePayMultiSignAddressSign(orderid, pubKey0, 1, signInputData);
         
@@ -122,6 +126,7 @@ public class PayMultiSignService {
             payMultiSignExt.setOrderid(payMultiSign.getOrderid());
             payMultiSignExt.setToaddress(payMultiSign.getToaddress());
             payMultiSignExt.setTokenid(payMultiSign.getTokenid());
+            payMultiSignExt.setOutpusHashHex(payMultiSign.getOutpusHashHex());
             payMultiSignExt.setSign(1);
             payMultiSignExt.setRealSignnumber(100);
             payMultiSignExts.add(payMultiSignExt);

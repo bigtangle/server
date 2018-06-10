@@ -73,6 +73,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    tokenid varchar(255) NOT NULL  ,\n" 
             + "    address varchar(255),\n"
             + "    pubKeyHex varchar(255),\n"
+            + "    posIndex int(11),\n"
             + "    PRIMARY KEY (tokenid, address) \n)";
 
     private static final String CREATE_TOKENSERIAL_TABLE = "CREATE TABLE tokenserial (\n"
@@ -106,6 +107,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    orderid varchar(255) NOT NULL  ,\n" 
             + "    pubKey varchar(255),\n"
             + "    sign int(11) NOT NULL,\n"
+            + "    signIndex int(11) NOT NULL,\n"
             + "    signInputData mediumblob,\n"
             + "    PRIMARY KEY (orderid, pubKey) \n)";
 

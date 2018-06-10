@@ -5,7 +5,6 @@
 
 package net.bigtangle.store;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -26,9 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
@@ -59,7 +55,6 @@ import net.bigtangle.script.Script;
 import net.bigtangle.script.Script.VerifyFlag;
 import net.bigtangle.server.service.BlockRequester;
 import net.bigtangle.server.service.MultiSignService;
-import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.server.service.ValidatorService;
 import net.bigtangle.utils.ContextPropagatingThreadFactory;
 import net.bigtangle.wallet.Wallet;
@@ -254,6 +249,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         if (tokenInfo.getMultiSignAddresses().size() > 0) {
             this.blockStore.deleteMultiSignAddressByTokenid(token.getTokenid());
         }
+        int index = 1;
         for (MultiSignAddress multiSignAddress : tokenInfo.getMultiSignAddresses()) {
             byte[] pubKey = Utils.HEX.decode(multiSignAddress.getPubKeyHex());
             multiSignAddress.setAddress(ECKey.fromPublicOnly(pubKey).toAddress(networkParameters).toBase58());
@@ -261,7 +257,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     multiSignAddress.getAddress());
             if (multiSignAddress0 == null) {
                 multiSignAddress0 = new MultiSignAddress().copy(multiSignAddress);
+                multiSignAddress0.setPosIndex(index);
                 blockStore.insertMultiSignAddress(multiSignAddress0);
+                index++;
             }
         }
         TokenSerial tokenSerial = tokenInfo.getTokenSerial();

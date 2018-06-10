@@ -287,8 +287,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected abstract String getUpdateBlockevaluationUnmaintainAllSQL();
 
-    protected String SELECT_MULTISIGNADDRESS_SQL = "SELECT tokenid, address, pubKeyHex FROM multisignaddress WHERE tokenid = ?";
-    protected String INSERT_MULTISIGNADDRESS_SQL = "INSERT INTO multisignaddress (tokenid, address, pubKeyHex) VALUES (?, ?, ?)";
+    protected String SELECT_MULTISIGNADDRESS_SQL = "SELECT tokenid, address, pubKeyHex, posIndex FROM multisignaddress WHERE tokenid = ?";
+    protected String INSERT_MULTISIGNADDRESS_SQL = "INSERT INTO multisignaddress (tokenid, address, pubKeyHex, posIndex) VALUES (?, ?, ?, ?)";
     protected String DELETE_MULTISIGNADDRESS_SQL = "DELETE FROM multisignaddress WHERE tokenid = ? AND address = ?";
     protected String COUNT_MULTISIGNADDRESS_SQL = "SELECT COUNT(*) as count FROM multisignaddress WHERE tokenid = ?";
     protected String SELECT_MULTISIGNADDRESSINFO_SQL = "SELECT tokenid, address FROM multisignaddress WHERE tokenid = ? AND address = ?";
@@ -2609,6 +2609,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 String address = resultSet.getString("address");
                 String pubKeyHex = resultSet.getString("pubKeyHex");
                 MultiSignAddress multiSignAddress = new MultiSignAddress(tokenid0, address, pubKeyHex);
+                int posIndex = resultSet.getInt("posIndex");
+                multiSignAddress.setPosIndex(posIndex);
                 list.add(multiSignAddress);
             }
             return list;
@@ -2634,6 +2636,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setString(1, multiSignAddress.getTokenid());
             preparedStatement.setString(2, multiSignAddress.getAddress());
             preparedStatement.setString(3, multiSignAddress.getPubKeyHex());
+            preparedStatement.setInt(4, multiSignAddress.getPosIndex());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -3634,7 +3637,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     
     @Override
     public void insertPayMultiSignAddress(PayMultiSignAddress payMultiSignAddress) throws BlockStoreException {
-        String sql = "insert into paymultisignaddress (orderid, pubKey, sign, signInputData) values (?, ?, ?, ?)";
+        String sql = "insert into paymultisignaddress (orderid, pubKey, sign, signInputData, signIndex) values (?, ?, ?, ?, ?)";
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -3643,6 +3646,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setString(2, payMultiSignAddress.getPubKey());
             preparedStatement.setInt(3, payMultiSignAddress.getSign());
             preparedStatement.setBytes(4, payMultiSignAddress.getSignInputData());
+            preparedStatement.setInt(5, payMultiSignAddress.getSignIndex());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -3677,6 +3681,30 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     preparedStatement.close();
                 } catch (SQLException e) {
                     throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public int getMaxPayMultiSignAddressSignIndex(String orderid) throws BlockStoreException {
+        String sql = "SELECT MAX(signIndex) AS signIndex FROM paymultisignaddress WHERE orderid = ?";
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setString(1, orderid);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            return resultSet.getInt(1);
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
                 }
             }
         }
@@ -3719,7 +3747,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public List<PayMultiSignAddress> getPayMultiSignAddressWithOrderid(String orderid) throws BlockStoreException {
-        String sql = "select orderid, pubKey, sign, signInputData from paymultisignaddress where orderid = ?";
+        String sql = "select orderid, pubKey, sign, signInputData, signIndex from paymultisignaddress where orderid = ? ORDER BY signIndex ASC";
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -3733,6 +3761,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 payMultiSignAddress.setPubKey(resultSet.getString("pubKey"));
                 payMultiSignAddress.setSign(resultSet.getInt("sign"));
                 payMultiSignAddress.setSignInputData(resultSet.getBytes("signInputData"));
+                payMultiSignAddress.setSignIndex(resultSet.getInt("signIndex"));
                 list.add(payMultiSignAddress);
             }
             return list;

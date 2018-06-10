@@ -12,6 +12,16 @@ public class PayMultiSignAddress implements java.io.Serializable {
     
     private byte[] signInputData;
     
+    private int signIndex;
+    
+    public int getSignIndex() {
+        return signIndex;
+    }
+
+    public void setSignIndex(int signIndex) {
+        this.signIndex = signIndex;
+    }
+
     public String getSignInputDataHex() {
         if (this.signInputData == null) {
             return "";

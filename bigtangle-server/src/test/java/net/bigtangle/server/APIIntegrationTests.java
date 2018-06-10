@@ -4,7 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 import java.io.UnsupportedEncodingException;
@@ -19,13 +18,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.collect.ImmutableList;
 
+import ch.qos.logback.classic.pattern.Util;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.BlockStoreException;
@@ -44,7 +44,6 @@ import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
-import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
@@ -53,9 +52,10 @@ import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.MilestoneService;
-import net.bigtangle.wallet.FreeStandingTransactionOutput;
+import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UUIDUtil;
+import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.wallet.Wallet;
 
 @RunWith(SpringRunner.class)
@@ -191,6 +191,38 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             testCreateMultiSig();
         }
         
+        PayMultiSign payMultiSign = launchPayMultiSign();
+        
+        for (int i = 0; i < 3; i ++) {
+            HashMap<String, Object> requestParam = new HashMap<String, Object>();
+            requestParam.put("orderid", payMultiSign.getOrderid());
+            String resp = OkHttp3Util.postString(contextRoot + "getPayMultiSignAddressList", Json.jsonmapper().writeValueAsString(requestParam));
+            HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
+            List<HashMap<String, Object>> payMultiSignAddresses = (List<HashMap<String, Object>>) result.get("payMultiSignAddresses");
+            
+            KeyParameter aesKey = null;
+            ECKey currentECKey = null;
+            
+            for (HashMap<String, Object> payMultiSignAddress : payMultiSignAddresses) {
+                if ((Integer) payMultiSignAddress.get("sign") == 1) {
+                    continue;
+                }
+                for (ECKey ecKey : walletAppKit.wallet().walletKeys(aesKey)) {
+                    if (Utils.HEX.encode(ecKey.getPubKey()).equals((String) payMultiSignAddress.get("pubKey"))) {
+                        currentECKey = ecKey;
+                        break;
+                    }
+                }
+            }
+            if (currentECKey == null) {
+                return;
+            }
+            
+            this.payMultiSign(currentECKey, payMultiSign.getOrderid(), networkParameters, contextRoot);
+        }
+    }
+
+    private PayMultiSign launchPayMultiSign() throws Exception, JsonProcessingException {
         List<ECKey> ecKeys = new ArrayList<ECKey>();
         ecKeys.add(walletKeys.get(0));
         ecKeys.add(walletKeys.get(1));
@@ -201,14 +233,11 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Coin amount = Coin.parseCoin("12", Utils.HEX.decode(tokenid));
         
         List<UTXO> outputs = testTransactionAndGetBalances(false, ecKeys);
-        
 
         TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0), 0);
-        Script multisigScript = multisigOutput.getScriptPubKey();
         Transaction transaction = new Transaction(networkParameters);
         transaction.addOutput(amount, outKey);
-        TransactionInput input = transaction.addInput(multisigOutput);
-
+        transaction.addInput(multisigOutput);
         
         PayMultiSign payMultiSign = new PayMultiSign();
         payMultiSign.setOrderid(UUIDUtil.randomUUID());
@@ -220,94 +249,72 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         payMultiSign.setOutpusHashHex(outputs.get(0).getHashHex());
 
         OkHttp3Util.post(contextRoot + "launchPayMultiSign", Json.jsonmapper().writeValueAsString(payMultiSign));
+        return payMultiSign;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public void payMultiSign(ECKey ecKey, String orderid, NetworkParameters networkParameters, String contextRoot) throws Exception {
+        List<String> pubKeys = new ArrayList<String>();
+        pubKeys.add(ecKey.getPublicKeyAsHex());
         
-        HashMap<String, Object> requestParam00 = new HashMap<String, Object>();
-        requestParam00.put("hexStr", outputs.get(0).getHashHex());
-        String resp0 = OkHttp3Util.postString(contextRoot + "outpusWithHexStr", Json.jsonmapper().writeValueAsString(requestParam00));
-        System.out.println(resp0);
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.clear();
+        requestParam.put("orderid", orderid);
+        String resp = OkHttp3Util.postString(contextRoot + "payMultiSignDetails", Json.jsonmapper().writeValueAsString(requestParam));
+        HashMap<String, Object> data = Json.jsonmapper().readValue(resp, HashMap.class);
+        HashMap<String, Object> payMultiSign_ = (HashMap<String, Object>) data.get("payMultiSign");
         
-
-
-
-//List<TransactionSignature>        transactionSignatures = new ArrayList<TransactionSignature>();
-//List<byte[]> aaa = new ArrayList<>();
-
-        for (ECKey ecKey : ecKeys) {
-            List<String> pubKeys = new ArrayList<String>();
-            pubKeys.add(ecKey.getPublicKeyAsHex());
-            String resp = OkHttp3Util.postString(contextRoot + "getPayMultiSignList", Json.jsonmapper().writeValueAsString(pubKeys));
-
-            HashMap<String, Object> data = Json.jsonmapper().readValue(resp, HashMap.class);
-            List<HashMap<String, Object>> payMultiSigns = (List<HashMap<String, Object>>) data.get("payMultiSigns");
-            HashMap<String, Object> payMultiSign_ = payMultiSigns.get(0);
-            
-            byte[] payloadBytes = Utils.HEX.decode((String) payMultiSign_.get("blockhashHex"));
-            Transaction transaction0 = networkParameters.getDefaultSerializer().makeTransaction(payloadBytes);
-            
-            Sha256Hash sighash = transaction0.hashForSignature(0, multisigScript, Transaction.SigHash.ALL, false);
-            TransactionSignature transactionSignature = new TransactionSignature(ecKey.sign(sighash), Transaction.SigHash.ALL, false);
-            
-//            transactionSignatures.add(transactionSignature);
-//            aaa.add(transactionSignature.encodeToBitcoin());
-            
-            ECKey.ECDSASignature party1Signature = ecKey.sign(transaction0.getHash());
-            byte[] buf1 = party1Signature.encodeToDER();
-            
-            HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.clear();
+        requestParam.put("hexStr", payMultiSign_.get("outpusHashHex"));
+        resp = OkHttp3Util.postString(contextRoot + "outpusWithHexStr", Json.jsonmapper().writeValueAsString(requestParam));
+        System.out.println(resp);
+        
+        HashMap<String, Object> outputs_ = Json.jsonmapper().readValue(resp, HashMap.class);
+        UTXO u = MapToBeanMapperUtil.parseUTXO((HashMap<String, Object>) outputs_.get("outputs"));
+        TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(networkParameters, u, 0);
+        Script multisigScript_ = multisigOutput_.getScriptPubKey();
+        
+        byte[] payloadBytes = Utils.HEX.decode((String) payMultiSign_.get("blockhashHex"));
+        Transaction transaction0 = networkParameters.getDefaultSerializer().makeTransaction(payloadBytes);
+        
+        Sha256Hash sighash = transaction0.hashForSignature(0, multisigScript_, Transaction.SigHash.ALL, false);
+        TransactionSignature transactionSignature = new TransactionSignature(ecKey.sign(sighash), Transaction.SigHash.ALL, false);
+        
+        ECKey.ECDSASignature party1Signature = ecKey.sign(transaction0.getHash());
+        byte[] buf1 = party1Signature.encodeToDER();
+        
+        requestParam.clear();
+        requestParam.put("orderid", (String) payMultiSign_.get("orderid"));
+        requestParam.put("pubKey", ecKey.getPublicKeyAsHex());
+        requestParam.put("signature", Utils.HEX.encode(buf1));
+        requestParam.put("signInputData", Utils.HEX.encode(transactionSignature.encodeToBitcoin()));
+        resp = OkHttp3Util.postString(contextRoot + "payMultiSign", Json.jsonmapper().writeValueAsString(requestParam));
+        System.out.println(resp);
+        
+        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
+        boolean success = (boolean) result.get("success");
+        if (success) {
+            requestParam.clear();
             requestParam.put("orderid", (String) payMultiSign_.get("orderid"));
-            requestParam.put("pubKey", ecKey.getPublicKeyAsHex());
-            requestParam.put("signature", Utils.HEX.encode(buf1));
-            requestParam.put("signInputData", Utils.HEX.encode(transactionSignature.encodeToBitcoin()));
-            System.out.println(" " + Utils.HEX.encode(transactionSignature.encodeToBitcoin()));
-            resp = OkHttp3Util.postString(contextRoot + "payMultiSign", Json.jsonmapper().writeValueAsString(requestParam));
+            resp = OkHttp3Util.postString(contextRoot + "getPayMultiSignAddressList", Json.jsonmapper().writeValueAsString(requestParam));
             System.out.println(resp);
-            
-            
-            HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
-            boolean success = (boolean) result.get("success");
-            if (success) {
-                requestParam.clear();
-                requestParam.put("orderid", (String) payMultiSign_.get("orderid"));
-                resp = OkHttp3Util.postString(contextRoot + "getPayMultiSignAddressList", Json.jsonmapper().writeValueAsString(requestParam));
-                System.out.println(resp);
-                result = Json.jsonmapper().readValue(resp, HashMap.class);
-                List<HashMap<String, Object>> payMultiSignAddresses = (List<HashMap<String, Object>>) result.get("payMultiSignAddresses");
-                List<HashMap<String, Object>> payMultiSignAddresses0 = new ArrayList<HashMap<String, Object>>();
-                for (ECKey ecKey0 : ecKeys) {
-                    for (HashMap<String, Object> payMultiSignAddress : payMultiSignAddresses) {
-                        if (ecKey0.getPublicKeyAsHex().equals(payMultiSignAddress.get("pubKey"))) {
-                            payMultiSignAddresses0.add(payMultiSignAddress);
-                            break;
-                        }
-                    }
-                }
-                List<byte[]> sigs = new ArrayList<byte[]>();
-                for (HashMap<String, Object> payMultiSignAddress : payMultiSignAddresses0) {
-                    String signInputDataHex = (String) payMultiSignAddress.get("signInputDataHex");
-                    sigs.add(Utils.HEX.decode(signInputDataHex));
-                }
-////                TransactionInput input = transaction0.getInput(0);
-//
-//                Script inputScript = ScriptBuilder.createMultiSigInputScriptBytes(sigs, null);
-//                input.setScriptSig(inputScript);
-//                
-//                byte[] buf = OkHttp3Util.post(contextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
-//                Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
-//                rollingBlock.addTransaction(transaction0);
-//                rollingBlock.solve();
-//               checkResponse( OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize()));
-//                Script inputScript = ScriptBuilder.createMultiSigInputScript(transactionSignatures);
-                Script inputScript = ScriptBuilder.createMultiSigInputScriptBytes(sigs);
-                transaction0.getInput(0).setScriptSig(inputScript);
-                
-                byte[] buf = OkHttp3Util.post(contextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
-                Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
-                rollingBlock.addTransaction(transaction0);
-                rollingBlock.solve();
-               checkResponse( OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize()));
+            result = Json.jsonmapper().readValue(resp, HashMap.class);
+            List<HashMap<String, Object>> payMultiSignAddresses = (List<HashMap<String, Object>>) result.get("payMultiSignAddresses");
+            List<byte[]> sigs = new ArrayList<byte[]>();
+            for (HashMap<String, Object> payMultiSignAddress : payMultiSignAddresses) {
+                String signInputDataHex = (String) payMultiSignAddress.get("signInputDataHex");
+                sigs.add(Utils.HEX.decode(signInputDataHex));
             }
-        }
 
+            Script inputScript = ScriptBuilder.createMultiSigInputScriptBytes(sigs);
+            transaction0.getInput(0).setScriptSig(inputScript);
+            
+            byte[] buf = OkHttp3Util.post(contextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+            Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
+            rollingBlock.addTransaction(transaction0);
+            rollingBlock.solve();
+           checkResponse( OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize()));
+        }
     }
 
     @SuppressWarnings("unchecked")
