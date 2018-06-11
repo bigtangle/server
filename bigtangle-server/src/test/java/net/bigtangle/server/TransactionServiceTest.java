@@ -95,7 +95,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         //TODO add new table for UTXO as outputsmulti _> 
         //UTXO write 
         //join and make this correct
-       checkBalance(NetworkParameters.BIGNETCOIN_TOKENID_STRING, wallet1Keys_);
+       checkBalance(amount0, wallet1Keys_);
         
         //find the transaction as input
       

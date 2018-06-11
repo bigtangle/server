@@ -166,7 +166,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         logger.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
         milestoneService.update();
 
-        checkBalance(utxo.getValue().getTokenHex(), walletAppKit1.wallet().walletKeys(null));
+        checkBalance(utxo.getValue() , walletAppKit1.wallet().walletKeys(null));
     }
 
     @SuppressWarnings("unchecked")
