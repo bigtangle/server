@@ -34,7 +34,9 @@ import net.bigtangle.core.ContactInfo;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
+import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.Sha256Hash;
@@ -354,17 +356,30 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
         } else if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_USERDATA) {
             Transaction tx = block.getTransactions().get(0);
-            if (tx.getData() != null) {
-                byte[] buf = tx.getData();
+            if (tx.getData() != null && tx.getDatasignature() != null) {
+                /*byte[] buf = tx.getData();
                 try {
                     ContactInfo contactInfo = new ContactInfo().parse(buf);
                 } catch (Exception e) {
                     throw new BlockStoreException(e);
+                }*/
+                try {
+                    @SuppressWarnings("unchecked")
+                    List<HashMap<String, Object>> multiSignBies = Json.jsonmapper().readValue(tx.getDatasignature(), List.class);
+                    Map<String, Object> multiSignBy = multiSignBies.get(0);
+                    byte[] pubKey = Utils.HEX.decode((String) multiSignBy.get("publickey"));
+                    byte[] data = tx.getHash().getBytes();
+                    byte[] signature = Utils.HEX.decode((String) multiSignBy.get("signature"));
+                    boolean success = ECKey.verify(data, signature, pubKey);
+                    if (!success) {
+                        throw new BlockStoreException("multisign signature error");
+                    }
+                    this.synchronizationUserData(block.getHash(), 
+                            DataClassName.valueOf(tx.getDataclassname()), tx.getData(), (String) multiSignBy.get("publickey"));
+                    }
+                catch (Exception e) {
+                    e.printStackTrace();
                 }
-
-                // TODO get datasignature for public key
-                this.synchronizationUserData(block.getHash(), DataClassName.valueOf(tx.getDataclassname()),
-                        tx.getData(), "");
             }
         }
 
