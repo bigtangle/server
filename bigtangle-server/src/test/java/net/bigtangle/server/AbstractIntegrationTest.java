@@ -71,7 +71,7 @@ import net.bigtangle.wallet.Wallet;
 public abstract class AbstractIntegrationTest {
 
     private static final String CONTEXT_ROOT_TEMPLATE = "http://localhost:%s/";
-    private static final Logger log = LoggerFactory.getLogger(TipsServiceTest.class);
+    private static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
     public String contextRoot;
     public List<ECKey> walletKeys;
     public List<ECKey> wallet1Keys;
@@ -237,7 +237,7 @@ public abstract class AbstractIntegrationTest {
 
         checkResponse(OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize()));
 
-        checkBalance(NetworkParameters.BIGNETCOIN_TOKENID_STRING, walletKeys);
+        checkBalance(amount, walletKeys);
 
     }
 
@@ -299,11 +299,12 @@ public abstract class AbstractIntegrationTest {
         assertTrue(error == code);
     }
 
-    public void checkBalance(String tokenid, List<ECKey> a) throws Exception {
+    public void checkBalance(Coin coin  , List<ECKey> a) throws Exception {
         List<UTXO> ulist = testTransactionAndGetBalances(false, a);
         UTXO myutxo = null;
         for (UTXO u : ulist) {
-            if (tokenid.equals(u.getTokenid())) {
+            if (coin.getTokenHex().equals(u.getTokenid())
+                    && coin.getValue()==u.getValue().getValue()) {
                 myutxo = u;
                 break;
             }

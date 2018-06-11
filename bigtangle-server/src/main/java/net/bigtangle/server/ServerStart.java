@@ -12,7 +12,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @ComponentScan(basePackages = { "net.bigtangle" })
 @EnableScheduling
-// @EnableCaching
 public class ServerStart {
 
     public static void main(String[] args) {
