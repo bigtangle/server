@@ -708,6 +708,10 @@ public class SendMoneyController {
 
         Address address = Address.fromBase58(networkParameters, addressComboBox1.getValue());
         transaction.addOutput(amount, address);
+        
+        Coin amount2 = multisigOutput.getValue().subtract(amount);
+        transaction.addOutput(amount2, multisigOutput.getScriptPubKey());
+        
         transaction.addInput(multisigOutput);
         transaction.setMemo(memoTF1.getText());
 
