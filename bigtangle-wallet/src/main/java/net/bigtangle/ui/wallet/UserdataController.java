@@ -16,6 +16,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.cell.MapValueFactory;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Contact;
 import net.bigtangle.core.ContactInfo;
@@ -199,6 +200,8 @@ public class UserdataController {
                 allData.add(map);
             }
             linkmanTableview.setItems(allData);
+            linkmanColumn.setCellValueFactory(new MapValueFactory("name"));
+            linkaddressColumn.setCellValueFactory(new MapValueFactory("address"));
         }
 
     }
