@@ -809,18 +809,6 @@ public class SendMoneyController {
         transaction.addInput(multisigOutput);
         transaction.setMemo(memoTF1.getText());
 
-        PayMultiSign payMultiSign = new PayMultiSign();
-        payMultiSign.setOrderid(UUIDUtil.randomUUID());
-        payMultiSign.setTokenid(utxo.getValue().getTokenHex());
-        payMultiSign.setBlockhashHex(Utils.HEX.encode(transaction.bitcoinSerialize()));
-        payMultiSign.setToaddress(address.toBase58());
-        payMultiSign.setAmount(amount.getValue());
-
-        int signnumber = Integer.parseInt(signnumberTFA.getText());
-        payMultiSign.setMinsignnumber(signnumber);
-        payMultiSign.setOutpusHashHex(utxo.getHashHex());
-
-        OkHttp3Util.post(contextRoot + "launchPayMultiSign", Json.jsonmapper().writeValueAsString(payMultiSign));
     }
 
     public void removeSignAddr(ActionEvent event) {
