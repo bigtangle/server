@@ -76,6 +76,9 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         List<ECKey> wallet1Keys_ = new ArrayList<ECKey>();
         wallet1Keys_.add(wallet1Keys.get(0));
         wallet1Keys_.add(wallet1Keys.get(1));
+        
+        for (ECKey ecKey : wallet1Keys_) System.out.println(ecKey.getPublicKeyAsHex());
+        
         Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, wallet1Keys_);
 
         Coin amount0 = Coin.parseCoin("0.15", NetworkParameters.BIGNETCOIN_TOKENID);

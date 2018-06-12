@@ -30,6 +30,8 @@ import java.util.Optional;
 
 import org.spongycastle.crypto.params.KeyParameter;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -579,15 +581,14 @@ public class SendMoneyController {
             multiSigTransaction.addOutput(amount0, scriptPubKey);
             // get new Block to be used from server
             HashMap<String, String> requestParam = new HashMap<String, String>();
-            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
-                    Json.jsonmapper().writeValueAsString(requestParam));
+            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
             Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
 
             SendRequest request = SendRequest.forTx(multiSigTransaction);
             Main.bitcoin.wallet().completeTx(request);
+            rollingBlock.addTransaction(request.tx);
             rollingBlock.solve();
             OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
-
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
