@@ -15,6 +15,9 @@ public class UserDataService {
     
     public byte[] getUserData(String dataclassname, String pubKey) throws BlockStoreException {
         UserData userData = this.store.getUserDataByPrimaryKey(dataclassname, pubKey);
-        return userData.getData();
+        if (userData != null) {
+            return userData.getData();
+        }
+        return new byte[0];
     }
 }

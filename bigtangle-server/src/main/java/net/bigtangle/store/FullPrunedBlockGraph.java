@@ -357,12 +357,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         } else if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_USERDATA) {
             Transaction tx = block.getTransactions().get(0);
             if (tx.getData() != null && tx.getDatasignature() != null) {
-                /*byte[] buf = tx.getData();
-                try {
-                    ContactInfo contactInfo = new ContactInfo().parse(buf);
-                } catch (Exception e) {
-                    throw new BlockStoreException(e);
-                }*/
                 try {
                     @SuppressWarnings("unchecked")
                     List<HashMap<String, Object>> multiSignBies = Json.jsonmapper().readValue(tx.getDatasignature(), List.class);

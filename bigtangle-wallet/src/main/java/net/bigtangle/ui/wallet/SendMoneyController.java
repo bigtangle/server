@@ -786,7 +786,10 @@ public class SendMoneyController {
 
     @SuppressWarnings("unchecked")
     public void launchPayMultiSignA(NetworkParameters networkParameters, String contextRoot) throws Exception {
-        int index = multiUtxoChoiceBox.getSelectionModel().getSelectedIndex();
+        int index = multiUtxoChoiceBox1.getSelectionModel().getSelectedIndex();
+        if (index == -1) {
+            return;
+        }
         String outputStr = this.hashHexList.get(index);
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hexStr", outputStr);
@@ -799,17 +802,34 @@ public class SendMoneyController {
         TransactionOutput multisigOutput = new FreeStandingTransactionOutput(networkParameters, utxo, 0);
         Transaction transaction = new Transaction(Main.params);
 
-        Coin amount = Coin.parseCoin(amountEdit1.getText(), utxo.getValue().tokenid);
+        Coin amount = Coin.parseCoin(amountEdit12.getText(), utxo.getValue().tokenid);
 
-        Address address = Address.fromBase58(networkParameters, addressComboBox1.getValue());
-        transaction.addOutput(amount, address);
+        List<ECKey> wallet1Keys_ = new ArrayList<ECKey>();
+        List<ECKey> keys = new ArrayList<ECKey>();
+        for (String keyString : addressChoiceBox1.getItems()) {
+            keys.add(ECKey.fromPublicOnly(Utils.HEX.decode(keyString)));
+        }
+        
+        Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, wallet1Keys_);
+        transaction.addOutput(amount, scriptPubKey);
 
         Coin amount2 = multisigOutput.getValue().subtract(amount);
         transaction.addOutput(amount2, multisigOutput.getScriptPubKey());
 
         transaction.addInput(multisigOutput);
-        transaction.setMemo(memoTF1.getText());
+        transaction.setMemo(memoTF111.getText());
 
+        PayMultiSign payMultiSign = new PayMultiSign();
+        payMultiSign.setOrderid(UUIDUtil.randomUUID());
+        payMultiSign.setTokenid(utxo.getValue().getTokenHex());
+        payMultiSign.setBlockhashHex(Utils.HEX.encode(transaction.bitcoinSerialize()));
+        payMultiSign.setToaddress("");
+        payMultiSign.setAmount(amount.getValue());
+
+        payMultiSign.setMinsignnumber(wallet1Keys_.size());
+        payMultiSign.setOutpusHashHex(utxo.getHashHex());
+
+        OkHttp3Util.post(contextRoot + "launchPayMultiSign", Json.jsonmapper().writeValueAsString(payMultiSign));
     }
 
     public void removeSignAddr(ActionEvent event) {
