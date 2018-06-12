@@ -736,13 +736,55 @@ public class SendMoneyController {
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
         this.launchPayMultiSign(Main.params, ContextRoot);
     }
+
     public void signA(ActionEvent event) throws Exception {
 
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
-
+        this.launchPayMultiSignA(Main.params, ContextRoot);
     }
+
     @SuppressWarnings("unchecked")
     public void launchPayMultiSign(NetworkParameters networkParameters, String contextRoot) throws Exception {
+        int index = multiUtxoChoiceBox.getSelectionModel().getSelectedIndex();
+        String outputStr = this.hashHexList.get(index);
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("hexStr", outputStr);
+        String resp = OkHttp3Util.postString(contextRoot + "outpusWithHexStr",
+                Json.jsonmapper().writeValueAsString(requestParam));
+
+        HashMap<String, Object> outputs_ = Json.jsonmapper().readValue(resp, HashMap.class);
+        UTXO utxo = MapToBeanMapperUtil.parseUTXO((HashMap<String, Object>) outputs_.get("outputs"));
+
+        TransactionOutput multisigOutput = new FreeStandingTransactionOutput(networkParameters, utxo, 0);
+        Transaction transaction = new Transaction(Main.params);
+
+        Coin amount = Coin.parseCoin(amountEdit1.getText(), utxo.getValue().tokenid);
+
+        Address address = Address.fromBase58(networkParameters, addressComboBox1.getValue());
+        transaction.addOutput(amount, address);
+
+        Coin amount2 = multisigOutput.getValue().subtract(amount);
+        transaction.addOutput(amount2, multisigOutput.getScriptPubKey());
+
+        transaction.addInput(multisigOutput);
+        transaction.setMemo(memoTF1.getText());
+
+        PayMultiSign payMultiSign = new PayMultiSign();
+        payMultiSign.setOrderid(UUIDUtil.randomUUID());
+        payMultiSign.setTokenid(utxo.getValue().getTokenHex());
+        payMultiSign.setBlockhashHex(Utils.HEX.encode(transaction.bitcoinSerialize()));
+        payMultiSign.setToaddress(address.toBase58());
+        payMultiSign.setAmount(amount.getValue());
+
+        int signnumber = Integer.parseInt(signnumberTFA.getText());
+        payMultiSign.setMinsignnumber(signnumber);
+        payMultiSign.setOutpusHashHex(utxo.getHashHex());
+
+        OkHttp3Util.post(contextRoot + "launchPayMultiSign", Json.jsonmapper().writeValueAsString(payMultiSign));
+    }
+
+    @SuppressWarnings("unchecked")
+    public void launchPayMultiSignA(NetworkParameters networkParameters, String contextRoot) throws Exception {
         int index = multiUtxoChoiceBox.getSelectionModel().getSelectedIndex();
         String outputStr = this.hashHexList.get(index);
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
