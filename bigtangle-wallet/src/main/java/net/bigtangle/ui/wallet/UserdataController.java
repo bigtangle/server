@@ -33,11 +33,21 @@ import net.bigtangle.utils.OkHttp3Util;
 public class UserdataController {
 
     @FXML
+    public TableView<Map<String, Object>> myTokenTableview;
+    @FXML
+    public TableColumn<Map<String, Object>, String> mytokennameColumn;
+    @FXML
+    public TableColumn<Map<String, Object>, String> mytokenidColumn;
+    
+    
+    @FXML
     public TableView<Map<String, Object>> wachtedTokenTableview;
     @FXML
     public TableColumn<Map<String, Object>, String> tokennameColumn;
     @FXML
     public TableColumn<Map<String, Object>, String> tokenidColumn;
+    
+    
     @FXML
     public TableView<Map<String, Object>> linkmanTableview;
     @FXML

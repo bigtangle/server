@@ -30,8 +30,6 @@ import java.util.Optional;
 
 import org.spongycastle.crypto.params.KeyParameter;
 
-import com.sun.corba.se.spi.ior.ObjectKey;
-
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -103,7 +101,11 @@ public class SendMoneyController {
     @FXML
     public ChoiceBox<String> addressChoiceBox;
     @FXML
+    public ChoiceBox<String> addressChoiceBox1;
+    @FXML
     public ChoiceBox<String> multiUtxoChoiceBox;
+    @FXML
+    public ChoiceBox<String> multiUtxoChoiceBox1;
 
     @FXML
     public TextField memoTF1;
@@ -111,14 +113,20 @@ public class SendMoneyController {
     @FXML
     public TextField amountEdit1;
     @FXML
+    public TextField amountEdit12;
+    @FXML
     public Label btcLabel1;
 
     @FXML
     public TextField memoTF11;
     @FXML
+    public TextField memoTF111;
+    @FXML
     public TextField amountEdit11;
     @FXML
     public Label btcLabel11;
+    @FXML
+    public Label btcLabel12;
     @FXML
     public TextField signnumberTF1;
     @FXML
@@ -151,6 +159,8 @@ public class SendMoneyController {
     @FXML
     public TextField signAddressTF1;
     @FXML
+    public TextField signAddressTF11;
+    @FXML
     public ChoiceBox<String> signAddressChoiceBox;;
 
     public TableView<Map> signTable;
@@ -169,7 +179,6 @@ public class SendMoneyController {
         // milionRadioButton.setUserData(1000 * 1000 + "");
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         ObservableList<Object> tokenData = FXCollections.observableArrayList();
-
         try {
             Map<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("name", "");
@@ -195,7 +204,7 @@ public class SendMoneyController {
                  * 
                  * } } }
                  */
-                if (NetworkParameters.BIGNETCOIN_TOKENID_STRING.equalsIgnoreCase(tokenHex) || isMyTokens(tokenHex)) {
+                if (NetworkParameters.BIGNETCOIN_TOKENID_STRING.equalsIgnoreCase(tokenHex) || isMyUTXOs(tokenHex)) {
                     tokenData.add(tokenHex);
                     names.add(map.get("tokenname").toString());
                 }
@@ -254,6 +263,23 @@ public class SendMoneyController {
 
     }
 
+    public boolean isMyUTXOs(String tokenHex) {
+        ObservableList<UTXOModel> list = Main.instance.getUtxoData();
+        if (list != null && !list.isEmpty()) {
+            for (UTXOModel utxoModel : list) {
+                String temp = utxoModel.getTokenid();
+                String signnum = utxoModel.getMinimumsign();
+                int signnumInt = Integer.parseInt(signnum);
+                String tempTokenid = temp.contains(":") ? temp.substring(temp.indexOf(":") + 1) : temp;
+                if (tokenHex.equalsIgnoreCase(tempTokenid.trim()) && signnumInt <= 1) {
+                    return true;
+                }
+            }
+        }
+        return false;
+
+    }
+
     private List<String> hashHexList = new ArrayList<String>();
 
     @FXML
@@ -268,6 +294,7 @@ public class SendMoneyController {
                     String temp = utxoModel.getBalance() + "," + utxoModel.getTokenid() + ","
                             + utxoModel.getMinimumsign();
                     multiUtxoChoiceBox.getItems().add(temp);
+                    multiUtxoChoiceBox1.getItems().add(temp);
                     hashHexList.add(utxoModel.getHash() + ":" + utxoModel.getOutputindex());
                 }
 
@@ -279,9 +306,17 @@ public class SendMoneyController {
                     btcLabel1.setText(newv.split(",")[1]);
                 }
             });
-//            multiUtxoChoiceBox.getSelectionModel().selectedIndexProperty().addListener((ov, oldindex, newindex) -> {
-//                utxoKey = hashHexList.get(newindex.intValue());// hash,index....
-//            });
+            multiUtxoChoiceBox1.getSelectionModel().selectedItemProperty().addListener((ov, oldv, newv) -> {
+                if (newv != null && !newv.trim().equals("")) {
+                    amountEdit12.setText(newv.split(",")[0]);
+                    signnumberTFA.setText(newv.split(",")[2]);
+                    btcLabel12.setText(newv.split(",")[1]);
+                }
+            });
+            // multiUtxoChoiceBox.getSelectionModel().selectedIndexProperty().addListener((ov,
+            // oldindex, newindex) -> {
+            // utxoKey = hashHexList.get(newindex.intValue());// hash,index....
+            // });
         }
 
         ObservableList<String> addressData = FXCollections.observableArrayList(list);
@@ -680,6 +715,18 @@ public class SendMoneyController {
         signAddressTF1.setText("");
     }
 
+    public void addSignAddrB(ActionEvent event) {
+        if (signAddressTF11.getText() == null || signAddressTF11.getText().isEmpty()) {
+            return;
+        }
+        if (!addressChoiceBox1.getItems().contains(signAddressTF11.getText())) {
+            addressChoiceBox1.getItems().add(signAddressTF11.getText());
+            addressChoiceBox1.getSelectionModel().selectLast();
+        }
+
+        signAddressTF11.setText("");
+    }
+
     public void sign(ActionEvent event) throws Exception {
         // multiUtxoChoiceBox
         // amountEdit1
@@ -689,14 +736,19 @@ public class SendMoneyController {
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
         this.launchPayMultiSign(Main.params, ContextRoot);
     }
+    public void signA(ActionEvent event) throws Exception {
 
+        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+
+    }
     @SuppressWarnings("unchecked")
     public void launchPayMultiSign(NetworkParameters networkParameters, String contextRoot) throws Exception {
         int index = multiUtxoChoiceBox.getSelectionModel().getSelectedIndex();
         String outputStr = this.hashHexList.get(index);
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hexStr", outputStr);
-        String resp = OkHttp3Util.postString(contextRoot + "outpusWithHexStr", Json.jsonmapper().writeValueAsString(requestParam));
+        String resp = OkHttp3Util.postString(contextRoot + "outpusWithHexStr",
+                Json.jsonmapper().writeValueAsString(requestParam));
 
         HashMap<String, Object> outputs_ = Json.jsonmapper().readValue(resp, HashMap.class);
         UTXO utxo = MapToBeanMapperUtil.parseUTXO((HashMap<String, Object>) outputs_.get("outputs"));
@@ -708,10 +760,10 @@ public class SendMoneyController {
 
         Address address = Address.fromBase58(networkParameters, addressComboBox1.getValue());
         transaction.addOutput(amount, address);
-        
+
         Coin amount2 = multisigOutput.getValue().subtract(amount);
         transaction.addOutput(amount2, multisigOutput.getScriptPubKey());
-        
+
         transaction.addInput(multisigOutput);
         transaction.setMemo(memoTF1.getText());
 
@@ -735,6 +787,10 @@ public class SendMoneyController {
 
     public void removeSignAddrA(ActionEvent event) {
         addressChoiceBox.getItems().remove(addressChoiceBox.getValue());
+    }
+
+    public void removeSignAddrB(ActionEvent event) {
+        addressChoiceBox1.getItems().remove(addressChoiceBox1.getValue());
     }
 
     public void saveSetting(ActionEvent event) {

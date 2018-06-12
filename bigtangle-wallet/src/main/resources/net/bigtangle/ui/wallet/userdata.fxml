@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.text.*?>
 <?import javafx.scene.control.*?>
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
@@ -7,22 +8,16 @@
 
 <AnchorPane maxHeight="700.0" maxWidth="1000.0" minHeight="700.0" minWidth="1000.0" prefHeight="700.0" prefWidth="1000.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.bigtangle.ui.wallet.UserdataController">
    <children>
-      <TabPane maxHeight="700.0" maxWidth="1000.0" minHeight="700.0" minWidth="1000.0" prefHeight="700.0" prefWidth="1000.0" tabClosingPolicy="UNAVAILABLE">
+      <TabPane layoutY="69.0" maxHeight="628.0" maxWidth="1000.0" minHeight="628.0" minWidth="1000.0" prefHeight="628.0" prefWidth="1000.0" tabClosingPolicy="UNAVAILABLE">
         <tabs>
-          <Tab closable="false" text="%search">
+          <Tab closable="false" text="%contact">
                <content>
-                  <AnchorPane maxHeight="690.0" maxWidth="1000.0" minHeight="690.0" minWidth="1000.0" prefHeight="690.0" prefWidth="1000.0" style="-fx-background-color: white;">
+                  <AnchorPane maxHeight="650.0" maxWidth="1000.0" minHeight="650.0" minWidth="1000.0" prefHeight="650.0" prefWidth="1000.0" style="-fx-background-color: white;">
                      <children>
-                        <TableView fx:id="wachtedTokenTableview" layoutX="14.0" layoutY="95.0" maxHeight="500.0" maxWidth="400.0" minHeight="500.0" minWidth="400.0" prefHeight="500.0" prefWidth="400.0">
-                          <columns>
-                            <TableColumn fx:id="tokennameColumn" prefWidth="126.0" text="%Token" />
-                            <TableColumn fx:id="tokenidColumn" prefWidth="272.0" text="%Token" />
-                          </columns>
-                        </TableView>
-                        <TableView fx:id="linkmanTableview" layoutX="421.0" layoutY="95.0" maxHeight="500.0" maxWidth="400.0" minHeight="500.0" minWidth="400.0" prefHeight="500.0" prefWidth="400.0">
+                        <TableView fx:id="linkmanTableview" layoutX="29.0" layoutY="95.0" maxHeight="500.0" maxWidth="792.0" minHeight="500.0" minWidth="400.0" prefHeight="500.0" prefWidth="792.0">
                            <columns>
                               <TableColumn fx:id="linkmanColumn" prefWidth="126.0" text="%linkname" />
-                              <TableColumn fx:id="linkaddressColumn" prefWidth="272.0" text="%Address" />
+                              <TableColumn fx:id="linkaddressColumn" prefWidth="646.0" text="%Address" />
                            </columns>
                         </TableView>
                         <Button defaultButton="true" layoutX="346.0" layoutY="605.0" mnemonicParsing="false" onAction="#removeToken" text="%remove" />
@@ -37,7 +32,44 @@
                   </AnchorPane>
                </content>
             </Tab>
+            <Tab closable="false" text="%positve">
+              <content>
+                <AnchorPane maxHeight="650.0" maxWidth="1000.0" minHeight="650.0" minWidth="1000.0" prefHeight="650.0" prefWidth="1000.0" style="-fx-background-color: white;">
+                     <children>
+                        <TableView fx:id="wachtedTokenTableview" layoutX="22.0" layoutY="65.0" maxHeight="500.0" maxWidth="827.0" minHeight="500.0" minWidth="400.0" prefHeight="500.0" prefWidth="827.0">
+                           <columns>
+                              <TableColumn fx:id="tokennameColumn" prefWidth="158.0" text="%Token" />
+                              <TableColumn fx:id="tokenidColumn" prefWidth="658.0" text="%Token" />
+                           </columns>
+                        </TableView>
+                     </children>
+                  </AnchorPane>
+              </content>
+            </Tab>
+            <Tab closable="false" text="%myValidToken">
+              <content>
+                <AnchorPane maxHeight="650.0" maxWidth="1000.0" minHeight="650.0" minWidth="1000.0" prefHeight="650.0" prefWidth="1000.0" style="-fx-background-color: white;">
+                     <children>
+                        <TableView fx:id="myTokenTableview" layoutX="42.0" layoutY="23.0" maxHeight="500.0" maxWidth="827.0" minHeight="500.0" minWidth="400.0" prefHeight="500.0" prefWidth="827.0">
+                           <columns>
+                              <TableColumn fx:id="mytokennameColumn" prefWidth="158.0" text="%Token" />
+                              <TableColumn fx:id="mytokenidColumn" prefWidth="658.0" text="%Token" />
+                           </columns>
+                        </TableView>
+                     </children>
+                  </AnchorPane>
+              </content>
+            </Tab>
         </tabs>
       </TabPane>
+      <HBox alignment="CENTER" prefHeight="68.0" prefWidth="1000.0" styleClass="title-banner">
+         <children>
+            <Label alignment="CENTER" maxHeight="1.7976931348623157E308" prefHeight="68.0" prefWidth="207.0" styleClass="title-label" text="%userdata">
+               <font>
+                  <Font size="30.0" />
+               </font>
+            </Label>
+         </children>
+      </HBox>
    </children>
 </AnchorPane>
