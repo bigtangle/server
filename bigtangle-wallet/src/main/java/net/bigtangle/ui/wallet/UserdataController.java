@@ -162,13 +162,15 @@ public class UserdataController {
 
             ContactInfo contactInfo = getUserdata();
             List<Contact> list = contactInfo.getContactList();
+            List<Contact> tempList=new ArrayList<Contact>();
             for (Contact contact : list) {
                 if (name.trim().equals(contact.getName().trim())
                         && address.trim().equals(contact.getAddress().trim())) {
-                    list.remove(contact);
+                    continue;
                 }
+                tempList.add(contact);
             }
-            contactInfo.setContactList(list);
+            contactInfo.setContactList(tempList);
 
             coinbase.setDataclassname(DataClassName.USERDATA.name());
             byte[] buf1 = contactInfo.toByteArray();

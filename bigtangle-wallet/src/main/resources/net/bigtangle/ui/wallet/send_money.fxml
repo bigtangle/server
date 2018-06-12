@@ -248,7 +248,7 @@
             </Tab>
             <Tab closable="false" text="%multiSign">
               <content>
-                <AnchorPane maxHeight="600.0" maxWidth="1000.0" minHeight="600.0" minWidth="1000.0" prefHeight="600.0" prefWidth="1000.0">
+                <AnchorPane maxHeight="600.0" maxWidth="1000.0" minHeight="600.0" minWidth="1000.0" prefHeight="600.0" prefWidth="1000.0" style="-fx-background-color: white;">
                      <children>
                         <TableView fx:id="signTable" layoutX="14.0" layoutY="88.0" maxWidth="900.0" minWidth="900.0" prefHeight="436.0" prefWidth="900.0">
                           <columns>
