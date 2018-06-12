@@ -31,7 +31,7 @@
                         <Label layoutX="35.0" layoutY="43.0" prefHeight="15.0" prefWidth="98.0" text="%linkname" />
                         <Label layoutX="288.0" layoutY="44.0" prefHeight="15.0" prefWidth="72.0" text="%Address" />
                         <TextField fx:id="nameTF" layoutX="137.0" layoutY="40.0" />
-                        <TextField fx:id="addressTF" layoutX="376.0" layoutY="40.0" onAction="#addContact" prefHeight="23.0" prefWidth="287.0" />
+                        <TextField fx:id="addressTF" layoutX="376.0" layoutY="40.0" prefHeight="23.0" prefWidth="287.0" />
                         <Button layoutX="686.0" layoutY="40.0" mnemonicParsing="false" onAction="#saveUserdata" text="%add" />
                      </children>
                   </AnchorPane>
