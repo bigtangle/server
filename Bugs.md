@@ -11,9 +11,11 @@
  
 
 ## add VOS block, 
-	use the dataclassname="Docker" and content is docker-compose.yml 
-	the public address
-	number of nodes for execution
+	use the dataclassname="Docker" and 
+	
+	 content: docker-compose.yml 
+	the public address:
+	number of nodes for execution:
 	price for execution pro node:
 	timeslot:
 	url:
