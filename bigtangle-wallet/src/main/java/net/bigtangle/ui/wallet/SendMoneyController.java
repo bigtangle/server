@@ -30,8 +30,6 @@ import java.util.Optional;
 
 import org.spongycastle.crypto.params.KeyParameter;
 
-import com.sun.xml.internal.fastinfoset.algorithm.IEEE754FloatingPointEncodingAlgorithm;
-
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
