@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.ui.wallet;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +27,8 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -81,19 +84,29 @@ public class UserdataController {
         }
     }
 
-    public ContactInfo getUserdata() throws Exception {
+    public Serializable getUserdata(String type) throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         HashMap<String, String> requestParam = new HashMap<String, String>();
         ECKey pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
         requestParam.put("pubKey", pubKeyTo.getPublicKeyAsHex());
-        requestParam.put("dataclassname", DataClassName.USERDATA.name());
+        requestParam.put("dataclassname", type);
         byte[] bytes = OkHttp3Util.post(CONTEXT_ROOT + "getUserData",
                 Json.jsonmapper().writeValueAsString(requestParam));
-        if (bytes == null || bytes.length == 0) {
-            return new ContactInfo();
+        if (DataClassName.USERDATA.name().equals(type)) {
+            if (bytes == null || bytes.length == 0) {
+                return new ContactInfo();
+            }
+            ContactInfo contactInfo = new ContactInfo().parse(bytes);
+            return contactInfo;
+        } else if (DataClassName.TOKEN.name().equals(type)) {
+            if (bytes == null || bytes.length == 0) {
+                return new TokenInfo();
+            }
+            TokenInfo tokenInfo = new TokenInfo().parse(bytes);
+            return tokenInfo;
+        } else {
+            return null;
         }
-        ContactInfo contactInfo = new ContactInfo().parse(bytes);
-        return contactInfo;
 
     }
 
@@ -109,7 +122,7 @@ public class UserdataController {
         Contact contact = new Contact();
         contact.setName(nameTF.getText());
         contact.setAddress(addressTF.getText());
-        ContactInfo contactInfo = getUserdata();
+        ContactInfo contactInfo = (ContactInfo) getUserdata(DataClassName.USERDATA.name());
 
         List<Contact> list = contactInfo.getContactList();
         list.add(contact);
@@ -162,7 +175,7 @@ public class UserdataController {
 
             Transaction coinbase = new Transaction(Main.params);
 
-            ContactInfo contactInfo = getUserdata();
+            ContactInfo contactInfo = (ContactInfo) getUserdata(DataClassName.USERDATA.name());
             List<Contact> list = contactInfo.getContactList();
             List<Contact> tempList = new ArrayList<Contact>();
             for (Contact contact : list) {
@@ -193,7 +206,7 @@ public class UserdataController {
     }
 
     public void initContactTableView() throws Exception {
-        ContactInfo contactInfo = getUserdata();
+        ContactInfo contactInfo = (ContactInfo) getUserdata(DataClassName.USERDATA.name());
         List<Contact> list = contactInfo.getContactList();
         ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();
         if (list != null && !list.isEmpty()) {
@@ -208,5 +221,22 @@ public class UserdataController {
             linkaddressColumn.setCellValueFactory(new MapValueFactory("address"));
         }
 
+    }
+
+    public void initTokenTableView() throws Exception {
+        TokenInfo tokenInfo = (TokenInfo) getUserdata(DataClassName.TOKEN.name());
+        List<Tokens> list = tokenInfo.getPositveTokenList();
+        ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();
+        if (list != null && !list.isEmpty()) {
+            for (Tokens tokens : list) {
+                Map<String, Object> map = new HashMap<String, Object>();
+                map.put("tokenname", tokens.getTokenname());
+                map.put("tokenid", tokens.getTokenid());
+                allData.add(map);
+            }
+            wachtedTokenTableview.setItems(allData);
+            tokennameColumn.setCellValueFactory(new MapValueFactory("tokenname"));
+            tokenidColumn.setCellValueFactory(new MapValueFactory("tokenid"));
+        }
     }
 }
