@@ -88,15 +88,7 @@ public class VersionMessage extends Message {
         time = System.currentTimeMillis() / 1000;
         // Note that the Bitcoin Core doesn't do anything with these, and finding out your own external IP address
         // is kind of tricky anyway, so we just put nonsense here for now.
-        try {
-            // We hard-code the IPv4 localhost address here rather than use InetAddress.getLocalHost() because some
-            // mobile phones have broken localhost DNS entries, also, this is faster.
-            final byte[] localhost = { 127, 0, 0, 1 };
-            myAddr = new PeerAddress(InetAddress.getByAddress(localhost), params.getPort(), 0);
-            theirAddr = new PeerAddress(InetAddress.getByAddress(localhost), params.getPort(), 0);
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);  // Cannot happen (illegal IP length).
-        }
+   
         subVer = LIBRARY_SUBVER;
         bestHeight = newBestHeight;
         relayTxesBeforeFilter = true;

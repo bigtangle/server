@@ -22,8 +22,7 @@ dependencies {
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-web', version:  ver.spring_boot
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version:   ver.spring_boot
     compile group: 'org.springframework.boot', name: 'spring-boot-configuration-processor', version:  ver.spring_boot
-    compile group: 'org.springframework.boot', name: 'spring-boot-starter-cache', version:  ver.spring_boot
- 
+    
     compile group: 'org.aspectj', name: 'aspectjrt',   version:ver.aspectjrt
     compile group: 'org.aspectj', name: 'aspectjweaver', version:ver.aspectjweaver
    	compile group: 'org.apache.commons', name: 'commons-lang3', version:ver.commons_lang3
@@ -61,7 +60,7 @@ dependencies {
     testCompile group: 'junit', name: 'junit',version:ver.junit
     testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
         testCompile group: 'org.easymock', name: 'easymock', version:  ver.easymock
-  
+    runtime group:'io.micrometer', name:'micrometer-registry-prometheus', version:ver.spring_metrics_promet
 }
 
 mainClassName = "net.bigtangle.server.ServerStart"
