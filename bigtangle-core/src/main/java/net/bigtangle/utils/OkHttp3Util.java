@@ -4,8 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.utils;
 
-import static org.junit.Assert.assertTrue;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
