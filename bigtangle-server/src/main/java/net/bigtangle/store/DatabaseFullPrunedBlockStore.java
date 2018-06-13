@@ -3900,7 +3900,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             boolean spendPending = results.getBoolean(13);
             String tokenid = results.getString("tokenid");
             
-            UTXO utxo = new UTXO(Sha256Hash.wrap(hash), -1L, coinvalue, height, coinbase, new Script(scriptBytes), address, blockhash,
+//            long outputindex = results.getLong("outputindex");
+            
+            UTXO utxo = new UTXO(Sha256Hash.wrap(hash), outputindex, coinvalue, height, coinbase, new Script(scriptBytes), address, blockhash,
                     fromaddress, memo, tokenid, spent, confirmed, spendPending, 0);
             return utxo;
         } catch (SQLException ex) {

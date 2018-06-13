@@ -864,6 +864,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         }
     }
 
+    @Test
     @SuppressWarnings("unchecked")
     public void testCreateMultiSig() throws JsonProcessingException, Exception {
         // Setup transaction and signatures
@@ -949,6 +950,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
             checkResponse(OkHttp3Util.post(contextRoot + "multiSign", block0.bitcoinSerialize()));
 
+        }
+        this.wallet1();
+        for (ECKey ecKey : walletAppKit1.wallet().walletKeys(null)) {
+            System.out.println(ecKey.getPublicKeyAsHex());
         }
         // checkBalance(tokenid, ecKeys );
     }
