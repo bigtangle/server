@@ -41,8 +41,27 @@ services:
     networks:
     - bigtangle-bridged-network
     environment:
-      KAFKA_BROKER: kafka-bigtangle:9092
       KAFKA_BOOTSTRAP_SERVERS: kafka-bigtangle:9092
-      KAFKA_ZOO_KEEPER_SERVER: kafka-bigtangle:2181
-      KAFKA_SCHEMA_REGISTRY_URL: http://kafka-bigtangle:8081
       DB_HOSTNAME: mysql-bigtangle
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+     - 9090:9090
+    volume:
+      - /home/cui/git/as-vdv-aus/helper/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - as-vdv-aus-bridged-network
+    environment:
+      PROCESSOR_METRICS_URL: http://as-vdv-aus_processor:8080/actuator/prometheus
+
+  grafana:
+    image: grafana/grafana:5.1.0
+    container_name: grafana
+    ports:
+      - 3000:3000
+    networks:
+      - as-vdv-aus-bridged-network
+
+      
+

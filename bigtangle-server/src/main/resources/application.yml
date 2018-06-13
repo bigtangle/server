@@ -1,8 +1,7 @@
 server:
   port: ${SERVER_PORT:8088}
   net: ${SERVER_NET:Unittest}
-  mineraddress:  ${SERVER_MINERADDRESS:mjWvzPZz4YJtWqb7ux7cdgq5G7rzkg3bXG}
-
+  mineraddress: ${SERVER_MINERADDRESS:mjWvzPZz4YJtWqb7ux7cdgq5G7rzkg3bXG}
 db:
   dbtype: ${DBTYPE:mysql}
   hostname: ${DB_HOSTNAME:localhost}
@@ -10,13 +9,22 @@ db:
   dbName: ${DB_NAME:info}
   username: ${DB_USERNAME:root}
   password: ${DB_PASSWORD:test1234}
-
 service:
   milestoneschedule:
     rate: ${SERVICE_MILESTONE_RATE:15000}
     active: ${SERVICE_MILESTONE_ACTIVE:false}
-
-    
 kafka:
   bootstrapServers: ${BOOT_STRAP_SERVERS:}
   topicOutName: ${TOPIC_OUT_NAME:bigtangle}
+management:
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    prometheus:
+      enabled: true

@@ -114,25 +114,7 @@ public class TokensController {
         }
     }
 
-    public void initPositveTableView() throws Exception {
-        List<String> tokens = Main.initToken4file();
-        ObservableList<Map> tokenData = FXCollections.observableArrayList();
-        if (tokens != null && !tokens.isEmpty()) {
-            for (String temp : tokens) {
-                // ONLY log log.debug("temp:" + temp);
-                if (!temp.equals("")) {
-                    Map map = new HashMap();
-                    map.put("tokenHex", temp.split(",")[0]);
-                    map.put("tokenname", temp.split(",")[1]);
-                    tokenData.add(map);
-                }
-
-            }
-            positveTokennameColumn.setCellValueFactory(new MapValueFactory("tokenname"));
-            positveTokenHexColumn.setCellValueFactory(new MapValueFactory("tokenHex"));
-            positveTokensTable.setItems(tokenData);
-        }
-    }
+    public void initPositveTableView() throws Exception {}
 
     public void removePositvle(ActionEvent event) {
         Map<String, Object> rowData = positveTokensTable.getSelectionModel().getSelectedItem();
