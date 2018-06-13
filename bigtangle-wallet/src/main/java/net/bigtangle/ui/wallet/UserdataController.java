@@ -39,16 +39,14 @@ public class UserdataController {
     public TableColumn<Map<String, Object>, String> mytokennameColumn;
     @FXML
     public TableColumn<Map<String, Object>, String> mytokenidColumn;
-    
-    
+
     @FXML
     public TableView<Map<String, Object>> wachtedTokenTableview;
     @FXML
     public TableColumn<Map<String, Object>, String> tokennameColumn;
     @FXML
     public TableColumn<Map<String, Object>, String> tokenidColumn;
-    
-    
+
     @FXML
     public TableView<Map<String, Object>> linkmanTableview;
     @FXML
@@ -91,6 +89,9 @@ public class UserdataController {
         requestParam.put("dataclassname", DataClassName.USERDATA.name());
         byte[] bytes = OkHttp3Util.post(CONTEXT_ROOT + "getUserData",
                 Json.jsonmapper().writeValueAsString(requestParam));
+        if (bytes == null || bytes.length == 0) {
+            return new ContactInfo();
+        }
         ContactInfo contactInfo = new ContactInfo().parse(bytes);
         return contactInfo;
 
@@ -109,6 +110,7 @@ public class UserdataController {
         contact.setName(nameTF.getText());
         contact.setAddress(addressTF.getText());
         ContactInfo contactInfo = getUserdata();
+
         List<Contact> list = contactInfo.getContactList();
         list.add(contact);
         contactInfo.setContactList(list);
@@ -162,7 +164,7 @@ public class UserdataController {
 
             ContactInfo contactInfo = getUserdata();
             List<Contact> list = contactInfo.getContactList();
-            List<Contact> tempList=new ArrayList<Contact>();
+            List<Contact> tempList = new ArrayList<Contact>();
             for (Contact contact : list) {
                 if (name.trim().equals(contact.getName().trim())
                         && address.trim().equals(contact.getAddress().trim())) {
