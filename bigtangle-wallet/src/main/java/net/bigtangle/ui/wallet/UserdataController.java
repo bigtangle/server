@@ -92,7 +92,7 @@ public class UserdataController {
         requestParam.put("dataclassname", type);
         byte[] bytes = OkHttp3Util.post(CONTEXT_ROOT + "getUserData",
                 Json.jsonmapper().writeValueAsString(requestParam));
-        if (DataClassName.USERDATA.name().equals(type)) {
+        if (DataClassName.ContactInfo.name().equals(type)) {
             if (bytes == null || bytes.length == 0) {
                 return new ContactInfo();
             }
@@ -122,13 +122,13 @@ public class UserdataController {
         Contact contact = new Contact();
         contact.setName(nameTF.getText());
         contact.setAddress(addressTF.getText());
-        ContactInfo contactInfo = (ContactInfo) getUserdata(DataClassName.USERDATA.name());
+        ContactInfo contactInfo = (ContactInfo) getUserdata(DataClassName.ContactInfo.name());
 
         List<Contact> list = contactInfo.getContactList();
         list.add(contact);
         contactInfo.setContactList(list);
 
-        coinbase.setDataclassname(DataClassName.USERDATA.name());
+        coinbase.setDataclassname(DataClassName.ContactInfo.name());
         coinbase.setData(contactInfo.toByteArray());
 
         Sha256Hash sighash = coinbase.getHash();
@@ -175,7 +175,7 @@ public class UserdataController {
 
             Transaction coinbase = new Transaction(Main.params);
 
-            ContactInfo contactInfo = (ContactInfo) getUserdata(DataClassName.USERDATA.name());
+            ContactInfo contactInfo = (ContactInfo) getUserdata(DataClassName.ContactInfo.name());
             List<Contact> list = contactInfo.getContactList();
             List<Contact> tempList = new ArrayList<Contact>();
             for (Contact contact : list) {
@@ -187,7 +187,7 @@ public class UserdataController {
             }
             contactInfo.setContactList(tempList);
 
-            coinbase.setDataclassname(DataClassName.USERDATA.name());
+            coinbase.setDataclassname(DataClassName.ContactInfo.name());
             byte[] buf1 = contactInfo.toByteArray();
             coinbase.setData(buf1);
 
@@ -206,7 +206,7 @@ public class UserdataController {
     }
 
     public void initContactTableView() throws Exception {
-        ContactInfo contactInfo = (ContactInfo) getUserdata(DataClassName.USERDATA.name());
+        ContactInfo contactInfo = (ContactInfo) getUserdata(DataClassName.ContactInfo.name());
         List<Contact> list = contactInfo.getContactList();
         ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();
         if (list != null && !list.isEmpty()) {

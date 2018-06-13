@@ -2,5 +2,5 @@ package net.bigtangle.core;
 
 public enum DataClassName {
 
-    TOKEN, USERDATA, PAYMULTISIGN
+    TOKEN, PAYMULTISIGN, ContactInfo
 }
