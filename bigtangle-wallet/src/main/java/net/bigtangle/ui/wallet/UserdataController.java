@@ -170,7 +170,7 @@ public class UserdataController {
     public void removeToken(ActionEvent event) {
     }
 
-    public void saveMyAddress(ActionEvent event) {
+    public void saveMyAddress(ActionEvent event) throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
@@ -181,7 +181,7 @@ public class UserdataController {
 
         Transaction coinbase = new Transaction(Main.params);
         coinbase.setDataclassname(DataClassName.UPLOADFILE.name());
-        coinbase.setData(buf);
+        // coinbase.setData(buf);
 
         Sha256Hash sighash = coinbase.getHash();
         ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash);
