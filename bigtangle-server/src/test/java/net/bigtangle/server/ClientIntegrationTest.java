@@ -182,19 +182,19 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         block.setBlocktype(NetworkParameters.BLOCKTYPE_USERDATA);
         ECKey outKey = new ECKey();
 
-        Transaction coinbase = new Transaction(networkParameters);
+        Transaction transaction = new Transaction(networkParameters);
         Contact contact = new Contact();
-        contact.setName("testname1");
+        contact.setName("testname");
         contact.setAddress(outKey.toAddress(networkParameters).toBase58());
-        ContactInfo contactInfo = new ContactInfo();
+        ContactInfo contactInfo0 = new ContactInfo();
         List<Contact> list = new ArrayList<Contact>();
         list.add(contact);
-        contactInfo.setContactList(list);
+        contactInfo0.setContactList(list);
 
-        coinbase.setDataclassname(DataClassName.ContactInfo.name());
-        coinbase.setData(contactInfo.toByteArray());
+        transaction.setDataclassname(DataClassName.ContactInfo.name());
+        transaction.setData(contactInfo0.toByteArray());
 
-        Sha256Hash sighash = coinbase.getHash();
+        Sha256Hash sighash = transaction.getHash();
         ECKey.ECDSASignature party1Signature = outKey.sign(sighash);
         byte[] buf1 = party1Signature.encodeToDER();
 
@@ -204,30 +204,29 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
-        coinbase.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
-        block.addTransaction(coinbase);
+        block.addTransaction(transaction);
         block.solve();
-
         OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
-
+        
         requestParam.clear();
         requestParam.put("dataclassname", DataClassName.ContactInfo.name());
         requestParam.put("pubKey", Utils.HEX.encode(outKey.getPubKey()));
         byte[] buf = OkHttp3Util.post(contextRoot + "getUserData", Json.jsonmapper().writeValueAsString(requestParam));
-        // change contact and save again. then check
-        System.out.println(Utils.HEX.encode(buf));
 
-        ContactInfo contactInfo2 = new ContactInfo().parse(buf);
-        List<Contact> list2 = contactInfo2.getContactList();
-        assertTrue(list2.size() == 1);
-        for (Contact contact2 : list2) {
-            logger.debug(contact2.getName() + "," + contact2.getAddress());
-            assertTrue("testname1".equals(contact2.getName()));
-        }
-        contactInfo2.setContactList(new ArrayList<Contact>());
-        coinbase.setData(contactInfo2.toByteArray());
-        sighash = coinbase.getHash();
+        ContactInfo contactInfo1 = new ContactInfo().parse(buf);
+        assertTrue(contactInfo1.getContactList().size() == 1);
+        
+        Contact contact0 = contactInfo1.getContactList().get(0);
+        assertTrue("testname".equals(contact0.getName()));
+        
+        transaction = new Transaction(networkParameters);
+        contactInfo1.setContactList(new ArrayList<Contact>());
+        transaction.setDataclassname(DataClassName.ContactInfo.name());
+        transaction.setData(contactInfo1.toByteArray());
+        
+        sighash = transaction.getHash();
         party1Signature = outKey.sign(sighash);
         buf1 = party1Signature.encodeToDER();
 
@@ -237,9 +236,14 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
-        coinbase.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
-        block.addTransaction(coinbase);
+        requestParam.clear();
+        data = OkHttp3Util.post(contextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+        block = networkParameters.getDefaultSerializer().makeBlock(data);
+        block.setBlocktype(NetworkParameters.BLOCKTYPE_USERDATA);
+        
+        block.addTransaction(transaction);
         block.solve();
 
         OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
@@ -248,16 +252,9 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         requestParam.put("dataclassname", DataClassName.ContactInfo.name());
         requestParam.put("pubKey", Utils.HEX.encode(outKey.getPubKey()));
         buf = OkHttp3Util.post(contextRoot + "getUserData", Json.jsonmapper().writeValueAsString(requestParam));
-        // change contact and save again. then check
-        System.out.println(Utils.HEX.encode(buf));
-
-        contactInfo2 = new ContactInfo().parse(buf);
-        list2 = contactInfo2.getContactList();
-        assertTrue(list2.size() == 0);
-        for (Contact contact2 : list2) {
-            logger.debug(contact2.getName() + "," + contact2.getAddress());
-            assertTrue("testname1".equals(contact2.getName()));
-        }
+        
+        contactInfo1 = new ContactInfo().parse(buf);
+        assertTrue(contactInfo1.getContactList().size() == 0);
     }
 
     @Test

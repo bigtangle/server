@@ -30,7 +30,7 @@ import java.util.Optional;
 
 import org.spongycastle.crypto.params.KeyParameter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.sun.xml.internal.fastinfoset.algorithm.IEEE754FloatingPointEncodingAlgorithm;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -311,7 +311,7 @@ public class SendMoneyController {
             multiUtxoChoiceBox1.getSelectionModel().selectedItemProperty().addListener((ov, oldv, newv) -> {
                 if (newv != null && !newv.trim().equals("")) {
                     amountEdit12.setText(newv.split(",")[0]);
-                    signnumberTFA.setText(newv.split(",")[2]);
+//                    signnumberTFA.setText(newv.split(",")[2]);
                     btcLabel12.setText(newv.split(",")[1]);
                 }
             });
@@ -804,13 +804,12 @@ public class SendMoneyController {
 
         Coin amount = Coin.parseCoin(amountEdit12.getText(), utxo.getValue().tokenid);
 
-        List<ECKey> wallet1Keys_ = new ArrayList<ECKey>();
         List<ECKey> keys = new ArrayList<ECKey>();
         for (String keyString : addressChoiceBox1.getItems()) {
             keys.add(ECKey.fromPublicOnly(Utils.HEX.decode(keyString)));
         }
         
-        Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, wallet1Keys_);
+        Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(keys.size(), keys);
         transaction.addOutput(amount, scriptPubKey);
 
         Coin amount2 = multisigOutput.getValue().subtract(amount);
@@ -826,8 +825,8 @@ public class SendMoneyController {
         payMultiSign.setToaddress("");
         payMultiSign.setAmount(amount.getValue());
 
-        payMultiSign.setMinsignnumber(wallet1Keys_.size());
-        payMultiSign.setOutpusHashHex(utxo.getHashHex());
+        payMultiSign.setMinsignnumber(keys.size());
+        payMultiSign.setOutpusHashHex(utxo.getHashHex() + ":" + utxo.getIndex());
 
         OkHttp3Util.post(contextRoot + "launchPayMultiSign", Json.jsonmapper().writeValueAsString(payMultiSign));
     }
