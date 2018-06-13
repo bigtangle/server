@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.ui.wallet;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,8 +17,10 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.MapValueFactory;
+import javafx.stage.FileChooser;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Contact;
 import net.bigtangle.core.ContactInfo;
@@ -31,17 +34,11 @@ import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
+import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
 
 public class UserdataController {
-
-    @FXML
-    public TableView<Map<String, Object>> myTokenTableview;
-    @FXML
-    public TableColumn<Map<String, Object>, String> mytokennameColumn;
-    @FXML
-    public TableColumn<Map<String, Object>, String> mytokenidColumn;
 
     @FXML
     public TableView<Map<String, Object>> wachtedTokenTableview;
@@ -63,6 +60,23 @@ public class UserdataController {
     public TextField nameTF;
     @FXML
     public TextField addressTF;
+
+    @FXML
+    public TextField filepathTF;
+
+    @FXML
+    public TextField countryTF;
+    @FXML
+    public TextField provinceTF;
+    @FXML
+    public TextField cityTF;
+    @FXML
+    public TextField streetTF;
+    @FXML
+    public TextField emailTF;
+    @FXML
+    public TextArea remarkTA;
+
     public Main.OverlayUI<?> overlayUI;
 
     @FXML
@@ -156,6 +170,38 @@ public class UserdataController {
     public void removeToken(ActionEvent event) {
     }
 
+    public void saveMyAddress(ActionEvent event) {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block block = Main.params.getDefaultSerializer().makeBlock(data);
+        block.setBlocktype(NetworkParameters.BLOCKTYPE_USERDATA);
+        ECKey pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+
+        Transaction coinbase = new Transaction(Main.params);
+        coinbase.setDataclassname(DataClassName.UPLOADFILE.name());
+        coinbase.setData(buf);
+
+        Sha256Hash sighash = coinbase.getHash();
+        ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash);
+        byte[] buf1 = party1Signature.encodeToDER();
+
+        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+        MultiSignBy multiSignBy0 = new MultiSignBy();
+        multiSignBy0.setAddress(pubKeyTo.toAddress(Main.params).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(pubKeyTo.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+        multiSignBies.add(multiSignBy0);
+        coinbase.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+
+        block.addTransaction(coinbase);
+        block.solve();
+
+        OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", block.bitcoinSerialize());
+
+    }
+
     public void removeLinkman(ActionEvent event) {
         try {
             Map<String, Object> rowdata = linkmanTableview.getSelectionModel().getSelectedItem();
@@ -203,6 +249,7 @@ public class UserdataController {
 
     public void initTableView() throws Exception {
         initContactTableView();
+        initTokenTableView();
     }
 
     public void initContactTableView() throws Exception {
@@ -239,4 +286,42 @@ public class UserdataController {
             tokenidColumn.setCellValueFactory(new MapValueFactory("tokenid"));
         }
     }
+
+    public void uploadFile(ActionEvent event) throws Exception {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        final FileChooser fileChooser = new FileChooser();
+        File file = fileChooser.showOpenDialog(null);
+        byte[] buf = FileUtil.readFile(file);
+        if (buf == null) {
+            return;
+        }
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block block = Main.params.getDefaultSerializer().makeBlock(data);
+        block.setBlocktype(NetworkParameters.BLOCKTYPE_USERDATA);
+        ECKey pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+
+        Transaction coinbase = new Transaction(Main.params);
+        coinbase.setDataclassname(DataClassName.UPLOADFILE.name());
+        coinbase.setData(buf);
+
+        Sha256Hash sighash = coinbase.getHash();
+        ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash);
+        byte[] buf1 = party1Signature.encodeToDER();
+
+        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+        MultiSignBy multiSignBy0 = new MultiSignBy();
+        multiSignBy0.setAddress(pubKeyTo.toAddress(Main.params).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(pubKeyTo.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+        multiSignBies.add(multiSignBy0);
+        coinbase.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+
+        block.addTransaction(coinbase);
+        block.solve();
+
+        OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", block.bitcoinSerialize());
+    }
+
 }

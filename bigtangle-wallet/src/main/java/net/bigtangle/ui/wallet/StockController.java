@@ -34,6 +34,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
@@ -686,6 +687,7 @@ public class StockController extends TokensController {
     }
 
     public void add2positve(ActionEvent event) {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         Map<String, Object> rowData = tokensTable.getSelectionModel().getSelectedItem();
         if (rowData == null || rowData.isEmpty()) {
             GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_d1"));
@@ -695,9 +697,50 @@ public class StockController extends TokensController {
         tokeninfo += Main.getString(rowData.get("tokenid")) + "," + Main.getString(rowData.get("tokenname"));
         try {
             Main.addText2file(tokeninfo, Main.keyFileDirectory + Main.positiveFile);
+            addToken(CONTEXT_ROOT, rowData.get("tokenname").toString(), rowData.get("tokenid").toString());
         } catch (Exception e) {
 
         }
+    }
+
+    public void addToken(String contextRoot, String tokenname, String tokenid) throws Exception {
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block block = Main.params.getDefaultSerializer().makeBlock(data);
+        block.setBlocktype(NetworkParameters.BLOCKTYPE_USERDATA);
+        ECKey pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+
+        Transaction coinbase = new Transaction(Main.params);
+
+        Tokens tokens = new Tokens();
+        tokens.setTokenid(tokenid);
+        tokens.setTokenname(tokenname);
+
+        TokenInfo tokenInfo = (TokenInfo) Main.getUserdata(DataClassName.TOKEN.name());
+
+        List<Tokens> list = tokenInfo.getPositveTokenList();
+        list.add(tokens);
+        tokenInfo.setPositveTokenList(list);
+        coinbase.setDataclassname(DataClassName.TOKEN.name());
+        coinbase.setData(tokenInfo.toByteArray());
+
+        Sha256Hash sighash = coinbase.getHash();
+        ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash);
+        byte[] buf1 = party1Signature.encodeToDER();
+
+        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+        MultiSignBy multiSignBy0 = new MultiSignBy();
+        multiSignBy0.setAddress(pubKeyTo.toAddress(Main.params).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(pubKeyTo.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+        multiSignBies.add(multiSignBy0);
+        coinbase.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+
+        block.addTransaction(coinbase);
+        block.solve();
+
+        OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
     }
 
     public void closeUI(ActionEvent event) {

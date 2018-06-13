@@ -35,26 +35,46 @@
               <content>
                 <AnchorPane maxHeight="650.0" maxWidth="1000.0" minHeight="650.0" minWidth="1000.0" prefHeight="650.0" prefWidth="1000.0" style="-fx-background-color: white;">
                      <children>
-                        <TableView fx:id="wachtedTokenTableview" layoutX="22.0" layoutY="65.0" maxHeight="500.0" maxWidth="827.0" minHeight="500.0" minWidth="400.0" prefHeight="500.0" prefWidth="827.0">
+                        <TableView fx:id="wachtedTokenTableview" layoutX="22.0" layoutY="65.0" maxHeight="500.0" maxWidth="827.0" minHeight="340.0" minWidth="400.0" prefHeight="340.0" prefWidth="827.0">
                            <columns>
                               <TableColumn fx:id="tokennameColumn" prefWidth="158.0" text="%Token" />
                               <TableColumn fx:id="tokenidColumn" prefWidth="658.0" text="%Token" />
                            </columns>
                         </TableView>
+                        <Button defaultButton="true" layoutX="630.0" layoutY="430.0" mnemonicParsing="false" onAction="#removeToken" text="%remove" />
+                        <Button cancelButton="true" layoutX="795.0" layoutY="430.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />
                      </children>
                   </AnchorPane>
               </content>
             </Tab>
-            <Tab closable="false" text="%myValidToken">
+            <Tab closable="false" text="%myHomeAddress">
               <content>
                 <AnchorPane maxHeight="650.0" maxWidth="1000.0" minHeight="650.0" minWidth="1000.0" prefHeight="650.0" prefWidth="1000.0" style="-fx-background-color: white;">
                      <children>
-                        <TableView fx:id="myTokenTableview" layoutX="42.0" layoutY="23.0" maxHeight="500.0" maxWidth="827.0" minHeight="500.0" minWidth="400.0" prefHeight="500.0" prefWidth="827.0">
-                           <columns>
-                              <TableColumn fx:id="mytokennameColumn" prefWidth="158.0" text="%Token" />
-                              <TableColumn fx:id="mytokenidColumn" prefWidth="658.0" text="%Token" />
-                           </columns>
-                        </TableView>
+                        <TextField fx:id="countryTF" layoutX="224.0" layoutY="40.0" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" />
+                        <TextField fx:id="provinceTF" layoutX="224.0" layoutY="98.0" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" />
+                        <TextField fx:id="cityTF" layoutX="224.0" layoutY="161.0" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" />
+                        <TextField fx:id="streetTF" layoutX="224.0" layoutY="224.0" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" />
+                        <TextField fx:id="emailTF" layoutX="224.0" layoutY="282.0" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" />
+                        <TextArea fx:id="remarkTA" layoutX="224.0" layoutY="322.0" prefHeight="78.0" prefWidth="200.0" />
+                        <Label layoutX="24.0" layoutY="44.0" prefHeight="15.0" prefWidth="98.0" text="%country" />
+                        <Label layoutX="24.0" layoutY="102.0" prefHeight="15.0" prefWidth="98.0" text="%province" />
+                        <Label layoutX="24.0" layoutY="165.0" prefHeight="15.0" prefWidth="98.0" text="%city" />
+                        <Label layoutX="24.0" layoutY="228.0" prefHeight="15.0" prefWidth="98.0" text="%street" />
+                        <Label layoutX="24.0" layoutY="286.0" prefHeight="15.0" prefWidth="98.0" text="%email" />
+                        <Label layoutX="24.0" layoutY="322.0" prefHeight="15.0" prefWidth="98.0" text="%remark" />
+                        <Button defaultButton="true" layoutX="224.0" layoutY="434.0" mnemonicParsing="false" onAction="#saveMyAddress" text="%save" />
+                        <Button cancelButton="true" layoutX="370.0" layoutY="434.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />
+                     </children>
+                  </AnchorPane>
+              </content>
+            </Tab>
+            <Tab closable="false" text="%upload">
+              <content>
+                <AnchorPane maxHeight="650.0" maxWidth="1000.0" minHeight="650.0" minWidth="1000.0" prefHeight="650.0" prefWidth="1000.0">
+                     <children>
+                        <Button layoutX="459.0" layoutY="62.0" mnemonicParsing="false" onAction="#uploadFile" text="%upload" />
+                        <TextField fx:id="filepathTF" layoutX="86.0" layoutY="62.0" prefHeight="23.0" prefWidth="351.0" />
                      </children>
                   </AnchorPane>
               </content>

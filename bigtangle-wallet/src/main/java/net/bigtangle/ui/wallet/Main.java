@@ -35,6 +35,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.Serializable;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -69,9 +70,12 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.ContactInfo;
+import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
@@ -628,6 +632,32 @@ public class Main extends Application {
         Pattern p = Pattern
                 .compile("((((0?[0-9])|([1][0-9])|([2][0-4]))\\:([0-5]?[0-9])((\\s)|(\\:([0-5]?[0-9])))))?$");
         return p.matcher(time).matches();
+    }
+
+    public static Serializable getUserdata(String type) throws Exception {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        ECKey pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+        requestParam.put("pubKey", pubKeyTo.getPublicKeyAsHex());
+        requestParam.put("dataclassname", type);
+        byte[] bytes = OkHttp3Util.post(CONTEXT_ROOT + "getUserData",
+                Json.jsonmapper().writeValueAsString(requestParam));
+        if (DataClassName.ContactInfo.name().equals(type)) {
+            if (bytes == null || bytes.length == 0) {
+                return new ContactInfo();
+            }
+            ContactInfo contactInfo = new ContactInfo().parse(bytes);
+            return contactInfo;
+        } else if (DataClassName.TOKEN.name().equals(type)) {
+            if (bytes == null || bytes.length == 0) {
+                return new TokenInfo();
+            }
+            TokenInfo tokenInfo = new TokenInfo().parse(bytes);
+            return tokenInfo;
+        } else {
+            return null;
+        }
+
     }
 
 }
