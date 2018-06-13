@@ -1,12 +1,41 @@
 package net.bigtangle.core;
 
-public class MyHomeAddress {
+import java.io.IOException;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+
+public class MyHomeAddress implements java.io.Serializable {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -4636810580856125604L;
     private String country;
     private String province;
     private String city;
     private String street;
     private String email;
     private String remark;
+
+    public byte[] toByteArray() {
+        try {
+            String jsonStr = Json.jsonmapper().writeValueAsString(this);
+            return jsonStr.getBytes();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return new byte[0];
+    }
+
+    public MyHomeAddress parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
+        String jsonStr = new String(buf);
+
+        MyHomeAddress myHomeAddress = Json.jsonmapper().readValue(jsonStr, MyHomeAddress.class);
+        if (myHomeAddress == null)
+            return this;
+
+        return this;
+    }
 
     public String getCountry() {
         return country;

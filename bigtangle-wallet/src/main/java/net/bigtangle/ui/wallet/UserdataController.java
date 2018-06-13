@@ -28,11 +28,13 @@ import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignBy;
+import net.bigtangle.core.MyHomeAddress;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.UploadfileInfo;
 import net.bigtangle.core.Utils;
 import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -82,6 +84,7 @@ public class UserdataController {
     @FXML
     public void initialize() {
         try {
+            initMyAddress();
             initTableView();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
@@ -118,6 +121,18 @@ public class UserdataController {
             }
             TokenInfo tokenInfo = new TokenInfo().parse(bytes);
             return tokenInfo;
+        } else if (DataClassName.MYHOMEADDRESS.name().equals(type)) {
+            if (bytes == null || bytes.length == 0) {
+                return new MyHomeAddress();
+            }
+            MyHomeAddress myHomeAddress = new MyHomeAddress().parse(bytes);
+            return myHomeAddress;
+        } else if (DataClassName.UPLOADFILE.name().equals(type)) {
+            if (bytes == null || bytes.length == 0) {
+                return new UploadfileInfo();
+            }
+            UploadfileInfo uploadfileInfo = new UploadfileInfo().parse(bytes);
+            return uploadfileInfo;
         } else {
             return null;
         }
@@ -170,6 +185,17 @@ public class UserdataController {
     public void removeToken(ActionEvent event) {
     }
 
+    public void initMyAddress() throws Exception {
+        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        MyHomeAddress myHomeAddress = (MyHomeAddress) getUserdata(DataClassName.MYHOMEADDRESS.name());
+        countryTF.setText(myHomeAddress.getCountry());
+        provinceTF.setText(myHomeAddress.getProvince());
+        cityTF.setText(myHomeAddress.getCity());
+        streetTF.setText(myHomeAddress.getStreet());
+        emailTF.setText(myHomeAddress.getEmail());
+        remarkTA.setText(myHomeAddress.getRemark());
+    }
+
     public void saveMyAddress(ActionEvent event) throws Exception {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -180,8 +206,15 @@ public class UserdataController {
         ECKey pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
 
         Transaction coinbase = new Transaction(Main.params);
-        coinbase.setDataclassname(DataClassName.UPLOADFILE.name());
-        // coinbase.setData(buf);
+        coinbase.setDataclassname(DataClassName.MYHOMEADDRESS.name());
+        MyHomeAddress myhomeaddress = new MyHomeAddress();
+        myhomeaddress.setCountry(countryTF.getText());
+        myhomeaddress.setProvince(provinceTF.getText());
+        myhomeaddress.setCity(cityTF.getText());
+        myhomeaddress.setStreet(streetTF.getText());
+        myhomeaddress.setEmail(emailTF.getText());
+        myhomeaddress.setRemark(remarkTA.getText());
+        coinbase.setData(myhomeaddress.toByteArray());
 
         Sha256Hash sighash = coinbase.getHash();
         ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash);
