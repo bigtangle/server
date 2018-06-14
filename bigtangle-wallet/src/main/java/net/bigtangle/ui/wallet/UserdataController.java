@@ -366,9 +366,9 @@ public class UserdataController {
                 map.put("size", contact.getMaxsize());
                 allData.add(map);
             }
-            linkmanTableview.setItems(allData);
-            linkmanColumn.setCellValueFactory(new MapValueFactory("name"));
-            linkaddressColumn.setCellValueFactory(new MapValueFactory("size"));
+            fileTable.setItems(allData);
+            filenameColumn.setCellValueFactory(new MapValueFactory("name"));
+            filesizeColumn.setCellValueFactory(new MapValueFactory("size"));
         }
 
     }
