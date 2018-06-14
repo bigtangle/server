@@ -332,8 +332,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String INSERT_OUTPUTSMULTI_SQL = "insert into outputsmulti (hash, toaddress, outputindex, minimumsign) values (?, ?, ?, ?)";
 
-    protected String SELECT_USERDATA_SQL = "SELECT blockhash, dataclassname, data, pubKey FROM userdata WHERE dataclassname = ? and pubKey = ?";
-    protected String INSERT_USERDATA_SQL = "INSERT INTO userdata (blockhash, dataclassname, data, pubKey) VALUES (?, ?, ?, ?)";
+    protected String SELECT_USERDATA_SQL = "SELECT blockhash, dataclassname, data, pubKey, blocktype FROM userdata WHERE dataclassname = ? and pubKey = ?";
+    protected String INSERT_USERDATA_SQL = "INSERT INTO userdata (blockhash, dataclassname, data, pubKey, blocktype) VALUES (?, ?, ?, ?, ?)";
     protected String UPDATE_USERDATA_SQL = "UPDATE userdata SET blockhash = ?, data = ? WHERE dataclassname = ? and pubKey = ?";
     
     protected NetworkParameters params;
@@ -3528,7 +3528,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public UserData getUserDataByPrimaryKey(String dataclassname, String pubKey) throws BlockStoreException {
+    public UserData queryUserDataWithPubKeyAndDataclassname(String dataclassname, String pubKey) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -3545,6 +3545,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             userData.setData(resultSet.getBytes("data"));
             userData.setDataclassname(resultSet.getString("dataclassname"));
             userData.setPubKey(resultSet.getString("pubKey"));
+            userData.setBlocktype(resultSet.getLong("blocktype"));
             return userData;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
@@ -3569,6 +3570,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setString(2, userData.getDataclassname());
             preparedStatement.setBytes(3, userData.getData());
             preparedStatement.setString(4, userData.getPubKey());
+            preparedStatement.setLong(5, userData.getBlocktype());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -3578,6 +3580,48 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     preparedStatement.close();
                 } catch (SQLException e) {
                     throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<UserData> getUserDataListWithBlocktypePubKeyList(int blocktype, List<String> pubKeyList)
+            throws BlockStoreException {
+        if (pubKeyList.isEmpty()) {
+            return new ArrayList<UserData>();
+        }
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            String sql = "select blockhash, dataclassname, data, pubKey, blocktype from userdata where blocktype = ? and pubKey in ";
+            StringBuffer stringBuffer = new StringBuffer();
+            for (String str : pubKeyList) stringBuffer.append(",'").append(str).append("'");
+            sql += "(" + stringBuffer.substring(1) + ")";
+            
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setLong(1, blocktype);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            List<UserData> list = new ArrayList<UserData>();
+            while (resultSet.next()) {
+                UserData userData = new UserData();
+                Sha256Hash blockhash = Sha256Hash.wrap(resultSet.getBytes("blockhash"));
+                userData.setBlockhash(blockhash);
+                userData.setData(resultSet.getBytes("data"));
+                userData.setDataclassname(resultSet.getString("dataclassname"));
+                userData.setPubKey(resultSet.getString("pubKey"));
+                userData.setBlocktype(resultSet.getLong("blocktype"));
+                list.add(userData);
+            }
+            return list;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
                 }
             }
         }

@@ -14,7 +14,7 @@ public enum ReqCmd {
 
     getMultiSignWithAddress, getMultiSignWithTokenid,
 
-    multiSign, getTokenSerials, getCalTokenIndex, getCountSign, updateTokenInfo, getUserData,
+    multiSign, getTokenSerials, getCalTokenIndex, getCountSign, updateTokenInfo, getUserData, userDataList,
     
     launchPayMultiSign, payMultiSign, getPayMultiSignList, getPayMultiSignAddressList, payMultiSignDetails;
 }

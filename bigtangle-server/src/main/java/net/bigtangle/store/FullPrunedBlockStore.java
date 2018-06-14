@@ -338,7 +338,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     
     public void insertOutputsMulti(OutputsMulti outputsMulti) throws BlockStoreException;
 
-    UserData getUserDataByPrimaryKey(String dataclassname, String pubKey) throws BlockStoreException;
+    UserData queryUserDataWithPubKeyAndDataclassname(String dataclassname, String pubKey) throws BlockStoreException;
 
     void insertUserData(UserData userData) throws BlockStoreException;
 
@@ -363,4 +363,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     int getCountPayMultiSignAddressStatus(String orderid) throws BlockStoreException;
 
     UTXO getOutputsWithHexStr(byte[] hash, long outputindex) throws BlockStoreException;
+
+    List<UserData> getUserDataListWithBlocktypePubKeyList(int blocktype, List<String> pubKeyList) throws BlockStoreException;
 }

@@ -30,13 +30,11 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
-import net.bigtangle.core.ContactInfo;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
-import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.Sha256Hash;
@@ -111,8 +109,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     /**
-     * Constructs a block chain connected to the given list of wallets and a
-     * store.
+     * Constructs a block chain connected to the given list of wallets and a store.
      */
     public FullPrunedBlockGraph(Context context, List<Wallet> listeners, FullPrunedBlockStore blockStore)
             throws BlockStoreException {
@@ -152,11 +149,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     /**
      * Whether or not to run scripts whilst accepting blocks (i.e. checking
      * signatures, for most transactions). If you're accepting data from an
-     * untrusted node, such as one found via the P2P network, this should be set
-     * to true (which is the default). If you're downloading a chain from a node
-     * you control, script execution is redundant because you know the connected
-     * node won't relay bad data to you. In that case it's safe to set this to
-     * false and obtain a significant speedup.
+     * untrusted node, such as one found via the P2P network, this should be set to
+     * true (which is the default). If you're downloading a chain from a node you
+     * control, script execution is redundant because you know the connected node
+     * won't relay bad data to you. In that case it's safe to set this to false and
+     * obtain a significant speedup.
      */
     public void setRunScripts(boolean value) {
         this.runScripts = value;
@@ -195,8 +192,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     /**
-     * Get the {@link Script} from the script bytes or return Script of empty
-     * byte array.
+     * Get the {@link Script} from the script bytes or return Script of empty byte
+     * array.
      */
     private Script getScript(byte[] scriptBytes) {
         try {
@@ -207,8 +204,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     /**
-     * Get the address from the {@link Script} if it exists otherwise return
-     * empty string "".
+     * Get the address from the {@link Script} if it exists otherwise return empty
+     * string "".
      *
      * @param script
      *            The script.
@@ -276,15 +273,16 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void synchronizationUserData(Sha256Hash blockhash, DataClassName dataClassName, byte[] data, String pubKey)
+    private void synchronizationUserData(Sha256Hash blockhash, DataClassName dataClassName, byte[] data, String pubKey, long blocktype)
             throws BlockStoreException {
-        UserData userData = this.blockStore.getUserDataByPrimaryKey(dataClassName.name(), pubKey);
+        UserData userData = this.blockStore.queryUserDataWithPubKeyAndDataclassname(dataClassName.name(), pubKey);
         if (userData == null) {
             userData = new UserData();
             userData.setBlockhash(blockhash);
             userData.setData(data);
             userData.setDataclassname(dataClassName.name());
             userData.setPubKey(pubKey);
+            userData.setBlocktype(blocktype);
             this.blockStore.insertUserData(userData);
             return;
         }
@@ -318,9 +316,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     /**
-     * Adds the specified block and all approved blocks to the milestone. This
-     * will connect all transactions of the block by marking used UTXOs spent
-     * and adding new UTXOs to the db.
+     * Adds the specified block and all approved blocks to the milestone. This will
+     * connect all transactions of the block by marking used UTXOs spent and adding
+     * new UTXOs to the db.
      * 
      * @param blockEvaluation
      * @throws BlockStoreException
@@ -354,12 +352,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 TokenInfo tokenInfo = new TokenInfo().parse(buf);
                 this.synchronizationToken(tokenInfo);
             }
-        } else if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_USERDATA) {
+        } else if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_USERDATA
+                || block.getBlocktype() == NetworkParameters.BLOCKTYPE_VOS) {
             Transaction tx = block.getTransactions().get(0);
             if (tx.getData() != null && tx.getDatasignature() != null) {
                 try {
                     @SuppressWarnings("unchecked")
-                    List<HashMap<String, Object>> multiSignBies = Json.jsonmapper().readValue(tx.getDatasignature(), List.class);
+                    List<HashMap<String, Object>> multiSignBies = Json.jsonmapper().readValue(tx.getDatasignature(),
+                            List.class);
                     Map<String, Object> multiSignBy = multiSignBies.get(0);
                     byte[] pubKey = Utils.HEX.decode((String) multiSignBy.get("publickey"));
                     byte[] data = tx.getHash().getBytes();
@@ -368,13 +368,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     if (!success) {
                         throw new BlockStoreException("multisign signature error");
                     }
-                    this.synchronizationUserData(block.getHash(), 
-                            DataClassName.valueOf(tx.getDataclassname()), tx.getData(), (String) multiSignBy.get("publickey"));
-                    }
-                catch (Exception e) {
+                    this.synchronizationUserData(block.getHash(), DataClassName.valueOf(tx.getDataclassname()),
+                            tx.getData(), (String) multiSignBy.get("publickey"), block.getBlocktype());
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
+
         }
 
         // Update block's transactions in db
@@ -444,9 +444,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     /**
-     * Removes the specified block and all its output spenders and approvers
-     * from the milestone. This will disconnect all transactions of the block by
-     * marking used UTXOs unspent and removing UTXOs of the block from the DB.
+     * Removes the specified block and all its output spenders and approvers from
+     * the milestone. This will disconnect all transactions of the block by marking
+     * used UTXOs unspent and removing UTXOs of the block from the DB.
      * 
      * @param blockEvaluation
      * @throws BlockStoreException

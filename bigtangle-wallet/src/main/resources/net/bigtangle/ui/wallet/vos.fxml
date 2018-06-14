@@ -24,7 +24,7 @@
                               <TableColumn fx:id="contentCol" prefWidth="179.0" text="%content" />
                           </columns>
                         </TableView>
-                        <Button cancelButton="true" layoutX="867.0" layoutY="458.0" mnemonicParsing="false" text="%close" />
+                        <Button cancelButton="true" layoutX="867.0" layoutY="458.0" onAction="#closeUI" mnemonicParsing="false" text="%close" />
                      </children>
                   </AnchorPane>
                </content>
@@ -45,7 +45,7 @@
                         <Label layoutX="98.0" layoutY="293.0" maxWidth="120.0" minWidth="120.0" prefWidth="120.0" text="%url" />
                         <Label layoutX="98.0" layoutY="343.0" maxWidth="120.0" minWidth="120.0" prefWidth="120.0" text="%content" />
                         <Button defaultButton="true" layoutX="253.0" layoutY="481.0" mnemonicParsing="false" onAction="#saveUserdata" text="%save" />
-                        <Button cancelButton="true" layoutX="499.0" layoutY="481.0" mnemonicParsing="false" text="%close" />
+                        <Button cancelButton="true" layoutX="499.0" layoutY="481.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />
                         <ComboBox fx:id="addressComboBox" editable="true" layoutX="253.0" layoutY="59.0" maxWidth="300.0" minWidth="300.0" prefWidth="300.0" />
                      </children>
                   </AnchorPane>

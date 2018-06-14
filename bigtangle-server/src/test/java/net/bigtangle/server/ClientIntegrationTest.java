@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.VOS;
 import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.SendRequest;
@@ -171,6 +173,65 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         milestoneService.update();
 
         checkBalance(utxo.getValue(), walletAppKit1.wallet().walletKeys(null));
+    }
+    
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testSaveOVS() throws Exception {
+        ECKey outKey = new ECKey();
+        
+        VOS vos = new VOS();
+        vos.setPubKey(outKey.getPublicKeyAsHex());
+        vos.setNodeNumber(1);
+        vos.setPrice(1);
+        vos.setFrequence(1);
+        vos.setUrl("");
+        vos.setContent("test");
+        
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block block = this.networkParameters.getDefaultSerializer().makeBlock(data);
+        block.setBlocktype(NetworkParameters.BLOCKTYPE_VOS);
+
+        Transaction coinbase = new Transaction(this.networkParameters);
+        coinbase.setDataclassname(DataClassName.VOS.name());
+        coinbase.setData(vos.toByteArray());
+
+        Sha256Hash sighash = coinbase.getHash();
+        ECKey.ECDSASignature party1Signature = outKey.sign(sighash);
+        byte[] buf1 = party1Signature.encodeToDER();
+
+        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+        MultiSignBy multiSignBy0 = new MultiSignBy();
+        multiSignBy0.setAddress(outKey.toAddress(this.networkParameters).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+        multiSignBies.add(multiSignBy0);
+        coinbase.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+
+        block.addTransaction(coinbase);
+        block.solve();
+        
+        OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
+        
+        int blocktype = (int) NetworkParameters.BLOCKTYPE_VOS;
+
+        List<String> pubKeyList = new ArrayList<String>();
+        pubKeyList.add(outKey.getPublicKeyAsHex());
+        
+        requestParam.clear();
+        requestParam.put("blocktype", blocktype);
+        requestParam.put("pubKeyList", pubKeyList);
+
+        String resp = OkHttp3Util.postString(contextRoot + "userDataList", Json.jsonmapper().writeValueAsString(requestParam));
+        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
+        List<String> dataList = (List<String>) result.get("dataList");
+        
+        assertEquals(dataList.size(), 1);
+        
+        String jsonStr = dataList.get(0);
+        assertEquals(jsonStr, Utils.HEX.encode(vos.toByteArray()));
     }
 
     @Test

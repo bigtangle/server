@@ -65,7 +65,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     private int height = 1;
 
     private static final Logger logger = LoggerFactory.getLogger(APIIntegrationTests.class);
-
+    
    // @Test
     public void testPayMultiSignToStore() throws BlockStoreException {
         ECKey outKey = new ECKey();

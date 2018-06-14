@@ -3,7 +3,7 @@ package net.bigtangle.core;
 public class UserData implements java.io.Serializable {
 
     private static final long serialVersionUID = 709353912782171256L;
-
+    
     private Sha256Hash blockhash;
 
     private String dataclassname;
@@ -11,6 +11,16 @@ public class UserData implements java.io.Serializable {
     private String pubKey;
 
     private byte[] data;
+    
+    private long blocktype;
+    
+    public long getBlocktype() {
+        return blocktype;
+    }
+
+    public void setBlocktype(long blocktype) {
+        this.blocktype = blocktype;
+    }
 
     public Sha256Hash getBlockhash() {
         return blockhash;

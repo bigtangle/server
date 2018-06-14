@@ -261,6 +261,15 @@ public class DispatcherController {
             }
                 break;
                 
+            case userDataList: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                int blocktype = (int) request.get("blocktype");
+                List<String> pubKeyList = (List<String>) request.get("pubKeyList");
+                AbstractResponse response = this.userDataService.getUserDataList(blocktype, pubKeyList);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
             case launchPayMultiSign: {
                 this.payMultiSignService.launchPayMultiSign(bodyByte);
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());

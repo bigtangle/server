@@ -139,6 +139,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    dataclassname varchar(255) NOT NULL,\n" 
             + "    data mediumblob NOT NULL,\n"
             + "    pubKey varchar(255),\n" 
+            + "    blocktype bigint,\n" 
              + "   CONSTRAINT userdata_pk PRIMARY KEY (dataclassname, pubKey) USING BTREE \n" + ")";
 
     // Some indexes to speed up inserts
