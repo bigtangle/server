@@ -34,6 +34,7 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.Uploadfile;
 import net.bigtangle.core.UploadfileInfo;
 import net.bigtangle.core.Utils;
 import net.bigtangle.ui.wallet.utils.FileUtil;
@@ -57,6 +58,13 @@ public class UserdataController {
     public TableColumn<Map<String, Object>, String> linkaddressColumn;
 
     @FXML
+    public TableView<Map<String, Object>> fileTable;
+    @FXML
+    public TableColumn<Map<String, Object>, String> filenameColumn;
+    @FXML
+    public TableColumn<Map<String, Object>, String> filesizeColumn;
+
+    @FXML
     public TextField dataclassTF;
     @FXML
     public TextField nameTF;
@@ -65,6 +73,8 @@ public class UserdataController {
 
     @FXML
     public TextField filepathTF;
+    @FXML
+    public TextField filenameTF;
 
     @FXML
     public TextField countryTF;
@@ -183,6 +193,48 @@ public class UserdataController {
     }
 
     public void removeToken(ActionEvent event) {
+        try {
+            Map<String, Object> rowdata = wachtedTokenTableview.getSelectionModel().getSelectedItem();
+            if (rowdata == null) {
+                return;
+            }
+            String name = (String) rowdata.get("tokenname");
+            String tokenid = (String) rowdata.get("tokenid");
+            String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+            HashMap<String, String> requestParam = new HashMap<String, String>();
+
+            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
+                    Json.jsonmapper().writeValueAsString(requestParam));
+
+            Block block = Main.params.getDefaultSerializer().makeBlock(data);
+            block.setBlocktype(NetworkParameters.BLOCKTYPE_USERDATA);
+
+            Transaction coinbase = new Transaction(Main.params);
+
+            TokenInfo tokenInfo = (TokenInfo) getUserdata(DataClassName.TOKEN.name());
+            List<Tokens> list = tokenInfo.getPositveTokenList();
+            List<Tokens> tempList = new ArrayList<Tokens>();
+            for (Tokens tokens : list) {
+                if (name.trim().equals(tokens.getTokenname().trim())
+                        && tokenid.trim().equals(tokens.getTokenid().trim())) {
+                    continue;
+                }
+                tempList.add(tokens);
+            }
+            tokenInfo.setPositveTokenList(tempList);
+
+            coinbase.setDataclassname(DataClassName.TOKEN.name());
+            byte[] buf1 = tokenInfo.toByteArray();
+            coinbase.setData(buf1);
+
+            block.addTransaction(coinbase);
+            block.solve();
+
+            OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", block.bitcoinSerialize());
+            initContactTableView();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
     }
 
     public void initMyAddress() throws Exception {
@@ -283,6 +335,7 @@ public class UserdataController {
     public void initTableView() throws Exception {
         initContactTableView();
         initTokenTableView();
+        initFileTableView();
     }
 
     public void initContactTableView() throws Exception {
@@ -302,7 +355,23 @@ public class UserdataController {
         }
 
     }
+    public void initFileTableView() throws Exception {
+        UploadfileInfo uploadfileInfo = (UploadfileInfo) getUserdata(DataClassName.UPLOADFILE.name());
+        List<Uploadfile> list = uploadfileInfo.getfUploadfiles();
+        ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();
+        if (list != null && !list.isEmpty()) {
+            for (Uploadfile contact : list) {
+                Map<String, Object> map = new HashMap<String, Object>();
+                map.put("name", contact.getName());
+                map.put("size", contact.getMaxsize());
+                allData.add(map);
+            }
+            linkmanTableview.setItems(allData);
+            linkmanColumn.setCellValueFactory(new MapValueFactory("name"));
+            linkaddressColumn.setCellValueFactory(new MapValueFactory("size"));
+        }
 
+    }
     public void initTokenTableView() throws Exception {
         TokenInfo tokenInfo = (TokenInfo) getUserdata(DataClassName.TOKEN.name());
         List<Tokens> list = tokenInfo.getPositveTokenList();
@@ -324,6 +393,10 @@ public class UserdataController {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         final FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showOpenDialog(null);
+        if (file.length() > Block.MAX_BLOCK_SIZE - 20 * 1000) {
+            GuiUtils.informationalAlert("", Main.getText("fileTooLarge"), "");
+            return;
+        }
         byte[] buf = FileUtil.readFile(file);
         if (buf == null) {
             return;
@@ -336,8 +409,18 @@ public class UserdataController {
         ECKey pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
 
         Transaction coinbase = new Transaction(Main.params);
+        Uploadfile uploadfile = new Uploadfile();
+        uploadfile.setName(filenameTF.getText());
+        uploadfile.setMaxsize(file.length());
+
+        UploadfileInfo uploadfileInfo = (UploadfileInfo) getUserdata(DataClassName.UPLOADFILE.name());
+        List<Uploadfile> uploadfiles = uploadfileInfo.getfUploadfiles();
+        uploadfiles.add(uploadfile);
+        uploadfileInfo.setfUploadfiles(uploadfiles);
+        uploadfile.setFileinfo(buf);
+        uploadfile.setFileinfoHex(Utils.HEX.encode(buf));
         coinbase.setDataclassname(DataClassName.UPLOADFILE.name());
-        coinbase.setData(buf);
+        coinbase.setData(uploadfileInfo.toByteArray());
 
         Sha256Hash sighash = coinbase.getHash();
         ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash);

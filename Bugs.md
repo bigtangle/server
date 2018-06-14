@@ -13,13 +13,14 @@
 ## add VOS block, 
 	use the dataclassname="Docker" and 
 	
-	 content: docker-compose.yml 
+	
 	the public address:
 	number of nodes for execution:
-	price for execution pro node:
-	timeslot:
+	(GAS) price for execution pro node:
+	frequence:(selection  month, one time, daily)
 	url:
-	
+	 content: examples as docker-compose.yml
+	  
 	example Ordermatch: 
 
 	
