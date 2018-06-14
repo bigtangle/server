@@ -322,7 +322,11 @@ public class MainController {
         Main.port = IPPort.getText();
         Main.instance.overlayUI("userdata.fxml");
     }
-
+    public void vos(ActionEvent event) {
+        Main.IpAddress = Server.getText();
+        Main.port = IPPort.getText();
+        Main.instance.overlayUI("vos.fxml");
+    }
     public void blockEvaluation(ActionEvent event) {
         Main.IpAddress = Server.getText();
         Main.port = IPPort.getText();
