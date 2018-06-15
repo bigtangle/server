@@ -393,6 +393,7 @@ public class UserdataController {
         String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
         final FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showOpenDialog(null);
+        filepathTF.setText(file.getAbsolutePath());
         if (file.length() > Block.MAX_BLOCK_SIZE - 20 * 1000) {
             GuiUtils.informationalAlert("", Main.getText("fileTooLarge"), "");
             return;
