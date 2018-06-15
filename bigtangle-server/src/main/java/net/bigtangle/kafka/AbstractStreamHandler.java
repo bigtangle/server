@@ -21,65 +21,66 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import net.bigtangle.server.config.ServerConfiguration;
 
-
 public abstract class AbstractStreamHandler {
 
-	@Autowired
-	protected KafkaConfiguration kafkaConfiguration;
+    @Autowired
+    protected KafkaConfiguration kafkaConfiguration;
 
-	   @Autowired
-	    protected ServerConfiguration serverConfiguration;
-	   
-	protected KafkaStreams streams;
-	   private static final Logger log = LoggerFactory.getLogger(KafkaMessageProducer.class);
+    @Autowired
+    protected ServerConfiguration serverConfiguration;
 
-	@PostConstruct
-	public void runStream() {
-	    if ("".equalsIgnoreCase(kafkaConfiguration.getBootstrapServers()))
-            return  ;
-	    log.info("KafkaConfiguration {} ", kafkaConfiguration.toString());
-		log.info("start stream {} handler", this.getClass().getSimpleName());
-		Properties props = prepareConfiguration();
-		KStreamBuilder streamBuilder = new KStreamBuilder();
+    protected KafkaStreams streams;
+    private static final Logger log = LoggerFactory.getLogger(KafkaMessageProducer.class);
 
-		try {
+    @PostConstruct
+    public void runStream() {
+        if ("".equalsIgnoreCase(kafkaConfiguration.getBootstrapServers()))
+            return;
+        log.info("KafkaConfiguration {} ", kafkaConfiguration.toString());
+        log.info("start stream {} handler", this.getClass().getSimpleName());
+        Properties props = prepareConfiguration();
+        KStreamBuilder streamBuilder = new KStreamBuilder();
+
+        try {
             run(streamBuilder);
         } catch (Exception e) {
-            log.error(" run(streamBuilder);  ",e);
-    
+            log.error(" run(streamBuilder);  ", e);
+
         }
 
-		streams = new KafkaStreams(streamBuilder, props);
-		streams.setUncaughtExceptionHandler((thread, exception) -> {
-			StringWriter sw = new StringWriter();
-			PrintWriter pw = new PrintWriter(sw);
-			exception.printStackTrace(pw);
-			log.error("uncaught exception handler {} {}", exception, exception.getMessage());
-			log.error(sw.toString());
- 
-		});
-		streams.start();
-	}
+        streams = new KafkaStreams(streamBuilder, props);
+        streams.setUncaughtExceptionHandler((thread, exception) -> {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            exception.printStackTrace(pw);
+            log.error("uncaught exception handler {} {}", exception, exception.getMessage());
+            log.error(sw.toString());
 
+        });
+        streams.start();
+    }
 
-	public abstract void run(final KStreamBuilder streamBuilder) throws Exception;
+    public abstract void run(final KStreamBuilder streamBuilder) throws Exception;
 
+    private Properties prepareConfiguration() {
+        Properties streamsConfiguration = new Properties();
+        streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, getApplicationId());
+        streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaConfiguration.getBootstrapServers());
+        streamsConfiguration.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        streamsConfiguration.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer");
+        streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        // streamsConfiguration.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG,
+        // kafkaConfiguration.getCommitInterval());
+        return streamsConfiguration;
+    }
 
-	private Properties prepareConfiguration() {
-		Properties streamsConfiguration = new Properties();
-		 streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, getApplicationId());
-		streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaConfiguration.getBootstrapServers());
-		streamsConfiguration.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-		streamsConfiguration.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer");
-		streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-		//streamsConfiguration.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, kafkaConfiguration.getCommitInterval());
-		return streamsConfiguration;
-	}
-	@PreDestroy
-	public void closeStream() {
-		streams.close();
-	}
-	 private String getApplicationId() {
-	        return BlockStreamHandler.class.getCanonicalName() + "_" + this.getClass().getSimpleName() + "_" + serverConfiguration.getMineraddress();
-	    }
+    @PreDestroy
+    public void closeStream() {
+        streams.close();
+    }
+
+    private String getApplicationId() {
+        return BlockStreamHandler.class.getCanonicalName() + "_" + this.getClass().getSimpleName() + "_"
+                + kafkaConfiguration.getConsumerIdSuffix();
+    }
 }

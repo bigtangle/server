@@ -16,6 +16,7 @@ service:
 kafka:
   bootstrapServers: ${BOOT_STRAP_SERVERS:}
   topicOutName: ${TOPIC_OUT_NAME:bigtangle}
+  consumerIdSuffix: ${CONSUMERIDSUFFIX:bigtangle}
 management:
   metrics:
     export:

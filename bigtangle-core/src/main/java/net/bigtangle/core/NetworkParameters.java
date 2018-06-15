@@ -137,7 +137,7 @@ public abstract class NetworkParameters {
         Transaction coinbase = new Transaction(params);
         final ScriptBuilder inputBuilder = new ScriptBuilder();
         coinbase.addInput(new TransactionInput(params, coinbase, inputBuilder.build().getProgram()));
-       add(params, "10000," +testPub , coinbase);
+       add(params, "100000000000," +testPub , coinbase);
        genesisBlock.addTransaction(coinbase);
         genesisBlock.solve();
         return genesisBlock;
