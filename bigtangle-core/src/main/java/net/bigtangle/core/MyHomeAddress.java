@@ -33,7 +33,12 @@ public class MyHomeAddress implements java.io.Serializable {
         MyHomeAddress myHomeAddress = Json.jsonmapper().readValue(jsonStr, MyHomeAddress.class);
         if (myHomeAddress == null)
             return this;
-
+        this.city = myHomeAddress.city;
+        this.country = myHomeAddress.country;
+        this.email = myHomeAddress.email;
+        this.province = myHomeAddress.province;
+        this.remark = myHomeAddress.remark;
+        this.street = myHomeAddress.street;
         return this;
     }
 
