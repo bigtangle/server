@@ -33,13 +33,7 @@ dependencies {
     compile group: 'commons-io', name: 'commons-io', version:ver.commons_io
     compile group: 'mysql', name: 'mysql-connector-java', version:ver.mysql_connector_java
     compile group: 'org.bgee.log4jdbc-log4j2', name: 'log4jdbc-log4j2-jdbc4.1', version: '1.16'
-    compile group: 'org.apache-extras.cassandra-jdbc', name: 'cassandra-jdbc', version: '1.2.5'
-    compile (group: 'org.apache.phoenix', name: 'phoenix-queryserver-client', version: '4.13.0-HBase-1.3')
-    {
-        exclude group: "org.slf4j", module: "slf4j-log4j12"
-    }
-    compile group: 'org.ehcache', name: 'ehcache', version:  ver.ehcache
-    compile group: 'javax.cache', name: 'cache-api', version: '1.1.0'
+ 
     compile group: 'joda-time', name: 'joda-time', version:  '2.9.8'
     compile group: 'com.mchange', name: 'c3p0', version:  ver.c3p0
     compile group: 'com.google.code.gson', name: 'gson', version:ver.gson
@@ -53,7 +47,7 @@ dependencies {
     testCompile group: 'org.easymock', name: 'easymock', version:  ver.easymock
 }
 
-mainClassName = "net.bigtangle.server.ServerStart"
+mainClassName = "net.bigtangle.server.ordermatch.OrdermatchStart"
 //applicationDefaultJvmArgs = ["-Dlogging.config=/etc/processor/logback.xml"]
 applicationDefaultJvmArgs = ["-Dlog.root.level=WARN", "-Dlog.de.db.level=INFO", "-Xmx2g"]
 
