@@ -755,9 +755,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         ps.close();
         createNewStore(params);
 
-        ECKey ecKey = new ECKey();
-        this.saveTokens(ecKey.getPublicKeyAsHex(), "default market", "default market", "http://localhost:8089/", 0,
-                false, true, true);
+//        ECKey ecKey = new ECKey();
+//        this.saveTokens(ecKey.getPublicKeyAsHex(), "default market", "default market", "http://localhost:8089/", 0,
+//                false, true, true);
     }
 
     /**
