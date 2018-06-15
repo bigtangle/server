@@ -159,7 +159,7 @@ public class VOSController {
             vos.setPubKey(addressComboBox.getSelectionModel().getSelectedItem());
             vos.setNodeNumber(Integer.parseInt(numberTF.getText()));
             vos.setPrice(Integer.parseInt(priceTF.getText()));
-            vos.setFrequence(Integer.parseInt(frequenceTF.getText()));
+            vos.setFrequence(frequence);
             vos.setUrl(urlTF.getText());
             vos.setContent(contentTA.getText());
 

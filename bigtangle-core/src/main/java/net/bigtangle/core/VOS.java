@@ -10,7 +10,7 @@ public class VOS implements java.io.Serializable {
     
     private int price;
     
-    private int frequence;
+    private String frequence;
     
     private String url;
     
@@ -40,13 +40,6 @@ public class VOS implements java.io.Serializable {
         this.price = price;
     }
 
-    public int getFrequence() {
-        return frequence;
-    }
-
-    public void setFrequence(int frequence) {
-        this.frequence = frequence;
-    }
 
     public String getUrl() {
         return url;
@@ -72,5 +65,13 @@ public class VOS implements java.io.Serializable {
             e.printStackTrace();
         }
         return new byte[0];
+    }
+
+    public String getFrequence() {
+        return frequence;
+    }
+
+    public void setFrequence(String frequence) {
+        this.frequence = frequence;
     }
 }

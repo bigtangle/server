@@ -184,7 +184,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         vos.setPubKey(outKey.getPublicKeyAsHex());
         vos.setNodeNumber(1);
         vos.setPrice(1);
-        vos.setFrequence(1);
+        vos.setFrequence("");
         vos.setUrl("");
         vos.setContent("test");
         
