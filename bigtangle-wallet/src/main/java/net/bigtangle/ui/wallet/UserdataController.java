@@ -319,8 +319,21 @@ public class UserdataController {
             contactInfo.setContactList(tempList);
 
             coinbase.setDataclassname(DataClassName.ContactInfo.name());
-            byte[] buf1 = contactInfo.toByteArray();
-            coinbase.setData(buf1);
+            coinbase.setData(contactInfo.toByteArray());
+            
+            ECKey pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+            
+            Sha256Hash sighash = coinbase.getHash();
+            ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash);
+            byte[] buf1 = party1Signature.encodeToDER();
+
+            List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+            MultiSignBy multiSignBy0 = new MultiSignBy();
+            multiSignBy0.setAddress(pubKeyTo.toAddress(Main.params).toBase58());
+            multiSignBy0.setPublickey(Utils.HEX.encode(pubKeyTo.getPubKey()));
+            multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+            multiSignBies.add(multiSignBy0);
+            coinbase.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
             block.addTransaction(coinbase);
             block.solve();
