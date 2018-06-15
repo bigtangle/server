@@ -139,7 +139,7 @@ public class MainController {
             passwordHBox.setVisible(false);
         }
         Server.setText(Main.IpAddress);
-        IPPort.setText(Main.port);
+        // IPPort.setText(Main.port);
         initTableView();
     }
 
@@ -189,8 +189,7 @@ public class MainController {
             String hashHex = (String) object.get("blockHashHex");
             String hash = u.getHashHex();
             long outputindex = u.getIndex();
-                    
-                    
+
             Main.validAddressSet.clear();
             Main.validAddressSet.add(address);
             boolean spendPending = u.isSpendPending();
@@ -205,9 +204,8 @@ public class MainController {
 
             }
             if (myPositvleTokens == null || myPositvleTokens.isEmpty() || "".equals(myPositvleTokens.trim()))
-                Main.instance.getUtxoData().add(
-                        new UTXOModel(balance, tokenid, address, spendPending, tokenname, memo, minimumsign, hashHex,
-                                hash, outputindex));
+                Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending, tokenname, memo,
+                        minimumsign, hashHex, hash, outputindex));
         }
         Main.instance.getUtxoData().addAll(subutxos);
         list = (List<Map<String, Object>>) data.get("tokens");
@@ -322,11 +320,13 @@ public class MainController {
         Main.port = IPPort.getText();
         Main.instance.overlayUI("userdata.fxml");
     }
+
     public void vos(ActionEvent event) {
         Main.IpAddress = Server.getText();
         Main.port = IPPort.getText();
         Main.instance.overlayUI("vos.fxml");
     }
+
     public void blockEvaluation(ActionEvent event) {
         Main.IpAddress = Server.getText();
         Main.port = IPPort.getText();
