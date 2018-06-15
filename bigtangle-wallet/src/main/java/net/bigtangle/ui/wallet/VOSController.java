@@ -136,6 +136,7 @@ public class VOSController {
             for (String hexStr : dataList) {
                 byte[] data = Utils.HEX.decode(hexStr);
                 HashMap<String, Object> vos = Json.jsonmapper().readValue(new String(data), HashMap.class);
+                vos.put("frequence", Main.getText(vos.get("frequence").toString()));
                 allData.add(vos);
             }
             vosTable.setItems(allData);
