@@ -289,7 +289,7 @@ public class MainController {
 
     public void sendMoneyOut(ActionEvent event) {
         Main.IpAddress = Server.getText();
-        Main.port = IPPort.getText();
+        // Main.port = IPPort.getText();
         initTableView();
         Main.instance.overlayUI("send_money.fxml");
     }
@@ -301,7 +301,7 @@ public class MainController {
 
     public void orders(ActionEvent event) {
         Main.IpAddress = Server.getText();
-        Main.port = IPPort.getText();
+        // Main.port = IPPort.getText();
         Main.OverlayUI<OrderController> order = Main.instance.overlayUI("orders.fxml");
         if (utxoTable.getSelectionModel().getSelectedItem() != null) {
             String address = utxoTable.getSelectionModel().getSelectedItem().getAddress();
@@ -311,37 +311,37 @@ public class MainController {
 
     public void otherWallet(ActionEvent event) {
         Main.IpAddress = Server.getText();
-        Main.port = IPPort.getText();
+        // Main.port = IPPort.getText();
         initialize();
     }
 
     public void userdataList(ActionEvent event) {
         Main.IpAddress = Server.getText();
-        Main.port = IPPort.getText();
+        // Main.port = IPPort.getText();
         Main.instance.overlayUI("userdata.fxml");
     }
 
     public void vos(ActionEvent event) {
         Main.IpAddress = Server.getText();
-        Main.port = IPPort.getText();
+        // Main.port = IPPort.getText();
         Main.instance.overlayUI("vos.fxml");
     }
 
     public void blockEvaluation(ActionEvent event) {
         Main.IpAddress = Server.getText();
-        Main.port = IPPort.getText();
+        // Main.port = IPPort.getText();
         Main.instance.overlayUI("blockEvaluation.fxml");
     }
 
     public void stockPublish(ActionEvent event) {
         Main.IpAddress = Server.getText();
-        Main.port = IPPort.getText();
+        // Main.port = IPPort.getText();
         Main.instance.overlayUI("stock.fxml");
     }
 
     public void eckeyList(ActionEvent event) {
         Main.IpAddress = Server.getText();
-        Main.port = IPPort.getText();
+        // Main.port = IPPort.getText();
         Main.instance.overlayUI("eckeys.fxml");
     }
 
@@ -354,7 +354,7 @@ public class MainController {
         Main.instance.getUtxoData().clear();
         Main.instance.getCoinData().clear();
         Main.IpAddress = Server.getText();
-        Main.port = IPPort.getText();
+        // Main.port = IPPort.getText();
         try {
             initTableView();
             // GuiUtils.informationalAlert("set server info is ok", "", "");
@@ -366,7 +366,7 @@ public class MainController {
 
     public void settingsClicked(ActionEvent event) {
         Main.IpAddress = Server.getText();
-        Main.port = IPPort.getText();
+        // Main.port = IPPort.getText();
         Main.instance.overlayUI("wallet_set_password.fxml");
     }
 
