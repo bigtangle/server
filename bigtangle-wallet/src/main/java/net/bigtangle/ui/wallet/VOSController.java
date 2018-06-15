@@ -80,6 +80,10 @@ public class VOSController {
     public void initialize() {
         try {
             KeyParameter aesKey = null;
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            if (!"".equals(Main.password.trim())) {
+                aesKey = keyCrypter.deriveKey(Main.password);
+            }
             List<String> list = new ArrayList<String>();
             for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
                 list.add(ecKey.getPublicKeyAsHex());
