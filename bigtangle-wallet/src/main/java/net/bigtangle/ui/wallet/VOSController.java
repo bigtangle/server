@@ -16,10 +16,12 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.cell.MapValueFactory;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.DataClassName;
@@ -67,6 +69,14 @@ public class VOSController {
 
     @FXML
     public TextField frequenceTF;
+    @FXML
+    public RadioButton monthRB;
+    @FXML
+    public RadioButton onetimeRB;
+    @FXML
+    public RadioButton dailyRB;
+    @FXML
+    public ToggleGroup frequenceTG;
 
     @FXML
     public TextField urlTF;
@@ -79,6 +89,10 @@ public class VOSController {
     @FXML
     public void initialize() {
         try {
+            monthRB.setUserData("month");
+            onetimeRB.setUserData("onetime");
+            dailyRB.setUserData("daily");
+
             KeyParameter aesKey = null;
             final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
             if (!"".equals(Main.password.trim())) {
@@ -138,6 +152,8 @@ public class VOSController {
 
     public void saveUserdata(ActionEvent event) {
         try {
+            String frequence=frequenceTG.getSelectedToggle().getUserData().toString();
+            //TODO cui,jiang
             VOS vos = new VOS();
             vos.setPubKey(addressComboBox.getSelectionModel().getSelectedItem());
             vos.setNodeNumber(Integer.parseInt(numberTF.getText()));
