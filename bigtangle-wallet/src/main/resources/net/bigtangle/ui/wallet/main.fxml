@@ -53,9 +53,7 @@
 		<AnchorPane fx:id="serverPane" layoutX="140.0" layoutY="25.0" prefHeight="23.0" prefWidth="673.0">
 			<children>
 				<Label layoutY="3.0" prefHeight="15.0" prefWidth="62.0" text="%Server" />
-				<TextField fx:id="Server" layoutX="92.0" prefHeight="23.0" prefWidth="206.0" />
-				<Label layoutX="313.0" layoutY="1.0" text="%Port" />
-				<TextField fx:id="IPPort" layoutX="352.0" prefHeight="23.0" prefWidth="190.0" />
+				<TextField fx:id="Server" layoutX="92.0" prefHeight="23.0" prefWidth="452.0" />
 			</children>
 		</AnchorPane>
 		<AnchorPane fx:id="searchPane" layoutX="140.0" layoutY="65.0" prefHeight="30.0" prefWidth="735.0">

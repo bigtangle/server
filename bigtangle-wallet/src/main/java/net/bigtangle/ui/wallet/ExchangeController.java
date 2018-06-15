@@ -92,7 +92,7 @@ public class ExchangeController {
     public Transaction mTransaction;
 
     public String mOrderid;
-//    public String mTokenid;
+    // public String mTokenid;
 
     @FXML
     public void initialize() {
@@ -108,7 +108,7 @@ public class ExchangeController {
         }
         mTransaction = null;
         mOrderid = "";
-//        mTokenid = "";
+        // mTokenid = "";
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -125,6 +125,9 @@ public class ExchangeController {
             }
             String url = (String) tokenResult.get("url");
             System.out.println(url);
+            if (url == null || url.isEmpty()) {
+                continue;
+            }
             KeyParameter aesKey = null;
             // Main.initAeskey(aesKey);
             final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
@@ -158,9 +161,9 @@ public class ExchangeController {
                             Utils.HEX.decode((String) map.get("fromTokenHex")));
                     Coin toAmount = Coin.valueOf(Long.parseLong((String) map.get("toAmount")),
                             Utils.HEX.decode((String) map.get("toTokenHex")));
-    
+
                     map.put("fromAmount", fromAmount.toPlainString());
-    
+
                     map.put("toAmount", toAmount.toPlainString());
                     exchangeData.add(map);
                 }
@@ -249,7 +252,7 @@ public class ExchangeController {
             String fromAmount = (String) exchangeResult.get("fromAmount");
             String toTokenHex = (String) exchangeResult.get("toTokenHex");
             String toAmount = (String) exchangeResult.get("toAmount");
-    
+
             String signtype = "";
             if (toSign == 0 && calculatedAddressHit(toAddress)) {
                 signtype = "to";
@@ -313,11 +316,11 @@ public class ExchangeController {
         byte[] orderid = new byte[byteBuffer.getInt()];
         byteBuffer.get(orderid);
         mOrderid = new String(orderid);
-        
-//        byte[] tokenid = new byte[byteBuffer.getInt()];
-//        byteBuffer.get(tokenid);
-//        mTokenid = new String(orderid);
-        
+
+        // byte[] tokenid = new byte[byteBuffer.getInt()];
+        // byteBuffer.get(tokenid);
+        // mTokenid = new String(orderid);
+
         // log.debug("orderid : " + new String(orderid));
 
         int len = byteBuffer.getInt();
@@ -348,7 +351,7 @@ public class ExchangeController {
         String toAmount = toAmountTextField.getText();
 
         this.mOrderid = UUIDUtil.randomUUID();
-//        this.mTokenid = fromTokenHex;
+        // this.mTokenid = fromTokenHex;
         byte[] buf = this.makeSignTransactionBuffer(fromAddress, getCoin(fromAmount, fromTokenHex, false), toAddress,
                 getCoin(toAmount, toTokenHex, false));
         if (buf == null) {
@@ -388,16 +391,17 @@ public class ExchangeController {
         String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
         requestParam0.put("tokenid", tokenid);
-        String resp = OkHttp3Util.postString(ContextRoot + "getTokenById", Json.jsonmapper().writeValueAsString(requestParam0));
+        String resp = OkHttp3Util.postString(ContextRoot + "getTokenById",
+                Json.jsonmapper().writeValueAsString(requestParam0));
         HashMap<String, Object> res = Json.jsonmapper().readValue(resp, HashMap.class);
         HashMap<String, Object> token_ = (HashMap<String, Object>) res.get("token");
         String marketURL = (String) token_.get("url");
-        
+
         if (rowData == null || rowData.isEmpty()) {
             GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_d1"));
         }
         this.mOrderid = stringValueOf(rowData.get("orderid"));
-//        this.mTokenid = tokenid;
+        // this.mTokenid = tokenid;
         HashMap<String, Object> exchangeResult = getExchangeInfoResult(marketURL, this.mOrderid);
         String dataHex = (String) exchangeResult.get("dataHex");
         if (dataHex.isEmpty()) {
@@ -514,10 +518,8 @@ public class ExchangeController {
         byte[] buf = null;
         try {
             List<UTXO> outputs = new ArrayList<UTXO>();
-            outputs.addAll(
-                    Main.getUTXOWithPubKeyHash(toAddress00.getHash160(), fromCoin.getTokenHex()));
-            outputs.addAll( Main.getUTXOWithECKeyList(Main.bitcoin.wallet().walletKeys(aesKey),
-                    toCoin.getTokenHex()));
+            outputs.addAll(Main.getUTXOWithPubKeyHash(toAddress00.getHash160(), fromCoin.getTokenHex()));
+            outputs.addAll(Main.getUTXOWithECKeyList(Main.bitcoin.wallet().walletKeys(aesKey), toCoin.getTokenHex()));
 
             SendRequest req = SendRequest.to(toAddress00, toCoin);
             req.tx.addOutput(fromCoin, fromAddress00);
@@ -565,8 +567,6 @@ public class ExchangeController {
     public void closeUI(ActionEvent event) {
         overlayUI.done();
     }
-
-
 
     public Coin getCoin(String toAmount, String toTokenHex, boolean decimal) {
         if (decimal) {

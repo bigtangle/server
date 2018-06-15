@@ -33,5 +33,6 @@
             </Label>
          </children>
       </HBox>
+      <Button defaultButton="true" layoutX="503.0" layoutY="649.0" mnemonicParsing="false" onAction="#newKey2wallet" text="%newkey" />
 	</children>
 </AnchorPane>

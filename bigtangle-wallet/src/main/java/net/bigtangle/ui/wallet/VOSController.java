@@ -31,6 +31,7 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VOS;
+import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
 
@@ -95,6 +96,10 @@ public class VOSController {
     private void initTableView() {
         try {
             KeyParameter aesKey = null;
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            if (!"".equals(Main.password.trim())) {
+                aesKey = keyCrypter.deriveKey(Main.password);
+            }
             List<String> pubKeyList = new ArrayList<String>();
             for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
                 pubKeyList.add(ecKey.getPublicKeyAsHex());
@@ -105,7 +110,8 @@ public class VOSController {
             requestParam.put("pubKeyList", pubKeyList);
 
             String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
-            String resp = OkHttp3Util.postString(CONTEXT_ROOT + "userDataList", Json.jsonmapper().writeValueAsString(requestParam));
+            String resp = OkHttp3Util.postString(CONTEXT_ROOT + "userDataList",
+                    Json.jsonmapper().writeValueAsString(requestParam));
             HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
             List<String> dataList = (List<String>) result.get("dataList");
             ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();
@@ -135,7 +141,7 @@ public class VOSController {
             vos.setFrequence(Integer.parseInt(frequenceTF.getText()));
             vos.setUrl(urlTF.getText());
             vos.setContent(contentTA.getText());
-            
+
             String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
             HashMap<String, String> requestParam = new HashMap<String, String>();
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
@@ -167,7 +173,7 @@ public class VOSController {
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
-        
+
     }
 
     public void closeUI(ActionEvent event) {

@@ -87,6 +87,18 @@ public class EckeyController {
         }
     }
 
+    public void newKey2wallet(ActionEvent event) {
+
+        ECKey newKey = new ECKey();
+        bitcoin.wallet().importKey(newKey);
+        bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
+        try {
+            initEcKeyList();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+    }
+
     public void initEcKeyList() throws Exception {
         issuedKeyData.clear();
 
