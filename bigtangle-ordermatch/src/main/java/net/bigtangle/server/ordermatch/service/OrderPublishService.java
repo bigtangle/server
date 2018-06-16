@@ -37,10 +37,10 @@ public class OrderPublishService {
         Date toDate = null;
         Date fromDate = null;
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        if (!validateto.trim().equals("00:00:00") && !StringUtils.isBlank(validateto)) {
+        if (validateto != null && !validateto.trim().equals("00:00:00") && !StringUtils.isBlank(validateto)) {
             toDate = simpleDateFormat.parse(validateto);
         }
-        if (!validatefrom.trim().equals("00:00:00") && !StringUtils.isBlank(validatefrom)) {
+        if (validatefrom != null && !validatefrom.trim().equals("00:00:00") && !StringUtils.isBlank(validatefrom)) {
             fromDate = simpleDateFormat.parse(validatefrom);
         }
         String market = (String) request.get("market");

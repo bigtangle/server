@@ -205,7 +205,9 @@ public class PayOrder {
     @SuppressWarnings("unchecked")
     public List<UTXO> getUTXOWithPubKeyHash(byte[] pubKeyHash, byte[] tokenid) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
-        String response = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "getOutputs", pubKeyHash);
+        List<String> pubKeyHashList = new ArrayList<String>();
+        pubKeyHashList.add(Utils.HEX.encode(pubKeyHash));
+        String response = OkHttp3Util.postString(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "getOutputs", Json.jsonmapper().writeValueAsString(pubKeyHashList));
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         if (data == null || data.isEmpty()) {
             return listUTXO;
@@ -230,7 +232,9 @@ public class PayOrder {
     public List<UTXO> getUTXOWithECKeyList(List<ECKey> ecKeys, byte[] tokenid) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         for (ECKey ecKey : ecKeys) {
-            String response = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "getOutputs", ecKey.getPubKeyHash());
+            List<String> pubKeyHashList = new ArrayList<String>();
+            pubKeyHashList.add(Utils.HEX.encode(ecKey.getPubKey()));
+            String response = OkHttp3Util.postString(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "getOutputs", Json.jsonmapper().writeValueAsString(pubKeyHashList));
             final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
             if (data == null || data.isEmpty()) {
                 return listUTXO;
