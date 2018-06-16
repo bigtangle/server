@@ -72,7 +72,7 @@ public class Account {
             this.walletKeys = walletAppKit.wallet().walletKeys(aesKey);
         } catch (Exception e) {
         }
-        walletAppKit.wallet().setServerURL(Configure.CONTEXT_ROOT);
+        walletAppKit.wallet().setServerURL(Configure.SIMPLE_SERVER_CONTEXT_ROOT);
         try {
             // gen token
             Action action2 = new TokenAction(this);

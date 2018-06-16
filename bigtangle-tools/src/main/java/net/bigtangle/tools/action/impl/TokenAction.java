@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.Json;
 import net.bigtangle.tools.account.Account;
 import net.bigtangle.tools.action.Action;
 import net.bigtangle.tools.config.Configure;
@@ -29,7 +28,7 @@ public class TokenAction extends Action {
         Block block = Simulator.createTokenBlock(outKey);
         // save block
         block.solve();
-        OkHttp3Util.post(Configure.CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
+        OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
 
         logger.info("account name : {},  action success", account.getName());
 

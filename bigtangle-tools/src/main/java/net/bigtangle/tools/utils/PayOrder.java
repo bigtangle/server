@@ -47,11 +47,11 @@ public class PayOrder {
         SendRequest request = SendRequest.forTx(transaction);
         this.account.wallet().signTransaction(request);
 
-        byte[] data = OkHttp3Util.post(Configure.CONTEXT_ROOT + "askTransaction", Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
+        byte[] data = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "askTransaction", Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
         Block rollingBlock = Configure.PARAMS.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(transaction);
         rollingBlock.solve();
-        OkHttp3Util.post(Configure.CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
+        OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
 
         HashMap<String, Object> exchangeResult = this.getExchangeInfoResult(this.mOrderid);
         int toSign = (int) exchangeResult.get("toSign");
@@ -75,7 +75,7 @@ public class PayOrder {
         requestParam.put("orderid", orderid);
         requestParam.put("dataHex", Utils.HEX.encode(buf));
         requestParam.put("signtype", signtype);
-        OkHttp3Util.post(Configure.CONTEXT_ROOT + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+        OkHttp3Util.post(Configure.ORDER_MATCH_CONTEXT_ROOT + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
     }
 
     public void signOrderTransaction() throws Exception {
@@ -101,7 +101,7 @@ public class PayOrder {
         requestParam.put("orderid", this.mOrderid);
         requestParam.put("dataHex", Utils.HEX.encode(buf));
         requestParam.put("signtype", signtype);
-        OkHttp3Util.post(Configure.CONTEXT_ROOT + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+        OkHttp3Util.post(Configure.ORDER_MATCH_CONTEXT_ROOT + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
         return;
     }
     
@@ -151,7 +151,7 @@ public class PayOrder {
             // fromAddress00);
 
             List<TransactionOutput> candidates = this.account.wallet().transforSpendCandidates(outputs);
-            this.account.wallet().setServerURL(Configure.CONTEXT_ROOT);
+            this.account.wallet().setServerURL(Configure.SIMPLE_SERVER_CONTEXT_ROOT);
             this.account.wallet().completeTx(req, candidates, false, addressResult);
             this.account.wallet().signTransaction(req);
 
@@ -205,7 +205,7 @@ public class PayOrder {
     @SuppressWarnings("unchecked")
     public List<UTXO> getUTXOWithPubKeyHash(byte[] pubKeyHash, byte[] tokenid) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
-        String response = OkHttp3Util.post(Configure.CONTEXT_ROOT + "getOutputs", pubKeyHash);
+        String response = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "getOutputs", pubKeyHash);
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         if (data == null || data.isEmpty()) {
             return listUTXO;
@@ -230,7 +230,7 @@ public class PayOrder {
     public List<UTXO> getUTXOWithECKeyList(List<ECKey> ecKeys, byte[] tokenid) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         for (ECKey ecKey : ecKeys) {
-            String response = OkHttp3Util.post(Configure.CONTEXT_ROOT + "getOutputs", ecKey.getPubKeyHash());
+            String response = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "getOutputs", ecKey.getPubKeyHash());
             final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
             if (data == null || data.isEmpty()) {
                 return listUTXO;
@@ -307,7 +307,7 @@ public class PayOrder {
     public HashMap<String, Object> getExchangeInfoResult(String orderid) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", orderid);
-        String respone = OkHttp3Util.postString(Configure.CONTEXT_ROOT + "exchangeInfo",
+        String respone = OkHttp3Util.postString(Configure.ORDER_MATCH_CONTEXT_ROOT + "exchangeInfo",
                 Json.jsonmapper().writeValueAsString(requestParam));
         HashMap<String, Object> result = Json.jsonmapper().readValue(respone, HashMap.class);
         HashMap<String, Object> exchange = (HashMap<String, Object>) result.get("exchange");

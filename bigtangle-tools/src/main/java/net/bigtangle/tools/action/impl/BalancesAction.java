@@ -36,7 +36,7 @@ public class BalancesAction extends Action {
         requestParams.add(Utils.HEX.encode(this.account.getBuyKey().getPubKeyHash()));
         try {
             String data;
-            data = OkHttp3Util.post(Configure.CONTEXT_ROOT + "batchGetBalances", Json.jsonmapper().writeValueAsString(requestParams).getBytes());
+            data = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "batchGetBalances", Json.jsonmapper().writeValueAsString(requestParams).getBytes());
             logger.info("account name : {}, Balances action resp : {} success", this.account.getName(), data);
         } catch (JsonProcessingException e) {
             e.printStackTrace();

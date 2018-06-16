@@ -28,7 +28,7 @@ public class ExchangeAction extends Action {
             String address = ecKey.toAddress(Configure.PARAMS).toString();
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("address", address);
-            String data = OkHttp3Util.post(Configure.CONTEXT_ROOT + "getExchange", Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+            String data = OkHttp3Util.post(Configure.ORDER_MATCH_CONTEXT_ROOT + "getExchange", Json.jsonmapper().writeValueAsString(requestParam).getBytes());
             logger.info("account name : {}, exchange action resp : {} success", account.getName(), data);
         }
     }

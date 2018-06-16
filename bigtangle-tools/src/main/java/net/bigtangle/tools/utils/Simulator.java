@@ -36,7 +36,7 @@ public class Simulator {
                 Block.BLOCK_VERSION_GENESIS, Configure.OUT_KEY.getPubKey(), height++,
                 ref1.getHash());
 
-        OkHttp3Util.post(Configure.CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
+        OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
 
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(Configure.PARAMS, 0, transaction.getHash());
@@ -44,7 +44,7 @@ public class Simulator {
         for (int i = 1; i < 3; i++) {
             rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS,
                     Configure.OUT_KEY.getPubKey(), height++, ref.getHash());
-            OkHttp3Util.post(Configure.CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
+            OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
         }
         
         Block b = createTokenBlock(ecKey);
@@ -56,7 +56,7 @@ public class Simulator {
         t.addSignedInput(spendableOutput, transaction.getOutputs().get(0).getScriptPubKey(), Configure.OUT_KEY);
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
-        OkHttp3Util.post(Configure.CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
+        OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
     }
 
     public static Block createTokenBlock(ECKey outKey) throws Exception {
@@ -77,7 +77,7 @@ public class Simulator {
         tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(Configure.CONTEXT_ROOT + "askTransaction",
+        byte[] data = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Configure.PARAMS.getDefaultSerializer().makeBlock(data);
         block.setBlocktype(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
@@ -106,7 +106,7 @@ public class Simulator {
     }
     public static Block getAskTransactionBlock() throws JsonProcessingException, Exception {
         final  Map<String, Object> requestParam = new HashMap<String, Object>();
-        byte[] data  = OkHttp3Util.post(Configure.CONTEXT_ROOT + "askTransaction",  Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] data  = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "askTransaction",  Json.jsonmapper().writeValueAsString(requestParam));
             
          return Configure.PARAMS.getDefaultSerializer().makeBlock(data);
     }

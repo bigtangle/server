@@ -29,7 +29,7 @@ public class SignOrderAction extends Action {
             String address = key.toAddress(Configure.PARAMS).toString();
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("address", address);
-            String response = OkHttp3Util.post(Configure.CONTEXT_ROOT + "getExchange", Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+            String response = OkHttp3Util.post(Configure.ORDER_MATCH_CONTEXT_ROOT + "getExchange", Json.jsonmapper().writeValueAsString(requestParam).getBytes());
             final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
             if (data == null) {
                 continue;
@@ -63,7 +63,7 @@ public class SignOrderAction extends Action {
     public HashMap<String, Object> getExchangeInfoResult(String orderid) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", orderid);
-        String respone = OkHttp3Util.postString(Configure.CONTEXT_ROOT + "exchangeInfo", Json.jsonmapper().writeValueAsString(requestParam));
+        String respone = OkHttp3Util.postString(Configure.ORDER_MATCH_CONTEXT_ROOT + "exchangeInfo", Json.jsonmapper().writeValueAsString(requestParam));
         HashMap<String, Object> result = Json.jsonmapper().readValue(respone, HashMap.class);
         HashMap<String, Object> exchange = (HashMap<String, Object>) result.get("exchange");
         return exchange;
