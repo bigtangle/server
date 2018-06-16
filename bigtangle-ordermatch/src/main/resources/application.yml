@@ -16,3 +16,15 @@ service:
     rate: ${SERVICE_ORDERMATCH_RATE:10000}
     active: ${SERVICE_ORDERMATCH_ACTIVE:false}
     
+management:
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    prometheus:
+      enabled: true
