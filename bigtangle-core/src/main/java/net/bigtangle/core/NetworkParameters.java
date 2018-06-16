@@ -124,8 +124,8 @@ public abstract class NetworkParameters {
     protected Map<Long, Sha256Hash> checkpoints = new HashMap<Long, Sha256Hash>();
     protected transient MessageSerializer defaultSerializer = null;
 
-    static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
-    static String testPiv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
+    public static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
+    public static String testPiv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
 
     protected NetworkParameters() {
     }
