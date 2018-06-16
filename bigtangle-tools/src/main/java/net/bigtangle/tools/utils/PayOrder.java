@@ -233,7 +233,7 @@ public class PayOrder {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         for (ECKey ecKey : ecKeys) {
             List<String> pubKeyHashList = new ArrayList<String>();
-            pubKeyHashList.add(Utils.HEX.encode(ecKey.getPubKey()));
+            pubKeyHashList.add(Utils.HEX.encode(ecKey.toAddress(Configure.PARAMS).getHash160()));
             String response = OkHttp3Util.postString(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "getOutputs", Json.jsonmapper().writeValueAsString(pubKeyHashList));
             final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
             if (data == null || data.isEmpty()) {
