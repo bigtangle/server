@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.kafka.clients.admin.Config;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import net.bigtangle.core.Block;
@@ -19,9 +21,13 @@ import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.crypto.TransactionSignature;
+import net.bigtangle.script.Script;
+import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.tools.config.Configure;
 import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
@@ -64,22 +70,31 @@ public class Simulator {
 
     public static void give(ECKey ecKey) throws Exception {
         Block block = getAskTransactionBlock();
-        Transaction transaction = new Transaction(Configure.PARAMS);
 
-        byte[] privKeyBytes = Utils.HEX.decode(NetworkParameters.testPiv);
-        ECKey toKey = ECKey.fromPrivate(privKeyBytes);
-        List<UTXO> listUTXO = getTransactionAndGetBalances(toKey);
-        
+        @SuppressWarnings("deprecation")
+        ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPiv),
+                Utils.HEX.decode(NetworkParameters.testPub));
+        List<UTXO> outputs = getTransactionAndGetBalances(genesiskey);
+
         Coin coinbase = Coin.valueOf(9999L, NetworkParameters.BIGNETCOIN_TOKENID);
-        TransactionOutput multisigOutput = new FreeStandingTransactionOutput(Configure.PARAMS, listUTXO.get(0), 0);
-        transaction.addOutput(coinbase, ecKey);
-        transaction.addSignedInput(multisigOutput, toKey);
-        block.addTransaction(transaction);
-        block.solve();
+
+        Transaction doublespent = new Transaction(Configure.PARAMS);
+        doublespent.addOutput(new TransactionOutput(Configure.PARAMS, doublespent, coinbase, ecKey));
         
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(Configure.PARAMS, outputs.get(0), 0);
+        Coin amount2 = spendableOutput.getValue().subtract(coinbase);
+        doublespent.addOutput(amount2, genesiskey);
+        TransactionInput input = doublespent.addInput(spendableOutput);
+        Sha256Hash sighash = doublespent.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
+                false);
+
+        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+                false);
+        Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+        input.setScriptSig(inputScript);
+
+        block.addTransaction(doublespent);
         OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "saveBlock", block.bitcoinSerialize());
-        
-        System.err.println("outKey : " + ecKey.toAddress(Configure.PARAMS).toBase58() + ",,," + Utils.HEX.encode(ecKey.toAddress(Configure.PARAMS).getHash160()));
     }
 
     @SuppressWarnings("unchecked")

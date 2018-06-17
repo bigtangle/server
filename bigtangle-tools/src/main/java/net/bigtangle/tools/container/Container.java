@@ -2,9 +2,12 @@ package net.bigtangle.tools.container;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 
+import net.bigtangle.core.ECKey;
 import net.bigtangle.tools.account.Account;
+import net.bigtangle.tools.utils.Simulator;
 
 public class Container extends ArrayList<Account> {
 
@@ -64,11 +67,11 @@ public class Container extends ArrayList<Account> {
         }
     }
 
-    public void startGiveMoney() {
+    public void startGiveMoney() throws Exception {
         this.initialize();
         for (Iterator<Account> iterator = this.iterator(); iterator.hasNext();) {
             Account account = iterator.next();
-            account.startGiveMoney();
+            Simulator.give(account.getBuyKey());
         }
     }
 }

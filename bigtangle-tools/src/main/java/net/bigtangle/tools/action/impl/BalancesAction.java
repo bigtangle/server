@@ -13,7 +13,6 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.tools.account.Account;
 import net.bigtangle.tools.action.Action;
 import net.bigtangle.tools.config.Configure;
-import net.bigtangle.tools.utils.Simulator;
 import net.bigtangle.utils.OkHttp3Util;
 
 public class BalancesAction extends Action {
@@ -28,10 +27,10 @@ public class BalancesAction extends Action {
 
     @Override
     public void execute0() throws Exception {
-        try {
-            Simulator.give(this.account.getBuyKey());
-        } catch (Exception e) {
-        }
+//        try {
+//            Simulator.give(this.account.getBuyKey());
+//        } catch (Exception e) {
+//        }
         List<String> requestParams = new ArrayList<String>();
         requestParams.add(Utils.HEX.encode(this.account.getBuyKey().getPubKeyHash()));
         try {
