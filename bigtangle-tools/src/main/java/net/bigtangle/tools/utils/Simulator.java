@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.kafka.clients.admin.Config;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import net.bigtangle.core.Block;
@@ -35,40 +33,9 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 public class Simulator {
 
-    /*
-     * public static void give(ECKey ecKey) throws Exception { int height = 1; Block
-     * ref = getAskTransactionBlock(); Block ref1 = getAskTransactionBlock(); Block
-     * rollingBlock = BlockForTest.createNextBlockWithCoinbase(ref,
-     * Block.BLOCK_VERSION_GENESIS, Configure.OUT_KEY.getPubKey(), height++,
-     * ref1.getHash());
-     * 
-     * OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "saveBlock",
-     * rollingBlock.bitcoinSerialize());
-     * 
-     * Transaction transaction = rollingBlock.getTransactions().get(0);
-     * TransactionOutPoint spendableOutput = new
-     * TransactionOutPoint(Configure.PARAMS, 0, transaction.getHash());
-     * 
-     * for (int i = 1; i < 3; i++) { rollingBlock =
-     * BlockForTest.createNextBlockWithCoinbase(rollingBlock,
-     * Block.BLOCK_VERSION_GENESIS, Configure.OUT_KEY.getPubKey(), height++,
-     * ref.getHash()); OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT +
-     * "saveBlock", rollingBlock.bitcoinSerialize()); }
-     * 
-     * Block b = createTokenBlock(ecKey); rollingBlock =
-     * BlockForTest.createNextBlock(b, null, ref1.getHash()); Coin amount =
-     * Coin.valueOf(999999999999L, NetworkParameters.BIGNETCOIN_TOKENID);
-     * 
-     * Transaction t = new Transaction(Configure.PARAMS); t.addOutput(new
-     * TransactionOutput(Configure.PARAMS, t, amount,
-     * ecKey.toAddress(Configure.PARAMS))); t.addSignedInput(spendableOutput,
-     * transaction.getOutputs().get(0).getScriptPubKey(), Configure.OUT_KEY);
-     * rollingBlock.addTransaction(t); rollingBlock.solve();
-     * OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "saveBlock",
-     * rollingBlock.bitcoinSerialize()); }
-     */
-
     public static void give(ECKey ecKey) throws Exception {
+        Thread.sleep(20000);
+
         Block block = getAskTransactionBlock();
 
         @SuppressWarnings("deprecation")
@@ -76,11 +43,13 @@ public class Simulator {
                 Utils.HEX.decode(NetworkParameters.testPub));
         List<UTXO> outputs = getTransactionAndGetBalances(genesiskey);
 
+        System.out.println(outputs.size());
+
         Coin coinbase = Coin.valueOf(9999L, NetworkParameters.BIGNETCOIN_TOKENID);
 
         Transaction doublespent = new Transaction(Configure.PARAMS);
         doublespent.addOutput(new TransactionOutput(Configure.PARAMS, doublespent, coinbase, ecKey));
-        
+
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(Configure.PARAMS, outputs.get(0), 0);
         Coin amount2 = spendableOutput.getValue().subtract(coinbase);
         doublespent.addOutput(amount2, genesiskey);
@@ -94,7 +63,12 @@ public class Simulator {
         input.setScriptSig(inputScript);
 
         block.addTransaction(doublespent);
-        OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "saveBlock", block.bitcoinSerialize());
+
+        try {
+            OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "saveBlock", block.bitcoinSerialize());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @SuppressWarnings("unchecked")
