@@ -22,7 +22,9 @@
 	 content: examples as docker-compose.yml
 	  
 	example Ordermatch: 
+TODO execution results Selection 
 
-	
+
 ## move unsolid blocks to new cache table
 
+## Cross-platform Java executable wrapper http://launch4j.sourceforge.net/

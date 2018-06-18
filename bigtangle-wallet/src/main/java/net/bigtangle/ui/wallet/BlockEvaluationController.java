@@ -93,7 +93,7 @@ public class BlockEvaluationController {
     }
 
     public void showBlock(ActionEvent event) throws Exception {
-        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String CONTEXT_ROOT =  Main.getContextRoot();
         Map<String, Object> rowData = blockEvaluationTable.getSelectionModel().getSelectedItem();
         if (rowData == null || rowData.isEmpty()) {
             GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("ex_c_m1"));
@@ -117,7 +117,7 @@ public class BlockEvaluationController {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void initTableView() throws Exception {
-        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String CONTEXT_ROOT =  Main.getContextRoot();
         String lastestAmount = latestAmountTextField.getText();
         String address = addressComboBox.getValue();
         List<String> addresses = new ArrayList<String>();

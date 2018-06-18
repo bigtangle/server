@@ -127,7 +127,7 @@ public class VOSController {
             requestParam.put("blocktype", blocktype);
             requestParam.put("pubKeyList", pubKeyList);
 
-            String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+            String CONTEXT_ROOT =  Main.getContextRoot();
             String resp = OkHttp3Util.postString(CONTEXT_ROOT + "userDataList",
                     Json.jsonmapper().writeValueAsString(requestParam));
             HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -163,7 +163,7 @@ public class VOSController {
             vos.setUrl(urlTF.getText());
             vos.setContent(contentTA.getText());
 
-            String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+            String CONTEXT_ROOT =  Main.getContextRoot();
             HashMap<String, String> requestParam = new HashMap<String, String>();
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
                     Json.jsonmapper().writeValueAsString(requestParam));

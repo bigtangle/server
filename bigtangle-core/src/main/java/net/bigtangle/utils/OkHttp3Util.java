@@ -5,8 +5,17 @@
 package net.bigtangle.utils;
 
 import java.io.IOException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -22,8 +31,7 @@ public class OkHttp3Util {
 
     public static String post(String url, byte[] b) throws Exception {
         System.out.println(url);
-        OkHttpClient client = (new OkHttpClient.Builder()).connectTimeout(60, TimeUnit.MINUTES)
-                .writeTimeout(60, TimeUnit.MINUTES).readTimeout(60, TimeUnit.MINUTES).build();
+        OkHttpClient client = getOkHttpClient();
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), b);
         Request request = new Request.Builder().url(url).post(body).build();
         Response response = client.newCall(request).execute();
@@ -42,8 +50,7 @@ public class OkHttp3Util {
     }
 
     public static byte[] post(String url, String s) throws Exception {
-        OkHttpClient client = (new OkHttpClient.Builder()).connectTimeout(60, TimeUnit.MINUTES)
-                .writeTimeout(60, TimeUnit.MINUTES).readTimeout(60, TimeUnit.MINUTES).build();
+        OkHttpClient client = getOkHttpClient();
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), s);
         Request request = new Request.Builder().url(url).post(body).build();
         Response response = client.newCall(request).execute();
@@ -59,8 +66,7 @@ public class OkHttp3Util {
     }
 
     public static String postString(String url, String s) throws Exception {
-        OkHttpClient client = (new OkHttpClient.Builder()).connectTimeout(60, TimeUnit.MINUTES)
-                .writeTimeout(60, TimeUnit.MINUTES).readTimeout(60, TimeUnit.MINUTES).build();
+        OkHttpClient client = getOkHttpClient();
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), s);
         Request request = new Request.Builder().url(url).post(body).build();
         Response response = client.newCall(request).execute();
@@ -71,7 +77,7 @@ public class OkHttp3Util {
         } finally {
             client.dispatcher().executorService().shutdown();
             client.connectionPool().evictAll();
-            // client.cache().close();
+
             response.close();
             response.body().close();
         }
@@ -92,4 +98,51 @@ public class OkHttp3Util {
         }
     }
 
+    private static OkHttpClient getOkHttpClient() {
+        
+        return getUnsafeOkHttpClient();
+    }
+    private static OkHttpClient getOkHttpClientSafe() {
+        OkHttpClient client = new OkHttpClient.Builder().connectTimeout(60, TimeUnit.MINUTES)
+                .writeTimeout(60, TimeUnit.MINUTES).readTimeout(60, TimeUnit.MINUTES).build();
+        return client;
+    }
+    private static OkHttpClient getUnsafeOkHttpClient() {
+        try {
+
+            X509TrustManager tr = new X509TrustManager() {
+                @Override
+                public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType)
+                        throws CertificateException {
+                }
+
+                @Override
+                public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType)
+                        throws CertificateException {
+                }
+                @Override
+                public X509Certificate[] getAcceptedIssuers() {
+                    return new X509Certificate[0];
+                }
+                
+            };
+
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, new TrustManager[] { tr }, null);
+            SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+
+            OkHttpClient client = new OkHttpClient.Builder().sslSocketFactory(sslSocketFactory, tr)
+                    .hostnameVerifier(new HostnameVerifier() {
+                        @Override
+                        public boolean verify(String hostname, SSLSession session) {
+                            return true;
+                        }
+                    }).connectTimeout(60, TimeUnit.MINUTES).writeTimeout(60, TimeUnit.MINUTES)
+                    .readTimeout(60, TimeUnit.MINUTES).build();
+
+            return client;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

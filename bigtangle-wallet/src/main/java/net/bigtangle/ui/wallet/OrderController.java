@@ -158,7 +158,7 @@ public class OrderController extends ExchangeController {
         }
         ObservableList<Map<String, Object>> orderData = FXCollections.observableArrayList();
 
-        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String CONTEXT_ROOT =  Main.getContextRoot();
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getMarkets",
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         final Map<String, Object> getTokensResult = Json.jsonmapper().readValue(response, Map.class);
@@ -215,7 +215,7 @@ public class OrderController extends ExchangeController {
     }
 
     public void initMarketComboBox() throws Exception {
-        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String CONTEXT_ROOT =  Main.getContextRoot();
         ObservableList<String> tokenData = FXCollections.observableArrayList();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getMarkets",
@@ -238,7 +238,7 @@ public class OrderController extends ExchangeController {
      */
     @SuppressWarnings("unchecked")
     public void initComboBox(boolean buy) throws Exception {
-        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String CONTEXT_ROOT =  Main.getContextRoot();
         ObservableList<String> tokenData = FXCollections.observableArrayList();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokensNoMarket",
@@ -304,7 +304,7 @@ public class OrderController extends ExchangeController {
         if (validdateToDatePicker.getValue() != null) {
             validdateTo = df.format(validdateToDatePicker.getValue());
         }
-        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String ContextRoot =  Main.getContextRoot();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("address", addressComboBox.getValue());
         // String tokenid = this.tokenComboBox.getValue().split(":")[1].trim();

@@ -109,7 +109,7 @@ public class Main extends Application {
     private ObservableList<UTXOModel> utxoData = FXCollections.observableArrayList();
 
     public static String IpAddress = "";
-    public static String port = "8088";
+   
     public static FXMLLoader loader;
 
     public static String lang = "en";
@@ -197,11 +197,11 @@ public class Main extends Application {
         if (!Locale.CHINESE.equals(locale)) {
 
             if ("".equals(IpAddress))
-                IpAddress = "de.server.bigtangle.net";
+                IpAddress = "https://de.server.bigtangle.net";
         } else {
 
             if ("".equals(IpAddress))
-                IpAddress = "cn.server.bigtangle.net";
+                IpAddress = "https://cn.server.bigtangle.net";
 
         }
         mainUI = loader.load();
@@ -245,7 +245,7 @@ public class Main extends Application {
 
     @SuppressWarnings("unchecked")
     public static Map<String, String> getTokenHexNameMap() throws Exception {
-        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String CONTEXT_ROOT =  Main.IpAddress +"/"; // Main.getContextRoot();
         Map<String, Object> requestParam = new HashMap<String, Object>();
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens",
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
@@ -529,7 +529,7 @@ public class Main extends Application {
     }
 
     public String sentEmpstyBlock() throws JsonProcessingException, Exception {
-        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String CONTEXT_ROOT =  Main.IpAddress +"/"; //http://" + Main.IpAddress + ":" + Main.port + "/";
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -560,7 +560,7 @@ public class Main extends Application {
     @SuppressWarnings("unchecked")
     public static List<UTXO> getUTXOWithPubKeyHash(List<String> pubKeyHashs, String tokenid) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
-        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String ContextRoot =  Main.IpAddress +"/"; //http://" + Main.IpAddress + ":" + Main.port + "/";
 
         String response = OkHttp3Util.post(ContextRoot + "getOutputs",
                 Json.jsonmapper().writeValueAsString(pubKeyHashs).getBytes());
@@ -600,7 +600,7 @@ public class Main extends Application {
     }
 
     public boolean sendMessage(byte[] data) throws Exception {
-        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String CONTEXT_ROOT =  Main.IpAddress +"/"; //http://" + Main.IpAddress + ":" + Main.port + "/";
         String resp = OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", data);
         @SuppressWarnings("unchecked")
         HashMap<String, Object> respRes = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -633,9 +633,11 @@ public class Main extends Application {
                 .compile("((((0?[0-9])|([1][0-9])|([2][0-4]))\\:([0-5]?[0-9])((\\s)|(\\:([0-5]?[0-9])))))?$");
         return p.matcher(time).matches();
     }
-
+    public static String getContextRoot() {
+   return  Main.IpAddress +"/"; //http://" + Main.IpAddress + ":" + Main.port + "/";
+    }
     public static Serializable getUserdata(String type) throws Exception {
-        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String CONTEXT_ROOT =  Main.IpAddress +"/"; //http://" + Main.IpAddress + ":" + Main.port + "/";
         HashMap<String, String> requestParam = new HashMap<String, String>();
         ECKey pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
         requestParam.put("pubKey", pubKeyTo.getPublicKeyAsHex());

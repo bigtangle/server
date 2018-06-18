@@ -177,7 +177,7 @@ public class SendMoneyController {
         // basicRadioButton.setUserData(1 + "");
         // kiloRadioButton.setUserData(1000 + "");
         // milionRadioButton.setUserData(1000 * 1000 + "");
-        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String CONTEXT_ROOT =  Main.getContextRoot();
         ObservableList<Object> tokenData = FXCollections.observableArrayList();
         try {
             Map<String, Object> requestParam = new HashMap<String, Object>();
@@ -337,7 +337,7 @@ public class SendMoneyController {
         for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
             pubKeys.add(ecKey.getPublicKeyAsHex());
         }
-        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String ContextRoot =  Main.getContextRoot();
         String resp = OkHttp3Util.postString(ContextRoot + "getPayMultiSignList",
                 Json.jsonmapper().writeValueAsString(pubKeys));
         HashMap<String, Object> data = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -441,7 +441,7 @@ public class SendMoneyController {
     }
 
     private byte[] makeSignTransactionBuffer(String toAddress, Coin toCoin) {
-        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String ContextRoot =  Main.getContextRoot();
         Address toAddress00 = new Address(Main.params, toAddress);
         KeyParameter aesKey = null;
         // Main.initAeskey(aesKey);
@@ -510,7 +510,7 @@ public class SendMoneyController {
                 GuiUtils.informationalAlert(Main.getText("address_empty"), "", "");
                 return;
             }
-            String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+            String CONTEXT_ROOT =  Main.getContextRoot();
             Address destination = // Address.getParametersFromAddress(address)address.getText()
                     Address.fromBase58(Main.params,
                             !addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
@@ -558,7 +558,7 @@ public class SendMoneyController {
                 GuiUtils.informationalAlert(Main.getText("signnumNull"), "", "");
                 return;
             }
-            String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+            String CONTEXT_ROOT =  Main.getContextRoot();
 
             Main.bitcoin.wallet().setServerURL(CONTEXT_ROOT);
 
@@ -623,7 +623,7 @@ public class SendMoneyController {
     }
 
     public void showAddAddressDialog() throws Exception {
-        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String CONTEXT_ROOT =  Main.getContextRoot();
 
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle(Main.getText("Address"));
@@ -732,13 +732,13 @@ public class SendMoneyController {
         // addressComboBox1
         // signnumberTFA
         // memoTF1
-        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String ContextRoot =  Main.getContextRoot();
         this.launchPayMultiSign(Main.params, ContextRoot);
     }
 
     public void signA(ActionEvent event) throws Exception {
 
-        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String ContextRoot =  Main.getContextRoot();
         this.launchPayMultiSignA(Main.params, ContextRoot);
     }
 
@@ -849,7 +849,7 @@ public class SendMoneyController {
     public void multiSign(ActionEvent event) throws Exception {
         Map<String, Object> map = signTable.getSelectionModel().getSelectedItem();
         String orderid = (String) map.get("orderid");
-        String ContextRoot = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String ContextRoot =  Main.getContextRoot();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", orderid);
         String resp = OkHttp3Util.postString(ContextRoot + "getPayMultiSignAddressList",

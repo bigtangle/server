@@ -144,7 +144,7 @@ public class TokensController {
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
-        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String CONTEXT_ROOT =  Main.getContextRoot();
         ObservableList<Map> tokenData = FXCollections.observableArrayList();
 
         Map<String, Object> requestParam = new HashMap<String, Object>();
@@ -176,7 +176,7 @@ public class TokensController {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void initTableView() throws Exception {
         String name = nameTextField.getText();
-        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String CONTEXT_ROOT =  Main.getContextRoot();
         ObservableList<Map> tokenData = FXCollections.observableArrayList();
 
         Map<String, Object> requestParam = new HashMap<String, Object>();
@@ -230,7 +230,7 @@ public class TokensController {
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
-        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String CONTEXT_ROOT =  Main.getContextRoot();
         ObservableList<Map> tokenData = FXCollections.observableArrayList();
 
         Map<String, Object> requestParam = new HashMap<String, Object>();

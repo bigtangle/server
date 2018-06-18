@@ -2,6 +2,12 @@ server:
   port: ${SERVER_PORT:8088}
   net: ${SERVER_NET:Unittest}
   mineraddress: ${SERVER_MINERADDRESS:mjWvzPZz4YJtWqb7ux7cdgq5G7rzkg3bXG}
+  ssl:
+    enabled: ${SSL:false}
+    key-store: ${KEYSTORE:src/main/resources/ca.pkcs12}
+    key-store-password: ${KEYSTOREPW:changeit}
+    keyStoreType: ${KEYSTORETYPE:PKCS12}
+
 db:
   dbtype: ${DBTYPE:mysql}
   hostname: ${DB_HOSTNAME:localhost}

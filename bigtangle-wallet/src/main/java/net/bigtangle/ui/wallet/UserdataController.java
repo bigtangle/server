@@ -102,7 +102,7 @@ public class UserdataController {
     }
 
     public void saveUserdata(ActionEvent event) {
-        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String CONTEXT_ROOT =  Main.getContextRoot();
         try {
             addContact(CONTEXT_ROOT);
             initContactTableView();
@@ -112,7 +112,7 @@ public class UserdataController {
     }
 
     public Serializable getUserdata(String type) throws Exception {
-        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String CONTEXT_ROOT =  Main.getContextRoot();
         HashMap<String, String> requestParam = new HashMap<String, String>();
         ECKey pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
         requestParam.put("pubKey", pubKeyTo.getPublicKeyAsHex());
@@ -200,7 +200,7 @@ public class UserdataController {
             }
             String name = (String) rowdata.get("tokenname");
             String tokenid = (String) rowdata.get("tokenid");
-            String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+            String CONTEXT_ROOT =  Main.getContextRoot();
             HashMap<String, String> requestParam = new HashMap<String, String>();
 
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
@@ -238,7 +238,7 @@ public class UserdataController {
     }
 
     public void initMyAddress() throws Exception {
-        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String CONTEXT_ROOT =  Main.getContextRoot();
         MyHomeAddress myHomeAddress = (MyHomeAddress) getUserdata(DataClassName.MYHOMEADDRESS.name());
         countryTF.setText(myHomeAddress.getCountry());
         provinceTF.setText(myHomeAddress.getProvince());
@@ -249,7 +249,7 @@ public class UserdataController {
     }
 
     public void saveMyAddress(ActionEvent event) throws Exception {
-        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String CONTEXT_ROOT =  Main.getContextRoot();
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -295,7 +295,7 @@ public class UserdataController {
             }
             String name = (String) rowdata.get("name");
             String address = (String) rowdata.get("address");
-            String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+            String CONTEXT_ROOT =  Main.getContextRoot();
             HashMap<String, String> requestParam = new HashMap<String, String>();
 
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
@@ -403,7 +403,7 @@ public class UserdataController {
     }
 
     public void uploadFile(ActionEvent event) throws Exception {
-        String CONTEXT_ROOT = "http://" + Main.IpAddress + ":" + Main.port + "/";
+        String CONTEXT_ROOT =  Main.getContextRoot();
         final FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showOpenDialog(null);
         filepathTF.setText(file.getAbsolutePath());
