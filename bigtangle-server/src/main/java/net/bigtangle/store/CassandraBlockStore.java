@@ -22,6 +22,7 @@ import net.bigtangle.core.NetworkParameters;
  */
 
 public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
+    
     private static final String MYSQL_DUPLICATE_KEY_ERROR_CODE = "23000";
     private static final String DATABASE_DRIVER_CLASS = "org.apache.cassandra.cql.jdbc.CassandraDriver";
     private static final String DATABASE_CONNECTION_URL_PREFIX = "jdbc:cassandra://";

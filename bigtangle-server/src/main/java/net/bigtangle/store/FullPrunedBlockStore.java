@@ -12,7 +12,6 @@ import java.util.Map;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.BlockStoreException;
-import net.bigtangle.core.Exchange;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
@@ -192,8 +191,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void updateBlockEvaluationSolid(Sha256Hash blockhash, boolean b) throws BlockStoreException;
 
-     
-
     public void updateBlockEvaluationCumulativeweight(Sha256Hash blockhash, long i) throws BlockStoreException;
 
     public void updateBlockEvaluationDepth(Sha256Hash blockhash, long i) throws BlockStoreException;
@@ -235,19 +232,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void saveTokens(String tokenid, String tokenname, String description, String url, long signnumber,
             boolean multiserial, boolean asmarket, boolean tokenstop) throws BlockStoreException;
-
- 
-    public void saveExchange(Exchange exchange) throws BlockStoreException;
-
-    public List<Exchange> getExchangeListWithAddress(String address) throws BlockStoreException;
-
-    public void updateExchangeSign(String orderid, String signtype, byte[] data) throws BlockStoreException;
-
-    
-
-    public Exchange getExchangeInfoByOrderid(String orderid) throws BlockStoreException;
-
-    
 
     public List<BlockEvaluation> getSearchBlockEvaluations(List<String> address) throws BlockStoreException;
 
