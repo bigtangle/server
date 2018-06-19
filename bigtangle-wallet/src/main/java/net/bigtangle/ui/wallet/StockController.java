@@ -158,7 +158,7 @@ public class StockController extends TokensController {
     }
 
     public void editToken(ActionEvent event) throws Exception {
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
         Map<String, Object> rowdata = tokenserialTable.getSelectionModel().getSelectedItem();
         if (rowdata == null || rowdata.isEmpty()) {
             GuiUtils.informationalAlert("", Main.getText("pleaseSelect"), "");
@@ -223,7 +223,7 @@ public class StockController extends TokensController {
     }
 
     public void againPublish(ActionEvent event) throws Exception {
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
         Map<String, Object> rowdata = tokenserialTable.getSelectionModel().getSelectedItem();
         if (rowdata == null || rowdata.isEmpty()) {
             GuiUtils.informationalAlert("", Main.getText("pleaseSelect"), "");
@@ -314,7 +314,7 @@ public class StockController extends TokensController {
     }
 
     public void showAddAddressDialog() throws Exception {
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
         String temp = signnumberTF.getText();
         if (temp != null && !temp.isEmpty() && temp.matches("[1-9]\\d*")) {
 
@@ -345,7 +345,7 @@ public class StockController extends TokensController {
     }
 
     public void initCombobox() throws Exception {
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
         ObservableList<String> tokenData = FXCollections.observableArrayList();
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("name", null);
@@ -396,7 +396,7 @@ public class StockController extends TokensController {
     }
 
     public void showToken(String newtokenid) throws Exception {
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
 
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", tokenid.getValue());
@@ -428,7 +428,7 @@ public class StockController extends TokensController {
     }
 
     public void saveToken(ActionEvent event, boolean market) {
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
         ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
         try {
             TokenInfo tokenInfo = new TokenInfo();
@@ -564,7 +564,7 @@ public class StockController extends TokensController {
                 break;
             }
         }
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
 
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
         requestParam0.put("address", rowdata.get("address").toString());
@@ -622,7 +622,7 @@ public class StockController extends TokensController {
         // for (ECKey ecKey : keys) {
         // System.out.println(ecKey.getPublicKeyAsHex());
         // }
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
 
         TokenInfo tokenInfo = new TokenInfo();
         Tokens tokens = new Tokens(Main.getString(map.get("tokenHex")).trim(),
@@ -687,7 +687,7 @@ public class StockController extends TokensController {
     }
 
     public void add2positve(ActionEvent event) {
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
         Map<String, Object> rowData = tokensTable.getSelectionModel().getSelectedItem();
         if (rowData == null || rowData.isEmpty()) {
             GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_d1"));
@@ -696,7 +696,6 @@ public class StockController extends TokensController {
         String tokeninfo = "";
         tokeninfo += Main.getString(rowData.get("tokenid")) + "," + Main.getString(rowData.get("tokenname"));
         try {
-            Main.addText2file(tokeninfo, Main.keyFileDirectory + Main.positiveFile);
             addToken(CONTEXT_ROOT, rowData.get("tokenname").toString(), rowData.get("tokenid").toString());
         } catch (Exception e) {
 

@@ -97,7 +97,7 @@ public class ExchangeController {
     @FXML
     public void initialize() {
         try {
-            List<String> list = Main.initAddress4file();
+            List<String> list = Main.initAddress4block();
             ObservableList<String> addressData = FXCollections.observableArrayList(list);
             toAddressComboBox.setItems(addressData);
 
@@ -113,7 +113,7 @@ public class ExchangeController {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void initTable() throws Exception {
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
         String response0 = OkHttp3Util.postString(CONTEXT_ROOT + "getMarkets", "{}");
         final Map<String, Object> getTokensResult = Json.jsonmapper().readValue(response0, Map.class);
         List<Map<String, Object>> tokensList = (List<Map<String, Object>>) getTokensResult.get("tokens");
@@ -191,7 +191,7 @@ public class ExchangeController {
 
     @SuppressWarnings("unchecked")
     public void initComboBox() throws Exception {
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
         ObservableList<String> tokenData = FXCollections.observableArrayList();
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("name", null);
@@ -234,7 +234,7 @@ public class ExchangeController {
         SendRequest request = SendRequest.forTx(mTransaction);
         Main.bitcoin.wallet().signTransaction(request);
 
-        String ContextRoot =  Main.getContextRoot();
+        String ContextRoot = Main.getContextRoot();
         byte[] data = OkHttp3Util.post(ContextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
         Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
@@ -388,7 +388,7 @@ public class ExchangeController {
         Map<String, Object> rowData = exchangeTable.getSelectionModel().getSelectedItem();
         String tokenid = (String) rowData.get("market");
 
-        String ContextRoot =  Main.getContextRoot();
+        String ContextRoot = Main.getContextRoot();
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
         requestParam0.put("tokenid", tokenid);
         String resp = OkHttp3Util.postString(ContextRoot + "getTokenById",
@@ -506,7 +506,7 @@ public class ExchangeController {
 
     @SuppressWarnings("deprecation")
     private byte[] makeSignTransactionBuffer(String fromAddress, Coin fromCoin, String toAddress, Coin toCoin) {
-        String ContextRoot =  Main.getContextRoot();
+        String ContextRoot = Main.getContextRoot();
         Address fromAddress00 = new Address(Main.params, fromAddress);
         Address toAddress00 = new Address(Main.params, toAddress);
         KeyParameter aesKey = null;

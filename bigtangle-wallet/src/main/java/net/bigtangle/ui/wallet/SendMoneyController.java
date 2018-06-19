@@ -177,7 +177,7 @@ public class SendMoneyController {
         // basicRadioButton.setUserData(1 + "");
         // kiloRadioButton.setUserData(1000 + "");
         // milionRadioButton.setUserData(1000 * 1000 + "");
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
         ObservableList<Object> tokenData = FXCollections.observableArrayList();
         try {
             Map<String, Object> requestParam = new HashMap<String, Object>();
@@ -188,22 +188,10 @@ public class SendMoneyController {
 
             List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
             List<String> names = new ArrayList<String>();
-            // xiao mi
-            List<String> tokens = Main.initToken4file();
             for (Map<String, Object> map : list) {
 
                 String tokenHex = (String) map.get("tokenid");
-                /*
-                 * if (tokens != null && !tokens.isEmpty()) { for (String temp :
-                 * tokens) { // ONLY log log.debug("temp:" + temp); if
-                 * ((!temp.equals("") && temp.contains(tokenHex)) ||
-                 * NetworkParameters.BIGNETCOIN_TOKENID_STRING.equalsIgnoreCase(
-                 * tokenHex) || isMyTokens(tokenHex)) { if
-                 * (!tokenData.contains(tokenHex)) { tokenData.add(tokenHex);
-                 * names.add(map.get("tokenname").toString()); }
-                 * 
-                 * } } }
-                 */
+
                 if (NetworkParameters.BIGNETCOIN_TOKENID_STRING.equalsIgnoreCase(tokenHex) || isMyUTXOs(tokenHex)) {
                     tokenData.add(tokenHex);
                     names.add(map.get("tokenname").toString());
@@ -285,7 +273,7 @@ public class SendMoneyController {
     @FXML
     public void initialize() throws Exception {
         initChoicebox();
-        List<String> list = Main.initAddress4file();
+        List<String> list = Main.initAddress4block();
         ObservableList<UTXOModel> utxoModels = Main.instance.getUtxoData();
         if (utxoModels != null && !utxoModels.isEmpty()) {
             for (UTXOModel utxoModel : utxoModels) {
@@ -309,7 +297,7 @@ public class SendMoneyController {
             multiUtxoChoiceBox1.getSelectionModel().selectedItemProperty().addListener((ov, oldv, newv) -> {
                 if (newv != null && !newv.trim().equals("")) {
                     amountEdit12.setText(newv.split(",")[0]);
-//                    signnumberTFA.setText(newv.split(",")[2]);
+                    // signnumberTFA.setText(newv.split(",")[2]);
                     btcLabel12.setText(newv.split(",")[1]);
                 }
             });
@@ -337,7 +325,7 @@ public class SendMoneyController {
         for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
             pubKeys.add(ecKey.getPublicKeyAsHex());
         }
-        String ContextRoot =  Main.getContextRoot();
+        String ContextRoot = Main.getContextRoot();
         String resp = OkHttp3Util.postString(ContextRoot + "getPayMultiSignList",
                 Json.jsonmapper().writeValueAsString(pubKeys));
         HashMap<String, Object> data = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -441,7 +429,7 @@ public class SendMoneyController {
     }
 
     private byte[] makeSignTransactionBuffer(String toAddress, Coin toCoin) {
-        String ContextRoot =  Main.getContextRoot();
+        String ContextRoot = Main.getContextRoot();
         Address toAddress00 = new Address(Main.params, toAddress);
         KeyParameter aesKey = null;
         // Main.initAeskey(aesKey);
@@ -510,7 +498,7 @@ public class SendMoneyController {
                 GuiUtils.informationalAlert(Main.getText("address_empty"), "", "");
                 return;
             }
-            String CONTEXT_ROOT =  Main.getContextRoot();
+            String CONTEXT_ROOT = Main.getContextRoot();
             Address destination = // Address.getParametersFromAddress(address)address.getText()
                     Address.fromBase58(Main.params,
                             !addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
@@ -558,7 +546,7 @@ public class SendMoneyController {
                 GuiUtils.informationalAlert(Main.getText("signnumNull"), "", "");
                 return;
             }
-            String CONTEXT_ROOT =  Main.getContextRoot();
+            String CONTEXT_ROOT = Main.getContextRoot();
 
             Main.bitcoin.wallet().setServerURL(CONTEXT_ROOT);
 
@@ -579,7 +567,8 @@ public class SendMoneyController {
             multiSigTransaction.addOutput(amount0, scriptPubKey);
             // get new Block to be used from server
             HashMap<String, String> requestParam = new HashMap<String, String>();
-            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
+                    Json.jsonmapper().writeValueAsString(requestParam));
             Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
 
             SendRequest request = SendRequest.forTx(multiSigTransaction);
@@ -595,8 +584,7 @@ public class SendMoneyController {
     // TODO Fix problem after send return to main
     public void checkContact(ActionEvent event) throws Exception {
 
-        String homedir = Main.keyFileDirectory;
-        String addresses = Main.getString4file(homedir + Main.contactFile);
+        String addresses = Main.getString4block(Main.initAddress4block());
         if (!addresses.contains(!addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
                 : addressComboBox.getValue().split(",")[1])) {
             TextInputDialog dialog = new TextInputDialog();
@@ -607,7 +595,7 @@ public class SendMoneyController {
             dialog.setWidth(900);
             Optional<String> result = dialog.showAndWait();
             if (result.isPresent()) {
-                Main.addAddress2file(result.get(),
+                Main.addAddress2block(result.get(),
                         !addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
                                 : addressComboBox.getValue().split(",")[1]);
             }
@@ -623,7 +611,7 @@ public class SendMoneyController {
     }
 
     public void showAddAddressDialog() throws Exception {
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
 
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle(Main.getText("Address"));
@@ -662,7 +650,7 @@ public class SendMoneyController {
         ComboBox<String> addressComboBox = new ComboBox<String>();
         addressComboBox.setEditable(true);
         addressComboBox.setPrefWidth(300);
-        List<String> list = Main.initAddress4file();
+        List<String> list = Main.initAddress4block();
 
         ObservableList<String> addressData = FXCollections.observableArrayList(list);
         addressComboBox.setItems(addressData);
@@ -732,13 +720,13 @@ public class SendMoneyController {
         // addressComboBox1
         // signnumberTFA
         // memoTF1
-        String ContextRoot =  Main.getContextRoot();
+        String ContextRoot = Main.getContextRoot();
         this.launchPayMultiSign(Main.params, ContextRoot);
     }
 
     public void signA(ActionEvent event) throws Exception {
 
-        String ContextRoot =  Main.getContextRoot();
+        String ContextRoot = Main.getContextRoot();
         this.launchPayMultiSignA(Main.params, ContextRoot);
     }
 
@@ -806,7 +794,7 @@ public class SendMoneyController {
         for (String keyString : addressChoiceBox1.getItems()) {
             keys.add(ECKey.fromPublicOnly(Utils.HEX.decode(keyString)));
         }
-        
+
         Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(keys.size(), keys);
         transaction.addOutput(amount, scriptPubKey);
 
@@ -849,7 +837,7 @@ public class SendMoneyController {
     public void multiSign(ActionEvent event) throws Exception {
         Map<String, Object> map = signTable.getSelectionModel().getSelectedItem();
         String orderid = (String) map.get("orderid");
-        String ContextRoot =  Main.getContextRoot();
+        String ContextRoot = Main.getContextRoot();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", orderid);
         String resp = OkHttp3Util.postString(ContextRoot + "getPayMultiSignAddressList",

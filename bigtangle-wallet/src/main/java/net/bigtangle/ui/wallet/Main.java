@@ -27,14 +27,8 @@ import static net.bigtangle.ui.wallet.utils.GuiUtils.fadeIn;
 import static net.bigtangle.ui.wallet.utils.GuiUtils.fadeOutAndRemove;
 import static net.bigtangle.ui.wallet.utils.GuiUtils.zoomIn;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.net.URL;
 import java.util.ArrayList;
@@ -70,12 +64,17 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.Contact;
 import net.bigtangle.core.ContactInfo;
 import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.Tokens;
+import net.bigtangle.core.Transaction;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
@@ -86,7 +85,6 @@ import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.utils.BriefLogFormatter;
 import net.bigtangle.utils.MapToBeanMapperUtil;
-import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.DeterministicSeed;
@@ -109,7 +107,7 @@ public class Main extends Application {
     private ObservableList<UTXOModel> utxoData = FXCollections.observableArrayList();
 
     public static String IpAddress = "";
-   
+
     public static FXMLLoader loader;
 
     public static String lang = "en";
@@ -245,7 +243,7 @@ public class Main extends Application {
 
     @SuppressWarnings("unchecked")
     public static Map<String, String> getTokenHexNameMap() throws Exception {
-        String CONTEXT_ROOT =  Main.IpAddress +"/"; // Main.getContextRoot();
+        String CONTEXT_ROOT = Main.IpAddress + "/"; // Main.getContextRoot();
         Map<String, Object> requestParam = new HashMap<String, Object>();
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens",
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
@@ -263,91 +261,77 @@ public class Main extends Application {
 
     }
 
-    public static void addAddress2file(String name, String address) throws Exception {
-        String homedir = Main.keyFileDirectory;
-        File addressFile = new File(homedir + Main.contactFile);
-        if (!addressFile.exists()) {
-            addressFile.createNewFile();
-        }
-        String addresses = getString4file(homedir + Main.contactFile);
-        if (!addresses.contains(address)) {
+    public static void addAddress2block(String name, String address) throws Exception {
+        String CONTEXT_ROOT = getContextRoot();
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block block = Main.params.getDefaultSerializer().makeBlock(data);
+        block.setBlocktype(NetworkParameters.BLOCKTYPE_USERDATA);
+        ECKey pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
 
-            BufferedWriter out = new BufferedWriter(
-                    new OutputStreamWriter(new FileOutputStream(addressFile, true), "UTF-8"));
-            out.write(name + "," + address);
-            out.newLine();
-            out.flush();
-            out.close();
-        }
+        Transaction coinbase = new Transaction(Main.params);
+        Contact contact = new Contact();
+        contact.setName(name);
+        contact.setAddress(address);
+        ContactInfo contactInfo = (ContactInfo) getUserdata(DataClassName.ContactInfo.name());
+
+        List<Contact> list = contactInfo.getContactList();
+        list.add(contact);
+        contactInfo.setContactList(list);
+
+        coinbase.setDataclassname(DataClassName.ContactInfo.name());
+        coinbase.setData(contactInfo.toByteArray());
+
+        Sha256Hash sighash = coinbase.getHash();
+        ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash);
+        byte[] buf1 = party1Signature.encodeToDER();
+
+        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+        MultiSignBy multiSignBy0 = new MultiSignBy();
+        multiSignBy0.setAddress(pubKeyTo.toAddress(Main.params).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(pubKeyTo.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+        multiSignBies.add(multiSignBy0);
+        coinbase.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+
+        block.addTransaction(coinbase);
+        block.solve();
+
+        OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", block.bitcoinSerialize());
     }
 
-    public static void addText2file(String info, String filepath) throws Exception {
-        File addressFile = new File(filepath);
-        if (!addressFile.exists()) {
-            addressFile.createNewFile();
-        }
-        String addresses = getString4file(filepath);
-        if (!addresses.contains(info)) {
-
-            BufferedWriter out = new BufferedWriter(
-                    new OutputStreamWriter(new FileOutputStream(addressFile, true), "UTF-8"));
-            out.write(info);
-            out.newLine();
-            out.flush();
-            out.close();
-        }
-    }
-
-    public static String getString4file(String filestring) throws Exception {
+    public static String getString4block(List<String> list) throws Exception {
         StringBuffer temp = new StringBuffer("");
-        File addressFile = new File(filestring);
-        if (!addressFile.exists()) {
-            addressFile.createNewFile();
+        if (list != null && !list.isEmpty()) {
+            for (String string : list) {
+                temp.append(string + "\n\r");
+            }
         }
-        BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(addressFile), "UTF-8"));
-        String str = "";
-        while ((str = in.readLine()) != null) {
-            temp.append(str + "\n");
-        }
-        in.close();
-
         return temp.toString();
 
     }
 
-    public static List<String> initAddress4file() throws Exception {
-        String homedir = Main.keyFileDirectory;
-        File addressFile = new File(homedir + Main.contactFile);
-        if (!addressFile.exists()) {
-            addressFile.createNewFile();
-        }
-        BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(addressFile), "UTF-8"));
-        String str = "";
+    public static List<String> initAddress4block() throws Exception {
+
         List<String> addressList = new ArrayList<String>();
-        addressList.clear();
-        addressList = new ArrayList<String>();
-        while ((str = in.readLine()) != null) {
-            addressList.add(str);
+        ContactInfo contactInfo = (ContactInfo) getUserdata(DataClassName.ContactInfo.name());
+
+        List<Contact> list = contactInfo.getContactList();
+        for (Contact contact : list) {
+            addressList.add(contact.getName() + "," + contact.getAddress());
         }
-        in.close();
         return addressList;
     }
 
-    public static List<String> initToken4file() throws Exception {
-        String homedir = Main.keyFileDirectory;
-        File addressFile = new File(homedir + Main.positiveFile);
-        if (!addressFile.exists()) {
-            addressFile.createNewFile();
-        }
-        BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(addressFile), "UTF-8"));
-        String str = "";
+    public static List<String> initToken4block() throws Exception {
+        TokenInfo tokenInfo = (TokenInfo) getUserdata(DataClassName.TOKEN.name());
+        List<Tokens> list = tokenInfo.getPositveTokenList();
         List<String> addressList = new ArrayList<String>();
-        addressList.clear();
-        addressList = new ArrayList<String>();
-        while ((str = in.readLine()) != null) {
-            addressList.add(str);
+        for (Tokens tokens : list) {
+            addressList.add(tokens.getTokenid() + "," + tokens.getTokenname());
         }
-        in.close();
+
         return addressList;
     }
 
@@ -484,13 +468,7 @@ public class Main extends Application {
             }
 
         }
-        String tokeninfo = "";
-        tokeninfo += NetworkParameters.BIGNETCOIN_TOKENID_STRING + "," + MonetaryFormat.CODE_BTC;
-        try {
-            Main.addText2file(tokeninfo, Main.keyFileDirectory + Main.positiveFile);
-        } catch (Exception e) {
 
-        }
         launch(args);
     }
 
@@ -529,7 +507,8 @@ public class Main extends Application {
     }
 
     public String sentEmpstyBlock() throws JsonProcessingException, Exception {
-        String CONTEXT_ROOT =  Main.IpAddress +"/"; //http://" + Main.IpAddress + ":" + Main.port + "/";
+        String CONTEXT_ROOT = Main.IpAddress + "/"; // http://" + Main.IpAddress
+                                                    // + ":" + Main.port + "/";
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -560,7 +539,8 @@ public class Main extends Application {
     @SuppressWarnings("unchecked")
     public static List<UTXO> getUTXOWithPubKeyHash(List<String> pubKeyHashs, String tokenid) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
-        String ContextRoot =  Main.IpAddress +"/"; //http://" + Main.IpAddress + ":" + Main.port + "/";
+        String ContextRoot = Main.IpAddress + "/"; // http://" + Main.IpAddress
+                                                   // + ":" + Main.port + "/";
 
         String response = OkHttp3Util.post(ContextRoot + "getOutputs",
                 Json.jsonmapper().writeValueAsString(pubKeyHashs).getBytes());
@@ -600,7 +580,8 @@ public class Main extends Application {
     }
 
     public boolean sendMessage(byte[] data) throws Exception {
-        String CONTEXT_ROOT =  Main.IpAddress +"/"; //http://" + Main.IpAddress + ":" + Main.port + "/";
+        String CONTEXT_ROOT = Main.IpAddress + "/"; // http://" + Main.IpAddress
+                                                    // + ":" + Main.port + "/";
         String resp = OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", data);
         @SuppressWarnings("unchecked")
         HashMap<String, Object> respRes = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -633,11 +614,15 @@ public class Main extends Application {
                 .compile("((((0?[0-9])|([1][0-9])|([2][0-4]))\\:([0-5]?[0-9])((\\s)|(\\:([0-5]?[0-9])))))?$");
         return p.matcher(time).matches();
     }
+
     public static String getContextRoot() {
-   return  Main.IpAddress +"/"; //http://" + Main.IpAddress + ":" + Main.port + "/";
+        return Main.IpAddress + "/"; // http://" + Main.IpAddress + ":" +
+                                     // Main.port + "/";
     }
+
     public static Serializable getUserdata(String type) throws Exception {
-        String CONTEXT_ROOT =  Main.IpAddress +"/"; //http://" + Main.IpAddress + ":" + Main.port + "/";
+        String CONTEXT_ROOT = Main.IpAddress + "/"; // http://" + Main.IpAddress
+                                                    // + ":" + Main.port + "/";
         HashMap<String, String> requestParam = new HashMap<String, String>();
         ECKey pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
         requestParam.put("pubKey", pubKeyTo.getPublicKeyAsHex());

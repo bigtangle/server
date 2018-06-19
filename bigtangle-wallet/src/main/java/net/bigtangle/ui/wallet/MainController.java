@@ -145,10 +145,10 @@ public class MainController {
 
     @SuppressWarnings("unchecked")
     public void initTable(String addressString) throws Exception {
-        String myPositvleTokens = Main.getString4file(Main.keyFileDirectory + Main.positiveFile);
+        String myPositvleTokens = Main.getString4block(Main.initToken4block());
         Main.instance.getUtxoData().clear();
         Main.instance.getCoinData().clear();
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
         bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
         aesKey = null;
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
@@ -403,7 +403,7 @@ public class MainController {
     }
 
     public void showBlock(ActionEvent event) throws Exception {
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
         UTXOModel utxoModel = utxoTable.getSelectionModel().getSelectedItem();
         if (utxoModel == null) {
             return;

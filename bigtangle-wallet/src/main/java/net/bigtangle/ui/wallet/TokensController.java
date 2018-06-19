@@ -4,7 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.ui.wallet;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,13 +22,9 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.MapValueFactory;
-import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
-import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.Transaction;
-import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
@@ -114,28 +109,7 @@ public class TokensController {
         }
     }
 
-    public void initPositveTableView() throws Exception {}
-
-    public void removePositvle(ActionEvent event) {
-        Map<String, Object> rowData = positveTokensTable.getSelectionModel().getSelectedItem();
-        if (rowData == null || rowData.isEmpty()) {
-            GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_d1"));
-        }
-        String tokenHex = Main.getString(rowData.get("tokenHex"));
-        String tokenname = Main.getString(rowData.get("tokenname"));
-        try {
-            String myPositvleTokens = Main.getString4file(Main.keyFileDirectory + "Main.positiveFile");
-            log.debug(myPositvleTokens);
-            myPositvleTokens.replace(tokenHex + "," + tokenname, "");
-            File temp = new File(Main.keyFileDirectory + Main.positiveFile);
-            if (temp.exists()) {
-                temp.delete();
-            }
-            Main.addText2file(myPositvleTokens, Main.keyFileDirectory + Main.positiveFile);
-            initPositveTableView();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public void initPositveTableView() throws Exception {
     }
 
     public void initSerialTableView() throws Exception {
@@ -144,7 +118,7 @@ public class TokensController {
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
         ObservableList<Map> tokenData = FXCollections.observableArrayList();
 
         Map<String, Object> requestParam = new HashMap<String, Object>();
@@ -176,7 +150,7 @@ public class TokensController {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void initTableView() throws Exception {
         String name = nameTextField.getText();
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
         ObservableList<Map> tokenData = FXCollections.observableArrayList();
 
         Map<String, Object> requestParam = new HashMap<String, Object>();
@@ -230,7 +204,7 @@ public class TokensController {
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
         ObservableList<Map> tokenData = FXCollections.observableArrayList();
 
         Map<String, Object> requestParam = new HashMap<String, Object>();
@@ -245,15 +219,14 @@ public class TokensController {
         log.debug(response);
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("multiSignList");
-        
+
         if (list != null) {
             for (Map<String, Object> map : list) {
                 int signnumber = (Integer) map.get("signnumber");
                 int signcount = (Integer) map.get("signcount");
                 if (signnumber <= signcount) {
                     map.put("isSignAll", "true");
-                }
-                else {
+                } else {
                     map.put("isSignAll", "false");
                 }
                 tokenData.add(map);
