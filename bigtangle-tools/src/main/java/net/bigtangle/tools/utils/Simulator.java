@@ -34,7 +34,7 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 public class Simulator {
 
     public static void give(ECKey ecKey) throws Exception {
-        Thread.sleep(20000);
+        //Thread.sleep(20000);
 
         Block block = getAskTransactionBlock();
 
@@ -63,6 +63,7 @@ public class Simulator {
         input.setScriptSig(inputScript);
 
         block.addTransaction(doublespent);
+        block.solve();
 
         try {
             OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "saveBlock", block.bitcoinSerialize());
