@@ -22,32 +22,55 @@ import net.bigtangle.core.NetworkParameters;
  */
 
 public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
+    
     private static final String MYSQL_DUPLICATE_KEY_ERROR_CODE = "23000";
     private static final String DATABASE_DRIVER_CLASS = "com.mysql.jdbc.Driver";
     private static final String DATABASE_CONNECTION_URL_PREFIX =  "jdbc:mysql://"; //"jdbc:log4jdbc:mysql://";
 
     // create table SQL
-    private static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" + "    name varchar(32) NOT NULL,\n"
-            + "    settingvalue blob,\n" + "    CONSTRAINT setting_pk PRIMARY KEY (name)  \n" + ")\n";
+    private static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" 
+            + "    name varchar(32) NOT NULL,\n"
+            + "    settingvalue blob,\n" 
+            + "    CONSTRAINT setting_pk PRIMARY KEY (name)  \n" + ")\n";
 
-    private static final String CREATE_HEADERS_TABLE = "CREATE TABLE headers (\n" + "    hash varbinary(32) NOT NULL,\n"
-            + "    height bigint NOT NULL,\n" + "    header mediumblob NOT NULL,\n"
-            + "    wasundoable boolean NOT NULL,\n" + "    prevblockhash  varbinary(32) NOT NULL,\n"
-            + "    prevbranchblockhash  varbinary(32) NOT NULL,\n" + "    mineraddress varbinary(255),\n"
-            + "    tokenid varbinary(255),\n" + "    blocktype bigint NOT NULL,\n"
-            + "    rating bigint ,\n" + "    depth bigint,\n"
-            + "    cumulativeweight  bigint ,\n" + "    solid boolean ,\n" 
-            + "    milestone boolean,\n" + "    milestonelastupdate bigint,\n" + "    milestonedepth bigint,\n"
-            + "    inserttime bigint,\n" + "    maintained boolean,\n" + "    rewardvalidityassessment boolean,\n"
+    private static final String CREATE_HEADERS_TABLE = "CREATE TABLE headers (\n"
+            + "    hash varbinary(32) NOT NULL,\n"
+            + "    height bigint NOT NULL,\n"
+            + "    header mediumblob NOT NULL,\n"
+            + "    wasundoable boolean NOT NULL,\n" 
+            + "    prevblockhash  varbinary(32) NOT NULL,\n"
+            + "    prevbranchblockhash  varbinary(32) NOT NULL,\n" 
+            + "    mineraddress varbinary(255),\n"
+            + "    tokenid varbinary(255),\n" 
+            + "    blocktype bigint NOT NULL,\n"
+            + "    rating bigint ,\n"
+            + "    depth bigint,\n"
+            + "    cumulativeweight  bigint ,\n" 
+            + "    solid boolean ,\n" 
+            + "    milestone boolean,\n" 
+            + "    milestonelastupdate bigint,\n" 
+            + "    milestonedepth bigint,\n"
+            + "    inserttime bigint,\n" 
+            + "    maintained boolean,\n"
+            + "    rewardvalidityassessment boolean,\n"
             + "    CONSTRAINT headers_pk PRIMARY KEY (hash) USING BTREE \n" + ")";
 
-    private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" + "    hash varbinary(32) NOT NULL,\n"
-            + "    outputindex bigint NOT NULL,\n" + "    height bigint NOT NULL,\n"
-            + "    coinvalue bigint NOT NULL,\n" + "    scriptbytes mediumblob NOT NULL,\n"
-            + "    toaddress varchar(255),\n" + "    addresstargetable bigint,\n" + "    coinbase boolean,\n"
-            + "    blockhash  varbinary(32)  NOT NULL,\n" + "    tokenid varchar(255),\n"
-            + "    fromaddress varchar(255),\n" + "    memo varchar(80),\n" + "    spent boolean NOT NULL,\n"
-            + "    confirmed boolean NOT NULL,\n" + "    spendpending boolean NOT NULL,\n"
+    private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" 
+            + "    hash varbinary(32) NOT NULL,\n"
+            + "    outputindex bigint NOT NULL,\n"
+            + "    height bigint NOT NULL,\n"
+            + "    coinvalue bigint NOT NULL,\n" 
+            + "    scriptbytes mediumblob NOT NULL,\n"
+            + "    toaddress varchar(255),\n" 
+            + "    addresstargetable bigint,\n" 
+            + "    coinbase boolean,\n"
+            + "    blockhash  varbinary(32)  NOT NULL,\n" 
+            + "    tokenid varchar(255),\n"
+            + "    fromaddress varchar(255),\n" 
+            + "    memo varchar(80),\n" 
+            + "    spent boolean NOT NULL,\n"
+            + "    confirmed boolean NOT NULL,\n" 
+            + "    spendpending boolean NOT NULL,\n"
             + "    spenderblockhash  varbinary(32),\n"
             + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex) USING BTREE \n" + ")\n";
     
@@ -58,15 +81,18 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    minimumsign bigint NOT NULL,\n"
             + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex, toaddress) USING BTREE \n" + ")\n";
 
-    private static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" + "    hash varbinary(32) NOT NULL,\n"
+    private static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n"
+            + "    hash varbinary(32) NOT NULL,\n"
             + "    CONSTRAINT tips_pk PRIMARY KEY (hash) USING BTREE \n" + ")\n";
 
- 
-
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
-            + "    tokenid varchar(255) NOT NULL  ,\n" + "    tokenname varchar(255) ,\n"
-            + "    description varchar(255) ,\n" + "    url varchar(255) ,\n" + "    signnumber bigint NOT NULL   ,\n"
-            + "    multiserial boolean,\n" + "    asmarket boolean,\n" + "   tokenstop boolean,\n"
+            + "    tokenid varchar(255) NOT NULL  ,\n"
+            + "    tokenname varchar(255) ,\n"
+            + "    description varchar(255) ,\n" 
+            + "    url varchar(255) ,\n" 
+            + "    signnumber bigint NOT NULL   ,\n"
+            + "    multiserial boolean,\n" 
+            + "    asmarket boolean,\n" + "   tokenstop boolean,\n"
             + "    PRIMARY KEY (tokenid) \n)";
 
     private static final String CREATE_MULTISIGNADDRESS_TABLE = "CREATE TABLE multisignaddress (\n"
@@ -77,12 +103,16 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    PRIMARY KEY (tokenid, address) \n)";
 
     private static final String CREATE_TOKENSERIAL_TABLE = "CREATE TABLE tokenserial (\n"
-            + "    tokenid varchar(255) NOT NULL  ,\n" + "    tokenindex bigint NOT NULL   ,\n"
-            + "    amount bigint(20) ,\n" + "    PRIMARY KEY (tokenid, tokenindex) \n)";
+            + "    tokenid varchar(255) NOT NULL  ,\n" 
+            + "    tokenindex bigint NOT NULL   ,\n"
+            + "    amount bigint(20) ,\n" 
+            + "    PRIMARY KEY (tokenid, tokenindex) \n)";
 
     private static final String CREATE_MULTISIGNBY_TABLE = "CREATE TABLE multisignby (\n"
-            + "    tokenid varchar(255) NOT NULL  ,\n" + "    tokenindex bigint NOT NULL   ,\n"
-            + "    address varchar(255),\n" + "    PRIMARY KEY (tokenid,tokenindex, address) \n)";
+            + "    tokenid varchar(255) NOT NULL  ,\n" 
+            + "    tokenindex bigint NOT NULL   ,\n"
+            + "    address varchar(255),\n" 
+            + "    PRIMARY KEY (tokenid,tokenindex, address) \n)";
     
     private static final String CREATE_MULTISIGN_TABLE = "CREATE TABLE multisign (\n"
             + "    id varchar(255) NOT NULL  ,\n" 
@@ -110,22 +140,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    signIndex int(11) NOT NULL,\n"
             + "    signInputData mediumblob,\n"
             + "    PRIMARY KEY (orderid, pubKey) \n)";
-
-    private static final String CREATE_EXCHANGE_TABLE = "CREATE TABLE exchange (\n"
-            + "   orderid varchar(255) NOT NULL,\n" 
-            + "   fromAddress varchar(255),\n"
-            + "   fromTokenHex varchar(255),\n" 
-            + "   fromAmount varchar(255),\n" 
-            + "   toAddress varchar(255),\n"
-            + "   toTokenHex varchar(255),\n" 
-            + "   toAmount varchar(255),\n" 
-            + "   data varbinary(5000) NOT NULL,\n"
-            + "   toSign boolean,\n" 
-            + "   fromSign integer,\n" 
-            + "   toOrderId varchar(255),\n"
-            + "   fromOrderId varchar(255),\n" 
-            + "   market varchar(255),\n"
-            + "   PRIMARY KEY (orderid) )";
     
     private static final String CREATE_TX_REWARD_TABLE = "CREATE TABLE txreward (\n"
             + "   blockhash varbinary(32) NOT NULL,\n" 
@@ -141,14 +155,21 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    pubKey varchar(255),\n" 
             + "    blocktype bigint,\n" 
              + "   CONSTRAINT userdata_pk PRIMARY KEY (dataclassname, pubKey) USING BTREE \n" + ")";
+    
+    private static final String CREATE_VOSEXECUTE_TABLE = "CREATE TABLE vosexecute (\n" 
+            + "    vosKey varchar(255) NOT NULL,\n"
+            + "    pubKey varchar(255) NOT NULL,\n" 
+            + "    execute bigint NOT NULL,\n" 
+            + "    data mediumblob NOT NULL,\n"
+            + "    startDate datetime NOT NULL,\n"
+            + "    endDate datetime NOT NULL,\n"
+             + "   CONSTRAINT vosexecute_pk PRIMARY KEY (vosKey, pubKey) USING BTREE \n" + ")";
 
     // Some indexes to speed up inserts
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_height_toaddress_idx ON outputs (hash, outputindex, height, toaddress) USING btree";
     private static final String CREATE_OUTPUTS_TOADDRESS_INDEX = "CREATE INDEX outputs_toaddress_idx ON outputs (toaddress) USING btree";
     private static final String CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX = "CREATE INDEX outputs_addresstargetable_idx ON outputs (addresstargetable) USING btree";
     private static final String CREATE_OUTPUTS_HASH_INDEX = "CREATE INDEX outputs_hash_idx ON outputs (hash) USING btree";
-    private static final String CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX = "CREATE INDEX exchange_fromAddress_idx ON exchange (fromAddress) USING btree";
-    private static final String CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX = "CREATE INDEX exchange_toAddress_idx ON exchange (toAddress) USING btree";
   
     public MySQLFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
             String username, String password) throws BlockStoreException {
@@ -170,7 +191,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_OUTPUT_MULTI_TABLE);
         sqlStatements.add(CREATE_TIPS_TABLE);
         sqlStatements.add(CREATE_TOKENS_TABLE);
-        sqlStatements.add(CREATE_EXCHANGE_TABLE);
         sqlStatements.add(CREATE_MULTISIGNADDRESS_TABLE);
         sqlStatements.add(CREATE_TOKENSERIAL_TABLE);
         sqlStatements.add(CREATE_MULTISIGNBY_TABLE);
@@ -179,6 +199,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_USERDATA_TABLE);
         sqlStatements.add(CREATE_PAYMULTISIGN_TABLE);
         sqlStatements.add(CREATE_PAYMULTISIGNADDRESS_TABLE);
+        sqlStatements.add(CREATE_VOSEXECUTE_TABLE);
         return sqlStatements;
     }
 
@@ -189,9 +210,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX);
         sqlStatements.add(CREATE_OUTPUTS_HASH_INDEX);
         sqlStatements.add(CREATE_OUTPUTS_TOADDRESS_INDEX);
-        sqlStatements.add(CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX);
-        sqlStatements.add(CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX);
- 
         return sqlStatements;
     }
 

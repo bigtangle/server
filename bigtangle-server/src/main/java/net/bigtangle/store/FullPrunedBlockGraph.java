@@ -6,6 +6,7 @@
 package net.bigtangle.store;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -50,6 +51,7 @@ import net.bigtangle.core.TransactionOutputChanges;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UserData;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.Script.VerifyFlag;
@@ -290,6 +292,31 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         userData.setData(data);
         this.blockStore.updateUserData(userData);
     }
+    
+    @SuppressWarnings("unchecked")
+    private void synchronizationVOSData(byte[] data) throws Exception {
+        String jsonStr = new String(data);
+        HashMap<String, Object> map = Json.jsonmapper().readValue(jsonStr, HashMap.class);
+        String vosKey = (String) map.get("vosKey");
+        String pubKey = (String) map.get("pubKey");
+        VOSExecute vosExecute_ = this.blockStore.getVOSExecuteWith(vosKey, pubKey);
+        if (vosExecute_ == null) {
+            vosExecute_ = new VOSExecute();
+            vosExecute_.setVosKey(vosKey);
+            vosExecute_.setPubKey(pubKey);
+            vosExecute_.setData(Utils.HEX.decode((String) map.get("dataHex")));
+            vosExecute_.setExecute((Integer) map.get("execute"));
+            vosExecute_.setStartDate(new Date((Long) map.get("startDate")));
+            vosExecute_.setEndDate(new Date((Long) map.get("endDate")));
+            this.blockStore.insertVOSExecute(vosExecute_);
+            return;
+        }
+        vosExecute_.setData(Utils.HEX.decode((String) map.get("dataHex")));
+        vosExecute_.setExecute((Integer) map.get("execute"));
+        vosExecute_.setStartDate(new Date((Long) map.get("startDate")));
+        vosExecute_.setEndDate(new Date((Long) map.get("endDate")));
+        this.blockStore.updateVOSExecute(vosExecute_);
+    }
 
     public boolean checkOutput(Map<String, Coin> valueOut) {
 
@@ -374,7 +401,26 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     e.printStackTrace();
                 }
             }
-
+        } else if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_VOS_EXECUTE) {
+            Transaction tx = block.getTransactions().get(0);
+            if (tx.getData() != null && tx.getDatasignature() != null) {
+                try {
+                    @SuppressWarnings("unchecked")
+                    List<HashMap<String, Object>> multiSignBies = Json.jsonmapper().readValue(tx.getDatasignature(),
+                            List.class);
+                    Map<String, Object> multiSignBy = multiSignBies.get(0);
+                    byte[] pubKey = Utils.HEX.decode((String) multiSignBy.get("publickey"));
+                    byte[] data = tx.getHash().getBytes();
+                    byte[] signature = Utils.HEX.decode((String) multiSignBy.get("signature"));
+                    boolean success = ECKey.verify(data, signature, pubKey);
+                    if (!success) {
+                        throw new BlockStoreException("multisign signature error");
+                    }
+                    this.synchronizationVOSData(tx.getData());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         // Update block's transactions in db

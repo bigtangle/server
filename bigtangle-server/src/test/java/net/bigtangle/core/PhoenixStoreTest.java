@@ -90,10 +90,7 @@ public class PhoenixStoreTest extends AbstractFullPrunedBlockChainTest {
         sqlStatements.add(DatabaseFullPrunedBlockStore.DROP_HEADERS_TABLE);
         sqlStatements.add(DatabaseFullPrunedBlockStore.DROP_OPEN_OUTPUT_TABLE);
         sqlStatements.add(DatabaseFullPrunedBlockStore.DROP_TIPS_TABLE);
-
         sqlStatements.add(DatabaseFullPrunedBlockStore.DROP_TOKENS_TABLE);
-      
-        sqlStatements.add(DatabaseFullPrunedBlockStore.DROP_EXCHANGE_TABLE);
         return sqlStatements;
     }
 
@@ -103,10 +100,7 @@ public class PhoenixStoreTest extends AbstractFullPrunedBlockChainTest {
         sqlStatements.add(PhoenixBlockStore.CREATE_HEADERS_TABLE);
         sqlStatements.add(PhoenixBlockStore.CREATE_OUTPUT_TABLE);
         sqlStatements.add(PhoenixBlockStore.CREATE_TIPS_TABLE);
-  
         sqlStatements.add(PhoenixBlockStore.CREATE_TOKENS_TABLE);
-  
-        sqlStatements.add(PhoenixBlockStore.CREATE_EXCHANGE_TABLE);
         return sqlStatements;
     }
     

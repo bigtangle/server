@@ -34,7 +34,6 @@ import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.Exchange;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
@@ -55,6 +54,7 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UTXOProviderException;
 import net.bigtangle.core.UserData;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.script.Script;
@@ -79,7 +79,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_OUTPUTSMULTI_TABLE = "DROP TABLE outputsmulti";
     public static String DROP_TIPS_TABLE = "DROP TABLE tips";
     public static String DROP_TOKENS_TABLE = "DROP TABLE tokens";
-    public static String DROP_EXCHANGE_TABLE = "DROP TABLE exchange";
     public static String DROP_MULTISIGNADDRESS_TABLE = "DROP TABLE multisignaddress";
     public static String DROP_TOKENSERIAL_TABLE = "DROP TABLE tokenserial";
     public static String DROP_MULTISIGNBY_TABLE = "DROP TABLE multisignby";
@@ -88,6 +87,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_USERDATA_TABLE = "DROP TABLE userdata";
     public static String DROP_PAYMULTISIGN_TABLE = "DROP TABLE paymultisign";
     public static String DROP_PAYMULTISIGNADDRESS_TABLE = "DROP TABLE paymultisignaddress";
+    public static String DROP_VOSEXECUTE_TABLE = "DROP TABLE vosexecute";
 
     // Queries SQL.
     protected String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
@@ -231,18 +231,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String SELECT_TOKENS_ACOUNT_MAP_SQL = "select tokenid,sum(amount) as amount from tokenserial GROUP BY tokenid";
 
     protected String SELECT_TOKENS_INFO_SQL = "select tokenid, tokenname, description, url, signnumber, multiserial, asmarket, tokenstop from tokens where tokenid = ?";
-
-    protected String INSERT_EXCHANGE_SQL = getInsert()
-            + "  INTO exchange (orderid, fromAddress, fromTokenHex, fromAmount,"
-            + " toAddress, toTokenHex, toAmount, data, toSign, fromSign, toOrderId, fromOrderId, market) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    protected String SELECT_EXCHANGE_SQL = "SELECT orderid, fromAddress, "
-            + "fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, "
-            + "data, toSign, fromSign, toOrderId, fromOrderId, market "
-            + "FROM exchange WHERE (fromAddress = ? OR toAddress = ?) AND (toSign = false OR fromSign = false)"
-            + afterSelect();
-    protected String SELECT_EXCHANGE_ORDERID_SQL = "SELECT orderid,"
-            + " fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex,"
-            + " toAmount, data, toSign, fromSign, toOrderId, fromOrderId, market FROM exchange WHERE orderid = ?";
 
     protected String UPDATE_SETTINGS_SQL = getUpdate() + " settings SET settingvalue = ? WHERE name = ?";
     protected String UPDATE_HEADERS_SQL = getUpdate() + " headers SET wasundoable=? WHERE hash=?";
@@ -497,7 +485,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_OUTPUTSMULTI_TABLE);
         sqlStatements.add(DROP_TIPS_TABLE);
         sqlStatements.add(DROP_TOKENS_TABLE);
-        sqlStatements.add(DROP_EXCHANGE_TABLE);
         sqlStatements.add(DROP_MULTISIGNADDRESS_TABLE);
         sqlStatements.add(DROP_TOKENSERIAL_TABLE);
         sqlStatements.add(DROP_MULTISIGNBY_TABLE);
@@ -506,6 +493,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_USERDATA_TABLE);
         sqlStatements.add(DROP_PAYMULTISIGN_TABLE);
         sqlStatements.add(DROP_PAYMULTISIGNADDRESS_TABLE);
+        sqlStatements.add(DROP_VOSEXECUTE_TABLE);
         return sqlStatements;
     }
 
@@ -2343,108 +2331,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void saveExchange(Exchange exchange) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(INSERT_EXCHANGE_SQL);
-            preparedStatement.setString(1, exchange.getOrderid());
-            preparedStatement.setString(2, exchange.getFromAddress());
-            preparedStatement.setString(3, exchange.getFromTokenHex());
-            preparedStatement.setString(4, exchange.getFromAmount());
-            preparedStatement.setString(5, exchange.getToAddress());
-            preparedStatement.setString(6, exchange.getToTokenHex());
-            preparedStatement.setString(7, exchange.getToAmount());
-            preparedStatement.setBytes(8, exchange.getData());
-            preparedStatement.setInt(9, exchange.getToSign());
-            preparedStatement.setInt(10, exchange.getFromSign());
-            preparedStatement.setString(11, exchange.getToOrderId());
-            preparedStatement.setString(12, exchange.getFromOrderId());
-            preparedStatement.setString(13, exchange.getMarket());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public List<Exchange> getExchangeListWithAddress(String address) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        List<Exchange> list = new ArrayList<Exchange>();
-        try {
-            preparedStatement = conn.get().prepareStatement(SELECT_EXCHANGE_SQL);
-            preparedStatement.setString(1, address);
-            preparedStatement.setString(2, address);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                Exchange exchange = new Exchange();
-                exchange.setOrderid(resultSet.getString("orderid"));
-                exchange.setFromAddress(resultSet.getString("fromAddress"));
-                exchange.setFromTokenHex(resultSet.getString("fromTokenHex"));
-                exchange.setFromAmount(resultSet.getString("fromAmount"));
-                exchange.setToAddress(resultSet.getString("toAddress"));
-                exchange.setToTokenHex(resultSet.getString("toTokenHex"));
-                exchange.setToAmount(resultSet.getString("toAmount"));
-                exchange.setData(resultSet.getBytes("data"));
-                exchange.setToSign(resultSet.getInt("toSign"));
-                exchange.setFromSign(resultSet.getInt("fromSign"));
-                exchange.setToOrderId(resultSet.getString("toOrderId"));
-                exchange.setFromOrderId(resultSet.getString("fromOrderId"));
-                exchange.setMarket(resultSet.getString("market"));
-                list.add(exchange);
-            }
-            return list;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public void updateExchangeSign(String orderid, String signtype, byte[] data) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            String sql = "";
-            if (signtype.equals("to")) {
-                sql = "UPDATE exchange SET toSign = 1, data = ? WHERE orderid = ?";
-            } else {
-                sql = "UPDATE exchange SET fromSign = 1, data = ? WHERE orderid = ?";
-            }
-            preparedStatement = conn.get().prepareStatement(sql);
-            preparedStatement.setString(2, orderid);
-            preparedStatement.setBytes(1, data);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
-    @Override
     public void updateUnmaintainAll() throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -2459,45 +2345,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     preparedStatement.close();
                 } catch (SQLException e) {
                     throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public Exchange getExchangeInfoByOrderid(String orderid) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(SELECT_EXCHANGE_ORDERID_SQL);
-            preparedStatement.setString(1, orderid);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (!resultSet.next()) {
-                return null;
-            }
-            Exchange exchange = new Exchange();
-            exchange.setOrderid(resultSet.getString("orderid"));
-            exchange.setFromAddress(resultSet.getString("fromAddress"));
-            exchange.setFromTokenHex(resultSet.getString("fromTokenHex"));
-            exchange.setFromAmount(resultSet.getString("fromAmount"));
-            exchange.setToAddress(resultSet.getString("toAddress"));
-            exchange.setToTokenHex(resultSet.getString("toTokenHex"));
-            exchange.setToAmount(resultSet.getString("toAmount"));
-            exchange.setData(resultSet.getBytes("data"));
-            exchange.setToSign(resultSet.getInt("toSign"));
-            exchange.setFromSign(resultSet.getInt("fromSign"));
-            exchange.setToOrderId(resultSet.getString("toOrderId"));
-            exchange.setFromOrderId(resultSet.getString("fromOrderId"));
-            exchange.setMarket(resultSet.getString("market"));
-            return exchange;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
                 }
             }
         }
@@ -3961,6 +3808,127 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
-    
+
+    @Override
+    public List<VOSExecute> getVOSExecuteList(String vosKey) throws BlockStoreException {
+        String sql = "SELECT vosKey, pubKey, execute, data, startDate, endDate FROM vosexecute WHERE vosKey = ?";
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setString(1, vosKey);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            List<VOSExecute> list = new ArrayList<VOSExecute>();
+            while (resultSet.next()) {
+                VOSExecute vosExecute = new VOSExecute();
+                vosExecute.setVosKey(resultSet.getString("vosKey"));
+                vosExecute.setPubKey(resultSet.getString("pubKey"));
+                vosExecute.setExecute(resultSet.getLong("execute"));
+                vosExecute.setData(resultSet.getBytes("data"));
+                vosExecute.setStartDate(resultSet.getDate("startDate"));
+                vosExecute.setEndDate(resultSet.getDate("endDate"));
+                list.add(vosExecute);
+            }
+            return list;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public VOSExecute getVOSExecuteWith(String vosKey, String pubKey) throws BlockStoreException {
+        String sql = "SELECT vosKey, pubKey, execute, data, startDate, endDate FROM vosexecute WHERE vosKey = ? AND pubKey = ?";
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setString(1, vosKey);
+            preparedStatement.setString(2, pubKey);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (!resultSet.next()) {
+                return null;
+            }
+            VOSExecute vosExecute = new VOSExecute();
+            vosExecute.setVosKey(resultSet.getString("vosKey"));
+            vosExecute.setPubKey(resultSet.getString("pubKey"));
+            vosExecute.setExecute(resultSet.getLong("execute"));
+            vosExecute.setData(resultSet.getBytes("data"));
+            vosExecute.setStartDate(resultSet.getDate("startDate"));
+            vosExecute.setEndDate(resultSet.getDate("endDate"));
+            return vosExecute;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void insertVOSExecute(VOSExecute vosExecute) throws BlockStoreException {
+        String sql = "INSERT INTO vosexecute (vosKey, pubKey, execute, data, startDate, endDate) VALUES (?, ?, ?, ?, ?, ?)";
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setString(1, vosExecute.getVosKey());
+            preparedStatement.setString(2, vosExecute.getPubKey());
+            preparedStatement.setLong(3, vosExecute.getExecute());
+            preparedStatement.setBytes(4, vosExecute.getData());
+            preparedStatement.setTimestamp(5, new java.sql.Timestamp(vosExecute.getStartDate().getTime()));
+            preparedStatement.setTimestamp(6, new java.sql.Timestamp(vosExecute.getEndDate().getTime()));
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void updateVOSExecute(VOSExecute vosExecute) throws BlockStoreException {
+        String sql = "UPDATE vosexecute SET execute = ?, data = ?, startDate = ?, endDate = ? WHERE vosKey = ? AND pubKey = ?";
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setLong(1, vosExecute.getExecute());
+            preparedStatement.setBytes(2, vosExecute.getData());
+            preparedStatement.setTimestamp(3, new java.sql.Timestamp(vosExecute.getStartDate().getTime()));
+            preparedStatement.setTimestamp(4, new java.sql.Timestamp(vosExecute.getEndDate().getTime()));
+            
+            preparedStatement.setString(5, vosExecute.getVosKey());
+            preparedStatement.setString(6, vosExecute.getPubKey());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
 }

@@ -66,16 +66,13 @@ public abstract class NetworkParameters {
     public static final long BLOCKTYPE_INITIAL = 0; // Genesis Block of system
     public static final long BLOCKTYPE_TRANSFER = 1; // normal transfer of token
     public static final long BLOCKTYPE_TOKEN_CREATION = 3; // custom token
-                                                           // creation
-
     public static final long BLOCKTYPE_REWARD = 2; // Reward of mining
-
     public static final long BLOCKTYPE_USERDATA = 4; // user defined data
-
     public static final long BLOCKTYPE_VOS = 5; // virtual operation system for using docker and kubernates
     public static final long BLOCKTYPE_GOVERNANCE = 6; //  Governance of software update and community
-    
     public static final long BLOCKTYPE_FILE = 7;
+    public static final long BLOCKTYPE_VOS_EXECUTE = 8;
+    
     // Use Equihash
     public static final boolean USE_EQUIHASH = false;
 

@@ -14,12 +14,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockStoreException;
-import net.bigtangle.core.Exchange;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.ProtocolException;
 import net.bigtangle.core.Sha256Hash;
@@ -38,119 +34,7 @@ import net.bigtangle.core.VerificationException;
 
 public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
 
-    private static final Logger log = LoggerFactory.getLogger(DatabaseFullPrunedBlockStore.class);
-
-    
-
-    @Override
-    public List<Exchange> getExchangeListWithAddress(String address) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        List<Exchange> list = new ArrayList<Exchange>();
-        try {
-            String SELECT_EXCHANGE_SQL = "SELECT orderid, fromAddress, "
-                    + "fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, "
-                    + "data, toSign, fromSign, toOrderId, fromOrderId " + "FROM exchange WHERE (fromAddress = ?)";
-            preparedStatement = conn.get().prepareStatement(SELECT_EXCHANGE_SQL);
-            preparedStatement.setString(1, address);
-            // preparedStatement.setString(2, address);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                Exchange exchange = new Exchange();
-                exchange.setOrderid(resultSet.getString("orderid"));
-                exchange.setFromAddress(resultSet.getString("fromAddress"));
-                exchange.setFromTokenHex(resultSet.getString("fromTokenHex"));
-                exchange.setFromAmount(resultSet.getString("fromAmount"));
-                exchange.setToAddress(resultSet.getString("toAddress"));
-                exchange.setToTokenHex(resultSet.getString("toTokenHex"));
-                exchange.setToAmount(resultSet.getString("toAmount"));
-                exchange.setData(resultSet.getBytes("data"));
-                exchange.setToSign(resultSet.getInt("toSign"));
-                exchange.setFromSign(resultSet.getInt("fromSign"));
-                exchange.setToOrderId(resultSet.getString("toOrderId"));
-                exchange.setFromOrderId(resultSet.getString("fromOrderId"));
-                if (exchange.getToSign() != 1 || exchange.getFromSign() != 1) {
-                    list.add(exchange);
-                }
-            }
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-        try {
-            String SELECT_EXCHANGE_SQL = "SELECT orderid, fromAddress, "
-                    + "fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, "
-                    + "data, toSign, fromSign, toOrderId, fromOrderId " + "FROM exchange WHERE (toAddress = ?)";
-            preparedStatement = conn.get().prepareStatement(SELECT_EXCHANGE_SQL);
-            preparedStatement.setString(1, address);
-            // preparedStatement.setString(2, address);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                Exchange exchange = new Exchange();
-                exchange.setOrderid(resultSet.getString("orderid"));
-                exchange.setFromAddress(resultSet.getString("fromAddress"));
-                exchange.setFromTokenHex(resultSet.getString("fromTokenHex"));
-                exchange.setFromAmount(resultSet.getString("fromAmount"));
-                exchange.setToAddress(resultSet.getString("toAddress"));
-                exchange.setToTokenHex(resultSet.getString("toTokenHex"));
-                exchange.setToAmount(resultSet.getString("toAmount"));
-                exchange.setData(resultSet.getBytes("data"));
-                exchange.setToSign(resultSet.getInt("toSign"));
-                exchange.setFromSign(resultSet.getInt("fromSign"));
-                exchange.setToOrderId(resultSet.getString("toOrderId"));
-                exchange.setFromOrderId(resultSet.getString("fromOrderId"));
-                if (exchange.getToSign() != 1 || exchange.getFromSign() != 1) {
-                    list.add(exchange);
-                }
-            }
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-        return list;
-    }
-
-    @Override
-    public void updateExchangeSign(String orderid, String signtype, byte[] data) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            String sql = "";
-            if (signtype.equals("to")) {
-                sql = "UPSERT INTO exchange (toSign, data, orderid) VALUES (1, ?, ?)";
-            } else {
-                sql = "UPSERT INTO exchange (fromSign, data, orderid) VALUES (1, ?, ?)";
-            }
-            preparedStatement = conn.get().prepareStatement(sql);
-            preparedStatement.setString(2, orderid);
-            preparedStatement.setBytes(1, data);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
+    //private static final Logger log = LoggerFactory.getLogger(DatabaseFullPrunedBlockStore.class);
 
     @Override
     public List<StoredBlock> getSolidApproverBlocks(Sha256Hash hash) throws BlockStoreException {
@@ -336,15 +220,6 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             + "    description varchar(255),\n" + "    blocktype integer ,\n"
             + "    CONSTRAINT tokenid_pk PRIMARY KEY (tokenid) \n)";
 
- 
-
-    public static final String CREATE_EXCHANGE_TABLE = "CREATE TABLE exchange (\n"
-            + "   orderid varchar(255) not null,\n" + "   fromAddress varchar(255),\n"
-            + "   fromTokenHex varchar(255),\n" + "   fromAmount varchar(255),\n" + "   toAddress varchar(255),\n"
-            + "   toTokenHex varchar(255),\n" + "   toAmount varchar(255),\n" + "   data VARBINARY(5000) ,\n"
-            + "   toSign integer,\n" + "   fromSign integer,\n" + "   toOrderId varchar(255),\n"
-            + "   fromOrderId varchar(255),\n" + "   CONSTRAINT orderid_pk PRIMARY KEY (orderid) )";
-
     public PhoenixBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
             String username, String password) throws BlockStoreException {
         super(params, DATABASE_CONNECTION_URL_PREFIX + hostname + ";serialization=PROTOBUF", fullStoreDepth, username,
@@ -365,8 +240,6 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_TIPS_TABLE);
         sqlStatements.add(CREATE_BLOCKEVALUATION_TABLE);
         sqlStatements.add(CREATE_TOKENS_TABLE);
-   
-        sqlStatements.add(CREATE_EXCHANGE_TABLE);
         return sqlStatements;
     }
 
@@ -384,10 +257,10 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blockevaluation (depth)");
         sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blockevaluation (milestonedepth)");
         sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blockevaluation (height)");
-        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON exchange (fromAddress)");
-        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON exchange (toAddress)");
-        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON exchange (toSign)");
-        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON exchange (fromSign)");
+//        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON exchange (fromAddress)");
+//        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON exchange (toAddress)");
+//        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON exchange (toSign)");
+//        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON exchange (fromSign)");
         sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON tokens (tokenname)");
         sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON tokens (description)");
         sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blockevaluation (maintained)");

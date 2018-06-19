@@ -9,6 +9,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -35,6 +36,7 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VOS;
+import net.bigtangle.core.VOSExecute;
 import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.SendRequest;
@@ -232,6 +234,45 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         
         String jsonStr = dataList.get(0);
         assertEquals(jsonStr, Utils.HEX.encode(vos.toByteArray()));
+    }
+    
+    @Test
+    public void testSaveOVSExecute() throws Exception {
+        ECKey outKey = new ECKey();
+        
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block block = this.networkParameters.getDefaultSerializer().makeBlock(data);
+        block.setBlocktype(NetworkParameters.BLOCKTYPE_VOS_EXECUTE);
+
+        Transaction coinbase = new Transaction(this.networkParameters);
+        VOSExecute vosExecute = new VOSExecute();
+        vosExecute.setVosKey(outKey.getPublicKeyAsHex());
+        vosExecute.setPubKey(outKey.getPublicKeyAsHex());
+        vosExecute.setExecute(1000);
+        vosExecute.setStartDate(new Date());
+        vosExecute.setEndDate(new Date());
+        vosExecute.setData(new byte[] {0x00, 0x00, 0x00, 0x00});
+        
+        coinbase.setData(vosExecute.toByteArray());
+
+        Sha256Hash sighash = coinbase.getHash();
+        ECKey.ECDSASignature party1Signature = outKey.sign(sighash);
+        byte[] buf1 = party1Signature.encodeToDER();
+
+        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+        MultiSignBy multiSignBy0 = new MultiSignBy();
+        multiSignBy0.setAddress(outKey.toAddress(this.networkParameters).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+        multiSignBies.add(multiSignBy0);
+        coinbase.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+
+        block.addTransaction(coinbase);
+        block.solve();
+        
+        OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
     }
 
     @Test
