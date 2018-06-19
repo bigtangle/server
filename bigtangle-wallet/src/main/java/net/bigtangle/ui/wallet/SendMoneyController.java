@@ -747,7 +747,9 @@ public class SendMoneyController {
 
         Coin amount = Coin.parseCoin(amountEdit1.getText(), utxo.getValue().tokenid);
 
-        Address address = Address.fromBase58(networkParameters, addressComboBox1.getValue());
+        Address address = Address.fromBase58(networkParameters,
+                !addressComboBox1.getValue().contains(",") ? addressComboBox1.getValue()
+                        : addressComboBox1.getValue().split(",")[1]);
         transaction.addOutput(amount, address);
 
         Coin amount2 = multisigOutput.getValue().subtract(amount);
