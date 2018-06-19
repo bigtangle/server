@@ -458,10 +458,11 @@ public class Main extends Application {
         TokenInfo tokenInfo = (TokenInfo) getUserdata(DataClassName.TOKEN.name());
         List<Tokens> list = tokenInfo.getPositveTokenList();
         List<String> addressList = new ArrayList<String>();
+        if(list!=null) {
         for (Tokens tokens : list) {
             addressList.add(tokens.getTokenid() + "," + tokens.getTokenname());
         }
-
+        }
         return addressList;
     }
 
