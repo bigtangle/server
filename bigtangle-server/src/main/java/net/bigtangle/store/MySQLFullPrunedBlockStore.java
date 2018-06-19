@@ -85,8 +85,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    hash varbinary(32) NOT NULL,\n"
             + "    CONSTRAINT tips_pk PRIMARY KEY (hash) USING BTREE \n" + ")\n";
 
- 
-
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
             + "    tokenid varchar(255) NOT NULL  ,\n"
             + "    tokenname varchar(255) ,\n"
@@ -157,6 +155,15 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    pubKey varchar(255),\n" 
             + "    blocktype bigint,\n" 
              + "   CONSTRAINT userdata_pk PRIMARY KEY (dataclassname, pubKey) USING BTREE \n" + ")";
+    
+    private static final String CREATE_VOSEXECUTE_TABLE = "CREATE TABLE vosexecute (\n" 
+            + "    vosKey varchar(255) NOT NULL,\n"
+            + "    pubKey varchar(255) NOT NULL,\n" 
+            + "    execute bigint NOT NULL,\n" 
+            + "    data mediumblob NOT NULL,\n"
+            + "    startDate datetime NOT NULL,\n"
+            + "    endDate datetime NOT NULL,\n"
+             + "   CONSTRAINT vosexecute_pk PRIMARY KEY (vosKey, pubKey) USING BTREE \n" + ")";
 
     // Some indexes to speed up inserts
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_height_toaddress_idx ON outputs (hash, outputindex, height, toaddress) USING btree";
@@ -192,6 +199,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_USERDATA_TABLE);
         sqlStatements.add(CREATE_PAYMULTISIGN_TABLE);
         sqlStatements.add(CREATE_PAYMULTISIGNADDRESS_TABLE);
+        sqlStatements.add(CREATE_VOSEXECUTE_TABLE);
         return sqlStatements;
     }
 

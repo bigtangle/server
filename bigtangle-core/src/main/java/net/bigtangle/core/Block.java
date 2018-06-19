@@ -924,7 +924,8 @@ public class Block extends Message {
             if (!allowCoinbaseTransaction() && transaction.isCoinBase()) {
                 throw new VerificationException("Coinbase Transaction is not allowed for this block type");
             }
-            if(blocktype != NetworkParameters.BLOCKTYPE_USERDATA && blocktype != NetworkParameters.BLOCKTYPE_VOS) {
+            if (blocktype != NetworkParameters.BLOCKTYPE_USERDATA && blocktype != NetworkParameters.BLOCKTYPE_VOS
+                    && blocktype != NetworkParameters.BLOCKTYPE_VOS_EXECUTE) {
                 transaction.verify();
             }
         }
