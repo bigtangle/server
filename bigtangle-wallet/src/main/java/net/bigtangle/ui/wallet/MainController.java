@@ -419,7 +419,8 @@ public class MainController {
         alert.setTitle("");
         alert.setHeaderText(null);
         alert.setResizable(true);
-        alert.setContentText(re.toString());
+        String blockinfo = Main.block2string(re);
+        alert.setContentText(blockinfo);
 
         alert.showAndWait();
     }

@@ -50,6 +50,7 @@ import org.spongycastle.crypto.params.KeyParameter;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.google.common.base.Strings;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -62,6 +63,7 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Contact;
@@ -71,15 +73,20 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.ScriptException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionInput;
+import net.bigtangle.core.TransactionOutPoint;
+import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.script.Script;
 import net.bigtangle.ui.wallet.controls.NotificationBarPane;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
@@ -322,6 +329,129 @@ public class Main extends Application {
             addressList.add(contact.getName() + "," + contact.getAddress());
         }
         return addressList;
+    }
+
+    public static String transaction2string(Transaction transaction) {
+        StringBuilder s = new StringBuilder();
+        s.append("  ").append(transaction.getHashAsString()).append('\n');
+        if (transaction.getUpdateTime() != null)
+            s.append("  updated: ").append(Utils.dateTimeFormat(transaction.getUpdateTime())).append('\n');
+        if (transaction.getVersion() != 1)
+            s.append("  version ").append(transaction.getVersion()).append('\n');
+        if (transaction.isTimeLocked()) {
+            s.append("  time locked until ");
+            if (transaction.getLockTime() < Transaction.LOCKTIME_THRESHOLD) {
+                s.append("block ").append(transaction.getLockTime());
+
+            } else {
+                s.append(Utils.dateTimeFormat(transaction.getLockTime() * 1000));
+            }
+            s.append('\n');
+        }
+        if (transaction.isOptInFullRBF()) {
+            s.append("  opts into full replace-by-fee\n");
+        }
+        if (transaction.isCoinBase()) {
+            String script;
+            String script2;
+            try {
+                script = transaction.getInputs().get(0).getScriptSig().toString();
+                script2 = transaction.getOutputs().get(0).toString();
+            } catch (ScriptException e) {
+                script = "???";
+                script2 = "???";
+            }
+            s.append("     == COINBASE (scriptSig ").append(script).append(")  (scriptPubKey ").append(script2)
+                    .append(")\n");
+            return s.toString();
+        }
+        if (!transaction.getInputs().isEmpty()) {
+            for (TransactionInput in : transaction.getInputs()) {
+                s.append("     ");
+                s.append("in   ");
+
+                try {
+                    String scriptSigStr = in.getScriptSig().toString();
+                    s.append(!Strings.isNullOrEmpty(scriptSigStr) ? scriptSigStr : "<no scriptSig>");
+                    if (in.getValue() != null)
+                        s.append(" ").append(in.getValue().toString());
+                    s.append("\n          ");
+                    s.append("outpoint:");
+                    final TransactionOutPoint outpoint = in.getOutpoint();
+                    s.append(outpoint.toString());
+                    final TransactionOutput connectedOutput = outpoint.getConnectedOutput();
+                    if (connectedOutput != null) {
+                        Script scriptPubKey = connectedOutput.getScriptPubKey();
+                        if (scriptPubKey.isSentToAddress() || scriptPubKey.isPayToScriptHash()) {
+                            s.append(" hash160:");
+                            s.append(Utils.HEX.encode(scriptPubKey.getPubKeyHash()));
+                        }
+                    }
+                    if (in.hasSequence()) {
+                        s.append("\n          sequence:").append(Long.toHexString(in.getSequenceNumber()));
+                        if (in.isOptInFullRBF())
+                            s.append(", opts into full RBF");
+                    }
+                } catch (Exception e) {
+                    s.append("[exception: ").append(e.getMessage()).append("]");
+                }
+                s.append('\n');
+            }
+        } else {
+            s.append("     ");
+            s.append("INCOMPLETE: No inputs!\n");
+        }
+        for (TransactionOutput out : transaction.getOutputs()) {
+            s.append("     ");
+            s.append("out  ");
+            try {
+                String scriptPubKeyStr = out.getScriptPubKey().toString();
+                s.append(!Strings.isNullOrEmpty(scriptPubKeyStr) ? scriptPubKeyStr : "<no scriptPubKey>");
+                s.append("\n ");
+                s.append(out.getValue().toString());
+                if (!out.isAvailableForSpending()) {
+                    s.append(" Spent");
+                }
+                if (out.getSpentBy() != null) {
+                    s.append(" by ");
+                    s.append(out.getSpentBy().getParentTransaction().getHashAsString());
+                }
+            } catch (Exception e) {
+                s.append("[exception: ").append(e.getMessage()).append("]");
+            }
+            s.append('\n');
+        }
+        if (transaction.getPurpose() != null)
+            s.append("   purpose ").append(transaction.getPurpose()).append('\n');
+        return s.toString();
+    }
+
+    public static String block2string(Block block) {
+        StringBuilder s = new StringBuilder();
+        s.append("block hash: ").append(block.getHashAsString()).append('\n');
+        if (block.getTransactions() != null && block.getTransactions().size() > 0) {
+            s.append("   ").append(block.getTransactions().size()).append(" transaction(s):\n");
+            for (Transaction tx : block.getTransactions()) {
+                s.append(transaction2string(tx));
+            }
+        }
+        s.append("   version: ").append(block.getVersion());
+        s.append('\n');
+        s.append("   previous: ").append(block.getPrevBlockHash()).append("\n");
+        s.append("   branch: ").append(block.getPrevBranchBlockHash()).append("\n");
+        s.append("   merkle: ").append(block.getMerkleRoot()).append("\n");
+        s.append("   time: ").append(block.getTimeSeconds()).append(" (")
+                .append(Utils.dateTimeFormat(block.getTimeSeconds() * 1000)).append(")\n");
+        // s.append(" difficulty target (nBits):
+        // ").append(difficultyTarget).append("\n");
+        s.append("   nonce: ").append(block.getNonce()).append("\n");
+        if (block.getMineraddress() != null)
+            s.append("   mineraddress: ").append(new Address(params, block.getMineraddress())).append("\n");
+
+        s.append("   blocktype: ").append(block.getBlocktype()).append("\n");
+
+        return s.toString();
+
     }
 
     public static List<String> initToken4block() throws Exception {
