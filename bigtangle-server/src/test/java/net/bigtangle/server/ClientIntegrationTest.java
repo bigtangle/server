@@ -260,7 +260,6 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         }
     }
     
-    @Test
     public void testSaveOVSExecute(ECKey outKey) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",

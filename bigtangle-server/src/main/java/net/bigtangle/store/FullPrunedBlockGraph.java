@@ -312,7 +312,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             return;
         }
         vosExecute_.setData(Utils.HEX.decode((String) map.get("dataHex")));
-        vosExecute_.setExecute((Integer) map.get("execute"));
         vosExecute_.setStartDate(new Date((Long) map.get("startDate")));
         vosExecute_.setEndDate(new Date((Long) map.get("endDate")));
         vosExecute_.setExecute(vosExecute_.getExecute() + 1);
