@@ -428,27 +428,28 @@ public class Main extends Application {
 
     public static String block2string(Block block) {
         StringBuilder s = new StringBuilder();
-        s.append("block hash: ").append(block.getHashAsString()).append('\n');
+        s.append(Main.getText("blockhash") + ": ").append(block.getHashAsString()).append('\n');
         if (block.getTransactions() != null && block.getTransactions().size() > 0) {
-            s.append("   ").append(block.getTransactions().size()).append(" transaction(s):\n");
+            s.append("   ").append(block.getTransactions().size()).append(" " + Main.getText("transaction") + ":\n");
             for (Transaction tx : block.getTransactions()) {
                 s.append(transaction2string(tx));
             }
         }
-        s.append("   version: ").append(block.getVersion());
+        s.append("   " + Main.getText("version") + ": ").append(block.getVersion());
         s.append('\n');
-        s.append("   previous: ").append(block.getPrevBlockHash()).append("\n");
-        s.append("   branch: ").append(block.getPrevBranchBlockHash()).append("\n");
-        s.append("   merkle: ").append(block.getMerkleRoot()).append("\n");
-        s.append("   time: ").append(block.getTimeSeconds()).append(" (")
+        s.append("   " + Main.getText("previous") + ": ").append(block.getPrevBlockHash()).append("\n");
+        s.append("   " + Main.getText("branch") + ": ").append(block.getPrevBranchBlockHash()).append("\n");
+        s.append("   " + Main.getText("merkle") + ": ").append(block.getMerkleRoot()).append("\n");
+        s.append("   " + Main.getText("time") + ": ").append(block.getTimeSeconds()).append(" (")
                 .append(Utils.dateTimeFormat(block.getTimeSeconds() * 1000)).append(")\n");
         // s.append(" difficulty target (nBits):
         // ").append(difficultyTarget).append("\n");
-        s.append("   nonce: ").append(block.getNonce()).append("\n");
+        s.append("   " + Main.getText("nonce") + ": ").append(block.getNonce()).append("\n");
         if (block.getMineraddress() != null)
-            s.append("   mineraddress: ").append(new Address(params, block.getMineraddress())).append("\n");
+            s.append("   " + Main.getText("mineraddress") + ": ").append(new Address(params, block.getMineraddress()))
+                    .append("\n");
 
-        s.append("   blocktype: ").append(block.getBlocktype()).append("\n");
+        s.append("   " + Main.getText("blocktype") + ": ").append(block.getBlocktype()).append("\n");
 
         return s.toString();
 
@@ -458,10 +459,10 @@ public class Main extends Application {
         TokenInfo tokenInfo = (TokenInfo) getUserdata(DataClassName.TOKEN.name());
         List<Tokens> list = tokenInfo.getPositveTokenList();
         List<String> addressList = new ArrayList<String>();
-        if(list!=null) {
-        for (Tokens tokens : list) {
-            addressList.add(tokens.getTokenid() + "," + tokens.getTokenname());
-        }
+        if (list != null) {
+            for (Tokens tokens : list) {
+                addressList.add(tokens.getTokenid() + "," + tokens.getTokenname());
+            }
         }
         return addressList;
     }
