@@ -237,9 +237,31 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     }
     
     @Test
-    public void testSaveOVSExecute() throws Exception {
+    public void testSaveOVSExecuteBatch() {
+        for (int i = 0; i < 10; i ++) {
+            try {
+                ECKey outKey = new ECKey();
+                this.testSaveOVSExecute(outKey);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    @Test
+    public void testSaveOVSExecuteBatch0() {
         ECKey outKey = new ECKey();
-        
+        for (int i = 0; i < 10; i ++) {
+            try {
+                this.testSaveOVSExecute(outKey);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    @Test
+    public void testSaveOVSExecute(ECKey outKey) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -250,7 +272,6 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         VOSExecute vosExecute = new VOSExecute();
         vosExecute.setVosKey(outKey.getPublicKeyAsHex());
         vosExecute.setPubKey(outKey.getPublicKeyAsHex());
-        vosExecute.setExecute(1000);
         vosExecute.setStartDate(new Date());
         vosExecute.setEndDate(new Date());
         vosExecute.setData(new byte[] {0x00, 0x00, 0x00, 0x00});

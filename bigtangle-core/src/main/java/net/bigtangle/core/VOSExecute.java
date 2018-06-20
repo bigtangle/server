@@ -9,7 +9,7 @@ public class VOSExecute implements java.io.Serializable {
         HashMap<String, Object> map = new HashMap<String, Object>();
         map.put("vosKey", vosKey);
         map.put("pubKey", pubKey);
-        map.put("execute", execute);
+//        map.put("execute", execute);
         map.put("startDate", startDate.getTime());
         map.put("endDate", endDate.getTime());
         map.put("dataHex", Utils.HEX.encode(this.data));

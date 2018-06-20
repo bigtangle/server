@@ -305,9 +305,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             vosExecute_.setVosKey(vosKey);
             vosExecute_.setPubKey(pubKey);
             vosExecute_.setData(Utils.HEX.decode((String) map.get("dataHex")));
-            vosExecute_.setExecute((Integer) map.get("execute"));
             vosExecute_.setStartDate(new Date((Long) map.get("startDate")));
             vosExecute_.setEndDate(new Date((Long) map.get("endDate")));
+            vosExecute_.setExecute(1);
             this.blockStore.insertVOSExecute(vosExecute_);
             return;
         }
@@ -315,6 +315,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         vosExecute_.setExecute((Integer) map.get("execute"));
         vosExecute_.setStartDate(new Date((Long) map.get("startDate")));
         vosExecute_.setEndDate(new Date((Long) map.get("endDate")));
+        vosExecute_.setExecute(vosExecute_.getExecute() + 1);
         this.blockStore.updateVOSExecute(vosExecute_);
     }
 
