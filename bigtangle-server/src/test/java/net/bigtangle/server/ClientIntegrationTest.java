@@ -21,6 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
@@ -248,8 +250,9 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         }
     }
     
+    @SuppressWarnings("unchecked")
     @Test
-    public void testSaveOVSExecuteBatch0() {
+    public void testSaveOVSExecuteBatch0() throws Exception {
         ECKey outKey = new ECKey();
         for (int i = 0; i < 10; i ++) {
             try {
@@ -258,6 +261,16 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
                 e.printStackTrace();
             }
         }
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("vosKey", outKey.getPublicKeyAsHex());
+        String resp = OkHttp3Util.postString(contextRoot + "getVOSExecuteList", Json.jsonmapper().writeValueAsString(requestParam));
+        
+        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
+        List<HashMap<String, Object>> vosExecutes = (List<HashMap<String,Object>>) result.get("vosExecutes");
+        assertTrue(vosExecutes.size() == 1);
+        
+        HashMap<String, Object> vosExecute = vosExecutes.get(0);
+        assertTrue((int) vosExecute.get("execute") == 10);
     }
     
     public void testSaveOVSExecute(ECKey outKey) throws Exception {

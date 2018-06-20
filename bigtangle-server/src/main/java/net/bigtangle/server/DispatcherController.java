@@ -43,6 +43,7 @@ import net.bigtangle.server.service.PayMultiSignService;
 import net.bigtangle.server.service.TokensService;
 import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.server.service.UserDataService;
+import net.bigtangle.server.service.VOSExecuteService;
 import net.bigtangle.server.service.WalletService;
 
 @RestController
@@ -72,6 +73,9 @@ public class DispatcherController {
     
     @Autowired
     private PayMultiSignService payMultiSignService;
+    
+    @Autowired
+    private VOSExecuteService vosExecuteService;
 
     @SuppressWarnings("unchecked")
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
@@ -312,6 +316,15 @@ public class DispatcherController {
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String hexStr = (String) request.get("hexStr");
                 AbstractResponse response = walletService.getOutputsWithHexStr(hexStr);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+                
+            case getVOSExecuteList: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String vosKey = (String) request.get("vosKey");
+                AbstractResponse response = vosExecuteService.getVOSExecuteList(vosKey);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
