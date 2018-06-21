@@ -8,7 +8,7 @@ public class TokenInfo implements java.io.Serializable {
     private static final long serialVersionUID = 1554582498768357964L;
 
     private Tokens tokens;
-    private List<Tokens> positveTokenList;
+    private List<Tokens> positveTokenList = new ArrayList<Tokens>();
 
     private TokenSerial tokenSerial;
 

@@ -698,7 +698,7 @@ public class StockController extends TokensController {
         try {
             addToken(CONTEXT_ROOT, rowData.get("tokenname").toString(), rowData.get("tokenid").toString());
         } catch (Exception e) {
-
+            GuiUtils.crashAlert(e);
         }
     }
 
