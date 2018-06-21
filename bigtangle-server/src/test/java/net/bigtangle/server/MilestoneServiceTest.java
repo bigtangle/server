@@ -11,7 +11,6 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -20,10 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import com.google.common.collect.ImmutableList;
-
 import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
@@ -32,7 +28,6 @@ import net.bigtangle.core.PrunedException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
-import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
@@ -42,9 +37,7 @@ import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
-import net.bigtangle.server.service.TipsService;
 import net.bigtangle.server.service.TransactionService;
-import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
@@ -63,8 +56,6 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     private NetworkParameters networkParameters;
     @Autowired
     protected FullPrunedBlockStore store;
-    @Autowired
-    private TipsService tipsManager;
     
     ECKey outKey = new ECKey();
 
@@ -124,7 +115,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(b2.getHash()).isMilestone());
         assertTrue(blockService.getBlockEvaluation(b3.getHash()).isMilestone());
 
-        ECKey genesiskey = new ECKey(Utils.HEX.decode(testPiv), Utils.HEX.decode(testPub));
+        ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         //use UTXO to create double spending, this can not be created with wallet
         List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0), 0);

@@ -104,7 +104,7 @@ public abstract class AbstractIntegrationTest {
     NetworkParameters networkParameters;
 
     static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
-    static String testPiv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
+    static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
 
     @Before
     public void setUp() throws Exception {
@@ -221,7 +221,7 @@ public abstract class AbstractIntegrationTest {
     public void testInitTransferWallet() throws Exception {
 
         Wallet coinbaseWallet = new Wallet(networkParameters);
-        coinbaseWallet.importKey(new ECKey(Utils.HEX.decode(testPiv), Utils.HEX.decode(testPub)));
+        coinbaseWallet.importKey(new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub)));
         coinbaseWallet.setServerURL(contextRoot);
         // get new Block to be used from server
         HashMap<String, String> requestParam = new HashMap<String, String>();

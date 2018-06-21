@@ -19,6 +19,7 @@ import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 
 import javax.annotation.Nullable;
 
@@ -1237,6 +1238,8 @@ public class Block extends Message {
                 || blocktype == NetworkParameters.BLOCKTYPE_TOKEN_CREATION
                 || blocktype == NetworkParameters.BLOCKTYPE_REWARD;
     }
+    
+    private static Random gen = new Random();
 
     /**
      * Returns a solved block that builds on top of this one. This exists for
@@ -1253,6 +1256,9 @@ public class Block extends Message {
         Block b = new Block(params, version);
         // b.setDifficultyTarget(difficultyTarget);
         // only BLOCKTYPE_TOKEN_CREATION, BLOCKTYPE_REWARD, BLOCKTYPE_INITIAL
+        
+        // Add randomness to prevent new empty blocks from same miner with same approved blocks to be the same
+        b.setNonce(gen.nextLong());
 
         b.setMineraddress(mineraddress);
         if (to != null) {
