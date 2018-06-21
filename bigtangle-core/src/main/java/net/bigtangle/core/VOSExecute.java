@@ -35,6 +35,13 @@ public class VOSExecute implements java.io.Serializable {
     private Date startDate;
     
     private Date endDate;
+    
+    public String getDataHex() {
+        if (data == null) {
+            return "";
+        }
+        return Utils.HEX.encode(this.data);
+    }
 
     public String getVosKey() {
         return vosKey;
