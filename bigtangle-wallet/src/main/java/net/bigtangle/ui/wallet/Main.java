@@ -334,10 +334,7 @@ public class Main extends Application {
     public static String transaction2string(Transaction transaction) {
         StringBuilder s = new StringBuilder();
         s.append("  ").append(transaction.getHashAsString()).append('\n');
-        if (transaction.getUpdateTime() != null)
-            s.append("  updated: ").append(Utils.dateTimeFormat(transaction.getUpdateTime())).append('\n');
-        if (transaction.getVersion() != 1)
-            s.append("  version ").append(transaction.getVersion()).append('\n');
+
         if (transaction.isTimeLocked()) {
             s.append("  time locked until ");
             if (transaction.getLockTime() < Transaction.LOCKTIME_THRESHOLD) {
@@ -348,9 +345,7 @@ public class Main extends Application {
             }
             s.append('\n');
         }
-        if (transaction.isOptInFullRBF()) {
-            s.append("  opts into full replace-by-fee\n");
-        }
+
         if (transaction.isCoinBase()) {
             String script;
             String script2;
@@ -361,18 +356,17 @@ public class Main extends Application {
                 script = "???";
                 script2 = "???";
             }
-            s.append("     == COINBASE (scriptSig ").append(script).append(")  (scriptPubKey ").append(script2)
-                    .append(")\n");
+            s.append(Main.getText("coinbase")).append(script).append("   (").append(script2).append(")\n");
             return s.toString();
         }
         if (!transaction.getInputs().isEmpty()) {
             for (TransactionInput in : transaction.getInputs()) {
                 s.append("     ");
-                s.append("in   ");
+                s.append(Main.getText("input"));
 
                 try {
                     String scriptSigStr = in.getScriptSig().toString();
-                    s.append(!Strings.isNullOrEmpty(scriptSigStr) ? scriptSigStr : "<no scriptSig>");
+                    s.append(!Strings.isNullOrEmpty(scriptSigStr) ? scriptSigStr : " ");
                     if (in.getValue() != null)
                         s.append(" ").append(in.getValue().toString());
                     s.append("\n          ");
@@ -389,8 +383,6 @@ public class Main extends Application {
                     }
                     if (in.hasSequence()) {
                         s.append("\n          sequence:").append(Long.toHexString(in.getSequenceNumber()));
-                        if (in.isOptInFullRBF())
-                            s.append(", opts into full RBF");
                     }
                 } catch (Exception e) {
                     s.append("[exception: ").append(e.getMessage()).append("]");
@@ -399,7 +391,7 @@ public class Main extends Application {
             }
         } else {
             s.append("     ");
-            s.append("INCOMPLETE: No inputs!\n");
+            // s.append("INCOMPLETE: No inputs!\n");
         }
         for (TransactionOutput out : transaction.getOutputs()) {
             s.append("     ");
@@ -421,8 +413,7 @@ public class Main extends Application {
             }
             s.append('\n');
         }
-        if (transaction.getPurpose() != null)
-            s.append("   purpose ").append(transaction.getPurpose()).append('\n');
+ 
         return s.toString();
     }
 
@@ -709,23 +700,6 @@ public class Main extends Application {
             amount = amount.add(utxo.getValue());
         }
         return amount;
-    }
-
-    public boolean sendMessage(byte[] data) throws Exception {
-        String CONTEXT_ROOT = Main.IpAddress + "/"; // http://" + Main.IpAddress
-                                                    // + ":" + Main.port + "/";
-        String resp = OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", data);
-        @SuppressWarnings("unchecked")
-        HashMap<String, Object> respRes = Json.jsonmapper().readValue(resp, HashMap.class);
-        int errorcode = (Integer) respRes.get("errorcode");
-        if (errorcode > 0) {
-            String message = (String) respRes.get("message");
-            GuiUtils.informationalAlert(message, Main.getText("ex_c_d1"));
-            return false;
-        }
-        // sentEmpstyBlock(2);
-        return true;
-
     }
 
     public static boolean checkResponse(String resp) throws JsonParseException, JsonMappingException, IOException {

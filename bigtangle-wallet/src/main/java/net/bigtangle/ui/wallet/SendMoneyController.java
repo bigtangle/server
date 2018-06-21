@@ -528,7 +528,7 @@ public class SendMoneyController {
                 GuiUtils.informationalAlert(Main.getText("m_n_e"), "", "");
                 return;
             }
-            Main.instance.sendMessage(rollingBlock.bitcoinSerialize());
+            sendMessage(rollingBlock.bitcoinSerialize());
             checkContact(event);
             // Main.instance.sentEmpstyBlock(2);
             overlayUI.done();
@@ -537,6 +537,22 @@ public class SendMoneyController {
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
+    }
+
+    public boolean sendMessage(byte[] data) throws Exception {
+        String CONTEXT_ROOT = Main.IpAddress + "/"; // http://" + Main.IpAddress
+                                                    // + ":" + Main.port + "/";
+        String resp = OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", data);
+        @SuppressWarnings("unchecked")
+        HashMap<String, Object> respRes = Json.jsonmapper().readValue(resp, HashMap.class);
+        int errorcode = (Integer) respRes.get("errorcode");
+        if (errorcode > 0) {
+            String message = (String) respRes.get("message");
+            GuiUtils.informationalAlert(message, Main.getText("ex_c_d1"));
+            return false;
+        }
+        return true;
+
     }
 
     public void sendMulti(ActionEvent event) {
