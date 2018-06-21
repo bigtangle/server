@@ -160,7 +160,19 @@ public abstract class AbstractIntegrationTest {
     public List<UTXO> testTransactionAndGetBalances(boolean withZero) throws Exception {
         return testTransactionAndGetBalances(withZero, walletKeys);
     }
-
+ 
+    public  UTXO  testTransactionAndGetBalances(String tokenid, boolean withZero, List<ECKey> keys) throws Exception {
+        List<UTXO> ulist = testTransactionAndGetBalances(withZero, keys);
+        
+        for (UTXO u : ulist) {
+            if (tokenid.equals(u.getTokenid())
+                   ) {
+                return u;
+            }
+        }
+        
+         throw new RuntimeException();
+    }
     // get balance for the walleKeys
     @SuppressWarnings("unchecked")
     public List<UTXO> testTransactionAndGetBalances(boolean withZero, List<ECKey> keys) throws Exception {

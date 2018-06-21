@@ -618,6 +618,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 return false;
         }
 
+        // Check genesis  block specific validity, can only one genesis block
+        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_INITIAL) {
+          if(  block.getHash() != networkParameters.getGenesisBlock().getHash()) {
+              return false;
+          }
+        }
         // Check issuance block specific validity
         if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
             try {
@@ -625,7 +631,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     return false;
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                log.error("",e);
                 return false;
             }
         }
@@ -750,7 +756,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 } catch (InterruptedException thrownE) {
                     throw new RuntimeException(thrownE); // Shouldn't happen
                 } catch (ExecutionException thrownE) {
-                    log.error("Script.correctlySpends threw a non-normal exception: " + thrownE.getCause());
+                   // log.error("Script.correctlySpends threw a non-normal exception: " ,thrownE );
                     throw new VerificationException(
                             "Bug in Script.correctlySpends, likely script malformed in some new and interesting way.",
                             thrownE);
@@ -769,8 +775,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         } finally {
             try {
                 blockStore.commitDatabaseBatchWrite();
-            } catch (BlockStoreException e) {
-                e.printStackTrace();
+            } catch ( Exception e) {
+                //Ignore;
+                log.error(" " + e);
+                
             }
         }
         return true;

@@ -20,6 +20,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
 import net.bigtangle.server.ReqCmd;
+import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.utils.OkHttp3Util;
 
 /**
@@ -37,35 +38,30 @@ public class BlockRequester {
 
     @Autowired
     TransactionService transactionService;
+    @Autowired
+    protected ServerConfiguration serverConfiguration;
 
     public byte[] requestBlock(Sha256Hash hash) {
-        // TODO block from network peers
-        log.debug("requestBlock" + hash.toString());
-        List<String> serverList = new ArrayList<String>();
-        serverList.add("http://de.server.bigtangle.net:8088/");
-        serverList.add("http://cn.server.bigtangle.net:8088/");
+        // block from network peers
+        log.debug("requestBlock" + hash.toString()); 
+        String[] re = serverConfiguration.getRequester().split(",");
         byte[] data = null;
-        for (String s : serverList) {
-
+        for (String s : re) { 
             HashMap<String, String> requestParam = new HashMap<String, String>();
-            requestParam.put("hashHex", Utils.HEX.encode(hash.getBytes()));
-
+            requestParam.put("hashHex", Utils.HEX.encode(hash.getBytes())); 
             try {
                 data = OkHttp3Util.post(s + ReqCmd.getBlock, Json.jsonmapper().writeValueAsString(requestParam));
                 transactionService.addConnected(data, false);
                 break;
-            } catch (JsonProcessingException e) {
-                // TODO Auto-generated catch block
             } catch (Exception e) {
-                // TODO Auto-generated catch block
+                log.debug(s, e);
             }
-
         }
         return data;
     }
 
     public void broadcastBlocks(long startheight, String kafkaserver) {
-       
+
     }
 
 }

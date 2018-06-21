@@ -5,8 +5,6 @@
 package net.bigtangle.server.config;
 
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -16,14 +14,10 @@ import org.springframework.stereotype.Component;
 public class ServerConfiguration {
 
  
-    private String neighbors;
+    private String requester;
     
-    private String port;
-
-    private String udp_receiver_port;
-
-    private String tcp_receiver_port;
-
+    private String port; 
+ 
     private Boolean debug;
 
     @Value("${net:Mainnet}")
@@ -45,12 +39,13 @@ public class ServerConfiguration {
     @Value("${maxRequestList:1000}")
     private   int maxRequestList;
 
-    public String getNeighbors() {
-        return neighbors;
+  
+    public String getRequester() {
+        return requester;
     }
 
-    public void setNeighbors(String neighbors) {
-        this.neighbors = neighbors;
+    public void setRequester(String requester) {
+        this.requester = requester;
     }
 
     public String getPort() {
@@ -61,22 +56,7 @@ public class ServerConfiguration {
         this.port = port;
     }
 
-    public String getUdp_receiver_port() {
-        return udp_receiver_port;
-    }
-
-    public void setUdp_receiver_port(String udp_receiver_port) {
-        this.udp_receiver_port = udp_receiver_port;
-    }
-
-    public String getTcp_receiver_port() {
-        return tcp_receiver_port;
-    }
-
-    public void setTcp_receiver_port(String tcp_receiver_port) {
-        this.tcp_receiver_port = tcp_receiver_port;
-    }
-
+     
     public Boolean getDebug() {
         return debug;
     }
