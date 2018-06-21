@@ -352,8 +352,8 @@ public class ExchangeController {
 
         this.mOrderid = UUIDUtil.randomUUID();
         // this.mTokenid = fromTokenHex;
-        byte[] buf = this.makeSignTransactionBuffer(fromAddress, getCoin(fromAmount, fromTokenHex, false), toAddress,
-                getCoin(toAmount, toTokenHex, false));
+        byte[] buf = this.makeSignTransactionBuffer(fromAddress, getCoin(fromAmount, fromTokenHex, true), toAddress,
+                getCoin(toAmount, toTokenHex, true));
         if (buf == null) {
             return;
         }
