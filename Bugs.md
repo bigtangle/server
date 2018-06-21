@@ -1,8 +1,14 @@
-## Refund
+## Refund --> get the block to imported and read all transaction input 
+and then pay the UTXO to own account. 
+## exchange bugs. 
 
-## add new key generation in key window
+## order sign add  selected order to cancel ---> ordermatch
+
+
+## reentry of transaction in case of conflicts and low rating
+
+
  
-
 ## problem that schedule is down.  --> monitoring prometheus
   
 
@@ -26,5 +32,3 @@ TODO execution results Selection
 
 
 ## move unsolid blocks to new cache table
-
-## Cross-platform Java executable wrapper http://launch4j.sourceforge.net/
