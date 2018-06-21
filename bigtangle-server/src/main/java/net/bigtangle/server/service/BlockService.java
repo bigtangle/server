@@ -12,8 +12,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +29,8 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.Utils;
+import net.bigtangle.kafka.KafkaConfiguration;
+import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.GenesisBlockLRResponse;
 import net.bigtangle.server.response.GetBlockEvaluationsResponse;
@@ -34,7 +38,6 @@ import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.wallet.CoinSelector;
 import net.bigtangle.wallet.DefaultCoinSelector;
-
 
 /**
  * <p>
@@ -53,6 +56,8 @@ public class BlockService {
     protected NetworkParameters networkParameters;
     @Autowired
     FullPrunedBlockGraph blockgraph;
+    @Autowired
+    private KafkaConfiguration kafkaConfiguration;
 
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
@@ -67,7 +72,8 @@ public class BlockService {
         }
         return blocks;
     }
-     @Cacheable(cacheNames = "BlockEvaluations")
+
+    @Cacheable(cacheNames = "BlockEvaluations")
     public BlockEvaluation getBlockEvaluation(Sha256Hash hash) throws BlockStoreException {
         return store.getBlockEvaluation(hash);
     }
@@ -121,7 +127,6 @@ public class BlockService {
         store.updateBlockEvaluationSolid(blockEvaluation.getBlockhash(), b);
     }
 
- 
     public void updateCumulativeWeight(BlockEvaluation blockEvaluation, long i) throws BlockStoreException {
         blockEvaluation.setCumulativeWeight(i);
         store.updateBlockEvaluationCumulativeweight(blockEvaluation.getBlockhash(), i);
@@ -150,8 +155,9 @@ public class BlockService {
     public void saveBlock(Block block) throws Exception {
         blockgraph.add(block);
         try {
+            brodcastBlock(block.bitcoinSerialize());
             milestoneService.update();
-      
+
         } catch (Exception e) {
             // TODO: handle exception
             logger.warn(" saveBlock problem after save milestoneService  ", e);
@@ -302,6 +308,16 @@ public class BlockService {
     public List<BlockEvaluation> getValidationEntryPointCandidates() throws BlockStoreException {
         return store.getBlocksInMilestoneDepthInterval(0, NetworkParameters.ENTRYPOINT_TIPSELECTION_DEPTH_CUTOFF);
     }
-    
- 
+
+    public void brodcastBlock(byte[] data) {
+        try {
+            if ("".equalsIgnoreCase(kafkaConfiguration.getBootstrapServers()))
+                return;
+            KafkaMessageProducer kafkaMessageProducer = new KafkaMessageProducer(kafkaConfiguration);
+            kafkaMessageProducer.sendMessage(data);
+        } catch (InterruptedException | ExecutionException e) {
+            Log.warn("", e);
+        }
+    }
+
 }

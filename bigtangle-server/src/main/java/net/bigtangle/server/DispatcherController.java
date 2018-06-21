@@ -10,12 +10,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 
-import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,8 +29,6 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
-import net.bigtangle.kafka.KafkaConfiguration;
-import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.ErrorResponse;
 import net.bigtangle.server.response.GetBlockEvaluationsResponse;
@@ -65,8 +61,6 @@ public class DispatcherController {
 
     public static int numberOfEmptyBlocks = 3;
 
-    @Autowired
-    private KafkaConfiguration kafkaConfiguration;
 
     @Autowired
     private MultiSignService multiSignService;
@@ -94,7 +88,7 @@ public class DispatcherController {
 
             case saveBlock: {
                 blockService.saveBinaryArrayToBlock(bodyByte);
-                brodcastBlock(bodyByte);
+            
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
                 break;
@@ -365,15 +359,5 @@ public class DispatcherController {
     @Autowired
     private UserDataService userDataService;
 
-    public void brodcastBlock(byte[] data) {
-        try {
-            if ("".equalsIgnoreCase(kafkaConfiguration.getBootstrapServers()))
-                return;
-            KafkaMessageProducer kafkaMessageProducer = new KafkaMessageProducer(kafkaConfiguration);
-            kafkaMessageProducer.sendMessage(data);
-        } catch (InterruptedException | ExecutionException e) {
-            Log.warn("", e);
-        }
-    }
-
+  
 }
