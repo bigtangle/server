@@ -82,6 +82,8 @@
                             <TableColumn fx:id="filesizeColumn" prefWidth="129.0" text="%size" />
                           </columns>
                         </TableView>
+                        <Button cancelButton="true" layoutX="557.0" layoutY="461.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />
+                        <Button defaultButton="true" layoutX="376.0" layoutY="461.0" mnemonicParsing="false" onAction="#downloadFile" text="%download" />
                      </children>
                   </AnchorPane>
               </content>

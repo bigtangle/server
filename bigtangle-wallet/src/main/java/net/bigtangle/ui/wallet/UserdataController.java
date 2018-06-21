@@ -102,7 +102,7 @@ public class UserdataController {
     }
 
     public void saveUserdata(ActionEvent event) {
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
         try {
             addContact(CONTEXT_ROOT);
             initContactTableView();
@@ -112,7 +112,7 @@ public class UserdataController {
     }
 
     public Serializable getUserdata(String type) throws Exception {
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
         HashMap<String, String> requestParam = new HashMap<String, String>();
         ECKey pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
         requestParam.put("pubKey", pubKeyTo.getPublicKeyAsHex());
@@ -200,7 +200,7 @@ public class UserdataController {
             }
             String name = (String) rowdata.get("tokenname");
             String tokenid = (String) rowdata.get("tokenid");
-            String CONTEXT_ROOT =  Main.getContextRoot();
+            String CONTEXT_ROOT = Main.getContextRoot();
             HashMap<String, String> requestParam = new HashMap<String, String>();
 
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
@@ -231,14 +231,14 @@ public class UserdataController {
             block.solve();
 
             OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", block.bitcoinSerialize());
-            initContactTableView();
+            initTokenTableView();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
     }
 
     public void initMyAddress() throws Exception {
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
         MyHomeAddress myHomeAddress = (MyHomeAddress) getUserdata(DataClassName.MYHOMEADDRESS.name());
         countryTF.setText(myHomeAddress.getCountry());
         provinceTF.setText(myHomeAddress.getProvince());
@@ -249,7 +249,7 @@ public class UserdataController {
     }
 
     public void saveMyAddress(ActionEvent event) throws Exception {
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -295,7 +295,7 @@ public class UserdataController {
             }
             String name = (String) rowdata.get("name");
             String address = (String) rowdata.get("address");
-            String CONTEXT_ROOT =  Main.getContextRoot();
+            String CONTEXT_ROOT = Main.getContextRoot();
             HashMap<String, String> requestParam = new HashMap<String, String>();
 
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
@@ -320,9 +320,9 @@ public class UserdataController {
 
             coinbase.setDataclassname(DataClassName.ContactInfo.name());
             coinbase.setData(contactInfo.toByteArray());
-            
+
             ECKey pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
-            
+
             Sha256Hash sighash = coinbase.getHash();
             ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash);
             byte[] buf1 = party1Signature.encodeToDER();
@@ -368,6 +368,7 @@ public class UserdataController {
         }
 
     }
+
     public void initFileTableView() throws Exception {
         UploadfileInfo uploadfileInfo = (UploadfileInfo) getUserdata(DataClassName.UPLOADFILE.name());
         List<Uploadfile> list = uploadfileInfo.getfUploadfiles();
@@ -377,6 +378,7 @@ public class UserdataController {
                 Map<String, Object> map = new HashMap<String, Object>();
                 map.put("name", contact.getName());
                 map.put("size", contact.getMaxsize());
+                map.put("fileinfo", contact.getFileinfo());
                 allData.add(map);
             }
             fileTable.setItems(allData);
@@ -385,6 +387,7 @@ public class UserdataController {
         }
 
     }
+
     public void initTokenTableView() throws Exception {
         TokenInfo tokenInfo = (TokenInfo) getUserdata(DataClassName.TOKEN.name());
         List<Tokens> list = tokenInfo.getPositveTokenList();
@@ -403,9 +406,13 @@ public class UserdataController {
     }
 
     public void uploadFile(ActionEvent event) throws Exception {
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
         final FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showOpenDialog(null);
+        if (filenameTF.getText() == null || filenameTF.getText().isEmpty()) {
+            filenameTF.setText(file.getName());
+        }
+
         filepathTF.setText(file.getAbsolutePath());
         if (file.length() > Block.MAX_BLOCK_SIZE - 20 * 1000) {
             GuiUtils.informationalAlert("", Main.getText("fileTooLarge"), "");
@@ -452,6 +459,22 @@ public class UserdataController {
         block.solve();
 
         OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", block.bitcoinSerialize());
+        initFileTableView();
     }
 
+    public void downloadFile(ActionEvent event) {
+        Map<String, Object> rowdata = fileTable.getSelectionModel().getSelectedItem();
+        if (rowdata == null || rowdata.isEmpty()) {
+            return;
+        }
+        byte[] fileinfo = (byte[]) rowdata.get("fileinfo");
+        final FileChooser fileChooser = new FileChooser();
+        File file = fileChooser.showSaveDialog(null);
+        if (file == null) {
+            return;
+        }
+        // wirte file
+        FileUtil.writeFile(file, fileinfo);
+        overlayUI.done();
+    }
 }
