@@ -370,7 +370,7 @@ public class Main extends Application {
                     if (in.getValue() != null)
                         s.append(" ").append(in.getValue().toString());
                     s.append("\n          ");
-                    s.append("outpoint:");
+                    s.append(Main.getText( "connectedOutput"));
                     final TransactionOutPoint outpoint = in.getOutpoint();
                     s.append(outpoint.toString());
                     final TransactionOutput connectedOutput = outpoint.getConnectedOutput();
@@ -398,7 +398,7 @@ public class Main extends Application {
             s.append("out  ");
             try {
                 String scriptPubKeyStr = out.getScriptPubKey().toString();
-                s.append(!Strings.isNullOrEmpty(scriptPubKeyStr) ? scriptPubKeyStr : "<no scriptPubKey>");
+                s.append(!Strings.isNullOrEmpty(scriptPubKeyStr) ? scriptPubKeyStr : "");
                 s.append("\n ");
                 s.append(out.getValue().toString());
                 if (!out.isAvailableForSpending()) {
