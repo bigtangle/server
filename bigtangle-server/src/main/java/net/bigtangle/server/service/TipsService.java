@@ -261,8 +261,8 @@ public class TipsService {
                 // TODO set exp fct and alpha according to ideal orphan rates as
                 // found in parameter tuning simulations and papers
                 for (int i = 0; i < blockApprovers.length; i++) {
-                    transitionWeights[i] = Math.pow(currentCumulativeWeight
-                            - blockService.getBlockEvaluation(blockApprovers[i]).getCumulativeWeight(), -3);
+                    //transitionWeights[i] = Math.pow(currentCumulativeWeight - blockService.getBlockEvaluation(blockApprovers[i]).getCumulativeWeight(), -3);
+                    transitionWeights[i] = Math.exp(-0.5*(currentCumulativeWeight - blockService.getBlockEvaluation(blockApprovers[i]).getCumulativeWeight()));
                     transitionWeightSum += transitionWeights[i];
                 }
 

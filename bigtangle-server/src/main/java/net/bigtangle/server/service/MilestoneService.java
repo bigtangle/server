@@ -391,6 +391,7 @@ public class MilestoneService {
             HashSet<BlockEvaluation> blocksToAdd = blockService.getBlocksToAddToMilestone();
 
             /** VALIDITY CHECKS START **/
+            // TODO put this into a function and reuse...
             // Remove blocks and their approvers that have at least one input
             // with its corresponding output not confirmed yet / nonexistent
             validatorService.removeWhereInputNotFoundOrUnconfirmed(blocksToAdd);
@@ -398,6 +399,10 @@ public class MilestoneService {
             // Resolve conflicting block combinations
             validatorService.resolvePrunedConflicts(blocksToAdd);
             validatorService.resolveUndoableConflicts(blocksToAdd);
+            
+            // Remove blocks and their approvers that have at least one input
+            // with its corresponding output not confirmed yet / nonexistent
+            validatorService.removeWhereInputNotFoundOrUnconfirmed(blocksToAdd);
             /** VALIDITY CHECKS END **/
 
             // Finally add the found new milestone blocks to the milestone

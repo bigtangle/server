@@ -551,8 +551,7 @@ public class ValidatorService {
         Stream<Pair<Block, ConflictPoint>> transferConflictPoints = blocksToAdd.stream()
                 .flatMap(b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream())
                         .filter(in -> !in.isCoinBase()).map(in -> Pair.of(b, new ConflictPoint(in.getOutpoint()))))
-                // Filter such that it has already been spent in addition to
-                // above
+                // Filter such that it has already been spent
                 .filter(pair -> transactionService.getUTXOSpent(pair.getRight().getOutpoint())
                         && transactionService.getUTXOSpender(pair.getRight().getOutpoint()) != null
                         && transactionService.getUTXOSpender(pair.getRight().getOutpoint()).isMaintained());
@@ -562,8 +561,7 @@ public class ValidatorService {
                 .filter(b -> b.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD)
                 .map(b -> Pair.of(b, Utils.readInt64(b.getTransactions().get(0).getData(), 0)))
                 .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight())))
-                // Filter such that it has already been spent in addition to
-                // above
+                // Filter such that it has already been spent 
                 .filter(pair -> {
                     try {
                         return pair.getRight().getHeight() != store.getMaxPrevTxRewardHeight() + NetworkParameters.REWARD_HEIGHT_INTERVAL;
