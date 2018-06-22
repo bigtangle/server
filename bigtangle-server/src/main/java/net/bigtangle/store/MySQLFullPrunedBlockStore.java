@@ -64,7 +64,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    toaddress varchar(255),\n" 
             + "    addresstargetable bigint,\n" 
             + "    coinbase boolean,\n"
-            + "    blockhash  varbinary(32)  NOT NULL,\n" 
+            + "    blockhash  varbinary(32),\n" 
             + "    tokenid varchar(255),\n"
             + "    fromaddress varchar(255),\n" 
             + "    memo varchar(80),\n" 

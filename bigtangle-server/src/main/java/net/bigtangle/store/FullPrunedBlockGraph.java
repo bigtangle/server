@@ -453,6 +453,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // For token creations, update token db
         if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
             // TODO revert token db changes here (revert synchronizationToken(TokenInfo))
+            // TODO unsolidify other issuances of this public key?
         }
 
         for (Transaction tx : block.getTransactions()) {
@@ -464,7 +465,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 }
             }
 
-            removeUTXOs(tx);
+            removeUTXOs(tx, block);
         }
     }
 
@@ -486,6 +487,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     private void confirmUTXOs(final Transaction tx) throws BlockStoreException {
         for (TransactionOutput out : tx.getOutputs()) {
             blockStore.updateTransactionOutputConfirmed(tx.getHash(), out.getIndex(), true);
+            blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), out.getIndex(), null);
+            blockStore.updateTransactionOutputSpent(tx.getHash(), out.getIndex(), false, null);
         }
     }
 
@@ -518,10 +521,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     // Mark unconfirmed all tx outputs in db and unconfirm their
     // spending blocks too
-    private void removeUTXOs(Transaction tx) throws BlockStoreException {
+    private void removeUTXOs(Transaction tx, Block parentBlock) throws BlockStoreException {
         for (TransactionOutput txout : tx.getOutputs()) {
             if (blockStore.getTransactionOutput(tx.getHash(), txout.getIndex()).isSpent()) {
                 removeBlockFromMilestone(blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()));
+                blockStore.updateTransactionOutputSpent(tx.getHash(), txout.getIndex(), false, null);
+                blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), txout.getIndex(), parentBlock.getHash());
             }
             blockStore.updateTransactionOutputConfirmed(tx.getHash(), txout.getIndex(), false);
         }
@@ -713,7 +718,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     // in future.
                     Script script = getScript(out.getScriptBytes());
                     UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), height, isCoinBase, script,
-                            getScriptAddress(script), block.getHash(), out.getFromaddress(), tx.getMemo(),
+                            getScriptAddress(script), null, out.getFromaddress(), tx.getMemo(),
                             Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0);
                     blockStore.addUnspentTransactionOutput(newOut);
 

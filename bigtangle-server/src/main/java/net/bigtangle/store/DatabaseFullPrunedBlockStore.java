@@ -247,6 +247,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String UPDATE_OUTPUTS_SPENDPENDING_SQL = getUpdate()
             + " outputs SET spendpending = ? WHERE hash = ? AND outputindex= ?";
 
+    protected String UPDATE_OUTPUTS_CONFIRMING_BLOCK_SQL = getUpdate()
+            + " outputs SET blockhash = ? WHERE hash = ? AND outputindex= ?";
+
     protected String UPDATE_BLOCKEVALUATION_DEPTH_SQL = getUpdate() + " headers SET depth = ? WHERE hash = ?";
 
     protected String UPDATE_BLOCKEVALUATION_CUMULATIVEWEIGHT_SQL = getUpdate()
@@ -1086,7 +1089,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             byte[] scriptBytes = results.getBytes(3);
             boolean coinbase = results.getBoolean(4);
             String address = results.getString(5);
-            Sha256Hash blockhash = Sha256Hash.wrap(results.getBytes(7));
+            Sha256Hash blockhash = results.getBytes(7) != null ? Sha256Hash.wrap(results.getBytes(7)) : null;
 
             String fromaddress = results.getString(9);
             String memo = results.getString(10);
@@ -1125,7 +1128,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setString(6, out.getAddress());
             s.setLong(7, out.getScript().getScriptType().ordinal());
             s.setBoolean(8, out.isCoinbase());
-            s.setBytes(9, out.getBlockhash().getBytes());
+            s.setBytes(9, out.getBlockhash() != null ? out.getBlockhash().getBytes() : null);
             s.setString(10, Utils.HEX.encode(out.getValue().tokenid));
             s.setString(11, out.getFromaddress());
             s.setString(12, out.getMemo());
@@ -1311,7 +1314,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     boolean coinbase = rs.getBoolean(6);
                     String toAddress = rs.getString(7);
                     // addresstargetable =rs.getBytes(8);
-                    Sha256Hash blockhash = Sha256Hash.wrap(rs.getBytes(9));
+                    Sha256Hash blockhash = rs.getBytes(9) != null ? Sha256Hash.wrap(rs.getBytes(9)) : null;
 
                     String fromaddress = rs.getString(11);
                     String memo = rs.getString(12);
@@ -2030,7 +2033,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             preparedStatement = conn.get().prepareStatement(getUpdateOutputsSpentSQL());
             preparedStatement.setBoolean(1, b);
-            preparedStatement.setBytes(2, spenderBlock.getBytes());
+            preparedStatement.setBytes(2, spenderBlock != null ? spenderBlock.getBytes() : null);
             preparedStatement.setBytes(3, prevTxHash.getBytes());
             preparedStatement.setLong(4, index);
             preparedStatement.executeUpdate();
@@ -2092,6 +2095,34 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             preparedStatement = conn.get().prepareStatement(getUpdateOutputsSpendPendingSQL());
             preparedStatement.setBoolean(1, b);
+            preparedStatement.setBytes(2, prevTxHash.getBytes());
+            preparedStatement.setLong(3, index);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public void updateTransactionOutputConfirmingBlock(Sha256Hash prevTxHash, int index, Sha256Hash blockHash)
+            throws BlockStoreException {
+        UTXO prev = this.getTransactionOutput(prevTxHash, index);
+        if (prev == null) {
+            throw new BlockStoreException("Could not find UTXO to update");
+        }
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(UPDATE_OUTPUTS_CONFIRMING_BLOCK_SQL);
+            preparedStatement.setBytes(1, blockHash != null ? blockHash.getBytes() : null);
             preparedStatement.setBytes(2, prevTxHash.getBytes());
             preparedStatement.setLong(3, index);
             preparedStatement.executeUpdate();
@@ -2409,7 +2440,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             sql += "SELECT headers.hash, rating, depth, cumulativeweight, "
                             + "solid, headers.height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained,"
                             + " rewardvalidityassessment " 
-                    + " FROM outputs LEFT JOIN headers " + "ON outputs.blockhash = headers.hash  ";
+                    + " FROM outputs JOIN headers " + "ON outputs.blockhash = headers.hash  ";
             sql += "WHERE outputs.toaddress in ";
             for (String str : address)
                 stringBuffer.append(",").append("'" + str + "'");
@@ -3782,7 +3813,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             byte[] scriptBytes = results.getBytes(3);
             boolean coinbase = results.getBoolean(4);
             String address = results.getString(5);
-            Sha256Hash blockhash = Sha256Hash.wrap(results.getBytes(7));
+            Sha256Hash blockhash = results.getBytes(7) != null ? Sha256Hash.wrap(results.getBytes(7)) : null;
 
             String fromaddress = results.getString(9);
             String memo = results.getString(10);

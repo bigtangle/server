@@ -227,7 +227,7 @@ public class UTXO {
     }
 
     public String getBlockHashHex() {
-        return Utils.HEX.encode(this.blockhash.getBytes());
+        return this.blockhash != null ? Utils.HEX.encode(this.blockhash.getBytes()) : "";
     }
 
     public void setBlockhash(Sha256Hash blockhash) {

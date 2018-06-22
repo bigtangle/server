@@ -43,7 +43,7 @@ public abstract class MapToBeanMapperUtil {
         String scriptHex = (String) map.get("scriptHex");
         String address = (String) map.get("address");
         String fromaddress = (String) map.get("fromaddress");
-        Sha256Hash blockhash = Sha256Hash.wrap((String) map.get("blockHashHex"));
+        Sha256Hash blockhash = map.get("blockHashHex") != "" ? Sha256Hash.wrap((String) map.get("blockHashHex")) : null;
         String description = (String) map.get("description");
         String tokenHex = (String) amount.getTokenHex();
         // System.out.println("tokenHex==" + tokenHex);

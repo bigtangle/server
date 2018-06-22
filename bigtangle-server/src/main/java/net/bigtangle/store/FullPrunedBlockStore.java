@@ -358,4 +358,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     void insertVOSExecute(VOSExecute vosExecute) throws BlockStoreException;
     
     void updateVOSExecute(VOSExecute vosExecute) throws BlockStoreException;
+
+    void updateTransactionOutputConfirmingBlock(Sha256Hash hash, int index, Sha256Hash hash2) throws BlockStoreException;
 }
