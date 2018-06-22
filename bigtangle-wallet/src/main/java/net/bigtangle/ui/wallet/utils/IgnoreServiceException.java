@@ -1,3 +1,7 @@
+/*******************************************************************************
+ *  Copyright   2018  Inasset GmbH. 
+ *  
+ *******************************************************************************/
 package net.bigtangle.ui.wallet.utils;
 
 public class IgnoreServiceException extends RuntimeException {
