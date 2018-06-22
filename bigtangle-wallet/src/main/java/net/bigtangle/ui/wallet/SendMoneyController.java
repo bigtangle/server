@@ -132,21 +132,11 @@ public class SendMoneyController {
     @FXML
     public TextField signnumberTFA;
 
-    // @FXML
-    // public ToggleGroup unitToggleGroup;
-    // @FXML
-    // public RadioButton basicRadioButton;
-    // @FXML
-    // public RadioButton kiloRadioButton;
-    // @FXML
-    // public RadioButton milionRadioButton;
+    @FXML
+    public ChoiceBox<String> tokeninfo;
 
     @FXML
-    public ChoiceBox<Object> tokeninfo;
-    // @FXML
-    // public ChoiceBox<Object> tokeninfo1;
-    @FXML
-    public ChoiceBox<Object> tokeninfo11;
+    public ChoiceBox<String> tokeninfo11;
 
     public Main.OverlayUI<?> overlayUI;
 
@@ -174,66 +164,48 @@ public class SendMoneyController {
     String utxoKey;
 
     public void initChoicebox() {
-        // basicRadioButton.setUserData(1 + "");
-        // kiloRadioButton.setUserData(1000 + "");
-        // milionRadioButton.setUserData(1000 * 1000 + "");
-        String CONTEXT_ROOT = Main.getContextRoot();
-        ObservableList<Object> tokenData = FXCollections.observableArrayList();
+
         try {
-            Map<String, Object> requestParam = new HashMap<String, Object>();
-            requestParam.put("name", "");
-            String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens",
-                    Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-            final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-
-            List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
-            List<String> names = new ArrayList<String>();
-            for (Map<String, Object> map : list) {
-
-                String tokenHex = (String) map.get("tokenid");
-
-                if (NetworkParameters.BIGNETCOIN_TOKENID_STRING.equalsIgnoreCase(tokenHex) || isMyUTXOs(tokenHex)) {
-                    tokenData.add(tokenHex);
-                    names.add(map.get("tokenname").toString());
-                }
-            }
-            tokeninfo.setItems(tokenData);
-            // tokeninfo1.setItems(tokenData);
-            tokeninfo11.setItems(tokenData);
-            tokeninfo.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
-                btcLabel.setText(names.get(newv.intValue()));
-            });
-            // tokeninfo1.getSelectionModel().selectedIndexProperty().addListener((ov,
-            // oldv, newv) -> {
-            // btcLabel1.setText(names.get(newv.intValue()));
-            // });
-            tokeninfo11.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
-                btcLabel11.setText(names.get(newv.intValue()));
-            });
-            tokeninfo.getSelectionModel().selectFirst();
-            // tokeninfo1.getSelectionModel().selectFirst();
-
-            // KeyParameter aesKey = null;
-            // // Main.initAeskey(aesKey);
-            // final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt)
-            // Main.bitcoin.wallet().getKeyCrypter();
-            // if (!"".equals(Main.password.trim())) {
-            // aesKey = keyCrypter.deriveKey(Main.password);
-            // }
-            // List<ECKey> issuedKeys =
-            // Main.bitcoin.wallet().walletKeys(aesKey);
-            // ObservableList<String> myAddressData =
-            // FXCollections.observableArrayList();
-            // if (issuedKeys != null && !issuedKeys.isEmpty()) {
-            // for (ECKey key : issuedKeys) {
-            // myAddressData.add(key.toAddress(Main.params).toBase58());
-            // }
-            // myAddressComboBox.setItems(myAddressData);
-            // }
+            initTokeninfo();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
 
+    }
+
+    public void initTokeninfo() {
+        ObservableList<UTXOModel> list = Main.instance.getUtxoData();
+        ObservableList<String> tokenData = FXCollections.observableArrayList();
+        List<String> names = new ArrayList<String>();
+        if (list != null && !list.isEmpty()) {
+            for (UTXOModel utxoModel : list) {
+                String temp = utxoModel.getTokenid();
+                String signnum = utxoModel.getMinimumsign();
+                int signnumInt = Integer.parseInt(signnum);
+                String tempTokenid = temp.contains(":") ? temp.substring(temp.indexOf(":") + 1) : temp;
+                String tempTokenname = temp.contains(":") ? temp.substring(0, temp.indexOf(":")) : "";
+                if (signnumInt <= 1) {
+                    if (!tokenData.contains(tempTokenid)) {
+                        tokenData.add(tempTokenid);
+                    }
+                    if (!names.contains(tempTokenname)) {
+                        names.add(tempTokenname);
+                    }
+
+                }
+            }
+        }
+        tokeninfo.setItems(tokenData);
+        tokeninfo11.setItems(tokenData);
+        tokeninfo.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
+            btcLabel.setText(names.get(newv.intValue()));
+        });
+
+        tokeninfo11.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
+            btcLabel11.setText(names.get(newv.intValue()));
+        });
+        tokeninfo.getSelectionModel().selectFirst();
+        tokeninfo11.getSelectionModel().selectFirst();
     }
 
     public boolean isMyTokens(String tokenHex) {
@@ -518,7 +490,7 @@ public class SendMoneyController {
             long factor = 1;
             amount = amount.multiply(factor);
             SendRequest request = SendRequest.to(destination, amount);
-            request.memo = memoTF.getText();
+            request.tx.setMemo(memoTF.getText());
             try {
                 wallet.completeTx(request);
                 rollingBlock.addTransaction(request.tx);
@@ -597,7 +569,6 @@ public class SendMoneyController {
         }
     }
 
-    // TODO Fix problem after send return to main
     public void checkContact(ActionEvent event) throws Exception {
 
         String addresses = Main.getString4block(Main.initAddress4block());
