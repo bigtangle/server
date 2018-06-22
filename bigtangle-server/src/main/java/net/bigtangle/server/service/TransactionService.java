@@ -166,7 +166,6 @@ public class TransactionService {
         return store.getTransactionOutput(out.getHash(), out.getIndex());
     }
 
-    // TODO use add instead of addConnected?
     public Optional<Block> addConnected(byte[] bytes, boolean emptyBlock) {
         try {
             Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bytes);

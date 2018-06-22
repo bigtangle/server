@@ -180,9 +180,8 @@ public class ValidatorService {
         return tx;
     }
 
-    // TODO rewrite this to batched computation of relevant reward block only,
+    // TODO cleanup and crosscheck with above code, rewrite this to batched computation of relevant reward block only,
     // e. g. go forward until confirmed reward block is found or up to the end
-    // Use above code not this one
     private boolean assessMiningRewardBlock(Block header, long height, boolean assumeMilestone) throws BlockStoreException {
         BlockEvaluation blockEvaluation = blockService.getBlockEvaluation(header.getHash());
 
@@ -289,13 +288,12 @@ public class ValidatorService {
             store.insertTxReward(header.getHash(), nextPerTxReward, fromHeight);
 
             // Set valid if generated TX is equal to the block's TX
-            // TODO this is still unnecessarily traversing twice
+            // This is still unnecessarily traversing twice.
             if (generateMiningRewardTX(header, fromHeight).getHash().equals(header.getTransactions().get(0).getHash())) {
                 store.updateBlockEvaluationRewardValid(header.getHash(), true);
                 return true;
             } else {
-                // TODO else set invalid forever to not assess this again and
-                // again
+                // Optimization: set invalid forever to not assess this again
                 return false;
             }
         } else {
