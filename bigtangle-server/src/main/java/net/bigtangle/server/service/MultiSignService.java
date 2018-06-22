@@ -87,6 +87,12 @@ public class MultiSignService {
     }
 
     public boolean checkMultiSignPre(Block block, FullPrunedBlockStore store) throws BlockStoreException, Exception {
+        // Check these TODOs and make sure they are implemented
+        // TODO token ids of tx must be equal to blocks token id
+        // TODO token issuance sum must not overflow
+        // TODO signature for coinbases must be correct (equal to pubkey
+        // hash of tokenid)
+        
         if (block.getTransactions() == null || block.getTransactions().isEmpty()) {
             throw new BlockStoreException("block transaction is empty");
         }
@@ -103,7 +109,7 @@ public class MultiSignService {
         }
         Tokens tokens_ = store.getTokensInfo(tokens.getTokenid());
         if (tokens_ != null && tokens_.isTokenstop()) {
-            throw new BlockStoreException("tokeninfo can not mutil sign");
+            throw new BlockStoreException("tokeninfo can not reissue");
         }
 
         if (tokens.getSignnumber() <= 0)

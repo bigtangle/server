@@ -505,6 +505,7 @@ public class ValidatorService {
     private void findCandidateConflicts(Collection<Block> blocksToAdd,
             Collection<Pair<BlockEvaluation, ConflictPoint>> conflictingOutPoints) throws BlockStoreException {
         // Create pairs of blocks and used non-coinbase utxos from blocksToAdd
+        // Dynamic conflicts: conflicting transactions
         Stream<Pair<Block, ConflictPoint>> transferConflictPoints = blocksToAdd.stream()
                 .flatMap(b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream())
                         .filter(in -> !in.isCoinBase()).map(in -> Pair.of(b, new ConflictPoint(in.getOutpoint()))));
@@ -548,6 +549,7 @@ public class ValidatorService {
             Collection<BlockEvaluation> conflictingMilestoneBlocks) throws BlockStoreException {
         // Create pairs of blocks and outpoints from blocksToAdd where already
         // spent by maintained milestone blocks.
+        // Dynamic conflicts: conflicting transactions
         Stream<Pair<Block, ConflictPoint>> transferConflictPoints = blocksToAdd.stream()
                 .flatMap(b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream())
                         .filter(in -> !in.isCoinBase()).map(in -> Pair.of(b, new ConflictPoint(in.getOutpoint()))))

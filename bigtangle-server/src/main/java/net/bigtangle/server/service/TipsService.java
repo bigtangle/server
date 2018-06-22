@@ -54,7 +54,7 @@ public class TipsService {
 
         for (int i = 0; i < entryPoints.size(); i++) {
             results.add(getMCMCResultBlock(entryPoints.get(i), seed, latestImportTime).peek()); 
-            // TODO use low-pass filter here by e.g. latestImportTime - 1000*i
+            // TODO eventually use low-pass filter here, e.g. latestImportTime - 1000*i
         }
 
         watch.stop();
@@ -256,13 +256,13 @@ public class TipsService {
                 double transitionWeightSum = 0;
                 long currentCumulativeWeight = blockService.getBlockEvaluation(blockHash).getCumulativeWeight();
 
-                // Calculate the unnormalized transition weights of all
-                // approvers as ((Hx-Hy)^-3)
-                // TODO set exp fct and alpha according to ideal orphan rates as
-                // found in parameter tuning simulations and papers
+                // Calculate the unnormalized transition weights
+                // TODO eventually set alpha according to ideal orphan rates as
+                // found in parameter tuning simulations and papers (see POLB.pdf)
                 for (int i = 0; i < blockApprovers.length; i++) {
                     //transitionWeights[i] = Math.pow(currentCumulativeWeight - blockService.getBlockEvaluation(blockApprovers[i]).getCumulativeWeight(), -3);
-                    transitionWeights[i] = Math.exp(-0.5*(currentCumulativeWeight - blockService.getBlockEvaluation(blockApprovers[i]).getCumulativeWeight()));
+                    double alpha = 0.5;
+                    transitionWeights[i] = Math.exp(-alpha *(currentCumulativeWeight - blockService.getBlockEvaluation(blockApprovers[i]).getCumulativeWeight()));
                     transitionWeightSum += transitionWeights[i];
                 }
 

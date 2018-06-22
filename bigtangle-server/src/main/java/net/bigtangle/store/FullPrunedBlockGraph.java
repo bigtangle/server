@@ -452,7 +452,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // For token creations, update token db
         if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
-            // TODO revert token db changes here
+            // TODO revert token db changes here (revert synchronizationToken(TokenInfo))
         }
 
         for (Transaction tx : block.getTransactions()) {
@@ -612,7 +612,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
 
             // Reward must have been assessed locally and passed.
-            // TODO don't assess here but do batched assessment
             if (!blockStore.getBlockEvaluation(block.getHash()).isRewardValid()
                     && !validatorService.assessMiningRewardBlock(block, height))
                 return false;

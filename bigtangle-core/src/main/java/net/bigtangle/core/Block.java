@@ -840,17 +840,12 @@ public class Block extends Message {
      */
     public void checkTransactionSolidity(final long height) throws VerificationException {
         // The transactions must adhere to their block type rules
-            if (blocktype == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
+        if (blocktype == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
             if (transactions.size() != 1)
                 throw new VerificationException("Too many or too few transactions for token creation.");
 
             if (!transactions.get(0).isCoinBase())
                 throw new VerificationException("TX is not coinbase when it should be.");
-
-            // TODO token ids of tx must be equal to blocks token id
-            // TODO token issuance sum must not overflow
-            // TODO signature for coinbases must be correct (equal to pubkey
-            // hash of tokenid)
         } else if (blocktype == NetworkParameters.BLOCKTYPE_REWARD) {
             if (transactions.size() != 1)
                 throw new VerificationException("Too many or too few transactions for token creation.");
@@ -868,7 +863,17 @@ public class Block extends Message {
             } catch (ArrayIndexOutOfBoundsException e) {
                 throw new VerificationException(e);
             }
-        }
+        } else if ((blocktype == NetworkParameters.BLOCKTYPE_TRANSFER)
+                || (blocktype == NetworkParameters.BLOCKTYPE_USERDATA)
+                || (blocktype == NetworkParameters.BLOCKTYPE_VOS)
+                || (blocktype == NetworkParameters.BLOCKTYPE_GOVERNANCE)
+                || (blocktype == NetworkParameters.BLOCKTYPE_FILE)
+                || (blocktype == NetworkParameters.BLOCKTYPE_VOS_EXECUTE)) {
+            for (Transaction tx : transactions)
+                if (tx.isCoinBase())
+                    throw new VerificationException("TX is coinbase when it should not be.");
+        } else
+            throw new VerificationException("Blocktype not implemented!");
     }
 
     /**
@@ -920,7 +925,7 @@ public class Block extends Message {
             throw new VerificationException("Block larger than MAX_BLOCK_SIZE");
         checkMerkleRoot();
         checkSigOps();
-      
+
         for (Transaction transaction : transactions) {
             if (!allowCoinbaseTransaction() && transaction.isCoinBase()) {
                 throw new VerificationException("Coinbase Transaction is not allowed for this block type");
@@ -1238,7 +1243,7 @@ public class Block extends Message {
                 || blocktype == NetworkParameters.BLOCKTYPE_TOKEN_CREATION
                 || blocktype == NetworkParameters.BLOCKTYPE_REWARD;
     }
-    
+
     private static Random gen = new Random();
 
     /**
@@ -1256,8 +1261,9 @@ public class Block extends Message {
         Block b = new Block(params, version);
         // b.setDifficultyTarget(difficultyTarget);
         // only BLOCKTYPE_TOKEN_CREATION, BLOCKTYPE_REWARD, BLOCKTYPE_INITIAL
-        
-        // Add randomness to prevent new empty blocks from same miner with same approved blocks to be the same
+
+        // Add randomness to prevent new empty blocks from same miner with same
+        // approved blocks to be the same
         b.setNonce(gen.nextLong());
 
         b.setMineraddress(mineraddress);
