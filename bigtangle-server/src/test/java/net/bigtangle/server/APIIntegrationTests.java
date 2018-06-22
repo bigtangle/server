@@ -43,6 +43,7 @@ import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
@@ -65,6 +66,36 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     private int height = 1;
 
     private static final Logger logger = LoggerFactory.getLogger(APIIntegrationTests.class);
+    
+    @Test
+    public void testBlockDamage() throws Exception {
+        ECKey outKey = new ECKey();
+        ECKey genesiskey = ECKey.fromPublicOnly(Utils.HEX.decode(NetworkParameters.testPub));
+        List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+        TransactionOutput transactionOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0), 0);
+        Coin amount = Coin.valueOf(2, NetworkParameters.BIGNETCOIN_TOKENID);
+        Transaction tx = new Transaction(networkParameters);
+        tx.addOutput(new TransactionOutput(networkParameters, tx, amount, outKey));
+        TransactionInput input = tx.addInput(transactionOutput);
+        Sha256Hash sighash = tx.hashForSignature(0, transactionOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL, false);
+        Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+        input.setScriptSig(inputScript);
+        
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        byte[] buf = OkHttp3Util.post(contextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
+        rollingBlock.addTransaction(tx);
+        rollingBlock.solve();
+        OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        
+        Transaction tx_ = rollingBlock.getTransactions().get(0);
+        buf = OkHttp3Util.post(contextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+        rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
+        rollingBlock.addTransaction(tx_);
+        rollingBlock.solve();
+        OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+    }
 
     // @Test
     public void testPayMultiSignToStore() throws BlockStoreException {
