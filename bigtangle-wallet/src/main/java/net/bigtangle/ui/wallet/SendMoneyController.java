@@ -490,7 +490,7 @@ public class SendMoneyController {
             long factor = 1;
             amount = amount.multiply(factor);
             SendRequest request = SendRequest.to(destination, amount);
-            request.memo = memoTF.getText();
+            request.tx.setMemo(memoTF.getText());
             try {
                 wallet.completeTx(request);
                 rollingBlock.addTransaction(request.tx);
