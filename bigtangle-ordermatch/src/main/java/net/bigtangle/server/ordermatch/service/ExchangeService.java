@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Exchange;
+import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.Utils;
 import net.bigtangle.server.ordermatch.service.response.AbstractResponse;
 import net.bigtangle.server.ordermatch.service.response.ExchangeInfoResponse;
@@ -43,11 +44,21 @@ public class ExchangeService {
     public AbstractResponse signTransaction(Map<String, Object> request) throws BlockStoreException {
         String dataHex = (String) request.get("dataHex");
         String orderid = (String) request.get("orderid");
+        
+        Exchange exchange = this.store.getExchangeInfoByOrderid(orderid);
+        OrderPublish orderPublish1 = this.store.getOrderPublishByOrderid(exchange.getToOrderId());
+        OrderPublish orderPublish2 = this.store.getOrderPublishByOrderid(exchange.getFromOrderId());
+        
+        if (orderPublish1.getState() == OrderState.finish.ordinal() 
+                || orderPublish2.getState() == OrderState.finish.ordinal()) {
+            throw new BlockStoreException("order publish state finish");
+        }
+        
         String signtype = (String) request.get("signtype");
         byte[] data = Utils.HEX.decode(dataHex);
         this.store.updateExchangeSign(orderid, signtype, data);
         
-        Exchange exchange = this.store.getExchangeInfoByOrderid(orderid);
+        
         if (exchange.getToSign() == 1 && exchange.getFromSign() == 1 && StringUtils.isNotBlank(exchange.getToOrderId())
                 && StringUtils.isNotBlank(exchange.getFromOrderId())) {
             this.store.updateOrderPublishState(exchange.getToOrderId(), OrderState.finish.ordinal());
@@ -67,5 +78,12 @@ public class ExchangeService {
     public AbstractResponse getExchangeByOrderid(String orderid) throws BlockStoreException {
         Exchange exchange = this.store.getExchangeInfoByOrderid(orderid);
         return ExchangeInfoResponse.create(exchange);
+    }
+
+    public void cancelOrderSign(String orderid) throws BlockStoreException {
+        // TODO check sign
+        Exchange exchange = this.store.getExchangeInfoByOrderid(orderid);
+        this.store.updateOrderPublishState(exchange.getToOrderId(), OrderState.finish.ordinal());
+        this.store.updateOrderPublishState(exchange.getFromOrderId(), OrderState.finish.ordinal());
     }
 }

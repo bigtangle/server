@@ -129,6 +129,7 @@
 									</columns>
 								</TableView>
 								<Button cancelButton="true" layoutX="937.0" layoutY="494.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />
+								<Button cancelButton="true" layoutX="870.0" layoutY="494.0" mnemonicParsing="false" onAction="#cancelOrder" text="cancelOrder" />
 								<Button defaultButton="true" layoutX="818.0" layoutY="494.0" mnemonicParsing="false" onAction="#signExchange" text="%sign" />
 							</children>
 						</AnchorPane>

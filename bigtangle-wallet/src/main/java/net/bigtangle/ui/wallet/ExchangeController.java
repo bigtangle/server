@@ -225,6 +225,19 @@ public class ExchangeController {
         exchange("");
         overlayUI.done();
     }
+    
+    public void cancelOrder(ActionEvent event) throws Exception {
+        String ContextRoot = Main.getContextRoot();
+        Map<String, Object> rowData = exchangeTable.getSelectionModel().getSelectedItem();
+        String orderid = stringValueOf(rowData.get("orderid"));
+        
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("orderid", orderid);
+        
+        OkHttp3Util.post(ContextRoot + "cancelOrder",
+                Json.jsonmapper().writeValueAsString(requestParam));
+        overlayUI.done();
+    }
 
     private void exchange(String marketURL) throws Exception, JsonProcessingException {
         if (mTransaction == null) {

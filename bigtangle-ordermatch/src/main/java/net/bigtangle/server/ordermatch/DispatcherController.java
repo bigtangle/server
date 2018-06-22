@@ -95,6 +95,16 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
+                
+            case cancelOrder: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String orderid = (String) request.get("orderid");
+                this.exchangeService.cancelOrderSign(orderid);
+                AbstractResponse response = AbstractResponse.createEmptyResponse();
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
             }
         } catch (Exception exception) {
             logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, Utils.HEX.encode(bodyByte), exception);
