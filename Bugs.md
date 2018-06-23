@@ -34,3 +34,9 @@ TODO execution results Selection
 
 
 ## move unsolid blocks to new cache table
+
+
+## read market with list of keys   https://market.bigtangle.net/getExchange
+
+
+
