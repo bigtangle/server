@@ -81,10 +81,9 @@ import net.bigtangle.wallet.Wallet;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
 public class SendMoneyController {
-    
+
     private static final Logger log = LoggerFactory.getLogger(SendMoneyController.class);
-    
-    
+
     public Button sendBtn;
     public Button cancelBtn;
 
@@ -268,7 +267,7 @@ public class SendMoneyController {
             multiUtxoChoiceBox.getSelectionModel().selectedItemProperty().addListener((ov, oldv, newv) -> {
                 if (newv != null && !newv.trim().equals("")) {
                     amountEdit1.setText(newv.split(",")[0]);
-                    signnumberTFA.setText(newv.split(",")[2]);
+                    // signnumberTFA.setText(newv.split(",")[2]);
                     btcLabel1.setText(newv.split(",")[1]);
                 }
             });
