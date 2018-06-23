@@ -167,6 +167,8 @@ public class SendMoneyController {
     public TableColumn<Map, String> amountColumn;
     public TableColumn<Map, String> orderidColumn;
     String utxoKey;
+    String signnumberString = "0";
+    String signnumberStringA = "0";
 
     public void initChoicebox() {
 
@@ -267,6 +269,7 @@ public class SendMoneyController {
             multiUtxoChoiceBox.getSelectionModel().selectedItemProperty().addListener((ov, oldv, newv) -> {
                 if (newv != null && !newv.trim().equals("")) {
                     amountEdit1.setText(newv.split(",")[0]);
+                    signnumberString = newv.split(",")[2];
                     // signnumberTFA.setText(newv.split(",")[2]);
                     btcLabel1.setText(newv.split(",")[1]);
                 }
@@ -274,6 +277,7 @@ public class SendMoneyController {
             multiUtxoChoiceBox1.getSelectionModel().selectedItemProperty().addListener((ov, oldv, newv) -> {
                 if (newv != null && !newv.trim().equals("")) {
                     amountEdit12.setText(newv.split(",")[0]);
+                    signnumberStringA = newv.split(",")[2];
                     // signnumberTFA.setText(newv.split(",")[2]);
                     btcLabel12.setText(newv.split(",")[1]);
                 }
@@ -757,7 +761,7 @@ public class SendMoneyController {
         payMultiSign.setToaddress(address.toBase58());
         payMultiSign.setAmount(amount.getValue());
 
-        int signnumber = Integer.parseInt(signnumberTFA.getText());
+        int signnumber = Integer.parseInt(signnumberString);
         payMultiSign.setMinsignnumber(signnumber);
         payMultiSign.setOutpusHashHex(utxo.getHashHex());
 
