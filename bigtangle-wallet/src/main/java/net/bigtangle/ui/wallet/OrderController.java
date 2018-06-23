@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import javafx.collections.FXCollections;
@@ -40,7 +42,8 @@ import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.OrderState;
 
 public class OrderController extends ExchangeController {
-
+    private static final Logger log = LoggerFactory.getLogger(OrderController.class);
+    
     @FXML
     public TextField fromTimeTF;
     @FXML
@@ -170,7 +173,7 @@ public class OrderController extends ExchangeController {
             }
             String url = (String) tokenResult.get("url");
             try {
-                response = OkHttp3Util.post(url + "getOrders",
+                response = OkHttp3Util.post(url +"/"+ "getOrders",
                         Json.jsonmapper().writeValueAsString(requestParam).getBytes());
             } catch (Exception e) {
                 continue;
@@ -279,9 +282,18 @@ public class OrderController extends ExchangeController {
 
     }
 
-    @SuppressWarnings("unchecked")
+    
     public void buy(ActionEvent event) throws Exception {
-        System.out.println(tokenComboBox.getValue());
+        
+        try {
+            buyDo(event);
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+    }
+    @SuppressWarnings("unchecked")
+    public void buyDo(ActionEvent event) throws Exception {
+        log.debug(tokenComboBox.getValue());
         String tokenid = tokenComboBox.getValue().split(":")[1].trim();
         String typeStr = (String) buySellTG.getSelectedToggle().getUserData().toString();
 
@@ -327,7 +339,7 @@ public class OrderController extends ExchangeController {
         HashMap<String, Object> token_ = (HashMap<String, Object>) res.get("token");
         
         String url = (String) token_.get("url");
-        OkHttp3Util.post(url + "saveOrder", Json.jsonmapper().writeValueAsString(requestParam));
+        OkHttp3Util.post(url+"/" + "saveOrder", Json.jsonmapper().writeValueAsString(requestParam));
         overlayUI.done();
     }
 

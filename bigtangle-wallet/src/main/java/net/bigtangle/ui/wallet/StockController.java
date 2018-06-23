@@ -424,27 +424,27 @@ public class StockController extends TokensController {
     }
 
     public void saveStock(ActionEvent event) {
-        saveToken(event, false);
+        ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
+        TokenInfo tokenInfo = new TokenInfo();
+        Tokens tokens = new Tokens(tokenid.getValue().trim(), stockName.getText().trim(),
+                stockDescription.getText().trim(), "", 1, false, false, false);
+        tokenInfo.setTokens(tokens);
+
+        // add MultiSignAddress item
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+
+        Coin basecoin = Coin.parseCoin(stockAmount.getText(), Utils.HEX.decode(tokenid.getValue()));
+
+        long amount = basecoin.getValue();
+        tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
+        saveToken(tokenInfo, basecoin, outKey);
     }
 
-    public void saveToken(ActionEvent event, boolean market) {
+    public void saveToken(TokenInfo tokenInfo, Coin basecoin, ECKey outKey) {
         String CONTEXT_ROOT = Main.getContextRoot();
-        ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
+
         try {
-            TokenInfo tokenInfo = new TokenInfo();
-            Tokens tokens = new Tokens(tokenid.getValue().trim(), stockName.getText().trim(),
-                    stockDescription.getText().trim(), "", 1, false, market, false);
-            tokenInfo.setTokens(tokens);
-
-            // add MultiSignAddress item
-            tokenInfo.getMultiSignAddresses()
-                    .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-
-            Coin basecoin = Coin.parseCoin(stockAmount.getText(), Utils.HEX.decode(tokenid.getValue()));
-
-            long amount = basecoin.getValue();
-            tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
-
             HashMap<String, String> requestParam = new HashMap<String, String>();
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
                     Json.jsonmapper().writeValueAsString(requestParam));
@@ -460,7 +460,7 @@ public class StockController extends TokensController {
 
             List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
             MultiSignBy multiSignBy0 = new MultiSignBy();
-            multiSignBy0.setTokenid(Main.getString(tokenid.getValue()).trim());
+            multiSignBy0.setTokenid(tokenInfo.getTokens().getTokenid().trim());
             multiSignBy0.setTokenindex(0);
             multiSignBy0.setAddress(outKey.toAddress(Main.params).toBase58());
             multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
@@ -483,7 +483,24 @@ public class StockController extends TokensController {
     }
 
     public void saveMarket(ActionEvent event) {
-        saveToken(event, true);
+        ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
+
+        TokenInfo tokenInfo = new TokenInfo();
+        Tokens tokens = new Tokens(marketid.getValue().trim(), marketName.getText().trim(),
+                marketDescription.getText().trim(), marketurl.getText(), 1, false, true, false);
+        tokenInfo.setTokens(tokens);
+
+        // add MultiSignAddress item
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+
+        Coin basecoin = Coin.parseCoin("0", Utils.HEX.decode(marketid.getValue()));
+
+        long amount = basecoin.getValue();
+        tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
+
+        saveToken(tokenInfo, basecoin, outKey);
+
     }
 
     public void saveMultiToken(ActionEvent event) {
@@ -619,9 +636,7 @@ public class StockController extends TokensController {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
         List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
-        // for (ECKey ecKey : keys) {
-        // System.out.println(ecKey.getPublicKeyAsHex());
-        // }
+
         String CONTEXT_ROOT = Main.getContextRoot();
 
         TokenInfo tokenInfo = new TokenInfo();
