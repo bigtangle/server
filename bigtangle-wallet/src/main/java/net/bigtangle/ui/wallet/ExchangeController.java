@@ -412,7 +412,7 @@ public class ExchangeController {
         for (TransactionOutput transactionOutput : this.mTransaction.getOutputs()) {
             Coin value = transactionOutput.getValue();
             String tokenid = value.getTokenHex();
-            if (!tokenid.equals(tokenHex)) {
+            if (tokenid.equals(tokenHex)) {
                 continue;
             }
             Coin coinbase = refundAmount.get(tokenid);
