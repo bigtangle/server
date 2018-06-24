@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import javafx.collections.FXCollections;
@@ -79,6 +81,9 @@ import net.bigtangle.wallet.Wallet;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
 public class SendMoneyController {
+
+    private static final Logger log = LoggerFactory.getLogger(SendMoneyController.class);
+
     public Button sendBtn;
     public Button cancelBtn;
 
@@ -162,6 +167,8 @@ public class SendMoneyController {
     public TableColumn<Map, String> amountColumn;
     public TableColumn<Map, String> orderidColumn;
     String utxoKey;
+    String signnumberString = "0";
+    String signnumberStringA = "0";
 
     public void initChoicebox() {
 
@@ -262,13 +269,15 @@ public class SendMoneyController {
             multiUtxoChoiceBox.getSelectionModel().selectedItemProperty().addListener((ov, oldv, newv) -> {
                 if (newv != null && !newv.trim().equals("")) {
                     amountEdit1.setText(newv.split(",")[0]);
-                    signnumberTFA.setText(newv.split(",")[2]);
+                    signnumberString = newv.split(",")[2];
+                    // signnumberTFA.setText(newv.split(",")[2]);
                     btcLabel1.setText(newv.split(",")[1]);
                 }
             });
             multiUtxoChoiceBox1.getSelectionModel().selectedItemProperty().addListener((ov, oldv, newv) -> {
                 if (newv != null && !newv.trim().equals("")) {
                     amountEdit12.setText(newv.split(",")[0]);
+                    signnumberStringA = newv.split(",")[2];
                     // signnumberTFA.setText(newv.split(",")[2]);
                     btcLabel12.setText(newv.split(",")[1]);
                 }
@@ -752,7 +761,7 @@ public class SendMoneyController {
         payMultiSign.setToaddress(address.toBase58());
         payMultiSign.setAmount(amount.getValue());
 
-        int signnumber = Integer.parseInt(signnumberTFA.getText());
+        int signnumber = Integer.parseInt(signnumberString);
         payMultiSign.setMinsignnumber(signnumber);
         payMultiSign.setOutpusHashHex(utxo.getHashHex());
 
@@ -874,7 +883,7 @@ public class SendMoneyController {
         requestParam.put("hexStr", payMultiSign_.get("outpusHashHex"));
         resp = OkHttp3Util.postString(contextRoot + "outpusWithHexStr",
                 Json.jsonmapper().writeValueAsString(requestParam));
-        System.out.println(resp);
+        log.debug(resp);
 
         HashMap<String, Object> outputs_ = Json.jsonmapper().readValue(resp, HashMap.class);
         UTXO u = MapToBeanMapperUtil.parseUTXO((HashMap<String, Object>) outputs_.get("outputs"));
@@ -897,7 +906,7 @@ public class SendMoneyController {
         requestParam.put("signature", Utils.HEX.encode(buf1));
         requestParam.put("signInputData", Utils.HEX.encode(transactionSignature.encodeToBitcoin()));
         resp = OkHttp3Util.postString(contextRoot + "payMultiSign", Json.jsonmapper().writeValueAsString(requestParam));
-        System.out.println(resp);
+        log.debug(resp);
 
         HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
         boolean success = (boolean) result.get("success");
@@ -906,7 +915,7 @@ public class SendMoneyController {
             requestParam.put("orderid", (String) payMultiSign_.get("orderid"));
             resp = OkHttp3Util.postString(contextRoot + "getPayMultiSignAddressList",
                     Json.jsonmapper().writeValueAsString(requestParam));
-            System.out.println(resp);
+            log.debug(resp);
             result = Json.jsonmapper().readValue(resp, HashMap.class);
             List<HashMap<String, Object>> payMultiSignAddresses = (List<HashMap<String, Object>>) result
                     .get("payMultiSignAddresses");

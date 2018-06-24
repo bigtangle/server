@@ -2,3 +2,4 @@
 /.cache-main
 /build/
 /.cache-tests
+/logs/

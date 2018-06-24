@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -49,7 +51,7 @@ import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
 public class ExchangeController {
-
+    private static final Logger log = LoggerFactory.getLogger(ExchangeController.class);
     @FXML
     public TextField toAmountTextField;
 
@@ -129,7 +131,8 @@ public class ExchangeController {
                 continue;
             }
             String url = (String) tokenResult.get("url");
-            System.out.println(url);
+           
+            log.debug( url);
             if (url == null || url.isEmpty()) {
                 continue;
             }
@@ -139,12 +142,14 @@ public class ExchangeController {
             if (!"".equals(Main.password.trim())) {
                 aesKey = keyCrypter.deriveKey(Main.password);
             }
+             
+                
             List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
             for (ECKey key : keys) {
                 String address = key.toAddress(Main.params).toString();
                 HashMap<String, Object> requestParam = new HashMap<String, Object>();
-                requestParam.put("address", address);
-                String response = OkHttp3Util.post(url + "getExchange",
+                requestParam.put("address", address); 
+                String response = OkHttp3Util.post(url+"/"+ "getExchange",
                         Json.jsonmapper().writeValueAsString(requestParam).getBytes());
                 final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
                 List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("exchanges");

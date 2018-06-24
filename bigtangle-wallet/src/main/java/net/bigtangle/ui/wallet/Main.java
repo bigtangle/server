@@ -125,8 +125,8 @@ public class Main extends Application {
     public static Set<String> validAddressSet = new HashSet<String>();
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
-    public static String positiveFile = "/bigtangle-wachted.txt";
-    public static String contactFile = "/bigtangle-contact.txt";
+ 
+     
 
     public static List<String> userdataList = new ArrayList<String>();
 
@@ -201,11 +201,11 @@ public class Main extends Application {
         if (!Locale.CHINESE.equals(locale)) {
 
             if ("".equals(IpAddress))
-                IpAddress = "https://de.server.bigtangle.net";
+                IpAddress = "https://bigtangle.de";
         } else {
 
             if ("".equals(IpAddress))
-                IpAddress = "https://cn.server.bigtangle.net";
+                IpAddress = "https://bigtangle.org";
 
         }
         mainUI = loader.load();
@@ -361,7 +361,7 @@ public class Main extends Application {
         if (!transaction.getInputs().isEmpty()) {
             for (TransactionInput in : transaction.getInputs()) {
                 s.append("     ");
-                s.append(Main.getText("input"));
+                s.append(Main.getText("input")+ ":   ");
 
                 try {
                     String scriptSigStr = in.getScriptSig().toString();
