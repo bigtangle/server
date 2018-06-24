@@ -31,15 +31,20 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
+import net.bigtangle.script.Script;
+import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UUIDUtil;
+import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
@@ -381,8 +386,61 @@ public class ExchangeController {
         overlayUI.done();
     }
 
-    public void refund(ActionEvent event) {
-        overlayUI.done();
+    public void refund(ActionEvent event) throws Exception {
+        if (mTransaction == null) {
+            GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("ex_c_d"));
+            return;
+        }
+        String tokenHex = null, address = null;
+        if (calculatedAddressHit(this.toAddressComboBox.getValue())) {
+            tokenHex = this.toTokenHexComboBox.getValue();
+            address = this.toAddressComboBox.getValue();
+        }
+        if (calculatedAddressHit(this.fromAddressComboBox.getValue())) {
+            tokenHex = this.fromTokenHexComboBox.getValue();
+            address = this.fromAddressComboBox.getValue();
+        }
+        if (tokenHex == null || address == null) {
+            GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("ex_c_d"));
+        }
+        HashMap<String, Coin> refundAmount = new HashMap<String, Coin>();
+        for (TransactionOutput transactionOutput : this.mTransaction.getOutputs()) {
+            Coin value = transactionOutput.getValue();
+            String tokenid = value.getTokenHex();
+            if (!tokenid.equals(tokenHex)) {
+                continue;
+            }
+            Coin coinbase = refundAmount.get(tokenid);
+            if (coinbase == null) {
+                coinbase = Coin.valueOf(0, value.getTokenid());
+            }
+            coinbase = coinbase.add(value);
+            refundAmount.put(tokenid, coinbase);
+        }
+        
+        if (refundAmount.isEmpty()) return;
+        
+        Coin amount = refundAmount.values().iterator().next();
+        Transaction transaction = new Transaction(Main.params);
+        transaction.addOutput(amount, Address.fromBase58(Main.params, address));
+        for (TransactionInput transactionInput : this.mTransaction.getInputs()) {
+            TransactionOutput transactionOutput = transactionInput.getConnectedOutput();
+            if (transactionOutput.getValue().getTokenHex().equals(amount.getTokenHex()) && transactionOutput.getValue().value == amount.value) {
+                //System.out.println(amount + "," + transactionOutput.getValue());
+                transaction.addInput(transactionInput);
+            }
+        }
+        SendRequest request = SendRequest.forTx(transaction);
+        Main.bitcoin.wallet().signTransaction(request);
+        
+        String ContextRoot = Main.getContextRoot();
+        
+        byte[] data = OkHttp3Util.post(ContextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
+        Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
+        rollingBlock.addTransaction(transaction);
+        rollingBlock.solve();
+        OkHttp3Util.post(ContextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        //overlayUI.done();
     }
 
     @SuppressWarnings("unchecked")

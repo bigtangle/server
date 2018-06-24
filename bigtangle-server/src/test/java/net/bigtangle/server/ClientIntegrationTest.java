@@ -75,6 +75,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
         // get token from wallet to spent
         ECKey yourKey = walletAppKit1.wallet().walletKeys(null).get(0);
+        System.err.println("toKey : " + yourKey.toAddress(networkParameters).toBase58());
 
         payToken(yourKey);
         List<ECKey> keys = new ArrayList<ECKey>();
@@ -88,6 +89,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
                 myutxo = u;
             }
         }
+        System.err.println("outKey : " + myutxo.getAddress());
 
         Coin amount = Coin.valueOf(10000, yourutxo.getValue().tokenid);
         SendRequest req = SendRequest.to(new Address(networkParameters, myutxo.getAddress()), amount);
