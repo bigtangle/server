@@ -111,7 +111,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     /**
-     * Constructs a block chain connected to the given list of wallets and a store.
+     * Constructs a block chain connected to the given list of wallets and a
+     * store.
      */
     public FullPrunedBlockGraph(Context context, List<Wallet> listeners, FullPrunedBlockStore blockStore)
             throws BlockStoreException {
@@ -151,11 +152,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     /**
      * Whether or not to run scripts whilst accepting blocks (i.e. checking
      * signatures, for most transactions). If you're accepting data from an
-     * untrusted node, such as one found via the P2P network, this should be set to
-     * true (which is the default). If you're downloading a chain from a node you
-     * control, script execution is redundant because you know the connected node
-     * won't relay bad data to you. In that case it's safe to set this to false and
-     * obtain a significant speedup.
+     * untrusted node, such as one found via the P2P network, this should be set
+     * to true (which is the default). If you're downloading a chain from a node
+     * you control, script execution is redundant because you know the connected
+     * node won't relay bad data to you. In that case it's safe to set this to
+     * false and obtain a significant speedup.
      */
     public void setRunScripts(boolean value) {
         this.runScripts = value;
@@ -194,8 +195,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     /**
-     * Get the {@link Script} from the script bytes or return Script of empty byte
-     * array.
+     * Get the {@link Script} from the script bytes or return Script of empty
+     * byte array.
      */
     private Script getScript(byte[] scriptBytes) {
         try {
@@ -206,8 +207,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     /**
-     * Get the address from the {@link Script} if it exists otherwise return empty
-     * string "".
+     * Get the address from the {@link Script} if it exists otherwise return
+     * empty string "".
      *
      * @param script
      *            The script.
@@ -275,8 +276,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void synchronizationUserData(Sha256Hash blockhash, DataClassName dataClassName, byte[] data, String pubKey, long blocktype)
-            throws BlockStoreException {
+    private void synchronizationUserData(Sha256Hash blockhash, DataClassName dataClassName, byte[] data, String pubKey,
+            long blocktype) throws BlockStoreException {
         UserData userData = this.blockStore.queryUserDataWithPubKeyAndDataclassname(dataClassName.name(), pubKey);
         if (userData == null) {
             userData = new UserData();
@@ -292,7 +293,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         userData.setData(data);
         this.blockStore.updateUserData(userData);
     }
-    
+
     @SuppressWarnings("unchecked")
     private void synchronizationVOSData(byte[] data) throws Exception {
         String jsonStr = new String(data);
@@ -343,9 +344,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     /**
-     * Adds the specified block and all approved blocks to the milestone. This will
-     * connect all transactions of the block by marking used UTXOs spent and adding
-     * new UTXOs to the db.
+     * Adds the specified block and all approved blocks to the milestone. This
+     * will connect all transactions of the block by marking used UTXOs spent
+     * and adding new UTXOs to the db.
      * 
      * @param blockEvaluation
      * @throws BlockStoreException
@@ -452,7 +453,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // For token creations, update token db
         if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
-            // TODO revert token db changes here (revert synchronizationToken(TokenInfo))
+            // TODO revert token db changes here (revert
+            // synchronizationToken(TokenInfo))
             // TODO unsolidify other issuances of this public key?
         }
 
@@ -484,7 +486,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     // }
 
     // For each output, mark as confirmed
-    private void confirmUTXOs(final Transaction tx,Sha256Hash blockhash) throws BlockStoreException {
+    private void confirmUTXOs(final Transaction tx, Sha256Hash blockhash) throws BlockStoreException {
         for (TransactionOutput out : tx.getOutputs()) {
             blockStore.updateTransactionOutputConfirmed(tx.getHash(), out.getIndex(), true);
             blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), out.getIndex(), blockhash);
@@ -493,9 +495,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     /**
-     * Removes the specified block and all its output spenders and approvers from
-     * the milestone. This will disconnect all transactions of the block by marking
-     * used UTXOs unspent and removing UTXOs of the block from the DB.
+     * Removes the specified block and all its output spenders and approvers
+     * from the milestone. This will disconnect all transactions of the block by
+     * marking used UTXOs unspent and removing UTXOs of the block from the DB.
      * 
      * @param blockEvaluation
      * @throws BlockStoreException
@@ -526,7 +528,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             if (blockStore.getTransactionOutput(tx.getHash(), txout.getIndex()).isSpent()) {
                 removeBlockFromMilestone(blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()));
                 blockStore.updateTransactionOutputSpent(tx.getHash(), txout.getIndex(), false, null);
-                blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), txout.getIndex(), parentBlock.getHash());
+                blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), txout.getIndex(),
+                        parentBlock.getHash());
             }
             blockStore.updateTransactionOutputConfirmed(tx.getHash(), txout.getIndex(), false);
         }
@@ -622,11 +625,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 return false;
         }
 
-        // Check genesis  block specific validity, can only one genesis block
+        // Check genesis block specific validity, can only one genesis block
         if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_INITIAL) {
-          if(  block.getHash() != networkParameters.getGenesisBlock().getHash()) {
-              return false;
-          }
+            if (block.getHash() != networkParameters.getGenesisBlock().getHash()) {
+                return false;
+            }
         }
         // Check issuance block specific validity
         if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
@@ -635,7 +638,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     return false;
                 }
             } catch (Exception e) {
-                log.error("",e);
+                log.error("", e);
                 return false;
             }
         }
@@ -720,8 +723,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), height, isCoinBase, script,
                             getScriptAddress(script), block.getHash(), out.getFromaddress(), tx.getMemo(),
                             Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0);
-                    blockStore.addUnspentTransactionOutput(newOut);
-
+                    // Filter zero UTXO
+                    if (!newOut.getValue().isZero()) {
+                        blockStore.addUnspentTransactionOutput(newOut);
+                    }
                     if (script.isSentToMultiSig()) {
                         int minsignnumber = script.getNumberOfSignaturesRequiredToSpend();
                         for (ECKey ecKey : script.getPubKeys()) {
@@ -760,7 +765,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 } catch (InterruptedException thrownE) {
                     throw new RuntimeException(thrownE); // Shouldn't happen
                 } catch (ExecutionException thrownE) {
-                   // log.error("Script.correctlySpends threw a non-normal exception: " ,thrownE );
+                    // log.error("Script.correctlySpends threw a non-normal
+                    // exception: " ,thrownE );
                     throw new VerificationException(
                             "Bug in Script.correctlySpends, likely script malformed in some new and interesting way.",
                             thrownE);
@@ -779,10 +785,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         } finally {
             try {
                 blockStore.commitDatabaseBatchWrite();
-            } catch ( Exception e) {
-                //Ignore;
+            } catch (Exception e) {
+                // Ignore;
                 log.error(" " + e);
-                
+
             }
         }
         return true;
