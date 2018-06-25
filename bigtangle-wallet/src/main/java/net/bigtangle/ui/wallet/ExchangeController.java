@@ -145,12 +145,15 @@ public class ExchangeController {
              
                 
             List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
-            for (ECKey key : keys) {
-                String address = key.toAddress(Main.params).toString();
-                HashMap<String, Object> requestParam = new HashMap<String, Object>();
-                requestParam.put("address", address); 
-                String response = OkHttp3Util.post(url+"/"+ "getExchange",
-                        Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+            List<String> addressList = new ArrayList<String>();
+            for (ECKey ecKey : keys) {
+                String address = ecKey.toAddress(Main.params).toString();
+                addressList.add(address);
+            }
+//                HashMap<String, Object> requestParam = new HashMap<String, Object>();
+//                requestParam.put("address", address); 
+                String response = OkHttp3Util.post(url+"/"+ "getBatchExchange",
+                        Json.jsonmapper().writeValueAsString(addressList).getBytes());
                 final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
                 List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("exchanges");
                 if (list == null) {
@@ -177,7 +180,6 @@ public class ExchangeController {
                     map.put("toAmount", toAmount.toPlainString());
                     exchangeData.add(map);
                 }
-            }
         }
         orderidsCol.setCellValueFactory(new MapValueFactory("orderid"));
         dataHexCol.setCellValueFactory(new MapValueFactory("dataHex"));
