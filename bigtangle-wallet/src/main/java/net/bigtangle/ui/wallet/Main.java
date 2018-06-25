@@ -666,6 +666,8 @@ public class Main extends Application {
 
         String response = OkHttp3Util.post(ContextRoot + "getOutputs",
                 Json.jsonmapper().writeValueAsString(pubKeyHashs).getBytes());
+        log.debug("tokenid:"+tokenid);
+        log.debug("response:"+response);
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         if (data == null || data.isEmpty()) {
             return listUTXO;

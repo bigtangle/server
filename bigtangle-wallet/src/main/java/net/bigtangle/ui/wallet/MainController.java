@@ -177,6 +177,7 @@ public class MainController {
         }
         Map<String, String> hashNameMap = Main.getTokenHexNameMap();
         ObservableList<UTXOModel> subutxos = FXCollections.observableArrayList();
+        Main.validAddressSet.clear();
         for (Map<String, Object> object : list) {
             UTXO u = MapToBeanMapperUtil.parseUTXO(object);
             Coin c = u.getValue();
@@ -190,7 +191,6 @@ public class MainController {
             String hash = u.getHashHex();
             long outputindex = u.getIndex();
 
-            Main.validAddressSet.clear();
             Main.validAddressSet.add(address);
             boolean spendPending = u.isSpendPending();
             if (myPositvleTokens != null && !"".equals(myPositvleTokens.trim()) && !myPositvleTokens.trim().isEmpty()) {
@@ -213,9 +213,10 @@ public class MainController {
             return;
         }
         ObservableList<CoinModel> subcoins = FXCollections.observableArrayList();
+        Main.validTokenMap.clear();
         for (Map<String, Object> map : list) {
             Coin coin2 = MapToBeanMapperUtil.parseCoin(map);
-            Main.validTokenMap.clear();
+
             Main.validTokenMap.put(Utils.HEX.encode(coin2.tokenid), true);
 
             if (!coin2.isZero()) {
