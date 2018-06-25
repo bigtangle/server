@@ -125,7 +125,7 @@
 										<TableColumn fx:id="toAmountCol" prefWidth="122.0" text="%to_tokenAmount" />
 										<TableColumn fx:id="toSignCol" prefWidth="71.0" text="%to_sign" />
 										<TableColumn fx:id="fromSignCol" prefWidth="51.0" text="%from_sign" />
-                                          <TableColumn fx:id="marketCol" prefWidth="51.0" text="market" />
+                                          <TableColumn fx:id="marketCol" prefWidth="51.0" text="%market" />
 									</columns>
 								</TableView>
                         <HBox alignment="CENTER_RIGHT" layoutX="538.0" layoutY="493.0" prefHeight="23.0" prefWidth="448.0" spacing="15.0">
