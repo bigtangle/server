@@ -236,7 +236,7 @@ public class OrderController extends ExchangeController {
     /**
      * 
      * @param all
-     *            buy==all
+     *            buy==all without system coin BIG
      * @throws Exception
      */
     @SuppressWarnings("unchecked")
@@ -252,7 +252,9 @@ public class OrderController extends ExchangeController {
         if (!buy) {
             if (Main.validTokenSet != null && !Main.validTokenSet.isEmpty()) {
                 for (String tokeninfo : Main.validTokenSet) {
+                    if(!isSystemCoin(tokeninfo)) {
                     tokenData.add(tokeninfo);
+                    }
                 }
             }
         } else {
@@ -263,7 +265,9 @@ public class OrderController extends ExchangeController {
                     continue;
 
                 String tokenname = (String) map.get("tokenname");
-                tokenData.add(tokenname + " : " + tokenHex);
+                if(!isSystemCoin(tokenname + ":" + tokenHex)) {
+                tokenData.add(tokenname + ":" + tokenHex);
+                }
 
             }
         }
@@ -285,6 +289,11 @@ public class OrderController extends ExchangeController {
             }
         }
         addressComboBox.setItems(addresses);
+
+    }
+
+    public boolean isSystemCoin(String token) {
+        return ("BIG:"+NetworkParameters.BIGNETCOIN_TOKENID_STRING).equals(token);
 
     }
 
