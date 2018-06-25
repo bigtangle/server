@@ -23,7 +23,7 @@ section {
 	background: #515e90 !important;
 }
 
-.bg-primary, #faq, #usecases{
+.bg-primary, #faq, #usecases, #intrinsics{
 	background: rgba(23,37,87,.7) !important;
 	color: #fff;
 }
