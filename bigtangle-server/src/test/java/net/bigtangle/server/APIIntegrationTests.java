@@ -5,6 +5,7 @@
 package net.bigtangle.server;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -66,6 +67,17 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     private int height = 1;
 
     private static final Logger logger = LoggerFactory.getLogger(APIIntegrationTests.class);
+    
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testClientVersion() throws Exception {
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        String resp = OkHttp3Util.postString(contextRoot + "version", Json.jsonmapper().writeValueAsString(requestParam));
+        System.out.println(resp);
+        HashMap<String, String> result = Json.jsonmapper().readValue(resp, HashMap.class);
+        String version = result.get("version");
+        assertTrue(version.equals("03"));
+    }
     
     @Test
     public void testBlockDamage() throws Exception {
