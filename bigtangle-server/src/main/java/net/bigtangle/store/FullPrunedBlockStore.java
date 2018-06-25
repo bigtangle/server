@@ -245,7 +245,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void streamBlocks(long heightstart, KafkaMessageProducer kafkaMessageProducer) throws BlockStoreException;
 
-    
     public List<MultiSignAddress> getMultiSignAddressListByTokenid(String tokenid) throws BlockStoreException;
 
     public void insertMultiSignAddress(MultiSignAddress multiSignAddress) throws BlockStoreException;
@@ -360,4 +359,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     void updateVOSExecute(VOSExecute vosExecute) throws BlockStoreException;
 
     void updateTransactionOutputConfirmingBlock(Sha256Hash hash, int index, Sha256Hash hash2) throws BlockStoreException;
+    
+    byte[] getSettingValue(String name) throws BlockStoreException;
 }

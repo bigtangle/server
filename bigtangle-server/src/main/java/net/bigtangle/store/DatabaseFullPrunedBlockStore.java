@@ -69,7 +69,32 @@ import net.bigtangle.script.Script;
 public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockStore {
     private static final Logger log = LoggerFactory.getLogger(DatabaseFullPrunedBlockStore.class);
 
-    protected String VERSION_SETTING = "version";
+    public static final String VERSION_SETTING = "version";
+    
+    @Override
+    public byte[] getSettingValue(String name) throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+        maybeConnect();
+        try {
+            preparedStatement = conn.get().prepareStatement(getSelectSettingsSQL());
+            preparedStatement.setString(1, name);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (!resultSet.next()) {
+                return null;
+            }
+            return resultSet.getBytes(1);
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
 
     // Drop table SQL.
     public static String DROP_SETTINGS_TABLE = "DROP TABLE settings";
@@ -750,6 +775,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 //        this.saveTokens(ecKey.getPublicKeyAsHex(), "default market", "default market", "http://localhost:8089/", 0,
 //                false, true, true);
     }
+    
+    
 
     /**
      * Create a new store for the given
