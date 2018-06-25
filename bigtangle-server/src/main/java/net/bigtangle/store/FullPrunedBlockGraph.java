@@ -438,7 +438,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 }
             }
 
-            confirmUTXOs(tx);
+            confirmUTXOs(tx, block.getHash());
         }
     }
 
@@ -484,11 +484,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     // }
 
     // For each output, mark as confirmed
-    private void confirmUTXOs(final Transaction tx) throws BlockStoreException {
+    private void confirmUTXOs(final Transaction tx,Sha256Hash blockhash) throws BlockStoreException {
         for (TransactionOutput out : tx.getOutputs()) {
             blockStore.updateTransactionOutputConfirmed(tx.getHash(), out.getIndex(), true);
-            blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), out.getIndex(), null);
-            blockStore.updateTransactionOutputSpent(tx.getHash(), out.getIndex(), false, null);
+            blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), out.getIndex(), blockhash);
+            blockStore.updateTransactionOutputSpent(tx.getHash(), out.getIndex(), false, blockhash);
         }
     }
 
