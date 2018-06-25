@@ -213,13 +213,13 @@ public class MainController {
             return;
         }
         ObservableList<CoinModel> subcoins = FXCollections.observableArrayList();
-        Main.validTokenMap.clear();
+        Main.validTokenSet.clear();
         for (Map<String, Object> map : list) {
             Coin coin2 = MapToBeanMapperUtil.parseCoin(map);
 
-            Main.validTokenMap.put(Utils.HEX.encode(coin2.tokenid), true);
-
             if (!coin2.isZero()) {
+                Main.validTokenSet.add(Main.getString(hashNameMap.get(Utils.HEX.encode(coin2.tokenid))) + ":"
+                        + Utils.HEX.encode(coin2.tokenid));
                 if (myPositvleTokens != null && !"".equals(myPositvleTokens.trim())
                         && !myPositvleTokens.trim().isEmpty()) {
                     if (myPositvleTokens.contains(Utils.HEX.encode(coin2.tokenid))) {

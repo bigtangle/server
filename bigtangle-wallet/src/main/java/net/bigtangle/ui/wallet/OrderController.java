@@ -43,7 +43,7 @@ import net.bigtangle.utils.OrderState;
 
 public class OrderController extends ExchangeController {
     private static final Logger log = LoggerFactory.getLogger(OrderController.class);
-    
+
     @FXML
     public TextField fromTimeTF;
     @FXML
@@ -161,7 +161,7 @@ public class OrderController extends ExchangeController {
         }
         ObservableList<Map<String, Object>> orderData = FXCollections.observableArrayList();
 
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getMarkets",
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         final Map<String, Object> getTokensResult = Json.jsonmapper().readValue(response, Map.class);
@@ -173,7 +173,7 @@ public class OrderController extends ExchangeController {
             }
             String url = (String) tokenResult.get("url");
             try {
-                response = OkHttp3Util.post(url +"/"+ "getOrders",
+                response = OkHttp3Util.post(url + "/" + "getOrders",
                         Json.jsonmapper().writeValueAsString(requestParam).getBytes());
             } catch (Exception e) {
                 continue;
@@ -218,7 +218,7 @@ public class OrderController extends ExchangeController {
     }
 
     public void initMarketComboBox() throws Exception {
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
         ObservableList<String> tokenData = FXCollections.observableArrayList();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getMarkets",
@@ -241,29 +241,35 @@ public class OrderController extends ExchangeController {
      */
     @SuppressWarnings("unchecked")
     public void initComboBox(boolean buy) throws Exception {
-        String CONTEXT_ROOT =  Main.getContextRoot();
+        String CONTEXT_ROOT = Main.getContextRoot();
         ObservableList<String> tokenData = FXCollections.observableArrayList();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokensNoMarket",
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
-        for (Map<String, Object> map : list) {
-            String tokenHex = (String) map.get("tokenid");
-            boolean asmarket = (boolean) map.get("asmarket");
-            if (asmarket) continue;
-            if (!buy) {
-                if (Main.validTokenMap.containsKey(tokenHex)) {
-                    String tokenname = (String) map.get("tokenname");
-                    tokenData.add(tokenname + " : " + tokenHex);
+
+        if (!buy) {
+            if (Main.validTokenSet != null && !Main.validTokenSet.isEmpty()) {
+                for (String tokeninfo : Main.validTokenSet) {
+                    tokenData.add(tokeninfo);
                 }
-            } else {
+            }
+        } else {
+            for (Map<String, Object> map : list) {
+                String tokenHex = (String) map.get("tokenid");
+                boolean asmarket = (boolean) map.get("asmarket");
+                if (asmarket)
+                    continue;
+
                 String tokenname = (String) map.get("tokenname");
                 tokenData.add(tokenname + " : " + tokenHex);
-            }
 
+            }
         }
+
         tokenComboBox.setItems(tokenData);
+        tokenComboBox.getSelectionModel().selectFirst();
         KeyParameter aeskey = null;
         // Main.initAeskey(aeskey);
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
@@ -282,15 +288,15 @@ public class OrderController extends ExchangeController {
 
     }
 
-    
     public void buy(ActionEvent event) throws Exception {
-        
+
         try {
             buyDo(event);
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
     }
+
     @SuppressWarnings("unchecked")
     public void buyDo(ActionEvent event) throws Exception {
         log.debug(tokenComboBox.getValue());
@@ -298,8 +304,7 @@ public class OrderController extends ExchangeController {
         String typeStr = (String) buySellTG.getSelectedToggle().getUserData().toString();
 
         byte[] pubKeyHash = Address.fromBase58(Main.params, addressComboBox.getValue()).getHash160();
-        
-        
+
         Coin coin = Main.calculateTotalUTXOList(pubKeyHash,
                 typeStr.equals("sell") ? tokenid : NetworkParameters.BIGNETCOIN_TOKENID_STRING);
         long amount = Coin.parseCoinValue(this.amountTextField.getText());
@@ -318,7 +323,7 @@ public class OrderController extends ExchangeController {
         if (validdateToDatePicker.getValue() != null) {
             validdateTo = df.format(validdateToDatePicker.getValue());
         }
-        String ContextRoot =  Main.getContextRoot();
+        String ContextRoot = Main.getContextRoot();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("address", addressComboBox.getValue());
         // String tokenid = this.tokenComboBox.getValue().split(":")[1].trim();
@@ -336,12 +341,13 @@ public class OrderController extends ExchangeController {
 
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
         requestParam0.put("tokenid", temp);
-        String resp = OkHttp3Util.postString(ContextRoot + "getTokenById", Json.jsonmapper().writeValueAsString(requestParam0));
+        String resp = OkHttp3Util.postString(ContextRoot + "getTokenById",
+                Json.jsonmapper().writeValueAsString(requestParam0));
         HashMap<String, Object> res = Json.jsonmapper().readValue(resp, HashMap.class);
         HashMap<String, Object> token_ = (HashMap<String, Object>) res.get("token");
-        
+
         String url = (String) token_.get("url");
-        OkHttp3Util.post(url+"/" + "saveOrder", Json.jsonmapper().writeValueAsString(requestParam));
+        OkHttp3Util.post(url + "/" + "saveOrder", Json.jsonmapper().writeValueAsString(requestParam));
         overlayUI.done();
     }
 

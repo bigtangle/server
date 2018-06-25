@@ -121,12 +121,9 @@ public class Main extends Application {
     public static int numberOfEmptyBlocks = 3;
     public static boolean emptyBlocks = true;
 
-    public static Map<String, Boolean> validTokenMap = new HashMap<String, Boolean>();
     public static Set<String> validAddressSet = new HashSet<String>();
-
+    public static Set<String> validTokenSet = new HashSet<String>();
     private static final Logger log = LoggerFactory.getLogger(Main.class);
- 
-     
 
     public static List<String> userdataList = new ArrayList<String>();
 
@@ -361,7 +358,7 @@ public class Main extends Application {
         if (!transaction.getInputs().isEmpty()) {
             for (TransactionInput in : transaction.getInputs()) {
                 s.append("     ");
-                s.append(Main.getText("input")+ ":   ");
+                s.append(Main.getText("input") + ":   ");
 
                 try {
                     String scriptSigStr = in.getScriptSig().toString();
@@ -369,7 +366,7 @@ public class Main extends Application {
                     if (in.getValue() != null)
                         s.append(" ").append(in.getValue().toString());
                     s.append("\n          ");
-                    s.append(Main.getText( "connectedOutput"));
+                    s.append(Main.getText("connectedOutput"));
                     final TransactionOutPoint outpoint = in.getOutpoint();
                     s.append(outpoint.toString());
                     final TransactionOutput connectedOutput = outpoint.getConnectedOutput();
@@ -412,7 +409,7 @@ public class Main extends Application {
             }
             s.append('\n');
         }
- 
+
         return s.toString();
     }
 
@@ -666,8 +663,8 @@ public class Main extends Application {
 
         String response = OkHttp3Util.post(ContextRoot + "getOutputs",
                 Json.jsonmapper().writeValueAsString(pubKeyHashs).getBytes());
-        log.debug("tokenid:"+tokenid);
-        log.debug("response:"+response);
+        log.debug("tokenid:" + tokenid);
+        log.debug("response:" + response);
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         if (data == null || data.isEmpty()) {
             return listUTXO;
