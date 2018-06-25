@@ -1,3 +1,11 @@
+## read market with list of keys   https://market.bigtangle.net/getExchange
+
+## add version check of wallet and force wallet update
+
+## rolling update of database table setting with a version and update the sql scripts against the version
+
+
+
 ## add list of server and save data local on wallet
 
 ## Refund --> get the block to imported and read all transaction input 
@@ -36,7 +44,7 @@ TODO execution results Selection
 ## move unsolid blocks to new cache table
 
 
-## read market with list of keys   https://market.bigtangle.net/getExchange
+
 
 
 
