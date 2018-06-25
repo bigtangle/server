@@ -731,13 +731,13 @@ public class StockController extends TokensController {
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
 
-        TokenInfo tokenInfo = (TokenInfo) Main.getUserdata(DataClassName.TOKEN.name());
+        Main.tokenInfo = (TokenInfo) Main.getUserdata(DataClassName.TOKEN.name());
 
-        List<Tokens> list = tokenInfo.getPositveTokenList();
+        List<Tokens> list = Main.tokenInfo.getPositveTokenList();
         list.add(tokens);
-        tokenInfo.setPositveTokenList(list);
+        Main.tokenInfo.setPositveTokenList(list);
         coinbase.setDataclassname(DataClassName.TOKEN.name());
-        coinbase.setData(tokenInfo.toByteArray());
+        coinbase.setData(Main.tokenInfo.toByteArray());
 
         Sha256Hash sighash = coinbase.getHash();
         ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash);

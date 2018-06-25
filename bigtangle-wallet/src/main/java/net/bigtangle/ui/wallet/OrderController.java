@@ -30,9 +30,12 @@ import javafx.scene.control.cell.MapValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -120,6 +123,7 @@ public class OrderController extends ExchangeController {
             stateRB1.setUserData("publish");
             stateRB2.setUserData("match");
             stateRB3.setUserData("finish");
+            Main.tokenInfo = (TokenInfo) Main.getUserdata(DataClassName.TOKEN.name());
             initMarketComboBox();
             buySellTG.selectedToggleProperty().addListener((ov, o, n) -> {
                 String temp = n.getUserData().toString();
@@ -252,8 +256,8 @@ public class OrderController extends ExchangeController {
         if (!buy) {
             if (Main.validTokenSet != null && !Main.validTokenSet.isEmpty()) {
                 for (String tokeninfo : Main.validTokenSet) {
-                    if(!isSystemCoin(tokeninfo)) {
-                    tokenData.add(tokeninfo);
+                    if (!isSystemCoin(tokeninfo)) {
+                        tokenData.add(tokeninfo);
                     }
                 }
             }
@@ -265,10 +269,17 @@ public class OrderController extends ExchangeController {
                     continue;
 
                 String tokenname = (String) map.get("tokenname");
-                if(!isSystemCoin(tokenname + ":" + tokenHex)) {
-                tokenData.add(tokenname + ":" + tokenHex);
+                if (!isSystemCoin(tokenname + ":" + tokenHex)) {
+                    tokenData.add(tokenname + ":" + tokenHex);
                 }
 
+            }
+            if (Main.tokenInfo != null && Main.tokenInfo.getPositveTokenList() != null) {
+                for (Tokens p : Main.tokenInfo.getPositveTokenList()) {
+                    if (!isSystemCoin(p.getTokenname() + ":" + p.getTokenid())) {
+                        tokenData.add(p.getTokenname() + ":" + p.getTokenid());
+                    }
+                }
             }
         }
 
@@ -293,7 +304,7 @@ public class OrderController extends ExchangeController {
     }
 
     public boolean isSystemCoin(String token) {
-        return ("BIG:"+NetworkParameters.BIGNETCOIN_TOKENID_STRING).equals(token);
+        return ("BIG:" + NetworkParameters.BIGNETCOIN_TOKENID_STRING).equals(token);
 
     }
 

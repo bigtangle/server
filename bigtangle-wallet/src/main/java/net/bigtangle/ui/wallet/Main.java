@@ -126,7 +126,8 @@ public class Main extends Application {
     private static final Logger log = LoggerFactory.getLogger(Main.class);
 
     public static List<String> userdataList = new ArrayList<String>();
-
+     //TODO as instance variable, not static 
+    public static TokenInfo tokenInfo ;
     @Override
     public void start(Stage mainWindow) throws Exception {
         try {
