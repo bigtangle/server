@@ -5,6 +5,7 @@
 package net.bigtangle.server.ordermatch;
 
 import java.io.PrintWriter;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.ServletOutputStream;
@@ -75,6 +76,14 @@ public class DispatcherController {
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String address = (String) request.get("address");
                 AbstractResponse response = exchangeService.getExchangeListWithAddress(address);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+                
+            case getBatchExchange: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                List<String> address = Json.jsonmapper().readValue(reqStr, List.class);
+                AbstractResponse response = exchangeService.getBatchExchangeListByAddressList(address);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;

@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.server.ordermatch.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -85,5 +86,13 @@ public class ExchangeService {
         Exchange exchange = this.store.getExchangeInfoByOrderid(orderid);
         this.store.updateOrderPublishState(exchange.getToOrderId(), OrderState.finish.ordinal());
         this.store.updateOrderPublishState(exchange.getFromOrderId(), OrderState.finish.ordinal());
+    }
+
+    public AbstractResponse getBatchExchangeListByAddressList(List<String> address) throws BlockStoreException {
+        List<Exchange> list = new ArrayList<Exchange>();
+        for (String s : address) {
+            list.addAll(this.store.getExchangeListWithAddress(s));
+        }
+        return GetExchangeResponse.create(list);
     }
 }
