@@ -452,7 +452,7 @@ public class ExchangeController {
     public HashMap<String, Object> getExchangeInfoResult(String url, String orderid) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", orderid);
-        String respone = OkHttp3Util.postString(url + "exchangeInfo",
+        String respone = OkHttp3Util.postString(url +"/"+ "exchangeInfo",
                 Json.jsonmapper().writeValueAsString(requestParam));
         HashMap<String, Object> result = Json.jsonmapper().readValue(respone, HashMap.class);
         HashMap<String, Object> exchange = (HashMap<String, Object>) result.get("exchange");
