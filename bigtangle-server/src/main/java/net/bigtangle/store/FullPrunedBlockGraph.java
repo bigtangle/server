@@ -718,7 +718,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     // in future.
                     Script script = getScript(out.getScriptBytes());
                     UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), height, isCoinBase, script,
-                            getScriptAddress(script), null, out.getFromaddress(), tx.getMemo(),
+                            getScriptAddress(script), block.getHash(), out.getFromaddress(), tx.getMemo(),
                             Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0);
                     blockStore.addUnspentTransactionOutput(newOut);
 
