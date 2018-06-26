@@ -266,8 +266,8 @@ public class ExchangeController {
         rollingBlock.addTransaction(mTransaction);
         rollingBlock.solve();
         OkHttp3Util.post(ContextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
-
-        if (marketURL != null && marketURL.equals("")) {
+        //System.out.println(marketURL);
+        if (marketURL != null && !marketURL.equals("")) {
             HashMap<String, Object> exchangeResult = this.getExchangeInfoResult(marketURL, this.mOrderid);
             int toSign = (int) exchangeResult.get("toSign");
             int fromSign = (int) exchangeResult.get("fromSign");
