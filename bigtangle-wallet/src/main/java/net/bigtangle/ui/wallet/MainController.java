@@ -127,6 +127,16 @@ public class MainController {
 
     @FXML
     public void initialize() {
+        try {
+            String version = checkVersion();
+            int latestVersion = Integer.parseInt(version);
+            int clientVersion = Integer.parseInt(Main.version);
+            if (clientVersion < latestVersion) {
+                GuiUtils.informationalAlert("", Main.getText("needUpdate"), "");
+            }
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
         if (bitcoin.wallet().isEncrypted()) {
             searchPane.setVisible(false);
             serverPane.setVisible(false);
@@ -141,6 +151,17 @@ public class MainController {
         Server.setText(Main.IpAddress);
         // IPPort.setText(Main.port);
         initTableView();
+    }
+
+    public String checkVersion() throws Exception {
+        String CONTEXT_ROOT = Main.getContextRoot();
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        String resp = OkHttp3Util.postString(CONTEXT_ROOT + "version",
+                Json.jsonmapper().writeValueAsString(requestParam));
+        HashMap<String, String> result = Json.jsonmapper().readValue(resp, HashMap.class);
+        String version = result.get("version");
+        return version;
+
     }
 
     @SuppressWarnings("unchecked")

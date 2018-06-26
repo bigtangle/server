@@ -98,7 +98,7 @@ import net.bigtangle.wallet.DeterministicSeed;
 public class Main extends Application {
     public static NetworkParameters params = UnitTestParams.get();
     public static final String APP_NAME = "Bigtangle Test Wallet 5.5";
-
+    public static final String version = "03";
     public static String keyFileDirectory = ".";
     public static String keyFilePrefix = "bigtangle";
     public static WalletAppKit bitcoin;
@@ -126,8 +126,9 @@ public class Main extends Application {
     private static final Logger log = LoggerFactory.getLogger(Main.class);
 
     public static List<String> userdataList = new ArrayList<String>();
-     //TODO as instance variable, not static 
-    public static TokenInfo tokenInfo ;
+    // TODO as instance variable, not static
+    public static TokenInfo tokenInfo;
+
     @Override
     public void start(Stage mainWindow) throws Exception {
         try {
