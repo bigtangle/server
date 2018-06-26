@@ -333,7 +333,7 @@ public abstract class AbstractBlockGraph {
     protected abstract boolean checkSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch,
             long height) throws BlockStoreException, VerificationException;
 
-    protected abstract void tryFirstSetSolidityAndHeight(Block block) throws BlockStoreException;
+    //protected abstract void tryFirstSetSolidityAndHeight(Block block) throws BlockStoreException;
 
     /**
      * Disconnect each transaction in the block (after reading it from the block

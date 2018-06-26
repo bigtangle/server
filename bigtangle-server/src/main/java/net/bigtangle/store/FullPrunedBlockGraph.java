@@ -541,37 +541,33 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         return blockStore.get(hash);
     }
 
-    @Override
-    protected void tryFirstSetSolidityAndHeight(Block block) throws BlockStoreException {
-        // Check previous blocks exist
-        BlockEvaluation prevBlockEvaluation = blockStore.getBlockEvaluation(block.getPrevBlockHash());
-        if (prevBlockEvaluation == null) {
-            blockRequester.requestBlock(block.getPrevBlockHash());
-            log.warn("previous block does not exist for solidity update, requesting...");
-        }
-
-        BlockEvaluation prevBranchBlockEvaluation = blockStore.getBlockEvaluation(block.getPrevBranchBlockHash());
-        if (prevBranchBlockEvaluation == null) {
-            blockRequester.requestBlock(block.getPrevBranchBlockHash());
-            log.warn("previous block does not exist for solidity update, requesting...");
-        }
-
-        if (prevBlockEvaluation == null || prevBranchBlockEvaluation == null) {
-            return;
-        }
-
-        // If both previous blocks are solid, our block should be solidified
-        if (prevBlockEvaluation.isSolid() && prevBranchBlockEvaluation.isSolid()) {
-            trySolidify(block, prevBlockEvaluation, prevBranchBlockEvaluation);
-        }
-    }
+//    @Override
+//    protected void tryFirstSetSolidityAndHeight(Block block) throws BlockStoreException {
+//        // Check previous blocks exist
+//        BlockEvaluation prevBlockEvaluation = blockStore.getBlockEvaluation(block.getPrevBlockHash());
+//        if (prevBlockEvaluation == null) {
+//            blockRequester.requestBlock(block.getPrevBlockHash());
+//            log.warn("previous block does not exist for solidity update, requesting...");
+//        }
+//
+//        BlockEvaluation prevBranchBlockEvaluation = blockStore.getBlockEvaluation(block.getPrevBranchBlockHash());
+//        if (prevBranchBlockEvaluation == null) {
+//            blockRequester.requestBlock(block.getPrevBranchBlockHash());
+//            log.warn("previous block does not exist for solidity update, requesting...");
+//        }
+//
+//        if (prevBlockEvaluation == null || prevBranchBlockEvaluation == null) {
+//            return;
+//        }
+//
+//        // If both previous blocks are solid, our block should be solidified
+//        if (prevBlockEvaluation.isSolid() && prevBranchBlockEvaluation.isSolid()) {
+//            trySolidify(block, prevBlockEvaluation, prevBranchBlockEvaluation);
+//        }
+//    }
 
     @Override
     public void solidifyBlock(Block block) throws BlockStoreException {
-
-        // Update evaluations
-        blockStore.updateBlockEvaluationSolid(block.getHash(), true);
-
         // Update tips table
         blockStore.deleteTip(block.getPrevBlockHash());
         blockStore.deleteTip(block.getPrevBranchBlockHash());
@@ -579,33 +575,32 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.insertTip(block.getHash());
     }
 
-    // TODO remove this and other now useless functions, migrate code to solidifyBlock
-    public boolean trySolidify(Block block, BlockEvaluation prev, BlockEvaluation prevBranch)
-            throws BlockStoreException {
-        StoredBlock storedPrev = blockStore.get(block.getPrevBlockHash());
-        StoredBlock storedPrevBranch = blockStore.get(block.getPrevBranchBlockHash());
-        long height = Math.max(prev.getHeight() + 1, prevBranch.getHeight() + 1);
-
-        // Fails if verification fails, for now tries to solidify again later
-        try {
-            if (!checkSolidity(block, storedPrev, storedPrevBranch, height)) {
-                return false;
-            }
-        } catch (VerificationException e) {
-            log.info(e.getMessage());
-            return false;
-        }
-
-        // Update evaluations
-        blockStore.updateBlockEvaluationSolid(block.getHash(), true);
-
-        // Update tips table
-        blockStore.deleteTip(block.getPrevBlockHash());
-        blockStore.deleteTip(block.getPrevBranchBlockHash());
-        blockStore.deleteTip(block.getHash());
-        blockStore.insertTip(block.getHash());
-        return true;
-    }
+//    public boolean trySolidify(Block block, BlockEvaluation prev, BlockEvaluation prevBranch)
+//            throws BlockStoreException {
+//        StoredBlock storedPrev = blockStore.get(block.getPrevBlockHash());
+//        StoredBlock storedPrevBranch = blockStore.get(block.getPrevBranchBlockHash());
+//        long height = Math.max(prev.getHeight() + 1, prevBranch.getHeight() + 1);
+//
+//        // Fails if verification fails, for now tries to solidify again later
+//        try {
+//            if (!checkSolidity(block, storedPrev, storedPrevBranch, height)) {
+//                return false;
+//            }
+//        } catch (VerificationException e) {
+//            log.info(e.getMessage());
+//            return false;
+//        }
+//
+//        // Update evaluations
+//        blockStore.updateBlockEvaluationSolid(block.getHash(), true);
+//
+//        // Update tips table
+//        blockStore.deleteTip(block.getPrevBlockHash());
+//        blockStore.deleteTip(block.getPrevBranchBlockHash());
+//        blockStore.deleteTip(block.getHash());
+//        blockStore.insertTip(block.getHash());
+//        return true;
+//    }
 
     protected void insertUnsolidBlock(Block block ) throws BlockStoreException {
         blockStore.insertUnsolid(block);

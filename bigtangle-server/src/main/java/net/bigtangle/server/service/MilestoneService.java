@@ -110,64 +110,64 @@ public class MilestoneService {
     private void clearCacheBlockEvaluations() throws Exception {
     }
 
-    /**
-     * Update solid, true if all directly or indirectly approved blocks exist.
-     * If solid, update height to be the max of previous heights + 1
-     * 
-     * @throws Exception
-     */
-    private void updateSolidityAndHeight() throws Exception {
-        List<Sha256Hash> nonSolidBlocks = blockService.getNonSolidBlocks();
-        for (Sha256Hash nonSolidBlock : nonSolidBlocks)
-            updateSolidityAndHeightRecursive(nonSolidBlock);
-    }
+//    /**
+//     * Update solid, true if all directly or indirectly approved blocks exist.
+//     * If solid, update height to be the max of previous heights + 1
+//     * 
+//     * @throws Exception
+//     */
+//    private void updateSolidityAndHeight() throws Exception {
+//        List<Sha256Hash> nonSolidBlocks = blockService.getNonSolidBlocks();
+//        for (Sha256Hash nonSolidBlock : nonSolidBlocks)
+//            updateSolidityAndHeightRecursive(nonSolidBlock);
+//    }
 
-    private boolean updateSolidityAndHeightRecursive(Sha256Hash hash) throws BlockStoreException {
-        BlockEvaluation blockEvaluation = blockService.getBlockEvaluation(hash);
-
-        // Missing blocks -> not solid, request from network
-        if (blockEvaluation == null) {
-            blockRequester.requestBlock(hash);
-            log.warn("this block does not exist for solidity update, requesting...");
-            return false;
-        }
-
-        // Solid blocks stay solid
-        if (blockEvaluation.isSolid()) {
-            return true;
-        }
-
-        Block block = blockService.getBlock(hash);
-        boolean prevBlockSolid = false;
-        boolean prevBranchBlockSolid = false;
-
-        // Check previous trunk block exists and is solid
-        BlockEvaluation prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
-        if (prevBlockEvaluation == null) {
-            blockRequester.requestBlock(block.getPrevBlockHash());
-            log.warn("this block does not exist for solidity update, requesting...");
-        } else {
-            prevBlockSolid = updateSolidityAndHeightRecursive(block.getPrevBlockHash());
-        }
-
-        // Check previous branch block exists and is solid
-        BlockEvaluation prevBranchBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
-        if (prevBranchBlockEvaluation == null) {
-            blockRequester.requestBlock(block.getPrevBranchBlockHash());
-            log.warn("this block does not exist for solidity update, requesting...");
-        } else {
-            prevBranchBlockSolid = updateSolidityAndHeightRecursive(block.getPrevBranchBlockHash());
-        }
-
-        // If both previous blocks are solid, our block should be solidified
-        if (prevBlockSolid && prevBranchBlockSolid) {
-            prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
-            prevBranchBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
-            blockGraphService.trySolidify(block, prevBlockEvaluation, prevBranchBlockEvaluation);
-            return true;
-        }
-        return false;
-    }
+//    private boolean updateSolidityAndHeightRecursive(Sha256Hash hash) throws BlockStoreException {
+//        BlockEvaluation blockEvaluation = blockService.getBlockEvaluation(hash);
+//
+//        // Missing blocks -> not solid, request from network
+//        if (blockEvaluation == null) {
+//            blockRequester.requestBlock(hash);
+//            log.warn("this block does not exist for solidity update, requesting...");
+//            return false;
+//        }
+//
+//        // Solid blocks stay solid
+//        if (blockEvaluation.isSolid()) {
+//            return true;
+//        }
+//
+//        Block block = blockService.getBlock(hash);
+//        boolean prevBlockSolid = false;
+//        boolean prevBranchBlockSolid = false;
+//
+//        // Check previous trunk block exists and is solid
+//        BlockEvaluation prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
+//        if (prevBlockEvaluation == null) {
+//            blockRequester.requestBlock(block.getPrevBlockHash());
+//            log.warn("this block does not exist for solidity update, requesting...");
+//        } else {
+//            prevBlockSolid = updateSolidityAndHeightRecursive(block.getPrevBlockHash());
+//        }
+//
+//        // Check previous branch block exists and is solid
+//        BlockEvaluation prevBranchBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
+//        if (prevBranchBlockEvaluation == null) {
+//            blockRequester.requestBlock(block.getPrevBranchBlockHash());
+//            log.warn("this block does not exist for solidity update, requesting...");
+//        } else {
+//            prevBranchBlockSolid = updateSolidityAndHeightRecursive(block.getPrevBranchBlockHash());
+//        }
+//
+//        // If both previous blocks are solid, our block should be solidified
+//        if (prevBlockSolid && prevBranchBlockSolid) {
+//            prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
+//            prevBranchBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
+//            blockGraphService.trySolidify(block, prevBlockEvaluation, prevBranchBlockEvaluation);
+//            return true;
+//        }
+//        return false;
+//    }
 
     /**
      * Update cumulative weight, the amount of blocks a block is approved by
