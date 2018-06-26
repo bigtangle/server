@@ -97,7 +97,7 @@ import net.bigtangle.wallet.DeterministicSeed;
 
 public class Main extends Application {
     public static NetworkParameters params = UnitTestParams.get();
-    public static final String APP_NAME = "Bigtangle Test Wallet 5.5";
+    public static final String APP_NAME = "Bigtangle  Wallet " + Main.version;
     public static final String version = "0.1.0";
     public static String keyFileDirectory = ".";
     public static String keyFilePrefix = "bigtangle";
@@ -150,30 +150,32 @@ public class Main extends Application {
         return rb.getString(s);
 
     }
-    /** 
-     * �Ƚϰ汾�ŵĴ�С,ǰ�ߴ��򷵻�һ������,���ߴ󷵻�һ������,����򷵻�0 
-     * @param version1 
-     * @param version2 
-     * @return 
-     */  
-    public static int compareVersion(String version1, String version2) throws Exception {  
-        if (version1 == null || version2 == null) {  
-            throw new Exception("compareVersion error:illegal params.");  
-        }  
-        String[] versionArray1 = version1.split("\\.");//ע��˴�Ϊ����ƥ�䣬������"."��  
-        String[] versionArray2 = version2.split("\\.");  
-        int idx = 0;  
-        int minLength = Math.min(versionArray1.length, versionArray2.length);//ȡ��С����ֵ  
-        int diff = 0;  
-        while (idx < minLength  
-                && (diff = versionArray1[idx].length() - versionArray2[idx].length()) == 0//�ȱȽϳ���  
-                && (diff = versionArray1[idx].compareTo(versionArray2[idx])) == 0) {//�ٱȽ��ַ�  
-            ++idx;  
-        }  
-        //����Ѿ��ֳ���С����ֱ�ӷ��أ����δ�ֳ���С�����ٱȽ�λ�������Ӱ汾��Ϊ��  
-        diff = (diff != 0) ? diff : versionArray1.length - versionArray2.length;  
-        return diff;  
-    }   
+
+    /**
+     * �Ƚϰ汾�ŵĴ�С,ǰ�ߴ��򷵻�һ������,���ߴ󷵻�һ������,����򷵻�0
+     * 
+     * @param version1
+     * @param version2
+     * @return
+     */
+    public static int compareVersion(String version1, String version2) throws Exception {
+        if (version1 == null || version2 == null) {
+            throw new Exception("compareVersion error:illegal params.");
+        }
+        String[] versionArray1 = version1.split("\\.");// ע��˴�Ϊ����ƥ�䣬������"."��
+        String[] versionArray2 = version2.split("\\.");
+        int idx = 0;
+        int minLength = Math.min(versionArray1.length, versionArray2.length);// ȡ��С����ֵ
+        int diff = 0;
+        while (idx < minLength && (diff = versionArray1[idx].length() - versionArray2[idx].length()) == 0// �ȱȽϳ���
+                && (diff = versionArray1[idx].compareTo(versionArray2[idx])) == 0) {// �ٱȽ��ַ�
+            ++idx;
+        }
+        // ����Ѿ��ֳ���С����ֱ�ӷ��أ����δ�ֳ���С�����ٱȽ�λ�������Ӱ汾��Ϊ��
+        diff = (diff != 0) ? diff : versionArray1.length - versionArray2.length;
+        return diff;
+    }
+
     public static String getString(Object object) {
 
         return object == null ? " " : String.valueOf(object).trim();
