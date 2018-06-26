@@ -33,10 +33,10 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    settingvalue blob,\n" 
             + "    CONSTRAINT setting_pk PRIMARY KEY (name)  \n" + ")\n";
 
-    private static final String CREATE_HEADERS_TABLE = "CREATE TABLE headers (\n"
+    private static final String CREATE_BLOCKS_TABLE = "CREATE TABLE blocks (\n"
             + "    hash varbinary(32) NOT NULL,\n"
             + "    height bigint NOT NULL,\n"
-            + "    header mediumblob NOT NULL,\n"
+            + "    block mediumblob NOT NULL,\n"
             + "    wasundoable boolean NOT NULL,\n" 
             + "    prevblockhash  varbinary(32) NOT NULL,\n"
             + "    prevbranchblockhash  varbinary(32) NOT NULL,\n" 
@@ -55,6 +55,12 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    rewardvalidityassessment boolean,\n"
             + "    CONSTRAINT headers_pk PRIMARY KEY (hash) USING BTREE \n" + ")";
 
+    private static final String CREATE_UNSOLIDBLOCKS_TABLE = "CREATE TABLE unsolidblocks (\n"
+            + "    hash varbinary(32) NOT NULL,\n"
+            + "    block mediumblob NOT NULL,\n"
+            + "    inserttime bigint,\n" 
+            + "    CONSTRAINT unsolidblocks_pk PRIMARY KEY (hash) USING BTREE \n" + ")";
+            
     private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" 
             + "    hash varbinary(32) NOT NULL,\n"
             + "    outputindex bigint NOT NULL,\n"
@@ -186,7 +192,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     protected List<String> getCreateTablesSQL() {
         List<String> sqlStatements = new ArrayList<String>();
         sqlStatements.add(CREATE_SETTINGS_TABLE);
-        sqlStatements.add(CREATE_HEADERS_TABLE);
+        sqlStatements.add(CREATE_BLOCKS_TABLE);
+        sqlStatements.add(CREATE_UNSOLIDBLOCKS_TABLE);
         sqlStatements.add(CREATE_OUTPUT_TABLE);
         sqlStatements.add(CREATE_OUTPUT_MULTI_TABLE);
         sqlStatements.add(CREATE_TIPS_TABLE);
@@ -232,7 +239,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
 
     @Override
     protected String getUpdateHeadersSQL() {
-        return UPDATE_HEADERS_SQL;
+        return UPDATE_BLOCKS_SQL;
     }
 
     @Override
@@ -298,7 +305,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
 
     @Override
     protected String getUpdateBlockevaluationUnmaintainAllSQL() {
-        return getUpdate() + " headers SET maintained = false WHERE maintained = true";
+        return getUpdate() + " blocks SET maintained = false WHERE maintained = true";
     }
 
 }

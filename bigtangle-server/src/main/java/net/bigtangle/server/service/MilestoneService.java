@@ -69,12 +69,12 @@ public class MilestoneService {
         try {
             log.info("Milestone Update started");
             // clearCacheBlockEvaluations();
-            Stopwatch watch = Stopwatch.createStarted();
-            updateSolidityAndHeight(); 
-            log.info("Solidity and height update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-
-            watch.stop();
-            watch = Stopwatch.createStarted();
+//            Stopwatch watch = Stopwatch.createStarted();
+//            updateSolidityAndHeight(); 
+//            log.info("Solidity and height update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+//
+//            watch.stop();
+            Stopwatch  watch = Stopwatch.createStarted();
             updateMaintained();
             log.info("Maintained update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 

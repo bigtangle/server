@@ -593,7 +593,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         return true;
     }
 
-    private boolean checkSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height)
+    protected void insertUnsolidBlock(Block block ) throws BlockStoreException {
+        blockStore.insertUnsolid(block);
+    }
+    
+    protected boolean checkSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height)
             throws BlockStoreException, VerificationException {
         // Check timestamp
         if (block.getTimeSeconds() < storedPrev.getHeader().getTimeSeconds()

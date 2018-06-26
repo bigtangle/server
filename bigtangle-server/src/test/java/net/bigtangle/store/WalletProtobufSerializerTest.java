@@ -5,21 +5,39 @@
 
 package net.bigtangle.store;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static net.bigtangle.core.Coin.COIN;
+import static net.bigtangle.testing.FakeTxBuilder.createFakeTx;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.security.SecureRandom;
+import java.util.Date;
+
+import org.junit.Before;
+import org.junit.Test;
+
 import com.google.protobuf.ByteString;
 
-import net.bigtangle.core.*;
+import net.bigtangle.core.Address;
+import net.bigtangle.core.Coin;
+import net.bigtangle.core.Context;
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Transaction.Purpose;
-import net.bigtangle.core.TransactionConfidence.ConfidenceType;
+import net.bigtangle.core.TransactionInput;
+import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.DeterministicKey;
-import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.UnitTestParams;
-import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.store.BlockGraph;
-import net.bigtangle.store.MemoryBlockStore;
 import net.bigtangle.testing.FakeTxBuilder;
 import net.bigtangle.testing.FooWalletExtension;
 import net.bigtangle.utils.BriefLogFormatter;
-import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.DeterministicKeyChain;
 import net.bigtangle.wallet.KeyChain;
 import net.bigtangle.wallet.MarriedKeyChain;
@@ -30,25 +48,6 @@ import net.bigtangle.wallet.WalletExtension;
 import net.bigtangle.wallet.WalletProtobufSerializer;
 import net.bigtangle.wallet.WalletTransaction;
 import net.bigtangle.wallet.WalletTransaction.Pool;
-import net.bigtangle.wallet.listeners.WalletCoinsReceivedEventListener;
-
-import org.junit.Before;
-import org.junit.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.math.BigInteger;
-import java.net.InetAddress;
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Set;
-
-import static org.junit.Assert.*;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static net.bigtangle.core.Coin.*;
-import static net.bigtangle.testing.FakeTxBuilder.createFakeTx;
 
 public class WalletProtobufSerializerTest {
     private static final NetworkParameters PARAMS = UnitTestParams.get();
@@ -195,63 +194,7 @@ public class WalletProtobufSerializerTest {
     }
 
     //@Test
-    public void testAppearedAtChainHeightDepthAndWorkDone() throws Exception {
-        // Test the TransactionConfidence appearedAtChainHeight, depth and workDone field are stored.
-
-        BlockGraph chain = new BlockGraph(PARAMS,  new MemoryBlockStore(PARAMS));
-
-        final ArrayList<Transaction> txns = new ArrayList<Transaction>(2);
-        myWallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
-            @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                txns.add(tx);
-            }
-        });
-
-        // Start by building two blocks on top of the genesis block.
-        Block b1 = BlockForTest.createNextBlock(PARAMS.getGenesisBlock(),myAddress, PARAMS.getGenesisBlock().getHash());
-        BigInteger work1 = b1.getWork();
-        assertTrue(work1.signum() > 0);
-
-        Block b2 = BlockForTest.createNextBlock(b1,myAddress, PARAMS.getGenesisBlock().getHash());
-        BigInteger work2 = b2.getWork();
-        assertTrue(work2.signum() > 0);
-
-        assertTrue(chain.add(b1));
-        assertTrue(chain.add(b2));
-
-        // We now have the following chain:
-        //     genesis -> b1 -> b2
-
-        // Check the transaction confidence levels are correct before wallet roundtrip.
-        Threading.waitForUserCode();
-        assertEquals(2, txns.size());
-
-//        TransactionConfidence confidence0 = txns.get(0).getConfidence();
-//        TransactionConfidence confidence1 = txns.get(1).getConfidence();
-
-//        assertEquals(1, confidence0.getAppearedAtChainHeight());
-//        assertEquals(2, confidence1.getAppearedAtChainHeight());
-//
-//        assertEquals(2, confidence0.getDepthInBlocks());
-//        assertEquals(1, confidence1.getDepthInBlocks());
-
-        // Roundtrip the wallet and check it has stored the depth and workDone.
-        Wallet rebornWallet = roundTrip(myWallet);
-
-        Set<Transaction> rebornTxns = rebornWallet.getTransactions(false);
-        assertEquals(2, rebornTxns.size());
-
-        // The transactions are not guaranteed to be in the same order so sort them to be in chain height order if required.
-        Iterator<Transaction> it = rebornTxns.iterator();
-        Transaction txA = it.next();
-        Transaction txB = it.next();
-
-        Transaction rebornTx0, rebornTx1;
-  
-        
- 
-    }
+    public void testAppearedAtChainHeightDepthAndWorkDone() throws Exception { }
 
     private static Wallet roundTrip(Wallet wallet) throws Exception {
         ByteArrayOutputStream output = new ByteArrayOutputStream();

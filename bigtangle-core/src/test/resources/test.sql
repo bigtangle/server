@@ -1,5 +1,5 @@
-select * from headers   ;
-select count( *) from headers   ;
+select * from blocks   ;
+select count( *) from blocks   ;
 select * from outputs   ;
 select * from tips   ;
 select * from tokens   ;

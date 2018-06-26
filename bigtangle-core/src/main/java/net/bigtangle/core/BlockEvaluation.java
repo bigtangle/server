@@ -27,7 +27,7 @@ public class BlockEvaluation implements Serializable{
 	public static BlockEvaluation buildInitial(Block block) {
 		long currentTimeMillis = System.currentTimeMillis();
         return BlockEvaluation.build(block.getHash(), 
-				0, 0, 1, false, 0, false, currentTimeMillis, 0, currentTimeMillis, true, false);
+				0, 0, 1, true, 0, false, currentTimeMillis, 0, currentTimeMillis, true, false);
 	}
 
 	public static BlockEvaluation build(Sha256Hash blockhash, long rating, long depth, long cumulativeWeight, 
