@@ -39,7 +39,9 @@ public class ServerConfiguration {
     @Value("${maxRequestList:1000}")
     private   int maxRequestList;
 
-  
+    private String serverversion;
+    private String clientversion;
+    
     public String getRequester() {
         return requester;
     }
@@ -136,6 +138,22 @@ public class ServerConfiguration {
 
     public void setMineraddress(String mineraddress) {
         this.mineraddress = mineraddress;
+    }
+
+    public String getServerversion() {
+        return serverversion;
+    }
+
+    public void setServerversion(String serverversion) {
+        this.serverversion = serverversion;
+    }
+
+    public String getClientversion() {
+        return clientversion;
+    }
+
+    public void setClientversion(String clientversion) {
+        this.clientversion = clientversion;
     }
 
     
