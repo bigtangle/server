@@ -132,6 +132,10 @@ public class MainController {
             int versionDiff = Main.compareVersion(version, Main.version);
             if (versionDiff > 0) {
                 GuiUtils.informationalAlert("", Main.getText("needUpdate"), "");
+                searchPane.setVisible(false);
+                serverPane.setVisible(false);
+                buttonHBox.setVisible(false);
+                passwordHBox.setVisible(false);
             } else {
                 if (bitcoin.wallet().isEncrypted()) {
                     searchPane.setVisible(false);
@@ -149,6 +153,10 @@ public class MainController {
             }
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
+            searchPane.setVisible(false);
+            serverPane.setVisible(false);
+            buttonHBox.setVisible(false);
+            passwordHBox.setVisible(false);
         }
 
     }
