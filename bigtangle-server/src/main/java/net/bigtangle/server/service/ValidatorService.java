@@ -186,8 +186,8 @@ public class ValidatorService {
         BlockEvaluation blockEvaluation = blockService.getBlockEvaluation(header.getHash());
 
         // Once set valid, always valid
-        if (blockEvaluation.isRewardValid())
-            return true;
+//        if (blockEvaluation.isRewardValid())
+//            return true;
 
         // Only mining reward blocks
         if (header.getBlocktype() != NetworkParameters.BLOCKTYPE_REWARD)

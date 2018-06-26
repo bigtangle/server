@@ -566,6 +566,20 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
+    @Override
+    public void solidifyBlock(Block block) throws BlockStoreException {
+
+        // Update evaluations
+        blockStore.updateBlockEvaluationSolid(block.getHash(), true);
+
+        // Update tips table
+        blockStore.deleteTip(block.getPrevBlockHash());
+        blockStore.deleteTip(block.getPrevBranchBlockHash());
+        blockStore.deleteTip(block.getHash());
+        blockStore.insertTip(block.getHash());
+    }
+
+    // TODO remove this and other now useless functions, migrate code to solidifyBlock
     public boolean trySolidify(Block block, BlockEvaluation prev, BlockEvaluation prevBranch)
             throws BlockStoreException {
         StoredBlock storedPrev = blockStore.get(block.getPrevBlockHash());
@@ -624,8 +638,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
 
             // Reward must have been assessed locally and passed.
-            if (!blockStore.getBlockEvaluation(block.getHash()).isRewardValid()
-                    && !validatorService.assessMiningRewardBlock(block, height))
+            //FIXME Kai
+            if (//!blockStore.getBlockEvaluation(block.getHash()).isRewardValid()&& 
+                    !validatorService.assessMiningRewardBlock(block, height))
                 return false;
         }
 

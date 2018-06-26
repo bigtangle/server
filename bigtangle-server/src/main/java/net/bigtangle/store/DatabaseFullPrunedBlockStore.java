@@ -1874,7 +1874,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement = conn.get().prepareStatement(INSERT_UNSOLIDBLOCKS_SQL);
             preparedStatement.setBytes(1, block.getHash().getBytes());
             preparedStatement.setBytes(2, block.bitcoinSerialize());
-            preparedStatement.setLong(1, block.getTimeSeconds());
+            preparedStatement.setLong(3, block.getTimeSeconds());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);

@@ -281,7 +281,8 @@ public abstract class AbstractBlockGraph {
                 if (storedPrev != null && storedPrevBranch != null) {
                     height = Math.max(storedPrev.getHeight(), storedPrevBranch.getHeight()) + 1;
                 } else {
-                    height = Block.BLOCK_HEIGHT_UNKNOWN;
+                    insertUnsolidBlock(block);
+                    return false;
                 }
 
                 flags = params.getBlockVerificationFlags(block, versionTally, height);
@@ -292,20 +293,18 @@ public abstract class AbstractBlockGraph {
                 log.error(block.getHashAsString());
                 throw e;
             }
-
-         //   
-
-            // Write to DB
-            boolean a = checkSolidity(block, storedPrev, storedPrevBranch, height);
-            if(a) {
+            
+            if(checkSolidity(block, storedPrev, storedPrevBranch, height)) {
+                // Write to DB
                 checkState(lock.isHeldByCurrentThread());
                 connectBlock(block, storedPrev, storedPrevBranch, shouldVerifyTransactions(), filteredTxHashList,
                         filteredTxn);
-            }else {
+                solidifyBlock(block);
+                return true;
+            } else {
                 insertUnsolidBlock(block);
+                return false;
             }
-            return true;
-
         } catch (Exception exception) {
             exception.printStackTrace();
             throw new BlockStoreException(exception);
@@ -428,4 +427,6 @@ public abstract class AbstractBlockGraph {
             return 0;
         }
     }
+
+    public abstract void solidifyBlock(Block block) throws BlockStoreException;
 }
