@@ -129,9 +129,8 @@ public class MainController {
     public void initialize() {
         try {
             String version = checkVersion();
-            int latestVersion = Integer.parseInt(version);
-            int clientVersion = Integer.parseInt(Main.version);
-            if (clientVersion < latestVersion) {
+            int versionDiff = Main.compareVersion(version, Main.version);
+            if (versionDiff > 0) {
                 GuiUtils.informationalAlert("", Main.getText("needUpdate"), "");
             } else {
                 if (bitcoin.wallet().isEncrypted()) {
