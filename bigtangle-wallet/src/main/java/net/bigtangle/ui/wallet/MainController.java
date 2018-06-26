@@ -133,24 +133,25 @@ public class MainController {
             int clientVersion = Integer.parseInt(Main.version);
             if (clientVersion < latestVersion) {
                 GuiUtils.informationalAlert("", Main.getText("needUpdate"), "");
+            } else {
+                if (bitcoin.wallet().isEncrypted()) {
+                    searchPane.setVisible(false);
+                    serverPane.setVisible(false);
+                    buttonHBox.setVisible(false);
+                    passwordHBox.setVisible(true);
+                } else {
+                    searchPane.setVisible(true);
+                    serverPane.setVisible(true);
+                    buttonHBox.setVisible(true);
+                    passwordHBox.setVisible(false);
+                }
+                Server.setText(Main.IpAddress);
+                initTableView();
             }
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
-        if (bitcoin.wallet().isEncrypted()) {
-            searchPane.setVisible(false);
-            serverPane.setVisible(false);
-            buttonHBox.setVisible(false);
-            passwordHBox.setVisible(true);
-        } else {
-            searchPane.setVisible(true);
-            serverPane.setVisible(true);
-            buttonHBox.setVisible(true);
-            passwordHBox.setVisible(false);
-        }
-        Server.setText(Main.IpAddress);
-        // IPPort.setText(Main.port);
-        initTableView();
+
     }
 
     public String checkVersion() throws Exception {
