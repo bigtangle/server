@@ -128,15 +128,7 @@ public class MainController {
     @FXML
     public void initialize() {
         try {
-            String version = checkVersion();
-            int versionDiff = Main.compareVersion(version, Main.version);
-            if (versionDiff > 0) {
-                GuiUtils.informationalAlert("", Main.getText("needUpdate"), "");
-                searchPane.setVisible(false);
-                serverPane.setVisible(false);
-                buttonHBox.setVisible(false);
-                passwordHBox.setVisible(false);
-            } else {
+            if (checkVersion()) {
                 if (bitcoin.wallet().isEncrypted()) {
                     searchPane.setVisible(false);
                     serverPane.setVisible(false);
@@ -161,15 +153,29 @@ public class MainController {
 
     }
 
-    public String checkVersion() throws Exception {
-        String CONTEXT_ROOT = Main.getContextRoot();
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        String resp = OkHttp3Util.postString(CONTEXT_ROOT + "version",
-                Json.jsonmapper().writeValueAsString(requestParam));
-        HashMap<String, String> result = Json.jsonmapper().readValue(resp, HashMap.class);
-        String version = result.get("version");
-        return version;
+    public boolean checkVersion() throws Exception {
+        try {
+            String CONTEXT_ROOT = Main.versionserver;
+            HashMap<String, Object> requestParam = new HashMap<String, Object>();
+            String resp = OkHttp3Util.postString(CONTEXT_ROOT + "version",
+                    Json.jsonmapper().writeValueAsString(requestParam));
+            HashMap<String, String> result = Json.jsonmapper().readValue(resp, HashMap.class);
+            String version = result.get("version");
 
+            int versionDiff = Main.compareVersion(version, Main.version);
+            if (versionDiff > 0) {
+                GuiUtils.informationalAlert("", Main.getText("needUpdate"), "");
+                searchPane.setVisible(false);
+                serverPane.setVisible(false);
+                buttonHBox.setVisible(false);
+                passwordHBox.setVisible(false);
+                return false;
+            }
+
+        } catch (Exception e) {
+            return true;
+        }
+        return true;
     }
 
     @SuppressWarnings("unchecked")

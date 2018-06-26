@@ -113,7 +113,7 @@ public class Main extends Application {
     private ObservableList<UTXOModel> utxoData = FXCollections.observableArrayList();
 
     public static String IpAddress = "";
-
+    public static String versionserver = "https://bigtangle.org/";
     public static FXMLLoader loader;
 
     public static String lang = "en";
@@ -151,7 +151,7 @@ public class Main extends Application {
 
     }
     /** 
-     * ±È½Ï°æ±¾ºÅµÄ´óÐ¡,Ç°Õß´óÔò·µ»ØÒ»¸öÕýÊý,ºóÕß´ó·µ»ØÒ»¸ö¸ºÊý,ÏàµÈÔò·µ»Ø0 
+     * ï¿½È½Ï°æ±¾ï¿½ÅµÄ´ï¿½Ð¡,Ç°ï¿½ß´ï¿½ï¿½ò·µ»ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ß´ó·µ»ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½ò·µ»ï¿½0 
      * @param version1 
      * @param version2 
      * @return 
@@ -160,17 +160,17 @@ public class Main extends Application {
         if (version1 == null || version2 == null) {  
             throw new Exception("compareVersion error:illegal params.");  
         }  
-        String[] versionArray1 = version1.split("\\.");//×¢Òâ´Ë´¦ÎªÕýÔòÆ¥Åä£¬²»ÄÜÓÃ"."£»  
+        String[] versionArray1 = version1.split("\\.");//×¢ï¿½ï¿½Ë´ï¿½Îªï¿½ï¿½ï¿½ï¿½Æ¥ï¿½ä£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"."ï¿½ï¿½  
         String[] versionArray2 = version2.split("\\.");  
         int idx = 0;  
-        int minLength = Math.min(versionArray1.length, versionArray2.length);//È¡×îÐ¡³¤¶ÈÖµ  
+        int minLength = Math.min(versionArray1.length, versionArray2.length);//È¡ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½Öµ  
         int diff = 0;  
         while (idx < minLength  
-                && (diff = versionArray1[idx].length() - versionArray2[idx].length()) == 0//ÏÈ±È½Ï³¤¶È  
-                && (diff = versionArray1[idx].compareTo(versionArray2[idx])) == 0) {//ÔÙ±È½Ï×Ö·û  
+                && (diff = versionArray1[idx].length() - versionArray2[idx].length()) == 0//ï¿½È±È½Ï³ï¿½ï¿½ï¿½  
+                && (diff = versionArray1[idx].compareTo(versionArray2[idx])) == 0) {//ï¿½Ù±È½ï¿½ï¿½Ö·ï¿½  
             ++idx;  
         }  
-        //Èç¹ûÒÑ¾­·Ö³ö´óÐ¡£¬ÔòÖ±½Ó·µ»Ø£¬Èç¹ûÎ´·Ö³ö´óÐ¡£¬ÔòÔÙ±È½ÏÎ»Êý£¬ÓÐ×Ó°æ±¾µÄÎª´ó£»  
+        //ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½Ö³ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½Ö±ï¿½Ó·ï¿½ï¿½Ø£ï¿½ï¿½ï¿½ï¿½Î´ï¿½Ö³ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½ï¿½Ù±È½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó°æ±¾ï¿½ï¿½Îªï¿½ï¿½  
         diff = (diff != 0) ? diff : versionArray1.length - versionArray2.length;  
         return diff;  
     }   
