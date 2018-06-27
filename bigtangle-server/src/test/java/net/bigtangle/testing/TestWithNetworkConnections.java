@@ -43,7 +43,6 @@ import net.bigtangle.net.NioServer;
 import net.bigtangle.net.StreamConnection;
 import net.bigtangle.net.StreamConnectionFactory;
 import net.bigtangle.params.UnitTestParams;
-import net.bigtangle.store.BlockGraph;
 import net.bigtangle.store.MemoryBlockStore;
 import net.bigtangle.store.Peer;
 import net.bigtangle.utils.BriefLogFormatter;
@@ -58,7 +57,7 @@ public class TestWithNetworkConnections {
     protected static final NetworkParameters PARAMS = UnitTestParams.get();
     protected Context context;
     protected BlockStore blockStore;
-    protected BlockGraph blockChain;
+ 
     protected Wallet wallet;
     protected ECKey key;
     protected Address address;
@@ -99,7 +98,7 @@ public class TestWithNetworkConnections {
             key = wallet.freshReceiveKey();
             address = key.toAddress(PARAMS);
         }
-        blockChain = new BlockGraph(PARAMS, blockStore);
+      
 
         startPeerServers();
         if (clientType == ClientType.NIO_CLIENT_MANAGER || clientType == ClientType.BLOCKING_CLIENT_MANAGER) {

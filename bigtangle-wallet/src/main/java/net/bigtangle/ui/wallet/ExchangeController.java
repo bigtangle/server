@@ -33,20 +33,16 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
-import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
-import net.bigtangle.script.Script;
-import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UUIDUtil;
-import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
@@ -111,6 +107,7 @@ public class ExchangeController {
             initComboBox();
             initTable();
         } catch (Exception e) {
+            e.printStackTrace();
             GuiUtils.crashAlert(e);
         }
         mTransaction = null;
@@ -125,61 +122,58 @@ public class ExchangeController {
         final Map<String, Object> getTokensResult = Json.jsonmapper().readValue(response0, Map.class);
         List<Map<String, Object>> tokensList = (List<Map<String, Object>>) getTokensResult.get("tokens");
         ObservableList<Map<String, Object>> exchangeData = FXCollections.observableArrayList();
+        KeyParameter aesKey = null;
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
+
+        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
+        List<String> addressList = new ArrayList<String>();
+        for (ECKey ecKey : keys) {
+            String address = ecKey.toAddress(Main.params).toString();
+            addressList.add(address);
+        }
         for (Map<String, Object> tokenResult : tokensList) {
             boolean asmarket = (boolean) tokenResult.get("asmarket");
             if (!asmarket) {
                 continue;
             }
             String url = (String) tokenResult.get("url");
-           
-            log.debug( url);
+
+            log.debug(url);
             if (url == null || url.isEmpty()) {
                 continue;
             }
-            KeyParameter aesKey = null;
-            // Main.initAeskey(aesKey);
-            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
-            if (!"".equals(Main.password.trim())) {
-                aesKey = keyCrypter.deriveKey(Main.password);
-            }
-             
-                
-            List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
-            List<String> addressList = new ArrayList<String>();
-            for (ECKey ecKey : keys) {
-                String address = ecKey.toAddress(Main.params).toString();
-                addressList.add(address);
-            }
-//                HashMap<String, Object> requestParam = new HashMap<String, Object>();
-//                requestParam.put("address", address); 
-                String response = OkHttp3Util.post(url+"/"+ "getBatchExchange",
-                        Json.jsonmapper().writeValueAsString(addressList).getBytes());
-                final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-                List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("exchanges");
-                if (list == null) {
-                    return;
-                }
-                for (Map<String, Object> map : list) {
-                    if ((Integer) map.get("toSign") == 1) {
-                        map.put("toSign", "*");
-                    } else {
-                        map.put("toSign", "-");
-                    }
-                    if ((Integer) map.get("fromSign") == 1) {
-                        map.put("fromSign", "*");
-                    } else {
-                        map.put("fromSign", "-");
-                    }
-                    Coin fromAmount = Coin.valueOf(Long.parseLong((String) map.get("fromAmount")),
-                            Utils.HEX.decode((String) map.get("fromTokenHex")));
-                    Coin toAmount = Coin.valueOf(Long.parseLong((String) map.get("toAmount")),
-                            Utils.HEX.decode((String) map.get("toTokenHex")));
 
-                    map.put("fromAmount", fromAmount.toPlainString());
-
-                    map.put("toAmount", toAmount.toPlainString());
-                    exchangeData.add(map);
+            String response = OkHttp3Util.post(url + "/" + "getBatchExchange",
+                    Json.jsonmapper().writeValueAsString(addressList).getBytes());
+            final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+            List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("exchanges");
+            if (list == null || list.isEmpty()) {
+                continue;
+            }
+            for (Map<String, Object> map : list) {
+                if ((Integer) map.get("toSign") == 1) {
+                    map.put("toSign", "*");
+                } else {
+                    map.put("toSign", "-");
                 }
+                if ((Integer) map.get("fromSign") == 1) {
+                    map.put("fromSign", "*");
+                } else {
+                    map.put("fromSign", "-");
+                }
+                Coin fromAmount = Coin.valueOf(Long.parseLong((String) map.get("fromAmount")),
+                        Utils.HEX.decode((String) map.get("fromTokenHex")));
+                Coin toAmount = Coin.valueOf(Long.parseLong((String) map.get("toAmount")),
+                        Utils.HEX.decode((String) map.get("toTokenHex")));
+
+                map.put("fromAmount", fromAmount.toPlainString());
+
+                map.put("toAmount", toAmount.toPlainString());
+                exchangeData.add(map);
+            }
         }
         orderidsCol.setCellValueFactory(new MapValueFactory("orderid"));
         dataHexCol.setCellValueFactory(new MapValueFactory("dataHex"));
@@ -237,17 +231,16 @@ public class ExchangeController {
         exchange("");
         overlayUI.done();
     }
-    
+
     public void cancelOrder(ActionEvent event) throws Exception {
         String ContextRoot = Main.getContextRoot();
         Map<String, Object> rowData = exchangeTable.getSelectionModel().getSelectedItem();
         String orderid = stringValueOf(rowData.get("orderid"));
-        
+
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", orderid);
-        
-        OkHttp3Util.post(ContextRoot + "cancelOrder",
-                Json.jsonmapper().writeValueAsString(requestParam));
+
+        OkHttp3Util.post(ContextRoot + "cancelOrder", Json.jsonmapper().writeValueAsString(requestParam));
         overlayUI.done();
     }
 
@@ -266,7 +259,7 @@ public class ExchangeController {
         rollingBlock.addTransaction(mTransaction);
         rollingBlock.solve();
         OkHttp3Util.post(ContextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
-        //System.out.println(marketURL);
+        // System.out.println(marketURL);
         if (marketURL != null && !marketURL.equals("")) {
             HashMap<String, Object> exchangeResult = this.getExchangeInfoResult(marketURL, this.mOrderid);
             int toSign = (int) exchangeResult.get("toSign");
@@ -424,37 +417,41 @@ public class ExchangeController {
             coinbase = coinbase.add(value);
             refundAmount.put(tokenid, coinbase);
         }
-        
-        if (refundAmount.isEmpty()) return;
-        
+
+        if (refundAmount.isEmpty())
+            return;
+
         Coin amount = refundAmount.values().iterator().next();
         Transaction transaction = new Transaction(Main.params);
         transaction.addOutput(amount, Address.fromBase58(Main.params, address));
         for (TransactionInput transactionInput : this.mTransaction.getInputs()) {
             TransactionOutput transactionOutput = transactionInput.getConnectedOutput();
-            if (transactionOutput.getValue().getTokenHex().equals(amount.getTokenHex()) && transactionOutput.getValue().value == amount.value) {
-                //System.out.println(amount + "," + transactionOutput.getValue());
+            if (transactionOutput.getValue().getTokenHex().equals(amount.getTokenHex())
+                    && transactionOutput.getValue().value == amount.value) {
+                // System.out.println(amount + "," +
+                // transactionOutput.getValue());
                 transaction.addInput(transactionInput);
             }
         }
         SendRequest request = SendRequest.forTx(transaction);
         Main.bitcoin.wallet().signTransaction(request);
-        
+
         String ContextRoot = Main.getContextRoot();
-        
-        byte[] data = OkHttp3Util.post(ContextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
+
+        byte[] data = OkHttp3Util.post(ContextRoot + "askTransaction",
+                Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
         Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(transaction);
         rollingBlock.solve();
         OkHttp3Util.post(ContextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
-        //overlayUI.done();
+        // overlayUI.done();
     }
 
     @SuppressWarnings("unchecked")
     public HashMap<String, Object> getExchangeInfoResult(String url, String orderid) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", orderid);
-        String respone = OkHttp3Util.postString(url +"/"+ "exchangeInfo",
+        String respone = OkHttp3Util.postString(url + "/" + "exchangeInfo",
                 Json.jsonmapper().writeValueAsString(requestParam));
         HashMap<String, Object> result = Json.jsonmapper().readValue(respone, HashMap.class);
         HashMap<String, Object> exchange = (HashMap<String, Object>) result.get("exchange");

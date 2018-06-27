@@ -5,13 +5,11 @@
 
 package net.bigtangle.testing;
 
-import static net.bigtangle.testing.FakeTxBuilder.createFakeBlock;
 import static net.bigtangle.testing.FakeTxBuilder.createFakeTx;
 
 import javax.annotation.Nullable;
 
 import net.bigtangle.core.Address;
-import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
@@ -20,8 +18,6 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.params.UnitTestParams;
-import net.bigtangle.store.AbstractBlockGraph;
-import net.bigtangle.store.BlockGraph;
 import net.bigtangle.store.MemoryBlockStore;
 import net.bigtangle.utils.BriefLogFormatter;
 import net.bigtangle.wallet.Wallet;
@@ -39,7 +35,7 @@ public class TestWithWallet {
     protected ECKey myKey;
     protected Address myAddress;
     protected Wallet wallet;
-    protected BlockGraph chain;
+ 
     protected BlockStore blockStore;
 
     public void setUp() throws Exception {
@@ -49,7 +45,7 @@ public class TestWithWallet {
         myKey = wallet.currentReceiveKey();
         myAddress = myKey.toAddress(PARAMS);
         blockStore = new MemoryBlockStore(PARAMS);
-        chain = new BlockGraph(PARAMS,  blockStore);
+      
     }
 
     public void tearDown() throws Exception {

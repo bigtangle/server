@@ -174,7 +174,6 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         rollingBlock.solve();
         checkResponse(OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize()));
         logger.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
-        milestoneService.update();
 
         checkBalance(utxo.getValue(), walletAppKit1.wallet().walletKeys(null));
     }
@@ -218,6 +217,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         block.solve();
         
         OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
+        milestoneService.update();
         
         int blocktype = (int) NetworkParameters.BLOCKTYPE_VOS;
 
@@ -261,6 +261,9 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
                 e.printStackTrace();
             }
         }
+
+        milestoneService.update();
+        
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("vosKey", outKey.getPublicKeyAsHex());
         String resp = OkHttp3Util.postString(contextRoot + "getVOSExecuteList", Json.jsonmapper().writeValueAsString(requestParam));
@@ -345,6 +348,8 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         block.solve();
         OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
         
+        milestoneService.update();
+        
         requestParam.clear();
         requestParam.put("dataclassname", DataClassName.ContactInfo.name());
         requestParam.put("pubKey", Utils.HEX.encode(outKey.getPubKey()));
@@ -382,7 +387,8 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         block.solve();
 
         OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
-
+        milestoneService.update();
+        
         requestParam.clear();
         requestParam.put("dataclassname", DataClassName.ContactInfo.name());
         requestParam.put("pubKey", Utils.HEX.encode(outKey.getPubKey()));

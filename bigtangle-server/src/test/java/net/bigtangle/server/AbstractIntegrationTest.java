@@ -312,6 +312,7 @@ public abstract class AbstractIntegrationTest {
     }
 
     public void checkBalance(Coin coin  , List<ECKey> a) throws Exception {
+        milestoneService.update();
         List<UTXO> ulist = testTransactionAndGetBalances(false, a);
         UTXO myutxo = null;
         for (UTXO u : ulist) {

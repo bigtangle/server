@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.BlockStoreException;
@@ -303,7 +304,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     long getCountMilestoneBlocksInInterval(long fromHeight, long toHeight) throws BlockStoreException;
 
     long getTxRewardValue(Sha256Hash hash) throws BlockStoreException;
-    
+
     boolean getTxRewardConfirmed(Sha256Hash hash) throws BlockStoreException;
 
     void insertTxReward(Sha256Hash hash, long nextPerTxReward, long prevHeight) throws BlockStoreException;
@@ -319,7 +320,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     // public List<TokenSerial> getTokenSerialListByTokenid(String tokenid);
     //
     // public List<MultiSignBy> getMultiSignByListByTokenid(String tokenid);
-    
+
     public void insertOutputsMulti(OutputsMulti outputsMulti) throws BlockStoreException;
 
     UserData queryUserDataWithPubKeyAndDataclassname(String dataclassname, String pubKey) throws BlockStoreException;
@@ -332,8 +333,9 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     void insertPayMultiSignAddress(PayMultiSignAddress payMultiSignAddress) throws BlockStoreException;
 
-    void updatePayMultiSignAddressSign(String orderid, String pubKey, int sign, byte[] signInputData) throws BlockStoreException;
-    
+    void updatePayMultiSignAddressSign(String orderid, String pubKey, int sign, byte[] signInputData)
+            throws BlockStoreException;
+
     int getMaxPayMultiSignAddressSignIndex(String orderid) throws BlockStoreException;
 
     PayMultiSign getPayMultiSignWithOrderid(String orderid) throws BlockStoreException;
@@ -348,17 +350,24 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     UTXO getOutputsWithHexStr(byte[] hash, long outputindex) throws BlockStoreException;
 
-    List<UserData> getUserDataListWithBlocktypePubKeyList(int blocktype, List<String> pubKeyList) throws BlockStoreException;
-    
+    List<UserData> getUserDataListWithBlocktypePubKeyList(int blocktype, List<String> pubKeyList)
+            throws BlockStoreException;
+
     List<VOSExecute> getVOSExecuteList(String vosKey) throws BlockStoreException;
-    
+
     VOSExecute getVOSExecuteWith(String vosKey, String pubKey) throws BlockStoreException;
-    
+
     void insertVOSExecute(VOSExecute vosExecute) throws BlockStoreException;
-    
+
     void updateVOSExecute(VOSExecute vosExecute) throws BlockStoreException;
 
-    void updateTransactionOutputConfirmingBlock(Sha256Hash hash, int index, Sha256Hash hash2) throws BlockStoreException;
-    
+    void updateTransactionOutputConfirmingBlock(Sha256Hash hash, int index, Sha256Hash hash2)
+            throws BlockStoreException;
+
     byte[] getSettingValue(String name) throws BlockStoreException;
+
+    void insertUnsolid(Block block) throws BlockStoreException;
+
+    void deleteUnsolid(Sha256Hash blockhash) throws BlockStoreException ;
+    Block getUnsolid(Sha256Hash blockhash) throws BlockStoreException ;
 }

@@ -42,11 +42,11 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         maybeConnect();
         PreparedStatement s = null;
         try {
-            String SELECT_SOLID_APPROVER_HEADERS_SQL = "SELECT  headers.height, header, wasundoable,prevblockhash,"
+            String SELECT_SOLID_APPROVER_BLOCKS_SQL = "SELECT  headers.height, header, wasundoable,prevblockhash,"
                     + "prevbranchblockhash,mineraddress,tokenid,blocktype FROM headers INNER JOIN blockevaluation"
                     + " ON headers.hash=blockevaluation.hash WHERE blockevaluation.solid = true AND (prevblockhash = ?)"
                     + afterSelect();
-            s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_HEADERS_SQL);
+            s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_BLOCKS_SQL);
             s.setString(1, Utils.HEX.encode(hash.getBytes()));
             // s.setString(2, Utils.HEX.encode(hash.getBytes()));
             ResultSet results = s.executeQuery();
@@ -76,11 +76,11 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             }
         }
         try {
-            String SELECT_SOLID_APPROVER_HEADERS_SQL = "SELECT  headers.height, header, wasundoable,prevblockhash,"
+            String SELECT_SOLID_APPROVER_BLOCKS_SQL = "SELECT  headers.height, header, wasundoable,prevblockhash,"
                     + "prevbranchblockhash,mineraddress,tokenid,blocktype FROM headers INNER JOIN blockevaluation"
                     + " ON headers.hash=blockevaluation.hash WHERE blockevaluation.solid = true AND (prevbranchblockhash = ?)"
                     + afterSelect();
-            s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_HEADERS_SQL);
+            s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_BLOCKS_SQL);
             s.setString(1, Utils.HEX.encode(hash.getBytes()));
             // s.setString(2, Utils.HEX.encode(hash.getBytes()));
             ResultSet results = s.executeQuery();
@@ -186,7 +186,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     public static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" + "    name varchar(32) not null,\n"
             + "    settingvalue VARBINARY(10000),\n" + "    CONSTRAINT setting_pk PRIMARY KEY (name)  \n" + ")\n";
 
-    public static final String CREATE_HEADERS_TABLE = "CREATE TABLE headers (\n" + "    hash BINARY(32) not null,\n"
+    public static final String CREATE_BLOCKS_TABLE = "CREATE TABLE headers (\n" + "    hash BINARY(32) not null,\n"
             + "    height bigint ,\n" + "    header VARBINARY(4000) ,\n" + "    wasundoable boolean ,\n"
             + "    prevblockhash VARCHAR(255) ,\n" + "    prevbranchblockhash VARCHAR(255) ,\n"
             + "    mineraddress VARBINARY(255),\n" + "    tokenid VARBINARY(255),\n" + "    blocktype bigint ,\n"
@@ -235,7 +235,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     protected List<String> getCreateTablesSQL() {
         List<String> sqlStatements = new ArrayList<String>();
         sqlStatements.add(CREATE_SETTINGS_TABLE);
-        sqlStatements.add(CREATE_HEADERS_TABLE);
+        sqlStatements.add(CREATE_BLOCKS_TABLE);
         sqlStatements.add(CREATE_OUTPUT_TABLE);
         sqlStatements.add(CREATE_TIPS_TABLE);
         sqlStatements.add(CREATE_BLOCKEVALUATION_TABLE);
@@ -294,7 +294,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     }
 
     protected String getUpdateHeadersSQL() {
-        return INSERT_HEADERS_SQL;
+        return INSERT_BLOCKS_SQL;
     }
 
     protected String getUpdateSettingsSLQ() {

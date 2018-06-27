@@ -212,6 +212,7 @@ public class MainController {
         }
         Map<String, String> hashNameMap = Main.getTokenHexNameMap();
         ObservableList<UTXOModel> subutxos = FXCollections.observableArrayList();
+        Main.validTokenMap.clear();
         Main.validAddressSet.clear();
         for (Map<String, Object> object : list) {
             UTXO u = MapToBeanMapperUtil.parseUTXO(object);
@@ -225,6 +226,13 @@ public class MainController {
             String hashHex = (String) object.get("blockHashHex");
             String hash = u.getHashHex();
             long outputindex = u.getIndex();
+            String key = address + ":" + Utils.HEX.encode(tokenid);
+            if (Main.validTokenMap.get(key) == null) {
+                Main.validTokenMap.put(key, c.longValue());
+            }else {
+               long temp=Main.validTokenMap.get(key);
+                Main.validTokenMap.put(key, temp+c.longValue());
+            }
 
             Main.validAddressSet.add(address);
             boolean spendPending = u.isSpendPending();

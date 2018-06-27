@@ -46,6 +46,13 @@ TODO execution results Selection
 ## move unsolid blocks to new cache table
 
 
+##  write test for unsolid blocks test 
+
+
+## delete solid = false and no previous and no follows (waiting for next from network?)
+
+
+
 
 
 

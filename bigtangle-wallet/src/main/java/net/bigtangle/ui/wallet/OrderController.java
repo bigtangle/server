@@ -292,13 +292,8 @@ public class OrderController extends ExchangeController {
             aeskey = keyCrypter.deriveKey(Main.password);
         }
         List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aeskey);
-        ObservableList<String> addresses = FXCollections.observableArrayList();
-        for (ECKey key : keys) {
-            String address = key.toAddress(Main.params).toString();
-            if (Main.validAddressSet.contains(address)) {
-                addresses.add(address);
-            }
-        }
+        ObservableList<String> addresses = FXCollections.observableArrayList(Main.validAddressSet);
+
         addressComboBox.setItems(addresses);
 
     }

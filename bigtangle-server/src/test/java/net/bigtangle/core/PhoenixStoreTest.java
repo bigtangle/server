@@ -87,7 +87,7 @@ public class PhoenixStoreTest extends AbstractFullPrunedBlockChainTest {
     protected List<String> getDropTablesSQL() {
         List<String> sqlStatements = new ArrayList<String>();
         sqlStatements.add(DatabaseFullPrunedBlockStore.DROP_SETTINGS_TABLE);
-        sqlStatements.add(DatabaseFullPrunedBlockStore.DROP_HEADERS_TABLE);
+        sqlStatements.add(DatabaseFullPrunedBlockStore.DROP_BLOCKS_TABLE);
         sqlStatements.add(DatabaseFullPrunedBlockStore.DROP_OPEN_OUTPUT_TABLE);
         sqlStatements.add(DatabaseFullPrunedBlockStore.DROP_TIPS_TABLE);
         sqlStatements.add(DatabaseFullPrunedBlockStore.DROP_TOKENS_TABLE);
@@ -97,7 +97,7 @@ public class PhoenixStoreTest extends AbstractFullPrunedBlockChainTest {
     protected List<String> getCreateTablesSQL() {
         List<String> sqlStatements = new ArrayList<String>();
         sqlStatements.add(PhoenixBlockStore.CREATE_SETTINGS_TABLE);
-        sqlStatements.add(PhoenixBlockStore.CREATE_HEADERS_TABLE);
+        sqlStatements.add(PhoenixBlockStore.CREATE_BLOCKS_TABLE);
         sqlStatements.add(PhoenixBlockStore.CREATE_OUTPUT_TABLE);
         sqlStatements.add(PhoenixBlockStore.CREATE_TIPS_TABLE);
         sqlStatements.add(PhoenixBlockStore.CREATE_TOKENS_TABLE);

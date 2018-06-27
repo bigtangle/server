@@ -5,45 +5,21 @@
 
 package net.bigtangle.core;
 
-import static net.bigtangle.core.Utils.HEX;
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.math.BigInteger;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
-import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
-import net.bigtangle.core.Address;
-import net.bigtangle.core.Block;
-import net.bigtangle.core.Coin;
-import net.bigtangle.core.Context;
-import net.bigtangle.core.ECKey;
-import net.bigtangle.core.Message;
-import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.ScriptException;
-import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.Transaction;
-import net.bigtangle.core.TransactionInput;
-import net.bigtangle.core.TransactionOutput;
-import net.bigtangle.core.VerificationException;
-import net.bigtangle.core.TransactionConfidence.ConfidenceType;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.UnitTestParams;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.store.BlockGraph;
 import net.bigtangle.testing.FakeTxBuilder;
 
 /**
