@@ -17,6 +17,9 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
@@ -29,8 +32,10 @@ import okhttp3.Response;
 
 public class OkHttp3Util {
 
+    private static final Logger logger = LoggerFactory.getLogger(OkHttp3Util.class);
+    
     public static String post(String url, byte[] b) throws Exception {
-        System.out.println(url);
+        logger.debug( url);
         OkHttpClient client = getOkHttpClient();
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), b);
         Request request = new Request.Builder().url(url).post(body).build();
