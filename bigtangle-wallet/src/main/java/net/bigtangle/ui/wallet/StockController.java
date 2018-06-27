@@ -311,6 +311,7 @@ public class StockController extends TokensController {
                 }
             }
         }
+        signPubkeyTF.setText("");
     }
 
     public void showAddAddressDialog() throws Exception {
