@@ -76,7 +76,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         System.out.println(resp);
         HashMap<String, String> result = Json.jsonmapper().readValue(resp, HashMap.class);
         String version = result.get("version");
-        assertTrue(version.equals("03"));
+        assertTrue(version.equals("0.1.0"));
     }
     
     @Test
