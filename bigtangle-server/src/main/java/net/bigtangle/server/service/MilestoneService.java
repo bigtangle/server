@@ -12,6 +12,7 @@ import java.util.PriorityQueue;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -428,14 +429,22 @@ public class MilestoneService {
         // Set all unmaintained
         store.updateUnmaintainAll();
         PriorityQueue<BlockEvaluation> blocks = getRatingEntryPointsAscendingAsPriorityQueue();
+        HashSet<BlockEvaluation> blockSet = new HashSet<>(blocks);
 
         // Now set maintained in order of ascending height
         BlockEvaluation currentBlock = null;
+        int i = 0;
         while ((currentBlock = blocks.poll()) != null) {
+            blockSet.remove(currentBlock);
             store.updateBlockEvaluationMaintained(currentBlock.getBlockhash(), true);
             List<StoredBlock> solidApproverBlocks = blockService.getSolidApproverBlocks(currentBlock.getBlockhash());
-            for (StoredBlock b : solidApproverBlocks) {
-                blocks.add(blockService.getBlockEvaluation(b.getHeader().getHash()));
+            List<BlockEvaluation> blockEvaluations = blockService.getBlockEvaluations(solidApproverBlocks.stream().map(b -> b.getHeader().getHash()).collect(Collectors.toList()));
+            for (BlockEvaluation b : blockEvaluations) {
+                if (blockSet.contains(b))
+                    continue;
+                
+                blocks.add(b);
+                blockSet.add(b);
             }
         }
     }

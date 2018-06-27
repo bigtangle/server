@@ -362,6 +362,8 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         transactionService.createMiningRewardBlock(0);
         milestoneService.update();
         milestoneService.update();
+        
+        //TODO fix
     }
 
     private Block createAndAddNextBlock(Block b1, long bVersion, byte[] pubKey, Sha256Hash b2)
