@@ -152,8 +152,8 @@ public class BlockService {
     public void saveBlock(Block block) throws Exception {
         blockgraph.add(block);
         try {
-            brodcastBlock(block.bitcoinSerialize());
-            milestoneService.update();
+            broadcastBlock(block.bitcoinSerialize());
+            //milestoneService.update();
 
         } catch (Exception e) {
             // TODO: handle exception
@@ -306,7 +306,7 @@ public class BlockService {
         return store.getBlocksInMilestoneDepthInterval(0, NetworkParameters.ENTRYPOINT_TIPSELECTION_DEPTH_CUTOFF);
     }
 
-    public void brodcastBlock(byte[] data) {
+    public void broadcastBlock(byte[] data) {
         try {
             if ("".equalsIgnoreCase(kafkaConfiguration.getBootstrapServers()))
                 return;
