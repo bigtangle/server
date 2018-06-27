@@ -358,6 +358,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
                     0, rollingBlock.getHash());
             blockgraph.add(rollingBlock);
         }
+        milestoneService.update();
 
         transactionService.createMiningRewardBlock(0);
         milestoneService.update();
