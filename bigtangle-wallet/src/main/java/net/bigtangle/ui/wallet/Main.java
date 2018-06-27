@@ -120,7 +120,7 @@ public class Main extends Application {
     public static String password = "";
     public static int numberOfEmptyBlocks = 3;
     public static boolean emptyBlocks = true;
-
+    public static Map<String, Long> validTokenMap = new HashMap<String, Long>();
     public static Set<String> validAddressSet = new HashSet<String>();
     public static Set<String> validTokenSet = new HashSet<String>();
     private static final Logger log = LoggerFactory.getLogger(Main.class);
