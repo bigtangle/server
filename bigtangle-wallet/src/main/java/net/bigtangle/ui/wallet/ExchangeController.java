@@ -475,6 +475,11 @@ public class ExchangeController {
         HashMap<String, Object> res = Json.jsonmapper().readValue(resp, HashMap.class);
         HashMap<String, Object> token_ = (HashMap<String, Object>) res.get("token");
         String marketURL = (String) token_.get("url");
+        
+        if (marketURL == null || marketURL.equals("")) {
+            GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_d1"));
+            return;
+        }
 
         if (rowData == null || rowData.isEmpty()) {
             GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_d1"));
