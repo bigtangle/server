@@ -463,7 +463,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             if (!tx.isCoinBase()) {
                 for (TransactionInput txin : tx.getInputs()) {
                     blockStore.updateTransactionOutputSpent(txin.getOutpoint().getHash(), txin.getOutpoint().getIndex(),
-                            false, Sha256Hash.ZERO_HASH);
+                            false, null);
                 }
             }
 
@@ -490,7 +490,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (TransactionOutput out : tx.getOutputs()) {
             blockStore.updateTransactionOutputConfirmed(tx.getHash(), out.getIndex(), true);
             blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), out.getIndex(), blockhash);
-            blockStore.updateTransactionOutputSpent(tx.getHash(), out.getIndex(), false, blockhash);
+            blockStore.updateTransactionOutputSpent(tx.getHash(), out.getIndex(), false, null);
         }
     }
 

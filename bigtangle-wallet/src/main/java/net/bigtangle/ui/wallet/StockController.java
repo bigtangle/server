@@ -367,11 +367,14 @@ public class StockController extends TokensController {
         for (ECKey key : keys) {
             String temp = Utils.HEX.encode(key.getPubKey());
             boolean flag = true;
-            for (Map<String, Object> map : list) {
-                String tokenHex = (String) map.get("tokenid");
-                if (temp.equals(tokenHex)) {
-                    if (!(boolean) map.get("multiserial")) {
-                        flag = false;
+            if (list != null && !list.isEmpty()) {
+
+                for (Map<String, Object> map : list) {
+                    String tokenHex = (String) map.get("tokenid");
+                    if (temp.equals(tokenHex)) {
+                        if (!(boolean) map.get("multiserial")) {
+                            flag = false;
+                        }
                     }
                 }
             }

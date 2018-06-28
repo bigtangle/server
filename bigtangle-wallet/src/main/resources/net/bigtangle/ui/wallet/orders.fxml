@@ -130,6 +130,7 @@
 								</TableView>
                         <HBox alignment="CENTER_RIGHT" layoutX="538.0" layoutY="493.0" prefHeight="23.0" prefWidth="448.0" spacing="15.0">
                            <children>
+                              <Button defaultButton="true" mnemonicParsing="false" onAction="#refreshSIgnTable" text="%refresh" />
       								<Button defaultButton="true" layoutY="494.0" mnemonicParsing="false" onAction="#signExchange" text="%sign" />
       								<Button cancelButton="true" defaultButton="true" layoutX="870.0" layoutY="494.0" mnemonicParsing="false" onAction="#cancelOrder" text="%Cancel" />
       								<Button cancelButton="true" layoutX="937.0" layoutY="494.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />

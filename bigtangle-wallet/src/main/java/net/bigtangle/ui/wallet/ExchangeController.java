@@ -461,6 +461,10 @@ public class ExchangeController {
     @SuppressWarnings("unchecked")
     public void signExchange(ActionEvent event) throws Exception {
         Map<String, Object> rowData = exchangeTable.getSelectionModel().getSelectedItem();
+        if (rowData == null || rowData.isEmpty()) {
+            GuiUtils.informationalAlert("", Main.getText("pleaseSelect"), "");
+            return;
+        }
         String tokenid = (String) rowData.get("market");
 
         String ContextRoot = Main.getContextRoot();
