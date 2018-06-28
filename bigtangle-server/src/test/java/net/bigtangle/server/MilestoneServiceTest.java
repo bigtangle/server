@@ -48,7 +48,7 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 public class MilestoneServiceTest extends AbstractIntegrationTest {
     
     @Test
-    public void testEmptyBlock() throws Exception {
+    public void testUnsolidBlock() throws Exception {
         while (true) {
             Sha256Hash sha256Hash1 = getRandomSha256Hash();
             Sha256Hash sha256Hash2 = getRandomSha256Hash();
