@@ -37,14 +37,12 @@
 			<div class="collapse navbar-collapse" id="navbarResponsive">
 				<ul class="navbar-nav ml-auto">
 					<li class="nav-item"><a class="nav-link js-scroll-trigger"
-						href="#home">Home</a></li>
+						href="index.html">主页</a></li>
 					<li class="nav-item"><a class="nav-link "
-						href=" whitepaper.pdf" target="_blank">Whitepaper</a></li>
-
-					<li class="nav-item"><a class="nav-link"
-						href=" quickstart.html">Quick Start</a></li>
-
-					<li class="nav-item"><a class="nav-link" href=" imprint.html">Imprint</a>
+						href="../whitepaper.pdf" target="_blank">白皮书</a></li>
+					<li class="nav-item"><a class="nav-link" href="userguide.html">用户指南
+					</a></li>
+					<li class="nav-item"><a class="nav-link" href="imprint.html">版本说明</a>
 				</ul>
 			</div>
 		</div>
@@ -53,61 +51,63 @@
 
 	<header class="bg-primary text-white" id="home">
 		<div class="container text-center">
-			<h1>
-				<b>BigTangle</b> is a <b>protocol for the internet of value.</b>
-			</h1>
+			<h1>价值互联网的协议 BigTangle</h1>
 			<p class="lead">
-				<img src="img/whitelogo.png" height="19" /> BigTangle is a
-				cryptocurrency network extending the directed acyclic graph
-				architecture Tangle. Through the use of industry standard big data
-				technology in conjunction with the parallelizable architecture,
-				BigTangle sees itself as a successor to Bitcoin that focuses on
-				economically important key use-cases. Proof-of-Work mining and
-				custom token self-issuances are supported. <br> Key Feartures
-				are: Easy of Use, Completely Feeless, Near Time Transaction,
-				Infinite Scalability, Permissionless, Trustless, Decentralized,
-				Distributed Proof of Work and Quantum Security.
+				<img src="../img/whitelogo.png" height="19" />
+				BigTangle是一个加密货币网络，将有向无环图结构与马尔可夫链蒙特卡洛（MCMC）一起扩展为共识算法和分布式工作量证明。
+				通过将行业标准大数据技术与可并行化架构结合使用，BigTangle是传统区块链的后续产品，它概括了现有的区块链比特币和智能合约以太坊。
+				BigTangle专注于重要的关键应用, 支持自定义令牌发行，市场交易，采矿和智能合约均受。
+				主要特点：易于使用，完全免费，实时交易确认，无限可扩展性，高性能，智能合同，无许可证，无信任，分散的应用程序，分布式工作证明和量子安全。
 			</p>
-			<!--   	<div class="row">
-			<div class="col-lg-12 mx-auto">
-				<div class="disclaimer">
-					<h2>ICO</h2>
-				</div>
-			</div>
-		</div>
-		-->
+
 		</div>
 	</header>
 
 
 	<section id="services" class="bg-light">
 		<div class="container">
+
 			<div class="row">
 				<div class="col-lg-12 mx-auto">
-					<h2>Test Wallet Download</h2>
-					<p class="lead">
-						On Windows, use bin\bigtangle-wallet.bat to start the wallet
-						application. <br> On Linux/Mac, start bin/bigtangle-wallet. <br>
-					</p>
+					<h2>下载Windows可执行文件测试钱包</h2>
+					<p class="lead">请下载zip文件（70 MB)。 解压缩zip文件并运行bigtangle.exe.</p>
 					<button type="button" class="btn download"
-						onclick="window.open('http://bigtangle.net/bigtangle-wallet-0.1.0.zip');">
-						Download from Server in Europe</button>
+						onclick="window.open('https://bigtangle.net/bigtangle.zip');">
+						从欧洲服务器下载</button>
 					<button type="button" class="btn download"
-						onclick="window.open('https://cn.bigtangle.net/bigtangle-wallet-0.1.0.zip');">
-						Download from Server in China</button>
+						onclick="window.open('https://cn.bigtangle.net/bigtangle.zip');">
+						中国服务器下载</button>
 				</div>
 			</div>
 			<br>
-			<!-- 
+
+
 			<div class="row">
 				<div class="col-lg-12 mx-auto">
-					<h2>Full Node Download</h2>
+					<h2>下载测试钱包 (Java>= 1.8)</h2>
 					<p class="lead">
-						Coming soon...
+						在Linux / Mac上，启动 bin/bigtangle-wallet. <br> 在 Windows, 上，启动
+						bin\bigtangle-wallet.bat <br>
 					</p>
+					<button type="button" class="btn download"
+						onclick="window.open('https://bigtangle.net/bigtangle-wallet-0.1.0.zip');">
+						从欧洲服务器下载</button>
+					<button type="button" class="btn download"
+						onclick="window.open('https://cn.bigtangle.net/bigtangle-wallet-0.1.0.zip');">
+						中国服务器下载</button>
 				</div>
 			</div>
-			 -->
+			<br>
+
+			<div class="row">
+				<div class="col-lg-12 mx-auto">
+					<h2>Github</h2>
+					<button type="button" class="btn normal"
+						onclick="window.open('https://github.com/bigtangle/bigtangle');">
+						Github</button>
+				</div>
+			</div>
+
 		</div>
 	</section>
 
@@ -381,43 +381,7 @@
 		</div>
 	</section>
 	-->
-	<section id="faq">
-		<div class="container">
-			<div class="row">
-				<div class="col-lg-12 mx-auto">
-					<h2 style="margin-bottom: 20px">Frequently Asked Questions</h2>
-					<h3>What is BigTangle?</h3>
-					<p class="lead">BigTangle is a practical approach to scalable
-						cryptocurrencies employing state-of-the-art big data technologies
-						in combination with the highly scalable Tangle directed acyclic
-						graph base architecture. It achieves high performance in terms of
-						transaction throughput by parallelizing computations on a general
-						directed acyclic block graph instead of a blockchain.</p>
-					<h3>Why is it called BigTangle?</h3>
-					<p class="lead">Our solution adapts the principles of Tangle in
-						a powerful environment by employing state-of-the-art big data
-						technologies.</p>
-					<h3>What are the features of BigTangle?</h3>
-					<p class="lead">Baseline properties provided by BigTangle are
-						high network hashing power due to mining, near infinite
-						scalability in terms of transactions per second, sufficiently fast
-						transaction confirmation times, full decentralization,
-						trustlessness and permissionlessness, feeless transactions,
-						in-principle quantum readiness and normalized inflation.</p>
-					<h3>When and how will the ICO take place?</h3>
-					<p class="lead">The ICO is planned to begin in June or July.
-						More information will be released soon!</p>
-					<h3>How can I host a node myself?</h3>
-					<p class="lead">As soon as the public Testnet node is released,
-						you can host your own network node. The release is scheduled to
-						take place approximately at the start of the ICO. The requirements
-						are dynamic and depend on the network usage. Baseline requirements
-						will be published regularly after Testnet release.</p>
-				</div>
-			</div>
-		</div>
-	</section>
-
+	 
 	<!-- Footer -->
 	<footer class="py-5">
 		<div class="container">
