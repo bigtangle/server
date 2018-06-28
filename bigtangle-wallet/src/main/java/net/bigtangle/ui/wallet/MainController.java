@@ -24,8 +24,10 @@ import static net.bigtangle.ui.wallet.Main.params;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +57,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
@@ -226,15 +229,22 @@ public class MainController {
             String hashHex = (String) object.get("blockHashHex");
             String hash = u.getHashHex();
             long outputindex = u.getIndex();
-            String key = address + ":" + Utils.HEX.encode(tokenid);
+            String key = Utils.HEX.encode(tokenid);
             if (Main.validTokenMap.get(key) == null) {
-                Main.validTokenMap.put(key, c.longValue());
-            }else {
-               long temp=Main.validTokenMap.get(key);
-                Main.validTokenMap.put(key, temp+c.longValue());
+                Set<String> addressList = new HashSet<String>();
+                addressList.add(address);
+                Main.validTokenMap.put(key, addressList);
+            } else {
+                Set<String> addressList = Main.validTokenMap.get(key);
+                if (!addressList.contains(address)) {
+                    addressList.add(address);
+                }
+                Main.validTokenMap.put(key, addressList);
+            }
+            if (u.getTokenid().trim().equals(NetworkParameters.BIGNETCOIN_TOKENID_STRING)) {
+                Main.validAddressSet.add(address);
             }
 
-            Main.validAddressSet.add(address);
             boolean spendPending = u.isSpendPending();
             if (myPositvleTokens != null && !"".equals(myPositvleTokens.trim()) && !myPositvleTokens.trim().isEmpty()) {
                 if (myPositvleTokens.contains(Utils.HEX.encode(tokenid))) {
@@ -349,7 +359,11 @@ public class MainController {
         Main.OverlayUI<OrderController> order = Main.instance.overlayUI("orders.fxml");
         if (utxoTable.getSelectionModel().getSelectedItem() != null) {
             String address = utxoTable.getSelectionModel().getSelectedItem().getAddress();
-            order.controller.initAddress(address);
+            String tokeninfo = utxoTable.getSelectionModel().getSelectedItem().getTokenid();
+            if (tokeninfo.split(":")[1].trim().equals(NetworkParameters.BIGNETCOIN_TOKENID_STRING)) {
+                order.controller.initAddress(address);
+            }
+
         }
     }
 

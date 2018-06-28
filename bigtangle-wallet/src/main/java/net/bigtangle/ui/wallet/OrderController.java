@@ -8,13 +8,15 @@ import static com.google.common.base.Preconditions.checkState;
 
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
 
+import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -31,13 +33,11 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.DataClassName;
-import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Utils;
-import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.ui.wallet.utils.WTUtils;
@@ -112,12 +112,15 @@ public class OrderController extends ExchangeController {
     public TableColumn<Map<String, Object>, String> priceCol;
     @FXML
     public TableColumn<Map<String, Object>, String> amountCol;
+    public Set<String> tempAddressSet;
+    public ChangeListener<String> myListener;
 
     // public Main.OverlayUI<?> overlayUI;
 
     @FXML
     public void initialize() {
         try {
+
             buyRadioButton.setUserData("buy");
             sellRadioButton.setUserData("sell");
             stateRB1.setUserData("publish");
@@ -125,21 +128,48 @@ public class OrderController extends ExchangeController {
             stateRB3.setUserData("finish");
             Main.tokenInfo = (TokenInfo) Main.getUserdata(DataClassName.TOKEN.name());
             initMarketComboBox();
+            myListener = (ov1, o1, n1) -> {
+                if (n1 != null && !n1.isEmpty()) {
+                    if (Main.validTokenMap != null && !Main.validTokenMap.isEmpty()) {
+                        tempAddressSet = Main.validTokenMap.get(n1.split(":")[1].trim());
+                        ObservableList<String> addresses = FXCollections.observableArrayList(tempAddressSet);
+                        addressComboBox.setItems(addresses);
+                    }
+
+                }
+
+            };
             buySellTG.selectedToggleProperty().addListener((ov, o, n) -> {
                 String temp = n.getUserData().toString();
-                if ("sell".equalsIgnoreCase(temp)) {
-                    try {
-                        initComboBox(false);
-                    } catch (Exception e) {
+                boolean flag = "sell".equalsIgnoreCase(temp);
+                try {
+                    initComboBox(!flag);
+                } catch (Exception e) {
 
-                    }
-                } else {
-                    try {
-                        initComboBox(true);
-                    } catch (Exception e) {
-
-                    }
                 }
+
+                if (flag) {
+                    tempAddressSet = new HashSet<String>();
+
+                    tokenComboBox.getSelectionModel().selectedItemProperty().addListener(myListener);
+                    if (Main.validTokenMap != null && !Main.validTokenMap.isEmpty()) {
+                        tokenComboBox.getSelectionModel().selectFirst();
+                        String key = tokenComboBox.getValue().split(":")[1];
+                        if (Main.validTokenMap.get(key) != null && !Main.validTokenMap.get(key).isEmpty()) {
+                            tempAddressSet = Main.validTokenMap.get(key);
+                        }
+
+                    }
+
+                } else {
+                    tokenComboBox.getSelectionModel().selectedItemProperty().removeListener(myListener);
+                    tempAddressSet = Main.validAddressSet;
+
+                }
+                ObservableList<String> addresses = FXCollections.observableArrayList(tempAddressSet);
+
+                addressComboBox.setItems(addresses);
+
             });
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             initComboBox(true);
@@ -285,13 +315,6 @@ public class OrderController extends ExchangeController {
 
         tokenComboBox.setItems(tokenData);
         tokenComboBox.getSelectionModel().selectFirst();
-        KeyParameter aeskey = null;
-        // Main.initAeskey(aeskey);
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
-        if (!"".equals(Main.password.trim())) {
-            aeskey = keyCrypter.deriveKey(Main.password);
-        }
-        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aeskey);
         ObservableList<String> addresses = FXCollections.observableArrayList(Main.validAddressSet);
 
         addressComboBox.setItems(addresses);
