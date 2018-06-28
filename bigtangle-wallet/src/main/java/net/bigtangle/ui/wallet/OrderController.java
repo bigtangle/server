@@ -186,6 +186,14 @@ public class OrderController extends ExchangeController {
         addressComboBox.setValue(address);
     }
 
+    public void refreshSIgnTable(ActionEvent event) {
+        try {
+            super.initTable();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+    }
+
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void initTable(Map<String, Object> requestParam) throws Exception {
         if (requestParam.containsKey("state")) {
