@@ -10,6 +10,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,11 +40,37 @@ import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class MilestoneServiceTest extends AbstractIntegrationTest {
+    
+    @Test
+    public void testEmptyBlock() throws Exception {
+        while (true) {
+            Sha256Hash sha256Hash1 = getRandomSha256Hash();
+            Sha256Hash sha256Hash2 = getRandomSha256Hash();
+            Block block = new Block(this.networkParameters, sha256Hash1, sha256Hash2,
+                    NetworkParameters.BLOCKTYPE_TRANSFER, System.currentTimeMillis() / 1000);
+            block.solve();
+            System.out.println(block.getHashAsString());
+            OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+            }
+        }
+    }
+    
+    public Sha256Hash getRandomSha256Hash() {
+        byte[] rawHashBytes = new byte[32];
+        new Random().nextBytes(rawHashBytes);
+        Sha256Hash sha256Hash = Sha256Hash.wrap(rawHashBytes);
+        return sha256Hash;
+    }
+    
     private static final Logger log = LoggerFactory.getLogger(MilestoneServiceTest.class);
 
     @Autowired
