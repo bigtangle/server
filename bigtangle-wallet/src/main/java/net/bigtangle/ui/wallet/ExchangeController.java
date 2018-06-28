@@ -508,7 +508,7 @@ public class ExchangeController {
             requestParam.put("orderid", this.mOrderid);
             requestParam.put("dataHex", Utils.HEX.encode(buf));
             requestParam.put("signtype", signtype);
-            OkHttp3Util.post(ContextRoot + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+            OkHttp3Util.post(marketURL + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
             this.initTable();
             return;
         }
