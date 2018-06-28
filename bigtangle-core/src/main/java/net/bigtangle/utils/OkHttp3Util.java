@@ -42,6 +42,7 @@ public class OkHttp3Util {
         Response response = client.newCall(request).execute();
         try {
             String resp = response.body().string();
+            logger.debug( resp);
             checkResponse(resp);
             return resp;
 
@@ -55,6 +56,7 @@ public class OkHttp3Util {
     }
 
     public static byte[] post(String url, String s) throws Exception {
+        logger.debug( url);
         OkHttpClient client = getOkHttpClient();
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), s);
         Request request = new Request.Builder().url(url).post(body).build();

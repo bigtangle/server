@@ -284,7 +284,7 @@ public class ExchangeController {
             requestParam.put("orderid", orderid);
             requestParam.put("dataHex", Utils.HEX.encode(buf));
             requestParam.put("signtype", signtype);
-            OkHttp3Util.post(marketURL + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+            OkHttp3Util.post(marketURL + "/signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
         }
     }
 
