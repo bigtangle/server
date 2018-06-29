@@ -115,13 +115,6 @@ public class UserdataController {
                 }
 
                     break;
-                case 4: {
-                }
-
-                    break;
-                default: {
-                }
-                    break;
                 }
             });
             initMyAddress();

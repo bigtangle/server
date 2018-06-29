@@ -194,13 +194,6 @@ public class OrderController extends ExchangeController {
                 }
 
                     break;
-                case 4: {
-                }
-
-                    break;
-                default: {
-                }
-                    break;
                 }
             });
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
