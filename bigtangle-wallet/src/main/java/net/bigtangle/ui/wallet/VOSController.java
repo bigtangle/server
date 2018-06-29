@@ -91,9 +91,6 @@ public class VOSController {
     @FXML
     public void initialize() {
         try {
-            monthRB.setUserData("month");
-            onetimeRB.setUserData("onetime");
-            dailyRB.setUserData("daily");
 
             KeyParameter aesKey = null;
             final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
@@ -104,29 +101,44 @@ public class VOSController {
             for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
                 list.add(ecKey.getPublicKeyAsHex());
             }
-            ObservableList<String> addressData = FXCollections.observableArrayList(list);
-            addressComboBox.setItems(addressData);
+
             tabPane.getSelectionModel().selectedIndexProperty().addListener((ov, t, t1) -> {
                 int index = t1.intValue();
                 switch (index) {
                 case 0: {
+                    initTableView(list);
                 }
 
                     break;
                 case 1: {
+                    initAddTab(list);
                 }
 
                     break;
                 }
             });
+            initTableView(list);
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
-        initTableView();
+
+    }
+
+    private void initAddTab(List<String> pubkeyList) {
+        try {
+            monthRB.setUserData("month");
+            onetimeRB.setUserData("onetime");
+            dailyRB.setUserData("daily");
+
+            ObservableList<String> addressData = FXCollections.observableArrayList(pubkeyList);
+            addressComboBox.setItems(addressData);
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private void initTableView() {
+    private void initTableView(List<String> pubkeyList) {
         try {
             KeyParameter aesKey = null;
             final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
