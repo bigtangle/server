@@ -24,7 +24,7 @@ section {
 }
 
 .bg-primary, #faq, #usecases, #intrinsics, #screenwallet{
-	background: rgba(23,37,87,.7) !important;
+	background: rgba(23,37,87,.7);
 	color: #fff;
 }
 
