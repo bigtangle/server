@@ -44,6 +44,7 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -169,6 +170,9 @@ public class SendMoneyController {
     String utxoKey;
     String signnumberString = "0";
     String signnumberStringA = "0";
+
+    @FXML
+    public TabPane tabPane;
 
     public void initChoicebox() {
 
@@ -296,6 +300,34 @@ public class SendMoneyController {
                 .didThrow(() -> checkState(Coin.parseCoin(text, NetworkParameters.BIGNETCOIN_TOKENID).isPositive())));
         new TextFieldValidator(amountEdit1, text -> !WTUtils
                 .didThrow(() -> checkState(Coin.parseCoin(text, NetworkParameters.BIGNETCOIN_TOKENID).isPositive())));
+        tabPane.getSelectionModel().selectedIndexProperty().addListener((ov, t, t1) -> {
+            int index = t1.intValue();
+            switch (index) {
+            case 0: {
+            }
+
+                break;
+            case 1: {
+            }
+
+                break;
+            case 2: {
+            }
+
+                break;
+            case 3: {
+            }
+
+                break;
+            case 4: {
+            }
+
+                break;
+            default: {
+            }
+                break;
+            }
+        });
         initSignTable();
     }
 

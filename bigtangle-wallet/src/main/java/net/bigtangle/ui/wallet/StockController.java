@@ -130,17 +130,37 @@ public class StockController extends TokensController {
             initCombobox();
             new TextFieldValidator(signnumberTF,
                     text -> !WTUtils.didThrow(() -> checkState(text.matches("[1-9]\\d*"))));
-            tabPane.getSelectionModel().selectedItemProperty().addListener((ov, t, t1) -> {
-                try {
-                    initPositveTableView();
-                } catch (Exception e) {
 
+            tabPane.getSelectionModel().selectedIndexProperty().addListener((ov, t, t1) -> {
+                int index = t1.intValue();
+                switch (index) {
+                case 0: {
+                }
+
+                    break;
+                case 1: {
+                }
+
+                    break;
+                case 2: {
+                }
+
+                    break;
+                case 3: {
+                }
+
+                    break;
+                case 4: {
+                }
+
+                    break;
+                default: {
+                }
+                    break;
                 }
             });
             initTableView();
-            initPositveTableView();
             initMultisignTableView();
-            // initSerialTableView();
 
         } catch (Exception e) {
             e.printStackTrace();

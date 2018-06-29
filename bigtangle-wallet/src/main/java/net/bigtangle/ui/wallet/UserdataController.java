@@ -15,6 +15,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
@@ -88,12 +89,41 @@ public class UserdataController {
     public TextField emailTF;
     @FXML
     public TextArea remarkTA;
-
+    @FXML
+    public TabPane tabPane;
     public Main.OverlayUI<?> overlayUI;
 
     @FXML
     public void initialize() {
         try {
+            tabPane.getSelectionModel().selectedIndexProperty().addListener((ov, t, t1) -> {
+                int index = t1.intValue();
+                switch (index) {
+                case 0: {
+                }
+
+                    break;
+                case 1: {
+                }
+
+                    break;
+                case 2: {
+                }
+
+                    break;
+                case 3: {
+                }
+
+                    break;
+                case 4: {
+                }
+
+                    break;
+                default: {
+                }
+                    break;
+                }
+            });
             initMyAddress();
             initTableView();
         } catch (Exception e) {

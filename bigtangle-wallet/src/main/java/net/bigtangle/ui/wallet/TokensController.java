@@ -94,7 +94,6 @@ public class TokensController {
         this.isSignCheckBox.setSelected(true);
         try {
             initTableView();
-            initPositveTableView();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
@@ -107,9 +106,6 @@ public class TokensController {
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
-    }
-
-    public void initPositveTableView() throws Exception {
     }
 
     public void initSerialTableView() throws Exception {

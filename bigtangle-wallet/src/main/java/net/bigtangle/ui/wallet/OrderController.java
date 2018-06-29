@@ -24,6 +24,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.RadioButton;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -115,6 +116,9 @@ public class OrderController extends ExchangeController {
     public Set<String> tempAddressSet;
     public ChangeListener<String> myListener;
 
+    @FXML
+    public TabPane tabPane;
+
     // public Main.OverlayUI<?> overlayUI;
 
     @FXML
@@ -170,6 +174,34 @@ public class OrderController extends ExchangeController {
 
                 addressComboBox.setItems(addresses);
 
+            });
+            tabPane.getSelectionModel().selectedIndexProperty().addListener((ov, t, t1) -> {
+                int index = t1.intValue();
+                switch (index) {
+                case 0: {
+                }
+
+                    break;
+                case 1: {
+                }
+
+                    break;
+                case 2: {
+                }
+
+                    break;
+                case 3: {
+                }
+
+                    break;
+                case 4: {
+                }
+
+                    break;
+                default: {
+                }
+                    break;
+                }
             });
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             initComboBox(true);

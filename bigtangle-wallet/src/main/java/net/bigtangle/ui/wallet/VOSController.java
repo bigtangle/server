@@ -17,6 +17,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.RadioButton;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
@@ -83,7 +84,8 @@ public class VOSController {
 
     @FXML
     public TextArea contentTA;
-
+    @FXML
+    public TabPane tabPane;
     public Main.OverlayUI<?> overlayUI;
 
     @FXML
@@ -104,6 +106,34 @@ public class VOSController {
             }
             ObservableList<String> addressData = FXCollections.observableArrayList(list);
             addressComboBox.setItems(addressData);
+            tabPane.getSelectionModel().selectedIndexProperty().addListener((ov, t, t1) -> {
+                int index = t1.intValue();
+                switch (index) {
+                case 0: {
+                }
+
+                    break;
+                case 1: {
+                }
+
+                    break;
+                case 2: {
+                }
+
+                    break;
+                case 3: {
+                }
+
+                    break;
+                case 4: {
+                }
+
+                    break;
+                default: {
+                }
+                    break;
+                }
+            });
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
@@ -127,7 +157,7 @@ public class VOSController {
             requestParam.put("blocktype", blocktype);
             requestParam.put("pubKeyList", pubKeyList);
 
-            String CONTEXT_ROOT =  Main.getContextRoot();
+            String CONTEXT_ROOT = Main.getContextRoot();
             String resp = OkHttp3Util.postString(CONTEXT_ROOT + "userDataList",
                     Json.jsonmapper().writeValueAsString(requestParam));
             HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -153,8 +183,8 @@ public class VOSController {
 
     public void saveUserdata(ActionEvent event) {
         try {
-            String frequence=frequenceTG.getSelectedToggle().getUserData().toString();
-            //TODO cui,jiang
+            String frequence = frequenceTG.getSelectedToggle().getUserData().toString();
+            // TODO cui,jiang
             VOS vos = new VOS();
             vos.setPubKey(addressComboBox.getSelectionModel().getSelectedItem());
             vos.setNodeNumber(Integer.parseInt(numberTF.getText()));
@@ -163,7 +193,7 @@ public class VOSController {
             vos.setUrl(urlTF.getText());
             vos.setContent(contentTA.getText());
 
-            String CONTEXT_ROOT =  Main.getContextRoot();
+            String CONTEXT_ROOT = Main.getContextRoot();
             HashMap<String, String> requestParam = new HashMap<String, String>();
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
                     Json.jsonmapper().writeValueAsString(requestParam));

@@ -8,7 +8,7 @@
 
 <AnchorPane maxHeight="700.0" maxWidth="1000.0" minHeight="700.0" minWidth="1000.0" prefHeight="700.0" prefWidth="1000.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.bigtangle.ui.wallet.VOSController">
    <children>
-      <TabPane layoutY="69.0" maxHeight="628.0" maxWidth="1000.0" minHeight="628.0" minWidth="1000.0" prefHeight="628.0" prefWidth="1000.0" tabClosingPolicy="UNAVAILABLE">
+      <TabPane fx:id="tabPane" layoutY="69.0" maxHeight="628.0" maxWidth="1000.0" minHeight="628.0" minWidth="1000.0" prefHeight="628.0" prefWidth="1000.0" tabClosingPolicy="UNAVAILABLE">
         <tabs>
           <Tab closable="false" text="%search">
                <content>
