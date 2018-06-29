@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.PriorityQueue;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -20,6 +21,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.apache.directory.api.util.exception.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,8 +35,10 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
+import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.script.Script;
@@ -280,6 +284,7 @@ public class ValidatorService {
             }
 
             // TX reward adjustments for next rewards
+            // TODO get prevTxReward from prevRewardBlock
             long perTxReward = store.getTxRewardValue(prevRewardBlock.getHash());
             long nextPerTxReward = Math.max(1, 20000000 * 365 * 24 * 60 * 60 / approveCount
                     / (header.getTimeSeconds() - prevRewardBlock.getTimeSeconds()));
@@ -324,44 +329,18 @@ public class ValidatorService {
         }
     }
 
-    /**
-     * Resolves conflicts in new blocks to add that cannot be undone due to
-     * pruning. This method does not do anything if not pruning blocks.
-     * 
-     * @param blocksToAdd
-     * @throws BlockStoreException
-     */
-    public void resolvePrunedConflicts(Collection<BlockEvaluation> blocksToAdd) throws BlockStoreException {
-        // TODO refactor this to use same code as below
-        // Get the blocks to add as actual blocks from blockService
-        List<Block> blocks = blockService
-                .getBlocks(blocksToAdd.stream().map(e -> e.getBlockhash()).collect(Collectors.toList()));
+    public void resolveValidityConflicts(Set<BlockEvaluation> blocksToAdd, boolean unconfirmLosingMilestones) throws BlockStoreException {
+        // Remove blocks and their approvers that have at least one input
+        // with its corresponding output not confirmed yet / nonexistent
+        removeWhereInputNotFoundOrUnconfirmed(blocksToAdd);
 
-        // TODO dynamic conflictpoints: token issuance ids, mining reward height
-        // intervals
-
-        // TODO flatout reject conflicts where the block to be created is in
-        // conflict (e. g. same reward)
-
-        // To check for unundoable conflicts, we do the following:
-        // Create tuples (block, txinput) of all blocksToAdd
-        Stream<Pair<Block, TransactionInput>> blockInputTuples = blocks.stream().flatMap(
-                b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream()).map(in -> Pair.of(b, in)));
-
-        // Now filter to only contain inputs that were already spent in the
-        // milestone where the corresponding block has already been pruned or is
-        // unmaintained...
-        Stream<Pair<Block, TransactionInput>> irresolvableConflicts = blockInputTuples
-                .filter(pair -> transactionService.getUTXOSpent(pair.getRight().getOutpoint())
-                        && (transactionService.getUTXOSpender(pair.getRight().getOutpoint()) == null
-                                || !transactionService.getUTXOSpender(pair.getRight().getOutpoint()).isMaintained()));
-
-        // These blocks cannot be added and must therefore be removed from
-        // blocksToAdd
-        for (Pair<Block, TransactionInput> p : irresolvableConflicts.collect(Collectors.toList())) {
-            blockService.removeBlockAndApproversFrom(blocksToAdd,
-                    blockService.getBlockEvaluation(p.getLeft().getHash()));
-        }
+        // Resolve conflicting block combinations
+        resolvePrunedConflicts(blocksToAdd);
+        resolveUndoableConflicts(blocksToAdd, unconfirmLosingMilestones);
+        
+        // Remove blocks and their approvers that have at least one input
+        // with its corresponding output not confirmed yet / nonexistent
+        removeWhereInputNotFoundOrUnconfirmed(blocksToAdd);
     }
 
     /**
@@ -369,9 +348,10 @@ public class ValidatorService {
      * well as conflicts among milestone candidates.
      * 
      * @param blockEvaluationsToAdd
+     * @param unconfirmLosingMilestones 
      * @throws BlockStoreException
      */
-    public void resolveUndoableConflicts(Collection<BlockEvaluation> blockEvaluationsToAdd) throws BlockStoreException {
+    public void resolveUndoableConflicts(Collection<BlockEvaluation> blockEvaluationsToAdd, boolean unconfirmLosingMilestones) throws BlockStoreException {
         HashSet<Pair<BlockEvaluation, ConflictPoint>> conflictingOutPoints = new HashSet<Pair<BlockEvaluation, ConflictPoint>>();
         HashSet<BlockEvaluation> conflictingMilestoneBlocks = new HashSet<BlockEvaluation>();
         List<Block> blocksToAdd = blockService
@@ -382,14 +362,19 @@ public class ValidatorService {
 
         // Resolve all conflicts by grouping by UTXO ordered by descending
         // rating
-        Pair<HashSet<BlockEvaluation>, HashSet<BlockEvaluation>> conflictResolution = resolveConflictsByDescendingRating(
-                conflictingOutPoints);
+        Pair<HashSet<BlockEvaluation>, HashSet<BlockEvaluation>> conflictResolution = 
+                resolveConflicts(conflictingOutPoints, unconfirmLosingMilestones);
         HashSet<BlockEvaluation> losingBlocks = conflictResolution.getRight();
 
         // For milestone blocks that have been eliminated call disconnect
         // procedure
         for (BlockEvaluation b : conflictingMilestoneBlocks.stream().filter(b -> losingBlocks.contains(b))
                 .collect(Collectors.toList())) {
+            if (!unconfirmLosingMilestones) {
+                logger.error("Cannot unconfirm milestone blocks when not allowing unconfirmation!");
+                break;
+            }
+            
             blockService.unconfirm(b);
         }
 
@@ -408,12 +393,13 @@ public class ValidatorService {
      * 
      * @param blockEvaluationsToAdd
      * @param conflictingOutPoints
+     * @param unconfirmLosingMilestones 
      * @param conflictingMilestoneBlocks
      * @return
      * @throws BlockStoreException
      */
-    public Pair<HashSet<BlockEvaluation>, HashSet<BlockEvaluation>> resolveConflictsByDescendingRating(
-            Collection<Pair<BlockEvaluation, ConflictPoint>> conflictingOutPoints) throws BlockStoreException {
+    public Pair<HashSet<BlockEvaluation>, HashSet<BlockEvaluation>> resolveConflicts(
+            Collection<Pair<BlockEvaluation, ConflictPoint>> conflictingOutPoints, boolean unconfirmLosingMilestones) throws BlockStoreException {
         // Initialize blocks that will survive the conflict resolution
         HashSet<BlockEvaluation> winningBlocksSingle = conflictingOutPoints.stream().map(p -> p.getLeft())
                 .collect(Collectors.toCollection(HashSet::new));
@@ -425,9 +411,9 @@ public class ValidatorService {
         HashSet<BlockEvaluation> losingBlocks = new HashSet<>(winningBlocks);
 
         // Sort conflicts internally by descending rating, then cumulative
-        // weight
-        Comparator<Pair<BlockEvaluation, ConflictPoint>> byDescendingRating = Comparator
-                .comparingLong((Pair<BlockEvaluation, ConflictPoint> e) -> e.getLeft().getRating())
+        // weight. If not unconfirming, prefer milestones first.
+        Comparator<Pair<BlockEvaluation, ConflictPoint>> byDescendingRating = getConflictComparator(unconfirmLosingMilestones)
+                .thenComparingLong((Pair<BlockEvaluation, ConflictPoint> e) -> e.getLeft().getRating())
                 .thenComparingLong((Pair<BlockEvaluation, ConflictPoint> e) -> e.getLeft().getCumulativeWeight())
                 .thenComparingLong((Pair<BlockEvaluation, ConflictPoint> e) -> -e.getLeft().getInsertTime())
                 .thenComparing((Pair<BlockEvaluation, ConflictPoint> e) -> e.getLeft().getBlockhash()).reversed();
@@ -438,9 +424,9 @@ public class ValidatorService {
         Map<Object, TreeSet<Pair<BlockEvaluation, ConflictPoint>>> conflicts = conflictingOutPoints.stream()
                 .collect(Collectors.groupingBy(Pair::getRight, Collectors.toCollection(conflictTreeSetSupplier)));
 
-        // Sort conflicts among each other by descending max(rating)
-        Comparator<TreeSet<Pair<BlockEvaluation, ConflictPoint>>> byDescendingSetRating = Comparator
-                .comparingLong((TreeSet<Pair<BlockEvaluation, ConflictPoint>> s) -> s.first().getLeft().getRating())
+        // Sort conflicts among each other by descending max(rating). If not unconfirming, prefer milestones first.
+        Comparator<TreeSet<Pair<BlockEvaluation, ConflictPoint>>> byDescendingSetRating = getConflictSetComparator(unconfirmLosingMilestones)
+                .thenComparingLong((TreeSet<Pair<BlockEvaluation, ConflictPoint>> s) -> s.first().getLeft().getRating())
                 .thenComparingLong(
                         (TreeSet<Pair<BlockEvaluation, ConflictPoint>> s) -> s.first().getLeft().getCumulativeWeight())
                 .thenComparingLong(
@@ -476,6 +462,54 @@ public class ValidatorService {
         losingBlocks.removeAll(winningBlocks);
 
         return Pair.of(winningBlocks, losingBlocks);
+    }
+
+    private Comparator<TreeSet<Pair<BlockEvaluation, ConflictPoint>>> getConflictSetComparator(boolean unconfirmLosingMilestones) {
+        if (!unconfirmLosingMilestones)
+            return new Comparator<TreeSet<Pair<BlockEvaluation, ConflictPoint>>>() {
+                @Override
+                public int compare(TreeSet<Pair<BlockEvaluation, ConflictPoint>> o1,
+                        TreeSet<Pair<BlockEvaluation, ConflictPoint>> o2) {
+                    if (o1.first().getLeft().isMilestone() && o2.first().getLeft().isMilestone())
+                        throw new RuntimeException("Inconsistent Milestone: Conflicting blocks in milestone");
+                    if (o1.first().getLeft().isMilestone())
+                        return 1;
+                    if (o2.first().getLeft().isMilestone())
+                        return -1;
+                    return 0;
+                }
+            };
+        else
+            return new Comparator<TreeSet<Pair<BlockEvaluation, ConflictPoint>>>() {
+                @Override
+                public int compare(TreeSet<Pair<BlockEvaluation, ConflictPoint>> o1,
+                        TreeSet<Pair<BlockEvaluation, ConflictPoint>> o2) {
+                    return 0;
+                }
+            };
+    }
+
+    private Comparator<Pair<BlockEvaluation, ConflictPoint>> getConflictComparator(boolean unconfirmLosingMilestones) {
+        if (!unconfirmLosingMilestones)
+            return new Comparator<Pair<BlockEvaluation,ConflictPoint>>() {
+                @Override
+                public int compare(Pair<BlockEvaluation, ConflictPoint> o1, Pair<BlockEvaluation, ConflictPoint> o2) {
+                    if (o1.getLeft().isMilestone() && o2.getLeft().isMilestone())
+                        throw new RuntimeException("Inconsistent Milestone: Conflicting blocks in milestone");
+                    if (o1.getLeft().isMilestone())
+                        return 1;
+                    if (o2.getLeft().isMilestone())
+                        return -1;
+                    return 0;
+                }
+            };
+        else
+            return new Comparator<Pair<BlockEvaluation,ConflictPoint>>() {
+                @Override
+                public int compare(Pair<BlockEvaluation, ConflictPoint> o1, Pair<BlockEvaluation, ConflictPoint> o2) {
+                    return 0;
+                }
+            };
     }
 
     /**
@@ -552,9 +586,7 @@ public class ValidatorService {
                 .flatMap(b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream())
                         .filter(in -> !in.isCoinBase()).map(in -> Pair.of(b, new ConflictPoint(in.getOutpoint()))))
                 // Filter such that it has already been spent
-                .filter(pair -> transactionService.getUTXOSpent(pair.getRight().getOutpoint())
-                        && transactionService.getUTXOSpender(pair.getRight().getOutpoint()) != null
-                        && transactionService.getUTXOSpender(pair.getRight().getOutpoint()).isMaintained());
+                .filter(pair -> alreadySpent(pair.getRight().getOutpoint()));
 
         // Dynamic conflicts: mining reward height intervals
         Stream<Pair<Block, ConflictPoint>> rewardConflictPoints = blocksToAdd.stream()
@@ -564,32 +596,112 @@ public class ValidatorService {
                 // Filter such that it has already been spent 
                 .filter(pair -> {
                     try {
-                        return pair.getRight().getHeight() != store.getMaxPrevTxRewardHeight() + NetworkParameters.REWARD_HEIGHT_INTERVAL;
+                        return alreadyRewarded(pair.getRight().getHeight());
                     } catch (BlockStoreException e) {
                         return false;
                     }
                 });
 
-        // Dynamic conflicts: token issuance ids
+        // Dynamic conflicts: token issuance ids already issued
         Stream<Pair<Block, ConflictPoint>> issuanceConflictPoints = blocksToAdd.stream().filter(t -> false) // TEMP
                 .filter(b -> b.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION)
                 .map(b -> Pair.of(b, new TokenInfo().parse(b.getTransactions().get(0).getData())))
                 .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight().getTokenSerial())))
-                .filter(pair -> false);
-        // TODO where token has been issued already (issuing block selectable
-        // see above)
+                // Filter such that it has already been issued 
+                .filter(pair -> alreadyIssued(pair.getRight().getTokenSerial()));
 
         // Add the conflicting candidates and milestone blocks
         for (Pair<Block, ConflictPoint> pair : Stream
                 .of(transferConflictPoints, rewardConflictPoints, issuanceConflictPoints).flatMap(i -> i)
                 .collect(Collectors.toList())) {
-            BlockEvaluation toAddEvaluation = blockService.getBlockEvaluation(pair.getLeft().getHash());
-            conflictingOutPoints.add(Pair.of(toAddEvaluation, pair.getRight()));
 
-            // TODO Select the milestone block that is conflicting with a switch
-            BlockEvaluation milestoneEvaluation = transactionService.getUTXOSpender(pair.getRight().getOutpoint());
+            BlockEvaluation milestoneEvaluation = null;
+            switch (pair.getRight().getType()) {
+            case TXOUT:
+                milestoneEvaluation = getSpendingBlock(pair.getRight().getOutpoint());
+                break;
+            case TOKENISSUANCE:
+                milestoneEvaluation = getTokenIssuingBlock(pair.getRight().getTokenSerial());
+                break;
+            case REWARDISSUANCE:
+                milestoneEvaluation = getIntervalRewardingBlock(pair.getRight().getHeight());
+                break;
+            default:
+                throw new NotImplementedException();            
+            }
             conflictingOutPoints.add(Pair.of(milestoneEvaluation, pair.getRight()));
             conflictingMilestoneBlocks.add(milestoneEvaluation);
+            
+            //Then add corresponding new block
+            BlockEvaluation toAddEvaluation = blockService.getBlockEvaluation(pair.getLeft().getHash());
+            conflictingOutPoints.add(Pair.of(toAddEvaluation, pair.getRight()));
         }
+    }
+
+    private boolean alreadySpent(TransactionOutPoint transactionOutPoint) {
+        return transactionService.getUTXOSpent(transactionOutPoint)
+                && getSpendingBlock(transactionOutPoint) != null
+                && getSpendingBlock(transactionOutPoint).isMaintained();
+    }
+
+    private boolean alreadyRewarded(long height) throws BlockStoreException {
+        return height != store.getMaxPrevTxRewardHeight() + NetworkParameters.REWARD_HEIGHT_INTERVAL;
+    }
+
+    private boolean alreadyIssued(TokenSerial tokenSerial) {
+        // TODO where token has been issued already
+        throw new NotImplementedException();
+    }
+
+    private BlockEvaluation getIntervalRewardingBlock(long height) throws BlockStoreException {
+        return store.getBlockEvaluation(store.getConfirmedRewardBlock(height));
+    }
+
+    private BlockEvaluation getSpendingBlock(TransactionOutPoint transactionOutPoint) {
+        return transactionService.getUTXOSpender(transactionOutPoint);
+    }
+
+    private BlockEvaluation getTokenIssuingBlock(TokenSerial tokenSerial) {
+        // TODO get milestone block that issued the specified token id and sequence number
+        throw new NotImplementedException();
+    }
+
+    /**
+     * Resolves conflicts in new blocks to add that cannot be undone due to
+     * pruning. This method does not do anything if not pruning blocks.
+     * 
+     * @param blocksToAdd
+     * @param unconfirmLosingMilestones 
+     * @throws BlockStoreException
+     */
+    public void resolvePrunedConflicts(Collection<BlockEvaluation> blocksToAdd) throws BlockStoreException {
+//        // TODO when pruning is activated, refactor this to use same code as below 
+//        // Get the blocks to add as actual blocks from blockService
+//        List<Block> blocks = blockService
+//                .getBlocks(blocksToAdd.stream().map(e -> e.getBlockhash()).collect(Collectors.toList()));
+//
+//        // TODO dynamic conflictpoints: token issuance ids, mining reward height
+//        // intervals, flatout reject conflicts where the block to be created is in
+//        // conflict (e. g. same reward)
+//
+//        // To check for unundoable conflicts, we do the following:
+//        // Create tuples (block, txinput) of all blocksToAdd
+//        Stream<Pair<Block, TransactionInput>> blockInputTuples = blocks.stream().flatMap(
+//                b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream()).map(in -> Pair.of(b, in)));
+//
+//        // Now filter to only contain inputs that were already spent in the
+//        // milestone where the corresponding block has already been pruned or is
+//        // unmaintained...
+//        Stream<Pair<Block, TransactionInput>> irresolvableConflicts = blockInputTuples
+//                .filter(pair -> transactionService.getUTXOSpent(pair.getRight().getOutpoint())
+//                        && (transactionService.getUTXOSpender(pair.getRight().getOutpoint()) == null
+//                                || !transactionService.getUTXOSpender(pair.getRight().getOutpoint()).isMaintained()));
+//
+//        // These blocks cannot be added and must therefore be removed from
+//        // blocksToAdd
+//        for (Pair<Block, TransactionInput> p : irresolvableConflicts.collect(Collectors.toList())) {
+//            blockService.removeBlockAndApproversFrom(blocksToAdd,
+//                    blockService.getBlockEvaluation(p.getLeft().getHash()));
+//        }
     }
 }

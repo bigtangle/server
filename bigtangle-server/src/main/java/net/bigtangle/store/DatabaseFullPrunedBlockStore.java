@@ -196,7 +196,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "blocks.height, milestone, milestonelastupdate, "
             + "milestonedepth, inserttime, maintained, rewardvalidityassessment "
             + "FROM blocks INNER JOIN outputs ON outputs.spenderblockhash=blocks.hash"
-            + " WHERE solid = true and blocks.hash = ? AND outputindex= ?" + afterSelect();
+            + " WHERE solid = true AND outputs.hash = ? AND outputindex= ?" + afterSelect();
     protected String SELECT_MAX_IMPORT_TIME_SQL = "SELECT MAX(inserttime) " + "FROM blocks WHERE solid = true";
 
     protected String SELECT_MAX_TOKENID_SQL = "select max(tokenid) from tokens";
@@ -290,7 +290,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String INSERT_TX_REWARD_SQL = getInsert()
             + "  INTO txreward (blockhash, rewardamount, prevheight, confirmed) VALUES (?, ?, ?, ?)";
-    protected String SELECT_TX_REWARD_SQL = "SELECT rewardamount " + "FROM txreward WHERE blockhash = ?";
+    protected String SELECT_TX_REWARD_SQL = "SELECT rewardamount FROM txreward WHERE blockhash = ?";
+    protected String SELECT_CONFIRMED_TX_REWARD_SQL = "SELECT blockhash FROM txreward WHERE prevheight = ?";
     protected String SELECT_MAX_TX_REWARD_HEIGHT_SQL = "SELECT MAX(prevheight) "
             + "FROM txreward WHERE confirmed = true";
     protected String SELECT_TX_REWARD_CONFIRMED_SQL = "SELECT confirmed " + "FROM txreward WHERE blockhash = ?";
@@ -3147,7 +3148,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-
+    
     @Override
     public long getTxRewardValue(Sha256Hash hash) throws BlockStoreException {
         maybeConnect();
@@ -3919,5 +3920,27 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-
+    
+    @Override
+    public Sha256Hash getConfirmedRewardBlock(long height) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_CONFIRMED_TX_REWARD_SQL);
+            preparedStatement.setLong(1, height);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            return Sha256Hash.wrap(resultSet.getBytes(1));
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
 }

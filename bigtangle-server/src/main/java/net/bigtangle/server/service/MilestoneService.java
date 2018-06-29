@@ -49,8 +49,6 @@ public class MilestoneService {
     private TipsService tipsService;
     @Autowired
     private ValidatorService validatorService;
-    @Autowired
-    private BlockRequester blockRequester;
 
     private final Semaphore lock = new Semaphore(1, true);
 
@@ -110,66 +108,7 @@ public class MilestoneService {
     @CacheEvict(cacheNames = "BlockEvaluations", allEntries = true)
     private void clearCacheBlockEvaluations() throws Exception {
     }
-
-//    /**
-//     * Update solid, true if all directly or indirectly approved blocks exist.
-//     * If solid, update height to be the max of previous heights + 1
-//     * 
-//     * @throws Exception
-//     */
-//    private void updateSolidityAndHeight() throws Exception {
-//        List<Sha256Hash> nonSolidBlocks = blockService.getNonSolidBlocks();
-//        for (Sha256Hash nonSolidBlock : nonSolidBlocks)
-//            updateSolidityAndHeightRecursive(nonSolidBlock);
-//    }
-
-//    private boolean updateSolidityAndHeightRecursive(Sha256Hash hash) throws BlockStoreException {
-//        BlockEvaluation blockEvaluation = blockService.getBlockEvaluation(hash);
-//
-//        // Missing blocks -> not solid, request from network
-//        if (blockEvaluation == null) {
-//            blockRequester.requestBlock(hash);
-//            log.warn("this block does not exist for solidity update, requesting...");
-//            return false;
-//        }
-//
-//        // Solid blocks stay solid
-//        if (blockEvaluation.isSolid()) {
-//            return true;
-//        }
-//
-//        Block block = blockService.getBlock(hash);
-//        boolean prevBlockSolid = false;
-//        boolean prevBranchBlockSolid = false;
-//
-//        // Check previous trunk block exists and is solid
-//        BlockEvaluation prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
-//        if (prevBlockEvaluation == null) {
-//            blockRequester.requestBlock(block.getPrevBlockHash());
-//            log.warn("this block does not exist for solidity update, requesting...");
-//        } else {
-//            prevBlockSolid = updateSolidityAndHeightRecursive(block.getPrevBlockHash());
-//        }
-//
-//        // Check previous branch block exists and is solid
-//        BlockEvaluation prevBranchBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
-//        if (prevBranchBlockEvaluation == null) {
-//            blockRequester.requestBlock(block.getPrevBranchBlockHash());
-//            log.warn("this block does not exist for solidity update, requesting...");
-//        } else {
-//            prevBranchBlockSolid = updateSolidityAndHeightRecursive(block.getPrevBranchBlockHash());
-//        }
-//
-//        // If both previous blocks are solid, our block should be solidified
-//        if (prevBlockSolid && prevBranchBlockSolid) {
-//            prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
-//            prevBranchBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBranchBlockHash());
-//            blockGraphService.trySolidify(block, prevBlockEvaluation, prevBranchBlockEvaluation);
-//            return true;
-//        }
-//        return false;
-//    }
-
+    
     /**
      * Update cumulative weight, the amount of blocks a block is approved by
      * 
@@ -391,20 +330,8 @@ public class MilestoneService {
             // Now try to find blocks that can be added to the milestone
             HashSet<BlockEvaluation> blocksToAdd = blockService.getBlocksToAddToMilestone();
 
-            /** VALIDITY CHECKS START **/
-            // TODO put this into a function and reuse...
-            // Remove blocks and their approvers that have at least one input
-            // with its corresponding output not confirmed yet / nonexistent
-            validatorService.removeWhereInputNotFoundOrUnconfirmed(blocksToAdd);
-
-            // Resolve conflicting block combinations
-            validatorService.resolvePrunedConflicts(blocksToAdd);
-            validatorService.resolveUndoableConflicts(blocksToAdd);
-            
-            // Remove blocks and their approvers that have at least one input
-            // with its corresponding output not confirmed yet / nonexistent
-            validatorService.removeWhereInputNotFoundOrUnconfirmed(blocksToAdd);
-            /** VALIDITY CHECKS END **/
+            // VALIDITY CHECKS 
+            validatorService.resolveValidityConflicts(blocksToAdd, true);
 
             // Finally add the found new milestone blocks to the milestone
             for (BlockEvaluation block : blocksToAdd)
@@ -433,7 +360,6 @@ public class MilestoneService {
 
         // Now set maintained in order of ascending height
         BlockEvaluation currentBlock = null;
-        int i = 0;
         while ((currentBlock = blocks.poll()) != null) {
             blockSet.remove(currentBlock);
             store.updateBlockEvaluationMaintained(currentBlock.getBlockhash(), true);

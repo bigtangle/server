@@ -324,8 +324,6 @@ public abstract class AbstractBlockGraph {
             throws BlockStoreException, VerificationException, PrunedException {
         checkState(lock.isHeldByCurrentThread());
         
-       
-        
         StoredBlock newStoredBlock = addToBlockStore(storedPrev,storedPrevBranch, block);
       //  tryFirstSetSolidityAndHeight(newStoredBlock.getHeader());
     }

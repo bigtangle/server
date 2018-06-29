@@ -94,6 +94,7 @@ public class TipsService {
             approvedNonMilestoneBlockEvaluations.addAll(b2.getRight());
             List<Block> approvedNonMilestoneBlocks = blockService.getBlocks(approvedNonMilestoneBlockEvaluations
                     .stream().map(e -> e.getBlockhash()).collect(Collectors.toList()));
+            
             HashSet<Pair<BlockEvaluation, ConflictPoint>> conflictingOutPoints = new HashSet<Pair<BlockEvaluation, ConflictPoint>>();
             HashSet<BlockEvaluation> conflictingMilestoneBlocks = new HashSet<BlockEvaluation>();
 
@@ -104,7 +105,7 @@ public class TipsService {
             // Resolve all conflicts by grouping by UTXO ordered by descending
             // rating for most likely consensus
             Pair<HashSet<BlockEvaluation>, HashSet<BlockEvaluation>> conflictResolution = validatorService
-                    .resolveConflictsByDescendingRating(conflictingOutPoints);
+                    .resolveConflicts(conflictingOutPoints, false);
             HashSet<BlockEvaluation> losingBlocks = conflictResolution.getRight();
 
             // If the selected blocks are in conflict, walk backwards until we
@@ -165,7 +166,7 @@ public class TipsService {
             // Resolve all conflicts by grouping by UTXO ordered by descending
             // rating for most likely consensus
             Pair<HashSet<BlockEvaluation>, HashSet<BlockEvaluation>> conflictResolution = validatorService
-                    .resolveConflictsByDescendingRating(conflictingOutPoints);
+                    .resolveConflicts(conflictingOutPoints, false);
             HashSet<BlockEvaluation> losingBlocks = conflictResolution.getRight();
 
             // If the selected block is in conflict, walk backwards until we

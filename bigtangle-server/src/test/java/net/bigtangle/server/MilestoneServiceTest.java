@@ -49,7 +49,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     
     @Test
     public void testUnsolidBlock() throws Exception {
-        while (true) {
+        for (int i = 0; i < 10; i++) {
             Sha256Hash sha256Hash1 = getRandomSha256Hash();
             Sha256Hash sha256Hash2 = getRandomSha256Hash();
             Block block = new Block(this.networkParameters, sha256Hash1, sha256Hash2,
@@ -390,8 +390,6 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         transactionService.createMiningRewardBlock(0);
         milestoneService.update();
         milestoneService.update();
-        
-        //TODO fix
     }
 
     private Block createAndAddNextBlock(Block b1, long bVersion, byte[] pubKey, Sha256Hash b2)
