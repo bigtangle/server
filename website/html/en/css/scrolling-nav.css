@@ -28,8 +28,9 @@ section {
 	color: #fff;
 }
 
-#features, #team, #blog, #imprint, #intrinsics, footer, #services, #quickstart{
+#features, #team, #blog, #imprint, #intrinsics, footer, #quickstart{
 	color: #07123a;
+	background: #fff;
 }
 
 .bg-light{
