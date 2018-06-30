@@ -23,12 +23,12 @@ section {
 	background: #515e90 !important;
 }
 
-.bg-primary, #faq, #usecases, #intrinsics, #screenwallet{
+.bg-primary, #faq, #usecases, #screenwallet{
 	background: rgba(23,37,87,.7);
 	color: #fff;
 }
 
-#features, #team, #blog, #imprint, footer, #services, #quickstart{
+#features, #team, #blog, #imprint, #intrinsics, footer, #services, #quickstart{
 	background: #f0f0f0;
 	color: #07123a;
 }
