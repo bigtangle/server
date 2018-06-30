@@ -29,8 +29,12 @@ section {
 }
 
 #features, #team, #blog, #imprint, #intrinsics, footer, #services, #quickstart{
-	background: #f0f0f0;
 	color: #07123a;
+}
+
+.bg-light{
+	background: #fff;
+	background: url(../img/bgWhite.png) no-repeat;
 }
 
 .card{
@@ -97,6 +101,10 @@ canvas {
 	font-size: 1.4rem;
 }
 
+h2{
+	font-weight: 300;
+}
+
 .card a{
 	color: #000;
 }
@@ -129,18 +137,38 @@ canvas {
 }
 
 .download{
-	background-image: url(../img/arrowDown.png);
+	background-image: url(../img/downloadBlue.png);
 	background-repeat: no-repeat;
 	background-position: 10px center;
-	background-size: 12px;
-	padding-left: 30px;
-	-webkit-transition: background-image 0.2s, color 0.2s;
-	transition: background-image 0.2s, color 0.2s;
+	background-size: 18px;
+	padding-left: 40px;
+	-webkit-transition: background-color 0.2s, color 0.2s;
+	transition: background-color 0.2s, color 0.2s;
+	border: 1px solid #515e90;
+	background-color: transparent;
+	border-radius: 20px;
+	font-weight: 300;
+	margin-right: 20px;
+	padding-right: 20px;
+	float: left;
+}
+
+.seperator{
+	margin-bottom: 50px;
 }
 
 .download:hover{
-	color: #bbb;
-	background-image: url(../img/arrowDownGrey.png);
+	background-color: rgba(0,0,0,.05);
+}
+
+.btnTitle{
+	color: #000;
+}
+
+.btnDescription{
+	color: #333;
+	margin-top: -7px;
+	font-size: 0.8em;
 }
 
 #faq h3{
@@ -319,4 +347,22 @@ canvas {
 	position: absolute;
 	top: 127px;
 	left: -25px;
+}
+
+.downloadIcon{
+	width: 70%;
+	margin-right: 30%;
+	height: 100%;
+	background: url(../img/downloadIcon.png) no-repeat center center;
+	background-size: contain;
+}
+
+.git{
+	background-image: url(../img/GitHub-Mark-120px-plus.png);
+	height: 38px;
+	width: 180px;
+}
+
+.git .btnTitle{
+	margin-top: 5px;
 }
