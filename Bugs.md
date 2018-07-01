@@ -52,7 +52,8 @@ TODO execution results Selection
 ## delete solid = false and no previous and no follows (waiting for next from network?)
 
 
-
+## check of multi publish and unify "chain"
+## revoke published token should be possible -- > add a field in token table analog to outputs confirmed
 
 
 

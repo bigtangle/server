@@ -119,7 +119,7 @@ public class MultiSignService {
         if (tokenSerial == null) {
             throw new BlockStoreException("tokenserial is null");
         }
-
+        //as conflict
         if (tokens_ != null && tokenSerial.getTokenindex() == 1L) {
             throw new BlockStoreException("tokens already existed");
         }

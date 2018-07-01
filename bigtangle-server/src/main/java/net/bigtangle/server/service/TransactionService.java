@@ -5,7 +5,6 @@
 package net.bigtangle.server.service;
 
 import java.nio.ByteBuffer;
-import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -22,10 +21,8 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.Tokens;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.UTXO;
-import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.kafka.KafkaConfiguration;
 import net.bigtangle.kafka.KafkaMessageProducer;
@@ -88,32 +85,7 @@ public class TransactionService {
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
 
     }
-
-    public byte[] createTokenBlock(Map<String, Object> request) throws Exception {
-        String tokenHex = (String) request.get("tokenHex");
-        Tokens tokens_ = this.store.getTokensInfo(tokenHex);
-        if (tokens_ != null) {
-            throw new BlockStoreException("tokens already existed");
-        }
-        String pubKeyHex = (String) request.get("pubKeyHex");
-        long amount = new Long(request.get("amount").toString());
-        String tokenname = (String) request.get("tokenname");
-        String description = (String) request.get("description");
-        boolean asmarket = request.get("asmarket") == null ? false : (boolean) request.get("asmarket");
-        boolean multiserial = request.get("multiserial") == null ? false : (boolean) request.get("multiserial");
-        boolean tokenstop = request.get("tokenstop") == null ? false : (boolean) request.get("tokenstop");
-        String url = (String) request.get("url");
-        long signnumber = 1;
-        Tokens tokens = new Tokens(tokenHex, tokenname, description, url, signnumber, multiserial, asmarket, tokenstop);
-        store.saveTokens(tokens);
-
-        byte[] pubKey = Utils.HEX.decode(pubKeyHex);
-        byte[] tokenid = Utils.HEX.decode(tokenHex);
-        Coin coin = Coin.valueOf(amount, tokenid);
-        // TODO why is there no TokenInfo here?
-        Block block = createTokenBlock(coin, tokenid, pubKey, null);
-        return block.bitcoinSerialize();
-    }
+ 
 
     public Block createTokenBlock(Coin coin, byte[] tokenid, byte[] pubKey, TokenInfo tokenInfo) throws Exception {
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
@@ -189,8 +161,7 @@ public class TransactionService {
     }
 
     /*
-     * check before add Block from kafka , the block can be already exists. TODO the
-     * block may be cached for performance
+     * check before add Block from kafka , the block can be already exists. 
      */
     public boolean checkBlockExists(Block block) throws BlockStoreException {
         return store.get(block.getHash()) != null;
