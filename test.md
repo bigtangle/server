@@ -28,3 +28,7 @@ e)
 # test of market and order using new ordermatch
 
  
+ [15:00, 1.7.2018] +49 1512 3282316: Ok
+[18:29, 1.7.2018] cui: Auf facebook benutze mein Konto Login: cui@inasset.de   pw=StartBigTangle
+[18:57, 1.7.2018] cui: Hier https://www.linkedin.com/
+[18:58, 1.7.2018] cui: User=cui@inasset.de  pw=Start2018
