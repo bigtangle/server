@@ -23,7 +23,7 @@ section {
 	background: #515e90 !important;
 }
 
-.bg-primary, #faq, #usecases, #screenwallet{
+.bg-primary, #faq, #usecases, #screenwallet, #home{
 	background: rgba(23,37,87,.7);
 	color: #fff;
 }
