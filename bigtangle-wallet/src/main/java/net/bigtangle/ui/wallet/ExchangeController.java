@@ -285,6 +285,7 @@ public class ExchangeController {
             requestParam.put("dataHex", Utils.HEX.encode(buf));
             requestParam.put("signtype", signtype);
             OkHttp3Util.post(marketURL + "/signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+            OkHttp3Util.post(Main.getContextRoot() + "/saveBlock",Utils.HEX.encode(buf));
         }
     }
 
@@ -514,6 +515,7 @@ public class ExchangeController {
             requestParam.put("dataHex", Utils.HEX.encode(buf));
             requestParam.put("signtype", signtype);
             OkHttp3Util.post(marketURL + "/signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+            OkHttp3Util.post(Main.getContextRoot() + "/saveBlock",Utils.HEX.encode(buf));
             this.initTable();
             return;
         }
@@ -524,6 +526,7 @@ public class ExchangeController {
             return;
         }
         this.exchange(marketURL);
+        
         this.initTable();
         // overlayUI.done();
     }
