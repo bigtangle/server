@@ -217,7 +217,7 @@ public class VOSController {
             coinbase.setData(vos.toByteArray());
 
             Sha256Hash sighash = coinbase.getHash();
-            ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash);
+            ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash,aesKey);
             byte[] buf1 = party1Signature.encodeToDER();
 
             List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();

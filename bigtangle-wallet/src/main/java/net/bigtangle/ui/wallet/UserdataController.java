@@ -214,7 +214,9 @@ public class UserdataController {
         coinbase.setData(contactInfo.toByteArray());
 
         Sha256Hash sighash = coinbase.getHash();
-        ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash);
+        
+        
+        ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash,aesKey);
         byte[] buf1 = party1Signature.encodeToDER();
 
         List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
@@ -329,7 +331,7 @@ public class UserdataController {
             coinbase.setData(myhomeaddress.toByteArray());
 
             Sha256Hash sighash = coinbase.getHash();
-            ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash);
+            ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash,aesKey);
             byte[] buf1 = party1Signature.encodeToDER();
 
             List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
@@ -399,7 +401,7 @@ public class UserdataController {
             }
 
             Sha256Hash sighash = coinbase.getHash();
-            ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash);
+            ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash,aesKey);
             byte[] buf1 = party1Signature.encodeToDER();
 
             List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
@@ -538,7 +540,7 @@ public class UserdataController {
             coinbase.setData(uploadfileInfo.toByteArray());
 
             Sha256Hash sighash = coinbase.getHash();
-            ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash);
+            ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash,aesKey);
             byte[] buf1 = party1Signature.encodeToDER();
 
             List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();

@@ -479,7 +479,14 @@ public class StockController extends TokensController {
             Transaction transaction = block.getTransactions().get(0);
 
             Sha256Hash sighash = transaction.getHash();
-            ECKey.ECDSASignature party1Signature = outKey.sign(sighash);
+            
+            KeyParameter aesKey = null;
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            if (!"".equals(Main.password.trim())) {
+                aesKey = keyCrypter.deriveKey(Main.password);
+            }
+            
+            ECKey.ECDSASignature party1Signature = outKey.sign(sighash,aesKey);
             byte[] buf1 = party1Signature.encodeToDER();
 
             List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
@@ -633,7 +640,9 @@ public class StockController extends TokensController {
             multiSignBies = Json.jsonmapper().readValue(transaction.getDatasignature(), List.class);
         }
         Sha256Hash sighash = transaction.getHash();
-        ECKey.ECDSASignature party1Signature = myKey.sign(sighash);
+        
+
+        ECKey.ECDSASignature party1Signature = myKey.sign(sighash,aesKey);
         byte[] buf1 = party1Signature.encodeToDER();
 
         MultiSignBy multiSignBy0 = new MultiSignBy();
@@ -764,7 +773,14 @@ public class StockController extends TokensController {
         coinbase.setData(Main.tokenInfo.toByteArray());
 
         Sha256Hash sighash = coinbase.getHash();
-        ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash);
+        
+        KeyParameter aesKey = null;
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
+        
+        ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash,aesKey);
         byte[] buf1 = party1Signature.encodeToDER();
 
         List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();

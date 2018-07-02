@@ -926,7 +926,14 @@ public class SendMoneyController {
         Transaction transaction0 = networkParameters.getDefaultSerializer().makeTransaction(payloadBytes);
 
         Sha256Hash sighash = transaction0.hashForSignature(0, multisigScript_, Transaction.SigHash.ALL, false);
-        TransactionSignature transactionSignature = new TransactionSignature(ecKey.sign(sighash),
+
+        KeyParameter aesKey = null;
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
+
+        TransactionSignature transactionSignature = new TransactionSignature(ecKey.sign(sighash, aesKey),
                 Transaction.SigHash.ALL, false);
 
         ECKey.ECDSASignature party1Signature = ecKey.sign(transaction0.getHash());
