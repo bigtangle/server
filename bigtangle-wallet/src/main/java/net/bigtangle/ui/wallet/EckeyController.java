@@ -13,6 +13,8 @@ import java.util.Optional;
 
 import org.spongycastle.crypto.params.KeyParameter;
 
+import com.google.common.collect.Lists;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -80,15 +82,19 @@ public class EckeyController {
         if (bitcoin.wallet().isEncrypted()) {
             test("addKey");
         } else {
-            addKey();
+            addKey("");
         }
 
     }
 
-    public void addKey() {
+    public void addKey(String password) {
         ECKey newKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(newPrivateKeyTextField.getText()),
                 Utils.HEX.decode(newPubkeyTextField.getText()));
-        bitcoin.wallet().importKey(newKey);
+        if ("".equals(password)) {
+            bitcoin.wallet().importKey(newKey);
+        } else {
+            bitcoin.wallet().importKeysAndEncrypt(Lists.newArrayList(newKey), password);
+        }
         bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
         try {
             initEcKeyList();
@@ -101,14 +107,18 @@ public class EckeyController {
         if (bitcoin.wallet().isEncrypted()) {
             test("newKey");
         } else {
-            newKey();
+            newKey("");
         }
 
     }
 
-    public void newKey() {
+    public void newKey(String password) {
         ECKey newKey = new ECKey();
-        bitcoin.wallet().importKey(newKey);
+        if ("".equals(password)) {
+            bitcoin.wallet().importKey(newKey);
+        } else {
+            bitcoin.wallet().importKeysAndEncrypt(Lists.newArrayList(newKey), password);
+        }
         bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
         try {
             initEcKeyList();
@@ -182,9 +192,9 @@ public class EckeyController {
                     if ("showKey".equals(methodName)) {
                         showKey();
                     } else if ("addKey".equals(methodName)) {
-                        addKey();
+                        addKey(Main.password);
                     } else if ("newKey".equals(methodName)) {
-                        newKey();
+                        newKey(Main.password);
                     }
                 } else {
                     Alert alert = new Alert(AlertType.WARNING);
