@@ -188,8 +188,9 @@ public class EckeyController {
             final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
             try {
                 if (Main.password.trim().equals(usernamePassword.trim())) {
-                    keyCrypter.deriveKey(usernamePassword.trim());
+
                     if ("showKey".equals(methodName)) {
+                        keyCrypter.deriveKey(usernamePassword.trim());
                         showKey();
                     } else if ("addKey".equals(methodName)) {
                         addKey(Main.password);
