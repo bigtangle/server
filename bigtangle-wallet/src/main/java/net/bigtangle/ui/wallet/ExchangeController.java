@@ -285,7 +285,7 @@ public class ExchangeController {
             requestParam.put("dataHex", Utils.HEX.encode(buf));
             requestParam.put("signtype", signtype);
             OkHttp3Util.post(marketURL + "/signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
-            OkHttp3Util.post(Main.getContextRoot() + "/saveBlock",Utils.HEX.encode(buf));
+            OkHttp3Util.post(Main.getContextRoot() + "/saveBlock", Utils.HEX.encode(buf));
         }
     }
 
@@ -458,9 +458,18 @@ public class ExchangeController {
         HashMap<String, Object> exchange = (HashMap<String, Object>) result.get("exchange");
         return exchange;
     }
-
-    @SuppressWarnings("unchecked")
+ 
     public void signExchange(ActionEvent event) throws Exception {
+        try {
+            signExchangeDo(event);
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+
+    }
+
+    public void signExchangeDo(ActionEvent event) throws Exception {
+
         Map<String, Object> rowData = exchangeTable.getSelectionModel().getSelectedItem();
         if (rowData == null || rowData.isEmpty()) {
             GuiUtils.informationalAlert("", Main.getText("pleaseSelect"), "");
@@ -476,7 +485,7 @@ public class ExchangeController {
         HashMap<String, Object> res = Json.jsonmapper().readValue(resp, HashMap.class);
         HashMap<String, Object> token_ = (HashMap<String, Object>) res.get("token");
         String marketURL = (String) token_.get("url");
-        
+
         if (marketURL == null || marketURL.equals("")) {
             GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_d1"));
             return;
@@ -515,7 +524,7 @@ public class ExchangeController {
             requestParam.put("dataHex", Utils.HEX.encode(buf));
             requestParam.put("signtype", signtype);
             OkHttp3Util.post(marketURL + "/signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
-            OkHttp3Util.post(Main.getContextRoot() + "/saveBlock",Utils.HEX.encode(buf));
+            OkHttp3Util.post(Main.getContextRoot() + "/saveBlock", Utils.HEX.encode(buf));
             this.initTable();
             return;
         }
@@ -526,7 +535,7 @@ public class ExchangeController {
             return;
         }
         this.exchange(marketURL);
-        
+
         this.initTable();
         // overlayUI.done();
     }

@@ -17,11 +17,12 @@ import net.bigtangle.wallet.KeyBag;
 import net.bigtangle.wallet.Wallet;
 
 /**
- * This transaction signer resolves missing signatures in accordance with the given {@link net.bigtangle.wallet.Wallet.MissingSigsMode}.
- * If missingSigsMode is USE_OP_ZERO this signer does nothing assuming missing signatures are already presented in
- * scriptSigs as OP_0.
- * In MissingSigsMode.THROW mode this signer will throw an exception. It would be MissingSignatureException
- * for P2SH or MissingPrivateKeyException for other transaction types.
+ * This transaction signer resolves missing signatures in accordance with the
+ * given {@link net.bigtangle.wallet.Wallet.MissingSigsMode}. If missingSigsMode
+ * is USE_OP_ZERO this signer does nothing assuming missing signatures are
+ * already presented in scriptSigs as OP_0. In MissingSigsMode.THROW mode this
+ * signer will throw an exception. It would be MissingSignatureException for
+ * P2SH or MissingPrivateKeyException for other transaction types.
  */
 public class MissingSigResolutionSigner extends StatelessTransactionSigner {
     private static final Logger log = LoggerFactory.getLogger(MissingSigResolutionSigner.class);
@@ -70,12 +71,14 @@ public class MissingSigResolutionSigner extends StatelessTransactionSigner {
                     }
                 }
             } else {
-                if (inputScript.getChunks().get(0).equalsOpCode(0)) {
+                if (!inputScript.getChunks().isEmpty() ) {
+                       if( inputScript.getChunks().get(0).equalsOpCode(0)) {
                     if (missingSigsMode == Wallet.MissingSigsMode.THROW) {
                         throw new ECKey.MissingPrivateKeyException();
                     } else if (missingSigsMode == Wallet.MissingSigsMode.USE_DUMMY_SIG) {
                         txIn.setScriptSig(scriptPubKey.getScriptSigWithSignature(inputScript, dummySig, 0));
                     }
+                }
                 }
             }
             // TODO handle non-P2SH multisig
