@@ -37,6 +37,23 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Nullable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.google.common.primitives.Ints;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
+import com.google.protobuf.ByteString;
+
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
@@ -87,23 +104,6 @@ import net.bigtangle.wallet.listeners.WalletCoinsSentEventListener;
 import net.bigtangle.wallet.listeners.WalletEventListener;
 import net.bigtangle.wallet.listeners.WalletReorganizeEventListener;
 import net.jcip.annotations.GuardedBy;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.google.common.primitives.Ints;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
-import com.google.protobuf.ByteString;
 
 // To do list:
 //
@@ -847,12 +847,15 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
      */
     public int importKeysAndEncrypt(final List<ECKey> keys, CharSequence password) {
         keyChainGroupLock.lock();
+        int result;
         try {
             checkNotNull(getKeyCrypter(), "Wallet is not encrypted");
-            return importKeysAndEncrypt(keys, getKeyCrypter().deriveKey(password));
+            result = importKeysAndEncrypt(keys, getKeyCrypter().deriveKey(password));
         } finally {
             keyChainGroupLock.unlock();
         }
+        saveNow();
+        return result;
     }
 
     /**
@@ -4334,7 +4337,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
             req.tx.setPurpose(Transaction.Purpose.USER_PAYMENT);
             // Record the exchange rate that was valid when the transaction was
             // completed.
-            //req.tx.setMemo(req.memo);
+            // req.tx.setMemo(req.memo);
             req.completed = true;
             log.info("  completed: {}", req.tx);
         } finally {
