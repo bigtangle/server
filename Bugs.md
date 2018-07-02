@@ -55,6 +55,6 @@ TODO execution results Selection
 ## check of multi publish and unify "chain"
 ## revoke published token should be possible -- > add a field in token table analog to outputs confirmed
 
-
+userdata and vos modify param from eckey to list of eckey
 
 
