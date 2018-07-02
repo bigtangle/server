@@ -1,6 +1,8 @@
 package net.bigtangle.tools.utils;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,8 +51,15 @@ public class Simulator {
 
         Transaction doublespent = new Transaction(Configure.PARAMS);
         doublespent.addOutput(new TransactionOutput(Configure.PARAMS, doublespent, coinbase, ecKey));
+        
+        UTXO output_ = null;
+        for (UTXO output : outputs) {
+            if (Arrays.equals(coinbase.getTokenid(), output.getValue().getTokenid())) {
+                output_ = output;
+            }
+        }
 
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(Configure.PARAMS, outputs.get(0), 0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(Configure.PARAMS, output_, 0);
         Coin amount2 = spendableOutput.getValue().subtract(coinbase);
         doublespent.addOutput(amount2, genesiskey);
         TransactionInput input = doublespent.addInput(spendableOutput);
