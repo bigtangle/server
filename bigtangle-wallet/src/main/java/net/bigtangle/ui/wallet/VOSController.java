@@ -4,6 +4,8 @@
  *******************************************************************************/
 package net.bigtangle.ui.wallet;
 
+import static net.bigtangle.ui.wallet.Main.bitcoin;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -196,7 +198,19 @@ public class VOSController {
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
             block.setBlocktype(NetworkParameters.BLOCKTYPE_VOS);
-            ECKey pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+            KeyParameter aesKey = null;
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            if (!"".equals(Main.password.trim())) {
+                aesKey = keyCrypter.deriveKey(Main.password);
+            }
+            List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
+
+            ECKey pubKeyTo = null;
+            if (bitcoin.wallet().isEncrypted()) {
+                pubKeyTo = issuedKeys.get(0);
+            } else {
+                pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+            }
 
             Transaction coinbase = new Transaction(Main.params);
             coinbase.setDataclassname(DataClassName.VOS.name());

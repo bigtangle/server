@@ -4,12 +4,16 @@
  *******************************************************************************/
 package net.bigtangle.ui.wallet;
 
+import static net.bigtangle.ui.wallet.Main.bitcoin;
+
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.spongycastle.crypto.params.KeyParameter;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -38,6 +42,7 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Uploadfile;
 import net.bigtangle.core.UploadfileInfo;
 import net.bigtangle.core.Utils;
+import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
@@ -181,8 +186,20 @@ public class UserdataController {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Main.params.getDefaultSerializer().makeBlock(data);
         block.setBlocktype(NetworkParameters.BLOCKTYPE_USERDATA);
-        ECKey pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
 
+        KeyParameter aesKey = null;
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
+        List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
+
+        ECKey pubKeyTo = null;
+        if (bitcoin.wallet().isEncrypted()) {
+            pubKeyTo = issuedKeys.get(0);
+        } else {
+            pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+        }
         Transaction coinbase = new Transaction(Main.params);
         Contact contact = new Contact();
         contact.setName(nameTF.getText());
@@ -286,7 +303,19 @@ public class UserdataController {
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
             block.setBlocktype(NetworkParameters.BLOCKTYPE_USERDATA);
-            ECKey pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+            KeyParameter aesKey = null;
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            if (!"".equals(Main.password.trim())) {
+                aesKey = keyCrypter.deriveKey(Main.password);
+            }
+            List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
+
+            ECKey pubKeyTo = null;
+            if (bitcoin.wallet().isEncrypted()) {
+                pubKeyTo = issuedKeys.get(0);
+            } else {
+                pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+            }
 
             Transaction coinbase = new Transaction(Main.params);
             coinbase.setDataclassname(DataClassName.MYHOMEADDRESS.name());
@@ -355,7 +384,19 @@ public class UserdataController {
             coinbase.setDataclassname(DataClassName.ContactInfo.name());
             coinbase.setData(contactInfo.toByteArray());
 
-            ECKey pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+            KeyParameter aesKey = null;
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            if (!"".equals(Main.password.trim())) {
+                aesKey = keyCrypter.deriveKey(Main.password);
+            }
+            List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
+
+            ECKey pubKeyTo = null;
+            if (bitcoin.wallet().isEncrypted()) {
+                pubKeyTo = issuedKeys.get(0);
+            } else {
+                pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+            }
 
             Sha256Hash sighash = coinbase.getHash();
             ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash);
@@ -467,7 +508,20 @@ public class UserdataController {
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
             block.setBlocktype(NetworkParameters.BLOCKTYPE_USERDATA);
-            ECKey pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+
+            KeyParameter aesKey = null;
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            if (!"".equals(Main.password.trim())) {
+                aesKey = keyCrypter.deriveKey(Main.password);
+            }
+            List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
+
+            ECKey pubKeyTo = null;
+            if (bitcoin.wallet().isEncrypted()) {
+                pubKeyTo = issuedKeys.get(0);
+            } else {
+                pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+            }
 
             Transaction coinbase = new Transaction(Main.params);
             Uploadfile uploadfile = new Uploadfile();
