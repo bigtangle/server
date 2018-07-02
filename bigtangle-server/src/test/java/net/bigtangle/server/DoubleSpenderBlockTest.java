@@ -1,5 +1,6 @@
 package net.bigtangle.server;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -28,27 +29,26 @@ import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
+import net.bigtangle.wallet.SendRequest;
+import net.bigtangle.wallet.Wallet;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
-    
+
     @Autowired
     private NetworkParameters networkParameters;
 
-    public Thread createThreadCountDownLatch(CountDownLatch start, CountDownLatch end, int method) {
+    public Thread createThreadCountDownLatch(int method) {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    start.await();
-                    test100EmptyBlock();
-//                    if (method == 1) {
-//                    }
-//                    else {
-//                        test50AskTransactionBlock();
-//                    }
-                    end.countDown();
+                    if (method == 1) {
+                        test100EmptyBlock();
+                    } else {
+                        test50AskTransactionBlock();
+                    }
                 } catch (Exception e) {
                 }
             }
@@ -57,45 +57,63 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testThreadDoubleSpenderRace() {
-        CountDownLatch start = new CountDownLatch(1);
-        CountDownLatch end = new CountDownLatch(2);
-
-        Thread thread1 = this.createThreadCountDownLatch(start, end, 1);
-//        Thread thread2 = this.createThreadCountDownLatch(start, end, 2);
-        
-        thread1.start();
-//        thread2.start();
-
-        try {
-            start.countDown();
-            end.await();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    public void testThreadDoubleSpenderRace() throws Exception {
+         Thread thread1 = createThreadCountDownLatch(1);
+         Thread thread2 = createThreadCountDownLatch(2);
+         thread1.start();
+         thread2.start();
+         while(true) {
+         }
     }
-
+    
+    @SuppressWarnings("deprecation")
     public void test50AskTransactionBlock() throws Exception {
-        List<UTXO> outputs = testTransactionAndGetBalances();
-
-        Block rollingBlock = null;
         for (int i = 0; i < 50; i++) {
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             byte[] buf = OkHttp3Util.post(contextRoot + "askTransaction",
                     Json.jsonmapper().writeValueAsString(requestParam));
-            rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
-
-            ECKey outKey = new ECKey();
-            Coin coinbase = Coin.valueOf(1, NetworkParameters.BIGNETCOIN_TOKENID);
-            giveBlockDoubleSpentTransaction(rollingBlock, outKey, coinbase, outputs.get(0));
-            rollingBlock.solve();
-            OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+            Block block = networkParameters.getDefaultSerializer().makeBlock(buf);
+            block.solve();
+            try {
+                OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        byte[] buf = OkHttp3Util.post(contextRoot + "askTransaction",
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block block = networkParameters.getDefaultSerializer().makeBlock(buf);
+        
+        ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPiv),
+                Utils.HEX.decode(NetworkParameters.testPub));
+        List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+        
+        ECKey outKey = new ECKey();
+        Coin coinbase = Coin.valueOf(1, NetworkParameters.BIGNETCOIN_TOKENID);
+        this.giveBlockDoubleSpentTransaction(block, outKey, coinbase, outputs);
+        block.solve();
+        try {
+            OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         LOGGER.info("test 50 ask transaction method end");
     }
 
+    private void giveBlockDoubleSpentTransaction(Block rollingBlock, ECKey outKey, Coin coinbase, List<UTXO> outputs)
+            throws Exception {
+        for (UTXO output : outputs) {
+            if (Arrays.equals(output.getValue().getTokenid(), NetworkParameters.BIGNETCOIN_TOKENID)) {
+                giveBlockDoubleSpentTransaction(rollingBlock, outKey, coinbase, output);
+                return;
+            }
+        }
+    }
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DoubleSpenderBlockTest.class);
 
+    @SuppressWarnings("deprecation")
     public void test100EmptyBlock() throws Exception {
         Sha256Hash sha256Hash1, sha256Hash2;
         {
@@ -116,48 +134,58 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
             OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
             sha256Hash2 = rollingBlock.getHash();
         }
-        Block rollingBlock = null;
         for (int i = 0; i < 100; i++) {
-            rollingBlock = new Block(this.networkParameters, sha256Hash1, sha256Hash2,
+            Block block = new Block(this.networkParameters, sha256Hash1, sha256Hash2,
                     NetworkParameters.BLOCKTYPE_TRANSFER, System.currentTimeMillis() / 1000);
             if (i == 99) {
                 break;
             }
-            rollingBlock.solve();
-            OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+            block.solve();
+            OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
             if (i % 2 == 0) {
-                sha256Hash1 = rollingBlock.getHash();
+                sha256Hash1 = block.getHash();
             } else {
-                sha256Hash2 = rollingBlock.getHash();
+                sha256Hash2 = block.getHash();
             }
         }
-        List<UTXO> outputs = testTransactionAndGetBalances();
+        
+        Block block = new Block(this.networkParameters, sha256Hash1, sha256Hash2,
+                NetworkParameters.BLOCKTYPE_TRANSFER, System.currentTimeMillis() / 1000);
+        
+        ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPiv),
+                Utils.HEX.decode(NetworkParameters.testPub));
+        List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+        
         ECKey outKey = new ECKey();
         Coin coinbase = Coin.valueOf(1, NetworkParameters.BIGNETCOIN_TOKENID);
-        giveBlockDoubleSpentTransaction(rollingBlock, outKey, coinbase, outputs.get(0));
-        rollingBlock.solve();
-        OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        giveBlockDoubleSpentTransaction(block, outKey, coinbase, outputs.get(0));
+        block.solve();
+        
+        OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
         LOGGER.info("test 100 empty block method end");
     }
 
     public void giveBlockDoubleSpentTransaction(Block rollingBlock, ECKey outKey, Coin coinbase, UTXO output)
             throws Exception {
         @SuppressWarnings("deprecation")
-        ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPiv),
-                Utils.HEX.decode(NetworkParameters.testPub));
+        ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
+        
+        Transaction doublespent = new Transaction(this.networkParameters);
+        doublespent.addOutput(new TransactionOutput(this.networkParameters, doublespent, coinbase, outKey));
 
-        Transaction doublespent = new Transaction(networkParameters);
-        doublespent.addOutput(new TransactionOutput(networkParameters, doublespent, coinbase, outKey));
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, output, 0);
-        Coin amount2 = spendableOutput.getValue().subtract(coinbase);
-        doublespent.addOutput(amount2, genesiskey);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, output, 0);
+//        Coin amount2 = spendableOutput.getValue().subtract(coinbase);
+//        doublespent.addOutput(amount2, genesiskey);
         TransactionInput input = doublespent.addInput(spendableOutput);
         Sha256Hash sighash = doublespent.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                 false);
+
         TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
                 false);
         Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
         input.setScriptSig(inputScript);
+
         rollingBlock.addTransaction(doublespent);
     }
 }
