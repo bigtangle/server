@@ -76,6 +76,16 @@ public class EckeyController {
         if (newPrivateKeyTextField.getText().equals("")) {
             return;
         }
+
+        if (bitcoin.wallet().isEncrypted()) {
+            test("addKey");
+        } else {
+            addKey();
+        }
+
+    }
+
+    public void addKey() {
         ECKey newKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(newPrivateKeyTextField.getText()),
                 Utils.HEX.decode(newPubkeyTextField.getText()));
         bitcoin.wallet().importKey(newKey);
@@ -88,7 +98,15 @@ public class EckeyController {
     }
 
     public void newKey2wallet(ActionEvent event) {
+        if (bitcoin.wallet().isEncrypted()) {
+            test("newKey");
+        } else {
+            newKey();
+        }
 
+    }
+
+    public void newKey() {
         ECKey newKey = new ECKey();
         bitcoin.wallet().importKey(newKey);
         bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
@@ -127,7 +145,7 @@ public class EckeyController {
 
     }
 
-    public void test() {
+    public void test(String methodName) {
         Dialog<String> dialog = new Dialog<>();
         dialog.setTitle(Main.getText("Enter_password"));
         dialog.setHeaderText(null);
@@ -161,7 +179,13 @@ public class EckeyController {
             try {
                 if (Main.password.trim().equals(usernamePassword.trim())) {
                     keyCrypter.deriveKey(usernamePassword.trim());
-                    showKey();
+                    if ("showKey".equals(methodName)) {
+                        showKey();
+                    } else if ("addKey".equals(methodName)) {
+                        addKey();
+                    } else if ("newKey".equals(methodName)) {
+                        newKey();
+                    }
                 } else {
                     Alert alert = new Alert(AlertType.WARNING);
                     alert.setWidth(500);
@@ -190,41 +214,7 @@ public class EckeyController {
             return;
         }
         if (bitcoin.wallet().isEncrypted()) {
-            //
-            // TextInputDialog dialog = new TextInputDialog();
-            // dialog.setTitle(Main.getText("Enter_password"));
-            // dialog.setHeaderText(null);
-            // dialog.setContentText(Main.getText("Password"));
-            //
-            // Optional<String> result = dialog.showAndWait();
-            // if (result.isPresent()) {
-            // final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt)
-            // Main.bitcoin.wallet().getKeyCrypter();
-            // try {
-            // if (Main.password.trim().equals(result.get().trim())) {
-            // keyCrypter.deriveKey(result.get());
-            // showKey();
-            // } else {
-            // Alert alert = new Alert(AlertType.WARNING);
-            // alert.setWidth(500);
-            // alert.setTitle("");
-            // alert.setHeaderText(null);
-            // alert.setContentText(Main.getText("w_p_c_m"));
-            //
-            // alert.showAndWait();
-            // }
-            // } catch (Exception e) {
-            // Alert alert = new Alert(AlertType.WARNING);
-            // alert.setWidth(500);
-            // alert.setTitle("");
-            // alert.setHeaderText(null);
-            // alert.setContentText(Main.getText("w_p_c_m"));
-            //
-            // alert.showAndWait();
-            // }
-            //
-            // }
-            test();
+            test("showKey");
         } else {
             showKey();
         }
