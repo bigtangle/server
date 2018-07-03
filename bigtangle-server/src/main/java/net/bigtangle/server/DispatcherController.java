@@ -6,12 +6,12 @@ package net.bigtangle.server;
 
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
@@ -34,6 +34,7 @@ import net.bigtangle.server.response.ErrorResponse;
 import net.bigtangle.server.response.GetBlockEvaluationsResponse;
 import net.bigtangle.server.response.OkResponse;
 import net.bigtangle.server.service.BlockService;
+import net.bigtangle.server.service.LogResultService;
 import net.bigtangle.server.service.MultiSignService;
 import net.bigtangle.server.service.PayMultiSignService;
 import net.bigtangle.server.service.SettingService;
@@ -62,7 +63,6 @@ public class DispatcherController {
 
     public static int numberOfEmptyBlocks = 3;
 
-
     @Autowired
     private MultiSignService multiSignService;
     
@@ -72,7 +72,11 @@ public class DispatcherController {
     @Autowired
     private VOSExecuteService vosExecuteService;
     
-    @Autowired private SettingService settingService;
+    @Autowired
+    private SettingService settingService;
+    
+    @Autowired
+    private LogResultService logResultService;
 
     @SuppressWarnings("unchecked")
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
@@ -107,7 +111,6 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-
   
             case exchangeToken: {
                 String reqStr = new String(bodyByte, "UTF-8");
@@ -145,6 +148,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
+                
             case outputsWiteToken: {
                 ByteBuffer byteBuffer = ByteBuffer.wrap(bodyByte);
                 byte[] pubKey = new byte[byteBuffer.getInt()];
@@ -155,7 +159,6 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
- 
 
             case batchGetBalances: {
                 String reqStr = new String(bodyByte, "UTF-8");
@@ -331,6 +334,14 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
+                
+            case submitLogResult: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                logResultService.submitLogResult(request);
+                this.outPrintJSONString(httpServletResponse, OkResponse.create());
+            }
+                break;
             }
         } catch (BlockStoreException e) {
             logger.error("", e);
@@ -348,10 +359,16 @@ public class DispatcherController {
     }
 
     public void outPointBinaryArray(HttpServletResponse httpServletResponse, byte[] data) throws Exception {
-        ServletOutputStream servletOutputStream = httpServletResponse.getOutputStream();
-        servletOutputStream.write(data);
+//        ServletOutputStream servletOutputStream = httpServletResponse.getOutputStream();
+        HashMap<String, Object> result = new HashMap<String, Object>();
+        result.put("dataHex", Utils.HEX.encode(data));
+        /*servletOutputStream.write(data);
         servletOutputStream.flush();
-        servletOutputStream.close();
+        servletOutputStream.close();*/
+        PrintWriter printWriter = httpServletResponse.getWriter();
+        printWriter.append(Json.jsonmapper().writeValueAsString(result));
+        printWriter.flush();
+        printWriter.close();
     }
 
     public void outPrintJSONString(HttpServletResponse httpServletResponse, AbstractResponse response)

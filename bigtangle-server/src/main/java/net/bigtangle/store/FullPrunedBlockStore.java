@@ -13,6 +13,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.LogResult;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
@@ -372,4 +373,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     Block getUnsolid(Sha256Hash blockhash) throws BlockStoreException ;
 
     Sha256Hash getConfirmedRewardBlock(long height) throws BlockStoreException;
+    
+    void insertLogResult(LogResult logResult) throws BlockStoreException;
+    
+    LogResult queryLogResultById(String logResultId) throws BlockStoreException;
 }

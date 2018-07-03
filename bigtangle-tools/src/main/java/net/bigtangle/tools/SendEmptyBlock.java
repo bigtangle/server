@@ -45,23 +45,23 @@ public class SendEmptyBlock {
     public static NetworkParameters params = UnitTestParams.get();
 
     OkHttpClient client = new OkHttpClient();
-    public String blockTopic = "bigtangle";
-    public String bootstrapServers = "de.kafka.bigtangle.net:9092";
 
-   // private String CONTEXT_ROOT = "http://bigtangle.net:8088/";
+    // private String CONTEXT_ROOT = "http://bigtangle.net:8088/";
 
-     private String CONTEXT_ROOT = "https://bigtangle.org/";
+    private String CONTEXT_ROOT = "https://bigtangle.de/";
+
     public static void main(String[] args) {
         SendEmptyBlock sendEmptyBlock = new SendEmptyBlock();
         boolean c = true;
-        int i=0;
+        int i = 0;
         while (c) {
 
             try {
                 Thread.sleep(1000);
-                sendEmptyBlock.send(); i+=1;
-                if(i % 5 ==0)
-                System.out.println(" empty blocks  =  " +i);
+                sendEmptyBlock.send();
+                i += 1;
+                if (i % 5 == 0)
+                    System.out.println(" empty blocks  =  " + i);
             } catch (JsonProcessingException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -82,43 +82,8 @@ public class SendEmptyBlock {
         Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
         rollingBlock.solve();
 
-        sendMessage(rollingBlock.bitcoinSerialize());
+        OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
 
-    }
-
-    public boolean sendMessage(byte[] data) throws InterruptedException, ExecutionException {
-        return sendMessage(data, this.blockTopic, this.bootstrapServers);
-    }
-
-    public boolean sendMessage(byte[] data, String topic, String bootstrapServers)
-            throws InterruptedException, ExecutionException {
-        final String key = UUID.randomUUID().toString();
-        KafkaProducer<String, byte[]> messageProducer = new KafkaProducer<String, byte[]>(
-                producerConfig(bootstrapServers, true));
-        ProducerRecord<String, byte[]> producerRecord = null;
-        producerRecord = new ProducerRecord<String, byte[]>(topic, key, data);
-        final Future<RecordMetadata> result = messageProducer.send(producerRecord);
-        RecordMetadata mdata = result.get();
-        // log.debug(" sendMessage "+ key );
-        messageProducer.close();
-        return mdata != null;
-
-    }
-
-    public Properties producerConfig(String bootstrapServers, boolean binaryMessageKey) {
-        Properties producerConfig = new Properties();
-        producerConfig.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        producerConfig.setProperty(ProducerConfig.ACKS_CONFIG, "all");
-        producerConfig.setProperty(ProducerConfig.RETRIES_CONFIG, "0");
-        producerConfig.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
-                binaryMessageKey ? ByteArraySerializer.class.getName() : StringSerializer.class.getName());
-        producerConfig.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-        producerConfig.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer");
-        // producerConfig.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-        // KafkaAvroSerializer.class.getName());
-        // producerConfig.setProperty(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
-        // configuration.getSchemaRegistryUrl());
-        return producerConfig;
     }
 
 }

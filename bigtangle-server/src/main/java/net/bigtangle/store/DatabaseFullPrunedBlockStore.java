@@ -33,6 +33,7 @@ import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.LogResult;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
@@ -87,6 +88,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_PAYMULTISIGN_TABLE = "DROP TABLE paymultisign";
     public static String DROP_PAYMULTISIGNADDRESS_TABLE = "DROP TABLE paymultisignaddress";
     public static String DROP_VOSEXECUTE_TABLE = "DROP TABLE vosexecute";
+    public static String DROP_LOGRESULT_TABLE = "DROP TABLE logresult";
 
     // Queries SQL.
     protected String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
@@ -302,6 +304,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String SELECT_USERDATA_SQL = "SELECT blockhash, dataclassname, data, pubKey, blocktype FROM userdata WHERE dataclassname = ? and pubKey = ?";
     protected String INSERT_USERDATA_SQL = "INSERT INTO userdata (blockhash, dataclassname, data, pubKey, blocktype) VALUES (?, ?, ?, ?, ?)";
     protected String UPDATE_USERDATA_SQL = "UPDATE userdata SET blockhash = ?, data = ? WHERE dataclassname = ? and pubKey = ?";
+    
+    protected String INSERT_LOGRESULT_SQL = "INSERT INTO logresult (logResultId, logContent, submitDate) VALUE (?, ?, ?)";
+    protected String SELECT_LOGRESULT_SQL = "SELECT logResultId, logContent, submitDate FROM logresult WHERE logResultId = ?";
 
     protected NetworkParameters params;
     protected ThreadLocal<Connection> conn;
@@ -474,6 +479,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_PAYMULTISIGN_TABLE);
         sqlStatements.add(DROP_PAYMULTISIGNADDRESS_TABLE);
         sqlStatements.add(DROP_VOSEXECUTE_TABLE);
+        sqlStatements.add(DROP_LOGRESULT_TABLE);
         return sqlStatements;
     }
 
@@ -3931,6 +3937,58 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
             return Sha256Hash.wrap(resultSet.getBytes(1));
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void insertLogResult(LogResult logResult) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(INSERT_LOGRESULT_SQL);
+            preparedStatement.setString(1, logResult.getLogResultId());
+            preparedStatement.setString(2, logResult.getLogContent());
+            preparedStatement.setTimestamp(3, new java.sql.Timestamp(logResult.getSubmitDate().getTime()));
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public LogResult queryLogResultById(String logResultId) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_CONFIRMED_TX_REWARD_SQL);
+            preparedStatement.setString(1, logResultId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (!resultSet.next()) {
+                return null;
+            }
+            LogResult logResult = new LogResult();
+            logResult.setLogResultId(resultSet.getString("logResultId"));
+            logResult.setLogContent(resultSet.getString("logContent"));
+            logResult.setSubmitDate(resultSet.getDate("submitDate"));
+            return logResult;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } finally {
