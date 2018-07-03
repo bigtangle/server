@@ -153,7 +153,9 @@ public class BlockService {
         blockgraph.add(block);
         try {
             broadcastBlock(block.bitcoinSerialize());
-            //milestoneService.update();
+            //TODO remove this later
+            
+            milestoneService.update();
 
         } catch (Exception e) {
             // TODO: handle exception
