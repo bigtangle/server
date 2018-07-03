@@ -29,8 +29,6 @@ import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
-import net.bigtangle.wallet.SendRequest;
-import net.bigtangle.wallet.Wallet;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -39,7 +37,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
     @Autowired
     private NetworkParameters networkParameters;
 
-    public Thread createThreadCountDownLatch(int method) {
+    public Thread createThreadCountDownLatch(int method, CountDownLatch countDownLatch) {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -51,19 +49,27 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
                     }
                 } catch (Exception e) {
                 }
+                countDownLatch.countDown();
             }
         });
         return thread;
     }
 
-    //@Test
+    @Test
     public void testThreadDoubleSpenderRace() throws Exception {
-         Thread thread1 = createThreadCountDownLatch(1);
-         Thread thread2 = createThreadCountDownLatch(2);
+        CountDownLatch countDownLatch = new CountDownLatch(2);
+        
+         Thread thread1 = createThreadCountDownLatch(1, countDownLatch);
+         Thread thread2 = createThreadCountDownLatch(2, countDownLatch);
+         
          thread1.start();
          thread2.start();
-         while(true) {
+         
+         try {
+             countDownLatch.await();
          }
+         catch (Exception e) {
+        }
     }
     
     @SuppressWarnings("deprecation")

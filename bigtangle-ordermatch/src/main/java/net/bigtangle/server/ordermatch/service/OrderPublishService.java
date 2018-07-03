@@ -60,6 +60,15 @@ public class OrderPublishService {
         return AbstractResponse.createEmptyResponse();
     }
     
+    public AbstractResponse deleteOrder() throws Exception {
+        String orderid = "";
+        OrderPublish orderPublish = this.store.getOrderPublishByOrderid(orderid);
+        if (orderPublish == null) {
+        }
+        return null;
+        
+    }
+    
     @Autowired
     private OrderBookHolder orderBookHolder;
     

@@ -170,6 +170,12 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    startDate datetime NOT NULL,\n"
             + "    endDate datetime NOT NULL,\n"
              + "   CONSTRAINT vosexecute_pk PRIMARY KEY (vosKey, pubKey) USING BTREE \n" + ")";
+    
+    private static final String CREATE_LOGRESULT_TABLE = "CREATE TABLE logresult (\n" 
+            + "    logResultId varchar(255) NOT NULL,\n"
+            + "    logContent varchar(255) NOT NULL,\n" 
+            + "    submitDate datetime NOT NULL,\n"
+             + "   CONSTRAINT vosexecute_pk PRIMARY KEY (logResultId) USING BTREE \n" + ")";
 
     // Some indexes to speed up inserts
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_height_toaddress_idx ON outputs (hash, outputindex, height, toaddress) USING btree";
@@ -207,6 +213,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_PAYMULTISIGN_TABLE);
         sqlStatements.add(CREATE_PAYMULTISIGNADDRESS_TABLE);
         sqlStatements.add(CREATE_VOSEXECUTE_TABLE);
+        sqlStatements.add(CREATE_LOGRESULT_TABLE);
         return sqlStatements;
     }
 
