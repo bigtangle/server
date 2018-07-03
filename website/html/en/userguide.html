@@ -18,11 +18,30 @@
 <link href="css/scrolling-nav.css" rel="stylesheet">
 
 <link rel="icon" type="image/png" href="favicon.png" />
+<style>
+section {
+	padding: 60px 0;
+	background-color: transparent
+}
 
+.bg-primary, #faq, #usecases, #intrinsics, #screenwallet {
+	background: none;
+	color: #fff;
+}
+
+#screenwallet div {
+	width: 1110px;
+	margin-left: auto;
+	margin-right: auto;
+	margin-bottom: 10px;
+	text-indent: 35px;
+}
+</style>
 </head>
 
 <body id="page-top">
 	<div id="particles-js"></div>
+	<!-- Navigation -->
 	<!-- Navigation -->
 	<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top"
 		id="mainNav">
@@ -35,183 +54,271 @@
 				<span class="navbar-toggler-icon"></span>
 			</button>
 			<div class="collapse navbar-collapse" id="navbarResponsive">
-				<ul class="navbar-nav ml-auto"> 
+				<ul class="navbar-nav ml-auto">
 					<li class="nav-item"><a class="nav-link js-scroll-trigger"
-						href="index.html#home">Home</a></li>
+						href="index.html">主页</a></li>
 					<li class="nav-item"><a class="nav-link " href="bigtangle.pdf"
-						target="_blank">Whitepaper</a></li> 
-					<li class="nav-item"><a class="nav-link" href="userguide.html">User Guide</a></li> 
-					<li class="nav-item"><a class="nav-link" href="imprint.html">Imprint</a></li>
-					<li class="nav-item"><a class="nav-link" href="cn/index.html">中文</a>
+						target="_blank">白皮书</a></li>
+					<li class="nav-item"><a class="nav-link" href="userguide.html">用户指南
+					</a>
+						<ul class="navbar-nav ml-auto">
+							<li class="nav-item"><a class="nav-link" href="#sendmoney">支付</a></li>
+							<li class="nav-item"><a class="nav-link " href="#market">市场</a></li>
+							<li class="nav-item"><a class="nav-link" href="#token">通证
+							</a></li>
+							<li class="nav-item"><a class="nav-link" href="#block">区块</a></li>
+							<li class="nav-item"><a class="nav-link " href="#eckey">密钥</a></li>
+							<li class="nav-item"><a class="nav-link" href="#userdata">用户数据
+							</a></li>
+							<li class="nav-item"><a class="nav-link" href="#vos">合约</a></li>
+							<li class="nav-item"><a class="nav-link " href="#setting">设置</a></li>
+						</ul></li>
+
 				</ul>
 			</div>
 		</div>
 	</nav>
 
+
+
 	<header class="text-white" id="home">
 		<div class="container text-center">
-			<h1>Quick Start for BigTangle Test Wallet</h1>
-			<br>
-		</div>
-		<div class="container">
-			<img src="quickstart/ScreenshotWallet.png">
+			<h1>用户指南</h1>
 		</div>
 	</header>
+<body>
 
-	<section id="quickstart">
+
+	<section id="screenwallet">
+		<div class="text-white">
+			1.从bigtangle.net下载自己语言的程序压缩包，如bigtangle.zip,然后解压缩该压缩文件，双击bigtangle.exe来启动程序。<br />
+			如果当前客户端版本不是最新的话，会弹出下载最新版本的提示框。<br />
+		</div>
 		<div class="container">
-			<div class="row">
-				<div class="col-lg-12 mx-auto">
-					<h2>Information</h2>
-					<div class="row">
-						<div class="col-md-4">
-							<div class="card mb-4 box-shadow">
-								<!--<img src="img/svg/033-deal.svg" class="card-img-top">-->
-								<div class="card-header">Payment</div>
-								<div class="card-body">You must have tokens to send a
-									payment to other addresses. You can select a token from the
-									list and enter an amount and address to pay. Then, after
-									clicking the button Send, the system will allow you to save the
-									address in the contact list. Next time, you can select the
-									address from this list. If you cannot find the payment in your
-									balance, please check the Blocks window. There may be a delay
-									in the range of seconds for payment confirmation. The column
-									pending will indicate with an asterisk if a payment is still
-									pending.</div>
-							</div>
-						</div>
-						<div class="col-md-4">
-							<div class="card mb-4 box-shadow">
-								<!--<img src="img/svg/015-strategy.svg" class="card-img-top">-->
-								<div class="card-header">Market</div>
-								<div class="card-body">Anything of value can be traded by
-									creating new token equivalents. The system has an integrated
-									free market for token exchanges. In the last step we created a
-									work day token. Now we wish to get BT in exchange for our work
-									days. Click the order tab in the Market window. Select your
-									token and give a price for your work days. Then wait for
-									someone to be matched to your sale. For testing purposes, we
-									have an agent running as an automated service: The agent will
-									offer to buy any tokens posted for sale.</div>
-							</div>
-						</div>
-						<div class="col-md-4">
-							<div class="card mb-4 box-shadow">
-								<!--<img src="img/svg/007-startup.svg" class="card-img-top">-->
-								<div class="card-header">Token</div>
-								<div class="card-body">Tokens can be anything from fiat
-									money to stocks of companies. Anyone can issue any number of
-									tokens. As an example, you can create your work days as token
-									for tracking and trading. Click the create button in the token
-									window. Enter the name of your token: My Work Days. Enter the
-									amount of tokens: 365. Select an address as the issuer and id
-									of this token. Finalize this. You may click search to refresh
-									your balance and check the block evaluations in the window
-									Blocks if your token is not shown in your balance.</div>
-							</div>
-						</div>
-						<div class="col-md-4">
-							<div class="card mb-4 box-shadow">
-								<!--<img src="img/svg/025-data.svg" class="card-img-top">-->
-								<div class="card-header">Exchange</div>
-								<div class="card-body">When an order is matched, it
-									becomes a transaction offer that can be signed in the wallet.
-									In the Exchange window you will find the offer already signed
-									by the automated agent. Click the sign button and the deal is
-									finalized such that you will exchange the specified tokens. You
-									can also create custom transaction offers. To do so, click
-									create in the Exchange window.</div>
-							</div>
-						</div>
-						<div class="col-md-4">
-							<div class="card mb-4 box-shadow">
-								<!--<img src="img/svg/023-business.svg" class="card-img-top">-->
-								<div class="card-header">Multi Sign</div>
-								<div class="card-body">It is possible to set up payments
-									to require N out of M signatures. For example, two signatures
-									out of three might be required to authorize a transaction. To
-									perform such transactions, the first key holder signs by click
-									export, then sends it to the next key holder. The next key
-									holder imports the block file and clicks the send button to
-									perform the payment.</div>
-							</div>
-						</div>
-						<div class="col-md-4">
-							<div class="card mb-4 box-shadow">
-								<!--<img src="img/svg/023-business.svg" class="card-img-top">-->
-								<div class="card-header">Blocks</div>
-								<div class="card-body">By default it will display blocks
-									related to you only. If you perform transactions but they do
-									not show up in the main window balance, you will probably find
-									the blocks here with ratings lower than the threshold and
-									milestone set to false. These blocks are not confirmed yet due
-									to conflicts, insufficient processing time or orphaning. You
-									can select the blocks and view their details.</div>
-							</div>
-						</div>
-						<div class="col-md-4">
-							<div class="card mb-4 box-shadow">
-								<!--<img src="img/svg/023-business.svg" class="card-img-top">-->
-								<div class="card-header">Keys and Settings</div>
-								<div class="card-body">The BigTangle wallet is a key
-									store. It saves all your public and private keys in your
-									wallet. You can set a password to protect your wallet, but IT
-									IS IMPOSSIBLE TO RECOVER THE KEYS WITHOUT YOUR PASSWORD. Your
-									wallet is per default saved in your home directory with
-									username.wallet as filename, e. g.
-									C:\Users\username\username.wallet. Your contact list and your
-									watched token list files are in the same directory.</div>
-							</div>
-						</div>
-						<div class="col-md-4">
-							<div class="card mb-4 box-shadow">
-								<!--<img src="img/svg/023-business.svg" class="card-img-top">-->
-								<div class="card-header">Test Clusters</div>
-								<div class="card-body">There are two server clusters for
-									the current Testnet operated by us. One of the clusters is in
-									China and can be connected to via cn.server.bigtangle.net, the
-									other is in Europe and is found under de.server.bigtangle.net.
-									The wallet will per default connect to the server in China if
-									your operation system's locale is Chinese. The clusters are
-									currently connected peer to peer. There will be more clusters
-									in the test network after release of the BigTangle node.</div>
-							</div>
-						</div>
-
-					</div>
-				</div>
-			</div>
+			<img alt="" src="img/version.jpg" /><br />
 		</div>
 	</section>
 
-
-
-	<!-- Footer -->
-	<footer class="py-5">
-		<div class="container">
-			<div class="row">
-				<div class="col-lg-12 mx-auto">
-
-					<h2 class="text-center">Contact</h2>
-					<p class="m-0 text-center">info@bigtangle.net</p>
-					<p></p>
-					<p class="m-0 text-center">Copyright &copy; BigTangle.net
-						Inasset GmbH 2018</p>
-				</div>
-			</div>
+	<section id="screenwallet">
+		<div class="text-white">
+			点击“确认”按钮后，进入主界面，在程序主界面里，可以看到，分别有“支付”、“市场”、“通证”、“区块”、“钥匙”、“用户数据”、“合约”及“设置”等功能按钮，点击相关按钮，以打开其对应界面。在主界面下方的表格，显示的是我已有通证的记录。点击“搜索”按钮更新该表格的记录。点击“显示块的信息”按钮，弹出每条记录的内容。<br />
 		</div>
-		<!-- /.container -->
-	</footer>
-
-	<!-- Bootstrap core JavaScript -->
-	<script src="vendor/jquery/jquery.min.js"></script>
-	<script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-
-	<!-- Plugin JavaScript -->
-	<script src="vendor/jquery-easing/jquery.easing.min.js"></script>
-
-	<script src="js/scrolling-nav.js"></script>
-
+		<div class="container">
+			<img alt="" src="img/main.jpg" /><br />
+		</div>
+	</section>
+	<section id="screenwallet">
+		<a name="sendmoney"></a>
+		<div class="text-white">2.在主界面，点击“支付”按钮，打开支付界面，</div>
+		<div class="container">
+			<img alt="" src="img/sendmoney1.jpg" />
+		</div>
+		<div class="text-white">
+			在“支付”界面里，再输入“数量”、“通政”及“到”（接收地址）后，点击“支付”来完成简单支付操作。</div>
+	</section>
+	<section id="screenwallet">
+		<div class="text-white">选择“多重签名支付”标签后，进入其界面。</div>
+		<div class="container">
+			<img alt="" src="img/sendmoney2.jpg" />
+		</div>
+		<div class="text-white">选择“可用通证”、输入“数量”等信息后，点击“保存”按钮来完成签名支付。</div>
+	</section>
+	<section id="screenwallet">
+		<div class="text-white">选择“多重地址支付”标签后，进入其界面</div>
+		<div class="container">
+			<img alt="" src="img/sendmoney3.jpg" />
+		</div>
+		<div class="text-white">
+			在输入相关信息后，点击“添加公钥”按钮，为此次支付添加签名地址，点击“移出公钥”按钮，可以将选中的公钥移出签名列表。之后，点击“支付”按钮，完成支付。
+		</div>
+	</section>
+	<section id="screenwallet">
+		<div class="text-white">选择“多重签名地址支付”标签后，进入其界面</div>
+		<div class="container">
+			<img alt="" src="img/sendmoney4.jpg" />
+		</div>
+		<div class="text-white">再输入相关信息后，点击“保存”按钮，完成此次操作。</div>
+	</section>
+	<section id="screenwallet">
+		<div class="text-white">
+			选择“签名”标签后，进入其界面。 <br />
+		</div>
+		<div class="container">
+			<img alt="" src="img/sendmoney5.jpg" />
+		</div>
+		<div class="text-white">
+			选择表格的一条数据后，点击“签名”按钮，对这条记录签名。点击“编辑”按钮后，对该记录进行编辑。</div>
+	</section>
+	<section id="screenwallet">
+		<a name="market"></a>
+		<div class="text-white">
+			3.查看当前交易订单，点击【搜索】可以查找您关注的订单信息，新创建订单状态为发布，后面交易配置成功则状态为匹配，当所有订单用户签名完成，则显示完成。
+		</div>
+		<div class="container">
+			<img alt="" src="img/image001.png" />
+		</div>
+		<div class="text-white">
+			下方表格显示的是，所有用户的买卖需求，点击“搜索”按钮，对该表格进行刷新，可以查看当前交易的订单信息。</div>
+	</section>
+	<section id="screenwallet">
+		<div class="text-white">
+			您也可以创建自己的交易信息，可以与他人进行交换货币，点击【订单】标签，发起一个订单交易请求，输入您的交易信息，地址：交易地址;
+			通证：交易的货币类型; 单价：交易价格，通过交易价格进行订单匹配; 数量：货币交易数量; 有效期：订单有效期内进行匹配;
+			买卖标识：买卖状态; 市场：选择的市场进行订单匹配;</div>
+		<div class="container">
+			<img alt="" src="img/image003.png" />
+		</div>
+	</section>
+	<section id="screenwallet">
+		<div class="text-white">
+			如果订单匹配成功则会在【签名】标签中列出要我签名的信息，选中所要签名的订单，点击右下角【签名】即可，当交易双方都进行签名则交易完成，并将货币支付到双方帐户中。
+		</div>
+		<div class="container">
+			<img alt="" src="img/image005.png" />
+		</div>
+	</section>
+	<section id="screenwallet">
+		<div class="text-white">4.选择“交换”标签，进入其界面。</div>
+		<div class="container">
+			<img alt="" src="img/order3.jpg" />
+		</div>
+		<div class="text-white">
+			用户也可以私下进行交易操作，在输入相关信息后，点击“交换”按钮，完成交换，点击“导入”按钮，弹出文件选择框，在选择要导入的文件后，可以将文件的数据显示在界面上。点击“导出”按钮，可以将界面目前信息导入到一个文件里进行保存。<br />
+		</div>
+	</section>
+	<section id="screenwallet">
+		<a name="token"></a>
+		<div class="text-white">5.在主界面点击“通证”按钮，进入其界面。</div>
+		<div class="container">
+			<img alt="" src="img/token1.jpg" />
+		</div>
+		<div class="text-white">
+			点击“搜索”按钮，来刷新下方表格的通证记录，点击“加入关注列表”按钮，可以将选中的通证加入到关注列表里。<br />
+		</div>
+	</section>
+	<section id="screenwallet">
+		<div class="text-white">选择“一次性发行”标签，进入其界面。</div>
+		<div class="container">
+			<img alt="" src="img/token2.jpg" />
+		</div>
+		<div class="text-white">
+			分别输入相关信息后，点击“保存”，完成保存。<br />
+		</div>
+	</section>
+	<section id="screenwallet">
+		<div class="text-white">选择“多次发行”标签，进入其界面</div>
+		<div class="container">
+			<img alt="" src="img/token3.jpg" />
+		</div>
+		<div class="text-white">
+			分别输入相关信息后，点击“保存”完成操作。<br />
+		</div>
+	</section>
+	<section id="screenwallet">
+		<div class="text-white">选择“签名”标签，进入其界面</div>
+		<div class="container">
+			<img alt="" src="img/token4.jpg" />
+		</div>
+		<div class="text-white">
+			点击“搜索”来刷新下方表格的记录，在选择一条记录后，点击“签名”完成该记录的签名，点击“更改”可以对该记录信息做修改，点击“新系列”对该通证新建一个发行。<br />
+		</div>
+	</section>
+	<section id="screenwallet">
+		<div class="text-white">选择“市场”标签后，进入其界面</div>
+		<div class="container">
+			<img alt="" src="img/token5.jpg" />
+		</div>
+		<div class="text-white">
+			在输入相关信息后，点击“保存”完成操作。<br />
+		</div>
+	</section>
+	<section id="screenwallet">
+		<a name="block"></a>
+		<div class="text-white">6.在主界面点击“区块”进入其界面</div>
+		<div class="container">
+			<img alt="" src="img/block.jpg" />
+		</div>
+		<div class="text-white">
+			点击“搜索”来刷新表格的记录，点击“显示块的信息”可以弹出该记录的信息显示<br />
+		</div>
+	</section>
+	<section id="screenwallet">
+		<a name="eckey"></a>
+		<div class="text-white">7.在主界面点击“钥匙”进入其界面</div>
+		<div class="container">
+			<img alt="" src="img/eckey.jpg" />
+		</div>
+		<div class="text-white">
+			点击“文件”更换当前钱包的文件，点击“添加钥匙”可以为当前钱包增加钥匙，点击“新建钥匙”对当前钱包生成新的钥匙，选择一个记录后，点击“显示私有钥匙”可以显示当前钥匙的私有钥匙<br />
+		</div>
+	</section>
+	<section id="screenwallet">
+		<a name="userdata"></a>
+		<div class="text-white">8.在主界面点击“用户数据”进入其界面</div>
+		<div class="container">
+			<img alt="" src="img/userdata1.jpg" />
+		</div>
+		<div class="text-white">
+			输入相关信息后，点击“添加”完成联系人的添加，在选择一条记录后，点击“移出”可以将该记录移出。<br />
+		</div>
+	</section>
+	<section id="screenwallet">
+		<div class="text-white">选择“我关注的通证”进入其界面</div>
+		<div class="container">
+			<img alt="" src="img/userdata2.jpg" />
+		</div>
+		<div class="text-white">
+			基本操作同“联系人”标签<br />
+		</div>
+	</section>
+	<section id="screenwallet">
+		<div class="text-white">选择“我的联系地址”进入其界面</div>
+		<div class="container">
+			<img alt="" src="img/userdata3.jpg" />
+		</div>
+		<div class="text-white">
+			在输入相关信息后，点击“保存”完成操作。选择“我关注的通证”进入其界面<br>
+		</div>
+	</section>
+	<section id="screenwallet">
+		<div class="text-white">选择“上传文档”进入其界面</div>
+		<div class="container">
+			<img alt="" src="img/userdata4.jpg" />
+		</div>
+		<div class="text-white">
+			点击“上传文档”，可以在选择一个文档后，将其上传到服务器。在选择一个文档记录后，点击“下载”来下载该文档。<br />
+		</div>
+	</section>
+	<section id="screenwallet">
+		<a name="vos"></a>
+		<div class="text-white">9.在主界面点击“合約”,进入其界面。</div>
+		<div class="container">
+			<img alt="" src="img/vos.jpg" />
+		</div>
+		<div class="text-white">
+			表格显示的是当前的虚拟系统（合约）的记录<br />
+		</div>
+	</section>
+	<section id="screenwallet">
+		<div class="text-white">选择“添加”标签后，进入其界面</div>
+		<div class="container">
+			<img alt="" src="img/vos2.jpg" />
+		</div>
+		<div class="text-white">
+			在输入相关信息后，点击“保存”完成操作。<br />
+		</div>
+	</section>
+	<section id="screenwallet">
+		<a name="setting"></a>
+		<div class="text-white">10.在主界面点击“设置”进入其界面</div>
+		<div class="container">
+			<img alt="" src="img/setting.jpg" />
+		</div>
+		<div class="text-white">
+			在成功设置密码后，将程序关闭后，再次启动程序时，需要先输入密码后，才能使用各项功能。</div>
+		<div class="container">
+			<img alt="" src="img/password.jpg" />
+		</div>
+	</section>
 </body>
-
 </html>
