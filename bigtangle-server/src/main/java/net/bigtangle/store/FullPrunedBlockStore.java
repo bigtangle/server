@@ -157,11 +157,11 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
      * treated as one call.
      * </p>
      */
-    void beginDatabaseBatchWrite() throws BlockStoreException;
+    public void beginDatabaseBatchWrite() throws BlockStoreException;
 
-    void commitDatabaseBatchWrite() throws BlockStoreException;
+    public void commitDatabaseBatchWrite() throws BlockStoreException;
 
-    void abortDatabaseBatchWrite() throws BlockStoreException;
+    public void abortDatabaseBatchWrite() throws BlockStoreException;
 
     /*
      * get the blocks which confirm the block

@@ -68,36 +68,70 @@ public class MilestoneService {
         try {
             log.info("Milestone Update started");
             // clearCacheBlockEvaluations();
-//            Stopwatch watch = Stopwatch.createStarted();
-//            updateSolidityAndHeight(); 
-//            log.info("Solidity and height update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-//
-//            watch.stop();
+            
             Stopwatch  watch = Stopwatch.createStarted();
-            updateMaintained();
+            try {
+                store.beginDatabaseBatchWrite();
+                updateMaintained();
+                store.commitDatabaseBatchWrite();
+            } catch (BlockStoreException e) {
+                store.abortDatabaseBatchWrite();
+                log.error(e.getMessage());
+                return;
+            }
             log.info("Maintained update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
             watch.stop();
             watch = Stopwatch.createStarted();
-            updateCumulativeWeightAndDepth();
+            try {
+                store.beginDatabaseBatchWrite();
+                updateCumulativeWeightAndDepth();
+                store.commitDatabaseBatchWrite();
+            } catch (BlockStoreException e) {
+                store.abortDatabaseBatchWrite();
+                log.error(e.getMessage());
+                return;
+            }
             log.info("Weight and depth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
             watch.stop();
             watch = Stopwatch.createStarted();
-            updateRating();
+            try {
+                store.beginDatabaseBatchWrite();
+                updateRating();
+                store.commitDatabaseBatchWrite();
+            } catch (BlockStoreException e) {
+                store.abortDatabaseBatchWrite();
+                log.error(e.getMessage());
+                return;
+            }
             log.info("Rating update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
             watch.stop();
             watch = Stopwatch.createStarted();
-            updateMilestone();
+            try {
+                store.beginDatabaseBatchWrite();
+                updateMilestone();
+                store.commitDatabaseBatchWrite();
+            } catch (BlockStoreException e) {
+                store.abortDatabaseBatchWrite();
+                log.error(e.getMessage());
+                return;
+            }
             log.info("Milestone update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
             watch.stop();
             watch = Stopwatch.createStarted();
-            updateMilestoneDepth();
+            try {
+                store.beginDatabaseBatchWrite();
+                updateMilestoneDepth();
+                store.commitDatabaseBatchWrite();
+            } catch (BlockStoreException e) {
+                store.abortDatabaseBatchWrite();
+                log.error(e.getMessage());
+                return;
+            }
             log.info("Milestonedepth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-
-            // Optional: Trigger batched tip pair selection here
 
             watch.stop();
         } finally {

@@ -56,14 +56,14 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
         return thread;
     }
 
-    //@Test
+    @Test
     public void testThreadDoubleSpenderRace() throws Exception {
-         Thread thread1 = createThreadCountDownLatch(1);
-         Thread thread2 = createThreadCountDownLatch(2);
-         thread1.start();
-         thread2.start();
-         while(true) {
-         }
+//         Thread thread1 = createThreadCountDownLatch(1);
+//         Thread thread2 = createThreadCountDownLatch(2);
+//         thread1.start();
+//         thread2.start();
+//         while(true) {
+//         }
     }
     
     @SuppressWarnings("deprecation")
