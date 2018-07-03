@@ -470,8 +470,12 @@ public class ValidatorService {
                 @Override
                 public int compare(TreeSet<Pair<BlockEvaluation, ConflictPoint>> o1,
                         TreeSet<Pair<BlockEvaluation, ConflictPoint>> o2) {
-                    if (o1.first().getLeft().isMilestone() && o2.first().getLeft().isMilestone())
-                        throw new RuntimeException("Inconsistent Milestone: Conflicting blocks in milestone");
+                    if (o1.first().getLeft().isMilestone() && o2.first().getLeft().isMilestone()){
+                        if (o1.first().getRight().equals(o2.first().getRight()))
+                            return 0;
+                        else
+                            throw new RuntimeException("Inconsistent Milestone: Conflicting blocks in milestone");                            
+                    }
                     if (o1.first().getLeft().isMilestone())
                         return 1;
                     if (o2.first().getLeft().isMilestone())
@@ -494,8 +498,12 @@ public class ValidatorService {
             return new Comparator<Pair<BlockEvaluation,ConflictPoint>>() {
                 @Override
                 public int compare(Pair<BlockEvaluation, ConflictPoint> o1, Pair<BlockEvaluation, ConflictPoint> o2) {
-                    if (o1.getLeft().isMilestone() && o2.getLeft().isMilestone())
-                        throw new RuntimeException("Inconsistent Milestone: Conflicting blocks in milestone");
+                    if (o1.getLeft().isMilestone() && o2.getLeft().isMilestone()) {
+                        if (o1.getRight().equals(o2.getRight()))
+                            return 0;
+                        else
+                            throw new RuntimeException("Inconsistent Milestone: Conflicting blocks in milestone");                            
+                    }
                     if (o1.getLeft().isMilestone())
                         return 1;
                     if (o2.getLeft().isMilestone())
