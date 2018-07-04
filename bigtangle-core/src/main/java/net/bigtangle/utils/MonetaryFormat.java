@@ -406,17 +406,7 @@ public final class MonetaryFormat {
         return Coin.valueOf(parseValue(str, Coin.SMALLEST_UNIT_EXPONENT), tokenid);
     }
 
-    /**
-     * Parse a human readable fiat value to a {@link net.bigtangle.utils.Fiat}
-     * instance.
-     * 
-     * @throws NumberFormatException
-     *             if the string cannot be parsed for some reason
-     */
-    public Fiat parseFiat(String currencyCode, String str) throws NumberFormatException {
-        return Fiat.valueOf(currencyCode, parseValue(str, Fiat.SMALLEST_UNIT_EXPONENT));
-    }
-
+  
     private long parseValue(String str, int smallestUnitExponent) {
         checkState(DECIMALS_PADDING.length() >= smallestUnitExponent);
         if (str.isEmpty())

@@ -17,8 +17,6 @@ import org.junit.Test;
 
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.utils.Fiat;
-import net.bigtangle.utils.MonetaryFormat;
 
 public class MonetaryFormatTest {
 
@@ -295,10 +293,5 @@ public class MonetaryFormatTest {
         NO_CODE.parse("-99999999999999999999",NetworkParameters.BIGNETCOIN_TOKENID);
     }
 
-    private static final Fiat ONE_EURO = Fiat.parseFiat("EUR", "1");
-
-    @Test
-    public void fiat() throws Exception {
-        assertEquals(ONE_EURO, NO_CODE.parseFiat("EUR", "1"));
-    }
+  
 }

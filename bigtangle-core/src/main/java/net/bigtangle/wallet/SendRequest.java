@@ -24,7 +24,6 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.utils.ExchangeRate;
 import net.bigtangle.wallet.KeyChain.KeyPurpose;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
@@ -123,10 +122,7 @@ public class SendRequest {
      */
     public MissingSigsMode missingSigsMode = MissingSigsMode.THROW;
 
-    /**
-     * If not null, this exchange rate is recorded with the transaction during completion.
-     */
-    public ExchangeRate exchangeRate = null;
+  
 
     /**
      * If not null, this memo is recorded with the transaction during completion. It can be used to record the memo
