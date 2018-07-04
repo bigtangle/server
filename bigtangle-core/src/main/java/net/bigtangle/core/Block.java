@@ -5,7 +5,6 @@
 
 package net.bigtangle.core;
 
-import static net.bigtangle.core.Coin.FIFTY_COINS;
 import static net.bigtangle.core.Sha256Hash.hashTwice;
 
 import java.io.ByteArrayOutputStream;
@@ -39,22 +38,18 @@ import net.bigtangle.script.ScriptBuilder;
  * <p>
  * A block is a group of transactions, and is one of the fundamental data
  * structures of the Bitcoin system. It records a set of {@link Transaction}s
- * together with some data that links it into a place in the global block chain,
+ * together with some data that links it into a place in the global block structure,
  * and proves that a difficult calculation was done over its contents. See
- * <a href="http://www.bitcoin.org/bitcoin.pdf">the Bitcoin technical paper</a>
+ * <a href="http://bitcoin.net/bigtangle.pdf">the white paper</a>
  * for more detail on blocks.
  * <p/>
  *
  * <p>
  * To get a block, you can either build one from the raw bytes you can get from
  * another implementation, or request one specifically using
- * {@link Peer#getBlock(Sha256Hash)}, or grab one from a downloaded
- * {@link BlockGraph}.
+ * {@link Peer#getBlock(Sha256Hash)}.
  * </p>
  * 
- * <p>
- * Instances of this class are not safe for use by multiple threads.
- * </p>
  */
 public class Block extends Message {
     /**
@@ -280,25 +275,6 @@ public class Block extends Message {
         this.nonce = nonce;
         this.transactions = new LinkedList<Transaction>();
         this.transactions.addAll(transactions);
-    }
-
-    /**
-     * <p>
-     * A utility method that calculates how much new Bitcoin would be created by
-     * the block at the given height. The inflation of Bitcoin is predictable
-     * and drops roughly every 4 years (210,000 blocks). At the dawn of the
-     * system it was 50 coins per block, in late 2012 it went to 25 coins per
-     * block, and so on. The size of a coinbase transaction is inflation plus
-     * fees.
-     * </p>
-     *
-     * <p>
-     * The half-life is controlled by
-     * {@link net.bigtangle.core.NetworkParameters#getSubsidyDecreaseBlockCount()}.
-     * </p>
-     */
-    public Coin getBlockInflation(int height) {
-        return FIFTY_COINS.shiftRight(height / params.getSubsidyDecreaseBlockCount());
     }
 
     /**
@@ -864,8 +840,7 @@ public class Block extends Message {
                 throw new VerificationException(e);
             }
         } else if ((blocktype == NetworkParameters.BLOCKTYPE_TRANSFER)
-                || (blocktype == NetworkParameters.BLOCKTYPE_USERDATA)
-                || (blocktype == NetworkParameters.BLOCKTYPE_VOS)
+                || (blocktype == NetworkParameters.BLOCKTYPE_USERDATA) || (blocktype == NetworkParameters.BLOCKTYPE_VOS)
                 || (blocktype == NetworkParameters.BLOCKTYPE_GOVERNANCE)
                 || (blocktype == NetworkParameters.BLOCKTYPE_FILE)
                 || (blocktype == NetworkParameters.BLOCKTYPE_VOS_EXECUTE)) {
@@ -1312,16 +1287,7 @@ public class Block extends Message {
         return b;
     }
 
-    @VisibleForTesting
-    boolean isHeaderBytesValid() {
-        return headerBytesValid;
-    }
-
-    @VisibleForTesting
-    boolean isTransactionBytesValid() {
-        return transactionBytesValid;
-    }
-
+  
     /**
      * Return whether this block contains any transactions.
      * 
@@ -1332,15 +1298,6 @@ public class Block extends Message {
         return !this.transactions.isEmpty();
     }
 
-    /**
-     * Returns whether this block conforms to <a href=
-     * "https://github.com/bitcoin/bips/blob/master/bip-0066.mediawiki">BIP66:
-     * Strict DER signatures</a>.
-     * 
-     * Returns whether this block conforms to <a href=
-     * "https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki">BIP65:
-     * OP_CHECKLOCKTIMEVERIFY</a>.
-     */
 
     public byte[] getMineraddress() {
         return mineraddress;
