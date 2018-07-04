@@ -108,6 +108,7 @@ public class TokensController {
         }
     }
 
+    @Deprecated
     public void initSerialTableView() throws Exception {
         KeyParameter aesKey = null;
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
