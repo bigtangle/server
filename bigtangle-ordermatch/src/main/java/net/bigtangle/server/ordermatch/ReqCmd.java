@@ -6,5 +6,5 @@ package net.bigtangle.server.ordermatch;
 
 public enum ReqCmd {
 
-    saveOrder, getOrders, exchangeInfo, saveExchange, getExchange, signTransaction, cancelOrder, getBatchExchange;
+    saveOrder, getOrders, deleteOrder, exchangeInfo, saveExchange, getExchange, signTransaction, cancelOrder, getBatchExchange;
 }

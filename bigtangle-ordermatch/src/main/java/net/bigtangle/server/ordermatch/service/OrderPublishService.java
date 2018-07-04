@@ -6,6 +6,7 @@ package net.bigtangle.server.ordermatch.service;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,8 +14,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Json;
 import net.bigtangle.core.OrderPublish;
+import net.bigtangle.core.Transaction;
+import net.bigtangle.core.Utils;
 import net.bigtangle.server.ordermatch.bean.OrderBook;
 import net.bigtangle.server.ordermatch.bean.Side;
 import net.bigtangle.server.ordermatch.context.OrderBookHolder;
@@ -60,13 +66,43 @@ public class OrderPublishService {
         return AbstractResponse.createEmptyResponse();
     }
     
-    public AbstractResponse deleteOrder() throws Exception {
-        String orderid = "";
+    @SuppressWarnings("unchecked")
+    public void deleteOrder(Block block) throws Exception {
+        Transaction transaction = block.getTransactions().get(0);
+        
+        byte[] buf = transaction.getData();
+        String orderid = new String(buf);
+        
+        List<HashMap<String, Object>> multiSignBies = Json.jsonmapper().readValue(transaction.getDatasignature(),
+                List.class);
+        Map<String, Object> multiSignBy = multiSignBies.get(0);
+        byte[] pubKey = Utils.HEX.decode((String) multiSignBy.get("publickey"));
+        byte[] data = transaction.getHash().getBytes();
+        byte[] signature = Utils.HEX.decode((String) multiSignBy.get("signature"));
+        
+        boolean success = ECKey.verify(data, signature, pubKey);
+        if (!success) {
+            throw new BlockStoreException("multisign signature error");
+        }
+        
         OrderPublish orderPublish = this.store.getOrderPublishByOrderid(orderid);
         if (orderPublish == null) {
+            throw new BlockStoreException("order publish not found");
         }
-        return null;
         
+        String tokenid = orderPublish.getTokenid();
+        OrderBook orderBook = orderBookHolder.getOrderBookWithTokenId(tokenid);
+        synchronized (this) {
+            if (orderBook == null) {
+                orderBook = orderBookHolder.createOrderBook();
+                orderBookHolder.addOrderBook(tokenid, orderBook);
+            }
+            orderBook.cancel(orderPublish.getOrderid(), 0);
+        }
+        
+        this.store.deleteOrderPublish(orderPublish.getOrderid());
+        this.store.deleteExchangeInfo(orderPublish.getOrderid());
+        this.store.deleteOrderMatch(orderPublish.getOrderid());
     }
     
     @Autowired

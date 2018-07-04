@@ -38,6 +38,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   amount bigint,\n" 
             + "   state integer,\n" 
             + "   market varchar(255),\n"
+            + "   submitDate datetime,\n"
             + "   PRIMARY KEY (orderid) )";
 
     private static final String CREATE_ORDERMATCH_TABLE = "CREATE TABLE ordermatch (\n"

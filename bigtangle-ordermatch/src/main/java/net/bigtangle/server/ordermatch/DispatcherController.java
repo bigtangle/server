@@ -20,7 +20,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import net.bigtangle.core.Block;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Utils;
 import net.bigtangle.server.ordermatch.service.ExchangeService;
 import net.bigtangle.server.ordermatch.service.OrderPublishService;
@@ -114,6 +116,14 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
+                
+            case deleteOrder: {
+                Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
+                this.orderPublishService.deleteOrder(block);
+                AbstractResponse response = AbstractResponse.createEmptyResponse();
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
             }
         } catch (Exception exception) {
             logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, Utils.HEX.encode(bodyByte), exception);
@@ -122,6 +132,9 @@ public class DispatcherController {
             this.outPrintJSONString(httpServletResponse, resp);
         }
     }
+    
+    @Autowired
+    private NetworkParameters networkParameters;
 
     public void outPointBinaryArray(HttpServletResponse httpServletResponse, byte[] data) throws Exception {
         ServletOutputStream servletOutputStream = httpServletResponse.getOutputStream();

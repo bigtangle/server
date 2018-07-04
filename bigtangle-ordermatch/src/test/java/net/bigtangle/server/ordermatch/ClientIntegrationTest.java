@@ -5,8 +5,6 @@
 package net.bigtangle.server.ordermatch;
 
 import static org.junit.Assert.assertTrue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -15,7 +13,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,19 +21,19 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
-import net.bigtangle.server.ordermatch.ReqCmd;
 import net.bigtangle.server.ordermatch.service.schedule.ScheduleOrderMatchService;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.SendRequest;
@@ -52,6 +49,59 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private ScheduleOrderMatchService scheduleOrderMatchService;
+    
+    @Test
+    @SuppressWarnings("unchecked")
+    public void deleteOrder() throws Exception {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        HashMap<String, Object> request = new HashMap<String, Object>();
+        ECKey outKey = new ECKey();
+        request.put("address", outKey.toAddress(networkParameters).toBase58());
+        request.put("tokenid", outKey.getPublicKeyAsHex());
+        request.put("type", 1);
+        request.put("price", 1);
+        request.put("amount", 100);
+        request.put("validateto", simpleDateFormat.format(new Date()));
+        request.put("validatefrom", simpleDateFormat.format(new Date()));
+
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.saveOrder.name(),
+                Json.jsonmapper().writeValueAsString(request));
+        logger.info("saveOrder resp : " + resp);
+
+        resp = OkHttp3Util.postString(contextRoot + ReqCmd.getOrders.name(),
+                Json.jsonmapper().writeValueAsString(new HashMap<String, Object>()));
+        logger.info("getOrders resp : " + resp);
+        
+        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
+        List<HashMap<String, Object>> list = (List<HashMap<String, Object>>) result.get("orders");
+        HashMap<String, Object> order = list.get(0);
+        
+        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(null, Block.BLOCK_VERSION_GENESIS,
+                (TransactionOutPoint) null, Utils.currentTimeSeconds(), outKey.getPubKey(), 1,
+                networkParameters.getGenesisBlock().getHash(), outKey.getPubKeyHash());
+        Transaction transaction = new Transaction(this.networkParameters);
+        transaction.setData(order.get("orderid").toString().getBytes());
+        
+        Sha256Hash sighash = transaction.getHash();
+        ECKey.ECDSASignature party1Signature = outKey.sign(sighash);
+        byte[] buf1 = party1Signature.encodeToDER();
+
+        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+        MultiSignBy multiSignBy0 = new MultiSignBy();
+        multiSignBy0.setTokenid(Utils.HEX.encode(outKey.getPubKey()));
+        multiSignBy0.setTokenindex(0);
+        multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+        multiSignBies.add(multiSignBy0);
+        transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        
+        rollingBlock.addTransaction(transaction);
+        rollingBlock.solve();
+        
+        resp = OkHttp3Util.post(contextRoot + ReqCmd.deleteOrder.name(), rollingBlock.bitcoinSerialize());
+        logger.info("deleteOrder resp : " + resp);
+    }
 
     @Test
     public void saveOrder() throws Exception {

@@ -94,4 +94,12 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void resetStore() throws BlockStoreException;
 
     public List<OrderPublish> getOrderPublishListWithNotMatch() throws BlockStoreException;
+
+    void deleteOrderPublish(String orderid) throws BlockStoreException;
+
+    void deleteExchangeInfo(String orderid) throws BlockStoreException;
+    
+    void deleteOrderMatch(String orderid) throws BlockStoreException;
+
+    List<OrderPublish> getOrderPublishListRemoveDaily(int i);
 }

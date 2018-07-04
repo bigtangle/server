@@ -56,7 +56,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String INSERT_ORDERPUBLISH_SQL = getInsert()
             + "  INTO orderpublish (orderid, address, tokenid, type, validateto, validatefrom,"
-            + " price, amount, state, market) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            + " price, amount, state, market, submitDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     protected String SELECT_ORDERPUBLISH_SQL = "SELECT orderid, address, tokenid, type,"
             + " validateto, validatefrom, price, amount, state, market FROM orderpublish";
 
@@ -74,6 +74,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String SELECT_EXCHANGE_ORDERID_SQL = "SELECT orderid,"
             + " fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex,"
             + " toAmount, data, toSign, fromSign, toOrderId, fromOrderId, market FROM exchange WHERE orderid = ?";
+    
+    protected String DELETE_EXCHANGE_SQL = "DELETE FROM exchange WHERE toOrderId = ? OR fromOrderId = ?";
+    protected String DELETE_ORDERPUBLISH_SQL = "DELETE FROM orderpublish WHERE orderid = ?";
+    protected String DELETE_ORDERMATCH_SQL = "DELETE FROM ordermatch WHERE restingOrderId = ? OR incomingOrderId = ?";
     
     // Tables exist SQL.
     protected String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM orderpublish WHERE 1 = 2";
@@ -475,6 +479,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setLong(8, orderPublish.getAmount());
             preparedStatement.setInt(9, orderPublish.getState());
             preparedStatement.setString(10, orderPublish.getMarket());
+            preparedStatement.setDate(11, new Date(System.currentTimeMillis()));
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -818,5 +823,76 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public List<UTXO> getOpenTransactionOutputs(List<Address> addresses, byte[] tokenid) throws UTXOProviderException {
         return null;
+    }
+    
+
+    @Override
+    public void deleteOrderPublish(String orderid) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(DELETE_ORDERPUBLISH_SQL);
+            preparedStatement.setString(1, orderid);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void deleteExchangeInfo(String orderid) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(DELETE_EXCHANGE_SQL);
+            preparedStatement.setString(1, orderid);
+            preparedStatement.setString(2, orderid);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void deleteOrderMatch(String orderid) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(DELETE_ORDERMATCH_SQL);
+            preparedStatement.setString(1, orderid);
+            preparedStatement.setString(2, orderid);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<OrderPublish> getOrderPublishListRemoveDaily(int i) {
+        return new ArrayList<OrderPublish>();
     }
 }
