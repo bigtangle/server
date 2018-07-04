@@ -72,6 +72,8 @@ public class StockController extends TokensController {
 
     @FXML
     public TextField stockName;
+    @FXML
+    public TextField stockUrl;
 
     @FXML
     public TextField stockAmount;
@@ -451,7 +453,7 @@ public class StockController extends TokensController {
         ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
         TokenInfo tokenInfo = new TokenInfo();
         Tokens tokens = new Tokens(tokenid.getValue().trim(), stockName.getText().trim(),
-                stockDescription.getText().trim(), "", 1, false, false, false);
+                stockDescription.getText().trim(), stockUrl.getText().trim(), 1, false, false, false);
         tokenInfo.setTokens(tokens);
 
         // add MultiSignAddress item
