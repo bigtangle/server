@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
@@ -115,7 +116,7 @@ public class BlockService {
         return store.getBlocksToRemoveFromMilestone();
     }
 
-    public HashSet<BlockEvaluation> getBlocksToAddToMilestone() throws BlockStoreException {
+    public HashSet<BlockWrap> getBlocksToAddToMilestone() throws BlockStoreException {
         return store.getBlocksToAddToMilestone(0);
     }
 
@@ -218,18 +219,18 @@ public class BlockService {
      * collection if this block is contained in the collection.
      * 
      * @param evaluations
-     * @param blockEvaluation
+     * @param block
      * @throws BlockStoreException
      */
-    public void removeBlockAndApproversFrom(Collection<BlockEvaluation> evaluations, BlockEvaluation blockEvaluation)
+    public void removeBlockAndApproversFrom(Collection<BlockWrap> evaluations, BlockWrap block)
             throws BlockStoreException {
-        if (!evaluations.contains(blockEvaluation))
+        if (!evaluations.contains(block))
             return;
 
         // Remove this block and remove its approvers
-        evaluations.remove(blockEvaluation);
-        for (Sha256Hash approver : getSolidApproverBlockHashes(blockEvaluation.getBlockhash())) {
-            removeBlockAndApproversFrom(evaluations, getBlockEvaluation(approver));
+        evaluations.remove(block);
+        for (Sha256Hash approver : getSolidApproverBlockHashes(block.getBlock().getHash())) {
+            removeBlockAndApproversFrom(evaluations, store.getBlockWrap(approver));
         }
     }
 
@@ -241,15 +242,15 @@ public class BlockService {
      * @param evaluation
      * @throws BlockStoreException
      */
-    public void addMilestoneApproversTo(Collection<BlockEvaluation> evaluations, BlockEvaluation evaluation)
+    public void addMilestoneApproversTo(Collection<BlockWrap> evaluations, BlockWrap evaluation)
             throws BlockStoreException {
-        if (!evaluation.isMilestone() || evaluations.contains(evaluation))
+        if (!evaluation.getBlockEvaluation().isMilestone() || evaluations.contains(evaluation))
             return;
 
         // Add this block and add all of its milestone approvers
         evaluations.add(evaluation);
-        for (Sha256Hash approverHash : getSolidApproverBlockHashes(evaluation.getBlockhash())) {
-            addMilestoneApproversTo(evaluations, getBlockEvaluation(approverHash));
+        for (Sha256Hash approverHash : getSolidApproverBlockHashes(evaluation.getBlockEvaluation().getBlockhash())) {
+            addMilestoneApproversTo(evaluations, store.getBlockWrap(approverHash));
         }
     }
 
@@ -262,22 +263,21 @@ public class BlockService {
      * @param milestoneEvaluation
      * @throws BlockStoreException
      */
-    public void addApprovedNonMilestoneBlocksTo(Collection<BlockEvaluation> evaluations, BlockEvaluation evaluation)
+    public void addApprovedNonMilestoneBlocksTo(Collection<BlockWrap> evaluations, BlockWrap block)
             throws BlockStoreException {
-        if (evaluation.isMilestone() || evaluations.contains(evaluation))
+        if (block.getBlockEvaluation().isMilestone() || evaluations.contains(block))
             return;
 
         // Add this block and add all of its approved non-milestone blocks
-        evaluations.add(evaluation);
+        evaluations.add(block);
 
-        Block block = getBlock(evaluation.getBlockhash());
-        BlockEvaluation prevBlockEvaluation = getBlockEvaluation(block.getPrevBlockHash());
-        BlockEvaluation prevBranchBlockEvaluation = getBlockEvaluation(block.getPrevBranchBlockHash());
+        BlockWrap prevTrunk = store.getBlockWrap(block.getBlock().getPrevBlockHash());
+        BlockWrap prevBranch = store.getBlockWrap(block.getBlock().getPrevBranchBlockHash());
 
-        if (prevBlockEvaluation != null)
-            addApprovedNonMilestoneBlocksTo(evaluations, prevBlockEvaluation);
-        if (prevBranchBlockEvaluation != null)
-            addApprovedNonMilestoneBlocksTo(evaluations, prevBranchBlockEvaluation);
+        if (prevTrunk != null)
+            addApprovedNonMilestoneBlocksTo(evaluations, prevTrunk);
+        if (prevBranch != null)
+            addApprovedNonMilestoneBlocksTo(evaluations, prevBranch);
     }
 
     @SuppressWarnings("unchecked")

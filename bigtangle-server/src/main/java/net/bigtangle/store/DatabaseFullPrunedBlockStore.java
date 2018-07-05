@@ -177,9 +177,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "depth, cumulativeweight, solid, height, milestone, milestonelastupdate,"
             + " milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blocks WHERE solid = false"
             + afterSelect();
-    protected String SELECT_BLOCKS_TO_ADD_TO_MILESTONE_SQL = "SELECT hash, "
+    protected String SELECT_BLOCKWRAPS_TO_ADD_TO_MILESTONE_SQL = "SELECT hash, "
             + "rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate,"
-            + " milestonedepth, inserttime, maintained, rewardvalidityassessment "
+            + " milestonedepth, inserttime, maintained, rewardvalidityassessment, block "
             + "FROM blocks WHERE solid = true AND milestone = false AND rating >= "
             + NetworkParameters.MILESTONE_UPPER_THRESHOLD + " AND depth >= ?" + afterSelect();
     protected String SELECT_MAINTAINED_BLOCKS_SQL = "SELECT hash "
@@ -1079,7 +1079,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.executeUpdate();
             s.close();
         } catch (SQLException e) {
-            e.printStackTrace();
             if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
                 throw new BlockStoreException(e);
         } finally {
@@ -1503,12 +1502,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public HashSet<BlockEvaluation> getBlocksToAddToMilestone(long minDepth) throws BlockStoreException {
-        HashSet<BlockEvaluation> storedBlockHashes = new HashSet<BlockEvaluation>();
+    public HashSet<BlockWrap> getBlocksToAddToMilestone(long minDepth) throws BlockStoreException {
+        HashSet<BlockWrap> storedBlockHashes = new HashSet<>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_BLOCKS_TO_ADD_TO_MILESTONE_SQL);
+            preparedStatement = conn.get().prepareStatement(SELECT_BLOCKWRAPS_TO_ADD_TO_MILESTONE_SQL);
             preparedStatement.setLong(1, minDepth);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -1516,7 +1515,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                         resultSet.getLong(2), resultSet.getLong(3), resultSet.getLong(4), resultSet.getBoolean(5),
                         resultSet.getLong(6), resultSet.getBoolean(7), resultSet.getLong(8), resultSet.getLong(9),
                         resultSet.getLong(10), resultSet.getBoolean(11), resultSet.getBoolean(12));
-                storedBlockHashes.add(blockEvaluation);
+                Block block = params.getDefaultSerializer().makeBlock(resultSet.getBytes(13));
+                block.verifyHeader();
+                storedBlockHashes.add(new BlockWrap(block, blockEvaluation, params));
             }
             return storedBlockHashes;
         } catch (SQLException ex) {
@@ -1947,7 +1948,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setLong(3, block.getTimeSeconds());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
-            throw new BlockStoreException(e);
+            if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
+                throw new BlockStoreException(e);
         } finally {
             if (preparedStatement != null) {
                 try {

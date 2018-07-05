@@ -21,6 +21,7 @@ import com.google.common.collect.Lists;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
@@ -427,7 +428,7 @@ public abstract class MemoryFullPrunedBlockStore implements FullPrunedBlockStore
 	}
 
 	@Override
-	public HashSet<BlockEvaluation> getBlocksToAddToMilestone(long i) {
+	public HashSet<BlockWrap> getBlocksToAddToMilestone(long i) {
 		return null;
 	}
 

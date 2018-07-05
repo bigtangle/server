@@ -60,4 +60,17 @@ public class BlockWrap implements Serializable {
     public NetworkParameters getParams() {
         return params;
     }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        return getBlock().equals(((BlockWrap)o).getBlock()) 
+                && getBlockEvaluation().equals(((BlockWrap)o).getBlockEvaluation());
+    }
+    
+    @Override
+    public int hashCode() {
+        return getBlock().hashCode();
+    }
 }

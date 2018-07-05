@@ -25,6 +25,7 @@ import com.google.common.base.Stopwatch;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
@@ -322,14 +323,14 @@ public class MilestoneService {
 
         for (int i = 0; true; i++) {
             // Now try to find blocks that can be added to the milestone
-            HashSet<BlockEvaluation> blocksToAdd = blockService.getBlocksToAddToMilestone();
+            HashSet<BlockWrap> blocksToAdd = blockService.getBlocksToAddToMilestone();
 
             // VALIDITY CHECKS 
             validatorService.resolveValidityConflicts(blocksToAdd, true);
 
             // Finally add the found new milestone blocks to the milestone
-            for (BlockEvaluation block : blocksToAdd)
-                blockService.confirm(block);
+            for (BlockWrap block : blocksToAdd)
+                blockService.confirm(block.getBlockEvaluation());
 
             // Exit condition: there are no more blocks to add
             if (blocksToAdd.isEmpty())
