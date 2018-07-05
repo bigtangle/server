@@ -31,6 +31,7 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.LogResult;
@@ -158,6 +159,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String SELECT_BLOCKEVALUATION_SQL = "SELECT hash, rating, depth, cumulativeweight, "
             + "solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained,"
             + " rewardvalidityassessment FROM blocks WHERE hash = ?" + afterSelect();
+    
+    protected String SELECT_BLOCKWRAP_SQL = "SELECT hash, rating, depth, cumulativeweight, "
+            + "solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained,"
+            + " rewardvalidityassessment, block FROM blocks WHERE hash = ?" + afterSelect();
 
     protected String SELECT_COUNT_MILESTONE_SQL = "SELECT COUNT(*) as count FROM blocks WHERE milestone = true AND height >= ? AND height <= ?";
     protected String SELECT_SOLID_BLOCKEVALUATIONS_SQL = "SELECT  hash, rating, depth, "
@@ -1327,6 +1332,38 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 } catch (SQLException e) {
                     throw new UTXOProviderException("Could not close statement", e);
                 }
+        }
+    }
+    
+    @Override
+    public BlockWrap getBlockWrap(Sha256Hash hash) throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+        maybeConnect();
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_BLOCKWRAP_SQL);
+            preparedStatement.setBytes(1, hash.getBytes());
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (!resultSet.next()) {
+                return null;
+            }
+            BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)),
+                    resultSet.getLong(2), resultSet.getLong(3), resultSet.getLong(4), resultSet.getBoolean(5),
+                    resultSet.getLong(6), resultSet.getBoolean(7), resultSet.getLong(8), resultSet.getLong(9),
+                    resultSet.getLong(10), resultSet.getBoolean(11), resultSet.getBoolean(12));
+            Block block = params.getDefaultSerializer().makeBlock(resultSet.getBytes(13));
+            block.verifyHeader();
+            return new BlockWrap(block, blockEvaluation, params);
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
         }
     }
 

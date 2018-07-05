@@ -13,6 +13,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.LogResult;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
@@ -170,6 +171,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public List<StoredBlock> getSolidApproverBlocks(Sha256Hash hash) throws BlockStoreException;
 
     public List<Sha256Hash> getSolidApproverBlockHashes(Sha256Hash hash) throws BlockStoreException;
+
+    public BlockWrap getBlockWrap(Sha256Hash hash) throws BlockStoreException;
 
     public BlockEvaluation getBlockEvaluation(Sha256Hash hash) throws BlockStoreException;
 

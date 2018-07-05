@@ -4,19 +4,10 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
-import static org.junit.Assert.assertEquals;
-
-import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.tomcat.jni.Time;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -26,7 +17,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.ECKey;
@@ -52,24 +42,24 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 	@Autowired
 	private MilestoneService milestoneService;
     
-    @Test
-    public void testBlockEvaluationDb() throws Exception {
-        List<Block> blocks = this.createBlock();
-        
-        milestoneService.update();
-        
-        Block block1 = blocks.get(0);
-        BlockEvaluation blockEvaluation = this.store.getBlockEvaluation(block1.getHash());
-        assertEquals(block1.getHash(), blockEvaluation.getBlockhash());
-        assertEquals(6, blockEvaluation.getCumulativeWeight());
-        assertEquals(5, blockEvaluation.getDepth());
-        assertEquals(1, blockEvaluation.getHeight());
-        //assertEquals(false, blockEvaluation.isMilestone());
-        assertEquals(true, blockEvaluation.isSolid());
-        assertEquals(0, blockEvaluation.getMilestoneDepth());
-            
-    
-    }
+//    @Test
+//    public void testBlockEvaluationDb() throws Exception {
+//        List<Block> blocks = this.createBlock();
+//        
+//        milestoneService.update();
+//        
+//        Block block1 = blocks.get(0);
+//        BlockEvaluation blockEvaluation = this.store.getBlockEvaluation(block1.getHash());
+//        assertEquals(block1.getHash(), blockEvaluation.getBlockhash());
+//        assertEquals(6, blockEvaluation.getCumulativeWeight());
+//        assertEquals(5, blockEvaluation.getDepth());
+//        assertEquals(1, blockEvaluation.getHeight());
+//        //assertEquals(false, blockEvaluation.isMilestone());
+//        assertEquals(true, blockEvaluation.isSolid());
+//        assertEquals(0, blockEvaluation.getMilestoneDepth());
+//            
+//    
+//    }
 
     @Autowired
     private TipsService tipsManager;

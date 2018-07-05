@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.DataClassName;
@@ -351,9 +352,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * @param blockEvaluation
      * @throws BlockStoreException
      */
-    public void addBlockToMilestone(BlockEvaluation blockEvaluation) throws BlockStoreException {
-        blockEvaluation = blockStore.getBlockEvaluation(blockEvaluation.getBlockhash());
-        Block block = blockStore.get(blockEvaluation.getBlockhash()).getHeader();
+    public void addBlockToMilestone(Sha256Hash blockHash) throws BlockStoreException {
+        BlockWrap blockWrap = blockStore.getBlockWrap(blockHash);
+        BlockEvaluation blockEvaluation = blockWrap.getBlockEvaluation();
+        Block block = blockWrap.getBlock();
 
         // If already connected, return
         if (blockEvaluation.isMilestone())
@@ -364,8 +366,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockhash(), true);
 
         // Connect all approved blocks first (check if actually needed)
-        addBlockToMilestone(blockStore.getBlockEvaluation(block.getPrevBlockHash()));
-        addBlockToMilestone(blockStore.getBlockEvaluation(block.getPrevBranchBlockHash()));
+        addBlockToMilestone(block.getPrevBlockHash());
+        addBlockToMilestone(block.getPrevBranchBlockHash());
 
         // For rewards, update reward db
         if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD) {
@@ -502,9 +504,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * @param blockEvaluation
      * @throws BlockStoreException
      */
-    public void removeBlockFromMilestone(BlockEvaluation blockEvaluation) throws BlockStoreException {
-        blockEvaluation = blockStore.getBlockEvaluation(blockEvaluation.getBlockhash());
-        Block block = blockStore.get(blockEvaluation.getBlockhash()).getHeader();
+    public void removeBlockFromMilestone(Sha256Hash blockHash) throws BlockStoreException {
+        BlockWrap blockWrap = blockStore.getBlockWrap(blockHash);
+        BlockEvaluation blockEvaluation = blockWrap.getBlockEvaluation();
+        Block block = blockWrap.getBlock();
 
         // If already disconnected, return
         if (!blockEvaluation.isMilestone())
@@ -514,8 +517,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockhash(), false);
 
         // Disconnect all approver blocks first
-        for (StoredBlock approver : blockStore.getSolidApproverBlocks(blockEvaluation.getBlockhash())) {
-            removeBlockFromMilestone(blockStore.getBlockEvaluation(approver.getHeader().getHash()));
+        for (Sha256Hash approver : blockStore.getSolidApproverBlockHashes(blockEvaluation.getBlockhash())) {
+            removeBlockFromMilestone(approver);
         }
 
         removeTransactionsFromMilestone(block);
@@ -526,7 +529,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     private void removeUTXOs(Transaction tx, Block parentBlock) throws BlockStoreException {
         for (TransactionOutput txout : tx.getOutputs()) {
             if (blockStore.getTransactionOutput(tx.getHash(), txout.getIndex()).isSpent()) {
-                removeBlockFromMilestone(blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()));
+                removeBlockFromMilestone(blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()).getBlockhash());
                 blockStore.updateTransactionOutputSpent(tx.getHash(), txout.getIndex(), false, null);
                 blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), txout.getIndex(),
                         parentBlock.getHash());
