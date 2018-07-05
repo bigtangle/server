@@ -175,11 +175,11 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
                 Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,
                 networkParameters.getGenesisBlock().getHash());
-        blockgraph.add(rollingBlock);
+        blockgraph.add(rollingBlock,true);
         for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                     height++, networkParameters.getGenesisBlock().getHash());
-            blockgraph.add(rollingBlock);
+            blockgraph.add(rollingBlock,true);
         }
         return rollingBlock;
     }
@@ -218,7 +218,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
-        blockgraph.add(rollingBlock);
+        blockgraph.add(rollingBlock,true);
         milestoneService.update();
         return toKey;
     }

@@ -227,7 +227,7 @@ public class DispatcherController {
                 break;
             case multiSign: {
                 Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
-                this.multiSignService.multiSign(block);
+                this.multiSignService.multiSign(block,true);
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
                 break;

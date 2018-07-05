@@ -94,7 +94,7 @@ public class TokensService {
             throw new BlockStoreException("token can't update");
         }
         this.store.deleteMultiSign(tokenid);
-        multiSignService.multiSign(block);
+        multiSignService.multiSign(block, true);
     }
     
     @Autowired

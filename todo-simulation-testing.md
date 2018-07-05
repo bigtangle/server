@@ -15,6 +15,11 @@ Possible Participants:
 
 	* BLOCKTYPE\_TRANSFER  
 	* BLOCKTYPE\_TOKEN\_CREATION  
+	
+	 -> create token with block, but  publish first
+	 -> 2. same token created and publish, save block
+	 -> paralell save first block
+	 
 	* BLOCKTYPE\_USERDATA  
 	* BLOCKTYPE\_VOS  
 	* BLOCKTYPE\_GOVERNANCE  

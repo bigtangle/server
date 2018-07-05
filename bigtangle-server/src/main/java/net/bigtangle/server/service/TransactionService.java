@@ -87,19 +87,6 @@ public class TransactionService {
     }
  
 
-    public Block createTokenBlock(Coin coin, byte[] tokenid, byte[] pubKey, TokenInfo tokenInfo) throws Exception {
-        Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
-        Block r1 = blockService.getBlock(tipsToApprove.getLeft());
-        Block r2 = blockService.getBlock(tipsToApprove.getRight());
-        long blocktype0 = NetworkParameters.BLOCKTYPE_TOKEN_CREATION;
-        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), blocktype0,
-                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
-        block.addCoinbaseTransaction(pubKey, coin, tokenInfo);
-        block.solve();
-        blockgraph.add(block);
-        return block;
-    }
-
     public Block createMiningRewardBlock(long fromHeight) throws Exception {
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
@@ -110,7 +97,7 @@ public class TransactionService {
 
         block.addTransaction(validatorService.generateMiningRewardTX(block, fromHeight));
         block.solve();
-        blockgraph.add(block);
+        blockgraph.add(block,true);
         return block;
     }
 
@@ -142,7 +129,7 @@ public class TransactionService {
         try {
             Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bytes);
             if (!checkBlockExists(block)) {
-                blockgraph.add(block);
+                blockgraph.add(block,true);
                 logger.debug("addConnected from kafka " + block);
                 // if(!block.getTransactions().isEmpty() && emptyBlock)
                 // saveEmptyBlock(3);
