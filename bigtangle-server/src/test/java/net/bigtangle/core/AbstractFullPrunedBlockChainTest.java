@@ -128,11 +128,11 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
         // Build some blocks on genesis block to create a spendable output
         Block rollingBlock = BlockForTest.createNextBlock(PARAMS.getGenesisBlock(),Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
-        blockgraph.add(rollingBlock);
+        blockgraph.add(rollingBlock,true);
         TransactionOutput spendableOutput = rollingBlock.getTransactions().get(0).getOutput(0);
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = BlockForTest.createNextBlock(rollingBlock,Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, PARAMS.getGenesisBlock().getHash());
-            blockgraph.add(rollingBlock);
+            blockgraph.add(rollingBlock,true);
         }
 
         rollingBlock = BlockForTest.createNextBlock(rollingBlock,null,PARAMS.getGenesisBlock().getHash());
@@ -145,7 +145,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         rollingBlock.solve();
         blockgraph.setRunScripts(false);
         try {
-            blockgraph.add(rollingBlock);
+            blockgraph.add(rollingBlock,true);
         } catch (VerificationException e) {
             fail();
         }
@@ -167,12 +167,12 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
         // Build some blocks on genesis block to create a spendable output
         Block rollingBlock = BlockForTest.createNextBlock(PARAMS.getGenesisBlock(),Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,PARAMS.getGenesisBlock().getHash());
-        blockgraph.add(rollingBlock);
+        blockgraph.add(rollingBlock,true);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, rollingBlock.getTransactions().get(0).getHash());
         byte[] spendableOutputScriptPubKey = rollingBlock.getTransactions().get(0).getOutputs().get(0).getScriptBytes();
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = BlockForTest.createNextBlock(rollingBlock,Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,PARAMS.getGenesisBlock().getHash());
-            blockgraph.add(rollingBlock);
+            blockgraph.add(rollingBlock,true);
         }
         
         WeakReference<UTXO> out = new WeakReference<UTXO>
@@ -186,7 +186,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
         
-        blockgraph.add(rollingBlock);
+        blockgraph.add(rollingBlock,true);
         
         try {
             store.close();
@@ -207,7 +207,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
             block.setPrevBlockHash(PARAMS.getGenesisBlock().getHash());
             //block.setDifficultyTarget(Block.CLIENT_DIFFICULTY_TARGET);
             block.solve();
-            blockgraph.add(block);
+            blockgraph.add(block,true);
         }
         try {
             store.close();
@@ -227,13 +227,13 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
         // Build some blocks on genesis block to create a spendable output
         Block rollingBlock = BlockForTest.createNextBlock(PARAMS.getGenesisBlock(),Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,PARAMS.getGenesisBlock().getHash());
-        blockgraph.add(rollingBlock);
+        blockgraph.add(rollingBlock,true);
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, transaction.getHash());
         byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = BlockForTest.createNextBlock(rollingBlock,Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,PARAMS.getGenesisBlock().getHash());
-            blockgraph.add(rollingBlock);
+            blockgraph.add(rollingBlock,true);
         }
         rollingBlock = BlockForTest.createNextBlock(rollingBlock,null,PARAMS.getGenesisBlock().getHash());
 
@@ -248,7 +248,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
-        blockgraph.add(rollingBlock);
+        blockgraph.add(rollingBlock,true);
         
         
         totalAmount = totalAmount.add(amount);
@@ -281,13 +281,13 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
         // Build some blocks on genesis block to create a spendable output.
         Block rollingBlock = BlockForTest.createNextBlock(PARAMS.getGenesisBlock(),Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,PARAMS.getGenesisBlock().getHash());
-        blockgraph.add(rollingBlock);
+        blockgraph.add(rollingBlock,true);
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, transaction.getHash());
         byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = BlockForTest.createNextBlock(rollingBlock,Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,PARAMS.getGenesisBlock().getHash());
-            blockgraph.add(rollingBlock);
+            blockgraph.add(rollingBlock,true);
         }
       //  rollingBlock = BlockForTest.createNextBlockWithCoinbase(rollingBlock,null,PARAMS.getGenesisBlock().getHash());
 
@@ -304,7 +304,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
-        blockgraph.add(rollingBlock);
+        blockgraph.add(rollingBlock,true);;
 
         // Create another spend of 1/2 the value of BTA we have available using the wallet (store coin selector).
         ECKey toKey2 = new ECKey();
@@ -345,20 +345,20 @@ public abstract class AbstractFullPrunedBlockChainTest {
             for (height = 1; height <= (PARAMS.getMajorityWindow() - PARAMS.getMajorityEnforceBlockUpgrade()); height++) {
                 chainHead = BlockForTest.createNextBlock(chainHead,Block.BLOCK_VERSION_GENESIS,
                     outKey.getPubKey(), height,PARAMS.getGenesisBlock().getHash());
-                blockgraph.add(chainHead);
+                blockgraph.add(chainHead,true);
             }
 
             // Fill the rest of the window in with v2 blocks
             for (; height < PARAMS.getMajorityWindow(); height++) {
                 chainHead = BlockForTest.createNextBlock(chainHead,Block.BLOCK_VERSION_GENESIS,
                     outKey.getPubKey(), height,PARAMS.getGenesisBlock().getHash());
-                blockgraph.add(chainHead);
+                blockgraph.add(chainHead,true);
             }
             // Throw a broken v2 block in before we have a supermajority to enable
             // enforcement, which should validate as-is
             chainHead = BlockForTest.createNextBlock(chainHead,Block.BLOCK_VERSION_GENESIS,
                 outKey.getPubKey(), height * 2,PARAMS.getGenesisBlock().getHash());
-            blockgraph.add(chainHead);
+            blockgraph.add(chainHead,true);
             height++;
 
             // Trying to add a broken v2 block should now result in rejection as
@@ -366,7 +366,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
             // thrown.expect(VerificationException.CoinbaseHeightMismatch.class);
             chainHead = BlockForTest.createNextBlock(chainHead,Block.BLOCK_VERSION_GENESIS,
                 outKey.getPubKey(), height * 2,PARAMS.getGenesisBlock().getHash());
-            blockgraph.add(chainHead);
+            blockgraph.add(chainHead,true);
         }  catch(final VerificationException ex) {
             throw (Exception) ex.getCause();
         } finally {

@@ -84,7 +84,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         List<Block> blocks = new ArrayList<Block>();
         Block rollingBlock1 = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
                 Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
-        blockgraph.add(rollingBlock1);
+        blockgraph.add(rollingBlock1,true);
         blocks.add(rollingBlock1);
        //log.debug("create block, hash : " + rollingBlock1.getHashAsString());
 
@@ -92,7 +92,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         for (int i = 1; i < 5; i++) {
             rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS,
                     outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
-            blockgraph.add(rollingBlock);
+            blockgraph.add(rollingBlock,true);
            log.debug("create block, hash : " + rollingBlock.getHashAsString());
             blocks.add(rollingBlock);
         }
@@ -123,7 +123,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         blocks.add(b5);
         int i = 0;
         for (Block block : blocks) {
-            this.blockgraph.add(block);
+            this.blockgraph.add(block,true);
            log.debug("create  " + i + " block:" + block.getHashAsString());
             i++;
 
@@ -156,7 +156,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             Block r2 = blockService.getBlock(tipsToApprove.getRight());
             Block rollingBlock = BlockForTest.createNextBlock(r2, Block.BLOCK_VERSION_GENESIS,
                     outKey.getPubKey(), height++, r1.getHash());
-            blockgraph.add(rollingBlock);
+            blockgraph.add(rollingBlock,true);
            log.debug("create block  : " + i + " " + rollingBlock);
         }
 
