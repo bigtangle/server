@@ -41,7 +41,7 @@ public class BlockEvaluationController {
     @FXML
     public TableColumn<Map, String> blockhashColumn;
     @FXML
-    public TableColumn<Map, Number> ratingColumn;
+    public TableColumn<Map, String> ratingColumn;
     @FXML
     public TableColumn<Map, Number> depthColumn;
     @FXML
@@ -68,6 +68,14 @@ public class BlockEvaluationController {
     public ComboBox<String> addressComboBox;
     @FXML
     public TextField latestAmountTextField;
+    @FXML
+    public TextField compareTF1;
+    @FXML
+    public TextField compareTF2;
+
+    public List<String> hashList = new ArrayList<String>();
+    public List<String> hashList1 = new ArrayList<String>();
+    public List<String> hashList2 = new ArrayList<String>();
 
     public Main.OverlayUI<?> overlayUI;
 
@@ -78,6 +86,81 @@ public class BlockEvaluationController {
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
+    }
+
+    private void initCompare() throws Exception {
+        List<Map<String, Object>> mainList = this.getBlockInfos(Main.getContextRoot());
+        if (mainList != null && !mainList.isEmpty()) {
+
+            for (Map<String, Object> map : mainList) {
+                if (!hashList.contains(map.get("blockHexStr").toString())) {
+                    hashList.add(map.get("blockHexStr").toString());
+                }
+
+            }
+        } else {
+            mainList = new ArrayList<Map<String, Object>>();
+        }
+        List<Map<String, Object>> compareList1 = null;
+        List<Map<String, Object>> compareList2 = null;
+        int length = mainList.size();
+        int length1 = 0;
+        int length2 = 0;
+        if (compareTF1.getText() != null && !compareTF1.getText().isEmpty()) {
+            compareList1 = this.getBlockInfos(compareTF1.getText().trim());
+
+            if (compareList1 != null && !compareList1.isEmpty()) {
+                length1 = compareList1.size();
+                mainList.addAll(compareList1);
+            }
+
+        }
+        if (compareTF2.getText() != null && !compareTF2.getText().isEmpty()) {
+            compareList2 = this.getBlockInfos(compareTF1.getText().trim());
+
+            if (compareList2 != null && !compareList2.isEmpty()) {
+                length2 = compareList2.size();
+                mainList.addAll(compareList2);
+            }
+        }
+
+        for (Map<String, Object> map : mainList) {
+
+        }
+    }
+
+    private void initMainServer() throws Exception {
+        List<Map<String, Object>> mainList = this.getBlockInfos(Main.getContextRoot());
+    }
+
+    private List<Map<String, Object>> getBlockInfos(String server) throws Exception {
+        String CONTEXT_ROOT = server;
+        String lastestAmount = latestAmountTextField.getText();
+        String address = addressComboBox.getValue();
+        List<String> addresses = new ArrayList<String>();
+        if (address == null || address.equals("")) {
+            KeyParameter aesKey = null;
+            // Main.initAeskey(aesKey);
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            if (!"".equals(Main.password.trim())) {
+                aesKey = keyCrypter.deriveKey(Main.password);
+            }
+            List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
+            for (ECKey key : keys) {
+                addresses.add(key.toAddress(Main.params).toString());
+            }
+        } else {
+            addresses.add(address);
+        }
+        Map<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("address", addresses);
+        requestParam.put("lastestAmount", lastestAmount);
+        String response = OkHttp3Util.postString(CONTEXT_ROOT + "searchBlock",
+                Json.jsonmapper().writeValueAsString(requestParam));
+        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+        List<Map<String, Object>> temp = (List<Map<String, Object>>) data.get("evaluations");
+        return temp;
+
     }
 
     public void searchBlock(ActionEvent event) {
