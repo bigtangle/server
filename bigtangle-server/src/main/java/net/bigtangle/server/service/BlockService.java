@@ -154,8 +154,7 @@ public class BlockService {
         try {
             broadcastBlock(block.bitcoinSerialize());
             //TODO remove this later
-            
-            milestoneService.update();
+            //milestoneService.update();
 
         } catch (Exception e) {
             // TODO: handle exception

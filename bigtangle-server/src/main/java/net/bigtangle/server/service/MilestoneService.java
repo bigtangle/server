@@ -70,67 +70,27 @@ public class MilestoneService {
             // clearCacheBlockEvaluations();
             
             Stopwatch  watch = Stopwatch.createStarted();
-            try {
-                store.beginDatabaseBatchWrite();
-                updateMaintained();
-                store.commitDatabaseBatchWrite();
-            } catch (BlockStoreException e) {
-                store.abortDatabaseBatchWrite();
-                log.error(e.getMessage());
-                return;
-            }
+            updateMaintained();
             log.info("Maintained update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
             watch.stop();
             watch = Stopwatch.createStarted();
-            try {
-                store.beginDatabaseBatchWrite();
-                updateCumulativeWeightAndDepth();
-                store.commitDatabaseBatchWrite();
-            } catch (BlockStoreException e) {
-                store.abortDatabaseBatchWrite();
-                log.error(e.getMessage());
-                return;
-            }
+            updateCumulativeWeightAndDepth();
             log.info("Weight and depth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
             watch.stop();
             watch = Stopwatch.createStarted();
-            try {
-                store.beginDatabaseBatchWrite();
-                updateRating();
-                store.commitDatabaseBatchWrite();
-            } catch (BlockStoreException e) {
-                store.abortDatabaseBatchWrite();
-                log.error(e.getMessage());
-                return;
-            }
+            updateRating();
             log.info("Rating update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
             watch.stop();
             watch = Stopwatch.createStarted();
-            try {
-                store.beginDatabaseBatchWrite();
-                updateMilestone();
-                store.commitDatabaseBatchWrite();
-            } catch (BlockStoreException e) {
-                store.abortDatabaseBatchWrite();
-                log.error(e.getMessage());
-                return;
-            }
+            updateMilestone();
             log.info("Milestone update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
             watch.stop();
             watch = Stopwatch.createStarted();
-            try {
-                store.beginDatabaseBatchWrite();
-                updateMilestoneDepth();
-                store.commitDatabaseBatchWrite();
-            } catch (BlockStoreException e) {
-                store.abortDatabaseBatchWrite();
-                log.error(e.getMessage());
-                return;
-            }
+            updateMilestoneDepth();
             log.info("Milestonedepth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
             watch.stop();
@@ -387,26 +347,34 @@ public class MilestoneService {
      * @throws BlockStoreException
      */
     private void updateMaintained() throws BlockStoreException {
-        // Set all unmaintained
-        store.updateUnmaintainAll();
+        HashSet<Sha256Hash> maintainedBlockHashes = store.getMaintainedBlockHashes();
+        HashSet<Sha256Hash> traversedBlockHashes = new HashSet<>();
         PriorityQueue<BlockEvaluation> blocks = getRatingEntryPointsAscendingAsPriorityQueue();
-        HashSet<BlockEvaluation> blockSet = new HashSet<>(blocks);
+        HashSet<BlockEvaluation> blocksToTraverse = new HashSet<>(blocks);
 
         // Now set maintained in order of ascending height
         BlockEvaluation currentBlock = null;
         while ((currentBlock = blocks.poll()) != null) {
-            blockSet.remove(currentBlock);
-            store.updateBlockEvaluationMaintained(currentBlock.getBlockhash(), true);
+            blocksToTraverse.remove(currentBlock);
+            traversedBlockHashes.add(currentBlock.getBlockhash());
             List<StoredBlock> solidApproverBlocks = blockService.getSolidApproverBlocks(currentBlock.getBlockhash());
             List<BlockEvaluation> blockEvaluations = blockService.getBlockEvaluations(solidApproverBlocks.stream().map(b -> b.getHeader().getHash()).collect(Collectors.toList()));
             for (BlockEvaluation b : blockEvaluations) {
-                if (blockSet.contains(b))
+                if (blocksToTraverse.contains(b))
                     continue;
                 
                 blocks.add(b);
-                blockSet.add(b);
+                blocksToTraverse.add(b);
             }
         }
+        
+        // Unset no longer maintained blocks
+        for (Sha256Hash hash : maintainedBlockHashes.stream().filter(h -> !traversedBlockHashes.contains(h)).collect(Collectors.toList()))
+            store.updateBlockEvaluationMaintained(hash, false);
+        
+        // Set now maintained blocks
+        for (Sha256Hash hash : traversedBlockHashes.stream().filter(h -> !maintainedBlockHashes.contains(h)).collect(Collectors.toList()))
+            store.updateBlockEvaluationMaintained(hash, true);
     }
 
     /**

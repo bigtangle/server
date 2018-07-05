@@ -377,4 +377,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     void insertLogResult(LogResult logResult) throws BlockStoreException;
     
     LogResult queryLogResultById(String logResultId) throws BlockStoreException;
+
+    HashSet<Sha256Hash> getMaintainedBlockHashes() throws BlockStoreException;
 }

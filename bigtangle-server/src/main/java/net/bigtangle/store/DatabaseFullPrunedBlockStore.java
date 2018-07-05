@@ -177,6 +177,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " milestonedepth, inserttime, maintained, rewardvalidityassessment "
             + "FROM blocks WHERE solid = true AND milestone = false AND rating >= "
             + NetworkParameters.MILESTONE_UPPER_THRESHOLD + " AND depth >= ?" + afterSelect();
+    protected String SELECT_MAINTAINED_BLOCKS_SQL = "SELECT hash "
+            + "FROM blocks WHERE maintained = true" + afterSelect();
     protected String SELECT_BLOCKS_IN_MILESTONEDEPTH_INTERVAL_SQL = "SELECT hash, "
             + "rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate,"
             + " milestonedepth, inserttime, maintained, rewardvalidityassessment "
@@ -1511,6 +1513,30 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                         resultSet.getLong(10), resultSet.getBoolean(11), resultSet.getBoolean(12));
                 storedBlockHashes.add(blockEvaluation);
             }
+            return storedBlockHashes;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public HashSet<Sha256Hash> getMaintainedBlockHashes() throws BlockStoreException {
+        HashSet<Sha256Hash> storedBlockHashes = new HashSet<>();
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_MAINTAINED_BLOCKS_SQL);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) 
+                storedBlockHashes.add(Sha256Hash.wrap(resultSet.getBytes(1)));
             return storedBlockHashes;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);

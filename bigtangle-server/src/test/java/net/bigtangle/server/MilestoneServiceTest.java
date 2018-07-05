@@ -390,6 +390,9 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         transactionService.createMiningRewardBlock(0);
         milestoneService.update();
         milestoneService.update();
+        
+        assertFalse(blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash()).isMaintained());
+        assertTrue(blockService.getBlockEvaluation(rollingBlock.getHash()).isMaintained());
     }
 
     private Block createAndAddNextBlock(Block b1, long bVersion, byte[] pubKey, Sha256Hash b2)

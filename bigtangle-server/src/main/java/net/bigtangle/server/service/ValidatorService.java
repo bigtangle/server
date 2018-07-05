@@ -662,7 +662,7 @@ public class ValidatorService {
     }
 
     private BlockEvaluation getIntervalRewardingBlock(long height) throws BlockStoreException {
-        return store.getBlockEvaluation(store.getConfirmedRewardBlock(height));
+        return blockService.getBlockEvaluation(store.getConfirmedRewardBlock(height));
     }
 
     private BlockEvaluation getSpendingBlock(TransactionOutPoint transactionOutPoint) {
