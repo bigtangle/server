@@ -69,7 +69,7 @@ public class KafkaServiceTest extends AbstractIntegrationTest {
         Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
                 Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,
                 networkParameters.getGenesisBlock().getHash());
-        blockgraph.add(rollingBlock);
+        blockgraph.add(rollingBlock,true);
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
         byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();

@@ -30,10 +30,10 @@ public class ScheduleOrderRemoveService {
     @Autowired
     protected FullPrunedBlockStore store;
     
-    @Scheduled(cron = "0 0 0 * * ?")
+    @Scheduled(fixedRateString = "5000")
     public void updateRemoveSchedule() {
         try {
-            logger.info("cal order match start");
+            logger.info("order publish remove start");
             List<OrderPublish> list = this.store.getOrderPublishListRemoveDaily(2);
             for (OrderPublish orderPublish : list) {
                 String tokenid = orderPublish.getTokenid();
@@ -50,7 +50,7 @@ public class ScheduleOrderRemoveService {
                 this.store.deleteOrderMatch(orderPublish.getOrderid());
             }
         } catch (Exception e) {
-            logger.error("cal order match error", e);
+            logger.error("order publish remove error", e);
         }
     }
 }

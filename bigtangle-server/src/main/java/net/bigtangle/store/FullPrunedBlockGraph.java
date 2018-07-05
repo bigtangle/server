@@ -609,7 +609,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.insertUnsolid(block);
     }
     
-    protected boolean checkSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height)
+    /*
+     * Allow conflicts for transaction data
+     * (non-Javadoc)
+     * @see net.bigtangle.store.AbstractBlockGraph#checkSolidity(net.bigtangle.core.Block, net.bigtangle.core.StoredBlock, net.bigtangle.core.StoredBlock, long)
+     */
+    protected boolean checkSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height, boolean allowConflicts)
             throws BlockStoreException, VerificationException {
         // Check timestamp
         if (block.getTimeSeconds() < storedPrev.getHeader().getTimeSeconds()
@@ -651,7 +656,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Check issuance block specific validity
         if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
             try {
-                if (!this.multiSignService.checkMultiSignPre(block, blockStore)) {
+                if (!this.multiSignService.checkMultiSignPre(block, blockStore, allowConflicts)) {
                     return false;
                 }
             } catch (Exception e) {

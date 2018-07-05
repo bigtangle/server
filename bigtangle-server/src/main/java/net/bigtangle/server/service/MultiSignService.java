@@ -85,8 +85,15 @@ public class MultiSignService {
         int count = this.store.getCountTokenSerialNumber(tokenid);
         return TokenSerialIndexResponse.createTokenSerialIndexResponse(count + 1);
     }
-
-    public boolean checkMultiSignPre(Block block, FullPrunedBlockStore store) throws BlockStoreException, Exception {
+    
+    
+    /*
+     * check unique as conflicts
+     */
+    public boolean checkMultiSignPre(Block block, FullPrunedBlockStore store, boolean allowConflicts) throws BlockStoreException, Exception {
+        
+     
+   
         // Check these TODOs and make sure they are implemented
         // TODO token ids of tx must be equal to blocks token id
         // TODO token issuance sum must not overflow
@@ -108,7 +115,7 @@ public class MultiSignService {
             throw new BlockStoreException("tokeninfo is null");
         }
         Tokens tokens_ = store.getTokensInfo(tokens.getTokenid());
-        if (tokens_ != null && tokens_.isTokenstop()) {
+        if (!allowConflicts &&tokens_ != null && tokens_.isTokenstop()) {
             throw new BlockStoreException("tokeninfo can not reissue");
         }
 
@@ -120,7 +127,7 @@ public class MultiSignService {
             throw new BlockStoreException("tokenserial is null");
         }
         //as conflict
-        if (tokens_ != null && tokenSerial.getTokenindex() == 1L) {
+        if (!allowConflicts && (tokens_ != null && tokenSerial.getTokenindex() == 1L)) {
             throw new BlockStoreException("tokens already existed");
         }
 
@@ -209,8 +216,8 @@ public class MultiSignService {
         return signCount >= signnumber;
     }
 
-    public void multiSign(Block block) throws Exception {
-        if (this.checkMultiSignPre(block, this.store)) {
+    public void multiSign(Block block,   boolean allowConflicts) throws Exception {
+        if (this.checkMultiSignPre(block, this.store, allowConflicts)) {
             blockService.saveBlock(block);
         }
     }

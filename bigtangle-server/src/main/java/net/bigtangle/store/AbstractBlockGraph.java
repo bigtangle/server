@@ -194,9 +194,9 @@ public abstract class AbstractBlockGraph {
      * transactions in another thread while this method runs may result in
      * undefined behavior.
      */
-    public boolean add(Block block) throws VerificationException, PrunedException {
+    public boolean add(Block block, boolean allowConflicts) throws VerificationException, PrunedException {
         try {
-            return add(block, true, null, null);
+            return add(block, true, null, null, allowConflicts);
         } catch (BlockStoreException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
@@ -227,7 +227,7 @@ public abstract class AbstractBlockGraph {
             // only be full of data when we are catching up to the head of the
             // tangle and thus haven't witnessed any
             // of the transactions.
-            return add(block.getBlockHeader(), true, block.getTransactionHashes(), block.getAssociatedTransactions());
+            return add(block.getBlockHeader(), true, block.getTransactionHashes(), block.getAssociatedTransactions(), true);
         } catch (BlockStoreException e) {
             throw new RuntimeException(e);
         } catch (VerificationException e) {
@@ -263,7 +263,7 @@ public abstract class AbstractBlockGraph {
 
     // filteredTxHashList contains all transactions, filteredTxn just a subset
     private boolean add(Block block, boolean tryConnecting, @Nullable List<Sha256Hash> filteredTxHashList,
-            @Nullable Map<Sha256Hash, Transaction> filteredTxn)
+            @Nullable Map<Sha256Hash, Transaction> filteredTxn, boolean allowConflicts)
             throws BlockStoreException, VerificationException, PrunedException {
         lock.lock();
         try {
@@ -294,7 +294,7 @@ public abstract class AbstractBlockGraph {
                 throw e;
             }
             
-            if(checkSolidity(block, storedPrev, storedPrevBranch, height)) {
+            if(checkSolidity(block, storedPrev, storedPrevBranch, height, allowConflicts)) {
                 // Write to DB
                 checkState(lock.isHeldByCurrentThread());
                 connectBlock(block, storedPrev, storedPrevBranch, shouldVerifyTransactions(), filteredTxHashList,
@@ -329,7 +329,7 @@ public abstract class AbstractBlockGraph {
     }
 
     protected abstract boolean checkSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch,
-            long height) throws BlockStoreException, VerificationException;
+            long height, boolean allowConflicts) throws BlockStoreException, VerificationException;
 
     //protected abstract void tryFirstSetSolidityAndHeight(Block block) throws BlockStoreException;
 

@@ -151,7 +151,7 @@ public class BlockService {
     }
 
     public void saveBlock(Block block) throws Exception {
-        blockgraph.add(block);
+        blockgraph.add(block, false);
         try {
             broadcastBlock(block.bitcoinSerialize());
             //TODO remove this later

@@ -742,7 +742,7 @@ public class Peer extends PeerSocketHandler {
                         log.info("Lost download peer status, throwing away downloaded headers.");
                         return;
                     }
-                    if (blockChain.add(header)) {
+                    if (blockChain.add(header,true)) {
                         // The block was successfully linked into the chain. Notify the user of our progress.
                         invokeOnBlocksDownloaded(header, null);
                     } else {
@@ -1035,7 +1035,7 @@ public class Peer extends PeerSocketHandler {
         pendingBlockDownloads.remove(m.getHash());
         try {
             // Otherwise it's a block sent to us because the peer thought we needed it, so add it to the block chain.
-            if (blockChain.add(m)) {
+            if (blockChain.add(m,true)) {
                 // The block was successfully linked into the chain. Notify the user of our progress.
                 invokeOnBlocksDownloaded(m, null);
             } else {
