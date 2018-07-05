@@ -39,5 +39,8 @@
 				</Label>
 			</children>
 		</HBox>
+      <TextField fx:id="compareTF1" layoutX="173.0" layoutY="125.0" prefHeight="23.0" prefWidth="231.0" promptText="%Server1" />
+      <TextField fx:id="compareTF1" layoutX="423.0" layoutY="125.0" prefHeight="23.0" prefWidth="195.0" promptText="%Server2" />
+      <Label layoutX="40.0" layoutY="129.0" prefHeight="15.0" prefWidth="126.0" text="%compareServer" />
 	</children>
 </AnchorPane>
