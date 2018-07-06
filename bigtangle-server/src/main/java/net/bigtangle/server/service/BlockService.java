@@ -168,19 +168,38 @@ public class BlockService {
             }
         }
     }
-    
 
     /*
-     * unsolid blocks can be solid, if previous can be found  in  network etc.
-     * read data from table oder by insert time,  use add Block to check again, 
-     * if missing previous,  it may request network for the blocks 
+     * unsolid blocks can be solid, if previous can be found in network etc.
+     * read data from table oder by insert time, use add Block to check again,
+     * if missing previous, it may request network for the blocks
+     * 
+     * BOOT_STRAP_SERVERS   de.kafka.bigtangle.net:9092
+     * 
+     * CONSUMERIDSUFFIX  12324
      */
     public void reCheckUnsolidBlock() throws Exception {
-        
- 
-              
-    }
+        List<Block> blocklist = getNonSolidBlocks();
 
+        for (Block block : blocklist) {
+            boolean added = blockgraph.add(block, true);
+             
+            
+            if(added) //delete
+                
+               //previous check, request previous block
+                
+               // 
+                
+                
+              
+            logger.debug("addConnected from kafka " + block);
+
+        }
+
+        
+        
+    }
 
     public int getNextTokenId() throws BlockStoreException {
         int maxTokenId = store.getMaxTokenId();
@@ -210,7 +229,6 @@ public class BlockService {
     public void unconfirm(BlockEvaluation blockEvaluation) throws BlockStoreException {
         blockgraph.removeBlockFromMilestone(blockEvaluation.getBlockhash());
     }
- 
 
     /**
      * Returns all solid tips ordered by descending height
