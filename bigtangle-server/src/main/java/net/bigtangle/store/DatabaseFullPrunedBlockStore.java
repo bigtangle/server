@@ -173,10 +173,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "rating, depth, cumulativeweight, solid, height, milestone,"
             + " milestonelastupdate, milestonedepth, inserttime, maintained, "
             + "rewardvalidityassessment FROM blocks ";
-    protected String SELECT_NONSOLID_BLOCKS_SQL = "SELECT hash, rating, "
-            + "depth, cumulativeweight, solid, height, milestone, milestonelastupdate,"
-            + " milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blocks WHERE solid = false"
-            + afterSelect();
+    
+//    protected String SELECT_NONSOLID_BLOCKS_SQL = "SELECT hash, rating, "
+//            + "depth, cumulativeweight, solid, height, milestone, milestonelastupdate,"
+//            + " milestonedepth, inserttime, maintained, rewardvalidityassessment FROM blocks WHERE solid = false"
+//            + afterSelect();
+    
+    protected String SELECT_NONSOLID_BLOCKS_SQL = "select hash, block, inserttime from unsolidblocks order by inserttime asc ";
+    
     protected String SELECT_BLOCKWRAPS_TO_ADD_TO_MILESTONE_SQL = "SELECT hash, "
             + "rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate,"
             + " milestonedepth, inserttime, maintained, rewardvalidityassessment, block "
@@ -1428,7 +1432,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement = conn.get().prepareStatement(SELECT_NONSOLID_BLOCKS_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                storedBlockHashes.add(params.getDefaultSerializer().makeBlock(  resultSet.getBytes(1)));
+                storedBlockHashes.add(params.getDefaultSerializer().makeBlock(  resultSet.getBytes("block")));
             }
             return storedBlockHashes;
         } catch (SQLException ex) {

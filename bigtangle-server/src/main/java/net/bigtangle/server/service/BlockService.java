@@ -180,26 +180,33 @@ public class BlockService {
      */
     public void reCheckUnsolidBlock() throws Exception {
         List<Block> blocklist = getNonSolidBlocks();
-
         for (Block block : blocklist) {
             boolean added = blockgraph.add(block, true);
-             
-            
-            if(added) //delete
-                
-               //previous check, request previous block
-                
-               // 
-                
-                
-              
-            logger.debug("addConnected from kafka " + block);
-
+            if (added) {
+                this.store.deleteUnsolid(block.getHash());
+                logger.debug("addConnected from kafka " + block.getHashAsString());
+                continue;
+            }
+            try {
+                StoredBlock storedBlock0 = this.store.get(block.getPrevBlockHash());
+                if (storedBlock0 == null) {
+                    blockRequester.requestBlock(block.getPrevBlockHash());
+                    logger.debug("block request from join server " + block.getPrevBlockHash().toString());
+                }
+                StoredBlock storedBlock1 = this.store.get(block.getPrevBranchBlockHash());
+                if (storedBlock1 == null) {
+                    blockRequester.requestBlock(block.getPrevBranchBlockHash());
+                    logger.debug("block request from join server " + block.getPrevBranchBlockHash().toString());
+                }
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
         }
-
-        
-        
     }
+    
+    @Autowired
+    private BlockRequester blockRequester;
 
     public int getNextTokenId() throws BlockStoreException {
         int maxTokenId = store.getMaxTokenId();

@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.kafka;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -24,7 +25,7 @@ public class KafkaConfiguration {
         return topicOutName;
     }
 
- 
+    @Value("${consumerIdSuffix}")
     private String consumerIdSuffix;
 
  
