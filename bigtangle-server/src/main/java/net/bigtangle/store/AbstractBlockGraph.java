@@ -198,10 +198,10 @@ public abstract class AbstractBlockGraph {
         try {
             return add(block, true, null, null, allowConflicts);
         } catch (BlockStoreException e) {
-            e.printStackTrace();
+            log.debug( "", e);
             throw new RuntimeException(e);
         } catch (VerificationException e) {
-            e.printStackTrace();
+            log.debug( "", e);
             throw new VerificationException("Could not verify block:\n" + block.toString(), e);
         }
     }
@@ -306,7 +306,7 @@ public abstract class AbstractBlockGraph {
                 return false;
             }
         } catch (Exception exception) {
-            exception.printStackTrace();
+            log.debug( "",  exception);
             throw new BlockStoreException(exception);
         } finally {
             lock.unlock();
@@ -421,7 +421,7 @@ public abstract class AbstractBlockGraph {
         try {
             return ((FullPrunedBlockStore) blockStore).getMaxSolidHeight();
         } catch (BlockStoreException e) {
-            e.printStackTrace();
+            log.debug( "", e);
             return 0;
         }
     }

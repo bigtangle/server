@@ -51,6 +51,8 @@ public class BlockService {
     protected CoinSelector coinSelector = new DefaultCoinSelector();
 
     @Autowired
+    private MilestoneService milestoneService;
+    @Autowired
     protected NetworkParameters networkParameters;
     @Autowired
     FullPrunedBlockGraph blockgraph;
@@ -96,7 +98,7 @@ public class BlockService {
         return store.getMaxSolidHeight();
     }
 
-    public List<Sha256Hash> getNonSolidBlocks() throws BlockStoreException {
+    public List<Block> getNonSolidBlocks() throws BlockStoreException {
         return store.getNonSolidBlocks();
     }
 
@@ -151,26 +153,39 @@ public class BlockService {
     }
 
     public void saveBlock(Block block) throws Exception {
-        blockgraph.add(block, false);
-        try {
-            broadcastBlock(block.bitcoinSerialize());
-            //TODO remove this later
-            //milestoneService.update();
+        boolean added = blockgraph.add(block, false);
+        if (added) {
+            try {
 
-        } catch (Exception e) {
-            // TODO: handle exception
-            logger.warn(" saveBlock problem after save milestoneService  ", e);
+                broadcastBlock(block.bitcoinSerialize());
+                // FIXME remove this later, this is needed for testnet, to get
+                // sync real time confirmation for client
+
+                milestoneService.update();
+            } catch (Exception e) {
+                // TODO: handle exception
+                logger.warn(" saveBlock problem after save milestoneService  ", e);
+            }
         }
-
     }
+    
+
+    /*
+     * unsolid blocks can be solid, if previous can be found  in  network etc.
+     * read data from table oder by insert time,  use add Block to check again, 
+     * if missing previous,  it may request network for the blocks 
+     */
+    public void reCheckUnsolidBlock() throws Exception {
+        
+ 
+              
+    }
+
 
     public int getNextTokenId() throws BlockStoreException {
         int maxTokenId = store.getMaxTokenId();
         return maxTokenId + 1;
     }
-
-    @Autowired
-    private MilestoneService milestoneService;
 
     /**
      * Adds the specified block and all approved blocks to the milestone. This
@@ -195,10 +210,7 @@ public class BlockService {
     public void unconfirm(BlockEvaluation blockEvaluation) throws BlockStoreException {
         blockgraph.removeBlockFromMilestone(blockEvaluation.getBlockhash());
     }
-
-    public List<BlockEvaluation> getSolidBlockEvaluations() throws BlockStoreException {
-        return store.getSolidBlockEvaluations();
-    }
+ 
 
     /**
      * Returns all solid tips ordered by descending height

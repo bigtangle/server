@@ -19,6 +19,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 import net.bigtangle.core.Address;
+import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.BlockWrap;
@@ -408,7 +409,7 @@ public abstract class MemoryFullPrunedBlockStore implements FullPrunedBlockStore
 	}
 
 	@Override
-	public List<Sha256Hash> getNonSolidBlocks() {
+	public List<Block> getNonSolidBlocks() {
 		return null;
 	}
 

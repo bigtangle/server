@@ -12,6 +12,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import net.bigtangle.server.config.ScheduleConfiguration;
+import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
 
 @Component
@@ -23,6 +24,9 @@ public class ScheduleMilestoneService {
     @Autowired
     private ScheduleConfiguration scheduleConfiguration;
 
+    @Autowired
+    private  BlockService blockService;
+    
     @Scheduled(fixedRateString = "${service.milestoneschedule.rate:10000}")
     public void updateMilestoneService() {
         if (scheduleConfiguration.isMilestone_active()) {
@@ -33,6 +37,23 @@ public class ScheduleMilestoneService {
                 logger.warn("updateMilestoneService ", e);
             }
         }
+    }
+
+    /*
+     * unsolid blocks can be solid, if previous can be found  in  network etc.
+     * read data from table oder by insert time,  use add Block to check again, 
+     * if missing previous,  it may request network for the blocks 
+     */
+    @Scheduled(fixedRateString = "${service.milestoneschedule.rate:10000}")
+    public void updateUnsolideService() {
+        
+            try {
+                logger.debug(" Start ScheduleMilestoneService: ");
+                blockService.reCheckUnsolidBlock(); 
+            } catch (Exception e) {
+                logger.warn("updateUnsolideService ", e);
+            }
+         
     }
 
 }

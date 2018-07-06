@@ -98,7 +98,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String SELECT_BLOCKS_SQL = "SELECT  height, block, wasundoable,prevblockhash,prevbranchblockhash,mineraddress,"
             + "blocktype FROM blocks WHERE hash = ?" + afterSelect();
     
-    protected String SELECT_UNSOLIDBLOCKS_SQL = "SELECT   block FROM blocks WHERE hash = ?" + afterSelect();
+    protected String SELECT_UNSOLIDBLOCKS_SQL = "SELECT  hash,   block,  inserttime FROM unsolidblocks oder by inserttime asc" + afterSelect();
 
     protected String SELECT_BLOCKS_HEIGHT_SQL = "SELECT block FROM blocks WHERE height >= ?" + afterSelect()
             + " order by height asc ";
@@ -115,7 +115,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String INSERT_UNSOLIDBLOCKS_SQL = getInsert() + "  INTO unsolidblocks(hash,   block,  inserttime  )"
             + " VALUES(?, ?, ? )";
-
+ 
     protected String SELECT_OUTPUTS_COUNT_SQL = "SELECT COUNT(*) FROM outputs WHERE hash = ?";
     protected String INSERT_OUTPUTS_SQL = getInsert()
             + " INTO outputs (hash, outputindex, height, coinvalue, scriptbytes, toaddress, addresstargetable,"
@@ -1420,15 +1420,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<Sha256Hash> getNonSolidBlocks() throws BlockStoreException {
-        List<Sha256Hash> storedBlockHashes = new ArrayList<Sha256Hash>();
+    public List<Block> getNonSolidBlocks() throws BlockStoreException {
+        List<Block> storedBlockHashes = new ArrayList<Block>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_NONSOLID_BLOCKS_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                storedBlockHashes.add(Sha256Hash.wrap(resultSet.getBytes(1)));
+                storedBlockHashes.add(params.getDefaultSerializer().makeBlock(  resultSet.getBytes(1)));
             }
             return storedBlockHashes;
         } catch (SQLException ex) {
@@ -1443,36 +1443,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-
-    @Override
-    public List<BlockEvaluation> getSolidBlockEvaluations() throws BlockStoreException {
-        List<BlockEvaluation> result = new ArrayList<BlockEvaluation>();
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(SELECT_SOLID_BLOCKEVALUATIONS_SQL);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)),
-                        resultSet.getLong(2), resultSet.getLong(3), resultSet.getLong(4), resultSet.getBoolean(5),
-                        resultSet.getLong(6), resultSet.getBoolean(7), resultSet.getLong(8), resultSet.getLong(9),
-                        resultSet.getLong(10), resultSet.getBoolean(11), resultSet.getBoolean(12));
-                result.add(blockEvaluation);
-            }
-            return result;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
+ 
     public List<BlockEvaluation> getAllBlockEvaluations() throws BlockStoreException {
         List<BlockEvaluation> result = new ArrayList<BlockEvaluation>();
         maybeConnect();
@@ -1900,43 +1871,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    @Override
-    public Block getUnsolid(Sha256Hash hash) throws BlockStoreException {
-
-        maybeConnect();
-        PreparedStatement s = null;
-        // log.info("find block hexStr : " + hash.toString());
-        try {
-            s = conn.get().prepareStatement(SELECT_UNSOLIDBLOCKS_SQL);
-            s.setBytes(1, hash.getBytes());
-            ResultSet results = s.executeQuery();
-            if (!results.next()) {
-                return null;
-            }
-
-            return params.getDefaultSerializer().makeBlock(results.getBytes(1));
-
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } catch (ProtocolException e) {
-            // Corrupted database.
-
-            throw new BlockStoreException(e);
-        } catch (VerificationException e) {
-            // Should not be able to happen unless the database contains bad
-            // blocks.
-            throw new BlockStoreException(e);
-        } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
+   
     @Override
     public void insertUnsolid(Block block) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
