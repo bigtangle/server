@@ -23,7 +23,7 @@ section {
 	background: #515e90 !important;
 }
 
-.bg-primary, #faq, #usecases, #screenwallet, #home{
+.bg-primary, #faq, #usecases, #home{
 	background-color: rgba(23,37,87,.7) !important;
 	color: #fff;
 }
@@ -375,4 +375,68 @@ h2{
 .git .btnTitle{
 	margin-top: 5px;
 }
+.subpage{
+	background: #394265;
+}
 
+
+.userguide .container{
+	overflow: auto;
+	position: relative;
+}
+
+.userguide .text-white{
+	width: calc(50% - 90px);
+	float: left;
+}
+.userguide .image{
+	width: calc(50% - 90px);
+	float: right;
+}
+.userguide .image img{
+	max-width: 100%;
+}
+.userguide section{
+	clear: both;
+	padding-bottom: 60px;
+}
+.userguide .dottedLine{
+	border-left: 5px solid #808080;
+	border-left-style: dashed;
+	left: 73px;
+	top: 70px;
+	bottom: 0px;
+	z-index: -1;
+	position: absolute;
+
+}
+.userguide .first{
+	margin-top: 80px;
+}
+.number{
+	width: 120px;
+	height: 120px;
+	float: left;
+	border-radius: 60px;
+	border: 5px solid #808080;
+	color: #808080;
+	background: #d5d9e7;
+	font-size: 40px;
+	text-align: center;
+	padding-top: 20px;
+	margin-right: 60px;
+}
+@media only screen and (max-width: 766px) {
+	.userguide .text-white,
+	.userguide .image{
+		width: 100%;
+		float: none;
+		margin: 10px 0;
+	}
+	.number{
+		float: none;
+	}
+	.dottedLine{
+		display: none;
+	}
+}
