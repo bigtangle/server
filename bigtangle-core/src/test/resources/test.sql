@@ -1,5 +1,8 @@
 select * from blocks   ;
 select count( *) from blocks   ;
+select count( *) from unsolidblocks   ;
+select   *  from unsolidblocks   ;
+
 select * from outputs   ;
 select * from tips   ;
 select * from tokens   ;

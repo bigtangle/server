@@ -178,9 +178,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public long getMaxSolidHeight() throws BlockStoreException;
 
-    public List<Sha256Hash> getNonSolidBlocks() throws BlockStoreException;
-
-    public List<BlockEvaluation> getSolidBlockEvaluations() throws BlockStoreException;
+    public List<Block> getNonSolidBlocks() throws BlockStoreException;
+ 
 
     public List<BlockEvaluation> getAllBlockEvaluations() throws BlockStoreException;
 
@@ -373,7 +372,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     void insertUnsolid(Block block) throws BlockStoreException;
 
     void deleteUnsolid(Sha256Hash blockhash) throws BlockStoreException ;
-    Block getUnsolid(Sha256Hash blockhash) throws BlockStoreException ;
+ 
 
     Sha256Hash getConfirmedRewardBlock(long height) throws BlockStoreException;
     
