@@ -12,6 +12,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import net.bigtangle.server.config.ScheduleConfiguration;
+import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
 
 @Component
@@ -23,6 +24,9 @@ public class ScheduleMilestoneService {
     @Autowired
     private ScheduleConfiguration scheduleConfiguration;
 
+    @Autowired
+    private  BlockService blockService;
+    
     @Scheduled(fixedRateString = "${service.milestoneschedule.rate:10000}")
     public void updateMilestoneService() {
         if (scheduleConfiguration.isMilestone_active()) {
@@ -45,9 +49,9 @@ public class ScheduleMilestoneService {
         
             try {
                 logger.debug(" Start ScheduleMilestoneService: ");
-                milestoneService.update();
+                blockService.reCheckUnsolidBlock(); 
             } catch (Exception e) {
-                logger.warn("updateMilestoneService ", e);
+                logger.warn("updateUnsolideService ", e);
             }
          
     }
