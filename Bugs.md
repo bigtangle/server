@@ -4,8 +4,9 @@
 
 ## add list of server and save data local on wallet
 
-## simulation buy token with read the order data from market and set the same amount to match
-## add more token  creation
+## simulation buy token with wallet1 (test key) read the order data from market and set the same amount to match, sign 
+
+## create new wallet add new key add create new  token  creation and sell token sign
 
 
 
