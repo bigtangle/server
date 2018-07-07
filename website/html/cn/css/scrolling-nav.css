@@ -23,14 +23,23 @@ section {
 	background: #515e90 !important;
 }
 
-.bg-primary, #faq, #usecases, #intrinsics, #screenwallet{
-	background: rgba(23,37,87,.7);
+.bg-primary, #faq, #usecases, #home{
+	background-color: rgba(23,37,87,.7) !important;
 	color: #fff;
 }
 
-#features, #team, #blog, #imprint, footer, #services, #quickstart{
-	background: #f0f0f0;
+#features, #team, #blog, #imprint, #intrinsics, footer, #quickstart{
 	color: #07123a;
+	background: #fff;
+}
+
+#Intrinsic{
+	background: #141840;
+}
+
+.bg-light{
+	background: #fff;
+	background: url(../img/bgWhite.png) no-repeat;
 }
 
 .card{
@@ -97,6 +106,10 @@ canvas {
 	font-size: 1.4rem;
 }
 
+h2{
+	font-weight: 300;
+}
+
 .card a{
 	color: #000;
 }
@@ -129,18 +142,41 @@ canvas {
 }
 
 .download{
-	background-image: url(../img/arrowDown.png);
+	background-image: url(../img/downloadBlue.png);
 	background-repeat: no-repeat;
 	background-position: 10px center;
-	background-size: 12px;
-	padding-left: 30px;
-	-webkit-transition: background-image 0.2s, color 0.2s;
-	transition: background-image 0.2s, color 0.2s;
+	background-size: 18px;
+	padding-left: 40px;
+	-webkit-transition: background-color 0.2s, color 0.2s;
+	transition: background-color 0.2s, color 0.2s;
+	border: 1px solid #515e90;
+	background-color: transparent;
+	border-radius: 20px;
+	font-weight: 300;
+	margin-right: 20px;
+	padding-right: 20px;
+	float: left;
+	margin-top: 5px;
+	width: 180px;
+	color: #000;
+}
+
+.seperator{
+	margin-bottom: 50px;
 }
 
 .download:hover{
-	color: #bbb;
-	background-image: url(../img/arrowDownGrey.png);
+	background-color: rgba(0,0,0,.05);
+}
+
+.btnTitle{
+	color: #000;
+}
+
+.btnDescription{
+	color: #333;
+	margin-top: -7px;
+	font-size: 0.8em;
 }
 
 #faq h3{
@@ -319,4 +355,88 @@ canvas {
 	position: absolute;
 	top: 127px;
 	left: -25px;
+}
+
+.downloadIcon{
+	width: 70%;
+	margin-right: 30%;
+	height: 100%;
+	background: url(../img/downloadIcon.png) no-repeat center center;
+	background-size: contain;
+}
+
+.git{
+	background-image: none;
+	padding-left: 20px;
+	height: 38px;
+	width: auto;
+}
+
+.git .btnTitle{
+	margin-top: 5px;
+}
+.subpage{
+	background: #394265;
+}
+
+
+.userguide .container{
+	overflow: auto;
+	position: relative;
+}
+
+.userguide .text-white{
+	width: calc(50% - 90px);
+	float: left;
+}
+.userguide .image{
+	width: calc(50% - 90px);
+	float: right;
+}
+.userguide .image img{
+	max-width: 100%;
+}
+.userguide section{
+	clear: both;
+	padding-bottom: 60px;
+}
+.userguide .dottedLine{
+	border-left: 5px solid #808080;
+	border-left-style: dashed;
+	left: 73px;
+	top: 70px;
+	bottom: 0px;
+	z-index: -1;
+	position: absolute;
+
+}
+.userguide .first{
+	margin-top: 80px;
+}
+.number{
+	width: 120px;
+	height: 120px;
+	float: left;
+	border-radius: 60px;
+	border: 5px solid #808080;
+	color: #808080;
+	background: #d5d9e7;
+	font-size: 40px;
+	text-align: center;
+	padding-top: 20px;
+	margin-right: 60px;
+}
+@media only screen and (max-width: 766px) {
+	.userguide .text-white,
+	.userguide .image{
+		width: 100%;
+		float: none;
+		margin: 10px 0;
+	}
+	.number{
+		float: none;
+	}
+	.dottedLine{
+		display: none;
+	}
 }
