@@ -49,7 +49,9 @@ public class ScheduleMilestoneService {
         
             try {
                 logger.debug(" Start ScheduleMilestoneService: ");
+                blockService. deleteOldUnsolidBlock();
                 blockService.reCheckUnsolidBlock(); 
+           
             } catch (Exception e) {
                 logger.warn("updateUnsolideService ", e);
             }

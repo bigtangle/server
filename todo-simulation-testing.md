@@ -18,7 +18,7 @@ Possible Participants:
 	
 	 -> create token with block, but  publish first
 	 -> 2. same token created and publish, save block
-	 -> paralell save first block
+	 -> parallel save first block
 	 
 	* BLOCKTYPE\_USERDATA  
 	* BLOCKTYPE\_VOS  

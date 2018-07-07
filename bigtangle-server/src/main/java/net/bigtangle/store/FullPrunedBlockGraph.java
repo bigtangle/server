@@ -656,7 +656,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Check issuance block specific validity
         if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
             try {
-                if (!this.multiSignService.checkMultiSignPre(block, blockStore, allowConflicts)) {
+                if (!this.multiSignService.checkMultiSignPre(block,   allowConflicts)) {
                     return false;
                 }
             } catch (Exception e) {
@@ -677,20 +677,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             List<Future<VerificationException>> listScriptVerificationResults = new ArrayList<Future<VerificationException>>(
                     block.getTransactions().size());
 
-            if (!params.isCheckpoint(height)) {
-                // BIP30 violator blocks are ones that contain a duplicated
-                // transaction. They
-                // are all in the
-                // checkpoints list and we therefore only check non-checkpoints
-                // for duplicated
-                // transactions here. See the
-                // BIP30 document for more details on this:
-                // https://github.com/bitcoin/bips/blob/master/bip-0030.mediawiki
+            if (!params.isCheckpoint(height)) { 
                 for (Transaction tx : block.getTransactions()) {
                     final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx,
                             getVersionTally());
-                    // We already check non-BIP16 sigops in
-                    // Block.verifyTransactions(true)
+ 
                     if (verifyFlags.contains(VerifyFlag.P2SH))
                         sigOps += tx.getSigOpCount();
                 }

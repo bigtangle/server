@@ -26,7 +26,4 @@ kafka:
   topicOutName: ${TOPIC_OUT_NAME:bigtangle}
   topicOut2Name: ${TOPIC_OUT2_NAME:bigtangle2}
   consumerIdSuffix: ${CONSUMERIDSUFFIX:453456}
-spring:
-  cache:
-    jcache:
-      config: classpath:ehcache.xml
+

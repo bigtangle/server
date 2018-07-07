@@ -90,7 +90,7 @@ public class MultiSignService {
     /*
      * check unique as conflicts
      */
-    public boolean checkMultiSignPre(Block block, FullPrunedBlockStore store, boolean allowConflicts) throws BlockStoreException, Exception {
+    public boolean checkMultiSignPre(Block block, boolean allowConflicts) throws BlockStoreException, Exception {
         
      
    
@@ -217,7 +217,7 @@ public class MultiSignService {
     }
 
     public void multiSign(Block block,   boolean allowConflicts) throws Exception {
-        if (this.checkMultiSignPre(block, this.store, allowConflicts)) {
+        if (this.checkMultiSignPre(block,  allowConflicts)) {
             blockService.saveBlock(block);
         }
     }
