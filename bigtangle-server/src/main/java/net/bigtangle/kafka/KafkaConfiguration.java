@@ -4,42 +4,39 @@
  *******************************************************************************/
 package net.bigtangle.kafka;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Component
 @ConfigurationProperties(prefix="kafka")
 public class KafkaConfiguration {
- 
-
     private String topicOutName;
-
-
+    private String bootstrapServers;   
+    private String consumerIdSuffix;
+    private long commitInterval;
     
  
-    private String bootstrapServers;
 
 
     public String getTopicOutName() {
         return topicOutName;
     }
 
-    @Value("${consumerIdSuffix}")
-    private String consumerIdSuffix;
 
- 
-    private long commitInterval;
-    
+
+
     public void setTopicOutName(String topicOutName) {
         this.topicOutName = topicOutName;
     }
 
- 
+
+
 
     public String getBootstrapServers() {
         return bootstrapServers;
     }
+
+
 
 
     public void setBootstrapServers(String bootstrapServers) {
@@ -47,9 +44,13 @@ public class KafkaConfiguration {
     }
 
 
+
+
     public String getConsumerIdSuffix() {
         return consumerIdSuffix;
     }
+
+
 
 
     public void setConsumerIdSuffix(String consumerIdSuffix) {
@@ -57,15 +58,18 @@ public class KafkaConfiguration {
     }
 
 
+
+
     public long getCommitInterval() {
         return commitInterval;
     }
 
 
+
+
     public void setCommitInterval(long commitInterval) {
         this.commitInterval = commitInterval;
     }
-
 
 
 
