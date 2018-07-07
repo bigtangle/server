@@ -475,7 +475,9 @@ public class ValidatorService {
                         if (o1.first().getRight().equals(o2.first().getRight()))
                             return 0;
                         else
-                            throw new RuntimeException("Inconsistent Milestone: Conflicting blocks in milestone");                            
+                            throw new RuntimeException("Inconsistent Milestone: "
+                                    +"Conflicting blocks in milestone: \n"+o1.first().getLeft().getBlock()
+                                    +"\n"+o1.first().getLeft().getBlock());                            
                     }
                     if (o1.first().getLeft().getBlockEvaluation().isMilestone())
                         return 1;
@@ -503,7 +505,9 @@ public class ValidatorService {
                         if (o1.getRight().equals(o2.getRight()))
                             return 0;
                         else
-                            throw new RuntimeException("Inconsistent Milestone: Conflicting blocks in milestone");                            
+                            throw new RuntimeException("Inconsistent Milestone: Conflicting blocks in milestone"
+                                +"Conflicting blocks in milestone: \n"+o1.getLeft().getBlock()
+                                +"\n"+o1.getLeft().getBlock());                                 
                     }
                     if (o1.getLeft().getBlockEvaluation().isMilestone())
                         return 1;
