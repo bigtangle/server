@@ -3,12 +3,13 @@ package net.bigtangle.tools.thread;
 import net.bigtangle.tools.account.Account;
 import net.bigtangle.tools.action.impl.BuyOrderAction;
 
-public class BuyRun implements Runnable {
+public class TradeBuyRunnable implements Runnable {
 
     private final Account account;
     
-    public BuyRun(final Account account) {
+    public TradeBuyRunnable(final Account account) {
         this.account = account;
+        this.account.initBuyOrderTask();
     }
 
     @Override
@@ -17,7 +18,6 @@ public class BuyRun implements Runnable {
             try {
                 BuyOrderAction  act = new BuyOrderAction(this.account);
                 act.execute();
-//                Thread.sleep(2000);
             } catch (Exception e) {
                 e.printStackTrace();
             }

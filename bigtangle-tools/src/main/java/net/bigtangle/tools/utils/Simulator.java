@@ -1,6 +1,5 @@
 package net.bigtangle.tools.utils;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -31,6 +30,7 @@ import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.tools.config.Configure;
 import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 public class Simulator {
@@ -100,17 +100,17 @@ public class Simulator {
     }
 
     public static Block createTokenBlock(ECKey outKey) throws Exception {
-
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
-        Tokens tokens = new Tokens(Utils.HEX.encode(pubKey), "test", "", "", 1, false, false, false);
+        
+        String tokenname = UUIDUtil.randomUUID();
+        Tokens tokens = new Tokens(Utils.HEX.encode(pubKey), tokenname, tokenname, "", 1, false, false, false);
         tokenInfo.setTokens(tokens);
 
-        // add MultiSignAddress item
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
-        Coin basecoin = Coin.valueOf(100000L, pubKey);
+        Coin basecoin = Coin.valueOf(10000000L, pubKey);
 
         long amount = basecoin.getValue();
         tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
@@ -138,9 +138,7 @@ public class Simulator {
         multiSignBies.add(multiSignBy0);
         transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
-        // save block
         block.solve();
-
         return block;
     }
 

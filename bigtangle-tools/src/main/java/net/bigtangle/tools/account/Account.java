@@ -11,14 +11,13 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Utils;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.tools.action.Action;
-import net.bigtangle.tools.action.impl.BalancesAction;
 import net.bigtangle.tools.action.impl.BuyOrderAction;
 import net.bigtangle.tools.action.impl.SellOrderAction;
 import net.bigtangle.tools.action.impl.SignOrderAction;
 import net.bigtangle.tools.action.impl.TokenAction;
 import net.bigtangle.tools.config.Configure;
-import net.bigtangle.tools.thread.BuyRun;
-import net.bigtangle.tools.thread.TradeRun;
+import net.bigtangle.tools.thread.TradeBuyRunnable;
+import net.bigtangle.tools.thread.TradeSellRunnable;
 import net.bigtangle.tools.utils.RandomTrade;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet;
@@ -29,21 +28,25 @@ public class Account {
 
     private Random random = new Random();
 
-    // private List<String> tokenHexList = new ArrayList<String>();
-    
-//    private ThreadLocal<ECKey> threadLocal = new ThreadLocal<ECKey>();
-    
     private List<ECKey> walletKeys = new ArrayList<ECKey>();
 
     public List<ECKey> walletKeys() throws Exception {
         return walletKeys;
     }
 
-//    private KeyParameter aesKey = null;
-
     public Account(String walletPath) {
         this.walletPath = walletPath;
-        this.initialize();
+        initWallet();
+    }
+
+    private void initWallet() {
+        walletAppKit = new WalletAppKit(Configure.PARAMS, new File("."), walletPath);
+        KeyParameter aesKey = null;
+        try {
+            this.walletKeys = walletAppKit.wallet().walletKeys(aesKey);
+        } catch (Exception e) {
+        }
+        walletAppKit.wallet().setServerURL(Configure.SIMPLE_SERVER_CONTEXT_ROOT);
     }
 
     public boolean calculatedAddressHit(String address) {
@@ -63,30 +66,21 @@ public class Account {
 
     private WalletAppKit walletAppKit;
 
-    // @SuppressWarnings("unchecked")
-    public void initialize() {
-        // init wallet
-        walletAppKit = new WalletAppKit(Configure.PARAMS, new File("."), walletPath);
-        KeyParameter aesKey = null;
+    public void initBuyOrderTask() {
+        this.executes.add(new BuyOrderAction(this));
+        this.executes.add(new SignOrderAction(this));
+    }
+    
+    public void initSellOrderTask() {
         try {
-            this.walletKeys = walletAppKit.wallet().walletKeys(aesKey);
-        } catch (Exception e) {
-        }
-        walletAppKit.wallet().setServerURL(Configure.SIMPLE_SERVER_CONTEXT_ROOT);
-        try {
-            // gen token
             Action action2 = new TokenAction(this);
             action2.execute();
         } catch (Exception e) {
         }
-        // init action
-        this.executes.add(new BuyOrderAction(this));
         this.executes.add(new SellOrderAction(this));
         this.executes.add(new SignOrderAction(this));
     }
     
-//    private static final Logger logger = LoggerFactory.getLogger(Account.class);
-
     public void doAction() {
         if (this.executes == null || this.executes.isEmpty()) {
             return;
@@ -94,11 +88,6 @@ public class Account {
         int index = random.nextInt(this.executes.size());
         Action action = this.executes.get(index);
         action.execute();
-    }
-
-    public void startTrade() {
-        Thread thread = new Thread(new TradeRun(this));
-        thread.start();
     }
 
     public String getName() {
@@ -150,12 +139,12 @@ public class Account {
     }
 
     public void startBuyOrder() {
-        Thread thread = new Thread(new BuyRun(this));
+        Thread thread = new Thread(new TradeBuyRunnable(this));
         thread.start();
     }
-
-    public void startGiveMoney() {
-        BalancesAction balancesAction = new BalancesAction(this);
-        balancesAction.execute();
+    
+    public void startSellOrder() {
+        Thread thread = new Thread(new TradeSellRunnable(this));
+        thread.start();
     }
 }
