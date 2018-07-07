@@ -69,7 +69,11 @@ public class OkHttp3Util {
             checkResponse(resp);
             HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
             String dataHex = (String) result.get("dataHex");
+            if(dataHex!=null) {
             return Utils.HEX.decode(dataHex);
+            }else {
+                return null;
+            }
         } finally {
             client.dispatcher().executorService().shutdown();
             client.connectionPool().evictAll();
