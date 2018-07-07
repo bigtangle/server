@@ -3330,7 +3330,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setLong(4, outputsMulti.getMinimumsign());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
-            throw new BlockStoreException(e);
+            if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
+                throw new BlockStoreException(e);
         } finally {
             if (preparedStatement != null) {
                 try {
