@@ -6,9 +6,9 @@ import net.bigtangle.params.UnitTestParams;
 
 public class Configure {
 
-    public final static String SIMPLE_SERVER_CONTEXT_ROOT = "https://bigtangle.org:8090/";
+    public final static String SIMPLE_SERVER_CONTEXT_ROOT = "https://test2.bigtangle.org:8088/";
 
-    public final static String ORDER_MATCH_CONTEXT_ROOT = "https://market.bigtangle.net/";
+    public final static String ORDER_MATCH_CONTEXT_ROOT = "https://testmarket.bigtangle.org:8090/";
 
     public final static NetworkParameters PARAMS = UnitTestParams.get();
 
