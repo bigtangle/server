@@ -372,7 +372,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     void insertUnsolid(Block block) throws BlockStoreException;
 
     void deleteUnsolid(Sha256Hash blockhash) throws BlockStoreException ;
- 
+    void deleteOldUnsolid(long  time) throws BlockStoreException ;
 
     Sha256Hash getConfirmedRewardBlock(long height) throws BlockStoreException;
     

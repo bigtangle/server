@@ -445,8 +445,13 @@ public class ValidatorService {
         for (TreeSet<Pair<BlockWrap, ConflictPoint>> conflict : sortedConflicts) {
             // Take the block with the maximum rating in this conflict that is
             // still in winning Blocks
-            Pair<BlockWrap, ConflictPoint> maxRatingPair = conflict.stream()
-                    .filter(p -> winningBlocks.contains(p.getLeft())).findFirst().orElse(null);
+            Pair<BlockWrap, ConflictPoint> maxRatingPair = null;
+            for (Pair<BlockWrap, ConflictPoint> pair : conflict) {
+                if (winningBlocks.contains(pair.getLeft())) {
+                    maxRatingPair = pair;   
+                    break;
+                }
+            }
 
             // If such a block exists, this conflict is resolved by eliminating
             // all other
@@ -471,12 +476,8 @@ public class ValidatorService {
                 @Override
                 public int compare(TreeSet<Pair<BlockWrap, ConflictPoint>> o1,
                         TreeSet<Pair<BlockWrap, ConflictPoint>> o2) {
-                    if (o1.first().getLeft().getBlockEvaluation().isMilestone() && o2.first().getLeft().getBlockEvaluation().isMilestone()){
-                        if (o1.first().getRight().equals(o2.first().getRight()))
-                            return 0;
-                        else
-                            throw new RuntimeException("Inconsistent Milestone: Conflicting blocks in milestone");                            
-                    }
+                    if (o1.first().getLeft().getBlockEvaluation().isMilestone() && o2.first().getLeft().getBlockEvaluation().isMilestone())
+                        return 0;
                     if (o1.first().getLeft().getBlockEvaluation().isMilestone())
                         return 1;
                     if (o2.first().getLeft().getBlockEvaluation().isMilestone())
@@ -502,8 +503,12 @@ public class ValidatorService {
                     if (o1.getLeft().getBlockEvaluation().isMilestone() && o2.getLeft().getBlockEvaluation().isMilestone()) {
                         if (o1.getRight().equals(o2.getRight()))
                             return 0;
-                        else
-                            throw new RuntimeException("Inconsistent Milestone: Conflicting blocks in milestone");                            
+                        else {
+                            logger.warn("Inconsistent Milestone: Conflicting blocks in milestone"
+                                    +": \n"+o1.getLeft().getBlock().getHash()
+                                    +"\n"+o2.getLeft().getBlock().getHash());        
+                            return 0;
+                        }                         
                     }
                     if (o1.getLeft().getBlockEvaluation().isMilestone())
                         return 1;

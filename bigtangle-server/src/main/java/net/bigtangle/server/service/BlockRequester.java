@@ -46,7 +46,7 @@ public class BlockRequester {
             HashMap<String, String> requestParam = new HashMap<String, String>();
             requestParam.put("hashHex", Utils.HEX.encode(hash.getBytes())); 
             try {
-                data = OkHttp3Util.post(s + ReqCmd.getBlock, Json.jsonmapper().writeValueAsString(requestParam));
+                data = OkHttp3Util.post(s +"/" + ReqCmd.getBlock, Json.jsonmapper().writeValueAsString(requestParam));
                 transactionService.addConnected(data, false);
                 break;
             } catch (Exception e) {

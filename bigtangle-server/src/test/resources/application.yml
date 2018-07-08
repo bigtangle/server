@@ -25,7 +25,5 @@ kafka:
   bootstrapServers: ${BOOT_STRAP_SERVERS:}
   topicOutName: ${TOPIC_OUT_NAME:bigtangle}
   topicOut2Name: ${TOPIC_OUT2_NAME:bigtangle2}
-spring:
-  cache:
-    jcache:
-      config: classpath:ehcache.xml
+  consumerIdSuffix: ${CONSUMERIDSUFFIX:453456}
+

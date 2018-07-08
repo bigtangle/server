@@ -85,6 +85,8 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     protected FullPrunedBlockStore store;
 
     ECKey outKey = new ECKey();
+    
+    // TODO test token issuance network split
 
     public List<Block> createMultiLinearTangle1() throws Exception {
 

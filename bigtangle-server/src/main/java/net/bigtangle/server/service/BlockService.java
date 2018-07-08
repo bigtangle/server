@@ -174,9 +174,9 @@ public class BlockService {
      * read data from table oder by insert time, use add Block to check again,
      * if missing previous, it may request network for the blocks
      * 
-     * BOOT_STRAP_SERVERS   de.kafka.bigtangle.net:9092
+     * BOOT_STRAP_SERVERS de.kafka.bigtangle.net:9092
      * 
-     * CONSUMERIDSUFFIX  12324
+     * CONSUMERIDSUFFIX 12324
      */
     public void reCheckUnsolidBlock() throws Exception {
         List<Block> blocklist = getNonSolidBlocks();
@@ -184,27 +184,38 @@ public class BlockService {
             boolean added = blockgraph.add(block, true);
             if (added) {
                 this.store.deleteUnsolid(block.getHash());
-                logger.debug("addConnected from kafka " + block.getHashAsString());
+                logger.debug("addConnected from reCheckUnsolidBlock " + block);
                 continue;
             }
             try {
                 StoredBlock storedBlock0 = this.store.get(block.getPrevBlockHash());
                 if (storedBlock0 == null) {
                     blockRequester.requestBlock(block.getPrevBlockHash());
-                    logger.debug("block request from join server " + block.getPrevBlockHash().toString());
+                    logger.debug("block request from join server " + block.toString());
                 }
                 StoredBlock storedBlock1 = this.store.get(block.getPrevBranchBlockHash());
                 if (storedBlock1 == null) {
                     blockRequester.requestBlock(block.getPrevBranchBlockHash());
-                    logger.debug("block request from join server " + block.getPrevBranchBlockHash().toString());
+                    logger.debug("block request from join server " + block.toString());
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     }
-    
+
+    /*
+     * all very old unsolid blocks are deleted
+     */
+    public void deleteOldUnsolidBlock() throws Exception {
+ 
+        this.store.deleteOldUnsolid(getTimeSeconds(1) );
+    }
+
+    public long getTimeSeconds(int days) throws Exception {
+        return System.currentTimeMillis() / 1000 - days * 60 * 24 * 60 * 60;
+    }
+
     @Autowired
     private BlockRequester blockRequester;
 
