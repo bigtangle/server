@@ -8,7 +8,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.tools.account.Account;
 import net.bigtangle.tools.action.Action;
 import net.bigtangle.tools.config.Configure;
-import net.bigtangle.tools.utils.Simulator;
+import net.bigtangle.tools.utils.GiveMoneyUtils;
 import net.bigtangle.utils.OkHttp3Util;
 
 public class TokenAction extends Action {
@@ -26,7 +26,7 @@ public class TokenAction extends Action {
         logger.info("account name : {}, token action start", account.getName());
         try {
             for (ECKey outKey : this.account.walletKeys()) {
-                Block block = Simulator.createTokenBlock(outKey);
+                Block block = GiveMoneyUtils.createTokenBlock(outKey);
                 OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
             }
         } catch (Exception e) {

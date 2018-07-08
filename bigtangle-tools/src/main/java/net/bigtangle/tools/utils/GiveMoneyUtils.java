@@ -33,7 +33,7 @@ import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
-public class Simulator {
+public class GiveMoneyUtils {
 
     public static void give(ECKey ecKey) throws Exception {
         //Thread.sleep(20000);

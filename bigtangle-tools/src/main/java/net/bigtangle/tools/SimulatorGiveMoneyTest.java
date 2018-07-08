@@ -1,11 +1,11 @@
 package net.bigtangle.tools;
 
-import net.bigtangle.tools.container.Container;
+import net.bigtangle.tools.container.AccountContainer;
 
 public class SimulatorGiveMoneyTest {
 
     public static void main(String[] args) throws Exception {
-        Container container = Container.getInstance();
+        AccountContainer container = AccountContainer.newInstance();
         container.startGiveMoney(1, 5);
     }
 }

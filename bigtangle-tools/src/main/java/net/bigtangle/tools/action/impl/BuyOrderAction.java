@@ -33,7 +33,8 @@ public class BuyOrderAction extends Action {
                     Json.jsonmapper().writeValueAsString(new HashMap<String, Object>()));
             HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
             List<HashMap<String, Object>> list = (List<HashMap<String, Object>>) result.get("orders");
-            if (list == null || list.isEmpty()) return;
+            if (list == null || list.isEmpty())
+                return;
             for (HashMap<String, Object> map : list) {
                 int state = (Integer) map.get("state");
                 if (state != OrderState.publish.ordinal()) {
@@ -45,15 +46,15 @@ public class BuyOrderAction extends Action {
                 requestParams.put("address", ecKey.toAddress(Configure.PARAMS).toBase58());
                 requestParams.put("tokenid", tokenHex);
                 requestParams.put("type", 2);
-                
+
                 int price = (Integer) map.get("price");
                 int amount = (Integer) map.get("amount");
                 requestParams.put("price", price);
                 requestParams.put("amount", amount);
-                OkHttp3Util.post(Configure.ORDER_MATCH_CONTEXT_ROOT + "saveOrder", Json.jsonmapper().writeValueAsString(requestParams).getBytes());
+                OkHttp3Util.post(Configure.ORDER_MATCH_CONTEXT_ROOT + "saveOrder",
+                        Json.jsonmapper().writeValueAsString(requestParams).getBytes());
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("account name : {}, buy order action exception", account.getName(), e);
         }
         logger.info("account name : {}, buy order action end", account.getName());

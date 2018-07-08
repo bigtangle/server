@@ -35,9 +35,9 @@ public class SellOrderAction extends Action {
             requestParams.put("type", 1);
             requestParams.put("price", 1000);
             requestParams.put("amount", 1);
-            OkHttp3Util.post(Configure.ORDER_MATCH_CONTEXT_ROOT + "saveOrder", Json.jsonmapper().writeValueAsString(requestParams).getBytes());
-        }
-        catch (Exception e) {
+            OkHttp3Util.post(Configure.ORDER_MATCH_CONTEXT_ROOT + "saveOrder",
+                    Json.jsonmapper().writeValueAsString(requestParams).getBytes());
+        } catch (Exception e) {
             logger.error("account name : {}, sell order action exception", account.getName(), e);
         }
         logger.info("account name : {}, sell order action end", account.getName());
