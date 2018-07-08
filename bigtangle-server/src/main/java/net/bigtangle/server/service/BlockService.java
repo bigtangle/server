@@ -190,16 +190,22 @@ public class BlockService {
             try {
                 StoredBlock storedBlock0 = this.store.get(block.getPrevBlockHash());
                 if (storedBlock0 == null) {
-                    blockRequester.requestBlock(block.getPrevBlockHash());
-                    logger.debug("block request from join server " + block.toString());
+                    byte[] re = blockRequester.requestBlock(block.getPrevBlockHash());
+                    if (re != null) {
+                        blockgraph.add((Block) networkParameters.getDefaultSerializer().makeBlock(re), true);
+
+                    }
                 }
                 StoredBlock storedBlock1 = this.store.get(block.getPrevBranchBlockHash());
                 if (storedBlock1 == null) {
-                    blockRequester.requestBlock(block.getPrevBranchBlockHash());
-                    logger.debug("block request from join server " + block.toString());
+                    byte[] re = blockRequester.requestBlock(block.getPrevBranchBlockHash());
+                    if (re != null) {
+                        blockgraph.add((Block) networkParameters.getDefaultSerializer().makeBlock(re), true);
+
+                    }
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.debug("", e );
             }
         }
     }
@@ -208,8 +214,8 @@ public class BlockService {
      * all very old unsolid blocks are deleted
      */
     public void deleteOldUnsolidBlock() throws Exception {
- 
-        this.store.deleteOldUnsolid(getTimeSeconds(1) );
+
+        this.store.deleteOldUnsolid(getTimeSeconds(1));
     }
 
     public long getTimeSeconds(int days) throws Exception {

@@ -43,6 +43,8 @@ public class BlockRequester {
         String[] re = serverConfiguration.getRequester().split(",");
         byte[] data = null;
         for (String s : re) { 
+            if(s!=null && "".equals(  s.trim()))
+                    {
             HashMap<String, String> requestParam = new HashMap<String, String>();
             requestParam.put("hashHex", Utils.HEX.encode(hash.getBytes())); 
             try {
@@ -52,6 +54,7 @@ public class BlockRequester {
             } catch (Exception e) {
                 log.debug(s, e);
             }
+                    }
         }
         return data;
     }
