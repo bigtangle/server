@@ -39,7 +39,7 @@ public class BlockRequester {
 
     public byte[] requestBlock(Sha256Hash hash) {
         // block from network peers
-        log.debug("requestBlock" + hash.toString()); 
+     //  log.debug("requestBlock" + hash.toString()); 
         String[] re = serverConfiguration.getRequester().split(",");
         byte[] data = null;
         for (String s : re) { 
