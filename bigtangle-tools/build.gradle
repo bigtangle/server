@@ -25,7 +25,7 @@ dependencies {
      compile project(':bigtangle-core')
 }
 
-mainClassName = "net.bigtangle.tools.BuyOrderTest"
+mainClassName = "net.bigtangle.tools.Simulator"
 //applicationDefaultJvmArgs = ["-Dlogging.config=/etc/processor/logback.xml"]
 applicationDefaultJvmArgs = ["-Dlog.root.level=WARN", "-Dlog.de.db.level=INFO", "-Xmx2g"]
 
