@@ -4,6 +4,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.tools.account.Account;
@@ -21,10 +24,13 @@ public class SignOrderAction extends Action {
     @Override
     public void callback() {
     }
+    
+    private static final Logger logger = LoggerFactory.getLogger(SellOrderAction.class);
 
     @SuppressWarnings("unchecked")
     @Override
     public void execute0() throws Exception {
+        logger.info("account name : {}, sign order action start", account.getName());
         for (ECKey key : this.account.walletKeys()) {
             String address = key.toAddress(Configure.PARAMS).toString();
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -57,6 +63,7 @@ public class SignOrderAction extends Action {
                 }
             }
         }
+        logger.info("account name : {}, sign order action end", account.getName());
     }
     
     @SuppressWarnings("unchecked")

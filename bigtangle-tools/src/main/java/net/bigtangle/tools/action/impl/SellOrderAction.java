@@ -5,11 +5,11 @@ import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.tools.account.Account;
 import net.bigtangle.tools.action.Action;
 import net.bigtangle.tools.config.Configure;
-import net.bigtangle.tools.utils.RandomTrade;
 import net.bigtangle.utils.OkHttp3Util;
 
 public class SellOrderAction extends Action {
@@ -24,20 +24,23 @@ public class SellOrderAction extends Action {
 
     @Override
     public void execute0() throws Exception {
+        logger.info("account name : {}, sell order action start", account.getName());
         try {
             HashMap<String, Object> requestParams = new HashMap<String, Object>();
-            RandomTrade random0 = account.getRandomTrade();
-            requestParams.put("address", random0.getAddress());
-            requestParams.put("tokenid", random0.getTokenID());
+            ECKey ecKey = account.getRandomTradeECKey();
+            String address = ecKey.toAddress(Configure.PARAMS).toBase58();
+            String tokenid = ecKey.getPublicKeyAsHex();
+            requestParams.put("address", address);
+            requestParams.put("tokenid", tokenid);
             requestParams.put("type", 1);
             requestParams.put("price", 1000);
             requestParams.put("amount", 1);
-            String data = OkHttp3Util.post(Configure.ORDER_MATCH_CONTEXT_ROOT + "saveOrder", Json.jsonmapper().writeValueAsString(requestParams).getBytes());
-            logger.info("account name : {}, sellOrder action resp : {} success", account.getName(), data);
+            OkHttp3Util.post(Configure.ORDER_MATCH_CONTEXT_ROOT + "saveOrder", Json.jsonmapper().writeValueAsString(requestParams).getBytes());
         }
         catch (Exception e) {
-            logger.error("account name : {}, sellOrder action fail", account.getName(), e);
+            logger.error("account name : {}, sell order action exception", account.getName(), e);
         }
+        logger.info("account name : {}, sell order action end", account.getName());
     }
 
     private static final Logger logger = LoggerFactory.getLogger(SellOrderAction.class);

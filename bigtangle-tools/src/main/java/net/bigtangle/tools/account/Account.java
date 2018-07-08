@@ -8,7 +8,6 @@ import java.util.Random;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.Utils;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.tools.action.Action;
 import net.bigtangle.tools.action.impl.BuyOrderAction;
@@ -18,7 +17,6 @@ import net.bigtangle.tools.action.impl.TokenAction;
 import net.bigtangle.tools.config.Configure;
 import net.bigtangle.tools.thread.TradeBuyRunnable;
 import net.bigtangle.tools.thread.TradeSellRunnable;
-import net.bigtangle.tools.utils.RandomTrade;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet;
 
@@ -36,10 +34,10 @@ public class Account {
 
     public Account(String walletPath) {
         this.walletPath = walletPath;
-        initWallet();
+        initWallet(walletPath);
     }
 
-    private void initWallet() {
+    private void initWallet(String walletPath) {
         walletAppKit = new WalletAppKit(Configure.PARAMS, new File("."), walletPath);
         KeyParameter aesKey = null;
         try {
@@ -94,25 +92,13 @@ public class Account {
         return "account_" + walletPath;
     }
 
-    public RandomTrade getRandomTrade() {
-        ECKey outKey = this.getSellKey();
-        String address = outKey.toAddress(Configure.PARAMS).toBase58();
-        return new RandomTrade(address, Utils.HEX.encode(outKey.getPubKeyHash()));
-    }
-
-    public ECKey getSellKey() {
-        List<ECKey> walletKeys = null;
-        try {
-            walletKeys = this.walletKeys();
-        } catch (Exception e) {
-        }
-        if (walletKeys == null || walletKeys.isEmpty()) {
-            return null;
-        }
-        ECKey outKey = walletKeys.get(0);
+    public ECKey getRandomTradeECKey() {
+        int count = this.walletKeys.size();
+        int index = new Random().nextInt(count);
+        ECKey outKey = this.walletKeys.get(index);
         return outKey;
     }
-    
+
     public ECKey getBuyKey() {
         List<ECKey> walletKeys = null;
         try {

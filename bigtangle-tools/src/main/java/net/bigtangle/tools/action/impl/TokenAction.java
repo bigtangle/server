@@ -23,11 +23,16 @@ public class TokenAction extends Action {
 
     @Override
     public void execute0() throws Exception {
-        for (ECKey outKey : this.account.walletKeys()) {
-            Block block = Simulator.createTokenBlock(outKey);
-            OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
+        logger.info("account name : {}, token action start", account.getName());
+        try {
+            for (ECKey outKey : this.account.walletKeys()) {
+                Block block = Simulator.createTokenBlock(outKey);
+                OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
+            }
+        } catch (Exception e) {
+            logger.error("account name : {}, token action exception", account.getName(), e);
         }
-        logger.info("account name : {},  action success", account.getName());
+        logger.info("account name : {}, token action end", account.getName());
     }
 
     private static final Logger logger = LoggerFactory.getLogger(TokenAction.class);

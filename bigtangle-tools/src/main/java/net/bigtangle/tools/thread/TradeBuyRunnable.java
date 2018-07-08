@@ -1,7 +1,6 @@
 package net.bigtangle.tools.thread;
 
 import net.bigtangle.tools.account.Account;
-import net.bigtangle.tools.action.impl.BuyOrderAction;
 
 public class TradeBuyRunnable implements Runnable {
 
@@ -16,12 +15,9 @@ public class TradeBuyRunnable implements Runnable {
     public void run() {
         while (true) {
             try {
-                BuyOrderAction  act = new BuyOrderAction(this.account);
-                act.execute();
+                account.doAction();
+                Thread.sleep(1000);
             } catch (Exception e) {
-                e.printStackTrace();
-            }
-            finally {
             }
         }
     }
