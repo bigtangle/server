@@ -105,9 +105,9 @@ public class ExchangeController {
             toAddressComboBox.setItems(addressData);
 
             initComboBox();
-            initTable();
+           //not load cui  initTable();
         } catch (Exception e) {
-            e.printStackTrace();
+         
             GuiUtils.crashAlert(e);
         }
         mTransaction = null;
@@ -145,7 +145,11 @@ public class ExchangeController {
             if (url == null || url.isEmpty()) {
                 continue;
             }
-
+            //TODO check market in watched list or default 
+            if(!url.contains( "market.bigtangle.net")
+                  || !url.contains( "test2market.bigtangle.net")
+                   )   continue;
+            
             String response = OkHttp3Util.post(url + "/" + "getBatchExchange",
                     Json.jsonmapper().writeValueAsString(addressList).getBytes());
             final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
