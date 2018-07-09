@@ -59,6 +59,18 @@ public class SignOrderAction extends Action {
                 if ((Integer) result.get("toSign") + (Integer) result.get("fromSign") == 2) {
                     continue;
                 }
+                
+                int toSign = (int) result.get("toSign");
+                int fromSign = (int) result.get("fromSign");
+                String toAddress = (String) result.get("toAddress");
+                String fromAddress = (String) result.get("fromAddress");
+                if (toSign == 1 && this.account.calculatedAddressHit(toAddress)) {
+                    continue;
+                }
+                if (fromSign == 1 && this.account.calculatedAddressHit(fromAddress)) {
+                    continue;
+                }
+                
                 String orderid = (String) result.get("orderid");
                 HashMap<String, Object> exchangeResult = this.getExchangeInfoResult(orderid);
                 if (exchangeResult == null) {
