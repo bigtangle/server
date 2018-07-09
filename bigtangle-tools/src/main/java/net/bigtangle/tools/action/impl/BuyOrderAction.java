@@ -40,6 +40,14 @@ public class BuyOrderAction extends Action {
                 if (state != OrderState.publish.ordinal()) {
                     continue;
                 }
+                String address = (String) map.get("address");
+                if (this.account.calculatedAddressHit(address)) {
+                	continue;
+                }
+                int type = (Integer) map.get("type");
+                if (type != 1) {
+                	continue;
+                }
                 String tokenHex = (String) map.get("tokenid");
                 HashMap<String, Object> requestParams = new HashMap<String, Object>();
                 ECKey ecKey = this.account.getBuyKey();
