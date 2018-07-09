@@ -48,29 +48,32 @@ public class SignOrderAction extends Action {
                 if (exchanges == null || exchanges.isEmpty()) {
                     continue;
                 }
-                exchangeList.addAll(exchanges);
-
+                for (Map<String, Object> result : exchangeList) {
+                    try {
+                        if ((Integer) result.get("toSign") + (Integer) result.get("fromSign") == 2) {
+                            continue;
+                        }
+                        int toSign = (int) result.get("toSign");
+                        int fromSign = (int) result.get("fromSign");
+                        String toAddress = (String) result.get("toAddress");
+                        String fromAddress = (String) result.get("fromAddress");
+                        if (toSign == 1 && this.account.calculatedAddressHit(toAddress)) {
+                            continue;
+                        }
+                        if (fromSign == 1 && this.account.calculatedAddressHit(fromAddress)) {
+                            continue;
+                        }
+                        exchangeList.add(result);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
             } catch (Exception e) {
                 // e.printStackTrace();
             }
         }
         for (Map<String, Object> result : exchangeList) {
             try {
-                if ((Integer) result.get("toSign") + (Integer) result.get("fromSign") == 2) {
-                    continue;
-                }
-                
-                int toSign = (int) result.get("toSign");
-                int fromSign = (int) result.get("fromSign");
-                String toAddress = (String) result.get("toAddress");
-                String fromAddress = (String) result.get("fromAddress");
-                if (toSign == 1 && this.account.calculatedAddressHit(toAddress)) {
-                    continue;
-                }
-                if (fromSign == 1 && this.account.calculatedAddressHit(fromAddress)) {
-                    continue;
-                }
-                
                 String orderid = (String) result.get("orderid");
                 HashMap<String, Object> exchangeResult = this.getExchangeInfoResult(orderid);
                 if (exchangeResult == null) {
