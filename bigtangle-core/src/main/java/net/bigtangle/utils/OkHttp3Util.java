@@ -43,7 +43,7 @@ public class OkHttp3Util {
         Response response = client.newCall(request).execute();
         try {
             String resp = response.body().string();
-            logger.debug(resp);
+            // logger.debug(resp);
             checkResponse(resp);
             return resp;
 

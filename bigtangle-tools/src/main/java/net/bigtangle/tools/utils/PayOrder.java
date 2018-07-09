@@ -7,8 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.kafka.clients.admin.Config;
-
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
@@ -47,11 +45,12 @@ public class PayOrder {
             return;
         }
         SendRequest request = SendRequest.forTx(transaction);
+        this.account.wallet().setServerURL(Configure.SIMPLE_SERVER_CONTEXT_ROOT);
         this.account.wallet().signTransaction(request);
 
         byte[] data = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "askTransaction", Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
         Block rollingBlock = Configure.PARAMS.getDefaultSerializer().makeBlock(data);
-        rollingBlock.addTransaction(transaction);
+        //rollingBlock.addTransaction(transaction);
         rollingBlock.solve();
         OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
 
@@ -65,7 +64,7 @@ public class PayOrder {
         String toTokenHex = (String) exchangeResult.get("toTokenHex");
         String toAmount = (String) exchangeResult.get("toAmount");
 
-        String signtype = "";
+        String signtype = "to";
         if (toSign == 0 && this.account.calculatedAddressHit(toAddress)) {
             signtype = "to";
         } else if (fromSign == 0 && this.account.calculatedAddressHit(fromAddress)) {
@@ -298,7 +297,7 @@ public class PayOrder {
         // System.out.println("orderid : " + new String(orderid));
 
         int len = byteBuffer.getInt();
-        // System.out.println("tx len : " + len);
+        System.out.println("tx len : " + len);
         byte[] data = new byte[len];
         byteBuffer.get(data);
         try {

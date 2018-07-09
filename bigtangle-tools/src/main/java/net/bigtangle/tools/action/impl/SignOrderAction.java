@@ -1,5 +1,6 @@
 package net.bigtangle.tools.action.impl;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,21 +32,30 @@ public class SignOrderAction extends Action {
     @Override
     public void execute0() throws Exception {
         logger.info("account name : {}, sign order action start", account.getName());
+        List<Map<String, Object>> exchangeList = new ArrayList<Map<String, Object>>();
         for (ECKey key : this.account.walletKeys()) {
-            String address = key.toAddress(Configure.PARAMS).toString();
-            HashMap<String, Object> requestParam = new HashMap<String, Object>();
-            requestParam.put("address", address);
-            String response = OkHttp3Util.post(Configure.ORDER_MATCH_CONTEXT_ROOT + "getExchange",
-                    Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-            final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-            if (data == null) {
-                continue;
+            try {
+                String address = key.toAddress(Configure.PARAMS).toString();
+                HashMap<String, Object> requestParam = new HashMap<String, Object>();
+                requestParam.put("address", address);
+                String response = OkHttp3Util.post(Configure.ORDER_MATCH_CONTEXT_ROOT + "getExchange",
+                        Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+                final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+                if (data == null) {
+                    continue;
+                }
+                List<Map<String, Object>> exchanges = (List<Map<String, Object>>) data.get("exchanges");
+                if (exchanges == null || exchanges.isEmpty()) {
+                    continue;
+                }
+                exchangeList.addAll(exchanges);
+
+            } catch (Exception e) {
+                // e.printStackTrace();
             }
-            List<Map<String, Object>> exchanges = (List<Map<String, Object>>) data.get("exchanges");
-            if (exchanges == null || exchanges.isEmpty()) {
-                continue;
-            }
-            for (Map<String, Object> result : exchanges) {
+        }
+        for (Map<String, Object> result : exchangeList) {
+            try {
                 if ((Integer) result.get("toSign") + (Integer) result.get("fromSign") == 2) {
                     continue;
                 }
@@ -61,6 +71,8 @@ public class SignOrderAction extends Action {
                 } else {
                     payOrder.signOrderComplete();
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
         logger.info("account name : {}, sign order action end", account.getName());
