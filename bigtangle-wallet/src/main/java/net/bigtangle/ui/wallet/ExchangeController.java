@@ -31,8 +31,11 @@ import javafx.stage.FileChooser;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -105,14 +108,36 @@ public class ExchangeController {
             toAddressComboBox.setItems(addressData);
 
             initComboBox();
-           //not load cui  initTable();
+            // not load cui initTable();
         } catch (Exception e) {
-         
+
             GuiUtils.crashAlert(e);
         }
         mTransaction = null;
         mOrderid = "";
         // mTokenid = "";
+    }
+
+    private boolean isWatched(String tokenid) {
+        try {
+            TokenInfo tokenInfo = (TokenInfo) Main.getUserdata(DataClassName.TOKEN.name());
+            if (tokenInfo == null) {
+                return false;
+            }
+            List<Tokens> tokenList = tokenInfo.getPositveTokenList();
+            if (tokenList == null || tokenList.isEmpty()) {
+                return false;
+            }
+            for (Tokens token : tokenList) {
+                if (tokenid.equals(token.getTokenid())) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -135,6 +160,7 @@ public class ExchangeController {
             addressList.add(address);
         }
         for (Map<String, Object> tokenResult : tokensList) {
+            String tokenid = (String) tokenResult.get("tokenid");
             boolean asmarket = (boolean) tokenResult.get("asmarket");
             if (!asmarket) {
                 continue;
@@ -145,38 +171,45 @@ public class ExchangeController {
             if (url == null || url.isEmpty()) {
                 continue;
             }
-            //TODO check market in watched list or default 
-            if(!url.contains( "market.bigtangle.net")
-                  || !url.contains( "test2market.bigtangle.net")
-                   )   continue;
-            
-            String response = OkHttp3Util.post(url + "/" + "getBatchExchange",
-                    Json.jsonmapper().writeValueAsString(addressList).getBytes());
-            final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-            List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("exchanges");
-            if (list == null || list.isEmpty()) {
-                continue;
+            // TODO check market in watched list or default
+            if (!url.contains("market.bigtangle.net") || !url.contains("test2market.bigtangle.net")) {
+                boolean watchedFlag = isWatched(tokenid);
+                if (!watchedFlag) {
+                    continue;
+                }
+
             }
-            for (Map<String, Object> map : list) {
-                if ((Integer) map.get("toSign") == 1) {
-                    map.put("toSign", "*");
-                } else {
-                    map.put("toSign", "-");
+            try {
+                String response = OkHttp3Util.post(url + "/" + "getBatchExchange",
+                        Json.jsonmapper().writeValueAsString(addressList).getBytes());
+                final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+                List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("exchanges");
+                if (list == null || list.isEmpty()) {
+                    continue;
                 }
-                if ((Integer) map.get("fromSign") == 1) {
-                    map.put("fromSign", "*");
-                } else {
-                    map.put("fromSign", "-");
+                for (Map<String, Object> map : list) {
+                    if ((Integer) map.get("toSign") == 1) {
+                        map.put("toSign", "*");
+                    } else {
+                        map.put("toSign", "-");
+                    }
+                    if ((Integer) map.get("fromSign") == 1) {
+                        map.put("fromSign", "*");
+                    } else {
+                        map.put("fromSign", "-");
+                    }
+                    Coin fromAmount = Coin.valueOf(Long.parseLong((String) map.get("fromAmount")),
+                            Utils.HEX.decode((String) map.get("fromTokenHex")));
+                    Coin toAmount = Coin.valueOf(Long.parseLong((String) map.get("toAmount")),
+                            Utils.HEX.decode((String) map.get("toTokenHex")));
+
+                    map.put("fromAmount", fromAmount.toPlainString());
+
+                    map.put("toAmount", toAmount.toPlainString());
+                    exchangeData.add(map);
                 }
-                Coin fromAmount = Coin.valueOf(Long.parseLong((String) map.get("fromAmount")),
-                        Utils.HEX.decode((String) map.get("fromTokenHex")));
-                Coin toAmount = Coin.valueOf(Long.parseLong((String) map.get("toAmount")),
-                        Utils.HEX.decode((String) map.get("toTokenHex")));
-
-                map.put("fromAmount", fromAmount.toPlainString());
-
-                map.put("toAmount", toAmount.toPlainString());
-                exchangeData.add(map);
+            } catch (Exception e) {
+                log.error("", e);
             }
         }
         orderidsCol.setCellValueFactory(new MapValueFactory("orderid"));
@@ -462,7 +495,7 @@ public class ExchangeController {
         HashMap<String, Object> exchange = (HashMap<String, Object>) result.get("exchange");
         return exchange;
     }
- 
+
     public void signExchange(ActionEvent event) throws Exception {
         try {
             signExchangeDo(event);

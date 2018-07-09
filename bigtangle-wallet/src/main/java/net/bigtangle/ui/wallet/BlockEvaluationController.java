@@ -71,6 +71,13 @@ public class BlockEvaluationController {
     public ComboBox<String> addressComboBox;
     @FXML
     public TextField latestAmountTextField;
+    
+    @FXML
+    public ComboBox<String> addressComboBox1;
+    @FXML
+    public TextField latestAmountTextField1;
+    
+    
     @FXML
     public TextField compareTF1;
     @FXML
@@ -257,8 +264,8 @@ public class BlockEvaluationController {
 
     private List<Map<String, Object>> getBlockInfos(String server) throws Exception {
         String CONTEXT_ROOT = server;
-        String lastestAmount = latestAmountTextField.getText();
-        String address = addressComboBox.getValue();
+        String lastestAmount = latestAmountTextField1.getText();
+        String address = addressComboBox1.getValue();
         List<String> addresses = new ArrayList<String>();
         if (address == null || address.equals("")) {
             KeyParameter aesKey = null;
