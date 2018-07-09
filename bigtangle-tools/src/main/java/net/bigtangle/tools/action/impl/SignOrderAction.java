@@ -48,7 +48,7 @@ public class SignOrderAction extends Action {
                 if (exchanges == null || exchanges.isEmpty()) {
                     continue;
                 }
-                for (Map<String, Object> result : exchangeList) {
+                for (Map<String, Object> result : exchanges) {
                     try {
                         if ((Integer) result.get("toSign") + (Integer) result.get("fromSign") == 2) {
                             continue;
