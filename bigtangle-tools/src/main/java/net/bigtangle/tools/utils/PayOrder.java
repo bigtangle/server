@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.kafka.clients.admin.Config;
+
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
@@ -231,26 +233,26 @@ public class PayOrder {
     @SuppressWarnings("unchecked")
     public List<UTXO> getUTXOWithECKeyList(List<ECKey> ecKeys, byte[] tokenid) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
+        List<String> pubKeyHashList = new ArrayList<String>();
         for (ECKey ecKey : ecKeys) {
-            List<String> pubKeyHashList = new ArrayList<String>();
             pubKeyHashList.add(Utils.HEX.encode(ecKey.toAddress(Configure.PARAMS).getHash160()));
-            String response = OkHttp3Util.postString(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "getOutputs", Json.jsonmapper().writeValueAsString(pubKeyHashList));
-            final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-            if (data == null || data.isEmpty()) {
-                return listUTXO;
+        }
+        String response = OkHttp3Util.postString(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "getOutputs", Json.jsonmapper().writeValueAsString(pubKeyHashList));
+        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+        if (data == null || data.isEmpty()) {
+            return listUTXO;
+        }
+        List<Map<String, Object>> outputs = (List<Map<String, Object>>) data.get("outputs");
+        if (outputs == null || outputs.isEmpty()) {
+            return listUTXO;
+        }
+        for (Map<String, Object> object : outputs) {
+            UTXO utxo = MapToBeanMapperUtil.parseUTXO(object);
+            if (!Arrays.equals(utxo.getTokenidBuf(), tokenid)) {
+                continue;
             }
-            List<Map<String, Object>> outputs = (List<Map<String, Object>>) data.get("outputs");
-            if (outputs == null || outputs.isEmpty()) {
-                return listUTXO;
-            }
-            for (Map<String, Object> object : outputs) {
-                UTXO utxo = MapToBeanMapperUtil.parseUTXO(object);
-                if (!Arrays.equals(utxo.getTokenidBuf(), tokenid)) {
-                    continue;
-                }
-                if (utxo.getValue().getValue() > 0) {
-                    listUTXO.add(utxo);
-                }
+            if (utxo.getValue().getValue() > 0) {
+                listUTXO.add(utxo);
             }
         }
         return listUTXO;

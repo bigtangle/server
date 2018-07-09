@@ -65,7 +65,7 @@ public class Account {
     private WalletAppKit walletAppKit;
 
     public void initBuyOrderTask() {
-        this.executes.add(new BuyOrderAction(this));
+        //this.executes.add(new BuyOrderAction(this));
         this.executes.add(new SignOrderAction(this));
     }
     
