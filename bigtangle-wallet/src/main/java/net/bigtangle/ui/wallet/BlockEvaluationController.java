@@ -6,6 +6,8 @@ package net.bigtangle.ui.wallet;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -21,6 +23,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -73,60 +76,179 @@ public class BlockEvaluationController {
     @FXML
     public TextField compareTF2;
 
-    public List<String> hashList = new ArrayList<String>();
-    public List<String> hashList1 = new ArrayList<String>();
-    public List<String> hashList2 = new ArrayList<String>();
+    @FXML
+    public TableView<Map> compareTable;
+    @FXML
+    public TableColumn<Map, Object> blockhashColumn1;
+    @FXML
+    public TableColumn<Map, Object> ratingColumn1;
 
+    @FXML
+    public TableColumn<Map, Object> cumulativeWeightColumn1;
+    @FXML
+    public TabPane tabPane;
     public Main.OverlayUI<?> overlayUI;
 
     @FXML
     public void initialize() {
         try {
             initTableView();
+            tabPane.getSelectionModel().selectedIndexProperty().addListener((ov, t, t1) -> {
+                int index = t1.intValue();
+                switch (index) {
+                case 0: {
+                }
+
+                    break;
+                case 1: {
+                    initCompare();
+                }
+
+                    break;
+
+                }
+            });
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
     }
 
-    private void initCompare() throws Exception {
-        List<Map<String, Object>> mainList = this.getBlockInfos(Main.getContextRoot());
-        if (mainList != null && !mainList.isEmpty()) {
+    private void initCompare() {
+        try {
+            Map<String, String> keyMap = new HashMap<String, String>();
+            List<Map<String, Object>> mainList = this.getBlockInfos(Main.getContextRoot());
+            if (mainList != null && !mainList.isEmpty()) {
 
-            for (Map<String, Object> map : mainList) {
-                if (!hashList.contains(map.get("blockHexStr").toString())) {
-                    hashList.add(map.get("blockHexStr").toString());
+                for (Map<String, Object> map : mainList) {
+                    String key = map.get("blockHexStr").toString();
+                    if (!keyMap.containsKey(key)) {
+                        keyMap.put(key, "m-0-0");
+                    }
+
+                }
+            } else {
+                mainList = new ArrayList<Map<String, Object>>();
+            }
+            List<Map<String, Object>> compareList1 = new ArrayList<Map<String, Object>>();
+            List<Map<String, Object>> compareList2 = new ArrayList<Map<String, Object>>();
+
+            if (compareTF1.getText() != null && !compareTF1.getText().isEmpty()) {
+                compareList1 = this.getBlockInfos(compareTF1.getText().trim());
+
+                if (compareList1 != null && !compareList1.isEmpty()) {
+                    for (Map<String, Object> map : compareList1) {
+                        String key = map.get("blockHexStr").toString();
+                        if (!keyMap.containsKey(key)) {
+                            keyMap.put(key, "0-c1-0");
+                        } else {
+                            keyMap.put(key, "m-c1-0");
+                        }
+
+                    }
+                    mainList.addAll(compareList1);
                 }
 
             }
-        } else {
-            mainList = new ArrayList<Map<String, Object>>();
-        }
-        List<Map<String, Object>> compareList1 = null;
-        List<Map<String, Object>> compareList2 = null;
-        int length = mainList.size();
-        int length1 = 0;
-        int length2 = 0;
-        if (compareTF1.getText() != null && !compareTF1.getText().isEmpty()) {
-            compareList1 = this.getBlockInfos(compareTF1.getText().trim());
+            if (compareTF2.getText() != null && !compareTF2.getText().isEmpty()) {
+                compareList2 = this.getBlockInfos(compareTF1.getText().trim());
 
-            if (compareList1 != null && !compareList1.isEmpty()) {
-                length1 = compareList1.size();
-                mainList.addAll(compareList1);
+                if (compareList2 != null && !compareList2.isEmpty()) {
+                    for (Map<String, Object> map : compareList2) {
+                        String key = map.get("blockHexStr").toString();
+                        if (!keyMap.containsKey(key)) {
+                            keyMap.put(key, "0-0-c2");
+                        } else {
+                            String value = keyMap.get(key).substring(0, keyMap.get(key).length() - 1);
+                            keyMap.put(key, value + "c2");
+                        }
+
+                    }
+                    mainList.addAll(compareList2);
+                }
             }
+            Collections.sort(mainList, new Comparator<Map<String, Object>>() {
 
-        }
-        if (compareTF2.getText() != null && !compareTF2.getText().isEmpty()) {
-            compareList2 = this.getBlockInfos(compareTF1.getText().trim());
+                @Override
+                public int compare(Map<String, Object> o1, Map<String, Object> o2) {
+                    String k1 = o1.get("blockHexStr").toString();
+                    String k2 = o2.get("blockHexStr").toString();
 
-            if (compareList2 != null && !compareList2.isEmpty()) {
-                length2 = compareList2.size();
-                mainList.addAll(compareList2);
+                    return k1.compareTo(k2);
+                }
+            });
+            ObservableList<Map> allData = FXCollections.observableArrayList();
+            for (int i = 0; i < mainList.size(); i++) {
+                Map<String, Object> map = mainList.get(i);
+                String tempKey = map.get("blockHexStr").toString();
+                String tempValue = keyMap.get(tempKey);
+                String tempRating = map.get("rating").toString();
+                String tempCumulativeWeight = map.get("cumulativeWeight").toString();
+                if (tempValue.equalsIgnoreCase("m-c1-c2")) {
+                    Map<String, Object> map1 = mainList.get(i + 1);
+                    String tempRating1 = map1.get("rating").toString();
+                    String tempCumulativeWeight1 = map1.get("cumulativeWeight").toString();
+
+                    Map<String, Object> map2 = mainList.get(i + 2);
+                    String tempRating2 = map2.get("rating").toString();
+                    String tempCumulativeWeight2 = map2.get("cumulativeWeight").toString();
+                    map.put("rating", tempRating + ";" + tempRating1 + ";" + tempRating2);
+                    map.put("cumulativeWeight",
+                            tempCumulativeWeight + ";" + tempCumulativeWeight1 + ";" + tempCumulativeWeight2);
+                    i = i + 2;
+                } else if (tempValue.equalsIgnoreCase("m-c1-0")) {
+                    Map<String, Object> map1 = mainList.get(i + 1);
+                    String tempRating1 = map1.get("rating").toString();
+                    String tempCumulativeWeight1 = map1.get("cumulativeWeight").toString();
+
+                    String tempRating2 = "-";
+                    String tempCumulativeWeight2 = "-";
+                    map.put("rating", tempRating + ";" + tempRating1 + ";" + tempRating2);
+                    map.put("cumulativeWeight",
+                            tempCumulativeWeight + ";" + tempCumulativeWeight1 + ";" + tempCumulativeWeight2);
+                    i = i + 1;
+                } else if (tempValue.equalsIgnoreCase("m-0-c2")) {
+                    Map<String, Object> map2 = mainList.get(i + 1);
+                    String tempRating1 = "-";
+                    String tempCumulativeWeight1 = "-";
+
+                    String tempRating2 = map2.get("rating").toString();
+                    String tempCumulativeWeight2 = map2.get("cumulativeWeight").toString();
+                    map.put("rating", tempRating + ";" + tempRating1 + ";" + tempRating2);
+                    map.put("cumulativeWeight",
+                            tempCumulativeWeight + ";" + tempCumulativeWeight1 + ";" + tempCumulativeWeight2);
+                    i = i + 1;
+                } else if (tempValue.equalsIgnoreCase("0-c1-c2")) {
+                    Map<String, Object> map1 = mainList.get(i + 1);
+                    String tempRating1 = map1.get("rating").toString();
+                    String tempCumulativeWeight1 = map1.get("cumulativeWeight").toString();
+
+                    map.put("rating", "-;" + tempRating + ";" + tempRating1);
+                    map.put("cumulativeWeight", "-;" + tempCumulativeWeight + ";" + tempCumulativeWeight1);
+                    i = i + 1;
+                } else if (tempValue.equalsIgnoreCase("m-0-0")) {
+
+                    map.put("rating", tempRating + ";-;-");
+                    map.put("cumulativeWeight", tempCumulativeWeight + ";-;-");
+
+                } else if (tempValue.equalsIgnoreCase("0-c1-0")) {
+                    map.put("rating", "-;" + tempRating + ";-");
+                    map.put("cumulativeWeight", "-;" + tempCumulativeWeight + ";-");
+                } else if (tempValue.equalsIgnoreCase("0-0-c2")) {
+                    map.put("rating", "-;-;" + tempRating);
+                    map.put("cumulativeWeight", "-;-;" + tempCumulativeWeight);
+                }
+                allData.add(map);
             }
+            if (allData != null && !allData.isEmpty()) {
+                blockhashColumn1.setCellValueFactory(new MapValueFactory("blockHexStr"));
+                ratingColumn1.setCellValueFactory(new MapValueFactory("rating"));
+                cumulativeWeightColumn1.setCellValueFactory(new MapValueFactory("cumulativeWeight"));
+                compareTable.setItems(allData);
+            }
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
         }
 
-        for (Map<String, Object> map : mainList) {
-
-        }
     }
 
     private void initMainServer() throws Exception {
@@ -173,6 +295,10 @@ public class BlockEvaluationController {
 
     public void closeUI(ActionEvent event) {
         overlayUI.done();
+    }
+
+    public void searchCompare(ActionEvent event) {
+        initCompare();
     }
 
     public void showBlock(ActionEvent event) throws Exception {
