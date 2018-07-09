@@ -24,8 +24,6 @@ public class Account {
 
     private List<Action> executes = new ArrayList<Action>();
 
-    private Random random = new Random();
-
     private List<ECKey> walletKeys = new ArrayList<ECKey>();
 
     public List<ECKey> walletKeys() throws Exception {
@@ -83,6 +81,7 @@ public class Account {
         if (this.executes == null || this.executes.isEmpty()) {
             return;
         }
+        Random random = new Random();
         int index = random.nextInt(this.executes.size());
         Action action = this.executes.get(index);
         action.execute();
