@@ -63,7 +63,7 @@ public class Account {
     private WalletAppKit walletAppKit;
 
     public void initBuyOrderTask() {
-        //this.executes.add(new BuyOrderAction(this));
+        this.executes.add(new BuyOrderAction(this));
         this.executes.add(new SignOrderAction(this));
     }
     
@@ -73,19 +73,25 @@ public class Account {
             action2.execute();
         } catch (Exception e) {
         }
-        this.executes.add(new SellOrderAction(this));
         this.executes.add(new SignOrderAction(this));
+        this.executes.add(new SellOrderAction(this));
     }
     
     public void doAction() {
         if (this.executes == null || this.executes.isEmpty()) {
             return;
         }
-        Random random = new Random();
-        int index = random.nextInt(this.executes.size());
-        Action action = this.executes.get(index);
+        index ++;
+        if (index % 10 == 0) {
+            Action action = this.executes.get(0);
+            action.execute();
+            return;
+        }
+        Action action = this.executes.get(1);
         action.execute();
     }
+    
+    private int index;
 
     public String getName() {
         return "account_" + walletPath;

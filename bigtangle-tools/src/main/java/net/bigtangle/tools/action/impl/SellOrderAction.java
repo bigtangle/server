@@ -17,7 +17,7 @@ public class SellOrderAction extends Action {
     public SellOrderAction(Account account) {
         super(account);
     }
-
+    
     @Override
     public void callback() {
     }

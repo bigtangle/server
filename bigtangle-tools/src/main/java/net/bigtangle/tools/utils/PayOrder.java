@@ -50,7 +50,7 @@ public class PayOrder {
 
         byte[] data = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "askTransaction", Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
         Block rollingBlock = Configure.PARAMS.getDefaultSerializer().makeBlock(data);
-        //rollingBlock.addTransaction(transaction);
+        rollingBlock.addTransaction(transaction);
         rollingBlock.solve();
         OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
 

@@ -46,7 +46,7 @@ public class BuyOrderAction extends Action {
                 }
                 int type = (Integer) map.get("type");
                 if (type != 1) {
-                	continue;
+                    continue;
                 }
                 String tokenHex = (String) map.get("tokenid");
                 HashMap<String, Object> requestParams = new HashMap<String, Object>();
