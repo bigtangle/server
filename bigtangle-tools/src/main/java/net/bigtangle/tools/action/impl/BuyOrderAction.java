@@ -27,6 +27,9 @@ public class BuyOrderAction extends Action {
     @SuppressWarnings("unchecked")
     @Override
     public void execute0() throws Exception {
+        if (this.account.defaultCoinAmount() <= 0) {
+            return;
+        }
         logger.info("account name : {}, buy order action start", account.getName());
         try {
             String resp = OkHttp3Util.postString(Configure.ORDER_MATCH_CONTEXT_ROOT + "getOrders",

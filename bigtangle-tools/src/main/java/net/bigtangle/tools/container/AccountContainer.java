@@ -49,4 +49,16 @@ public class AccountContainer extends ArrayList<Account> {
             }
         }
     }
+
+    public void startTradeOrder(int startIndex, int endIndex) {
+        for (int i = startIndex; i <= endIndex; i++) {
+            try {
+                Account account = new Account("wallet" + String.valueOf(i));
+                account.startTradeOrder();
+                this.add(account);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }
