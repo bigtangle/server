@@ -2,7 +2,7 @@
 
 ## upload log file 
 
-## add list of server and save data local on wallet
+## add user setting for server, language, and list of server, markets in watched list and save it bigtangle  and   local as cached data to start.
 
 ## simulation buy token with wallet1 (test key) read the order data from market and set the same amount to match, sign 
 
