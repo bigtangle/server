@@ -8,6 +8,7 @@ import java.util.Random;
 
 import org.spongycastle.crypto.params.KeyParameter;
 
+import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.tools.action.Action;
@@ -31,7 +32,7 @@ public class Account {
     
     public TokenCoinbase tokenCoinbase;
     
-    public long defaultCoinAmount() {
+    public Coin defaultCoinAmount() {
         return this.tokenCoinbase.getCoinDefaultValue();
     }
 

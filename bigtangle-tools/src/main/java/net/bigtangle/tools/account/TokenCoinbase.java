@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import net.bigtangle.core.Coin;
 import net.bigtangle.core.NetworkParameters;
 
 public class TokenCoinbase {
@@ -14,11 +15,11 @@ public class TokenCoinbase {
         if (tokens.isEmpty()) return;
         lock.lock();
         try {
-            Map<String, Long> values = new HashMap<String, Long>();
+            Map<String, Coin> values = new HashMap<String, Coin>();
             for (Map<String, Object> map : tokens) {
                 String tokenHex = (String) map.get("tokenHex");
                 String value = map.get("value").toString();
-                values.put(tokenHex, Long.parseLong(value));
+                values.put(tokenHex, Coin.valueOf(Long.parseLong(value), tokenHex));
             }
             this.values = values;
         }
@@ -32,13 +33,13 @@ public class TokenCoinbase {
     public TokenCoinbase(Account account) {
     }
     
-    private Map<String, Long> values = new HashMap<String, Long>();
+    private Map<String, Coin> values = new HashMap<String, Coin>();
     
-    public long getCoinDefaultValue() {
-        Long amount = this.values.get(NetworkParameters.BIGNETCOIN_TOKENID_STRING);
-        if (amount == null) {
-            return 0;
+    public Coin getCoinDefaultValue() {
+        Coin coin = this.values.get(NetworkParameters.BIGNETCOIN_TOKENID_STRING);
+        if (coin == null) {
+            return Coin.ZERO;
         }
-        return amount.longValue();
+        return coin;
     }
 }
