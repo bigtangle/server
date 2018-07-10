@@ -7,7 +7,6 @@ package net.bigtangle.ui.wallet;
 import static net.bigtangle.ui.wallet.Main.bitcoin;
 
 import java.io.File;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -142,44 +141,6 @@ public class UserdataController {
         }
     }
 
-    public Serializable getUserdata(String type) throws Exception {
-        String CONTEXT_ROOT = Main.getContextRoot();
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        ECKey pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
-        requestParam.put("pubKey", pubKeyTo.getPublicKeyAsHex());
-        requestParam.put("dataclassname", type);
-        byte[] bytes = OkHttp3Util.post(CONTEXT_ROOT + "getUserData",
-                Json.jsonmapper().writeValueAsString(requestParam));
-        if (DataClassName.ContactInfo.name().equals(type)) {
-            if (bytes == null || bytes.length == 0) {
-                return new ContactInfo();
-            }
-            ContactInfo contactInfo = new ContactInfo().parse(bytes);
-            return contactInfo;
-        } else if (DataClassName.TOKEN.name().equals(type)) {
-            if (bytes == null || bytes.length == 0) {
-                return new TokenInfo();
-            }
-            TokenInfo tokenInfo = new TokenInfo().parse(bytes);
-            return tokenInfo;
-        } else if (DataClassName.MYHOMEADDRESS.name().equals(type)) {
-            if (bytes == null || bytes.length == 0) {
-                return new MyHomeAddress();
-            }
-            MyHomeAddress myHomeAddress = new MyHomeAddress().parse(bytes);
-            return myHomeAddress;
-        } else if (DataClassName.UPLOADFILE.name().equals(type)) {
-            if (bytes == null || bytes.length == 0) {
-                return new UploadfileInfo();
-            }
-            UploadfileInfo uploadfileInfo = new UploadfileInfo().parse(bytes);
-            return uploadfileInfo;
-        } else {
-            return null;
-        }
-
-    }
-
     public void addContact(String contextRoot) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
@@ -204,7 +165,7 @@ public class UserdataController {
         Contact contact = new Contact();
         contact.setName(nameTF.getText());
         contact.setAddress(addressTF.getText());
-        ContactInfo contactInfo = (ContactInfo) getUserdata(DataClassName.ContactInfo.name());
+        ContactInfo contactInfo = (ContactInfo) Main.getUserdata(DataClassName.ContactInfo.name());
 
         List<Contact> list = contactInfo.getContactList();
         list.add(contact);
@@ -214,9 +175,8 @@ public class UserdataController {
         coinbase.setData(contactInfo.toByteArray());
 
         Sha256Hash sighash = coinbase.getHash();
-        
-        
-        ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash,aesKey);
+
+        ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash, aesKey);
         byte[] buf1 = party1Signature.encodeToDER();
 
         List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
@@ -256,7 +216,7 @@ public class UserdataController {
 
             Transaction coinbase = new Transaction(Main.params);
 
-            TokenInfo tokenInfo = (TokenInfo) getUserdata(DataClassName.TOKEN.name());
+            TokenInfo tokenInfo = (TokenInfo) Main.getUserdata(DataClassName.TOKEN.name());
             List<Tokens> list = tokenInfo.getPositveTokenList();
             List<Tokens> tempList = new ArrayList<Tokens>();
             for (Tokens tokens : list) {
@@ -285,7 +245,7 @@ public class UserdataController {
     public void initMyAddress() {
         try {
             String CONTEXT_ROOT = Main.getContextRoot();
-            MyHomeAddress myHomeAddress = (MyHomeAddress) getUserdata(DataClassName.MYHOMEADDRESS.name());
+            MyHomeAddress myHomeAddress = (MyHomeAddress) Main.getUserdata(DataClassName.MYHOMEADDRESS.name());
             countryTF.setText(myHomeAddress.getCountry());
             provinceTF.setText(myHomeAddress.getProvince());
             cityTF.setText(myHomeAddress.getCity());
@@ -331,7 +291,7 @@ public class UserdataController {
             coinbase.setData(myhomeaddress.toByteArray());
 
             Sha256Hash sighash = coinbase.getHash();
-            ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash,aesKey);
+            ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash, aesKey);
             byte[] buf1 = party1Signature.encodeToDER();
 
             List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
@@ -371,7 +331,7 @@ public class UserdataController {
 
             Transaction coinbase = new Transaction(Main.params);
 
-            ContactInfo contactInfo = (ContactInfo) getUserdata(DataClassName.ContactInfo.name());
+            ContactInfo contactInfo = (ContactInfo) Main.getUserdata(DataClassName.ContactInfo.name());
             List<Contact> list = contactInfo.getContactList();
             List<Contact> tempList = new ArrayList<Contact>();
             for (Contact contact : list) {
@@ -401,7 +361,7 @@ public class UserdataController {
             }
 
             Sha256Hash sighash = coinbase.getHash();
-            ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash,aesKey);
+            ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash, aesKey);
             byte[] buf1 = party1Signature.encodeToDER();
 
             List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
@@ -424,7 +384,7 @@ public class UserdataController {
 
     public void initContactTableView() {
         try {
-            ContactInfo contactInfo = (ContactInfo) getUserdata(DataClassName.ContactInfo.name());
+            ContactInfo contactInfo = (ContactInfo) Main.getUserdata(DataClassName.ContactInfo.name());
             List<Contact> list = contactInfo.getContactList();
             ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();
             if (list != null && !list.isEmpty()) {
@@ -446,7 +406,7 @@ public class UserdataController {
 
     public void initFileTableView() {
         try {
-            UploadfileInfo uploadfileInfo = (UploadfileInfo) getUserdata(DataClassName.UPLOADFILE.name());
+            UploadfileInfo uploadfileInfo = (UploadfileInfo) Main.getUserdata(DataClassName.UPLOADFILE.name());
             List<Uploadfile> list = uploadfileInfo.getfUploadfiles();
             ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();
             if (list != null && !list.isEmpty()) {
@@ -468,7 +428,7 @@ public class UserdataController {
 
     public void initTokenTableView() {
         try {
-            TokenInfo tokenInfo = (TokenInfo) getUserdata(DataClassName.TOKEN.name());
+            TokenInfo tokenInfo = (TokenInfo) Main.getUserdata(DataClassName.TOKEN.name());
             List<Tokens> list = tokenInfo.getPositveTokenList();
             ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();
             if (list != null && !list.isEmpty()) {
@@ -530,7 +490,7 @@ public class UserdataController {
             uploadfile.setName(filenameTF.getText());
             uploadfile.setMaxsize(file.length());
 
-            UploadfileInfo uploadfileInfo = (UploadfileInfo) getUserdata(DataClassName.UPLOADFILE.name());
+            UploadfileInfo uploadfileInfo = (UploadfileInfo) Main.getUserdata(DataClassName.UPLOADFILE.name());
             List<Uploadfile> uploadfiles = uploadfileInfo.getfUploadfiles();
             uploadfiles.add(uploadfile);
             uploadfileInfo.setfUploadfiles(uploadfiles);
@@ -540,7 +500,7 @@ public class UserdataController {
             coinbase.setData(uploadfileInfo.toByteArray());
 
             Sha256Hash sighash = coinbase.getHash();
-            ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash,aesKey);
+            ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash, aesKey);
             byte[] buf1 = party1Signature.encodeToDER();
 
             List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();

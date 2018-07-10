@@ -71,6 +71,7 @@ import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignBy;
+import net.bigtangle.core.MyHomeAddress;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.ScriptException;
 import net.bigtangle.core.Sha256Hash;
@@ -81,6 +82,7 @@ import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
+import net.bigtangle.core.UploadfileInfo;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletAppKit;
@@ -319,8 +321,8 @@ public class Main extends Application {
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
-        
-        ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash,aesKey);
+
+        ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash, aesKey);
         byte[] buf1 = party1Signature.encodeToDER();
 
         List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
@@ -761,7 +763,21 @@ public class Main extends Application {
         String CONTEXT_ROOT = Main.IpAddress + "/"; // http://" + Main.IpAddress
                                                     // + ":" + Main.port + "/";
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        ECKey pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+
+        KeyParameter aesKey = null;
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
+        List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
+
+        ECKey pubKeyTo = null;
+        if (bitcoin.wallet().isEncrypted()) {
+            pubKeyTo = issuedKeys.get(0);
+        } else {
+            pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+        }
+
         requestParam.put("pubKey", pubKeyTo.getPublicKeyAsHex());
         requestParam.put("dataclassname", type);
         byte[] bytes = OkHttp3Util.post(CONTEXT_ROOT + "getUserData",
@@ -778,6 +794,18 @@ public class Main extends Application {
             }
             TokenInfo tokenInfo = new TokenInfo().parse(bytes);
             return tokenInfo;
+        } else if (DataClassName.MYHOMEADDRESS.name().equals(type)) {
+            if (bytes == null || bytes.length == 0) {
+                return new MyHomeAddress();
+            }
+            MyHomeAddress myHomeAddress = new MyHomeAddress().parse(bytes);
+            return myHomeAddress;
+        } else if (DataClassName.UPLOADFILE.name().equals(type)) {
+            if (bytes == null || bytes.length == 0) {
+                return new UploadfileInfo();
+            }
+            UploadfileInfo uploadfileInfo = new UploadfileInfo().parse(bytes);
+            return uploadfileInfo;
         } else {
             return null;
         }
