@@ -5,17 +5,16 @@
 
 package net.bigtangle.core;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-import net.bigtangle.params.Networks;
-import net.bigtangle.script.Script;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 
 import javax.annotation.Nullable;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import net.bigtangle.params.Networks;
+import net.bigtangle.script.Script;
 
 /**
  * <p>A Bitcoin address looks like 1MsScoe2fTJoq4ZPdQgqyhgWeoNamYPevy and is derived from an elliptic curve public key

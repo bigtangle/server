@@ -186,7 +186,7 @@ public class TipsService {
                     BlockEvaluation selectedBlock = candidates.get(selection);
                     selectionRealization -= selectedBlock.getCumulativeWeight() / maxBlockWeight;
                     if (selectionRealization <= 0) {
-                        results.add(selectedBlock.getBlockhash());
+                        results.add(selectedBlock.getBlockHash());
                         break;
                     }
                 }

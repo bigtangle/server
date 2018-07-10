@@ -31,14 +31,15 @@ public class BlockWrap implements Serializable {
         this.params = params;
     }
 
-    //Used for spark 
+    //Used in Spark 
     public BlockWrap(byte[] blockbyte, NetworkParameters params) {
         super();
         this.params = params;
         block = params.getDefaultSerializer().makeBlock(blockbyte);
 
     }
-    //Used for spark 
+    
+    //Used in Spark 
     private void readObject(ObjectInputStream aInputStream) throws ClassNotFoundException, IOException {
         int length = aInputStream.readInt();
         byte[] dataRead = new byte[length];
@@ -48,7 +49,8 @@ public class BlockWrap implements Serializable {
             params = UnitTestParams.get();
         block = params.getDefaultSerializer().makeBlock(dataRead);
     }
-    //Used for spark 
+    
+    //Used in Spark 
     private void writeObject(ObjectOutputStream aOutputStream) throws IOException {
 
         byte[] a = block.bitcoinSerialize();

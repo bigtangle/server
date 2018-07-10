@@ -18,17 +18,17 @@ public class OrderPublish implements java.io.Serializable {
 
     private static final long serialVersionUID = 190060684620430983L;
 
-    private String orderid;
+    private String orderId;
 
     private String address;
 
-    private String tokenid;
+    private String tokenId;
 
     private int type;
 
-    private Date validateto;
+    private Date validateTo;
 
-    private Date validatefrom;
+    private Date validateFrom;
 
     private int state;
 
@@ -62,12 +62,12 @@ public class OrderPublish implements java.io.Serializable {
         this.amount = amount;
     }
 
-    public String getOrderid() {
-        return orderid;
+    public String getOrderId() {
+        return orderId;
     }
 
-    public void setOrderid(String orderid) {
-        this.orderid = orderid;
+    public void setOrderId(String orderId) {
+        this.orderId = orderId;
     }
 
     public String getAddress() {
@@ -78,12 +78,12 @@ public class OrderPublish implements java.io.Serializable {
         this.address = address;
     }
 
-    public String getTokenid() {
-        return tokenid;
+    public String getTokenId() {
+        return tokenId;
     }
 
-    public void setTokenid(String tokenid) {
-        this.tokenid = tokenid;
+    public void setTokenId(String tokenId) {
+        this.tokenId = tokenId;
     }
 
     public int getType() {
@@ -94,20 +94,20 @@ public class OrderPublish implements java.io.Serializable {
         this.type = type;
     }
 
-    public Date getValidateto() {
-        return validateto;
+    public Date getValidateTo() {
+        return validateTo;
     }
 
-    public void setValidateto(Date validateto) {
-        this.validateto = validateto;
+    public void setValidateTo(Date validateTo) {
+        this.validateTo = validateTo;
     }
 
-    public Date getValidatefrom() {
-        return validatefrom;
+    public Date getValidateFrom() {
+        return validateFrom;
     }
 
-    public void setValidatefrom(Date validatefrom) {
-        this.validatefrom = validatefrom;
+    public void setValidateFrom(Date validateFrom) {
+        this.validateFrom = validateFrom;
     }
 
     public int getState() {
@@ -120,12 +120,12 @@ public class OrderPublish implements java.io.Serializable {
 
     public OrderPublish(String address, String tokenid, int type, Date validateto, Date validatefrom, 
             long price, long amount, String market) {
-        this.orderid = UUIDUtil.randomUUID();
+        this.orderId = UUIDUtil.randomUUID();
         this.address = address;
-        this.tokenid = tokenid;
+        this.tokenId = tokenid;
         this.type = type;
-        this.validateto = validateto;
-        this.validatefrom = validatefrom;
+        this.validateTo = validateto;
+        this.validateFrom = validatefrom;
         this.state = OrderState.publish.ordinal();
         this.price = price;
         this.amount = amount;

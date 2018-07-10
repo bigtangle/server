@@ -5,40 +5,10 @@
 
 package net.bigtangle.core;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
-import com.google.common.primitives.Ints;
-import com.google.common.primitives.UnsignedBytes;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
-import net.bigtangle.crypto.*;
-import net.bigtangle.wallet.Protos;
-import net.bigtangle.wallet.Wallet;
-
-import org.bitcoin.NativeSecp256k1;
-import org.bitcoin.NativeSecp256k1Util;
-import org.bitcoin.Secp256k1Context;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.spongycastle.asn1.*;
-import org.spongycastle.asn1.x9.X9ECParameters;
-import org.spongycastle.asn1.x9.X9IntegerConverter;
-import org.spongycastle.crypto.AsymmetricCipherKeyPair;
-import org.spongycastle.crypto.digests.SHA256Digest;
-import org.spongycastle.crypto.ec.CustomNamedCurves;
-import org.spongycastle.crypto.generators.ECKeyPairGenerator;
-import org.spongycastle.crypto.params.*;
-import org.spongycastle.crypto.signers.ECDSASigner;
-import org.spongycastle.crypto.signers.HMacDSAKCalculator;
-import org.spongycastle.math.ec.ECAlgorithms;
-import org.spongycastle.math.ec.ECPoint;
-import org.spongycastle.math.ec.FixedPointCombMultiplier;
-import org.spongycastle.math.ec.FixedPointUtil;
-import org.spongycastle.math.ec.custom.sec.SecP256K1Curve;
-import org.spongycastle.util.encoders.Base64;
-
-import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -48,7 +18,58 @@ import java.security.SignatureException;
 import java.util.Arrays;
 import java.util.Comparator;
 
-import static com.google.common.base.Preconditions.*;
+import javax.annotation.Nullable;
+
+import org.bitcoin.NativeSecp256k1;
+import org.bitcoin.NativeSecp256k1Util;
+import org.bitcoin.Secp256k1Context;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.spongycastle.asn1.ASN1InputStream;
+import org.spongycastle.asn1.ASN1Integer;
+import org.spongycastle.asn1.ASN1OctetString;
+import org.spongycastle.asn1.ASN1TaggedObject;
+import org.spongycastle.asn1.DERBitString;
+import org.spongycastle.asn1.DEROctetString;
+import org.spongycastle.asn1.DERSequenceGenerator;
+import org.spongycastle.asn1.DERTaggedObject;
+import org.spongycastle.asn1.DLSequence;
+import org.spongycastle.asn1.x9.X9ECParameters;
+import org.spongycastle.asn1.x9.X9IntegerConverter;
+import org.spongycastle.crypto.AsymmetricCipherKeyPair;
+import org.spongycastle.crypto.digests.SHA256Digest;
+import org.spongycastle.crypto.ec.CustomNamedCurves;
+import org.spongycastle.crypto.generators.ECKeyPairGenerator;
+import org.spongycastle.crypto.params.ECDomainParameters;
+import org.spongycastle.crypto.params.ECKeyGenerationParameters;
+import org.spongycastle.crypto.params.ECPrivateKeyParameters;
+import org.spongycastle.crypto.params.ECPublicKeyParameters;
+import org.spongycastle.crypto.params.KeyParameter;
+import org.spongycastle.crypto.signers.ECDSASigner;
+import org.spongycastle.crypto.signers.HMacDSAKCalculator;
+import org.spongycastle.math.ec.ECAlgorithms;
+import org.spongycastle.math.ec.ECPoint;
+import org.spongycastle.math.ec.FixedPointCombMultiplier;
+import org.spongycastle.math.ec.FixedPointUtil;
+import org.spongycastle.math.ec.custom.sec.SecP256K1Curve;
+import org.spongycastle.util.encoders.Base64;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.MoreObjects;
+import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
+import com.google.common.primitives.Ints;
+import com.google.common.primitives.UnsignedBytes;
+
+import net.bigtangle.crypto.EncryptableItem;
+import net.bigtangle.crypto.EncryptedData;
+import net.bigtangle.crypto.KeyCrypter;
+import net.bigtangle.crypto.KeyCrypterException;
+import net.bigtangle.crypto.LazyECPoint;
+import net.bigtangle.crypto.LinuxSecureRandom;
+import net.bigtangle.crypto.TransactionSignature;
+import net.bigtangle.wallet.Protos;
+import net.bigtangle.wallet.Wallet;
 
 // TODO: Move this class to tracking compression state itself.
 // The Bouncy Castle developers are deprecating their own tracking of the compression state.

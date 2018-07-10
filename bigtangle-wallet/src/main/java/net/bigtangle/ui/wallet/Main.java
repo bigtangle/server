@@ -299,7 +299,7 @@ public class Main extends Application {
         byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Main.params.getDefaultSerializer().makeBlock(data);
-        block.setBlocktype(NetworkParameters.BLOCKTYPE_USERDATA);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_USERDATA);
         KeyParameter aesKey = null;
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
@@ -318,13 +318,13 @@ public class Main extends Application {
         Contact contact = new Contact();
         contact.setName(name);
         contact.setAddress(address);
-        ContactInfo contactInfo = (ContactInfo) getUserdata(DataClassName.ContactInfo.name());
+        ContactInfo contactInfo = (ContactInfo) getUserdata(DataClassName.CONTACTINFO.name());
 
         List<Contact> list = contactInfo.getContactList();
         list.add(contact);
         contactInfo.setContactList(list);
 
-        coinbase.setDataclassname(DataClassName.ContactInfo.name());
+        coinbase.setDataClassName(DataClassName.CONTACTINFO.name());
         coinbase.setData(contactInfo.toByteArray());
 
         Sha256Hash sighash = coinbase.getHash();
@@ -338,7 +338,7 @@ public class Main extends Application {
         multiSignBy0.setPublickey(Utils.HEX.encode(pubKeyTo.getPubKey()));
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
-        coinbase.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        coinbase.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
         block.addTransaction(coinbase);
         block.solve();
@@ -360,7 +360,7 @@ public class Main extends Application {
     public static List<String> initAddress4block() throws Exception {
 
         List<String> addressList = new ArrayList<String>();
-        ContactInfo contactInfo = (ContactInfo) getUserdata(DataClassName.ContactInfo.name());
+        ContactInfo contactInfo = (ContactInfo) getUserdata(DataClassName.CONTACTINFO.name());
 
         List<Contact> list = contactInfo.getContactList();
         for (Contact contact : list) {
@@ -474,11 +474,11 @@ public class Main extends Application {
         // s.append(" difficulty target (nBits):
         // ").append(difficultyTarget).append("\n");
         s.append("   " + Main.getText("nonce") + ": ").append(block.getNonce()).append("\n");
-        if (block.getMineraddress() != null)
-            s.append("   " + Main.getText("mineraddress") + ": ").append(new Address(params, block.getMineraddress()))
+        if (block.getMinerAddress() != null)
+            s.append("   " + Main.getText("mineraddress") + ": ").append(new Address(params, block.getMinerAddress()))
                     .append("\n");
 
-        s.append("   " + Main.getText("blocktype") + ": ").append(block.getBlocktype()).append("\n");
+        s.append("   " + Main.getText("blocktype") + ": ").append(block.getBlockType()).append("\n");
 
         return s.toString();
 
@@ -717,7 +717,7 @@ public class Main extends Application {
         }
         for (Map<String, Object> object : outputs) {
             UTXO utxo = MapToBeanMapperUtil.parseUTXO(object);
-            if (!utxo.getTokenid().equals(tokenid)) {
+            if (!utxo.getTokenId().equals(tokenid)) {
                 continue;
             }
             if (utxo.getValue().getValue() > 0) {
@@ -789,7 +789,7 @@ public class Main extends Application {
         requestParam.put("dataclassname", type);
         byte[] bytes = OkHttp3Util.post(CONTEXT_ROOT + "getUserData",
                 Json.jsonmapper().writeValueAsString(requestParam));
-        if (DataClassName.ContactInfo.name().equals(type)) {
+        if (DataClassName.CONTACTINFO.name().equals(type)) {
             if (bytes == null || bytes.length == 0) {
                 return new ContactInfo();
             }

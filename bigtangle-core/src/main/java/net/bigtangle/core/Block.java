@@ -25,7 +25,6 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
@@ -110,12 +109,12 @@ public class Block extends Message {
 
     private Sha256Hash merkleRoot;
     private long time;
-    // private long difficultyTarget; // "nBits"
     private long nonce;
+    
     // Utils.sha256hash160
-    private byte[] mineraddress;
+    private byte[] minerAddress;
 
-    private long blocktype;
+    private long blockType;
 
     // If NetworkParameters.USE_EQUIHASH, this field will contain the PoW
     // solution
@@ -163,8 +162,8 @@ public class Block extends Message {
         this.prevBlockHash = prevBlockHash;
         this.prevBranchBlockHash = prevBranchBlockHash;
 
-        this.blocktype = blocktype;
-        mineraddress = new byte[20];
+        this.blockType = blocktype;
+        minerAddress = new byte[20];
         length = HEADER_SIZE;
         this.transactions = new ArrayList<>();
     }
@@ -320,8 +319,8 @@ public class Block extends Message {
         time = readUint32();
         // difficultyTarget = readUint32();
         nonce = readUint32();
-        mineraddress = readBytes(20);
-        blocktype = readUint32();
+        minerAddress = readBytes(20);
+        blockType = readUint32();
 
         hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(payload, offset, cursor - offset));
         headerBytesValid = serializer.isParseRetainMode();
@@ -359,9 +358,9 @@ public class Block extends Message {
         Utils.uint32ToByteStreamLE(time, stream);
         // Utils.uint32ToByteStreamLE(difficultyTarget, stream);
         Utils.uint32ToByteStreamLE(nonce, stream);
-        stream.write(mineraddress);
+        stream.write(minerAddress);
 
-        Utils.uint32ToByteStreamLE(blocktype, stream);
+        Utils.uint32ToByteStreamLE(blockType, stream);
     }
 
     void writePoW(OutputStream stream) throws IOException {
@@ -580,10 +579,10 @@ public class Block extends Message {
         block.version = version;
         block.time = time;
         // block.difficultyTarget = difficultyTarget
-        block.mineraddress = mineraddress;
+        block.minerAddress = minerAddress;
         block.equihashProof = equihashProof;
 
-        block.blocktype = blocktype;
+        block.blockType = blockType;
         block.transactions = null;
         block.hash = getHash();
     }
@@ -611,10 +610,10 @@ public class Block extends Message {
         // s.append(" difficulty target (nBits):
         // ").append(difficultyTarget).append("\n");
         s.append("   nonce: ").append(nonce).append("\n");
-        if (mineraddress != null)
-            s.append("   mineraddress: ").append(new Address(params, mineraddress)).append("\n");
+        if (minerAddress != null)
+            s.append("   mineraddress: ").append(new Address(params, minerAddress)).append("\n");
 
-        s.append("   blocktype: ").append(blocktype).append("\n");
+        s.append("   blocktype: ").append(blockType).append("\n");
 
         return s.toString();
     }
@@ -816,13 +815,13 @@ public class Block extends Message {
      */
     public void checkTransactionSolidity(final long height) throws VerificationException {
         // The transactions must adhere to their block type rules
-        if (blocktype == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
+        if (blockType == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
             if (transactions.size() != 1)
                 throw new VerificationException("Too many or too few transactions for token creation.");
 
             if (!transactions.get(0).isCoinBase())
                 throw new VerificationException("TX is not coinbase when it should be.");
-        } else if (blocktype == NetworkParameters.BLOCKTYPE_REWARD) {
+        } else if (blockType == NetworkParameters.BLOCKTYPE_REWARD) {
             if (transactions.size() != 1)
                 throw new VerificationException("Too many or too few transactions for token creation.");
 
@@ -839,11 +838,11 @@ public class Block extends Message {
             } catch (ArrayIndexOutOfBoundsException e) {
                 throw new VerificationException(e);
             }
-        } else if ((blocktype == NetworkParameters.BLOCKTYPE_TRANSFER)
-                || (blocktype == NetworkParameters.BLOCKTYPE_USERDATA) || (blocktype == NetworkParameters.BLOCKTYPE_VOS)
-                || (blocktype == NetworkParameters.BLOCKTYPE_GOVERNANCE)
-                || (blocktype == NetworkParameters.BLOCKTYPE_FILE)
-                || (blocktype == NetworkParameters.BLOCKTYPE_VOS_EXECUTE)) {
+        } else if ((blockType == NetworkParameters.BLOCKTYPE_TRANSFER)
+                || (blockType == NetworkParameters.BLOCKTYPE_USERDATA) || (blockType == NetworkParameters.BLOCKTYPE_VOS)
+                || (blockType == NetworkParameters.BLOCKTYPE_GOVERNANCE)
+                || (blockType == NetworkParameters.BLOCKTYPE_FILE)
+                || (blockType == NetworkParameters.BLOCKTYPE_VOS_EXECUTE)) {
             for (Transaction tx : transactions)
                 if (tx.isCoinBase())
                     throw new VerificationException("TX is coinbase when it should not be.");
@@ -905,8 +904,8 @@ public class Block extends Message {
             if (!allowCoinbaseTransaction() && transaction.isCoinBase()) {
                 throw new VerificationException("Coinbase Transaction is not allowed for this block type");
             }
-            if (blocktype != NetworkParameters.BLOCKTYPE_USERDATA && blocktype != NetworkParameters.BLOCKTYPE_VOS
-                    && blocktype != NetworkParameters.BLOCKTYPE_VOS_EXECUTE) {
+            if (blockType != NetworkParameters.BLOCKTYPE_USERDATA && blockType != NetworkParameters.BLOCKTYPE_VOS
+                    && blockType != NetworkParameters.BLOCKTYPE_VOS_EXECUTE) {
                 transaction.verify();
             }
         }
@@ -1091,7 +1090,7 @@ public class Block extends Message {
         Transaction coinbase = new Transaction(params);
 
         coinbase.setData(data);
-        coinbase.setDataclassname(dataClassName.name());
+        coinbase.setDataClassName(dataClassName.name());
 
         // coinbase.tokenid = value.tokenid;
         final ScriptBuilder inputBuilder = new ScriptBuilder();
@@ -1129,7 +1128,7 @@ public class Block extends Message {
         byteBuffer.putInt(data.length);
         byteBuffer.put(data);
         coinbase.setData(byteBuffer.array());
-        coinbase.setDataclassname(dataClassName.name());
+        coinbase.setDataClassName(dataClassName.name());
 
         // coinbase.tokenid = value.tokenid;
         final ScriptBuilder inputBuilder = new ScriptBuilder();
@@ -1160,7 +1159,7 @@ public class Block extends Message {
 
         Transaction coinbase = new Transaction(params);
         if (tokenInfo != null) {
-            coinbase.setDataclassname(DataClassName.TOKEN.name());
+            coinbase.setDataClassName(DataClassName.TOKEN.name());
             byte[] buf = tokenInfo.toByteArray();
             coinbase.setData(buf);
         }
@@ -1214,9 +1213,9 @@ public class Block extends Message {
     public static final byte[] EMPTY_BYTES = new byte[32];
 
     public boolean allowCoinbaseTransaction() {
-        return blocktype == NetworkParameters.BLOCKTYPE_INITIAL
-                || blocktype == NetworkParameters.BLOCKTYPE_TOKEN_CREATION
-                || blocktype == NetworkParameters.BLOCKTYPE_REWARD;
+        return blockType == NetworkParameters.BLOCKTYPE_INITIAL
+                || blockType == NetworkParameters.BLOCKTYPE_TOKEN_CREATION
+                || blockType == NetworkParameters.BLOCKTYPE_REWARD;
     }
 
     private static Random gen = new Random();
@@ -1241,7 +1240,7 @@ public class Block extends Message {
         // approved blocks to be the same
         b.setNonce(gen.nextLong());
 
-        b.setMineraddress(mineraddress);
+        b.setMinerAddress(mineraddress);
         if (to != null) {
             // Add a transaction paying 50 coins to the "to" address.
             Transaction t = new Transaction(params);
@@ -1299,23 +1298,23 @@ public class Block extends Message {
     }
 
 
-    public byte[] getMineraddress() {
-        return mineraddress;
+    public byte[] getMinerAddress() {
+        return minerAddress;
     }
 
-    public void setMineraddress(byte[] mineraddress) {
+    public void setMinerAddress(byte[] mineraddress) {
         unCacheHeader();
-        this.mineraddress = mineraddress;
+        this.minerAddress = mineraddress;
         this.hash = null;
     }
 
-    public long getBlocktype() {
-        return blocktype;
+    public long getBlockType() {
+        return blockType;
     }
 
-    public void setBlocktype(long blocktype) {
+    public void setBlockType(long blocktype) {
         unCacheHeader();
-        this.blocktype = blocktype;
+        this.blockType = blocktype;
         this.hash = null;
     }
 

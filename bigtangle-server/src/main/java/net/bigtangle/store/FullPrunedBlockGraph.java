@@ -363,32 +363,32 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Set milestone true and update latestMilestoneUpdateTime first to stop
         // infinite recursions
-        blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockhash(), true);
+        blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), true);
 
         // Connect all approved blocks first (check if actually needed)
         addBlockToMilestone(block.getPrevBlockHash());
         addBlockToMilestone(block.getPrevBranchBlockHash());
 
         // For rewards, update reward db
-        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD) {
+        if (block.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD) {
             blockStore.updateTxRewardConfirmed(block.getHash(), true);
         }
 
         // For token creations, update token db
-        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
+        if (block.getBlockType() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
             Transaction tx = block.getTransactions().get(0);
             if (tx.getData() != null) {
                 byte[] buf = tx.getData();
                 TokenInfo tokenInfo = new TokenInfo().parse(buf);
                 this.synchronizationToken(tokenInfo);
             }
-        } else if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_USERDATA
-                || block.getBlocktype() == NetworkParameters.BLOCKTYPE_VOS) {
+        } else if (block.getBlockType() == NetworkParameters.BLOCKTYPE_USERDATA
+                || block.getBlockType() == NetworkParameters.BLOCKTYPE_VOS) {
             Transaction tx = block.getTransactions().get(0);
-            if (tx.getData() != null && tx.getDatasignature() != null) {
+            if (tx.getData() != null && tx.getDataSignature() != null) {
                 try {
                     @SuppressWarnings("unchecked")
-                    List<HashMap<String, Object>> multiSignBies = Json.jsonmapper().readValue(tx.getDatasignature(),
+                    List<HashMap<String, Object>> multiSignBies = Json.jsonmapper().readValue(tx.getDataSignature(),
                             List.class);
                     Map<String, Object> multiSignBy = multiSignBies.get(0);
                     byte[] pubKey = Utils.HEX.decode((String) multiSignBy.get("publickey"));
@@ -398,18 +398,18 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     if (!success) {
                         throw new BlockStoreException("multisign signature error");
                     }
-                    this.synchronizationUserData(block.getHash(), DataClassName.valueOf(tx.getDataclassname()),
-                            tx.getData(), (String) multiSignBy.get("publickey"), block.getBlocktype());
+                    this.synchronizationUserData(block.getHash(), DataClassName.valueOf(tx.getDataClassName()),
+                            tx.getData(), (String) multiSignBy.get("publickey"), block.getBlockType());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-        } else if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_VOS_EXECUTE) {
+        } else if (block.getBlockType() == NetworkParameters.BLOCKTYPE_VOS_EXECUTE) {
             Transaction tx = block.getTransactions().get(0);
-            if (tx.getData() != null && tx.getDatasignature() != null) {
+            if (tx.getData() != null && tx.getDataSignature() != null) {
                 try {
                     @SuppressWarnings("unchecked")
-                    List<HashMap<String, Object>> multiSignBies = Json.jsonmapper().readValue(tx.getDatasignature(),
+                    List<HashMap<String, Object>> multiSignBies = Json.jsonmapper().readValue(tx.getDataSignature(),
                             List.class);
                     Map<String, Object> multiSignBy = multiSignBies.get(0);
                     byte[] pubKey = Utils.HEX.decode((String) multiSignBy.get("publickey"));
@@ -449,12 +449,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     public void removeTransactionsFromMilestone(Block block) throws BlockStoreException {
 
         // For rewards, update reward db
-        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD) {
+        if (block.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD) {
             blockStore.updateTxRewardConfirmed(block.getHash(), false);
         }
 
         // For token creations, update token db
-        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
+        if (block.getBlockType() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
             // TODO revert token db changes here (revert
             // synchronizationToken(TokenInfo))
             // TODO unsolidify other issuances of this public key?
@@ -514,10 +514,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             return;
 
         // Set milestone false and update latestMilestoneUpdateTime
-        blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockhash(), false);
+        blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), false);
 
         // Disconnect all approver blocks first
-        for (Sha256Hash approver : blockStore.getSolidApproverBlockHashes(blockEvaluation.getBlockhash())) {
+        for (Sha256Hash approver : blockStore.getSolidApproverBlockHashes(blockEvaluation.getBlockHash())) {
             removeBlockFromMilestone(approver);
         }
 
@@ -529,7 +529,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     private void removeUTXOs(Transaction tx, Block parentBlock) throws BlockStoreException {
         for (TransactionOutput txout : tx.getOutputs()) {
             if (blockStore.getTransactionOutput(tx.getHash(), txout.getIndex()).isSpent()) {
-                removeBlockFromMilestone(blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()).getBlockhash());
+                removeBlockFromMilestone(blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()).getBlockHash());
                 blockStore.updateTransactionOutputSpent(tx.getHash(), txout.getIndex(), false, null);
                 blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), txout.getIndex(),
                         parentBlock.getHash());
@@ -629,7 +629,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
 
         // Check reward block specific solidity
-        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD) {
+        if (block.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD) {
             // Open reward interval must be this one to be solid
             try {
                 long prevFromHeight = blockStore.getMaxPrevTxRewardHeight();
@@ -648,13 +648,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
 
         // Check genesis block specific validity, can only one genesis block
-        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_INITIAL) {
+        if (block.getBlockType() == NetworkParameters.BLOCKTYPE_INITIAL) {
             if (block.getHash() != networkParameters.getGenesisBlock().getHash()) {
                 return false;
             }
         }
         // Check issuance block specific validity
-        if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
+        if (block.getBlockType() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
             try {
                 if (!this.multiSignService.checkMultiSignPre(block,   allowConflicts)) {
                     return false;

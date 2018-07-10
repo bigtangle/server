@@ -461,19 +461,19 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(INSERT_ORDERPUBLISH_SQL);
-            preparedStatement.setString(1, orderPublish.getOrderid());
+            preparedStatement.setString(1, orderPublish.getOrderId());
             preparedStatement.setString(2, orderPublish.getAddress());
-            preparedStatement.setString(3, orderPublish.getTokenid());
+            preparedStatement.setString(3, orderPublish.getTokenId());
             preparedStatement.setInt(4, orderPublish.getType());
-            if (orderPublish.getValidateto() == null) {
+            if (orderPublish.getValidateTo() == null) {
                 preparedStatement.setDate(5, null);
             } else {
-                preparedStatement.setDate(5, new Date(orderPublish.getValidateto().getTime()));
+                preparedStatement.setDate(5, new Date(orderPublish.getValidateTo().getTime()));
             }
-            if (orderPublish.getValidatefrom() == null) {
+            if (orderPublish.getValidateFrom() == null) {
                 preparedStatement.setDate(6, null);
             } else {
-                preparedStatement.setDate(6, new Date(orderPublish.getValidatefrom().getTime()));
+                preparedStatement.setDate(6, new Date(orderPublish.getValidateFrom().getTime()));
             }
             preparedStatement.setLong(7, orderPublish.getPrice());
             preparedStatement.setLong(8, orderPublish.getAmount());
@@ -513,15 +513,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 OrderPublish orderPublish = new OrderPublish();
-                orderPublish.setOrderid(resultSet.getString("orderid"));
+                orderPublish.setOrderId(resultSet.getString("orderid"));
                 orderPublish.setAddress(resultSet.getString("address"));
-                orderPublish.setTokenid(resultSet.getString("tokenid"));
+                orderPublish.setTokenId(resultSet.getString("tokenid"));
                 orderPublish.setType(resultSet.getInt("type"));
                 orderPublish.setPrice(resultSet.getLong("price"));
                 orderPublish.setAmount(resultSet.getLong("amount"));
                 orderPublish.setState(resultSet.getInt("state"));
-                orderPublish.setValidateto(resultSet.getDate("validateto"));
-                orderPublish.setValidatefrom(resultSet.getDate("validatefrom"));
+                orderPublish.setValidateTo(resultSet.getDate("validateto"));
+                orderPublish.setValidateFrom(resultSet.getDate("validatefrom"));
                 orderPublish.setMarket(resultSet.getString("market"));
                 list.add(orderPublish);
             }
@@ -682,15 +682,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 return null;
             }
             OrderPublish orderPublish = new OrderPublish();
-            orderPublish.setOrderid(resultSet.getString("orderid"));
+            orderPublish.setOrderId(resultSet.getString("orderid"));
             orderPublish.setAddress(resultSet.getString("address"));
-            orderPublish.setTokenid(resultSet.getString("tokenid"));
+            orderPublish.setTokenId(resultSet.getString("tokenid"));
             orderPublish.setType(resultSet.getInt("type"));
             orderPublish.setPrice(resultSet.getLong("price"));
             orderPublish.setAmount(resultSet.getLong("amount"));
             orderPublish.setState(resultSet.getInt("state"));
-            orderPublish.setValidateto(resultSet.getDate("validateto"));
-            orderPublish.setValidatefrom(resultSet.getDate("validatefrom"));
+            orderPublish.setValidateTo(resultSet.getDate("validateto"));
+            orderPublish.setValidateFrom(resultSet.getDate("validatefrom"));
             orderPublish.setMarket(resultSet.getString("market"));
             return orderPublish;
         } catch (SQLException ex) {
@@ -780,15 +780,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 OrderPublish orderPublish = new OrderPublish();
-                orderPublish.setOrderid(resultSet.getString("orderid"));
+                orderPublish.setOrderId(resultSet.getString("orderid"));
                 orderPublish.setAddress(resultSet.getString("address"));
-                orderPublish.setTokenid(resultSet.getString("tokenid"));
+                orderPublish.setTokenId(resultSet.getString("tokenid"));
                 orderPublish.setType(resultSet.getInt("type"));
                 orderPublish.setPrice(resultSet.getLong("price"));
                 orderPublish.setAmount(resultSet.getLong("amount"));
                 orderPublish.setState(resultSet.getInt("state"));
-                orderPublish.setValidateto(resultSet.getDate("validateto"));
-                orderPublish.setValidatefrom(resultSet.getDate("validatefrom"));
+                orderPublish.setValidateTo(resultSet.getDate("validateto"));
+                orderPublish.setValidateFrom(resultSet.getDate("validatefrom"));
                 orderPublish.setMarket(resultSet.getString("market"));
                 list.add(orderPublish);
             }
@@ -902,15 +902,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 OrderPublish orderPublish = new OrderPublish();
-                orderPublish.setOrderid(resultSet.getString("orderid"));
+                orderPublish.setOrderId(resultSet.getString("orderid"));
                 orderPublish.setAddress(resultSet.getString("address"));
-                orderPublish.setTokenid(resultSet.getString("tokenid"));
+                orderPublish.setTokenId(resultSet.getString("tokenid"));
                 orderPublish.setType(resultSet.getInt("type"));
                 orderPublish.setPrice(resultSet.getLong("price"));
                 orderPublish.setAmount(resultSet.getLong("amount"));
                 orderPublish.setState(resultSet.getInt("state"));
-                orderPublish.setValidateto(resultSet.getDate("validateto"));
-                orderPublish.setValidatefrom(resultSet.getDate("validatefrom"));
+                orderPublish.setValidateTo(resultSet.getDate("validateto"));
+                orderPublish.setValidateFrom(resultSet.getDate("validatefrom"));
                 orderPublish.setMarket(resultSet.getString("market"));
                 list.add(orderPublish);
             }

@@ -63,12 +63,12 @@ public abstract class NetworkParameters {
     public static final byte[] DUMMY_TOKENID = HEX.decode("1111111111111111111111111111111111111111");
 
     // BLOCKTYPE
-    public static final long BLOCKTYPE_INITIAL = 0; // Genesis Block of system
-    public static final long BLOCKTYPE_TRANSFER = 1; // normal transfer of token
-    public static final long BLOCKTYPE_TOKEN_CREATION = 3; // custom token
-    public static final long BLOCKTYPE_REWARD = 2; // Reward of mining
+    public static final long BLOCKTYPE_INITIAL = 0; // Genesis block 
+    public static final long BLOCKTYPE_TRANSFER = 1; // Normal transfer of token
+    public static final long BLOCKTYPE_TOKEN_CREATION = 3; // Custom token issuance
+    public static final long BLOCKTYPE_REWARD = 2; // Rewards of mining
     public static final long BLOCKTYPE_USERDATA = 4; // user defined data
-    public static final long BLOCKTYPE_VOS = 5; // virtual operation system for using docker and kubernates
+    public static final long BLOCKTYPE_VOS = 5; // virtual operation system for using Docker and Kubernetes
     public static final long BLOCKTYPE_GOVERNANCE = 6; //  Governance of software update and community
     public static final long BLOCKTYPE_FILE = 7;
     public static final long BLOCKTYPE_VOS_EXECUTE = 8;
@@ -122,7 +122,7 @@ public abstract class NetworkParameters {
     protected transient MessageSerializer defaultSerializer = null;
 
     public static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
-    public static String testPiv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
+    public static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
     public static long testCoin=  1000000000000000l;
     protected NetworkParameters() {
     }

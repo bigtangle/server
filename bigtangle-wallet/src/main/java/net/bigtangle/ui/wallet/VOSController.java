@@ -197,7 +197,7 @@ public class VOSController {
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
-            block.setBlocktype(NetworkParameters.BLOCKTYPE_VOS);
+            block.setBlockType(NetworkParameters.BLOCKTYPE_VOS);
             KeyParameter aesKey = null;
             final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
             if (!"".equals(Main.password.trim())) {
@@ -213,7 +213,7 @@ public class VOSController {
             }
 
             Transaction coinbase = new Transaction(Main.params);
-            coinbase.setDataclassname(DataClassName.VOS.name());
+            coinbase.setDataClassName(DataClassName.VOS.name());
             coinbase.setData(vos.toByteArray());
 
             Sha256Hash sighash = coinbase.getHash();
@@ -226,7 +226,7 @@ public class VOSController {
             multiSignBy0.setPublickey(Utils.HEX.encode(pubKeyTo.getPubKey()));
             multiSignBy0.setSignature(Utils.HEX.encode(buf1));
             multiSignBies.add(multiSignBy0);
-            coinbase.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+            coinbase.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
             block.addTransaction(coinbase);
             block.solve();

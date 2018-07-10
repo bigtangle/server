@@ -204,10 +204,10 @@ public class Transaction extends ChildMessage {
     private byte[] data;
 
     @Nullable
-    private byte[] datasignature;
+    private byte[] dataSignature;
 
     @Nullable
-    private String dataclassname;
+    private String dataClassName;
 
     public Transaction(NetworkParameters params) {
         super(params);
@@ -289,8 +289,8 @@ public class Transaction extends ChildMessage {
 
     public int calculateDataSignatireLen() {
         int len = 4;
-        if (this.datasignature != null) {
-            len += this.datasignature.length;
+        if (this.dataSignature != null) {
+            len += this.dataSignature.length;
         }
         return len;
     }
@@ -613,7 +613,7 @@ public class Transaction extends ChildMessage {
 
         if (dataclassnameLen > 0) {
             byte[] buf = readBytes((int) dataclassnameLen);
-            this.dataclassname = new String(buf);
+            this.dataClassName = new String(buf);
             optimalEncodingMessageSize += dataclassnameLen;
         }
 
@@ -627,7 +627,7 @@ public class Transaction extends ChildMessage {
         len = readUint32();
         optimalEncodingMessageSize += 4;
         if (len > 0) {
-            this.datasignature = readBytes((int) len);
+            this.dataSignature = readBytes((int) len);
             optimalEncodingMessageSize += len;
         }
 
@@ -1210,11 +1210,11 @@ public class Transaction extends ChildMessage {
             uint32ToByteStreamLE(membyte.length, stream);
             stream.write(membyte);
         }
-        if (this.dataclassname == null) {
+        if (this.dataClassName == null) {
             uint32ToByteStreamLE(0L, stream);
         } else {
-            uint32ToByteStreamLE(this.dataclassname.length(), stream);
-            stream.write(this.dataclassname.getBytes());
+            uint32ToByteStreamLE(this.dataClassName.length(), stream);
+            stream.write(this.dataClassName.getBytes());
         }
 
         if (this.data == null) {
@@ -1224,11 +1224,11 @@ public class Transaction extends ChildMessage {
             stream.write(this.data);
         }
 
-        if (this.datasignature == null) {
+        if (this.dataSignature == null) {
             uint32ToByteStreamLE(0L, stream);
         } else {
-            uint32ToByteStreamLE(this.datasignature.length, stream);
-            stream.write(this.datasignature);
+            uint32ToByteStreamLE(this.dataSignature.length, stream);
+            stream.write(this.dataSignature);
         }
     }
 
@@ -1502,19 +1502,19 @@ public class Transaction extends ChildMessage {
         this.data = data;
     }
 
-    public byte[] getDatasignature() {
-        return datasignature;
+    public byte[] getDataSignature() {
+        return dataSignature;
     }
 
-    public void setDatasignature(byte[] datasignatire) {
-        this.datasignature = datasignatire;
+    public void setDataSignature(byte[] datasignatire) {
+        this.dataSignature = datasignatire;
     }
 
-    public String getDataclassname() {
-        return dataclassname;
+    public String getDataClassName() {
+        return dataClassName;
     }
 
-    public void setDataclassname(String dataclassname) {
-        this.dataclassname = dataclassname;
+    public void setDataClassName(String dataclassname) {
+        this.dataClassName = dataclassname;
     }
 }

@@ -794,9 +794,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setBoolean(4, false);
             s.setBytes(5, block.getPrevBlockHash().getBytes());
             s.setBytes(6, block.getPrevBranchBlockHash().getBytes());
-            s.setBytes(7, block.getMineraddress());
+            s.setBytes(7, block.getMinerAddress());
 
-            s.setLong(8, block.getBlocktype());
+            s.setLong(8, block.getBlockType());
             int j = 7;
             s.setLong(j + 2, blockEvaluation.getRating());
             s.setLong(j + 3, blockEvaluation.getDepth());
@@ -3346,9 +3346,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             preparedStatement = conn.get().prepareStatement(INSERT_OUTPUTSMULTI_SQL);
             preparedStatement.setBytes(1, outputsMulti.getHash().getBytes());
-            preparedStatement.setString(2, outputsMulti.getToaddress());
-            preparedStatement.setLong(3, outputsMulti.getOutputindex());
-            preparedStatement.setLong(4, outputsMulti.getMinimumsign());
+            preparedStatement.setString(2, outputsMulti.getToAddress());
+            preparedStatement.setLong(3, outputsMulti.getOutputIndex());
+            preparedStatement.setLong(4, outputsMulti.getMinimumSignCount());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))

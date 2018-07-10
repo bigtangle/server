@@ -18,7 +18,7 @@ public class BlockEvaluation implements Serializable{
 
 
     public String getBlockHexStr() {
-        return Utils.HEX.encode(this.blockhash.getBytes());
+        return Utils.HEX.encode(this.blockHash.getBytes());
     }
 
 	private BlockEvaluation() { 
@@ -34,7 +34,7 @@ public class BlockEvaluation implements Serializable{
 	        boolean solid, long height, boolean milestone, long milestoneLastUpdateTime,
 	        long milestoneDepth, long insertTime, boolean maintained, boolean validityAssessment) {
 		BlockEvaluation blockEvaluation = new BlockEvaluation();
-		blockEvaluation.setBlockhash(blockhash);
+		blockEvaluation.setBlockHash(blockhash);
 		blockEvaluation.setRating(rating);
 		blockEvaluation.setDepth(depth);
 		blockEvaluation.setCumulativeWeight(cumulativeWeight);
@@ -50,7 +50,7 @@ public class BlockEvaluation implements Serializable{
 	}
 
 	// hash of corresponding block
-	private Sha256Hash blockhash;
+	private Sha256Hash blockHash;
 	
 	// percentage of MCMC selected tips approving this block
 	private long rating;
@@ -85,12 +85,12 @@ public class BlockEvaluation implements Serializable{
     private boolean rewardValid;
 	
 
-	public Sha256Hash getBlockhash() {
-		return blockhash;
+	public Sha256Hash getBlockHash() {
+		return blockHash;
 	}
 
-	public void setBlockhash(Sha256Hash blockhash) {
-		this.blockhash = blockhash;
+	public void setBlockHash(Sha256Hash blockHash) {
+		this.blockHash = blockHash;
 	}
 
 	public long getRating() {
@@ -153,12 +153,12 @@ public class BlockEvaluation implements Serializable{
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        return getBlockhash().equals(((BlockEvaluation)o).getBlockhash());
+        return getBlockHash().equals(((BlockEvaluation)o).getBlockHash());
     }
 
     @Override
     public int hashCode() {
-        return getBlockhash().hashCode();
+        return getBlockHash().hashCode();
     }
 
     public long getMilestoneDepth() {

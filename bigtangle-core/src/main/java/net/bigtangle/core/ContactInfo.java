@@ -8,9 +8,6 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
 public class ContactInfo implements java.io.Serializable {
-    /**
-     * 
-     */
     private static final long serialVersionUID = -1965429530354669140L;
     private List<Contact> contactList = new ArrayList<Contact>();
 
