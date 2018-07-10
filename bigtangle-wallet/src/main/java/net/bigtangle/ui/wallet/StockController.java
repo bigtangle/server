@@ -450,21 +450,39 @@ public class StockController extends TokensController {
     }
 
     public void saveStock(ActionEvent event) {
-        ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
-        TokenInfo tokenInfo = new TokenInfo();
-        Tokens tokens = new Tokens(tokenid.getValue().trim(), stockName.getText().trim(),
-                stockDescription.getText().trim(), stockUrl.getText().trim(), 1, false, false, false);
-        tokenInfo.setTokens(tokens);
+        try {
+            ECKey outKey = null;
 
-        // add MultiSignAddress item
-        tokenInfo.getMultiSignAddresses()
-                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+            KeyParameter aesKey = null;
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            if (!"".equals(Main.password.trim())) {
+                aesKey = keyCrypter.deriveKey(Main.password);
+            }
+            List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
 
-        Coin basecoin = Coin.parseCoin(stockAmount.getText(), Utils.HEX.decode(tokenid.getValue()));
+            if (Main.bitcoin.wallet().isEncrypted()) {
+                outKey = issuedKeys.get(0);
+            } else {
+                outKey = Main.bitcoin.wallet().currentReceiveKey();
+            }
 
-        long amount = basecoin.getValue();
-        tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
-        saveToken(tokenInfo, basecoin, outKey);
+            TokenInfo tokenInfo = new TokenInfo();
+            Tokens tokens = new Tokens(tokenid.getValue().trim(), stockName.getText().trim(),
+                    stockDescription.getText().trim(), stockUrl.getText().trim(), 1, false, false, false);
+            tokenInfo.setTokens(tokens);
+
+            // add MultiSignAddress item
+            tokenInfo.getMultiSignAddresses()
+                    .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+
+            Coin basecoin = Coin.parseCoin(stockAmount.getText(), Utils.HEX.decode(tokenid.getValue()));
+
+            long amount = basecoin.getValue();
+            tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
+            saveToken(tokenInfo, basecoin, outKey);
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
     }
 
     public void saveToken(TokenInfo tokenInfo, Coin basecoin, ECKey outKey) {
@@ -516,44 +534,76 @@ public class StockController extends TokensController {
     }
 
     public void saveMarket(ActionEvent event) {
-        ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
+        try {
+            ECKey outKey = null;
 
-        TokenInfo tokenInfo = new TokenInfo();
-        Tokens tokens = new Tokens(marketid.getValue().trim(), marketName.getText().trim(),
-                marketDescription.getText().trim(), marketurl.getText(), 1, false, true, false);
-        tokenInfo.setTokens(tokens);
+            KeyParameter aesKey = null;
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            if (!"".equals(Main.password.trim())) {
+                aesKey = keyCrypter.deriveKey(Main.password);
+            }
+            List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
 
-        // add MultiSignAddress item
-        tokenInfo.getMultiSignAddresses()
-                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+            if (Main.bitcoin.wallet().isEncrypted()) {
+                outKey = issuedKeys.get(0);
+            } else {
+                outKey = Main.bitcoin.wallet().currentReceiveKey();
+            }
 
-        Coin basecoin = Coin.parseCoin("0", Utils.HEX.decode(marketid.getValue()));
+            TokenInfo tokenInfo = new TokenInfo();
+            Tokens tokens = new Tokens(marketid.getValue().trim(), marketName.getText().trim(),
+                    marketDescription.getText().trim(), marketurl.getText(), 1, false, true, false);
+            tokenInfo.setTokens(tokens);
 
-        long amount = basecoin.getValue();
-        tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
+            // add MultiSignAddress item
+            tokenInfo.getMultiSignAddresses()
+                    .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
-        saveToken(tokenInfo, basecoin, outKey);
+            Coin basecoin = Coin.parseCoin("0", Utils.HEX.decode(marketid.getValue()));
+
+            long amount = basecoin.getValue();
+            tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
+
+            saveToken(tokenInfo, basecoin, outKey);
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
 
     }
 
     public void saveMultiToken(ActionEvent event) {
-        ECKey outKey = Main.bitcoin.wallet().currentReceiveKey();
-        if (signnumberTF.getText() == null || signnumberTF.getText().trim().isEmpty()) {
-            GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
-            return;
-        }
-        if (!signnumberTF.getText().matches("[1-9]\\d*")) {
-            GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
-            return;
-        }
-        if (signnumberTF.getText() != null && !signnumberTF.getText().trim().isEmpty()
-                && signnumberTF.getText().matches("[1-9]\\d*")
-                && Long.parseLong(signnumberTF.getText().trim()) > signAddrChoiceBox.getItems().size()) {
-
-            GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
-            return;
-        }
         try {
+            ECKey outKey = null;
+
+            KeyParameter aesKey = null;
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            if (!"".equals(Main.password.trim())) {
+                aesKey = keyCrypter.deriveKey(Main.password);
+            }
+            List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
+
+            if (Main.bitcoin.wallet().isEncrypted()) {
+                outKey = issuedKeys.get(0);
+            } else {
+                outKey = Main.bitcoin.wallet().currentReceiveKey();
+            }
+
+            if (signnumberTF.getText() == null || signnumberTF.getText().trim().isEmpty()) {
+                GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
+                return;
+            }
+            if (!signnumberTF.getText().matches("[1-9]\\d*")) {
+                GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
+                return;
+            }
+            if (signnumberTF.getText() != null && !signnumberTF.getText().trim().isEmpty()
+                    && signnumberTF.getText().matches("[1-9]\\d*")
+                    && Long.parseLong(signnumberTF.getText().trim()) > signAddrChoiceBox.getItems().size()) {
+
+                GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
+                return;
+            }
+
             byte[] pubKey = outKey.getPubKey();
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
@@ -703,7 +753,14 @@ public class StockController extends TokensController {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Main.params.getDefaultSerializer().makeBlock(data);
         block.setBlocktype(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
-        ECKey key1 = Main.bitcoin.wallet().currentReceiveKey();
+        ECKey key1 = null;
+
+        if (Main.bitcoin.wallet().isEncrypted()) {
+            key1 = keys.get(0);
+        } else {
+            key1 = Main.bitcoin.wallet().currentReceiveKey();
+        }
+
         signAddrChoiceBox.getItems().add(key1.toAddress(Main.params).toBase58());
         List<ECKey> myEcKeys = new ArrayList<ECKey>();
         if (signAddrChoiceBox.getItems() != null && !signAddrChoiceBox.getItems().isEmpty()) {
@@ -757,7 +814,20 @@ public class StockController extends TokensController {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Main.params.getDefaultSerializer().makeBlock(data);
         block.setBlocktype(NetworkParameters.BLOCKTYPE_USERDATA);
-        ECKey pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+        ECKey pubKeyTo = null;
+
+        KeyParameter aesKey = null;
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
+        List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
+
+        if (Main.bitcoin.wallet().isEncrypted()) {
+            pubKeyTo = issuedKeys.get(0);
+        } else {
+            pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+        }
 
         Transaction coinbase = new Transaction(Main.params);
 
@@ -774,12 +844,6 @@ public class StockController extends TokensController {
         coinbase.setData(Main.tokenInfo.toByteArray());
 
         Sha256Hash sighash = coinbase.getHash();
-
-        KeyParameter aesKey = null;
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
-        if (!"".equals(Main.password.trim())) {
-            aesKey = keyCrypter.deriveKey(Main.password);
-        }
 
         ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash, aesKey);
         byte[] buf1 = party1Signature.encodeToDER();

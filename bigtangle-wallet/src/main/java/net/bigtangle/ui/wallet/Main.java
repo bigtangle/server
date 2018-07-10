@@ -300,7 +300,19 @@ public class Main extends Application {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Main.params.getDefaultSerializer().makeBlock(data);
         block.setBlocktype(NetworkParameters.BLOCKTYPE_USERDATA);
-        ECKey pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+        KeyParameter aesKey = null;
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
+        List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
+
+        ECKey pubKeyTo = null;
+        if (bitcoin.wallet().isEncrypted()) {
+            pubKeyTo = issuedKeys.get(0);
+        } else {
+            pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+        }
 
         Transaction coinbase = new Transaction(Main.params);
         Contact contact = new Contact();
@@ -316,11 +328,6 @@ public class Main extends Application {
         coinbase.setData(contactInfo.toByteArray());
 
         Sha256Hash sighash = coinbase.getHash();
-        KeyParameter aesKey = null;
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
-        if (!"".equals(Main.password.trim())) {
-            aesKey = keyCrypter.deriveKey(Main.password);
-        }
 
         ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash, aesKey);
         byte[] buf1 = party1Signature.encodeToDER();
