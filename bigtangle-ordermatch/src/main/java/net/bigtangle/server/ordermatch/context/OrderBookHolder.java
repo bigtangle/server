@@ -25,12 +25,12 @@ public class OrderBookHolder {
             ConcurrentHashMap<String, OrderBook> dataMap = new ConcurrentHashMap<String, OrderBook>();
             List<OrderPublish> orderPublishs = this.orderPublishService.getOrderPublishListWithNotMatch();
             for (OrderPublish order : orderPublishs) {
-                OrderBook orderBook = dataMap.get(order.getTokenid());
+                OrderBook orderBook = dataMap.get(order.getTokenId());
                 if (orderBook == null) {
                     orderBook = this.createOrderBook();
-                    this.addOrderBook(order.getTokenid(), orderBook);
+                    this.addOrderBook(order.getTokenId(), orderBook);
                 }
-                orderBook.enter(order.getOrderid(), order.getType() == 1 ? Side.SELL : Side.BUY, order.getPrice(),
+                orderBook.enter(order.getOrderId(), order.getType() == 1 ? Side.SELL : Side.BUY, order.getPrice(),
                         order.getAmount());
             }
             this.dataMap = dataMap;

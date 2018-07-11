@@ -77,25 +77,25 @@ public class ScheduleOrderMatchService {
                             // TODO Here's the change orders Jiang
                             // sell side will get the system coin as token
                             if (match.incomingSide == Side.BUY) {
-                                Exchange exchange = new Exchange(incomingOrder.getOrderid(), incomingOrder.getAddress(),
-                                        incomingOrder.getTokenid(), String.valueOf(match.executedQuantity),
-                                        restingOrder.getOrderid(), restingOrder.getAddress(),
+                                Exchange exchange = new Exchange(incomingOrder.getOrderId(), incomingOrder.getAddress(),
+                                        incomingOrder.getTokenId(), String.valueOf(match.executedQuantity),
+                                        restingOrder.getOrderId(), restingOrder.getAddress(),
                                         Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID),
                                         String.valueOf(match.executedQuantity * match.price / Coin.COIN_VALUE),
                                         new byte[0], incomingOrder.getMarket());
                                 this.store.saveExchange(exchange);
                             } else {
-                                Exchange exchange = new Exchange(restingOrder.getOrderid(), restingOrder.getAddress(),
-                                        restingOrder.getTokenid(), String.valueOf(match.executedQuantity),
-                                        incomingOrder.getOrderid(), incomingOrder.getAddress(),
+                                Exchange exchange = new Exchange(restingOrder.getOrderId(), restingOrder.getAddress(),
+                                        restingOrder.getTokenId(), String.valueOf(match.executedQuantity),
+                                        incomingOrder.getOrderId(), incomingOrder.getAddress(),
                                         Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID),
                                         String.valueOf(match.executedQuantity * match.price / Coin.COIN_VALUE),
                                         new byte[0], restingOrder.getMarket());
                                 // add exchange to store
                                 this.store.saveExchange(exchange);
                             }
-                            this.store.updateOrderPublishState(incomingOrder.getOrderid(), OrderState.match.ordinal());
-                            this.store.updateOrderPublishState(restingOrder.getOrderid(), OrderState.match.ordinal());
+                            this.store.updateOrderPublishState(incomingOrder.getOrderId(), OrderState.match.ordinal());
+                            this.store.updateOrderPublishState(restingOrder.getOrderId(), OrderState.match.ordinal());
                             iterator.remove();
                         } else {
                             // Add add = (Add) event;

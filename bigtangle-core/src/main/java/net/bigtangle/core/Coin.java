@@ -16,8 +16,7 @@ import com.google.common.primitives.Longs;
 import net.bigtangle.utils.MonetaryFormat;
 
 /**
- * Represents a monetary Coin value. This class is immutable. The coin is set to
- * minimal MILLICOIN for micro payment of machine.
+ * Represents a monetary Coin value. This class is immutable. 
  */
 public final class Coin implements Monetary, Comparable<Coin>, Serializable {
 

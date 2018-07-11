@@ -124,27 +124,27 @@ public class BlockService {
 
     public void updateSolid(BlockEvaluation blockEvaluation, boolean b) throws BlockStoreException {
         blockEvaluation.setSolid(b);
-        store.updateBlockEvaluationSolid(blockEvaluation.getBlockhash(), b);
+        store.updateBlockEvaluationSolid(blockEvaluation.getBlockHash(), b);
     }
 
     public void updateCumulativeWeight(BlockEvaluation blockEvaluation, long i) throws BlockStoreException {
         blockEvaluation.setCumulativeWeight(i);
-        store.updateBlockEvaluationCumulativeweight(blockEvaluation.getBlockhash(), i);
+        store.updateBlockEvaluationCumulativeweight(blockEvaluation.getBlockHash(), i);
     }
 
     public void updateDepth(BlockEvaluation blockEvaluation, long i) throws BlockStoreException {
         blockEvaluation.setDepth(i);
-        store.updateBlockEvaluationDepth(blockEvaluation.getBlockhash(), i);
+        store.updateBlockEvaluationDepth(blockEvaluation.getBlockHash(), i);
     }
 
     public void updateMilestoneDepth(BlockEvaluation blockEvaluation, long i) throws BlockStoreException {
         blockEvaluation.setMilestoneDepth(i);
-        store.updateBlockEvaluationMilestoneDepth(blockEvaluation.getBlockhash(), i);
+        store.updateBlockEvaluationMilestoneDepth(blockEvaluation.getBlockHash(), i);
     }
 
     public void updateRating(BlockEvaluation blockEvaluation, long i) throws BlockStoreException {
         blockEvaluation.setRating(i);
-        store.updateBlockEvaluationRating(blockEvaluation.getBlockhash(), i);
+        store.updateBlockEvaluationRating(blockEvaluation.getBlockHash(), i);
     }
 
     public void saveBinaryArrayToBlock(byte[] bytes) throws Exception {
@@ -239,7 +239,7 @@ public class BlockService {
      * @throws BlockStoreException
      */
     public void confirm(BlockEvaluation blockEvaluation) throws BlockStoreException {
-        blockgraph.addBlockToMilestone(blockEvaluation.getBlockhash());
+        blockgraph.addBlockToMilestone(blockEvaluation.getBlockHash());
     }
 
     /**
@@ -251,7 +251,7 @@ public class BlockService {
      * @throws BlockStoreException
      */
     public void unconfirm(BlockEvaluation blockEvaluation) throws BlockStoreException {
-        blockgraph.removeBlockFromMilestone(blockEvaluation.getBlockhash());
+        blockgraph.removeBlockFromMilestone(blockEvaluation.getBlockHash());
     }
 
     /**
@@ -303,7 +303,7 @@ public class BlockService {
 
         // Add this block and add all of its milestone approvers
         evaluations.add(evaluation);
-        for (Sha256Hash approverHash : getSolidApproverBlockHashes(evaluation.getBlockEvaluation().getBlockhash())) {
+        for (Sha256Hash approverHash : getSolidApproverBlockHashes(evaluation.getBlockEvaluation().getBlockHash())) {
             addMilestoneApproversTo(evaluations, store.getBlockWrap(approverHash));
         }
     }

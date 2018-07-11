@@ -36,18 +36,18 @@ public class ScheduleOrderRemoveService {
             logger.info("order publish remove start");
             List<OrderPublish> list = this.store.getOrderPublishListRemoveDaily(2);
             for (OrderPublish orderPublish : list) {
-                String tokenid = orderPublish.getTokenid();
+                String tokenid = orderPublish.getTokenId();
                 OrderBook orderBook = orderBookHolder.getOrderBookWithTokenId(tokenid);
                 synchronized (this) {
                     if (orderBook == null) {
                         orderBook = orderBookHolder.createOrderBook();
                         orderBookHolder.addOrderBook(tokenid, orderBook);
                     }
-                    orderBook.cancel(orderPublish.getOrderid(), 0);
+                    orderBook.cancel(orderPublish.getOrderId(), 0);
                 }
-                this.store.deleteOrderPublish(orderPublish.getOrderid());
-                this.store.deleteExchangeInfo(orderPublish.getOrderid());
-                this.store.deleteOrderMatch(orderPublish.getOrderid());
+                this.store.deleteOrderPublish(orderPublish.getOrderId());
+                this.store.deleteExchangeInfo(orderPublish.getOrderId());
+                this.store.deleteOrderMatch(orderPublish.getOrderId());
             }
         } catch (Exception e) {
             logger.error("order publish remove error", e);

@@ -36,9 +36,9 @@ public class UTXO {
     private boolean spent;
     private boolean confirmed;
     private boolean spendPending;
-    private String tokenid;
+    private String tokenId;
 
-    private long  minimumsign;;
+    private long  minimumsign;
     
     
     public boolean isMultiSig() {
@@ -46,17 +46,17 @@ public class UTXO {
     }
     
     
-    public String getTokenid() {
-        return tokenid;
+    public String getTokenId() {
+        return tokenId;
     }
 
-    public void setTokenid(String tokenid) {
-        this.tokenid = tokenid;
+    public void setTokenId(String tokenid) {
+        this.tokenId = tokenid;
     }
     
     @Transient 
     public byte[] getTokenidBuf() {
-        return Utils.HEX.decode(this.tokenid);
+        return Utils.HEX.decode(this.tokenId);
     }
 
     /**
@@ -88,7 +88,7 @@ public class UTXO {
         this.memo = memo;
         this.address = address;
         this.spent = spent;
-        this.tokenid = tokenid;
+        this.tokenId = tokenid;
         this.confirmed = confirmed;
         this.spendPending = spendPending;
         this.minimumsign=minimumsign;

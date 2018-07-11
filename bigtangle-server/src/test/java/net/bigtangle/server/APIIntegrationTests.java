@@ -379,7 +379,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlocktype(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
 
         String tokenid = Utils.HEX.encode(keys.get(0).getPubKeyHash());
         int amount = 100000000;
@@ -402,7 +402,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlocktype(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
         String tokenid = Utils.HEX.encode(keys.get(0).getPubKeyHash());
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
@@ -424,7 +424,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlocktype(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
         String tokenid = Utils.HEX.encode(keys.get(0).getPubKeyHash());
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
@@ -451,7 +451,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlocktype(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
         String tokenid = Utils.HEX.encode(keys.get(0).getPubKeyHash());
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
@@ -478,7 +478,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlocktype(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
         String tokenid = Utils.HEX.encode(keys.get(0).getPubKeyHash());
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
@@ -513,7 +513,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlocktype(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
         String tokenid = keys.get(0).getPublicKeyAsHex();
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
@@ -551,7 +551,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlocktype(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
         // Tokenid with keys.get(0) is already used in setup
         String tokenid = keys.get(5).getPublicKeyAsHex();
         int amount = 100000000;
@@ -593,10 +593,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
         Transaction transaction = block0.getTransactions().get(0);
         List<MultiSignBy> multiSignBies = null;
-        if (transaction.getDatasignature() == null) {
+        if (transaction.getDataSignature() == null) {
             multiSignBies = new ArrayList<MultiSignBy>();
         } else {
-            multiSignBies = Json.jsonmapper().readValue(transaction.getDatasignature(), List.class);
+            multiSignBies = Json.jsonmapper().readValue(transaction.getDataSignature(), List.class);
         }
         Sha256Hash sighash = transaction.getHash();
         ECKey.ECDSASignature party1Signature = keys.get(3).sign(sighash);
@@ -610,7 +610,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
 
-        transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
         resp = OkHttp3Util.post(contextRoot + "multiSign", block0.bitcoinSerialize());
 
         result2 = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -627,7 +627,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlocktype(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
 
         String tokenid = keys.get(5).getPublicKeyAsHex();
         int amount = 100000000;
@@ -669,10 +669,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
         Transaction transaction = block0.getTransactions().get(0);
         List<MultiSignBy> multiSignBies = null;
-        if (transaction.getDatasignature() == null) {
+        if (transaction.getDataSignature() == null) {
             multiSignBies = new ArrayList<MultiSignBy>();
         } else {
-            multiSignBies = Json.jsonmapper().readValue(transaction.getDatasignature(), List.class);
+            multiSignBies = Json.jsonmapper().readValue(transaction.getDataSignature(), List.class);
         }
         byte[] buf1 = new byte[] { (byte) 0, (byte) 1, (byte) 2, (byte) 3 };
 
@@ -684,7 +684,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
 
-        transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
         resp = OkHttp3Util.post(contextRoot + "multiSign", block0.bitcoinSerialize());
 
         result2 = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -701,7 +701,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlocktype(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
         String tokenid = keys.get(5).getPublicKeyAsHex();
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
@@ -742,10 +742,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
         Transaction transaction = block0.getTransactions().get(0);
         List<MultiSignBy> multiSignBies = null;
-        if (transaction.getDatasignature() == null) {
+        if (transaction.getDataSignature() == null) {
             multiSignBies = new ArrayList<MultiSignBy>();
         } else {
-            multiSignBies = Json.jsonmapper().readValue(transaction.getDatasignature(), List.class);
+            multiSignBies = Json.jsonmapper().readValue(transaction.getDataSignature(), List.class);
         }
         Sha256Hash sighash = transaction.getHash();
         ECKey.ECDSASignature party1Signature = keys.get(0).sign(sighash);
@@ -759,7 +759,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
 
-        transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
         resp = OkHttp3Util.post(contextRoot + "multiSign", block0.bitcoinSerialize());
 
         result2 = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -793,7 +793,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-            block.setBlocktype(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+            block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
             block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo);
 
             Transaction transaction = block.getTransactions().get(0);
@@ -810,7 +810,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
             multiSignBy0.setSignature(Utils.HEX.encode(buf1));
             multiSignBies.add(multiSignBy0);
-            transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+            transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
             // save block
             block.solve();
@@ -850,7 +850,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-            block.setBlocktype(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+            block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
             block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
             block.solve();
 
@@ -888,10 +888,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 Transaction transaction = block0.getTransactions().get(0);
 
                 List<MultiSignBy> multiSignBies = null;
-                if (transaction.getDatasignature() == null) {
+                if (transaction.getDataSignature() == null) {
                     multiSignBies = new ArrayList<MultiSignBy>();
                 } else {
-                    multiSignBies = Json.jsonmapper().readValue(transaction.getDatasignature(), List.class);
+                    multiSignBies = Json.jsonmapper().readValue(transaction.getDataSignature(), List.class);
                 }
                 Sha256Hash sighash = transaction.getHash();
                 ECKey.ECDSASignature party1Signature = ecKey.sign(sighash);
@@ -905,7 +905,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 multiSignBy0.setSignature(Utils.HEX.encode(buf1));
                 multiSignBies.add(multiSignBy0);
 
-                transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+                transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
                 resp = OkHttp3Util.post(contextRoot + "multiSign", block0.bitcoinSerialize());
                 System.out.println("resp : " + resp);
             }
@@ -950,7 +950,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlocktype(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
         block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
         block.solve();
 
@@ -978,10 +978,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             Transaction transaction = block0.getTransactions().get(0);
 
             List<MultiSignBy> multiSignBies = null;
-            if (transaction.getDatasignature() == null) {
+            if (transaction.getDataSignature() == null) {
                 multiSignBies = new ArrayList<MultiSignBy>();
             } else {
-                multiSignBies = Json.jsonmapper().readValue(transaction.getDatasignature(), List.class);
+                multiSignBies = Json.jsonmapper().readValue(transaction.getDataSignature(), List.class);
             }
             Sha256Hash sighash = transaction.getHash();
             ECKey.ECDSASignature party1Signature = ecKey.sign(sighash);
@@ -995,7 +995,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             multiSignBy0.setSignature(Utils.HEX.encode(buf1));
             multiSignBies.add(multiSignBy0);
 
-            transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+            transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
             checkResponse(OkHttp3Util.post(contextRoot + "multiSign", block0.bitcoinSerialize()));
 
         }
@@ -1078,7 +1078,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlocktype(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
         block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
         block.solve();
         // save block
@@ -1102,7 +1102,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         requestParam = new HashMap<String, String>();
         data = OkHttp3Util.post(contextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
         Block block_ = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlocktype(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
         block_.addCoinbaseTransaction(key4.getPubKey(), basecoin, updateTokenInfo);
         block_.solve();
         // save block

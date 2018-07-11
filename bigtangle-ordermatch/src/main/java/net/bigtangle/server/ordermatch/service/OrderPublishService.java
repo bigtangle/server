@@ -61,7 +61,7 @@ public class OrderPublishService {
                 orderBook = orderBookHolder.createOrderBook();
                 orderBookHolder.addOrderBook(tokenid, orderBook);
             }
-            orderBook.enter(order.getOrderid(), type == 1 ? Side.SELL : Side.BUY, price, amount);
+            orderBook.enter(order.getOrderId(), type == 1 ? Side.SELL : Side.BUY, price, amount);
         }
         return AbstractResponse.createEmptyResponse();
     }
@@ -73,7 +73,7 @@ public class OrderPublishService {
         byte[] buf = transaction.getData();
         String orderid = new String(buf);
         
-        List<HashMap<String, Object>> multiSignBies = Json.jsonmapper().readValue(transaction.getDatasignature(),
+        List<HashMap<String, Object>> multiSignBies = Json.jsonmapper().readValue(transaction.getDataSignature(),
                 List.class);
         Map<String, Object> multiSignBy = multiSignBies.get(0);
         byte[] pubKey = Utils.HEX.decode((String) multiSignBy.get("publickey"));
@@ -90,19 +90,19 @@ public class OrderPublishService {
             throw new BlockStoreException("order publish not found");
         }
         
-        String tokenid = orderPublish.getTokenid();
+        String tokenid = orderPublish.getTokenId();
         OrderBook orderBook = orderBookHolder.getOrderBookWithTokenId(tokenid);
         synchronized (this) {
             if (orderBook == null) {
                 orderBook = orderBookHolder.createOrderBook();
                 orderBookHolder.addOrderBook(tokenid, orderBook);
             }
-            orderBook.cancel(orderPublish.getOrderid(), 0);
+            orderBook.cancel(orderPublish.getOrderId(), 0);
         }
         
-        this.store.deleteOrderPublish(orderPublish.getOrderid());
-        this.store.deleteExchangeInfo(orderPublish.getOrderid());
-        this.store.deleteOrderMatch(orderPublish.getOrderid());
+        this.store.deleteOrderPublish(orderPublish.getOrderId());
+        this.store.deleteExchangeInfo(orderPublish.getOrderId());
+        this.store.deleteOrderMatch(orderPublish.getOrderId());
     }
     
     @Autowired

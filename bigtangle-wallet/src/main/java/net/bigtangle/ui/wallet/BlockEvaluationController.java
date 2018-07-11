@@ -368,7 +368,7 @@ public class BlockEvaluationController {
                 for (BlockEvaluation blockEvaluation : list) {
                     Map<String, Object> dataRow = new HashMap<>();
                     dataRow.put("hash",
-                            blockEvaluation.getBlockhash() == null ? "" : blockEvaluation.getBlockhash().toString());
+                            blockEvaluation.getBlockHash() == null ? "" : blockEvaluation.getBlockHash().toString());
                     dataRow.put("rating", blockEvaluation.getRating());
                     dataRow.put("depth", blockEvaluation.getDepth());
                     dataRow.put("cumulativeWeight", blockEvaluation.getCumulativeWeight());

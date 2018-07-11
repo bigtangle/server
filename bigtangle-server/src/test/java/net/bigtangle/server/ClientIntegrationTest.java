@@ -195,10 +195,10 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = this.networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlocktype(NetworkParameters.BLOCKTYPE_VOS);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_VOS);
 
         Transaction coinbase = new Transaction(this.networkParameters);
-        coinbase.setDataclassname(DataClassName.VOS.name());
+        coinbase.setDataClassName(DataClassName.VOS.name());
         coinbase.setData(vos.toByteArray());
 
         Sha256Hash sighash = coinbase.getHash();
@@ -211,7 +211,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
-        coinbase.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        coinbase.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
         block.addTransaction(coinbase);
         block.solve();
@@ -281,7 +281,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = this.networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlocktype(NetworkParameters.BLOCKTYPE_VOS_EXECUTE);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_VOS_EXECUTE);
 
         Transaction coinbase = new Transaction(this.networkParameters);
         VOSExecute vosExecute = new VOSExecute();
@@ -303,7 +303,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
-        coinbase.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        coinbase.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
         block.addTransaction(coinbase);
         block.solve();
@@ -317,7 +317,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlocktype(NetworkParameters.BLOCKTYPE_USERDATA);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_USERDATA);
         ECKey outKey = new ECKey();
 
         Transaction transaction = new Transaction(networkParameters);
@@ -329,7 +329,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         list.add(contact);
         contactInfo0.setContactList(list);
 
-        transaction.setDataclassname(DataClassName.ContactInfo.name());
+        transaction.setDataClassName(DataClassName.CONTACTINFO.name());
         transaction.setData(contactInfo0.toByteArray());
 
         Sha256Hash sighash = transaction.getHash();
@@ -342,7 +342,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
-        transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
         block.addTransaction(transaction);
         block.solve();
@@ -351,7 +351,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         milestoneService.update();
         
         requestParam.clear();
-        requestParam.put("dataclassname", DataClassName.ContactInfo.name());
+        requestParam.put("dataclassname", DataClassName.CONTACTINFO.name());
         requestParam.put("pubKey", Utils.HEX.encode(outKey.getPubKey()));
         byte[] buf = OkHttp3Util.post(contextRoot + "getUserData", Json.jsonmapper().writeValueAsString(requestParam));
 
@@ -363,7 +363,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         
         transaction = new Transaction(networkParameters);
         contactInfo1.setContactList(new ArrayList<Contact>());
-        transaction.setDataclassname(DataClassName.ContactInfo.name());
+        transaction.setDataClassName(DataClassName.CONTACTINFO.name());
         transaction.setData(contactInfo1.toByteArray());
         
         sighash = transaction.getHash();
@@ -376,12 +376,12 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
-        transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
         requestParam.clear();
         data = OkHttp3Util.post(contextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
         block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlocktype(NetworkParameters.BLOCKTYPE_USERDATA);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_USERDATA);
         
         block.addTransaction(transaction);
         block.solve();
@@ -390,7 +390,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         milestoneService.update();
         
         requestParam.clear();
-        requestParam.put("dataclassname", DataClassName.ContactInfo.name());
+        requestParam.put("dataclassname", DataClassName.CONTACTINFO.name());
         requestParam.put("pubKey", Utils.HEX.encode(outKey.getPubKey()));
         buf = OkHttp3Util.post(contextRoot + "getUserData", Json.jsonmapper().writeValueAsString(requestParam));
         
@@ -428,7 +428,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         logger.info("transaction, memo : " + transaction.getMemo());
         // logger.info("transaction, tokens : " +
         // Json.jsonmapper().writeValueAsString(transaction.getTokenInfo()));
-        logger.info("transaction, datatype : " + transaction.getDataclassname());
+        logger.info("transaction, datatype : " + transaction.getDataClassName());
     }
 
 }

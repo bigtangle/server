@@ -146,7 +146,7 @@ public class UserdataController {
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Main.params.getDefaultSerializer().makeBlock(data);
-        block.setBlocktype(NetworkParameters.BLOCKTYPE_USERDATA);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_USERDATA);
 
         KeyParameter aesKey = null;
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
@@ -165,13 +165,13 @@ public class UserdataController {
         Contact contact = new Contact();
         contact.setName(nameTF.getText());
         contact.setAddress(addressTF.getText());
-        ContactInfo contactInfo = (ContactInfo) Main.getUserdata(DataClassName.ContactInfo.name());
+        ContactInfo contactInfo = (ContactInfo) Main.getUserdata(DataClassName.CONTACTINFO.name());
 
         List<Contact> list = contactInfo.getContactList();
         list.add(contact);
         contactInfo.setContactList(list);
 
-        coinbase.setDataclassname(DataClassName.ContactInfo.name());
+        coinbase.setDataClassName(DataClassName.CONTACTINFO.name());
         coinbase.setData(contactInfo.toByteArray());
 
         Sha256Hash sighash = coinbase.getHash();
@@ -185,7 +185,7 @@ public class UserdataController {
         multiSignBy0.setPublickey(Utils.HEX.encode(pubKeyTo.getPubKey()));
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
-        coinbase.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        coinbase.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
         block.addTransaction(coinbase);
         block.solve();
@@ -212,7 +212,7 @@ public class UserdataController {
                     Json.jsonmapper().writeValueAsString(requestParam));
 
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
-            block.setBlocktype(NetworkParameters.BLOCKTYPE_USERDATA);
+            block.setBlockType(NetworkParameters.BLOCKTYPE_USERDATA);
 
             Transaction coinbase = new Transaction(Main.params);
 
@@ -228,7 +228,7 @@ public class UserdataController {
             }
             tokenInfo.setPositveTokenList(tempList);
 
-            coinbase.setDataclassname(DataClassName.TOKEN.name());
+            coinbase.setDataClassName(DataClassName.TOKEN.name());
             byte[] buf1 = tokenInfo.toByteArray();
             coinbase.setData(buf1);
 
@@ -264,7 +264,7 @@ public class UserdataController {
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
-            block.setBlocktype(NetworkParameters.BLOCKTYPE_USERDATA);
+            block.setBlockType(NetworkParameters.BLOCKTYPE_USERDATA);
             KeyParameter aesKey = null;
             final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
             if (!"".equals(Main.password.trim())) {
@@ -280,7 +280,7 @@ public class UserdataController {
             }
 
             Transaction coinbase = new Transaction(Main.params);
-            coinbase.setDataclassname(DataClassName.MYHOMEADDRESS.name());
+            coinbase.setDataClassName(DataClassName.MYHOMEADDRESS.name());
             MyHomeAddress myhomeaddress = new MyHomeAddress();
             myhomeaddress.setCountry(countryTF.getText());
             myhomeaddress.setProvince(provinceTF.getText());
@@ -300,7 +300,7 @@ public class UserdataController {
             multiSignBy0.setPublickey(Utils.HEX.encode(pubKeyTo.getPubKey()));
             multiSignBy0.setSignature(Utils.HEX.encode(buf1));
             multiSignBies.add(multiSignBy0);
-            coinbase.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+            coinbase.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
             block.addTransaction(coinbase);
             block.solve();
@@ -327,11 +327,11 @@ public class UserdataController {
                     Json.jsonmapper().writeValueAsString(requestParam));
 
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
-            block.setBlocktype(NetworkParameters.BLOCKTYPE_USERDATA);
+            block.setBlockType(NetworkParameters.BLOCKTYPE_USERDATA);
 
             Transaction coinbase = new Transaction(Main.params);
 
-            ContactInfo contactInfo = (ContactInfo) Main.getUserdata(DataClassName.ContactInfo.name());
+            ContactInfo contactInfo = (ContactInfo) Main.getUserdata(DataClassName.CONTACTINFO.name());
             List<Contact> list = contactInfo.getContactList();
             List<Contact> tempList = new ArrayList<Contact>();
             for (Contact contact : list) {
@@ -343,7 +343,7 @@ public class UserdataController {
             }
             contactInfo.setContactList(tempList);
 
-            coinbase.setDataclassname(DataClassName.ContactInfo.name());
+            coinbase.setDataClassName(DataClassName.CONTACTINFO.name());
             coinbase.setData(contactInfo.toByteArray());
 
             KeyParameter aesKey = null;
@@ -370,7 +370,7 @@ public class UserdataController {
             multiSignBy0.setPublickey(Utils.HEX.encode(pubKeyTo.getPubKey()));
             multiSignBy0.setSignature(Utils.HEX.encode(buf1));
             multiSignBies.add(multiSignBy0);
-            coinbase.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+            coinbase.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
             block.addTransaction(coinbase);
             block.solve();
@@ -384,7 +384,7 @@ public class UserdataController {
 
     public void initContactTableView() {
         try {
-            ContactInfo contactInfo = (ContactInfo) Main.getUserdata(DataClassName.ContactInfo.name());
+            ContactInfo contactInfo = (ContactInfo) Main.getUserdata(DataClassName.CONTACTINFO.name());
             List<Contact> list = contactInfo.getContactList();
             ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();
             if (list != null && !list.isEmpty()) {
@@ -469,7 +469,7 @@ public class UserdataController {
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
-            block.setBlocktype(NetworkParameters.BLOCKTYPE_USERDATA);
+            block.setBlockType(NetworkParameters.BLOCKTYPE_USERDATA);
 
             KeyParameter aesKey = null;
             final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
@@ -496,7 +496,7 @@ public class UserdataController {
             uploadfileInfo.setfUploadfiles(uploadfiles);
             uploadfile.setFileinfo(buf);
             uploadfile.setFileinfoHex(Utils.HEX.encode(buf));
-            coinbase.setDataclassname(DataClassName.UPLOADFILE.name());
+            coinbase.setDataClassName(DataClassName.UPLOADFILE.name());
             coinbase.setData(uploadfileInfo.toByteArray());
 
             Sha256Hash sighash = coinbase.getHash();
@@ -509,7 +509,7 @@ public class UserdataController {
             multiSignBy0.setPublickey(Utils.HEX.encode(pubKeyTo.getPubKey()));
             multiSignBy0.setSignature(Utils.HEX.encode(buf1));
             multiSignBies.add(multiSignBy0);
-            coinbase.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+            coinbase.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
             block.addTransaction(coinbase);
             block.solve();

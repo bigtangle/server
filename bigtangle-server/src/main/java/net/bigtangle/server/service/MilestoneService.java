@@ -115,8 +115,8 @@ public class MilestoneService {
         HashMap<Sha256Hash, HashSet<Sha256Hash>> approverHashSets = new HashMap<>();
         HashMap<Sha256Hash, Long> depths = new HashMap<>();
         for (BlockEvaluation tip : blocksByDescendingHeight) {
-            approverHashSets.put(tip.getBlockhash(), new HashSet<>());
-            depths.put(tip.getBlockhash(), 0L);
+            approverHashSets.put(tip.getBlockHash(), new HashSet<>());
+            depths.put(tip.getBlockHash(), 0L);
         }
 
         BlockEvaluation currentBlock = null;
@@ -126,20 +126,20 @@ public class MilestoneService {
                 continue;
 
             // Add your own hash to approver hashes of current approver hashes
-            HashSet<Sha256Hash> approverHashes = approverHashSets.get(currentBlock.getBlockhash());
-            approverHashes.add(currentBlock.getBlockhash());
-            long depth = depths.get(currentBlock.getBlockhash());
+            HashSet<Sha256Hash> approverHashes = approverHashSets.get(currentBlock.getBlockHash());
+            approverHashes.add(currentBlock.getBlockHash());
+            long depth = depths.get(currentBlock.getBlockHash());
 
             // Add all current references to both approved blocks (initialize if
             // not yet initialized)
-            Block block = blockService.getBlock(currentBlock.getBlockhash());
+            Block block = blockService.getBlock(currentBlock.getBlockHash());
 
             if (!approverHashSets.containsKey(block.getPrevBlockHash())) {
                 BlockEvaluation prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
                 if (prevBlockEvaluation != null) {
                     blocksByDescendingHeight.add(prevBlockEvaluation);
-                    approverHashSets.put(prevBlockEvaluation.getBlockhash(), new HashSet<>());
-                    depths.put(prevBlockEvaluation.getBlockhash(), 0L);
+                    approverHashSets.put(prevBlockEvaluation.getBlockHash(), new HashSet<>());
+                    depths.put(prevBlockEvaluation.getBlockHash(), 0L);
                 }
             }
 
@@ -148,8 +148,8 @@ public class MilestoneService {
                         .getBlockEvaluation(block.getPrevBranchBlockHash());
                 if (prevBranchBlockEvaluation != null) {
                     blocksByDescendingHeight.add(prevBranchBlockEvaluation);
-                    approverHashSets.put(prevBranchBlockEvaluation.getBlockhash(), new HashSet<>());
-                    depths.put(prevBranchBlockEvaluation.getBlockhash(), 0L);
+                    approverHashSets.put(prevBranchBlockEvaluation.getBlockHash(), new HashSet<>());
+                    depths.put(prevBranchBlockEvaluation.getBlockHash(), 0L);
                 }
             }
 
@@ -170,8 +170,8 @@ public class MilestoneService {
             // Update and dereference
             blockService.updateCumulativeWeight(currentBlock, approverHashes.size());
             blockService.updateDepth(currentBlock, depth);
-            approverHashSets.remove(currentBlock.getBlockhash());
-            depths.remove(currentBlock.getBlockhash());
+            approverHashSets.remove(currentBlock.getBlockHash());
+            depths.remove(currentBlock.getBlockHash());
         }
     }
 
@@ -185,7 +185,7 @@ public class MilestoneService {
         PriorityQueue<BlockEvaluation> blocksByDescendingHeight = getSolidTipsDescendingAsPriorityQueue();
         HashMap<Sha256Hash, Long> milestoneDepths = new HashMap<>();
         for (BlockEvaluation tip : blocksByDescendingHeight) {
-            milestoneDepths.put(tip.getBlockhash(), -1L);
+            milestoneDepths.put(tip.getBlockHash(), -1L);
         }
 
         BlockEvaluation currentBlock = null;
@@ -196,14 +196,14 @@ public class MilestoneService {
 
             // Add all current references to both approved blocks (initialize if
             // not yet initialized)
-            long milestoneDepth = milestoneDepths.get(currentBlock.getBlockhash());
-            Block block = blockService.getBlock(currentBlock.getBlockhash());
+            long milestoneDepth = milestoneDepths.get(currentBlock.getBlockHash());
+            Block block = blockService.getBlock(currentBlock.getBlockHash());
 
             if (!milestoneDepths.containsKey(block.getPrevBlockHash())) {
                 BlockEvaluation prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
                 if (prevBlockEvaluation != null) {
                     blocksByDescendingHeight.add(prevBlockEvaluation);
-                    milestoneDepths.put(prevBlockEvaluation.getBlockhash(), -1L);
+                    milestoneDepths.put(prevBlockEvaluation.getBlockHash(), -1L);
                 }
             }
 
@@ -212,7 +212,7 @@ public class MilestoneService {
                         .getBlockEvaluation(block.getPrevBranchBlockHash());
                 if (prevBranchBlockEvaluation != null) {
                     blocksByDescendingHeight.add(prevBranchBlockEvaluation);
-                    milestoneDepths.put(prevBranchBlockEvaluation.getBlockhash(), -1L);
+                    milestoneDepths.put(prevBranchBlockEvaluation.getBlockHash(), -1L);
                 }
             }
 
@@ -231,7 +231,7 @@ public class MilestoneService {
 
             // Update and dereference
             blockService.updateMilestoneDepth(currentBlock, milestoneDepth + 1);
-            milestoneDepths.remove(currentBlock.getBlockhash());
+            milestoneDepths.remove(currentBlock.getBlockHash());
         }
     }
 
@@ -260,7 +260,7 @@ public class MilestoneService {
         PriorityQueue<BlockEvaluation> blocksByDescendingHeight = getSolidTipsDescendingAsPriorityQueue();
         HashMap<Sha256Hash, HashSet<UUID>> approverHashSets = new HashMap<>();
         for (BlockEvaluation tip : blockService.getSolidTips()) {
-            approverHashSets.put(tip.getBlockhash(), new HashSet<>());
+            approverHashSets.put(tip.getBlockHash(), new HashSet<>());
         }
 
         BlockEvaluation currentBlock = null;
@@ -271,20 +271,20 @@ public class MilestoneService {
 
             // Add your own hashes as reference if current block is one of the
             // selected tips
-            HashSet<UUID> approverHashes = approverHashSets.get(currentBlock.getBlockhash());
+            HashSet<UUID> approverHashes = approverHashSets.get(currentBlock.getBlockHash());
             if (selectedTips.containsKey(currentBlock)) {
                 approverHashes.addAll(selectedTips.get(currentBlock));
             }
 
             // Add all current references to both approved blocks (initialize if
             // not yet initialized)
-            Block block = blockService.getBlock(currentBlock.getBlockhash());
+            Block block = blockService.getBlock(currentBlock.getBlockHash());
 
             if (!approverHashSets.containsKey(block.getPrevBlockHash())) {
                 BlockEvaluation prevBlockEvaluation = blockService.getBlockEvaluation(block.getPrevBlockHash());
                 if (prevBlockEvaluation != null) {
                     blocksByDescendingHeight.add(prevBlockEvaluation);
-                    approverHashSets.put(prevBlockEvaluation.getBlockhash(), new HashSet<>());
+                    approverHashSets.put(prevBlockEvaluation.getBlockHash(), new HashSet<>());
                 }
             }
 
@@ -293,7 +293,7 @@ public class MilestoneService {
                         .getBlockEvaluation(block.getPrevBranchBlockHash());
                 if (prevBranchBlockEvaluation != null) {
                     blocksByDescendingHeight.add(prevBranchBlockEvaluation);
-                    approverHashSets.put(prevBranchBlockEvaluation.getBlockhash(), new HashSet<>());
+                    approverHashSets.put(prevBranchBlockEvaluation.getBlockHash(), new HashSet<>());
                 }
             }
 
@@ -305,7 +305,7 @@ public class MilestoneService {
 
             // Update your rating
             blockService.updateRating(currentBlock, approverHashes.size());
-            approverHashSets.remove(currentBlock.getBlockhash());
+            approverHashSets.remove(currentBlock.getBlockHash());
         }
     }
 
@@ -357,8 +357,8 @@ public class MilestoneService {
         BlockEvaluation currentBlock = null;
         while ((currentBlock = blocks.poll()) != null) {
             blocksToTraverse.remove(currentBlock);
-            traversedBlockHashes.add(currentBlock.getBlockhash());
-            List<StoredBlock> solidApproverBlocks = blockService.getSolidApproverBlocks(currentBlock.getBlockhash());
+            traversedBlockHashes.add(currentBlock.getBlockHash());
+            List<StoredBlock> solidApproverBlocks = blockService.getSolidApproverBlocks(currentBlock.getBlockHash());
             List<BlockEvaluation> blockEvaluations = blockService.getBlockEvaluations(solidApproverBlocks.stream().map(b -> b.getHeader().getHash()).collect(Collectors.toList()));
             for (BlockEvaluation b : blockEvaluations) {
                 if (blocksToTraverse.contains(b))

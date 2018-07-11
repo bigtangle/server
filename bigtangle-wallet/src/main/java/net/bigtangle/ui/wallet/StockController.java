@@ -493,7 +493,7 @@ public class StockController extends TokensController {
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
-            block.setBlocktype(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+            block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
             block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo);
 
             Transaction transaction = block.getTransactions().get(0);
@@ -517,7 +517,7 @@ public class StockController extends TokensController {
             multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
             multiSignBy0.setSignature(Utils.HEX.encode(buf1));
             multiSignBies.add(multiSignBy0);
-            transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+            transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
             // save block
             block.solve();
@@ -686,10 +686,10 @@ public class StockController extends TokensController {
         Transaction transaction = block0.getTransactions().get(0);
 
         List<MultiSignBy> multiSignBies = null;
-        if (transaction.getDatasignature() == null) {
+        if (transaction.getDataSignature() == null) {
             multiSignBies = new ArrayList<MultiSignBy>();
         } else {
-            multiSignBies = Json.jsonmapper().readValue(transaction.getDatasignature(), List.class);
+            multiSignBies = Json.jsonmapper().readValue(transaction.getDataSignature(), List.class);
         }
         Sha256Hash sighash = transaction.getHash();
 
@@ -705,7 +705,7 @@ public class StockController extends TokensController {
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
 
-        transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
         OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block0.bitcoinSerialize());
         Main.instance.controller.initTableView();
         initTableView();
@@ -752,7 +752,7 @@ public class StockController extends TokensController {
         byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Main.params.getDefaultSerializer().makeBlock(data);
-        block.setBlocktype(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
         ECKey key1 = null;
 
         if (Main.bitcoin.wallet().isEncrypted()) {
@@ -813,7 +813,7 @@ public class StockController extends TokensController {
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Main.params.getDefaultSerializer().makeBlock(data);
-        block.setBlocktype(NetworkParameters.BLOCKTYPE_USERDATA);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_USERDATA);
         ECKey pubKeyTo = null;
 
         KeyParameter aesKey = null;
@@ -840,7 +840,7 @@ public class StockController extends TokensController {
         List<Tokens> list = Main.tokenInfo.getPositveTokenList();
         list.add(tokens);
         Main.tokenInfo.setPositveTokenList(list);
-        coinbase.setDataclassname(DataClassName.TOKEN.name());
+        coinbase.setDataClassName(DataClassName.TOKEN.name());
         coinbase.setData(Main.tokenInfo.toByteArray());
 
         Sha256Hash sighash = coinbase.getHash();
@@ -854,7 +854,7 @@ public class StockController extends TokensController {
         multiSignBy0.setPublickey(Utils.HEX.encode(pubKeyTo.getPubKey()));
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
-        coinbase.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        coinbase.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
         block.addTransaction(coinbase);
         block.solve();

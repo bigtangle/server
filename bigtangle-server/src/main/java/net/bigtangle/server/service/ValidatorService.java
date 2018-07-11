@@ -100,7 +100,7 @@ public class ValidatorService {
         // Go backwards by height
         BlockWrap currentBlock = null;
         while ((currentBlock = blockQueue.poll()) != null) {
-            Block block = currentBlock.getBlockEvaluation().getBlockhash().equals(header.getHash()) ? header : blockService.getBlock(currentBlock.getBlock().getHash());
+            Block block = currentBlock.getBlockEvaluation().getBlockHash().equals(header.getHash()) ? header : blockService.getBlock(currentBlock.getBlock().getHash());
 
             // Stop criterion: Block height lower than approved interval height
             if (currentBlock.getBlockEvaluation().getHeight() < fromHeight)
@@ -109,13 +109,13 @@ public class ValidatorService {
             if (currentBlock.getBlockEvaluation().getHeight() <= toHeight) {
                 // Count rewards, try to find prevRewardBlock
                 approveCount++;
-                Address miner = new Address(networkParameters, block.getMineraddress());
+                Address miner = new Address(networkParameters, block.getMinerAddress());
                 if (!rewardCount.containsKey(miner))
                     rewardCount.put(miner, 1L);
                 else
                     rewardCount.put(miner, rewardCount.get(miner) + 1);
 
-                if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD) {
+                if (block.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD) {
                     ByteBuffer prevBb = ByteBuffer.wrap(block.getTransactions().get(0).getData());
                     long prevFromHeight = prevBb.getLong();
 
@@ -195,7 +195,7 @@ public class ValidatorService {
 //            return true;
 
         // Only mining reward blocks
-        if (header.getBlocktype() != NetworkParameters.BLOCKTYPE_REWARD)
+        if (header.getBlockType() != NetworkParameters.BLOCKTYPE_REWARD)
             return false;
 
         // Get interval height from tx data
@@ -238,13 +238,13 @@ public class ValidatorService {
 
                 // Count rewards, try to find prevRewardBlock
                 approveCount++;
-                Address miner = new Address(networkParameters, block.getMineraddress());
+                Address miner = new Address(networkParameters, block.getMinerAddress());
                 if (!rewardCount.containsKey(miner))
                     rewardCount.put(miner, 1L);
                 else
                     rewardCount.put(miner, rewardCount.get(miner) + 1);
 
-                if (block.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD) {
+                if (block.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD) {
                     ByteBuffer prevBb = ByteBuffer.wrap(block.getTransactions().get(0).getData());
                     long prevFromHeight = prevBb.getLong();
 
@@ -417,7 +417,7 @@ public class ValidatorService {
                 .thenComparingLong((Pair<BlockWrap, ConflictPoint> e) -> e.getLeft().getBlockEvaluation().getRating())
                 .thenComparingLong((Pair<BlockWrap, ConflictPoint> e) -> e.getLeft().getBlockEvaluation().getCumulativeWeight())
                 .thenComparingLong((Pair<BlockWrap, ConflictPoint> e) -> -e.getLeft().getBlockEvaluation().getInsertTime())
-                .thenComparing((Pair<BlockWrap, ConflictPoint> e) -> e.getLeft().getBlockEvaluation().getBlockhash()).reversed();
+                .thenComparing((Pair<BlockWrap, ConflictPoint> e) -> e.getLeft().getBlockEvaluation().getBlockHash()).reversed();
 
         Supplier<TreeSet<Pair<BlockWrap, ConflictPoint>>> conflictTreeSetSupplier = () -> new TreeSet<Pair<BlockWrap, ConflictPoint>>(
                 byDescendingRating);
@@ -432,7 +432,7 @@ public class ValidatorService {
                         (TreeSet<Pair<BlockWrap, ConflictPoint>> s) -> s.first().getLeft().getBlockEvaluation().getCumulativeWeight())
                 .thenComparingLong(
                         (TreeSet<Pair<BlockWrap, ConflictPoint>> s) -> -s.first().getLeft().getBlockEvaluation().getInsertTime())
-                .thenComparing((TreeSet<Pair<BlockWrap, ConflictPoint>> s) -> s.first().getLeft().getBlockEvaluation().getBlockhash())
+                .thenComparing((TreeSet<Pair<BlockWrap, ConflictPoint>> s) -> s.first().getLeft().getBlockEvaluation().getBlockHash())
                 .reversed();
 
         Supplier<TreeSet<TreeSet<Pair<BlockWrap, ConflictPoint>>>> conflictsTreeSetSupplier = () -> new TreeSet<TreeSet<Pair<BlockWrap, ConflictPoint>>>(
@@ -558,13 +558,13 @@ public class ValidatorService {
 
         // Dynamic conflicts: mining reward height intervals
         Stream<Pair<Block, ConflictPoint>> rewardConflictPoints = blocksToAdd.stream()
-                .filter(b -> b.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD)
+                .filter(b -> b.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD)
                 .map(b -> Pair.of(b, Utils.readInt64(b.getTransactions().get(0).getData(), 0)))
                 .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight()))).filter(pair -> false);
 
         // Dynamic conflicts: token issuance ids
         Stream<Pair<Block, ConflictPoint>> issuanceConflictPoints = blocksToAdd.stream().filter(t -> false) // TEMP
-                .filter(b -> b.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION)
+                .filter(b -> b.getBlockType() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION)
                 .map(b -> Pair.of(b, new TokenInfo().parse(b.getTransactions().get(0).getData())))
                 .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight().getTokenSerial())))
                 .filter(pair -> false);
@@ -604,7 +604,7 @@ public class ValidatorService {
 
         // Dynamic conflicts: mining reward height intervals
         Stream<Pair<Block, ConflictPoint>> rewardConflictPoints = blocksToAdd.stream()
-                .filter(b -> b.getBlocktype() == NetworkParameters.BLOCKTYPE_REWARD)
+                .filter(b -> b.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD)
                 .map(b -> Pair.of(b, Utils.readInt64(b.getTransactions().get(0).getData(), 0)))
                 .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight())))
                 // Filter such that it has already been spent 
@@ -618,7 +618,7 @@ public class ValidatorService {
 
         // Dynamic conflicts: token issuance ids already issued
         Stream<Pair<Block, ConflictPoint>> issuanceConflictPoints = blocksToAdd.stream().filter(t -> false) // TEMP
-                .filter(b -> b.getBlocktype() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION)
+                .filter(b -> b.getBlockType() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION)
                 .map(b -> Pair.of(b, new TokenInfo().parse(b.getTransactions().get(0).getData())))
                 .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight().getTokenSerial())))
                 // Filter such that it has already been issued 
@@ -673,7 +673,7 @@ public class ValidatorService {
 
     private BlockWrap getSpendingBlock(TransactionOutPoint transactionOutPoint) {
         try {
-            return store.getBlockWrap(transactionService.getUTXOSpender(transactionOutPoint).getBlockhash());
+            return store.getBlockWrap(transactionService.getUTXOSpender(transactionOutPoint).getBlockHash());
         } catch (BlockStoreException e) {
             return null;
         }

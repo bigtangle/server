@@ -18,6 +18,7 @@ import javax.annotation.Nullable;
  * the last byte is a discriminator value for the compressed pubkey.
  */
 public class DumpedPrivateKey extends VersionedChecksummedBytes {
+    private static final long serialVersionUID = 1L;
     private boolean compressed;
 
     /**

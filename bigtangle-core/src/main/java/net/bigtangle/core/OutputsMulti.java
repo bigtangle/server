@@ -4,20 +4,20 @@ public class OutputsMulti {
 
     private Sha256Hash hash;
 
-    private String toaddress;
+    private String toAddress;
     
-    private long outputindex;
+    private long outputIndex;
     
-    private long minimumsign;
+    private long minimumSignCount;
     
     public OutputsMulti() {
     }
 
-    public OutputsMulti(Sha256Hash hash, String toaddress, long outputindex, long minimumsign) {
+    public OutputsMulti(Sha256Hash hash, String toaddress, long outputIndex, long minimumSign) {
         this.hash = hash;
-        this.toaddress = toaddress;
-        this.outputindex = outputindex;
-        this.minimumsign = minimumsign;
+        this.toAddress = toaddress;
+        this.outputIndex = outputIndex;
+        this.minimumSignCount = minimumSign;
     }
 
     public Sha256Hash getHash() {
@@ -28,27 +28,27 @@ public class OutputsMulti {
         this.hash = hash;
     }
 
-    public String getToaddress() {
-        return toaddress;
+    public String getToAddress() {
+        return toAddress;
     }
 
-    public void setToaddress(String toaddress) {
-        this.toaddress = toaddress;
+    public void setToAddress(String toAddress) {
+        this.toAddress = toAddress;
     }
 
-    public long getOutputindex() {
-        return outputindex;
+    public long getOutputIndex() {
+        return outputIndex;
     }
 
-    public void setOutputindex(long outputindex) {
-        this.outputindex = outputindex;
+    public void setOutputIndex(long outputIndex) {
+        this.outputIndex = outputIndex;
     }
 
-    public long getMinimumsign() {
-        return minimumsign;
+    public long getMinimumSignCount() {
+        return minimumSignCount;
     }
 
-    public void setMinimumsign(long minimumsign) {
-        this.minimumsign = minimumsign;
+    public void setMinimumSignCount(long minimumSign) {
+        this.minimumSignCount = minimumSign;
     }
 }

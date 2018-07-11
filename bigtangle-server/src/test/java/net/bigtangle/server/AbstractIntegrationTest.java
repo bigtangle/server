@@ -165,7 +165,7 @@ public abstract class AbstractIntegrationTest {
         List<UTXO> ulist = testTransactionAndGetBalances(withZero, keys);
         
         for (UTXO u : ulist) {
-            if (tokenid.equals(u.getTokenid())
+            if (tokenid.equals(u.getTokenId())
                    ) {
                 return u;
             }
@@ -276,7 +276,7 @@ public abstract class AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlocktype(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
         block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo);
 
         Transaction transaction = block.getTransactions().get(0);
@@ -293,7 +293,7 @@ public abstract class AbstractIntegrationTest {
         multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
-        transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
         // save block
         block.solve();
@@ -316,7 +316,7 @@ public abstract class AbstractIntegrationTest {
         List<UTXO> ulist = testTransactionAndGetBalances(false, a);
         UTXO myutxo = null;
         for (UTXO u : ulist) {
-            if (coin.getTokenHex().equals(u.getTokenid())
+            if (coin.getTokenHex().equals(u.getTokenId())
                     && coin.getValue()==u.getValue().getValue()) {
                 myutxo = u;
                 break;

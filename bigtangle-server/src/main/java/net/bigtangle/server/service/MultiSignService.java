@@ -64,10 +64,10 @@ public class MultiSignService {
             Coin fromAmount = Coin.valueOf(tokenInfo.getTokenSerial().getAmount(), multiSign.getTokenid());
             map.put("amount", fromAmount.toPlainString());
             int signcount = 0;
-            if (transaction.getDatasignature() == null) {
+            if (transaction.getDataSignature() == null) {
                 signcount = 0;
             } else {
-                String jsonStr = new String(transaction.getDatasignature());
+                String jsonStr = new String(transaction.getDataSignature());
                 @SuppressWarnings("unchecked")
                 List<Map<String, Object>> multiSignBies = Json.jsonmapper().readValue(jsonStr, List.class);
                 signcount = multiSignBies.size();
@@ -170,8 +170,8 @@ public class MultiSignService {
             multiSignAddressRes.put(multiSignAddress.getAddress(), multiSignAddress);
         }
         int signCount = 0;
-        if (transaction.getDatasignature() != null) {
-            String jsonStr = new String(transaction.getDatasignature());
+        if (transaction.getDataSignature() != null) {
+            String jsonStr = new String(transaction.getDataSignature());
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> multiSignBies = Json.jsonmapper().readValue(jsonStr, List.class);
             for (Map<String, Object> multiSignBy : multiSignBies) {

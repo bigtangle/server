@@ -241,7 +241,7 @@ public class MainController {
                 }
                 Main.validTokenMap.put(key, addressList);
             }
-            if (u.getTokenid().trim().equals(NetworkParameters.BIGNETCOIN_TOKENID_STRING)) {
+            if (u.getTokenId().trim().equals(NetworkParameters.BIGNETCOIN_TOKENID_STRING)) {
                 Main.validAddressSet.add(address);
             }
 
