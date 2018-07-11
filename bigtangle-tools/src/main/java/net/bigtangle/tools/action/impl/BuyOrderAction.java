@@ -47,7 +47,7 @@ public class BuyOrderAction extends Action {
                     continue;
                 }
                 String address = (String) map.get("address");
-                if (this.account.calculatedAddressHit(address)) {
+                if (this.account.wallet().calculatedAddressHit(address)) {
                     continue;
                 }
                 int type = (Integer) map.get("type");

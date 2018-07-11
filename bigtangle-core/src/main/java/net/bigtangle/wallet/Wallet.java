@@ -4433,4 +4433,23 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         }
         return walletKeys;
     }
+    
+    public List<ECKey> walletKeys() throws Exception {
+        KeyParameter aesKey = null;
+        return walletKeys(aesKey);
+    }
+
+    public boolean calculatedAddressHit(String address) {
+        KeyParameter aesKey = null;
+        try {
+            for (ECKey key : this.walletKeys(aesKey)) {
+                String n = key.toAddress(this.getNetworkParameters()).toString();
+                if (n.equalsIgnoreCase(address)) {
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+        }
+        return false;
+    }
 }

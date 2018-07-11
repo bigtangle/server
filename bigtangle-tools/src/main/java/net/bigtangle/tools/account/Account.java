@@ -56,19 +56,6 @@ public class Account {
         walletAppKit.wallet().setServerURL(Configure.SIMPLE_SERVER_CONTEXT_ROOT);
     }
 
-    public boolean calculatedAddressHit(String address) {
-        try {
-            for (ECKey key : this.walletKeys()) {
-                String n = key.toAddress(Configure.PARAMS).toString();
-                if (n.equalsIgnoreCase(address)) {
-                    return true;
-                }
-            }
-        } catch (Exception e) {
-        }
-        return false;
-    }
-
     private String walletPath;
 
     private WalletAppKit walletAppKit;
