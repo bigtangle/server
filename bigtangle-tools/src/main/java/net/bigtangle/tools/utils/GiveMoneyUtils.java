@@ -41,7 +41,7 @@ public class GiveMoneyUtils {
         Block block = getAskTransactionBlock();
 
         @SuppressWarnings("deprecation")
-        ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPiv),
+        ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
         List<UTXO> outputs = getTransactionAndGetBalances(genesiskey);
 
@@ -119,7 +119,7 @@ public class GiveMoneyUtils {
         byte[] data = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Configure.PARAMS.getDefaultSerializer().makeBlock(data);
-        block.setBlocktype(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
         block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo);
 
         Transaction transaction = block.getTransactions().get(0);
@@ -136,7 +136,7 @@ public class GiveMoneyUtils {
         multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
-        transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
         block.solve();
         return block;
