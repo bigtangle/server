@@ -15,8 +15,6 @@ import java.util.Map;
 
 import org.junit.Before;
 import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -56,8 +54,8 @@ import net.bigtangle.utils.OkHttp3Util;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public abstract class AbstractIntegrationTest {
 
-    private static final String CONTEXT_ROOT_TEMPLATE = "http://localhost:%s/";
-    private static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
+	public final String CONTEXT_ROOT_TEMPLATE = "http://localhost:%s/";
+    //private static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
     public String contextRoot;
 
     WalletAppKit walletAppKit;

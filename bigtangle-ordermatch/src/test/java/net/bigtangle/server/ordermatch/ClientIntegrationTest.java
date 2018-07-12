@@ -36,6 +36,7 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.server.ordermatch.service.schedule.ScheduleOrderMatchService;
 import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.wallet.PayOrder;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
@@ -64,11 +65,11 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         request.put("validateto", simpleDateFormat.format(new Date()));
         request.put("validatefrom", simpleDateFormat.format(new Date()));
 
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.saveOrder.name(),
+        String resp = OkHttp3Util.postString(CONTEXT_ROOT_TEMPLATE + ReqCmd.saveOrder.name(),
                 Json.jsonmapper().writeValueAsString(request));
         logger.info("saveOrder resp : " + resp);
 
-        resp = OkHttp3Util.postString(contextRoot + ReqCmd.getOrders.name(),
+        resp = OkHttp3Util.postString(CONTEXT_ROOT_TEMPLATE + ReqCmd.getOrders.name(),
                 Json.jsonmapper().writeValueAsString(new HashMap<String, Object>()));
         logger.info("getOrders resp : " + resp);
         
@@ -131,7 +132,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         logger.info("getOrders resp : " + response);
     }
 
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({ "deprecation", "unchecked" })
     @Test
     public void exchangeOrder() throws Exception {
 
@@ -182,8 +183,18 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("exchanges");
         assertTrue(list.size() >= 1);
         Map<String, Object> exchangemap = list.get(0);
-
         
+        String serverURL = "http://localhost:8090";
+        String marketURL = "http://localhost:8090";
+        
+        String orderid = (String) exchangemap.get("orderid");
+        
+        PayOrder payOrder1 = new PayOrder(walletAppKit.wallet(), orderid, serverURL, marketURL);
+        payOrder1.sign();
+        
+        PayOrder payOrder2 = new PayOrder(walletAppKit1.wallet(), orderid, serverURL, marketURL);
+        payOrder2.sign();
+/*
         Address fromAddress00 = new Address(networkParameters, (String) exchangemap.get("fromAddress"));
         Address toAddress00 = new Address(networkParameters, (String) exchangemap.get("toAddress"));
         Coin fromAmount = Coin.valueOf( 
@@ -227,8 +238,10 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         requestParam1.put("dataHex", Utils.HEX.encode(transaction.bitcoinSerialize()));
         requestParam1.put("signtype", "from");
         OkHttp3Util.post(contextRoot + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam1));
+ */
     }
-    
+
+/*
     public void exchangeTokenComplete(Transaction tx) throws Exception {
         // get new Block to be used from server
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -241,7 +254,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         String res = OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
         System.out.println(res);
     }
-
+*/
     public void payToken(ECKey outKey) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
