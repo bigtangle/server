@@ -17,8 +17,10 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -80,10 +82,11 @@ public class DispatcherController {
 
     @SuppressWarnings("unchecked")
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
-    public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] bodyByte,
+    public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] bodyByte, @RequestHeader HttpHeaders httpHeaders ,
             HttpServletResponse httpServletResponse) throws Exception {
         try {
-            logger.info("reqCmd : {}, reqHex : {}, started.", reqCmd, Utils.HEX.encode(bodyByte));
+            logger.debug("reqCmd : {}, reqSize : {}, started.", reqCmd,  bodyByte.length );
+            logger.debug("headers.", httpHeaders.toString()  );
             ReqCmd reqCmd0000 = ReqCmd.valueOf(reqCmd);
             switch (reqCmd0000) {
 
@@ -150,6 +153,15 @@ public class DispatcherController {
                 break;
                 
             case outputsWiteToken: {
+                ByteBuffer byteBuffer = ByteBuffer.wrap(bodyByte);
+                byte[] pubKey = new byte[byteBuffer.getInt()];
+                byteBuffer.put(pubKey);
+                byte[] tokenid = new byte[byteBuffer.getInt()];
+                byteBuffer.put(tokenid);
+                AbstractResponse response = walletService.getAccountOutputsWithToken(pubKey, tokenid);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+            case outputsWithToken: {
                 ByteBuffer byteBuffer = ByteBuffer.wrap(bodyByte);
                 byte[] pubKey = new byte[byteBuffer.getInt()];
                 byteBuffer.put(pubKey);
