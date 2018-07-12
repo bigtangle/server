@@ -94,7 +94,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
-        transaction.setDatasignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
         
         rollingBlock.addTransaction(transaction);
         rollingBlock.solve();
@@ -153,7 +153,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
         HashMap<String, Object> request = new HashMap<String, Object>();
         request.put("address", yourutxo.getAddress());
-        request.put("tokenid", yourutxo.getTokenid());
+        request.put("tokenid", yourutxo.getTokenId());
         request.put("type", 1);
         request.put("price", 1000);
         request.put("amount", 1000);
@@ -163,7 +163,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(request).getBytes());
         
         request.put("address", myutxo.getAddress());
-        request.put("tokenid", yourutxo.getTokenid());
+        request.put("tokenid", yourutxo.getTokenId());
         request.put("type", 2);
         request.put("price", 1000);
         request.put("amount", 1000);
