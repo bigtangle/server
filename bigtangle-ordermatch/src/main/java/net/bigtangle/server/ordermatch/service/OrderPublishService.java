@@ -19,6 +19,7 @@ import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.OrderPublish;
+import net.bigtangle.core.OrderPublishList;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.server.ordermatch.bean.OrderBook;
@@ -112,7 +113,9 @@ public class OrderPublishService {
     protected FullPrunedBlockStore store;
 
     public AbstractResponse getOrderPublishListWithCondition(Map<String, Object> request) throws BlockStoreException {
-        List<OrderPublish> orders = this.store.getOrderPublishListWithCondition(request);
+ 
+        OrderPublishList  orders= new OrderPublishList();
+        orders.setOrderPublishList(this.store.getOrderPublishListWithCondition(request));
         return GetOrderResponse.create(orders);
     }
 

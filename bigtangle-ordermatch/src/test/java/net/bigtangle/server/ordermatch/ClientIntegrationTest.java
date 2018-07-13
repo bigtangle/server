@@ -29,6 +29,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OrderPublishList;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutPoint;
@@ -128,8 +129,8 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
         String response = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
                 Json.jsonmapper().writeValueAsString(request).getBytes());
-
-        logger.info("getOrders resp : " + response);
+        OrderPublishList   r= Json.jsonmapper() .readValue(response, OrderPublishList.class) ;
+        logger.info("getOrders resp : " + r);
     }
 
     @SuppressWarnings({ "deprecation", "unchecked" })

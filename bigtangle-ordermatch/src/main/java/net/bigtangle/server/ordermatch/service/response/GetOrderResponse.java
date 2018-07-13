@@ -4,25 +4,23 @@
  *******************************************************************************/
 package net.bigtangle.server.ordermatch.service.response;
 
-import java.util.List;
-
-import net.bigtangle.core.OrderPublish;
+import net.bigtangle.core.OrderPublishList;
 
 public class GetOrderResponse extends AbstractResponse {
 
-    private List<OrderPublish> orders;
+    private OrderPublishList orders;
     
-    public static AbstractResponse create(List<OrderPublish> orders) {
+    public static AbstractResponse create( OrderPublishList orders) {
         GetOrderResponse res = new GetOrderResponse();
         res.orders = orders;
         return res;
     }
 
-    public List<OrderPublish> getOrders() {
+    public OrderPublishList getOrders() {
         return orders;
     }
 
-    public void setOrders(List<OrderPublish> orders) {
+    public void setOrders(OrderPublishList orders) {
         this.orders = orders;
     }
 }
