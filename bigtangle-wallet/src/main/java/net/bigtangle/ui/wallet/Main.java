@@ -83,12 +83,14 @@ import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UploadfileInfo;
+import net.bigtangle.core.UserSettingData;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.UnitTestParams;
 import net.bigtangle.script.Script;
 import net.bigtangle.ui.wallet.controls.NotificationBarPane;
+import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.utils.BriefLogFormatter;
@@ -150,6 +152,66 @@ public class Main extends Application {
             rb = ResourceBundle.getBundle("net.bigtangle.ui.wallet.message", Locale.CHINESE);
         }
         return rb.getString(s);
+
+    }
+
+    public static void addToken(String contextRoot, String tokenname, String tokenid, String type) throws Exception {
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block block = Main.params.getDefaultSerializer().makeBlock(data);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_USERDATA);
+        ECKey pubKeyTo = null;
+
+        KeyParameter aesKey = null;
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
+        List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
+
+        if (Main.bitcoin.wallet().isEncrypted()) {
+            pubKeyTo = issuedKeys.get(0);
+        } else {
+            pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+        }
+
+        Transaction coinbase = new Transaction(Main.params);
+        UserSettingData userSettingData = new UserSettingData();
+        userSettingData.setDomain(type);
+        userSettingData.setKey(tokenid);
+        userSettingData.setValue(tokenname);
+
+        coinbase.setDataClassName(type);
+        coinbase.setData(userSettingData.toByteArray());
+
+        Sha256Hash sighash = coinbase.getHash();
+
+        ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash, aesKey);
+        byte[] buf1 = party1Signature.encodeToDER();
+
+        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+        MultiSignBy multiSignBy0 = new MultiSignBy();
+        multiSignBy0.setAddress(pubKeyTo.toAddress(Main.params).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(pubKeyTo.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+        multiSignBies.add(multiSignBy0);
+        coinbase.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+
+        block.addTransaction(coinbase);
+        block.solve();
+
+        OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
+        byte[] buf = block.bitcoinSerialize();
+        if (buf == null) {
+            return;
+        }
+
+        File file = new File(Main.keyFileDirectory + "/usersetting.block");
+        if (file.exists()) {
+            file.delete();
+        }
+        FileUtil.writeFile(file, buf);
 
     }
 

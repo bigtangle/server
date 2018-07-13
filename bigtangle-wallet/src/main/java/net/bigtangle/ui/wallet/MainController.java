@@ -55,6 +55,7 @@ import javafx.util.Duration;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
@@ -144,6 +145,8 @@ public class MainController {
                     passwordHBox.setVisible(false);
                 }
                 Server.setText(Main.IpAddress);
+                Main.addToken(Main.getContextRoot(), Main.IpAddress, "mainServer",
+                        DataClassName.SERVERURL.name());
                 initTableView();
             }
         } catch (Exception e) {
