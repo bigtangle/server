@@ -186,7 +186,6 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         
         String serverURL = "http://localhost:8090";
         String marketURL = "http://localhost:8090";
-        
         String orderid = (String) exchangemap.get("orderid");
         
         PayOrder payOrder1 = new PayOrder(walletAppKit.wallet(), orderid, serverURL, marketURL);
