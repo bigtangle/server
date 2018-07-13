@@ -10,6 +10,8 @@ import java.util.Map;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -27,14 +29,15 @@ import net.bigtangle.wallet.SendRequest;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class OrderMatchTest extends AbstractIntegrationTest {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(OrderMatchTest.class);
 	
 	public void payToken(ECKey outKey) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
-        //logger.info("resp block, hex : " + Utils.HEX.encode(data));
-        // get other tokenid from wallet
+        LOGGER.info("resp block, hex : " + Utils.HEX.encode(data));
         UTXO utxo = null;
         List<UTXO> ulist = testTransactionAndGetBalances();
         for (UTXO u : ulist) {
@@ -43,24 +46,20 @@ public class OrderMatchTest extends AbstractIntegrationTest {
             }
         }
         System.out.println(utxo.getValue());
-        //Coin baseCoin = utxo.getValue().subtract(Coin.parseCoin("10000", utxo.getValue().getTokenid()));
-        //System.out.println(baseCoin);
         Address destination = outKey.toAddress(networkParameters);
         SendRequest request = SendRequest.to(destination, utxo.getValue());
         walletAppKit.wallet().completeTx(request);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
         OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
-        //logger.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
-  
+        LOGGER.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
     }
 
-	@Test
+	@SuppressWarnings("unchecked")
+    @Test
     public void exchangeOrder() throws Exception {
-		
-
-        String marketURL = "http://localhost:8088";
-
+        String marketURL = "http://localhost:8089/";
+        
         // get token from wallet to spent
         ECKey yourKey = walletAppKit1.wallet().walletKeys(null).get(0);
 
@@ -85,7 +84,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         request.put("amount", 1000);
         System.out.println("req : " + request);
         // sell token order
-        String response = OkHttp3Util.post(contextRoot + "saveOrder",
+        String response = OkHttp3Util.post(marketURL + "saveOrder",
                 Json.jsonmapper().writeValueAsString(request).getBytes());
         
         request.put("address", myutxo.getAddress());
@@ -95,14 +94,14 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         request.put("amount", 1000);
         System.out.println("req : " + request);
         // buy token order
-          response = OkHttp3Util.post(contextRoot + "saveOrder",
+          response = OkHttp3Util.post(marketURL + "saveOrder",
                 Json.jsonmapper().writeValueAsString(request).getBytes());
 
-        Thread.sleep(100000);
+        Thread.sleep(10000);
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("address", myutxo.getAddress());
-          response = OkHttp3Util.post(contextRoot + "getExchange",
+          response = OkHttp3Util.post(marketURL + "getExchange",
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("exchanges");
