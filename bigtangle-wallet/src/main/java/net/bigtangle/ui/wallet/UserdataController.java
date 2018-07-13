@@ -496,7 +496,7 @@ public class UserdataController {
             String CONTEXT_ROOT = Main.getContextRoot();
             String resp = OkHttp3Util.postString(CONTEXT_ROOT + "userDataList",
                     Json.jsonmapper().writeValueAsString(requestParam));
-            System.out.println(resp);
+        
             HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
             List<String> dataList = (List<String>) result.get("dataList");
             ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();
