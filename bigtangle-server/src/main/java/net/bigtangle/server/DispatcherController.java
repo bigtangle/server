@@ -31,6 +31,7 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.response.AbstractResponse;
 import net.bigtangle.server.response.ErrorResponse;
 import net.bigtangle.server.response.GetBlockEvaluationsResponse;

@@ -2,9 +2,9 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.server.ordermatch;
+package net.bigtangle.params;
 
-public enum ReqCmd {
+public enum OrdermatchReqCmd {
 
     saveOrder, getOrders, deleteOrder, exchangeInfo, saveExchange, getExchange, signTransaction, cancelOrder, getBatchExchange;
 }

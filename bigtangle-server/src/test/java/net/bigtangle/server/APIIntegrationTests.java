@@ -50,6 +50,7 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.TransactionSignature;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.MilestoneService;

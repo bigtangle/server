@@ -15,7 +15,7 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
-import net.bigtangle.server.ReqCmd;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.utils.OkHttp3Util;
 

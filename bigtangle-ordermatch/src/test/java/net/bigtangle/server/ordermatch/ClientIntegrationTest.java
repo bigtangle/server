@@ -35,6 +35,7 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.server.ordermatch.service.schedule.ScheduleOrderMatchService;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.PayOrder;
@@ -66,11 +67,11 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         request.put("validateto", simpleDateFormat.format(new Date()));
         request.put("validatefrom", simpleDateFormat.format(new Date()));
 
-        String resp = OkHttp3Util.postString(CONTEXT_ROOT_TEMPLATE + ReqCmd.saveOrder.name(),
+        String resp = OkHttp3Util.postString(CONTEXT_ROOT_TEMPLATE + OrdermatchReqCmd.saveOrder.name(),
                 Json.jsonmapper().writeValueAsString(request));
         logger.info("saveOrder resp : " + resp);
 
-        resp = OkHttp3Util.postString(CONTEXT_ROOT_TEMPLATE + ReqCmd.getOrders.name(),
+        resp = OkHttp3Util.postString(CONTEXT_ROOT_TEMPLATE + OrdermatchReqCmd.getOrders.name(),
                 Json.jsonmapper().writeValueAsString(new HashMap<String, Object>()));
         logger.info("getOrders resp : " + resp);
         
@@ -101,7 +102,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         rollingBlock.addTransaction(transaction);
         rollingBlock.solve();
         
-        resp = OkHttp3Util.post(contextRoot + ReqCmd.deleteOrder.name(), rollingBlock.bitcoinSerialize());
+        resp = OkHttp3Util.post(contextRoot + OrdermatchReqCmd.deleteOrder.name(), rollingBlock.bitcoinSerialize());
         logger.info("deleteOrder resp : " + resp);
     }
 
@@ -117,7 +118,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         request.put("validateto", simpleDateFormat.format(new Date()));
         request.put("validatefrom", simpleDateFormat.format(new Date()));
 
-        String response = OkHttp3Util.post(contextRoot + ReqCmd.saveOrder.name(),
+        String response = OkHttp3Util.post(contextRoot + OrdermatchReqCmd.saveOrder.name(),
                 Json.jsonmapper().writeValueAsString(request).getBytes());
         logger.info("saveOrder resp : " + response);
         this.getOrders();
@@ -127,7 +128,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     public void getOrders() throws Exception {
         HashMap<String, Object> request = new HashMap<String, Object>();
 
-        String response = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
+        String response = OkHttp3Util.post(contextRoot + OrdermatchReqCmd.getOrders.name(),
                 Json.jsonmapper().writeValueAsString(request).getBytes());
         OrderPublishList   r= Json.jsonmapper() .readValue(response, OrderPublishList.class) ;
         logger.info("getOrders resp : " + r);
@@ -161,7 +162,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         request.put("amount", 1000);
         System.out.println("req : " + request);
         // sell token order
-        String response = OkHttp3Util.post(contextRoot + ReqCmd.saveOrder.name(),
+        String response = OkHttp3Util.post(contextRoot + OrdermatchReqCmd.saveOrder.name(),
                 Json.jsonmapper().writeValueAsString(request).getBytes());
         
         request.put("address", myutxo.getAddress());
@@ -171,7 +172,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         request.put("amount", 1000);
         System.out.println("req : " + request);
         // buy token order
-          response = OkHttp3Util.post(contextRoot + ReqCmd.saveOrder.name(),
+          response = OkHttp3Util.post(contextRoot + OrdermatchReqCmd.saveOrder.name(),
                 Json.jsonmapper().writeValueAsString(request).getBytes());
 
         scheduleOrderMatchService.updateMatch();

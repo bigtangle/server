@@ -24,6 +24,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Utils;
+import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.server.ordermatch.service.ExchangeService;
 import net.bigtangle.server.ordermatch.service.OrderPublishService;
 import net.bigtangle.server.ordermatch.service.response.AbstractResponse;
@@ -46,7 +47,7 @@ public class DispatcherController {
             HttpServletResponse httpServletResponse) throws Exception {
         try {
             logger.info("reqCmd : {}, reqHex : {}, started.", reqCmd, Utils.HEX.encode(bodyByte));
-            ReqCmd reqCmd0000 = ReqCmd.valueOf(reqCmd);
+            OrdermatchReqCmd reqCmd0000 = OrdermatchReqCmd.valueOf(reqCmd);
             switch (reqCmd0000) {
             case saveOrder: {
                 String reqStr = new String(bodyByte, "UTF-8");
