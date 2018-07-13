@@ -18,6 +18,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -70,6 +71,15 @@ public class UserdataController {
     public TableColumn<Map<String, Object>, String> filesizeColumn;
 
     @FXML
+    public TableView<Map<String, Object>> otherTableview;
+    @FXML
+    public TableColumn<Map<String, Object>, String> keyColumn;
+    @FXML
+    public TableColumn<Map<String, Object>, String> valueColumn;
+
+    @FXML
+    public TableColumn<Map<String, Object>, String> domainColumn;
+    @FXML
     public TextField dataclassTF;
     @FXML
     public TextField nameTF;
@@ -95,11 +105,28 @@ public class UserdataController {
     public TextArea remarkTA;
     @FXML
     public TabPane tabPane;
+
+    @FXML
+    public TextField keyTF;
+    @FXML
+    public TextField valueTF;
+    @FXML
+    public ComboBox<String> domianComboBox;
+
     public Main.OverlayUI<?> overlayUI;
 
     @FXML
     public void initialize() {
         try {
+            KeyParameter aesKey = null;
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            if (!"".equals(Main.password.trim())) {
+                aesKey = keyCrypter.deriveKey(Main.password);
+            }
+            List<String> list = new ArrayList<String>();
+            for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
+                list.add(ecKey.getPublicKeyAsHex());
+            }
             tabPane.getSelectionModel().selectedIndexProperty().addListener((ov, t, t1) -> {
                 int index = t1.intValue();
                 switch (index) {
@@ -121,7 +148,9 @@ public class UserdataController {
                 case 3: {
                     initFileTableView();
                 }
-
+                case 4: {
+                    initOtherTableView(list);
+                }
                     break;
                 }
             });
@@ -136,6 +165,25 @@ public class UserdataController {
         try {
             addContact(CONTEXT_ROOT);
             initContactTableView();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+    }
+
+    public void saveOther(ActionEvent event) {
+        String CONTEXT_ROOT = Main.getContextRoot();
+        try {
+            KeyParameter aesKey = null;
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            if (!"".equals(Main.password.trim())) {
+                aesKey = keyCrypter.deriveKey(Main.password);
+            }
+            List<String> list = new ArrayList<String>();
+            for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
+                list.add(ecKey.getPublicKeyAsHex());
+            }
+            Main.addToken(CONTEXT_ROOT, valueTF.getText(), keyTF.getText(), domianComboBox.getValue());
+            initOtherTableView(list);
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
@@ -421,6 +469,47 @@ public class UserdataController {
                 filenameColumn.setCellValueFactory(new MapValueFactory("name"));
                 filesizeColumn.setCellValueFactory(new MapValueFactory("size"));
             }
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+    }
+
+    private void initOtherTableView(List<String> pubkeyList) {
+        ObservableList<String> userdata = FXCollections.observableArrayList(DataClassName.SERVERURL.name(),
+                DataClassName.LANG.name());
+        domianComboBox.setItems(userdata);
+        try {
+            KeyParameter aesKey = null;
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            if (!"".equals(Main.password.trim())) {
+                aesKey = keyCrypter.deriveKey(Main.password);
+            }
+            List<String> pubKeyList = new ArrayList<String>();
+            for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
+                pubKeyList.add(ecKey.getPublicKeyAsHex());
+            }
+            int blocktype = (int) NetworkParameters.BLOCKTYPE_USERDATA;
+            HashMap<String, Object> requestParam = new HashMap<String, Object>();
+            requestParam.put("blocktype", blocktype);
+            requestParam.put("pubKeyList", pubKeyList);
+
+            String CONTEXT_ROOT = Main.getContextRoot();
+            String resp = OkHttp3Util.postString(CONTEXT_ROOT + "userDataList",
+                    Json.jsonmapper().writeValueAsString(requestParam));
+            System.out.println(resp);
+            HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
+            List<String> dataList = (List<String>) result.get("dataList");
+            ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();
+            for (String hexStr : dataList) {
+                byte[] data = Utils.HEX.decode(hexStr);
+                HashMap<String, Object> userdataKV = Json.jsonmapper().readValue(new String(data), HashMap.class);
+                allData.add(userdataKV);
+            }
+            otherTableview.setItems(allData);
+            keyColumn.setCellValueFactory(new MapValueFactory("key"));
+            valueColumn.setCellValueFactory(new MapValueFactory("value"));
+            domainColumn.setCellValueFactory(new MapValueFactory("domain"));
+
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }

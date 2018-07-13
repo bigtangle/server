@@ -72,7 +72,9 @@ public abstract class NetworkParameters {
     public static final long BLOCKTYPE_GOVERNANCE = 6; //  Governance of software update and community
     public static final long BLOCKTYPE_FILE = 7;
     public static final long BLOCKTYPE_VOS_EXECUTE = 8;
-    
+    public static final long BLOCKTYPE_SERVERURL = 9; // virtual operation system for using Docker and Kubernetes
+    public static final long BLOCKTYPE_LANG = 10; 
+    public static final long BLOCKTYPE_OTHER = 11; 
     // Use Equihash
     public static final boolean USE_EQUIHASH = false;
 

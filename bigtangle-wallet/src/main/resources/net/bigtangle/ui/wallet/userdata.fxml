@@ -88,6 +88,30 @@
                   </AnchorPane>
               </content>
             </Tab>
+            <Tab closable="false" text="%other">
+               <content>
+                  <AnchorPane maxHeight="650.0" maxWidth="1000.0" minHeight="650.0" minWidth="1000.0" prefHeight="650.0" prefWidth="1000.0" style="-fx-background-color: white;">
+                     <children>
+                        <TableView fx:id="otherTableview" layoutX="29.0" layoutY="95.0" maxHeight="500.0" maxWidth="845.0" minHeight="375.0" minWidth="400.0" prefHeight="375.0" prefWidth="845.0">
+                           <columns>
+                              <TableColumn fx:id="keyColumn" prefWidth="126.0" text="%userdataKey" />
+                              <TableColumn fx:id="valueColumn" prefWidth="498.0" text="%userdataValue" />
+                              <TableColumn fx:id="domainColumn" prefWidth="202.0" text="%userdataDomain" />
+                           </columns>
+                        </TableView>
+                        <Button defaultButton="true" layoutX="641.0" layoutY="499.0" mnemonicParsing="false" onAction="#removeLinkman" text="%remove" />
+                        <Button cancelButton="true" layoutX="767.0" layoutY="499.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />
+                        <Label layoutX="35.0" layoutY="43.0" prefHeight="15.0" prefWidth="98.0" text="%userdataKey" />
+                        <Label layoutX="288.0" layoutY="44.0" prefHeight="15.0" prefWidth="99.0" text="%userdataValue" />
+                        <TextField fx:id="keyTF" layoutX="137.0" layoutY="40.0" />
+                        <TextField fx:id="valueTF" layoutX="387.0" layoutY="40.0" prefHeight="23.0" prefWidth="131.0" />
+                        <Button layoutX="821.0" layoutY="39.0" mnemonicParsing="false" onAction="#saveOther" text="%add" />
+                        <Label layoutX="527.0" layoutY="44.0" prefHeight="15.0" prefWidth="116.0" text="%userdataDomain" />
+                        <ComboBox fx:id="domianComboBox" editable="true" layoutX="643.0" layoutY="39.0" prefWidth="150.0" />
+                     </children>
+                  </AnchorPane>
+               </content>
+            </Tab>
         </tabs>
       </TabPane>
       <HBox alignment="CENTER" prefHeight="68.0" prefWidth="1000.0" styleClass="title-banner">
