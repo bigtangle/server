@@ -45,6 +45,7 @@ import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.UserSettingData;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -830,18 +831,13 @@ public class StockController extends TokensController {
         }
 
         Transaction coinbase = new Transaction(Main.params);
+        UserSettingData userSettingData = new UserSettingData();
+        userSettingData.setDomain(DataClassName.TOKEN.name());
+        userSettingData.setKey(tokenid);
+        userSettingData.setValue(tokenname);
 
-        Tokens tokens = new Tokens();
-        tokens.setTokenid(tokenid);
-        tokens.setTokenname(tokenname);
-
-        Main.tokenInfo = (TokenInfo) Main.getUserdata(DataClassName.TOKEN.name());
-
-        List<Tokens> list = Main.tokenInfo.getPositveTokenList();
-        list.add(tokens);
-        Main.tokenInfo.setPositveTokenList(list);
         coinbase.setDataClassName(DataClassName.TOKEN.name());
-        coinbase.setData(Main.tokenInfo.toByteArray());
+        coinbase.setData(userSettingData.toByteArray());
 
         Sha256Hash sighash = coinbase.getHash();
 
