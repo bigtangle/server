@@ -802,64 +802,11 @@ public class StockController extends TokensController {
         String tokeninfo = "";
         tokeninfo += Main.getString(rowData.get("tokenid")) + "," + Main.getString(rowData.get("tokenname"));
         try {
-            addToken(CONTEXT_ROOT, rowData.get("tokenname").toString(), rowData.get("tokenid").toString());
+            Main.addToken(CONTEXT_ROOT, rowData.get("tokenname").toString(), rowData.get("tokenid").toString(),
+                    DataClassName.TOKEN.name());
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
-    }
-
-    public void addToken(String contextRoot, String tokenname, String tokenid) throws Exception {
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block block = Main.params.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(NetworkParameters.BLOCKTYPE_USERDATA);
-        ECKey pubKeyTo = null;
-
-        KeyParameter aesKey = null;
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
-        if (!"".equals(Main.password.trim())) {
-            aesKey = keyCrypter.deriveKey(Main.password);
-        }
-        List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
-
-        if (Main.bitcoin.wallet().isEncrypted()) {
-            pubKeyTo = issuedKeys.get(0);
-        } else {
-            pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
-        }
-
-        Transaction coinbase = new Transaction(Main.params);
-
-        Tokens tokens = new Tokens();
-        tokens.setTokenid(tokenid);
-        tokens.setTokenname(tokenname);
-
-        Main.tokenInfo = (TokenInfo) Main.getUserdata(DataClassName.TOKEN.name());
-
-        List<Tokens> list = Main.tokenInfo.getPositveTokenList();
-        list.add(tokens);
-        Main.tokenInfo.setPositveTokenList(list);
-        coinbase.setDataClassName(DataClassName.TOKEN.name());
-        coinbase.setData(Main.tokenInfo.toByteArray());
-
-        Sha256Hash sighash = coinbase.getHash();
-
-        ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash, aesKey);
-        byte[] buf1 = party1Signature.encodeToDER();
-
-        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
-        MultiSignBy multiSignBy0 = new MultiSignBy();
-        multiSignBy0.setAddress(pubKeyTo.toAddress(Main.params).toBase58());
-        multiSignBy0.setPublickey(Utils.HEX.encode(pubKeyTo.getPubKey()));
-        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
-        multiSignBies.add(multiSignBy0);
-        coinbase.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
-
-        block.addTransaction(coinbase);
-        block.solve();
-
-        OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
     }
 
     public void closeUI(ActionEvent event) {
