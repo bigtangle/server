@@ -7,6 +7,7 @@ package net.bigtangle.ui.wallet;
 import static com.google.common.base.Preconditions.checkState;
 import static net.bigtangle.ui.wallet.utils.GuiUtils.checkGuiThread;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +49,7 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.UserSettingData;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
+import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.IgnoreServiceException;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
@@ -856,6 +858,17 @@ public class StockController extends TokensController {
         block.solve();
 
         OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
+        byte[] buf = block.bitcoinSerialize();
+        if (buf == null) {
+            return;
+        }
+
+        File file = new File(Main.keyFileDirectory + "/usersetting.block");
+        if (file.exists()) {
+            file.delete();
+        }
+        FileUtil.writeFile(file, buf);
+
     }
 
     public void closeUI(ActionEvent event) {
