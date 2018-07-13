@@ -284,6 +284,7 @@ public class OrderController extends ExchangeController {
         orderTable.setItems(orderData);
     }
 
+    @SuppressWarnings("unchecked")
     public void initMarketComboBox() throws Exception {
         String CONTEXT_ROOT = Main.getContextRoot();
         ObservableList<String> tokenData = FXCollections.observableArrayList();

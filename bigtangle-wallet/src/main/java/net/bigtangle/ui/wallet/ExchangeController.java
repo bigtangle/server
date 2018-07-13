@@ -46,6 +46,7 @@ import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UUIDUtil;
+import net.bigtangle.wallet.PayOrder;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
@@ -175,9 +176,8 @@ public class ExchangeController {
             if (!url.contains("market.bigtangle.net") || !url.contains("test2market.bigtangle.net")) {
                 boolean watchedFlag = isWatched(tokenid);
                 if (!watchedFlag) {
-                    continue;
+                   continue;
                 }
-
             }
             try {
                 String response = OkHttp3Util.post(url + "/" + "getBatchExchange",
@@ -505,6 +505,7 @@ public class ExchangeController {
 
     }
 
+    @SuppressWarnings("unchecked")
     public void signExchangeDo(ActionEvent event) throws Exception {
 
         Map<String, Object> rowData = exchangeTable.getSelectionModel().getSelectedItem();
@@ -532,48 +533,15 @@ public class ExchangeController {
             GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_d1"));
         }
         this.mOrderid = stringValueOf(rowData.get("orderid"));
-        // this.mTokenid = tokenid;
-        HashMap<String, Object> exchangeResult = getExchangeInfoResult(marketURL, this.mOrderid);
-        String dataHex = (String) exchangeResult.get("dataHex");
-        if (dataHex.isEmpty()) {
-            byte[] buf = null;
-            String fromAddress = stringValueOf(exchangeResult.get("fromAddress"));
-            String toAddress = stringValueOf(exchangeResult.get("toAddress"));
-            String toTokenHex = stringValueOf(exchangeResult.get("toTokenHex"));
-            String fromTokenHex = stringValueOf(exchangeResult.get("fromTokenHex"));
-            String toAmount = stringValueOf(exchangeResult.get("toAmount"));
-            String fromAmount = stringValueOf(exchangeResult.get("fromAmount"));
-            buf = this.makeSignTransactionBufferCheckSwap(fromAddress, getCoin(fromAmount, fromTokenHex, false),
-                    toAddress, getCoin(toAmount, toTokenHex, false));
-            if (buf == null) {
-                return;
-            }
-            int toSign = (int) exchangeResult.get("toSign");
-            int fromSign = (int) exchangeResult.get("fromSign");
-            String signtype = "";
-            if (toSign == 0 && calculatedAddressHit(toAddress)) {
-                signtype = "to";
-            } else if (fromSign == 0 && calculatedAddressHit(fromAddress)) {
-                signtype = "from";
-            }
-            HashMap<String, Object> requestParam = new HashMap<String, Object>();
-            requestParam.put("orderid", this.mOrderid);
-            requestParam.put("dataHex", Utils.HEX.encode(buf));
-            requestParam.put("signtype", signtype);
-            OkHttp3Util.post(marketURL + "/signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
-            OkHttp3Util.post(Main.getContextRoot() + "/saveBlock", Utils.HEX.encode(buf));
+        
+        try {
+            PayOrder payOrder = new PayOrder(Main.bitcoin.wallet(), this.mOrderid, ContextRoot + "/", marketURL + "/");
+            payOrder.sign();
             this.initTable();
-            return;
         }
-        byte[] buf = Utils.HEX.decode(dataHex);
-        this.reloadTransaction(buf);
-        if (mTransaction == null) {
-            GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("ex_c_d"));
-            return;
+        catch (Exception e) {
+            GuiUtils.crashAlert(e);
         }
-        this.exchange(marketURL);
-
-        this.initTable();
         // overlayUI.done();
     }
 
@@ -617,24 +585,6 @@ public class ExchangeController {
         Coin t = fromCoin;
         fromCoin = toCoin;
         toCoin = t;
-    }
-
-    private byte[] makeSignTransactionBufferCheckSwap(String fromAddress, Coin fromCoin, String toAddress, Coin toCoin)
-            throws Exception {
-        String fromAddress00, toAddress00;
-        Coin fromCoin00, toCoin00;
-        if (this.calculatedAddressHit(fromAddress)) {
-            fromAddress00 = fromAddress;
-            toAddress00 = toAddress;
-            fromCoin00 = fromCoin;
-            toCoin00 = toCoin;
-        } else {
-            fromAddress00 = toAddress;
-            toAddress00 = fromAddress;
-            fromCoin00 = toCoin;
-            toCoin00 = fromCoin;
-        }
-        return makeSignTransactionBuffer(fromAddress00, fromCoin00, toAddress00, toCoin00);
     }
 
     @SuppressWarnings("deprecation")
