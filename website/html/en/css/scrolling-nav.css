@@ -394,7 +394,8 @@ h2{
 	float: right;
 }
 .userguide .image img{
-	max-width: 100%;
+	max-width: 90%;
+	margin-left: 10%;
 }
 .userguide section{
 	clear: both;
