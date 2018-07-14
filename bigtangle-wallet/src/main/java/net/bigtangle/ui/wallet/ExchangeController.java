@@ -42,6 +42,7 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
@@ -290,7 +291,7 @@ public class ExchangeController {
         Main.bitcoin.wallet().signTransaction(request);
 
         String ContextRoot = Main.getContextRoot();
-        byte[] data = OkHttp3Util.post(ContextRoot + "askTransaction",
+        byte[] data = OkHttp3Util.post(ContextRoot + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
         Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(mTransaction);
@@ -476,7 +477,7 @@ public class ExchangeController {
 
         String ContextRoot = Main.getContextRoot();
 
-        byte[] data = OkHttp3Util.post(ContextRoot + "askTransaction",
+        byte[] data = OkHttp3Util.post(ContextRoot + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
         Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(transaction);

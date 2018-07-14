@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -51,6 +50,7 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.kits.WalletAppKit;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.DBStoreConfiguration;
 import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.store.FullPrunedBlockGraph;
@@ -230,6 +230,7 @@ public abstract class AbstractIntegrationTest {
     }
 
     // transfer the coin deon test key to address in wallet
+    @SuppressWarnings("deprecation")
     public void testInitTransferWallet() throws Exception {
 
         Wallet coinbaseWallet = new Wallet(networkParameters);
@@ -237,7 +238,7 @@ public abstract class AbstractIntegrationTest {
         coinbaseWallet.setServerURL(contextRoot);
         // get new Block to be used from server
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction,
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
 
@@ -273,7 +274,7 @@ public abstract class AbstractIntegrationTest {
         tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);

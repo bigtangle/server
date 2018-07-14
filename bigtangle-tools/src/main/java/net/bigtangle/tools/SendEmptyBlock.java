@@ -25,6 +25,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.params.UnitTestParams;
 import net.bigtangle.utils.OkHttp3Util;
 import okhttp3.OkHttpClient;
@@ -65,7 +66,7 @@ public class SendEmptyBlock {
     public void send() throws JsonProcessingException, Exception {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
+        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         Block rollingBlock = params.getDefaultSerializer().makeBlock(data);

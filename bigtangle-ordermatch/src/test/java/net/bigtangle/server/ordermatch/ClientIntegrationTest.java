@@ -24,7 +24,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
-import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignBy;
@@ -36,11 +35,11 @@ import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.params.OrdermatchReqCmd;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.ordermatch.service.schedule.ScheduleOrderMatchService;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.PayOrder;
 import net.bigtangle.wallet.SendRequest;
-import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -246,7 +245,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     public void exchangeTokenComplete(Transaction tx) throws Exception {
         // get new Block to be used from server
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(tx);
@@ -258,7 +257,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 */
     public void payToken(ECKey outKey) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         logger.info("resp block, hex : " + Utils.HEX.encode(data));

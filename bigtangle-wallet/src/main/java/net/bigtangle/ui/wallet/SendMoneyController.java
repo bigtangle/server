@@ -67,6 +67,7 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.crypto.TransactionSignature;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.ui.wallet.utils.FileUtil;
@@ -517,7 +518,7 @@ public class SendMoneyController {
                             !addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
                                     : addressComboBox.getValue().split(",")[1]);
             HashMap<String, String> requestParam = new HashMap<String, String>();
-            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
+            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.askTransaction.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
 
             Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
@@ -596,7 +597,7 @@ public class SendMoneyController {
             multiSigTransaction.addOutput(amount0, scriptPubKey);
             // get new Block to be used from server
             HashMap<String, String> requestParam = new HashMap<String, String>();
-            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
+            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.askTransaction.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
 
@@ -967,7 +968,7 @@ public class SendMoneyController {
             Script inputScript = ScriptBuilder.createMultiSigInputScriptBytes(sigs);
             transaction0.getInput(0).setScriptSig(inputScript);
 
-            byte[] buf = OkHttp3Util.post(contextRoot + "askTransaction",
+            byte[] buf = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
             rollingBlock.addTransaction(transaction0);

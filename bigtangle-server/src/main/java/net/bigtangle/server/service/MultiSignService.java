@@ -21,10 +21,10 @@ import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
-import net.bigtangle.server.response.AbstractResponse;
-import net.bigtangle.server.response.MultiSignResponse;
-import net.bigtangle.server.response.SearchMultiSignResponse;
-import net.bigtangle.server.response.TokenSerialIndexResponse;
+import net.bigtangle.core.http.AbstractResponse;
+import net.bigtangle.core.http.server.resp.MultiSignResponse;
+import net.bigtangle.core.http.server.resp.SearchMultiSignResponse;
+import net.bigtangle.core.http.server.resp.TokenSerialIndexResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.UUIDUtil;
 
@@ -85,27 +85,24 @@ public class MultiSignService {
         int count = this.store.getCountTokenSerialNumber(tokenid);
         return TokenSerialIndexResponse.createTokenSerialIndexResponse(count + 1);
     }
-    
-    
+
     /*
      * check unique as conflicts
      */
     public boolean checkMultiSignPre(Block block, boolean allowConflicts) throws BlockStoreException, Exception {
-        
-     
-   
+
         // Check these TODOs and make sure they are implemented
         // TODO token ids of tx must be equal to blocks token id
         // TODO token issuance sum must not overflow
         // TODO signature for coinbases must be correct (equal to pubkey
         // hash of tokenid)
-        
+
         if (block.getTransactions() == null || block.getTransactions().isEmpty()) {
             throw new BlockStoreException("block transaction is empty");
         }
         Transaction transaction = block.getTransactions().get(0);
         if (transaction.getData() == null) {
-            // FIXME this transaction data is not serialized properly. 
+            // FIXME this transaction data is not serialized properly.
             throw new BlockStoreException("block transaction data is null");
         }
         byte[] buf = transaction.getData();
@@ -115,7 +112,7 @@ public class MultiSignService {
             throw new BlockStoreException("tokeninfo is null");
         }
         Tokens tokens_ = store.getTokensInfo(tokens.getTokenid());
-        if (!allowConflicts &&tokens_ != null && tokens_.isTokenstop()) {
+        if (!allowConflicts && tokens_ != null && tokens_.isTokenstop()) {
             throw new BlockStoreException("tokeninfo can not reissue");
         }
 
@@ -126,7 +123,7 @@ public class MultiSignService {
         if (tokenSerial == null) {
             throw new BlockStoreException("tokenserial is null");
         }
-        //as conflict
+        // as conflict
         if (!allowConflicts && (tokens_ != null && tokenSerial.getTokenindex() == 1L)) {
             throw new BlockStoreException("tokens already existed");
         }
@@ -216,8 +213,8 @@ public class MultiSignService {
         return signCount >= signnumber;
     }
 
-    public void multiSign(Block block,   boolean allowConflicts) throws Exception {
-        if (this.checkMultiSignPre(block,  allowConflicts)) {
+    public void multiSign(Block block, boolean allowConflicts) throws Exception {
+        if (this.checkMultiSignPre(block, allowConflicts)) {
             blockService.saveBlock(block);
         }
     }

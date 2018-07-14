@@ -16,9 +16,9 @@ import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.Utils;
-import net.bigtangle.server.ordermatch.service.response.AbstractResponse;
-import net.bigtangle.server.ordermatch.service.response.ExchangeInfoResponse;
-import net.bigtangle.server.ordermatch.service.response.GetExchangeResponse;
+import net.bigtangle.core.http.AbstractResponse;
+import net.bigtangle.core.http.ordermatch.resp.ExchangeInfoResponse;
+import net.bigtangle.core.http.ordermatch.resp.GetExchangeResponse;
 import net.bigtangle.server.ordermatch.store.FullPrunedBlockStore;
 import net.bigtangle.utils.OrderState;
 
@@ -41,25 +41,24 @@ public class ExchangeService {
         this.store.saveExchange(exchange);
         return AbstractResponse.createEmptyResponse();
     }
-    
+
     public AbstractResponse signTransaction(Map<String, Object> request) throws BlockStoreException {
         String dataHex = (String) request.get("dataHex");
         String orderid = (String) request.get("orderid");
-        
+
         Exchange exchange = this.store.getExchangeInfoByOrderid(orderid);
         OrderPublish orderPublish1 = this.store.getOrderPublishByOrderid(exchange.getToOrderId());
         OrderPublish orderPublish2 = this.store.getOrderPublishByOrderid(exchange.getFromOrderId());
-        
-        if (orderPublish1.getState() == OrderState.finish.ordinal() 
+
+        if (orderPublish1.getState() == OrderState.finish.ordinal()
                 || orderPublish2.getState() == OrderState.finish.ordinal()) {
             throw new BlockStoreException("order publish state finish");
         }
-        
+
         String signtype = (String) request.get("signtype");
         byte[] data = Utils.HEX.decode(dataHex);
         this.store.updateExchangeSign(orderid, signtype, data);
-        
-        
+
         if (exchange.getToSign() == 1 && exchange.getFromSign() == 1 && StringUtils.isNotBlank(exchange.getToOrderId())
                 && StringUtils.isNotBlank(exchange.getFromOrderId())) {
             this.store.updateOrderPublishState(exchange.getToOrderId(), OrderState.finish.ordinal());

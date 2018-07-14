@@ -31,11 +31,11 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.http.AbstractResponse;
+import net.bigtangle.core.http.ErrorResponse;
+import net.bigtangle.core.http.OkResponse;
+import net.bigtangle.core.http.server.resp.GetBlockEvaluationsResponse;
 import net.bigtangle.params.ReqCmd;
-import net.bigtangle.server.response.AbstractResponse;
-import net.bigtangle.server.response.ErrorResponse;
-import net.bigtangle.server.response.GetBlockEvaluationsResponse;
-import net.bigtangle.server.response.OkResponse;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.LogResultService;
 import net.bigtangle.server.service.MultiSignService;
@@ -94,7 +94,7 @@ public class DispatcherController {
             case askTransaction: {
                 byte[] data = transactionService.askTransaction().array();
                 this.outPointBinaryArray(httpServletResponse, data);
-            }
+            }   
                 break;
 
             case saveBlock: {

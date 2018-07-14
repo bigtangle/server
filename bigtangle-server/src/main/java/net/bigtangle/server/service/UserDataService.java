@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.UserData;
 import net.bigtangle.core.Utils;
-import net.bigtangle.server.response.AbstractResponse;
-import net.bigtangle.server.response.UserDataResponse;
+import net.bigtangle.core.http.AbstractResponse;
+import net.bigtangle.core.http.server.resp.UserDataResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
 
 @Service
@@ -18,7 +18,7 @@ public class UserDataService {
 
     @Autowired
     protected FullPrunedBlockStore store;
-    
+
     public byte[] getUserData(String dataclassname, String pubKey) throws BlockStoreException {
         UserData userData = this.store.queryUserDataWithPubKeyAndDataclassname(dataclassname, pubKey);
         if (userData != null) {

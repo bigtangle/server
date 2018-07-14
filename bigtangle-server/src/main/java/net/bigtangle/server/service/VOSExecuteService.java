@@ -7,8 +7,8 @@ import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.VOSExecute;
-import net.bigtangle.server.response.AbstractResponse;
-import net.bigtangle.server.response.VOSExecuteListResponse;
+import net.bigtangle.core.http.AbstractResponse;
+import net.bigtangle.core.http.server.resp.VOSExecuteListResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
 
 @Service

@@ -19,11 +19,11 @@ import net.bigtangle.core.PayMultiSignExt;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
-import net.bigtangle.server.response.AbstractResponse;
-import net.bigtangle.server.response.PayMultiSignAddressListResponse;
-import net.bigtangle.server.response.PayMultiSignDetailsResponse;
-import net.bigtangle.server.response.PayMultiSignListResponse;
-import net.bigtangle.server.response.PayMultiSignResponse;
+import net.bigtangle.core.http.AbstractResponse;
+import net.bigtangle.core.http.server.resp.PayMultiSignAddressListResponse;
+import net.bigtangle.core.http.server.resp.PayMultiSignDetailsResponse;
+import net.bigtangle.core.http.server.resp.PayMultiSignListResponse;
+import net.bigtangle.core.http.server.resp.PayMultiSignResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
 
 @Service

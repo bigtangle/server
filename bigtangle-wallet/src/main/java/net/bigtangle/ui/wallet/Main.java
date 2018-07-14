@@ -87,6 +87,7 @@ import net.bigtangle.core.UserSettingData;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletAppKit;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.params.UnitTestParams;
 import net.bigtangle.script.Script;
 import net.bigtangle.ui.wallet.controls.NotificationBarPane;
@@ -157,7 +158,7 @@ public class Main extends Application {
 
     public static void addToken(String contextRoot, String tokenname, String tokenid, String type) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Main.params.getDefaultSerializer().makeBlock(data);
         block.setBlockType(NetworkParameters.BLOCKTYPE_USERDATA);
@@ -358,7 +359,7 @@ public class Main extends Application {
     public static void addAddress2block(String name, String address) throws Exception {
         String CONTEXT_ROOT = getContextRoot();
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
+        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Main.params.getDefaultSerializer().makeBlock(data);
         block.setBlockType(NetworkParameters.BLOCKTYPE_USERDATA);
@@ -733,7 +734,7 @@ public class Main extends Application {
         String CONTEXT_ROOT = Main.IpAddress + "/"; // http://" + Main.IpAddress
                                                     // + ":" + Main.port + "/";
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
+        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
         rollingBlock.solve();

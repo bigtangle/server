@@ -140,7 +140,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     public void exchangeTokenComplete(Transaction tx) throws Exception {
         // get new Block to be used from server
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(tx);
@@ -152,7 +152,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
     public void payToken(ECKey outKey) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         logger.info("resp block, hex : " + Utils.HEX.encode(data));
@@ -193,7 +193,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         vos.setContent("test");
         
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = this.networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(NetworkParameters.BLOCKTYPE_VOS);
@@ -279,7 +279,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     
     public void testSaveOVSExecute(ECKey outKey) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = this.networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(NetworkParameters.BLOCKTYPE_VOS_EXECUTE);
@@ -315,7 +315,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     @Test
     public void testSaveUserData() throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(NetworkParameters.BLOCKTYPE_USERDATA);
@@ -380,7 +380,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
         requestParam.clear();
-        data = OkHttp3Util.post(contextRoot + "askTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+        data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(), Json.jsonmapper().writeValueAsString(requestParam));
         block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(NetworkParameters.BLOCKTYPE_USERDATA);
         
@@ -403,7 +403,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     public void createTransaction() throws Exception {
         milestoneService.update();
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + "askTransaction",
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         logger.info("resp block, hex : " + Utils.HEX.encode(data));

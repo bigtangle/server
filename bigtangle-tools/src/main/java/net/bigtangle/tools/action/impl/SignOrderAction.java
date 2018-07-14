@@ -3,13 +3,15 @@ package net.bigtangle.tools.action.impl;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Exchange;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.http.ordermatch.resp.GetExchangeResponse;
+import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.tools.account.Account;
 import net.bigtangle.tools.action.Action;
 import net.bigtangle.tools.config.Configure;
@@ -28,42 +30,35 @@ public class SignOrderAction extends Action {
 
     private static final Logger logger = LoggerFactory.getLogger(SellOrderAction.class);
 
-    @SuppressWarnings("unchecked")
     @Override
     public void execute0() throws Exception {
         logger.info("account name : {}, sign order action start", account.getName());
-        List<Map<String, Object>> exchangeList = new ArrayList<Map<String, Object>>();
+        List<Exchange> exchangeList = new ArrayList<Exchange>();
         for (ECKey key : this.account.walletKeys()) {
             try {
                 String address = key.toAddress(Configure.PARAMS).toString();
                 HashMap<String, Object> requestParam = new HashMap<String, Object>();
                 requestParam.put("address", address);
-                String response = OkHttp3Util.post(Configure.ORDER_MATCH_CONTEXT_ROOT + "getExchange",
+                String response = OkHttp3Util.post(Configure.ORDER_MATCH_CONTEXT_ROOT + OrdermatchReqCmd.getExchange.name(),
                         Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-                final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-                if (data == null) {
-                    continue;
-                }
-                List<Map<String, Object>> exchanges = (List<Map<String, Object>>) data.get("exchanges");
-                if (exchanges == null || exchanges.isEmpty()) {
-                    continue;
-                }
-                for (Map<String, Object> result : exchanges) {
+                
+                GetExchangeResponse getExchangeResponse = Json.jsonmapper().readValue(response, GetExchangeResponse.class);
+                for (Exchange exchange : getExchangeResponse.getExchanges()) {
                     try {
-                        if ((Integer) result.get("toSign") + (Integer) result.get("fromSign") == 2) {
+                        if (exchange.getToSign() + exchange.getFromSign() == 2) {
                             continue;
                         }
-                        int toSign = (int) result.get("toSign");
-                        int fromSign = (int) result.get("fromSign");
-                        String toAddress = (String) result.get("toAddress");
-                        String fromAddress = (String) result.get("fromAddress");
+                        int toSign = exchange.getToSign();
+                        int fromSign = exchange.getFromSign();
+                        String toAddress = exchange.getToAddress();
+                        String fromAddress = exchange.getFromAddress();
                         if (toSign == 1 && this.account.wallet().calculatedAddressHit(toAddress)) {
                             continue;
                         }
                         if (fromSign == 1 && this.account.wallet().calculatedAddressHit(fromAddress)) {
                             continue;
                         }
-                        exchangeList.add(result);
+                        exchangeList.add(exchange);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -72,9 +67,9 @@ public class SignOrderAction extends Action {
                 // e.printStackTrace();
             }
         }
-        for (Map<String, Object> result : exchangeList) {
+        for (Exchange exchange : exchangeList) {
             try {
-                String orderid = (String) result.get("orderid");
+                String orderid = exchange.getOrderid();
                 PayOrder payOrder = new PayOrder(this.account.wallet(), orderid, Configure.SIMPLE_SERVER_CONTEXT_ROOT,
                         Configure.ORDER_MATCH_CONTEXT_ROOT);
                 payOrder.sign();

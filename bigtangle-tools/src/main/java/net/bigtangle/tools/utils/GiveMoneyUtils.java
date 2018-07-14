@@ -25,6 +25,7 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.TransactionSignature;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.tools.config.Configure;
@@ -116,7 +117,7 @@ public class GiveMoneyUtils {
         tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "askTransaction",
+        byte[] data = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Configure.PARAMS.getDefaultSerializer().makeBlock(data);
         block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
@@ -144,7 +145,7 @@ public class GiveMoneyUtils {
 
     public static Block getAskTransactionBlock() throws JsonProcessingException, Exception {
         final Map<String, Object> requestParam = new HashMap<String, Object>();
-        byte[] data = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "askTransaction",
+        byte[] data = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         return Configure.PARAMS.getDefaultSerializer().makeBlock(data);
     }

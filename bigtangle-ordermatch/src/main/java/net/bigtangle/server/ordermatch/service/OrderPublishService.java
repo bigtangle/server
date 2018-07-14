@@ -19,14 +19,13 @@ import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.OrderPublish;
-import net.bigtangle.core.OrderPublishList;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.http.AbstractResponse;
+import net.bigtangle.core.http.ordermatch.resp.GetOrderResponse;
 import net.bigtangle.server.ordermatch.bean.OrderBook;
 import net.bigtangle.server.ordermatch.bean.Side;
 import net.bigtangle.server.ordermatch.context.OrderBookHolder;
-import net.bigtangle.server.ordermatch.service.response.AbstractResponse;
-import net.bigtangle.server.ordermatch.service.response.GetOrderResponse;
 import net.bigtangle.server.ordermatch.store.FullPrunedBlockStore;
 
 @Service
@@ -38,9 +37,9 @@ public class OrderPublishService {
         int type = (Integer) request.get("type");
         String validateto = (String) request.get("validateto");
         String validatefrom = (String) request.get("validatefrom");
-        long price =  Long.parseLong( request.get("price").toString());
-        long amount =   Long.parseLong( request.get("amount").toString());
-        
+        long price = Long.parseLong(request.get("price").toString());
+        long amount = Long.parseLong(request.get("amount").toString());
+
         Date toDate = null;
         Date fromDate = null;
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -51,11 +50,12 @@ public class OrderPublishService {
             fromDate = simpleDateFormat.parse(validatefrom);
         }
         String market = (String) request.get("market");
-        if (market == null) market = "";
+        if (market == null)
+            market = "";
         // add market
         OrderPublish order = OrderPublish.create(address, tokenid, type, toDate, fromDate, price, amount, market);
         store.saveOrderPublish(order);
-        
+
         OrderBook orderBook = orderBookHolder.getOrderBookWithTokenId(tokenid);
         synchronized (this) {
             if (orderBook == null) {
@@ -66,31 +66,31 @@ public class OrderPublishService {
         }
         return AbstractResponse.createEmptyResponse();
     }
-    
+
     @SuppressWarnings("unchecked")
     public void deleteOrder(Block block) throws Exception {
         Transaction transaction = block.getTransactions().get(0);
-        
+
         byte[] buf = transaction.getData();
         String orderid = new String(buf);
-        
+
         List<HashMap<String, Object>> multiSignBies = Json.jsonmapper().readValue(transaction.getDataSignature(),
                 List.class);
         Map<String, Object> multiSignBy = multiSignBies.get(0);
         byte[] pubKey = Utils.HEX.decode((String) multiSignBy.get("publickey"));
         byte[] data = transaction.getHash().getBytes();
         byte[] signature = Utils.HEX.decode((String) multiSignBy.get("signature"));
-        
+
         boolean success = ECKey.verify(data, signature, pubKey);
         if (!success) {
             throw new BlockStoreException("multisign signature error");
         }
-        
+
         OrderPublish orderPublish = this.store.getOrderPublishByOrderid(orderid);
         if (orderPublish == null) {
             throw new BlockStoreException("order publish not found");
         }
-        
+
         String tokenid = orderPublish.getTokenId();
         OrderBook orderBook = orderBookHolder.getOrderBookWithTokenId(tokenid);
         synchronized (this) {
@@ -100,22 +100,20 @@ public class OrderPublishService {
             }
             orderBook.cancel(orderPublish.getOrderId(), 0);
         }
-        
+
         this.store.deleteOrderPublish(orderPublish.getOrderId());
         this.store.deleteExchangeInfo(orderPublish.getOrderId());
         this.store.deleteOrderMatch(orderPublish.getOrderId());
     }
-    
+
     @Autowired
     private OrderBookHolder orderBookHolder;
-    
+
     @Autowired
     protected FullPrunedBlockStore store;
 
     public AbstractResponse getOrderPublishListWithCondition(Map<String, Object> request) throws BlockStoreException {
- 
-        OrderPublishList  orders= new OrderPublishList();
-        orders.setOrderPublishList(this.store.getOrderPublishListWithCondition(request));
+        List<OrderPublish> orders = this.store.getOrderPublishListWithCondition(request);
         return GetOrderResponse.create(orders);
     }
 

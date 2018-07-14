@@ -37,6 +37,7 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VOS;
 import net.bigtangle.crypto.KeyCrypterScrypt;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
 
@@ -194,7 +195,7 @@ public class VOSController {
 
             String CONTEXT_ROOT = Main.getContextRoot();
             HashMap<String, String> requestParam = new HashMap<String, String>();
-            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "askTransaction",
+            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.askTransaction.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
             block.setBlockType(NetworkParameters.BLOCKTYPE_VOS);

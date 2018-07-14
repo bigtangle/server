@@ -11,11 +11,15 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Exchange;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.http.ordermatch.resp.ExchangeInfoResponse;
+import net.bigtangle.params.OrdermatchReqCmd;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.SendRequest;
@@ -26,7 +30,7 @@ public class PayOrder {
 
     private Wallet wallet;
 
-    private HashMap<String, Object> exchangeResult;
+    private Exchange exchange;
 
     private String orderid;
 
@@ -43,15 +47,15 @@ public class PayOrder {
     }
 
     private void loadExchangeInfo() throws Exception {
-        HashMap<String, Object> exchangeResult = this.getExchangeInfoResult(orderid);
-        if (exchangeResult == null) {
+        Exchange exchange = this.getExchangeInfoResult(orderid);
+        if (exchange == null) {
             throw new RuntimeException("exchange info not found");
         }
-        this.exchangeResult = exchangeResult;
+        this.exchange = exchange;
     }
 
     public void sign() throws Exception {
-        String dataHex = (String) exchangeResult.get("dataHex");
+        String dataHex = this.exchange.getDataHex();
         if (dataHex.isEmpty()) {
             this.signOrderTransaction();
         } else {
@@ -64,7 +68,7 @@ public class PayOrder {
     }
 
     private void signOrderComplete() throws Exception {
-        String dataHex = (String) exchangeResult.get("dataHex");
+        String dataHex = this.exchange.getDataHex();
         byte[] buf = Utils.HEX.decode(dataHex);
         ExchangeReload exchangeReload = this.reloadTransaction(buf);
         Transaction transaction = exchangeReload.getTransaction();
@@ -75,22 +79,22 @@ public class PayOrder {
         this.wallet().setServerURL(this.serverURL);
         this.wallet().signTransaction(request);
 
-        byte[] data = OkHttp3Util.post(this.serverURL + "askTransaction",
+        byte[] data = OkHttp3Util.post(this.serverURL + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
         Block rollingBlock = this.wallet().getNetworkParameters().getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(transaction);
         rollingBlock.solve();
-        OkHttp3Util.post(this.serverURL + "saveBlock", rollingBlock.bitcoinSerialize());
+        OkHttp3Util.post(this.serverURL + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
 
-        HashMap<String, Object> exchangeResult = this.getExchangeInfoResult(this.orderid);
-        int toSign = (int) exchangeResult.get("toSign");
-        int fromSign = (int) exchangeResult.get("fromSign");
-        String toAddress = (String) exchangeResult.get("toAddress");
-        String fromAddress = (String) exchangeResult.get("fromAddress");
-        String fromTokenHex = (String) exchangeResult.get("fromTokenHex");
-        String fromAmount = (String) exchangeResult.get("fromAmount");
-        String toTokenHex = (String) exchangeResult.get("toTokenHex");
-        String toAmount = (String) exchangeResult.get("toAmount");
+        Exchange exchange = this.getExchangeInfoResult(this.orderid);
+        int toSign = exchange.getToSign();
+        int fromSign = exchange.getFromSign();
+        String toAddress = exchange.getToAddress();
+        String fromAddress = exchange.getFromAddress();
+        String fromTokenHex = exchange.getFromTokenHex();
+        String fromAmount = exchange.getFromAmount();
+        String toTokenHex = exchange.getToTokenHex();
+        String toAmount = exchange.getToAmount();
 
         String signtype = "to";
         if (toSign == 0 && this.wallet().calculatedAddressHit(toAddress)) {
@@ -105,24 +109,25 @@ public class PayOrder {
         requestParam.put("orderid", orderid);
         requestParam.put("dataHex", Utils.HEX.encode(buf));
         requestParam.put("signtype", signtype);
-        OkHttp3Util.post(this.marketURL + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+        OkHttp3Util.post(this.marketURL + OrdermatchReqCmd.signTransaction.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
     }
 
     private void signOrderTransaction() throws Exception {
-        String fromAddress = stringValueOf(exchangeResult.get("fromAddress"));
-        String toAddress = stringValueOf(exchangeResult.get("toAddress"));
-        String toTokenHex = stringValueOf(exchangeResult.get("toTokenHex"));
-        String fromTokenHex = stringValueOf(exchangeResult.get("fromTokenHex"));
-        String toAmount = stringValueOf(exchangeResult.get("toAmount"));
-        String fromAmount = stringValueOf(exchangeResult.get("fromAmount"));
+        String fromAddress = stringValueOf(this.exchange.getFromAddress());
+        String toAddress = stringValueOf(this.exchange.getToAddress());
+        String toTokenHex = stringValueOf(this.exchange.getToTokenHex());
+        String fromTokenHex = stringValueOf(this.exchange.getFromTokenHex());
+        String toAmount = stringValueOf(this.exchange.getToAmount());
+        String fromAmount = stringValueOf(this.exchange.getFromAmount());
         byte[] buf = this.makeSignTransactionBufferCheckSwap(fromAddress,
                 parseCoinValue(fromAmount, fromTokenHex, false), toAddress,
                 parseCoinValue(toAmount, toTokenHex, false));
         if (buf == null) {
             return;
         }
-        int toSign = (int) exchangeResult.get("toSign");
-        int fromSign = (int) exchangeResult.get("fromSign");
+        int toSign = this.exchange.getToSign();
+        int fromSign = this.exchange.getFromSign();
         String signtype = "";
         if (toSign == 0 && this.wallet().calculatedAddressHit(toAddress)) {
             signtype = "to";
@@ -133,8 +138,8 @@ public class PayOrder {
         requestParam.put("orderid", this.orderid);
         requestParam.put("dataHex", Utils.HEX.encode(buf));
         requestParam.put("signtype", signtype);
-        OkHttp3Util.post(this.marketURL + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
-        return;
+        OkHttp3Util.post(this.marketURL + OrdermatchReqCmd.signTransaction.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
     }
 
     private byte[] makeSignTransactionBufferCheckSwap(String fromAddress, Coin fromCoin, String toAddress, Coin toCoin)
@@ -241,7 +246,7 @@ public class PayOrder {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         List<String> pubKeyHashList = new ArrayList<String>();
         pubKeyHashList.add(Utils.HEX.encode(pubKeyHash));
-        String response = OkHttp3Util.postString(this.serverURL + "getOutputs",
+        String response = OkHttp3Util.postString(this.serverURL + ReqCmd.getOutputs.name(),
                 Json.jsonmapper().writeValueAsString(pubKeyHashList));
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         if (data == null || data.isEmpty()) {
@@ -270,7 +275,7 @@ public class PayOrder {
         for (ECKey ecKey : ecKeys) {
             pubKeyHashList.add(Utils.HEX.encode(ecKey.toAddress(this.wallet().getNetworkParameters()).getHash160()));
         }
-        String response = OkHttp3Util.postString(this.serverURL + "getOutputs",
+        String response = OkHttp3Util.postString(this.serverURL + ReqCmd.getOutputs.name(),
                 Json.jsonmapper().writeValueAsString(pubKeyHashList));
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         if (data == null || data.isEmpty()) {
@@ -343,7 +348,8 @@ public class PayOrder {
         byte[] data = new byte[len];
         byteBuffer.get(data);
         try {
-            Transaction transaction = (Transaction) this.wallet().getNetworkParameters().getDefaultSerializer().makeTransaction(data);
+            Transaction transaction = (Transaction) this.wallet().getNetworkParameters().getDefaultSerializer()
+                    .makeTransaction(data);
             exchangeReload.setTransaction(transaction);
         } catch (Exception e) {
             e.printStackTrace();
@@ -351,14 +357,12 @@ public class PayOrder {
         return exchangeReload;
     }
 
-    @SuppressWarnings("unchecked")
-    private HashMap<String, Object> getExchangeInfoResult(String orderid) throws Exception {
+    private Exchange getExchangeInfoResult(String orderid) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", orderid);
-        String respone = OkHttp3Util.postString(this.marketURL + "exchangeInfo",
+        String respone = OkHttp3Util.postString(this.marketURL + OrdermatchReqCmd.exchangeInfo.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
-        HashMap<String, Object> result = Json.jsonmapper().readValue(respone, HashMap.class);
-        HashMap<String, Object> exchange = (HashMap<String, Object>) result.get("exchange");
-        return exchange;
+        ExchangeInfoResponse exchangeInfoResponse = Json.jsonmapper().readValue(respone, ExchangeInfoResponse.class);
+        return exchangeInfoResponse.getExchange();
     }
 }
