@@ -178,7 +178,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("address", myutxo.getAddress());
-          response = OkHttp3Util.post(contextRoot + "getExchange",
+          response = OkHttp3Util.post(contextRoot + OrdermatchReqCmd.getExchange.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("exchanges");
@@ -220,7 +220,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         requestParam0.put("dataHex", Utils.HEX.encode(a));
         requestParam0.put("signtype", "to");
 
-        OkHttp3Util.post(contextRoot + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam0));
+        OkHttp3Util.post(contextRoot + OrdermatchReqCmd.signTransaction.name(), Json.jsonmapper().writeValueAsString(requestParam0));
   
 
         Transaction transaction = (Transaction) networkParameters.getDefaultSerializer().makeTransaction(a);
@@ -237,7 +237,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         requestParam1.put("orderid", (String) exchangemap.get("orderid"));
         requestParam1.put("dataHex", Utils.HEX.encode(transaction.bitcoinSerialize()));
         requestParam1.put("signtype", "from");
-        OkHttp3Util.post(contextRoot + "signTransaction", Json.jsonmapper().writeValueAsString(requestParam1));
+        OkHttp3Util.post(contextRoot + OrdermatchReqCmd.signTransaction.name(), Json.jsonmapper().writeValueAsString(requestParam1));
  */
     }
 

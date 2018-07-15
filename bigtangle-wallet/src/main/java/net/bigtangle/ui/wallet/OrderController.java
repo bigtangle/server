@@ -39,6 +39,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Utils;
+import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
@@ -241,7 +242,7 @@ public class OrderController extends ExchangeController {
             }
             String url = (String) tokenResult.get("url");
             try {
-                response = OkHttp3Util.post(url + "/" + "getOrders",
+                response = OkHttp3Util.post(url + "/" + OrdermatchReqCmd.getOrders.name(),
                         Json.jsonmapper().writeValueAsString(requestParam).getBytes());
             } catch (Exception e) {
                 continue;
@@ -420,7 +421,7 @@ public class OrderController extends ExchangeController {
         HashMap<String, Object> token_ = (HashMap<String, Object>) res.get("token");
 
         String url = (String) token_.get("url");
-        OkHttp3Util.post(url + "/" + "saveOrder", Json.jsonmapper().writeValueAsString(requestParam));
+        OkHttp3Util.post(url + "/" + OrdermatchReqCmd.saveOrder.name(), Json.jsonmapper().writeValueAsString(requestParam));
         overlayUI.done();
     }
 

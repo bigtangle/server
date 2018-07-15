@@ -37,6 +37,7 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VOS;
 import net.bigtangle.core.VOSExecute;
+import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.utils.OkHttp3Util;
@@ -105,24 +106,8 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         walletAppKit.wallet().signTransaction(req);
 
         byte[] a = req.tx.bitcoinSerialize();
-        /*
-         * HashMap<String, Object> requestParam = new HashMap<String, Object>();
-         * requestParam.put("fromAddress", "fromAddress");
-         * requestParam.put("fromTokenHex", "fromTokenHex");
-         * requestParam.put("fromAmount", "22"); requestParam.put("toAddress",
-         * "toAddress"); requestParam.put("toTokenHex", "toTokenHex");
-         * requestParam.put("toAmount", "33"); requestParam.put("orderid",
-         * UUID.randomUUID().toString()); requestParam.put("dataHex",
-         * Utils.HEX.encode(a)); String data = OkHttp3Util.post(contextRoot +
-         * "saveExchange",
-         * Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-         * logger.info("testGetBalances resp : " + data);
-         */
-        Transaction transaction = (Transaction) networkParameters.getDefaultSerializer().makeTransaction(a);
 
-        // byte[] buf = BeanSerializeUtil.serializer(req.tx);
-        // Transaction transaction = BeanSerializeUtil.deserialize(buf,
-        // Transaction.class);
+        Transaction transaction = (Transaction) networkParameters.getDefaultSerializer().makeTransaction(a);
 
         SendRequest request = SendRequest.forTx(transaction);
         walletAppKit1.wallet().signTransaction(request);
@@ -131,7 +116,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("address", "fromAddress");
 
-        // String response = OkHttp3Util.post(contextRoot + "getExchange",
+        // String response = OkHttp3Util.post(contextRoot + OrdermatchReqCmd.getExchange.name(),
         // Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
         // logger.info("getExchange resp : " + requestParam);

@@ -20,8 +20,10 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OrderMatch;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.PayOrder;
@@ -85,7 +87,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         request.put("amount", 1000);
         System.out.println("req : " + request);
         // sell token order
-        String response = OkHttp3Util.post(marketURL + "saveOrder",
+        String response = OkHttp3Util.post(marketURL + OrdermatchReqCmd.saveOrder.name(),
                 Json.jsonmapper().writeValueAsString(request).getBytes());
         
         request.put("address", myutxo.getAddress());
@@ -95,14 +97,14 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         request.put("amount", 1000);
         System.out.println("req : " + request);
         // buy token order
-          response = OkHttp3Util.post(marketURL + "saveOrder",
+          response = OkHttp3Util.post(marketURL + OrdermatchReqCmd.saveOrder.name(),
                 Json.jsonmapper().writeValueAsString(request).getBytes());
 
         Thread.sleep(10000);
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("address", myutxo.getAddress());
-          response = OkHttp3Util.post(marketURL + "getExchange",
+          response = OkHttp3Util.post(marketURL + OrdermatchReqCmd.getExchange.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("exchanges");

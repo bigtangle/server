@@ -42,6 +42,7 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
+import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -181,7 +182,7 @@ public class ExchangeController {
                 }
             }
             try {
-                String response = OkHttp3Util.post(url + "/" + "getBatchExchange",
+                String response = OkHttp3Util.post(url + "/" + OrdermatchReqCmd.getBatchExchange.name(),
                         Json.jsonmapper().writeValueAsString(addressList).getBytes());
                 final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
                 List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("exchanges");
@@ -278,7 +279,7 @@ public class ExchangeController {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", orderid);
 
-        OkHttp3Util.post(ContextRoot + "cancelOrder", Json.jsonmapper().writeValueAsString(requestParam));
+        OkHttp3Util.post(ContextRoot + OrdermatchReqCmd.cancelOrder.name(), Json.jsonmapper().writeValueAsString(requestParam));
         overlayUI.done();
     }
 
@@ -490,7 +491,7 @@ public class ExchangeController {
     public HashMap<String, Object> getExchangeInfoResult(String url, String orderid) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", orderid);
-        String respone = OkHttp3Util.postString(url + "/" + "exchangeInfo",
+        String respone = OkHttp3Util.postString(url + "/" + OrdermatchReqCmd.exchangeInfo.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         HashMap<String, Object> result = Json.jsonmapper().readValue(respone, HashMap.class);
         HashMap<String, Object> exchange = (HashMap<String, Object>) result.get("exchange");
