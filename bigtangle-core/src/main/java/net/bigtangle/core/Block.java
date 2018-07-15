@@ -620,16 +620,14 @@ public class Block extends Message {
 
     /**
      * <p>
-     * Finds a value of nonce that makes the blocks hash lower than the
-     * difficulty target. This is called mining, but solve() is far too slow to
-     * do real mining with. It exists only for unit testing purposes.
-     *
-     * <p>
-     * This can loop forever if a solution cannot be found solely by
-     * incrementing nonce. It doesn't change extraNonce.
-     * </p>
+     * Finds a value of nonce and equihashProof if using Equihash 
+     * that validates correctly.
      */
     public void solve() {
+        // Add randomness to prevent new empty blocks from same miner with same
+        // approved blocks to be the same
+        setNonce(gen.nextLong());
+        
         while (true) {
             try {
                 // Is our proof of work valid yet?
@@ -1235,10 +1233,6 @@ public class Block extends Message {
         Block b = new Block(params, version);
         // b.setDifficultyTarget(difficultyTarget);
         // only BLOCKTYPE_TOKEN_CREATION, BLOCKTYPE_REWARD, BLOCKTYPE_INITIAL
-
-        // Add randomness to prevent new empty blocks from same miner with same
-        // approved blocks to be the same
-        b.setNonce(gen.nextLong());
 
         b.setMinerAddress(mineraddress);
         if (to != null) {

@@ -429,10 +429,10 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMilestone());
 
         // Generate longer new Tangle
-        rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0, networkParameters.getGenesisBlock().getHash());
+        rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
+                outKey.getPubKey(), 0, networkParameters.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock, true);
-        
+
         for (int i = 0; i < NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 25; i++) {
             rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                     0, rollingBlock.getHash());
@@ -440,7 +440,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         }
         milestoneService.update();
         Block newTangleBlock = rollingBlock;
-        
+
         // New Tangle should now be in Milestone?
         assertFalse(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMilestone());
         assertTrue(blockService.getBlockEvaluation(newTangleBlock.getHash()).isMilestone());
@@ -483,7 +483,6 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
             rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                     0, rollingBlock.getHash());
             blockgraph.add(rollingBlock, true);
-            ;
         }
         milestoneService.update();
 
