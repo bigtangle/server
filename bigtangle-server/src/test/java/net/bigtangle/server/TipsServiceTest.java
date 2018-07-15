@@ -41,28 +41,9 @@ public class TipsServiceTest extends AbstractIntegrationTest {
     
 	@Autowired
 	private MilestoneService milestoneService;
-    
-//    @Test
-//    public void testBlockEvaluationDb() throws Exception {
-//        List<Block> blocks = this.createBlock();
-//        
-//        milestoneService.update();
-//        
-//        Block block1 = blocks.get(0);
-//        BlockEvaluation blockEvaluation = this.store.getBlockEvaluation(block1.getHash());
-//        assertEquals(block1.getHash(), blockEvaluation.getBlockhash());
-//        assertEquals(6, blockEvaluation.getCumulativeWeight());
-//        assertEquals(5, blockEvaluation.getDepth());
-//        assertEquals(1, blockEvaluation.getHeight());
-//        //assertEquals(false, blockEvaluation.isMilestone());
-//        assertEquals(true, blockEvaluation.isSolid());
-//        assertEquals(0, blockEvaluation.getMilestoneDepth());
-//            
-//    
-//    }
 
     @Autowired
-    private TipsService tipsManager;
+    private TipsService tipsService;
 
     @Autowired
     private BlockService blockService;
@@ -125,7 +106,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
     @Test
     public void getBlockToApprove() throws Exception {
         for (int i = 1; i < 20; i++) {
-        	Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsManager.getValidatedBlockPair();
+        	Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
             Block r1 = blockService.getBlock(tipsToApprove.getLeft());
             Block r2 = blockService.getBlock(tipsToApprove.getRight());
            log.debug("b0Sha256Hash : " + r1.toString());
@@ -141,7 +122,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         int height = 1;
 
         for (int i = 1; i < 20; i++) {
-        	Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsManager.getValidatedBlockPair();
+        	Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
             Block r1 = blockService.getBlock(tipsToApprove.getLeft());
             Block r2 = blockService.getBlock(tipsToApprove.getRight());
             Block rollingBlock = BlockForTest.createNextBlock(r2, Block.BLOCK_VERSION_GENESIS,
