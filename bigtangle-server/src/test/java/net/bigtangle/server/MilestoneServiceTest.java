@@ -138,7 +138,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testMilestoneUpdate() throws Exception {
+    public void testStatisticsUpdate() throws Exception {
         store.resetStore();
 
         Block b1 = createAndAddNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
@@ -372,22 +372,78 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     public void testMiningReward() throws Exception {
         store.resetStore();
 
+        // Generate blocks until passing first reward interval
         Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
                 Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0, networkParameters.getGenesisBlock().getHash());
         blockgraph.add(rollingBlock, true);
-        ;
-        for (int i = 0; i < 110; i++) {
+
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + 10; i++) {
             rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                     0, rollingBlock.getHash());
             blockgraph.add(rollingBlock, true);
         }
         milestoneService.update();
 
-        transactionService.createMiningRewardBlock(0);
+        // Generate mining reward block
+        Block rewardBlock = transactionService.createMiningRewardBlock(0);
         milestoneService.update();
 
+        // Genesis block is no longer maintained, while newest one is maintained
         assertFalse(blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash()).isMaintained());
         assertTrue(blockService.getBlockEvaluation(rollingBlock.getHash()).isMaintained());
+
+        // Mining reward block should go through
+        for (int i = 1; i < 30; i++) {
+            Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
+            Block r1 = blockService.getBlock(tipsToApprove.getLeft());
+            Block r2 = blockService.getBlock(tipsToApprove.getRight());
+            Block b = BlockForTest.createNextBlock(r2, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0,
+                    r1.getHash());
+            blockgraph.add(b, true);
+            log.debug("create block  : " + i + " " + rollingBlock);
+        }
+        milestoneService.update();
+        assertTrue(blockService.getBlockEvaluation(rewardBlock.getHash()).isMilestone());
+    }
+
+    @Test
+    public void testReorgDeadlockResolution() throws Exception {
+        store.resetStore();
+
+        // Generate blocks until first ones become unmaintained
+        Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
+                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0, networkParameters.getGenesisBlock().getHash());
+        blockgraph.add(rollingBlock, true);
+
+        for (int i = 0; i < NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 5; i++) {
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+                    0, rollingBlock.getHash());
+            blockgraph.add(rollingBlock, true);
+        }
+        milestoneService.update();
+        Block oldTangleBlock = rollingBlock;
+
+        // Genesis block is no longer maintained, while newest one is maintained
+        assertFalse(blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash()).isMaintained());
+        assertTrue(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMaintained());
+        assertTrue(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMilestone());
+
+        // Generate longer new Tangle
+        rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
+                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0, networkParameters.getGenesisBlock().getHash());
+        blockgraph.add(rollingBlock, true);
+        
+        for (int i = 0; i < NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 25; i++) {
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+                    0, rollingBlock.getHash());
+            blockgraph.add(rollingBlock, true);
+        }
+        milestoneService.update();
+        Block newTangleBlock = rollingBlock;
+        
+        // New Tangle should now be in Milestone?
+        assertFalse(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMilestone());
+        assertTrue(blockService.getBlockEvaluation(newTangleBlock.getHash()).isMilestone());
     }
 
     @Test
@@ -445,6 +501,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
             blockgraph.add(b, true);
             log.debug("create block  : " + i + " " + rollingBlock);
         }
+        milestoneService.update();
 
         // Ensure the second block eventually loses and is not
         assertTrue(blockService.getBlockEvaluation(b1.getHash()).isMilestone());
