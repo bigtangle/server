@@ -52,7 +52,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         walletAppKit.wallet().completeTx(request);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
-        OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
         LOGGER.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
     }
 

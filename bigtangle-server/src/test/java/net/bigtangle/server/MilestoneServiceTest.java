@@ -34,6 +34,7 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.crypto.TransactionSignature;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.BlockService;
@@ -56,7 +57,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
                     NetworkParameters.BLOCKTYPE_TRANSFER, System.currentTimeMillis() / 1000);
             block.solve();
             System.out.println(block.getHashAsString());
-            OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
+            OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {

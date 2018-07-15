@@ -76,7 +76,7 @@ public class GiveMoneyUtils {
         block.solve();
 
         try {
-            OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "saveBlock", block.bitcoinSerialize());
+            OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -87,7 +87,7 @@ public class GiveMoneyUtils {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         List<String> keyStrHex000 = new ArrayList<String>();
         keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
-        String response = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "batchGetBalances",
+        String response = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.batchGetBalances.name(),
                 Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
 
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);

@@ -72,7 +72,7 @@ public class SendEmptyBlock {
         Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
         rollingBlock.solve();
 
-        OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
+        OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
 
     }
 

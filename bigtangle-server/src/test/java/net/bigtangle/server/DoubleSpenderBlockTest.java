@@ -87,7 +87,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
             Block block = networkParameters.getDefaultSerializer().makeBlock(buf);
             block.solve();
             try {
-                OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
+                OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -106,7 +106,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
         this.giveBlockDoubleSpentTransaction(block, outKey, coinbase, outputs);
         block.solve();
         try {
-            OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
+            OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -134,7 +134,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
             rollingBlock.solve();
-            OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+            OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
             sha256Hash1 = rollingBlock.getHash();
         }
         {
@@ -143,7 +143,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
             rollingBlock.solve();
-            OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+            OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
             sha256Hash2 = rollingBlock.getHash();
         }
         for (int i = 0; i < 100; i++) {
@@ -153,7 +153,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
                 break;
             }
             block.solve();
-            OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
+            OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
             if (i % 2 == 0) {
                 sha256Hash1 = block.getHash();
             } else {
@@ -173,7 +173,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
         giveBlockDoubleSpentTransaction(block, outKey, coinbase, outputs.get(0));
         block.solve();
         
-        OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
+        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
         LOGGER.info("test 100 empty block method end");
     }
 
@@ -265,6 +265,6 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
 
         // save block
         block.solve();
-        OkHttp3Util.post(contextRoot + "multiSign", block.bitcoinSerialize());
+        OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
     }
 }

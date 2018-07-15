@@ -26,6 +26,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.crypto.KeyCrypterScrypt;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
 
@@ -124,7 +125,7 @@ public class TokensController {
         List<String> addresses = keys.stream().map(key -> key.toAddress(Main.params).toBase58())
                 .collect(Collectors.toList());
         requestParam.put("addresses", addresses);
-        String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokenSerials",
+        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokenSerials.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokenSerials");
@@ -152,7 +153,7 @@ public class TokensController {
 
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("name", Main.getString(name));
-        String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens",
+        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         log.debug(response);
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
@@ -211,7 +212,7 @@ public class TokensController {
                 .collect(Collectors.toList());
         requestParam.put("addresses", addresses);
         requestParam.put("isSign", isSignCheckBox.isSelected());
-        String response = OkHttp3Util.post(CONTEXT_ROOT + "getMultiSignWithTokenid",
+        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getMultiSignWithTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         log.debug(response);
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);

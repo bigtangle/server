@@ -63,6 +63,7 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletAppKit;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.controls.ClickableBitcoinAddress;
 import net.bigtangle.ui.wallet.controls.NotificationBarPane;
 import net.bigtangle.ui.wallet.utils.BitcoinUIModel;
@@ -163,7 +164,7 @@ public class MainController {
         try {
             String CONTEXT_ROOT = Main.versionserver;
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
-            String resp = OkHttp3Util.postString(CONTEXT_ROOT + "version",
+            String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.version.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             HashMap<String, String> result = Json.jsonmapper().readValue(resp, HashMap.class);
             String version = result.get("version");
@@ -205,7 +206,7 @@ public class MainController {
             keyStrHex000.add(Utils.HEX.encode(Address.fromBase58(Main.params, addressString).getHash160()));
         }
 
-        String response = OkHttp3Util.post(CONTEXT_ROOT + "batchGetBalances",
+        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.batchGetBalances.name(),
                 Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
         log.debug(response);
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
@@ -472,7 +473,7 @@ public class MainController {
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hashHex", Main.getString(utxoModel.getHashHex()));
 
-        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "getBlock", Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getBlock.name(), Json.jsonmapper().writeValueAsString(requestParam));
         Block re = Main.params.getDefaultSerializer().makeBlock(data);
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setHeight(800);

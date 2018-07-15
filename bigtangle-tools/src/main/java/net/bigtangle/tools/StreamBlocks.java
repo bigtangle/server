@@ -24,6 +24,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.params.UnitTestParams;
 import net.bigtangle.utils.OkHttp3Util;
 import okhttp3.OkHttpClient;
@@ -43,7 +44,7 @@ public class StreamBlocks {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         requestParam.put("heightstart", "1");
         requestParam.put("kafka", "de.kafka.bigtangle.net:9092");
-        OkHttp3Util.post(CONTEXT_ROOT + "streamBlocks", Json.jsonmapper().writeValueAsString(requestParam));
+        OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.streamBlocks.name(), Json.jsonmapper().writeValueAsString(requestParam));
 
     }
 

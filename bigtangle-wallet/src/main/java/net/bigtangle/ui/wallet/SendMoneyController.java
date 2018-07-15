@@ -340,7 +340,7 @@ public class SendMoneyController {
             pubKeys.add(ecKey.getPublicKeyAsHex());
         }
         String ContextRoot = Main.getContextRoot();
-        String resp = OkHttp3Util.postString(ContextRoot + "getPayMultiSignList",
+        String resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getPayMultiSignList.name(),
                 Json.jsonmapper().writeValueAsString(pubKeys));
         HashMap<String, Object> data = Json.jsonmapper().readValue(resp, HashMap.class);
         List<HashMap<String, Object>> payMultiSigns = (List<HashMap<String, Object>>) data.get("payMultiSigns");
@@ -556,7 +556,7 @@ public class SendMoneyController {
     public boolean sendMessage(byte[] data) throws Exception {
         String CONTEXT_ROOT = Main.IpAddress + "/"; // http://" + Main.IpAddress
                                                     // + ":" + Main.port + "/";
-        String resp = OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", data);
+        String resp = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.saveBlock.name(), data);
         @SuppressWarnings("unchecked")
         HashMap<String, Object> respRes = Json.jsonmapper().readValue(resp, HashMap.class);
         int errorcode = (Integer) respRes.get("errorcode");
@@ -605,7 +605,7 @@ public class SendMoneyController {
             Main.bitcoin.wallet().completeTx(request);
             rollingBlock.addTransaction(request.tx);
             rollingBlock.solve();
-            OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
+            OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
@@ -798,7 +798,7 @@ public class SendMoneyController {
         payMultiSign.setMinsignnumber(signnumber);
         payMultiSign.setOutpusHashHex(utxo.getHashHex());
 
-        OkHttp3Util.post(contextRoot + "launchPayMultiSign", Json.jsonmapper().writeValueAsString(payMultiSign));
+        OkHttp3Util.post(contextRoot + ReqCmd.launchPayMultiSign.name(), Json.jsonmapper().writeValueAsString(payMultiSign));
     }
 
     @SuppressWarnings("unchecked")
@@ -845,7 +845,7 @@ public class SendMoneyController {
         payMultiSign.setMinsignnumber(keys.size());
         payMultiSign.setOutpusHashHex(utxo.getHashHex() + ":" + utxo.getIndex());
 
-        OkHttp3Util.post(contextRoot + "launchPayMultiSign", Json.jsonmapper().writeValueAsString(payMultiSign));
+        OkHttp3Util.post(contextRoot + ReqCmd.launchPayMultiSign.name(), Json.jsonmapper().writeValueAsString(payMultiSign));
     }
 
     public void removeSignAddr(ActionEvent event) {
@@ -871,7 +871,7 @@ public class SendMoneyController {
         String ContextRoot = Main.getContextRoot();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", orderid);
-        String resp = OkHttp3Util.postString(ContextRoot + "getPayMultiSignAddressList",
+        String resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getPayMultiSignAddressList.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
         List<HashMap<String, Object>> payMultiSignAddresses = (List<HashMap<String, Object>>) result
@@ -907,7 +907,7 @@ public class SendMoneyController {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.clear();
         requestParam.put("orderid", orderid);
-        String resp = OkHttp3Util.postString(contextRoot + "payMultiSignDetails",
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.payMultiSignDetails.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         HashMap<String, Object> data = Json.jsonmapper().readValue(resp, HashMap.class);
         HashMap<String, Object> payMultiSign_ = (HashMap<String, Object>) data.get("payMultiSign");
@@ -945,7 +945,7 @@ public class SendMoneyController {
         requestParam.put("pubKey", ecKey.getPublicKeyAsHex());
         requestParam.put("signature", Utils.HEX.encode(buf1));
         requestParam.put("signInputData", Utils.HEX.encode(transactionSignature.encodeToBitcoin()));
-        resp = OkHttp3Util.postString(contextRoot + "payMultiSign", Json.jsonmapper().writeValueAsString(requestParam));
+        resp = OkHttp3Util.postString(contextRoot + ReqCmd.payMultiSign.name(), Json.jsonmapper().writeValueAsString(requestParam));
         log.debug(resp);
 
         HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -953,7 +953,7 @@ public class SendMoneyController {
         if (success) {
             requestParam.clear();
             requestParam.put("orderid", (String) payMultiSign_.get("orderid"));
-            resp = OkHttp3Util.postString(contextRoot + "getPayMultiSignAddressList",
+            resp = OkHttp3Util.postString(contextRoot + ReqCmd.getPayMultiSignAddressList.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             log.debug(resp);
             result = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -973,7 +973,7 @@ public class SendMoneyController {
             Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
             rollingBlock.addTransaction(transaction0);
             rollingBlock.solve();
-            OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+            OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
         }
     }
 

@@ -39,6 +39,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Utils;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.ui.wallet.utils.WTUtils;
@@ -229,7 +230,7 @@ public class OrderController extends ExchangeController {
         ObservableList<Map<String, Object>> orderData = FXCollections.observableArrayList();
 
         String CONTEXT_ROOT = Main.getContextRoot();
-        String response = OkHttp3Util.post(CONTEXT_ROOT + "getMarkets",
+        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getMarkets.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         final Map<String, Object> getTokensResult = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> tokensList = (List<Map<String, Object>>) getTokensResult.get("tokens");
@@ -289,7 +290,7 @@ public class OrderController extends ExchangeController {
         String CONTEXT_ROOT = Main.getContextRoot();
         ObservableList<String> tokenData = FXCollections.observableArrayList();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        String response = OkHttp3Util.post(CONTEXT_ROOT + "getMarkets",
+        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getMarkets.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
@@ -312,7 +313,7 @@ public class OrderController extends ExchangeController {
         String CONTEXT_ROOT = Main.getContextRoot();
         ObservableList<String> tokenData = FXCollections.observableArrayList();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokensNoMarket",
+        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokensNoMarket.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
@@ -413,7 +414,7 @@ public class OrderController extends ExchangeController {
 
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
         requestParam0.put("tokenid", temp);
-        String resp = OkHttp3Util.postString(ContextRoot + "getTokenById",
+        String resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
         HashMap<String, Object> res = Json.jsonmapper().readValue(resp, HashMap.class);
         HashMap<String, Object> token_ = (HashMap<String, Object>) res.get("token");

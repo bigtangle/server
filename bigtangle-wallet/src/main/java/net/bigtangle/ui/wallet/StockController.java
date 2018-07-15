@@ -196,7 +196,7 @@ public class StockController extends TokensController {
         address = rowdata.get("address").toString();
         tokenUUID = rowdata.get("id").toString();
         tokenidString = rowdata.get("tokenid").toString();
-        String resp = OkHttp3Util.postString(CONTEXT_ROOT + "getMultiSignWithAddress",
+        String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getMultiSignWithAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
         HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -234,7 +234,7 @@ public class StockController extends TokensController {
         requestParam0.put("tokenid", rowdata.get("tokenid").toString());
         requestParam0.put("tokenindex", Long.parseLong(rowdata.get("tokenindex").toString()));
         requestParam0.put("sign", 0);
-        resp = OkHttp3Util.postString(CONTEXT_ROOT + "getCountSign",
+        resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getCountSign.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
         result = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -261,7 +261,7 @@ public class StockController extends TokensController {
         address = rowdata.get("address").toString();
         tokenUUID = rowdata.get("id").toString();
         tokenidString = rowdata.get("tokenid").toString();
-        String resp = OkHttp3Util.postString(CONTEXT_ROOT + "getMultiSignWithAddress",
+        String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getMultiSignWithAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
         HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -301,7 +301,7 @@ public class StockController extends TokensController {
         requestParam0.put("tokenid", rowdata.get("tokenid").toString());
         requestParam0.put("tokenindex", Long.parseLong(rowdata.get("tokenindex").toString()));
         requestParam0.put("sign", 0);
-        resp = OkHttp3Util.postString(CONTEXT_ROOT + "getCountSign",
+        resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getCountSign.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
         result = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -373,7 +373,7 @@ public class StockController extends TokensController {
         ObservableList<String> tokenData = FXCollections.observableArrayList();
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("name", null);
-        String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens",
+        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
 
@@ -427,7 +427,7 @@ public class StockController extends TokensController {
 
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", tokenid.getValue());
-        String response = OkHttp3Util.post(CONTEXT_ROOT + "getMultiSignWithTokenid",
+        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getMultiSignWithTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("multiSigns");
@@ -522,7 +522,7 @@ public class StockController extends TokensController {
 
             // save block
             block.solve();
-            OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
+            OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.multiSign.name(), block.bitcoinSerialize());
 
             GuiUtils.informationalAlert("", Main.getText("s_c_m"));
             Main.instance.controller.initTableView();
@@ -669,7 +669,7 @@ public class StockController extends TokensController {
 
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
         requestParam0.put("address", rowdata.get("address").toString());
-        String resp = OkHttp3Util.postString(CONTEXT_ROOT + "getMultiSignWithAddress",
+        String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getMultiSignWithAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
         log.debug(resp);
 
@@ -707,7 +707,7 @@ public class StockController extends TokensController {
         multiSignBies.add(multiSignBy0);
 
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
-        OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block0.bitcoinSerialize());
+        OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.multiSign.name(), block0.bitcoinSerialize());
         Main.instance.controller.initTableView();
         initTableView();
         initMultisignTableView();
@@ -742,7 +742,7 @@ public class StockController extends TokensController {
 
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
         requestParam00.put("tokenid", Main.getString(map.get("tokenHex")).trim());
-        String resp2 = OkHttp3Util.postString(CONTEXT_ROOT + "getCalTokenIndex",
+        String resp2 = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getCalTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp2, HashMap.class);
         Integer tokenindex_ = (Integer) result2.get("tokenindex");
@@ -782,7 +782,7 @@ public class StockController extends TokensController {
         block.solve();
 
         // save block
-        String resp = OkHttp3Util.post(CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
+        String resp = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.multiSign.name(), block.bitcoinSerialize());
         @SuppressWarnings("unchecked")
         HashMap<String, Object> respRes = Json.jsonmapper().readValue(resp, HashMap.class);
         int errorcode = (Integer) respRes.get("errorcode");

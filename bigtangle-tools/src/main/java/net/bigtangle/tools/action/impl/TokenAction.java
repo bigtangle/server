@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.tools.account.Account;
 import net.bigtangle.tools.action.Action;
 import net.bigtangle.tools.config.Configure;
@@ -27,7 +28,7 @@ public class TokenAction extends Action {
         try {
             for (ECKey outKey : this.account.walletKeys()) {
                 Block block = GiveMoneyUtils.createTokenBlock(outKey);
-                OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + "multiSign", block.bitcoinSerialize());
+                OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.multiSign.name(), block.bitcoinSerialize());
             }
         } catch (Exception e) {
             logger.error("account name : {}, token action exception", account.getName(), e);

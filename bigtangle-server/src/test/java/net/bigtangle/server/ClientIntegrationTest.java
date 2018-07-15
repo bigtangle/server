@@ -146,7 +146,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         rollingBlock.addTransaction(tx);
         rollingBlock.solve();
 
-        String res = OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        String res = OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
         System.out.println(res);
     }
 
@@ -173,7 +173,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         walletAppKit.wallet().completeTx(request);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
-        checkResponse(OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize()));
+        checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize()));
         logger.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
 
         checkBalance(utxo.getValue(), walletAppKit1.wallet().walletKeys(null));
@@ -217,7 +217,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         block.addTransaction(coinbase);
         block.solve();
         
-        OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
+        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
         milestoneService.update();
         
         int blocktype = (int) NetworkParameters.BLOCKTYPE_VOS;
@@ -229,7 +229,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         requestParam.put("blocktype", blocktype);
         requestParam.put("pubKeyList", pubKeyList);
 
-        String resp = OkHttp3Util.postString(contextRoot + "userDataList", Json.jsonmapper().writeValueAsString(requestParam));
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.userDataList.name(), Json.jsonmapper().writeValueAsString(requestParam));
         HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
         List<String> dataList = (List<String>) result.get("dataList");
         
@@ -267,7 +267,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("vosKey", outKey.getPublicKeyAsHex());
-        String resp = OkHttp3Util.postString(contextRoot + "getVOSExecuteList", Json.jsonmapper().writeValueAsString(requestParam));
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getVOSExecuteList.name(), Json.jsonmapper().writeValueAsString(requestParam));
         
         HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
         List<HashMap<String, Object>> vosExecutes = (List<HashMap<String,Object>>) result.get("vosExecutes");
@@ -309,7 +309,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         block.addTransaction(coinbase);
         block.solve();
         
-        OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
+        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
     }
 
     @Test
@@ -347,14 +347,14 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
         block.addTransaction(transaction);
         block.solve();
-        OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
+        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
         
         milestoneService.update();
         
         requestParam.clear();
         requestParam.put("dataclassname", DataClassName.CONTACTINFO.name());
         requestParam.put("pubKey", Utils.HEX.encode(outKey.getPubKey()));
-        byte[] buf = OkHttp3Util.post(contextRoot + "getUserData", Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] buf = OkHttp3Util.post(contextRoot + ReqCmd.getUserData.name(), Json.jsonmapper().writeValueAsString(requestParam));
 
         ContactInfo contactInfo1 = new ContactInfo().parse(buf);
         assertTrue(contactInfo1.getContactList().size() == 1);
@@ -387,13 +387,13 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         block.addTransaction(transaction);
         block.solve();
 
-        OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
+        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
         milestoneService.update();
         
         requestParam.clear();
         requestParam.put("dataclassname", DataClassName.CONTACTINFO.name());
         requestParam.put("pubKey", Utils.HEX.encode(outKey.getPubKey()));
-        buf = OkHttp3Util.post(contextRoot + "getUserData", Json.jsonmapper().writeValueAsString(requestParam));
+        buf = OkHttp3Util.post(contextRoot + ReqCmd.getUserData.name(), Json.jsonmapper().writeValueAsString(requestParam));
         
         contactInfo1 = new ContactInfo().parse(buf);
         assertTrue(contactInfo1.getContactList().size() == 0);
@@ -419,7 +419,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
 
-        OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
         logger.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
 
         testTransactionAndGetBalances();

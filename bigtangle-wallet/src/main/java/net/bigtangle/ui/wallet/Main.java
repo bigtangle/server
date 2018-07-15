@@ -202,7 +202,7 @@ public class Main extends Application {
         block.addTransaction(coinbase);
         block.solve();
 
-        OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
+        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
         byte[] buf = block.bitcoinSerialize();
         if (buf == null) {
             return;
@@ -340,7 +340,7 @@ public class Main extends Application {
     public static Map<String, String> getTokenHexNameMap() throws Exception {
         String CONTEXT_ROOT = Main.IpAddress + "/"; // Main.getContextRoot();
         Map<String, Object> requestParam = new HashMap<String, Object>();
-        String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens",
+        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
@@ -406,7 +406,7 @@ public class Main extends Application {
         block.addTransaction(coinbase);
         block.solve();
 
-        OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", block.bitcoinSerialize());
+        OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
     }
 
     public static String getString4block(List<String> list) throws Exception {
@@ -739,7 +739,7 @@ public class Main extends Application {
         Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
         rollingBlock.solve();
 
-        return OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", rollingBlock.bitcoinSerialize());
+        return OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
 
     }
 
@@ -766,7 +766,7 @@ public class Main extends Application {
         String ContextRoot = Main.IpAddress + "/"; // http://" + Main.IpAddress
                                                    // + ":" + Main.port + "/";
 
-        String response = OkHttp3Util.post(ContextRoot + "getOutputs",
+        String response = OkHttp3Util.post(ContextRoot + ReqCmd.getOutputs.name(),
                 Json.jsonmapper().writeValueAsString(pubKeyHashs).getBytes());
         log.debug("tokenid:" + tokenid);
         log.debug("response:" + response);
@@ -850,7 +850,7 @@ public class Main extends Application {
 
         requestParam.put("pubKey", pubKeyTo.getPublicKeyAsHex());
         requestParam.put("dataclassname", type);
-        byte[] bytes = OkHttp3Util.post(CONTEXT_ROOT + "getUserData",
+        byte[] bytes = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getUserData.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         if (DataClassName.CONTACTINFO.name().equals(type)) {
             if (bytes == null || bytes.length == 0) {

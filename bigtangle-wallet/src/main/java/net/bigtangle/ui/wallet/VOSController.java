@@ -158,7 +158,7 @@ public class VOSController {
             requestParam.put("pubKeyList", pubKeyList);
 
             String CONTEXT_ROOT = Main.getContextRoot();
-            String resp = OkHttp3Util.postString(CONTEXT_ROOT + "userDataList",
+            String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.userDataList.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
             List<String> dataList = (List<String>) result.get("dataList");
@@ -232,7 +232,7 @@ public class VOSController {
             block.addTransaction(coinbase);
             block.solve();
 
-            OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", block.bitcoinSerialize());
+            OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }

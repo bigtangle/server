@@ -34,6 +34,7 @@ import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.crypto.KeyCrypterScrypt;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
@@ -284,7 +285,7 @@ public class BlockEvaluationController {
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("address", addresses);
         requestParam.put("lastestAmount", lastestAmount);
-        String response = OkHttp3Util.postString(CONTEXT_ROOT + "searchBlock",
+        String response = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.searchBlock.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> temp = (List<Map<String, Object>>) data.get("evaluations");
@@ -318,7 +319,7 @@ public class BlockEvaluationController {
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hashHex", Main.getString(rowData.get("hash")));
 
-        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + "getBlock", Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getBlock.name(), Json.jsonmapper().writeValueAsString(requestParam));
         Block re = Main.params.getDefaultSerializer().makeBlock(data);
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setHeight(800);
@@ -355,7 +356,7 @@ public class BlockEvaluationController {
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("address", addresses);
         requestParam.put("lastestAmount", lastestAmount);
-        String response = OkHttp3Util.postString(CONTEXT_ROOT + "searchBlock",
+        String response = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.searchBlock.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> temp = (List<Map<String, Object>>) data.get("evaluations");

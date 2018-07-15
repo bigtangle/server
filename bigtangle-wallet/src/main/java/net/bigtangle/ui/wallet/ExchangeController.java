@@ -145,7 +145,7 @@ public class ExchangeController {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void initTable() throws Exception {
         String CONTEXT_ROOT = Main.getContextRoot();
-        String response0 = OkHttp3Util.postString(CONTEXT_ROOT + "getMarkets", "{}");
+        String response0 = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getMarkets.name(), "{}");
         final Map<String, Object> getTokensResult = Json.jsonmapper().readValue(response0, Map.class);
         List<Map<String, Object>> tokensList = (List<Map<String, Object>>) getTokensResult.get("tokens");
         ObservableList<Map<String, Object>> exchangeData = FXCollections.observableArrayList();
@@ -239,7 +239,7 @@ public class ExchangeController {
         ObservableList<String> tokenData = FXCollections.observableArrayList();
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("name", null);
-        String response = OkHttp3Util.post(CONTEXT_ROOT + "getTokens",
+        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> tokens = (List<Map<String, Object>>) data.get("tokens");
@@ -296,7 +296,7 @@ public class ExchangeController {
         Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(mTransaction);
         rollingBlock.solve();
-        OkHttp3Util.post(ContextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        OkHttp3Util.post(ContextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
         // System.out.println(marketURL);
         if (marketURL != null && !marketURL.equals("")) {
             HashMap<String, Object> exchangeResult = this.getExchangeInfoResult(marketURL, this.mOrderid);
@@ -482,7 +482,7 @@ public class ExchangeController {
         Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(transaction);
         rollingBlock.solve();
-        OkHttp3Util.post(ContextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        OkHttp3Util.post(ContextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
         // overlayUI.done();
     }
 
@@ -519,7 +519,7 @@ public class ExchangeController {
         String ContextRoot = Main.getContextRoot();
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
         requestParam0.put("tokenid", tokenid);
-        String resp = OkHttp3Util.postString(ContextRoot + "getTokenById",
+        String resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
         HashMap<String, Object> res = Json.jsonmapper().readValue(resp, HashMap.class);
         HashMap<String, Object> token_ = (HashMap<String, Object>) res.get("token");

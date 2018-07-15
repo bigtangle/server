@@ -39,6 +39,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.kits.WalletAppKit;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.ordermatch.config.DBStoreConfiguration;
 import net.bigtangle.server.ordermatch.store.FullPrunedBlockStore;
 import net.bigtangle.utils.MapToBeanMapperUtil;
@@ -149,7 +150,7 @@ public abstract class AbstractIntegrationTest {
             // keyStrHex000.add(ecKey.toAddress(networkParameters).toString());
             keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
         }
-        String response = OkHttp3Util.post(contextRoot + "batchGetBalances",
+        String response = OkHttp3Util.post(contextRoot + ReqCmd.batchGetBalances.name(),
                 Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
 
         // String response = mvcResult.getResponse().getContentAsString();

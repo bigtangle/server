@@ -183,7 +183,7 @@ public abstract class AbstractIntegrationTest {
             // keyStrHex000.add(ecKey.toAddress(networkParameters).toString());
             keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
         }
-        String response = OkHttp3Util.post(contextRoot + "batchGetBalances",
+        String response = OkHttp3Util.post(contextRoot + ReqCmd.batchGetBalances.name(),
                 Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
 
         // String response = mvcResult.getResponse().getContentAsString();
@@ -248,7 +248,7 @@ public abstract class AbstractIntegrationTest {
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
 
-        checkResponse(OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize()));
+        checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize()));
 
         checkBalance(amount, walletKeys);
 
@@ -298,7 +298,7 @@ public abstract class AbstractIntegrationTest {
 
         // save block
         block.solve();
-        OkHttp3Util.post(contextRoot + "multiSign", block.bitcoinSerialize());
+        OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
     }
 
     public void checkResponse(String resp) throws JsonParseException, JsonMappingException, IOException {

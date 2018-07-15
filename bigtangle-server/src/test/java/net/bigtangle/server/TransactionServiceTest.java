@@ -81,7 +81,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         walletAppKit.wallet().completeTx(request);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
-        OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
         //tis is failed, becuase the address is empty for createMultiSigOutputScript
         //TODO add new table for UTXO as outputsmulti _> 
         //UTXO write 
@@ -140,7 +140,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
 //        rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
 
-       checkResponse( OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize()));
+       checkResponse( OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize()));
        
        List<TransactionOutput> candidates = walletAppKit.wallet().calculateAllSpendCandidates(true);
        
@@ -162,6 +162,6 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
 
-        OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
     }
 }

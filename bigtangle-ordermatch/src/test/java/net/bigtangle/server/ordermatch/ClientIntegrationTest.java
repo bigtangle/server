@@ -251,7 +251,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         rollingBlock.addTransaction(tx);
         rollingBlock.solve();
 
-        String res = OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        String res = OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
         System.out.println(res);
     }
 */
@@ -277,7 +277,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         walletAppKit.wallet().completeTx(request);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
-        OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
         logger.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
   
     }

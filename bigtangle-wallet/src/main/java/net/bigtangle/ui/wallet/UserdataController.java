@@ -239,7 +239,7 @@ public class UserdataController {
         block.addTransaction(coinbase);
         block.solve();
 
-        OkHttp3Util.post(contextRoot + "saveBlock", block.bitcoinSerialize());
+        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
     }
 
     public void closeUI(ActionEvent event) {
@@ -284,7 +284,7 @@ public class UserdataController {
             block.addTransaction(coinbase);
             block.solve();
 
-            OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", block.bitcoinSerialize());
+            OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
             initTokenTableView();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
@@ -354,7 +354,7 @@ public class UserdataController {
             block.addTransaction(coinbase);
             block.solve();
 
-            OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", block.bitcoinSerialize());
+            OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
@@ -424,7 +424,7 @@ public class UserdataController {
             block.addTransaction(coinbase);
             block.solve();
 
-            OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", block.bitcoinSerialize());
+            OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
             initContactTableView();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
@@ -495,7 +495,7 @@ public class UserdataController {
             requestParam.put("pubKeyList", pubKeyList);
 
             String CONTEXT_ROOT = Main.getContextRoot();
-            String resp = OkHttp3Util.postString(CONTEXT_ROOT + "userDataList",
+            String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.userDataList.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
         
             HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -604,7 +604,7 @@ public class UserdataController {
             block.addTransaction(coinbase);
             block.solve();
 
-            OkHttp3Util.post(CONTEXT_ROOT + "saveBlock", block.bitcoinSerialize());
+            OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
             initFileTableView();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);

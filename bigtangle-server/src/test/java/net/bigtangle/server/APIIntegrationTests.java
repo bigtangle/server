@@ -73,7 +73,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     @Test
     public void testClientVersion() throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        String resp = OkHttp3Util.postString(contextRoot + "version", Json.jsonmapper().writeValueAsString(requestParam));
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.version.name(), Json.jsonmapper().writeValueAsString(requestParam));
         System.out.println(resp);
         HashMap<String, String> result = Json.jsonmapper().readValue(resp, HashMap.class);
         String version = result.get("version");
@@ -100,14 +100,14 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
         rollingBlock.addTransaction(tx);
         rollingBlock.solve();
-        OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
         
         Transaction tx_ = rollingBlock.getTransactions().get(0);
         buf = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(), Json.jsonmapper().writeValueAsString(requestParam));
         rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
         rollingBlock.addTransaction(tx_);
         rollingBlock.solve();
-        OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize());
+        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
     }
 
     // @Test
@@ -236,7 +236,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         for (int i = 0; i < 3; i++) {
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("orderid", payMultiSign.getOrderid());
-            String resp = OkHttp3Util.postString(contextRoot + "getPayMultiSignAddressList",
+            String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getPayMultiSignAddressList.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
             List<HashMap<String, Object>> payMultiSignAddresses = (List<HashMap<String, Object>>) result
@@ -296,7 +296,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         payMultiSign.setMinsignnumber(3);
         payMultiSign.setOutpusHashHex(output.getHashHex() + ":" + output.getIndex());
 
-        OkHttp3Util.post(contextRoot + "launchPayMultiSign", Json.jsonmapper().writeValueAsString(payMultiSign));
+        OkHttp3Util.post(contextRoot + ReqCmd.launchPayMultiSign.name(), Json.jsonmapper().writeValueAsString(payMultiSign));
         return payMultiSign;
     }
 
@@ -309,7 +309,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.clear();
         requestParam.put("orderid", orderid);
-        String resp = OkHttp3Util.postString(contextRoot + "payMultiSignDetails",
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.payMultiSignDetails.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         HashMap<String, Object> data = Json.jsonmapper().readValue(resp, HashMap.class);
         HashMap<String, Object> payMultiSign_ = (HashMap<String, Object>) data.get("payMultiSign");
@@ -340,7 +340,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         requestParam.put("pubKey", ecKey.getPublicKeyAsHex());
         requestParam.put("signature", Utils.HEX.encode(buf1));
         requestParam.put("signInputData", Utils.HEX.encode(transactionSignature.encodeToBitcoin()));
-        resp = OkHttp3Util.postString(contextRoot + "payMultiSign", Json.jsonmapper().writeValueAsString(requestParam));
+        resp = OkHttp3Util.postString(contextRoot + ReqCmd.payMultiSign.name(), Json.jsonmapper().writeValueAsString(requestParam));
         System.out.println(resp);
 
         HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -348,7 +348,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         if (success) {
             requestParam.clear();
             requestParam.put("orderid", (String) payMultiSign_.get("orderid"));
-            resp = OkHttp3Util.postString(contextRoot + "getPayMultiSignAddressList",
+            resp = OkHttp3Util.postString(contextRoot + ReqCmd.getPayMultiSignAddressList.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             System.out.println(resp);
             result = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -368,7 +368,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
             rollingBlock.addTransaction(transaction0);
             rollingBlock.solve();
-            checkResponse(OkHttp3Util.post(contextRoot + "saveBlock", rollingBlock.bitcoinSerialize()));
+            checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize()));
         }
     }
 
@@ -1107,7 +1107,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         block_.addCoinbaseTransaction(key4.getPubKey(), basecoin, updateTokenInfo);
         block_.solve();
         // save block
-        OkHttp3Util.post(contextRoot + "updateTokenInfo", block_.bitcoinSerialize());
+        OkHttp3Util.post(contextRoot + ReqCmd.updateTokenInfo.name(), block_.bitcoinSerialize());
 
     }
 

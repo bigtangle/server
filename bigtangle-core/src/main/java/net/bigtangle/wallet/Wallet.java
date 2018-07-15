@@ -83,6 +83,7 @@ import net.bigtangle.crypto.DeterministicKey;
 import net.bigtangle.crypto.KeyCrypter;
 import net.bigtangle.crypto.KeyCrypterException;
 import net.bigtangle.crypto.KeyCrypterScrypt;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.signers.LocalTransactionSigner;
@@ -4201,7 +4202,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
                 pubKeyHashs.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
             }
 
-            String response = OkHttp3Util.post(this.serverurl + "getOutputs",
+            String response = OkHttp3Util.post(this.serverurl + ReqCmd.getOutputs.name(),
                     Json.jsonmapper().writeValueAsString(pubKeyHashs).getBytes("UTF-8"));
 
             final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
