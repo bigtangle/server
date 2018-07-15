@@ -22,11 +22,17 @@ b) more tests
 c) performance test
 
 
-
-14) complete the quick start /
-
-
 15) application monitoring heath check  and metrics
 
 16) roadmap
 
+
+air drop
+
+add new application to support air drop
+
+1) Rest Api for /wechat/invite?wechatid+invite wechatid
+
+2) for any invite member of wechat, reward = 1000 BIG maximal 1 Million
+
+3) Total amount for reward = 100 Billion = 10%  
