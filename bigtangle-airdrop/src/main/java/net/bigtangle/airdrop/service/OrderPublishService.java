@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.server.ordermatch.service;
+package net.bigtangle.airdrop.service;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import net.bigtangle.airdrop.store.FullPrunedBlockStore;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.ECKey;
@@ -23,10 +24,6 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.AbstractResponse;
 import net.bigtangle.core.http.ordermatch.resp.GetOrderResponse;
-import net.bigtangle.server.ordermatch.bean.OrderBook;
-import net.bigtangle.server.ordermatch.bean.Side;
-import net.bigtangle.server.ordermatch.context.OrderBookHolder;
-import net.bigtangle.server.ordermatch.store.FullPrunedBlockStore;
 
 @Service
 public class OrderPublishService {
@@ -56,14 +53,7 @@ public class OrderPublishService {
         OrderPublish order = OrderPublish.create(address, tokenid, type, toDate, fromDate, price, amount, market);
         store.saveOrderPublish(order);
 
-        OrderBook orderBook = orderBookHolder.getOrderBookWithTokenId(tokenid);
-        synchronized (this) {
-            if (orderBook == null) {
-                orderBook = orderBookHolder.createOrderBook();
-                orderBookHolder.addOrderBook(tokenid, orderBook);
-            }
-            orderBook.enter(order.getOrderId(), type == 1 ? Side.SELL : Side.BUY, price, amount);
-        }
+    
         return AbstractResponse.createEmptyResponse();
     }
 
@@ -91,24 +81,14 @@ public class OrderPublishService {
             throw new BlockStoreException("order publish not found");
         }
 
-        String tokenid = orderPublish.getTokenId();
-        OrderBook orderBook = orderBookHolder.getOrderBookWithTokenId(tokenid);
-        synchronized (this) {
-            if (orderBook == null) {
-                orderBook = orderBookHolder.createOrderBook();
-                orderBookHolder.addOrderBook(tokenid, orderBook);
-            }
-            orderBook.cancel(orderPublish.getOrderId(), 0);
-        }
+    
 
         this.store.deleteOrderPublish(orderPublish.getOrderId());
         this.store.deleteExchangeInfo(orderPublish.getOrderId());
         this.store.deleteOrderMatch(orderPublish.getOrderId());
     }
 
-    @Autowired
-    private OrderBookHolder orderBookHolder;
-
+   
     @Autowired
     protected FullPrunedBlockStore store;
 

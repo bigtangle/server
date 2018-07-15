@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.server.ordermatch.config;
+package net.bigtangle.airdrop.config;
 
 
 import org.springframework.boot.context.properties.ConfigurationProperties;

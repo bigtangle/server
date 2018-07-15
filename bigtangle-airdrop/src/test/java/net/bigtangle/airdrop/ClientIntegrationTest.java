@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.server.ordermatch;
+package net.bigtangle.airdrop;
 
 import static org.junit.Assert.assertTrue;
 
@@ -36,7 +36,6 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
-import net.bigtangle.server.ordermatch.service.schedule.ScheduleOrderMatchService;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.PayOrder;
 import net.bigtangle.wallet.SendRequest;
@@ -49,9 +48,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     private NetworkParameters networkParameters;
     private static final Logger logger = LoggerFactory.getLogger(ClientIntegrationTest.class);
 
-    @Autowired
-    private ScheduleOrderMatchService scheduleOrderMatchService;
-    
+   
     @Test
     @SuppressWarnings("unchecked")
     public void deleteOrder() throws Exception {
@@ -174,7 +171,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
           response = OkHttp3Util.post(contextRoot + OrdermatchReqCmd.saveOrder.name(),
                 Json.jsonmapper().writeValueAsString(request).getBytes());
 
-        scheduleOrderMatchService.updateMatch();
+     
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("address", myutxo.getAddress());

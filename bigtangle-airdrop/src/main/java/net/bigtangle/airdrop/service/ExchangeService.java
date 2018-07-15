@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.server.ordermatch.service;
+package net.bigtangle.airdrop.service;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import net.bigtangle.airdrop.store.FullPrunedBlockStore;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.OrderPublish;
@@ -19,7 +20,6 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.AbstractResponse;
 import net.bigtangle.core.http.ordermatch.resp.ExchangeInfoResponse;
 import net.bigtangle.core.http.ordermatch.resp.GetExchangeResponse;
-import net.bigtangle.server.ordermatch.store.FullPrunedBlockStore;
 import net.bigtangle.utils.OrderState;
 
 @Service

@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.server.ordermatch;
+package net.bigtangle.airdrop;
 
 import static org.junit.Assert.assertTrue;
 
@@ -33,14 +33,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import net.bigtangle.airdrop.config.DBStoreConfiguration;
+import net.bigtangle.airdrop.store.FullPrunedBlockStore;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.kits.WalletAppKit;
-import net.bigtangle.server.ordermatch.config.DBStoreConfiguration;
-import net.bigtangle.server.ordermatch.store.FullPrunedBlockStore;
 import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
 

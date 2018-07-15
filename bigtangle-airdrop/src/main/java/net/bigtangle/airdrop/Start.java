@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.server.ordermatch;
+package net.bigtangle.airdrop;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -16,7 +16,6 @@ public class Start {
 
     public static void main(String[] args) {
         SpringApplication springApplication = new SpringApplication(Start.class);
-        springApplication.addListeners(new BeforeStartup());
         springApplication.run(args);
     }
 }
