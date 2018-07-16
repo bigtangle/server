@@ -35,16 +35,18 @@ jar {
     }
 }
 
-
-task createDistributable(type: Copy) {
+task createDistributable(type: Copy) { 
     def distDir = file('build/dist')
-    from('build/distributions') {
-        include '*processor*.tar'
-        rename '.*', 'processor-all.tar'
+    from('build/libs') {
+        include '*.jar'
+        rename '.*', 'bigtangle-tools.jar'
+        into 'build/libs'
     }
-    from('etc') {
-        include '*'
+    from('etc/') {
+        include 'Dockerfile'
+        include 'entrypoint.sh'
     }
     destinationDir distDir
 }
+
 createDistributable.dependsOn distTar
