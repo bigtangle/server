@@ -9,34 +9,41 @@ import javax.annotation.Nullable;
 
 import com.google.common.base.Objects;
 
+import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.TransactionOutPoint;
 
 public class ConflictPoint {
 
+    private BlockWrap block;
     private ConflictType type;
+    
     /** Null if not conflict of corresponding type */
     @Nullable
     private TransactionOutPoint connectedOutpoint;
     @Nullable
-    private long fromHeight;
+    private long connectedRewardHeight;
     @Nullable
     private TokenSerial connectedTokenSerial;
 
-    public ConflictPoint(TransactionOutPoint connectedOutpoint) {
+    public ConflictPoint(BlockWrap block, TransactionOutPoint connectedOutpoint) {
         super();
+        this.block = block;
         this.type = ConflictType.TXOUT;
         this.connectedOutpoint = connectedOutpoint;
     }
 
-    public ConflictPoint(long fromHeight) {
+    public ConflictPoint(BlockWrap block, long fromHeight) {
         super();
+        this.block = block;
         this.type = ConflictType.REWARDISSUANCE;
-        this.fromHeight = fromHeight;
+        this.connectedRewardHeight = fromHeight;
     }
 
-    public ConflictPoint(TokenSerial serial) {
+    public ConflictPoint(BlockWrap block, TokenSerial serial) {
         super();
+        this.block = block;
         this.type = ConflictType.TOKENISSUANCE;
         this.connectedTokenSerial = serial;
     }
@@ -53,13 +60,13 @@ public class ConflictPoint {
 
         switch (type) {
         case REWARDISSUANCE:
-            return getHeight() == other.getHeight();
+            return getConnectedRewardHeight() == other.getConnectedRewardHeight();
         case TOKENISSUANCE:
-            return getTokenSerial().getTokenindex() == other.getTokenSerial().getTokenindex()
-                    && getTokenSerial().getTokenid().equals(other.getTokenSerial().getTokenid());
+            return getConnectedTokenSerial().getTokenindex() == other.getConnectedTokenSerial().getTokenindex()
+                    && getConnectedTokenSerial().getTokenid().equals(other.getConnectedTokenSerial().getTokenid());
         case TXOUT:
-            return getOutpoint().getIndex() == other.getOutpoint().getIndex()
-                    && getOutpoint().getHash().equals(other.getOutpoint().getHash());
+            return getConnectedOutpoint().getIndex() == other.getConnectedOutpoint().getIndex()
+                    && getConnectedOutpoint().getHash().equals(other.getConnectedOutpoint().getHash());
         default:
             return true;
         }
@@ -69,11 +76,11 @@ public class ConflictPoint {
     public int hashCode() {
         switch (type) {
         case REWARDISSUANCE:
-            return Objects.hashCode(getHeight());
+            return Objects.hashCode(getConnectedRewardHeight());
         case TOKENISSUANCE:
-            return Objects.hashCode(getTokenSerial().getTokenindex(), getTokenSerial().getTokenid());
+            return Objects.hashCode(getConnectedTokenSerial().getTokenindex(), getConnectedTokenSerial().getTokenid());
         case TXOUT:
-            return Objects.hashCode(getOutpoint().getIndex(), getOutpoint().getHash());
+            return Objects.hashCode(getConnectedOutpoint().getIndex(), getConnectedOutpoint().getHash());
         default:
             return super.hashCode();
         }
@@ -87,15 +94,19 @@ public class ConflictPoint {
         return type;
     }
 
-    public TransactionOutPoint getOutpoint() {
+    public TransactionOutPoint getConnectedOutpoint() {
         return connectedOutpoint;
     }
 
-    public long getHeight() {
-        return fromHeight;
+    public long getConnectedRewardHeight() {
+        return connectedRewardHeight;
     }
 
-    public TokenSerial getTokenSerial() {
+    public TokenSerial getConnectedTokenSerial() {
         return connectedTokenSerial;
+    }
+
+    public BlockWrap getBlock() {
+        return block;
     }
 }

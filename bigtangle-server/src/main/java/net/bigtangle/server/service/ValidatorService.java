@@ -349,25 +349,21 @@ public class ValidatorService {
      * Resolves conflicts between milestone blocks and milestone candidates as
      * well as conflicts among milestone candidates.
      * 
-     * @param blockEvaluationsToAdd
+     * @param blocksToAdd
      * @param unconfirmLosingMilestones
      * @throws BlockStoreException
      */
-    public void resolveUndoableConflicts(Collection<BlockWrap> blockEvaluationsToAdd, boolean unconfirmLosingMilestones)
+    public void resolveUndoableConflicts(Collection<BlockWrap> blocksToAdd, boolean unconfirmLosingMilestones)
             throws BlockStoreException {
-        HashSet<Pair<BlockWrap, ConflictPoint>> conflictingOutPoints = new HashSet<Pair<BlockWrap, ConflictPoint>>();
+        HashSet<ConflictPoint> conflictingOutPoints = new HashSet<ConflictPoint>();
         HashSet<BlockWrap> conflictingMilestoneBlocks = new HashSet<BlockWrap>();
-        List<Block> blocksToAdd = blockService.getBlocks(
-                blockEvaluationsToAdd.stream().map(e -> e.getBlock().getHash()).collect(Collectors.toList()));
 
         // Find all conflicts in the new blocks
         findConflicts(blocksToAdd, conflictingOutPoints, conflictingMilestoneBlocks);
 
         // Resolve all conflicts by grouping by UTXO ordered by descending
         // rating
-        Pair<HashSet<BlockWrap>, HashSet<BlockWrap>> conflictResolution = resolveConflicts(conflictingOutPoints,
-                unconfirmLosingMilestones);
-        HashSet<BlockWrap> losingBlocks = conflictResolution.getRight();
+        HashSet<BlockWrap> losingBlocks = resolveConflicts(conflictingOutPoints, unconfirmLosingMilestones);
 
         // For milestone blocks that have been eliminated call disconnect
         // procedure
@@ -384,10 +380,10 @@ public class ValidatorService {
         // For candidates that have been eliminated (conflictingOutPoints in
         // blocksToAdd
         // \ winningBlocks) remove them from blocksToAdd
-        for (Pair<BlockWrap, ConflictPoint> b : conflictingOutPoints.stream()
-                .filter(b -> blockEvaluationsToAdd.contains(b.getLeft()) && losingBlocks.contains(b.getLeft()))
+        for (ConflictPoint b : conflictingOutPoints.stream()
+                .filter(b -> blocksToAdd.contains(b.getBlock()) && losingBlocks.contains(b.getBlock()))
                 .collect(Collectors.toList())) {
-            blockService.removeBlockAndApproversFrom(blockEvaluationsToAdd, b.getLeft());
+            blockService.removeBlockAndApproversFrom(blocksToAdd, b.getBlock());
         }
     }
 
@@ -398,17 +394,17 @@ public class ValidatorService {
      * @param conflictingOutPoints
      * @param unconfirmLosingMilestones
      * @param conflictingMilestoneBlocks
-     * @return
+     * @return losingBlocks: blocks that have been removed due to conflict
+     *         resolution
      * @throws BlockStoreException
      */
-    public Pair<HashSet<BlockWrap>, HashSet<BlockWrap>> resolveConflicts(
-            Collection<Pair<BlockWrap, ConflictPoint>> conflictingOutPoints, boolean unconfirmLosingMilestones)
-            throws BlockStoreException {
+    public HashSet<BlockWrap> resolveConflicts(Collection<ConflictPoint> conflictingOutPoints,
+            boolean unconfirmLosingMilestones) throws BlockStoreException {
         // Initialize blocks that will survive the conflict resolution
-        HashSet<BlockWrap> winningBlocksSingle = conflictingOutPoints.stream().map(p -> p.getLeft())
+        HashSet<BlockWrap> initialBlocks = conflictingOutPoints.stream().map(c -> c.getBlock())
                 .collect(Collectors.toCollection(HashSet::new));
         HashSet<BlockWrap> winningBlocks = new HashSet<>();
-        for (BlockWrap winningBlock : winningBlocksSingle) {
+        for (BlockWrap winningBlock : initialBlocks) {
             blockService.addApprovedNonMilestoneBlocksTo(winningBlocks, winningBlock);
             blockService.addMilestoneApproversTo(winningBlocks, winningBlock);
         }
@@ -416,49 +412,49 @@ public class ValidatorService {
 
         // Sort conflicts internally by descending rating, then cumulative
         // weight. If not unconfirming, prefer milestones first.
-        Comparator<Pair<BlockWrap, ConflictPoint>> byDescendingRating = getConflictComparator(unconfirmLosingMilestones)
-                .thenComparingLong((Pair<BlockWrap, ConflictPoint> e) -> e.getLeft().getBlockEvaluation().getRating())
+        Comparator<ConflictPoint> byDescendingRating = getConflictComparator(unconfirmLosingMilestones)
+                .thenComparingLong((ConflictPoint e) -> e.getBlock().getBlockEvaluation().getRating())
                 .thenComparingLong(
-                        (Pair<BlockWrap, ConflictPoint> e) -> e.getLeft().getBlockEvaluation().getCumulativeWeight())
+                        (ConflictPoint e) -> e.getBlock().getBlockEvaluation().getCumulativeWeight())
                 .thenComparingLong(
-                        (Pair<BlockWrap, ConflictPoint> e) -> -e.getLeft().getBlockEvaluation().getInsertTime())
-                .thenComparing((Pair<BlockWrap, ConflictPoint> e) -> e.getLeft().getBlockEvaluation().getBlockHash())
+                        (ConflictPoint e) -> -e.getBlock().getBlockEvaluation().getInsertTime())
+                .thenComparing((ConflictPoint e) -> e.getBlock().getBlockEvaluation().getBlockHash())
                 .reversed();
 
-        Supplier<TreeSet<Pair<BlockWrap, ConflictPoint>>> conflictTreeSetSupplier = () -> new TreeSet<Pair<BlockWrap, ConflictPoint>>(
+        Supplier<TreeSet<ConflictPoint>> conflictTreeSetSupplier = () -> new TreeSet<ConflictPoint>(
                 byDescendingRating);
 
-        Map<Object, TreeSet<Pair<BlockWrap, ConflictPoint>>> conflicts = conflictingOutPoints.stream()
-                .collect(Collectors.groupingBy(Pair::getRight, Collectors.toCollection(conflictTreeSetSupplier)));
+        Map<Object, TreeSet<ConflictPoint>> conflicts = conflictingOutPoints.stream()
+                .collect(Collectors.groupingBy(i -> i, Collectors.toCollection(conflictTreeSetSupplier)));
 
         // Sort conflicts among each other by descending max(rating). If not
         // unconfirming, prefer milestones first.
-        Comparator<TreeSet<Pair<BlockWrap, ConflictPoint>>> byDescendingSetRating = getConflictSetComparator(
+        Comparator<TreeSet<ConflictPoint>> byDescendingSetRating = getConflictSetComparator(
                 unconfirmLosingMilestones)
-                        .thenComparingLong((TreeSet<Pair<BlockWrap, ConflictPoint>> s) -> s.first().getLeft()
+                        .thenComparingLong((TreeSet<ConflictPoint> s) -> s.first().getBlock()
                                 .getBlockEvaluation().getRating())
-                        .thenComparingLong((TreeSet<Pair<BlockWrap, ConflictPoint>> s) -> s.first().getLeft()
+                        .thenComparingLong((TreeSet<ConflictPoint> s) -> s.first().getBlock()
                                 .getBlockEvaluation().getCumulativeWeight())
-                        .thenComparingLong((TreeSet<Pair<BlockWrap, ConflictPoint>> s) -> -s.first().getLeft()
+                        .thenComparingLong((TreeSet<ConflictPoint> s) -> -s.first().getBlock()
                                 .getBlockEvaluation().getInsertTime())
-                        .thenComparing((TreeSet<Pair<BlockWrap, ConflictPoint>> s) -> s.first().getLeft()
+                        .thenComparing((TreeSet<ConflictPoint> s) -> s.first().getBlock()
                                 .getBlockEvaluation().getBlockHash())
                         .reversed();
 
-        Supplier<TreeSet<TreeSet<Pair<BlockWrap, ConflictPoint>>>> conflictsTreeSetSupplier = () -> new TreeSet<TreeSet<Pair<BlockWrap, ConflictPoint>>>(
+        Supplier<TreeSet<TreeSet<ConflictPoint>>> conflictsTreeSetSupplier = () -> new TreeSet<TreeSet<ConflictPoint>>(
                 byDescendingSetRating);
 
-        TreeSet<TreeSet<Pair<BlockWrap, ConflictPoint>>> sortedConflicts = conflicts.values().stream()
+        TreeSet<TreeSet<ConflictPoint>> sortedConflicts = conflicts.values().stream()
                 .collect(Collectors.toCollection(conflictsTreeSetSupplier));
 
         // Now handle conflicts by descending max(rating)
-        for (TreeSet<Pair<BlockWrap, ConflictPoint>> conflict : sortedConflicts) {
+        for (TreeSet<ConflictPoint> conflict : sortedConflicts) {
             // Take the block with the maximum rating in this conflict that is
             // still in winning Blocks
-            Pair<BlockWrap, ConflictPoint> maxRatingPair = null;
-            for (Pair<BlockWrap, ConflictPoint> pair : conflict) {
-                if (winningBlocks.contains(pair.getLeft())) {
-                    maxRatingPair = pair;
+            ConflictPoint maxRatingPair = null;
+            for (ConflictPoint c : conflict) {
+                if (winningBlocks.contains(c.getBlock())) {
+                    maxRatingPair = c;
                     break;
                 }
             }
@@ -467,9 +463,9 @@ public class ValidatorService {
             // all other
             // blocks in this conflict from winning Blocks
             if (maxRatingPair != null) {
-                for (Pair<BlockWrap, ConflictPoint> pair : conflict) {
-                    if (pair.getLeft() != maxRatingPair.getLeft()) {
-                        blockService.removeBlockAndApproversFrom(winningBlocks, pair.getLeft());
+                for (ConflictPoint c : conflict) {
+                    if (c != maxRatingPair) {
+                        blockService.removeBlockAndApproversFrom(winningBlocks, c.getBlock());
                     }
                 }
             }
@@ -477,62 +473,62 @@ public class ValidatorService {
 
         losingBlocks.removeAll(winningBlocks);
 
-        return Pair.of(winningBlocks, losingBlocks);
+        return losingBlocks;
     }
 
-    private Comparator<TreeSet<Pair<BlockWrap, ConflictPoint>>> getConflictSetComparator(
+    private Comparator<TreeSet<ConflictPoint>> getConflictSetComparator(
             boolean unconfirmLosingMilestones) {
         if (!unconfirmLosingMilestones)
-            return new Comparator<TreeSet<Pair<BlockWrap, ConflictPoint>>>() {
+            return new Comparator<TreeSet<ConflictPoint>>() {
                 @Override
-                public int compare(TreeSet<Pair<BlockWrap, ConflictPoint>> o1,
-                        TreeSet<Pair<BlockWrap, ConflictPoint>> o2) {
-                    if (o1.first().getLeft().getBlockEvaluation().isMilestone()
-                            && o2.first().getLeft().getBlockEvaluation().isMilestone())
+                public int compare(TreeSet<ConflictPoint> o1,
+                        TreeSet<ConflictPoint> o2) {
+                    if (o1.first().getBlock().getBlockEvaluation().isMilestone()
+                            && o2.first().getBlock().getBlockEvaluation().isMilestone())
                         return 0;
-                    if (o1.first().getLeft().getBlockEvaluation().isMilestone())
+                    if (o1.first().getBlock().getBlockEvaluation().isMilestone())
                         return 1;
-                    if (o2.first().getLeft().getBlockEvaluation().isMilestone())
+                    if (o2.first().getBlock().getBlockEvaluation().isMilestone())
                         return -1;
                     return 0;
                 }
             };
         else
-            return new Comparator<TreeSet<Pair<BlockWrap, ConflictPoint>>>() {
+            return new Comparator<TreeSet<ConflictPoint>>() {
                 @Override
-                public int compare(TreeSet<Pair<BlockWrap, ConflictPoint>> o1,
-                        TreeSet<Pair<BlockWrap, ConflictPoint>> o2) {
+                public int compare(TreeSet<ConflictPoint> o1,
+                        TreeSet<ConflictPoint> o2) {
                     return 0;
                 }
             };
     }
 
-    private Comparator<Pair<BlockWrap, ConflictPoint>> getConflictComparator(boolean unconfirmLosingMilestones) {
+    private Comparator<ConflictPoint> getConflictComparator(boolean unconfirmLosingMilestones) {
         if (!unconfirmLosingMilestones)
-            return new Comparator<Pair<BlockWrap, ConflictPoint>>() {
+            return new Comparator<ConflictPoint>() {
                 @Override
-                public int compare(Pair<BlockWrap, ConflictPoint> o1, Pair<BlockWrap, ConflictPoint> o2) {
-                    if (o1.getLeft().getBlockEvaluation().isMilestone()
-                            && o2.getLeft().getBlockEvaluation().isMilestone()) {
-                        if (o1.getRight().equals(o2.getRight()))
+                public int compare(ConflictPoint o1, ConflictPoint o2) {
+                    if (o1.getBlock().getBlockEvaluation().isMilestone()
+                            && o2.getBlock().getBlockEvaluation().isMilestone()) {
+                        if (o1.equals(o2))
                             return 0;
                         else {
                             logger.warn("Inconsistent Milestone: Conflicting blocks in milestone" + ": \n"
-                                    + o1.getLeft().getBlock().getHash() + "\n" + o2.getLeft().getBlock().getHash());
+                                    + o1.getBlock().getBlock().getHash() + "\n" + o2.getBlock().getBlock().getHash());
                             return 0;
                         }
                     }
-                    if (o1.getLeft().getBlockEvaluation().isMilestone())
+                    if (o1.getBlock().getBlockEvaluation().isMilestone())
                         return 1;
-                    if (o2.getLeft().getBlockEvaluation().isMilestone())
+                    if (o2.getBlock().getBlockEvaluation().isMilestone())
                         return -1;
                     return 0;
                 }
             };
         else
-            return new Comparator<Pair<BlockWrap, ConflictPoint>>() {
+            return new Comparator<ConflictPoint>() {
                 @Override
-                public int compare(Pair<BlockWrap, ConflictPoint> o1, Pair<BlockWrap, ConflictPoint> o2) {
+                public int compare(ConflictPoint o1, ConflictPoint o2) {
                     return 0;
                 }
             };
@@ -545,8 +541,7 @@ public class ValidatorService {
      * @param conflictingOutPoints
      * @throws BlockStoreException
      */
-    public void findConflicts(Collection<Block> blocksToAdd,
-            Collection<Pair<BlockWrap, ConflictPoint>> conflictingOutPoints,
+    public void findConflicts(Collection<BlockWrap> blocksToAdd, Collection<ConflictPoint> conflictingOutPoints,
             Collection<BlockWrap> conflictingMilestoneBlocks) throws BlockStoreException {
 
         findMilestoneConflicts(blocksToAdd, conflictingOutPoints, conflictingMilestoneBlocks);
@@ -560,37 +555,35 @@ public class ValidatorService {
      * @param conflictingOutPoints
      * @throws BlockStoreException
      */
-    private void findCandidateConflicts(Collection<Block> blocksToAdd,
-            Collection<Pair<BlockWrap, ConflictPoint>> conflictingOutPoints) throws BlockStoreException {
+    private void findCandidateConflicts(Collection<BlockWrap> blocksToAdd,
+            Collection<ConflictPoint> conflictingOutPoints) throws BlockStoreException {
         // Create pairs of blocks and used non-coinbase utxos from blocksToAdd
         // Dynamic conflicts: conflicting transactions
-        Stream<Pair<Block, ConflictPoint>> transferConflictPoints = blocksToAdd.stream()
-                .flatMap(b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream())
-                        .filter(in -> !in.isCoinBase()).map(in -> Pair.of(b, new ConflictPoint(in.getOutpoint()))));
+        Stream<ConflictPoint> transferConflictPoints = blocksToAdd.stream()
+                .flatMap(b -> b.getBlock().getTransactions().stream().flatMap(t -> t.getInputs().stream())
+                        .filter(in -> !in.isCoinBase()).map(in -> new ConflictPoint(b, in.getOutpoint())));
 
         // Dynamic conflicts: mining reward height intervals
-        Stream<Pair<Block, ConflictPoint>> rewardConflictPoints = blocksToAdd.stream()
-                .filter(b -> b.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD)
-                .map(b -> Pair.of(b, Utils.readInt64(b.getTransactions().get(0).getData(), 0)))
-                .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight())));
+        Stream<ConflictPoint> rewardConflictPoints = blocksToAdd.stream()
+                .filter(b -> b.getBlock().getBlockType() == NetworkParameters.BLOCKTYPE_REWARD)
+                .map(b -> new ConflictPoint(b, Utils.readInt64(b.getBlock().getTransactions().get(0).getData(), 0)));
 
         // Dynamic conflicts: token issuance ids
-        Stream<Pair<Block, ConflictPoint>> issuanceConflictPoints = blocksToAdd.stream()
-                .filter(b -> b.getBlockType() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION)
-                .map(b -> Pair.of(b, new TokenInfo().parse(b.getTransactions().get(0).getData())))
-                .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight().getTokenSerial())));
+        Stream<ConflictPoint> issuanceConflictPoints = blocksToAdd.stream()
+                .filter(b -> b.getBlock().getBlockType() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION)
+                .map(b -> new ConflictPoint(b,
+                        new TokenInfo().parse(b.getBlock().getTransactions().get(0).getData()).getTokenSerial()));
 
         // Filter to only contain conflicts that are spent more than once in the
-        // new milestone candidates
-        List<Pair<Block, ConflictPoint>> candidateCandidateConflicts = Stream
+        // candidates
+        List<ConflictPoint> candidateCandidateConflicts = Stream
                 .of(transferConflictPoints, rewardConflictPoints, issuanceConflictPoints).flatMap(i -> i)
-                .collect(Collectors.groupingBy(Pair::getRight)).values().stream().filter(l -> l.size() > 1)
+                .collect(Collectors.groupingBy(i -> i)).values().stream().filter(l -> l.size() > 1)
                 .flatMap(l -> l.stream()).collect(Collectors.toList());
 
         // Add the conflicting candidates
-        for (Pair<Block, ConflictPoint> pair : candidateCandidateConflicts) {
-            BlockWrap toAddEvaluation = store.getBlockWrap(pair.getLeft().getHash());
-            conflictingOutPoints.add(Pair.of(toAddEvaluation, pair.getRight()));
+        for (ConflictPoint c : candidateCandidateConflicts) {
+            conflictingOutPoints.add(c);
         }
     }
 
@@ -601,65 +594,62 @@ public class ValidatorService {
      * @param conflictingOutPoints
      * @throws BlockStoreException
      */
-    private void findMilestoneConflicts(Collection<Block> blocksToAdd,
-            Collection<Pair<BlockWrap, ConflictPoint>> conflictingOutPoints,
-            Collection<BlockWrap> conflictingMilestoneBlocks) throws BlockStoreException {
+    private void findMilestoneConflicts(Collection<BlockWrap> blocksToAdd,
+            Collection<ConflictPoint> conflictingOutPoints, Collection<BlockWrap> conflictingMilestoneBlocks)
+            throws BlockStoreException {
         // Create pairs of blocks and outpoints from blocksToAdd where already
         // spent by maintained milestone blocks.
         // Dynamic conflicts: conflicting transactions
-        Stream<Pair<Block, ConflictPoint>> transferConflictPoints = blocksToAdd.stream()
-                .flatMap(b -> b.getTransactions().stream().flatMap(t -> t.getInputs().stream())
-                        .filter(in -> !in.isCoinBase()).map(in -> Pair.of(b, new ConflictPoint(in.getOutpoint()))))
+        Stream<ConflictPoint> transferConflictPoints = blocksToAdd.stream()
+                .flatMap(b -> b.getBlock().getTransactions().stream().flatMap(t -> t.getInputs().stream())
+                        .filter(in -> !in.isCoinBase()).map(in -> new ConflictPoint(b, in.getOutpoint())))
                 // Filter such that it has already been spent
-                .filter(pair -> alreadySpent(pair.getRight().getOutpoint()));
+                .filter(c -> alreadySpent(c.getConnectedOutpoint()));
 
         // Dynamic conflicts: mining reward height intervals
-        Stream<Pair<Block, ConflictPoint>> rewardConflictPoints = blocksToAdd.stream()
-                .filter(b -> b.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD)
-                .map(b -> Pair.of(b, Utils.readInt64(b.getTransactions().get(0).getData(), 0)))
-                .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight())))
+        Stream<ConflictPoint> rewardConflictPoints = blocksToAdd.stream()
+                .filter(b -> b.getBlock().getBlockType() == NetworkParameters.BLOCKTYPE_REWARD)
+                .map(b -> new ConflictPoint(b, Utils.readInt64(b.getBlock().getTransactions().get(0).getData(), 0)))
                 // Filter such that it has already been spent
-                .filter(pair -> {
+                .filter(c -> {
                     try {
-                        return alreadyRewarded(pair.getRight().getHeight());
+                        return alreadyRewarded(c.getConnectedRewardHeight());
                     } catch (BlockStoreException e) {
                         return false;
                     }
                 });
 
-        // Dynamic conflicts: token issuance ids already issued
-        Stream<Pair<Block, ConflictPoint>> issuanceConflictPoints = blocksToAdd.stream()
-                .filter(b -> b.getBlockType() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION)
-                .map(b -> Pair.of(b, new TokenInfo().parse(b.getTransactions().get(0).getData())))
-                .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight().getTokenSerial())))
+        // Dynamic conflicts: token issuance ids
+        Stream<ConflictPoint> issuanceConflictPoints = blocksToAdd.stream()
+                .filter(b -> b.getBlock().getBlockType() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION)
+                .map(b -> new ConflictPoint(b,
+                        new TokenInfo().parse(b.getBlock().getTransactions().get(0).getData()).getTokenSerial()))
                 // Filter such that it has already been issued
-                .filter(pair -> alreadyIssued(pair.getRight().getTokenSerial()));
+                .filter(c -> alreadyIssued(c.getConnectedTokenSerial()));
 
         // Add the conflicting candidates and milestone blocks
-        for (Pair<Block, ConflictPoint> pair : Stream
-                .of(transferConflictPoints, rewardConflictPoints, issuanceConflictPoints).flatMap(i -> i)
-                .collect(Collectors.toList())) {
+        for (ConflictPoint c : Stream.of(transferConflictPoints, rewardConflictPoints, issuanceConflictPoints)
+                .flatMap(i -> i).collect(Collectors.toList())) {
 
             BlockWrap milestoneEvaluation = null;
-            switch (pair.getRight().getType()) {
+            switch (c.getType()) {
             case TXOUT:
-                milestoneEvaluation = getSpendingBlock(pair.getRight().getOutpoint());
+                milestoneEvaluation = getSpendingBlock(c.getConnectedOutpoint());
                 break;
             case TOKENISSUANCE:
-                milestoneEvaluation = getTokenIssuingBlock(pair.getRight().getTokenSerial());
+                milestoneEvaluation = getTokenIssuingBlock(c.getConnectedTokenSerial());
                 break;
             case REWARDISSUANCE:
-                milestoneEvaluation = getIntervalRewardingBlock(pair.getRight().getHeight());
+                milestoneEvaluation = getIntervalRewardingBlock(c.getConnectedRewardHeight());
                 break;
             default:
                 throw new NotImplementedException();
             }
-            conflictingOutPoints.add(Pair.of(milestoneEvaluation, pair.getRight()));
+            conflictingOutPoints.add(c);
             conflictingMilestoneBlocks.add(milestoneEvaluation);
 
             // Then add corresponding new block
-            BlockWrap toAddEvaluation = store.getBlockWrap(pair.getLeft().getHash());
-            conflictingOutPoints.add(Pair.of(toAddEvaluation, pair.getRight()));
+            conflictingOutPoints.add(c);
         }
     }
 
@@ -726,25 +716,48 @@ public class ValidatorService {
 
     private HashSet<ConflictPoint> toConflictPointCandidates(Block b) {
         HashSet<ConflictPoint> blockConflictPoints = new HashSet<>();
-
-        // Create pairs of blocks and used non-coinbase utxos from block
-        // Dynamic conflicts: conflicting transactions
-        b.getTransactions().stream().flatMap(t -> t.getInputs().stream()).filter(in -> !in.isCoinBase())
-                .map(in -> Pair.of(b, new ConflictPoint(in.getOutpoint())));
-
-        // Dynamic conflicts: mining reward height intervals
-        if (b.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD)
-                new ConflictPoint(Utils.readInt64(b.getTransactions().get(0).getData(), 0));
-
-        // Dynamic conflicts: token issuance ids
-        if (b.getBlockType() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION)
-                new ConflictPoint(new TokenInfo().parse(b.getTransactions().get(0).getData()).getTokenSerial());
-
+        /*
+         * // Create pairs of blocks and used non-coinbase utxos from block //
+         * Dynamic conflicts: conflicting transactions
+         * b.getTransactions().stream().flatMap(t ->
+         * t.getInputs().stream()).filter(in -> !in.isCoinBase()) .map(in ->
+         * Pair.of(b, new ConflictPoint(in.getOutpoint()))).forEach(c ->
+         * blockConflictPoints.add(c)); ;
+         * 
+         * // Dynamic conflicts: mining reward height intervals if
+         * (b.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD) new
+         * ConflictPoint(Utils.readInt64(b.getTransactions().get(0).getData(),
+         * 0));
+         * 
+         * // Dynamic conflicts: token issuance ids if (b.getBlockType() ==
+         * NetworkParameters.BLOCKTYPE_TOKEN_CREATION) new ConflictPoint(new
+         * TokenInfo().parse(b.getTransactions().get(0).getData()).
+         * getTokenSerial());
+         */
         return blockConflictPoints;
     }
 
     private boolean isConflictingWithMilestone(HashSet<ConflictPoint> blockConflictPoints) {
-        // TODO Auto-generated method stub
-        return false;
+        filterConflictingWithMilestone(blockConflictPoints);
+        return !blockConflictPoints.isEmpty();
+    }
+
+    private void filterConflictingWithMilestone(HashSet<ConflictPoint> blockConflictPoints) {
+        blockConflictPoints.removeIf(c -> {
+            switch (c.getType()) {
+            case TXOUT:
+                return alreadySpent(c.getConnectedOutpoint());
+            case TOKENISSUANCE:
+                return alreadyIssued(c.getConnectedTokenSerial());
+            case REWARDISSUANCE:
+                try {
+                    return alreadyRewarded(c.getConnectedRewardHeight());
+                } catch (BlockStoreException e) {
+                    e.printStackTrace();
+                }
+            default:
+                throw new NotImplementedException();
+            }
+        });
     }
 }
