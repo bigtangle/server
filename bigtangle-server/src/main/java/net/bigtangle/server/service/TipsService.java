@@ -77,6 +77,13 @@ public class TipsService {
         Stopwatch watch = Stopwatch.createStarted();
         List<Sha256Hash> ratingEntryPoints = getRatingEntryPoints(2);
         Pair<Sha256Hash, Sha256Hash> pair = Pair.of(ratingEntryPoints.get(0), ratingEntryPoints.get(1));
+        HashSet<ConflictPoint> currentConflictPoints = new HashSet<>();
+                
+        List<BlockWrap> leftApprovers = blockService.getSolidApproverBlocks(pair.getLeft());
+        List<BlockWrap> rightApprovers = blockService.getSolidApproverBlocks(pair.getRight());
+        leftApprovers.removeIf(b -> validatorService.isConflicting(b, currentConflictPoints));
+        rightApprovers.removeIf(b -> validatorService.isConflicting(b, currentConflictPoints));
+        
 
         watch.stop();
         log.info("getValidatedBlockPairIteratively time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));

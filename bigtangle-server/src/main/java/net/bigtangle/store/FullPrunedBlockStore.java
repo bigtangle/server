@@ -168,7 +168,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     /*
      * get the blocks which confirm the block
      */
-    public List<StoredBlock> getSolidApproverBlocks(Sha256Hash hash) throws BlockStoreException;
+    public List<BlockWrap> getSolidApproverBlocks(Sha256Hash hash) throws BlockStoreException;
 
     public List<Sha256Hash> getSolidApproverBlockHashes(Sha256Hash hash) throws BlockStoreException;
 

@@ -86,7 +86,7 @@ public class BlockService {
         return blocks;
     }
 
-    public List<StoredBlock> getSolidApproverBlocks(Sha256Hash blockhash) throws BlockStoreException {
+    public List<BlockWrap> getSolidApproverBlocks(Sha256Hash blockhash) throws BlockStoreException {
         return store.getSolidApproverBlocks(blockhash);
     }
 

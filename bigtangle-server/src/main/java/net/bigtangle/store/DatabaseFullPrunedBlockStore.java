@@ -102,8 +102,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String SELECT_BLOCKS_HEIGHT_SQL = "SELECT block FROM blocks WHERE height >= ?" + afterSelect()
             + " order by height asc ";
-    protected String SELECT_SOLID_APPROVER_BLOCKS_SQL = "SELECT  height, block, wasundoable,prevblockhash,"
-            + "prevbranchblockhash,mineraddress,blocktype FROM blocks "
+    protected String SELECT_SOLID_APPROVER_BLOCKS_SQL = "SELECT hash, rating, depth, cumulativeweight, "
+            + "solid, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained,"
+            + " rewardvalidityassessment, block FROM blocks"
             + " WHERE solid = true AND (prevblockhash = ? OR prevbranchblockhash = ?)" + afterSelect();
     protected String SELECT_SOLID_APPROVER_HASHES_SQL = "SELECT hash FROM blocks " + " "
             + "WHERE solid = true AND (blocks.prevblockhash = ? OR blocks.prevbranchblockhash = ?)" + afterSelect();
@@ -936,21 +937,23 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    public List<StoredBlock> getSolidApproverBlocks(Sha256Hash hash) throws BlockStoreException {
-        List<StoredBlock> storedBlocks = new ArrayList<StoredBlock>();
+    public List<BlockWrap> getSolidApproverBlocks(Sha256Hash hash) throws BlockStoreException {
+        List<BlockWrap> storedBlocks = new ArrayList<BlockWrap>();
         maybeConnect();
         PreparedStatement s = null;
         try {
             s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_BLOCKS_SQL);
             s.setBytes(1, hash.getBytes());
             s.setBytes(2, hash.getBytes());
-            ResultSet results = s.executeQuery();
-            while (results.next()) {
-                // Parse it.
-                int height = results.getInt(1);
-                Block b = params.getDefaultSerializer().makeBlock(results.getBytes(2));
-                b.verifyHeader();
-                storedBlocks.add(new StoredBlock(b, height));
+            ResultSet resultSet = s.executeQuery();
+            while (resultSet.next()) {
+                BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)),
+                        resultSet.getLong(2), resultSet.getLong(3), resultSet.getLong(4), resultSet.getBoolean(5),
+                        resultSet.getLong(6), resultSet.getBoolean(7), resultSet.getLong(8), resultSet.getLong(9),
+                        resultSet.getLong(10), resultSet.getBoolean(11), resultSet.getBoolean(12));
+                Block block = params.getDefaultSerializer().makeBlock(resultSet.getBytes(13));
+                block.verifyHeader();
+                storedBlocks.add(new BlockWrap(block, blockEvaluation, params));
             }
             return storedBlocks;
         } catch (SQLException ex) {

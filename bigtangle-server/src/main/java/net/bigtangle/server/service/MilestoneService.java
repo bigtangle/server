@@ -358,14 +358,13 @@ public class MilestoneService {
         while ((currentBlock = blocks.poll()) != null) {
             blocksToTraverse.remove(currentBlock);
             traversedBlockHashes.add(currentBlock.getBlockHash());
-            List<StoredBlock> solidApproverBlocks = blockService.getSolidApproverBlocks(currentBlock.getBlockHash());
-            List<BlockEvaluation> blockEvaluations = blockService.getBlockEvaluations(solidApproverBlocks.stream().map(b -> b.getHeader().getHash()).collect(Collectors.toList()));
-            for (BlockEvaluation b : blockEvaluations) {
-                if (blocksToTraverse.contains(b))
+            List<BlockWrap> solidApproverBlocks = blockService.getSolidApproverBlocks(currentBlock.getBlockHash());
+            for (BlockWrap b : solidApproverBlocks) {
+                if (blocksToTraverse.contains(b.getBlockEvaluation()))
                     continue;
                 
-                blocks.add(b);
-                blocksToTraverse.add(b);
+                blocks.add(b.getBlockEvaluation());
+                blocksToTraverse.add(b.getBlockEvaluation());
             }
         }
         
