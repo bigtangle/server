@@ -14,12 +14,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.ProtocolException;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
 
@@ -37,79 +36,80 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     //private static final Logger log = LoggerFactory.getLogger(DatabaseFullPrunedBlockStore.class);
 
     @Override
-    public List<StoredBlock> getSolidApproverBlocks(Sha256Hash hash) throws BlockStoreException {
-        List<StoredBlock> storedBlocks = new ArrayList<StoredBlock>();
-        maybeConnect();
-        PreparedStatement s = null;
-        try {
-            String SELECT_SOLID_APPROVER_BLOCKS_SQL = "SELECT  headers.height, header, wasundoable,prevblockhash,"
-                    + "prevbranchblockhash,mineraddress,tokenid,blocktype FROM headers INNER JOIN blockevaluation"
-                    + " ON headers.hash=blockevaluation.hash WHERE blockevaluation.solid = true AND (prevblockhash = ?)"
-                    + afterSelect();
-            s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_BLOCKS_SQL);
-            s.setString(1, Utils.HEX.encode(hash.getBytes()));
-            // s.setString(2, Utils.HEX.encode(hash.getBytes()));
-            ResultSet results = s.executeQuery();
-            while (results.next()) {
-                // Parse it.
-                int height = results.getInt(1);
-                Block b = params.getDefaultSerializer().makeBlock(results.getBytes(2));
-                b.verifyHeader();
-                storedBlocks.add(new StoredBlock(b, height));
-            }
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } catch (ProtocolException e) {
-            // Corrupted database.
-            throw new BlockStoreException(e);
-        } catch (VerificationException e) {
-            // Should not be able to happen unless the database contains bad
-            // blocks.
-            throw new BlockStoreException(e);
-        } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-        try {
-            String SELECT_SOLID_APPROVER_BLOCKS_SQL = "SELECT  headers.height, header, wasundoable,prevblockhash,"
-                    + "prevbranchblockhash,mineraddress,tokenid,blocktype FROM headers INNER JOIN blockevaluation"
-                    + " ON headers.hash=blockevaluation.hash WHERE blockevaluation.solid = true AND (prevbranchblockhash = ?)"
-                    + afterSelect();
-            s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_BLOCKS_SQL);
-            s.setString(1, Utils.HEX.encode(hash.getBytes()));
-            // s.setString(2, Utils.HEX.encode(hash.getBytes()));
-            ResultSet results = s.executeQuery();
-            while (results.next()) {
-                // Parse it.
-                int height = results.getInt(1);
-                Block b = params.getDefaultSerializer().makeBlock(results.getBytes(2));
-                b.verifyHeader();
-                storedBlocks.add(new StoredBlock(b, height));
-            }
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } catch (ProtocolException e) {
-            // Corrupted database.
-            throw new BlockStoreException(e);
-        } catch (VerificationException e) {
-            // Should not be able to happen unless the database contains bad
-            // blocks.
-            throw new BlockStoreException(e);
-        } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-        return storedBlocks;
+    public List<BlockWrap> getSolidApproverBlocks(Sha256Hash hash) throws BlockStoreException {
+        return null;
+//        List<StoredBlock> storedBlocks = new ArrayList<StoredBlock>();
+//        maybeConnect();
+//        PreparedStatement s = null;
+//        try {
+//            String SELECT_SOLID_APPROVER_BLOCKS_SQL = "SELECT  headers.height, header, wasundoable,prevblockhash,"
+//                    + "prevbranchblockhash,mineraddress,tokenid,blocktype FROM headers INNER JOIN blockevaluation"
+//                    + " ON headers.hash=blockevaluation.hash WHERE blockevaluation.solid = true AND (prevblockhash = ?)"
+//                    + afterSelect();
+//            s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_BLOCKS_SQL);
+//            s.setString(1, Utils.HEX.encode(hash.getBytes()));
+//            // s.setString(2, Utils.HEX.encode(hash.getBytes()));
+//            ResultSet results = s.executeQuery();
+//            while (results.next()) {
+//                // Parse it.
+//                int height = results.getInt(1);
+//                Block b = params.getDefaultSerializer().makeBlock(results.getBytes(2));
+//                b.verifyHeader();
+//                storedBlocks.add(new StoredBlock(b, height));
+//            }
+//        } catch (SQLException ex) {
+//            throw new BlockStoreException(ex);
+//        } catch (ProtocolException e) {
+//            // Corrupted database.
+//            throw new BlockStoreException(e);
+//        } catch (VerificationException e) {
+//            // Should not be able to happen unless the database contains bad
+//            // blocks.
+//            throw new BlockStoreException(e);
+//        } finally {
+//            if (s != null) {
+//                try {
+//                    s.close();
+//                } catch (SQLException e) {
+//                    throw new BlockStoreException("Failed to close PreparedStatement");
+//                }
+//            }
+//        }
+//        try {
+//            String SELECT_SOLID_APPROVER_BLOCKS_SQL = "SELECT  headers.height, header, wasundoable,prevblockhash,"
+//                    + "prevbranchblockhash,mineraddress,tokenid,blocktype FROM headers INNER JOIN blockevaluation"
+//                    + " ON headers.hash=blockevaluation.hash WHERE blockevaluation.solid = true AND (prevbranchblockhash = ?)"
+//                    + afterSelect();
+//            s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_BLOCKS_SQL);
+//            s.setString(1, Utils.HEX.encode(hash.getBytes()));
+//            // s.setString(2, Utils.HEX.encode(hash.getBytes()));
+//            ResultSet results = s.executeQuery();
+//            while (results.next()) {
+//                // Parse it.
+//                int height = results.getInt(1);
+//                Block b = params.getDefaultSerializer().makeBlock(results.getBytes(2));
+//                b.verifyHeader();
+//                storedBlocks.add(new StoredBlock(b, height));
+//            }
+//        } catch (SQLException ex) {
+//            throw new BlockStoreException(ex);
+//        } catch (ProtocolException e) {
+//            // Corrupted database.
+//            throw new BlockStoreException(e);
+//        } catch (VerificationException e) {
+//            // Should not be able to happen unless the database contains bad
+//            // blocks.
+//            throw new BlockStoreException(e);
+//        } finally {
+//            if (s != null) {
+//                try {
+//                    s.close();
+//                } catch (SQLException e) {
+//                    throw new BlockStoreException("Failed to close PreparedStatement");
+//                }
+//            }
+//        }
+//        return storedBlocks;
     }
 
     @Override

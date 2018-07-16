@@ -250,6 +250,7 @@ public abstract class MemoryFullPrunedBlockStore implements FullPrunedBlockStore
     private TransactionalHashMap<Sha256Hash, StoredBlockAndWasUndoableFlag> blockMap;
     private TransactionalMultiKeyHashMap<Sha256Hash, Long, StoredUndoableBlock> fullBlockMap;
     private TransactionalHashMap<StoredTransactionOutPoint, UTXO> transactionOutputMap;
+    @SuppressWarnings("unused")
     private int fullStoreDepth;
     private NetworkParameters params;
     
@@ -388,7 +389,7 @@ public abstract class MemoryFullPrunedBlockStore implements FullPrunedBlockStore
     }
 
     @Override
-    public List<StoredBlock> getSolidApproverBlocks(Sha256Hash hash) throws BlockStoreException {
+    public List<BlockWrap> getSolidApproverBlocks(Sha256Hash hash) throws BlockStoreException {
         return null;
     }
 
