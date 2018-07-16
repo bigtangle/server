@@ -65,12 +65,13 @@ public class TipsService {
     }
 
     public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair() throws Exception {
-        Stopwatch watch = Stopwatch.createStarted();
-        List<Pair<Sha256Hash, Sha256Hash>> pairs = getValidatedBlockPairs(1);
-        watch.stop();
-        log.info("getValidatedBlockPair time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-
-        return pairs.get(0);
+    	return getValidatedBlockPairIteratively();
+//        Stopwatch watch = Stopwatch.createStarted();
+//        List<Pair<Sha256Hash, Sha256Hash>> pairs = getValidatedBlockPairs(1);
+//        watch.stop();
+//        log.info("getValidatedBlockPair time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+//
+//        return pairs.get(0);
     }
 
     public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPairIteratively() throws Exception {

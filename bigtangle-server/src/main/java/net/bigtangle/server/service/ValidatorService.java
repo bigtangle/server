@@ -715,12 +715,12 @@ public class ValidatorService {
         blockConflicts.removeIf(c -> {
             switch (c.getConflictPoint().getType()) {
             case TXOUT:
-                return alreadySpent(c.getConflictPoint().getConnectedOutpoint());
+                return !alreadySpent(c.getConflictPoint().getConnectedOutpoint());
             case TOKENISSUANCE:
-                return alreadyIssued(c.getConflictPoint().getConnectedTokenSerial());
+                return !alreadyIssued(c.getConflictPoint().getConnectedTokenSerial());
             case REWARDISSUANCE:
                 try {
-                    return alreadyRewarded(c.getConflictPoint().getConnectedRewardHeight());
+                    return !alreadyRewarded(c.getConflictPoint().getConnectedRewardHeight());
                 } catch (BlockStoreException e) {
                     e.printStackTrace();
                 }
