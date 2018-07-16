@@ -9,14 +9,10 @@ import javax.annotation.Nullable;
 
 import com.google.common.base.Objects;
 
-import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.TransactionOutPoint;
 
 public class ConflictPoint {
-
-    private BlockWrap block;
     private ConflictType type;
     
     /** Null if not conflict of corresponding type */
@@ -27,23 +23,20 @@ public class ConflictPoint {
     @Nullable
     private TokenSerial connectedTokenSerial;
 
-    public ConflictPoint(BlockWrap block, TransactionOutPoint connectedOutpoint) {
+    public ConflictPoint(TransactionOutPoint connectedOutpoint) {
         super();
-        this.block = block;
         this.type = ConflictType.TXOUT;
         this.connectedOutpoint = connectedOutpoint;
     }
 
-    public ConflictPoint(BlockWrap block, long fromHeight) {
+    public ConflictPoint(long fromHeight) {
         super();
-        this.block = block;
         this.type = ConflictType.REWARDISSUANCE;
         this.connectedRewardHeight = fromHeight;
     }
 
-    public ConflictPoint(BlockWrap block, TokenSerial serial) {
+    public ConflictPoint(TokenSerial serial) {
         super();
-        this.block = block;
         this.type = ConflictType.TOKENISSUANCE;
         this.connectedTokenSerial = serial;
     }
@@ -104,9 +97,5 @@ public class ConflictPoint {
 
     public TokenSerial getConnectedTokenSerial() {
         return connectedTokenSerial;
-    }
-
-    public BlockWrap getBlock() {
-        return block;
     }
 }

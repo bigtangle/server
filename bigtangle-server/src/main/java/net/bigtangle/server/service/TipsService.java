@@ -82,9 +82,9 @@ public class TipsService {
         BlockWrap right = store.getBlockWrap(ratingEntryPoints.get(1));
 
         // Init conflict set
-        HashSet<ConflictPoint> currentConflictPoints = new HashSet<>();
-        currentConflictPoints.addAll(validatorService.toConflictPointCandidates(left));
-        currentConflictPoints.addAll(validatorService.toConflictPointCandidates(right));
+        HashSet<Conflict> currentConflictPoints = new HashSet<>();
+        currentConflictPoints.addAll(validatorService.toConflictCandidates(left));
+        currentConflictPoints.addAll(validatorService.toConflictCandidates(right));
 
         // Find valid approvers to go to
         // TODO filter low-pass filter here and below too
@@ -101,13 +101,13 @@ public class TipsService {
         while (nextLeft != left && nextRight != right) {
             if (nextLeft.getBlockEvaluation().getRating() > nextRight.getBlockEvaluation().getRating()) {
                 left = nextLeft;
-                currentConflictPoints.addAll(validatorService.toConflictPointCandidates(left));
+                currentConflictPoints.addAll(validatorService.toConflictCandidates(left));
                 leftApprovers = blockService.getSolidApproverBlocks(left.getBlock().getHash());
                 leftApprovers.removeIf(b -> validatorService.isConflicting(b, currentConflictPoints));
                 nextLeft = performStep(left, leftApprovers);
             } else {
                 right = nextRight;
-                currentConflictPoints.addAll(validatorService.toConflictPointCandidates(right));
+                currentConflictPoints.addAll(validatorService.toConflictCandidates(right));
                 rightApprovers = blockService.getSolidApproverBlocks(right.getBlock().getHash());
                 rightApprovers.removeIf(b -> validatorService.isConflicting(b, currentConflictPoints));
                 nextRight = performStep(right, rightApprovers);
@@ -117,14 +117,14 @@ public class TipsService {
         // Go forward on the remaining paths
         while (nextLeft != left) {
             left = nextLeft;
-            currentConflictPoints.addAll(validatorService.toConflictPointCandidates(left));
+            currentConflictPoints.addAll(validatorService.toConflictCandidates(left));
             leftApprovers = blockService.getSolidApproverBlocks(left.getBlock().getHash());
             leftApprovers.removeIf(b -> validatorService.isConflicting(b, currentConflictPoints));
             nextLeft = performStep(left, leftApprovers);
         }
         while (nextRight != right) {
             right = nextRight;
-            currentConflictPoints.addAll(validatorService.toConflictPointCandidates(right));
+            currentConflictPoints.addAll(validatorService.toConflictCandidates(right));
             rightApprovers = blockService.getSolidApproverBlocks(right.getBlock().getHash());
             rightApprovers.removeIf(b -> validatorService.isConflicting(b, currentConflictPoints));
             nextRight = performStep(right, rightApprovers);
