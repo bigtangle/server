@@ -61,7 +61,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
             System.out.println(block.getHashAsString());
             OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
             try {
-                Thread.sleep(1000);
+                Thread.sleep(100);
             } catch (InterruptedException e) {
             }
         }
@@ -393,7 +393,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(rollingBlock.getHash()).isMaintained());
 
         // Mining reward block should go through
-        for (int i = 1; i < 30; i++) {
+        for (int i = 1; i < 5; i++) {
             Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
             Block r1 = blockService.getBlock(tipsToApprove.getLeft());
             Block r2 = blockService.getBlock(tipsToApprove.getRight());

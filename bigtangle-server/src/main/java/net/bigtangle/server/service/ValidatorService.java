@@ -187,8 +187,6 @@ public class ValidatorService {
     // TODO cleanup and crosscheck with above code, rewrite this to batched computation of relevant reward block only,
     // e. g. go forward until confirmed reward block is found or up to the end
     private boolean assessMiningRewardBlock(Block header, long height, boolean assumeMilestone) throws BlockStoreException {
-        BlockWrap blockEvaluation = store.getBlockWrap(header.getHash());
-
         // Once set valid, always valid
 //        if (blockEvaluation.isRewardValid())
 //            return true;

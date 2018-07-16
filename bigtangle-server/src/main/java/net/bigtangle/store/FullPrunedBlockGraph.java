@@ -90,8 +90,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      */
     protected final FullPrunedBlockStore blockStore;
     @Autowired
-    private BlockRequester blockRequester;
-    @Autowired
     protected NetworkParameters networkParameters;
     @Autowired
     private ValidatorService validatorService;

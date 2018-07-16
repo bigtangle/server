@@ -1999,10 +1999,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public void updateTransactionOutputSpent(Sha256Hash prevTxHash, long index, boolean b, Sha256Hash spenderBlock)
             throws BlockStoreException {
-        UTXO prev = this.getTransactionOutput(prevTxHash, index);
-        if (prev == null) {
-            throw new BlockStoreException("Could not find UTXO to update");
-        }
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -2031,10 +2027,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public void updateTransactionOutputConfirmed(Sha256Hash prevTxHash, long index, boolean b)
             throws BlockStoreException {
-        UTXO prev = this.getTransactionOutput(prevTxHash, index);
-        if (prev == null) {
-            throw new BlockStoreException("Could not find UTXO to update");
-        }
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -2061,10 +2053,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public void updateTransactionOutputSpendPending(Sha256Hash prevTxHash, long index, boolean b)
             throws BlockStoreException {
-        UTXO prev = this.getTransactionOutput(prevTxHash, index);
-        if (prev == null) {
-            throw new BlockStoreException("Could not find UTXO to update");
-        }
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -2089,10 +2077,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public void updateTransactionOutputConfirmingBlock(Sha256Hash prevTxHash, int index, Sha256Hash blockHash)
             throws BlockStoreException {
-        UTXO prev = this.getTransactionOutput(prevTxHash, index);
-        if (prev == null) {
-            throw new BlockStoreException("Could not find UTXO to update");
-        }
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
