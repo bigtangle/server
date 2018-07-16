@@ -65,30 +65,111 @@ public class TipsService {
     }
 
     public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair() throws Exception {
-        Stopwatch watch = Stopwatch.createStarted();
-        List<Pair<Sha256Hash, Sha256Hash>> pairs = getValidatedBlockPairs(1);
-        watch.stop();
-        log.info("getValidatedBlockPair time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-
-        return pairs.get(0);
+        return getValidatedBlockPairIteratively();
+        
+//        Stopwatch watch = Stopwatch.createStarted();
+//        List<Pair<Sha256Hash, Sha256Hash>> pairs = getValidatedBlockPairs(1);
+//        watch.stop();
+//        log.info("getValidatedBlockPair time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+//
+//        return pairs.get(0);
     }
 
     public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPairIteratively() throws Exception {
         Stopwatch watch = Stopwatch.createStarted();
         List<Sha256Hash> ratingEntryPoints = getRatingEntryPoints(2);
-        Pair<Sha256Hash, Sha256Hash> pair = Pair.of(ratingEntryPoints.get(0), ratingEntryPoints.get(1));
+        BlockWrap left = store.getBlockWrap(ratingEntryPoints.get(0));
+        BlockWrap right = store.getBlockWrap(ratingEntryPoints.get(1));
+
+        // Init conflict set
         HashSet<ConflictPoint> currentConflictPoints = new HashSet<>();
-                
-        List<BlockWrap> leftApprovers = blockService.getSolidApproverBlocks(pair.getLeft());
-        List<BlockWrap> rightApprovers = blockService.getSolidApproverBlocks(pair.getRight());
+        currentConflictPoints.addAll(validatorService.toConflictPointCandidates(left));
+        currentConflictPoints.addAll(validatorService.toConflictPointCandidates(right));
+
+        // Find valid approvers to go to
+        // TODO filter low-pass filter here and below too
+        List<BlockWrap> leftApprovers = blockService.getSolidApproverBlocks(left.getBlock().getHash());
+        List<BlockWrap> rightApprovers = blockService.getSolidApproverBlocks(right.getBlock().getHash());
         leftApprovers.removeIf(b -> validatorService.isConflicting(b, currentConflictPoints));
         rightApprovers.removeIf(b -> validatorService.isConflicting(b, currentConflictPoints));
-        
+
+        // Perform next steps
+        BlockWrap nextLeft = performStep(left, leftApprovers);
+        BlockWrap nextRight = performStep(right, rightApprovers);
+
+        // Proceed on path to be included first (highest rating else right which is random)
+        while (nextLeft != left && nextRight != right) {
+            if (nextLeft.getBlockEvaluation().getRating() > nextRight.getBlockEvaluation().getRating()) {
+                left = nextLeft;
+                currentConflictPoints.addAll(validatorService.toConflictPointCandidates(left));
+                leftApprovers = blockService.getSolidApproverBlocks(left.getBlock().getHash());
+                leftApprovers.removeIf(b -> validatorService.isConflicting(b, currentConflictPoints));
+                nextLeft = performStep(left, leftApprovers);
+            } else {
+                right = nextRight;
+                currentConflictPoints.addAll(validatorService.toConflictPointCandidates(right));
+                rightApprovers = blockService.getSolidApproverBlocks(right.getBlock().getHash());
+                rightApprovers.removeIf(b -> validatorService.isConflicting(b, currentConflictPoints));
+                nextRight = performStep(right, rightApprovers);
+            }
+        }
+
+        // Go forward on the remaining paths
+        while (nextLeft != left) {
+            left = nextLeft;
+            currentConflictPoints.addAll(validatorService.toConflictPointCandidates(left));
+            leftApprovers = blockService.getSolidApproverBlocks(left.getBlock().getHash());
+            leftApprovers.removeIf(b -> validatorService.isConflicting(b, currentConflictPoints));
+            nextLeft = performStep(left, leftApprovers);
+        }
+        while (nextRight != right) {
+            right = nextRight;
+            currentConflictPoints.addAll(validatorService.toConflictPointCandidates(right));
+            rightApprovers = blockService.getSolidApproverBlocks(right.getBlock().getHash());
+            rightApprovers.removeIf(b -> validatorService.isConflicting(b, currentConflictPoints));
+            nextRight = performStep(right, rightApprovers);
+        }
 
         watch.stop();
         log.info("getValidatedBlockPairIteratively time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
-        return pair;
+        return Pair.of(left.getBlock().getHash(), right.getBlock().getHash());
+    }
+
+    public BlockWrap performStep(BlockWrap currentBlock, List<BlockWrap> approverHashes) {
+        if (approverHashes.size() == 0) {
+            return currentBlock;
+        } else if (approverHashes.size() == 1) {
+            return approverHashes.get(0);
+        } else {
+            double[] transitionWeights = new double[approverHashes.size()];
+            double transitionWeightSum = 0;
+            long currentCumulativeWeight = currentBlock.getBlockEvaluation().getCumulativeWeight();
+
+            // Calculate the unnormalized transition weights
+            // TODO eventually set alpha according to ideal orphan rates as
+            // found in parameter tuning simulations and papers (see
+            // POLB.pdf)
+            for (int i = 0; i < approverHashes.size(); i++) {
+                double alpha = 0.5;
+                transitionWeights[i] = Math.exp(-alpha
+                        * (currentCumulativeWeight - approverHashes.get(i).getBlockEvaluation().getCumulativeWeight()));
+                transitionWeightSum += transitionWeights[i];
+            }
+
+            // Randomly select one of the approvers weighted by their
+            // transition probabilities
+            double transitionRealization = seed.nextDouble() * transitionWeightSum;
+            for (int i = 0; i < approverHashes.size(); i++) {
+                transitionRealization -= transitionWeights[i];
+                if (transitionRealization <= 0) {
+                    return approverHashes.get(i);
+                }
+            }
+
+            log.warn("MCMC step failed");
+            return currentBlock;
+        }
     }
 
     public List<Pair<Sha256Hash, Sha256Hash>> getValidatedBlockPairs(int count) throws Exception {
