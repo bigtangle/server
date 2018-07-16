@@ -572,14 +572,13 @@ public class ValidatorService {
         Stream<Pair<Block, ConflictPoint>> rewardConflictPoints = blocksToAdd.stream()
                 .filter(b -> b.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD)
                 .map(b -> Pair.of(b, Utils.readInt64(b.getTransactions().get(0).getData(), 0)))
-                .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight()))).filter(pair -> false);
+                .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight())));
 
         // Dynamic conflicts: token issuance ids
-        Stream<Pair<Block, ConflictPoint>> issuanceConflictPoints = blocksToAdd.stream().filter(t -> false) // TEMP
+        Stream<Pair<Block, ConflictPoint>> issuanceConflictPoints = blocksToAdd.stream()
                 .filter(b -> b.getBlockType() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION)
                 .map(b -> Pair.of(b, new TokenInfo().parse(b.getTransactions().get(0).getData())))
-                .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight().getTokenSerial())))
-                .filter(pair -> false);
+                .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight().getTokenSerial())));
 
         // Filter to only contain conflicts that are spent more than once in the
         // new milestone candidates
@@ -629,7 +628,7 @@ public class ValidatorService {
                 });
 
         // Dynamic conflicts: token issuance ids already issued
-        Stream<Pair<Block, ConflictPoint>> issuanceConflictPoints = blocksToAdd.stream().filter(t -> false) // TEMP
+        Stream<Pair<Block, ConflictPoint>> issuanceConflictPoints = blocksToAdd.stream()
                 .filter(b -> b.getBlockType() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION)
                 .map(b -> Pair.of(b, new TokenInfo().parse(b.getTransactions().get(0).getData())))
                 .map(pair -> Pair.of(pair.getLeft(), new ConflictPoint(pair.getRight().getTokenSerial())))
@@ -669,17 +668,12 @@ public class ValidatorService {
                 && getSpendingBlock(transactionOutPoint).getBlockEvaluation().isMaintained();
     }
 
-    private boolean alreadyRewarded(long height) throws BlockStoreException {
-        return height != store.getMaxPrevTxRewardHeight() + NetworkParameters.REWARD_HEIGHT_INTERVAL;
-    }
-
-    private boolean alreadyIssued(TokenSerial tokenSerial) {
-        // TODO where token has been issued already
-        return false;
-    }
-
     private BlockWrap getIntervalRewardingBlock(long height) throws BlockStoreException {
         return store.getBlockWrap(store.getConfirmedRewardBlock(height));
+    }
+
+    private boolean alreadyRewarded(long height) throws BlockStoreException {
+        return height != store.getMaxPrevTxRewardHeight() + NetworkParameters.REWARD_HEIGHT_INTERVAL;
     }
 
     private BlockWrap getSpendingBlock(TransactionOutPoint transactionOutPoint) {
@@ -688,6 +682,11 @@ public class ValidatorService {
         } catch (BlockStoreException e) {
             return null;
         }
+    }
+
+    private boolean alreadyIssued(TokenSerial tokenSerial) {
+        // TODO where token has been issued already
+        return false;
     }
 
     private BlockWrap getTokenIssuingBlock(TokenSerial tokenSerial) {
