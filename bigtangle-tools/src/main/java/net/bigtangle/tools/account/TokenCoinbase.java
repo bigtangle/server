@@ -11,15 +11,14 @@ import net.bigtangle.core.NetworkParameters;
 
 public class TokenCoinbase {
     
-    public void syncTokenCoinbase(List<Map<String, Object>> tokens) {
-        if (tokens.isEmpty()) return;
+    public void syncTokenCoinbase(List<Coin> list) {
+        if (list.isEmpty()) return;
         lock.lock();
         try {
             Map<String, Coin> values = new HashMap<String, Coin>();
-            for (Map<String, Object> map : tokens) {
-                String tokenHex = (String) map.get("tokenHex");
-                String value = map.get("value").toString();
-                values.put(tokenHex, Coin.valueOf(Long.parseLong(value), tokenHex));
+            for (Coin coin : list) {
+                String tokenHex = coin.getTokenHex();
+                values.put(tokenHex, coin);
             }
             this.values = values;
         }

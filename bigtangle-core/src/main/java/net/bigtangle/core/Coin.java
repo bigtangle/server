@@ -19,6 +19,9 @@ import net.bigtangle.utils.MonetaryFormat;
  * Represents a monetary Coin value. This class is immutable. 
  */
 public final class Coin implements Monetary, Comparable<Coin>, Serializable {
+    
+    public Coin() {
+    }
 
     private static final long serialVersionUID = 551802452657362699L;
 
@@ -69,8 +72,8 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     /**
      * The number of satoshis of this monetary value.
      */
-    public final long value;
-    public final byte[] tokenid;
+    public long value;
+    public byte[] tokenid;
 
     private Coin(final long satoshis, final byte[] tokenid) {
         this.value = satoshis;

@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
@@ -18,12 +17,10 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.ordermatch.resp.ExchangeInfoResponse;
+import net.bigtangle.core.http.server.resp.GetOutputsResponse;
 import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
-import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
-import net.bigtangle.wallet.SendRequest;
-import net.bigtangle.wallet.Wallet;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
 public class PayOrder {
@@ -241,23 +238,14 @@ public class PayOrder {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private List<UTXO> getUTXOWithPubKeyHash(byte[] pubKeyHash, byte[] tokenid) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         List<String> pubKeyHashList = new ArrayList<String>();
         pubKeyHashList.add(Utils.HEX.encode(pubKeyHash));
         String response = OkHttp3Util.postString(this.serverURL + ReqCmd.getOutputs.name(),
                 Json.jsonmapper().writeValueAsString(pubKeyHashList));
-        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-        if (data == null || data.isEmpty()) {
-            return listUTXO;
-        }
-        List<Map<String, Object>> outputs = (List<Map<String, Object>>) data.get("outputs");
-        if (outputs == null || outputs.isEmpty()) {
-            return listUTXO;
-        }
-        for (Map<String, Object> object : outputs) {
-            UTXO utxo = MapToBeanMapperUtil.parseUTXO(object);
+        GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(response, GetOutputsResponse.class);
+        for (UTXO utxo : getOutputsResponse.getOutputs()) {
             if (!Arrays.equals(utxo.getTokenidBuf(), tokenid)) {
                 continue;
             }
@@ -268,7 +256,6 @@ public class PayOrder {
         return listUTXO;
     }
 
-    @SuppressWarnings("unchecked")
     private List<UTXO> getUTXOWithECKeyList(List<ECKey> ecKeys, byte[] tokenid) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         List<String> pubKeyHashList = new ArrayList<String>();
@@ -277,16 +264,8 @@ public class PayOrder {
         }
         String response = OkHttp3Util.postString(this.serverURL + ReqCmd.getOutputs.name(),
                 Json.jsonmapper().writeValueAsString(pubKeyHashList));
-        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-        if (data == null || data.isEmpty()) {
-            return listUTXO;
-        }
-        List<Map<String, Object>> outputs = (List<Map<String, Object>>) data.get("outputs");
-        if (outputs == null || outputs.isEmpty()) {
-            return listUTXO;
-        }
-        for (Map<String, Object> object : outputs) {
-            UTXO utxo = MapToBeanMapperUtil.parseUTXO(object);
+        GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(response, GetOutputsResponse.class);
+        for (UTXO utxo : getOutputsResponse.getOutputs()) {
             if (!Arrays.equals(utxo.getTokenidBuf(), tokenid)) {
                 continue;
             }

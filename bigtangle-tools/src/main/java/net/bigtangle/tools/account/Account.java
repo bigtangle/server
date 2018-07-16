@@ -158,7 +158,7 @@ public class Account {
         thread.start();
     }
 
-    public void syncTokenCoinbase(List<Map<String, Object>> tokens) {
-        this.tokenCoinbase.syncTokenCoinbase(tokens);
+    public void syncTokenCoinbase(List<Coin> list) {
+        this.tokenCoinbase.syncTokenCoinbase(list);
     }
 }

@@ -1,13 +1,12 @@
 package net.bigtangle.tools.action.impl;
 
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.http.server.resp.GetBalancesResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.tools.account.Account;
 import net.bigtangle.tools.action.Action;
@@ -24,7 +23,6 @@ public class BalancesAction extends Action {
     public void callback() {
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void execute0() throws Exception {
         try {
@@ -34,15 +32,8 @@ public class BalancesAction extends Action {
             }
             String resp = OkHttp3Util.postString(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.batchGetBalances.name(),
                     Json.jsonmapper().writeValueAsString(pubKeyHashs));
-            final Map<String, Object> data = Json.jsonmapper().readValue(resp, Map.class);
-            if (data == null || data.isEmpty()) {
-                return;
-            }
-            List<Map<String, Object>> tokens = (List<Map<String, Object>>) data.get("tokens");
-            if (tokens == null || tokens.isEmpty()) {
-                return;
-            }
-            this.account.syncTokenCoinbase(tokens);
+            GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(resp, GetBalancesResponse.class);
+            this.account.syncTokenCoinbase(getBalancesResponse.getTokens());
         } catch (Exception e) {
             e.printStackTrace();
         }

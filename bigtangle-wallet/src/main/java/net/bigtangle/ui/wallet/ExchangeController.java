@@ -41,6 +41,7 @@ import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
@@ -147,8 +148,9 @@ public class ExchangeController {
     public void initTable() throws Exception {
         String CONTEXT_ROOT = Main.getContextRoot();
         String response0 = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getMarkets.name(), "{}");
-        final Map<String, Object> getTokensResult = Json.jsonmapper().readValue(response0, Map.class);
-        List<Map<String, Object>> tokensList = (List<Map<String, Object>>) getTokensResult.get("tokens");
+        
+        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response0,GetTokensResponse.class);
+        
         ObservableList<Map<String, Object>> exchangeData = FXCollections.observableArrayList();
         KeyParameter aesKey = null;
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
@@ -162,14 +164,11 @@ public class ExchangeController {
             String address = ecKey.toAddress(Main.params).toString();
             addressList.add(address);
         }
-        for (Map<String, Object> tokenResult : tokensList) {
-            String tokenid = (String) tokenResult.get("tokenid");
-            boolean asmarket = (boolean) tokenResult.get("asmarket");
-            if (!asmarket) {
-                continue;
-            }
-            String url = (String) tokenResult.get("url");
-
+        for (Tokens tokens : getTokensResponse.getTokens()) {
+            String tokenid = tokens.getTokenid();
+            boolean asmarket = tokens.isAsmarket();
+            if (!asmarket) continue;
+            String url = tokens.getUrl();
             log.debug(url);
             if (url == null || url.isEmpty()) {
                 continue;
@@ -234,7 +233,6 @@ public class ExchangeController {
         exchangeTable.setItems(exchangeData);
     }
 
-    @SuppressWarnings("unchecked")
     public void initComboBox() throws Exception {
         String CONTEXT_ROOT = Main.getContextRoot();
         ObservableList<String> tokenData = FXCollections.observableArrayList();
@@ -242,13 +240,14 @@ public class ExchangeController {
         requestParam.put("name", null);
         String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-        List<Map<String, Object>> tokens = (List<Map<String, Object>>) data.get("tokens");
-        for (Map<String, Object> map : tokens) {
-            String tokenHex = (String) map.get("tokenid");
-            String tokenname = (String) map.get("tokenname");
+        
+        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
+        for (Tokens tokens : getTokensResponse.getTokens()) {
+            String tokenHex = tokens.getTokenid();
+            String tokenname = tokens.getTokenname();
             tokenData.add(tokenname + " : " + tokenHex);
         }
+        
         toTokenHexComboBox.setItems(tokenData);
         fromTokenHexComboBox.setItems(tokenData);
 
@@ -507,7 +506,6 @@ public class ExchangeController {
 
     }
 
-    @SuppressWarnings("unchecked")
     public void signExchangeDo(ActionEvent event) throws Exception {
 
         Map<String, Object> rowData = exchangeTable.getSelectionModel().getSelectedItem();
@@ -522,9 +520,9 @@ public class ExchangeController {
         requestParam0.put("tokenid", tokenid);
         String resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
-        HashMap<String, Object> res = Json.jsonmapper().readValue(resp, HashMap.class);
-        HashMap<String, Object> token_ = (HashMap<String, Object>) res.get("token");
-        String marketURL = (String) token_.get("url");
+        
+        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
+        String marketURL = getTokensResponse.getToken().getUrl();
 
         if (marketURL == null || marketURL.equals("")) {
             GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_d1"));

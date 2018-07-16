@@ -24,6 +24,7 @@ import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.http.server.resp.GetBalancesResponse;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
@@ -82,7 +83,6 @@ public class GiveMoneyUtils {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private static List<UTXO> getTransactionAndGetBalances(ECKey ecKey) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         List<String> keyStrHex000 = new ArrayList<String>();
@@ -90,12 +90,11 @@ public class GiveMoneyUtils {
         String response = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.batchGetBalances.name(),
                 Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
 
-        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("outputs");
-        for (Map<String, Object> object : list) {
-            UTXO u = MapToBeanMapperUtil.parseUTXO(object);
-            if (u.getValue().getValue() > 0)
-                listUTXO.add(u);
+        GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
+        for (UTXO utxo : getBalancesResponse.getOutputs()) {
+            if (utxo.getValue().getValue() > 0) {
+                listUTXO.add(utxo);
+            }
         }
         return listUTXO;
     }
