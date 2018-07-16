@@ -54,9 +54,9 @@ import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.ui.wallet.utils.WTUtils;
 import net.bigtangle.utils.OkHttp3Util;
 
-public class StockController extends TokensController {
+public class TokenController extends TokenBaseController {
 
-    private static final Logger log = LoggerFactory.getLogger(StockController.class);
+    private static final Logger log = LoggerFactory.getLogger(TokenController.class);
 
     @FXML
     public TabPane tabPane;

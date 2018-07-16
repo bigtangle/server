@@ -6,13 +6,13 @@ package net.bigtangle.ui.wallet;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 
-public class StockModel {
+public class TokenModel {
     private SimpleStringProperty stockName;
     private SimpleStringProperty stockCode;
     private SimpleLongProperty stockNumber;
     private SimpleStringProperty stockDescription;
 
-    public StockModel(String name, String code, long number, String description) {
+    public TokenModel(String name, String code, long number, String description) {
         this.stockName = new SimpleStringProperty(name);
         this.stockCode = new SimpleStringProperty(code);
         this.stockNumber = new SimpleLongProperty(number);

@@ -30,7 +30,7 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
 
-public class TokensController {
+public class TokenBaseController {
     @FXML
     public TableView<Map> tokensTable;
     @FXML
@@ -88,7 +88,7 @@ public class TokensController {
     @FXML
     public CheckBox isSignCheckBox;
     public static Map<String, Boolean> multiMap = new HashMap<String, Boolean>();
-    private static final Logger log = LoggerFactory.getLogger(TokensController.class);
+    private static final Logger log = LoggerFactory.getLogger(TokenBaseController.class);
 
     @FXML
     public void initialize() {
