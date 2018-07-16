@@ -492,7 +492,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         // Add blocks via tip selection
         for (int i = 1; i < 30; i++) {
-            Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
+            Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPairIteratively();
             Block r1 = blockService.getBlock(tipsToApprove.getLeft());
             Block r2 = blockService.getBlock(tipsToApprove.getRight());
             Block b = BlockForTest.createNextBlock(r2, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0,
