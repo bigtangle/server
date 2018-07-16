@@ -46,6 +46,7 @@ import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -375,10 +376,9 @@ public class TokenController extends TokenBaseController {
         requestParam.put("name", null);
         String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+        
+        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
 
-        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
-        List<String> names = new ArrayList<String>();
         // wallet keys minus used from token list with one time (blocktype false
         KeyParameter aeskey = null;
         // Main.initAeskey(aeskey);
@@ -390,14 +390,11 @@ public class TokenController extends TokenBaseController {
         for (ECKey key : keys) {
             String temp = Utils.HEX.encode(key.getPubKey());
             boolean flag = true;
-            if (list != null && !list.isEmpty()) {
-
-                for (Map<String, Object> map : list) {
-                    String tokenHex = (String) map.get("tokenid");
-                    if (temp.equals(tokenHex)) {
-                        if (!(boolean) map.get("multiserial")) {
-                            flag = false;
-                        }
+            for (Tokens tokens : getTokensResponse.getTokens()) {
+                String tokenHex = tokens.getTokenid();
+                if (temp.equals(tokenHex)) {
+                    if (!tokens.isMultiserial()) {
+                        flag = false;
                     }
                 }
             }

@@ -49,6 +49,7 @@ import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.http.server.resp.SettingResponse;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
@@ -69,14 +70,12 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
     private static final Logger logger = LoggerFactory.getLogger(APIIntegrationTests.class);
     
-    @SuppressWarnings("unchecked")
     @Test
     public void testClientVersion() throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.version.name(), Json.jsonmapper().writeValueAsString(requestParam));
-        System.out.println(resp);
-        HashMap<String, String> result = Json.jsonmapper().readValue(resp, HashMap.class);
-        String version = result.get("version");
+        SettingResponse settingResponse = Json.jsonmapper().readValue(resp, SettingResponse.class);
+        String version = settingResponse.getVersion();
         assertTrue(version.equals("0.1.0"));
     }
     

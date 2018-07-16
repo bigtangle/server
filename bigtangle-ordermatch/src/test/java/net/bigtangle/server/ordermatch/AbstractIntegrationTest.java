@@ -38,6 +38,7 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.http.server.resp.GetBalancesResponse;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.ordermatch.config.DBStoreConfiguration;
@@ -141,37 +142,24 @@ public abstract class AbstractIntegrationTest {
     }
 
     // get balance for the walleKeys
-    @SuppressWarnings("unchecked")
     public List<UTXO> testTransactionAndGetBalances(boolean withZero, List<ECKey> keys) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         List<String> keyStrHex000 = new ArrayList<String>();
-
+        
         for (ECKey ecKey : keys) {
-            // keyStrHex000.add(ecKey.toAddress(networkParameters).toString());
             keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
         }
         String response = OkHttp3Util.post(contextRoot + ReqCmd.batchGetBalances.name(),
                 Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
 
-        // String response = mvcResult.getResponse().getContentAsString();
-        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-        if (data != null && !data.isEmpty()) {
-            List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("outputs");
-            if (list != null && !list.isEmpty()) {
-                for (Map<String, Object> object : list) {
-                    UTXO u = MapToBeanMapperUtil.parseUTXO(object);
-                    if (withZero) {
-                        listUTXO.add(u);
-                    } else {
-                        if (u.getValue().getValue() > 0)
-                            listUTXO.add(u);
-                    }
-
-                }
+        GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
+        for (UTXO utxo : getBalancesResponse.getOutputs()) {
+            if (withZero) {
+                listUTXO.add(utxo);
+            } else if (utxo.getValue().getValue() > 0) {
+                listUTXO.add(utxo);
             }
-
         }
-
         return listUTXO;
     }
 

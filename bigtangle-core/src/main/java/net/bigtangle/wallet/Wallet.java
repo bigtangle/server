@@ -77,6 +77,7 @@ import net.bigtangle.core.UTXOProviderException;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VarInt;
 import net.bigtangle.core.VerificationException;
+import net.bigtangle.core.http.server.resp.GetOutputsResponse;
 import net.bigtangle.crypto.ChildNumber;
 import net.bigtangle.crypto.DeterministicHierarchy;
 import net.bigtangle.crypto.DeterministicKey;
@@ -91,7 +92,6 @@ import net.bigtangle.signers.MissingSigResolutionSigner;
 import net.bigtangle.signers.TransactionSigner;
 import net.bigtangle.utils.BaseTaggableObject;
 import net.bigtangle.utils.ListenerRegistration;
-import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.Protos.Wallet.EncryptionType;
@@ -4198,21 +4198,14 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
             List<String> pubKeyHashs = new ArrayList<String>();
 
             for (ECKey ecKey : walletKeys(null)) {
-
                 pubKeyHashs.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
             }
 
             String response = OkHttp3Util.post(this.serverurl + ReqCmd.getOutputs.name(),
                     Json.jsonmapper().writeValueAsString(pubKeyHashs).getBytes("UTF-8"));
 
-            final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-            List<UTXO> outputs = new ArrayList<UTXO>();
-            for (Map<String, Object> map : (List<Map<String, Object>>) data.get("outputs")) {
-                UTXO utxo = MapToBeanMapperUtil.parseUTXO(map);
-                outputs.add(utxo);
-            }
-
-            for (UTXO output : outputs) {
+            GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(response, GetOutputsResponse.class);
+            for (UTXO output : getOutputsResponse.getOutputs()) {
                 if (multisigns) {
                     candidates.add(new FreeStandingTransactionOutput(this.params, output, 0));
                 } else {
@@ -4221,7 +4214,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
                     }
                 }
             }
-
             return candidates;
         } finally {
             lock.unlock();

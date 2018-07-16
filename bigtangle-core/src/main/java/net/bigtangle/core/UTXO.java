@@ -5,14 +5,18 @@
 
 package net.bigtangle.core;
 
+import java.beans.Transient;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.math.BigInteger;
+import java.util.Locale;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Objects;
 
-import net.bigtangle.script.*;
-
-import java.beans.Transient;
-import java.io.*;
-import java.math.*;
-import java.util.Locale;
+import net.bigtangle.script.Script;
 
 // TODO: Fix this class: should not talk about addresses, height should be optional/support mempool height etc
 
@@ -23,7 +27,47 @@ import java.util.Locale;
  */
 public class UTXO {
 
+    public UTXO() {
+    }
+
+    public void setScriptHex(String scriptHex) {
+        this.script = new Script(Utils.HEX.decode(scriptHex));
+    }
+
+    public void setHashHex(String hashHex) {
+        this.hash = Sha256Hash.wrap(hashHex);
+    }
+
+    public void setBlockHashHex(String blockHashHex) {
+        this.blockhash = Sha256Hash.wrap(blockHashHex);
+    }
+
+    public void setValue(Coin value) {
+        this.value = value;
+    }
+
+    public void setHash(Sha256Hash hash) {
+        this.hash = hash;
+    }
+
+    public void setIndex(long index) {
+        this.index = index;
+    }
+
+    public void setHeight(long height) {
+        this.height = height;
+    }
+
+    public void setCoinbase(boolean coinbase) {
+        this.coinbase = coinbase;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
     private Coin value;
+    @JsonIgnore
     private Script script;
     private Sha256Hash hash;
     private long index;
@@ -38,14 +82,12 @@ public class UTXO {
     private boolean spendPending;
     private String tokenId;
 
-    private long  minimumsign;
-    
-    
+    private long minimumsign;
+
     public boolean isMultiSig() {
         return minimumsign > 1l;
     }
-    
-    
+
     public String getTokenId() {
         return tokenId;
     }
@@ -53,8 +95,12 @@ public class UTXO {
     public void setTokenId(String tokenid) {
         this.tokenId = tokenid;
     }
-    
-    @Transient 
+
+    public void setTokenid(String tokenid) {
+        this.tokenId = tokenid;
+    }
+
+    @Transient
     public byte[] getTokenidBuf() {
         return Utils.HEX.decode(this.tokenId);
     }
@@ -76,7 +122,8 @@ public class UTXO {
      *            The address.
      */
     public UTXO(Sha256Hash hash, long index, Coin value, long height, boolean coinbase, Script script, String address,
-            Sha256Hash blockhash, String fromaddress, String memo, String tokenid, boolean spent, boolean confirmed, boolean spendPending,long minimumsign) {
+            Sha256Hash blockhash, String fromaddress, String memo, String tokenid, boolean spent, boolean confirmed,
+            boolean spendPending, long minimumsign) {
         this.hash = hash;
         this.index = index;
         this.value = value;
@@ -91,7 +138,7 @@ public class UTXO {
         this.tokenId = tokenid;
         this.confirmed = confirmed;
         this.spendPending = spendPending;
-        this.minimumsign=minimumsign;
+        this.minimumsign = minimumsign;
     }
 
     public UTXO(InputStream in) throws IOException {
@@ -135,12 +182,16 @@ public class UTXO {
     }
 
     /**
-     * The Script object which you can use to get address, script bytes or
-     * script type.
+     * The Script object which you can use to get address, script bytes or script
+     * type.
      */
     @Transient
     public Script getScript() {
         return script;
+    }
+
+    public void setScript(Script script) {
+        this.script = script;
     }
 
     public String getScriptHex() {
@@ -173,8 +224,8 @@ public class UTXO {
     }
 
     /**
-     * The address of this output, can be the empty string if none was provided
-     * at construction time or was deserialized
+     * The address of this output, can be the empty string if none was provided at
+     * construction time or was deserialized
      */
     public String getAddress() {
         return address;
@@ -258,21 +309,21 @@ public class UTXO {
         this.spent = spent;
     }
 
-	public boolean isConfirmed() {
-		return confirmed;
-	}
+    public boolean isConfirmed() {
+        return confirmed;
+    }
 
-	public void setConfirmed(boolean confirmed) {
-		this.confirmed = confirmed;
-	}
+    public void setConfirmed(boolean confirmed) {
+        this.confirmed = confirmed;
+    }
 
-	public boolean isSpendPending() {
-		return spendPending;
-	}
+    public boolean isSpendPending() {
+        return spendPending;
+    }
 
-	public void setSpendPending(boolean spendPending) {
-		this.spendPending = spendPending;
-	}
+    public void setSpendPending(boolean spendPending) {
+        this.spendPending = spendPending;
+    }
 
     public long getMinimumsign() {
         return minimumsign;

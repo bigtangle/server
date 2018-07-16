@@ -85,6 +85,8 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UploadfileInfo;
 import net.bigtangle.core.UserSettingData;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.http.server.resp.GetOutputsResponse;
+import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.ReqCmd;
@@ -95,7 +97,6 @@ import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.utils.BriefLogFormatter;
-import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.DeterministicSeed;
@@ -336,24 +337,18 @@ public class Main extends Application {
 
     }
 
-    @SuppressWarnings("unchecked")
     public static Map<String, String> getTokenHexNameMap() throws Exception {
         String CONTEXT_ROOT = Main.IpAddress + "/"; // Main.getContextRoot();
         Map<String, Object> requestParam = new HashMap<String, Object>();
         String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-
-        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
-        if (list != null && !list.isEmpty()) {
-            Map<String, String> temp = new HashMap<String, String>();
-            for (Map<String, Object> map : list) {
-                temp.put(Main.getString(map.get("tokenid")), Main.getString(map.get("tokenname")));
-            }
-            return temp;
+        
+        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
+        Map<String, String> map = new HashMap<String, String>();
+        for (Tokens tokens : getTokensResponse.getTokens()) {
+            map.put(Main.getString(tokens.getTokenid()), Main.getString(tokens.getTokenname()));
         }
-        return null;
-
+        return map;
     }
 
     public static void addAddress2block(String name, String address) throws Exception {
@@ -770,16 +765,8 @@ public class Main extends Application {
                 Json.jsonmapper().writeValueAsString(pubKeyHashs).getBytes());
         log.debug("tokenid:" + tokenid);
         log.debug("response:" + response);
-        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-        if (data == null || data.isEmpty()) {
-            return listUTXO;
-        }
-        List<Map<String, Object>> outputs = (List<Map<String, Object>>) data.get("outputs");
-        if (outputs == null || outputs.isEmpty()) {
-            return listUTXO;
-        }
-        for (Map<String, Object> object : outputs) {
-            UTXO utxo = MapToBeanMapperUtil.parseUTXO(object);
+        GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(response, GetOutputsResponse.class);
+        for (UTXO utxo : getOutputsResponse.getOutputs()) {
             if (!utxo.getTokenId().equals(tokenid)) {
                 continue;
             }

@@ -7,9 +7,12 @@ import java.util.Random;
 
 import org.junit.Test;
 
+import net.bigtangle.core.Coin;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.ordermatch.resp.GetOrderResponse;
 
@@ -67,5 +70,13 @@ public class JsonMapperTest {
     	
     	sha256Hash = Json.jsonmapper().readValue(jsonStr, Sha256Hash.class);
     	System.out.println(Utils.HEX.encode(sha256Hash.getBytes()));
+    	
+    	Coin coin = Coin.valueOf(10000, NetworkParameters.BIGNETCOIN_TOKENID);
+    	jsonStr = Json.jsonmapper().writeValueAsString(coin);
+    	
+    	System.out.println(jsonStr);
+    	
+    	coin = Json.jsonmapper().readValue(jsonStr, Coin.class);
+    	System.out.println(coin);
     }
 }

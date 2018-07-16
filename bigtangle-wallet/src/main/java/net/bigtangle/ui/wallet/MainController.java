@@ -59,8 +59,11 @@ import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Tokens;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.http.server.resp.GetBalancesResponse;
+import net.bigtangle.core.http.server.resp.SettingResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.ReqCmd;
@@ -166,9 +169,8 @@ public class MainController {
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.version.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
-            HashMap<String, String> result = Json.jsonmapper().readValue(resp, HashMap.class);
-            String version = result.get("version");
-
+            SettingResponse settingResponse = Json.jsonmapper().readValue(resp, SettingResponse.class);
+            String version = settingResponse.getVersion();
             int versionDiff = Main.compareVersion(version, Main.version);
             if (versionDiff > 0) {
                 GuiUtils.informationalAlert("", Main.getText("needUpdate"), "");
@@ -178,7 +180,6 @@ public class MainController {
                 passwordHBox.setVisible(false);
                 return false;
             }
-
         } catch (Exception e) {
             return true;
         }
@@ -209,30 +210,24 @@ public class MainController {
         String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.batchGetBalances.name(),
                 Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
         log.debug(response);
-        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-        if (data == null || data.isEmpty()) {
-            return;
-        }
-        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("outputs");
-        if (list == null || list.isEmpty()) {
-            return;
-        }
+        
+        GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
+        
         Map<String, String> hashNameMap = Main.getTokenHexNameMap();
         ObservableList<UTXOModel> subutxos = FXCollections.observableArrayList();
         Main.validTokenMap.clear();
         Main.validAddressSet.clear();
-        for (Map<String, Object> object : list) {
-            UTXO u = MapToBeanMapperUtil.parseUTXO(object);
-            Coin c = u.getValue();
+        for (UTXO utxo : getBalancesResponse.getOutputs()) {
+            Coin c = utxo.getValue();
             String balance = c.toPlainString();
             byte[] tokenid = c.tokenid;
-            String address = u.getAddress();
+            String address = utxo.getAddress();
             String tokenname = Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid)));
-            String memo = u.getMemo();
-            String minimumsign = Main.getString(u.getMinimumsign()).trim();
-            String hashHex = (String) object.get("blockHashHex");
-            String hash = u.getHashHex();
-            long outputindex = u.getIndex();
+            String memo = utxo.getMemo();
+            String minimumsign = Main.getString(utxo.getMinimumsign()).trim();
+            String hashHex = utxo.getBlockHashHex();
+            String hash = utxo.getHashHex();
+            long outputindex = utxo.getIndex();
             String key = Utils.HEX.encode(tokenid);
             if (Main.validTokenMap.get(key) == null) {
                 Set<String> addressList = new HashSet<String>();
@@ -245,11 +240,11 @@ public class MainController {
                 }
                 Main.validTokenMap.put(key, addressList);
             }
-            if (u.getTokenId().trim().equals(NetworkParameters.BIGNETCOIN_TOKENID_STRING)) {
+            if (utxo.getTokenId().trim().equals(NetworkParameters.BIGNETCOIN_TOKENID_STRING)) {
                 Main.validAddressSet.add(address);
             }
 
-            boolean spendPending = u.isSpendPending();
+            boolean spendPending = utxo.isSpendPending();
             if (myPositvleTokens != null && !"".equals(myPositvleTokens.trim()) && !myPositvleTokens.trim().isEmpty()) {
                 if (myPositvleTokens.contains(Utils.HEX.encode(tokenid))) {
                     Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending, tokenname,
@@ -265,32 +260,27 @@ public class MainController {
                         minimumsign, hashHex, hash, outputindex));
         }
         Main.instance.getUtxoData().addAll(subutxos);
-        list = (List<Map<String, Object>>) data.get("tokens");
-        if (list == null || list.isEmpty()) {
-            return;
-        }
+        
         ObservableList<CoinModel> subcoins = FXCollections.observableArrayList();
         Main.validTokenSet.clear();
-        for (Map<String, Object> map : list) {
-            Coin coin2 = MapToBeanMapperUtil.parseCoin(map);
-
-            if (!coin2.isZero()) {
-                Main.validTokenSet.add(Main.getString(hashNameMap.get(Utils.HEX.encode(coin2.tokenid))) + ":"
-                        + Utils.HEX.encode(coin2.tokenid));
+        for (Coin coin : getBalancesResponse.getTokens()) {
+            if (!coin.isZero()) {
+                Main.validTokenSet.add(Main.getString(hashNameMap.get(Utils.HEX.encode(coin.tokenid))) + ":"
+                        + Utils.HEX.encode(coin.tokenid));
                 if (myPositvleTokens != null && !"".equals(myPositvleTokens.trim())
                         && !myPositvleTokens.trim().isEmpty()) {
-                    if (myPositvleTokens.contains(Utils.HEX.encode(coin2.tokenid))) {
-                        Main.instance.getCoinData().add(new CoinModel(coin2.toPlainString(), coin2.tokenid,
-                                Main.getString(hashNameMap.get(Utils.HEX.encode(coin2.tokenid)))));
+                    if (myPositvleTokens.contains(Utils.HEX.encode(coin.tokenid))) {
+                        Main.instance.getCoinData().add(new CoinModel(coin.toPlainString(), coin.tokenid,
+                                Main.getString(hashNameMap.get(Utils.HEX.encode(coin.tokenid)))));
 
                     } else {
-                        subcoins.add(new CoinModel(coin2.toPlainString(), coin2.tokenid,
-                                Main.getString(hashNameMap.get(Utils.HEX.encode(coin2.tokenid)))));
+                        subcoins.add(new CoinModel(coin.toPlainString(), coin.tokenid,
+                                Main.getString(hashNameMap.get(Utils.HEX.encode(coin.tokenid)))));
                     }
                 }
                 if (myPositvleTokens == null || myPositvleTokens.isEmpty() || "".equals(myPositvleTokens.trim()))
-                    Main.instance.getCoinData().add(new CoinModel(coin2.toPlainString(), coin2.tokenid,
-                            Main.getString(hashNameMap.get(Utils.HEX.encode(coin2.tokenid)))));
+                    Main.instance.getCoinData().add(new CoinModel(coin.toPlainString(), coin.tokenid,
+                            Main.getString(hashNameMap.get(Utils.HEX.encode(coin.tokenid)))));
             }
         }
         Main.instance.getCoinData().addAll(subcoins);

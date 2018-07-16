@@ -39,6 +39,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -233,14 +234,13 @@ public class OrderController extends ExchangeController {
         String CONTEXT_ROOT = Main.getContextRoot();
         String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getMarkets.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        final Map<String, Object> getTokensResult = Json.jsonmapper().readValue(response, Map.class);
-        List<Map<String, Object>> tokensList = (List<Map<String, Object>>) getTokensResult.get("tokens");
-        for (Map<String, Object> tokenResult : tokensList) {
-            boolean asmarket = (boolean) tokenResult.get("asmarket");
-            if (!asmarket) {
-                continue;
-            }
-            String url = (String) tokenResult.get("url");
+        
+        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
+        
+        for (Tokens tokens : getTokensResponse.getTokens()) {
+            boolean asmarket = tokens.isAsmarket();
+            if (!asmarket) continue;
+            String url = tokens.getUrl();
             try {
                 response = OkHttp3Util.post(url + "/" + OrdermatchReqCmd.getOrders.name(),
                         Json.jsonmapper().writeValueAsString(requestParam).getBytes());
@@ -286,18 +286,16 @@ public class OrderController extends ExchangeController {
         orderTable.setItems(orderData);
     }
 
-    @SuppressWarnings("unchecked")
     public void initMarketComboBox() throws Exception {
         String CONTEXT_ROOT = Main.getContextRoot();
         ObservableList<String> tokenData = FXCollections.observableArrayList();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getMarkets.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
-        for (Map<String, Object> map : list) {
-            String tokenHex = (String) map.get("tokenid");
-            String tokenname = (String) map.get("tokenname");
+        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
+        for (Tokens tokens : getTokensResponse.getTokens()) {
+            String tokenHex = tokens.getTokenid();
+            String tokenname = tokens.getTokenname();
             tokenData.add(tokenname + " : " + tokenHex);
         }
         marketComboBox.setItems(tokenData);
@@ -309,15 +307,14 @@ public class OrderController extends ExchangeController {
      *            buy==all without system coin BIG
      * @throws Exception
      */
-    @SuppressWarnings("unchecked")
     public void initComboBox(boolean buy) throws Exception {
         String CONTEXT_ROOT = Main.getContextRoot();
         ObservableList<String> tokenData = FXCollections.observableArrayList();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokensNoMarket.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
+        
+        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
 
         if (!buy) {
             if (Main.validTokenSet != null && !Main.validTokenSet.isEmpty()) {
@@ -328,17 +325,14 @@ public class OrderController extends ExchangeController {
                 }
             }
         } else {
-            for (Map<String, Object> map : list) {
-                String tokenHex = (String) map.get("tokenid");
-                boolean asmarket = (boolean) map.get("asmarket");
-                if (asmarket)
-                    continue;
-
-                String tokenname = (String) map.get("tokenname");
+            for (Tokens tokens : getTokensResponse.getTokens()) {
+                String tokenHex = tokens.getTokenid();
+                boolean asmarket = tokens.isAsmarket();
+                if (asmarket) continue;
+                String tokenname = tokens.getTokenname();
                 if (!isSystemCoin(tokenname + ":" + tokenHex)) {
                     tokenData.add(tokenname + ":" + tokenHex);
                 }
-
             }
             if (Main.tokenInfo != null && Main.tokenInfo.getPositveTokenList() != null) {
                 for (Tokens p : Main.tokenInfo.getPositveTokenList()) {
@@ -352,9 +346,7 @@ public class OrderController extends ExchangeController {
         tokenComboBox.setItems(tokenData);
         tokenComboBox.getSelectionModel().selectFirst();
         ObservableList<String> addresses = FXCollections.observableArrayList(Main.validAddressSet);
-
         addressComboBox.setItems(addresses);
-
     }
 
     public boolean isSystemCoin(String token) {
@@ -371,7 +363,6 @@ public class OrderController extends ExchangeController {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public void buyDo(ActionEvent event) throws Exception {
         log.debug(tokenComboBox.getValue());
         String tokenid = tokenComboBox.getValue().split(":")[1].trim();
@@ -417,10 +408,11 @@ public class OrderController extends ExchangeController {
         requestParam0.put("tokenid", temp);
         String resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
-        HashMap<String, Object> res = Json.jsonmapper().readValue(resp, HashMap.class);
-        HashMap<String, Object> token_ = (HashMap<String, Object>) res.get("token");
+        
+        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
+        Tokens token_ = getTokensResponse.getToken();
 
-        String url = (String) token_.get("url");
+        String url = token_.getUrl();
         OkHttp3Util.post(url + "/" + OrdermatchReqCmd.saveOrder.name(), Json.jsonmapper().writeValueAsString(requestParam));
         overlayUI.done();
     }
