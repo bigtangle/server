@@ -3,17 +3,20 @@ package net.bigtangle.server;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import org.junit.Test;
 
 import net.bigtangle.core.Json;
 import net.bigtangle.core.OrderPublish;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.ordermatch.resp.GetOrderResponse;
 
-public class SimpleIntegrationTest {
+public class JsonMapperTest {
 
     @Test
-    public void testJsonMapper() throws Exception {
+    public void testJsonMapperListObject() throws Exception {
         GetOrderResponse getOrderResponse = new GetOrderResponse();
         getOrderResponse.setErrorcode(0);
 
@@ -38,7 +41,7 @@ public class SimpleIntegrationTest {
     }
 
     @Test
-    public void testJsonMapper000() throws Exception {
+    public void testJsonMapperByteList() throws Exception {
         ByteListResp byteListResp = new ByteListResp();
         ByteResp byteResp = new ByteResp();
         byteResp.setData(new byte[] { 0x00, 0x01, 0x02, 0x03 });
@@ -52,5 +55,17 @@ public class SimpleIntegrationTest {
         for (byte b : byteResp.getData()) {
             System.out.println(String.format("%02X", b));
         }
+    }
+    
+    @Test
+    public void testJsonMapperSha256Hash() throws Exception {
+        byte[] rawHashBytes = new byte[32];
+        new Random().nextBytes(rawHashBytes);
+        Sha256Hash sha256Hash = Sha256Hash.wrap(rawHashBytes);
+        System.out.println(Utils.HEX.encode(sha256Hash.getBytes()));
+    	String jsonStr = Json.jsonmapper().writeValueAsString(sha256Hash);
+    	
+    	sha256Hash = Json.jsonmapper().readValue(jsonStr, Sha256Hash.class);
+    	System.out.println(Utils.HEX.encode(sha256Hash.getBytes()));
     }
 }

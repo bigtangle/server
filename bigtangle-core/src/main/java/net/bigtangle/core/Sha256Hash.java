@@ -31,7 +31,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
     
     public static final Sha256Hash ZERO_HASH = wrap(new byte[LENGTH]);
 
-    private final byte[] bytes;
+    private byte[] bytes;
 
     /**
      * Use {@link #wrap(byte[])} instead.
@@ -41,6 +41,9 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
         checkArgument(rawHashBytes.length == LENGTH);
         this.bytes = rawHashBytes;
     }
+    
+    public Sha256Hash() {
+	}
 
     /**
      * Use {@link #wrap(String)} instead.
