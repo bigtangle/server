@@ -8,6 +8,7 @@ package net.bigtangle.store;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
@@ -185,7 +186,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public List<BlockEvaluation> getSolidBlocksOfHeight(long height) throws BlockStoreException;
 
-    public List<BlockEvaluation> getSolidTips() throws BlockStoreException;
+    public PriorityQueue<BlockWrap> getSolidTipsDescending() throws BlockStoreException;
 
     public HashSet<BlockEvaluation> getBlocksToRemoveFromMilestone() throws BlockStoreException;
 

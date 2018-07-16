@@ -48,7 +48,6 @@ public class TipsService {
 		long latestImportTime = store.getMaxImportTime();
 
 		for (int i = 0; i < entryPoints.size(); i++) {
-			// TODO low-pass
 			results.add(randomWalk(entryPoints.get(i), latestImportTime));
 		}
 

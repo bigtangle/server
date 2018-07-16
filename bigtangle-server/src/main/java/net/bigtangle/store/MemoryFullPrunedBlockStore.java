@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -420,7 +421,7 @@ public abstract class MemoryFullPrunedBlockStore implements FullPrunedBlockStore
 	}
 
 	@Override
-	public List<BlockEvaluation> getSolidTips() {
+	public PriorityQueue<BlockWrap> getSolidTipsDescending() {
 		return null;
 	}
 

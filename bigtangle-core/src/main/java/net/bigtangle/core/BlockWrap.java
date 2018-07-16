@@ -87,4 +87,8 @@ public class BlockWrap implements Serializable {
     public int hashCode() {
         return getBlock().hashCode();
     }
+
+	public Sha256Hash getBlockHash() {
+		return block.getHash();
+	}
 }

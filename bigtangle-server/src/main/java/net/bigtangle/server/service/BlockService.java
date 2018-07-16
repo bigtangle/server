@@ -6,12 +6,11 @@ package net.bigtangle.server.service;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
+import java.util.PriorityQueue;
 import java.util.concurrent.ExecutionException;
 
 import org.mortbay.log.Log;
@@ -106,8 +105,8 @@ public class BlockService {
         return store.getSolidBlocksOfHeight(currentHeight);
     }
 
-    public List<BlockEvaluation> getSolidTips() throws BlockStoreException {
-        return store.getSolidTips();
+    public PriorityQueue<BlockWrap> getSolidTipsDescending() throws BlockStoreException {
+        return store.getSolidTipsDescending();
     }
 
     public List<BlockEvaluation> getAllBlockEvaluations() throws BlockStoreException {
@@ -252,20 +251,6 @@ public class BlockService {
      */
     public void unconfirm(BlockEvaluation blockEvaluation) throws BlockStoreException {
         blockgraph.removeBlockFromMilestone(blockEvaluation.getBlockHash());
-    }
-
-    /**
-     * Returns all solid tips ordered by descending height
-     * 
-     * @return solid tips by ordered by descending height
-     * @throws BlockStoreException
-     */
-    public TreeSet<BlockEvaluation> getSolidTipsDescending() throws BlockStoreException {
-        List<BlockEvaluation> solidTips = getSolidTips();
-        TreeSet<BlockEvaluation> blocksByDescendingHeight = new TreeSet<BlockEvaluation>(
-                Comparator.comparingLong(BlockEvaluation::getHeight).reversed());
-        blocksByDescendingHeight.addAll(solidTips);
-        return blocksByDescendingHeight;
     }
 
     /**
