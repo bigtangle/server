@@ -56,7 +56,6 @@ import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.Script.VerifyFlag;
-import net.bigtangle.server.service.BlockRequester;
 import net.bigtangle.server.service.MultiSignService;
 import net.bigtangle.server.service.ValidatorService;
 import net.bigtangle.utils.ContextPropagatingThreadFactory;

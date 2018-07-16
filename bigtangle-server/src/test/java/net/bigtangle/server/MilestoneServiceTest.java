@@ -151,7 +151,8 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(b2.getHash()).isMilestone());
         assertTrue(blockService.getBlockEvaluation(b3.getHash()).isMilestone());
 
-        ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        @SuppressWarnings("deprecation")
+		ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         // use UTXO to create double spending, this can not be created with
         // wallet
         List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
@@ -452,7 +453,8 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         // Generate two conflicting blocks where the second block approves the
         // first
-        ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        @SuppressWarnings("deprecation")
+		ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
                 0);
@@ -492,7 +494,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         // Add blocks via tip selection
         for (int i = 1; i < 30; i++) {
-            Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPairIteratively();
+            Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
             Block r1 = blockService.getBlock(tipsToApprove.getLeft());
             Block r2 = blockService.getBlock(tipsToApprove.getRight());
             Block b = BlockForTest.createNextBlock(r2, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0,

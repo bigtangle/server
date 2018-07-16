@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +60,11 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
             }
         });
         return thread;
+    }
+    
+    @Test
+    public void initializationTest() {
+    	
     }
 
     //@Test
