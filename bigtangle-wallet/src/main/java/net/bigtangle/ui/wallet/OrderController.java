@@ -201,7 +201,7 @@ public class OrderController extends ExchangeController {
             });
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             initComboBox(true);
-            initTable(requestParam);
+          //TODO auto initTable is quite slow and disabled now and click search to start initTable  initTable(requestParam);
             super.initialize();
             new TextFieldValidator(fromTimeTF, text -> !WTUtils.didThrow(() -> checkState(Main.isTime(text))));
             new TextFieldValidator(toTimeTF, text -> !WTUtils.didThrow(() -> checkState(Main.isTime(text))));
