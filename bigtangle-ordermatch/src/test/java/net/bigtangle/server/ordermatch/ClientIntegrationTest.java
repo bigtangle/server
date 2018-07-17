@@ -51,7 +51,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private ScheduleOrderMatchService scheduleOrderMatchService;
-    
+
     @Test
     @SuppressWarnings("unchecked")
     public void deleteOrder() throws Exception {
@@ -73,17 +73,17 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         resp = OkHttp3Util.postString(CONTEXT_ROOT_TEMPLATE + OrdermatchReqCmd.getOrders.name(),
                 Json.jsonmapper().writeValueAsString(new HashMap<String, Object>()));
         logger.info("getOrders resp : " + resp);
-        
+
         HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
         List<HashMap<String, Object>> list = (List<HashMap<String, Object>>) result.get("orders");
         HashMap<String, Object> order = list.get(0);
-        
+
         Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(null, Block.BLOCK_VERSION_GENESIS,
                 (TransactionOutPoint) null, Utils.currentTimeSeconds(), outKey.getPubKey(), 1,
                 networkParameters.getGenesisBlock().getHash(), outKey.getPubKeyHash());
         Transaction transaction = new Transaction(this.networkParameters);
         transaction.setData(order.get("orderid").toString().getBytes());
-        
+
         Sha256Hash sighash = transaction.getHash();
         ECKey.ECDSASignature party1Signature = outKey.sign(sighash);
         byte[] buf1 = party1Signature.encodeToDER();
@@ -97,10 +97,10 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
-        
+
         rollingBlock.addTransaction(transaction);
         rollingBlock.solve();
-        
+
         resp = OkHttp3Util.post(contextRoot + OrdermatchReqCmd.deleteOrder.name(), rollingBlock.bitcoinSerialize());
         logger.info("deleteOrder resp : " + resp);
     }
@@ -123,14 +123,21 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         this.getOrders();
     }
 
-    @Test
     public void getOrders() throws Exception {
         HashMap<String, Object> request = new HashMap<String, Object>();
 
         String response = OkHttp3Util.post(contextRoot + OrdermatchReqCmd.getOrders.name(),
                 Json.jsonmapper().writeValueAsString(request).getBytes());
-        OrderPublishList   r= Json.jsonmapper() .readValue(response, OrderPublishList.class) ;
-        logger.info("getOrders resp : " + r);
+        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
+        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("orders");
+        if (list != null) {
+            for (Map<String, Object> map : list) {
+                ;
+                assertTrue(!map.isEmpty());
+                logger.info("getOrders resp : " + map);
+            }
+        }
+
     }
 
     @SuppressWarnings({ "deprecation", "unchecked" })
@@ -163,7 +170,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         // sell token order
         String response = OkHttp3Util.post(contextRoot + OrdermatchReqCmd.saveOrder.name(),
                 Json.jsonmapper().writeValueAsString(request).getBytes());
-        
+
         request.put("address", myutxo.getAddress());
         request.put("tokenid", yourutxo.getTokenId());
         request.put("type", 2);
@@ -171,90 +178,97 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         request.put("amount", 1000);
         System.out.println("req : " + request);
         // buy token order
-          response = OkHttp3Util.post(contextRoot + OrdermatchReqCmd.saveOrder.name(),
+        response = OkHttp3Util.post(contextRoot + OrdermatchReqCmd.saveOrder.name(),
                 Json.jsonmapper().writeValueAsString(request).getBytes());
 
         scheduleOrderMatchService.updateMatch();
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("address", myutxo.getAddress());
-          response = OkHttp3Util.post(contextRoot + OrdermatchReqCmd.getExchange.name(),
+        response = OkHttp3Util.post(contextRoot + OrdermatchReqCmd.getExchange.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
         List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("exchanges");
         assertTrue(list.size() >= 1);
         Map<String, Object> exchangemap = list.get(0);
-        
+
         String serverURL = "http://localhost:8090";
         String marketURL = "http://localhost:8090";
         String orderid = (String) exchangemap.get("orderid");
-        
+
         PayOrder payOrder1 = new PayOrder(walletAppKit.wallet(), orderid, serverURL, marketURL);
         payOrder1.sign();
-        
+
         PayOrder payOrder2 = new PayOrder(walletAppKit1.wallet(), orderid, serverURL, marketURL);
         payOrder2.sign();
-/*
-        Address fromAddress00 = new Address(networkParameters, (String) exchangemap.get("fromAddress"));
-        Address toAddress00 = new Address(networkParameters, (String) exchangemap.get("toAddress"));
-        Coin fromAmount = Coin.valueOf( 
-                Long.parseLong( (String) exchangemap.get("fromAmount")), Utils.HEX.decode((String) exchangemap.get("fromTokenHex")));
-        Coin toAmount =  Coin.valueOf( 
-                        Long.parseLong( (String) exchangemap.get("toAmount")), Utils.HEX.decode((String) exchangemap.get("toTokenHex")));
-                   
-        SendRequest req = SendRequest.to(toAddress00,toAmount  );
-        req.tx.addOutput(fromAmount , fromAddress00 );
-        
-        HashMap<String, Address> addressResult = new HashMap<String, Address>();
-        addressResult.put((String) exchangemap.get("fromTokenHex"), toAddress00);
-        addressResult.put((String) exchangemap.get("toTokenHex"), fromAddress00);
-        
-        req.missingSigsMode = MissingSigsMode.USE_OP_ZERO;
-        ulist.addAll(utxos);
-        walletAppKit.wallet().completeTx(req, walletAppKit.wallet().transforSpendCandidates(ulist), false, addressResult);
-        walletAppKit.wallet().signTransaction(req);
-
-        byte[] a = req.tx.bitcoinSerialize();
-        HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
-        requestParam0.put("orderid", (String) exchangemap.get("orderid"));
-        requestParam0.put("dataHex", Utils.HEX.encode(a));
-        requestParam0.put("signtype", "to");
-
-        OkHttp3Util.post(contextRoot + OrdermatchReqCmd.signTransaction.name(), Json.jsonmapper().writeValueAsString(requestParam0));
-  
-
-        Transaction transaction = (Transaction) networkParameters.getDefaultSerializer().makeTransaction(a);
-
-        // byte[] buf = BeanSerializeUtil.serializer(req.tx);
-        // Transaction transaction = BeanSerializeUtil.deserialize(buf,
-        // Transaction.class);
-
-        req = SendRequest.forTx(transaction);
-        walletAppKit1.wallet().signTransaction(req);
-        exchangeTokenComplete(req.tx); 
-        
-        HashMap<String, Object> requestParam1 = new HashMap<String, Object>();
-        requestParam1.put("orderid", (String) exchangemap.get("orderid"));
-        requestParam1.put("dataHex", Utils.HEX.encode(transaction.bitcoinSerialize()));
-        requestParam1.put("signtype", "from");
-        OkHttp3Util.post(contextRoot + OrdermatchReqCmd.signTransaction.name(), Json.jsonmapper().writeValueAsString(requestParam1));
- */
+        /*
+         * Address fromAddress00 = new Address(networkParameters, (String)
+         * exchangemap.get("fromAddress")); Address toAddress00 = new
+         * Address(networkParameters, (String) exchangemap.get("toAddress"));
+         * Coin fromAmount = Coin.valueOf( Long.parseLong( (String)
+         * exchangemap.get("fromAmount")), Utils.HEX.decode((String)
+         * exchangemap.get("fromTokenHex"))); Coin toAmount = Coin.valueOf(
+         * Long.parseLong( (String) exchangemap.get("toAmount")),
+         * Utils.HEX.decode((String) exchangemap.get("toTokenHex")));
+         * 
+         * SendRequest req = SendRequest.to(toAddress00,toAmount );
+         * req.tx.addOutput(fromAmount , fromAddress00 );
+         * 
+         * HashMap<String, Address> addressResult = new HashMap<String,
+         * Address>(); addressResult.put((String)
+         * exchangemap.get("fromTokenHex"), toAddress00);
+         * addressResult.put((String) exchangemap.get("toTokenHex"),
+         * fromAddress00);
+         * 
+         * req.missingSigsMode = MissingSigsMode.USE_OP_ZERO;
+         * ulist.addAll(utxos); walletAppKit.wallet().completeTx(req,
+         * walletAppKit.wallet().transforSpendCandidates(ulist), false,
+         * addressResult); walletAppKit.wallet().signTransaction(req);
+         * 
+         * byte[] a = req.tx.bitcoinSerialize(); HashMap<String, Object>
+         * requestParam0 = new HashMap<String, Object>();
+         * requestParam0.put("orderid", (String) exchangemap.get("orderid"));
+         * requestParam0.put("dataHex", Utils.HEX.encode(a));
+         * requestParam0.put("signtype", "to");
+         * 
+         * OkHttp3Util.post(contextRoot +
+         * OrdermatchReqCmd.signTransaction.name(),
+         * Json.jsonmapper().writeValueAsString(requestParam0));
+         * 
+         * 
+         * Transaction transaction = (Transaction)
+         * networkParameters.getDefaultSerializer().makeTransaction(a);
+         * 
+         * // byte[] buf = BeanSerializeUtil.serializer(req.tx); // Transaction
+         * transaction = BeanSerializeUtil.deserialize(buf, //
+         * Transaction.class);
+         * 
+         * req = SendRequest.forTx(transaction);
+         * walletAppKit1.wallet().signTransaction(req);
+         * exchangeTokenComplete(req.tx);
+         * 
+         * HashMap<String, Object> requestParam1 = new HashMap<String,
+         * Object>(); requestParam1.put("orderid", (String)
+         * exchangemap.get("orderid")); requestParam1.put("dataHex",
+         * Utils.HEX.encode(transaction.bitcoinSerialize()));
+         * requestParam1.put("signtype", "from"); OkHttp3Util.post(contextRoot +
+         * OrdermatchReqCmd.signTransaction.name(),
+         * Json.jsonmapper().writeValueAsString(requestParam1));
+         */
     }
 
-/*
-    public void exchangeTokenComplete(Transaction tx) throws Exception {
-        // get new Block to be used from server
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
-        rollingBlock.addTransaction(tx);
-        rollingBlock.solve();
-
-        String res = OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
-        System.out.println(res);
-    }
-*/
+    /*
+     * public void exchangeTokenComplete(Transaction tx) throws Exception { //
+     * get new Block to be used from server HashMap<String, String> requestParam
+     * = new HashMap<String, String>(); byte[] data =
+     * OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+     * Json.jsonmapper().writeValueAsString(requestParam)); Block rollingBlock =
+     * networkParameters.getDefaultSerializer().makeBlock(data);
+     * rollingBlock.addTransaction(tx); rollingBlock.solve();
+     * 
+     * String res = OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(),
+     * rollingBlock.bitcoinSerialize()); System.out.println(res); }
+     */
     public void payToken(ECKey outKey) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
@@ -270,8 +284,9 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
             }
         }
         System.out.println(utxo.getValue());
-        //Coin baseCoin = utxo.getValue().subtract(Coin.parseCoin("10000", utxo.getValue().getTokenid()));
-        //System.out.println(baseCoin);
+        // Coin baseCoin = utxo.getValue().subtract(Coin.parseCoin("10000",
+        // utxo.getValue().getTokenid()));
+        // System.out.println(baseCoin);
         Address destination = outKey.toAddress(networkParameters);
         SendRequest request = SendRequest.to(destination, utxo.getValue());
         walletAppKit.wallet().completeTx(request);
@@ -279,6 +294,6 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         rollingBlock.solve();
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
         logger.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
-  
+
     }
 }

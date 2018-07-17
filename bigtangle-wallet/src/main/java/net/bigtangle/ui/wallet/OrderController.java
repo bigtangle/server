@@ -201,7 +201,8 @@ public class OrderController extends ExchangeController {
             });
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             initComboBox(true);
-          //TODO auto initTable is quite slow and disabled now and click search to start initTable  initTable(requestParam);
+            // TODO auto initTable is quite slow and disabled now and click
+            // search to start initTable initTable(requestParam);
             super.initialize();
             new TextFieldValidator(fromTimeTF, text -> !WTUtils.didThrow(() -> checkState(Main.isTime(text))));
             new TextFieldValidator(toTimeTF, text -> !WTUtils.didThrow(() -> checkState(Main.isTime(text))));
@@ -234,12 +235,13 @@ public class OrderController extends ExchangeController {
         String CONTEXT_ROOT = Main.getContextRoot();
         String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getMarkets.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        
+
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
-        
+
         for (Tokens tokens : getTokensResponse.getTokens()) {
             boolean asmarket = tokens.isAsmarket();
-            if (!asmarket) continue;
+            if (!asmarket)
+                continue;
             String url = tokens.getUrl();
             try {
                 response = OkHttp3Util.post(url + "/" + OrdermatchReqCmd.getOrders.name(),
@@ -259,10 +261,15 @@ public class OrderController extends ExchangeController {
                     int stateIndex = (int) map.get("state");
                     OrderState orderState = OrderState.values()[stateIndex];
                     map.put("state", Main.getText(orderState.name()));
-                    Coin fromAmount = Coin.valueOf(Long.parseLong(map.get("price").toString()),
-                            Utils.HEX.decode((String) map.get("tokenid")));
-                    Coin toAmount = Coin.valueOf(Long.parseLong(map.get("amount").toString()),
-                            Utils.HEX.decode((String) map.get("tokenid")));
+                    byte[] tokenid = null;
+                    if ((String) map.get("tokenId") == null) {
+
+                    } else {
+                        tokenid = Utils.HEX.decode((String) map.get("tokenId"));
+                    }
+
+                    Coin fromAmount = Coin.valueOf(Long.parseLong(map.get("price").toString()), tokenid);
+                    Coin toAmount = Coin.valueOf(Long.parseLong(map.get("amount").toString()), tokenid);
                     map.put("price", fromAmount.toPlainString());
                     map.put("amount", toAmount.toPlainString());
                     orderData.add(map);
@@ -313,7 +320,7 @@ public class OrderController extends ExchangeController {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokensNoMarket.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        
+
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
 
         if (!buy) {
@@ -328,7 +335,8 @@ public class OrderController extends ExchangeController {
             for (Tokens tokens : getTokensResponse.getTokens()) {
                 String tokenHex = tokens.getTokenid();
                 boolean asmarket = tokens.isAsmarket();
-                if (asmarket) continue;
+                if (asmarket)
+                    continue;
                 String tokenname = tokens.getTokenname();
                 if (!isSystemCoin(tokenname + ":" + tokenHex)) {
                     tokenData.add(tokenname + ":" + tokenHex);
@@ -408,12 +416,13 @@ public class OrderController extends ExchangeController {
         requestParam0.put("tokenid", temp);
         String resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
-        
+
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
         Tokens token_ = getTokensResponse.getToken();
 
         String url = token_.getUrl();
-        OkHttp3Util.post(url + "/" + OrdermatchReqCmd.saveOrder.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        OkHttp3Util.post(url + "/" + OrdermatchReqCmd.saveOrder.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
         overlayUI.done();
     }
 

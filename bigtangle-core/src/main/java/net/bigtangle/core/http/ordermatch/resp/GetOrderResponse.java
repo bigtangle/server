@@ -12,7 +12,7 @@ import net.bigtangle.core.http.AbstractResponse;
 public class GetOrderResponse extends AbstractResponse {
 
     private List<OrderPublish> orders;
-
+    
     public static AbstractResponse create(List<OrderPublish> orders) {
         GetOrderResponse res = new GetOrderResponse();
         res.orders = orders;

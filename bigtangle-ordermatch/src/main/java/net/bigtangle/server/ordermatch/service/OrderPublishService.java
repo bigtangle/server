@@ -19,6 +19,7 @@ import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.OrderPublish;
+import net.bigtangle.core.OrderPublishList;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.AbstractResponse;
@@ -116,7 +117,6 @@ public class OrderPublishService {
         List<OrderPublish> orders = this.store.getOrderPublishListWithCondition(request);
         return GetOrderResponse.create(orders);
     }
-
     public List<OrderPublish> getOrderPublishListWithNotMatch() throws BlockStoreException {
         List<OrderPublish> orders = this.store.getOrderPublishListWithNotMatch();
         return orders;
