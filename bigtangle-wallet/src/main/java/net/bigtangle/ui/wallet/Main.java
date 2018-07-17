@@ -85,6 +85,7 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UploadfileInfo;
 import net.bigtangle.core.UserSettingData;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.WatchedInfo;
 import net.bigtangle.core.http.server.resp.GetOutputsResponse;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
@@ -158,11 +159,25 @@ public class Main extends Application {
     }
 
     public static void addToken(String contextRoot, String tokenname, String tokenid, String type) throws Exception {
+        String domain = type;
+        long blocktype = NetworkParameters.BLOCKTYPE_USERDATA;
+        if (DataClassName.SERVERURL.name().equals(type)) {
+            type = DataClassName.WATCHED.name();
+            // blocktype = NetworkParameters.BLOCKTYPE_USERDATA_SERVERURL;
+        }
+        if (DataClassName.LANG.name().equals(type)) {
+            type = DataClassName.WATCHED.name();
+            // blocktype = NetworkParameters.BLOCKTYPE_USERDATA_LANG;
+        }
+        if (DataClassName.TOKEN.name().equals(type)) {
+            type = DataClassName.WATCHED.name();
+            // blocktype = NetworkParameters.BLOCKTYPE_USERDATA_TOKEN;
+        }
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Main.params.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(NetworkParameters.BLOCKTYPE_USERDATA);
+        block.setBlockType(blocktype);
         ECKey pubKeyTo = null;
 
         KeyParameter aesKey = null;
@@ -180,12 +195,13 @@ public class Main extends Application {
 
         Transaction coinbase = new Transaction(Main.params);
         UserSettingData userSettingData = new UserSettingData();
-        userSettingData.setDomain(type);
+        userSettingData.setDomain(domain);
         userSettingData.setKey(tokenid);
         userSettingData.setValue(tokenname);
-
+        WatchedInfo watchedInfo = (WatchedInfo) getUserdata(DataClassName.WATCHED.name());
+        watchedInfo.getUserSettingDatas().add(userSettingData);
         coinbase.setDataClassName(type);
-        coinbase.setData(userSettingData.toByteArray());
+        coinbase.setData(watchedInfo.toByteArray());
 
         Sha256Hash sighash = coinbase.getHash();
 
@@ -204,16 +220,18 @@ public class Main extends Application {
         block.solve();
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
-        byte[] buf = block.bitcoinSerialize();
-        if (buf == null) {
-            return;
-        }
+        if (DataClassName.WATCHED.name().equals(type)) {
+            byte[] buf = block.bitcoinSerialize();
+            if (buf == null) {
+                return;
+            }
 
-        File file = new File(Main.keyFileDirectory + "/usersetting.block");
-        if (file.exists()) {
-            file.delete();
+            File file = new File(Main.keyFileDirectory + "/usersetting.block");
+            if (file.exists()) {
+                file.delete();
+            }
+            FileUtil.writeFile(file, buf);
         }
-        FileUtil.writeFile(file, buf);
 
     }
 
@@ -342,7 +360,7 @@ public class Main extends Application {
         Map<String, Object> requestParam = new HashMap<String, Object>();
         String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        
+
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
         Map<String, String> map = new HashMap<String, String>();
         for (Tokens tokens : getTokensResponse.getTokens()) {
@@ -668,6 +686,43 @@ public class Main extends Application {
     public static void main(String[] args) {
         String systemLang = Locale.getDefault().getLanguage();
         // String systemName = System.getProperty("os.name").toLowerCase();
+        File file = new File(keyFileDirectory + "/usersetting.block");
+        byte[] data = null;
+        if (file.exists()) {
+            data = FileUtil.readFile(file);
+        }
+
+        if (data != null && data.length != 0) {
+            Block block = Main.params.getDefaultSerializer().makeBlock(data);
+            boolean flag = true;
+            if (block == null) {
+                flag = false;
+            }
+            if (block.getTransactions() == null || block.getTransactions().isEmpty()) {
+                flag = false;
+            }
+            if (flag) {
+                Transaction transaction = block.getTransactions().get(0);
+                byte[] buf = transaction.getData();
+                try {
+                    WatchedInfo watchedInfo = new WatchedInfo().parse(buf);
+                    List<UserSettingData> list = watchedInfo.getUserSettingDatas();
+                    if (list != null && !list.isEmpty()) {
+                        for (UserSettingData userSettingData : list) {
+                            if (userSettingData.getDomain().equals(DataClassName.SERVERURL.name())) {
+                                IpAddress = userSettingData.getValue();
+                            }
+                            if (userSettingData.getDomain().equals(DataClassName.LANG.name())) {
+                                lang = userSettingData.getValue();
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("", e);
+                }
+            }
+
+        }
         if (args == null || args.length == 0) {
             lang = systemLang;
             keyFileDirectory = System.getProperty("user.home");
@@ -863,6 +918,13 @@ public class Main extends Application {
             }
             UploadfileInfo uploadfileInfo = new UploadfileInfo().parse(bytes);
             return uploadfileInfo;
+        } else if (DataClassName.SERVERURL.name().equals(type) || DataClassName.LANG.name().equals(type)
+                || DataClassName.TOKEN.name().equals(type)) {
+            if (bytes == null || bytes.length == 0) {
+                return new WatchedInfo();
+            }
+            WatchedInfo watchedInfo = new WatchedInfo().parse(bytes);
+            return watchedInfo;
         } else {
             return null;
         }

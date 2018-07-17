@@ -183,7 +183,9 @@ public class UserdataController {
             for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
                 list.add(ecKey.getPublicKeyAsHex());
             }
-            Main.addToken(CONTEXT_ROOT, valueTF.getText(), keyTF.getText(), domianComboBox.getValue());
+            String type = domianComboBox.getValue();
+
+            Main.addToken(CONTEXT_ROOT, valueTF.getText(), keyTF.getText(), type);
             initOtherTableView(list);
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
@@ -497,7 +499,7 @@ public class UserdataController {
             String CONTEXT_ROOT = Main.getContextRoot();
             String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.userDataList.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
-        
+
             HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
             List<String> dataList = (List<String>) result.get("dataList");
             ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();

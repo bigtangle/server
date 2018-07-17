@@ -1,6 +1,15 @@
 package net.bigtangle.core;
 
-public class UserSettingData {
+import java.io.IOException;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+
+public class UserSettingData implements java.io.Serializable {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -7176158338120349182L;
     private String key;
     private String value;
     private String domain;
@@ -13,6 +22,15 @@ public class UserSettingData {
             e.printStackTrace();
         }
         return new byte[0];
+    }
+
+    public UserSettingData parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
+        String jsonStr = new String(buf);
+
+        UserSettingData userSettingData = Json.jsonmapper().readValue(jsonStr, UserSettingData.class);
+        if (userSettingData == null)
+            return this;
+        return this;
     }
 
     public String getKey() {
