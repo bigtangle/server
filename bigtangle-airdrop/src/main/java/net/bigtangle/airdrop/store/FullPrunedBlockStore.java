@@ -5,17 +5,11 @@
 
 package net.bigtangle.airdrop.store;
 
-import java.util.List;
-import java.util.Map;
-
 import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.BlockStoreException;
-import net.bigtangle.core.Exchange;
-import net.bigtangle.core.OrderMatch;
-import net.bigtangle.core.OrderPublish;
+import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.StoredUndoableBlock;
-import net.bigtangle.core.UTXOProvider;
 
 /**
  * <p>
@@ -65,41 +59,22 @@ import net.bigtangle.core.UTXOProvider;
  * FullPrunedBlockStores are thread safe.
  * </p>
  */
-public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
+public interface FullPrunedBlockStore {
     
     void beginDatabaseBatchWrite() throws BlockStoreException;
 
     void commitDatabaseBatchWrite() throws BlockStoreException;
 
     void abortDatabaseBatchWrite() throws BlockStoreException;
-
-    public void saveOrderPublish(OrderPublish orderPublish) throws BlockStoreException;
-
-    public void saveOrderMatch(OrderMatch orderMatch) throws BlockStoreException;
-
-    public List<OrderPublish> getOrderPublishListWithCondition(Map<String, Object> request) throws BlockStoreException;
-
-    public void saveExchange(Exchange exchange) throws BlockStoreException;
-
-    public List<Exchange> getExchangeListWithAddress(String address) throws BlockStoreException;
-
-    public void updateExchangeSign(String orderid, String signtype, byte[] data) throws BlockStoreException;
-
-    public OrderPublish getOrderPublishByOrderid(String orderid) throws BlockStoreException;
-
-    public Exchange getExchangeInfoByOrderid(String orderid) throws BlockStoreException;
-
-    public void updateOrderPublishState(String orderid, int state) throws BlockStoreException;
-
-    public void resetStore() throws BlockStoreException;
-
-    public List<OrderPublish> getOrderPublishListWithNotMatch() throws BlockStoreException;
-
-    void deleteOrderPublish(String orderid) throws BlockStoreException;
-
-    void deleteExchangeInfo(String orderid) throws BlockStoreException;
     
-    void deleteOrderMatch(String orderid) throws BlockStoreException;
+    public void resetStore() throws BlockStoreException;
+    
+    /** Closes the store. */
+    void close() throws BlockStoreException;
 
-    List<OrderPublish> getOrderPublishListRemoveDaily(int i) throws BlockStoreException;
+    /**
+     * Get the {@link net.bigtangle.core.NetworkParameters} of this store.
+     * @return The network params.
+     */
+    NetworkParameters getParams();
 }

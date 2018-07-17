@@ -47,7 +47,6 @@ public class DBStoreConfiguration {
     public FullPrunedBlockStore createMysqlBlockStore() throws BlockStoreException {
         MySQLFullPrunedBlockStore store = new MySQLFullPrunedBlockStore(networkParameters, fullStoreDepth,
                 hostname + ":" + port, dbName, username, password);
-
         return store;
     }
 }

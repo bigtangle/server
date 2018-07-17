@@ -6,7 +6,6 @@
 package net.bigtangle.airdrop.store;
 
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,27 +14,15 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.bigtangle.core.Address;
 import net.bigtangle.core.BlockStoreException;
-import net.bigtangle.core.Exchange;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderMatch;
-import net.bigtangle.core.OrderPublish;
-import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.StoredBlock;
-import net.bigtangle.core.UTXO;
-import net.bigtangle.core.UTXOProviderException;
-import net.bigtangle.utils.OrderState;
 
 /**
  * <p>
@@ -50,34 +37,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String VERSION_SETTING = "version";
 
     // Drop table SQL.
-    public static String DROP_ORDERPUBLISH_TABLE = "DROP TABLE orderpublish";
-    public static String DROP_ORDERMATCH_TABLE = "DROP TABLE ordermatch";
-    public static String DROP_EXCHANGE_TABLE = "DROP TABLE exchange";
-
-    protected String INSERT_ORDERPUBLISH_SQL = getInsert()
-            + "  INTO orderpublish (orderid, address, tokenid, type, validateto, validatefrom,"
-            + " price, amount, state, market, submitDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    protected String SELECT_ORDERPUBLISH_SQL = "SELECT orderid, address, tokenid, type,"
-            + " validateto, validatefrom, price, amount, state, market FROM orderpublish";
-
-    protected String INSERT_ORDERMATCH_SQL = getInsert() + " INTO ordermatch (matchid, "
-            + "restingOrderId, incomingOrderId, type, price, executedQuantity, remainingQuantity) VALUES (?, ?, ?, ?, ?, ?, ?)";
-
-    protected String INSERT_EXCHANGE_SQL = getInsert()
-            + "  INTO exchange (orderid, fromAddress, fromTokenHex, fromAmount,"
-            + " toAddress, toTokenHex, toAmount, data, toSign, fromSign, toOrderId, fromOrderId, market) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    protected String SELECT_EXCHANGE_SQL = "SELECT orderid, fromAddress, "
-            + "fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, "
-            + "data, toSign, fromSign, toOrderId, fromOrderId, market "
-            + "FROM exchange WHERE (fromAddress = ? OR toAddress = ?) AND (toSign = false OR fromSign = false)"
-            + afterSelect();
-    protected String SELECT_EXCHANGE_ORDERID_SQL = "SELECT orderid,"
-            + " fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex,"
-            + " toAmount, data, toSign, fromSign, toOrderId, fromOrderId, market FROM exchange WHERE orderid = ?";
-    
-    protected String DELETE_EXCHANGE_SQL = "DELETE FROM exchange WHERE toOrderId = ? OR fromOrderId = ?";
-    protected String DELETE_ORDERPUBLISH_SQL = "DELETE FROM orderpublish WHERE orderid = ?";
-    protected String DELETE_ORDERMATCH_SQL = "DELETE FROM ordermatch WHERE restingOrderId = ? OR incomingOrderId = ?";
+    public static String DROP_WECHATINVITE_TABLE = "DROP TABLE wechatinvite";
+    public static String DROP_WECHATREWARD_TABLE = "DROP TABLE wechatreward";
     
     // Tables exist SQL.
     protected String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM orderpublish WHERE 1 = 2";
@@ -142,9 +103,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             log.error("check CLASSPATH for database driver jar ", e);
         }
         maybeConnect();
-
         try {
-            // Create tables if needed
             if (!tablesExists()) {
                 createTables();
             }
@@ -152,18 +111,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             e.printStackTrace();
             throw new BlockStoreException(e);
         }
-    }
-
-    protected String afterSelect() {
-        return "";
-    }
-
-    protected String getInsert() {
-        return "insert ";
-    }
-
-    protected String getUpdate() {
-        return "update ";
     }
 
     /**
@@ -215,9 +162,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      */
     protected List<String> getDropTablesSQL() {
         List<String> sqlStatements = new ArrayList<String>();
-        sqlStatements.add(DROP_ORDERPUBLISH_TABLE);
-        sqlStatements.add(DROP_ORDERMATCH_TABLE);
-        sqlStatements.add(DROP_EXCHANGE_TABLE);
+        sqlStatements.add(DROP_WECHATINVITE_TABLE);
+        sqlStatements.add(DROP_WECHATREWARD_TABLE);
         return sqlStatements;
     }
 
@@ -435,11 +381,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public void deleteStore() throws BlockStoreException {
         maybeConnect();
         try {
-            /*
-             * for (String sql : getDropIndexsSQL()) { Statement s =
-             * conn.get().createStatement(); try { log.info("drop index : " +
-             * sql); s.execute(sql); } finally { s.close(); } }
-             */
             for (String sql : getDropTablesSQL()) {
                 Statement s = conn.get().createStatement();
                 try {
@@ -451,480 +392,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         } catch (Exception ex) {
             log.warn("Warning: deleteStore", ex);
-            // throw new RuntimeException(ex);
-        }
-    }
-
-    @Override
-    public void saveOrderPublish(OrderPublish orderPublish) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(INSERT_ORDERPUBLISH_SQL);
-            preparedStatement.setString(1, orderPublish.getOrderId());
-            preparedStatement.setString(2, orderPublish.getAddress());
-            preparedStatement.setString(3, orderPublish.getTokenId());
-            preparedStatement.setInt(4, orderPublish.getType());
-            if (orderPublish.getValidateTo() == null) {
-                preparedStatement.setDate(5, null);
-            } else {
-                preparedStatement.setDate(5, new Date(orderPublish.getValidateTo().getTime()));
-            }
-            if (orderPublish.getValidateFrom() == null) {
-                preparedStatement.setDate(6, null);
-            } else {
-                preparedStatement.setDate(6, new Date(orderPublish.getValidateFrom().getTime()));
-            }
-            preparedStatement.setLong(7, orderPublish.getPrice());
-            preparedStatement.setLong(8, orderPublish.getAmount());
-            preparedStatement.setInt(9, orderPublish.getState());
-            preparedStatement.setString(10, orderPublish.getMarket());
-            preparedStatement.setDate(11, new Date(System.currentTimeMillis()));
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public List<OrderPublish> getOrderPublishListWithCondition(Map<String, Object> request) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        List<OrderPublish> list = new ArrayList<OrderPublish>();
-        try {
-            StringBuffer whereStr = new StringBuffer(" WHERE 1 = 1 ");
-            for (Entry<String, Object> entry : request.entrySet()) {
-                if (StringUtils.isBlank(entry.getValue().toString())) {
-                    continue;
-                }
-                whereStr.append(" AND ").append(entry.getKey() + "=" + "'" + entry.getValue() + "' ");
-            }
-            String sql = SELECT_ORDERPUBLISH_SQL + whereStr;
-            // System.out.println(sql);
-            preparedStatement = conn.get().prepareStatement(sql);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                OrderPublish orderPublish = new OrderPublish();
-                orderPublish.setOrderId(resultSet.getString("orderid"));
-                orderPublish.setAddress(resultSet.getString("address"));
-                orderPublish.setTokenId(resultSet.getString("tokenid"));
-                orderPublish.setType(resultSet.getInt("type"));
-                orderPublish.setPrice(resultSet.getLong("price"));
-                orderPublish.setAmount(resultSet.getLong("amount"));
-                orderPublish.setState(resultSet.getInt("state"));
-                orderPublish.setValidateTo(resultSet.getDate("validateto"));
-                orderPublish.setValidateFrom(resultSet.getDate("validatefrom"));
-                orderPublish.setMarket(resultSet.getString("market"));
-                list.add(orderPublish);
-            }
-            return list;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public void saveExchange(Exchange exchange) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(INSERT_EXCHANGE_SQL);
-            preparedStatement.setString(1, exchange.getOrderid());
-            preparedStatement.setString(2, exchange.getFromAddress());
-            preparedStatement.setString(3, exchange.getFromTokenHex());
-            preparedStatement.setString(4, exchange.getFromAmount());
-            preparedStatement.setString(5, exchange.getToAddress());
-            preparedStatement.setString(6, exchange.getToTokenHex());
-            preparedStatement.setString(7, exchange.getToAmount());
-            preparedStatement.setBytes(8, exchange.getData());
-            preparedStatement.setInt(9, exchange.getToSign());
-            preparedStatement.setInt(10, exchange.getFromSign());
-            preparedStatement.setString(11, exchange.getToOrderId());
-            preparedStatement.setString(12, exchange.getFromOrderId());
-            preparedStatement.setString(13, exchange.getMarket());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public List<Exchange> getExchangeListWithAddress(String address) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        List<Exchange> list = new ArrayList<Exchange>();
-        try {
-            preparedStatement = conn.get().prepareStatement(SELECT_EXCHANGE_SQL);
-            preparedStatement.setString(1, address);
-            preparedStatement.setString(2, address);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                Exchange exchange = new Exchange();
-                exchange.setOrderid(resultSet.getString("orderid"));
-                exchange.setFromAddress(resultSet.getString("fromAddress"));
-                exchange.setFromTokenHex(resultSet.getString("fromTokenHex"));
-                exchange.setFromAmount(resultSet.getString("fromAmount"));
-                exchange.setToAddress(resultSet.getString("toAddress"));
-                exchange.setToTokenHex(resultSet.getString("toTokenHex"));
-                exchange.setToAmount(resultSet.getString("toAmount"));
-                exchange.setData(resultSet.getBytes("data"));
-                exchange.setToSign(resultSet.getInt("toSign"));
-                exchange.setFromSign(resultSet.getInt("fromSign"));
-                exchange.setToOrderId(resultSet.getString("toOrderId"));
-                exchange.setFromOrderId(resultSet.getString("fromOrderId"));
-                exchange.setMarket(resultSet.getString("market"));
-                list.add(exchange);
-            }
-            return list;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public void saveOrderMatch(OrderMatch orderMatch) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(INSERT_ORDERMATCH_SQL);
-            preparedStatement.setString(1, orderMatch.getMatchid());
-            preparedStatement.setString(2, orderMatch.getRestingOrderId());
-            preparedStatement.setString(3, orderMatch.getIncomingOrderId());
-            preparedStatement.setInt(4, orderMatch.getType());
-            preparedStatement.setLong(5, orderMatch.getPrice());
-            preparedStatement.setLong(6, orderMatch.getExecutedQuantity());
-            preparedStatement.setLong(7, orderMatch.getRemainingQuantity());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public void updateExchangeSign(String orderid, String signtype, byte[] data) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            String sql = "";
-            if (signtype.equals("to")) {
-                sql = "UPDATE exchange SET toSign = 1, data = ? WHERE orderid = ?";
-            } else {
-                sql = "UPDATE exchange SET fromSign = 1, data = ? WHERE orderid = ?";
-            }
-            preparedStatement = conn.get().prepareStatement(sql);
-            preparedStatement.setString(2, orderid);
-            preparedStatement.setBytes(1, data);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public OrderPublish getOrderPublishByOrderid(String orderid) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            StringBuffer whereStr = new StringBuffer(" WHERE orderid = ? ");
-            String sql = SELECT_ORDERPUBLISH_SQL + whereStr;
-            preparedStatement = conn.get().prepareStatement(sql);
-            preparedStatement.setString(1, orderid);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (!resultSet.next()) {
-                return null;
-            }
-            OrderPublish orderPublish = new OrderPublish();
-            orderPublish.setOrderId(resultSet.getString("orderid"));
-            orderPublish.setAddress(resultSet.getString("address"));
-            orderPublish.setTokenId(resultSet.getString("tokenid"));
-            orderPublish.setType(resultSet.getInt("type"));
-            orderPublish.setPrice(resultSet.getLong("price"));
-            orderPublish.setAmount(resultSet.getLong("amount"));
-            orderPublish.setState(resultSet.getInt("state"));
-            orderPublish.setValidateTo(resultSet.getDate("validateto"));
-            orderPublish.setValidateFrom(resultSet.getDate("validatefrom"));
-            orderPublish.setMarket(resultSet.getString("market"));
-            return orderPublish;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public Exchange getExchangeInfoByOrderid(String orderid) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(SELECT_EXCHANGE_ORDERID_SQL);
-            preparedStatement.setString(1, orderid);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (!resultSet.next()) {
-                return null;
-            }
-            Exchange exchange = new Exchange();
-            exchange.setOrderid(resultSet.getString("orderid"));
-            exchange.setFromAddress(resultSet.getString("fromAddress"));
-            exchange.setFromTokenHex(resultSet.getString("fromTokenHex"));
-            exchange.setFromAmount(resultSet.getString("fromAmount"));
-            exchange.setToAddress(resultSet.getString("toAddress"));
-            exchange.setToTokenHex(resultSet.getString("toTokenHex"));
-            exchange.setToAmount(resultSet.getString("toAmount"));
-            exchange.setData(resultSet.getBytes("data"));
-            exchange.setToSign(resultSet.getInt("toSign"));
-            exchange.setFromSign(resultSet.getInt("fromSign"));
-            exchange.setToOrderId(resultSet.getString("toOrderId"));
-            exchange.setFromOrderId(resultSet.getString("fromOrderId"));
-            exchange.setMarket(resultSet.getString("market"));
-            return exchange;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public void updateOrderPublishState(String orderid, int state) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            String sql = "UPDATE orderpublish SET state = ? WHERE orderid = ?";
-            preparedStatement = conn.get().prepareStatement(sql);
-            preparedStatement.setInt(1, state);
-            preparedStatement.setString(2, orderid);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public List<OrderPublish> getOrderPublishListWithNotMatch() throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        List<OrderPublish> list = new ArrayList<OrderPublish>();
-        try {
-            String sql = SELECT_ORDERPUBLISH_SQL + " WHERE 1 = 1 AND state = ?";
-            preparedStatement = conn.get().prepareStatement(sql);
-            preparedStatement.setInt(1, OrderState.publish.ordinal());
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                OrderPublish orderPublish = new OrderPublish();
-                orderPublish.setOrderId(resultSet.getString("orderid"));
-                orderPublish.setAddress(resultSet.getString("address"));
-                orderPublish.setTokenId(resultSet.getString("tokenid"));
-                orderPublish.setType(resultSet.getInt("type"));
-                orderPublish.setPrice(resultSet.getLong("price"));
-                orderPublish.setAmount(resultSet.getLong("amount"));
-                orderPublish.setState(resultSet.getInt("state"));
-                orderPublish.setValidateTo(resultSet.getDate("validateto"));
-                orderPublish.setValidateFrom(resultSet.getDate("validatefrom"));
-                orderPublish.setMarket(resultSet.getString("market"));
-                list.add(orderPublish);
-            }
-            return list;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public void put(StoredBlock block) throws BlockStoreException {
-    }
-
-    @Override
-    public StoredBlock get(Sha256Hash hash) throws BlockStoreException {
-        return null;
-    }
-
-    @Override
-    public List<UTXO> getOpenTransactionOutputs(List<Address> addresses) throws UTXOProviderException {
-        return null;
-    }
-
-    @Override
-    public List<UTXO> getOpenTransactionOutputs(List<Address> addresses, byte[] tokenid) throws UTXOProviderException {
-        return null;
-    }
-    
-
-    @Override
-    public void deleteOrderPublish(String orderid) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(DELETE_ORDERPUBLISH_SQL);
-            preparedStatement.setString(1, orderid);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public void deleteExchangeInfo(String orderid) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(DELETE_EXCHANGE_SQL);
-            preparedStatement.setString(1, orderid);
-            preparedStatement.setString(2, orderid);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public void deleteOrderMatch(String orderid) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(DELETE_ORDERMATCH_SQL);
-            preparedStatement.setString(1, orderid);
-            preparedStatement.setString(2, orderid);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public List<OrderPublish> getOrderPublishListRemoveDaily(int i) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        List<OrderPublish> list = new ArrayList<OrderPublish>();
-        try {
-            String sql = SELECT_ORDERPUBLISH_SQL + " WHERE DATE_ADD(submitDate, INTERVAL 2 DAY) <= NOW()";
-            preparedStatement = conn.get().prepareStatement(sql);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                OrderPublish orderPublish = new OrderPublish();
-                orderPublish.setOrderId(resultSet.getString("orderid"));
-                orderPublish.setAddress(resultSet.getString("address"));
-                orderPublish.setTokenId(resultSet.getString("tokenid"));
-                orderPublish.setType(resultSet.getInt("type"));
-                orderPublish.setPrice(resultSet.getLong("price"));
-                orderPublish.setAmount(resultSet.getLong("amount"));
-                orderPublish.setState(resultSet.getInt("state"));
-                orderPublish.setValidateTo(resultSet.getDate("validateto"));
-                orderPublish.setValidateFrom(resultSet.getDate("validatefrom"));
-                orderPublish.setMarket(resultSet.getString("market"));
-                list.add(orderPublish);
-            }
-            return list;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
         }
     }
 }

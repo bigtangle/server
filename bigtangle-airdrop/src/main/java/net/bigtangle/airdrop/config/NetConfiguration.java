@@ -18,16 +18,16 @@ public class NetConfiguration {
 
     @Autowired
     ServerConfiguration serverConfiguration;
+
     @Bean
     public NetworkParameters networkParameters() {
-        if("Mainnet".equals(serverConfiguration.getNet())) {
+        if ("Mainnet".equals(serverConfiguration.getNet())) {
             return new MainNetParams();
         }
-        if("Testnet".equals(serverConfiguration.getNet())) {
+        if ("Testnet".equals(serverConfiguration.getNet())) {
             return new TestNet3Params();
         }
         return new UnitTestParams();
     }
-    
-    
+
 }
