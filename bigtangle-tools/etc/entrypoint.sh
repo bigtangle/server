@@ -4,4 +4,4 @@
 #  
 #*******************************************************************************
 
-java -jar /app/bigtangle-tools.jar -Xms512m -Xmx1g  $*
+/app/bigtangle-tools-0.1.0/bin/bigtangle-tools

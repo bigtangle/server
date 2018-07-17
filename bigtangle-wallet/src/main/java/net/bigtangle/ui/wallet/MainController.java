@@ -149,8 +149,8 @@ public class MainController {
                     passwordHBox.setVisible(false);
                 }
                 Server.setText(Main.IpAddress);
-                Main.addToken(Main.getContextRoot(), Main.IpAddress, "mainServer",
-                        DataClassName.SERVERURL.name());
+            //    Main.addToken(Main.getContextRoot(), Main.IpAddress, "mainServer",
+            //            DataClassName.SERVERURL.name());
                 initTableView();
             }
         } catch (Exception e) {
