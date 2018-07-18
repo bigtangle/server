@@ -41,7 +41,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_WECHATREWARD_TABLE = "DROP TABLE wechatreward";
     
     // Tables exist SQL.
-    protected String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM orderpublish WHERE 1 = 2";
+    protected String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM wechatreward WHERE 1 = 2";
 
     protected NetworkParameters params;
     protected ThreadLocal<Connection> conn;

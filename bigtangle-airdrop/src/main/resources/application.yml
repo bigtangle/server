@@ -6,6 +6,14 @@ server:
     key-store-password: ${KEYSTOREPW:changeit}
     keyStoreType: ${KEYSTORETYPE:PKCS12}
 
+spring:
+    mvc:
+        view:
+            suffix: .jsp
+            prefix: /WEB-INF/jsp/
+    thymeleaf:
+        cache: false
+        enabled: false
 
 db:
   dbtype: ${DBTYPE:mysql}
@@ -13,7 +21,7 @@ db:
   port: ${DB_PORT:3306}
   dbName: ${DB_NAME:ordermatch}
   username: ${DB_USERNAME:root}
-  password: ${DB_PASSWORD:123456}
+  password: ${DB_PASSWORD:test1234}
 
 service:
   orderMatchService:

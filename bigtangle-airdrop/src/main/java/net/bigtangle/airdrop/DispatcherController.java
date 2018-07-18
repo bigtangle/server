@@ -5,6 +5,7 @@
 package net.bigtangle.airdrop;
 
 import java.io.PrintWriter;
+import java.util.HashMap;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
@@ -39,7 +40,7 @@ public class DispatcherController {
     private WechatRewardService wechatRewardService;
 
     @SuppressWarnings("unchecked")
-    @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
+    @RequestMapping(value = "/cmd/{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
     public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] bodyByte,
             HttpServletResponse httpServletResponse) throws Exception {
         try {
@@ -60,11 +61,13 @@ public class DispatcherController {
     private NetworkParameters networkParameters;
 
     public void outPointBinaryArray(HttpServletResponse httpServletResponse, byte[] data) throws Exception {
-        ServletOutputStream servletOutputStream = httpServletResponse.getOutputStream();
-        servletOutputStream.write(data);
-        servletOutputStream.flush();
-        servletOutputStream.close();
-    }
+      HashMap<String, Object> result = new HashMap<String, Object>();
+      result.put("dataHex", Utils.HEX.encode(data));
+      PrintWriter printWriter = httpServletResponse.getWriter();
+      printWriter.append(Json.jsonmapper().writeValueAsString(result));
+      printWriter.flush();
+      printWriter.close();
+  }
 
     public void outPrintJSONString(HttpServletResponse httpServletResponse, AbstractResponse response)
             throws Exception {
