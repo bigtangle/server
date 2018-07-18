@@ -23,7 +23,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
-import net.bigtangle.server.service.TipsService;
+import net.bigtangle.server.service.TipService;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -43,7 +43,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 	private MilestoneService milestoneService;
 
     @Autowired
-    private TipsService tipsService;
+    private TipService tipsService;
 
     @Autowired
     private BlockService blockService;

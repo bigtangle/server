@@ -40,7 +40,7 @@ import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
-import net.bigtangle.server.service.TipsService;
+import net.bigtangle.server.service.TipService;
 import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.OkHttp3Util;
@@ -87,7 +87,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     @Autowired
     protected FullPrunedBlockStore store;
     @Autowired
-    private TipsService tipsService;
+    private TipService tipsService;
 
     ECKey outKey = new ECKey();
 

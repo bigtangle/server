@@ -309,6 +309,9 @@ public class BlockService {
     
     public void addApprovedNonMilestoneBlocksTo(Collection<BlockWrap> evaluations, BlockWrap block, Collection<BlockWrap> exclusions)
             throws BlockStoreException {
+    	if (block == null)
+    		return; 
+    	
         if (block.getBlockEvaluation().isMilestone() || evaluations.contains(block) || (exclusions != null && exclusions.contains(block)))
             return;
 
@@ -342,12 +345,12 @@ public class BlockService {
         return GetBlockEvaluationsResponse.create(evaluations);
     }
 
-    public List<BlockEvaluation> getRatingEntryPointCandidates() throws BlockStoreException {
+    public List<BlockWrap> getRatingEntryPointCandidates() throws BlockStoreException {
         return store.getBlocksInMilestoneDepthInterval(NetworkParameters.ENTRYPOINT_RATING_LOWER_DEPTH_CUTOFF,
                 NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF);
     }
 
-    public List<BlockEvaluation> getValidationEntryPointCandidates() throws BlockStoreException {
+    public List<BlockWrap> getValidationEntryPointCandidates() throws BlockStoreException {
         return store.getBlocksInMilestoneDepthInterval(0, NetworkParameters.ENTRYPOINT_TIPSELECTION_DEPTH_CUTOFF);
     }
 

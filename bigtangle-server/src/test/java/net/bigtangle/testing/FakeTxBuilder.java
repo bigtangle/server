@@ -37,13 +37,13 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.server.service.TipsService;
+import net.bigtangle.server.service.TipService;
 import net.bigtangle.server.service.ValidatorService;
 
 public class FakeTxBuilder {
 
     @Autowired
-    private static TipsService tipsManager;
+    private static TipService tipsManager;
 
     /** Create a fake transaction, without change. */
     public static Transaction createFakeTx(final NetworkParameters params) {

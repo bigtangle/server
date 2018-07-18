@@ -46,7 +46,7 @@ public class MilestoneService {
 	@Autowired
 	private BlockService blockService;
 	@Autowired
-	private TipsService tipsService;
+	private TipService tipsService;
 	@Autowired
 	private ValidatorService validatorService;
 
@@ -234,19 +234,18 @@ public class MilestoneService {
 	 */
 	private void updateRating() throws Exception {
 		// Select #tipCount solid tips via MCMC
-		HashMap<BlockWrap, HashSet<UUID>> selectedTips = new HashMap<BlockWrap, HashSet<UUID>>(
+		HashMap<BlockWrap, HashSet<UUID>> selectedTipApprovers = new HashMap<BlockWrap, HashSet<UUID>>(
 				NetworkParameters.MAX_RATING_TIP_COUNT);
-		List<Sha256Hash> selectedTipHashes = tipsService.getRatingTips(NetworkParameters.MAX_RATING_TIP_COUNT);
+		List<BlockWrap> selectedTips = tipsService.getRatingTips(NetworkParameters.MAX_RATING_TIP_COUNT);
 		
-		for (Sha256Hash selectedTipHash : selectedTipHashes) {
-			BlockWrap selectedTip = store.getBlockWrap(selectedTipHash);
-			if (selectedTips.containsKey(selectedTip)) {
-				HashSet<UUID> result = selectedTips.get(selectedTip);
+		for (BlockWrap selectedTip : selectedTips) {
+			if (selectedTipApprovers.containsKey(selectedTip)) {
+				HashSet<UUID> result = selectedTipApprovers.get(selectedTip);
 				result.add(UUID.randomUUID());
 			} else {
 				HashSet<UUID> result = new HashSet<>();
 				result.add(UUID.randomUUID());
-				selectedTips.put(selectedTip, result);
+				selectedTipApprovers.put(selectedTip, result);
 			}
 		}
 
@@ -266,8 +265,8 @@ public class MilestoneService {
 			// Add your own hashes as reference if current block is one of the
 			// selected tips
 			HashSet<UUID> approverHashes = approverHashSets.get(currentBlock.getBlockHash());
-			if (selectedTips.containsKey(currentBlock)) {
-				approverHashes.addAll(selectedTips.get(currentBlock));
+			if (selectedTipApprovers.containsKey(currentBlock)) {
+				approverHashes.addAll(selectedTipApprovers.get(currentBlock));
 			}
 
 			// Add all current references to both approved blocks (initialize if
@@ -343,21 +342,21 @@ public class MilestoneService {
 	private void updateMaintained() throws BlockStoreException {
 		HashSet<Sha256Hash> maintainedBlockHashes = store.getMaintainedBlockHashes();
 		HashSet<Sha256Hash> traversedBlockHashes = new HashSet<>();
-		PriorityQueue<BlockEvaluation> blocks = getRatingEntryPointsAscendingAsPriorityQueue();
-		HashSet<BlockEvaluation> blocksToTraverse = new HashSet<>(blocks);
+		PriorityQueue<BlockWrap> blocks = getRatingEntryPointsAscendingAsPriorityQueue();
+		HashSet<BlockWrap> blocksToTraverse = new HashSet<>(blocks);
 
 		// Now set maintained in order of ascending height
-		BlockEvaluation currentBlock = null;
+		BlockWrap currentBlock = null;
 		while ((currentBlock = blocks.poll()) != null) {
 			blocksToTraverse.remove(currentBlock);
 			traversedBlockHashes.add(currentBlock.getBlockHash());
 			List<BlockWrap> solidApproverBlocks = blockService.getSolidApproverBlocks(currentBlock.getBlockHash());
 			for (BlockWrap b : solidApproverBlocks) {
-				if (blocksToTraverse.contains(b.getBlockEvaluation()))
+				if (blocksToTraverse.contains(b))
 					continue;
 
-				blocks.add(b.getBlockEvaluation());
-				blocksToTraverse.add(b.getBlockEvaluation());
+				blocks.add(b);
+				blocksToTraverse.add(b);
 			}
 		}
 
@@ -378,13 +377,13 @@ public class MilestoneService {
 	 * @return solid tips by ordered by descending height
 	 * @throws BlockStoreException
 	 */
-	private PriorityQueue<BlockEvaluation> getRatingEntryPointsAscendingAsPriorityQueue() throws BlockStoreException {
-		List<BlockEvaluation> candidates = blockService.getRatingEntryPointCandidates();
+	private PriorityQueue<BlockWrap> getRatingEntryPointsAscendingAsPriorityQueue() throws BlockStoreException {
+		List<BlockWrap> candidates = blockService.getRatingEntryPointCandidates();
 		if (candidates.isEmpty())
 			throw new IllegalStateException("No rating entry point candidates were found!");
 
-		PriorityQueue<BlockEvaluation> blocksByDescendingHeight = new PriorityQueue<BlockEvaluation>(candidates.size(),
-				Comparator.comparingLong(BlockEvaluation::getHeight));
+		PriorityQueue<BlockWrap> blocksByDescendingHeight = new PriorityQueue<BlockWrap>(candidates.size(),
+				Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()));
 		blocksByDescendingHeight.addAll(candidates);
 		return blocksByDescendingHeight;
 	}

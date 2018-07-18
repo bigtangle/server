@@ -177,11 +177,11 @@ public abstract class NetworkParameters {
      */
     public static final int BIP16_ENFORCE_TIME = 1333238400;
 
-    public static final int MILESTONE_UPPER_THRESHOLD = 75;
-    public static final int MILESTONE_LOWER_THRESHOLD = 66;
+    public static final int MILESTONE_UPPER_THRESHOLD = 70;
+    public static final int MILESTONE_LOWER_THRESHOLD = 67;
     public static final int MAX_RATING_TIP_COUNT = 100;
 
-    public static final long ENTRYPOINT_RATING_LOWER_DEPTH_CUTOFF = 0;
+    public static final long ENTRYPOINT_RATING_LOWER_DEPTH_CUTOFF = 0; // should be zero
     public static final long ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF = 60;
 
     public static final long ENTRYPOINT_TIPSELECTION_DEPTH_CUTOFF = 20;
@@ -525,7 +525,7 @@ public abstract class NetworkParameters {
     public EnumSet<Script.VerifyFlag> getTransactionVerificationFlags(final Block block, final Transaction transaction,
             final VersionTally tally) {
         final EnumSet<Script.VerifyFlag> verifyFlags = EnumSet.noneOf(Script.VerifyFlag.class);
-        if (block.getTimeSeconds() >= NetworkParameters.BIP16_ENFORCE_TIME)
+        //if (block.getTimeSeconds() >= NetworkParameters.BIP16_ENFORCE_TIME)
             verifyFlags.add(Script.VerifyFlag.P2SH);
 
         // Start enforcing CHECKLOCKTIMEVERIFY, (BIP65) for block.nVersion=4

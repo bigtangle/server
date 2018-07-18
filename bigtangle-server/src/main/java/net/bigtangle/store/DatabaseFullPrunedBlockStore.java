@@ -196,7 +196,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 			+ afterSelect();
 	protected String SELECT_BLOCKS_IN_MILESTONEDEPTH_INTERVAL_SQL = "SELECT hash, "
 			+ "rating, depth, cumulativeweight, solid, height, milestone, milestonelastupdate,"
-			+ " milestonedepth, inserttime, maintained, rewardvalidityassessment "
+			+ " milestonedepth, inserttime, maintained, rewardvalidityassessment, block "
 			+ "FROM blocks WHERE milestone = true AND milestonedepth >= ? AND milestonedepth <= ?" + afterSelect();
 	protected String SELECT_BLOCKS_TO_REMOVE_FROM_MILESTONE_SQL = "SELECT hash, rating, depth, "
 			+ "cumulativeweight, solid, height, milestone, milestonelastupdate,"
@@ -1516,9 +1516,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	}
 
 	@Override
-	public List<BlockEvaluation> getBlocksInMilestoneDepthInterval(long minDepth, long maxDepth)
+	public List<BlockWrap> getBlocksInMilestoneDepthInterval(long minDepth, long maxDepth)
 			throws BlockStoreException {
-		List<BlockEvaluation> storedBlockHashes = new ArrayList<BlockEvaluation>();
+		List<BlockWrap> storedBlockHashes = new ArrayList<>();
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
 		try {
@@ -1531,7 +1531,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 						resultSet.getLong(2), resultSet.getLong(3), resultSet.getLong(4), resultSet.getBoolean(5),
 						resultSet.getLong(6), resultSet.getBoolean(7), resultSet.getLong(8), resultSet.getLong(9),
 						resultSet.getLong(10), resultSet.getBoolean(11), resultSet.getBoolean(12));
-				storedBlockHashes.add(blockEvaluation);
+				Block block = params.getDefaultSerializer().makeBlock(resultSet.getBytes(13));
+				block.verifyHeader();
+				storedBlockHashes.add(new BlockWrap(block, blockEvaluation, params));
 			}
 			return storedBlockHashes;
 		} catch (SQLException ex) {

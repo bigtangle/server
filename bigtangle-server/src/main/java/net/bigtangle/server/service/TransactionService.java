@@ -47,7 +47,7 @@ public class TransactionService {
     @Autowired
     private BlockService blockService;
     @Autowired
-    protected TipsService tipService;
+    protected TipService tipService;
     @Autowired
     protected MilestoneService milestoneService;
     @Autowired
