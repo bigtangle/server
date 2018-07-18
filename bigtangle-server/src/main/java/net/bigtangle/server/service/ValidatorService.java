@@ -18,7 +18,7 @@ import java.util.TreeSet;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.tuple.Triple;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.directory.api.util.exception.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,118 +56,106 @@ public class ValidatorService {
 
 	private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
-	// Tries to update validity according to the mining consensus rules
-	// Assumes reward block to not necessarily be valid
-	// Returns true if block rewards are valid
-	public boolean assessMiningRewardBlock(Block header, long height) throws BlockStoreException {
-		return assessMiningRewardBlock(header, height, false);
-	}
-
-	// If rewardvalid = false but it is still about to be added to the
-	// milestone,
-	// we must calculate rewards anyways.
-	// Assumes reward block to be valid, which is the case when trying to add to
-	// milestone.
-	public boolean calculateMiningReward(Block header, long height) throws BlockStoreException {
-		return assessMiningRewardBlock(header, height, true);
-	}
-
-	// In ascending order of miner addresses, we create reward tx
-	// deterministically
-	public Transaction generateMiningRewardTX(Block header, long fromHeight) throws BlockStoreException {
-		long toHeight = fromHeight + networkParameters.getRewardHeightInterval() - 1;
-
+	/**
+	 * Deterministically creates a mining reward transaction based on the previous
+	 * blocks and previous reward transaction.
+	 * 
+	 * @return Pair of mining transaction and whether it is eligible to be voted on
+	 *         at this moment of time.
+	 * @throws BlockStoreException
+	 */
+	public Pair<Transaction, Boolean> generateMiningRewardTX(Sha256Hash prevTrunkHash, Sha256Hash prevBranchHash,
+			Sha256Hash prevRewardHash) throws BlockStoreException {
 		// Count how many blocks from miners in the reward interval are approved
 		// and build rewards
-		long approveCount = 0;
-		Block prevRewardBlock = null;
+		boolean eligibility = true;
 		PriorityQueue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
 				Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
 		HashSet<BlockWrap> queuedBlocks = new HashSet<>();
 		HashMap<Address, Long> rewardCount = new HashMap<>();
-		blockQueue.add(store.getBlockWrap(header.getPrevBlockHash()));
-		blockQueue.add(store.getBlockWrap(header.getPrevBranchBlockHash()));
-		queuedBlocks.add(store.getBlockWrap(header.getPrevBlockHash()));
-		queuedBlocks.add(store.getBlockWrap(header.getPrevBranchBlockHash()));
+		long approveCount = 0;
 
-		// Initial reward block must be defined
-		if (fromHeight == 0)
-			prevRewardBlock = networkParameters.getGenesisBlock();
+		BlockWrap prevTrunkBlock = store.getBlockWrap(prevTrunkHash);
+		BlockWrap prevBranchBlock = store.getBlockWrap(prevBranchHash);
+		blockQueue.add(prevTrunkBlock);
+		blockQueue.add(prevBranchBlock);
+		queuedBlocks.add(prevTrunkBlock);
+		queuedBlocks.add(prevBranchBlock);
+
+		// Read previous reward block's data
+		BlockWrap prevRewardBlock = store.getBlockWrap(prevRewardHash);
+		long fromHeight = 0, toHeight = 0, minHeight = 0, perTxReward = 0;
+		try {
+			if (prevRewardBlock.getBlock().getHash().equals(networkParameters.getGenesisBlock().getHash())) {
+				fromHeight = 0;
+				toHeight = fromHeight + networkParameters.getRewardHeightInterval() - 1;
+				minHeight = toHeight;
+				perTxReward = 100;
+				
+			} else {
+				ByteBuffer bb = ByteBuffer.wrap(prevRewardBlock.getBlock().getTransactions().get(0).getData());
+				fromHeight = bb.getLong() + networkParameters.getRewardHeightInterval();
+				toHeight = fromHeight + networkParameters.getRewardHeightInterval() - 1;
+				minHeight = toHeight;
+				perTxReward = bb.getLong();
+			}
+
+			if (prevTrunkBlock.getBlockEvaluation().getHeight() < minHeight - 1
+					&& prevBranchBlock.getBlockEvaluation().getHeight() < minHeight - 1)
+				return Pair.of(null, false);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return Pair.of(null, false);
+		}
 
 		// Go backwards by height
-		BlockWrap currentBlock = null;
+		// TODO penalize lowest cumulative weight
+		BlockWrap currentBlock = null, tmpBlock = null;
 		while ((currentBlock = blockQueue.poll()) != null) {
-			Block block = currentBlock.getBlockEvaluation().getBlockHash().equals(header.getHash()) ? header
-					: blockService.getBlock(currentBlock.getBlock().getHash());
-
 			// Stop criterion: Block height lower than approved interval height
 			if (currentBlock.getBlockEvaluation().getHeight() < fromHeight)
 				continue;
 
 			if (currentBlock.getBlockEvaluation().getHeight() <= toHeight) {
+				// Failure criterion: rewarding non-milestone blocks
+				if (currentBlock.getBlockEvaluation().isMilestone() == false)
+					eligibility = false;
+				
 				// Count rewards, try to find prevRewardBlock
 				approveCount++;
-				Address miner = new Address(networkParameters, block.getMinerAddress());
+				Address miner = new Address(networkParameters, currentBlock.getBlock().getMinerAddress());
 				if (!rewardCount.containsKey(miner))
 					rewardCount.put(miner, 1L);
 				else
 					rewardCount.put(miner, rewardCount.get(miner) + 1);
-
-				if (block.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD) {
-					ByteBuffer prevBb = ByteBuffer.wrap(block.getTransactions().get(0).getData());
-					long prevFromHeight = prevBb.getLong();
-
-					if (prevFromHeight == fromHeight - networkParameters.getRewardHeightInterval()) {
-						// Failure if there are multiple prevRewardBlocks
-						if (prevRewardBlock != null)
-							logger.error(
-									"Failed in creating reward block here, try resolving conflicts with rewarding in mind");
-
-						prevRewardBlock = block;
-					}
-				}
 			}
 
 			// Continue with approved blocks
-			BlockWrap prevBlock = store.getBlockWrap(block.getPrevBlockHash());
-			if (!queuedBlocks.contains(prevBlock) && prevBlock != null) {
-				queuedBlocks.add(prevBlock);
-				blockQueue.add(prevBlock);
+			tmpBlock = store.getBlockWrap(currentBlock.getBlock().getPrevBlockHash());
+			if (!queuedBlocks.contains(tmpBlock) && tmpBlock != null) {
+				queuedBlocks.add(tmpBlock);
+				blockQueue.add(tmpBlock);
 			}
 
-			BlockWrap prevBranchBlock = store.getBlockWrap(block.getPrevBranchBlockHash());
-			if (!queuedBlocks.contains(prevBranchBlock) && prevBranchBlock != null) {
-				queuedBlocks.add(prevBranchBlock);
-				blockQueue.add(prevBranchBlock);
+			tmpBlock = store.getBlockWrap(currentBlock.getBlock().getPrevBranchBlockHash());
+			if (!queuedBlocks.contains(tmpBlock) && tmpBlock != null) {
+				queuedBlocks.add(tmpBlock);
+				blockQueue.add(tmpBlock);
 			}
-		}
-
-		// If the previous one has not been assessed yet, we need to assess
-		// the previous one first
-		if (!blockService.getBlockEvaluation(prevRewardBlock.getHash()).isRewardValid()) {
-			logger.error("Not ready for new mining reward block: Make sure the previous one is confirmed first!");
 		}
 
 		// TX reward adjustments for next rewards
-		long perTxReward = store.getTxRewardValue(prevRewardBlock.getHash());
 		long nextPerTxReward = Math.max(1, 20000000 * 365 * 24 * 60 * 60 / approveCount
-				/ (header.getTimeSeconds() - prevRewardBlock.getTimeSeconds()));
+				/ (Math.max(prevTrunkBlock.getBlock().getTimeSeconds(), prevTrunkBlock.getBlock().getTimeSeconds())
+						- prevRewardBlock.getBlock().getTimeSeconds()));
 		nextPerTxReward = Math.max(nextPerTxReward, perTxReward / 4);
 		nextPerTxReward = Math.min(nextPerTxReward, perTxReward * 4);
-		// store.insertTxReward(header.getHash(), nextPerTxReward);
 
-		// Calculate rewards
-		PriorityQueue<Triple<Sha256Hash, Address, Long>> sortedMiningRewardCalculations = new PriorityQueue<>(
-				Comparator.comparingLong(t -> t.getRight()));
-		for (Entry<Address, Long> entry : rewardCount.entrySet())
-			sortedMiningRewardCalculations
-					.add(Triple.of(header.getHash(), entry.getKey(), entry.getValue() * perTxReward));
-
+		// Build transaction outputs
 		Transaction tx = new Transaction(networkParameters);
-		Triple<Sha256Hash, Address, Long> utxoData;
-		while ((utxoData = sortedMiningRewardCalculations.poll()) != null) {
-			tx.addOutput(Coin.SATOSHI.times(utxoData.getRight()), utxoData.getMiddle());
-		}
+		for (Entry<Address, Long> entry : rewardCount.entrySet())
+			tx.addOutput(Coin.SATOSHI.times(entry.getValue() * perTxReward), entry.getKey());
 
 		// The input does not really need to be a valid signature, as long
 		// as it has the right general form.
@@ -175,135 +163,18 @@ public class ValidatorService {
 				Script.createInputScript(Block.EMPTY_BYTES, Block.EMPTY_BYTES));
 		tx.addInput(input);
 
-		// Add the type-specific data (fromHeight)
-		byte[] data = new byte[8];
-		Utils.uint64ToByteArrayLE(fromHeight, data, 0);
-		tx.setData(data);
+		// Add the type-specific tx data (fromHeight, nextPerTxReward, prevRewardHash)
+		ByteBuffer bb = ByteBuffer.allocate(48);
+		bb.putLong(fromHeight);
+		bb.putLong(nextPerTxReward);
+		bb.put(prevRewardHash.getBytes());
+		tx.setData(bb.array());
+		
+		// Check eligibility: sufficient amount of milestone blocks approved?
+		if (approveCount < store.getCountMilestoneBlocksInInterval(fromHeight, toHeight) * 99 / 100)
+			eligibility = false;
 
-		return tx;
-	}
-
-	// TODO cleanup and crosscheck with above code, rewrite this to batched
-	// computation of relevant reward block only,
-	// e. g. go forward until confirmed reward block is found or up to the end
-	private boolean assessMiningRewardBlock(Block header, long height, boolean assumeMilestone)
-			throws BlockStoreException {
-		// Once set valid, always valid
-		// if (blockEvaluation.isRewardValid())
-		// return true;
-
-		// Only mining reward blocks
-		if (header.getBlockType() != NetworkParameters.BLOCKTYPE_REWARD)
-			return false;
-
-		// Get interval height from tx data
-		ByteBuffer bb = ByteBuffer.wrap(header.getTransactions().get(0).getData());
-		long fromHeight = bb.getLong();
-		long toHeight = fromHeight + networkParameters.getRewardHeightInterval() - 1;
-		if (height <= toHeight)
-			return false;
-
-		// Count how many blocks from the reward interval are approved
-		// Also build rewards while we're at it
-		long approveCount = 0;
-		Block prevRewardBlock = null;
-		PriorityQueue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
-				Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
-		HashSet<BlockWrap> queuedBlocks = new HashSet<>();
-		HashMap<Address, Long> rewardCount = new HashMap<>();
-		blockQueue.add(store.getBlockWrap(header.getPrevBlockHash()));
-		blockQueue.add(store.getBlockWrap(header.getPrevBranchBlockHash()));
-		queuedBlocks.add(store.getBlockWrap(header.getPrevBlockHash()));
-		queuedBlocks.add(store.getBlockWrap(header.getPrevBranchBlockHash()));
-
-		// Initial reward block must be defined
-		if (fromHeight == 0)
-			prevRewardBlock = networkParameters.getGenesisBlock();
-
-		// Go backwards by height
-		BlockWrap currentBlock = null;
-		while ((currentBlock = blockQueue.poll()) != null) {
-			Block block = currentBlock.getBlock();
-
-			// Stop criterion: Block height lower than approved interval height
-			if (currentBlock.getBlockEvaluation().getHeight() < fromHeight)
-				continue;
-
-			if (currentBlock.getBlockEvaluation().getHeight() <= toHeight) {
-				// Failure criterion: approving non-milestone blocks
-				if (!assumeMilestone && currentBlock.getBlockEvaluation().isMilestone() == false)
-					return false;
-
-				// Count rewards, try to find prevRewardBlock
-				approveCount++;
-				Address miner = new Address(networkParameters, block.getMinerAddress());
-				if (!rewardCount.containsKey(miner))
-					rewardCount.put(miner, 1L);
-				else
-					rewardCount.put(miner, rewardCount.get(miner) + 1);
-
-				if (block.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD) {
-					ByteBuffer prevBb = ByteBuffer.wrap(block.getTransactions().get(0).getData());
-					long prevFromHeight = prevBb.getLong();
-
-					if (prevFromHeight == fromHeight - networkParameters.getRewardHeightInterval()) {
-						// Failure if there are multiple prevRewardBlocks
-						// approved
-						if (prevRewardBlock != null)
-							return false;
-
-						prevRewardBlock = block;
-					}
-
-				}
-			}
-
-			// Continue with approved blocks
-			BlockWrap prevBlock = store.getBlockWrap(block.getPrevBlockHash());
-			if (!queuedBlocks.contains(prevBlock) && prevBlock != null) {
-				queuedBlocks.add(prevBlock);
-				blockQueue.add(prevBlock);
-			}
-
-			BlockWrap prevBranchBlock = store.getBlockWrap(block.getPrevBranchBlockHash());
-			if (!queuedBlocks.contains(prevBranchBlock) && prevBranchBlock != null) {
-				queuedBlocks.add(prevBranchBlock);
-				blockQueue.add(prevBranchBlock);
-			}
-		}
-
-		// Compare with amount of milestone blocks in interval to assess
-		// validity
-		if (prevRewardBlock != null && (assumeMilestone
-				|| approveCount > store.getCountMilestoneBlocksInInterval(fromHeight, toHeight) * 95 / 100)) {
-			// If the previous one has not been assessed yet, we need to assess
-			// the previous one first
-			if (!blockService.getBlockEvaluation(prevRewardBlock.getHash()).isRewardValid()) {
-				return false;
-			}
-
-			// TX reward adjustments for next rewards
-			// TODO get prevTxReward from prevRewardBlock
-			long perTxReward = store.getTxRewardValue(prevRewardBlock.getHash());
-			long nextPerTxReward = Math.max(1, 20000000 * 365 * 24 * 60 * 60 / approveCount
-					/ (header.getTimeSeconds() - prevRewardBlock.getTimeSeconds()));
-			nextPerTxReward = Math.max(nextPerTxReward, perTxReward / 4);
-			nextPerTxReward = Math.min(nextPerTxReward, perTxReward * 4);
-			store.insertTxReward(header.getHash(), nextPerTxReward, fromHeight);
-
-			// Set valid if generated TX is equal to the block's TX
-			// This is still unnecessarily traversing twice.
-			if (generateMiningRewardTX(header, fromHeight).getHash()
-					.equals(header.getTransactions().get(0).getHash())) {
-				store.updateBlockEvaluationRewardValid(header.getHash(), true);
-				return true;
-			} else {
-				// Optimization: set invalid forever to not assess this again
-				return false;
-			}
-		} else {
-			return false;
-		}
+		return Pair.of(tx, eligibility);
 	}
 
 	/**
@@ -317,7 +188,7 @@ public class ValidatorService {
 	 */
 	public boolean removeWhereInputUnconfirmed(Collection<BlockWrap> blocksToAdd) throws BlockStoreException {
 		boolean removed = false;
-		
+
 		for (BlockWrap e : new HashSet<BlockWrap>(blocksToAdd)) {
 			Block block = blockService.getBlock(e.getBlock().getHash());
 			for (TransactionInput in : block.getTransactions().stream().flatMap(t -> t.getInputs().stream())
@@ -330,16 +201,16 @@ public class ValidatorService {
 					blockService.removeBlockAndApproversFrom(blocksToAdd, e);
 				}
 			}
-			
+
 			if (block.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD) {
 				// TODO add prev mining reward confirmed
 			}
-			
-			if (block.getBlockType() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {				
-				// TODO add prev token issuance confirmed				
+
+			if (block.getBlockType() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
+				// TODO add prev token issuance confirmed
 			}
 		}
-		
+
 		return removed;
 	}
 
@@ -650,9 +521,10 @@ public class ValidatorService {
 	public boolean isIneligibleForSelection(BlockWrap block, HashSet<BlockWrap> currentApprovedNonMilestoneBlocks) {
 		if (block.getBlockEvaluation().isMilestone())
 			return false;
-		
+
 		@SuppressWarnings("unchecked")
-		HashSet<BlockWrap> newApprovedNonMilestoneBlocks = (HashSet<BlockWrap>) currentApprovedNonMilestoneBlocks.clone();
+		HashSet<BlockWrap> newApprovedNonMilestoneBlocks = (HashSet<BlockWrap>) currentApprovedNonMilestoneBlocks
+				.clone();
 		try {
 			blockService.addApprovedNonMilestoneBlocksTo(newApprovedNonMilestoneBlocks, block);
 		} catch (BlockStoreException e) {

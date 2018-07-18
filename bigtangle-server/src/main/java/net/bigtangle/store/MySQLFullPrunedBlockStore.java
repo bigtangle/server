@@ -152,6 +152,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   rewardamount bigint NOT NULL,\n"
             + "   prevheight bigint NOT NULL,\n"
             + "   confirmed boolean NOT NULL,\n" 
+            + "   eligibility boolean NOT NULL,\n"
             + "   PRIMARY KEY (blockhash) )";
     
     private static final String CREATE_USERDATA_TABLE = "CREATE TABLE userdata (\n" 

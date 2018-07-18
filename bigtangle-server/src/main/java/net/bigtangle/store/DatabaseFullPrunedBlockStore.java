@@ -308,7 +308,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	protected String SELECT_COUNT_MULTISIGN_SIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = ? AND tokenindex = ? AND sign = ?";
 
 	protected String INSERT_TX_REWARD_SQL = getInsert()
-			+ "  INTO txreward (blockhash, rewardamount, prevheight, confirmed) VALUES (?, ?, ?, ?)";
+			+ "  INTO txreward (blockhash, rewardamount, prevheight, confirmed, eligibility) VALUES (?, ?, ?, ?, ?)";
 	protected String SELECT_TX_REWARD_SQL = "SELECT rewardamount FROM txreward WHERE blockhash = ?";
 	protected String SELECT_CONFIRMED_TX_REWARD_SQL = "SELECT blockhash FROM txreward WHERE prevheight = ?";
 	protected String SELECT_MAX_TX_REWARD_HEIGHT_SQL = "SELECT MAX(prevheight) "
@@ -747,7 +747,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 			updateBlockEvaluationRewardValid(params.getGenesisBlock().getHash(), true);
 			insertTip(params.getGenesisBlock().getHash());
 			insertTxReward(params.getGenesisBlock().getHash(), NetworkParameters.INITIAL_TX_REWARD,
-					-NetworkParameters.REWARD_HEIGHT_INTERVAL);
+					-NetworkParameters.REWARD_HEIGHT_INTERVAL, true);
 			updateTxRewardConfirmed(params.getGenesisBlock().getHash(), true);
 		} catch (VerificationException e) {
 			throw new RuntimeException(e); // Cannot happen.
@@ -3243,7 +3243,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	}
 
 	@Override
-	public void insertTxReward(Sha256Hash hash, long nextPerTxReward, long prevHeight) throws BlockStoreException {
+	public void insertTxReward(Sha256Hash hash, long nextPerTxReward, long prevHeight, boolean eligibility) throws BlockStoreException {
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
 		try {
@@ -3252,6 +3252,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 			preparedStatement.setLong(2, nextPerTxReward);
 			preparedStatement.setLong(3, prevHeight);
 			preparedStatement.setBoolean(4, false);
+			preparedStatement.setBoolean(5, eligibility);
 			preparedStatement.executeUpdate();
 		} catch (SQLException e) {
 			throw new BlockStoreException(e);

@@ -85,7 +85,7 @@ public class TransactionService {
     }
  
 
-    public Block createMiningRewardBlock(long fromHeight) throws Exception {
+    public Block createMiningRewardBlock(Sha256Hash prevRewardHash) throws Exception {
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
         Block r2 = blockService.getBlock(tipsToApprove.getRight());
@@ -93,7 +93,8 @@ public class TransactionService {
         Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), blocktype0,
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
 
-        block.addTransaction(validatorService.generateMiningRewardTX(block, fromHeight));
+        // TODO check if eligible and drop if not 
+        block.addTransaction(validatorService.generateMiningRewardTX(r1.getHash(), r2.getHash(), prevRewardHash).getLeft());
         block.solve();
         blockgraph.add(block,true);
         return block;

@@ -386,7 +386,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         milestoneService.update();
 
         // Generate mining reward block
-        Block rewardBlock = transactionService.createMiningRewardBlock(0);
+        Block rewardBlock = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash());
         milestoneService.update();
 
         // Genesis block is no longer maintained, while newest one is maintained

@@ -5,6 +5,7 @@
 
 package net.bigtangle.store;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -22,6 +23,7 @@ import java.util.concurrent.FutureTask;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -634,25 +636,31 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 		// Check reward block specific solidity
 		if (block.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD) {
 			// Open reward interval must be this one to be solid
+			Sha256Hash prevRewardHash = null;
+			long fromHeight = 0, nextPerTxReward = 0;
 			try {
-				long prevFromHeight = blockStore.getMaxPrevTxRewardHeight();
-				long fromHeight = Utils.readInt64(block.getTransactions().get(0).getData(), 0);
-				if (prevFromHeight + NetworkParameters.REWARD_HEIGHT_INTERVAL != fromHeight)
-					return false;
-			} catch (ArrayIndexOutOfBoundsException e) {
+				byte[] hashBytes = new byte[32];
+				ByteBuffer bb = ByteBuffer.wrap(block.getTransactions().get(0).getData());
+				fromHeight = bb.getLong();
+				nextPerTxReward = bb.getLong();
+				bb.get(hashBytes, 0, 32);
+				prevRewardHash = Sha256Hash.wrap(hashBytes);
+			} catch (Exception e) {
+				e.printStackTrace();
 				return false;
 			}
 
-			// Reward must have been assessed locally and passed.
-			// FIXME Kai
-			if (// !blockStore.getBlockEvaluation(block.getHash()).isRewardValid()&&
-			!validatorService.assessMiningRewardBlock(block, height))
+			// Reward must have been built correctly.
+			Pair<Transaction, Boolean> referenceReward = validatorService.generateMiningRewardTX(storedPrev.getHeader().getHash(), storedPrevBranch.getHeader().getHash(), prevRewardHash);
+			if (!referenceReward.getLeft().getHash().equals(block.getTransactions().get(0).getHash()))
 				return false;
+			
+			blockStore.insertTxReward(block.getHash(), nextPerTxReward, fromHeight, referenceReward.getRight());
 		}
 
 		// Check genesis block specific validity, can only one genesis block
 		if (block.getBlockType() == NetworkParameters.BLOCKTYPE_INITIAL) {
-			if (block.getHash() != networkParameters.getGenesisBlock().getHash()) {
+			if (!block.getHash().equals(networkParameters.getGenesisBlock().getHash())) {
 				return false;
 			}
 		}
