@@ -6,30 +6,30 @@ import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.TransactionOutPoint;
 
-public class Conflict {
+public class ConflictCandidate {
 
     private BlockWrap block;
 	private ConflictPoint conflictPoint;
 
-    public Conflict(BlockWrap block, TransactionOutPoint connectedOutpoint) {
+    public ConflictCandidate(BlockWrap block, TransactionOutPoint connectedOutpoint) {
         super();
         this.block = block;
         this.conflictPoint = new ConflictPoint(connectedOutpoint);
     }
 
-    public Conflict(BlockWrap block, long fromHeight) {
+    public ConflictCandidate(BlockWrap block, long fromHeight) {
         super();
         this.block = block;
         this.conflictPoint = new ConflictPoint(fromHeight);
     }
 
-    public Conflict(BlockWrap block, TokenSerial serial) {
+    public ConflictCandidate(BlockWrap block, TokenSerial serial) {
         super();
         this.block = block;
         this.conflictPoint = new ConflictPoint(serial);
     }
 
-    public Conflict(BlockWrap block, ConflictPoint conflictPoint) {
+    public ConflictCandidate(BlockWrap block, ConflictPoint conflictPoint) {
         super();
         this.block = block;
         this.conflictPoint = conflictPoint;
@@ -49,7 +49,7 @@ public class Conflict {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        Conflict other = (Conflict) o;
+        ConflictCandidate other = (ConflictCandidate) o;
 
         return block.equals(other.block) && conflictPoint.equals(other.conflictPoint);
     }

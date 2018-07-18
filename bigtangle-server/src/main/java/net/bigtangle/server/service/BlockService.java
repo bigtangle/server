@@ -304,7 +304,12 @@ public class BlockService {
      */
     public void addApprovedNonMilestoneBlocksTo(Collection<BlockWrap> evaluations, BlockWrap block)
             throws BlockStoreException {
-        if (block.getBlockEvaluation().isMilestone() || evaluations.contains(block))
+        addApprovedNonMilestoneBlocksTo(evaluations, block, null);
+    }
+    
+    public void addApprovedNonMilestoneBlocksTo(Collection<BlockWrap> evaluations, BlockWrap block, Collection<BlockWrap> exclusions)
+            throws BlockStoreException {
+        if (block.getBlockEvaluation().isMilestone() || evaluations.contains(block) || (exclusions != null && exclusions.contains(block)))
             return;
 
         // Add this block and add all of its approved non-milestone blocks

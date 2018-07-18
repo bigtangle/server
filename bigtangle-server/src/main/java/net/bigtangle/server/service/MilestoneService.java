@@ -260,7 +260,7 @@ public class MilestoneService {
 		BlockWrap currentBlock = null;
 		while ((currentBlock = blocksByDescendingHeight.poll()) != null) {
 			// Abort if unmaintained
-			if (!currentBlock.getBlockEvaluation().isMaintained())
+			if (!currentBlock.getBlockEvaluation().isMaintained() && currentBlock.getBlockEvaluation().isMilestone())
 				continue;
 
 			// Add your own hashes as reference if current block is one of the

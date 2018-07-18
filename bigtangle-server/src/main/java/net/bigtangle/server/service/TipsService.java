@@ -4,7 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -38,7 +37,7 @@ public class TipsService {
 	@Autowired
 	private ValidatorService validatorService;
 
-	private static Random seed = new SecureRandom();
+	private static Random seed = new Random();
 
 	public List<Sha256Hash> getRatingTips(int count) throws Exception {
 		Stopwatch watch = Stopwatch.createStarted();
@@ -58,58 +57,55 @@ public class TipsService {
 	}
 
 	public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair() throws Exception {
+		// Init 
 		Stopwatch watch = Stopwatch.createStarted();
 		List<Sha256Hash> entryPoints = getValidationEntryPoints(2);
 		BlockWrap left = store.getBlockWrap(entryPoints.get(0));
 		BlockWrap right = store.getBlockWrap(entryPoints.get(1));
-
-		// Init conflict set
-		HashSet<Conflict> currentConflictPoints = new HashSet<>();
-		currentConflictPoints.addAll(validatorService.toConflictCandidates(left));
-		currentConflictPoints.addAll(validatorService.toConflictCandidates(right));
+		HashSet<BlockWrap> currentApprovedNonMilestoneBlocks = new HashSet<>();
 
 		// Find valid approvers to go to
-		List<BlockWrap> leftApprovers = blockService.getSolidApproverBlocks(left.getBlock().getHash());
-		List<BlockWrap> rightApprovers = blockService.getSolidApproverBlocks(right.getBlock().getHash());
-		leftApprovers.removeIf(b -> validatorService.isConflicting(b, currentConflictPoints));
-		rightApprovers.removeIf(b -> validatorService.isConflicting(b, currentConflictPoints));
+		List<BlockWrap> validLeftApprovers = blockService.getSolidApproverBlocks(left.getBlock().getHash());
+		List<BlockWrap> validRightApprovers = blockService.getSolidApproverBlocks(right.getBlock().getHash());
+		validLeftApprovers.removeIf(b -> validatorService.isIneligible(b, currentApprovedNonMilestoneBlocks));
+		validRightApprovers.removeIf(b -> validatorService.isIneligible(b, currentApprovedNonMilestoneBlocks));
 
 		// Perform next steps
-		BlockWrap nextLeft = performStep(left, leftApprovers);
-		BlockWrap nextRight = performStep(right, rightApprovers);
+		BlockWrap nextLeft = performStep(left, validLeftApprovers);
+		BlockWrap nextRight = performStep(right, validRightApprovers);
 
-		// Proceed on path to be included first (highest rating else right which is
+		// Repeat: Proceed on path to be included first (highest rating else right, which is
 		// random)
 		while (nextLeft != left && nextRight != right) {
 			if (nextLeft.getBlockEvaluation().getRating() > nextRight.getBlockEvaluation().getRating()) {
 				left = nextLeft;
-				currentConflictPoints.addAll(validatorService.toConflictCandidates(left));
-				leftApprovers = blockService.getSolidApproverBlocks(left.getBlock().getHash());
-				leftApprovers.removeIf(b -> validatorService.isConflicting(b, currentConflictPoints));
-				nextLeft = performStep(left, leftApprovers);
+				blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, nextLeft);
+				validLeftApprovers = blockService.getSolidApproverBlocks(left.getBlock().getHash());
+				validLeftApprovers.removeIf(b -> validatorService.isIneligible(b, currentApprovedNonMilestoneBlocks));
+				nextLeft = performStep(left, validLeftApprovers);
 			} else {
 				right = nextRight;
-				currentConflictPoints.addAll(validatorService.toConflictCandidates(right));
-				rightApprovers = blockService.getSolidApproverBlocks(right.getBlock().getHash());
-				rightApprovers.removeIf(b -> validatorService.isConflicting(b, currentConflictPoints));
-				nextRight = performStep(right, rightApprovers);
+				blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, nextRight);
+				validRightApprovers = blockService.getSolidApproverBlocks(right.getBlock().getHash());
+				validRightApprovers.removeIf(b -> validatorService.isIneligible(b, currentApprovedNonMilestoneBlocks));
+				nextRight = performStep(right, validRightApprovers);
 			}
 		}
 
 		// Go forward on the remaining paths
 		while (nextLeft != left) {
 			left = nextLeft;
-			currentConflictPoints.addAll(validatorService.toConflictCandidates(left));
-			leftApprovers = blockService.getSolidApproverBlocks(left.getBlock().getHash());
-			leftApprovers.removeIf(b -> validatorService.isConflicting(b, currentConflictPoints));
-			nextLeft = performStep(left, leftApprovers);
+			blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, nextLeft);
+			validLeftApprovers = blockService.getSolidApproverBlocks(left.getBlock().getHash());
+			validLeftApprovers.removeIf(b -> validatorService.isIneligible(b, currentApprovedNonMilestoneBlocks));
+			nextLeft = performStep(left, validLeftApprovers);
 		}
 		while (nextRight != right) {
 			right = nextRight;
-			currentConflictPoints.addAll(validatorService.toConflictCandidates(right));
-			rightApprovers = blockService.getSolidApproverBlocks(right.getBlock().getHash());
-			rightApprovers.removeIf(b -> validatorService.isConflicting(b, currentConflictPoints));
-			nextRight = performStep(right, rightApprovers);
+			blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, nextRight);
+			validRightApprovers = blockService.getSolidApproverBlocks(right.getBlock().getHash());
+			validRightApprovers.removeIf(b -> validatorService.isIneligible(b, currentApprovedNonMilestoneBlocks));
+			nextRight = performStep(right, validRightApprovers);
 		}
 
 		watch.stop();
