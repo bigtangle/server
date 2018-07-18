@@ -29,10 +29,10 @@ public class BuyOrderAction extends Action {
 
     @Override
     public void execute0() throws Exception {
-        Coin coinbase = this.account.defaultCoinAmount();
+        /*Coin coinbase = this.account.defaultCoinAmount();
         if (coinbase.getValue() <= 0) {
             return;
-        }
+        }*/
         logger.info("account name : {}, buy order action start", account.getName());
         try {
             String resp = OkHttp3Util.postString(Configure.ORDER_MATCH_CONTEXT_ROOT + OrdermatchReqCmd.getOrders.name(),
