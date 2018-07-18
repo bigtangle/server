@@ -100,7 +100,7 @@ public class TipService {
 			throws BlockStoreException {
 		blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, fromBlock);
 		List<BlockWrap> validApprovers = blockService.getSolidApproverBlocks(fromBlock.getBlock().getHash());
-		validApprovers.removeIf(b -> validatorService.isIneligible(b, currentApprovedNonMilestoneBlocks));
+		validApprovers.removeIf(b -> validatorService.isIneligibleForSelection(b, currentApprovedNonMilestoneBlocks));
 		return performTransition(fromBlock, validApprovers);
 	}
 

@@ -608,13 +608,12 @@ public class Transaction extends ChildMessage {
             optimalEncodingMessageSize += len;
         }
 
-        long dataclassnameLen = readUint32();
+        len = readUint32();
         optimalEncodingMessageSize += 4;
-
-        if (dataclassnameLen > 0) {
-            byte[] buf = readBytes((int) dataclassnameLen);
+        if (len > 0) {
+            byte[] buf = readBytes((int) len);
             this.dataClassName = new String(buf);
-            optimalEncodingMessageSize += dataclassnameLen;
+            optimalEncodingMessageSize += len;
         }
 
         len = readUint32();

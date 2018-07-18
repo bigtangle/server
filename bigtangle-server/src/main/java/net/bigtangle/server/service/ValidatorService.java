@@ -647,7 +647,7 @@ public class ValidatorService {
 		throw new NotImplementedException();
 	}
 
-	public boolean isIneligible(BlockWrap block, HashSet<BlockWrap> currentApprovedNonMilestoneBlocks) {
+	public boolean isIneligibleForSelection(BlockWrap block, HashSet<BlockWrap> currentApprovedNonMilestoneBlocks) {
 		if (block.getBlockEvaluation().isMilestone())
 			return false;
 		
