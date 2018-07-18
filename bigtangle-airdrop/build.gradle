@@ -40,8 +40,8 @@ dependencies {
     compile project(':bigtangle-core')
     compile group: 'org.springframework', name: 'spring-web', version: ver.spring
     compile group: 'org.springframework', name: 'spring-jdbc', version:  ver.spring
-    compile group: 'org.apache.tomcat.embed', name: 'tomcat-embed-jasper', version: ver.spring_boot
-    compile group: 'javax.servlet.jsp.jstl', name: 'jstl-api', version: '1.2'
+//   compile group: 'org.apache.tomcat.embed', name: 'tomcat-embed-jasper', version: ver.spring_boot
+//   compile group: 'javax.servlet.jsp.jstl', name: 'jstl-api', version: '1.2'
     
     testCompile group: 'org.mockito', name: 'mockito-all', version:  ver.mockito_all
     testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
