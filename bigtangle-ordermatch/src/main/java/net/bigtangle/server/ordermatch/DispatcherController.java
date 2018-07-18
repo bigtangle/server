@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
@@ -44,9 +45,10 @@ public class DispatcherController {
     @SuppressWarnings("unchecked")
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
     public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] bodyByte,
-            HttpServletResponse httpServletResponse) throws Exception {
+            HttpServletResponse httpServletResponse, HttpServletRequest httprequest) throws Exception {
         try {
-            logger.info("reqCmd : {}, reqHex : {}, started.", reqCmd, Utils.HEX.encode(bodyByte));
+            logger.info("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
+                    bodyByte.length);
             OrdermatchReqCmd reqCmd0000 = OrdermatchReqCmd.valueOf(reqCmd);
             switch (reqCmd0000) {
             case saveOrder: {
@@ -82,7 +84,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-                
+
             case getBatchExchange: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 List<String> address = Json.jsonmapper().readValue(reqStr, List.class);
@@ -98,7 +100,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-                
+
             case exchangeInfo: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -107,7 +109,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-                
+
             case cancelOrder: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -117,7 +119,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-                
+
             case deleteOrder: {
                 Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
                 this.orderPublishService.deleteOrder(block);
@@ -133,7 +135,7 @@ public class DispatcherController {
             this.outPrintJSONString(httpServletResponse, resp);
         }
     }
-    
+
     @Autowired
     private NetworkParameters networkParameters;
 
