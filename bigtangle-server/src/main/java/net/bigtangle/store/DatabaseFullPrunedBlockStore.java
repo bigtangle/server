@@ -1487,13 +1487,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	}
 
 	@Override
-	public HashSet<BlockWrap> getBlocksToAddToMilestone(long minDepth) throws BlockStoreException {
+	public HashSet<BlockWrap> getBlocksToAddToMilestone() throws BlockStoreException {
 		HashSet<BlockWrap> storedBlockHashes = new HashSet<>();
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = conn.get().prepareStatement(SELECT_BLOCKWRAPS_TO_ADD_TO_MILESTONE_SQL);
-			preparedStatement.setLong(1, minDepth);
+			preparedStatement.setLong(1, 0);
 			ResultSet resultSet = preparedStatement.executeQuery();
 			while (resultSet.next()) {
 				BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)),
@@ -1624,6 +1624,40 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 				blocksByDescendingHeight.add(new BlockWrap(block, blockEvaluation, params));
 			}
 			return blocksByDescendingHeight;
+		} catch (SQLException ex) {
+			throw new BlockStoreException(ex);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					throw new BlockStoreException("Failed to close PreparedStatement");
+				}
+			}
+		}
+	}
+	
+	@Override
+	public PriorityQueue<BlockWrap> getRatingEntryPointsAscending() throws BlockStoreException {
+		PriorityQueue<BlockWrap> resultQueue = new PriorityQueue<BlockWrap>(
+				Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()));
+		maybeConnect();
+		PreparedStatement preparedStatement = null;
+		try {
+			preparedStatement = conn.get().prepareStatement(SELECT_BLOCKS_IN_MILESTONEDEPTH_INTERVAL_SQL);
+			preparedStatement.setLong(1, 0);
+			preparedStatement.setLong(2, NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF);
+			ResultSet resultSet = preparedStatement.executeQuery();
+			while (resultSet.next()) {
+				BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)),
+						resultSet.getLong(2), resultSet.getLong(3), resultSet.getLong(4), resultSet.getBoolean(5),
+						resultSet.getLong(6), resultSet.getBoolean(7), resultSet.getLong(8), resultSet.getLong(9),
+						resultSet.getLong(10), resultSet.getBoolean(11), resultSet.getBoolean(12));
+				Block block = params.getDefaultSerializer().makeBlock(resultSet.getBytes(13));
+				block.verifyHeader();
+				resultQueue.add(new BlockWrap(block, blockEvaluation, params));
+			}
+			return resultQueue;
 		} catch (SQLException ex) {
 			throw new BlockStoreException(ex);
 		} finally {
@@ -2343,26 +2377,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 			preparedStatement.setBoolean(6, tokens.isAsmarket());
 			preparedStatement.setBoolean(7, tokens.isTokenstop());
 			preparedStatement.setString(8, tokens.getTokenid());
-			preparedStatement.executeUpdate();
-		} catch (SQLException e) {
-			throw new BlockStoreException(e);
-		} finally {
-			if (preparedStatement != null) {
-				try {
-					preparedStatement.close();
-				} catch (SQLException e) {
-					throw new BlockStoreException("Could not close statement");
-				}
-			}
-		}
-	}
-
-	@Override
-	public void updateUnmaintainAll() throws BlockStoreException {
-		maybeConnect();
-		PreparedStatement preparedStatement = null;
-		try {
-			preparedStatement = conn.get().prepareStatement(getUpdateBlockevaluationUnmaintainAllSQL());
 			preparedStatement.executeUpdate();
 		} catch (SQLException e) {
 			throw new BlockStoreException(e);

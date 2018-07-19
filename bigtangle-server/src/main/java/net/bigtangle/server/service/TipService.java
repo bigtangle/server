@@ -39,7 +39,7 @@ public class TipService {
 
 	private static Random seed = new Random();
 
-	public List<BlockWrap> getRatingTips(int count) throws Exception {
+	public List<BlockWrap> getRatingTips(int count) throws BlockStoreException {
 		Stopwatch watch = Stopwatch.createStarted();
 
 		List<BlockWrap> entryPoints = getRatingEntryPoints(count);
@@ -97,20 +97,20 @@ public class TipService {
 	private BlockWrap performValidatedStep(BlockWrap fromBlock, HashSet<BlockWrap> currentApprovedNonMilestoneBlocks)
 			throws BlockStoreException {
 		blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, fromBlock);
-		List<BlockWrap> validApprovers = blockService.getSolidApproverBlocks(fromBlock.getBlock().getHash());
+		List<BlockWrap> validApprovers = store.getSolidApproverBlocks(fromBlock.getBlock().getHash());
 		validApprovers.removeIf(b -> validatorService.isIneligibleForSelection(b, currentApprovedNonMilestoneBlocks));
 		return performTransition(fromBlock, validApprovers);
 	}
 
-	private BlockWrap randomWalk(BlockWrap currentBlock, long maxTime) throws Exception {
+	private BlockWrap randomWalk(BlockWrap currentBlock, long maxTime) throws BlockStoreException {
 		// Repeatedly perform transitions until the final tip is found
-		List<BlockWrap> approvers = blockService.getSolidApproverBlocks(currentBlock.getBlock().getHash());
+		List<BlockWrap> approvers = store.getSolidApproverBlocks(currentBlock.getBlock().getHash());
 		approvers.removeIf(b -> b.getBlockEvaluation().getInsertTime() > maxTime);
 		BlockWrap nextBlock = performTransition(currentBlock, approvers);
 
 		while (currentBlock != nextBlock) {
 			currentBlock = nextBlock;
-			approvers = blockService.getSolidApproverBlocks(currentBlock.getBlock().getHash());
+			approvers = store.getSolidApproverBlocks(currentBlock.getBlock().getHash());
 			approvers.removeIf(b -> b.getBlockEvaluation().getInsertTime() > maxTime);
 			nextBlock = performTransition(currentBlock, approvers);
 		}
@@ -162,7 +162,7 @@ public class TipService {
 		}
 	}
 
-	private List<BlockWrap> getRatingEntryPoints(int count) throws Exception {
+	private List<BlockWrap> getRatingEntryPoints(int count) throws BlockStoreException {
 		List<BlockWrap> candidates = blockService.getRatingEntryPointCandidates();
 		return pullRandomlyByCumulativeWeight(candidates, count);
 	}

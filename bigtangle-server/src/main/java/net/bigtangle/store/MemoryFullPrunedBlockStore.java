@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -20,10 +19,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 import net.bigtangle.core.Address;
-import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
-import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
@@ -387,101 +383,5 @@ public abstract class MemoryFullPrunedBlockStore implements FullPrunedBlockStore
             }
         }
         return foundOutputs;
-    }
-
-    @Override
-    public List<BlockWrap> getSolidApproverBlocks(Sha256Hash hash) throws BlockStoreException {
-        return null;
-    }
-
-    @Override
-    public BlockEvaluation getBlockEvaluation(Sha256Hash hash) {
-        return null;
-    }
-
-    @Override
-    public List<Sha256Hash> getSolidApproverBlockHashes(Sha256Hash hash) throws BlockStoreException {
-        return null;
-    }
-
- 
-	@Override
-	public long getMaxSolidHeight() throws BlockStoreException {
-		return 0;
-	}
-
-	@Override
-	public List<Block> getNonSolidBlocks() {
-		return null;
-	}
-
-	@Override
-	public List<BlockEvaluation> getSolidBlocksOfHeight(long currentHeight) {
-		return null;
-	}
-
-	@Override
-	public PriorityQueue<BlockWrap> getSolidTipsDescending() {
-		return null;
-	}
-
-	@Override
-	public HashSet<BlockEvaluation> getBlocksToRemoveFromMilestone() {
-		return null;
-	}
-
-	@Override
-	public HashSet<BlockWrap> getBlocksToAddToMilestone(long i) {
-		return null;
-	}
-
-	@Override
-	public void updateBlockEvaluationSolid(Sha256Hash blockhash, boolean b) {
-	}
-
-	 
-	@Override
-	public void updateBlockEvaluationCumulativeWeight(Sha256Hash blockhash, long i) {
-	}
-
-	@Override
-	public void updateBlockEvaluationDepth(Sha256Hash blockhash, long i) {
-	}
-
-	@Override
-	public void updateBlockEvaluationRating(Sha256Hash blockhash, long i) {
-	}
-
-	@Override
-	public void updateBlockEvaluationMilestone(Sha256Hash blockhash, boolean b) {
-	}
-
-	 
-	@Override
-	public void deleteTip(Sha256Hash prevBlockHash) throws BlockStoreException {
-	}
-
-	@Override
-	public void insertTip(Sha256Hash blockhash) throws BlockStoreException {		
-	}
-
-	@Override
-	public void removeUnspentTransactionOutput(Sha256Hash prevTxHash, long index) throws BlockStoreException {
-	}
-
-	@Override
-	public BlockEvaluation getTransactionOutputSpender(Sha256Hash prevBlockHash, long index)
-			throws BlockStoreException {
-		return null;
-	}
-
-	@Override
-	public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, long index, boolean b, Sha256Hash a)
-			throws BlockStoreException {
-	}
-
-    @Override
-    public int getMaxTokenId() {
-        return 0;
     }
 }

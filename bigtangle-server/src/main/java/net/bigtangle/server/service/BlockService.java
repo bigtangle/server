@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
 import java.util.concurrent.ExecutionException;
 
 import org.mortbay.log.Log;
@@ -77,84 +76,13 @@ public class BlockService {
         return store.getBlockEvaluation(hash);
     }
 
-    public List<BlockEvaluation> getBlockEvaluations(Collection<Sha256Hash> hashes) throws BlockStoreException {
-        List<BlockEvaluation> blocks = new ArrayList<BlockEvaluation>();
-        for (Sha256Hash hash : hashes) {
-            blocks.add(getBlockEvaluation(hash));
-        }
-        return blocks;
-    }
-
-    public List<BlockWrap> getSolidApproverBlocks(Sha256Hash blockhash) throws BlockStoreException {
-        return store.getSolidApproverBlocks(blockhash);
-    }
-
-    public List<Sha256Hash> getSolidApproverBlockHashes(Sha256Hash blockhash) throws BlockStoreException {
-        return store.getSolidApproverBlockHashes(blockhash);
-    }
-
-    public long getMaxSolidHeight() throws BlockStoreException {
-        return store.getMaxSolidHeight();
-    }
-
-    public List<Block> getNonSolidBlocks() throws BlockStoreException {
-        return store.getNonSolidBlocks();
-    }
-
-    public List<BlockEvaluation> getSolidBlocksOfHeight(long currentHeight) throws BlockStoreException {
-        return store.getSolidBlocksOfHeight(currentHeight);
-    }
-
-    public PriorityQueue<BlockWrap> getSolidTipsDescending() throws BlockStoreException {
-        return store.getSolidTipsDescending();
-    }
-
-    public List<BlockEvaluation> getAllBlockEvaluations() throws BlockStoreException {
-        return store.getAllBlockEvaluations();
-    }
-
-    public HashSet<BlockEvaluation> getBlocksToRemoveFromMilestone() throws BlockStoreException {
-        return store.getBlocksToRemoveFromMilestone();
-    }
-
-    public HashSet<BlockWrap> getBlocksToAddToMilestone() throws BlockStoreException {
-        return store.getBlocksToAddToMilestone(0);
-    }
-
-    public void updateSolid(BlockEvaluation blockEvaluation, boolean b) throws BlockStoreException {
-        blockEvaluation.setSolid(b);
-        store.updateBlockEvaluationSolid(blockEvaluation.getBlockHash(), b);
-    }
-
-    public void updateWeight(BlockEvaluation blockEvaluation, long i) throws BlockStoreException {
-        blockEvaluation.setCumulativeWeight(i);
-        store.updateBlockEvaluationCumulativeWeight(blockEvaluation.getBlockHash(), i);
-    }
-
-    public void updateWeightAndDepth(BlockEvaluation blockEvaluation, long weight, long depth) throws BlockStoreException {
-        blockEvaluation.setCumulativeWeight(weight);
-        blockEvaluation.setDepth(depth);
-        store.updateBlockEvaluationWeightAndDepth(blockEvaluation.getBlockHash(), weight, depth);
-    }
-
-    public void updateDepth(BlockEvaluation blockEvaluation, long i) throws BlockStoreException {
-        blockEvaluation.setDepth(i);
-        store.updateBlockEvaluationDepth(blockEvaluation.getBlockHash(), i);
-    }
-
-    public void updateMilestoneDepth(BlockEvaluation blockEvaluation, long i) throws BlockStoreException {
-        blockEvaluation.setMilestoneDepth(i);
-        store.updateBlockEvaluationMilestoneDepth(blockEvaluation.getBlockHash(), i);
-    }
-
-    public void updateRating(BlockEvaluation blockEvaluation, long i) throws BlockStoreException {
-        blockEvaluation.setRating(i);
-        store.updateBlockEvaluationRating(blockEvaluation.getBlockHash(), i);
-    }
-
     public void saveBinaryArrayToBlock(byte[] bytes) throws Exception {
         Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bytes);
         saveBlock(block);
+    }
+	
+    public List<BlockEvaluation> getAllBlockEvaluations() throws BlockStoreException {
+        return store.getAllBlockEvaluations();
     }
 
     public void saveBlock(Block block) throws Exception {
@@ -184,7 +112,7 @@ public class BlockService {
      * CONSUMERIDSUFFIX 12324
      */
     public void reCheckUnsolidBlock() throws Exception {
-        List<Block> blocklist = getNonSolidBlocks();
+        List<Block> blocklist = store.getNonSolidBlocks();
         for (Block block : blocklist) {
             boolean added = blockgraph.add(block, true);
             if (added) {
@@ -274,7 +202,7 @@ public class BlockService {
 
         // Remove this block and remove its approvers
         evaluations.remove(block);
-        for (Sha256Hash approver : getSolidApproverBlockHashes(block.getBlock().getHash())) {
+        for (Sha256Hash approver : store.getSolidApproverBlockHashes(block.getBlock().getHash())) {
             removeBlockAndApproversFrom(evaluations, store.getBlockWrap(approver));
         }
     }
@@ -294,7 +222,7 @@ public class BlockService {
 
         // Add this block and add all of its milestone approvers
         evaluations.add(evaluation);
-        for (Sha256Hash approverHash : getSolidApproverBlockHashes(evaluation.getBlockEvaluation().getBlockHash())) {
+        for (Sha256Hash approverHash : store.getSolidApproverBlockHashes(evaluation.getBlockEvaluation().getBlockHash())) {
             addMilestoneApproversTo(evaluations, store.getBlockWrap(approverHash));
         }
     }
@@ -370,5 +298,4 @@ public class BlockService {
             Log.warn("", e);
         }
     }
-
 }

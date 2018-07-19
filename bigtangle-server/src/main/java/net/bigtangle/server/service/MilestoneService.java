@@ -4,7 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -54,9 +53,9 @@ public class MilestoneService {
 	/**
 	 * Scheduled update function that updates the Tangle
 	 * 
-	 * @throws Exception
+	 * @throws BlockStoreException
 	 */
-	public void update() throws Exception {
+	public void update() throws BlockStoreException {
 		if (!lock.tryAcquire()) {
 			log.debug("Milestone Update already running. Returning...");
 			return;
@@ -108,7 +107,7 @@ public class MilestoneService {
 	 */
 	private void updateWeightAndDepth() throws BlockStoreException {
 		// Begin from the highest solid height tips and go backwards from there
-		PriorityQueue<BlockWrap> blockQueue = blockService.getSolidTipsDescending();
+		PriorityQueue<BlockWrap> blockQueue = store.getSolidTipsDescending();
 		HashMap<Sha256Hash, HashSet<Sha256Hash>> approvers = new HashMap<>();
 		HashMap<Sha256Hash, Long> depths = new HashMap<>();
 
@@ -137,7 +136,7 @@ public class MilestoneService {
 			subUpdateWeightAndDepth(blockQueue, approvers, depths, currentBlockHash, prevBranch);
 
 			// Update and dereference
-			blockService.updateWeightAndDepth(currentBlock.getBlockEvaluation(), approvers.get(currentBlockHash).size(),
+			store.updateBlockEvaluationWeightAndDepth(currentBlock.getBlockHash(), approvers.get(currentBlockHash).size(),
 					depths.get(currentBlockHash));
 			approvers.remove(currentBlockHash);
 			depths.remove(currentBlockHash);
@@ -170,7 +169,7 @@ public class MilestoneService {
 	 */
 	private void updateMilestoneDepth() throws BlockStoreException {
 		// Begin from the highest solid height tips and go backwards from there
-		PriorityQueue<BlockWrap> blockQueue = blockService.getSolidTipsDescending();
+		PriorityQueue<BlockWrap> blockQueue = store.getSolidTipsDescending();
 		HashMap<Sha256Hash, Long> milestoneDepths = new HashMap<>();
 
 		// Initialize milestone depths as -1
@@ -198,7 +197,7 @@ public class MilestoneService {
 			subUpdateMilestoneDepth(blockQueue, milestoneDepths, currentBlock, prevBranch);
 
 			// Update and dereference
-			blockService.updateMilestoneDepth(currentBlock.getBlockEvaluation(),
+			store.updateBlockEvaluationMilestoneDepth(currentBlock.getBlockHash(),
 					milestoneDepths.get(currentBlock.getBlockHash()));
 			milestoneDepths.remove(currentBlock.getBlockHash());
 		}
@@ -226,9 +225,9 @@ public class MilestoneService {
 	 * Update rating: the percentage of times that tips selected by MCMC approve a
 	 * block
 	 * 
-	 * @throws Exception
+	 * @throws BlockStoreException
 	 */
-	private void updateRating() throws Exception {
+	private void updateRating() throws BlockStoreException {
 		// Select #tipCount solid tips via MCMC
 		HashMap<BlockWrap, HashSet<UUID>> selectedTipApprovers = new HashMap<BlockWrap, HashSet<UUID>>(
 				NetworkParameters.MAX_RATING_TIP_COUNT);
@@ -247,7 +246,7 @@ public class MilestoneService {
 		}
 
 		// Begin from the highest solid height tips and go backwards from there
-		PriorityQueue<BlockWrap> blockQueue = blockService.getSolidTipsDescending();
+		PriorityQueue<BlockWrap> blockQueue = store.getSolidTipsDescending();
 		HashMap<Sha256Hash, HashSet<UUID>> approvers = new HashMap<>();
 		for (BlockWrap tip : blockQueue) {
 			approvers.put(tip.getBlock().getHash(), new HashSet<>());
@@ -273,7 +272,7 @@ public class MilestoneService {
 			subUpdateRating(blockQueue, approvers, currentBlock, prevBranch);
 
 			// Update your rating
-			blockService.updateRating(currentBlock.getBlockEvaluation(),
+			store.updateBlockEvaluationRating(currentBlock.getBlockHash(),
 					approvers.get(currentBlock.getBlockHash()).size());
 			approvers.remove(currentBlock.getBlockHash());
 		}
@@ -301,13 +300,13 @@ public class MilestoneService {
 	 */
 	private void updateMilestone() throws BlockStoreException {
 		// First remove any blocks that should no longer be in the milestone
-		HashSet<BlockEvaluation> blocksToRemove = blockService.getBlocksToRemoveFromMilestone();
+		HashSet<BlockEvaluation> blocksToRemove = store.getBlocksToRemoveFromMilestone();
 		for (BlockEvaluation block : blocksToRemove)
 			blockService.unconfirm(block);
 
 		for (int i = 0; true; i++) {
 			// Now try to find blocks that can be added to the milestone
-			HashSet<BlockWrap> blocksToAdd = blockService.getBlocksToAddToMilestone();
+			HashSet<BlockWrap> blocksToAdd = store.getBlocksToAddToMilestone();
 
 			// VALIDITY CHECKS
 			validatorService.resolveValidityConflicts(blocksToAdd, true);
@@ -326,7 +325,7 @@ public class MilestoneService {
 	}
 
 	/**
-	 * Updates maintained field in block evaluation Sets maintained to true if
+	 * Updates maintained field in block evaluation. Sets maintained to true if
 	 * reachable by a rating entry point, else false.
 	 * 
 	 * @throws BlockStoreException
@@ -334,7 +333,7 @@ public class MilestoneService {
 	private void updateMaintained() throws BlockStoreException {
 		HashSet<Sha256Hash> maintainedBlockHashes = store.getMaintainedBlockHashes();
 		HashSet<Sha256Hash> traversedBlockHashes = new HashSet<>();
-		PriorityQueue<BlockWrap> blocks = getRatingEntryPointsAscendingAsPriorityQueue();
+		PriorityQueue<BlockWrap> blocks = store.getRatingEntryPointsAscending();
 		HashSet<BlockWrap> blocksToTraverse = new HashSet<>(blocks);
 
 		// Now set maintained in order of ascending height
@@ -342,7 +341,7 @@ public class MilestoneService {
 		while ((currentBlock = blocks.poll()) != null) {
 			blocksToTraverse.remove(currentBlock);
 			traversedBlockHashes.add(currentBlock.getBlockHash());
-			List<BlockWrap> solidApproverBlocks = blockService.getSolidApproverBlocks(currentBlock.getBlockHash());
+			List<BlockWrap> solidApproverBlocks = store.getSolidApproverBlocks(currentBlock.getBlockHash());
 			for (BlockWrap b : solidApproverBlocks) {
 				if (blocksToTraverse.contains(b))
 					continue;
@@ -361,22 +360,5 @@ public class MilestoneService {
 		for (Sha256Hash hash : traversedBlockHashes.stream().filter(h -> !maintainedBlockHashes.contains(h))
 				.collect(Collectors.toList()))
 			store.updateBlockEvaluationMaintained(hash, true);
-	}
-
-	/**
-	 * Returns all rating entry point candidates ordered by ascending height
-	 * 
-	 * @return solid tips by ordered by descending height
-	 * @throws BlockStoreException
-	 */
-	private PriorityQueue<BlockWrap> getRatingEntryPointsAscendingAsPriorityQueue() throws BlockStoreException {
-		List<BlockWrap> candidates = blockService.getRatingEntryPointCandidates();
-		if (candidates.isEmpty())
-			throw new IllegalStateException("No rating entry point candidates were found!");
-
-		PriorityQueue<BlockWrap> blocksByDescendingHeight = new PriorityQueue<BlockWrap>(candidates.size(),
-				Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()));
-		blocksByDescendingHeight.addAll(candidates);
-		return blocksByDescendingHeight;
 	}
 }
