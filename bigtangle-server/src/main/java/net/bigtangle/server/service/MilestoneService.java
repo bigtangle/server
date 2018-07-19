@@ -131,43 +131,36 @@ public class MilestoneService {
 			// not yet initialized)
 			Block block = blockService.getBlock(currentBlock.getBlockHash());
 
-			if (!approverHashSets.containsKey(block.getPrevBlockHash())) {
-				BlockWrap prevBlockEvaluation = store.getBlockWrap(block.getPrevBlockHash());
-				if (prevBlockEvaluation != null) {
-					blocksByDescendingHeight.add(prevBlockEvaluation);
-					approverHashSets.put(prevBlockEvaluation.getBlockHash(), new HashSet<>());
-					depths.put(prevBlockEvaluation.getBlockHash(), 0L);
-				}
-			}
+			Sha256Hash prevTrunk = block.getPrevBlockHash();
+			updateApprovedBlock(blocksByDescendingHeight, approverHashSets, depths, approverHashes, depth,
+					prevTrunk);
 
-			if (!approverHashSets.containsKey(block.getPrevBranchBlockHash())) {
-				BlockWrap prevBranchBlockEvaluation = store.getBlockWrap(block.getPrevBranchBlockHash());
-				if (prevBranchBlockEvaluation != null) {
-					blocksByDescendingHeight.add(prevBranchBlockEvaluation);
-					approverHashSets.put(prevBranchBlockEvaluation.getBlockHash(), new HashSet<>());
-					depths.put(prevBranchBlockEvaluation.getBlockHash(), 0L);
-				}
-			}
-
-			if (approverHashSets.containsKey(block.getPrevBlockHash())) {
-				approverHashSets.get(block.getPrevBlockHash()).addAll(approverHashes);
-				if (depth + 1 > depths.get(block.getPrevBlockHash())) {
-					depths.put(block.getPrevBlockHash(), depth + 1);
-				}
-			}
-
-			if (approverHashSets.containsKey(block.getPrevBranchBlockHash())) {
-				approverHashSets.get(block.getPrevBranchBlockHash()).addAll(approverHashes);
-				if (depth + 1 > depths.get(block.getPrevBranchBlockHash())) {
-					depths.put(block.getPrevBranchBlockHash(), depth + 1);
-				}
-			}
+			Sha256Hash prevBranch = block.getPrevBranchBlockHash();
+			updateApprovedBlock(blocksByDescendingHeight, approverHashSets, depths, approverHashes, depth,
+					prevBranch);
 
 			// Update and dereference
 			blockService.updateCumulativeWeight(currentBlock.getBlockEvaluation(), approverHashes.size());
 			blockService.updateDepth(currentBlock.getBlockEvaluation(), depth);
 			approverHashSets.remove(currentBlock.getBlockHash());
 			depths.remove(currentBlock.getBlockHash());
+		}
+	}
+
+	private void updateApprovedBlock(PriorityQueue<BlockWrap> blocksByDescendingHeight,
+			HashMap<Sha256Hash, HashSet<Sha256Hash>> approverHashSets, HashMap<Sha256Hash, Long> depths,
+			HashSet<Sha256Hash> approverHashes, long depth, Sha256Hash prevBlockHash) throws BlockStoreException {
+		if (!approverHashSets.containsKey(prevBlockHash)) {
+			BlockWrap prevBlockEvaluation = store.getBlockWrap(prevBlockHash);
+			if (prevBlockEvaluation != null) {
+				blocksByDescendingHeight.add(prevBlockEvaluation);
+				approverHashSets.put(prevBlockEvaluation.getBlockHash(), new HashSet<>(approverHashes));
+				depths.put(prevBlockEvaluation.getBlockHash(), depth + 1);
+			}
+		} else {
+			approverHashSets.get(prevBlockHash).addAll(approverHashes);
+			if (depth + 1 > depths.get(prevBlockHash))
+				depths.put(prevBlockHash, depth + 1);
 		}
 	}
 
@@ -212,7 +205,8 @@ public class MilestoneService {
 			}
 
 			if (milestoneDepths.containsKey(block.getPrevBlockHash())) {
-				if (currentBlock.getBlockEvaluation().isMilestone() && milestoneDepth + 1 > milestoneDepths.get(block.getPrevBlockHash())) {
+				if (currentBlock.getBlockEvaluation().isMilestone()
+						&& milestoneDepth + 1 > milestoneDepths.get(block.getPrevBlockHash())) {
 					milestoneDepths.put(block.getPrevBlockHash(), milestoneDepth + 1);
 				}
 			}
@@ -240,7 +234,7 @@ public class MilestoneService {
 		HashMap<BlockWrap, HashSet<UUID>> selectedTipApprovers = new HashMap<BlockWrap, HashSet<UUID>>(
 				NetworkParameters.MAX_RATING_TIP_COUNT);
 		List<BlockWrap> selectedTips = tipsService.getRatingTips(NetworkParameters.MAX_RATING_TIP_COUNT);
-		
+
 		for (BlockWrap selectedTip : selectedTips) {
 			if (selectedTipApprovers.containsKey(selectedTip)) {
 				HashSet<UUID> result = selectedTipApprovers.get(selectedTip);

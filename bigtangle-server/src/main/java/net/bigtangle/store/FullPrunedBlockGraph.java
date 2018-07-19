@@ -312,28 +312,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 		this.blockStore.updateVOSExecute(vosExecute_);
 	}
 
-	private boolean checkOutput(Map<String, Coin> valueOut) {
-		for (Map.Entry<String, Coin> entry : valueOut.entrySet()) {
-			// System.out.println(entry.getKey() + "/" + entry.getValue());
-			if (entry.getValue().signum() < 0) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private boolean checkInputOutput(Map<String, Coin> valueInput, Map<String, Coin> valueOut) {
-		for (Map.Entry<String, Coin> entry : valueOut.entrySet()) {
-			if (!valueInput.containsKey(entry.getKey())) {
-				return false;
-			} else {
-				if (valueInput.get(entry.getKey()).compareTo(entry.getValue()) < 0)
-					return false;
-			}
-		}
-		return true;
-	}
-
 	/**
 	 * Adds the specified block and all approved blocks to the milestone. This will
 	 * connect all transactions of the block by marking used UTXOs spent and adding
@@ -755,6 +733,28 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 				// Ignore;
 				log.error(" " + e);
 
+			}
+		}
+		return true;
+	}
+
+	private boolean checkOutput(Map<String, Coin> valueOut) {
+		for (Map.Entry<String, Coin> entry : valueOut.entrySet()) {
+			// System.out.println(entry.getKey() + "/" + entry.getValue());
+			if (entry.getValue().signum() < 0) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private boolean checkInputOutput(Map<String, Coin> valueInput, Map<String, Coin> valueOut) {
+		for (Map.Entry<String, Coin> entry : valueOut.entrySet()) {
+			if (!valueInput.containsKey(entry.getKey())) {
+				return false;
+			} else {
+				if (valueInput.get(entry.getKey()).compareTo(entry.getValue()) < 0)
+					return false;
 			}
 		}
 		return true;

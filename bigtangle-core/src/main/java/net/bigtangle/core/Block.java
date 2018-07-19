@@ -994,7 +994,7 @@ public class Block extends Message {
     }
 
     /**
-     * Returns the hash of the previous block in the chain, as defined by the
+     * Returns the hash of the previous trunk block in the chain, as defined by the
      * block header.
      */
     public Sha256Hash getPrevBlockHash() {
@@ -1007,6 +1007,10 @@ public class Block extends Message {
         this.hash = null;
     }
 
+    /**
+     * Returns the hash of the previous branch block in the chain, as defined by the
+     * block header.
+     */
     public Sha256Hash getPrevBranchBlockHash() {
         return prevBranchBlockHash;
     }
