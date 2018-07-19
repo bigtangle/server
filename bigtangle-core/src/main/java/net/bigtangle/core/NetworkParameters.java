@@ -179,6 +179,7 @@ public abstract class NetworkParameters {
 
     public static final int REWARD_HEIGHT_INTERVAL = 100;
     public static final BigInteger MAX_TARGET = Utils.decodeCompactBits(0x207fFFFFL);
+	public static final long MAX_TIMESTAMP_DIFF = 5 * 60;
 
     /**
      * The maximum number of coins to be generated

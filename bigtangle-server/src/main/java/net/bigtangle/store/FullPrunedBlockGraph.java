@@ -564,7 +564,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 		if (block.getTimeSeconds() < storedPrev.getHeader().getTimeSeconds()
 				|| block.getTimeSeconds() < storedPrevBranch.getHeader().getTimeSeconds())
 			return false;
-		// TODO do not allow timestamp to exceed system time by more than 5 minutes
+		
+		if (block.getTimeSeconds() > System.currentTimeMillis() + NetworkParameters.MAX_TIMESTAMP_DIFF)
+			return false;
 
 		// Check formal correctness of TXs and their data
 		try {
