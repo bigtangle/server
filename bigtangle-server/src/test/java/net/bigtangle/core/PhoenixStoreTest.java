@@ -14,7 +14,6 @@ import org.junit.After;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import net.bigtangle.params.UnitTestParams;
 import net.bigtangle.store.DatabaseFullPrunedBlockStore;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.store.PhoenixBlockStore;
@@ -103,12 +102,6 @@ public class PhoenixStoreTest extends AbstractFullPrunedBlockChainTest {
         sqlStatements.add(PhoenixBlockStore.CREATE_TOKENS_TABLE);
         return sqlStatements;
     }
-    
-    protected static final NetworkParameters PARAMS = new UnitTestParams() {
-        @Override public int getInterval() {
-            return 10000;
-        }
-    };
     
     protected List<String> getCreateIndexesSQL() {
         List<String> sqlStatements = new ArrayList<String>();

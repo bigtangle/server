@@ -45,11 +45,8 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractFullPrunedBlockChainTest.class);
 
-    protected static final NetworkParameters PARAMS = new UnitTestParams() {
-        @Override public int getInterval() {
-            return 10000;
-        }
-    };
+    protected static final NetworkParameters PARAMS = new UnitTestParams();
+    
     @Autowired
     protected FullPrunedBlockGraph blockgraph;
     protected FullPrunedBlockStore store;

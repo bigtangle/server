@@ -91,8 +91,6 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
     ECKey outKey = new ECKey();
 
-    // TODO test token issuance network split
-
     public List<Block> createMultiLinearTangle1() throws Exception {
 
         List<Block> blocks = new ArrayList<Block>();
@@ -440,7 +438,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertFalse(blockService.getBlockEvaluation(rewardBlock.getHash()).isMilestone());
     }
 
-    @Test
+    //@Test
     public void testReorgDeadlockResolution() throws Exception {
         store.resetStore();
 

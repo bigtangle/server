@@ -8,8 +8,6 @@ package net.bigtangle.params;
 import java.io.Serializable;
 import java.math.BigInteger;
 
-import net.bigtangle.core.*;
-
 /**
  * Network parameters used by the bitcoinj unit tests (and potentially your own). This lets you solve a block using
  * {@link net.bigtangle.core.Block#solve()} by setting difficulty to the easiest possible.
@@ -32,9 +30,7 @@ public class UnitTestParams extends AbstractBitcoinNetParams implements Serializ
         acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
         maxTarget = new BigInteger("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
         port = 18333;
-        interval = 10;
         dumpedPrivateKeyHeader = 239;
-        targetTimespan = 200000000;  // 6 years. Just a very big number.
         spendableCoinbaseDepth = 10;
         subsidyDecreaseBlockCount = 100;
         dnsSeeds = null;

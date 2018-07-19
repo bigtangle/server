@@ -89,6 +89,7 @@ public class MultiSignService {
     /*
      * check unique as conflicts
      */
+    // TODO change to unified logic (see mining rewards)
     public boolean checkMultiSignPre(Block block, boolean allowConflicts) throws BlockStoreException, Exception {
 
         // Check these TODOs and make sure they are implemented

@@ -5,8 +5,6 @@
 
 package net.bigtangle.params;
 
-import java.util.Date;
-
 import net.bigtangle.core.Utils;
 
 /**
@@ -17,10 +15,7 @@ public class TestNet3Params extends AbstractBitcoinNetParams {
     public TestNet3Params() {
         super();
         id = ID_TESTNET;
-        // Genesis hash is 000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943
         packetMagic = 0x0b110907;
-        interval = INTERVAL;
-        targetTimespan = TARGET_TIMESPAN;
         maxTarget = Utils.decodeCompactBits(0x1d00ffffL);
         port = 18333;
         addressHeader = 111;
@@ -58,11 +53,5 @@ public class TestNet3Params extends AbstractBitcoinNetParams {
         }
         return instance;
     }
-
-   
-
-    // February 16th 2012
-    private static final Date testnetDiffDate = new Date(1329264000000L);
-
 }
     

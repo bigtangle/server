@@ -26,7 +26,6 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.PrunedException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
-import net.bigtangle.core.StoredUndoableBlock;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutputChanges;
 import net.bigtangle.core.VerificationException;
@@ -181,12 +180,6 @@ public abstract class AbstractBlockGraph {
             throws BlockStoreException, VerificationException;
 
     /**
-     * For a standard BlockChain, this should return blockStore.get(hash), for a
-     * FullPrunedBlockChain blockStore.getOnceUndoableStoredBlock(hash)
-     */
-    protected abstract StoredBlock getStoredBlockInCurrentScope(Sha256Hash hash) throws BlockStoreException;
-
-    /**
      * Processes a received block and tries to add it to the chain. If there's
      * something wrong with the block an exception is thrown. If the block is OK
      * but cannot be connected to the chain at this time, returns false. If the
@@ -243,24 +236,6 @@ public abstract class AbstractBlockGraph {
      */
     public abstract boolean shouldVerifyTransactions();
 
-    /**
-     * Connect each transaction in block.transactions, verifying them as we go
-     * and removing spent outputs If an error is encountered in a transaction,
-     * no changes should be made to the underlying BlockStore. and a
-     * VerificationException should be thrown. Only called
-     * if(shouldVerifyTransactions())
-     * 
-     * @throws VerificationException
-     *             if an attempt was made to spend an already-spent output, or
-     *             if a transaction incorrectly solved an output script.
-     * @throws BlockStoreException
-     *             if the block store had an underlying error.
-     * @return The full set of all changes made to the set of open transaction
-     *         outputs.
-     */
-    protected abstract TransactionOutputChanges connectTransactions(long height, Block block)
-            throws VerificationException, BlockStoreException;
-
     // filteredTxHashList contains all transactions, filteredTxn just a subset
     private boolean add(Block block, boolean tryConnecting, @Nullable List<Sha256Hash> filteredTxHashList,
             @Nullable Map<Sha256Hash, Transaction> filteredTxn, boolean allowConflicts)
@@ -275,8 +250,8 @@ public abstract class AbstractBlockGraph {
             // Check the block is formally valid
             try {
                 block.verifyHeader();
-                storedPrev = getStoredBlockInCurrentScope(block.getPrevBlockHash());
-                storedPrevBranch = getStoredBlockInCurrentScope(block.getPrevBranchBlockHash());
+                storedPrev = blockStore.get(block.getPrevBlockHash());
+                storedPrevBranch = blockStore.get(block.getPrevBranchBlockHash());
 
                 if (storedPrev != null && storedPrevBranch != null) {
                     height = Math.max(storedPrev.getHeight(), storedPrevBranch.getHeight()) + 1;
@@ -323,28 +298,11 @@ public abstract class AbstractBlockGraph {
             @Nullable final Map<Sha256Hash, Transaction> filteredTxn)
             throws BlockStoreException, VerificationException, PrunedException {
         checkState(lock.isHeldByCurrentThread());
-        
-        StoredBlock newStoredBlock = addToBlockStore(storedPrev,storedPrevBranch, block);
-      //  tryFirstSetSolidityAndHeight(newStoredBlock.getHeader());
+        addToBlockStore(storedPrev,storedPrevBranch, block);
     }
 
     protected abstract boolean checkSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch,
             long height, boolean allowConflicts) throws BlockStoreException, VerificationException;
-
-    //protected abstract void tryFirstSetSolidityAndHeight(Block block) throws BlockStoreException;
-
-    /**
-     * Disconnect each transaction in the block (after reading it from the block
-     * store) Only called if(shouldVerifyTransactions())
-     * 
-     * @throws PrunedException
-     *             if block does not exist as a {@link StoredUndoableBlock} in
-     *             the block store.
-     * @throws BlockStoreException
-     *             if the block store had an underlying error or block does not
-     *             exist in the block store at all.
-     */
-    protected abstract void removeTransactionsFromMilestone(Block block) throws PrunedException, BlockStoreException;
 
     /**
      * The false positive rate is the average over all blockchain transactions
@@ -426,5 +384,5 @@ public abstract class AbstractBlockGraph {
         }
     }
 
-    public abstract void solidifyBlock(Block block) throws BlockStoreException;
+    protected abstract void solidifyBlock(Block block) throws BlockStoreException;
 }

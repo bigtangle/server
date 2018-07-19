@@ -186,8 +186,11 @@ public class ValidatorService {
 	 * @return true if a block was removed
 	 * @throws BlockStoreException
 	 */
-	// TODO opt: return false on failure parameter
 	public boolean removeWherePreconditionsUnfulfilled(Collection<BlockWrap> blocksToAdd) throws BlockStoreException {
+		return removeWherePreconditionsUnfulfilled(blocksToAdd, false);
+	}
+	
+	public boolean removeWherePreconditionsUnfulfilled(Collection<BlockWrap> blocksToAdd, boolean returnOnFirstRemoval) throws BlockStoreException {
 		boolean removed = false;
 
 		for (BlockWrap b : new HashSet<BlockWrap>(blocksToAdd)) {
@@ -572,7 +575,7 @@ public class ValidatorService {
 		// Remove blocks and their approvers that have at least one input
 		// with its corresponding output not confirmed yet
 		try {
-			if (removeWherePreconditionsUnfulfilled(newApprovedNonMilestoneBlocks))
+			if (removeWherePreconditionsUnfulfilled(newApprovedNonMilestoneBlocks, true))
 				return true;
 		} catch (BlockStoreException e) {
 			e.printStackTrace();

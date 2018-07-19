@@ -5,7 +5,6 @@
 
 package net.bigtangle.params;
 
-import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
 
 /**
@@ -18,8 +17,6 @@ public class MainNetParams extends AbstractBitcoinNetParams {
 
     public MainNetParams() {
         super();
-        interval = INTERVAL;
-        targetTimespan = TARGET_TIMESPAN;
         maxTarget = Utils.decodeCompactBits(0x1d00ffffL);
         dumpedPrivateKeyHeader = 128;
         addressHeader = 0;
