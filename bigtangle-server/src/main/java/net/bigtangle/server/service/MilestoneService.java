@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 
 import com.google.common.base.Stopwatch;
 
-import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.BlockWrap;
@@ -73,7 +72,7 @@ public class MilestoneService {
 
 			watch.stop();
 			watch = Stopwatch.createStarted();
-			updateCumulativeWeightAndDepth();
+			updateWeightAndDepth();
 			log.info("Weight and depth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
 			watch.stop();
@@ -102,130 +101,130 @@ public class MilestoneService {
 	}
 
 	/**
-	 * Update cumulative weight, the amount of blocks a block is approved by
+	 * Update cumulative weight: the amount of blocks a block is approved by. Update
+	 * depth: the longest chain of blocks to a tip
 	 * 
 	 * @throws BlockStoreException
 	 */
-	private void updateCumulativeWeightAndDepth() throws BlockStoreException {
+	private void updateWeightAndDepth() throws BlockStoreException {
 		// Begin from the highest solid height tips and go backwards from there
-		PriorityQueue<BlockWrap> blocksByDescendingHeight = blockService.getSolidTipsDescending();
-		HashMap<Sha256Hash, HashSet<Sha256Hash>> approverHashSets = new HashMap<>();
+		PriorityQueue<BlockWrap> blockQueue = blockService.getSolidTipsDescending();
+		HashMap<Sha256Hash, HashSet<Sha256Hash>> approvers = new HashMap<>();
 		HashMap<Sha256Hash, Long> depths = new HashMap<>();
-		for (BlockWrap tip : blocksByDescendingHeight) {
-			approverHashSets.put(tip.getBlockHash(), new HashSet<>());
+
+		// Initialize weight and depth of tips
+		for (BlockWrap tip : blockQueue) {
+			approvers.put(tip.getBlockHash(), new HashSet<>());
 			depths.put(tip.getBlockHash(), 0L);
 		}
 
 		BlockWrap currentBlock = null;
-		while ((currentBlock = blocksByDescendingHeight.poll()) != null) {
-			// Abort if unmaintained
+		while ((currentBlock = blockQueue.poll()) != null) {
+			Sha256Hash currentBlockHash = currentBlock.getBlockHash();
+
+			// Abort if unmaintained, since it will be irrelevant for any tip selections
 			if (!currentBlock.getBlockEvaluation().isMaintained())
 				continue;
 
 			// Add your own hash to approver hashes of current approver hashes
-			HashSet<Sha256Hash> approverHashes = approverHashSets.get(currentBlock.getBlockHash());
-			approverHashes.add(currentBlock.getBlockHash());
-			long depth = depths.get(currentBlock.getBlockHash());
+			approvers.get(currentBlockHash).add(currentBlockHash);
 
-			// Add all current references to both approved blocks (initialize if
-			// not yet initialized)
-			Block block = blockService.getBlock(currentBlock.getBlockHash());
+			// Add all current references to both approved blocks
+			Sha256Hash prevTrunk = currentBlock.getBlock().getPrevBlockHash();
+			subUpdateWeightAndDepth(blockQueue, approvers, depths, currentBlockHash, prevTrunk);
 
-			Sha256Hash prevTrunk = block.getPrevBlockHash();
-			updateApprovedBlock(blocksByDescendingHeight, approverHashSets, depths, approverHashes, depth,
-					prevTrunk);
-
-			Sha256Hash prevBranch = block.getPrevBranchBlockHash();
-			updateApprovedBlock(blocksByDescendingHeight, approverHashSets, depths, approverHashes, depth,
-					prevBranch);
+			Sha256Hash prevBranch = currentBlock.getBlock().getPrevBranchBlockHash();
+			subUpdateWeightAndDepth(blockQueue, approvers, depths, currentBlockHash, prevBranch);
 
 			// Update and dereference
-			blockService.updateCumulativeWeight(currentBlock.getBlockEvaluation(), approverHashes.size());
-			blockService.updateDepth(currentBlock.getBlockEvaluation(), depth);
-			approverHashSets.remove(currentBlock.getBlockHash());
-			depths.remove(currentBlock.getBlockHash());
+			blockService.updateWeightAndDepth(currentBlock.getBlockEvaluation(), approvers.get(currentBlockHash).size(),
+					depths.get(currentBlockHash));
+			approvers.remove(currentBlockHash);
+			depths.remove(currentBlockHash);
 		}
 	}
 
-	private void updateApprovedBlock(PriorityQueue<BlockWrap> blocksByDescendingHeight,
-			HashMap<Sha256Hash, HashSet<Sha256Hash>> approverHashSets, HashMap<Sha256Hash, Long> depths,
-			HashSet<Sha256Hash> approverHashes, long depth, Sha256Hash prevBlockHash) throws BlockStoreException {
-		if (!approverHashSets.containsKey(prevBlockHash)) {
-			BlockWrap prevBlockEvaluation = store.getBlockWrap(prevBlockHash);
-			if (prevBlockEvaluation != null) {
-				blocksByDescendingHeight.add(prevBlockEvaluation);
-				approverHashSets.put(prevBlockEvaluation.getBlockHash(), new HashSet<>(approverHashes));
-				depths.put(prevBlockEvaluation.getBlockHash(), depth + 1);
+	private void subUpdateWeightAndDepth(PriorityQueue<BlockWrap> blockQueue,
+			HashMap<Sha256Hash, HashSet<Sha256Hash>> approvers, HashMap<Sha256Hash, Long> depths,
+			Sha256Hash currentBlockHash, Sha256Hash approvedBlockHash) throws BlockStoreException {
+		Long currentDepth = depths.get(currentBlockHash);
+		HashSet<Sha256Hash> currentApprovers = approvers.get(currentBlockHash);
+		if (!approvers.containsKey(approvedBlockHash)) {
+			BlockWrap prevBlock = store.getBlockWrap(approvedBlockHash);
+			if (prevBlock != null) {
+				blockQueue.add(prevBlock);
+				approvers.put(approvedBlockHash, new HashSet<>(currentApprovers));
+				depths.put(approvedBlockHash, currentDepth + 1);
 			}
 		} else {
-			approverHashSets.get(prevBlockHash).addAll(approverHashes);
-			if (depth + 1 > depths.get(prevBlockHash))
-				depths.put(prevBlockHash, depth + 1);
+			approvers.get(approvedBlockHash).addAll(currentApprovers);
+			if (currentDepth + 1 > depths.get(approvedBlockHash))
+				depths.put(approvedBlockHash, currentDepth + 1);
 		}
 	}
 
 	/**
-	 * Update cumulative weight, the amount of blocks a block is approved by
+	 * Update MilestoneDepth: the longest forward path to a milestone block
 	 * 
 	 * @throws BlockStoreException
 	 */
 	private void updateMilestoneDepth() throws BlockStoreException {
 		// Begin from the highest solid height tips and go backwards from there
-		PriorityQueue<BlockWrap> blocksByDescendingHeight = blockService.getSolidTipsDescending();
+		PriorityQueue<BlockWrap> blockQueue = blockService.getSolidTipsDescending();
 		HashMap<Sha256Hash, Long> milestoneDepths = new HashMap<>();
-		for (BlockWrap tip : blocksByDescendingHeight) {
+
+		// Initialize milestone depths as -1
+		for (BlockWrap tip : blockQueue) {
 			milestoneDepths.put(tip.getBlockHash(), -1L);
 		}
 
 		BlockWrap currentBlock = null;
-		while ((currentBlock = blocksByDescendingHeight.poll()) != null) {
-			// Abort if unmaintained
+		while ((currentBlock = blockQueue.poll()) != null) {
+			// Abort if unmaintained, since it will be irrelevant (new milestone blocks will
+			// always be relevant since lower cut-off is set to zero
 			if (!currentBlock.getBlockEvaluation().isMaintained())
 				continue;
 
-			// Add all current references to both approved blocks (initialize if
-			// not yet initialized)
-			long milestoneDepth = milestoneDepths.get(currentBlock.getBlockHash());
-			Block block = blockService.getBlock(currentBlock.getBlockHash());
+			// If depth is set to -1 and we are milestone, set to 0
+			if (milestoneDepths.get(currentBlock.getBlockHash()) == -1L
+					&& currentBlock.getBlockEvaluation().isMilestone())
+				milestoneDepths.put(currentBlock.getBlockHash(), 0L);
 
-			if (!milestoneDepths.containsKey(block.getPrevBlockHash())) {
-				BlockWrap prevBlockEvaluation = store.getBlockWrap(block.getPrevBlockHash());
-				if (prevBlockEvaluation != null) {
-					blocksByDescendingHeight.add(prevBlockEvaluation);
-					milestoneDepths.put(prevBlockEvaluation.getBlockHash(), -1L);
-				}
-			}
+			// Add all current references to both approved blocks
+			Sha256Hash prevTrunk = currentBlock.getBlock().getPrevBlockHash();
+			subUpdateMilestoneDepth(blockQueue, milestoneDepths, currentBlock, prevTrunk);
 
-			if (!milestoneDepths.containsKey(block.getPrevBranchBlockHash())) {
-				BlockWrap prevBranchBlockEvaluation = store.getBlockWrap(block.getPrevBranchBlockHash());
-				if (prevBranchBlockEvaluation != null) {
-					blocksByDescendingHeight.add(prevBranchBlockEvaluation);
-					milestoneDepths.put(prevBranchBlockEvaluation.getBlockHash(), -1L);
-				}
-			}
-
-			if (milestoneDepths.containsKey(block.getPrevBlockHash())) {
-				if (currentBlock.getBlockEvaluation().isMilestone()
-						&& milestoneDepth + 1 > milestoneDepths.get(block.getPrevBlockHash())) {
-					milestoneDepths.put(block.getPrevBlockHash(), milestoneDepth + 1);
-				}
-			}
-
-			if (milestoneDepths.containsKey(block.getPrevBranchBlockHash())) {
-				if (currentBlock.getBlockEvaluation().isMilestone()
-						&& milestoneDepth + 1 > milestoneDepths.get(block.getPrevBranchBlockHash())) {
-					milestoneDepths.put(block.getPrevBranchBlockHash(), milestoneDepth + 1);
-				}
-			}
+			Sha256Hash prevBranch = currentBlock.getBlock().getPrevBranchBlockHash();
+			subUpdateMilestoneDepth(blockQueue, milestoneDepths, currentBlock, prevBranch);
 
 			// Update and dereference
-			blockService.updateMilestoneDepth(currentBlock.getBlockEvaluation(), milestoneDepth + 1);
+			blockService.updateMilestoneDepth(currentBlock.getBlockEvaluation(),
+					milestoneDepths.get(currentBlock.getBlockHash()));
 			milestoneDepths.remove(currentBlock.getBlockHash());
 		}
 	}
 
+	private void subUpdateMilestoneDepth(PriorityQueue<BlockWrap> blockQueue,
+			HashMap<Sha256Hash, Long> milestoneDepths, BlockWrap currentBlock, Sha256Hash approvedBlock)
+			throws BlockStoreException {
+		boolean isMilestone = currentBlock.getBlockEvaluation().isMilestone();
+		long milestoneDepth = milestoneDepths.get(currentBlock.getBlockHash());
+		if (!milestoneDepths.containsKey(approvedBlock)) {
+			BlockWrap prevBlock = store.getBlockWrap(approvedBlock);
+			if (prevBlock != null) {
+				blockQueue.add(prevBlock);
+				milestoneDepths.put(prevBlock.getBlockHash(), isMilestone ? milestoneDepth + 1 : -1L);
+			}
+		} else {
+			if (isMilestone)
+				if (milestoneDepth + 1 > milestoneDepths.get(approvedBlock))
+					milestoneDepths.put(approvedBlock, milestoneDepth + 1);
+		}
+	}
+
 	/**
-	 * Update the percentage of times that tips selected by MCMC approve a block
+	 * Update rating: the percentage of times that tips selected by MCMC approve a
+	 * block
 	 * 
 	 * @throws Exception
 	 */
@@ -235,6 +234,7 @@ public class MilestoneService {
 				NetworkParameters.MAX_RATING_TIP_COUNT);
 		List<BlockWrap> selectedTips = tipsService.getRatingTips(NetworkParameters.MAX_RATING_TIP_COUNT);
 
+		// Initialize all approvers
 		for (BlockWrap selectedTip : selectedTips) {
 			if (selectedTipApprovers.containsKey(selectedTip)) {
 				HashSet<UUID> result = selectedTipApprovers.get(selectedTip);
@@ -247,54 +247,49 @@ public class MilestoneService {
 		}
 
 		// Begin from the highest solid height tips and go backwards from there
-		PriorityQueue<BlockWrap> blocksByDescendingHeight = blockService.getSolidTipsDescending();
-		HashMap<Sha256Hash, HashSet<UUID>> approverHashSets = new HashMap<>();
-		for (BlockWrap tip : blocksByDescendingHeight) {
-			approverHashSets.put(tip.getBlock().getHash(), new HashSet<>());
+		PriorityQueue<BlockWrap> blockQueue = blockService.getSolidTipsDescending();
+		HashMap<Sha256Hash, HashSet<UUID>> approvers = new HashMap<>();
+		for (BlockWrap tip : blockQueue) {
+			approvers.put(tip.getBlock().getHash(), new HashSet<>());
 		}
 
 		BlockWrap currentBlock = null;
-		while ((currentBlock = blocksByDescendingHeight.poll()) != null) {
-			// Abort if unmaintained
+		while ((currentBlock = blockQueue.poll()) != null) {
+			// Abort if unmaintained and in milestone only (for now)
 			if (!currentBlock.getBlockEvaluation().isMaintained() && currentBlock.getBlockEvaluation().isMilestone())
 				continue;
 
 			// Add your own hashes as reference if current block is one of the
 			// selected tips
-			HashSet<UUID> approverHashes = approverHashSets.get(currentBlock.getBlockHash());
-			if (selectedTipApprovers.containsKey(currentBlock)) {
-				approverHashes.addAll(selectedTipApprovers.get(currentBlock));
-			}
+			if (selectedTipApprovers.containsKey(currentBlock))
+				approvers.get(currentBlock.getBlockHash()).addAll(selectedTipApprovers.get(currentBlock));
 
 			// Add all current references to both approved blocks (initialize if
 			// not yet initialized)
-			Block block = blockService.getBlock(currentBlock.getBlockHash());
+			Sha256Hash prevTrunk = currentBlock.getBlock().getPrevBlockHash();
+			subUpdateRating(blockQueue, approvers, currentBlock, prevTrunk);
 
-			if (!approverHashSets.containsKey(block.getPrevBlockHash())) {
-				BlockWrap prevBlockEvaluation = store.getBlockWrap(block.getPrevBlockHash());
-				if (prevBlockEvaluation != null) {
-					blocksByDescendingHeight.add(prevBlockEvaluation);
-					approverHashSets.put(prevBlockEvaluation.getBlockHash(), new HashSet<>());
-				}
-			}
-
-			if (!approverHashSets.containsKey(block.getPrevBranchBlockHash())) {
-				BlockWrap prevBranchBlockEvaluation = store.getBlockWrap(block.getPrevBranchBlockHash());
-				if (prevBranchBlockEvaluation != null) {
-					blocksByDescendingHeight.add(prevBranchBlockEvaluation);
-					approverHashSets.put(prevBranchBlockEvaluation.getBlockHash(), new HashSet<>());
-				}
-			}
-
-			if (approverHashSets.containsKey(block.getPrevBlockHash()))
-				approverHashSets.get(block.getPrevBlockHash()).addAll(approverHashes);
-
-			if (approverHashSets.containsKey(block.getPrevBranchBlockHash()))
-				approverHashSets.get(block.getPrevBranchBlockHash()).addAll(approverHashes);
+			Sha256Hash prevBranch = currentBlock.getBlock().getPrevBranchBlockHash();
+			subUpdateRating(blockQueue, approvers, currentBlock, prevBranch);
 
 			// Update your rating
-			blockService.updateRating(currentBlock.getBlockEvaluation(), approverHashes.size());
-			approverHashSets.remove(currentBlock.getBlockHash());
+			blockService.updateRating(currentBlock.getBlockEvaluation(),
+					approvers.get(currentBlock.getBlockHash()).size());
+			approvers.remove(currentBlock.getBlockHash());
+		}
+	}
+
+	private void subUpdateRating(PriorityQueue<BlockWrap> blockQueue,
+			HashMap<Sha256Hash, HashSet<UUID>> approvers, BlockWrap currentBlock, Sha256Hash prevTrunk)
+			throws BlockStoreException {
+		if (!approvers.containsKey(prevTrunk)) {
+			BlockWrap prevBlock = store.getBlockWrap(prevTrunk);
+			if (prevBlock != null) {
+				blockQueue.add(prevBlock);
+				approvers.put(prevBlock.getBlockHash(), new HashSet<>(approvers.get(currentBlock.getBlockHash())));
+			}
+		} else {
+			approvers.get(prevTrunk).addAll(approvers.get(currentBlock.getBlockHash()));
 		}
 	}
 

@@ -441,7 +441,7 @@ public abstract class MemoryFullPrunedBlockStore implements FullPrunedBlockStore
 
 	 
 	@Override
-	public void updateBlockEvaluationCumulativeweight(Sha256Hash blockhash, long i) {
+	public void updateBlockEvaluationCumulativeWeight(Sha256Hash blockhash, long i) {
 	}
 
 	@Override

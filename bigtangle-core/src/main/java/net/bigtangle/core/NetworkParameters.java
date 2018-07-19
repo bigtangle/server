@@ -123,6 +123,25 @@ public abstract class NetworkParameters {
 	protected Map<Long, Sha256Hash> checkpoints = new HashMap<Long, Sha256Hash>();
 	protected transient MessageSerializer defaultSerializer = null;
 
+	/**
+	 * Blocks with a timestamp after this should enforce BIP 16, aka "Pay to script
+	 * hash". This BIP changed the network rules in a soft-forking manner, that is,
+	 * blocks that don't follow the rules are accepted but not mined upon and thus
+	 * will be quickly re-orged out as long as the majority are enforcing the rule.
+	 */
+	public static final int BIP16_ENFORCE_TIME = 1333238400;
+
+	public static final int MILESTONE_UPPER_THRESHOLD = 70;
+	public static final int MILESTONE_LOWER_THRESHOLD = 67;
+	public static final int MAX_RATING_TIP_COUNT = 100;
+
+	public static final long ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF = 60;
+	public static final long ENTRYPOINT_TIPSELECTION_DEPTH_CUTOFF = 20;
+
+	public static final int REWARD_HEIGHT_INTERVAL = 100;
+	public static final BigInteger MAX_TARGET = Utils.decodeCompactBits(0x207fFFFFL);
+	public static final long MAX_TIMESTAMP_DIFF = 5 * 60;
+
 	public static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
 	public static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
 	public static long testCoin = 1000000000000000l;
@@ -160,27 +179,6 @@ public abstract class NetworkParameters {
 			coinbase.addOutput(new TransactionOutput(params, coinbase, base, scriptPubKey.getProgram()));
 		}
 	}
-
-	/**
-	 * Blocks with a timestamp after this should enforce BIP 16, aka "Pay to script
-	 * hash". This BIP changed the network rules in a soft-forking manner, that is,
-	 * blocks that don't follow the rules are accepted but not mined upon and thus
-	 * will be quickly re-orged out as long as the majority are enforcing the rule.
-	 */
-	public static final int BIP16_ENFORCE_TIME = 1333238400;
-
-	public static final int MILESTONE_UPPER_THRESHOLD = 70;
-	public static final int MILESTONE_LOWER_THRESHOLD = 67;
-	public static final int MAX_RATING_TIP_COUNT = 100;
-
-	public static final long ENTRYPOINT_RATING_LOWER_DEPTH_CUTOFF = 0; // should be zero
-	public static final long ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF = 60;
-
-	public static final long ENTRYPOINT_TIPSELECTION_DEPTH_CUTOFF = 20;
-
-	public static final int REWARD_HEIGHT_INTERVAL = 100;
-	public static final BigInteger MAX_TARGET = Utils.decodeCompactBits(0x207fFFFFL);
-	public static final long MAX_TIMESTAMP_DIFF = 5 * 60;
 
 	/**
 	 * A Java package style string acting as unique ID for these parameters

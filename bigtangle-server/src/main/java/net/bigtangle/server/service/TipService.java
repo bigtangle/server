@@ -67,9 +67,7 @@ public class TipService {
 		BlockWrap nextLeft = performValidatedStep(left, currentApprovedNonMilestoneBlocks);
 		BlockWrap nextRight = performValidatedStep(right, currentApprovedNonMilestoneBlocks);
 
-		// Repeat: Proceed on path to be included first (highest rating else right,
-		// which is
-		// random)
+		// Repeat: Proceed on path to be included first (highest rating else random)
 		while (nextLeft != left && nextRight != right) {
 			if (nextLeft.getBlockEvaluation().getRating() > nextRight.getBlockEvaluation().getRating()) {
 				left = nextLeft;

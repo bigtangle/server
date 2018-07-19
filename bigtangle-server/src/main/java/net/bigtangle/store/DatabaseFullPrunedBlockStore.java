@@ -250,6 +250,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
 	protected String UPDATE_BLOCKEVALUATION_DEPTH_SQL = getUpdate() + " blocks SET depth = ? WHERE hash = ?";
 
+	protected String UPDATE_BLOCKEVALUATION_WEIGHT_AND_DEPTH_SQL = getUpdate() + " blocks SET cumulativeweight = ?, depth = ? WHERE hash = ?";
+
 	protected String UPDATE_BLOCKEVALUATION_CUMULATIVEWEIGHT_SQL = getUpdate()
 			+ " blocks SET cumulativeweight = ? WHERE hash = ?";
 
@@ -1668,7 +1670,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	protected abstract String getUpdateBlockEvaluationCumulativeweightSQL();
 
 	@Override
-	public void updateBlockEvaluationCumulativeweight(Sha256Hash blockhash, long cumulativeweight)
+	public void updateBlockEvaluationCumulativeWeight(Sha256Hash blockhash, long cumulativeweight)
 			throws BlockStoreException {
 		PreparedStatement preparedStatement = null;
 		maybeConnect();
@@ -1700,6 +1702,29 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 			preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationDepthSQL());
 			preparedStatement.setLong(1, depth);
 			preparedStatement.setBytes(2, blockhash.getBytes());
+			preparedStatement.executeUpdate();
+		} catch (SQLException e) {
+			throw new BlockStoreException(e);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
+	}
+
+	@Override
+	public void updateBlockEvaluationWeightAndDepth(Sha256Hash blockhash, long weight, long depth) throws BlockStoreException {
+		PreparedStatement preparedStatement = null;
+		maybeConnect();
+		try {
+			preparedStatement = conn.get().prepareStatement(UPDATE_BLOCKEVALUATION_WEIGHT_AND_DEPTH_SQL);
+			preparedStatement.setLong(1, weight);
+			preparedStatement.setLong(2, depth);
+			preparedStatement.setBytes(3, blockhash.getBytes());
 			preparedStatement.executeUpdate();
 		} catch (SQLException e) {
 			throw new BlockStoreException(e);

@@ -126,9 +126,15 @@ public class BlockService {
         store.updateBlockEvaluationSolid(blockEvaluation.getBlockHash(), b);
     }
 
-    public void updateCumulativeWeight(BlockEvaluation blockEvaluation, long i) throws BlockStoreException {
+    public void updateWeight(BlockEvaluation blockEvaluation, long i) throws BlockStoreException {
         blockEvaluation.setCumulativeWeight(i);
-        store.updateBlockEvaluationCumulativeweight(blockEvaluation.getBlockHash(), i);
+        store.updateBlockEvaluationCumulativeWeight(blockEvaluation.getBlockHash(), i);
+    }
+
+    public void updateWeightAndDepth(BlockEvaluation blockEvaluation, long weight, long depth) throws BlockStoreException {
+        blockEvaluation.setCumulativeWeight(weight);
+        blockEvaluation.setDepth(depth);
+        store.updateBlockEvaluationWeightAndDepth(blockEvaluation.getBlockHash(), weight, depth);
     }
 
     public void updateDepth(BlockEvaluation blockEvaluation, long i) throws BlockStoreException {
@@ -346,7 +352,7 @@ public class BlockService {
     }
 
     public List<BlockWrap> getRatingEntryPointCandidates() throws BlockStoreException {
-        return store.getBlocksInMilestoneDepthInterval(NetworkParameters.ENTRYPOINT_RATING_LOWER_DEPTH_CUTOFF,
+        return store.getBlocksInMilestoneDepthInterval((long) 0,
                 NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF);
     }
 
