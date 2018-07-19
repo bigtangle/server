@@ -227,9 +227,9 @@ public class ValidatorService {
 					continue;
 				}
 				
-				// If ineligible or not old enough and in milestone range, preconditions are not met
+				// If ineligible, preconditions are sufficient age and milestone rating range
 				if (!store.getTxRewardEligible(block.getHash()) 
-						&& (b.getBlockEvaluation().getRating() > NetworkParameters.MILESTONE_UPPER_THRESHOLD 
+						&& !(b.getBlockEvaluation().getRating() > NetworkParameters.MILESTONE_UPPER_THRESHOLD 
 								&& b.getBlockEvaluation().getInsertTime() < System.currentTimeMillis()/1000 - 30)) {
 					removed = true;
 					blockService.removeBlockAndApproversFrom(blocksToAdd, b);

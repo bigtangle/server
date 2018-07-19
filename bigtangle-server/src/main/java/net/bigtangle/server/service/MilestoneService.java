@@ -58,8 +58,10 @@ public class MilestoneService {
 	 * @throws Exception
 	 */
 	public void update() throws Exception {
-		if (!lock.tryAcquire())
+		if (!lock.tryAcquire()) {
+			log.debug("Milestone Update already running. Returning...");
 			return;
+		}
 
 		try {
 			log.info("Milestone Update started");
