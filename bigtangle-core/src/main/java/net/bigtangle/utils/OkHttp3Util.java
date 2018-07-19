@@ -35,6 +35,8 @@ public class OkHttp3Util {
 
     private static final Logger logger = LoggerFactory.getLogger(OkHttp3Util.class);
 
+    private static OkHttpClient client = null;
+
     public static String post(String url, byte[] b) throws Exception {
         logger.debug(url);
         OkHttpClient client = getOkHttpClient();
@@ -48,8 +50,6 @@ public class OkHttp3Util {
             return resp;
 
         } finally {
-            client.dispatcher().executorService().shutdown();
-            client.connectionPool().evictAll();
             // client.cache().close();
             response.close();
             response.body().close();
@@ -64,19 +64,17 @@ public class OkHttp3Util {
         Request request = new Request.Builder().url(url).post(body).build();
         Response response = client.newCall(request).execute();
         try {
-//            return response.body().bytes();
+            // return response.body().bytes();
             String resp = response.body().string();
             checkResponse(resp);
             HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
             String dataHex = (String) result.get("dataHex");
-            if(dataHex!=null) {
-            return Utils.HEX.decode(dataHex);
-            }else {
+            if (dataHex != null) {
+                return Utils.HEX.decode(dataHex);
+            } else {
                 return null;
             }
         } finally {
-            client.dispatcher().executorService().shutdown();
-            client.connectionPool().evictAll();
             // client.cache().close();
             response.close();
             response.body().close();
@@ -93,9 +91,6 @@ public class OkHttp3Util {
             checkResponse(resp);
             return resp;
         } finally {
-            client.dispatcher().executorService().shutdown();
-            client.connectionPool().evictAll();
-
             response.close();
             response.body().close();
         }
@@ -117,13 +112,16 @@ public class OkHttp3Util {
     }
 
     private static OkHttpClient getOkHttpClient() {
-        return getUnsafeOkHttpClient();
+        if (client == null)
+            client = getUnsafeOkHttpClient();
+        return client;
+
     }
 
     @SuppressWarnings("unused")
     private static OkHttpClient getOkHttpClientSafe() {
-        OkHttpClient client = new OkHttpClient.Builder().connectTimeout(60, TimeUnit.MINUTES)
-                .writeTimeout(60, TimeUnit.MINUTES).readTimeout(60, TimeUnit.MINUTES).build();
+        OkHttpClient client = new OkHttpClient.Builder().connectTimeout(6, TimeUnit.MINUTES)
+                .writeTimeout(6, TimeUnit.MINUTES).readTimeout(6, TimeUnit.MINUTES).build();
         return client;
     }
 

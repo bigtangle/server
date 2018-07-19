@@ -11,15 +11,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -82,11 +81,10 @@ public class DispatcherController {
 
     @SuppressWarnings("unchecked")
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
-    public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] bodyByte, @RequestHeader HttpHeaders httpHeaders ,
-            HttpServletResponse httpServletResponse) throws Exception {
+    public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] bodyByte, 
+            HttpServletResponse httpServletResponse, HttpServletRequest httprequest) throws Exception {
         try {
-            logger.debug("reqCmd : {}, reqSize : {}, started.", reqCmd,  bodyByte.length );
-            logger.debug("headers.", httpHeaders.toString()  );
+            logger.info("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),  bodyByte.length);
             ReqCmd reqCmd0000 = ReqCmd.valueOf(reqCmd);
             switch (reqCmd0000) {
 

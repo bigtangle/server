@@ -1,6 +1,6 @@
 server:
   neighbors: 
-  port: ${SERVER_PORT:8088}
+  port: ${SERVER_PORT:8089}
   udp_receiver_port: 
   tcp_receiver_port: 
   net: ${SERVER_NET:Unittest}
