@@ -58,7 +58,8 @@ public class MilestoneService {
 	 * @throws Exception
 	 */
 	public void update() throws Exception {
-		lock.acquire();
+		if (!lock.tryAcquire())
+			return;
 
 		try {
 			log.info("Milestone Update started");

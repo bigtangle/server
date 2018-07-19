@@ -91,7 +91,7 @@ public class ValidatorService {
 				toHeight = fromHeight + networkParameters.getRewardHeightInterval() - 1;
 				minHeight = toHeight;
 				perTxReward = 100;
-				
+
 			} else {
 				ByteBuffer bb = ByteBuffer.wrap(prevRewardBlock.getBlock().getTransactions().get(0).getData());
 				fromHeight = bb.getLong() + networkParameters.getRewardHeightInterval();
@@ -121,7 +121,7 @@ public class ValidatorService {
 				// Failure criterion: rewarding non-milestone blocks
 				if (currentBlock.getBlockEvaluation().isMilestone() == false)
 					eligibility = false;
-				
+
 				// Count rewards, try to find prevRewardBlock
 				approveCount++;
 				Address miner = new Address(networkParameters, currentBlock.getBlock().getMinerAddress());
@@ -169,7 +169,7 @@ public class ValidatorService {
 		bb.putLong(nextPerTxReward);
 		bb.put(prevRewardHash.getBytes());
 		tx.setData(bb.array());
-		
+
 		// Check eligibility: sufficient amount of milestone blocks approved?
 		if (approveCount < store.getCountMilestoneBlocksInInterval(fromHeight, toHeight) * 99 / 100)
 			eligibility = false;
@@ -186,11 +186,12 @@ public class ValidatorService {
 	 * @return true if a block was removed
 	 * @throws BlockStoreException
 	 */
-	public boolean removeWhereInputUnconfirmed(Collection<BlockWrap> blocksToAdd) throws BlockStoreException {
+	// TODO opt: return false on failure parameter
+	public boolean removeWherePreconditionsUnfulfilled(Collection<BlockWrap> blocksToAdd) throws BlockStoreException {
 		boolean removed = false;
 
-		for (BlockWrap e : new HashSet<BlockWrap>(blocksToAdd)) {
-			Block block = blockService.getBlock(e.getBlock().getHash());
+		for (BlockWrap b : new HashSet<BlockWrap>(blocksToAdd)) {
+			Block block = blockService.getBlock(b.getBlock().getHash());
 			for (TransactionInput in : block.getTransactions().stream().flatMap(t -> t.getInputs().stream())
 					.collect(Collectors.toList())) {
 				if (in.isCoinBase())
@@ -198,12 +199,42 @@ public class ValidatorService {
 				UTXO utxo = transactionService.getUTXO(in.getOutpoint());
 				if (utxo == null || !utxo.isConfirmed()) {
 					removed = true;
-					blockService.removeBlockAndApproversFrom(blocksToAdd, e);
+					blockService.removeBlockAndApproversFrom(blocksToAdd, b);
+					continue;
 				}
 			}
 
 			if (block.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD) {
-				// TODO add prev mining reward confirmed
+				// Previous reward must have been confirmed
+				Sha256Hash prevRewardHash = null;
+				try {
+					byte[] hashBytes = new byte[32];
+					ByteBuffer bb = ByteBuffer.wrap(block.getTransactions().get(0).getData());
+					bb.getLong();
+					bb.getLong();
+					bb.get(hashBytes, 0, 32);
+					prevRewardHash = Sha256Hash.wrap(hashBytes);
+					
+					if (!store.getTxRewardConfirmed(prevRewardHash)) {
+						removed = true;
+						blockService.removeBlockAndApproversFrom(blocksToAdd, b);
+						continue;
+					}
+				} catch (Exception c) {
+					c.printStackTrace();
+					removed = true;
+					blockService.removeBlockAndApproversFrom(blocksToAdd, b);
+					continue;
+				}
+				
+				// If ineligible or not old enough and in milestone range, preconditions are not met
+				if (!store.getTxRewardEligible(block.getHash()) 
+						&& (b.getBlockEvaluation().getRating() > NetworkParameters.MILESTONE_UPPER_THRESHOLD 
+								&& b.getBlockEvaluation().getInsertTime() < System.currentTimeMillis()/1000 - 30)) {
+					removed = true;
+					blockService.removeBlockAndApproversFrom(blocksToAdd, b);
+					continue;
+				}				
 			}
 
 			if (block.getBlockType() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
@@ -218,11 +249,17 @@ public class ValidatorService {
 			throws BlockStoreException {
 		// Remove blocks and their approvers that have at least one input
 		// with its corresponding output not confirmed yet / nonexistent
-		removeWhereInputUnconfirmed(blocksToAdd);
+		removeWherePreconditionsUnfulfilled(blocksToAdd);
 
 		// Resolve conflicting block combinations
 		// resolvePrunedConflicts(blocksToAdd);
 		resolveUndoableConflicts(blocksToAdd, unconfirmLosingMilestones);
+
+		// Remove blocks and their approvers that have at least one input
+		// with its corresponding output not confirmed yet / nonexistent
+		// Needed since while resolving undoable conflicts, milestone blocks are
+		// unconfirmed
+		removeWherePreconditionsUnfulfilled(blocksToAdd);
 	}
 
 	/**
@@ -533,9 +570,9 @@ public class ValidatorService {
 		}
 
 		// Remove blocks and their approvers that have at least one input
-		// with its corresponding output not confirmed yet / nonexistent
+		// with its corresponding output not confirmed yet
 		try {
-			if (removeWhereInputUnconfirmed(newApprovedNonMilestoneBlocks))
+			if (removeWherePreconditionsUnfulfilled(newApprovedNonMilestoneBlocks))
 				return true;
 		} catch (BlockStoreException e) {
 			e.printStackTrace();

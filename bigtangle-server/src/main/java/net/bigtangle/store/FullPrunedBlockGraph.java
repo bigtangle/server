@@ -635,7 +635,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
 		// Check reward block specific solidity
 		if (block.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD) {
-			// Open reward interval must be this one to be solid
+			// Get reward data from previous reward cycle
 			Sha256Hash prevRewardHash = null;
 			long fromHeight = 0, nextPerTxReward = 0;
 			try {

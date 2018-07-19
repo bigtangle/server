@@ -370,7 +370,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testMiningReward() throws Exception {
+    public void testMiningRewardAccept() throws Exception {
         store.resetStore();
 
         // Generate blocks until passing first reward interval
@@ -405,6 +405,39 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         }
         milestoneService.update();
         assertTrue(blockService.getBlockEvaluation(rewardBlock.getHash()).isMilestone());
+    }
+
+    @Test
+    public void testMiningRewardReject() throws Exception {
+        store.resetStore();
+
+        // Generate blocks until passing first reward interval
+        Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
+                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0, networkParameters.getGenesisBlock().getHash());
+        blockgraph.add(rollingBlock, true);
+
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + 10; i++) {
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+                    0, rollingBlock.getHash());
+            blockgraph.add(rollingBlock, true);
+        }
+
+        // Generate mining reward block
+        Block rewardBlock = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash());
+        milestoneService.update();
+
+        // Mining reward block should not go through
+        for (int i = 1; i < 5; i++) {
+            Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
+            Block r1 = blockService.getBlock(tipsToApprove.getLeft());
+            Block r2 = blockService.getBlock(tipsToApprove.getRight());
+            Block b = BlockForTest.createNextBlock(r2, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0,
+                    r1.getHash());
+            blockgraph.add(b, true);
+            log.debug("create block  : " + i + " " + rollingBlock);
+        }
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(rewardBlock.getHash()).isMilestone());
     }
 
     @Test

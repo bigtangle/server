@@ -314,6 +314,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	protected String SELECT_MAX_TX_REWARD_HEIGHT_SQL = "SELECT MAX(prevheight) "
 			+ "FROM txreward WHERE confirmed = true";
 	protected String SELECT_TX_REWARD_CONFIRMED_SQL = "SELECT confirmed " + "FROM txreward WHERE blockhash = ?";
+	protected String SELECT_TX_REWARD_ELIGIBLE_SQL = "SELECT eligibility " + "FROM txreward WHERE blockhash = ?";
 	protected String UPDATE_TX_REWARD_CONFIRMED_SQL = "UPDATE txreward SET confirmed = ? WHERE blockhash = ?";
 
 	protected String INSERT_OUTPUTSMULTI_SQL = "insert into outputsmulti (hash, toaddress, outputindex, minimumsign) values (?, ?, ?, ?)";
@@ -3219,6 +3220,29 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 			}
 		}
 	}
+	
+	@Override
+	public boolean getTxRewardEligible(Sha256Hash hash) throws BlockStoreException {
+		maybeConnect();
+		PreparedStatement preparedStatement = null;
+		try {
+			preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_ELIGIBLE_SQL);
+			preparedStatement.setBytes(1, hash.getBytes());
+			ResultSet resultSet = preparedStatement.executeQuery();
+			resultSet.next();
+			return resultSet.getBoolean(1);
+		} catch (SQLException ex) {
+			throw new BlockStoreException(ex);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					throw new BlockStoreException("Failed to close PreparedStatement");
+				}
+			}
+		}
+	}
 
 	@Override
 	public boolean getTxRewardConfirmed(Sha256Hash hash) throws BlockStoreException {
@@ -3226,6 +3250,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_CONFIRMED_SQL);
+			preparedStatement.setBytes(1, hash.getBytes());
 			ResultSet resultSet = preparedStatement.executeQuery();
 			resultSet.next();
 			return resultSet.getBoolean(1);
