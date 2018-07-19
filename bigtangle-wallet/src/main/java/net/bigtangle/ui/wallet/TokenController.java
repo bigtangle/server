@@ -447,7 +447,7 @@ public class TokenController extends TokenBaseController {
 
     }
 
-    public void saveStock(ActionEvent event) {
+    public void saveToken(ActionEvent event) {
         try {
             ECKey outKey = null;
 

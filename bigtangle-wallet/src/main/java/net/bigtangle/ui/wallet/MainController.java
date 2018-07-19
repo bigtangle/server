@@ -388,7 +388,7 @@ public class MainController {
     public void stockPublish(ActionEvent event) {
         Main.IpAddress = Server.getText();
         // Main.port = IPPort.getText();
-        Main.instance.overlayUI("stock.fxml");
+        Main.instance.overlayUI("token.fxml");
     }
 
     public void eckeyList(ActionEvent event) {
