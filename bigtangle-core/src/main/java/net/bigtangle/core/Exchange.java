@@ -6,6 +6,10 @@ package net.bigtangle.core;
 
 import java.beans.Transient;
 
+import javax.sound.midi.VoiceStatus;
+
+import org.apache.commons.lang3.StringUtils;
+
 import net.bigtangle.utils.UUIDUtil;
 
 public class Exchange implements java.io.Serializable {
@@ -112,7 +116,15 @@ public class Exchange implements java.io.Serializable {
     	}
         return Utils.HEX.encode(this.data);
     }
-
+    
+	public void setDataHex(String dataHex) {
+		if (StringUtils.isBlank(dataHex)) {
+			this.data = null;
+		} else {
+			this.data = Utils.HEX.decode(dataHex);
+		}
+	}
+    
     public void setData(byte[] data) {
         this.data = data;
     }

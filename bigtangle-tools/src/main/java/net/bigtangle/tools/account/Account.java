@@ -51,7 +51,7 @@ public class Account {
 	public Account(String walletPath) {
 		this.walletPath = walletPath;
 		initWallet(walletPath);
-		this.tokenCoinbase = new TokenCoinbase(this);
+		//this.tokenCoinbase = new TokenCoinbase(this);
 	}
 
 	private void initWallet(String walletPath) {
@@ -75,11 +75,11 @@ public class Account {
 	}
 
 	public void initSellOrderTask() {
-		try {
+		/*try {
 			Action action2 = new TokenAction(this);
 			action2.execute();
 		} catch (Exception e) {
-		}
+		}*/
 		this.executes.add(new SignOrderAction(this));
 		this.executes.add(new SellOrderAction(this));
 		// this.executes.add(new BalancesAction(this));
@@ -97,22 +97,11 @@ public class Account {
 	}
 
 	public void doAction() {
-		if (this.executes == null || this.executes.isEmpty()) {
-			return;
-		}
-		index++;
-		if (index % 3 == 0) {
-			Action action = this.executes.get(0);
-			action.execute();
-			return;
-		}
 		Random random = new Random();
-		int len = this.executes.size() - 1;
-		Action action = this.executes.get(random.nextInt(len) + 1);
+		int len = this.executes.size();
+		Action action = this.executes.get(random.nextInt(len));
 		action.execute();
 	}
-
-	private int index;
 
 	public String getName() {
 		return "account_" + walletPath;

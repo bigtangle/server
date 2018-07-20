@@ -33,7 +33,7 @@ public class BuyOrderAction extends Action {
         if (coinbase.getValue() <= 0) {
             return;
         }*/
-        logger.info("account name : {}, buy order action start", account.getName());
+        //logger.info("account name : {}, buy order action start", account.getName());
         try {
             String resp = OkHttp3Util.postString(Configure.ORDER_MATCH_CONTEXT_ROOT + OrdermatchReqCmd.getOrders.name(),
                     Json.jsonmapper().writeValueAsString(new HashMap<String, Object>()));
@@ -65,7 +65,7 @@ public class BuyOrderAction extends Action {
         } catch (Exception e) {
             logger.error("account name : {}, buy order action exception", account.getName(), e);
         }
-        logger.info("account name : {}, buy order action end", account.getName());
+        //logger.info("account name : {}, buy order action end", account.getName());
     }
 
     private static final Logger logger = LoggerFactory.getLogger(BuyOrderAction.class);

@@ -29,7 +29,7 @@ public class AccountContainer extends ArrayList<Account> {
 				}
 			}
 		});
-		thread.start();
+		//thread.start();
 	}
 
 	public void startSellOrder(int startIndex, int endIndex) {
@@ -75,12 +75,27 @@ public class AccountContainer extends ArrayList<Account> {
 		for (int i = startIndex; i <= endIndex; i++) {
 			try {
 				Account account = new Account("wallet" + String.valueOf(i));
-				account.startTradeOrder();
+				if (i == 1) {
+					account.initBuyOrderTask();
+				}
+				else {
+					account.initSellOrderTask();
+				}
+				//account.startTradeOrder();
 				this.add(account);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
-		this.startBlockCheckRatingThread();
+		int index = 0;
+		while (true) {
+			Account account = this.get(index);
+			index ++;
+			if (index == this.size()) {
+				index = 0;
+			}
+			account.doAction();
+		}
+		//this.startBlockCheckRatingThread();
 	}
 }
