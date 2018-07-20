@@ -376,7 +376,7 @@ public class TokenController extends TokenBaseController {
         requestParam.put("name", null);
         String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        
+
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
 
         // wallet keys minus used from token list with one time (blocktype false
@@ -484,42 +484,15 @@ public class TokenController extends TokenBaseController {
     }
 
     public void saveToken(TokenInfo tokenInfo, Coin basecoin, ECKey outKey) {
-        String CONTEXT_ROOT = Main.getContextRoot();
 
         try {
-            HashMap<String, String> requestParam = new HashMap<String, String>();
-            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.askTransaction.name(),
-                    Json.jsonmapper().writeValueAsString(requestParam));
-            Block block = Main.params.getDefaultSerializer().makeBlock(data);
-            block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
-            block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo);
-
-            Transaction transaction = block.getTransactions().get(0);
-
-            Sha256Hash sighash = transaction.getHash();
 
             KeyParameter aesKey = null;
             final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
             if (!"".equals(Main.password.trim())) {
                 aesKey = keyCrypter.deriveKey(Main.password);
             }
-
-            ECKey.ECDSASignature party1Signature = outKey.sign(sighash, aesKey);
-            byte[] buf1 = party1Signature.encodeToDER();
-
-            List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
-            MultiSignBy multiSignBy0 = new MultiSignBy();
-            multiSignBy0.setTokenid(tokenInfo.getTokens().getTokenid().trim());
-            multiSignBy0.setTokenindex(0);
-            multiSignBy0.setAddress(outKey.toAddress(Main.params).toBase58());
-            multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
-            multiSignBy0.setSignature(Utils.HEX.encode(buf1));
-            multiSignBies.add(multiSignBy0);
-            transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
-
-            // save block
-            block.solve();
-            OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.multiSign.name(), block.bitcoinSerialize());
+            Main.bitcoin.wallet().saveToken(tokenInfo, basecoin, outKey, aesKey);
 
             GuiUtils.informationalAlert("", Main.getText("s_c_m"));
             Main.instance.controller.initTableView();

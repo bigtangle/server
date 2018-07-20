@@ -161,19 +161,19 @@ public abstract class AbstractIntegrationTest {
     public List<UTXO> testTransactionAndGetBalances(boolean withZero) throws Exception {
         return testTransactionAndGetBalances(withZero, walletKeys);
     }
- 
-    public  UTXO  testTransactionAndGetBalances(String tokenid, boolean withZero, List<ECKey> keys) throws Exception {
+
+    public UTXO testTransactionAndGetBalances(String tokenid, boolean withZero, List<ECKey> keys) throws Exception {
         List<UTXO> ulist = testTransactionAndGetBalances(withZero, keys);
-        
+
         for (UTXO u : ulist) {
-            if (tokenid.equals(u.getTokenId())
-                   ) {
+            if (tokenid.equals(u.getTokenId())) {
                 return u;
             }
         }
-        
-         throw new RuntimeException();
+
+        throw new RuntimeException();
     }
+
     // get balance for the walleKeys
     public List<UTXO> testTransactionAndGetBalances(boolean withZero, List<ECKey> keys) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
@@ -185,7 +185,7 @@ public abstract class AbstractIntegrationTest {
         }
         String response = OkHttp3Util.post(contextRoot + ReqCmd.batchGetBalances.name(),
                 Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
-        
+
         GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
 
         // String response = mvcResult.getResponse().getContentAsString();
@@ -208,8 +208,8 @@ public abstract class AbstractIntegrationTest {
 
     public void testInitWallet() throws Exception {
 
-        ECKey myKey = walletKeys.get(0);
         testCreateMultiSig();
+        testCreateMarket();
         milestoneService.update();
 
         List<UTXO> ux = testTransactionAndGetBalances();
@@ -246,51 +246,47 @@ public abstract class AbstractIntegrationTest {
 
     }
 
-    @SuppressWarnings("unchecked")
+  
     public void testCreateMultiSig() throws JsonProcessingException, Exception {
 
-         ECKey outKey = walletKeys.get(0) ;
+        ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
-        Tokens tokens = new Tokens(Utils.HEX.encode(pubKey), "test",
-               "", "", 1, false, false, false);
+        Tokens tokens = new Tokens(Utils.HEX.encode(pubKey), "test", "", "", 1, false, false, false);
         tokenInfo.setTokens(tokens);
 
         // add MultiSignAddress item
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
-        Coin basecoin = Coin.valueOf(77777L,  pubKey);
+        Coin basecoin = Coin.valueOf(77777L, pubKey);
 
         long amount = basecoin.getValue();
         tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
 
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
-        block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo);
+        walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, null);
+    }
 
-        Transaction transaction = block.getTransactions().get(0);
+ 
+    public void testCreateMarket() throws JsonProcessingException, Exception {
 
-        Sha256Hash sighash = transaction.getHash();
-        ECKey.ECDSASignature party1Signature = outKey.sign(sighash);
-        byte[] buf1 = party1Signature.encodeToDER();
+        ECKey outKey = walletKeys.get(1);
+        byte[] pubKey = outKey.getPubKey();
+        TokenInfo tokenInfo = new TokenInfo();
+        Tokens tokens = new Tokens(Utils.HEX.encode(pubKey), "p2p", "", "http://localhost:80089", 1, false, true,
+                false);
+        tokenInfo.setTokens(tokens);
 
-        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
-        MultiSignBy multiSignBy0 = new MultiSignBy();
-        multiSignBy0.setTokenid(Utils.HEX.encode(pubKey));
-        multiSignBy0.setTokenindex(0);
-        multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
-        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
-        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
-        multiSignBies.add(multiSignBy0);
-        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        // add MultiSignAddress item
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
-        // save block
-        block.solve();
-        OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
+        Coin basecoin = Coin.valueOf(0, pubKey);
+
+        long amount = basecoin.getValue();
+        tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
+
+        walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, null);
     }
 
     public void checkResponse(String resp) throws JsonParseException, JsonMappingException, IOException {
@@ -304,13 +300,12 @@ public abstract class AbstractIntegrationTest {
         assertTrue(error == code);
     }
 
-    public void checkBalance(Coin coin  , List<ECKey> a) throws Exception {
+    public void checkBalance(Coin coin, List<ECKey> a) throws Exception {
         milestoneService.update();
         List<UTXO> ulist = testTransactionAndGetBalances(false, a);
         UTXO myutxo = null;
         for (UTXO u : ulist) {
-            if (coin.getTokenHex().equals(u.getTokenId())
-                    && coin.getValue()==u.getValue().getValue()) {
+            if (coin.getTokenHex().equals(u.getTokenId()) && coin.getValue() == u.getValue().getValue()) {
                 myutxo = u;
                 break;
             }

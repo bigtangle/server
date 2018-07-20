@@ -51,14 +51,17 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 
 import net.bigtangle.core.Address;
+import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.InsufficientMoneyException;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.ScriptException;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionBag;
 import net.bigtangle.core.TransactionInput;
@@ -85,6 +88,7 @@ import net.bigtangle.utils.BaseTaggableObject;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.Protos.Wallet.EncryptionType;
+import net.bigtangle.wallet.Wallet.BalanceType;
 import net.bigtangle.wallet.WalletTransaction.Pool;
 import net.bigtangle.wallet.listeners.KeyChainEventListener;
 import net.jcip.annotations.GuardedBy;
@@ -3655,4 +3659,38 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         }
         return false;
     }
+
+    public void saveToken(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey)
+            throws JsonProcessingException, Exception {
+
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(serverurl + ReqCmd.askTransaction.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block block = params.getDefaultSerializer().makeBlock(data);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+        block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo);
+
+        Transaction transaction = block.getTransactions().get(0);
+
+        Sha256Hash sighash = transaction.getHash();
+
+        ECKey.ECDSASignature party1Signature = outKey.sign(sighash, aesKey);
+        byte[] buf1 = party1Signature.encodeToDER();
+
+        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+        MultiSignBy multiSignBy0 = new MultiSignBy();
+        multiSignBy0.setTokenid(tokenInfo.getTokens().getTokenid().trim());
+        multiSignBy0.setTokenindex(0);
+        multiSignBy0.setAddress(outKey.toAddress(params).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+        multiSignBies.add(multiSignBy0);
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+
+        // save block
+        block.solve();
+        OkHttp3Util.post(serverurl + ReqCmd.multiSign.name(), block.bitcoinSerialize());
+
+    }
+    
 }
