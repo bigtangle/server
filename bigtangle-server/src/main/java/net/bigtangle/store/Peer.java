@@ -1180,7 +1180,7 @@ public class Peer extends PeerSocketHandler {
     private boolean checkForFilterExhaustion(FilteredBlock m) {
         boolean exhausted = false;
         for (Wallet wallet : wallets) {
-            exhausted |= wallet.checkForFilterExhaustion(m);
+           
         }
         return exhausted;
     }

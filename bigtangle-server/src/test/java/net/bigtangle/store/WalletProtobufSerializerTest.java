@@ -72,7 +72,7 @@ public class WalletProtobufSerializerTest {
         myWallet = new Wallet(PARAMS);
         myWallet.importKey(myKey);
         mScriptCreationTime = new Date().getTime() / 1000 - 1234;
-        myWallet.addWatchedAddress(myWatchedKey.toAddress(PARAMS), mScriptCreationTime);
+      
         myWallet.setDescription(WALLET_DESCRIPTION);
     }
 

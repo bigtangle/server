@@ -16,7 +16,6 @@ import java.net.InetSocketAddress;
 import java.net.NoRouteToHostException;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -39,7 +38,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Nullable;
@@ -65,11 +63,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Runnables;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
- 
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BloomFilter;
-import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.FilteredBlock;
@@ -79,13 +75,10 @@ import net.bigtangle.core.Message;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.PeerAddress;
 import net.bigtangle.core.Transaction;
-import net.bigtangle.core.TransactionConfidence;
-import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.TxConfidenceTable;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.core.VersionMessage;
-import net.bigtangle.core.listeners.AbstractPeerEventListener;
 import net.bigtangle.core.listeners.BlocksDownloadedEventListener;
 import net.bigtangle.core.listeners.ChainDownloadStartedEventListener;
 import net.bigtangle.core.listeners.DownloadProgressTracker;
@@ -96,26 +89,18 @@ import net.bigtangle.core.listeners.PeerDataEventListener;
 import net.bigtangle.core.listeners.PeerDisconnectedEventListener;
 import net.bigtangle.core.listeners.PeerDiscoveredEventListener;
 import net.bigtangle.core.listeners.PreMessageReceivedEventListener;
-import net.bigtangle.crypto.DRMWorkaround;
-import net.bigtangle.net.BlockingClientManager;
 import net.bigtangle.net.ClientConnectionManager;
 import net.bigtangle.net.NioClientManager;
-import net.bigtangle.net.discovery.HttpDiscovery;
 import net.bigtangle.net.discovery.MultiplexingDiscovery;
 import net.bigtangle.net.discovery.PeerDiscovery;
 import net.bigtangle.net.discovery.PeerDiscoveryException;
- 
-import net.bigtangle.script.Script;
 import net.bigtangle.utils.ContextPropagatingThreadFactory;
 import net.bigtangle.utils.ExponentialBackoff;
 import net.bigtangle.utils.ListenerRegistration;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.Wallet;
 import net.bigtangle.wallet.listeners.KeyChainEventListener;
-import net.bigtangle.wallet.listeners.ScriptsChangeEventListener;
-import net.bigtangle.wallet.listeners.WalletCoinsReceivedEventListener;
 import net.jcip.annotations.GuardedBy;
-import okhttp3.OkHttpClient;
 
 /**
  * <p>
@@ -207,7 +192,6 @@ public class PeerGroup implements TransactionBroadcaster {
     // Currently connecting peers.
     private final CopyOnWriteArrayList<Peer> pendingPeers;
     private final ClientConnectionManager channels;
-   
 
     // The peer that has been selected for the purposes of downloading announced
     // data.
@@ -272,68 +256,11 @@ public class PeerGroup implements TransactionBroadcaster {
     private final PeerListener peerListener = new PeerListener();
 
     private int minBroadcastConnections = 0;
-    private final ScriptsChangeEventListener walletScriptEventListener = new ScriptsChangeEventListener() {
-        @Override
-        public void onScriptsChanged(Wallet wallet, List<Script> scripts, boolean isAddingScripts) {
-            recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
-        }
-    };
 
     private final KeyChainEventListener walletKeyEventListener = new KeyChainEventListener() {
         @Override
         public void onKeysAdded(List<ECKey> keys) {
             recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
-        }
-    };
-
-    private final WalletCoinsReceivedEventListener walletCoinsReceivedEventListener = new WalletCoinsReceivedEventListener() {
-        @Override
-        public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-            // We received a relevant transaction. We MAY need to recalculate
-            // and resend the Bloom filter, but only
-            // if we have received a transaction that includes a relevant
-            // pay-to-pubkey output.
-            //
-            // The reason is that pay-to-pubkey outputs, when spent, will not
-            // repeat any data we can predict in their
-            // inputs. So a remote peer will update the Bloom filter for us when
-            // such an output is seen matching the
-            // existing filter, so that it includes the tx hash in which the
-            // pay-to-pubkey output was observed. Thus
-            // the spending transaction will always match (due to the outpoint
-            // structure).
-            //
-            // Unfortunately, whilst this is required for correct sync of the
-            // chain in blocks, there are two edge cases.
-            //
-            // (1) If a wallet receives a relevant, confirmed p2pubkey output
-            // that was not broadcast across the network,
-            // for example in a coinbase transaction, then the node that's
-            // serving us the chain will update its filter
-            // but the rest will not. If another transaction then spends it, the
-            // other nodes won't match/relay it.
-            //
-            // (2) If we receive a p2pubkey output broadcast across the network,
-            // all currently connected nodes will see
-            // it and update their filter themselves, but any newly connected
-            // nodes will receive the last filter we
-            // calculated, which would not include this transaction.
-            //
-            // For this reason we check if the transaction contained any
-            // relevant pay to pubkeys and force a recalc
-            // and possibly retransmit if so. The recalculation process will end
-            // up including the tx hash into the
-            // filter. In case (1), we need to retransmit the filter to the
-            // connected peers. In case (2), we don't
-            // and shouldn't, we should just recalculate and cache the new
-            // filter for next time.
-            for (TransactionOutput output : tx.getOutputs()) {
-                if (output.getScriptPubKey().isSentToRawPubKey() && output.isMine(wallet)) {
-                    
-                        recalculateFastCatchupAndFilter(FilterRecalculateMode.DONT_SEND);
-                    return;
-                }
-            }
         }
     };
 
@@ -455,7 +382,6 @@ public class PeerGroup implements TransactionBroadcaster {
         this(context, chain, new NioClientManager());
     }
 
-  
     /**
      * <p>
      * Creates a PeerGroup that accesses the network via the Tor network. The
@@ -480,7 +406,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * @throws TimeoutException
      *             if Tor fails to start within 20 seconds.
      */
- 
+
     /**
      * Creates a new PeerGroup allowing you to specify the
      * {@link ClientConnectionManager} which is used to create new connections
@@ -493,7 +419,6 @@ public class PeerGroup implements TransactionBroadcaster {
         fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
         wallets = new CopyOnWriteArrayList<Wallet>();
         peerFilterProviders = new CopyOnWriteArrayList<PeerFilterProvider>();
-         
 
         executor = createPrivateExecutor();
 
@@ -839,34 +764,6 @@ public class PeerGroup implements TransactionBroadcaster {
         setUserAgent(name, version, null);
     }
 
-    /** Use the more specific listener methods instead */
-    @Deprecated
-    @SuppressWarnings("deprecation")
-    public void addEventListener(AbstractPeerEventListener listener, Executor executor) {
-        addBlocksDownloadedEventListener(Threading.USER_THREAD, listener);
-        addChainDownloadStartedEventListener(Threading.USER_THREAD, listener);
-        addConnectedEventListener(Threading.USER_THREAD, listener);
-        addDisconnectedEventListener(Threading.USER_THREAD, listener);
-        addDiscoveredEventListener(Threading.USER_THREAD, listener);
-        addGetDataEventListener(Threading.USER_THREAD, listener);
-        addOnTransactionBroadcastListener(Threading.USER_THREAD, listener);
-        addPreMessageReceivedEventListener(Threading.USER_THREAD, listener);
-    }
-
-    /** Use the more specific listener methods instead */
-    @Deprecated
-    @SuppressWarnings("deprecation")
-    public void addEventListener(AbstractPeerEventListener listener) {
-        addBlocksDownloadedEventListener(executor, listener);
-        addChainDownloadStartedEventListener(executor, listener);
-        addConnectedEventListener(executor, listener);
-        addDisconnectedEventListener(executor, listener);
-        addDiscoveredEventListener(executor, listener);
-        addGetDataEventListener(executor, listener);
-        addOnTransactionBroadcastListener(executor, listener);
-        addPreMessageReceivedEventListener(executor, listener);
-    }
-
     /**
      * See
      * {@link Peer#addBlocksDownloadedEventListener(BlocksDownloadedEventListener)}
@@ -1035,20 +932,6 @@ public class PeerGroup implements TransactionBroadcaster {
             peer.addPreMessageReceivedEventListener(executor, listener);
         for (Peer peer : getPendingPeers())
             peer.addPreMessageReceivedEventListener(executor, listener);
-    }
-
-    /** Use the more specific listener methods instead */
-    @Deprecated
-    @SuppressWarnings("deprecation")
-    public void removeEventListener(AbstractPeerEventListener listener) {
-        removeBlocksDownloadedEventListener(listener);
-        removeChainDownloadStartedEventListener(listener);
-        removeConnectedEventListener(listener);
-        removeDisconnectedEventListener(listener);
-        removeDiscoveredEventListener(listener);
-        removeGetDataEventListener(listener);
-        removeOnTransactionBroadcastListener(listener);
-        removePreMessageReceivedEventListener(listener);
     }
 
     public boolean removeBlocksDownloadedEventListener(BlocksDownloadedEventListener listener) {
@@ -1331,7 +1214,7 @@ public class PeerGroup implements TransactionBroadcaster {
             public void run() {
                 try {
                     log.info("Starting ...");
-                   
+
                     channels.startAsync();
                     channels.awaitRunning();
                     triggerConnections();
@@ -1373,7 +1256,7 @@ public class PeerGroup implements TransactionBroadcaster {
                     for (PeerDiscovery peerDiscovery : peerDiscoverers) {
                         peerDiscovery.shutdown();
                     }
-                     
+
                     vRunning = false;
                     log.info("Stopped.");
                 } catch (Throwable e) {
@@ -1445,7 +1328,7 @@ public class PeerGroup implements TransactionBroadcaster {
             checkNotNull(wallet);
             checkState(!wallets.contains(wallet));
             wallets.add(wallet);
-                     // addPeerFilterProvider(wallet);
+            // addPeerFilterProvider(wallet);
             for (Peer peer : peers) {
                 peer.addWallet(wallet);
             }
@@ -1536,7 +1419,7 @@ public class PeerGroup implements TransactionBroadcaster {
      */
     public void removeWallet(Wallet wallet) {
         wallets.remove(checkNotNull(wallet));
-        peerFilterProviders.remove(wallet); 
+        peerFilterProviders.remove(wallet);
         // wallet.setTransactionBroadcaster(null);
         for (Peer peer : peers) {
             peer.removeWallet(wallet);
@@ -1685,8 +1568,8 @@ public class PeerGroup implements TransactionBroadcaster {
      *            destination IP and port.
      * @return The newly created Peer object or null if the peer could not be
      *         connected. Use
-     *         {@link net.bigtangle.store.Peer#getConnectionOpenFuture()} if
-     *         you want a future which completes when the connection is open.
+     *         {@link net.bigtangle.store.Peer#getConnectionOpenFuture()} if you
+     *         want a future which completes when the connection is open.
      */
     @Nullable
     public Peer connectTo(InetSocketAddress address) {
@@ -2522,7 +2405,7 @@ public class PeerGroup implements TransactionBroadcaster {
         // If we don't have a record of where this tx came from already, set it
         // to be ourselves so Peer doesn't end up
         // redownloading it from the network redundantly.
-        
+
         final TransactionBroadcast broadcast = new TransactionBroadcast(this, tx);
         broadcast.setMinConnections(minConnections);
         // Send the TX to the wallet once we have a successful broadcast.
@@ -2716,7 +2599,6 @@ public class PeerGroup implements TransactionBroadcaster {
         }
     }
 
- 
     /**
      * Returns the maximum number of {@link Peer}s to discover. This maximum is
      * checked after each {@link PeerDiscovery} so this max number can be

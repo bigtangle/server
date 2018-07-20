@@ -12,7 +12,6 @@ import static net.bigtangle.testing.FakeTxBuilder.createFakeTx;
 import static net.bigtangle.testing.FakeTxBuilder.makeSolvedTestBlock;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -22,8 +21,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.net.SocketException;
-import java.nio.channels.CancelledKeyException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,33 +46,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 
-import net.bigtangle.core.Block;
-import net.bigtangle.core.Coin;
-import net.bigtangle.core.ECKey;
-import net.bigtangle.core.FilteredBlock;
-import net.bigtangle.core.GetBlocksMessage;
-import net.bigtangle.core.GetDataMessage;
-import net.bigtangle.core.GetHeadersMessage;
-import net.bigtangle.core.GetUTXOsMessage;
-import net.bigtangle.core.HeadersMessage;
-import net.bigtangle.core.InventoryItem;
-import net.bigtangle.core.InventoryMessage;
-import net.bigtangle.core.Message;
-import net.bigtangle.core.MessageSerializer;
-import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.NotFoundMessage;
-import net.bigtangle.core.PeerAddress;
-import net.bigtangle.core.Ping;
-import net.bigtangle.core.Pong;
-import net.bigtangle.core.ProtocolException;
-import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.Transaction;
-import net.bigtangle.core.TransactionInput;
-import net.bigtangle.core.TransactionOutPoint;
-import net.bigtangle.core.TransactionOutput;
-import net.bigtangle.core.UTXOsMessage;
-import net.bigtangle.core.Utils;
-import net.bigtangle.core.VersionMessage;
 import net.bigtangle.core.listeners.AbstractPeerConnectionEventListener;
 import net.bigtangle.core.listeners.BlocksDownloadedEventListener;
 import net.bigtangle.core.listeners.ChainDownloadStartedEventListener;
@@ -90,7 +60,6 @@ import net.bigtangle.testing.InboundMessageQueuer;
 import net.bigtangle.testing.TestWithNetworkConnections;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.Wallet;
-import net.bigtangle.wallet.listeners.WalletCoinsReceivedEventListener;
 
 @RunWith(value = Parameterized.class)
  @Ignore
@@ -469,12 +438,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // Check that if we request dependency download to be disabled and receive a relevant tx, things work correctly.
         Transaction tx = FakeTxBuilder.createFakeTx(PARAMS, COIN, address);
         final Transaction[] result = new Transaction[1];
-        wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
-            @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                result[0] = tx;
-            }
-        });
+        
         inbound(writeTarget, tx);
         pingAndWait(writeTarget);
         assertEquals(tx, result[0]);
@@ -637,12 +601,7 @@ public class PeerTest extends TestWithNetworkConnections {
         ECKey key = wallet.freshReceiveKey();
         peer.addWallet(wallet);
         final Transaction[] vtx = new Transaction[1];
-        wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
-            @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                vtx[0] = tx;
-            }
-        });
+        
         // Send a normal relevant transaction, it's received correctly.
         Transaction t1 = FakeTxBuilder.createFakeTx(PARAMS, COIN, key);
         inbound(writeTarget, t1);
@@ -689,12 +648,7 @@ public class PeerTest extends TestWithNetworkConnections {
         wallet.setAcceptRiskyTransactions(shouldAccept);
         peer.addWallet(wallet);
         final Transaction[] vtx = new Transaction[1];
-        wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
-            @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                vtx[0] = tx;
-            }
-        });
+       
         // t1 -> t2 [locked] -> t3 (not available)
         Transaction t2 = new Transaction(PARAMS);;
         t2.setLockTime(999999);
@@ -770,12 +724,7 @@ public class PeerTest extends TestWithNetworkConnections {
 
     @Test
     public void exceptionListener() throws Exception {
-        wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
-            @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                throw new NullPointerException("boo!");
-            }
-        });
+         
         final Throwable[] throwables = new Throwable[1];
         Threading.uncaughtExceptionHandler = new Thread.UncaughtExceptionHandler() {
             @Override
