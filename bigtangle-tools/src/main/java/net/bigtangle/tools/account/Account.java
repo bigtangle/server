@@ -34,142 +34,144 @@ import net.bigtangle.wallet.Wallet;
 
 public class Account {
 
-	private List<Action> executes = new ArrayList<Action>();
+    private List<Action> executes = new ArrayList<Action>();
 
-	private List<ECKey> walletKeys = new ArrayList<ECKey>();
+    private List<ECKey> walletKeys = new ArrayList<ECKey>();
 
-	public TokenCoinbase tokenCoinbase;
+    public TokenCoinbase tokenCoinbase;
+    
+    private int index = 0;
 
-	public Coin defaultCoinAmount() {
-		return this.tokenCoinbase.getCoinDefaultValue();
-	}
+    public Coin defaultCoinAmount() {
+        return this.tokenCoinbase.getCoinDefaultValue();
+    }
 
-	public List<ECKey> walletKeys() throws Exception {
-		return walletKeys;
-	}
+    public List<ECKey> walletKeys() throws Exception {
+        return walletKeys;
+    }
 
-	public Account(String walletPath) {
-		this.walletPath = walletPath;
-		initWallet(walletPath);
-		//this.tokenCoinbase = new TokenCoinbase(this);
-	}
+    public Account(String walletPath) {
+        this.walletPath = walletPath;
+        initWallet(walletPath);
+    }
 
-	private void initWallet(String walletPath) {
-		walletAppKit = new WalletAppKit(Configure.PARAMS, new File("."), walletPath);
-		KeyParameter aesKey = null;
-		try {
-			this.walletKeys = walletAppKit.wallet().walletKeys(aesKey);
-		} catch (Exception e) {
-		}
-		walletAppKit.wallet().setServerURL(Configure.SIMPLE_SERVER_CONTEXT_ROOT);
-	}
+    private void initWallet(String walletPath) {
+        walletAppKit = new WalletAppKit(Configure.PARAMS, new File("."), walletPath);
+        KeyParameter aesKey = null;
+        try {
+            this.walletKeys = walletAppKit.wallet().walletKeys(aesKey);
+        } catch (Exception e) {
+        }
+        walletAppKit.wallet().setServerURL(Configure.SIMPLE_SERVER_CONTEXT_ROOT);
+    }
 
-	private String walletPath;
+    private String walletPath;
 
-	private WalletAppKit walletAppKit;
+    private WalletAppKit walletAppKit;
 
-	public void initBuyOrderTask() {
-		this.executes.add(new BuyOrderAction(this));
-		this.executes.add(new SignOrderAction(this));
-		// this.executes.add(new BalancesAction(this));
-	}
+    public void initBuyOrderTask() {
+        this.executes.add(new BuyOrderAction(this));
+        this.executes.add(new SignOrderAction(this));
+        // this.executes.add(new BalancesAction(this));
+    }
 
-	public void initSellOrderTask() {
-		/*try {
-			Action action2 = new TokenAction(this);
-			action2.execute();
-		} catch (Exception e) {
-		}*/
-		this.executes.add(new SignOrderAction(this));
-		this.executes.add(new SellOrderAction(this));
-		// this.executes.add(new BalancesAction(this));
-	}
+    public void initSellOrderTask() {
+        try {
+            Action action2 = new TokenAction(this);
+            action2.execute();
+        } catch (Exception e) {
+        }
+        this.executes.add(new SignOrderAction(this));
+        this.executes.add(new SellOrderAction(this));
+        // this.executes.add(new BalancesAction(this));
+    }
 
-	public void initTradeOrderTask() {
-		try {
-			Action action2 = new TokenAction(this);
-			action2.execute();
-		} catch (Exception e) {
-		}
-		this.executes.add(new SignOrderAction(this));
-		this.executes.add(new SellOrderAction(this));
-		this.executes.add(new BalancesAction(this));
-	}
+    public void initTradeOrderTask() {
+        try {
+            Action action2 = new TokenAction(this);
+            action2.execute();
+        } catch (Exception e) {
+        }
+        this.executes.add(new SignOrderAction(this));
+        this.executes.add(new SellOrderAction(this));
+        this.executes.add(new BalancesAction(this));
+    }
 
-	public void doAction() {
-		Random random = new Random();
-		int len = this.executes.size();
-		Action action = this.executes.get(random.nextInt(len));
-		action.execute();
-	}
+    public void doAction() {
+        int len = this.executes.size();
+        Action action = this.executes.get(index);
+        action.execute();
+        index ++;
+        if (index == len) index = 0;
+    }
 
-	public String getName() {
-		return "account_" + walletPath;
-	}
+    public String getName() {
+        return "account_" + walletPath;
+    }
 
-	public ECKey getRandomTradeECKey() {
-		int count = this.walletKeys.size();
-		int index = new Random().nextInt(count);
-		ECKey outKey = this.walletKeys.get(index);
-		return outKey;
-	}
+    public ECKey getRandomTradeECKey() {
+        int count = this.walletKeys.size();
+        int index = new Random().nextInt(count);
+        ECKey outKey = this.walletKeys.get(index);
+        return outKey;
+    }
 
-	public ECKey getBuyKey() throws Exception {
-		if (buyKey == null) {
-			for (ECKey ecKey : walletKeys()) {
-				try {
-					Set<String> pubKeyHashs = new HashSet<String>();
-					pubKeyHashs.add(Utils.HEX.encode(ecKey.toAddress(Configure.PARAMS).getHash160()));
+    public ECKey getBuyKey() throws Exception {
+        if (buyKey == null) {
+            for (ECKey ecKey : walletKeys()) {
+                try {
+                    Set<String> pubKeyHashs = new HashSet<String>();
+                    pubKeyHashs.add(Utils.HEX.encode(ecKey.toAddress(Configure.PARAMS).getHash160()));
 
-					String resp = OkHttp3Util.postString(
-							Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.batchGetBalances.name(),
-							Json.jsonmapper().writeValueAsString(pubKeyHashs));
-					GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(resp,
-							GetBalancesResponse.class);
-					
-					for (Coin coinbase : getBalancesResponse.getTokens()) {
-						if (Arrays.equals(coinbase.getTokenid(), NetworkParameters.BIGNETCOIN_TOKENID)) {
-							this.buyKey = ecKey;
-							break;
-						}
-					}
-				} catch (Exception e) {
-				}
-			}
-		}
-		return buyKey;
-	}
+                    String resp = OkHttp3Util.postString(
+                            Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.batchGetBalances.name(),
+                            Json.jsonmapper().writeValueAsString(pubKeyHashs));
+                    GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(resp,
+                            GetBalancesResponse.class);
 
-	private ECKey buyKey;
+                    for (Coin coinbase : getBalancesResponse.getTokens()) {
+                        if (Arrays.equals(coinbase.getTokenid(), NetworkParameters.BIGNETCOIN_TOKENID)) {
+                            this.buyKey = ecKey;
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                }
+            }
+        }
+        return buyKey;
+    }
 
-	public void completeTransaction(SendRequest request) throws Exception {
-		this.walletAppKit.wallet().completeTx(request);
-	}
+    private ECKey buyKey;
 
-	public void signTransaction(SendRequest request) throws Exception {
-		this.walletAppKit.wallet().signTransaction(request);
-	}
+    public void completeTransaction(SendRequest request) throws Exception {
+        this.walletAppKit.wallet().completeTx(request);
+    }
 
-	public Wallet wallet() {
-		return this.walletAppKit.wallet();
-	}
+    public void signTransaction(SendRequest request) throws Exception {
+        this.walletAppKit.wallet().signTransaction(request);
+    }
 
-	public void startBuyOrder() {
-		Thread thread = new Thread(new TradeBuyRunnable(this));
-		thread.start();
-	}
+    public Wallet wallet() {
+        return this.walletAppKit.wallet();
+    }
 
-	public void startSellOrder() {
-		Thread thread = new Thread(new TradeSellRunnable(this));
-		thread.start();
-	}
+    public void startBuyOrder() {
+        Thread thread = new Thread(new TradeBuyRunnable(this));
+        thread.start();
+    }
 
-	public void startTradeOrder() {
-		Thread thread = new Thread(new TradeRunnable(this));
-		thread.start();
-	}
+    public void startSellOrder() {
+        Thread thread = new Thread(new TradeSellRunnable(this));
+        thread.start();
+    }
 
-	public void syncTokenCoinbase(List<Coin> list) {
-		this.tokenCoinbase.syncTokenCoinbase(list);
-	}
+    public void startTradeOrder() {
+        Thread thread = new Thread(new TradeRunnable(this));
+        thread.start();
+    }
+
+    public void syncTokenCoinbase(List<Coin> list) {
+        this.tokenCoinbase.syncTokenCoinbase(list);
+    }
 }

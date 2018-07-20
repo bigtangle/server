@@ -58,7 +58,7 @@ public class OkHttp3Util {
 
     @SuppressWarnings("unchecked")
     public static byte[] post(String url, String s) throws Exception {
-        logger.debug(url);
+        logger.debug("url : " + url);
         OkHttpClient client = getOkHttpClient();
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), s);
         Request request = new Request.Builder().url(url).post(body).build();

@@ -19,62 +19,62 @@ import net.bigtangle.wallet.PayOrder;
 
 public class SignOrderAction extends Action {
 
-	public SignOrderAction(Account account) {
-		super(account);
-	}
+    public SignOrderAction(Account account) {
+        super(account);
+    }
 
-	@Override
-	public void callback() {
-	}
+    @Override
+    public void callback() {
+    }
 
-	private static final Logger logger = LoggerFactory.getLogger(SellOrderAction.class);
+    private static final Logger logger = LoggerFactory.getLogger(SellOrderAction.class);
 
-	@Override
-	public void execute0() throws Exception {
-		//logger.info("account name : {}, sign order action start", account.getName());
-		List<Exchange> exchangeList = new ArrayList<Exchange>();
-		List<String> addressList = new ArrayList<String>();
-		for (ECKey ecKey : this.account.walletKeys()) {
-			String address = ecKey.toAddress(Configure.PARAMS).toString();
-			addressList.add(address);
-		}
-		String response = OkHttp3Util.post(
-				Configure.ORDER_MATCH_CONTEXT_ROOT + OrdermatchReqCmd.getBatchExchange.name(),
-				Json.jsonmapper().writeValueAsString(addressList).getBytes());
+    @Override
+    public void execute0() throws Exception {
+        logger.info("account name : {}, sign order action start", account.getName());
+        List<Exchange> exchangeList = new ArrayList<Exchange>();
+        List<String> addressList = new ArrayList<String>();
+        for (ECKey ecKey : this.account.walletKeys()) {
+            String address = ecKey.toAddress(Configure.PARAMS).toString();
+            addressList.add(address);
+        }
+        String response = OkHttp3Util.post(
+                Configure.ORDER_MATCH_CONTEXT_ROOT + OrdermatchReqCmd.getBatchExchange.name(),
+                Json.jsonmapper().writeValueAsString(addressList).getBytes());
 
-		GetExchangeResponse getExchangeResponse = Json.jsonmapper().readValue(response, GetExchangeResponse.class);
-		for (Exchange exchange : getExchangeResponse.getExchanges()) {
-			try {
-				/*if (exchange.getToSign() + exchange.getFromSign() == 2) {
-					continue;
-				}*/
-				int toSign = exchange.getToSign();
-				int fromSign = exchange.getFromSign();
-				String toAddress = exchange.getToAddress();
-				//mj61qqqkFDcXFx6P5bMtspDH7tJZ7jVHL4
-				String fromAddress = exchange.getFromAddress();
-				if (toSign == 1 && this.account.wallet().calculatedAddressHit(toAddress)) {
-					continue;
-				}
-				if (fromSign == 1 && this.account.wallet().calculatedAddressHit(fromAddress)) {
-					continue;
-				}
-				exchangeList.add(exchange);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		logger.info("find exchange size : " + exchangeList.size());
-		for (Exchange exchange : exchangeList) {
-			try {
-				String orderid = exchange.getOrderid();
-				PayOrder payOrder = new PayOrder(this.account.wallet(), orderid, Configure.SIMPLE_SERVER_CONTEXT_ROOT,
-						Configure.ORDER_MATCH_CONTEXT_ROOT);
-				payOrder.sign();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		//logger.info("account name : {}, sign order action end", account.getName());
-	}
+        GetExchangeResponse getExchangeResponse = Json.jsonmapper().readValue(response, GetExchangeResponse.class);
+        for (Exchange exchange : getExchangeResponse.getExchanges()) {
+            try {
+                /*
+                 * if (exchange.getToSign() + exchange.getFromSign() == 2) { continue; }
+                 */
+                int toSign = exchange.getToSign();
+                int fromSign = exchange.getFromSign();
+                String toAddress = exchange.getToAddress();
+                // mj61qqqkFDcXFx6P5bMtspDH7tJZ7jVHL4
+                String fromAddress = exchange.getFromAddress();
+                if (toSign == 1 && this.account.wallet().calculatedAddressHit(toAddress)) {
+                    continue;
+                }
+                if (fromSign == 1 && this.account.wallet().calculatedAddressHit(fromAddress)) {
+                    continue;
+                }
+                exchangeList.add(exchange);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        logger.info("find exchange size : " + exchangeList.size());
+        for (Exchange exchange : exchangeList) {
+            try {
+                String orderid = exchange.getOrderid();
+                PayOrder payOrder = new PayOrder(this.account.wallet(), orderid, Configure.SIMPLE_SERVER_CONTEXT_ROOT,
+                        Configure.ORDER_MATCH_CONTEXT_ROOT);
+                payOrder.sign();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        logger.info("account name : {}, sign order action end", account.getName());
+    }
 }

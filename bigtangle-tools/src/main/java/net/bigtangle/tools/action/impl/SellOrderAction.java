@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.params.OrdermatchReqCmd;
-import net.bigtangle.params.ReqCmd;
 import net.bigtangle.tools.account.Account;
 import net.bigtangle.tools.action.Action;
 import net.bigtangle.tools.config.Configure;
@@ -26,7 +25,7 @@ public class SellOrderAction extends Action {
 
     @Override
     public void execute0() throws Exception {
-        //logger.info("account name : {}, sell order action start", account.getName());
+        logger.info("account name : {}, sell order action start", account.getName());
         try {
             HashMap<String, Object> requestParams = new HashMap<String, Object>();
             ECKey ecKey = account.getRandomTradeECKey();
@@ -42,7 +41,7 @@ public class SellOrderAction extends Action {
         } catch (Exception e) {
             logger.error("account name : {}, sell order action exception", account.getName(), e);
         }
-        //logger.info("account name : {}, sell order action end", account.getName());
+        logger.info("account name : {}, sell order action end", account.getName());
     }
 
     private static final Logger logger = LoggerFactory.getLogger(SellOrderAction.class);

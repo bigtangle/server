@@ -7,6 +7,6 @@ public class Simulator {
     public static void main(String[] args) {
         //AccountContainer.newInstance().startBuyOrder(1, 1);
         //AccountContainer.newInstance().startSellOrder(2, 5);
-        AccountContainer.newInstance().startTradeOrder(1, 2);
+        AccountContainer.newInstance().startTradeOrder(1, 5);
     }
 }
