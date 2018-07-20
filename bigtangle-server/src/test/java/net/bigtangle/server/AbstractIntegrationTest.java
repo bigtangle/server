@@ -218,7 +218,7 @@ public abstract class AbstractIntegrationTest {
             log.debug(u.toString());
         }
 
-        testInitTransferWallet();
+      //  testInitTransferWallet();
     }
 
     // transfer the coin deon test key to address in wallet
@@ -234,7 +234,7 @@ public abstract class AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
 
-        Coin amount = Coin.parseCoin("3", NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin amount = Coin.parseCoin("3333333", NetworkParameters.BIGNETCOIN_TOKENID);
         SendRequest request = SendRequest.to(walletKeys.get(1).toAddress(networkParameters), amount);
         coinbaseWallet.completeTx(request);
         rollingBlock.addTransaction(request.tx);
