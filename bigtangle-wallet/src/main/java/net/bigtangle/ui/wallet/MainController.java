@@ -55,11 +55,9 @@ import javafx.util.Duration;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
-import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.Tokens;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
@@ -69,11 +67,9 @@ import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.controls.ClickableBitcoinAddress;
 import net.bigtangle.ui.wallet.controls.NotificationBarPane;
-import net.bigtangle.ui.wallet.utils.BitcoinUIModel;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.easing.EasingMode;
 import net.bigtangle.ui.wallet.utils.easing.ElasticInterpolator;
-import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
 
 /**
@@ -128,9 +124,6 @@ public class MainController {
     @FXML
     public TextField addressTextField;
 
-    private BitcoinUIModel model = new BitcoinUIModel();
-
-    private NotificationBarPane.Item syncItem;
     private KeyParameter aesKey = null;
 
     @FXML
@@ -149,8 +142,9 @@ public class MainController {
                     passwordHBox.setVisible(false);
                 }
                 Server.setText(Main.IpAddress);
-            //    Main.addToken(Main.getContextRoot(), Main.IpAddress, "mainServer",
-            //            DataClassName.SERVERURL.name());
+                // Main.addToken(Main.getContextRoot(), Main.IpAddress,
+                // "mainServer",
+                // DataClassName.SERVERURL.name());
                 initTableView();
             }
         } catch (Exception e) {
@@ -186,7 +180,6 @@ public class MainController {
         return true;
     }
 
-    @SuppressWarnings("unchecked")
     public void initTable(String addressString) throws Exception {
         String myPositvleTokens = Main.getString4block(Main.initToken4block());
         Main.instance.getUtxoData().clear();
@@ -210,9 +203,9 @@ public class MainController {
         String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.batchGetBalances.name(),
                 Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
         log.debug(response);
-        
+
         GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
-        
+
         Map<String, String> hashNameMap = Main.getTokenHexNameMap();
         ObservableList<UTXOModel> subutxos = FXCollections.observableArrayList();
         Main.validTokenMap.clear();
@@ -260,7 +253,7 @@ public class MainController {
                         minimumsign, hashHex, hash, outputindex));
         }
         Main.instance.getUtxoData().addAll(subutxos);
-        
+
         ObservableList<CoinModel> subcoins = FXCollections.observableArrayList();
         Main.validTokenSet.clear();
         for (Coin coin : getBalancesResponse.getTokens()) {
@@ -422,18 +415,6 @@ public class MainController {
         Main.instance.overlayUI("wallet_set_password.fxml");
     }
 
-    private void askForPasswordAndRetry() {
-        Main.OverlayUI<WalletPasswordController> pwd = Main.instance.overlayUI("wallet_password.fxml");
-
-        pwd.controller.aesKeyProperty().addListener((observable, old, cur) -> {
-
-            Main.OverlayUI<MainController> screen = Main.instance.overlayUI("main.fxml");
-            screen.controller.aesKey = cur;
-
-            screen.controller.initTableView();
-        });
-    }
-
     public void restoreFromSeedAnimation() {
         // Buttons slide out ...
         TranslateTransition leave = new TranslateTransition(Duration.millis(1200), controlsBox);
@@ -463,7 +444,8 @@ public class MainController {
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hashHex", Main.getString(utxoModel.getHashHex()));
 
-        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getBlock.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getBlock.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
         Block re = Main.params.getDefaultSerializer().makeBlock(data);
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setHeight(800);

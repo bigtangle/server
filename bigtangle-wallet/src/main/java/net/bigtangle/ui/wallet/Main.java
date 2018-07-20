@@ -236,7 +236,6 @@ public class Main extends Application {
     }
 
     /**
-     * �Ƚϰ汾�ŵĴ�С,ǰ�ߴ��򷵻�һ������,���ߴ󷵻�һ������,����򷵻�0
      * 
      * @param version1
      * @param version2
@@ -246,16 +245,15 @@ public class Main extends Application {
         if (version1 == null || version2 == null) {
             throw new Exception("compareVersion error:illegal params.");
         }
-        String[] versionArray1 = version1.split("\\.");// ע��˴�Ϊ����ƥ�䣬������"."��
+        String[] versionArray1 = version1.split("\\.");
         String[] versionArray2 = version2.split("\\.");
         int idx = 0;
-        int minLength = Math.min(versionArray1.length, versionArray2.length);// ȡ��С����ֵ
+        int minLength = Math.min(versionArray1.length, versionArray2.length);
         int diff = 0;
-        while (idx < minLength && (diff = versionArray1[idx].length() - versionArray2[idx].length()) == 0// �ȱȽϳ���
-                && (diff = versionArray1[idx].compareTo(versionArray2[idx])) == 0) {// �ٱȽ��ַ�
+        while (idx < minLength && (diff = versionArray1[idx].length() - versionArray2[idx].length()) == 0
+                && (diff = versionArray1[idx].compareTo(versionArray2[idx])) == 0) {
             ++idx;
         }
-        // ����Ѿ��ֳ���С����ֱ�ӷ��أ����δ�ֳ���С�����ٱȽ�λ�������Ӱ汾��Ϊ��
         diff = (diff != 0) ? diff : versionArray1.length - versionArray2.length;
         return diff;
     }
