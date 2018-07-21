@@ -6,7 +6,7 @@ package net.bigtangle.params;
 
 public enum ReqCmd {
 
-    askTransaction, saveBlock, getOutputs, getTokens, getTokensNoMarket, getMarkets, getTokenById, getAllEvaluations,
+    askTransaction, saveBlock, getOutputs, getTokens, getTokensNoMarket, getMarkets, getTokenById,
 
     batchGetBalances, searchBlock, getBlock, streamBlocks,
 

@@ -16,6 +16,10 @@ public class BlockEvaluation implements Serializable {
 	public String getBlockHexStr() {
 		return Utils.HEX.encode(this.blockHash.getBytes());
 	}
+	
+	public void setBlockHexStr(String blockHexStr) {
+	    this.blockHash = Sha256Hash.wrap(blockHexStr);
+	}
 
 	private BlockEvaluation() {
 	}

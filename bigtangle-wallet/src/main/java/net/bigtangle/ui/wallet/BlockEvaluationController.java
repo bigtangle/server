@@ -33,6 +33,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.http.server.resp.GetBlockEvaluationsResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -72,13 +73,12 @@ public class BlockEvaluationController {
     public ComboBox<String> addressComboBox;
     @FXML
     public TextField latestAmountTextField;
-    
+
     @FXML
     public ComboBox<String> addressComboBox1;
     @FXML
     public TextField latestAmountTextField1;
-    
-    
+
     @FXML
     public TextField compareTF1;
     @FXML
@@ -124,89 +124,99 @@ public class BlockEvaluationController {
     private void initCompare() {
         try {
             Map<String, String> keyMap = new HashMap<String, String>();
-            List<Map<String, Object>> mainList = this.getBlockInfos(Main.getContextRoot());
-            if (mainList != null && !mainList.isEmpty()) {
-
-                for (Map<String, Object> map : mainList) {
-                    String key = map.get("blockHexStr").toString();
+            List<BlockEvaluation> blockEvaluations = this.getBlockInfos(Main.getContextRoot());
+            if (blockEvaluations != null && !blockEvaluations.isEmpty()) {
+                for (BlockEvaluation blockEvaluation : blockEvaluations) {
+                    String key = blockEvaluation.getBlockHexStr();
                     if (!keyMap.containsKey(key)) {
                         keyMap.put(key, "m-0-0");
                     }
-
                 }
             } else {
-                mainList = new ArrayList<Map<String, Object>>();
+                blockEvaluations = new ArrayList<BlockEvaluation>();
             }
-            List<Map<String, Object>> compareList1 = new ArrayList<Map<String, Object>>();
-            List<Map<String, Object>> compareList2 = new ArrayList<Map<String, Object>>();
+
+            List<BlockEvaluation> compareList1 = new ArrayList<BlockEvaluation>();
+            List<BlockEvaluation> compareList2 = new ArrayList<BlockEvaluation>();
 
             if (compareTF1.getText() != null && !compareTF1.getText().isEmpty()) {
                 compareList1 = this.getBlockInfos(compareTF1.getText().trim());
-
                 if (compareList1 != null && !compareList1.isEmpty()) {
-                    for (Map<String, Object> map : compareList1) {
-                        String key = map.get("blockHexStr").toString();
+                    for (BlockEvaluation blockEvaluation : compareList1) {
+                        String key = blockEvaluation.getBlockHexStr();
                         if (!keyMap.containsKey(key)) {
                             keyMap.put(key, "0-c1-0");
                         } else {
                             keyMap.put(key, "m-c1-0");
                         }
-
                     }
-                    mainList.addAll(compareList1);
+                    blockEvaluations.addAll(compareList1);
                 }
-
             }
             if (compareTF2.getText() != null && !compareTF2.getText().isEmpty()) {
                 compareList2 = this.getBlockInfos(compareTF1.getText().trim());
-
                 if (compareList2 != null && !compareList2.isEmpty()) {
-                    for (Map<String, Object> map : compareList2) {
-                        String key = map.get("blockHexStr").toString();
+                    for (BlockEvaluation blockEvaluation : compareList2) {
+                        String key = blockEvaluation.getBlockHexStr();
                         if (!keyMap.containsKey(key)) {
                             keyMap.put(key, "0-0-c2");
                         } else {
                             String value = keyMap.get(key).substring(0, keyMap.get(key).length() - 1);
                             keyMap.put(key, value + "c2");
                         }
-
                     }
-                    mainList.addAll(compareList2);
+                    blockEvaluations.addAll(compareList1);
                 }
             }
-            Collections.sort(mainList, new Comparator<Map<String, Object>>() {
+            Collections.sort(blockEvaluations, new Comparator<BlockEvaluation>() {
 
                 @Override
-                public int compare(Map<String, Object> o1, Map<String, Object> o2) {
-                    String k1 = o1.get("blockHexStr").toString();
-                    String k2 = o2.get("blockHexStr").toString();
+                public int compare(BlockEvaluation o1, BlockEvaluation o2) {
+                    String k1 = o1.getBlockHexStr();
+                    String k2 = o2.getBlockHexStr();
 
                     return k1.compareTo(k2);
                 }
             });
             ObservableList<Map> allData = FXCollections.observableArrayList();
-            for (int i = 0; i < mainList.size(); i++) {
-                Map<String, Object> map = mainList.get(i);
-                String tempKey = map.get("blockHexStr").toString();
+            for (int i = 0; i < blockEvaluations.size(); i++) {
+                BlockEvaluation blockEvaluation = blockEvaluations.get(i);
+                String tempKey = blockEvaluation.getBlockHexStr();
                 String tempValue = keyMap.get(tempKey);
-                String tempRating = map.get("rating").toString();
-                String tempCumulativeWeight = map.get("cumulativeWeight").toString();
-                if (tempValue.equalsIgnoreCase("m-c1-c2")) {
-                    Map<String, Object> map1 = mainList.get(i + 1);
-                    String tempRating1 = map1.get("rating").toString();
-                    String tempCumulativeWeight1 = map1.get("cumulativeWeight").toString();
+                String tempRating = String.valueOf(blockEvaluation.getRating());
+                String tempCumulativeWeight = String.valueOf(blockEvaluation.getCumulativeWeight());
 
-                    Map<String, Object> map2 = mainList.get(i + 2);
-                    String tempRating2 = map2.get("rating").toString();
-                    String tempCumulativeWeight2 = map2.get("cumulativeWeight").toString();
+                Map<String, Object> map = new HashMap<String, Object>();
+
+                map.put("blockHexStr", blockEvaluation.getBlockHexStr());
+                map.put("rating", blockEvaluation.getRating());
+                map.put("depth", blockEvaluation.getDepth());
+                map.put("cumulativeWeight", blockEvaluation.getCumulativeWeight());
+                map.put("solid", blockEvaluation.isSolid());
+                map.put("height", blockEvaluation.getHeight());
+                map.put("milestone", blockEvaluation.isMilestone());
+                map.put("milestoneLastUpdateTime", blockEvaluation.getMilestoneLastUpdateTime());
+                map.put("milestoneDepth", blockEvaluation.getMilestoneDepth());
+                map.put("insertTime", blockEvaluation.getInsertTime());
+                map.put("maintained", blockEvaluation.isMaintained());
+                map.put("rewardValid", blockEvaluation.isRewardValid());
+
+                if (tempValue.equalsIgnoreCase("m-c1-c2")) {
+                    BlockEvaluation map1 = blockEvaluations.get(i + 1);
+                    String tempRating1 = String.valueOf(map1.getRating());
+                    String tempCumulativeWeight1 = String.valueOf(map1.getCumulativeWeight());
+
+                    BlockEvaluation map2 = blockEvaluations.get(i + 2);
+                    String tempRating2 = String.valueOf(map2.getRating());
+                    String tempCumulativeWeight2 = String.valueOf(map2.getCumulativeWeight());
                     map.put("rating", tempRating + ";" + tempRating1 + ";" + tempRating2);
                     map.put("cumulativeWeight",
                             tempCumulativeWeight + ";" + tempCumulativeWeight1 + ";" + tempCumulativeWeight2);
                     i = i + 2;
                 } else if (tempValue.equalsIgnoreCase("m-c1-0")) {
-                    Map<String, Object> map1 = mainList.get(i + 1);
-                    String tempRating1 = map1.get("rating").toString();
-                    String tempCumulativeWeight1 = map1.get("cumulativeWeight").toString();
+                    BlockEvaluation map1 = blockEvaluations.get(i + 1);
+                    String tempRating1 = String.valueOf(map1.getRating());
+                    String tempCumulativeWeight1 = String.valueOf(map1.getCumulativeWeight());
 
                     String tempRating2 = "-";
                     String tempCumulativeWeight2 = "-";
@@ -215,20 +225,20 @@ public class BlockEvaluationController {
                             tempCumulativeWeight + ";" + tempCumulativeWeight1 + ";" + tempCumulativeWeight2);
                     i = i + 1;
                 } else if (tempValue.equalsIgnoreCase("m-0-c2")) {
-                    Map<String, Object> map2 = mainList.get(i + 1);
+                    BlockEvaluation map2 = blockEvaluations.get(i + 1);
                     String tempRating1 = "-";
                     String tempCumulativeWeight1 = "-";
 
-                    String tempRating2 = map2.get("rating").toString();
-                    String tempCumulativeWeight2 = map2.get("cumulativeWeight").toString();
+                    String tempRating2 = String.valueOf(map2.getRating());
+                    String tempCumulativeWeight2 = String.valueOf(map2.getCumulativeWeight());
                     map.put("rating", tempRating + ";" + tempRating1 + ";" + tempRating2);
                     map.put("cumulativeWeight",
                             tempCumulativeWeight + ";" + tempCumulativeWeight1 + ";" + tempCumulativeWeight2);
                     i = i + 1;
                 } else if (tempValue.equalsIgnoreCase("0-c1-c2")) {
-                    Map<String, Object> map1 = mainList.get(i + 1);
-                    String tempRating1 = map1.get("rating").toString();
-                    String tempCumulativeWeight1 = map1.get("cumulativeWeight").toString();
+                    BlockEvaluation map1 = blockEvaluations.get(i + 1);
+                    String tempRating1 = String.valueOf(map1.getRating());
+                    String tempCumulativeWeight1 = String.valueOf(map1.getCumulativeWeight());
 
                     map.put("rating", "-;" + tempRating + ";" + tempRating1);
                     map.put("cumulativeWeight", "-;" + tempCumulativeWeight + ";" + tempCumulativeWeight1);
@@ -259,11 +269,7 @@ public class BlockEvaluationController {
 
     }
 
-    private void initMainServer() throws Exception {
-        List<Map<String, Object>> mainList = this.getBlockInfos(Main.getContextRoot());
-    }
-
-    private List<Map<String, Object>> getBlockInfos(String server) throws Exception {
+    private List<BlockEvaluation> getBlockInfos(String server) throws Exception {
         String CONTEXT_ROOT = server;
         String lastestAmount = latestAmountTextField1.getText();
         String address = addressComboBox1.getValue();
@@ -287,10 +293,9 @@ public class BlockEvaluationController {
         requestParam.put("lastestAmount", lastestAmount);
         String response = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.searchBlock.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
-        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-        List<Map<String, Object>> temp = (List<Map<String, Object>>) data.get("evaluations");
-        return temp;
-
+        GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
+                GetBlockEvaluationsResponse.class);
+        return getBlockEvaluationsResponse.getEvaluations();
     }
 
     public void searchBlock(ActionEvent event) {
@@ -311,6 +316,7 @@ public class BlockEvaluationController {
 
     public void showBlock(ActionEvent event) throws Exception {
         String CONTEXT_ROOT = Main.getContextRoot();
+        @SuppressWarnings("unchecked")
         Map<String, Object> rowData = blockEvaluationTable.getSelectionModel().getSelectedItem();
         if (rowData == null || rowData.isEmpty()) {
             GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("ex_c_m1"));
@@ -319,7 +325,8 @@ public class BlockEvaluationController {
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hashHex", Main.getString(rowData.get("hash")));
 
-        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getBlock.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getBlock.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
         Block re = Main.params.getDefaultSerializer().makeBlock(data);
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setHeight(800);
@@ -358,57 +365,53 @@ public class BlockEvaluationController {
         requestParam.put("lastestAmount", lastestAmount);
         String response = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.searchBlock.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
-        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-        List<Map<String, Object>> temp = (List<Map<String, Object>>) data.get("evaluations");
-        if (temp != null && !temp.isEmpty()) {
 
-            List<BlockEvaluation> list = temp.stream().map(map -> MapToBeanMapperUtil.parseBlockEvaluation(map))
-                    .collect(Collectors.toList());
-            ObservableList<Map> allData = FXCollections.observableArrayList();
-            if (list != null && !list.isEmpty()) {
-                for (BlockEvaluation blockEvaluation : list) {
-                    Map<String, Object> dataRow = new HashMap<>();
-                    dataRow.put("hash",
-                            blockEvaluation.getBlockHash() == null ? "" : blockEvaluation.getBlockHash().toString());
-                    dataRow.put("rating", blockEvaluation.getRating());
-                    dataRow.put("depth", blockEvaluation.getDepth());
-                    dataRow.put("cumulativeWeight", blockEvaluation.getCumulativeWeight());
-                    dataRow.put("height", blockEvaluation.getHeight());
+        GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
+                GetBlockEvaluationsResponse.class);
+        List<BlockEvaluation> blockEvaluations = getBlockEvaluationsResponse.getEvaluations();
 
-                    dataRow.put("solid", blockEvaluation.isSolid() ? Main.getText("yes") : Main.getText("no"));
-                    dataRow.put("milestone", blockEvaluation.isMilestone() ? Main.getText("yes") : Main.getText("no"));
-                    dataRow.put("milestoneDepth", blockEvaluation.getMilestoneDepth());
-                    dataRow.put("maintained",
-                            blockEvaluation.isMaintained() ? Main.getText("yes") : Main.getText("no"));
-                    dataRow.put("rewardValid",
-                            blockEvaluation.isRewardValid() ? Main.getText("yes") : Main.getText("no"));
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                    java.util.Date date = new Date(blockEvaluation.getMilestoneLastUpdateTime());
-                    String str = sdf.format(date);
-                    dataRow.put("milestoneLastUpdateTime", str);
-                    date = new Date(blockEvaluation.getInsertTime());
-                    str = sdf.format(date);
-                    dataRow.put("insertTime", str);
+        ObservableList<Map> allData = FXCollections.observableArrayList();
+        if (blockEvaluations != null && !blockEvaluations.isEmpty()) {
+            for (BlockEvaluation blockEvaluation : blockEvaluations) {
+                Map<String, Object> dataRow = new HashMap<>();
+                dataRow.put("hash",
+                        blockEvaluation.getBlockHash() == null ? "" : blockEvaluation.getBlockHash().toString());
+                dataRow.put("rating", blockEvaluation.getRating());
+                dataRow.put("depth", blockEvaluation.getDepth());
+                dataRow.put("cumulativeWeight", blockEvaluation.getCumulativeWeight());
+                dataRow.put("height", blockEvaluation.getHeight());
 
-                    allData.add(dataRow);
-                }
-                blockhashColumn.setCellValueFactory(new MapValueFactory("hash"));
-                ratingColumn.setCellValueFactory(new MapValueFactory("rating"));
-                depthColumn.setCellValueFactory(new MapValueFactory("depth"));
-                cumulativeWeightColumn.setCellValueFactory(new MapValueFactory("cumulativeWeight"));
-                heightColumn.setCellValueFactory(new MapValueFactory("height"));
+                dataRow.put("solid", blockEvaluation.isSolid() ? Main.getText("yes") : Main.getText("no"));
+                dataRow.put("milestone", blockEvaluation.isMilestone() ? Main.getText("yes") : Main.getText("no"));
+                dataRow.put("milestoneDepth", blockEvaluation.getMilestoneDepth());
+                dataRow.put("maintained", blockEvaluation.isMaintained() ? Main.getText("yes") : Main.getText("no"));
+                dataRow.put("rewardValid", blockEvaluation.isRewardValid() ? Main.getText("yes") : Main.getText("no"));
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                java.util.Date date = new Date(blockEvaluation.getMilestoneLastUpdateTime());
+                String str = sdf.format(date);
+                dataRow.put("milestoneLastUpdateTime", str);
+                date = new Date(blockEvaluation.getInsertTime());
+                str = sdf.format(date);
+                dataRow.put("insertTime", str);
 
-                solidColumn.setCellValueFactory(new MapValueFactory("solid"));
-                milestoneColumn.setCellValueFactory(new MapValueFactory("milestone"));
-                milestoneDepthColumn.setCellValueFactory(new MapValueFactory("milestoneDepth"));
-                maintainedColumn.setCellValueFactory(new MapValueFactory("maintained"));
-                rewardValidColumn.setCellValueFactory(new MapValueFactory("rewardValid"));
-                milestoneLastUpdateTimeColumn.setCellValueFactory(new MapValueFactory("milestoneLastUpdateTime"));
-                insertTimeColumn.setCellValueFactory(new MapValueFactory("insertTime"));
-
-                blockhashColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+                allData.add(dataRow);
             }
-            blockEvaluationTable.setItems(allData);
+            blockhashColumn.setCellValueFactory(new MapValueFactory("hash"));
+            ratingColumn.setCellValueFactory(new MapValueFactory("rating"));
+            depthColumn.setCellValueFactory(new MapValueFactory("depth"));
+            cumulativeWeightColumn.setCellValueFactory(new MapValueFactory("cumulativeWeight"));
+            heightColumn.setCellValueFactory(new MapValueFactory("height"));
+
+            solidColumn.setCellValueFactory(new MapValueFactory("solid"));
+            milestoneColumn.setCellValueFactory(new MapValueFactory("milestone"));
+            milestoneDepthColumn.setCellValueFactory(new MapValueFactory("milestoneDepth"));
+            maintainedColumn.setCellValueFactory(new MapValueFactory("maintained"));
+            rewardValidColumn.setCellValueFactory(new MapValueFactory("rewardValid"));
+            milestoneLastUpdateTimeColumn.setCellValueFactory(new MapValueFactory("milestoneLastUpdateTime"));
+            insertTimeColumn.setCellValueFactory(new MapValueFactory("insertTime"));
+
+            blockhashColumn.setCellFactory(TextFieldTableCell.forTableColumn());
         }
+        blockEvaluationTable.setItems(allData);
     }
 }

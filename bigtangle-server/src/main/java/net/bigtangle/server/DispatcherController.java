@@ -144,11 +144,11 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-            case getAllEvaluations: {
-                AbstractResponse response = GetBlockEvaluationsResponse.create(blockService.getAllBlockEvaluations());
-                this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
+//            case getAllEvaluations: {
+//                AbstractResponse response = GetBlockEvaluationsResponse.create(blockService.getAllBlockEvaluations());
+//                this.outPrintJSONString(httpServletResponse, response);
+//            }
+//                break;
             case batchGetBalances: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 List<String> keyStrHex000 = Json.jsonmapper().readValue(reqStr, List.class);
