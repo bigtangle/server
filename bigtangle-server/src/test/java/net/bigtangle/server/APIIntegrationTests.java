@@ -315,7 +315,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
         requestParam.clear();
         requestParam.put("hexStr", payMultiSign_.get("outpusHashHex"));
-        resp = OkHttp3Util.postString(contextRoot + "outpusWithHexStr",
+        resp = OkHttp3Util.postString(contextRoot + ReqCmd.outpusWithHexStr.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         System.out.println(resp);
 

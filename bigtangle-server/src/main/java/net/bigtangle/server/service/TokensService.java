@@ -27,7 +27,7 @@ import net.bigtangle.utils.MonetaryFormat;
 
 @Service
 public class TokensService {
-    
+
     public AbstractResponse getTokenById(String tokenid) throws BlockStoreException {
         Tokens tokens = this.store.getTokensInfo(tokenid);
         AbstractResponse response = GetTokensResponse.create(tokens);
@@ -68,35 +68,42 @@ public class TokensService {
     }
 
     public void updateTokenInfo(Block block) throws Exception {
-        if (block.getTransactions() == null || block.getTransactions().isEmpty()) {
-            return;
-        }
-        Transaction transaction = block.getTransactions().get(0);
-        if (transaction.getData() == null) {
-            return;
-        }
-        byte[] buf = transaction.getData();
-        TokenInfo tokenInfo = new TokenInfo().parse(buf);
-
-        final String tokenid = tokenInfo.getTokens().getTokenid();
-        Tokens tokens = this.store.getTokensInfo(tokenid);
-        if (tokens != null) {
-            throw new BlockStoreException("token can't update");
-        }
-
-        TokenSerial tokenSerial = tokenInfo.getTokenSerial();
-        List<MultiSign> multiSigns = this.store.getMultiSignListByTokenid(tokenid, tokenSerial.getTokenindex());
-        int signnumber = 0;
-        for (MultiSign multiSign : multiSigns) {
-            if (multiSign.getSign() == 1) {
-                signnumber++;
+        this.store.beginDatabaseBatchWrite();
+        try {
+            if (block.getTransactions() == null || block.getTransactions().isEmpty()) {
+                return;
             }
+            Transaction transaction = block.getTransactions().get(0);
+            if (transaction.getData() == null) {
+                return;
+            }
+            byte[] buf = transaction.getData();
+            TokenInfo tokenInfo = new TokenInfo().parse(buf);
+
+            final String tokenid = tokenInfo.getTokens().getTokenid();
+            Tokens tokens = this.store.getTokensInfo(tokenid);
+            if (tokens != null) {
+                throw new BlockStoreException("token can't update");
+            }
+
+            TokenSerial tokenSerial = tokenInfo.getTokenSerial();
+            List<MultiSign> multiSigns = this.store.getMultiSignListByTokenid(tokenid, tokenSerial.getTokenindex());
+            int signnumber = 0;
+            for (MultiSign multiSign : multiSigns) {
+                if (multiSign.getSign() == 1) {
+                    signnumber++;
+                }
+            }
+            if (signnumber >= multiSigns.size()) {
+                throw new BlockStoreException("token can't update");
+            }
+            this.store.deleteMultiSign(tokenid);
+            multiSignService.multiSign(block, true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            this.store.abortDatabaseBatchWrite();
         }
-        if (signnumber >= multiSigns.size()) {
-            throw new BlockStoreException("token can't update");
-        }
-        this.store.deleteMultiSign(tokenid);
-        multiSignService.multiSign(block, true);
+        this.store.commitDatabaseBatchWrite();
     }
 
     @Autowired

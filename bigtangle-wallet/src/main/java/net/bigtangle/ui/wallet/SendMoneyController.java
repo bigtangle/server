@@ -765,7 +765,7 @@ public class SendMoneyController {
         String outputStr = this.hashHexList.get(index);
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hexStr", outputStr);
-        String resp = OkHttp3Util.postString(contextRoot + "outpusWithHexStr",
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.outpusWithHexStr.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         HashMap<String, Object> outputs_ = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -810,7 +810,7 @@ public class SendMoneyController {
         String outputStr = this.hashHexList.get(index);
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hexStr", outputStr);
-        String resp = OkHttp3Util.postString(contextRoot + "outpusWithHexStr",
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.outpusWithHexStr.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         HashMap<String, Object> outputs_ = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -914,7 +914,7 @@ public class SendMoneyController {
 
         requestParam.clear();
         requestParam.put("hexStr", payMultiSign_.get("outpusHashHex"));
-        resp = OkHttp3Util.postString(contextRoot + "outpusWithHexStr",
+        resp = OkHttp3Util.postString(contextRoot + ReqCmd.outpusWithHexStr.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         log.debug(resp);
 

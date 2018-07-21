@@ -149,27 +149,6 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-                
-//            case outputsWiteToken: {
-//                ByteBuffer byteBuffer = ByteBuffer.wrap(bodyByte);
-//                byte[] pubKey = new byte[byteBuffer.getInt()];
-//                byteBuffer.put(pubKey);
-//                byte[] tokenid = new byte[byteBuffer.getInt()];
-//                byteBuffer.put(tokenid);
-//                AbstractResponse response = walletService.getAccountOutputsWithToken(pubKey, tokenid);
-//                this.outPrintJSONString(httpServletResponse, response);
-//            }
-//            case outputsWithToken: {
-//                ByteBuffer byteBuffer = ByteBuffer.wrap(bodyByte);
-//                byte[] pubKey = new byte[byteBuffer.getInt()];
-//                byteBuffer.put(pubKey);
-//                byte[] tokenid = new byte[byteBuffer.getInt()];
-//                byteBuffer.put(tokenid);
-//                AbstractResponse response = walletService.getAccountOutputsWithToken(pubKey, tokenid);
-//                this.outPrintJSONString(httpServletResponse, response);
-//            }
-//                break;
-
             case batchGetBalances: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 List<String> keyStrHex000 = Json.jsonmapper().readValue(reqStr, List.class);
@@ -321,14 +300,15 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-//            case outpusWithHexStr: {
-//                String reqStr = new String(bodyByte, "UTF-8");
-//                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-//                String hexStr = (String) request.get("hexStr");
-//                AbstractResponse response = walletService.getOutputsWithHexStr(hexStr);
-//                this.outPrintJSONString(httpServletResponse, response);
-//            }
-//                break;
+                
+            case outpusWithHexStr: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String hexStr = (String) request.get("hexStr");
+                AbstractResponse response = walletService.getOutputsWithHexStr(hexStr);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
                 
             case getVOSExecuteList: {
                 String reqStr = new String(bodyByte, "UTF-8");
