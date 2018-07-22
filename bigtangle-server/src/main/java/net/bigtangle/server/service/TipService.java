@@ -71,11 +71,11 @@ public class TipService {
 		while (nextLeft != left && nextRight != right) {
 			if (nextLeft.getBlockEvaluation().getRating() > nextRight.getBlockEvaluation().getRating()) {
 				left = nextLeft;
-				nextLeft = performValidatedStep(left, currentApprovedNonMilestoneBlocks);
 			} else {
 				right = nextRight;
-				nextRight = performValidatedStep(right, currentApprovedNonMilestoneBlocks);
 			}
+			nextLeft = performValidatedStep(left, currentApprovedNonMilestoneBlocks);
+			nextRight = performValidatedStep(right, currentApprovedNonMilestoneBlocks);
 		}
 
 		// Go forward on the remaining paths
