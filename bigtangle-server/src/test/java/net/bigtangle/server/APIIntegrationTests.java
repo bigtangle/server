@@ -590,11 +590,12 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         requestParam0.put("address", keys.get(0).toAddress(networkParameters).toBase58());
         resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultiSignWithAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
-        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
 
-        List<HashMap<String, Object>> multiSigns = (List<HashMap<String, Object>>) result.get("multiSigns");
-        byte[] payloadBytes = Utils.HEX.decode((String) multiSigns.get((int) tokenindex_ - 1).get("blockhashHex"));
+        MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
+        String blockhashHex = multiSignResponse.getMultiSigns().get((int) tokenindex_ - 1).getBlockhashHex();
+        byte[] payloadBytes = Utils.HEX.decode(blockhashHex);
         Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
+        
         Transaction transaction = block0.getTransactions().get(0);
         List<MultiSignBy> multiSignBies = null;
         if (transaction.getDataSignature() == null) {
@@ -666,11 +667,11 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         requestParam0.put("address", keys.get(0).toAddress(networkParameters).toBase58());
         resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultiSignWithAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
-        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
-
-        List<HashMap<String, Object>> multiSigns = (List<HashMap<String, Object>>) result.get("multiSigns");
-        byte[] payloadBytes = Utils.HEX.decode((String) multiSigns.get((int) tokenindex_ - 1).get("blockhashHex"));
+        
+        MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
+        byte[] payloadBytes = Utils.HEX.decode((String) multiSignResponse.getMultiSigns().get((int) tokenindex_ - 1).getBlockhashHex());
         Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
+        
         Transaction transaction = block0.getTransactions().get(0);
         List<MultiSignBy> multiSignBies = null;
         if (transaction.getDataSignature() == null) {
@@ -739,11 +740,11 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         requestParam0.put("address", keys.get(0).toAddress(networkParameters).toBase58());
         resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultiSignWithAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
-        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
 
-        List<HashMap<String, Object>> multiSigns = (List<HashMap<String, Object>>) result.get("multiSigns");
-        byte[] payloadBytes = Utils.HEX.decode((String) multiSigns.get((int) tokenindex_ - 1).get("blockhashHex"));
+        MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
+        byte[] payloadBytes = Utils.HEX.decode((String) multiSignResponse.getMultiSigns().get((int) tokenindex_ - 1).getBlockhashHex());
         Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
+        
         Transaction transaction = block0.getTransactions().get(0);
         List<MultiSignBy> multiSignBies = null;
         if (transaction.getDataSignature() == null) {
@@ -1095,10 +1096,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultiSignWithAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
-        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
-        List<HashMap<String, Object>> multiSigns = (List<HashMap<String, Object>>) result.get("multiSigns");
-        byte[] payloadBytes = Utils.HEX.decode((String) multiSigns.get((int) tokenindex_ - 1).get("blockhashHex"));
+        MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
+        byte[] payloadBytes = Utils.HEX.decode((String) multiSignResponse.getMultiSigns().get((int) tokenindex_ - 1).getBlockhashHex());
         Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
+        
         Transaction transaction = block0.getTransactions().get(0);
 
         TokenInfo updateTokenInfo = new TokenInfo().parse(transaction.getData());

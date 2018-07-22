@@ -37,6 +37,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
@@ -47,6 +48,7 @@ import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
+import net.bigtangle.core.http.server.resp.MultiSignResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -200,15 +202,16 @@ public class TokenController extends TokenBaseController {
         String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getMultiSignWithAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
-        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
-        List<HashMap<String, Object>> multiSigns = (List<HashMap<String, Object>>) result.get("multiSigns");
-        HashMap<String, Object> multiSign000 = null;
-        for (HashMap<String, Object> multiSign : multiSigns) {
-            if (multiSign.get("id").toString().equals(rowdata.get("id").toString())) {
+        
+        MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
+        MultiSign multiSign000 = null;
+        for (MultiSign multiSign : multiSignResponse.getMultiSigns()) {
+            if (multiSign.getId().equals(rowdata.get("id").toString())) {
                 multiSign000 = multiSign;
             }
         }
-        byte[] payloadBytes = Utils.HEX.decode((String) multiSign000.get("blockhashHex"));
+        
+        byte[] payloadBytes = Utils.HEX.decode((String) multiSign000.getBlockhashHex());
         Block block0 = Main.params.getDefaultSerializer().makeBlock(payloadBytes);
         Transaction transaction = block0.getTransactions().get(0);
 
@@ -238,7 +241,7 @@ public class TokenController extends TokenBaseController {
         resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getCountSign.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
-        result = Json.jsonmapper().readValue(resp, HashMap.class);
+        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
         int count = (int) result.get("signCount");
         if (count == 0) {
             save1.setDisable(true);
@@ -265,15 +268,15 @@ public class TokenController extends TokenBaseController {
         String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getMultiSignWithAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
-        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
-        List<HashMap<String, Object>> multiSigns = (List<HashMap<String, Object>>) result.get("multiSigns");
-        HashMap<String, Object> multiSign000 = null;
-        for (HashMap<String, Object> multiSign : multiSigns) {
-            if (multiSign.get("id").toString().equals(rowdata.get("id").toString())) {
+        MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
+        MultiSign multiSign000 = null;
+        for (MultiSign multiSign : multiSignResponse.getMultiSigns()) {
+            if (multiSign.getId().equals(rowdata.get("id").toString())) {
                 multiSign000 = multiSign;
             }
         }
-        byte[] payloadBytes = Utils.HEX.decode((String) multiSign000.get("blockhashHex"));
+        
+        byte[] payloadBytes = Utils.HEX.decode((String) multiSign000.getBlockhashHex());
         Block block0 = Main.params.getDefaultSerializer().makeBlock(payloadBytes);
         Transaction transaction = block0.getTransactions().get(0);
 
@@ -305,7 +308,7 @@ public class TokenController extends TokenBaseController {
         resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getCountSign.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
-        result = Json.jsonmapper().readValue(resp, HashMap.class);
+        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
         int count = (int) result.get("signCount");
         if (count == 0) {
             save1.setDisable(true);
@@ -643,16 +646,16 @@ public class TokenController extends TokenBaseController {
                 Json.jsonmapper().writeValueAsString(requestParam0));
         log.debug(resp);
 
-        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
-        List<HashMap<String, Object>> multiSigns = (List<HashMap<String, Object>>) result.get("multiSigns");
-        HashMap<String, Object> multiSign000 = null;
-        for (HashMap<String, Object> multiSign : multiSigns) {
-            if (multiSign.get("id").toString().equals(rowdata.get("id").toString())) {
+        MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
+        MultiSign multiSign000 = null;
+        for (MultiSign multiSign : multiSignResponse.getMultiSigns()) {
+            if (multiSign.getId().equals(rowdata.get("id").toString())) {
                 multiSign000 = multiSign;
                 break;
             }
         }
-        byte[] payloadBytes = Utils.HEX.decode((String) multiSign000.get("blockhashHex"));
+        
+        byte[] payloadBytes = Utils.HEX.decode((String) multiSign000.getBlockhashHex());
         Block block0 = Main.params.getDefaultSerializer().makeBlock(payloadBytes);
         Transaction transaction = block0.getTransactions().get(0);
 
@@ -670,7 +673,7 @@ public class TokenController extends TokenBaseController {
         MultiSignBy multiSignBy0 = new MultiSignBy();
 
         multiSignBy0.setTokenid(Main.getString(rowdata.get("tokenid")).trim());
-        multiSignBy0.setTokenindex((Integer) multiSign000.get("tokenindex"));
+        multiSignBy0.setTokenindex(multiSign000.getTokenindex());
         multiSignBy0.setAddress(rowdata.get("address").toString());
         multiSignBy0.setPublickey(Utils.HEX.encode(myKey.getPubKey()));
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
