@@ -8,9 +8,14 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.mysql.jdbc.log.Log;
+
+import net.bigtangle.core.Json;
 import net.bigtangle.core.OrderPublish;
 import net.bigtangle.server.ordermatch.bean.OrderBook;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents;
@@ -32,12 +37,15 @@ public class OrderBookHolder {
                 }
                 orderBook.enter(order.getOrderId(), order.getType() == 1 ? Side.SELL : Side.BUY, order.getPrice(),
                         order.getAmount());
+                LOGGER.info("init orderbook : " + Json.jsonmapper().writeValueAsString(order));
             }
             this.dataMap = dataMap;
         }
         catch (Exception e) {
         }
     }
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(OrderBookHolder.class);
     
     @Autowired
     private OrderPublishService orderPublishService;

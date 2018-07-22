@@ -50,6 +50,7 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
+import net.bigtangle.core.http.server.resp.MultiSignResponse;
 import net.bigtangle.core.http.server.resp.SettingResponse;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
@@ -884,9 +885,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                         Json.jsonmapper().writeValueAsString(requestParam0));
                 System.out.println(resp);
 
-                HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
-                List<HashMap<String, Object>> multiSigns = (List<HashMap<String, Object>>) result.get("multiSigns");
-                byte[] payloadBytes = Utils.HEX.decode((String) multiSigns.get((int) i - 1).get("blockhashHex"));
+                MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
+                String blockhashHex = multiSignResponse.getMultiSigns().get((int) i - 1).getBlockhashHex();
+                byte[] payloadBytes = Utils.HEX.decode(blockhashHex);
+                
                 Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
                 Transaction transaction = block0.getTransactions().get(0);
 
@@ -973,10 +975,11 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultiSignWithAddress.name(),
                     Json.jsonmapper().writeValueAsString(requestParam0));
             System.out.println(resp);
-
-            HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
-            List<HashMap<String, Object>> multiSigns = (List<HashMap<String, Object>>) result.get("multiSigns");
-            byte[] payloadBytes = Utils.HEX.decode((String) multiSigns.get((int) tokenindex_ - 1).get("blockhashHex"));
+            
+            MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
+            String blockhashHex = multiSignResponse.getMultiSigns().get((int) tokenindex_ - 1).getBlockhashHex();
+            byte[] payloadBytes = Utils.HEX.decode(blockhashHex);
+            
             Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
             Transaction transaction = block0.getTransactions().get(0);
 

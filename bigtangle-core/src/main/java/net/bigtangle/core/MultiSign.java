@@ -20,6 +20,15 @@ public class MultiSign implements java.io.Serializable {
         }
         return Utils.HEX.encode(this.blockhash);
     }
+    
+    public void setBlockhashHex(String blockhashHex) {
+        if (blockhashHex == null) {
+            this.blockhash = null;
+        }
+        else {
+            this.blockhash = Utils.HEX.decode(blockhashHex);
+        }
+    }
 
     private int sign;
 

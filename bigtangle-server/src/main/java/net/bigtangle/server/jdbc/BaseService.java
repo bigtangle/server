@@ -4,7 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server.jdbc;
 
-import java.io.File;
 import java.io.IOException;
 
 public class BaseService {
