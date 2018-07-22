@@ -38,7 +38,7 @@ public class SendEmptyBlock {
 
     // private String CONTEXT_ROOT = "http://bigtangle.net:8088/";
 
-    private String CONTEXT_ROOT = "https://bigtangle.de/";
+    private String CONTEXT_ROOT = "http://localhost:8088/";
 
     public static void main(String[] args) {
         SendEmptyBlock sendEmptyBlock = new SendEmptyBlock();

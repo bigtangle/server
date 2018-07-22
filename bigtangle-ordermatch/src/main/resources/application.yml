@@ -11,14 +11,14 @@ db:
   dbtype: ${DBTYPE:mysql}
   hostname: ${DB_HOSTNAME:localhost}
   port: ${DB_PORT:3306}
-  dbName: ${DB_NAME:info}
+  dbName: ${DB_NAME:ordermatch}
   username: ${DB_USERNAME:root}
   password: ${DB_PASSWORD:test1234}
 
 service:
   orderMatchService:
     rate: ${SERVICE_ORDERMATCH_RATE:10000}
-    active: ${SERVICE_ORDERMATCH_ACTIVE:false}
+    active: ${SERVICE_ORDERMATCH_ACTIVE:true}
     
 management:
   metrics:
