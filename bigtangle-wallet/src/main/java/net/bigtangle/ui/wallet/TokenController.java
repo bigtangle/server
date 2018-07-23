@@ -49,6 +49,7 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.core.http.server.resp.MultiSignResponse;
+import net.bigtangle.core.http.server.resp.SearchMultiSignResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -429,10 +430,10 @@ public class TokenController extends TokenBaseController {
         requestParam.put("tokenid", tokenid.getValue());
         String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getMultiSignWithTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("multiSigns");
-        if (list != null && !list.isEmpty()) {
-            Map<String, Object> multisignMap = list.get(0);
+        
+        final SearchMultiSignResponse searchMultiSignResponse = Json.jsonmapper().readValue(response, SearchMultiSignResponse.class);
+        if (searchMultiSignResponse.getMultiSignList() != null && !searchMultiSignResponse.getMultiSignList().isEmpty()) {
+            Map<String, Object> multisignMap = searchMultiSignResponse.getMultiSignList().get(0);
             tokenUUID = multisignMap.get("id").toString();
         } else {
             tokenUUID = null;

@@ -25,6 +25,9 @@ import javafx.scene.control.cell.MapValueFactory;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.TokenSerial;
+import net.bigtangle.core.http.server.resp.GetTokensResponse;
+import net.bigtangle.core.http.server.resp.SearchMultiSignResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -127,13 +130,22 @@ public class TokenBaseController {
         requestParam.put("addresses", addresses);
         String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokenSerials.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokenSerials");
-
-        if (list != null) {
-            for (Map<String, Object> map : list) {
-                Coin fromAmount = Coin.valueOf((long) map.get("amount"), (String) map.get("tokenid"));
+        
+        
+        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
+        List<TokenSerial> tokenSerials = getTokensResponse.getTokenSerials();
+        
+        if (tokenSerials != null) {
+            for (TokenSerial tokenSerial : tokenSerials) {
+                Coin fromAmount = Coin.valueOf(tokenSerial.getAmount(), tokenSerial.getTokenid());
+                
+                HashMap<String, Object> map = new HashMap<String, Object>();
                 map.put("amount", fromAmount.toPlainString());
+                map.put("tokenid", tokenSerial.getTokenid());
+                map.put("tokenindex", tokenSerial.getTokenindex());
+                map.put("signnumber", tokenSerial.getSignnumber());
+                map.put("count", tokenSerial.getCount());
+                
                 tokenData.add(map);
             }
         }
@@ -215,11 +227,11 @@ public class TokenBaseController {
         String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getMultiSignWithTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         log.debug(response);
-        final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("multiSignList");
-
-        if (list != null) {
-            for (Map<String, Object> map : list) {
+        
+        
+        final SearchMultiSignResponse searchMultiSignResponse = Json.jsonmapper().readValue(response, SearchMultiSignResponse.class);
+        if (searchMultiSignResponse.getMultiSignList() != null) {
+            for (Map<String, Object> map : searchMultiSignResponse.getMultiSignList()) {
                 int signnumber = (Integer) map.get("signnumber");
                 int signcount = (Integer) map.get("signcount");
                 if (signnumber <= signcount) {
