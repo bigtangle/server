@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +37,7 @@ import net.bigtangle.utils.UUIDUtil;
 @Service
 public class MultiSignService {
 
+    private static final Logger log = LoggerFactory.getLogger(MultiSignService.class);
     @Autowired
     protected FullPrunedBlockStore store;
 
@@ -125,21 +128,23 @@ public class MultiSignService {
 					store.updateMultiSignBlockHash(tokenid, tokenindex, address, block.bitcoinSerialize());
 				}
 			}
-
-			String jsonStr = new String(transaction.getDataSignature());
-			@SuppressWarnings("unchecked")
-			List<Map<String, Object>> multiSignBies = Json.jsonmapper().readValue(jsonStr, List.class);
-			for (Map<String, Object> multiSignBy : multiSignBies) {
-				String tokenid = (String) multiSignBy.get("tokenid");
-				int tokenindex = (Integer) multiSignBy.get("tokenindex");
-				String address = (String) multiSignBy.get("address");
-				store.updateMultiSign(tokenid, tokenindex, address, block.bitcoinSerialize(), 1);
+			if (transaction.getDataSignature() != null) {
+    			String jsonStr = new String(transaction.getDataSignature());
+    			@SuppressWarnings("unchecked")
+    			List<Map<String, Object>> multiSignBies = Json.jsonmapper().readValue(jsonStr, List.class);
+    			for (Map<String, Object> multiSignBy : multiSignBies) {
+    				String tokenid = (String) multiSignBy.get("tokenid");
+    				int tokenindex = (Integer) multiSignBy.get("tokenindex");
+    				String address = (String) multiSignBy.get("address");
+    				store.updateMultiSign(tokenid, tokenindex, address, block.bitcoinSerialize(), 1);
+    			}
 			}
 			store.updateMultiSignBlockBitcoinSerialize(tokens.getTokenid(), tokenSerial.getTokenindex(),
 					block.bitcoinSerialize());
 			this.store.commitDatabaseBatchWrite();
 
 		} catch (Exception e) {
+		    log.error("",e);
 			this.store.abortDatabaseBatchWrite();
 		}
 	}
@@ -246,6 +251,7 @@ public class MultiSignService {
 
     public void multiSign(Block block, boolean allowConflicts) throws Exception {
         if (this.checkMultiSignPre(block, allowConflicts)) {
+            //data save only on this server, not in block.
         	this.saveMultiSign(block);
             blockService.saveBlock(block);
         }

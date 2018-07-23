@@ -123,7 +123,7 @@ public abstract class AbstractBlockGraph {
     private double falsePositiveTrend;
     private double previousFalsePositiveRate;
 
-    private final VersionTally versionTally;
+    protected final VersionTally versionTally;
 
     /**
      * Constructs a BlockTangle connected to the given list of listeners (eg,
@@ -187,48 +187,8 @@ public abstract class AbstractBlockGraph {
      * transactions in another thread while this method runs may result in
      * undefined behavior.
      */
-    public boolean add(Block block, boolean allowConflicts) throws VerificationException, PrunedException {
-        try {
-            return add(block, true, null, null, allowConflicts);
-        } catch (BlockStoreException e) {
-            log.debug( "", e);
-            throw new RuntimeException(e);
-        } catch (VerificationException e) {
-            log.debug( "", e);
-            throw new VerificationException("Could not verify block:\n" + block.toString(), e);
-        }
-    }
-
-    /**
-     * Processes a received block and tries to add it to the tangle. If there's
-     * something wrong with the block an exception is thrown. If the block is OK
-     * but cannot be connected to the tangle at this time, returns false. If the
-     * block can be connected to the tangle, returns true.
-     */
-    public boolean add(FilteredBlock block) throws VerificationException, PrunedException {
-        try {
-            // The block has a list of hashes of transactions that matched the
-            // Bloom filter, and a list of associated
-            // Transaction objects. There may be fewer Transaction objects than
-            // hashes, this is expected. It can happen
-            // in the case where we were already around to witness the initial
-            // broadcast, so we downloaded the
-            // transaction and sent it to the wallet before this point (the
-            // wallet may have thrown it away if it was
-            // a false positive, as expected in any Bloom filtering scheme). The
-            // filteredTxn list here will usually
-            // only be full of data when we are catching up to the head of the
-            // tangle and thus haven't witnessed any
-            // of the transactions.
-            return add(block.getBlockHeader(), true, block.getTransactionHashes(), block.getAssociatedTransactions(), true);
-        } catch (BlockStoreException e) {
-            throw new RuntimeException(e);
-        } catch (VerificationException e) {
-            throw new VerificationException(
-                    "Could not verify block " + block.getHash().toString() + "\n" + block.toString(), e);
-        }
-    }
-
+ 
+    
     /**
      * Whether or not we are maintaining a set of unspent outputs and are
      * verifying all transactions. Also indicates that all calls to add() should
@@ -236,70 +196,9 @@ public abstract class AbstractBlockGraph {
      */
     public abstract boolean shouldVerifyTransactions();
 
-    // filteredTxHashList contains all transactions, filteredTxn just a subset
-    private boolean add(Block block, boolean tryConnecting, @Nullable List<Sha256Hash> filteredTxHashList,
-            @Nullable Map<Sha256Hash, Transaction> filteredTxn, boolean allowConflicts)
-            throws BlockStoreException, VerificationException, PrunedException {
-        lock.lock();
-        try {
-            final StoredBlock storedPrev;
-            final StoredBlock storedPrevBranch;
-            final long height;
-            final EnumSet<Block.VerifyFlag> flags;
 
-            // Check the block is formally valid
-            try {
-                block.verifyHeader();
-                storedPrev = blockStore.get(block.getPrevBlockHash());
-                storedPrevBranch = blockStore.get(block.getPrevBranchBlockHash());
-
-                if (storedPrev != null && storedPrevBranch != null) {
-                    height = Math.max(storedPrev.getHeight(), storedPrevBranch.getHeight()) + 1;
-                } else {
-                    insertUnsolidBlock(block);
-                    return false;
-                }
-
-                flags = params.getBlockVerificationFlags(block, versionTally, height);
-                if (shouldVerifyTransactions())
-                    block.verifyTransactions(height, flags);
-            } catch (VerificationException e) {
-                log.error("Failed to verify block: ", e);
-                log.error(block.getHashAsString());
-                throw e;
-            }
-            
-            if(checkSolidity(block, storedPrev, storedPrevBranch, height, allowConflicts)) {
-                // Write to DB
-                checkState(lock.isHeldByCurrentThread());
-                connectBlock(block, storedPrev, storedPrevBranch, shouldVerifyTransactions(), filteredTxHashList,
-                        filteredTxn);
-                solidifyBlock(block);
-                return true;
-            } else {
-                insertUnsolidBlock(block);
-                return false;
-            }
-        } catch (Exception exception) {
-            log.debug( "",  exception);
-            throw new BlockStoreException(exception);
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    // expensiveChecks enables checks that require looking at blocks further
-    // back in the tangle
-    // than the previous one when connecting (eg median timestamp check)
-    // It could be exposed, but for now we just set it to
-    // shouldVerifyTransactions()
-    private void connectBlock(final Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch,
-            boolean expensiveChecks, @Nullable final List<Sha256Hash> filteredTxHashList,
-            @Nullable final Map<Sha256Hash, Transaction> filteredTxn)
-            throws BlockStoreException, VerificationException, PrunedException {
-        checkState(lock.isHeldByCurrentThread());
-        addToBlockStore(storedPrev,storedPrevBranch, block);
-    }
+    protected abstract boolean savePre(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height,
+            boolean allowConflicts) throws BlockStoreException, VerificationException;
 
     protected abstract boolean checkSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch,
             long height, boolean allowConflicts) throws BlockStoreException, VerificationException;
@@ -379,7 +278,7 @@ public abstract class AbstractBlockGraph {
         try {
             return ((FullPrunedBlockStore) blockStore).getMaxSolidHeight();
         } catch (BlockStoreException e) {
-            log.debug( "", e);
+            log.debug("", e);
             return 0;
         }
     }

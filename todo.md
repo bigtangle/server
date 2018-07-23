@@ -24,9 +24,6 @@ c) performance test
 
 15) application monitoring heath check  and metrics
 
-16) roadmap
-
-
 air drop
 
 add new application to support air drop
