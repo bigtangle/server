@@ -46,13 +46,11 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    rating bigint ,\n"
             + "    depth bigint,\n"
             + "    cumulativeweight  bigint ,\n" 
-            + "    solid boolean ,\n" 
             + "    milestone boolean,\n" 
             + "    milestonelastupdate bigint,\n" 
             + "    milestonedepth bigint,\n"
             + "    inserttime bigint,\n" 
             + "    maintained boolean,\n"
-            + "    rewardvalidityassessment boolean,\n"
             + "    CONSTRAINT headers_pk PRIMARY KEY (hash) USING BTREE \n" + ")";
 
     private static final String CREATE_UNSOLIDBLOCKS_TABLE = "CREATE TABLE unsolidblocks (\n"
@@ -271,10 +269,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         return UPDATE_BLOCKEVALUATION_RATING_SQL;
     }
 
-    @Override
-    protected String getUpdateBlockEvaluationSolidSQL() {
-        return UPDATE_BLOCKEVALUATION_SOLID_SQL;
-    }
+  
 
     @Override
     protected String getUpdateBlockEvaluationMilestoneDepthSQL() {
@@ -286,11 +281,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         return UPDATE_BLOCKEVALUATION_MAINTAINED_SQL;
     }
 
-    @Override
-    protected String getUpdateBlockEvaluationRewardValidItyassessmentSQL() {
-        return UPDATE_BLOCKEVALUATION_REWARDVALIDITYASSESSMENT_SQL;
-    }
-
+  
     @Override
     protected String getUpdateOutputsSpentSQL() {
         return UPDATE_OUTPUTS_SPENT_SQL;

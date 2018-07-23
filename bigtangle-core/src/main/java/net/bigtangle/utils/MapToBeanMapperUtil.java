@@ -69,15 +69,14 @@ public abstract class MapToBeanMapperUtil {
         long cumulativeWeight = Long.parseLong(map.get("cumulativeWeight").toString());
         long height = Long.parseLong(map.get("height").toString());
 
-        boolean solid = (boolean) map.get("solid");
         boolean milestone = (boolean) map.get("milestone");
         boolean maintained = (boolean) map.get("maintained");
-        boolean rewardValid = (boolean) map.get("rewardValid");
+
         long milestoneDepth = Long.parseLong(map.get("milestoneDepth").toString());
         long milestoneLastUpdateTime = (long) map.get("milestoneLastUpdateTime");
         long insertTime = (long) map.get("insertTime");
-        return BlockEvaluation.build(hash, rating, depth, cumulativeWeight, solid, height, milestone,
-                milestoneLastUpdateTime, milestoneDepth, insertTime, maintained, rewardValid);
+        return BlockEvaluation.build(hash, rating, depth, cumulativeWeight,  height, milestone,
+                milestoneLastUpdateTime, milestoneDepth, insertTime, maintained);
 
     }
 }

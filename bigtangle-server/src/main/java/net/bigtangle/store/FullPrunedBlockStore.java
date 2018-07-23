@@ -167,7 +167,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
 	public void resetStore() throws BlockStoreException;
 
-	public long getMaxSolidHeight() throws BlockStoreException;
+ 
 
 	public long getMaxImportTime() throws BlockStoreException;
 
@@ -198,7 +198,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
 	public HashSet<Sha256Hash> getMaintainedBlockHashes() throws BlockStoreException;
 
-	public void updateBlockEvaluationSolid(Sha256Hash blockhash, boolean solid) throws BlockStoreException;
+ 
 
 	public void updateBlockEvaluationCumulativeWeight(Sha256Hash blockhash, long weight) throws BlockStoreException;
 
@@ -214,9 +214,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 	public void updateBlockEvaluationMilestoneDepth(Sha256Hash blockhash, long milestoneDepth) throws BlockStoreException;
 
 	public void updateBlockEvaluationMaintained(Sha256Hash blockhash, boolean relevant) throws BlockStoreException;
-
-	public void updateBlockEvaluationRewardValid(Sha256Hash blockhash, boolean b) throws BlockStoreException;
-
+ 
 	public void deleteTip(Sha256Hash blockhash) throws BlockStoreException;
 
 	public void insertTip(Sha256Hash blockhash) throws BlockStoreException;

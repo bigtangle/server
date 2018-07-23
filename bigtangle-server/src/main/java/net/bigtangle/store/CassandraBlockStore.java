@@ -183,11 +183,7 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
         return getUpdate() + " blockevaluation SET rating = ? WHERE blockhash = ?";
     }
 
-    @Override
-    protected String getUpdateBlockEvaluationSolidSQL() {
-        return getUpdate() + " blockevaluation SET solid = ? WHERE blockhash = ?";
-    }
-
+   
     @Override
     protected String getUpdateBlockEvaluationMilestoneDepthSQL() {
         return getUpdate() + " blockevaluation SET milestonedepth = ? WHERE blockhash = ?";
@@ -198,11 +194,7 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
         return getUpdate() + " blockevaluation SET maintained = ? WHERE blockhash = ?";
     }
 
-    @Override
-    protected String getUpdateBlockEvaluationRewardValidItyassessmentSQL() {
-        return getUpdate() + " blockevaluation SET maintained = ? WHERE blockhash = ?";
-    }
-
+  
     @Override
     protected String getUpdateOutputsSpentSQL() {
         return getUpdate() + " outputs SET spendpending = ? WHERE hash = ? AND outputindex= ?";

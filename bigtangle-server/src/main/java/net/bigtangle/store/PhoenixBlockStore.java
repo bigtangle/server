@@ -333,10 +333,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         return getUpdate() + " blockevaluation (rating, hash) VALUES (?, ?)";
     }
 
-    @Override
-    protected String getUpdateBlockEvaluationSolidSQL() {
-        return getUpdate() + " blockevaluation (solid, hash) VALUES (?, ?)";
-    }
+  
 
     @Override
     protected String getUpdateBlockEvaluationMilestoneDepthSQL() {
@@ -348,10 +345,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         return getUpdate() + " blockevaluation (maintained, hash) VALUES (?, ?)";
     }
 
-    @Override
-    protected String getUpdateBlockEvaluationRewardValidItyassessmentSQL() {
-        return getUpdate() + " blockevaluation (rewardvalidityassessment, hash) VALUES (?, ?)";
-    }
+   
 
     @Override
     protected String getUpdateOutputsSpentSQL() {

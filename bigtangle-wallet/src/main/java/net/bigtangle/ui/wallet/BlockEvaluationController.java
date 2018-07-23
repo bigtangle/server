@@ -192,14 +192,14 @@ public class BlockEvaluationController {
                 map.put("rating", blockEvaluation.getRating());
                 map.put("depth", blockEvaluation.getDepth());
                 map.put("cumulativeWeight", blockEvaluation.getCumulativeWeight());
-                map.put("solid", blockEvaluation.isSolid());
+              
                 map.put("height", blockEvaluation.getHeight());
                 map.put("milestone", blockEvaluation.isMilestone());
                 map.put("milestoneLastUpdateTime", blockEvaluation.getMilestoneLastUpdateTime());
                 map.put("milestoneDepth", blockEvaluation.getMilestoneDepth());
                 map.put("insertTime", blockEvaluation.getInsertTime());
                 map.put("maintained", blockEvaluation.isMaintained());
-                map.put("rewardValid", blockEvaluation.isRewardValid());
+              
 
                 if (tempValue.equalsIgnoreCase("m-c1-c2")) {
                     BlockEvaluation map1 = blockEvaluations.get(i + 1);
@@ -381,11 +381,11 @@ public class BlockEvaluationController {
                 dataRow.put("cumulativeWeight", blockEvaluation.getCumulativeWeight());
                 dataRow.put("height", blockEvaluation.getHeight());
 
-                dataRow.put("solid", blockEvaluation.isSolid() ? Main.getText("yes") : Main.getText("no"));
+            
                 dataRow.put("milestone", blockEvaluation.isMilestone() ? Main.getText("yes") : Main.getText("no"));
                 dataRow.put("milestoneDepth", blockEvaluation.getMilestoneDepth());
                 dataRow.put("maintained", blockEvaluation.isMaintained() ? Main.getText("yes") : Main.getText("no"));
-                dataRow.put("rewardValid", blockEvaluation.isRewardValid() ? Main.getText("yes") : Main.getText("no"));
+         
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 java.util.Date date = new Date(blockEvaluation.getMilestoneLastUpdateTime());
                 String str = sdf.format(date);

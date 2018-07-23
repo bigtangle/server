@@ -273,15 +273,7 @@ public abstract class AbstractBlockGraph {
     protected VersionTally getVersionTally() {
         return versionTally;
     }
-
-    public long getMaxHeight() {
-        try {
-            return ((FullPrunedBlockStore) blockStore).getMaxSolidHeight();
-        } catch (BlockStoreException e) {
-            log.debug("", e);
-            return 0;
-        }
-    }
+ 
 
     protected abstract void solidifyBlock(Block block) throws BlockStoreException;
 }
