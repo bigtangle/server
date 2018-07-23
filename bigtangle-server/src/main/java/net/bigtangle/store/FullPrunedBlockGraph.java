@@ -201,7 +201,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     throw e;
                 } finally {
                     try {
-                    
+
                     } catch (Exception e) {
                         // Ignore;
                         log.error(" " + e);
@@ -638,174 +638,56 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             boolean allowConflicts) throws BlockStoreException, VerificationException {
         // TODO no parameter allowConflicts necessary anymore
         // Check timestamp
-        if (block.getTimeSeconds() < storedPrev.getHeader().getTimeSeconds()
-                || block.getTimeSeconds() < storedPrevBranch.getHeader().getTimeSeconds())
-            return false;
-
-        if (block.getTimeSeconds() > System.currentTimeMillis() + NetworkParameters.MAX_TIMESTAMP_DIFF)
-            return false;
-
-        // Check formal correctness of TXs and their data
-        try {
-            block.checkTransactionSolidity(height);
-        } catch (VerificationException e) {
-            return false;
-        }
 
         // Check reward block specific solidity
         if (block.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD) {
             // Get reward data from previous reward cycle
             Sha256Hash prevRewardHash = null;
             long fromHeight = 0, nextPerTxReward = 0;
-            try {
-                byte[] hashBytes = new byte[32];
-                ByteBuffer bb = ByteBuffer.wrap(block.getTransactions().get(0).getData());
-                fromHeight = bb.getLong();
-                nextPerTxReward = bb.getLong();
-                bb.get(hashBytes, 0, 32);
-                prevRewardHash = Sha256Hash.wrap(hashBytes);
-            } catch (Exception e) {
-                e.printStackTrace();
-                return false;
-            }
-
+            byte[] hashBytes = new byte[32];
+            ByteBuffer bb = ByteBuffer.wrap(block.getTransactions().get(0).getData());
+            fromHeight = bb.getLong();
+            nextPerTxReward = bb.getLong();
+            bb.get(hashBytes, 0, 32);
+            prevRewardHash = Sha256Hash.wrap(hashBytes);
             // Reward must have been built correctly.
             Pair<Transaction, Boolean> referenceReward = validatorService.generateMiningRewardTX(
                     storedPrev.getHeader().getHash(), storedPrevBranch.getHeader().getHash(), prevRewardHash);
-            if (!referenceReward.getLeft().getHash().equals(block.getTransactions().get(0).getHash()))
-                return false;
 
             blockStore.insertTxReward(block.getHash(), nextPerTxReward, fromHeight, referenceReward.getRight());
         }
-
-        LinkedList<UTXO> txOutsSpent = new LinkedList<UTXO>();
-        LinkedList<UTXO> txOutsCreated = new LinkedList<UTXO>();
-        long sigOps = 0;
-
-        try {
-            if (scriptVerificationExecutor.isShutdown())
-                scriptVerificationExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-
-            List<Future<VerificationException>> listScriptVerificationResults = new ArrayList<Future<VerificationException>>(
-                    block.getTransactions().size());
-
-            if (!params.isCheckpoint(height)) {
-                for (Transaction tx : block.getTransactions()) {
-                    final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx,
-                            getVersionTally());
-
-                    if (verifyFlags.contains(VerifyFlag.P2SH))
-                        sigOps += tx.getSigOpCount();
+        for (final Transaction tx : block.getTransactions()) {
+            boolean isCoinBase = tx.isCoinBase();
+            if (!isCoinBase) {
+                for (int index = 0; index < tx.getInputs().size(); index++) {
+                    TransactionInput in = tx.getInputs().get(index);
+                    UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(),
+                            in.getOutpoint().getIndex());
+                    blockStore.updateTransactionOutputSpendPending(prevOut.getHash(), prevOut.getIndex(), true);
                 }
             }
-
-            for (final Transaction tx : block.getTransactions()) {
-                boolean isCoinBase = tx.isCoinBase();
-                Map<String, Coin> valueIn = new HashMap<String, Coin>();
-                Map<String, Coin> valueOut = new HashMap<String, Coin>();
-
-                final List<Script> prevOutScripts = new LinkedList<Script>();
-                final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx,
-                        getVersionTally());
-                if (!isCoinBase) {
-                    for (int index = 0; index < tx.getInputs().size(); index++) {
-                        TransactionInput in = tx.getInputs().get(index);
-                        UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(),
-                                in.getOutpoint().getIndex());
-                        if (prevOut == null)
-                            throw new VerificationException("Block attempts to spend a not yet existent output!");
-
-                        if (valueIn.containsKey(Utils.HEX.encode(prevOut.getValue().getTokenid()))) {
-                            valueIn.put(Utils.HEX.encode(prevOut.getValue().getTokenid()), valueIn
-                                    .get(Utils.HEX.encode(prevOut.getValue().getTokenid())).add(prevOut.getValue()));
-                        } else {
-                            valueIn.put(Utils.HEX.encode(prevOut.getValue().getTokenid()), prevOut.getValue());
-
-                        }
-                        if (verifyFlags.contains(VerifyFlag.P2SH)) {
-                            if (prevOut.getScript().isPayToScriptHash())
-                                sigOps += Script.getP2SHSigOpCount(in.getScriptBytes());
-                            if (sigOps > Block.MAX_BLOCK_SIGOPS)
-                                throw new VerificationException("Too many P2SH SigOps in block");
-                        }
-                        prevOutScripts.add(prevOut.getScript());
-                        blockStore.updateTransactionOutputSpendPending(prevOut.getHash(), prevOut.getIndex(), true);
-                        txOutsSpent.add(prevOut);
-                    }
+            Sha256Hash hash = tx.getHash();
+            for (TransactionOutput out : tx.getOutputs()) {
+                Script script = getScript(out.getScriptBytes());
+                UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), height, isCoinBase, script,
+                        getScriptAddress(script), block.getHash(), out.getFromaddress(), tx.getMemo(),
+                        Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0);
+                // Filter zero UTXO
+                if (!newOut.getValue().isZero()) {
+                    blockStore.addUnspentTransactionOutput(newOut);
                 }
-                Sha256Hash hash = tx.getHash();
-                for (TransactionOutput out : tx.getOutputs()) {
-                    if (valueOut.containsKey(Utils.HEX.encode(out.getValue().getTokenid()))) {
-                        valueOut.put(Utils.HEX.encode(out.getValue().getTokenid()),
-                                valueOut.get(Utils.HEX.encode(out.getValue().getTokenid())).add(out.getValue()));
-                    } else {
-                        valueOut.put(Utils.HEX.encode(out.getValue().getTokenid()), out.getValue());
+                if (script.isSentToMultiSig()) {
+                    int minsignnumber = script.getNumberOfSignaturesRequiredToSpend();
+                    for (ECKey ecKey : script.getPubKeys()) {
+                        String toaddress = ecKey.toAddress(networkParameters).toBase58();
+                        OutputsMulti outputsMulti = new OutputsMulti(newOut.getHash(), toaddress, newOut.getIndex(),
+                                minsignnumber);
+                        this.blockStore.insertOutputsMulti(outputsMulti);
                     }
-                    // For each output, add it to the set of unspent outputs so
-                    // it can be consumed
-                    // in future.
-                    Script script = getScript(out.getScriptBytes());
-                    UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), height, isCoinBase, script,
-                            getScriptAddress(script), block.getHash(), out.getFromaddress(), tx.getMemo(),
-                            Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0);
-                    // Filter zero UTXO
-                    if (!newOut.getValue().isZero()) {
-                        blockStore.addUnspentTransactionOutput(newOut);
-                    }
-                    if (script.isSentToMultiSig()) {
-                        int minsignnumber = script.getNumberOfSignaturesRequiredToSpend();
-                        for (ECKey ecKey : script.getPubKeys()) {
-                            String toaddress = ecKey.toAddress(networkParameters).toBase58();
-                            OutputsMulti outputsMulti = new OutputsMulti(newOut.getHash(), toaddress, newOut.getIndex(),
-                                    minsignnumber);
-                            this.blockStore.insertOutputsMulti(outputsMulti);
-                        }
-                    }
-
-                    txOutsCreated.add(newOut);
-                }
-                if (!checkOutput(valueOut))
-                    throw new VerificationException("Transaction output value out of range");
-                if (isCoinBase) {
-                    // coinbaseValue = valueOut;
-                } else {
-                    if (!checkInputOutput(valueIn, valueOut))
-                        throw new VerificationException("Transaction input value out of range");
-                    // totalFees = totalFees.add(valueIn.subtract(valueOut));
-                }
-
-                if (!isCoinBase && runScripts) {
-                    // Because correctlySpends modifies transactions, this must
-                    // come after we are done with tx
-                    FutureTask<VerificationException> future = new FutureTask<VerificationException>(
-                            new Verifier(tx, prevOutScripts, verifyFlags));
-                    scriptVerificationExecutor.execute(future);
-                    listScriptVerificationResults.add(future);
                 }
             }
-            for (Future<VerificationException> future : listScriptVerificationResults) {
-                VerificationException e;
-                try {
-                    e = future.get();
-                } catch (InterruptedException thrownE) {
-                    throw new RuntimeException(thrownE); // Shouldn't happen
-                } catch (ExecutionException thrownE) {
-                    // log.error("Script.correctlySpends threw a non-normal
-                    // exception: " ,thrownE );
-                    throw new VerificationException(
-                            "Bug in Script.correctlySpends, likely script malformed in some new and interesting way.",
-                            thrownE);
-                }
-                if (e != null)
-                    throw e;
-            }
-        } catch (VerificationException e) {
-            scriptVerificationExecutor.shutdownNow();
-            throw e;
-        } catch (BlockStoreException e) {
-            scriptVerificationExecutor.shutdownNow();
-            throw e;
         }
+
         return true;
     }
 
@@ -859,6 +741,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     storedPrev.getHeader().getHash(), storedPrevBranch.getHeader().getHash(), prevRewardHash);
             if (!referenceReward.getLeft().getHash().equals(block.getTransactions().get(0).getHash()))
                 return false;
+
         }
 
         // Check genesis block specific validity, can only one genesis block
@@ -879,6 +762,122 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
         }
 
+        LinkedList<UTXO> txOutsSpent = new LinkedList<UTXO>();
+        LinkedList<UTXO> txOutsCreated = new LinkedList<UTXO>();
+        long sigOps = 0;
+
+        try {
+            if (scriptVerificationExecutor.isShutdown())
+                scriptVerificationExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+            List<Future<VerificationException>> listScriptVerificationResults = new ArrayList<Future<VerificationException>>(
+                    block.getTransactions().size());
+
+            if (!params.isCheckpoint(height)) {
+                for (Transaction tx : block.getTransactions()) {
+                    final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx,
+                            getVersionTally());
+
+                    if (verifyFlags.contains(VerifyFlag.P2SH))
+                        sigOps += tx.getSigOpCount();
+                }
+            }
+
+            for (final Transaction tx : block.getTransactions()) {
+                boolean isCoinBase = tx.isCoinBase();
+                Map<String, Coin> valueIn = new HashMap<String, Coin>();
+                Map<String, Coin> valueOut = new HashMap<String, Coin>();
+
+                final List<Script> prevOutScripts = new LinkedList<Script>();
+                final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx,
+                        getVersionTally());
+                if (!isCoinBase) {
+                    for (int index = 0; index < tx.getInputs().size(); index++) {
+                        TransactionInput in = tx.getInputs().get(index);
+                        UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(),
+                                in.getOutpoint().getIndex());
+                        if (prevOut == null)
+                            throw new VerificationException("Block attempts to spend a not yet existent output!");
+
+                        if (valueIn.containsKey(Utils.HEX.encode(prevOut.getValue().getTokenid()))) {
+                            valueIn.put(Utils.HEX.encode(prevOut.getValue().getTokenid()), valueIn
+                                    .get(Utils.HEX.encode(prevOut.getValue().getTokenid())).add(prevOut.getValue()));
+                        } else {
+                            valueIn.put(Utils.HEX.encode(prevOut.getValue().getTokenid()), prevOut.getValue());
+
+                        }
+                        if (verifyFlags.contains(VerifyFlag.P2SH)) {
+                            if (prevOut.getScript().isPayToScriptHash())
+                                sigOps += Script.getP2SHSigOpCount(in.getScriptBytes());
+                            if (sigOps > Block.MAX_BLOCK_SIGOPS)
+                                throw new VerificationException("Too many P2SH SigOps in block");
+                        }
+                        prevOutScripts.add(prevOut.getScript());
+                        txOutsSpent.add(prevOut);
+                    }
+                }
+                Sha256Hash hash = tx.getHash();
+                for (TransactionOutput out : tx.getOutputs()) {
+                    if (valueOut.containsKey(Utils.HEX.encode(out.getValue().getTokenid()))) {
+                        valueOut.put(Utils.HEX.encode(out.getValue().getTokenid()),
+                                valueOut.get(Utils.HEX.encode(out.getValue().getTokenid())).add(out.getValue()));
+                    } else {
+                        valueOut.put(Utils.HEX.encode(out.getValue().getTokenid()), out.getValue());
+                    }
+                    // For each output, add it to the set of unspent outputs so
+                    // it can be consumed
+                    // in future.
+                    Script script = getScript(out.getScriptBytes());
+                    UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), height, isCoinBase, script,
+                            getScriptAddress(script), block.getHash(), out.getFromaddress(), tx.getMemo(),
+                            Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0);
+
+                    txOutsCreated.add(newOut);
+                }
+                if (!checkOutput(valueOut))
+                    throw new VerificationException("Transaction output value out of range");
+                if (isCoinBase) {
+                    // coinbaseValue = valueOut;
+                } else {
+                    if (!checkInputOutput(valueIn, valueOut))
+                        throw new VerificationException("Transaction input value out of range");
+                    // totalFees = totalFees.add(valueIn.subtract(valueOut));
+                }
+
+                if (!isCoinBase && runScripts) {
+                    // Because correctlySpends modifies transactions, this must
+                    // come after we are done with tx
+                    FutureTask<VerificationException> future = new FutureTask<VerificationException>(
+                            new Verifier(tx, prevOutScripts, verifyFlags));
+                    scriptVerificationExecutor.execute(future);
+                    listScriptVerificationResults.add(future);
+                }
+            }
+            for (Future<VerificationException> future : listScriptVerificationResults) {
+                VerificationException e;
+                try {
+                    e = future.get();
+                } catch (InterruptedException thrownE) {
+                    throw new RuntimeException(thrownE); // Shouldn't happen
+                } catch (ExecutionException thrownE) {
+                    // log.error("Script.correctlySpends threw a non-normal
+                    // exception: " ,thrownE );
+                    throw new VerificationException(
+                            "Bug in Script.correctlySpends, likely script malformed in some new and interesting way.",
+                            thrownE);
+                }
+                if (e != null)
+                    throw e;
+            }
+        } catch (VerificationException e) {
+            scriptVerificationExecutor.shutdownNow();
+
+            throw e;
+        } catch (BlockStoreException e) {
+            scriptVerificationExecutor.shutdownNow();
+
+            throw e;
+        }
         return true;
     }
 
