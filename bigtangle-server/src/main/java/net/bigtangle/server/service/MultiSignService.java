@@ -150,7 +150,6 @@ public class MultiSignService {
     // TODO change to unified logic (see mining rewards)
     public boolean checkMultiSignPre(Block block, boolean allowConflicts) throws BlockStoreException, Exception {
         try {
-
             if (block.getTransactions() == null || block.getTransactions().isEmpty()) {
                 throw new BlockStoreException("block transaction is empty");
             }
@@ -249,6 +248,9 @@ public class MultiSignService {
         if (this.checkMultiSignPre(block, allowConflicts)) {
         	this.saveMultiSign(block);
             blockService.saveBlock(block);
+        }
+        else {
+        	this.saveMultiSign(block);
         }
     }
 
