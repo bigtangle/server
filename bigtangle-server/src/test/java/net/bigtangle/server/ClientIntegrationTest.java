@@ -37,6 +37,8 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VOS;
 import net.bigtangle.core.VOSExecute;
+import net.bigtangle.core.http.server.resp.UserDataResponse;
+import net.bigtangle.core.http.server.resp.VOSExecuteListResponse;
 import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.service.MilestoneService;
@@ -215,8 +217,9 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         requestParam.put("pubKeyList", pubKeyList);
 
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.userDataList.name(), Json.jsonmapper().writeValueAsString(requestParam));
-        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
-        List<String> dataList = (List<String>) result.get("dataList");
+        
+        UserDataResponse userDataResponse = Json.jsonmapper().readValue(resp, UserDataResponse.class);
+        List<String> dataList = userDataResponse.getDataList();
         
         assertEquals(dataList.size(), 1);
         
@@ -236,7 +239,6 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         }
     }
     
-    @SuppressWarnings("unchecked")
     @Test
     public void testSaveOVSExecuteBatch0() throws Exception {
         ECKey outKey = new ECKey();
@@ -254,12 +256,13 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         requestParam.put("vosKey", outKey.getPublicKeyAsHex());
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getVOSExecuteList.name(), Json.jsonmapper().writeValueAsString(requestParam));
         
-        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
-        List<HashMap<String, Object>> vosExecutes = (List<HashMap<String,Object>>) result.get("vosExecutes");
+        VOSExecuteListResponse vosExecuteListResponse = Json.jsonmapper().readValue(resp, VOSExecuteListResponse.class);
+        
+        List<VOSExecute> vosExecutes = vosExecuteListResponse.getVosExecutes();
         assertTrue(vosExecutes.size() == 1);
         
-        HashMap<String, Object> vosExecute = vosExecutes.get(0);
-        assertTrue((int) vosExecute.get("execute") == 10);
+        VOSExecute vosExecute = vosExecutes.get(0);
+        assertTrue((int) vosExecute.getExecute() == 10);
     }
     
     public void testSaveOVSExecute(ECKey outKey) throws Exception {

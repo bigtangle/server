@@ -36,6 +36,7 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VOS;
+import net.bigtangle.core.http.server.resp.UserDataResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -160,8 +161,10 @@ public class VOSController {
             String CONTEXT_ROOT = Main.getContextRoot();
             String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.userDataList.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
-            HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
-            List<String> dataList = (List<String>) result.get("dataList");
+            
+            UserDataResponse userDataResponse = Json.jsonmapper().readValue(resp, UserDataResponse.class);
+            List<String> dataList = userDataResponse.getDataList();
+            
             ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();
             for (String hexStr : dataList) {
                 byte[] data = Utils.HEX.decode(hexStr);

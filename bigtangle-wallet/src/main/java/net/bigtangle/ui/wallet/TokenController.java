@@ -50,6 +50,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.core.http.server.resp.MultiSignResponse;
 import net.bigtangle.core.http.server.resp.SearchMultiSignResponse;
+import net.bigtangle.core.http.server.resp.TokenSerialIndexResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -242,8 +243,9 @@ public class TokenController extends TokenBaseController {
         resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getCountSign.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
-        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
-        int count = (int) result.get("signCount");
+        MultiSignResponse multiSignResponse2 = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
+        int count = multiSignResponse2.getSignCount();
+        
         if (count == 0) {
             save1.setDisable(true);
         }
@@ -309,8 +311,8 @@ public class TokenController extends TokenBaseController {
         resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getCountSign.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
-        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
-        int count = (int) result.get("signCount");
+        MultiSignResponse multiSignResponse2 = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
+        int count = multiSignResponse2.getSignCount();
         if (count == 0) {
             save1.setDisable(true);
         }
@@ -718,8 +720,10 @@ public class TokenController extends TokenBaseController {
         requestParam00.put("tokenid", Main.getString(map.get("tokenHex")).trim());
         String resp2 = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getCalTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
-        HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp2, HashMap.class);
-        Integer tokenindex_ = (Integer) result2.get("tokenindex");
+        
+        TokenSerialIndexResponse tokenSerialIndexResponse = Json.jsonmapper().readValue(resp2,
+                TokenSerialIndexResponse.class);
+        Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
 
         tokenInfo.setTokenSerial(new TokenSerial(Main.getString(map.get("tokenHex")).trim(), tokenindex_, amount));
 
