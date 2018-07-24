@@ -31,10 +31,10 @@
 										<TableColumn fx:id="cumulativeWeightColumn" prefWidth="155.0" text="%cumulativeWeight" />
 										<TableColumn fx:id="heightColumn" prefWidth="60.0" text="%height" />
 										<TableColumn fx:id="milestoneDepthColumn" prefWidth="68.0" text="%milestoneDepth" />
-										<TableColumn fx:id="solidColumn" prefWidth="53.0" text="%solid" />
+						
 										<TableColumn fx:id="milestoneColumn" prefWidth="79.0" text="%milestone" />
 										<TableColumn fx:id="maintainedColumn" prefWidth="50.0" text="%maintained" />
-										<TableColumn fx:id="rewardValidColumn" prefWidth="50.0" text="%rewardValid" />
+		
 										<TableColumn fx:id="milestoneLastUpdateTimeColumn" prefWidth="50.0" text="%milestoneLastUpdateTime" />
 										<TableColumn fx:id="insertTimeColumn" prefWidth="59.0" text="%insertTime" />
 									</columns>

@@ -806,7 +806,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
 			s.executeUpdate();
 			s.close();
-			log.info("add block hexStr : " + block.getHash().toString());
+			//log.info("add block hexStr : " + block.getHash().toString());
 		} catch (SQLException e) {
 			// It is possible we try to add a duplicate StoredBlock if we
 			// upgraded
@@ -2386,6 +2386,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 			for (String str : address)
 				stringBuffer.append(",").append("'" + str + "'");
 			sql += "(" + stringBuffer.substring(1).toString() + ")";
+			
+			sql += " ORDER BY insertTime desc ";
 		}
 		List<BlockEvaluation> result = new ArrayList<BlockEvaluation>();
 		maybeConnect();
