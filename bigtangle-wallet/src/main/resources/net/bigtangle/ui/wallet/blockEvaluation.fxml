@@ -26,17 +26,17 @@
 								<TableView fx:id="blockEvaluationTable" editable="true" layoutX="6.0" layoutY="81.0" maxHeight="400.0" minHeight="400.0" prefHeight="400.0" prefWidth="980.0">
 									<columns>
 										<TableColumn fx:id="blockhashColumn" prefWidth="196.0" text="%blockhash" />
-										<TableColumn fx:id="ratingColumn" prefWidth="90.0" text="%rating" />
+										<TableColumn fx:id="ratingColumn" prefWidth="50.0" text="%rating" />
 										<TableColumn fx:id="depthColumn" prefWidth="61.0" text="%depth" />
-										<TableColumn fx:id="cumulativeWeightColumn" prefWidth="155.0" text="%cumulativeWeight" />
+										<TableColumn fx:id="cumulativeWeightColumn" prefWidth="55.0" text="%cumulativeWeight" />
 										<TableColumn fx:id="heightColumn" prefWidth="60.0" text="%height" />
 										<TableColumn fx:id="milestoneDepthColumn" prefWidth="68.0" text="%milestoneDepth" />
 						
 										<TableColumn fx:id="milestoneColumn" prefWidth="79.0" text="%milestone" />
 										<TableColumn fx:id="maintainedColumn" prefWidth="50.0" text="%maintained" />
 		
-										<TableColumn fx:id="milestoneLastUpdateTimeColumn" prefWidth="50.0" text="%milestoneLastUpdateTime" />
-										<TableColumn fx:id="insertTimeColumn" prefWidth="59.0" text="%insertTime" />
+										<TableColumn fx:id="milestoneLastUpdateTimeColumn" prefWidth="148.0" text="%milestoneLastUpdateTime" />
+										<TableColumn fx:id="insertTimeColumn" prefWidth="154.0" text="%insertTime" />
 									</columns>
 								</TableView>
 								<Button cancelButton="true" layoutX="927.0" layoutY="514.0" maxWidth="60.0" minWidth="60.0" mnemonicParsing="false" onAction="#closeUI" prefWidth="60.0" text="%close" />
