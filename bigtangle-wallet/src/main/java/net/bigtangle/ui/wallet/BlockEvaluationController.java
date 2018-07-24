@@ -402,11 +402,11 @@ public class BlockEvaluationController {
             cumulativeWeightColumn.setCellValueFactory(new MapValueFactory("cumulativeWeight"));
             heightColumn.setCellValueFactory(new MapValueFactory("height"));
 
-            solidColumn.setCellValueFactory(new MapValueFactory("solid"));
+          
             milestoneColumn.setCellValueFactory(new MapValueFactory("milestone"));
             milestoneDepthColumn.setCellValueFactory(new MapValueFactory("milestoneDepth"));
             maintainedColumn.setCellValueFactory(new MapValueFactory("maintained"));
-            rewardValidColumn.setCellValueFactory(new MapValueFactory("rewardValid"));
+     
             milestoneLastUpdateTimeColumn.setCellValueFactory(new MapValueFactory("milestoneLastUpdateTime"));
             insertTimeColumn.setCellValueFactory(new MapValueFactory("insertTime"));
 
