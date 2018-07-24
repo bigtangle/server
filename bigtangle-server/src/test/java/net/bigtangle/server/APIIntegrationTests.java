@@ -625,7 +625,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     }
 
     @SuppressWarnings("unchecked")
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testMultiSigMultiSignSignatureError() throws Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -695,7 +695,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         result2 = Json.jsonmapper().readValue(resp, HashMap.class);
         int duration = (Integer) result2.get("errorcode");
         System.out.println("resp : " + resp);
-        assertEquals(duration, 100);
+        assertTrue(duration == 101);
     }
 
     @SuppressWarnings("unchecked")

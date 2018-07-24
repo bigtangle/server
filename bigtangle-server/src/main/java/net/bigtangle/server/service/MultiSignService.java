@@ -245,7 +245,7 @@ public class MultiSignService {
             return signCount >= signnumber;
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            throw new BlockStoreException("multisign error");
         }
     }
 
