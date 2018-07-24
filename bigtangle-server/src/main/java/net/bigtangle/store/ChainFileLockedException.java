@@ -24,6 +24,9 @@ import net.bigtangle.core.BlockStoreException;
  * Thrown by {@link SPVBlockStore} when the process cannot gain exclusive access to the chain file.
  */
 public class ChainFileLockedException extends BlockStoreException {
+    
+    private static final long serialVersionUID = 2746919734691128741L;
+
     public ChainFileLockedException(String message) {
         super(message);
     }

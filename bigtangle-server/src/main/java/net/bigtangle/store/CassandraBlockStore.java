@@ -71,15 +71,15 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
             + "   PRIMARY KEY (orderid) )";
 
     // Some indexes to speed up inserts
-    private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_height_toaddress_idx ON outputs (hash, outputindex, height, toaddress) USING btree";
-    private static final String CREATE_OUTPUTS_TOADDRESS_INDEX = "CREATE INDEX outputs_toaddress_idx ON outputs (toaddress) USING btree";
-    private static final String CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX = "CREATE INDEX outputs_addresstargetable_idx ON outputs (addresstargetable) USING btree";
-    private static final String CREATE_OUTPUTS_HASH_INDEX = "CREATE INDEX outputs_hash_idx ON outputs (hash) USING btree";
-    private static final String CREATE_UNDOABLE_TABLE_INDEX = "CREATE INDEX undoableblocks_height_idx ON undoableblocks (height) USING btree";
-    private static final String CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX = "CREATE INDEX exchange_fromAddress_idx ON exchange (fromAddress) USING btree";
-    private static final String CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX = "CREATE INDEX exchange_toAddress_idx ON exchange (toAddress) USING btree";
-    private static final String CREATE_ORDERMATCH_RESTINGORDERID_TABLE_INDEX = "CREATE INDEX ordermatch_restingOrderId_idx ON ordermatch (restingOrderId) USING btree";
-    private static final String CREATE_ORDERMATCH_INCOMINGORDERID_TABLE_INDEX = "CREATE INDEX ordermatch_incomingOrderId_idx ON ordermatch (incomingOrderId) USING btree";
+//    private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_height_toaddress_idx ON outputs (hash, outputindex, height, toaddress) USING btree";
+//    private static final String CREATE_OUTPUTS_TOADDRESS_INDEX = "CREATE INDEX outputs_toaddress_idx ON outputs (toaddress) USING btree";
+//    private static final String CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX = "CREATE INDEX outputs_addresstargetable_idx ON outputs (addresstargetable) USING btree";
+//    private static final String CREATE_OUTPUTS_HASH_INDEX = "CREATE INDEX outputs_hash_idx ON outputs (hash) USING btree";
+//    private static final String CREATE_UNDOABLE_TABLE_INDEX = "CREATE INDEX undoableblocks_height_idx ON undoableblocks (height) USING btree";
+//    private static final String CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX = "CREATE INDEX exchange_fromAddress_idx ON exchange (fromAddress) USING btree";
+//    private static final String CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX = "CREATE INDEX exchange_toAddress_idx ON exchange (toAddress) USING btree";
+//    private static final String CREATE_ORDERMATCH_RESTINGORDERID_TABLE_INDEX = "CREATE INDEX ordermatch_restingOrderId_idx ON ordermatch (restingOrderId) USING btree";
+//    private static final String CREATE_ORDERMATCH_INCOMINGORDERID_TABLE_INDEX = "CREATE INDEX ordermatch_incomingOrderId_idx ON ordermatch (incomingOrderId) USING btree";
 
     public CassandraBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
             String username, String password) throws BlockStoreException {

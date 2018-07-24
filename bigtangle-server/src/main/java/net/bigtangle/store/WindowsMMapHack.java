@@ -18,10 +18,7 @@
 
 package net.bigtangle.store;
 
-import sun.misc.*;
-import sun.nio.ch.*;
-
-import java.nio.*;
+import java.nio.MappedByteBuffer;
 
 /**
  * <p>This class knows how to force an mmap'd ByteBuffer to reliquish its file handles before it becomes garbage collected,

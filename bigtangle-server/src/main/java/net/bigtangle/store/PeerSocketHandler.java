@@ -5,22 +5,9 @@
 
 package net.bigtangle.store;
 
-import com.google.common.annotations.VisibleForTesting;
-
-import net.bigtangle.core.BitcoinSerializer;
-import net.bigtangle.core.Message;
-import net.bigtangle.core.MessageSerializer;
-import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.PeerAddress;
-import net.bigtangle.core.ProtocolException;
-import net.bigtangle.core.BitcoinSerializer.BitcoinPacketHeader;
-import net.bigtangle.net.AbstractTimeoutHandler;
-import net.bigtangle.net.MessageWriteTarget;
-import net.bigtangle.net.StreamConnection;
-import net.bigtangle.utils.Threading;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -31,7 +18,21 @@ import java.nio.ByteBuffer;
 import java.nio.channels.NotYetConnectedException;
 import java.util.concurrent.locks.Lock;
 
-import static com.google.common.base.Preconditions.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import net.bigtangle.core.BitcoinSerializer;
+import net.bigtangle.core.Message;
+import net.bigtangle.core.MessageSerializer;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.PeerAddress;
+import net.bigtangle.core.ProtocolException;
+import net.bigtangle.net.AbstractTimeoutHandler;
+import net.bigtangle.net.MessageWriteTarget;
+import net.bigtangle.net.StreamConnection;
+import net.bigtangle.utils.Threading;
 
 /**
  * Handles high-level message (de)serialization for peers, acting as the bridge between the

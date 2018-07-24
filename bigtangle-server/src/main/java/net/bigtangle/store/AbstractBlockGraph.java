@@ -5,11 +5,7 @@
 
 package net.bigtangle.store;
 
-import static com.google.common.base.Preconditions.checkState;
-
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Nullable;
@@ -21,12 +17,8 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Context;
-import net.bigtangle.core.FilteredBlock;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.PrunedException;
-import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
-import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutputChanges;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.utils.Threading;

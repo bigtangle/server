@@ -4,17 +4,13 @@
  *******************************************************************************/
 package net.bigtangle.server.config;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.store.MySQLFullPrunedBlockStore;
 import net.bigtangle.store.PhoenixBlockStore;
@@ -43,8 +39,6 @@ public class DBStoreConfiguration {
     private int fullStoreDepth = 10;
     @Autowired
     NetworkParameters networkParameters;
-
-    private static final Logger logger = LoggerFactory.getLogger(DBStoreConfiguration.class);
 
     @Bean
     public FullPrunedBlockStore store() throws BlockStoreException {

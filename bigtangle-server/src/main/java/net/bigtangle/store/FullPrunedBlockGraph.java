@@ -723,6 +723,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         if (block.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD) {
             // Get reward data from previous reward cycle
             Sha256Hash prevRewardHash = null;
+            @SuppressWarnings("unused")
             long fromHeight = 0, nextPerTxReward = 0;
             try {
                 byte[] hashBytes = new byte[32];

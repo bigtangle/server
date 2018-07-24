@@ -8,15 +8,22 @@ package net.bigtangle.store;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.apache.commons.lang.NotImplementedException;
-
-import net.bigtangle.core.*;
+import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockStore;
+import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.StoredBlock;
+import net.bigtangle.core.VerificationException;
 
 /**
  * Keeps {@link net.bigtangle.core.StoredBlock}s in memory. Used primarily for unit testing.
  */
 public class MemoryBlockStore implements BlockStore {
     private LinkedHashMap<Sha256Hash, StoredBlock> blockMap = new LinkedHashMap<Sha256Hash, StoredBlock>() {
+        
+        private static final long serialVersionUID = -3935009615200982749L;
+
         @Override
         protected boolean removeEldestEntry(Map.Entry<Sha256Hash, StoredBlock> eldest) {
             return blockMap.size() > 5000;
