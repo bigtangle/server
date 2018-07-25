@@ -119,35 +119,21 @@ public class ValidatorService {
 
 		// Go backwards by height
 		while ((currentBlock = blockQueue.poll()) != null) {
-			// If we have reached a new height, trigger payout calculation if possible
+
+			// If we have reached a new height level, try trigger payout calculation
 			if (currentHeight > currentBlock.getBlockEvaluation().getHeight()) {
+
 				// Calculate rewards if in reward interval height
 				if (currentHeight <= toHeight) {
-					// For each height, throw away anything below the 99-percentile
-					// in terms of reduced weight
-					long heightRewardCount = (long) Math.ceil(0.95d * currentHeightBlocks.size());
-					totalRewardCount += heightRewardCount;
-
-					long rewarded = 0;
-					for (BlockWrap rewardedBlock : currentHeightBlocks.stream().sorted(Comparator
-							.comparingLong(b -> snapshotWeights.get(b).size()).reversed())
-							.collect(Collectors.toList())) {
-						if (rewarded >= heightRewardCount)
-							break;
-
-						Address miner = new Address(networkParameters, rewardedBlock.getBlock().getMinerAddress());
-						if (!finalRewardCount.containsKey(miner))
-							finalRewardCount.put(miner, 1L);
-						else
-							finalRewardCount.put(miner, finalRewardCount.get(miner) + 1);
-						rewarded++;
-					}
+					totalRewardCount = calculateHeightRewards(currentHeightBlocks, snapshotWeights, finalRewardCount,
+							totalRewardCount);
 				}
 
 				// Finished with this height level, go to next level
 				currentHeightBlocks.clear();
 				long currentHeightTmp = currentHeight;
-				snapshotWeights.entrySet().removeIf(e -> e.getKey().getBlockEvaluation().getHeight() == currentHeightTmp);
+				snapshotWeights.entrySet()
+						.removeIf(e -> e.getKey().getBlockEvaluation().getHeight() == currentHeightTmp);
 				currentHeight = currentBlock.getBlockEvaluation().getHeight();
 			}
 
@@ -189,27 +175,13 @@ public class ValidatorService {
 			}
 		}
 
-		// Exception for height 0: since null, we do payout calculation again
+		// Exception for height 0 (genesis): since prevblock null, finish payout
+		// calculation
 		if (currentHeight == 0) {
 			// For each height, throw away anything below the 99-percentile
 			// in terms of reduced weight
-			long heightRewardCount = 99 * currentHeightBlocks.size() / 100 + 1;
-			totalRewardCount += heightRewardCount;
-
-			long rewarded = 0;
-			for (BlockWrap rewardedBlock : currentHeightBlocks.stream().sorted(Comparator
-					.comparingLong(b -> snapshotWeights.get(b).size()).reversed())
-					.collect(Collectors.toList())) {
-				if (rewarded >= heightRewardCount)
-					break;
-
-				Address miner = new Address(networkParameters, rewardedBlock.getBlock().getMinerAddress());
-				if (!finalRewardCount.containsKey(miner))
-					finalRewardCount.put(miner, 1L);
-				else
-					finalRewardCount.put(miner, finalRewardCount.get(miner) + 1);
-				rewarded++;
-			}
+			totalRewardCount = calculateHeightRewards(currentHeightBlocks, snapshotWeights, finalRewardCount,
+					totalRewardCount);
 		}
 
 		// Build transaction outputs sorted by addresses
@@ -225,11 +197,8 @@ public class ValidatorService {
 		tx.addInput(input);
 
 		// TX reward adjustments for next rewards
-		long nextPerTxReward = Math.max(1, 20000000 * 365 * 24 * 60 * 60 / totalRewardCount / Math.min(1,
-				(Math.max(prevTrunkBlock.getBlock().getTimeSeconds(), prevBranchBlock.getBlock().getTimeSeconds())
-						- prevRewardBlock.getBlock().getTimeSeconds())));
-		nextPerTxReward = Math.max(nextPerTxReward, perTxReward / 4);
-		nextPerTxReward = Math.min(nextPerTxReward, perTxReward * 4);
+		long nextPerTxReward = calculateNextTxReward(prevTrunkBlock, prevBranchBlock, prevRewardBlock, perTxReward,
+				totalRewardCount);
 
 		// Build the type-specific tx data (fromHeight, nextPerTxReward, prevRewardHash)
 		ByteBuffer bb = ByteBuffer.allocate(48);
@@ -239,10 +208,47 @@ public class ValidatorService {
 		tx.setData(bb.array());
 
 		// Check eligibility: sufficient amount of milestone blocks approved?
-		if (totalRewardCount < store.getCountMilestoneBlocksInInterval(fromHeight, toHeight) * 99 / 100)
+		if (!checkEligibility(fromHeight, toHeight, totalRewardCount))
 			eligibility = false;
 
 		return Pair.of(tx, eligibility);
+	}
+
+	private long calculateNextTxReward(BlockWrap prevTrunkBlock, BlockWrap prevBranchBlock, BlockWrap prevRewardBlock,
+			long currPerTxReward, long totalRewardCount) {
+		long nextPerTxReward = Math.max(1, 20000000 * 365 * 24 * 60 * 60 / totalRewardCount / Math.min(1,
+				(Math.max(prevTrunkBlock.getBlock().getTimeSeconds(), prevBranchBlock.getBlock().getTimeSeconds())
+						- prevRewardBlock.getBlock().getTimeSeconds())));
+		nextPerTxReward = Math.max(nextPerTxReward, currPerTxReward / 4);
+		nextPerTxReward = Math.min(nextPerTxReward, currPerTxReward * 4);
+		return nextPerTxReward;
+	}
+
+	private boolean checkEligibility(long fromHeight, long toHeight, long totalRewardCount) throws BlockStoreException {
+		return totalRewardCount >= store.getCountMilestoneBlocksInInterval(fromHeight, toHeight) * 99 / 100;
+	}
+
+	private long calculateHeightRewards(Set<BlockWrap> currentHeightBlocks,
+			Map<BlockWrap, Set<Sha256Hash>> snapshotWeights, Map<Address, Long> finalRewardCount,
+			long totalRewardCount) {
+		long heightRewardCount = (long) Math.ceil(0.95d * currentHeightBlocks.size());
+		totalRewardCount += heightRewardCount;
+
+		long rewarded = 0;
+		for (BlockWrap rewardedBlock : currentHeightBlocks.stream()
+				.sorted(Comparator.comparingLong(b -> snapshotWeights.get(b).size()).reversed())
+				.collect(Collectors.toList())) {
+			if (rewarded >= heightRewardCount)
+				break;
+
+			Address miner = new Address(networkParameters, rewardedBlock.getBlock().getMinerAddress());
+			if (!finalRewardCount.containsKey(miner))
+				finalRewardCount.put(miner, 1L);
+			else
+				finalRewardCount.put(miner, finalRewardCount.get(miner) + 1);
+			rewarded++;
+		}
+		return totalRewardCount;
 	}
 
 	/**
@@ -329,7 +335,7 @@ public class ValidatorService {
 
 		// Remove blocks and their approvers that have at least one input
 		// with its corresponding output not confirmed yet / nonexistent
-		// Needed since while resolving undoable conflicts, milestone blocks are
+		// Needed since while resolving undoable conflicts, milestone blocks could be
 		// unconfirmed
 		removeWherePreconditionsUnfulfilled(blocksToAdd);
 	}

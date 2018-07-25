@@ -80,7 +80,7 @@ public class TipService {
 				
 				// Perform next steps 
 				nextLeft = performValidatedStep(left, currentApprovedNonMilestoneBlocks);
-				nextRight = validateOrPerformNextStep(right, currentApprovedNonMilestoneBlocks, nextRight);
+				nextRight = validateOrPerformValidatedStep(right, currentApprovedNonMilestoneBlocks, nextRight);
 			} else {
 				// Go right
 				right = nextRight;
@@ -88,7 +88,7 @@ public class TipService {
 				
 				// Perform next steps 
 				nextRight = performValidatedStep(right, currentApprovedNonMilestoneBlocks);
-				nextLeft = validateOrPerformNextStep(left, currentApprovedNonMilestoneBlocks, nextLeft);
+				nextLeft = validateOrPerformValidatedStep(left, currentApprovedNonMilestoneBlocks, nextLeft);
 			}
 		}
 
@@ -111,7 +111,7 @@ public class TipService {
 	}
 
 	// Does not redo finding next step if next step was still valid
-	private BlockWrap validateOrPerformNextStep(BlockWrap fromBlock, HashSet<BlockWrap> currentApprovedNonMilestoneBlocks,
+	private BlockWrap validateOrPerformValidatedStep(BlockWrap fromBlock, HashSet<BlockWrap> currentApprovedNonMilestoneBlocks,
 			BlockWrap potentialNextBlock) throws BlockStoreException {
 		if (!validatorService.isIneligibleForSelection(potentialNextBlock, currentApprovedNonMilestoneBlocks))
 			return potentialNextBlock;
@@ -174,7 +174,7 @@ public class TipService {
 						* Math.exp(0.05 * Math.max(0.0, (currentBlock.getBlockEvaluation().getMilestoneDepth() - 30)));
 				
 				// Clamp
-				alpha = Math.max(0.0, alpha);
+				alpha = Math.max(0.001, alpha);
 				alpha = Math.min(1.5, alpha);
 				
 				// Calculate transition weights
