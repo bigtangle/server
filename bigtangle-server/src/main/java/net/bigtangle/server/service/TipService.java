@@ -62,6 +62,10 @@ public class TipService {
 		BlockWrap left = entryPoints.get(0);
 		BlockWrap right = entryPoints.get(1);
 		HashSet<BlockWrap> currentApprovedNonMilestoneBlocks = new HashSet<>();
+		
+		//Unnecessary: left/right are never non-milestone initially
+		//blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, left);
+		//blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, right);
 
 		// Perform next steps
 		BlockWrap nextLeft = performValidatedStep(left, currentApprovedNonMilestoneBlocks);
@@ -70,21 +74,33 @@ public class TipService {
 		// Repeat: Proceed on path to be included first (highest rating else random)
 		while (nextLeft != left && nextRight != right) {
 			if (nextLeft.getBlockEvaluation().getRating() > nextRight.getBlockEvaluation().getRating()) {
+				// Go left
 				left = nextLeft;
+				blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, left);
+				
+				// Perform next steps 
+				nextLeft = performValidatedStep(left, currentApprovedNonMilestoneBlocks);
+				nextRight = validateOrPerformNextStep(right, currentApprovedNonMilestoneBlocks, right);
 			} else {
+				// Go right
 				right = nextRight;
+				blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, right);
+				
+				// Perform next steps 
+				nextRight = performValidatedStep(right, currentApprovedNonMilestoneBlocks);
+				nextLeft = validateOrPerformNextStep(left, currentApprovedNonMilestoneBlocks, left);
 			}
-			nextLeft = performValidatedStep(left, currentApprovedNonMilestoneBlocks);
-			nextRight = performValidatedStep(right, currentApprovedNonMilestoneBlocks);
 		}
 
 		// Go forward on the remaining paths
 		while (nextLeft != left) {
 			left = nextLeft;
+			blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, left);
 			nextLeft = performValidatedStep(left, currentApprovedNonMilestoneBlocks);
 		}
 		while (nextRight != right) {
 			right = nextRight;
+			blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, right);
 			nextRight = performValidatedStep(right, currentApprovedNonMilestoneBlocks);
 		}
 
@@ -94,9 +110,18 @@ public class TipService {
 		return Pair.of(left.getBlock().getHash(), right.getBlock().getHash());
 	}
 
+	// Does not redo finding next step if next step was still valid
+	private BlockWrap validateOrPerformNextStep(BlockWrap fromBlock, HashSet<BlockWrap> currentApprovedNonMilestoneBlocks,
+			BlockWrap potentialNextBlock) throws BlockStoreException {
+		if (!validatorService.isIneligibleForSelection(potentialNextBlock, currentApprovedNonMilestoneBlocks))
+			return potentialNextBlock;
+		else 
+			return performValidatedStep(fromBlock, currentApprovedNonMilestoneBlocks);
+	}
+
+	// Finds a potential approver block to include given the currently approved blocks
 	private BlockWrap performValidatedStep(BlockWrap fromBlock, HashSet<BlockWrap> currentApprovedNonMilestoneBlocks)
 			throws BlockStoreException {
-		blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, fromBlock);
 		List<BlockWrap> validApprovers = store.getSolidApproverBlocks(fromBlock.getBlock().getHash());
 		validApprovers.removeIf(b -> validatorService.isIneligibleForSelection(b, currentApprovedNonMilestoneBlocks));
 		return performTransition(fromBlock, validApprovers);

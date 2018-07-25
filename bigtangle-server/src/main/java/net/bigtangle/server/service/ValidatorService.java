@@ -146,9 +146,9 @@ public class ValidatorService {
 		}
 
 		// TX reward adjustments for next rewards
-		long nextPerTxReward = Math.max(1, 20000000 * 365 * 24 * 60 * 60 / approveCount
-				/ (Math.max(prevTrunkBlock.getBlock().getTimeSeconds(), prevTrunkBlock.getBlock().getTimeSeconds())
-						- prevRewardBlock.getBlock().getTimeSeconds()));
+		long nextPerTxReward = Math.max(1, 20000000 * 365 * 24 * 60 * 60 / approveCount / Math.min(1,
+				(Math.max(prevTrunkBlock.getBlock().getTimeSeconds(), prevBranchBlock.getBlock().getTimeSeconds())
+						- prevRewardBlock.getBlock().getTimeSeconds())));
 		nextPerTxReward = Math.max(nextPerTxReward, perTxReward / 4);
 		nextPerTxReward = Math.min(nextPerTxReward, perTxReward * 4);
 
@@ -189,8 +189,9 @@ public class ValidatorService {
 	public boolean removeWherePreconditionsUnfulfilled(Collection<BlockWrap> blocksToAdd) throws BlockStoreException {
 		return removeWherePreconditionsUnfulfilled(blocksToAdd, false);
 	}
-	
-	public boolean removeWherePreconditionsUnfulfilled(Collection<BlockWrap> blocksToAdd, boolean returnOnFirstRemoval) throws BlockStoreException {
+
+	public boolean removeWherePreconditionsUnfulfilled(Collection<BlockWrap> blocksToAdd, boolean returnOnFirstRemoval)
+			throws BlockStoreException {
 		boolean removed = false;
 
 		for (BlockWrap b : new HashSet<BlockWrap>(blocksToAdd)) {
@@ -217,7 +218,7 @@ public class ValidatorService {
 					bb.getLong();
 					bb.get(hashBytes, 0, 32);
 					prevRewardHash = Sha256Hash.wrap(hashBytes);
-					
+
 					if (!store.getTxRewardConfirmed(prevRewardHash)) {
 						removed = true;
 						blockService.removeBlockAndApproversFrom(blocksToAdd, b);
@@ -229,15 +230,15 @@ public class ValidatorService {
 					blockService.removeBlockAndApproversFrom(blocksToAdd, b);
 					continue;
 				}
-				
+
 				// If ineligible, preconditions are sufficient age and milestone rating range
-				if (!store.getTxRewardEligible(block.getHash()) 
-						&& !(b.getBlockEvaluation().getRating() > NetworkParameters.MILESTONE_UPPER_THRESHOLD 
-								&& b.getBlockEvaluation().getInsertTime() < System.currentTimeMillis()/1000 - 30)) {
+				if (!store.getTxRewardEligible(block.getHash())
+						&& !(b.getBlockEvaluation().getRating() > NetworkParameters.MILESTONE_UPPER_THRESHOLD
+								&& b.getBlockEvaluation().getInsertTime() < System.currentTimeMillis() / 1000 - 30)) {
 					removed = true;
 					blockService.removeBlockAndApproversFrom(blocksToAdd, b);
 					continue;
-				}				
+				}
 			}
 
 			if (block.getBlockType() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
