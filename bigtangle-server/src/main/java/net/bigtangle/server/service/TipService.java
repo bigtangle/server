@@ -122,9 +122,14 @@ public class TipService {
 	// Finds a potential approver block to include given the currently approved blocks
 	private BlockWrap performValidatedStep(BlockWrap fromBlock, HashSet<BlockWrap> currentApprovedNonMilestoneBlocks)
 			throws BlockStoreException {
-		List<BlockWrap> validApprovers = store.getSolidApproverBlocks(fromBlock.getBlock().getHash());
-		validApprovers.removeIf(b -> validatorService.isIneligibleForSelection(b, currentApprovedNonMilestoneBlocks));
-		return performTransition(fromBlock, validApprovers);
+		List<BlockWrap> candidates = store.getSolidApproverBlocks(fromBlock.getBlock().getHash());
+		BlockWrap result;
+		do {
+			// Find results until one is valid/eligible
+			result = performTransition(fromBlock, candidates);
+			candidates.remove(result);
+		} while (validatorService.isIneligibleForSelection(result, currentApprovedNonMilestoneBlocks));
+		return result;
 	}
 
 	private BlockWrap randomWalk(BlockWrap currentBlock, long maxTime) throws BlockStoreException {
