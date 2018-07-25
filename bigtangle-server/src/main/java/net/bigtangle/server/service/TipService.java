@@ -169,10 +169,15 @@ public class TipService {
 
 			// Calculate the unnormalized transition weights
 			for (int i = 0; i < approvers.size(); i++) {
-				double alpha = 0.5
-						* Math.exp(-0.05 * Math.max(0.0, (currentBlock.getBlockEvaluation().getMilestoneDepth() - 30)));
+				// Aviv Zohar: Scale alpha up if very deep to prevent splitting attack
+				double alpha = 0.1
+						* Math.exp(0.05 * Math.max(0.0, (currentBlock.getBlockEvaluation().getMilestoneDepth() - 30)));
+				
+				// Clamp
 				alpha = Math.max(0.0, alpha);
 				alpha = Math.min(1.5, alpha);
+				
+				// Calculate transition weights
 				transitionWeights[i] = Math.exp(-alpha
 						* (currentCumulativeWeight - approvers.get(i).getBlockEvaluation().getCumulativeWeight()));
 				transitionWeightSum += transitionWeights[i];
