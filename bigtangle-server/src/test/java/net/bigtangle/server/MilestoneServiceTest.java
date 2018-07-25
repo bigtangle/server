@@ -471,6 +471,26 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		milestoneService.update();
 		assertFalse(blockService.getBlockEvaluation(rewardBlock.getHash()).isMilestone());
 	}
+	
+	@Test
+	public void manualTest() throws Exception {
+		store.resetStore();
+
+		// Generate two blocks
+		createAndAddNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
+				outKey.getPubKey(), networkParameters.getGenesisBlock().getHash());
+		createAndAddNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
+				outKey.getPubKey(), networkParameters.getGenesisBlock().getHash());
+		milestoneService.update();
+		
+		// Generate block normally now
+		Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
+		Block r1 = blockService.getBlock(tipsToApprove.getLeft());
+		Block r2 = blockService.getBlock(tipsToApprove.getRight());
+		Block b = BlockForTest.createNextBlock(r2, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0,
+				r1.getHash());
+		blockgraph.add(b, true);
+	}
 
 	// @Test
 	public void testReorgDeadlockResolution() throws Exception {

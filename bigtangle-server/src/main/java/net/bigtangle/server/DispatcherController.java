@@ -32,7 +32,6 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.AbstractResponse;
 import net.bigtangle.core.http.ErrorResponse;
 import net.bigtangle.core.http.OkResponse;
-import net.bigtangle.core.http.server.resp.GetBlockEvaluationsResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.LogResultService;

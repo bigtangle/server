@@ -80,7 +80,7 @@ public class TipService {
 				
 				// Perform next steps 
 				nextLeft = performValidatedStep(left, currentApprovedNonMilestoneBlocks);
-				nextRight = validateOrPerformNextStep(right, currentApprovedNonMilestoneBlocks, right);
+				nextRight = validateOrPerformNextStep(right, currentApprovedNonMilestoneBlocks, nextRight);
 			} else {
 				// Go right
 				right = nextRight;
@@ -88,7 +88,7 @@ public class TipService {
 				
 				// Perform next steps 
 				nextRight = performValidatedStep(right, currentApprovedNonMilestoneBlocks);
-				nextLeft = validateOrPerformNextStep(left, currentApprovedNonMilestoneBlocks, left);
+				nextLeft = validateOrPerformNextStep(left, currentApprovedNonMilestoneBlocks, nextLeft);
 			}
 		}
 
