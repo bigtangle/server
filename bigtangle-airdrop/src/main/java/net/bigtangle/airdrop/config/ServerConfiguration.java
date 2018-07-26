@@ -17,6 +17,8 @@ public class ServerConfiguration {
     private Boolean debug;
     
     private String net;
+    
+    private String serverURL;
 
     public String getPort() {
         return port;
@@ -41,5 +43,13 @@ public class ServerConfiguration {
 
     public void setNet(String net) {
         this.net = net;
+    }
+
+    public String getServerURL() {
+        return serverURL;
+    }
+
+    public void setServerURL(String serverURL) {
+        this.serverURL = serverURL;
     }
 }

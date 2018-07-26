@@ -12,26 +12,14 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "service")
 public class ScheduleConfiguration {
 
-    @Value("${milestoneschedule.active:false}")
-    boolean milestone_active;
+    @Value("${giveMoneyService.active:true}")
+    boolean giveMoneyServiceActive;
 
-    @Value("${orderMatchService.active:true}")
-    boolean ordermatch_active;
-
-    public boolean isMilestone_active() {
-        return milestone_active;
+    public boolean isGiveMoneyServiceActive() {
+        return giveMoneyServiceActive;
     }
 
-    public void setMilestone_active(boolean milestone_active) {
-        this.milestone_active = milestone_active;
+    public void setGiveMoneyServiceActive(boolean giveMoneyServiceActive) {
+        this.giveMoneyServiceActive = giveMoneyServiceActive;
     }
-
-    public boolean isOrdermatch_active() {
-        return ordermatch_active;
-    }
-
-    public void setOrdermatch_active(boolean ordermatch_active) {
-        this.ordermatch_active = ordermatch_active;
-    }
-
 }
