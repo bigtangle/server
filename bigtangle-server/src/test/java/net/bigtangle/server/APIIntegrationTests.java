@@ -973,7 +973,6 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void testCreateMultiSig() throws JsonProcessingException, Exception {
         // Setup transaction and signatures
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
