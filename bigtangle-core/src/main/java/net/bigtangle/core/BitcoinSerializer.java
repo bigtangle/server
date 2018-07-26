@@ -44,7 +44,7 @@ public class BitcoinSerializer extends MessageSerializer {
         names.put(Block.class, "block");
         names.put(GetDataMessage.class, "getdata");
         names.put(Transaction.class, "tx");
-        names.put(AddressMessage.class, "addr");
+    
         names.put(Ping.class, "ping");
         names.put(Pong.class, "pong");
         names.put(VersionAck.class, "verack");
@@ -193,9 +193,7 @@ public class BitcoinSerializer extends MessageSerializer {
             message = new GetHeadersMessage(params, payloadBytes);
         } else if (command.equals("tx")) {
             message = makeTransaction(payloadBytes, 0, length, hash);
-        } else if (command.equals("addr")) {
-            message = makeAddressMessage(payloadBytes, length);
-        } else if (command.equals("ping")) {
+        }  else if (command.equals("ping")) {
             message = new Ping(params, payloadBytes);
         } else if (command.equals("pong")) {
             message = new Pong(params, payloadBytes);
@@ -230,16 +228,7 @@ public class BitcoinSerializer extends MessageSerializer {
     public NetworkParameters getParameters() {
         return params;
     }
-
-    /**
-     * Make an address message from the payload. Extension point for alternative
-     * serialization format support.
-     */
-    @Override
-    public AddressMessage makeAddressMessage(byte[] payloadBytes, int length) throws ProtocolException {
-        return new AddressMessage(params, payloadBytes, this, length);
-    }
-
+ 
     /**
      * Make an alert message from the payload. Extension point for alternative
      * serialization format support.

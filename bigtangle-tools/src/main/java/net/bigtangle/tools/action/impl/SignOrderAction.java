@@ -59,22 +59,20 @@ public class SignOrderAction extends Action {
                 if (fromSign == 1 && this.account.wallet().calculatedAddressHit(fromAddress)) {
                     continue;
                 }
-                exchangeList.add(exchange);
+               // exchangeList.add(exchange);
+                try {
+                    String orderid = exchange.getOrderid();
+                    PayOrder payOrder = new PayOrder(this.account.wallet(), orderid, Configure.SIMPLE_SERVER_CONTEXT_ROOT,
+                            Configure.ORDER_MATCH_CONTEXT_ROOT);
+                    payOrder.sign();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        logger.info("find exchange size : " + exchangeList.size());
-        for (Exchange exchange : exchangeList) {
-            try {
-                String orderid = exchange.getOrderid();
-                PayOrder payOrder = new PayOrder(this.account.wallet(), orderid, Configure.SIMPLE_SERVER_CONTEXT_ROOT,
-                        Configure.ORDER_MATCH_CONTEXT_ROOT);
-                payOrder.sign();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+     
         logger.info("account name : {}, sign order action end", account.getName());
     }
 }

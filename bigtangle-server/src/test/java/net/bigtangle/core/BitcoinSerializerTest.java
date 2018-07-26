@@ -5,29 +5,21 @@
 
 package net.bigtangle.core;
 
-import org.junit.Test;
-
-import net.bigtangle.core.AddressMessage;
-import net.bigtangle.core.BitcoinSerializer;
-import net.bigtangle.core.Block;
-import net.bigtangle.core.HeadersMessage;
-import net.bigtangle.core.Message;
-import net.bigtangle.core.MessageSerializer;
-import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.PeerAddress;
-import net.bigtangle.core.ProtocolException;
-import net.bigtangle.core.Transaction;
-import net.bigtangle.core.Utils;
-import net.bigtangle.params.MainNetParams;
+import static net.bigtangle.core.Utils.HEX;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
-import java.net.InetAddress;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import static net.bigtangle.core.Utils.HEX;
-import static org.junit.Assert.*;
+import org.junit.Test;
+
+import net.bigtangle.params.MainNetParams;
 
 public class BitcoinSerializerTest {
     private static final byte[] ADDRESS_MESSAGE_BYTES = HEX.decode("f9beb4d96164647200000000000000001f000000" +
@@ -53,28 +45,7 @@ public class BitcoinSerializerTest {
             "0e ab 5b ea 43 6a 04 84  cf ab 12 48 5e fd a0 b7" +
             "8b 4e cc 52 88 ac 00 00  00 00");
 
-    @Test
-    public void testAddr() throws Exception {
-        final NetworkParameters params = MainNetParams.get();
-        MessageSerializer serializer = params.getDefaultSerializer();
-        // the actual data from https://en.bitcoin.it/wiki/Protocol_specification#addr
-        AddressMessage addressMessage = (AddressMessage) serializer.deserialize(ByteBuffer.wrap(ADDRESS_MESSAGE_BYTES));
-        assertEquals(1, addressMessage.getAddresses().size());
-        PeerAddress peerAddress = addressMessage.getAddresses().get(0);
-        assertEquals(8333, peerAddress.getPort());
-        assertEquals("10.0.0.1", peerAddress.getAddr().getHostAddress());
-        ByteArrayOutputStream bos = new ByteArrayOutputStream(ADDRESS_MESSAGE_BYTES.length);
-        serializer.serialize(addressMessage, bos);
-
-        assertEquals(31, addressMessage.getMessageSize());
-        addressMessage.addAddress(new PeerAddress(params, InetAddress.getLocalHost()));
-        assertEquals(61, addressMessage.getMessageSize());
-        addressMessage.removeAddress(0);
-        assertEquals(31, addressMessage.getMessageSize());
-
-        //this wont be true due to dynamic timestamps.
-        //assertTrue(LazyParseByteCacheTest.arrayContains(bos.toByteArray(), addrMessage));
-    }
+    
 
     //TODO  new binary @Test
     public void testCachedParsing() throws Exception {

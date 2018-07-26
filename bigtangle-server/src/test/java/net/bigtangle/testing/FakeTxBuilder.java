@@ -29,7 +29,6 @@ import net.bigtangle.core.ProtocolException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.Transaction;
-import net.bigtangle.core.TransactionConfidence;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
@@ -38,7 +37,6 @@ import net.bigtangle.core.VerificationException;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.TipService;
-import net.bigtangle.server.service.ValidatorService;
 
 public class FakeTxBuilder {
 

@@ -189,10 +189,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
     // Whether or not to ignore pending transactions that are considered risky
     // by the configured risk analyzer.
     private boolean acceptRiskyTransactions;
-    // Object that performs risk analysis of pending transactions. We might
-    // reject transactions that seem like
-    // a high risk of being a double spending attack.
-    private RiskAnalysis.Analyzer riskAnalyzer = DefaultRiskAnalysis.FACTORY;
+ 
 
     // Stuff for notifying transaction objects that we changed their
     // confidences. The purpose of this is to avoid
@@ -1303,34 +1300,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         }
     }
 
-    /**
-     * Sets the {@link RiskAnalysis} implementation to use for deciding whether
-     * received pending transactions are risky or not. If the analyzer says a
-     * transaction is risky, by default it will be dropped. You can customize
-     * this behaviour with {@link #setAcceptRiskyTransactions(boolean)}.
-     */
-    public void setRiskAnalyzer(RiskAnalysis.Analyzer analyzer) {
-        lock.lock();
-        try {
-            this.riskAnalyzer = checkNotNull(analyzer);
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Gets the current {@link RiskAnalysis} implementation. The default is
-     * {@link DefaultRiskAnalysis}.
-     */
-    public RiskAnalysis.Analyzer getRiskAnalyzer() {
-        lock.lock();
-        try {
-            return riskAnalyzer;
-        } finally {
-            lock.unlock();
-        }
-    }
-
+ 
+ 
     /**
      * <p>
      * Sets up the wallet to auto-save itself to the given file, using temp
@@ -1584,32 +1555,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
 
     // endregion
 
-    /**
-     * Given a transaction and an optional list of dependencies
-     * (recursive/flattened), returns true if the given transaction would be
-     * rejected by the analyzer, or false otherwise. The result of this call is
-     * independent of the value of {@link #isAcceptRiskyTransactions()}. Risky
-     * transactions yield a logged warning. If you want to know the reason why a
-     * transaction is risky, create an instance of the {@link RiskAnalysis}
-     * yourself using the factory returned by {@link #getRiskAnalyzer()} and use
-     * it directly.
-     */
-    public boolean isTransactionRisky(Transaction tx, @Nullable List<Transaction> dependencies) {
-        lock.lock();
-        try {
-            if (dependencies == null)
-                dependencies = ImmutableList.of();
-            RiskAnalysis analysis = riskAnalyzer.create(this, tx, dependencies);
-            RiskAnalysis.Result result = analysis.analyze();
-            if (result != RiskAnalysis.Result.OK) {
-                log.warn("Pending transaction was considered risky: {}\n{}", analysis, tx);
-                return true;
-            }
-            return false;
-        } finally {
-            lock.unlock();
-        }
-    }
+ 
 
     /**
      * This method is used by a {@link Peer} to find out if a transaction that

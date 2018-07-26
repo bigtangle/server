@@ -18,9 +18,12 @@
 
 package net.bigtangle.core;
 
-import org.slf4j.*;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-import static com.google.common.base.Preconditions.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import net.bigtangle.wallet.SendRequest;
 
 // TODO: Finish adding Context c'tors to all the different objects so we can start deprecating the versions that take NetworkParameters.
 // TODO: Add a working directory notion to Context and make various subsystems that want to use files default to that directory (eg. Orchid, block stores, wallet, etc).
@@ -44,8 +47,7 @@ import static com.google.common.base.Preconditions.*;
  */
 public class Context {
     private static final Logger log = LoggerFactory.getLogger(Context.class);
-
-    private TxConfidenceTable confidenceTable;
+ 
     private NetworkParameters params;
     private int eventHorizon = 100;
     private boolean ensureMinRequiredFee = true;
@@ -59,7 +61,7 @@ public class Context {
      */
     public Context(NetworkParameters params) {
         log.info("Creating  {} context.", VersionMessage.BITCOINJ_VERSION);
-        this.confidenceTable = new TxConfidenceTable();
+        
         this.params = params;
         lastConstructed = this;
         // We may already have a context in our TLS slot. This can happen a lot during unit tests, so just ignore it.
@@ -153,16 +155,7 @@ public class Context {
         slot.set(checkNotNull(context));
     }
 
-    /**
-     * Returns the {@link TxConfidenceTable} created by this context. The pool tracks advertised
-     * and downloaded transactions so their confidence can be measured as a proportion of how many peers announced it.
-     * With an un-tampered with internet connection, the more peers announce a transaction the more confidence you can
-     * have that it's really valid.
-     */
-    public TxConfidenceTable getConfidenceTable() {
-        return confidenceTable;
-    }
-
+ 
     /**
      * Returns the {@link net.bigtangle.core.NetworkParameters} specified when this context was (auto) created. The
      * network parameters defines various hard coded constants for a specific instance of a Bitcoin network, such as

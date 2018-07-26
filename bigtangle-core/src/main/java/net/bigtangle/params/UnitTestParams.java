@@ -29,7 +29,7 @@ public class UnitTestParams extends AbstractBitcoinNetParams implements Serializ
         p2shHeader = 196;
         acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
         maxTarget = new BigInteger("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
-        port = 18333;
+ 
         dumpedPrivateKeyHeader = 239;
         spendableCoinbaseDepth = 10;
         subsidyDecreaseBlockCount = 100;

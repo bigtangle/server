@@ -13,8 +13,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.nio.channels.FileLock;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -31,7 +29,6 @@ import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.PeerAddress;
 import net.bigtangle.core.Utils;
 import net.bigtangle.wallet.DeterministicSeed;
 import net.bigtangle.wallet.KeyChainGroup;
@@ -92,7 +89,7 @@ public class WalletAppKit extends AbstractIdleService {
     protected volatile File vWalletFile;
 
     protected boolean useAutoSave = true;
-    protected PeerAddress[] peerAddresses;
+ 
 
     protected boolean autoStop = true;
     protected InputStream checkpoints;
@@ -126,25 +123,7 @@ public class WalletAppKit extends AbstractIdleService {
         this.filePrefix = checkNotNull(filePrefix);
     }
 
-    /**
-     * Will only connect to the given addresses. Cannot be called after startup.
-     */
-    public WalletAppKit setPeerNodes(PeerAddress... addresses) {
-        checkState(state() == State.NEW, "Cannot call after startup");
-        this.peerAddresses = addresses;
-        return this;
-    }
-
-    /** Will only connect to localhost. Cannot be called after startup. */
-    public WalletAppKit connectToLocalHost() {
-        try {
-            final InetAddress localHost = InetAddress.getLocalHost();
-            return setPeerNodes(new PeerAddress(params, localHost, params.getPort()));
-        } catch (UnknownHostException e) {
-            // Borked machine with no loopback adapter configured properly.
-            throw new RuntimeException(e);
-        }
-    }
+ 
 
     /**
      * If true, the wallet will save itself to disk automatically whenever it
