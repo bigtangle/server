@@ -62,6 +62,10 @@ public class TipService {
 		BlockWrap left = entryPoints.get(0);
 		BlockWrap right = entryPoints.get(1);
 		HashSet<BlockWrap> currentApprovedNonMilestoneBlocks = new HashSet<>();
+		
+		//Unnecessary: left/right are never non-milestone initially
+		//blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, left);
+		//blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, right);
 
 		// Perform next steps
 		BlockWrap nextLeft = performValidatedStep(left, currentApprovedNonMilestoneBlocks);
@@ -70,21 +74,33 @@ public class TipService {
 		// Repeat: Proceed on path to be included first (highest rating else random)
 		while (nextLeft != left && nextRight != right) {
 			if (nextLeft.getBlockEvaluation().getRating() > nextRight.getBlockEvaluation().getRating()) {
+				// Go left
 				left = nextLeft;
+				blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, left);
+				
+				// Perform next steps 
+				nextLeft = performValidatedStep(left, currentApprovedNonMilestoneBlocks);
+				nextRight = validateOrPerformValidatedStep(right, currentApprovedNonMilestoneBlocks, nextRight);
 			} else {
+				// Go right
 				right = nextRight;
+				blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, right);
+				
+				// Perform next steps 
+				nextRight = performValidatedStep(right, currentApprovedNonMilestoneBlocks);
+				nextLeft = validateOrPerformValidatedStep(left, currentApprovedNonMilestoneBlocks, nextLeft);
 			}
-			nextLeft = performValidatedStep(left, currentApprovedNonMilestoneBlocks);
-			nextRight = performValidatedStep(right, currentApprovedNonMilestoneBlocks);
 		}
 
 		// Go forward on the remaining paths
 		while (nextLeft != left) {
 			left = nextLeft;
+			blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, left);
 			nextLeft = performValidatedStep(left, currentApprovedNonMilestoneBlocks);
 		}
 		while (nextRight != right) {
 			right = nextRight;
+			blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, right);
 			nextRight = performValidatedStep(right, currentApprovedNonMilestoneBlocks);
 		}
 
@@ -94,12 +110,26 @@ public class TipService {
 		return Pair.of(left.getBlock().getHash(), right.getBlock().getHash());
 	}
 
+	// Does not redo finding next step if next step was still valid
+	private BlockWrap validateOrPerformValidatedStep(BlockWrap fromBlock, HashSet<BlockWrap> currentApprovedNonMilestoneBlocks,
+			BlockWrap potentialNextBlock) throws BlockStoreException {
+		if (!validatorService.isIneligibleForSelection(potentialNextBlock, currentApprovedNonMilestoneBlocks))
+			return potentialNextBlock;
+		else 
+			return performValidatedStep(fromBlock, currentApprovedNonMilestoneBlocks);
+	}
+
+	// Finds a potential approver block to include given the currently approved blocks
 	private BlockWrap performValidatedStep(BlockWrap fromBlock, HashSet<BlockWrap> currentApprovedNonMilestoneBlocks)
 			throws BlockStoreException {
-		blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, fromBlock);
-		List<BlockWrap> validApprovers = store.getSolidApproverBlocks(fromBlock.getBlock().getHash());
-		validApprovers.removeIf(b -> validatorService.isIneligibleForSelection(b, currentApprovedNonMilestoneBlocks));
-		return performTransition(fromBlock, validApprovers);
+		List<BlockWrap> candidates = store.getSolidApproverBlocks(fromBlock.getBlock().getHash());
+		BlockWrap result;
+		do {
+			// Find results until one is valid/eligible
+			result = performTransition(fromBlock, candidates);
+			candidates.remove(result);
+		} while (validatorService.isIneligibleForSelection(result, currentApprovedNonMilestoneBlocks));
+		return result;
 	}
 
 	private BlockWrap randomWalk(BlockWrap currentBlock, long maxTime) throws BlockStoreException {
@@ -139,10 +169,15 @@ public class TipService {
 
 			// Calculate the unnormalized transition weights
 			for (int i = 0; i < approvers.size(); i++) {
-				double alpha = 0.5
-						* Math.exp(-0.05 * Math.max(0.0, (currentBlock.getBlockEvaluation().getMilestoneDepth() - 30)));
-				alpha = Math.max(0.0, alpha);
+				// Aviv Zohar: Scale alpha up if very deep to prevent splitting attack
+				double alpha = 0.1
+						* Math.exp(0.05 * Math.max(0.0, (currentBlock.getBlockEvaluation().getMilestoneDepth() - 30)));
+				
+				// Clamp
+				alpha = Math.max(0.001, alpha);
 				alpha = Math.min(1.5, alpha);
+				
+				// Calculate transition weights
 				transitionWeights[i] = Math.exp(-alpha
 						* (currentCumulativeWeight - approvers.get(i).getBlockEvaluation().getCumulativeWeight()));
 				transitionWeightSum += transitionWeights[i];

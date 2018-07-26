@@ -199,14 +199,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 } catch (BlockStoreException e) {
                     blockStore.abortDatabaseBatchWrite();
                     throw e;
-                } finally {
-                    try {
-
-                    } catch (Exception e) {
-                        // Ignore;
-                        log.error(" " + e);
-                    }
-                }
+                } 
             } else {
                 insertUnsolidBlock(block);
                 return false;
