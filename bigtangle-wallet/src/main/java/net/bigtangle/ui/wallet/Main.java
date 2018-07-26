@@ -791,7 +791,7 @@ public class Main extends Application {
 
     }
 
-    @SuppressWarnings("unchecked")
+
     public static List<UTXO> getUTXOWithECKeyList(List<ECKey> ecKeys, String tokenid) throws Exception {
         List<String> pubKeyHashs = new ArrayList<String>();
 
@@ -801,14 +801,13 @@ public class Main extends Application {
         return getUTXOWithPubKeyHash(pubKeyHashs, tokenid);
     }
 
-    @SuppressWarnings("unchecked")
+
     public static List<UTXO> getUTXOWithPubKeyHash(byte[] pubKeyHash, String tokenid) throws Exception {
         List<String> pubKeyHashs = new ArrayList<String>();
         pubKeyHashs.add(Utils.HEX.encode(pubKeyHash));
         return getUTXOWithPubKeyHash(pubKeyHashs, tokenid);
     }
-
-    @SuppressWarnings("unchecked")
+ 
     public static List<UTXO> getUTXOWithPubKeyHash(List<String> pubKeyHashs, String tokenid) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         String ContextRoot = Main.IpAddress + "/"; // http://" + Main.IpAddress

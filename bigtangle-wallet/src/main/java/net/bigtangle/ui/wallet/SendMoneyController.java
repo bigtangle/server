@@ -348,11 +348,11 @@ public class SendMoneyController {
         String ContextRoot = Main.getContextRoot();
         String resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getPayMultiSignList.name(),
                 Json.jsonmapper().writeValueAsString(pubKeys));
-        
+
         PayMultiSignListResponse payMultiSignListResponse = Json.jsonmapper().readValue(resp,
                 PayMultiSignListResponse.class);
         List<PayMultiSignExt> payMultiSigns = payMultiSignListResponse.getPayMultiSigns();
-        
+
         ObservableList<Map> signData = FXCollections.observableArrayList();
         for (PayMultiSignExt payMultiSign : payMultiSigns) {
             HashMap<String, Object> map = new HashMap<String, Object>();
@@ -366,7 +366,7 @@ public class SendMoneyController {
             map.put("orderid", payMultiSign.getOrderid());
             signData.add(map);
         }
-        
+
         addressColumn.setCellValueFactory(new MapValueFactory("toaddress"));
         signnumberColumn.setCellValueFactory(new MapValueFactory("minsignnumber"));
         isMySignColumn.setCellValueFactory(new MapValueFactory("sign"));
@@ -428,18 +428,8 @@ public class SendMoneyController {
     }
 
     public void exportSign(ActionEvent event) {
-        String toAddress = !addressComboBox1.getValue().contains(",") ? addressComboBox1.getValue()
-                : addressComboBox1.getValue().split(",")[1];
-        // String toTokenHex = tokeninfo1.getValue().toString().trim();
-        String toAmount = amountEdit1.getText();
-        this.mOrderid = UUIDUtil.randomUUID();
-        boolean decial = true;
 
-        // byte[] buf = this.makeSignTransactionBuffer(toAddress,
-        // getCoin(toAmount, toTokenHex, decial));
-        // if (buf == null) {
-        // return;
-        // }
+        this.mOrderid = UUIDUtil.randomUUID();
 
         final FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showSaveDialog(null);
@@ -457,59 +447,6 @@ public class SendMoneyController {
         } else {
             return Coin.valueOf(Long.parseLong(toAmount), Utils.HEX.decode(toTokenHex));
         }
-    }
-
-    private byte[] makeSignTransactionBuffer(String toAddress, Coin toCoin) {
-        String ContextRoot = Main.getContextRoot();
-        Address toAddress00 = new Address(Main.params, toAddress);
-        KeyParameter aesKey = null;
-        // Main.initAeskey(aesKey);
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
-        if (!"".equals(Main.password.trim())) {
-            aesKey = keyCrypter.deriveKey(Main.password);
-        }
-        byte[] buf = null;
-        try {
-            List<UTXO> outputs = new ArrayList<UTXO>();
-            List<String> pubKeyHashs = new ArrayList<String>();
-            pubKeyHashs.add(Utils.HEX.encode(toAddress00.getHash160()));
-
-            outputs.addAll(Main.getUTXOWithPubKeyHash(pubKeyHashs, null));
-            outputs.addAll(Main.getUTXOWithECKeyList(Main.bitcoin.wallet().walletKeys(aesKey), toCoin.getTokenHex()));
-
-            SendRequest req = SendRequest.to(toAddress00, toCoin);
-
-            req.missingSigsMode = MissingSigsMode.USE_OP_ZERO;
-
-            HashMap<String, Address> addressResult = new HashMap<String, Address>();
-            addressResult.put(toCoin.getTokenHex(), toAddress00);
-
-            List<TransactionOutput> candidates = Main.bitcoin.wallet().transforSpendCandidates(outputs);
-            Main.bitcoin.wallet().setServerURL(ContextRoot);
-            Main.bitcoin.wallet().completeTx(req, candidates, false, addressResult);
-            Main.bitcoin.wallet().signTransaction(req);
-
-            this.mTransaction = req.tx;
-            buf = mTransaction.bitcoinSerialize();
-        } catch (Exception e) {
-            GuiUtils.crashAlert(e);
-            return null;
-        }
-        return makeSignTransactionBuffer(toAddress, toCoin, buf);
-    }
-
-    private byte[] makeSignTransactionBuffer(String toAddress, Coin toCoin, byte[] buf) {
-        ByteBuffer byteBuffer = ByteBuffer
-                .allocate(buf.length + 4 + toAddress.getBytes().length + 4 + toCoin.getTokenHex().getBytes().length + 4
-                        + toCoin.toPlainString().getBytes().length + 4 + this.mOrderid.getBytes().length + 4);
-
-        byteBuffer.putInt(toAddress.getBytes().length).put(toAddress.getBytes());
-        byteBuffer.putInt(toCoin.getTokenHex().getBytes().length).put(toCoin.getTokenHex().getBytes());
-        byteBuffer.putInt(toCoin.toPlainString().getBytes().length).put(toCoin.toPlainString().getBytes());
-        byteBuffer.putInt(this.mOrderid.getBytes().length).put(this.mOrderid.getBytes());
-        byteBuffer.putInt(buf.length).put(buf);
-        // log.debug("tx len : " + buf.length);
-        return byteBuffer.array();
     }
 
     public void cancel(ActionEvent event) {
@@ -657,8 +594,6 @@ public class SendMoneyController {
     }
 
     public void showAddAddressDialog() throws Exception {
-        String CONTEXT_ROOT = Main.getContextRoot();
-
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle(Main.getText("Address"));
         dialog.setHeaderText(null);
@@ -815,7 +750,8 @@ public class SendMoneyController {
         payMultiSign.setMinsignnumber(signnumber);
         payMultiSign.setOutpusHashHex(utxo.getHashHex());
 
-        OkHttp3Util.post(contextRoot + ReqCmd.launchPayMultiSign.name(), Json.jsonmapper().writeValueAsString(payMultiSign));
+        OkHttp3Util.post(contextRoot + ReqCmd.launchPayMultiSign.name(),
+                Json.jsonmapper().writeValueAsString(payMultiSign));
     }
 
     @SuppressWarnings("unchecked")
@@ -862,7 +798,8 @@ public class SendMoneyController {
         payMultiSign.setMinsignnumber(keys.size());
         payMultiSign.setOutpusHashHex(utxo.getHashHex() + ":" + utxo.getIndex());
 
-        OkHttp3Util.post(contextRoot + ReqCmd.launchPayMultiSign.name(), Json.jsonmapper().writeValueAsString(payMultiSign));
+        OkHttp3Util.post(contextRoot + ReqCmd.launchPayMultiSign.name(),
+                Json.jsonmapper().writeValueAsString(payMultiSign));
     }
 
     public void removeSignAddr(ActionEvent event) {
@@ -890,7 +827,7 @@ public class SendMoneyController {
         requestParam.put("orderid", orderid);
         String resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getPayMultiSignAddressList.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
-        
+
         PayMultiSignAddressListResponse payMultiSignAddressListResponse = Json.jsonmapper().readValue(resp,
                 PayMultiSignAddressListResponse.class);
         List<PayMultiSignAddress> payMultiSignAddresses = payMultiSignAddressListResponse.getPayMultiSignAddresses();
@@ -927,8 +864,9 @@ public class SendMoneyController {
         requestParam.put("orderid", orderid);
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.payMultiSignDetails.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
-        
-        PayMultiSignDetailsResponse payMultiSignDetailsResponse = Json.jsonmapper().readValue(resp, PayMultiSignDetailsResponse.class);
+
+        PayMultiSignDetailsResponse payMultiSignDetailsResponse = Json.jsonmapper().readValue(resp,
+                PayMultiSignDetailsResponse.class);
         PayMultiSign payMultiSign_ = payMultiSignDetailsResponse.getPayMultiSign();
 
         requestParam.clear();
@@ -964,7 +902,8 @@ public class SendMoneyController {
         requestParam.put("pubKey", ecKey.getPublicKeyAsHex());
         requestParam.put("signature", Utils.HEX.encode(buf1));
         requestParam.put("signInputData", Utils.HEX.encode(transactionSignature.encodeToBitcoin()));
-        resp = OkHttp3Util.postString(contextRoot + ReqCmd.payMultiSign.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        resp = OkHttp3Util.postString(contextRoot + ReqCmd.payMultiSign.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
         log.debug(resp);
 
         PayMultiSignResponse payMultiSignResponse = Json.jsonmapper().readValue(resp, PayMultiSignResponse.class);
@@ -975,7 +914,7 @@ public class SendMoneyController {
             resp = OkHttp3Util.postString(contextRoot + ReqCmd.getPayMultiSignAddressList.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             log.debug(resp);
-            
+
             PayMultiSignAddressListResponse payMultiSignAddressListResponse = Json.jsonmapper().readValue(resp,
                     PayMultiSignAddressListResponse.class);
             List<PayMultiSignAddress> payMultiSignAddresses = payMultiSignAddressListResponse

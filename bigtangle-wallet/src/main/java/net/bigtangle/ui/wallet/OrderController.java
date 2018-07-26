@@ -199,7 +199,6 @@ public class OrderController extends ExchangeController {
                     break;
                 }
             });
-            HashMap<String, Object> requestParam = new HashMap<String, Object>();
             initComboBox(true);
             // TODO auto initTable is quite slow and disabled now and click
             // search to start initTable initTable(requestParam);

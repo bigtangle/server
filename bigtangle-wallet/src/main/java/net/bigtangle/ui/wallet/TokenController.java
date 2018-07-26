@@ -346,7 +346,7 @@ public class TokenController extends TokenBaseController {
     }
 
     public void showAddAddressDialog() throws Exception {
-        String CONTEXT_ROOT = Main.getContextRoot();
+        
         String temp = signnumberTF.getText();
         if (temp != null && !temp.isEmpty() && temp.matches("[1-9]\\d*")) {
 
@@ -781,8 +781,7 @@ public class TokenController extends TokenBaseController {
             GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_d1"));
             return;
         }
-        String tokeninfo = "";
-        tokeninfo += Main.getString(rowData.get("tokenid")) + "," + Main.getString(rowData.get("tokenname"));
+    
         try {
             Main.addToken(CONTEXT_ROOT, rowData.get("tokenname").toString(), rowData.get("tokenid").toString(),
                     DataClassName.TOKEN.name());
