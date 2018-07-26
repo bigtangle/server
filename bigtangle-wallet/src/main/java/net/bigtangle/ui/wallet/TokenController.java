@@ -47,6 +47,7 @@ import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.core.http.server.resp.MultiSignResponse;
 import net.bigtangle.core.http.server.resp.SearchMultiSignResponse;
@@ -666,7 +667,9 @@ public class TokenController extends TokenBaseController {
         if (transaction.getDataSignature() == null) {
             multiSignBies = new ArrayList<MultiSignBy>();
         } else {
-            multiSignBies = Json.jsonmapper().readValue(transaction.getDataSignature(), List.class);
+            MultiSignByRequest multiSignByRequest = Json.jsonmapper().readValue(transaction.getDataSignature(),
+                    MultiSignByRequest.class);
+            multiSignBies = multiSignByRequest.getMultiSignBies();
         }
         Sha256Hash sighash = transaction.getHash();
 
@@ -681,8 +684,8 @@ public class TokenController extends TokenBaseController {
         multiSignBy0.setPublickey(Utils.HEX.encode(myKey.getPubKey()));
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
-
-        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
         OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.multiSign.name(), block0.bitcoinSerialize());
         Main.instance.controller.initTableView();
         initTableView();

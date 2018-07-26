@@ -17,6 +17,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
+import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenSerial;
@@ -24,6 +25,7 @@ import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.AbstractResponse;
+import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.MultiSignResponse;
 import net.bigtangle.core.http.server.resp.SearchMultiSignResponse;
 import net.bigtangle.core.http.server.resp.TokenSerialIndexResponse;
@@ -71,9 +73,8 @@ public class MultiSignService {
                 signcount = 0;
             } else {
                 String jsonStr = new String(transaction.getDataSignature());
-                @SuppressWarnings("unchecked")
-                List<Map<String, Object>> multiSignBies = Json.jsonmapper().readValue(jsonStr, List.class);
-                signcount = multiSignBies.size();
+                MultiSignByRequest multiSignByRequest = Json.jsonmapper().readValue(jsonStr, MultiSignByRequest.class);
+                signcount = multiSignByRequest.getMultiSignBies().size();
             }
             map.put("signcount", signcount);
             multiSignList.add(map);
@@ -126,12 +127,11 @@ public class MultiSignService {
 			}
 			if (transaction.getDataSignature() != null) {
     			String jsonStr = new String(transaction.getDataSignature());
-    			@SuppressWarnings("unchecked")
-    			List<Map<String, Object>> multiSignBies = Json.jsonmapper().readValue(jsonStr, List.class);
-    			for (Map<String, Object> multiSignBy : multiSignBies) {
-    				String tokenid = (String) multiSignBy.get("tokenid");
-    				int tokenindex = (Integer) multiSignBy.get("tokenindex");
-    				String address = (String) multiSignBy.get("address");
+    	        MultiSignByRequest multiSignByRequest = Json.jsonmapper().readValue(jsonStr, MultiSignByRequest.class);
+    			for (MultiSignBy multiSignBy : multiSignByRequest.getMultiSignBies()) {
+    				String tokenid = multiSignBy.getTokenid();
+    				int tokenindex = (int) multiSignBy.getTokenindex();
+    				String address = multiSignBy.getAddress();
     				store.updateMultiSign(tokenid, tokenindex, address, block.bitcoinSerialize(), 1);
     			}
 			}
@@ -204,23 +204,22 @@ public class MultiSignService {
             int signCount = 0;
             if (transaction.getDataSignature() != null) {
                 String jsonStr = new String(transaction.getDataSignature());
-                @SuppressWarnings("unchecked")
-                List<Map<String, Object>> multiSignBies = Json.jsonmapper().readValue(jsonStr, List.class);
-                for (Map<String, Object> multiSignBy : multiSignBies) {
-                    String address = (String) multiSignBy.get("address");
+                MultiSignByRequest multiSignByRequest = Json.jsonmapper().readValue(jsonStr, MultiSignByRequest.class);
+                for (MultiSignBy multiSignBy : multiSignByRequest.getMultiSignBies()) {
+                    String address = multiSignBy.getAddress();
                     if (!multiSignAddressRes.containsKey(address)) {
                         throw new BlockStoreException("multisignby address not in address list");
                     }
                 }
-                HashMap<String, Map<String, Object>> multiSignBiesRes = new HashMap<String, Map<String, Object>>();
-                for (Map<String, Object> multiSignBy : multiSignBies) {
-                    String address = (String) multiSignBy.get("address");
+                HashMap<String, MultiSignBy> multiSignBiesRes = new HashMap<String, MultiSignBy>();
+                for (MultiSignBy multiSignBy : multiSignByRequest.getMultiSignBies()) {
+                    String address = multiSignBy.getAddress();
                     multiSignBiesRes.put(address, multiSignBy);
                 }
-                for (Map<String, Object> multiSignBy : multiSignBiesRes.values()) {
-                    byte[] pubKey = Utils.HEX.decode((String) multiSignBy.get("publickey"));
+                for (MultiSignBy multiSignBy : multiSignBiesRes.values()) {
+                    byte[] pubKey = Utils.HEX.decode(multiSignBy.getPublickey());
                     byte[] data = transaction.getHash().getBytes();
-                    byte[] signature = Utils.HEX.decode((String) multiSignBy.get("signature"));
+                    byte[] signature = Utils.HEX.decode(multiSignBy.getSignature());
                     boolean success = ECKey.verify(data, signature, pubKey);
                     if (success) {
                         signCount++;

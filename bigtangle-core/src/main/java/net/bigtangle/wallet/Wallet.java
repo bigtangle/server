@@ -72,6 +72,7 @@ import net.bigtangle.core.UTXOProvider;
 import net.bigtangle.core.UTXOProviderException;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VarInt;
+import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetOutputsResponse;
 import net.bigtangle.crypto.ChildNumber;
 import net.bigtangle.crypto.DeterministicHierarchy;
@@ -3685,7 +3686,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
-        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
 
         // save block
         block.solve();
