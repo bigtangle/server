@@ -30,7 +30,7 @@ public class BalancesAction extends Action {
             for (ECKey ecKey : this.account.walletKeys()) {
                 pubKeyHashs.add(Utils.HEX.encode(ecKey.toAddress(Configure.PARAMS).getHash160()));
             }
-            String resp = OkHttp3Util.postString(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.batchGetBalances.name(),
+            String resp = OkHttp3Util.postString(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.getBalances.name(),
                     Json.jsonmapper().writeValueAsString(pubKeyHashs));
             GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(resp, GetBalancesResponse.class);
             this.account.syncTokenCoinbase(getBalancesResponse.getTokens());

@@ -148,7 +148,7 @@ public class DispatcherController {
 //                this.outPrintJSONString(httpServletResponse, response);
 //            }
 //                break;
-            case batchGetBalances: {
+            case getBalances: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 List<String> keyStrHex000 = Json.jsonmapper().readValue(reqStr, List.class);
                 Set<byte[]> pubKeyHashs = new HashSet<byte[]>();

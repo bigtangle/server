@@ -200,7 +200,7 @@ public class MainController {
             keyStrHex000.add(Utils.HEX.encode(Address.fromBase58(Main.params, addressString).getHash160()));
         }
 
-        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.batchGetBalances.name(),
+        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getBalances.name(),
                 Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
         log.debug(response);
 
