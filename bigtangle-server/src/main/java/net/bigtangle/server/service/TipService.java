@@ -47,28 +47,11 @@ public class TipService {
 		long latestImportTime = store.getMaxImportTime();
 
 		for (int i = 0; i < entryPoints.size(); i++) {
-			results.add(randomWalk(entryPoints.get(i), latestImportTime));
+			results.add(getRatingTip(entryPoints.get(i), latestImportTime));
 		}
 
 		watch.stop();
 		log.info("getRatingTips time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-
-		return results;
-	}
-
-	// TODO use when optimized enough
-	public List<Pair<BlockWrap, BlockWrap>> getRatingTipPairs(int count) throws BlockStoreException {
-		Stopwatch watch = Stopwatch.createStarted();
-
-		// TODO import time low pass filter
-		List<Pair<BlockWrap, BlockWrap>> results = new ArrayList<>();
-		for (int i = 0; i < count; i++) {
-			Pair<Sha256Hash, Sha256Hash> validatedBlockPair = getValidatedBlockPair();
-			results.add(Pair.of(store.getBlockWrap(validatedBlockPair.getLeft()), store.getBlockWrap(validatedBlockPair.getRight())));
-		}
-		
-		watch.stop();
-		log.info("getRatingTipPairs time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
 		return results;
 	}
@@ -150,7 +133,7 @@ public class TipService {
 		return result;
 	}
 
-	private BlockWrap randomWalk(BlockWrap currentBlock, long maxTime) throws BlockStoreException {
+	private BlockWrap getRatingTip(BlockWrap currentBlock, long maxTime) throws BlockStoreException {
 		// Repeatedly perform transitions until the final tip is found
 		List<BlockWrap> approvers = store.getSolidApproverBlocks(currentBlock.getBlock().getHash());
 		approvers.removeIf(b -> b.getBlockEvaluation().getInsertTime() > maxTime);
@@ -162,6 +145,23 @@ public class TipService {
 			approvers.removeIf(b -> b.getBlockEvaluation().getInsertTime() > maxTime);
 			nextBlock = performTransition(currentBlock, approvers);
 		}
+		return currentBlock;
+	}
+
+	@SuppressWarnings("unused")
+	private BlockWrap getValidatedRatingBlock(BlockWrap currentBlock) throws BlockStoreException {
+		HashSet<BlockWrap> currentApprovedNonMilestoneBlocks = new HashSet<>();
+
+		// Perform next step
+		BlockWrap nextLeft = performValidatedStep(currentBlock, currentApprovedNonMilestoneBlocks);
+		
+		// Go forward while validating
+		while (nextLeft != currentBlock) {
+			currentBlock = nextLeft;
+			blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, currentBlock);
+			nextLeft = performValidatedStep(currentBlock, currentApprovedNonMilestoneBlocks);
+		}
+
 		return currentBlock;
 	}
 

@@ -223,6 +223,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX);
         sqlStatements.add(CREATE_OUTPUTS_HASH_INDEX);
         sqlStatements.add(CREATE_OUTPUTS_TOADDRESS_INDEX);
+        //sqlStatements.add(CREATE_PREVBRANCH_HASH_INDEX);
+        //sqlStatements.add(CREATE_PREVTRUNK_HASH_INDEX);
         return sqlStatements;
     }
 
