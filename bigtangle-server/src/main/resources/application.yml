@@ -3,8 +3,8 @@ server:
   net: ${SERVER_NET:Unittest}
   requester: ${REQUESTER:}
   mineraddress: ${SERVER_MINERADDRESS:mjWvzPZz4YJtWqb7ux7cdgq5G7rzkg3bXG}
-  serverversion: ${SERVERVERSION:0.1.0}
-  clientversion: ${CLIENTVERSION:0.1.0}
+  serverversion: ${SERVERVERSION:0.2.0}
+  clientversion: ${CLIENTVERSION:0.2.0}
   ssl:
     enabled: ${SSL:false}
     key-store: ${KEYSTORE:src/main/resources/ca.pkcs12}
