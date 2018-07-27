@@ -117,7 +117,7 @@ public class GiveMoneyUtils {
         Transaction doublespent = new Transaction(networkParameters);
         for (Map.Entry<String, Integer> entry : giveMoneyResult.entrySet()) {
             ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(entry.getKey()));
-            Coin coinbase = Coin.valueOf(100 * entry.getValue(), NetworkParameters.BIGNETCOIN_TOKENID);
+            Coin coinbase = Coin.valueOf(1000 * entry.getValue(), NetworkParameters.BIGNETCOIN_TOKENID);
             doublespent.addOutput(new TransactionOutput(networkParameters, doublespent, coinbase, ecKey));
             coinbase000 = coinbase000.add(coinbase);
         }
