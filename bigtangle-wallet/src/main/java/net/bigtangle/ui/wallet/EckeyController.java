@@ -20,7 +20,6 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
-import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonBar.ButtonData;
@@ -172,8 +171,7 @@ public class EckeyController {
 
         grid.add(new Label(Main.getText("Password")), 0, 0);
         grid.add(password, 1, 0);
-
-        Node loginButton = dialog.getDialogPane().lookupButton(loginButtonType);
+ 
 
         dialog.getDialogPane().setContent(grid);
 

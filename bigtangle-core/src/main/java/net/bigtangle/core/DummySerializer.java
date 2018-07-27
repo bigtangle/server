@@ -41,11 +41,7 @@ class DummySerializer extends MessageSerializer {
     public boolean isParseRetainMode() {
         return false;
     }
-
-    @Override
-    public AddressMessage makeAddressMessage(byte[] payloadBytes, int length) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
-    }
+ 
 
     @Override
     public Message makeAlertMessage(byte[] payloadBytes) throws UnsupportedOperationException {

@@ -27,7 +27,7 @@ db:
 
 service:
   giveMoneyService:
-    rate: ${SERVICE_GIVEMONEY_RATE:10000}
+    rate: ${SERVICE_GIVEMONEY_RATE:5000}
     active: ${SERVICE_GIVEMONEY_ACTIVE:true}
     
 management:

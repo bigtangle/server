@@ -6,7 +6,7 @@
 package net.bigtangle.core;
 
 import com.google.common.base.Objects;
-import javax.annotation.Nullable; 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
@@ -14,21 +14,36 @@ import java.net.UnknownHostException;
 import java.util.Locale;
 
 /**
- * <p>A VersionMessage holds information exchanged during connection setup with another peer. Most of the fields are not
- * particularly interesting. The subVer field, since BIP 14, acts as a User-Agent string would. You can and should 
- * append to or change the subVer for your own software so other implementations can identify it, and you can look at
- * the subVer field received from other nodes to see what they are running.</p>
+ * <p>
+ * A VersionMessage holds information exchanged during connection setup with
+ * another peer. Most of the fields are not particularly interesting. The subVer
+ * field, since BIP 14, acts as a User-Agent string would. You can and should
+ * append to or change the subVer for your own software so other implementations
+ * can identify it, and you can look at the subVer field received from other
+ * nodes to see what they are running.
+ * </p>
  *
- * <p>After creating yourself a VersionMessage, you can pass it to {@link PeerGroup#setVersionMessage(VersionMessage)}
- * to ensure it will be used for each new connection.</p>
+ * <p>
+ * After creating yourself a VersionMessage, you can pass it to
+ * {@link PeerGroup#setVersionMessage(VersionMessage)} to ensure it will be used
+ * for each new connection.
+ * </p>
  * 
- * <p>Instances of this class are not safe for use by multiple threads.</p>
+ * <p>
+ * Instances of this class are not safe for use by multiple threads.
+ * </p>
  */
 public class VersionMessage extends Message {
 
-    /** A service bit that denotes whether the peer has a copy of the block chain or not. */
+    /**
+     * A service bit that denotes whether the peer has a copy of the block chain
+     * or not.
+     */
     public static final int NODE_NETWORK = 1 << 0;
-    /** A service bit that denotes whether the peer supports the getutxos message or not. */
+    /**
+     * A service bit that denotes whether the peer supports the getutxos message
+     * or not.
+     */
     public static final int NODE_GETUTXOS = 1 << 1;
     /** A service bit used by Bitcoin-ABC to announce Bitcoin Cash nodes. */
     public static final int NODE_BITCOIN_CASH = 1 << 5;
@@ -46,16 +61,9 @@ public class VersionMessage extends Message {
      */
     public long time;
     /**
-     * What the other side believes the address of this program is. Not used.
-     */
-    public PeerAddress myAddr;
-    /**
-     * What the other side believes their own address is. Not used.
-     */
-    public PeerAddress theirAddr;
-    /**
-     * User-Agent as defined in <a href="https://github.com/bitcoin/bips/blob/master/bip-0014.mediawiki">BIP 14</a>.
-     * Bitcoin Core sets it to something like "/Satoshi:0.9.1/".
+     * User-Agent as defined in <a href=
+     * "https://github.com/bitcoin/bips/blob/master/bip-0014.mediawiki">BIP
+     * 14</a>. Bitcoin Core sets it to something like "/Satoshi:0.9.1/".
      */
     public String subVer;
     /**
@@ -63,8 +71,9 @@ public class VersionMessage extends Message {
      */
     public long bestHeight;
     /**
-     * Whether or not to relay tx invs before a filter is received.
-     * See <a href="https://github.com/bitcoin/bips/blob/master/bip-0037.mediawiki#extensions-to-existing-messages">BIP 37</a>.
+     * Whether or not to relay tx invs before a filter is received. See <a href=
+     * "https://github.com/bitcoin/bips/blob/master/bip-0037.mediawiki#extensions-to-existing-messages">BIP
+     * 37</a>.
      */
     public boolean relayTxesBeforeFilter;
 
@@ -77,18 +86,21 @@ public class VersionMessage extends Message {
         super(params, payload, 0);
     }
 
-    // It doesn't really make sense to ever lazily parse a version message or to retain the backing bytes.
-    // If you're receiving this on the wire you need to check the protocol version and it will never need to be sent
+    // It doesn't really make sense to ever lazily parse a version message or to
+    // retain the backing bytes.
+    // If you're receiving this on the wire you need to check the protocol
+    // version and it will never need to be sent
     // back down the wire.
-    
+
     public VersionMessage(NetworkParameters params, long newBestHeight) {
         super(params);
         clientVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT);
         localServices = 0;
         time = System.currentTimeMillis() / 1000;
-        // Note that the Bitcoin Core doesn't do anything with these, and finding out your own external IP address
+        // Note that the Bitcoin Core doesn't do anything with these, and
+        // finding out your own external IP address
         // is kind of tricky anyway, so we just put nonsense here for now.
-   
+
         subVer = LIBRARY_SUBVER;
         bestHeight = newBestHeight;
         relayTxesBeforeFilter = true;
@@ -104,26 +116,26 @@ public class VersionMessage extends Message {
         clientVersion = (int) readUint32();
         localServices = readUint64().longValue();
         time = readUint64().longValue();
-        myAddr = new PeerAddress(params, payload, cursor, 0);
-        cursor += myAddr.getMessageSize();
-        theirAddr = new PeerAddress(params, payload, cursor, 0);
-        cursor += theirAddr.getMessageSize();
-        // uint64 localHostNonce  (random data)
-        // We don't care about the localhost nonce. It's used to detect connecting back to yourself in cases where
-        // there are NATs and proxies in the way. However we don't listen for inbound connections so it's irrelevant.
+
+        // uint64 localHostNonce (random data)
+        // We don't care about the localhost nonce. It's used to detect
+        // connecting back to yourself in cases where
+        // there are NATs and proxies in the way. However we don't listen for
+        // inbound connections so it's irrelevant.
         readUint64();
         try {
-            // Initialize default values for flags which may not be sent by old nodes
+            // Initialize default values for flags which may not be sent by old
+            // nodes
             subVer = "";
             bestHeight = 0;
             relayTxesBeforeFilter = true;
             if (!hasMoreBytes())
                 return;
-            //   string subVer  (currently "")
+            // string subVer (currently "")
             subVer = readStr();
             if (!hasMoreBytes())
                 return;
-            //   int bestHeight (size of known block chain).
+            // int bestHeight (size of known block chain).
             bestHeight = readUint32();
             if (!hasMoreBytes())
                 return;
@@ -140,18 +152,11 @@ public class VersionMessage extends Message {
         Utils.uint32ToByteStreamLE(localServices >> 32, buf);
         Utils.uint32ToByteStreamLE(time, buf);
         Utils.uint32ToByteStreamLE(time >> 32, buf);
-        try {
-            // My address.
-            myAddr.bitcoinSerialize(buf);
-            // Their address.
-            theirAddr.bitcoinSerialize(buf);
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);  // Can't happen.
-        } catch (IOException e) {
-            throw new RuntimeException(e);  // Can't happen.
-        }
-        // Next up is the "local host nonce", this is to detect the case of connecting
-        // back to yourself. We don't care about this as we won't be accepting inbound 
+
+        // Next up is the "local host nonce", this is to detect the case of
+        // connecting
+        // back to yourself. We don't care about this as we won't be accepting
+        // inbound
         // connections.
         Utils.uint32ToByteStreamLE(0, buf);
         Utils.uint32ToByteStreamLE(0, buf);
@@ -165,8 +170,9 @@ public class VersionMessage extends Message {
     }
 
     /**
-     * Returns true if the version message indicates the sender has a full copy of the block chain,
-     * or if it's running in client mode (only has the headers).
+     * Returns true if the version message indicates the sender has a full copy
+     * of the block chain, or if it's running in client mode (only has the
+     * headers).
      */
     public boolean hasBlockChain() {
         return (localServices & NODE_NETWORK) == NODE_NETWORK;
@@ -174,23 +180,20 @@ public class VersionMessage extends Message {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         VersionMessage other = (VersionMessage) o;
-        return other.bestHeight == bestHeight &&
-                other.clientVersion == clientVersion &&
-                other.localServices == localServices &&
-                other.time == time &&
-                other.subVer.equals(subVer) &&
-                other.myAddr.equals(myAddr) &&
-                other.theirAddr.equals(theirAddr) &&
+        return other.bestHeight == bestHeight && other.clientVersion == clientVersion
+                && other.localServices == localServices && other.time == time && other.subVer.equals(subVer) &&
+
                 other.relayTxesBeforeFilter == relayTxesBeforeFilter;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(bestHeight, clientVersion, localServices,
-            time, subVer, myAddr, theirAddr, relayTxesBeforeFilter);
+        return Objects.hashCode(bestHeight, clientVersion, localServices, time, subVer, relayTxesBeforeFilter);
     }
 
     @Override
@@ -200,8 +203,7 @@ public class VersionMessage extends Message {
         stringBuilder.append("client version: ").append(clientVersion).append("\n");
         stringBuilder.append("local services: ").append(localServices).append("\n");
         stringBuilder.append("time:           ").append(time).append("\n");
-        stringBuilder.append("my addr:        ").append(myAddr).append("\n");
-        stringBuilder.append("their addr:     ").append(theirAddr).append("\n");
+
         stringBuilder.append("sub version:    ").append(subVer).append("\n");
         stringBuilder.append("best height:    ").append(bestHeight).append("\n");
         stringBuilder.append("delay tx relay: ").append(!relayTxesBeforeFilter).append("\n");
@@ -213,32 +215,45 @@ public class VersionMessage extends Message {
         v.clientVersion = clientVersion;
         v.localServices = localServices;
         v.time = time;
-        v.myAddr = myAddr;
-        v.theirAddr = theirAddr;
+
         v.subVer = subVer;
         v.relayTxesBeforeFilter = relayTxesBeforeFilter;
         return v;
     }
 
     /**
-     * Appends the given user-agent information to the subVer field. The subVer is composed of a series of
-     * name:version pairs separated by slashes in the form of a path. For example a typical subVer field for bitcoinj
-     * users might look like "/bitcoinj:0.13/MultiBit:1.2/" where libraries come further to the left.<p>
+     * Appends the given user-agent information to the subVer field. The subVer
+     * is composed of a series of name:version pairs separated by slashes in the
+     * form of a path. For example a typical subVer field for bitcoinj users
+     * might look like "/bitcoinj:0.13/MultiBit:1.2/" where libraries come
+     * further to the left.
+     * <p>
      *
-     * There can be as many components as you feel a need for, and the version string can be anything, but it is
-     * recommended to use A.B.C where A = major, B = minor and C = revision for software releases, and dates for
-     * auto-generated source repository snapshots. A valid subVer begins and ends with a slash, therefore name
-     * and version are not allowed to contain such characters. <p>
+     * There can be as many components as you feel a need for, and the version
+     * string can be anything, but it is recommended to use A.B.C where A =
+     * major, B = minor and C = revision for software releases, and dates for
+     * auto-generated source repository snapshots. A valid subVer begins and
+     * ends with a slash, therefore name and version are not allowed to contain
+     * such characters.
+     * <p>
      *
-     * Anything put in the "comments" field will appear in brackets and may be used for platform info, or anything
-     * else. For example, calling <tt>appendToSubVer("MultiBit", "1.0", "Windows")</tt> will result in a subVer being
-     * set of "/bitcoinj:1.0/MultiBit:1.0(Windows)/". Therefore the / ( and ) characters are reserved in all these
-     * components. If you don't want to add a comment (recommended), pass null.<p>
+     * Anything put in the "comments" field will appear in brackets and may be
+     * used for platform info, or anything else. For example, calling
+     * <tt>appendToSubVer("MultiBit", "1.0", "Windows")</tt> will result in a
+     * subVer being set of "/bitcoinj:1.0/MultiBit:1.0(Windows)/". Therefore the
+     * / ( and ) characters are reserved in all these components. If you don't
+     * want to add a comment (recommended), pass null.
+     * <p>
      *
-     * See <a href="https://github.com/bitcoin/bips/blob/master/bip-0014.mediawiki">BIP 14</a> for more information.
+     * See <a href=
+     * "https://github.com/bitcoin/bips/blob/master/bip-0014.mediawiki">BIP
+     * 14</a> for more information.
      *
-     * @param comments Optional (can be null) platform or other node specific information.
-     * @throws IllegalArgumentException if name, version or comments contains invalid characters.
+     * @param comments
+     *            Optional (can be null) platform or other node specific
+     *            information.
+     * @throws IllegalArgumentException
+     *             if name, version or comments contains invalid characters.
      */
     public void appendToSubVer(String name, String version, @Nullable String comments) {
         checkSubVerComponent(name);
@@ -257,23 +272,29 @@ public class VersionMessage extends Message {
     }
 
     /**
-     * Returns true if the clientVersion field is >= Pong.MIN_PROTOCOL_VERSION. If it is then ping() is usable.
+     * Returns true if the clientVersion field is >= Pong.MIN_PROTOCOL_VERSION.
+     * If it is then ping() is usable.
      */
     public boolean isPingPongSupported() {
         return clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.PONG);
     }
 
     /**
-     * Returns true if the clientVersion field is >= FilteredBlock.MIN_PROTOCOL_VERSION. If it is then Bloom filtering
-     * is available and the memory pool of the remote peer will be queried when the downloadData property is true.
+     * Returns true if the clientVersion field is >=
+     * FilteredBlock.MIN_PROTOCOL_VERSION. If it is then Bloom filtering is
+     * available and the memory pool of the remote peer will be queried when the
+     * downloadData property is true.
      */
     public boolean isBloomFilteringSupported() {
         return clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER);
     }
 
-    /** Returns true if the protocol version and service bits both indicate support for the getutxos message. */
+    /**
+     * Returns true if the protocol version and service bits both indicate
+     * support for the getutxos message.
+     */
     public boolean isGetUTXOsSupported() {
-        return clientVersion >= GetUTXOsMessage.MIN_PROTOCOL_VERSION &&
-                (localServices & NODE_GETUTXOS) == NODE_GETUTXOS;
+        return clientVersion >= GetUTXOsMessage.MIN_PROTOCOL_VERSION
+                && (localServices & NODE_GETUTXOS) == NODE_GETUTXOS;
     }
 }

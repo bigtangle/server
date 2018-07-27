@@ -38,12 +38,7 @@ public abstract class MessageSerializer {
      */
     public abstract boolean isParseRetainMode();
 
-    /**
-     * Make an address message from the payload. Extension point for alternative
-     * serialization format support.
-     */
-    public abstract AddressMessage makeAddressMessage(byte[] payloadBytes, int length) throws ProtocolException, UnsupportedOperationException;
-
+   
     /**
      * Make an alert message from the payload. Extension point for alternative
      * serialization format support.

@@ -50,8 +50,6 @@ public abstract class NetworkParameters {
 	public static final String ID_MAINNET = "net.bigtangle";
 	/** The string returned by getId() for the testnet. */
 	public static final String ID_TESTNET = "net.bigtangle.test";
-	/** The string returned by getId() for regtest mode. */
-	public static final String ID_REGTEST = "net.bigtangle.regtest";
 	/** Unit test network. */
 	public static final String ID_UNITTESTNET = "net.bigtangle.unittest";
 
@@ -64,19 +62,16 @@ public abstract class NetworkParameters {
 
 	// BLOCKTYPE
 	public static final long BLOCKTYPE_INITIAL = 0; // Genesis block
-	public static final long BLOCKTYPE_TRANSFER = 1; // Normal transfer of token
-	public static final long BLOCKTYPE_TOKEN_CREATION = 3; // Custom token issuance
+	public static final long BLOCKTYPE_TRANSFER = 1; //  transfer of token
 	public static final long BLOCKTYPE_REWARD = 2; // Rewards of mining
+	public static final long BLOCKTYPE_TOKEN_CREATION = 3; // Custom token issuance
 	public static final long BLOCKTYPE_USERDATA = 4; // user defined data
 	public static final long BLOCKTYPE_VOS = 5; // virtual operation system for using Docker and Kubernetes
 	public static final long BLOCKTYPE_GOVERNANCE = 6; // Governance of software update and community
-	public static final long BLOCKTYPE_FILE = 7;
-	public static final long BLOCKTYPE_VOS_EXECUTE = 8;
-	public static final long BLOCKTYPE_USERDATA_SERVERURL = 9; // virtual operation system for using Docker and
-																// Kubernetes
-	public static final long BLOCKTYPE_USERDATA_LANG = 10;
-	public static final long BLOCKTYPE_USERDATA_TOKEN = 11;
-	public static final long BLOCKTYPE_USERDATA_OTHER = 12;
+	public static final long BLOCKTYPE_FILE = 7; //upload file
+	public static final long BLOCKTYPE_VOS_EXECUTE = 8; //VOS execution result
+
+
 	// Use Equihash
 	public static final boolean USE_EQUIHASH = false;
 
@@ -84,7 +79,7 @@ public abstract class NetworkParameters {
 
 	protected Block genesisBlock;
 	protected BigInteger maxTarget;
-	protected int port;
+ 
 	protected long packetMagic; // Indicates message origin network and is used
 								// to seek to the next message when stream state
 								// is unknown.
@@ -288,11 +283,7 @@ public abstract class NetworkParameters {
 		return genesisBlock;
 	}
 
-	/** Default TCP port on which to connect to nodes. */
-	public int getPort() {
-		return port;
-	}
-
+ 
 	/** The header bytes that identify the start of a packet on this network. */
 	public long getPacketMagic() {
 		return packetMagic;

@@ -12,7 +12,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.spongycastle.crypto.params.KeyParameter;
 
@@ -37,35 +36,47 @@ import net.bigtangle.core.http.server.resp.GetBlockEvaluationsResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
-import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
 
 public class BlockEvaluationController {
+    @SuppressWarnings("rawtypes")
     @FXML
     public TableView<Map> blockEvaluationTable;
+    @SuppressWarnings("rawtypes")
     @FXML
     public TableColumn<Map, String> blockhashColumn;
+    @SuppressWarnings("rawtypes")
     @FXML
     public TableColumn<Map, String> ratingColumn;
+    @SuppressWarnings("rawtypes")
     @FXML
     public TableColumn<Map, Number> depthColumn;
+    @SuppressWarnings("rawtypes")
     @FXML
     public TableColumn<Map, Number> cumulativeWeightColumn;
+    @SuppressWarnings("rawtypes")
     @FXML
     public TableColumn<Map, Number> heightColumn;
 
+    @SuppressWarnings("rawtypes")
     @FXML
     public TableColumn<Map, String> solidColumn;
+    @SuppressWarnings("rawtypes")
     @FXML
     public TableColumn<Map, String> milestoneColumn;
+    @SuppressWarnings("rawtypes")
     @FXML
     public TableColumn<Map, String> maintainedColumn;
+    @SuppressWarnings("rawtypes")
     @FXML
     public TableColumn<Map, String> rewardValidColumn;
+    @SuppressWarnings("rawtypes")
     @FXML
     public TableColumn<Map, String> milestoneLastUpdateTimeColumn;
+    @SuppressWarnings("rawtypes")
     @FXML
     public TableColumn<Map, Number> milestoneDepthColumn;
+    @SuppressWarnings("rawtypes")
     @FXML
     public TableColumn<Map, String> insertTimeColumn;
 
@@ -83,14 +94,16 @@ public class BlockEvaluationController {
     public TextField compareTF1;
     @FXML
     public TextField compareTF2;
-
+    @SuppressWarnings("rawtypes")
     @FXML
     public TableView<Map> compareTable;
+    @SuppressWarnings("rawtypes")
     @FXML
     public TableColumn<Map, Object> blockhashColumn1;
+    @SuppressWarnings("rawtypes")
     @FXML
     public TableColumn<Map, Object> ratingColumn1;
-
+    @SuppressWarnings("rawtypes")
     @FXML
     public TableColumn<Map, Object> cumulativeWeightColumn1;
     @FXML
@@ -192,14 +205,13 @@ public class BlockEvaluationController {
                 map.put("rating", blockEvaluation.getRating());
                 map.put("depth", blockEvaluation.getDepth());
                 map.put("cumulativeWeight", blockEvaluation.getCumulativeWeight());
-              
+
                 map.put("height", blockEvaluation.getHeight());
                 map.put("milestone", blockEvaluation.isMilestone());
                 map.put("milestoneLastUpdateTime", blockEvaluation.getMilestoneLastUpdateTime());
                 map.put("milestoneDepth", blockEvaluation.getMilestoneDepth());
                 map.put("insertTime", blockEvaluation.getInsertTime());
                 map.put("maintained", blockEvaluation.isMaintained());
-              
 
                 if (tempValue.equalsIgnoreCase("m-c1-c2")) {
                     BlockEvaluation map1 = blockEvaluations.get(i + 1);
@@ -381,11 +393,10 @@ public class BlockEvaluationController {
                 dataRow.put("cumulativeWeight", blockEvaluation.getCumulativeWeight());
                 dataRow.put("height", blockEvaluation.getHeight());
 
-            
                 dataRow.put("milestone", blockEvaluation.isMilestone() ? Main.getText("yes") : Main.getText("no"));
                 dataRow.put("milestoneDepth", blockEvaluation.getMilestoneDepth());
                 dataRow.put("maintained", blockEvaluation.isMaintained() ? Main.getText("yes") : Main.getText("no"));
-         
+
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 java.util.Date date = new Date(blockEvaluation.getMilestoneLastUpdateTime());
                 String str = sdf.format(date);
@@ -402,11 +413,10 @@ public class BlockEvaluationController {
             cumulativeWeightColumn.setCellValueFactory(new MapValueFactory("cumulativeWeight"));
             heightColumn.setCellValueFactory(new MapValueFactory("height"));
 
-          
             milestoneColumn.setCellValueFactory(new MapValueFactory("milestone"));
             milestoneDepthColumn.setCellValueFactory(new MapValueFactory("milestoneDepth"));
             maintainedColumn.setCellValueFactory(new MapValueFactory("maintained"));
-     
+
             milestoneLastUpdateTimeColumn.setCellValueFactory(new MapValueFactory("milestoneLastUpdateTime"));
             insertTimeColumn.setCellValueFactory(new MapValueFactory("insertTime"));
 

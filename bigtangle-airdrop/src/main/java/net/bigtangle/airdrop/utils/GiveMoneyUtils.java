@@ -87,7 +87,7 @@ public class GiveMoneyUtils {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         List<String> keyStrHex000 = new ArrayList<String>();
         keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
-        String response = OkHttp3Util.post(serverConfiguration.getServerURL() + ReqCmd.batchGetBalances.name(),
+        String response = OkHttp3Util.post(serverConfiguration.getServerURL() + ReqCmd.getBalances.name(),
                 Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
         GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
         for (UTXO utxo : getBalancesResponse.getOutputs()) {

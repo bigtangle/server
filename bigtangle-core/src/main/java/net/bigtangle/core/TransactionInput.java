@@ -20,7 +20,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 
 import net.bigtangle.script.Script;
-import net.bigtangle.wallet.DefaultRiskAnalysis;
 import net.bigtangle.wallet.KeyBag;
 import net.bigtangle.wallet.RedeemData;
 
@@ -439,17 +438,7 @@ public class TransactionInput extends ChildMessage {
         return new TransactionInput(params, null, bitcoinSerialize(), 0);
     }
 
-    /**
-     * <p>Returns either RuleViolation.NONE if the input is standard, or which rule makes it non-standard if so.
-     * The "IsStandard" rules control whether the default Bitcoin Core client blocks relay of a tx / refuses to mine it,
-     * however, non-standard transactions can still be included in blocks and will be accepted as valid if so.</p>
-     *
-     * <p>This method simply calls <tt>DefaultRiskAnalysis.isInputStandard(this)</tt>.</p>
-     */
-    public DefaultRiskAnalysis.RuleViolation isStandard() {
-        return DefaultRiskAnalysis.isInputStandard(this);
-    }
-
+ 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

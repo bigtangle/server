@@ -47,6 +47,7 @@ import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.core.http.server.resp.MultiSignResponse;
 import net.bigtangle.core.http.server.resp.SearchMultiSignResponse;
@@ -345,7 +346,7 @@ public class TokenController extends TokenBaseController {
     }
 
     public void showAddAddressDialog() throws Exception {
-        String CONTEXT_ROOT = Main.getContextRoot();
+        
         String temp = signnumberTF.getText();
         if (temp != null && !temp.isEmpty() && temp.matches("[1-9]\\d*")) {
 
@@ -666,7 +667,9 @@ public class TokenController extends TokenBaseController {
         if (transaction.getDataSignature() == null) {
             multiSignBies = new ArrayList<MultiSignBy>();
         } else {
-            multiSignBies = Json.jsonmapper().readValue(transaction.getDataSignature(), List.class);
+            MultiSignByRequest multiSignByRequest = Json.jsonmapper().readValue(transaction.getDataSignature(),
+                    MultiSignByRequest.class);
+            multiSignBies = multiSignByRequest.getMultiSignBies();
         }
         Sha256Hash sighash = transaction.getHash();
 
@@ -681,8 +684,8 @@ public class TokenController extends TokenBaseController {
         multiSignBy0.setPublickey(Utils.HEX.encode(myKey.getPubKey()));
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
-
-        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
         OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.multiSign.name(), block0.bitcoinSerialize());
         Main.instance.controller.initTableView();
         initTableView();
@@ -778,8 +781,7 @@ public class TokenController extends TokenBaseController {
             GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_d1"));
             return;
         }
-        String tokeninfo = "";
-        tokeninfo += Main.getString(rowData.get("tokenid")) + "," + Main.getString(rowData.get("tokenname"));
+    
         try {
             Main.addToken(CONTEXT_ROOT, rowData.get("tokenname").toString(), rowData.get("tokenid").toString(),
                     DataClassName.TOKEN.name());
