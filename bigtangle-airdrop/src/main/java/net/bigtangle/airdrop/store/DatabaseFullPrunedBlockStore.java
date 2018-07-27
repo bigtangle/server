@@ -12,17 +12,22 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.bigtangle.airdrop.bean.WechatInvite;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.ProtocolException;
+import net.bigtangle.core.VerificationException;
 
 /**
  * <p>
@@ -54,6 +59,41 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     public ThreadLocal<Connection> getConnection() {
         return this.conn;
+    }
+    
+    public List<WechatInvite> queryByUnfinishedWechatInvite() throws BlockStoreException {
+    	String sql = "select id, wechatId, wechatInviterId, createTime, status from wechatinvite where status = 0";
+    	List<WechatInvite> wechatInvites = new ArrayList<WechatInvite>();
+		maybeConnect();
+		PreparedStatement s = null;
+		try {
+			s = conn.get().prepareStatement(sql);
+			ResultSet resultSet = s.executeQuery();
+			while (resultSet.next()) {
+				WechatInvite wechatInvite = new WechatInvite();
+				wechatInvite.setId(resultSet.getString("id"));
+				wechatInvite.setWechatId(resultSet.getString("wechatId"));
+				wechatInvite.setWechatinviterId(resultSet.getString("wechatinviterId"));
+				wechatInvite.setCreateTime(resultSet.getDate("createTime"));
+				wechatInvite.setStatus(resultSet.getInt("status"));
+				wechatInvites.add(wechatInvite);
+			}
+			return wechatInvites;
+		} catch (SQLException ex) {
+			throw new BlockStoreException(ex);
+		} catch (ProtocolException e) {
+			throw new BlockStoreException(e);
+		} catch (VerificationException e) {
+			throw new BlockStoreException(e);
+		} finally {
+			if (s != null) {
+				try {
+					s.close();
+				} catch (SQLException e) {
+					throw new BlockStoreException("Failed to close PreparedStatement");
+				}
+			}
+		}
     }
 
     /**
@@ -394,4 +434,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             log.warn("Warning: deleteStore", ex);
         }
     }
+
+	public HashMap<String, String> queryByUWechatInvitePubKeyMapping(Set<String> set) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
