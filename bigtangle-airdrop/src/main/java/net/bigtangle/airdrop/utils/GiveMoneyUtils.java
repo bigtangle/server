@@ -97,4 +97,55 @@ public class GiveMoneyUtils {
         }
         return listUTXO;
     }
+
+    public void batchGiveMoneyToECKeyList(HashMap<String, Integer> giveMoneyResult) throws Exception {
+        if (giveMoneyResult.isEmpty()) {
+            return;
+        }
+        
+        final Map<String, Object> requestParam = new HashMap<String, Object>();
+        byte[] data = OkHttp3Util.post(serverConfiguration.getServerURL() + ReqCmd.askTransaction.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+
+        @SuppressWarnings("deprecation")
+        ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPriv),
+                Utils.HEX.decode(NetworkParameters.testPub));
+        List<UTXO> outputs = getTransactionAndGetBalances(genesiskey);
+
+        Coin coinbase000 = Coin.ZERO;
+        Transaction doublespent = new Transaction(networkParameters);
+        for (Map.Entry<String, Integer> entry : giveMoneyResult.entrySet()) {
+            ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(entry.getKey()));
+            Coin coinbase = Coin.valueOf(100 * entry.getValue(), NetworkParameters.BIGNETCOIN_TOKENID);
+            doublespent.addOutput(new TransactionOutput(networkParameters, doublespent, coinbase, ecKey));
+            coinbase000 = coinbase000.add(coinbase);
+        }
+
+        UTXO output_ = null;
+        for (UTXO output : outputs) {
+            if (Arrays.equals(NetworkParameters.BIGNETCOIN_TOKENID, output.getValue().getTokenid())) {
+                output_ = output;
+            }
+        }
+
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, output_, 0);
+        Coin amount2 = spendableOutput.getValue().subtract(coinbase000);
+        doublespent.addOutput(amount2, genesiskey);
+        TransactionInput input = doublespent.addInput(spendableOutput);
+        Sha256Hash sighash = doublespent.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
+                false);
+        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+                false);
+        Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+        input.setScriptSig(inputScript);
+
+        block.addTransaction(doublespent);
+        block.solve();
+        try {
+            OkHttp3Util.post(serverConfiguration.getServerURL() + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
