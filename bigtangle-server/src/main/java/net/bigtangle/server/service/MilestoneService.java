@@ -13,6 +13,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -218,6 +219,74 @@ public class MilestoneService {
 			if (isMilestone)
 				if (milestoneDepth + 1 > milestoneDepths.get(approvedBlock))
 					milestoneDepths.put(approvedBlock, milestoneDepth + 1);
+		}
+	}/**
+	 * Update rating: the percentage of times that tips selected by MCMC approve a
+	 * block
+	 * 
+	 * @throws BlockStoreException
+	 */
+	private void updateRatingPairbased() throws BlockStoreException {
+		// Select #tipCount solid tips via MCMC
+		HashMap<BlockWrap, HashSet<UUID>> selectedTipApprovers = new HashMap<BlockWrap, HashSet<UUID>>(
+				NetworkParameters.MAX_RATING_TIP_COUNT);
+		List<Pair<BlockWrap, BlockWrap>> selectedTipPairs = tipsService.getRatingTipPairs(NetworkParameters.MAX_RATING_TIP_COUNT);
+
+		// Initialize all approvers
+		for (Pair<BlockWrap, BlockWrap> selectedTipPair : selectedTipPairs) {
+			UUID randomUUID = UUID.randomUUID();
+			
+			// Put a UUID as approver for one of the selected blocks
+			if (selectedTipApprovers.containsKey(selectedTipPair.getLeft())) {
+				HashSet<UUID> result = selectedTipApprovers.get(selectedTipPair.getLeft());
+				result.add(randomUUID);
+			} else {
+				HashSet<UUID> result = new HashSet<>();
+				result.add(randomUUID);
+				selectedTipApprovers.put(selectedTipPair.getLeft(), result);
+			}
+
+			// Again for the other approved block, put the same UUID
+			if (selectedTipApprovers.containsKey(selectedTipPair.getRight())) {
+				HashSet<UUID> result = selectedTipApprovers.get(selectedTipPair.getRight());
+				result.add(randomUUID);
+			} else {
+				HashSet<UUID> result = new HashSet<>();
+				result.add(randomUUID);
+				selectedTipApprovers.put(selectedTipPair.getRight(), result);
+			}
+		}
+
+		// Begin from the highest solid height tips and go backwards from there
+		PriorityQueue<BlockWrap> blockQueue = store.getSolidTipsDescending();
+		HashMap<Sha256Hash, HashSet<UUID>> approvers = new HashMap<>();
+		for (BlockWrap tip : blockQueue) {
+			approvers.put(tip.getBlock().getHash(), new HashSet<>());
+		}
+
+		BlockWrap currentBlock = null;
+		while ((currentBlock = blockQueue.poll()) != null) {
+			// Abort if unmaintained and in milestone only (for now)
+			if (!currentBlock.getBlockEvaluation().isMaintained() && currentBlock.getBlockEvaluation().isMilestone())
+				continue;
+
+			// Add your own hashes as reference if current block is one of the
+			// selected tips
+			if (selectedTipApprovers.containsKey(currentBlock))
+				approvers.get(currentBlock.getBlockHash()).addAll(selectedTipApprovers.get(currentBlock));
+
+			// Add all current references to both approved blocks (initialize if
+			// not yet initialized)
+			Sha256Hash prevTrunk = currentBlock.getBlock().getPrevBlockHash();
+			subUpdateRating(blockQueue, approvers, currentBlock, prevTrunk);
+
+			Sha256Hash prevBranch = currentBlock.getBlock().getPrevBranchBlockHash();
+			subUpdateRating(blockQueue, approvers, currentBlock, prevBranch);
+
+			// Update your rating
+			store.updateBlockEvaluationRating(currentBlock.getBlockHash(),
+					approvers.get(currentBlock.getBlockHash()).size());
+			approvers.remove(currentBlock.getBlockHash());
 		}
 	}
 

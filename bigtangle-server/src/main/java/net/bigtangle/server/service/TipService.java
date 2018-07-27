@@ -56,7 +56,25 @@ public class TipService {
 		return results;
 	}
 
-	public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair() throws Exception {
+	// TODO use when optimized enough
+	public List<Pair<BlockWrap, BlockWrap>> getRatingTipPairs(int count) throws BlockStoreException {
+		Stopwatch watch = Stopwatch.createStarted();
+
+		// TODO import time low pass filter
+		List<Pair<BlockWrap, BlockWrap>> results = new ArrayList<>();
+		for (int i = 0; i < count; i++) {
+			Pair<Sha256Hash, Sha256Hash> validatedBlockPair = getValidatedBlockPair();
+			results.add(Pair.of(store.getBlockWrap(validatedBlockPair.getLeft()), store.getBlockWrap(validatedBlockPair.getRight())));
+		}
+		
+		watch.stop();
+		log.info("getRatingTipPairs time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+
+		return results;
+	}
+
+	// TODO optimize
+	public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair() throws BlockStoreException {
 		Stopwatch watch = Stopwatch.createStarted();
 		List<BlockWrap> entryPoints = getValidationEntryPoints(2);
 		BlockWrap left = entryPoints.get(0);
@@ -105,7 +123,7 @@ public class TipService {
 		}
 
 		watch.stop();
-		log.info("getValidatedBlockPairIteratively time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+		log.info("getValidatedBlockPair (iteratively) time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
 		return Pair.of(left.getBlock().getHash(), right.getBlock().getHash());
 	}
@@ -210,7 +228,7 @@ public class TipService {
 	 * @return hashes of the entry points
 	 * @throws Exception
 	 */
-	private List<BlockWrap> getValidationEntryPoints(int count) throws Exception {
+	private List<BlockWrap> getValidationEntryPoints(int count) throws BlockStoreException {
 		List<BlockWrap> candidates = blockService.getValidationEntryPointCandidates();
 		return pullRandomlyByCumulativeWeight(candidates, count);
 	}
