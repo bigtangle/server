@@ -13,6 +13,16 @@ public class WechatInvite implements java.io.Serializable {
 	private String wechatinviterId;
 	
 	private Date createTime;
+	
+	private int status;
+
+	public int getStatus() {
+		return status;
+	}
+
+	public void setStatus(int status) {
+		this.status = status;
+	}
 
 	public String getId() {
 		return id;

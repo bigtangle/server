@@ -220,7 +220,7 @@ public class MilestoneService {
 					milestoneDepths.put(approvedBlock, milestoneDepth + 1);
 		}
 	}
-
+	
 	/**
 	 * Update rating: the percentage of times that tips selected by MCMC approve a
 	 * block
@@ -233,14 +233,15 @@ public class MilestoneService {
 				NetworkParameters.MAX_RATING_TIP_COUNT);
 		List<BlockWrap> selectedTips = tipsService.getRatingTips(NetworkParameters.MAX_RATING_TIP_COUNT);
 
-		// Initialize all approvers
+		// Initialize all approvers as UUID
 		for (BlockWrap selectedTip : selectedTips) {
+			UUID randomUUID = UUID.randomUUID();
 			if (selectedTipApprovers.containsKey(selectedTip)) {
 				HashSet<UUID> result = selectedTipApprovers.get(selectedTip);
-				result.add(UUID.randomUUID());
+				result.add(randomUUID);
 			} else {
 				HashSet<UUID> result = new HashSet<>();
-				result.add(UUID.randomUUID());
+				result.add(randomUUID);
 				selectedTipApprovers.put(selectedTip, result);
 			}
 		}

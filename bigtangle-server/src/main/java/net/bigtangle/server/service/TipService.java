@@ -47,7 +47,7 @@ public class TipService {
 		long latestImportTime = store.getMaxImportTime();
 
 		for (int i = 0; i < entryPoints.size(); i++) {
-			results.add(randomWalk(entryPoints.get(i), latestImportTime));
+			results.add(getRatingTip(entryPoints.get(i), latestImportTime));
 		}
 
 		watch.stop();
@@ -56,7 +56,8 @@ public class TipService {
 		return results;
 	}
 
-	public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair() throws Exception {
+	// TODO optimize
+	public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair() throws BlockStoreException {
 		Stopwatch watch = Stopwatch.createStarted();
 		List<BlockWrap> entryPoints = getValidationEntryPoints(2);
 		BlockWrap left = entryPoints.get(0);
@@ -105,7 +106,7 @@ public class TipService {
 		}
 
 		watch.stop();
-		log.info("getValidatedBlockPairIteratively time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+		log.info("getValidatedBlockPair (iteratively) time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
 		return Pair.of(left.getBlock().getHash(), right.getBlock().getHash());
 	}
@@ -132,7 +133,7 @@ public class TipService {
 		return result;
 	}
 
-	private BlockWrap randomWalk(BlockWrap currentBlock, long maxTime) throws BlockStoreException {
+	private BlockWrap getRatingTip(BlockWrap currentBlock, long maxTime) throws BlockStoreException {
 		// Repeatedly perform transitions until the final tip is found
 		List<BlockWrap> approvers = store.getSolidApproverBlocks(currentBlock.getBlock().getHash());
 		approvers.removeIf(b -> b.getBlockEvaluation().getInsertTime() > maxTime);
@@ -144,6 +145,23 @@ public class TipService {
 			approvers.removeIf(b -> b.getBlockEvaluation().getInsertTime() > maxTime);
 			nextBlock = performTransition(currentBlock, approvers);
 		}
+		return currentBlock;
+	}
+
+	@SuppressWarnings("unused")
+	private BlockWrap getValidatedRatingBlock(BlockWrap currentBlock) throws BlockStoreException {
+		HashSet<BlockWrap> currentApprovedNonMilestoneBlocks = new HashSet<>();
+
+		// Perform next step
+		BlockWrap nextLeft = performValidatedStep(currentBlock, currentApprovedNonMilestoneBlocks);
+		
+		// Go forward while validating
+		while (nextLeft != currentBlock) {
+			currentBlock = nextLeft;
+			blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, currentBlock);
+			nextLeft = performValidatedStep(currentBlock, currentApprovedNonMilestoneBlocks);
+		}
+
 		return currentBlock;
 	}
 
@@ -210,7 +228,7 @@ public class TipService {
 	 * @return hashes of the entry points
 	 * @throws Exception
 	 */
-	private List<BlockWrap> getValidationEntryPoints(int count) throws Exception {
+	private List<BlockWrap> getValidationEntryPoints(int count) throws BlockStoreException {
 		List<BlockWrap> candidates = blockService.getValidationEntryPointCandidates();
 		return pullRandomlyByCumulativeWeight(candidates, count);
 	}

@@ -269,7 +269,7 @@ public class ValidatorService {
 		boolean removed = false;
 
 		for (BlockWrap b : new HashSet<BlockWrap>(blocksToAdd)) {
-			Block block = blockService.getBlock(b.getBlock().getHash());
+			Block block = b.getBlock();
 			for (TransactionInput in : block.getTransactions().stream().flatMap(t -> t.getInputs().stream())
 					.collect(Collectors.toList())) {
 				if (in.isCoinBase())
