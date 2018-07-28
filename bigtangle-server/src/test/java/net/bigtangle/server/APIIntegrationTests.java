@@ -104,7 +104,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.version.name(), Json.jsonmapper().writeValueAsString(requestParam));
         SettingResponse settingResponse = Json.jsonmapper().readValue(resp, SettingResponse.class);
         String version = settingResponse.getVersion();
-        assertTrue(version.equals("0.1.0"));
+        assertTrue(version.equals("0.2.0"));
     }
     
     //FIXME @Test
