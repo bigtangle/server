@@ -82,7 +82,7 @@ public class ScheduleGiveMoneyService {
                     	iterator.remove();
                         continue;
                     }
-                    giveMoneyResult.put(pubkey, count);
+                    giveMoneyResult.put(pubkey, count * 1000);
                 }
                 
                 if (giveMoneyResult.isEmpty()) {
@@ -92,8 +92,10 @@ public class ScheduleGiveMoneyService {
                 giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult);
                 
                 for (Map.Entry<String, List<WechatInvite>> entry : dataMap.entrySet()) {
+                	logger.info("wechat invite give money : " + entry.getKey() + ", money : " + (entry.getValue().size() * 1000));
                 	for (WechatInvite wechatInvite : entry.getValue()) {
                 		this.store.updateWechatInviteStatus(wechatInvite.getId(), 1);
+                    	logger.info("wechat invite update status, id : " + wechatInvite.getId() + ", success");
                 	}
                 } 
                 
