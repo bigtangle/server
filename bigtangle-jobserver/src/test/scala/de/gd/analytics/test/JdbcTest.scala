@@ -33,29 +33,16 @@ object JdbcTest {
       .option("url", "jdbc:mysql://localhost:3306/info")
       .option("user", "root")
       .option("password", "test1234")
-      .option("dbtable", "headers")
+      .option("dbtable", "blocks")
       .load()
     headers.printSchema()
 
-    val blockevaluation = sqlContext.read
-      .format("jdbc")
-      .option("url", "jdbc:mysql://localhost:3306/info")
-      .option("user", "root")
-      .option("password", "test1234")
-      .option("dbtable", "blockevaluation")
-      .load()
-    blockevaluation.printSchema()
-
+ 
     headers.createOrReplaceTempView("headers")
-    blockevaluation.createOrReplaceTempView("blockevaluation")
-
-    val SELECT1_SQL = "SELECT  hash ,  prevblockhash ,  prevbranchblockhash ,  header, rating, depth, cumulativeweight, " +
-      "solid, blockevaluation.height, milestone, milestonelastupdate, milestonedepth, inserttime," +
-      "maintained, rewardvalidityassessment FROM headers LEFT JOIN blockevaluation on headers.hash = blockevaluation.blockhash"
-
+ 
+ 
       
-      
-    val SELECT_SQL = "SELECT  hash ,  prevblockhash ,  prevbranchblockhash ,  header FROM headers "
+    val SELECT_SQL = "SELECT  hash ,  prevblockhash ,  prevbranchblockhash ,  block FROM blocks "
 
       
     val df = sqlContext.sql(SELECT_SQL)

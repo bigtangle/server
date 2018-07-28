@@ -37,9 +37,9 @@ import net.bigtangle.script.ScriptBuilder;
  * <p>
  * A block is a group of transactions, and is one of the fundamental data
  * structures of the Bitcoin system. It records a set of {@link Transaction}s
- * together with some data that links it into a place in the global block structure,
- * and proves that a difficult calculation was done over its contents. See
- * <a href="http://bitcoin.net/bigtangle.pdf">the white paper</a>
+ * together with some data that links it into a place in the global block
+ * structure, and proves that a difficult calculation was done over its
+ * contents. See <a href="http://bitcoin.net/bigtangle.pdf">the white paper</a>
  * for more detail on blocks.
  * <p/>
  *
@@ -110,7 +110,7 @@ public class Block extends Message {
     private Sha256Hash merkleRoot;
     private long time;
     private long nonce;
-    
+
     // Utils.sha256hash160
     private byte[] minerAddress;
 
@@ -620,14 +620,14 @@ public class Block extends Message {
 
     /**
      * <p>
-     * Finds a value of nonce and equihashProof if using Equihash 
-     * that validates correctly.
+     * Finds a value of nonce and equihashProof if using Equihash that validates
+     * correctly.
      */
     public void solve() {
         // Add randomness to prevent new empty blocks from same miner with same
         // approved blocks to be the same
         setNonce(gen.nextLong());
-        
+
         while (true) {
             try {
                 // Is our proof of work valid yet?
@@ -994,8 +994,8 @@ public class Block extends Message {
     }
 
     /**
-     * Returns the hash of the previous trunk block in the chain, as defined by the
-     * block header.
+     * Returns the hash of the previous trunk block in the chain, as defined by
+     * the block header.
      */
     public Sha256Hash getPrevBlockHash() {
         return prevBlockHash;
@@ -1008,8 +1008,8 @@ public class Block extends Message {
     }
 
     /**
-     * Returns the hash of the previous branch block in the chain, as defined by the
-     * block header.
+     * Returns the hash of the previous branch block in the chain, as defined by
+     * the block header.
      */
     public Sha256Hash getPrevBranchBlockHash() {
         return prevBranchBlockHash;
@@ -1284,7 +1284,6 @@ public class Block extends Message {
         return b;
     }
 
-  
     /**
      * Return whether this block contains any transactions.
      * 
@@ -1294,7 +1293,6 @@ public class Block extends Message {
     public boolean hasTransactions() {
         return !this.transactions.isEmpty();
     }
-
 
     public byte[] getMinerAddress() {
         return minerAddress;

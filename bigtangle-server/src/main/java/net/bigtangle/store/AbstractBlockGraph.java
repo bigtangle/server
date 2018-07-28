@@ -195,6 +195,7 @@ public abstract class AbstractBlockGraph {
     protected abstract boolean checkSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch,
             long height, boolean allowConflicts) throws BlockStoreException, VerificationException;
 
+
     /**
      * The false positive rate is the average over all blockchain transactions
      * of:

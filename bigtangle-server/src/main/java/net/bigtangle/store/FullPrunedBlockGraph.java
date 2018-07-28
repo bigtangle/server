@@ -629,7 +629,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     @Override
     protected boolean savePre(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height,
             boolean allowConflicts) throws BlockStoreException, VerificationException {
-        // TODO no parameter allowConflicts necessary anymore
         // Check timestamp
 
         // Check reward block specific solidity
@@ -696,7 +695,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     @Override
     protected boolean checkSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height,
             boolean allowConflicts) throws BlockStoreException, VerificationException {
-        // TODO no parameter allowConflicts necessary anymore
         // Check timestamp
         if (block.getTimeSeconds() < storedPrev.getHeader().getTimeSeconds()
                 || block.getTimeSeconds() < storedPrevBranch.getHeader().getTimeSeconds())
@@ -756,6 +754,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
         }
 
+        checkSolidityTransfer(block, height);
+        
+        return true;
+    }
+
+    private void checkSolidityTransfer(Block block, long height) throws BlockStoreException {
         LinkedList<UTXO> txOutsSpent = new LinkedList<UTXO>();
         LinkedList<UTXO> txOutsCreated = new LinkedList<UTXO>();
         long sigOps = 0;
@@ -872,7 +876,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
             throw e;
         }
-        return true;
     }
 
     private boolean checkOutput(Map<String, Coin> valueOut) {
