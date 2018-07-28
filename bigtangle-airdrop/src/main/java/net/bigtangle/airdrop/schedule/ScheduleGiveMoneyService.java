@@ -21,7 +21,7 @@ import com.mchange.v2.lang.StringUtils;
 
 import net.bigtangle.airdrop.bean.WechatInvite;
 import net.bigtangle.airdrop.config.ScheduleConfiguration;
-import net.bigtangle.airdrop.store.DatabaseFullPrunedBlockStore;
+import net.bigtangle.airdrop.store.FullPrunedBlockStore;
 import net.bigtangle.airdrop.utils.GiveMoneyUtils;
 
 @Component
@@ -37,7 +37,7 @@ public class ScheduleGiveMoneyService {
     private GiveMoneyUtils giveMoneyUtils;
 
     @Autowired
-    private DatabaseFullPrunedBlockStore store;
+    private FullPrunedBlockStore store;
 
     @Scheduled(fixedRateString = "${service.giveMoneyService.rate:10000}")
     public void updateMilestoneService() {
@@ -69,19 +69,34 @@ public class ScheduleGiveMoneyService {
                     return;
                 }
                 HashMap<String, Integer> giveMoneyResult = new HashMap<String, Integer>();
-                for (Map.Entry<String, List<WechatInvite>> entry : dataMap.entrySet()) {
+                for (Iterator<Map.Entry<String, List<WechatInvite>>> iterator = dataMap.entrySet().iterator(); iterator.hasNext();) {
+                	Map.Entry<String, List<WechatInvite>> entry = iterator.next();
                     String wechatinviterId = entry.getKey();
-                    String pubKey = wechatInviteResult.get(wechatinviterId);
-                    if (!StringUtils.nonEmptyString(pubKey))
+                    String pubkey = wechatInviteResult.get(wechatinviterId);
+                    if (!StringUtils.nonEmptyString(pubkey)) {
+                    	iterator.remove();
                         continue;
-                    
+                    }
                     final int count = entry.getValue().size();
-                    if (count == 0)
+                    if (count == 0) {
+                    	iterator.remove();
                         continue;
-                    
-                    giveMoneyResult.put(pubKey, count);
+                    }
+                    giveMoneyResult.put(pubkey, count);
                 }
+                
+                if (giveMoneyResult.isEmpty()) {
+                	return;
+                }
+                
                 giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult);
+                
+                for (Map.Entry<String, List<WechatInvite>> entry : dataMap.entrySet()) {
+                	for (WechatInvite wechatInvite : entry.getValue()) {
+                		this.store.updateWechatInviteStatus(wechatInvite.getId(), 1);
+                	}
+                } 
+                
             } catch (Exception e) {
                 logger.warn("ScheduleGiveMoneyService", e);
             }

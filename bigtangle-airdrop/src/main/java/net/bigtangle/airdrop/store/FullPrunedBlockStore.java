@@ -5,6 +5,11 @@
 
 package net.bigtangle.airdrop.store;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
+
+import net.bigtangle.airdrop.bean.WechatInvite;
 import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
@@ -77,4 +82,10 @@ public interface FullPrunedBlockStore {
      * @return The network params.
      */
     NetworkParameters getParams();
+
+	List<WechatInvite> queryByUnfinishedWechatInvite() throws BlockStoreException;
+
+	HashMap<String, String> queryByUWechatInvitePubKeyMapping(Set<String> keySet) throws BlockStoreException;
+
+	void updateWechatInviteStatus(String id, int status) throws BlockStoreException;
 }
