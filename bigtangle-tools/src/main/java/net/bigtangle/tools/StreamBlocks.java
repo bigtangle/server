@@ -37,7 +37,7 @@ public class StreamBlocks {
 
     // private String CONTEXT_ROOT = "http://bigtangle.net:8088/";
 
-    private static String CONTEXT_ROOT = "http://de.server.bigtangle.net:8088/";
+    private static String CONTEXT_ROOT = "https://bigtangle.org/";
 
     public static void main(String[] args) throws JsonProcessingException, Exception {
 

@@ -170,7 +170,7 @@ public class TokenController extends TokenBaseController {
             });
             initTableView();
             initMultisignTableView();
-
+            Main.bitcoin.wallet().setServerURL(Main.getContextRoot());
         } catch (Exception e) {
             e.printStackTrace();
             GuiUtils.crashAlert(e);
@@ -205,7 +205,6 @@ public class TokenController extends TokenBaseController {
         String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getMultiSignWithAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
-        
         MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
         MultiSign multiSign000 = null;
         for (MultiSign multiSign : multiSignResponse.getMultiSigns()) {
@@ -213,7 +212,7 @@ public class TokenController extends TokenBaseController {
                 multiSign000 = multiSign;
             }
         }
-        
+
         byte[] payloadBytes = Utils.HEX.decode((String) multiSign000.getBlockhashHex());
         Block block0 = Main.params.getDefaultSerializer().makeBlock(payloadBytes);
         Transaction transaction = block0.getTransactions().get(0);
@@ -246,7 +245,7 @@ public class TokenController extends TokenBaseController {
 
         MultiSignResponse multiSignResponse2 = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
         int count = multiSignResponse2.getSignCount();
-        
+
         if (count == 0) {
             save1.setDisable(true);
         }
@@ -279,7 +278,7 @@ public class TokenController extends TokenBaseController {
                 multiSign000 = multiSign;
             }
         }
-        
+
         byte[] payloadBytes = Utils.HEX.decode((String) multiSign000.getBlockhashHex());
         Block block0 = Main.params.getDefaultSerializer().makeBlock(payloadBytes);
         Transaction transaction = block0.getTransactions().get(0);
@@ -346,7 +345,7 @@ public class TokenController extends TokenBaseController {
     }
 
     public void showAddAddressDialog() throws Exception {
-        
+
         String temp = signnumberTF.getText();
         if (temp != null && !temp.isEmpty() && temp.matches("[1-9]\\d*")) {
 
@@ -433,9 +432,11 @@ public class TokenController extends TokenBaseController {
         requestParam.put("tokenid", tokenid.getValue());
         String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getMultiSignWithTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        
-        final SearchMultiSignResponse searchMultiSignResponse = Json.jsonmapper().readValue(response, SearchMultiSignResponse.class);
-        if (searchMultiSignResponse.getMultiSignList() != null && !searchMultiSignResponse.getMultiSignList().isEmpty()) {
+
+        final SearchMultiSignResponse searchMultiSignResponse = Json.jsonmapper().readValue(response,
+                SearchMultiSignResponse.class);
+        if (searchMultiSignResponse.getMultiSignList() != null
+                && !searchMultiSignResponse.getMultiSignList().isEmpty()) {
             Map<String, Object> multisignMap = searchMultiSignResponse.getMultiSignList().get(0);
             tokenUUID = multisignMap.get("id").toString();
         } else {
@@ -658,7 +659,7 @@ public class TokenController extends TokenBaseController {
                 break;
             }
         }
-        
+
         byte[] payloadBytes = Utils.HEX.decode((String) multiSign000.getBlockhashHex());
         Block block0 = Main.params.getDefaultSerializer().makeBlock(payloadBytes);
         Transaction transaction = block0.getTransactions().get(0);
@@ -723,7 +724,7 @@ public class TokenController extends TokenBaseController {
         requestParam00.put("tokenid", Main.getString(map.get("tokenHex")).trim());
         String resp2 = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getCalTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
-        
+
         TokenSerialIndexResponse tokenSerialIndexResponse = Json.jsonmapper().readValue(resp2,
                 TokenSerialIndexResponse.class);
         Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
@@ -781,7 +782,7 @@ public class TokenController extends TokenBaseController {
             GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_d1"));
             return;
         }
-    
+
         try {
             Main.addToken(CONTEXT_ROOT, rowData.get("tokenname").toString(), rowData.get("tokenid").toString(),
                     DataClassName.TOKEN.name());
