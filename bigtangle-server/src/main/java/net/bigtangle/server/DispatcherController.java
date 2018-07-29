@@ -348,6 +348,7 @@ public class DispatcherController {
     }
 
     public void outPointBinaryArray(HttpServletResponse httpServletResponse, byte[] data) throws Exception {
+        httpServletResponse.setCharacterEncoding("UTF-8");
 //        ServletOutputStream servletOutputStream = httpServletResponse.getOutputStream();
         HashMap<String, Object> result = new HashMap<String, Object>();
         result.put("dataHex", Utils.HEX.encode(data));
@@ -362,6 +363,7 @@ public class DispatcherController {
 
     public void outPrintJSONString(HttpServletResponse httpServletResponse, AbstractResponse response)
             throws Exception {
+        httpServletResponse.setCharacterEncoding("UTF-8");
         PrintWriter printWriter = httpServletResponse.getWriter();
         printWriter.append(Json.jsonmapper().writeValueAsString(response));
         printWriter.flush();
