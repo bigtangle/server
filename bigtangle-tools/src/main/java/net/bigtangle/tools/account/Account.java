@@ -7,6 +7,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.spongycastle.crypto.params.KeyParameter;
 
@@ -21,6 +24,7 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.tools.action.Action;
 import net.bigtangle.tools.action.impl.BalancesAction;
 import net.bigtangle.tools.action.impl.BuyOrderAction;
+import net.bigtangle.tools.action.impl.MultiSignTokenAction;
 import net.bigtangle.tools.action.impl.SellOrderAction;
 import net.bigtangle.tools.action.impl.SignOrderAction;
 import net.bigtangle.tools.action.impl.TokenAction;
@@ -34,12 +38,32 @@ import net.bigtangle.wallet.Wallet;
 
 public class Account {
 
+    public void multiSignToken(CountDownLatch latch) {
+        try {
+            final ECKey ecKey = this.getRandomTradeECKey();
+            final Account account = this;
+            for (int i = 0; i < 10; i++) {
+                executorService.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        MultiSignTokenAction multiSignTokenAction = new MultiSignTokenAction(account, ecKey);
+                        multiSignTokenAction.execute();
+                    }
+                });
+            }
+        } finally {
+            latch.countDown();
+        }
+    }
+
+    private ExecutorService executorService = Executors.newFixedThreadPool(10);
+
     private List<Action> executes = new ArrayList<Action>();
 
     private List<ECKey> walletKeys = new ArrayList<ECKey>();
 
     public TokenCoinbase tokenCoinbase;
-    
+
     private int index = 0;
 
     public Coin defaultCoinAmount() {
@@ -101,8 +125,9 @@ public class Account {
         int len = this.executes.size();
         Action action = this.executes.get(index);
         action.execute();
-        index ++;
-        if (index == len) index = 0;
+        index++;
+        if (index == len)
+            index = 0;
     }
 
     public String getName() {

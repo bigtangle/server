@@ -1,6 +1,7 @@
 package net.bigtangle.tools.container;
 
 import java.util.ArrayList;
+import java.util.concurrent.CountDownLatch;
 
 import net.bigtangle.tools.account.Account;
 import net.bigtangle.tools.utils.GiveMoneyUtils;
@@ -15,19 +16,14 @@ public class AccountContainer extends ArrayList<Account> {
     }
 
     public void startBlockCheckRatingThread() {
-        /*Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-                    try {
-                        BlockRatingCheckAction blockRatingCheckAction = new BlockRatingCheckAction();
-                        blockRatingCheckAction.execute0();
-                        Thread.sleep(10000);
-                    } catch (Exception e) {
-                    }
-                }
-            }
-        });*/
+        /*
+         * Thread thread = new Thread(new Runnable() {
+         * 
+         * @Override public void run() { while (true) { try { BlockRatingCheckAction
+         * blockRatingCheckAction = new BlockRatingCheckAction();
+         * blockRatingCheckAction.execute0(); Thread.sleep(10000); } catch (Exception e)
+         * { } } } });
+         */
         // thread.start();
     }
 
@@ -94,5 +90,33 @@ public class AccountContainer extends ArrayList<Account> {
             }
         }
         // this.startBlockCheckRatingThread();
+    }
+
+    public void startMultiSignToken(int startIndex, int endIndex) {
+        for (int i = startIndex; i <= endIndex; i++) {
+            try {
+                Account account = new Account("wallet" + String.valueOf(i));
+                if (i == 1) {
+                    account.initBuyOrderTask();
+                } else {
+                    account.initSellOrderTask();
+                }
+                this.add(account);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        while (true) {
+            CountDownLatch countDownLatch = new CountDownLatch(this.size());
+            for (Account account : this) {
+                account.multiSignToken(countDownLatch);
+            }
+            try {
+                countDownLatch.await();
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
