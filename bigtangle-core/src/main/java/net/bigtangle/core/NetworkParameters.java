@@ -136,6 +136,7 @@ public abstract class NetworkParameters {
 	public static final int REWARD_HEIGHT_INTERVAL = 100;
 	public static final BigInteger MAX_TARGET = Utils.decodeCompactBits(0x207fFFFFL);
 	public static final long MAX_TIMESTAMP_DIFF = 5 * 60;
+	public static final long TARGET_YEARLY_MINING_PAYOUT = 20000000000L; //3 digits after comma, 2% of 1 trillion total supply
 
 	public static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
 	public static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
@@ -146,7 +147,8 @@ public abstract class NetworkParameters {
 
 	public static Block createGenesis(NetworkParameters params) {
 		Block genesisBlock = new Block(params, Block.BLOCK_VERSION_GENESIS, BLOCKTYPE_INITIAL);
-		genesisBlock.setTime(1231006505L);
+		genesisBlock.setTime(1532896109L);
+//		genesisBlock.setTime(1231006505L);
 
 		Transaction coinbase = new Transaction(params);
 		final ScriptBuilder inputBuilder = new ScriptBuilder();

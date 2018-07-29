@@ -147,7 +147,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     
     private static final String CREATE_TX_REWARD_TABLE = "CREATE TABLE txreward (\n"
             + "   blockhash varbinary(32) NOT NULL,\n" 
-            + "   rewardamount bigint NOT NULL,\n"
             + "   prevheight bigint NOT NULL,\n"
             + "   confirmed boolean NOT NULL,\n" 
             + "   eligibility boolean NOT NULL,\n"
