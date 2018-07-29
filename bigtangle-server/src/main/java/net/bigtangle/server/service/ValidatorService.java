@@ -61,8 +61,9 @@ public class ValidatorService {
 	 * Deterministically creates a mining reward transaction based on the previous
 	 * blocks and previous reward transaction.
 	 * 
-	 * @return Pair of mining transaction and whether it is eligible to be voted on
-	 *         at this moment of time.
+	 * @return Pair of mining reward transaction and boolean indicating whether this
+	 *         mining reward transaction is eligible to be voted on at this moment
+	 *         of time.
 	 * @throws BlockStoreException
 	 */
 	public Pair<Transaction, Boolean> generateMiningRewardTX(Sha256Hash prevTrunkHash, Sha256Hash prevBranchHash,
@@ -191,9 +192,13 @@ public class ValidatorService {
 			tx.addOutput(Coin.SATOSHI.times(entry.getValue() * perTxReward), entry.getKey());
 
 		// The input does not really need to be a valid signature, as long
-		// as it has the right general form.
+		// as it has the right general form and is slightly different for different tx
+//		byte[] inputBytes1 = Block.EMPTY_BYTES;
+//		Utils.uint64ToByteArrayLE(, inputBytes1, 0);
+//		byte[] inputBytes2 = Block.EMPTY_BYTES;
+//		Utils.uint64ToByteArrayLE(prevBranchBlock.getBlockEvaluation().getHeight(), inputBytes2, 0);
 		TransactionInput input = new TransactionInput(networkParameters, tx,
-				Script.createInputScript(Block.EMPTY_BYTES, Block.EMPTY_BYTES));
+				Script.createInputScript(prevTrunkBlock.getBlockHash().getBytes(), prevBranchBlock.getBlockHash().getBytes()));
 		tx.addInput(input);
 
 		// TX reward adjustments for next rewards
