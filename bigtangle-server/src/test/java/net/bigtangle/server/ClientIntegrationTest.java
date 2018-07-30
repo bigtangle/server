@@ -7,13 +7,11 @@ package net.bigtangle.server;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map.Entry;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,8 +20,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
@@ -44,7 +40,6 @@ import net.bigtangle.core.VOS;
 import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.http.server.resp.UserDataResponse;
 import net.bigtangle.core.http.server.resp.VOSExecuteListResponse;
-import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.utils.OkHttp3Util;
@@ -209,7 +204,6 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     }
     
     @Test
-    @SuppressWarnings("unchecked")
     public void testSaveOVS() throws Exception {
         ECKey outKey = new ECKey();
         

@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -21,12 +20,13 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.ReqCmd;
-import net.bigtangle.tools.action.Action;
+import net.bigtangle.tools.action.SimpleAction;
 import net.bigtangle.tools.action.impl.BalancesAction;
 import net.bigtangle.tools.action.impl.BuyOrderAction;
-import net.bigtangle.tools.action.impl.MultiSignTokenAction;
+import net.bigtangle.tools.action.impl.MultiTokenAction;
 import net.bigtangle.tools.action.impl.SellOrderAction;
 import net.bigtangle.tools.action.impl.SignOrderAction;
+import net.bigtangle.tools.action.impl.SingleTokenAction;
 import net.bigtangle.tools.action.impl.TokenAction;
 import net.bigtangle.tools.config.Configure;
 import net.bigtangle.tools.thread.TradeBuyRunnable;
@@ -38,27 +38,13 @@ import net.bigtangle.wallet.Wallet;
 
 public class Account {
 
-    public void multiSignToken(CountDownLatch latch) {
-        try {
-            final ECKey ecKey = this.getRandomTradeECKey();
-            final Account account = this;
-            for (int i = 0; i < 10; i++) {
-                executorService.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        MultiSignTokenAction multiSignTokenAction = new MultiSignTokenAction(account, ecKey);
-                        multiSignTokenAction.execute();
-                    }
-                });
-            }
-        } finally {
-            latch.countDown();
-        }
+    public void executePool(Runnable runnable) {
+        this.executorService.submit(runnable);
     }
 
     private ExecutorService executorService = Executors.newFixedThreadPool(10);
 
-    private List<Action> executes = new ArrayList<Action>();
+    private List<SimpleAction> executes = new ArrayList<SimpleAction>();
 
     private List<ECKey> walletKeys = new ArrayList<ECKey>();
 
@@ -96,34 +82,46 @@ public class Account {
     public void initBuyOrderTask() {
         this.executes.add(new BuyOrderAction(this));
         this.executes.add(new SignOrderAction(this));
-        // this.executes.add(new BalancesAction(this));
+        this.executes.add(new BalancesAction(this));
+        //this.executes.add(new MultiTokenAction(this));
+        //this.executes.add(new SingleTokenAction(this));
     }
 
     public void initSellOrderTask() {
         try {
-            Action action2 = new TokenAction(this);
-            action2.execute();
-        } catch (Exception e) {
-        }
-        this.executes.add(new SignOrderAction(this));
-        this.executes.add(new SellOrderAction(this));
-        // this.executes.add(new BalancesAction(this));
-    }
-
-    public void initTradeOrderTask() {
-        try {
-            Action action2 = new TokenAction(this);
+            SimpleAction action2 = new TokenAction(this);
             action2.execute();
         } catch (Exception e) {
         }
         this.executes.add(new SignOrderAction(this));
         this.executes.add(new SellOrderAction(this));
         this.executes.add(new BalancesAction(this));
+        //this.executes.add(new MultiTokenAction(this));
+        //this.executes.add(new SingleTokenAction(this));
+    }
+
+    public void initTradeOrderTask() {
+        try {
+            SimpleAction action2 = new TokenAction(this);
+            action2.execute();
+        } catch (Exception e) {
+        }
+        this.executes.add(new SignOrderAction(this));
+        this.executes.add(new SellOrderAction(this));
+        this.executes.add(new BalancesAction(this));
+        //this.executes.add(new MultiTokenAction(this));
+        //this.executes.add(new SingleTokenAction(this));
+    }
+    
+
+    public void initTokenTask() {
+        this.executes.add(new MultiTokenAction(this));
+        this.executes.add(new SingleTokenAction(this));
     }
 
     public void doAction() {
         int len = this.executes.size();
-        Action action = this.executes.get(index);
+        SimpleAction action = this.executes.get(index);
         action.execute();
         index++;
         if (index == len)
@@ -192,6 +190,11 @@ public class Account {
     }
 
     public void startTradeOrder() {
+        Thread thread = new Thread(new TradeRunnable(this));
+        thread.start();
+    }
+    
+    public void startToken() {
         Thread thread = new Thread(new TradeRunnable(this));
         thread.start();
     }

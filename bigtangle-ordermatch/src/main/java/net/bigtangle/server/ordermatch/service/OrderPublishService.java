@@ -6,7 +6,6 @@ package net.bigtangle.server.ordermatch.service;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,12 +17,13 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.OrderPublish;
-import net.bigtangle.core.OrderPublishList;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.AbstractResponse;
 import net.bigtangle.core.http.ordermatch.resp.GetOrderResponse;
+import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.server.ordermatch.bean.OrderBook;
 import net.bigtangle.server.ordermatch.bean.Side;
 import net.bigtangle.server.ordermatch.context.OrderBookHolder;
@@ -68,19 +68,19 @@ public class OrderPublishService {
         return AbstractResponse.createEmptyResponse();
     }
 
-    @SuppressWarnings("unchecked")
     public void deleteOrder(Block block) throws Exception {
         Transaction transaction = block.getTransactions().get(0);
 
         byte[] buf = transaction.getData();
         String orderid = new String(buf);
 
-        List<HashMap<String, Object>> multiSignBies = Json.jsonmapper().readValue(transaction.getDataSignature(),
-                List.class);
-        Map<String, Object> multiSignBy = multiSignBies.get(0);
-        byte[] pubKey = Utils.HEX.decode((String) multiSignBy.get("publickey"));
+        MultiSignByRequest multiSignByRequest = Json.jsonmapper().readValue(transaction.getDataSignature(),
+                MultiSignByRequest.class);
+        
+        MultiSignBy multiSignBy = multiSignByRequest.getMultiSignBies().get(0);
+        byte[] pubKey = Utils.HEX.decode(multiSignBy.getPublickey());
         byte[] data = transaction.getHash().getBytes();
-        byte[] signature = Utils.HEX.decode((String) multiSignBy.get("signature"));
+        byte[] signature = Utils.HEX.decode(multiSignBy.getSignature());
 
         boolean success = ECKey.verify(data, signature, pubKey);
         if (!success) {

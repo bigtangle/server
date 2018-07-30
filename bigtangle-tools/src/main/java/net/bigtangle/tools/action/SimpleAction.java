@@ -2,7 +2,7 @@ package net.bigtangle.tools.action;
 
 import net.bigtangle.tools.account.Account;
 
-public abstract class Action {
+public abstract class SimpleAction {
 
     public void execute() {
         try {
@@ -22,7 +22,7 @@ public abstract class Action {
     
     protected Account account;
     
-    public Action(Account account) {
+    public SimpleAction(Account account) {
         this.account = account;
     }
 }

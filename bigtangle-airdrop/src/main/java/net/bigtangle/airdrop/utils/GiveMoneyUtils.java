@@ -24,17 +24,18 @@ import net.bigtangle.wallet.Wallet;
 
 @Component
 public class GiveMoneyUtils {
-	
-	@PostConstruct
-	@SuppressWarnings("deprecation")
-	public void init() {
+
+    @PostConstruct
+    @SuppressWarnings("deprecation")
+    public void init() {
         String contextRoot = serverConfiguration.getServerURL();
         coinbaseWallet = new Wallet(networkParameters, contextRoot);
-        coinbaseWallet.importKey(new ECKey(Utils.HEX.decode(NetworkParameters.testPriv), Utils.HEX.decode(NetworkParameters.testPub)));
+        coinbaseWallet.importKey(
+                new ECKey(Utils.HEX.decode(NetworkParameters.testPriv), Utils.HEX.decode(NetworkParameters.testPub)));
         coinbaseWallet.setServerURL(contextRoot);
-	}
-	
-	private Wallet coinbaseWallet;
+    }
+
+    private Wallet coinbaseWallet;
 
     @Autowired
     private NetworkParameters networkParameters;
@@ -42,24 +43,25 @@ public class GiveMoneyUtils {
     @Autowired
     private ServerConfiguration serverConfiguration;
 
-	public void batchGiveMoneyToECKeyList(HashMap<String, Integer> giveMoneyResult) throws Exception {
+    public void batchGiveMoneyToECKeyList(HashMap<String, Integer> giveMoneyResult) throws Exception {
         if (giveMoneyResult.isEmpty()) {
             return;
         }
         String contextRoot = serverConfiguration.getServerURL();
-        
+
         Transaction transaction = new Transaction(this.networkParameters);
         for (Entry<String, Integer> entry : giveMoneyResult.entrySet()) {
-        	Coin amount = Coin.valueOf(entry.getValue() * 1000, NetworkParameters.BIGNETCOIN_TOKENID);
-        	Address address = Address.fromBase58(networkParameters, entry.getKey());
-        	transaction.addOutput(amount, address);
+            Coin amount = Coin.valueOf(entry.getValue() * 1000, NetworkParameters.BIGNETCOIN_TOKENID);
+            Address address = Address.fromBase58(networkParameters, entry.getKey());
+            transaction.addOutput(amount, address);
         }
-        
+
         SendRequest request = SendRequest.forTx(transaction);
         coinbaseWallet.completeTx(request);
-        
+
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction, Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction,
+                Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();

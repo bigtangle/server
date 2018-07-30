@@ -12,12 +12,12 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.http.ordermatch.resp.GetExchangeResponse;
 import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.tools.account.Account;
-import net.bigtangle.tools.action.Action;
+import net.bigtangle.tools.action.SimpleAction;
 import net.bigtangle.tools.config.Configure;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.PayOrder;
 
-public class SignOrderAction extends Action {
+public class SignOrderAction extends SimpleAction {
 
     public SignOrderAction(Account account) {
         super(account);
@@ -32,7 +32,6 @@ public class SignOrderAction extends Action {
     @Override
     public void execute0() throws Exception {
         logger.info("account name : {}, sign order action start", account.getName());
-        List<Exchange> exchangeList = new ArrayList<Exchange>();
         List<String> addressList = new ArrayList<String>();
         for (ECKey ecKey : this.account.walletKeys()) {
             String address = ecKey.toAddress(Configure.PARAMS).toString();

@@ -9,11 +9,11 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.tools.account.Account;
-import net.bigtangle.tools.action.Action;
+import net.bigtangle.tools.action.SimpleAction;
 import net.bigtangle.tools.config.Configure;
 import net.bigtangle.utils.OkHttp3Util;
 
-public class BalancesAction extends Action {
+public class BalancesAction extends SimpleAction {
 
     public BalancesAction(Account account) {
         super(account);

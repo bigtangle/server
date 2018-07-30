@@ -7,12 +7,12 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.tools.account.Account;
-import net.bigtangle.tools.action.Action;
+import net.bigtangle.tools.action.SimpleAction;
 import net.bigtangle.tools.config.Configure;
 import net.bigtangle.tools.utils.GiveMoneyUtils;
 import net.bigtangle.utils.OkHttp3Util;
 
-public class TokenAction extends Action {
+public class TokenAction extends SimpleAction {
 
     public TokenAction(Account account) {
         super(account);

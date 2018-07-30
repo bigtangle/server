@@ -89,7 +89,6 @@ import net.bigtangle.utils.BaseTaggableObject;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.Protos.Wallet.EncryptionType;
-import net.bigtangle.wallet.Wallet.BalanceType;
 import net.bigtangle.wallet.WalletTransaction.Pool;
 import net.bigtangle.wallet.listeners.KeyChainEventListener;
 import net.jcip.annotations.GuardedBy;

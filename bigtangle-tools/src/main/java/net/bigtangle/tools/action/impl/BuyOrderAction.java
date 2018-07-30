@@ -11,12 +11,12 @@ import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.http.ordermatch.resp.GetOrderResponse;
 import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.tools.account.Account;
-import net.bigtangle.tools.action.Action;
+import net.bigtangle.tools.action.SimpleAction;
 import net.bigtangle.tools.config.Configure;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.OrderState;
 
-public class BuyOrderAction extends Action {
+public class BuyOrderAction extends SimpleAction {
 
     public BuyOrderAction(Account account) {
         super(account);

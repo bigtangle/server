@@ -1,7 +1,6 @@
 package net.bigtangle.tools.container;
 
 import java.util.ArrayList;
-import java.util.concurrent.CountDownLatch;
 
 import net.bigtangle.tools.account.Account;
 import net.bigtangle.tools.utils.GiveMoneyUtils;
@@ -37,7 +36,6 @@ public class AccountContainer extends ArrayList<Account> {
                 e.printStackTrace();
             }
         }
-        this.startBlockCheckRatingThread();
     }
 
     public void startBuyOrder(int startIndex, int endIndex) {
@@ -50,7 +48,6 @@ public class AccountContainer extends ArrayList<Account> {
                 e.printStackTrace();
             }
         }
-        this.startBlockCheckRatingThread();
     }
 
     public void startGiveMoney(int startIndex, int endIndex) throws Exception {
@@ -63,7 +60,6 @@ public class AccountContainer extends ArrayList<Account> {
                 e.printStackTrace();
             }
         }
-        this.startBlockCheckRatingThread();
     }
 
     public void startTradeOrder(int startIndex, int endIndex) {
@@ -89,32 +85,15 @@ public class AccountContainer extends ArrayList<Account> {
                 index = 0;
             }
         }
-        // this.startBlockCheckRatingThread();
     }
 
     public void startMultiSignToken(int startIndex, int endIndex) {
         for (int i = startIndex; i <= endIndex; i++) {
             try {
                 Account account = new Account("wallet" + String.valueOf(i));
-                if (i == 1) {
-                    account.initBuyOrderTask();
-                } else {
-                    account.initSellOrderTask();
-                }
+                account.startToken();
                 this.add(account);
             } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        while (true) {
-            CountDownLatch countDownLatch = new CountDownLatch(this.size());
-            for (Account account : this) {
-                account.multiSignToken(countDownLatch);
-            }
-            try {
-                countDownLatch.await();
-            }
-            catch (Exception e) {
                 e.printStackTrace();
             }
         }

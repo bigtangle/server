@@ -28,12 +28,15 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.OrderPublishList;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.http.ordermatch.resp.GetOrderResponse;
+import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.OkHttp3Util;
@@ -71,15 +74,15 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(new HashMap<String, Object>()));
         logger.info("getOrders resp : " + resp);
         
-        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
-        List<HashMap<String, Object>> list = (List<HashMap<String, Object>>) result.get("orders");
-        HashMap<String, Object> order = list.get(0);
+        GetOrderResponse getOrderResponse = Json.jsonmapper().readValue(resp, GetOrderResponse.class);
+        OrderPublish orderPublish = getOrderResponse.getOrders().get(0);
         
         Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(null, Block.BLOCK_VERSION_GENESIS,
                 (TransactionOutPoint) null, Utils.currentTimeSeconds(), outKey.getPubKey(), 1,
                 networkParameters.getGenesisBlock().getHash(), outKey.getPubKeyHash());
+        
         Transaction transaction = new Transaction(this.networkParameters);
-        transaction.setData(order.get("orderid").toString().getBytes());
+        transaction.setData(orderPublish.getOrderId().getBytes());
         
         Sha256Hash sighash = transaction.getHash();
         ECKey.ECDSASignature party1Signature = outKey.sign(sighash);
@@ -93,7 +96,8 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
-        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
         
         rollingBlock.addTransaction(transaction);
         rollingBlock.solve();
@@ -123,14 +127,13 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     @Test
     public void getOrders() throws Exception {
         HashMap<String, Object> request = new HashMap<String, Object>();
-
         String response = OkHttp3Util.post(contextRoot + OrdermatchReqCmd.getOrders.name(),
                 Json.jsonmapper().writeValueAsString(request).getBytes());
-        OrderPublishList   r= Json.jsonmapper() .readValue(response, OrderPublishList.class) ;
-        logger.info("getOrders resp : " + r);
+        GetOrderResponse getOrderResponse = Json.jsonmapper().readValue(response, GetOrderResponse.class);
+        logger.info("getOrders resp : " + getOrderResponse);
     }
 
-    @SuppressWarnings({ "deprecation", "unchecked" })
+    @SuppressWarnings({ "unchecked" })
     @Test
     public void exchangeOrder() throws Exception {
 

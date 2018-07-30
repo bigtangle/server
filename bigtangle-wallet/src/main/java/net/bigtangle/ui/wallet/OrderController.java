@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,9 +37,11 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.http.ordermatch.resp.GetOrderResponse;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
@@ -248,31 +251,33 @@ public class OrderController extends ExchangeController {
             } catch (Exception e) {
                 continue;
             }
-            final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
-            List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("orders");
-            if (list != null) {
-                for (Map<String, Object> map : list) {
-                    if ((Integer) map.get("type") == 1) {
-                        map.put("type", Main.getText("SELL"));
-                    } else {
-                        map.put("type", Main.getText("BUY"));
-                    }
-                    int stateIndex = (int) map.get("state");
-                    OrderState orderState = OrderState.values()[stateIndex];
-                    map.put("state", Main.getText(orderState.name()));
-                    byte[] tokenid = null;
-                    if ((String) map.get("tokenId") == null) {
-
-                    } else {
-                        tokenid = Utils.HEX.decode((String) map.get("tokenId"));
-                    }
-
-                    Coin fromAmount = Coin.valueOf(Long.parseLong(map.get("price").toString()), tokenid);
-                    Coin toAmount = Coin.valueOf(Long.parseLong(map.get("amount").toString()), tokenid);
-                    map.put("price", fromAmount.toPlainString());
-                    map.put("amount", toAmount.toPlainString());
-                    orderData.add(map);
+            GetOrderResponse getOrderResponse = Json.jsonmapper().readValue(response, GetOrderResponse.class);
+            for (OrderPublish orderPublish : getOrderResponse.getOrders()) {
+                HashMap<String, Object> map = new HashMap<String, Object>();
+                if (orderPublish.getType() == 1) {
+                    map.put("type", Main.getText("SELL"));
+                } else {
+                    map.put("type", Main.getText("BUY"));
                 }
+                int stateIndex = orderPublish.getState();
+                OrderState orderState = OrderState.values()[stateIndex];
+                map.put("state", Main.getText(orderState.name()));
+                
+                byte[] tokenid = null;
+                if (StringUtils.isNotBlank(orderPublish.getTokenId())) {
+                    tokenid = Utils.HEX.decode((String) map.get("tokenId"));
+                }
+                Coin fromAmount = Coin.valueOf(orderPublish.getPrice(), tokenid);
+                Coin toAmount = Coin.valueOf(orderPublish.getAmount(), tokenid);
+                map.put("price", fromAmount.toPlainString());
+                map.put("amount", toAmount.toPlainString());
+                map.put("orderId", orderPublish.getOrderId());
+                map.put("address", orderPublish.getAddress());
+                map.put("tokenId", orderPublish.getTokenId());
+                map.put("validateTo", orderPublish.getValidateTo());
+                map.put("validateFrom", orderPublish.getValidateFrom());
+                map.put("market", orderPublish.getMarket());
+                orderData.add(map);
             }
         }
         orderidCol.setCellValueFactory(new MapValueFactory("orderid"));
