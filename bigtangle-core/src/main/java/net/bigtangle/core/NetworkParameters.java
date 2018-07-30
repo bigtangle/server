@@ -135,7 +135,6 @@ public abstract class NetworkParameters {
 
 	public static final int REWARD_HEIGHT_INTERVAL = 100;
 	public static final BigInteger MAX_TARGET = Utils.decodeCompactBits(0x207fFFFFL);
-	public static final long MAX_TIMESTAMP_DIFF = 5 * 60;
 	public static final long TARGET_YEARLY_MINING_PAYOUT = 20000000000L; //3 digits after comma, 2% of 1 trillion total supply
 
 	public static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";

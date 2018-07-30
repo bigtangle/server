@@ -551,7 +551,7 @@ public class UserdataController {
             }
 
             filepathTF.setText(file.getAbsolutePath());
-            if (file.length() > Block.MAX_BLOCK_SIZE - 20 * 1000) {
+            if (file.length() > Block.MAX_DEFAULT_BLOCK_SIZE - 20 * 1000) {
                 GuiUtils.informationalAlert("", Main.getText("fileTooLarge"), "");
                 return;
             }

@@ -700,9 +700,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 || block.getTimeSeconds() < storedPrevBranch.getHeader().getTimeSeconds())
             return false;
 
-        if (block.getTimeSeconds() > System.currentTimeMillis() + NetworkParameters.MAX_TIMESTAMP_DIFF)
-            return false;
-
         // Check formal correctness of TXs and their data
         try {
             block.checkTransactionSolidity(height);

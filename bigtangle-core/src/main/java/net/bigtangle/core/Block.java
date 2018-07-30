@@ -68,8 +68,7 @@ public class Block extends Message {
      */
     public static final int HEADER_SIZE = 80 + 32 + 20 + EquihashProof.BYTE_LENGTH;
 
-    static final long ALLOWED_TIME_DRIFT = 2 * 60 * 60; // Same value as Bitcoin
-                                                        // Core.
+    static final long ALLOWED_TIME_DRIFT = 5 * 60; 
 
     /**
      * A constant shared by the entire network: how large in bytes a block is
@@ -78,14 +77,14 @@ public class Block extends Message {
      * avoid somebody creating a titanically huge but valid block and forcing
      * everyone to download/store it forever.
      */
-    public static final int MAX_BLOCK_SIZE = 1 * 1000 * 1000;
+    public static final int MAX_DEFAULT_BLOCK_SIZE = 4 * 1000;
     /**
      * A "sigop" is a signature verification operation. Because they're
      * expensive we also impose a separate limit on the number in a block to
      * prevent somebody mining a huge block that has way more sigops than
      * normal, so is very expensive/slow to verify.
      */
-    public static final int MAX_BLOCK_SIGOPS = MAX_BLOCK_SIZE / 50;
+    public static final int MAX_BLOCK_SIGOPS = MAX_DEFAULT_BLOCK_SIZE / 50;
 
     /**
      * A value for difficultyTarget (nBits) that allows half of all possible
@@ -114,6 +113,7 @@ public class Block extends Message {
     // Utils.sha256hash160
     private byte[] minerAddress;
 
+    // TODO use enum or subclasses
     private long blockType;
 
     // If NetworkParameters.USE_EQUIHASH, this field will contain the PoW
@@ -893,7 +893,7 @@ public class Block extends Message {
         // transactions that reference spent or non-existant inputs.
         // if (transactions.isEmpty())
         // throw new VerificationException("Block had no transactions");
-        if (this.getOptimalEncodingMessageSize() > MAX_BLOCK_SIZE)
+        if (this.getOptimalEncodingMessageSize() > getMaxBlockSize())
             throw new VerificationException("Block larger than MAX_BLOCK_SIZE");
         checkMerkleRoot();
         checkSigOps();
@@ -908,6 +908,15 @@ public class Block extends Message {
             }
         }
     }
+
+	private int getMaxBlockSize() {
+		if (getBlockType() == NetworkParameters.BLOCKTYPE_INITIAL) {
+			return Integer.MAX_VALUE;			
+		}
+		else {
+			return MAX_DEFAULT_BLOCK_SIZE;			
+		}
+	}
 
     /**
      * Verifies both the header and that the transactions hash to the merkle
