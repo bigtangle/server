@@ -199,6 +199,8 @@ public class Main extends Application {
         userSettingData.setKey(tokenid);
         userSettingData.setValue(tokenname);
         WatchedInfo watchedInfo = (WatchedInfo) getUserdata(DataClassName.WATCHED.name());
+        if (watchedInfo == null)
+            return;
         watchedInfo.getUserSettingDatas().add(userSettingData);
         coinbase.setDataClassName(type);
         coinbase.setData(watchedInfo.toByteArray());
@@ -314,6 +316,9 @@ public class Main extends Application {
                 IpAddress = "https://bigtangle.org";
 
         }
+
+        addUsersettingData();
+
         mainUI = loader.load();
         controller = loader.getController();
         // Configure the window with a StackPane so we can overlay things on top
@@ -756,7 +761,7 @@ public class Main extends Application {
             }
 
         }
-        addUsersettingData();
+
         launch(args);
     }
 
