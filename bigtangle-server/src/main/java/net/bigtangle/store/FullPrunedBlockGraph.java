@@ -635,18 +635,18 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         if (block.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD) {
             // Get reward data from previous reward cycle
             Sha256Hash prevRewardHash = null;
-            long fromHeight = 0, nextPerTxReward = 0;
+            long fromHeight = 0;
             byte[] hashBytes = new byte[32];
             ByteBuffer bb = ByteBuffer.wrap(block.getTransactions().get(0).getData());
             fromHeight = bb.getLong();
-            nextPerTxReward = bb.getLong();
-            bb.get(hashBytes, 0, 32);
+            bb.getLong(); //nextReward
+            bb.get(hashBytes, 0, 32); //prevRewardHash
             prevRewardHash = Sha256Hash.wrap(hashBytes);
             // Reward must have been built correctly.
             Pair<Transaction, Boolean> referenceReward = validatorService.generateMiningRewardTX(
                     storedPrev.getHeader().getHash(), storedPrevBranch.getHeader().getHash(), prevRewardHash);
 
-            blockStore.insertTxReward(block.getHash(), nextPerTxReward, fromHeight, referenceReward.getRight());
+            blockStore.insertTxReward(block.getHash(), fromHeight, referenceReward.getRight());
         }
         for (final Transaction tx : block.getTransactions()) {
             boolean isCoinBase = tx.isCoinBase();

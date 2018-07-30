@@ -83,12 +83,15 @@ public class TransactionService {
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
 
     }
- 
 
     public Block createMiningRewardBlock(Sha256Hash prevRewardHash) throws Exception {
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
-        Block r1 = blockService.getBlock(tipsToApprove.getLeft());
-        Block r2 = blockService.getBlock(tipsToApprove.getRight());
+        return createMiningRewardBlock(prevRewardHash, tipsToApprove.getLeft(), tipsToApprove.getRight());
+    }
+
+    public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch) throws Exception {
+        Block r1 = blockService.getBlock(prevTrunk);
+        Block r2 = blockService.getBlock(prevBranch);
         long blocktype0 = NetworkParameters.BLOCKTYPE_REWARD;
         Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), blocktype0,
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));

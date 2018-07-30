@@ -689,7 +689,8 @@ public class Main extends Application {
         if (file.exists()) {
             data = FileUtil.readFile(file);
         }
-
+        boolean flag1 = false;
+        boolean flag2 = false;
         if (data != null && data.length != 0) {
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
             boolean flag = true;
@@ -708,10 +709,20 @@ public class Main extends Application {
                     if (list != null && !list.isEmpty()) {
                         for (UserSettingData userSettingData : list) {
                             if (userSettingData.getDomain().equals(DataClassName.SERVERURL.name())) {
-                                IpAddress = userSettingData.getValue();
+                                if (userSettingData.getValue() != null
+                                        || !userSettingData.getValue().trim().isEmpty()) {
+                                    flag1 = true;
+                                    IpAddress = userSettingData.getValue();
+                                }
+
                             }
                             if (userSettingData.getDomain().equals(DataClassName.LANG.name())) {
-                                lang = userSettingData.getValue();
+                                if (userSettingData.getValue() != null
+                                        || !userSettingData.getValue().trim().isEmpty()) {
+                                    flag2 = true;
+                                    lang = userSettingData.getValue();
+                                }
+
                             }
                         }
                     }
@@ -722,12 +733,16 @@ public class Main extends Application {
 
         }
         if (args == null || args.length == 0) {
-            lang = systemLang;
+            if (!flag2) {
+                lang = systemLang;
+            }
+
             keyFileDirectory = System.getProperty("user.home");
             keyFilePrefix = System.getProperty("user.name");
         }
         if (args != null && args.length >= 2) {
-            lang = args[0];
+            if (!flag2)
+                lang = args[0];
             keyFileDirectory = new File(args[1]).getParent();
             String temp = new File(args[1]).getName();
             if (temp.contains(".")) {
@@ -736,12 +751,22 @@ public class Main extends Application {
                 keyFilePrefix = temp;
             }
             if (args.length >= 3) {
-                IpAddress = args[2];
+                if (!flag1)
+                    IpAddress = args[2];
             }
 
         }
-
+        addUsersettingData();
         launch(args);
+    }
+
+    public static void addUsersettingData() {
+        try {
+            addToken(getContextRoot(), lang, DataClassName.LANG.name(), DataClassName.LANG.name());
+            addToken(getContextRoot(), IpAddress, DataClassName.SERVERURL.name(), DataClassName.SERVERURL.name());
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
     }
 
     public ObservableList<CoinModel> getCoinData() {
@@ -791,7 +816,6 @@ public class Main extends Application {
 
     }
 
-
     public static List<UTXO> getUTXOWithECKeyList(List<ECKey> ecKeys, String tokenid) throws Exception {
         List<String> pubKeyHashs = new ArrayList<String>();
 
@@ -801,13 +825,12 @@ public class Main extends Application {
         return getUTXOWithPubKeyHash(pubKeyHashs, tokenid);
     }
 
-
     public static List<UTXO> getUTXOWithPubKeyHash(byte[] pubKeyHash, String tokenid) throws Exception {
         List<String> pubKeyHashs = new ArrayList<String>();
         pubKeyHashs.add(Utils.HEX.encode(pubKeyHash));
         return getUTXOWithPubKeyHash(pubKeyHashs, tokenid);
     }
- 
+
     public static List<UTXO> getUTXOWithPubKeyHash(List<String> pubKeyHashs, String tokenid) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         String ContextRoot = Main.IpAddress + "/"; // http://" + Main.IpAddress

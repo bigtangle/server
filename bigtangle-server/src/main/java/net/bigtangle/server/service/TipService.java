@@ -56,7 +56,6 @@ public class TipService {
 		return results;
 	}
 
-	// TODO optimize
 	public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair() throws BlockStoreException {
 		Stopwatch watch = Stopwatch.createStarted();
 		List<BlockWrap> entryPoints = getValidationEntryPoints(2);

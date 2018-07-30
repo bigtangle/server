@@ -61,8 +61,9 @@ public class ValidatorService {
 	 * Deterministically creates a mining reward transaction based on the previous
 	 * blocks and previous reward transaction.
 	 * 
-	 * @return Pair of mining transaction and whether it is eligible to be voted on
-	 *         at this moment of time.
+	 * @return Pair of mining reward transaction and boolean indicating whether this
+	 *         mining reward transaction is eligible to be voted on at this moment
+	 *         of time.
 	 * @throws BlockStoreException
 	 */
 	public Pair<Transaction, Boolean> generateMiningRewardTX(Sha256Hash prevTrunkHash, Sha256Hash prevBranchHash,
@@ -86,7 +87,7 @@ public class ValidatorService {
 				fromHeight = 0;
 				toHeight = fromHeight + networkParameters.getRewardHeightInterval() - 1;
 				minHeight = toHeight;
-				perTxReward = 100;
+				perTxReward = NetworkParameters.INITIAL_TX_REWARD;
 
 			} else {
 				ByteBuffer bb = ByteBuffer.wrap(prevRewardBlock.getBlock().getTransactions().get(0).getData());
@@ -191,9 +192,9 @@ public class ValidatorService {
 			tx.addOutput(Coin.SATOSHI.times(entry.getValue() * perTxReward), entry.getKey());
 
 		// The input does not really need to be a valid signature, as long
-		// as it has the right general form.
-		TransactionInput input = new TransactionInput(networkParameters, tx,
-				Script.createInputScript(Block.EMPTY_BYTES, Block.EMPTY_BYTES));
+		// as it has the right general form and is slightly different for different tx
+		TransactionInput input = new TransactionInput(networkParameters, tx, Script.createInputScript(
+				prevTrunkBlock.getBlockHash().getBytes(), prevBranchBlock.getBlockHash().getBytes()));
 		tx.addInput(input);
 
 		// TX reward adjustments for next rewards
@@ -216,11 +217,15 @@ public class ValidatorService {
 
 	private long calculateNextTxReward(BlockWrap prevTrunkBlock, BlockWrap prevBranchBlock, BlockWrap prevRewardBlock,
 			long currPerTxReward, long totalRewardCount) {
-		long nextPerTxReward = Math.max(1, 20000000 * 365 * 24 * 60 * 60 / totalRewardCount / Math.min(1,
-				(Math.max(prevTrunkBlock.getBlock().getTimeSeconds(), prevBranchBlock.getBlock().getTimeSeconds())
-						- prevRewardBlock.getBlock().getTimeSeconds())));
+		long currentTime = Math.max(prevTrunkBlock.getBlock().getTimeSeconds(),
+				prevBranchBlock.getBlock().getTimeSeconds()); // Approximately current time
+		// TODO enforce timestamp equal to this currentTime in checkSolidity
+		long passedSeconds = Math.max(1, (currentTime - prevRewardBlock.getBlock().getTimeSeconds()));
+		long nextPerTxReward = NetworkParameters.TARGET_YEARLY_MINING_PAYOUT * passedSeconds / 31536000L
+				/ totalRewardCount;
 		nextPerTxReward = Math.max(nextPerTxReward, currPerTxReward / 4);
 		nextPerTxReward = Math.min(nextPerTxReward, currPerTxReward * 4);
+		nextPerTxReward = Math.max(nextPerTxReward, 1);
 		return nextPerTxReward;
 	}
 

@@ -101,13 +101,6 @@
                         </TableView>
                         <Button defaultButton="true" layoutX="641.0" layoutY="499.0" mnemonicParsing="false" text="%remove" />
                         <Button cancelButton="true" layoutX="767.0" layoutY="499.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />
-                        <Label layoutX="35.0" layoutY="43.0" prefHeight="15.0" prefWidth="98.0" text="%userdataKey" />
-                        <Label layoutX="288.0" layoutY="44.0" prefHeight="15.0" prefWidth="99.0" text="%userdataValue" />
-                        <TextField fx:id="keyTF" layoutX="137.0" layoutY="40.0" />
-                        <TextField fx:id="valueTF" layoutX="387.0" layoutY="40.0" prefHeight="23.0" prefWidth="131.0" />
-                        <Button layoutX="821.0" layoutY="39.0" mnemonicParsing="false" onAction="#saveOther" text="%add" />
-                        <Label layoutX="527.0" layoutY="44.0" prefHeight="15.0" prefWidth="116.0" text="%userdataDomain" />
-                        <ComboBox fx:id="domianComboBox" editable="true" layoutX="643.0" layoutY="39.0" prefWidth="150.0" />
                      </children>
                   </AnchorPane>
                </content>
