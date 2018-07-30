@@ -7,11 +7,13 @@ package net.bigtangle.server;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,6 +22,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
@@ -33,6 +37,7 @@ import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VOS;
@@ -44,11 +49,48 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.SendRequest;
+import net.bigtangle.wallet.Wallet;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ClientIntegrationTest extends AbstractIntegrationTest {
+    
+    @Test
+    @SuppressWarnings("deprecation")
+    public void testWalletImportKeyGiveMoney() throws Exception {
+        Wallet coinbaseWallet = new Wallet(networkParameters, contextRoot);
+        coinbaseWallet.importKey(new ECKey(Utils.HEX.decode(NetworkParameters.testPriv), Utils.HEX.decode(NetworkParameters.testPub)));
+        coinbaseWallet.setServerURL(contextRoot);
+
+        ECKey outKey = new ECKey();
+        
+        for (int i = 0; i < 3; i ++) {
+            Transaction transaction = new Transaction(this.networkParameters);
+            Coin amount = Coin.parseCoin("10000", NetworkParameters.BIGNETCOIN_TOKENID);
+            transaction.addOutput(amount, outKey);
+            
+            SendRequest request = SendRequest.forTx(transaction);
+            coinbaseWallet.completeTx(request);
+            
+            HashMap<String, String> requestParam = new HashMap<String, String>();
+            byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction, Json.jsonmapper().writeValueAsString(requestParam));
+            Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
+            rollingBlock.addTransaction(request.tx);
+            rollingBlock.solve();
+    
+            OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+            
+            List<TransactionOutput> candidates = coinbaseWallet.calculateAllSpendCandidates(false);
+            for (TransactionOutput transactionOutput : candidates) {
+                logger.info("UTXO : " + transactionOutput);
+            }
+            
+            for (UTXO output : this.testTransactionAndGetBalances(true, outKey)) {
+                logger.info("UTXO : " + output);
+            }
+        }
+    }
 
     @Autowired
     private NetworkParameters networkParameters;
