@@ -3430,8 +3430,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
             Map<String, Coin> value = new HashMap<String, Coin>();
             for (TransactionOutput output : req.tx.getOutputs()) {
                 if (value.containsKey(output.getValue().getTokenHex())) {
-                    value.put(output.getValue().getTokenHex(), value.get(output.getValue().getTokenHex()))
-                            .add(output.getValue());
+                	Coin coin = value.get(output.getValue().getTokenHex());
+                    value.put(output.getValue().getTokenHex(), coin.add(output.getValue()));
                 } else {
                     value.put(output.getValue().getTokenHex(), output.getValue());
                 }

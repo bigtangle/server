@@ -86,6 +86,42 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
             }
         }
     }
+    
+    @Test
+    @SuppressWarnings("deprecation")
+    public void testWalletBatchGiveMoney() throws Exception {
+        Wallet coinbaseWallet = new Wallet(networkParameters, contextRoot);
+        coinbaseWallet.importKey(new ECKey(Utils.HEX.decode(NetworkParameters.testPriv), Utils.HEX.decode(NetworkParameters.testPub)));
+        coinbaseWallet.setServerURL(contextRoot);
+
+        
+        Transaction transaction = new Transaction(this.networkParameters);
+        for (int i = 0; i < 3; i ++) {
+        	ECKey outKey = new ECKey();
+            Coin amount = Coin.parseCoin("3", NetworkParameters.BIGNETCOIN_TOKENID);
+            transaction.addOutput(amount, outKey);
+        }
+        
+        SendRequest request = SendRequest.forTx(transaction);
+        coinbaseWallet.completeTx(request);
+        
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction, Json.jsonmapper().writeValueAsString(requestParam));
+        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
+        rollingBlock.addTransaction(request.tx);
+        rollingBlock.solve();
+
+        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+        
+        List<TransactionOutput> candidates = coinbaseWallet.calculateAllSpendCandidates(false);
+        for (TransactionOutput transactionOutput : candidates) {
+            logger.info("UTXO : " + transactionOutput);
+        }
+        /*
+        for (UTXO output : this.testTransactionAndGetBalances(true, outKey)) {
+            logger.info("UTXO : " + output);
+        }*/
+    }
 
     @Autowired
     private NetworkParameters networkParameters;
