@@ -69,36 +69,38 @@ public class ScheduleGiveMoneyService {
                     return;
                 }
                 HashMap<String, Integer> giveMoneyResult = new HashMap<String, Integer>();
-                for (Iterator<Map.Entry<String, List<WechatInvite>>> iterator = dataMap.entrySet().iterator(); iterator.hasNext();) {
-                	Map.Entry<String, List<WechatInvite>> entry = iterator.next();
+                for (Iterator<Map.Entry<String, List<WechatInvite>>> iterator = dataMap.entrySet().iterator(); iterator
+                        .hasNext();) {
+                    Map.Entry<String, List<WechatInvite>> entry = iterator.next();
                     String wechatinviterId = entry.getKey();
                     String pubkey = wechatInviteResult.get(wechatinviterId);
                     if (!StringUtils.nonEmptyString(pubkey)) {
-                    	iterator.remove();
+                        iterator.remove();
                         continue;
                     }
                     final int count = entry.getValue().size();
                     if (count == 0) {
-                    	iterator.remove();
+                        iterator.remove();
                         continue;
                     }
-                    giveMoneyResult.put(pubkey, count * 1000);
+                    giveMoneyResult.put(pubkey, (count + 1) * 1000);
                 }
-                
+
                 if (giveMoneyResult.isEmpty()) {
-                	return;
+                    return;
                 }
-                
+
                 giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult);
-                
+
                 for (Map.Entry<String, List<WechatInvite>> entry : dataMap.entrySet()) {
-                	logger.info("wechat invite give money : " + entry.getKey() + ", money : " + (entry.getValue().size() * 1000));
-                	for (WechatInvite wechatInvite : entry.getValue()) {
-                		this.store.updateWechatInviteStatus(wechatInvite.getId(), 1);
-                    	logger.info("wechat invite update status, id : " + wechatInvite.getId() + ", success");
-                	}
-                } 
-                
+                    logger.info("wechat invite give money : " + entry.getKey() + ", money : "
+                            + (entry.getValue().size() * 1000));
+                    for (WechatInvite wechatInvite : entry.getValue()) {
+                        this.store.updateWechatInviteStatus(wechatInvite.getId(), 1);
+                        logger.info("wechat invite update status, id : " + wechatInvite.getId() + ", success");
+                    }
+                }
+
             } catch (Exception e) {
                 logger.warn("ScheduleGiveMoneyService", e);
             }
