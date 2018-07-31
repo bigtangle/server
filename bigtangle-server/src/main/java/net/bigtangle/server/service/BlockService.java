@@ -152,7 +152,7 @@ public class BlockService {
     }
 
     public long getTimeSeconds(int days) throws Exception {
-        return System.currentTimeMillis() / 1000 - days * 60 * 24 * 60 * 60;
+        return System.currentTimeMillis() / 1000 - days * 60 * 24 * 60 ;
     }
 
     @Autowired
