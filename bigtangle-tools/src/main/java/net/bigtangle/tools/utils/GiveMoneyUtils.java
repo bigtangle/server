@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -26,6 +27,8 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
+import net.bigtangle.core.http.server.resp.MultiSignResponse;
+import net.bigtangle.core.http.server.resp.TokenSerialIndexResponse;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
@@ -37,9 +40,83 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 public class GiveMoneyUtils {
 
-    public static void give(ECKey ecKey) throws Exception {
-        //Thread.sleep(20000);
+    public static void createTokenMultiSign(String tokenId, List<ECKey> ecKeys, int amount)
+            throws JsonProcessingException, Exception {
+        if (ecKeys.isEmpty()) {
+            return;
+        }
+        TokenInfo tokenInfo = new TokenInfo();
+        Tokens tokens = new Tokens(tokenId, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "",
+                ecKeys.size(), true, true, false);
+        tokenInfo.setTokens(tokens);
+        for (ECKey ecKey : ecKeys) {
+            tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenId, "", ecKey.getPublicKeyAsHex()));
+        }
+        Coin basecoin = Coin.valueOf(amount, tokenId);
 
+        HashMap<String, String> requestParam00 = new HashMap<String, String>();
+        requestParam00.put("tokenid", tokenId);
+        String resp2 = OkHttp3Util.postString(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.getCalTokenIndex.name(),
+                Json.jsonmapper().writeValueAsString(requestParam00));
+
+        TokenSerialIndexResponse tokenSerialIndexResponse = Json.jsonmapper().readValue(resp2,
+                TokenSerialIndexResponse.class);
+        Integer tokenindex = tokenSerialIndexResponse.getTokenindex();
+
+        tokenInfo.setTokenSerial(new TokenSerial(tokenId, tokenindex, amount));
+
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.askTransaction.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block block = Configure.PARAMS.getDefaultSerializer().makeBlock(data);
+        block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+        block.addCoinbaseTransaction(ecKeys.get(0).getPubKey(), basecoin, tokenInfo);
+        block.solve();
+
+        OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.multiSign.name(), block.bitcoinSerialize());
+
+        for (ECKey ecKey : ecKeys) {
+            HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
+            requestParam0.put("address", ecKey.toAddress(Configure.PARAMS).toBase58());
+            String resp = OkHttp3Util.postString(
+                    Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.getMultiSignWithAddress.name(),
+                    Json.jsonmapper().writeValueAsString(requestParam0));
+            System.out.println(resp);
+
+            MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
+            String blockhashHex = multiSignResponse.getMultiSigns().get((int) tokenindex - 1).getBlockhashHex();
+            byte[] payloadBytes = Utils.HEX.decode(blockhashHex);
+
+            Block block0 = Configure.PARAMS.getDefaultSerializer().makeBlock(payloadBytes);
+            Transaction transaction = block0.getTransactions().get(0);
+
+            List<MultiSignBy> multiSignBies = null;
+            if (transaction.getDataSignature() == null) {
+                multiSignBies = new ArrayList<MultiSignBy>();
+            } else {
+                MultiSignByRequest multiSignByRequest = Json.jsonmapper().readValue(transaction.getDataSignature(),
+                        MultiSignByRequest.class);
+                multiSignBies = multiSignByRequest.getMultiSignBies();
+            }
+
+            Sha256Hash sighash = transaction.getHash();
+            ECKey.ECDSASignature party1Signature = ecKey.sign(sighash);
+            byte[] buf1 = party1Signature.encodeToDER();
+
+            MultiSignBy multiSignBy0 = new MultiSignBy();
+            multiSignBy0.setTokenid(tokenId);
+            multiSignBy0.setTokenindex(tokenindex);
+            multiSignBy0.setAddress(ecKey.toAddress(Configure.PARAMS).toBase58());
+            multiSignBy0.setPublickey(Utils.HEX.encode(ecKey.getPubKey()));
+            multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+            multiSignBies.add(multiSignBy0);
+            MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
+            transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
+            OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.multiSign.name(), block0.bitcoinSerialize());
+        }
+    }
+
+    public static void give(ECKey ecKey) throws Exception {
         Block block = getAskTransactionBlock();
 
         @SuppressWarnings("deprecation")
@@ -53,7 +130,7 @@ public class GiveMoneyUtils {
 
         Transaction doublespent = new Transaction(Configure.PARAMS);
         doublespent.addOutput(new TransactionOutput(Configure.PARAMS, doublespent, coinbase, ecKey));
-        
+
         UTXO output_ = null;
         for (UTXO output : outputs) {
             if (Arrays.equals(coinbase.getTokenid(), output.getValue().getTokenid())) {
@@ -102,7 +179,7 @@ public class GiveMoneyUtils {
     public static Block createTokenBlock(ECKey outKey) throws Exception {
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
-        
+
         String tokenname = UUIDUtil.randomUUID();
         Tokens tokens = new Tokens(Utils.HEX.encode(pubKey), tokenname, tokenname, "", 1, false, false, false);
         tokenInfo.setTokens(tokens);
@@ -136,7 +213,7 @@ public class GiveMoneyUtils {
         multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
-        
+
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
 

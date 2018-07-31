@@ -22,7 +22,7 @@ public class SingleTokenAction extends SimpleAction {
     @Override
     public void execute0() {
         ECKey ecKey = this.account.getRandomTradeECKey();
-        logger.info("account name : {}, eckey : {}, multiSign token action start", account.getName(),
+        logger.info("account name : {}, eckey : {}, single token action start", account.getName(),
                 Utils.HEX.encode(ecKey.getPubKey()));
         try {
             for (int i = 0; i < 10; i++) {
@@ -30,7 +30,7 @@ public class SingleTokenAction extends SimpleAction {
                 this.account.executePool(runnable);
             }
         } finally {
-            logger.info("account name : {}, eckey : {}, multiSign token action end", account.getName(),
+            logger.info("account name : {}, eckey : {}, single token action end", account.getName(),
                     Utils.HEX.encode(ecKey.getPubKey()));
         }
     }
@@ -44,7 +44,7 @@ public class SingleTokenAction extends SimpleAction {
                     OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.multiSign.name(),
                             block.bitcoinSerialize());
                 } catch (Exception e) {
-                    logger.error("account name : {}, eckey : {}, multiSign token action exception", account.getName(),
+                    logger.error("account name : {}, eckey : {}, single token action exception", account.getName(),
                             Utils.HEX.encode(ecKey.getPubKey()), e);
                 }
             }

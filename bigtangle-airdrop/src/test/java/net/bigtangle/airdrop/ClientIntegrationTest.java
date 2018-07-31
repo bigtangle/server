@@ -29,7 +29,6 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderPublish;
-import net.bigtangle.core.OrderPublishList;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutPoint;
@@ -53,7 +52,6 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
    
     @Test
-    @SuppressWarnings("unchecked")
     public void deleteOrder() throws Exception {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         HashMap<String, Object> request = new HashMap<String, Object>();

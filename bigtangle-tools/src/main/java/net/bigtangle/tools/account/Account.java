@@ -21,7 +21,6 @@ import net.bigtangle.core.http.server.resp.GetBalancesResponse;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.tools.action.SimpleAction;
-import net.bigtangle.tools.action.impl.BalancesAction;
 import net.bigtangle.tools.action.impl.BuyOrderAction;
 import net.bigtangle.tools.action.impl.MultiTokenAction;
 import net.bigtangle.tools.action.impl.SellOrderAction;
@@ -29,6 +28,7 @@ import net.bigtangle.tools.action.impl.SignOrderAction;
 import net.bigtangle.tools.action.impl.SingleTokenAction;
 import net.bigtangle.tools.action.impl.TokenAction;
 import net.bigtangle.tools.config.Configure;
+import net.bigtangle.tools.thread.TokenRunnable;
 import net.bigtangle.tools.thread.TradeBuyRunnable;
 import net.bigtangle.tools.thread.TradeRunnable;
 import net.bigtangle.tools.thread.TradeSellRunnable;
@@ -82,9 +82,6 @@ public class Account {
     public void initBuyOrderTask() {
         this.executes.add(new BuyOrderAction(this));
         this.executes.add(new SignOrderAction(this));
-        this.executes.add(new BalancesAction(this));
-        //this.executes.add(new MultiTokenAction(this));
-        //this.executes.add(new SingleTokenAction(this));
     }
 
     public void initSellOrderTask() {
@@ -95,9 +92,6 @@ public class Account {
         }
         this.executes.add(new SignOrderAction(this));
         this.executes.add(new SellOrderAction(this));
-        this.executes.add(new BalancesAction(this));
-        //this.executes.add(new MultiTokenAction(this));
-        //this.executes.add(new SingleTokenAction(this));
     }
 
     public void initTradeOrderTask() {
@@ -108,11 +102,7 @@ public class Account {
         }
         this.executes.add(new SignOrderAction(this));
         this.executes.add(new SellOrderAction(this));
-        this.executes.add(new BalancesAction(this));
-        //this.executes.add(new MultiTokenAction(this));
-        //this.executes.add(new SingleTokenAction(this));
     }
-    
 
     public void initTokenTask() {
         this.executes.add(new MultiTokenAction(this));
@@ -124,8 +114,9 @@ public class Account {
         SimpleAction action = this.executes.get(index);
         action.execute();
         index++;
-        if (index == len)
+        if (index == len) {
             index = 0;
+        }
     }
 
     public String getName() {
@@ -140,32 +131,57 @@ public class Account {
     }
 
     public ECKey getBuyKey() throws Exception {
-        if (buyKey == null) {
-            for (ECKey ecKey : walletKeys()) {
-                try {
-                    Set<String> pubKeyHashs = new HashSet<String>();
-                    pubKeyHashs.add(Utils.HEX.encode(ecKey.toAddress(Configure.PARAMS).getHash160()));
+        if (this.buyKey != null) {
+            return this.buyKey;
+        }
+        for (ECKey ecKey : walletKeys()) {
+            try {
+                Set<String> pubKeyHashs = new HashSet<String>();
+                pubKeyHashs.add(Utils.HEX.encode(ecKey.toAddress(Configure.PARAMS).getHash160()));
 
-                    String resp = OkHttp3Util.postString(
-                            Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.getBalances.name(),
-                            Json.jsonmapper().writeValueAsString(pubKeyHashs));
-                    GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(resp,
-                            GetBalancesResponse.class);
+                String resp = OkHttp3Util.postString(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.getBalances.name(),
+                        Json.jsonmapper().writeValueAsString(pubKeyHashs));
+                GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(resp, GetBalancesResponse.class);
 
-                    for (Coin coinbase : getBalancesResponse.getTokens()) {
-                        if (Arrays.equals(coinbase.getTokenid(), NetworkParameters.BIGNETCOIN_TOKENID)) {
-                            this.buyKey = ecKey;
-                            break;
-                        }
+                for (Coin coinbase : getBalancesResponse.getTokens()) {
+                    if (Arrays.equals(coinbase.getTokenid(), NetworkParameters.BIGNETCOIN_TOKENID)) {
+                        this.buyKey = ecKey;
+                        break;
                     }
-                } catch (Exception e) {
                 }
+            } catch (Exception e) {
             }
         }
-        return buyKey;
+        return this.buyKey;
+    }
+
+    public ECKey getPushKey() throws Exception {
+        if (this.pushKey != null) {
+            return this.pushKey;
+        }
+        this.pushKey = this.walletKeys().get(0);
+        return this.pushKey;
+    }
+
+    public List<ECKey> getSignKey() throws Exception {
+        if (this.signKey != null && !this.signKey.isEmpty()) {
+            return this.signKey;
+        }
+        this.signKey = new ArrayList<ECKey>();
+        for (ECKey ecKey : this.walletKeys()) {
+            signKey.add(ecKey);
+            if (signKey.size() == 3) {
+                break;
+            }
+        }
+        return this.signKey;
     }
 
     private ECKey buyKey;
+
+    private ECKey pushKey;
+
+    private List<ECKey> signKey;
 
     public void completeTransaction(SendRequest request) throws Exception {
         this.walletAppKit.wallet().completeTx(request);
@@ -193,9 +209,9 @@ public class Account {
         Thread thread = new Thread(new TradeRunnable(this));
         thread.start();
     }
-    
+
     public void startToken() {
-        Thread thread = new Thread(new TradeRunnable(this));
+        Thread thread = new Thread(new TokenRunnable(this));
         thread.start();
     }
 
