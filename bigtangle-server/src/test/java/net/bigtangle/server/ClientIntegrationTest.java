@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,6 +34,7 @@ import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
@@ -40,9 +42,13 @@ import net.bigtangle.core.VOS;
 import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.http.server.resp.UserDataResponse;
 import net.bigtangle.core.http.server.resp.VOSExecuteListResponse;
+import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
+import net.bigtangle.script.Script;
+import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
@@ -50,6 +56,66 @@ import net.bigtangle.wallet.Wallet.MissingSigsMode;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ClientIntegrationTest extends AbstractIntegrationTest {
+	
+	public void testGiveMoney() throws Exception {
+        @SuppressWarnings("deprecation")
+        ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPriv),
+                Utils.HEX.decode(NetworkParameters.testPub));
+        
+        HashMap<String, Integer> giveMoneyResult = new HashMap<>();
+        for (int i = 0; i < 3; i ++) {
+        	ECKey outKey = new ECKey();
+        	giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), 1000);
+        }
+        
+        List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+
+        System.out.println(outputs.size());
+
+        Coin coinbase = Coin.ZERO;
+
+        Transaction doublespent = new Transaction(networkParameters);
+        
+        for (Map.Entry<String, Integer> entry : giveMoneyResult.entrySet()) {
+        	Coin amount = Coin.valueOf(entry.getValue() * 1000, NetworkParameters.BIGNETCOIN_TOKENID);
+            Address address = Address.fromBase58(networkParameters, entry.getKey());
+            doublespent.addOutput(amount, address);
+            coinbase = coinbase.add(amount);
+        }
+
+        UTXO output_ = null;
+        for (UTXO output : outputs) {
+            if (Arrays.equals(coinbase.getTokenid(), output.getValue().getTokenid())) {
+                output_ = output;
+            }
+        }
+
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, output_, 0);
+        Coin amount2 = spendableOutput.getValue().subtract(coinbase);
+        
+        doublespent.addOutput(amount2, genesiskey);
+        TransactionInput input = doublespent.addInput(spendableOutput);
+        Sha256Hash sighash = doublespent.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
+                false);
+
+        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+                false);
+        Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+        input.setScriptSig(inputScript);
+
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction,
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
+        rollingBlock.addTransaction(doublespent);
+        rollingBlock.solve();
+
+        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+        
+        for (UTXO utxo : testTransactionAndGetBalances(false, genesiskey)) {
+            logger.info("UTXO : " + utxo);
+        }
+	}
     
     @Test
     @SuppressWarnings("deprecation")
