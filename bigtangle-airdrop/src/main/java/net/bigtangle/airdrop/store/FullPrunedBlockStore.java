@@ -83,9 +83,11 @@ public interface FullPrunedBlockStore {
      */
     NetworkParameters getParams();
 
-	List<WechatInvite> queryByUnfinishedWechatInvite() throws BlockStoreException;
+    List<WechatInvite> queryByUnfinishedWechatInvite() throws BlockStoreException;
 
-	HashMap<String, String> queryByUWechatInvitePubKeyMapping(Set<String> keySet) throws BlockStoreException;
+    HashMap<String, String> queryByUWechatInvitePubKeyMapping(Set<String> keySet) throws BlockStoreException;
 
-	void updateWechatInviteStatus(String id, int status) throws BlockStoreException;
+    void updateWechatInviteStatus(String id, int status) throws BlockStoreException;
+
+    void clearWechatInviteStatusZero() throws BlockStoreException;
 }

@@ -4,7 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.airdrop.config;
 
-
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -15,10 +14,20 @@ public class ServerConfiguration {
     private String port;
 
     private Boolean debug;
-    
+
     private String net;
-    
+
     private String serverURL;
+
+    private boolean reset;
+
+    public boolean isReset() {
+        return reset;
+    }
+
+    public void setReset(boolean reset) {
+        this.reset = reset;
+    }
 
     public String getPort() {
         return port;
@@ -36,7 +45,6 @@ public class ServerConfiguration {
         this.debug = debug;
     }
 
-  
     public String getNet() {
         return net;
     }

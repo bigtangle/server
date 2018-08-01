@@ -33,6 +33,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   wechatId varchar(255),\n" 
             + "   wechatinviterId varchar(255),\n"
             + "   createtime datetime,\n" 
+            + "   status int(11) not null,\n"
             + "   PRIMARY KEY (id) )";
     
     private static final String CREATE_WECHAT_REWARD_TABLE = "CREATE TABLE wechatreward (\n"
@@ -41,9 +42,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   wechatInviterId varchar(255),\n"
             + "   createtime datetime,\n" 
             + "   PRIMARY KEY (id) )";
-
-    private static final String CREATE_WECHAT_INVITE_TABLE_INDEX = "CREATE INDEX wechatreward_wechatInviterId ON wechatreward (wechatInviterId) USING btree";
-    private static final String CREATE_WECHAT_REWARD_TABLE_INDEX = "CREATE INDEX wechatreward_wechatinviterId_wechatId ON exchange (wechatinviterId, wechatId) USING btree";
 
     public MySQLFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
             String username, String password) throws BlockStoreException {
@@ -66,8 +64,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     @Override
     protected List<String> getCreateIndexesSQL() {
         List<String> sqlStatements = new ArrayList<String>();
-        sqlStatements.add(CREATE_WECHAT_INVITE_TABLE_INDEX);
-        sqlStatements.add(CREATE_WECHAT_REWARD_TABLE_INDEX);
         return sqlStatements;
     }
 
