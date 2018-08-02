@@ -121,7 +121,11 @@ public class BlockService {
                 continue;
             }
             try {
+                if (block.getBlockType() == NetworkParameters.BLOCKTYPE_INITIAL)  {
+                    continue;
+                }
                 StoredBlock storedBlock0 = this.store.get(block.getPrevBlockHash());
+               
                 if (storedBlock0 == null) {
                     byte[] re = blockRequester.requestBlock(block.getPrevBlockHash());
                     if (re != null) {
