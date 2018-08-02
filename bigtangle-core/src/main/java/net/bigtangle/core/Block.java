@@ -147,7 +147,7 @@ public class Block extends Message {
 
     public Block(NetworkParameters params, long blockVersionGenesis, long blocktypeTransfer) {
 
-        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, NetworkParameters.BLOCKTYPE_TRANSFER, 0);
+        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, blocktypeTransfer, 0);
     }
 
     public Block(NetworkParameters params, Sha256Hash prevBlockHash, Sha256Hash prevBranchBlockHash, long blocktype,
