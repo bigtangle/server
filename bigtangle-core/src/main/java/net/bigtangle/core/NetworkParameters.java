@@ -154,7 +154,8 @@ public abstract class NetworkParameters {
 		coinbase.addInput(new TransactionInput(params, coinbase, inputBuilder.build().getProgram()));
 		add(params, testCoin + "," + testPub, coinbase);
 		genesisBlock.addTransaction(coinbase);
-		genesisBlock.solve();
+		genesisBlock.setNonce(0);
+		//genesisBlock.solve();
 		return genesisBlock;
 
 	}

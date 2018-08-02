@@ -89,17 +89,19 @@ public class TransactionService {
         return createMiningRewardBlock(prevRewardHash, tipsToApprove.getLeft(), tipsToApprove.getRight());
     }
 
-    public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch) throws Exception {
+    public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
+            throws Exception {
         Block r1 = blockService.getBlock(prevTrunk);
         Block r2 = blockService.getBlock(prevBranch);
         long blocktype0 = NetworkParameters.BLOCKTYPE_REWARD;
         Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), blocktype0,
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
 
-        // TODO check if eligible and drop if not 
-        block.addTransaction(validatorService.generateMiningRewardTX(r1.getHash(), r2.getHash(), prevRewardHash).getLeft());
+        // TODO check if eligible and drop if not
+        block.addTransaction(
+                validatorService.generateMiningRewardTX(r1.getHash(), r2.getHash(), prevRewardHash).getLeft());
         block.solve();
-        blockgraph.add(block,true);
+        blockgraph.add(block, true);
         return block;
     }
 
@@ -131,10 +133,12 @@ public class TransactionService {
         try {
             Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bytes);
             if (!checkBlockExists(block)) {
-                blockgraph.add(block,true);
-                logger.debug("addConnected from kafka " + block);
-                // if(!block.getTransactions().isEmpty() && emptyBlock)
-                // saveEmptyBlock(3);
+                boolean added = blockgraph.add(block, true);
+                if (added) {
+                    logger.debug("addConnected from kafka " + block);
+                } else {
+                    logger.debug(" unsolid block from kafka " + block);
+                }
                 return Optional.of(block);
             } else {
                 logger.debug("addConnected   BlockExists " + block);
@@ -150,7 +154,7 @@ public class TransactionService {
     }
 
     /*
-     * check before add Block from kafka , the block can be already exists. 
+     * check before add Block from kafka , the block can be already exists.
      */
     public boolean checkBlockExists(Block block) throws BlockStoreException {
         return store.get(block.getHash()) != null;

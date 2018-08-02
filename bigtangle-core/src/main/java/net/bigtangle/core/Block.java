@@ -68,7 +68,7 @@ public class Block extends Message {
      */
     public static final int HEADER_SIZE = 80 + 32 + 20 + EquihashProof.BYTE_LENGTH;
 
-    static final long ALLOWED_TIME_DRIFT = 5 * 60; 
+    static final long ALLOWED_TIME_DRIFT = 5 * 60;
 
     /**
      * A constant shared by the entire network: how large in bytes a block is
@@ -666,6 +666,12 @@ public class Block extends Message {
      * target).
      */
     protected boolean checkProofOfWork(boolean throwException) throws VerificationException {
+        // fix none for genesis block
+
+        if (getBlockType() == NetworkParameters.BLOCKTYPE_INITIAL) {
+            return true;
+        }
+
         // This part is key - it is what proves the block was as difficult to
         // make as it claims
         // to be. Note however that in the context of this function, the block
@@ -909,14 +915,13 @@ public class Block extends Message {
         }
     }
 
-	private int getMaxBlockSize() {
-		if (getBlockType() == NetworkParameters.BLOCKTYPE_INITIAL) {
-			return Integer.MAX_VALUE;			
-		}
-		else {
-			return MAX_DEFAULT_BLOCK_SIZE;			
-		}
-	}
+    private int getMaxBlockSize() {
+        if (getBlockType() == NetworkParameters.BLOCKTYPE_INITIAL) {
+            return Integer.MAX_VALUE;
+        } else {
+            return MAX_DEFAULT_BLOCK_SIZE;
+        }
+    }
 
     /**
      * Verifies both the header and that the transactions hash to the merkle
@@ -1275,12 +1280,13 @@ public class Block extends Message {
         b.setPrevBlockHash(getHash());
         b.setPrevBranchBlockHash(prevBranchBlockHash);
 
-        // Don't let timestamp go backwards
-        if (getTimeSeconds() >= time)
-            b.setTime(getTimeSeconds() + 1);
-        else
-            b.setTime(time);
-
+        // Don't let timestamp go backwards, ex the genesis block
+        if (blockType != NetworkParameters.BLOCKTYPE_INITIAL) {
+            if (getTimeSeconds() >= time)
+                b.setTime(getTimeSeconds() + 1);
+            else
+                b.setTime(time);
+        }
         b.solve();
         try {
             b.verifyHeader();
