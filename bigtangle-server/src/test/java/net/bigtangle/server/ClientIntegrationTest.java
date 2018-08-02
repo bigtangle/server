@@ -56,44 +56,40 @@ import net.bigtangle.wallet.Wallet.MissingSigsMode;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ClientIntegrationTest extends AbstractIntegrationTest {
-	
-	public void testGiveMoney() throws Exception {
+
+    @Test
+    public void testGiveMoney() throws Exception {
         @SuppressWarnings("deprecation")
         ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
-        
-        HashMap<String, Integer> giveMoneyResult = new HashMap<>();
-        for (int i = 0; i < 3; i ++) {
-        	ECKey outKey = new ECKey();
-        	giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), 1000);
-        }
-        
-        List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
 
-        System.out.println(outputs.size());
+        HashMap<String, Integer> giveMoneyResult = new HashMap<>();
+        for (int i = 0; i < 3; i++) {
+            ECKey outKey = new ECKey();
+            giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), 1000);
+        }
 
         Coin coinbase = Coin.ZERO;
-
         Transaction doublespent = new Transaction(networkParameters);
-        
+
         for (Map.Entry<String, Integer> entry : giveMoneyResult.entrySet()) {
-        	Coin amount = Coin.valueOf(entry.getValue() * 1000, NetworkParameters.BIGNETCOIN_TOKENID);
+            Coin amount = Coin.valueOf(entry.getValue() * 1000, NetworkParameters.BIGNETCOIN_TOKENID);
             Address address = Address.fromBase58(networkParameters, entry.getKey());
             doublespent.addOutput(amount, address);
             coinbase = coinbase.add(amount);
         }
 
-        UTXO output_ = null;
-        for (UTXO output : outputs) {
+        UTXO findOutput = null;
+        for (UTXO output : testTransactionAndGetBalances(false, genesiskey)) {
             if (Arrays.equals(coinbase.getTokenid(), output.getValue().getTokenid())) {
-                output_ = output;
+                findOutput = output;
             }
         }
 
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, output_, 0);
-        Coin amount2 = spendableOutput.getValue().subtract(coinbase);
-        
-        doublespent.addOutput(amount2, genesiskey);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, findOutput, 0);
+        Coin amount = spendableOutput.getValue().subtract(coinbase);
+
+        doublespent.addOutput(amount, genesiskey);
         TransactionInput input = doublespent.addInput(spendableOutput);
         Sha256Hash sighash = doublespent.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                 false);
@@ -111,11 +107,14 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         rollingBlock.solve();
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
-        
+
         for (UTXO utxo : testTransactionAndGetBalances(false, genesiskey)) {
             logger.info("UTXO : " + utxo);
+            if (Arrays.equals(coinbase.getTokenid(), utxo.getValue().getTokenid())) {
+                assertTrue(utxo.getValue().value == 999999997000000L);
+            }
         }
-	}
+    }
     
     @Test
     @SuppressWarnings("deprecation")

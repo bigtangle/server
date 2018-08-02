@@ -8,6 +8,8 @@ import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -73,40 +75,35 @@ public class GiveMoneyUtils {
     }
 
     public void batchGiveMoneyToECKeyList(HashMap<String, Integer> giveMoneyResult) throws Exception {
+        String contextRoot = serverConfiguration.getServerURL();
         if (giveMoneyResult.isEmpty()) {
             return;
         }
-
         @SuppressWarnings("deprecation")
         ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
-        
-        List<UTXO> outputs = getTransactionAndGetBalances(genesiskey);
-
-        System.out.println(outputs.size());
 
         Coin coinbase = Coin.ZERO;
-
         Transaction doublespent = new Transaction(networkParameters);
-        
+
         for (Map.Entry<String, Integer> entry : giveMoneyResult.entrySet()) {
-        	Coin amount = Coin.valueOf(entry.getValue() * 1000, NetworkParameters.BIGNETCOIN_TOKENID);
+            Coin amount = Coin.valueOf(entry.getValue() * 1000, NetworkParameters.BIGNETCOIN_TOKENID);
             Address address = Address.fromBase58(networkParameters, entry.getKey());
             doublespent.addOutput(amount, address);
             coinbase = coinbase.add(amount);
         }
 
-        UTXO output_ = null;
-        for (UTXO output : outputs) {
+        UTXO findOutput = null;
+        for (UTXO output : getTransactionAndGetBalances(genesiskey)) {
             if (Arrays.equals(coinbase.getTokenid(), output.getValue().getTokenid())) {
-                output_ = output;
+                findOutput = output;
             }
         }
 
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, output_, 0);
-        Coin amount2 = spendableOutput.getValue().subtract(coinbase);
-        
-        doublespent.addOutput(amount2, genesiskey);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, findOutput, 0);
+        Coin amount = spendableOutput.getValue().subtract(coinbase);
+
+        doublespent.addOutput(amount, genesiskey);
         TransactionInput input = doublespent.addInput(spendableOutput);
         Sha256Hash sighash = doublespent.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                 false);
@@ -116,7 +113,6 @@ public class GiveMoneyUtils {
         Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
         input.setScriptSig(inputScript);
 
-        String contextRoot = serverConfiguration.getServerURL();
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction,
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -125,5 +121,11 @@ public class GiveMoneyUtils {
         rollingBlock.solve();
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+        
+        for (TransactionOutput transactionOutput : doublespent.getOutputs()) {
+            LOGGER.info("give mount output value : " + transactionOutput.getValue());
+        }
     }
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(GiveMoneyUtils.class);
 }
