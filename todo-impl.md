@@ -212,4 +212,9 @@ Needs changing the algorithm since it currently relies on getting updated blocke
 See above
 ```
 
+# setup of securiry of permissioned bigtangle
+1) disable check of other wallet other then yours in wallet
+2) restirct access of block transaction 
+3) interface to add user access list as KYC
 
+ 
