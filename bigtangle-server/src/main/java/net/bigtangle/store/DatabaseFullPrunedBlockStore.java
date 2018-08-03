@@ -1889,7 +1889,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public void insertUnsolid(Block block) throws BlockStoreException {
-        if (block.getBlockType() == NetworkParameters.BLOCKTYPE_INITIAL) {
+        if (block.getBlockType() == Block.BLOCKTYPE_INITIAL) {
             return;
         }
         PreparedStatement preparedStatement = null;

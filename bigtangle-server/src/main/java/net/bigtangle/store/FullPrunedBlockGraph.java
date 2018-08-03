@@ -450,12 +450,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
 
         // For rewards, update reward to be confirmed now
-        if (block.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD) {
+        if (block.getBlockType() == Block.BLOCKTYPE_REWARD) {
             blockStore.updateTxRewardConfirmed(block.getHash(), true);
         }
 
         // For token creations, update token db
-        if (block.getBlockType() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
+        if (block.getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION) {
             Transaction tx = block.getTransactions().get(0);
             if (tx.getData() != null) {
                 byte[] buf = tx.getData();
@@ -464,8 +464,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
         }
 
-        if (block.getBlockType() == NetworkParameters.BLOCKTYPE_USERDATA
-                || block.getBlockType() == NetworkParameters.BLOCKTYPE_VOS) {
+        if (block.getBlockType() == Block.BLOCKTYPE_USERDATA
+                || block.getBlockType() == Block.BLOCKTYPE_VOS) {
             Transaction tx = block.getTransactions().get(0);
             if (tx.getData() != null && tx.getDataSignature() != null) {
                 try {
@@ -488,7 +488,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
         }
 
-        if (block.getBlockType() == NetworkParameters.BLOCKTYPE_VOS_EXECUTE) {
+        if (block.getBlockType() == Block.BLOCKTYPE_VOS_EXECUTE) {
             Transaction tx = block.getTransactions().get(0);
             if (tx.getData() != null && tx.getDataSignature() != null) {
                 try {
@@ -571,12 +571,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
 
         // For rewards, update reward db
-        if (block.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD) {
+        if (block.getBlockType() == Block.BLOCKTYPE_REWARD) {
             blockStore.updateTxRewardConfirmed(block.getHash(), false);
         }
 
         // For token creations, update token db
-        if (block.getBlockType() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
+        if (block.getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION) {
             // TODO revert token db changes here (revert
             // synchronizationToken(TokenInfo))
             // TODO unsolidify other issuances of this public key?
@@ -632,7 +632,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Check timestamp
 
         // Check reward block specific solidity
-        if (block.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD) {
+        if (block.getBlockType() == Block.BLOCKTYPE_REWARD) {
             // Get reward data from previous reward cycle
             Sha256Hash prevRewardHash = null;
             long fromHeight = 0;
@@ -708,7 +708,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
 
         // Check reward block specific solidity
-        if (block.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD) {
+        if (block.getBlockType() == Block.BLOCKTYPE_REWARD) {
             // Get reward data from previous reward cycle
             Sha256Hash prevRewardHash = null;
             @SuppressWarnings("unused")
@@ -734,13 +734,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
 
         // Check genesis block specific validity, can only one genesis block
-        if (block.getBlockType() == NetworkParameters.BLOCKTYPE_INITIAL) {
+        if (block.getBlockType() == Block.BLOCKTYPE_INITIAL) {
             if (!block.getHash().equals(networkParameters.getGenesisBlock().getHash())) {
                 return false;
             }
         }
         // Check issuance block specific validity
-        if (block.getBlockType() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
+        if (block.getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION) {
             try {
                 if (!this.multiSignService.checkMultiSignPre(block, allowConflicts)) {
                     return false;

@@ -121,7 +121,7 @@ public class BlockService {
                 continue;
             }
             try {
-                if (block.getBlockType() == NetworkParameters.BLOCKTYPE_INITIAL)  {
+                if (block.getBlockType() == Block.BLOCKTYPE_INITIAL)  {
                     continue;
                 }
                 StoredBlock storedBlock0 = this.store.get(block.getPrevBlockHash());

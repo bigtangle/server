@@ -287,7 +287,7 @@ public class ValidatorService {
 				}
 			}
 
-			if (block.getBlockType() == NetworkParameters.BLOCKTYPE_REWARD) {
+			if (block.getBlockType() == Block.BLOCKTYPE_REWARD) {
 				// Previous reward must have been confirmed
 				Sha256Hash prevRewardHash = null;
 				try {
@@ -320,7 +320,7 @@ public class ValidatorService {
 				}
 			}
 
-			if (block.getBlockType() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
+			if (block.getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION) {
 				// TODO add prev token issuance confirmed
 			}
 		}
@@ -679,12 +679,12 @@ public class ValidatorService {
 				.map(in -> new ConflictCandidate(b, in.getOutpoint())).forEach(c -> blockConflicts.add(c));
 
 		// Dynamic conflicts: mining reward height intervals
-		if (b.getBlock().getBlockType() == NetworkParameters.BLOCKTYPE_REWARD)
+		if (b.getBlock().getBlockType() == Block.BLOCKTYPE_REWARD)
 			blockConflicts
 					.add(new ConflictCandidate(b, Utils.readInt64(b.getBlock().getTransactions().get(0).getData(), 0)));
 
 		// Dynamic conflicts: token issuance ids
-		if (b.getBlock().getBlockType() == NetworkParameters.BLOCKTYPE_TOKEN_CREATION)
+		if (b.getBlock().getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION)
 			blockConflicts.add(new ConflictCandidate(b,
 					new TokenInfo().parse(b.getBlock().getTransactions().get(0).getData()).getTokenSerial()));
 

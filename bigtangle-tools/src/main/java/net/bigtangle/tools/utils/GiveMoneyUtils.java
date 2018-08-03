@@ -69,7 +69,7 @@ public class GiveMoneyUtils {
         byte[] data = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Configure.PARAMS.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+        block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
         block.addCoinbaseTransaction(ecKeys.get(0).getPubKey(), basecoin, tokenInfo);
         block.solve();
 
@@ -196,7 +196,7 @@ public class GiveMoneyUtils {
         byte[] data = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Configure.PARAMS.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+        block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
         block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo);
 
         Transaction transaction = block.getTransactions().get(0);

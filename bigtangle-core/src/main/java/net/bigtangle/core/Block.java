@@ -140,9 +140,28 @@ public class Block extends Message {
     // (which Message needs)
     protected int optimalEncodingMessageSize;
 
+    public static final long BLOCKTYPE_VOS_EXECUTE = 8; //VOS execution result
+
+    public static final long BLOCKTYPE_FILE = 7; //upload file
+
+    public static final long BLOCKTYPE_GOVERNANCE = 6; // Governance of software update and community
+
+    public static final long BLOCKTYPE_VOS = 5; // virtual operation system for using Docker and Kubernetes
+
+    public static final long BLOCKTYPE_USERDATA = 4; // user defined data
+
+    public static final long BLOCKTYPE_TOKEN_CREATION = 3; // Custom token issuance
+
+    public static final long BLOCKTYPE_REWARD = 2; // Rewards of mining
+
+    public static final long BLOCKTYPE_TRANSFER = 1; //  transfer of token
+
+    // BLOCKTYPE
+    public static final long BLOCKTYPE_INITIAL = 0; // Genesis block
+
     Block(NetworkParameters params, long setVersion) {
 
-        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, NetworkParameters.BLOCKTYPE_TRANSFER, 0);
+        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, Block.BLOCKTYPE_TRANSFER, 0);
     }
 
     public Block(NetworkParameters params, long blockVersionGenesis, long blocktypeTransfer) {
@@ -668,7 +687,7 @@ public class Block extends Message {
     protected boolean checkProofOfWork(boolean throwException) throws VerificationException {
         // fix none for genesis block
 
-        if (getBlockType() == NetworkParameters.BLOCKTYPE_INITIAL) {
+        if (getBlockType() == Block.BLOCKTYPE_INITIAL) {
             return true;
         }
 
@@ -819,13 +838,13 @@ public class Block extends Message {
      */
     public void checkTransactionSolidity(final long height) throws VerificationException {
         // The transactions must adhere to their block type rules
-        if (blockType == NetworkParameters.BLOCKTYPE_TOKEN_CREATION) {
+        if (blockType == Block.BLOCKTYPE_TOKEN_CREATION) {
             if (transactions.size() != 1)
                 throw new VerificationException("Too many or too few transactions for token creation.");
 
             if (!transactions.get(0).isCoinBase())
                 throw new VerificationException("TX is not coinbase when it should be.");
-        } else if (blockType == NetworkParameters.BLOCKTYPE_REWARD) {
+        } else if (blockType == Block.BLOCKTYPE_REWARD) {
             if (transactions.size() != 1)
                 throw new VerificationException("Too many or too few transactions for token creation.");
 
@@ -842,11 +861,11 @@ public class Block extends Message {
             } catch (ArrayIndexOutOfBoundsException e) {
                 throw new VerificationException(e);
             }
-        } else if ((blockType == NetworkParameters.BLOCKTYPE_TRANSFER)
-                || (blockType == NetworkParameters.BLOCKTYPE_USERDATA) || (blockType == NetworkParameters.BLOCKTYPE_VOS)
-                || (blockType == NetworkParameters.BLOCKTYPE_GOVERNANCE)
-                || (blockType == NetworkParameters.BLOCKTYPE_FILE)
-                || (blockType == NetworkParameters.BLOCKTYPE_VOS_EXECUTE)) {
+        } else if ((blockType == Block.BLOCKTYPE_TRANSFER)
+                || (blockType == Block.BLOCKTYPE_USERDATA) || (blockType == Block.BLOCKTYPE_VOS)
+                || (blockType == Block.BLOCKTYPE_GOVERNANCE)
+                || (blockType == Block.BLOCKTYPE_FILE)
+                || (blockType == Block.BLOCKTYPE_VOS_EXECUTE)) {
             for (Transaction tx : transactions)
                 if (tx.isCoinBase())
                     throw new VerificationException("TX is coinbase when it should not be.");
@@ -908,15 +927,15 @@ public class Block extends Message {
             if (!allowCoinbaseTransaction() && transaction.isCoinBase()) {
                 throw new VerificationException("Coinbase Transaction is not allowed for this block type");
             }
-            if (blockType != NetworkParameters.BLOCKTYPE_USERDATA && blockType != NetworkParameters.BLOCKTYPE_VOS
-                    && blockType != NetworkParameters.BLOCKTYPE_VOS_EXECUTE) {
+            if (blockType != Block.BLOCKTYPE_USERDATA && blockType != Block.BLOCKTYPE_VOS
+                    && blockType != Block.BLOCKTYPE_VOS_EXECUTE) {
                 transaction.verify();
             }
         }
     }
 
     private int getMaxBlockSize() {
-        if (getBlockType() == NetworkParameters.BLOCKTYPE_INITIAL) {
+        if (getBlockType() == Block.BLOCKTYPE_INITIAL) {
             return Integer.MAX_VALUE;
         } else {
             return MAX_DEFAULT_BLOCK_SIZE;
@@ -1229,9 +1248,9 @@ public class Block extends Message {
     public static final byte[] EMPTY_BYTES = new byte[32];
 
     public boolean allowCoinbaseTransaction() {
-        return blockType == NetworkParameters.BLOCKTYPE_INITIAL
-                || blockType == NetworkParameters.BLOCKTYPE_TOKEN_CREATION
-                || blockType == NetworkParameters.BLOCKTYPE_REWARD;
+        return blockType == Block.BLOCKTYPE_INITIAL
+                || blockType == Block.BLOCKTYPE_TOKEN_CREATION
+                || blockType == Block.BLOCKTYPE_REWARD;
     }
 
     private static Random gen = new Random();
@@ -1281,7 +1300,7 @@ public class Block extends Message {
         b.setPrevBranchBlockHash(prevBranchBlockHash);
 
         // Don't let timestamp go backwards, ex the genesis block
-        if (blockType != NetworkParameters.BLOCKTYPE_INITIAL) {
+        if (blockType != Block.BLOCKTYPE_INITIAL) {
             if (getTimeSeconds() >= time)
                 b.setTime(getTimeSeconds() + 1);
             else

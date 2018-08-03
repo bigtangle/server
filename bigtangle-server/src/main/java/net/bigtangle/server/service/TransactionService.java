@@ -79,7 +79,7 @@ public class TransactionService {
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
         Block r2 = blockService.getBlock(tipsToApprove.getRight());
 
-        return new Block(this.networkParameters, r1.getHash(), r2.getHash(), NetworkParameters.BLOCKTYPE_TRANSFER,
+        return new Block(this.networkParameters, r1.getHash(), r2.getHash(), Block.BLOCKTYPE_TRANSFER,
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
 
     }
@@ -93,7 +93,7 @@ public class TransactionService {
             throws Exception {
         Block r1 = blockService.getBlock(prevTrunk);
         Block r2 = blockService.getBlock(prevBranch);
-        long blocktype0 = NetworkParameters.BLOCKTYPE_REWARD;
+        long blocktype0 = Block.BLOCKTYPE_REWARD;
         Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), blocktype0,
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
 

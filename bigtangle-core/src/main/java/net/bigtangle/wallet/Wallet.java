@@ -3613,7 +3613,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         byte[] data = OkHttp3Util.post(serverurl + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = params.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+        block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
         block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo);
 
         Transaction transaction = block.getTransactions().get(0);

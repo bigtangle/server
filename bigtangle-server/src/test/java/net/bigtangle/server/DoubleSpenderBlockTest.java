@@ -155,7 +155,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
         }
         for (int i = 0; i < 100; i++) {
             Block block = new Block(this.networkParameters, sha256Hash1, sha256Hash2,
-                    NetworkParameters.BLOCKTYPE_TRANSFER, System.currentTimeMillis() / 1000);
+                    Block.BLOCKTYPE_TRANSFER, System.currentTimeMillis() / 1000);
             if (i == 99) {
                 break;
             }
@@ -169,7 +169,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
         }
         
         Block block = new Block(this.networkParameters, sha256Hash1, sha256Hash2,
-                NetworkParameters.BLOCKTYPE_TRANSFER, System.currentTimeMillis() / 1000);
+                Block.BLOCKTYPE_TRANSFER, System.currentTimeMillis() / 1000);
         
         ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
@@ -251,7 +251,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+        block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
         block.addCoinbaseTransaction(ecKey.getPubKey(), basecoin, tokenInfo);
 
         Transaction transaction = block.getTransactions().get(0);

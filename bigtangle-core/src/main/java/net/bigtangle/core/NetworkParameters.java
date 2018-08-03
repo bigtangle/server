@@ -60,18 +60,6 @@ public abstract class NetworkParameters {
 	// DUMMY Token id byte[20]
 	public static final byte[] DUMMY_TOKENID = HEX.decode("1111111111111111111111111111111111111111");
 
-	// BLOCKTYPE
-	public static final long BLOCKTYPE_INITIAL = 0; // Genesis block
-	public static final long BLOCKTYPE_TRANSFER = 1; //  transfer of token
-	public static final long BLOCKTYPE_REWARD = 2; // Rewards of mining
-	public static final long BLOCKTYPE_TOKEN_CREATION = 3; // Custom token issuance
-	public static final long BLOCKTYPE_USERDATA = 4; // user defined data
-	public static final long BLOCKTYPE_VOS = 5; // virtual operation system for using Docker and Kubernetes
-	public static final long BLOCKTYPE_GOVERNANCE = 6; // Governance of software update and community
-	public static final long BLOCKTYPE_FILE = 7; //upload file
-	public static final long BLOCKTYPE_VOS_EXECUTE = 8; //VOS execution result
-
-
 	// Use Equihash
 	public static final boolean USE_EQUIHASH = false;
 
@@ -145,7 +133,7 @@ public abstract class NetworkParameters {
 	}
 
 	public static Block createGenesis(NetworkParameters params) {
-		Block genesisBlock = new Block(params, Block.BLOCK_VERSION_GENESIS, BLOCKTYPE_INITIAL);
+		Block genesisBlock = new Block(params, Block.BLOCK_VERSION_GENESIS, Block.BLOCKTYPE_INITIAL);
 		genesisBlock.setTime(1532896109L);
 //		genesisBlock.setTime(1231006505L);
 
