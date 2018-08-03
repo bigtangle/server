@@ -198,7 +198,7 @@ public class UserdataController {
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Main.params.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(NetworkParameters.BLOCKTYPE_USERDATA);
+        block.setBlockType(Block.BLOCKTYPE_USERDATA);
 
         KeyParameter aesKey = null;
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
@@ -264,7 +264,7 @@ public class UserdataController {
                     Json.jsonmapper().writeValueAsString(requestParam));
 
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
-            block.setBlockType(NetworkParameters.BLOCKTYPE_USERDATA);
+            block.setBlockType(Block.BLOCKTYPE_USERDATA);
 
             Transaction coinbase = new Transaction(Main.params);
 
@@ -316,7 +316,7 @@ public class UserdataController {
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.askTransaction.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
-            block.setBlockType(NetworkParameters.BLOCKTYPE_USERDATA);
+            block.setBlockType(Block.BLOCKTYPE_USERDATA);
             KeyParameter aesKey = null;
             final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
             if (!"".equals(Main.password.trim())) {
@@ -379,7 +379,7 @@ public class UserdataController {
                     Json.jsonmapper().writeValueAsString(requestParam));
 
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
-            block.setBlockType(NetworkParameters.BLOCKTYPE_USERDATA);
+            block.setBlockType(Block.BLOCKTYPE_USERDATA);
 
             Transaction coinbase = new Transaction(Main.params);
 
@@ -492,7 +492,7 @@ public class UserdataController {
             for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
                 pubKeyList.add(ecKey.getPublicKeyAsHex());
             }
-            int blocktype = (int) NetworkParameters.BLOCKTYPE_USERDATA;
+            int blocktype = (int) Block.BLOCKTYPE_USERDATA;
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("blocktype", blocktype);
             requestParam.put("pubKeyList", pubKeyList);
@@ -563,7 +563,7 @@ public class UserdataController {
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.askTransaction.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
-            block.setBlockType(NetworkParameters.BLOCKTYPE_USERDATA);
+            block.setBlockType(Block.BLOCKTYPE_USERDATA);
 
             KeyParameter aesKey = null;
             final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();

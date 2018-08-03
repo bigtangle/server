@@ -735,7 +735,7 @@ public class TokenController extends TokenBaseController {
         byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Main.params.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(NetworkParameters.BLOCKTYPE_TOKEN_CREATION);
+        block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
         ECKey key1 = null;
 
         if (Main.bitcoin.wallet().isEncrypted()) {

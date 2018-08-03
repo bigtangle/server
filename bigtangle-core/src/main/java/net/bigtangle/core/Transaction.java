@@ -209,6 +209,9 @@ public class Transaction extends ChildMessage {
     @Nullable
     private String dataClassName;
 
+    @Nullable
+    private byte[] subtangleID;
+
     public Transaction(NetworkParameters params) {
         super(params);
         version = 1;
@@ -602,9 +605,8 @@ public class Transaction extends ChildMessage {
         long len = readUint32();
         optimalEncodingMessageSize += 4;
 
-        if (len > 0) {
-            byte[] data = readBytes((int) len);
-            this.memo = new String(data);
+        if (len > 0) { 
+            this.memo = new String( readBytes((int) len));
             optimalEncodingMessageSize += len;
         }
 
@@ -630,6 +632,14 @@ public class Transaction extends ChildMessage {
             optimalEncodingMessageSize += len;
         }
 
+        len = readUint32();
+        optimalEncodingMessageSize += 4;
+        if (len > 0) {
+            this.subtangleID = readBytes((int) len);
+            optimalEncodingMessageSize += len;
+        }
+
+        
         length = cursor - offset;
     }
 
@@ -678,9 +688,10 @@ public class Transaction extends ChildMessage {
     public String toString() {
         StringBuilder s = new StringBuilder();
         s.append("  ").append(getHashAsString()).append('\n');
-//        if (updatedAt != null)
-//            s.append("  updated: ").append(Utils.dateTimeFormat(updatedAt)).append('\n');
-       if (version != 1)
+        // if (updatedAt != null)
+        // s.append(" updated:
+        // ").append(Utils.dateTimeFormat(updatedAt)).append('\n');
+        if (version != 1)
             s.append("  version ").append(version).append('\n');
         if (isTimeLocked()) {
             s.append("  time locked until ");
@@ -1229,6 +1240,13 @@ public class Transaction extends ChildMessage {
             uint32ToByteStreamLE(this.dataSignature.length, stream);
             stream.write(this.dataSignature);
         }
+        if (this.subtangleID == null) {
+            uint32ToByteStreamLE(0L, stream);
+        } else {
+            uint32ToByteStreamLE(this.subtangleID.length, stream);
+            stream.write(this.subtangleID);
+        }
+
     }
 
     /**
@@ -1516,4 +1534,13 @@ public class Transaction extends ChildMessage {
     public void setDataClassName(String dataclassname) {
         this.dataClassName = dataclassname;
     }
+
+    public byte[] getSubtangleID() {
+        return subtangleID;
+    }
+
+    public void setSubtangleID(byte[] subtangleID) {
+        this.subtangleID = subtangleID;
+    }
+    
 }

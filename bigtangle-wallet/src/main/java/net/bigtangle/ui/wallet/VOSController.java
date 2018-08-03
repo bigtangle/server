@@ -153,7 +153,7 @@ public class VOSController {
             for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
                 pubKeyList.add(ecKey.getPublicKeyAsHex());
             }
-            int blocktype = (int) NetworkParameters.BLOCKTYPE_VOS;
+            int blocktype = (int) Block.BLOCKTYPE_VOS;
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("blocktype", blocktype);
             requestParam.put("pubKeyList", pubKeyList);
@@ -201,7 +201,7 @@ public class VOSController {
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.askTransaction.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
-            block.setBlockType(NetworkParameters.BLOCKTYPE_VOS);
+            block.setBlockType(Block.BLOCKTYPE_VOS);
             KeyParameter aesKey = null;
             final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
             if (!"".equals(Main.password.trim())) {

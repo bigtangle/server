@@ -140,21 +140,27 @@ public class Block extends Message {
     // (which Message needs)
     protected int optimalEncodingMessageSize;
 
-    public static final long BLOCKTYPE_VOS_EXECUTE = 8; //VOS execution result
+    public static final long BLOCKTYPE_CROSSTANGLE = 9; // transfer from mainnet
+                                                        // to permissioned
+                                                        // bigtangle
+    public static final long BLOCKTYPE_VOS_EXECUTE = 8; // VOS execution result
 
-    public static final long BLOCKTYPE_FILE = 7; //upload file
+    public static final long BLOCKTYPE_FILE = 7; // upload file
 
-    public static final long BLOCKTYPE_GOVERNANCE = 6; // Governance of software update and community
+    public static final long BLOCKTYPE_GOVERNANCE = 6; // Governance of software
+                                                       // update and community
 
-    public static final long BLOCKTYPE_VOS = 5; // virtual operation system for using Docker and Kubernetes
+    public static final long BLOCKTYPE_VOS = 5; // Smart contracts for using
+                                                // Docker and Kubernetes
 
     public static final long BLOCKTYPE_USERDATA = 4; // user defined data
 
-    public static final long BLOCKTYPE_TOKEN_CREATION = 3; // Custom token issuance
+    public static final long BLOCKTYPE_TOKEN_CREATION = 3; // Custom token
+                                                           // issuance
 
     public static final long BLOCKTYPE_REWARD = 2; // Rewards of mining
 
-    public static final long BLOCKTYPE_TRANSFER = 1; //  transfer of token
+    public static final long BLOCKTYPE_TRANSFER = 1; // transfer of token
 
     // BLOCKTYPE
     public static final long BLOCKTYPE_INITIAL = 0; // Genesis block
@@ -861,11 +867,9 @@ public class Block extends Message {
             } catch (ArrayIndexOutOfBoundsException e) {
                 throw new VerificationException(e);
             }
-        } else if ((blockType == Block.BLOCKTYPE_TRANSFER)
-                || (blockType == Block.BLOCKTYPE_USERDATA) || (blockType == Block.BLOCKTYPE_VOS)
-                || (blockType == Block.BLOCKTYPE_GOVERNANCE)
-                || (blockType == Block.BLOCKTYPE_FILE)
-                || (blockType == Block.BLOCKTYPE_VOS_EXECUTE)) {
+        } else if ((blockType == Block.BLOCKTYPE_TRANSFER) || (blockType == Block.BLOCKTYPE_USERDATA)
+                || (blockType == Block.BLOCKTYPE_VOS) || (blockType == Block.BLOCKTYPE_GOVERNANCE)
+                || (blockType == Block.BLOCKTYPE_FILE) || (blockType == Block.BLOCKTYPE_VOS_EXECUTE)) {
             for (Transaction tx : transactions)
                 if (tx.isCoinBase())
                     throw new VerificationException("TX is coinbase when it should not be.");
@@ -1248,8 +1252,7 @@ public class Block extends Message {
     public static final byte[] EMPTY_BYTES = new byte[32];
 
     public boolean allowCoinbaseTransaction() {
-        return blockType == Block.BLOCKTYPE_INITIAL
-                || blockType == Block.BLOCKTYPE_TOKEN_CREATION
+        return blockType == Block.BLOCKTYPE_INITIAL || blockType == Block.BLOCKTYPE_TOKEN_CREATION
                 || blockType == Block.BLOCKTYPE_REWARD;
     }
 
