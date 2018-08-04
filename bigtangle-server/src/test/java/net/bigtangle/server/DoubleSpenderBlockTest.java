@@ -24,6 +24,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenSerial;
+import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
@@ -236,7 +237,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
     public void createToken(ECKey ecKey) throws Exception {
         byte[] pubKey = ecKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
-        Tokens tokens = new Tokens(Utils.HEX.encode(pubKey), "test", "", "", 1, false, false, false);
+        Tokens tokens = new Tokens(Utils.HEX.encode(pubKey), "test", "", "", 1, false, TokenType.token.ordinal(), false);
         tokenInfo.setTokens(tokens);
 
         tokenInfo.getMultiSignAddresses()

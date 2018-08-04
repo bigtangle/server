@@ -256,7 +256,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 	public void saveTokens(Tokens tokens) throws BlockStoreException;
 
 	public void saveTokens(String tokenid, String tokenname, String description, String url, long signnumber,
-			boolean multiserial, boolean asmarket, boolean tokenstop) throws BlockStoreException;
+			boolean multiserial, int tokentype, boolean tokenstop) throws BlockStoreException;
 
 	public List<BlockEvaluation> getSearchBlockEvaluations(List<String> address) throws BlockStoreException;
 

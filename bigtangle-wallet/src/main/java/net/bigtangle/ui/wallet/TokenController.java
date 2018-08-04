@@ -44,6 +44,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenSerial;
+import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
@@ -474,7 +475,7 @@ public class TokenController extends TokenBaseController {
 
             TokenInfo tokenInfo = new TokenInfo();
             Tokens tokens = new Tokens(tokenid.getValue().trim(), stockName.getText().trim(),
-                    stockDescription.getText().trim(), stockUrl.getText().trim(), 1, false, false, false);
+                    stockDescription.getText().trim(), stockUrl.getText().trim(), 1, false, TokenType.token.ordinal(), false);
             tokenInfo.setTokens(tokens);
 
             // add MultiSignAddress item
@@ -531,7 +532,7 @@ public class TokenController extends TokenBaseController {
 
             TokenInfo tokenInfo = new TokenInfo();
             Tokens tokens = new Tokens(marketid.getValue().trim(), marketName.getText().trim(),
-                    marketDescription.getText().trim(), marketurl.getText(), 1, false, true, false);
+                    marketDescription.getText().trim(), marketurl.getText(), 1, false, TokenType.market.ordinal(), false);
             tokenInfo.setTokens(tokens);
 
             // add MultiSignAddress item
@@ -707,7 +708,7 @@ public class TokenController extends TokenBaseController {
         TokenInfo tokenInfo = new TokenInfo();
         Tokens tokens = new Tokens(Main.getString(map.get("tokenHex")).trim(),
                 Main.getString(map.get("tokenname")).trim(), Main.getString(map.get("description")).trim(),
-                Main.getString(map.get("url")).trim(), Long.parseLong(this.signnumberTF.getText().trim()), true, false,
+                Main.getString(map.get("url")).trim(), Long.parseLong(this.signnumberTF.getText().trim()), true, TokenType.token.ordinal(),
                 (boolean) map.get("tokenstop"));
         tokenInfo.setTokens(tokens);
         if (signAddrChoiceBox.getItems() != null && !signAddrChoiceBox.getItems().isEmpty()) {

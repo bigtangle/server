@@ -38,6 +38,7 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.ordermatch.resp.GetOrderResponse;
@@ -240,9 +241,9 @@ public class OrderController extends ExchangeController {
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
 
         for (Tokens tokens : getTokensResponse.getTokens()) {
-            boolean asmarket = tokens.isAsmarket();
-            if (!asmarket)
+            if (tokens.getTokenType() != TokenType.market.ordinal()) {
                 continue;
+            }
             String url = tokens.getUrl();
             try {
                 response = OkHttp3Util.post(url + "/" + OrdermatchReqCmd.getOrders.name(),
@@ -337,9 +338,9 @@ public class OrderController extends ExchangeController {
         } else {
             for (Tokens tokens : getTokensResponse.getTokens()) {
                 String tokenHex = tokens.getTokenid();
-                boolean asmarket = tokens.isAsmarket();
-                if (asmarket)
+                if (tokens.getTokenType() != TokenType.token.ordinal()) {
                     continue;
+                }
                 String tokenname = tokens.getTokenname();
                 if (!isSystemCoin(tokenname + ":" + tokenHex)) {
                     tokenData.add(tokenname + ":" + tokenHex);

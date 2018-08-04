@@ -42,6 +42,7 @@ import net.bigtangle.core.PrunedException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenSerial;
+import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
@@ -466,7 +467,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
         TokenInfo tokenInfo = new TokenInfo();
         Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", -1, true,
-                true, true);
+                TokenType.market.ordinal(), true);
         tokenInfo.setTokens(tokens);
 
         block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
@@ -493,7 +494,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
         TokenInfo tokenInfo = new TokenInfo();
         Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true,
-                true, true);
+                TokenType.market.ordinal(), true);
         tokenInfo.setTokens(tokens);
 
         block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
@@ -520,7 +521,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
         TokenInfo tokenInfo = new TokenInfo();
         Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true,
-                true, true);
+                TokenType.market.ordinal(), true);
         tokenInfo.setTokens(tokens);
 
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
@@ -558,7 +559,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
         TokenInfo tokenInfo = new TokenInfo();
         Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true,
-                true, true);
+                TokenType.market.ordinal(), true);
         tokenInfo.setTokens(tokens);
 
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
@@ -600,7 +601,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
         TokenInfo tokenInfo = new TokenInfo();
         Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true,
-                true, true);
+                TokenType.market.ordinal(), true);
         tokenInfo.setTokens(tokens);
 
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
@@ -682,7 +683,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
         TokenInfo tokenInfo = new TokenInfo();
         Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true,
-                true, true);
+                TokenType.market.ordinal(), true);
         tokenInfo.setTokens(tokens);
 
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
@@ -760,7 +761,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
         TokenInfo tokenInfo = new TokenInfo();
         Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true,
-                true, true);
+                TokenType.market.ordinal(), true);
         tokenInfo.setTokens(tokens);
 
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
@@ -833,7 +834,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         for (int i = 1; i <= 2; i++) {
 
             TokenInfo tokenInfo = new TokenInfo();
-            Tokens tokens = new Tokens(Utils.HEX.encode(pubKey), "test", "", "", 1, false, false, false);
+            Tokens tokens = new Tokens(Utils.HEX.encode(pubKey), "test", "", "", 1, false, TokenType.token.ordinal(), false);
             tokenInfo.setTokens(tokens);
 
             // add MultiSignAddress item
@@ -884,7 +885,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         for (int i = 1; i <= 2; i++) {
             TokenInfo tokenInfo = new TokenInfo();
             Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true,
-                    true, false);
+                    TokenType.market.ordinal(), false);
             tokenInfo.setTokens(tokens);
 
             ECKey key1 = keys.get(0);
@@ -981,7 +982,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
         TokenInfo tokenInfo = new TokenInfo();
         Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true,
-                true, false);
+                TokenType.market.ordinal(), false);
         tokenInfo.setTokens(tokens);
 
         ECKey key1 = keys.get(0);
@@ -1119,7 +1120,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String tokenid = keys.get(7).getPublicKeyAsHex();
         TokenInfo tokenInfo = new TokenInfo();
         Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true,
-                true, true);
+                TokenType.market.ordinal(), true);
         tokenInfo.setTokens(tokens);
         ECKey key1 = keys.get(0);
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key1.getPublicKeyAsHex()));

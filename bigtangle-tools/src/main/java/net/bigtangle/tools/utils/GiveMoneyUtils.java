@@ -19,6 +19,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenSerial;
+import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
@@ -47,7 +48,7 @@ public class GiveMoneyUtils {
         }
         TokenInfo tokenInfo = new TokenInfo();
         Tokens tokens = new Tokens(tokenId, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "",
-                ecKeys.size(), true, true, false);
+                ecKeys.size(), true, TokenType.token.ordinal(), false);
         tokenInfo.setTokens(tokens);
         for (ECKey ecKey : ecKeys) {
             tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenId, "", ecKey.getPublicKeyAsHex()));
@@ -181,7 +182,7 @@ public class GiveMoneyUtils {
         TokenInfo tokenInfo = new TokenInfo();
 
         String tokenname = UUIDUtil.randomUUID();
-        Tokens tokens = new Tokens(Utils.HEX.encode(pubKey), tokenname, tokenname, "", 1, false, false, false);
+        Tokens tokens = new Tokens(Utils.HEX.encode(pubKey), tokenname, tokenname, "", 1, false, TokenType.token.ordinal(), false);
         tokenInfo.setTokens(tokens);
 
         tokenInfo.getMultiSignAddresses()

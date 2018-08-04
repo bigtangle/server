@@ -35,6 +35,7 @@ import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
@@ -166,8 +167,9 @@ public class ExchangeController {
         }
         for (Tokens tokens : getTokensResponse.getTokens()) {
             String tokenid = tokens.getTokenid();
-            boolean asmarket = tokens.isAsmarket();
-            if (!asmarket) continue;
+            if (tokens.getTokenType() != TokenType.market.ordinal()) {
+                continue;
+            }
             String url = tokens.getUrl();
             log.debug(url);
             if (url == null || url.isEmpty()) {

@@ -9,14 +9,14 @@ public class Tokens implements java.io.Serializable {
     private static final long serialVersionUID = 6992138619113601243L;
 
     public Tokens(String tokenid, String tokenname, String description, String url, long signnumber,
-            boolean multiserial, boolean asmarket, boolean tokenstop) {
+            boolean multiserial, int tokenType, boolean tokenstop) {
         this.tokenid = tokenid;
         this.tokenname = tokenname;
         this.description = description;
         this.url = url;
         this.signnumber = signnumber;
         this.multiserial = multiserial;
-        this.asmarket = asmarket;
+        this.tokenType = tokenType;
         this.tokenstop = tokenstop;
     }
     
@@ -36,8 +36,16 @@ public class Tokens implements java.io.Serializable {
     
     private boolean multiserial;
     
-    private boolean asmarket;
+    private int tokenType;
     
+    public int getTokenType() {
+        return tokenType;
+    }
+
+    public void setTokenType(int tokenType) {
+        this.tokenType = tokenType;
+    }
+
     private boolean tokenstop;
 
     public String getTokenid() {
@@ -88,14 +96,6 @@ public class Tokens implements java.io.Serializable {
         this.multiserial = multiserial;
     }
 
-    public boolean isAsmarket() {
-        return asmarket;
-    }
-
-    public void setAsmarket(boolean asmarket) {
-        this.asmarket = asmarket;
-    }
-
     public boolean isTokenstop() {
         return tokenstop;
     }
@@ -107,7 +107,7 @@ public class Tokens implements java.io.Serializable {
     @Override
     public String toString() {
         return "Tokens [tokenid=" + tokenid + ", tokenname=" + tokenname + ", description=" + description + ", url="
-                + url + ", signnumber=" + signnumber + ", multiserial=" + multiserial + ", asmarket=" + asmarket
+                + url + ", signnumber=" + signnumber + ", multiserial=" + multiserial + ", tokenType=" + tokenType
                 + ", tokenstop=" + tokenstop + "]";
     }
 
@@ -118,8 +118,10 @@ public class Tokens implements java.io.Serializable {
         this.url = tokens.getUrl();
         this.signnumber = tokens.getSignnumber();
         this.multiserial = tokens.isMultiserial();
-        this.asmarket = tokens.isAsmarket();
+        this.tokenType = tokens.getTokenType();
         this.tokenstop = tokens.isTokenstop();
         return this;
     }
+    
+    
 }
