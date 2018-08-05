@@ -869,7 +869,8 @@ public class Block extends Message {
             }
         } else if ((blockType == Block.BLOCKTYPE_TRANSFER) || (blockType == Block.BLOCKTYPE_USERDATA)
                 || (blockType == Block.BLOCKTYPE_VOS) || (blockType == Block.BLOCKTYPE_GOVERNANCE)
-                || (blockType == Block.BLOCKTYPE_FILE) || (blockType == Block.BLOCKTYPE_VOS_EXECUTE)) {
+                || (blockType == Block.BLOCKTYPE_FILE) || (blockType == Block.BLOCKTYPE_VOS_EXECUTE
+                || (blockType == Block.BLOCKTYPE_CROSSTANGLE))) {
             for (Transaction tx : transactions)
                 if (tx.isCoinBase())
                     throw new VerificationException("TX is coinbase when it should not be.");
@@ -932,7 +933,7 @@ public class Block extends Message {
                 throw new VerificationException("Coinbase Transaction is not allowed for this block type");
             }
             if (blockType != Block.BLOCKTYPE_USERDATA && blockType != Block.BLOCKTYPE_VOS
-                    && blockType != Block.BLOCKTYPE_VOS_EXECUTE) {
+                    && blockType != Block.BLOCKTYPE_VOS_EXECUTE && blockType != Block.BLOCKTYPE_CROSSTANGLE) {
                 transaction.verify();
             }
         }
