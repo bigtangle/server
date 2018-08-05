@@ -18,6 +18,10 @@ db:
   dbName: ${DB_NAME:info}
   username: ${DB_USERNAME:root}
   password: ${DB_PASSWORD:test1234}
+
+subtangle:
+  active: ${SUBTABGLE_ACTIVE:false}
+  
 service:
   milestoneschedule:
     rate: ${SERVICE_MILESTONE_RATE:15000}
