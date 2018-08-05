@@ -116,7 +116,17 @@ When 'parent transfer block' is CONFIRMED in the subnet, the master node sends v
 MAY NOT HAPPEN: 'parent transfer block' is UNCONFIRMED in the subnet. (no influence on parent Tangle) -> responsibility of tangle owner -> no second public Tangles 
 ```
 
+create master address as token 
 
+create payment in parent
+ 1) address =master account
+ 2) subtangleid = target address
+
+Subtangle
+ find all new payment entry UTXO and find the relevant  block
+ getBlock to read 
+ create Multi  Token publish with  Coinbase transaction
+ payment to target address
 
 
 #Problems and proposed solutions
