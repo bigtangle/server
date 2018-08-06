@@ -201,7 +201,23 @@ public class Main extends Application {
         WatchedInfo watchedInfo = (WatchedInfo) getUserdata(DataClassName.WATCHED.name());
         if (watchedInfo == null)
             return;
-        watchedInfo.getUserSettingDatas().add(userSettingData);
+        List<UserSettingData> userSettingDatas = watchedInfo.getUserSettingDatas();
+        if (userSettingDatas != null && !userSettingDatas.isEmpty()) {
+            for (UserSettingData userSettingData2 : userSettingDatas) {
+                if (DataClassName.SERVERURL.name().equals(userSettingData2.getDomain())
+                        || DataClassName.LANG.name().equals(userSettingData2.getDomain())) {
+                    if (domain.equals(userSettingData2.getDomain())) {
+                        userSettingData2.setValue(tokenname);
+                    }
+
+                }
+
+            }
+            watchedInfo.setUserSettingDatas(userSettingDatas);
+        } else {
+            watchedInfo.getUserSettingDatas().add(userSettingData);
+        }
+
         coinbase.setDataClassName(type);
         coinbase.setData(watchedInfo.toByteArray());
 
