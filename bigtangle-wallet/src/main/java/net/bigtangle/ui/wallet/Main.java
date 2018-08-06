@@ -963,7 +963,7 @@ public class Main extends Application {
             UploadfileInfo uploadfileInfo = new UploadfileInfo().parse(bytes);
             return uploadfileInfo;
         } else if (DataClassName.SERVERURL.name().equals(type) || DataClassName.LANG.name().equals(type)
-                || DataClassName.TOKEN.name().equals(type)) {
+                || DataClassName.TOKEN.name().equals(type) || DataClassName.WATCHED.name().equals(type)) {
             if (bytes == null || bytes.length == 0) {
                 return new WatchedInfo();
             }

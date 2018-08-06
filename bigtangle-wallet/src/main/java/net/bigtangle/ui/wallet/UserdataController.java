@@ -507,7 +507,14 @@ public class UserdataController {
             for (String hexStr : dataList) {
                 byte[] data = Utils.HEX.decode(hexStr);
                 HashMap<String, Object> userdataKV = Json.jsonmapper().readValue(new String(data), HashMap.class);
-                allData.add(userdataKV);
+                List<Map<String, Object>> userSettingDatas = (List<Map<String, Object>>) userdataKV
+                        .get("userSettingDatas");
+                if (userSettingDatas != null && !userSettingDatas.isEmpty()) {
+                    for (Map<String, Object> map : userSettingDatas) {
+                        allData.add(map);
+                    }
+                }
+
             }
             otherTableview.setItems(allData);
             keyColumn.setCellValueFactory(new MapValueFactory("key"));
