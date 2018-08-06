@@ -34,7 +34,6 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.MyHomeAddress;
-import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Tokens;
@@ -186,7 +185,7 @@ public class UserdataController {
             }
             String type = domianComboBox.getValue();
 
-            Main.addToken(CONTEXT_ROOT, valueTF.getText(), keyTF.getText(), type);
+            Main.addToken(CONTEXT_ROOT, valueTF.getText(), type, type);
             initOtherTableView(list);
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
@@ -503,7 +502,7 @@ public class UserdataController {
 
             UserDataResponse userDataResponse = Json.jsonmapper().readValue(resp, UserDataResponse.class);
             List<String> dataList = userDataResponse.getDataList();
-            
+
             ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();
             for (String hexStr : dataList) {
                 byte[] data = Utils.HEX.decode(hexStr);
