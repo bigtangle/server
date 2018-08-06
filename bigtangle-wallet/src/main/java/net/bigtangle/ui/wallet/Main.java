@@ -202,6 +202,8 @@ public class Main extends Application {
         if (watchedInfo == null)
             return;
         List<UserSettingData> userSettingDatas = watchedInfo.getUserSettingDatas();
+        List<UserSettingData> temps = new ArrayList<>();
+
         if (userSettingDatas != null && !userSettingDatas.isEmpty()) {
             for (UserSettingData userSettingData2 : userSettingDatas) {
                 if (DataClassName.SERVERURL.name().equals(userSettingData2.getDomain())
@@ -211,9 +213,10 @@ public class Main extends Application {
                     }
 
                 }
+                temps.add(userSettingData2);
 
             }
-            watchedInfo.setUserSettingDatas(userSettingDatas);
+            watchedInfo.setUserSettingDatas(temps);
         } else {
             watchedInfo.getUserSettingDatas().add(userSettingData);
         }
