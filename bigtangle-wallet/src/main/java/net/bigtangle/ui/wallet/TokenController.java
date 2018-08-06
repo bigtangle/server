@@ -40,7 +40,6 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
-import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenSerial;
@@ -475,7 +474,8 @@ public class TokenController extends TokenBaseController {
 
             TokenInfo tokenInfo = new TokenInfo();
             Tokens tokens = new Tokens(tokenid.getValue().trim(), stockName.getText().trim(),
-                    stockDescription.getText().trim(), stockUrl.getText().trim(), 1, false, TokenType.token.ordinal(), false);
+                    stockDescription.getText().trim(), stockUrl.getText().trim(), 1, false, TokenType.token.ordinal(),
+                    false);
             tokenInfo.setTokens(tokens);
 
             // add MultiSignAddress item
@@ -532,7 +532,8 @@ public class TokenController extends TokenBaseController {
 
             TokenInfo tokenInfo = new TokenInfo();
             Tokens tokens = new Tokens(marketid.getValue().trim(), marketName.getText().trim(),
-                    marketDescription.getText().trim(), marketurl.getText(), 1, false, TokenType.market.ordinal(), false);
+                    marketDescription.getText().trim(), marketurl.getText(), 1, false, TokenType.market.ordinal(),
+                    false);
             tokenInfo.setTokens(tokens);
 
             // add MultiSignAddress item
@@ -708,8 +709,8 @@ public class TokenController extends TokenBaseController {
         TokenInfo tokenInfo = new TokenInfo();
         Tokens tokens = new Tokens(Main.getString(map.get("tokenHex")).trim(),
                 Main.getString(map.get("tokenname")).trim(), Main.getString(map.get("description")).trim(),
-                Main.getString(map.get("url")).trim(), Long.parseLong(this.signnumberTF.getText().trim()), true, TokenType.token.ordinal(),
-                (boolean) map.get("tokenstop"));
+                Main.getString(map.get("url")).trim(), Long.parseLong(this.signnumberTF.getText().trim()), true,
+                TokenType.token.ordinal(), (boolean) map.get("tokenstop"));
         tokenInfo.setTokens(tokens);
         if (signAddrChoiceBox.getItems() != null && !signAddrChoiceBox.getItems().isEmpty()) {
             for (String pubKeyHex : signAddrChoiceBox.getItems()) {
@@ -787,6 +788,7 @@ public class TokenController extends TokenBaseController {
         try {
             Main.addToken(CONTEXT_ROOT, rowData.get("tokenname").toString(), rowData.get("tokenid").toString(),
                     DataClassName.TOKEN.name());
+            GuiUtils.informationalAlert("", Main.getText("addwatchedSuccess"), "");
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
