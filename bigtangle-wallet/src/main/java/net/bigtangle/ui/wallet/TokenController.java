@@ -659,7 +659,84 @@ public class TokenController extends TokenBaseController {
         }
     }
 
-    public void doSaveSubtangle(HashMap<String, Object> map) {
+    public void doSaveSubtangle(HashMap<String, Object> map) throws Exception {
+        KeyParameter aesKey = null;
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
+        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
+
+        String CONTEXT_ROOT = Main.getContextRoot();
+
+        TokenInfo tokenInfo = new TokenInfo();
+        Tokens tokens = new Tokens(Main.getString(map.get("tokenHex")).trim(),
+                Main.getString(map.get("tokenname")).trim(), Main.getString(map.get("description")).trim(),
+                Main.getString(map.get("url")).trim(), Long.parseLong(this.signnumberTF1.getText().trim()), true,
+                TokenType.subtangle.ordinal(), (boolean) map.get("tokenstop"));
+        tokenInfo.setTokens(tokens);
+        if (signAddrChoiceBox1.getItems() != null && !signAddrChoiceBox1.getItems().isEmpty()) {
+            for (String pubKeyHex : signAddrChoiceBox.getItems()) {
+                ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(pubKeyHex));
+                tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(Main.getString(map.get("tokenHex")).trim(),
+                        "", ecKey.getPublicKeyAsHex()));
+            }
+        }
+        Coin basecoin = Coin.valueOf(0, Main.getString(map.get("tokenHex")).trim());
+        long amount = basecoin.getValue();
+        HashMap<String, String> requestParam00 = new HashMap<String, String>();
+        requestParam00.put("tokenid", Main.getString(map.get("tokenHex")).trim());
+        String resp2 = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getCalTokenIndex.name(),
+                Json.jsonmapper().writeValueAsString(requestParam00));
+
+        TokenSerialIndexResponse tokenSerialIndexResponse = Json.jsonmapper().readValue(resp2,
+                TokenSerialIndexResponse.class);
+        Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
+
+        tokenInfo.setTokenSerial(new TokenSerial(Main.getString(map.get("tokenHex")).trim(), tokenindex_, amount));
+
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.askTransaction.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block block = Main.params.getDefaultSerializer().makeBlock(data);
+        block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
+        ECKey key1 = null;
+
+        if (Main.bitcoin.wallet().isEncrypted()) {
+            key1 = keys.get(0);
+        } else {
+            key1 = Main.bitcoin.wallet().currentReceiveKey();
+        }
+
+        signAddrChoiceBox1.getItems().add(key1.toAddress(Main.params).toBase58());
+        List<ECKey> myEcKeys = new ArrayList<ECKey>();
+        if (signAddrChoiceBox1.getItems() != null && !signAddrChoiceBox1.getItems().isEmpty()) {
+            ObservableList<String> addresses = signAddrChoiceBox1.getItems();
+            for (ECKey ecKey : keys) {
+                // log.debug(ecKey.toAddress(Main.params).toBase58());
+                if (addresses.contains(ecKey.toAddress(Main.params).toBase58())) {
+                    myEcKeys.add(ecKey);
+                }
+            }
+            if (!myEcKeys.isEmpty()) {
+                key1 = myEcKeys.get(0);
+            }
+
+        }
+
+        block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
+        block.solve();
+
+        // save block
+        String resp = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.multiSign.name(), block.bitcoinSerialize());
+        @SuppressWarnings("unchecked")
+        HashMap<String, Object> respRes = Json.jsonmapper().readValue(resp, HashMap.class);
+        int errorcode = (Integer) respRes.get("errorcode");
+        if (errorcode > 0) {
+            String message = (String) respRes.get("message");
+            GuiUtils.informationalAlert("SIGN ERROR : " + message, Main.getText("ex_c_d1"));
+            throw new IgnoreServiceException();
+        }
 
     }
 
