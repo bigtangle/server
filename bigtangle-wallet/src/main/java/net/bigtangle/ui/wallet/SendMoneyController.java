@@ -86,7 +86,6 @@ import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet;
-import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
 public class SendMoneyController {
 
@@ -174,6 +173,18 @@ public class SendMoneyController {
     public TableColumn<Map, String> isMySignColumn;
     public TableColumn<Map, String> amountColumn;
     public TableColumn<Map, String> orderidColumn;
+
+    @FXML
+    public TextField amountEdit2;
+    @FXML
+    public ChoiceBox<String> tokeninfo1;
+    @FXML
+    public ComboBox<String> addressComboBox2;
+    @FXML
+    public TextField memoTF2;
+    @FXML
+    public Label btcLabel2;
+
     String utxoKey;
     String signnumberString = "0";
     String signnumberStringA = "0";
@@ -214,15 +225,19 @@ public class SendMoneyController {
             }
         }
         tokeninfo.setItems(tokenData);
+        tokeninfo1.setItems(tokenData);
         tokeninfo11.setItems(tokenData);
         tokeninfo.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
             btcLabel.setText(names.get(newv.intValue()));
         });
-
+        tokeninfo1.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
+            btcLabel2.setText(names.get(newv.intValue()));
+        });
         tokeninfo11.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
             btcLabel11.setText(names.get(newv.intValue()));
         });
         tokeninfo.getSelectionModel().selectFirst();
+        tokeninfo1.getSelectionModel().selectFirst();
         tokeninfo11.getSelectionModel().selectFirst();
     }
 
@@ -302,6 +317,7 @@ public class SendMoneyController {
         ObservableList<String> addressData = FXCollections.observableArrayList(list);
         addressComboBox.setItems(addressData);
         addressComboBox1.setItems(addressData);
+        addressComboBox2.setItems(addressData);
         // new BitcoinAddressValidator(Main.params, addressComboBox, sendBtn);
         new TextFieldValidator(amountEdit, text -> !WTUtils
                 .didThrow(() -> checkState(Coin.parseCoin(text, NetworkParameters.BIGNETCOIN_TOKENID).isPositive())));
@@ -327,6 +343,10 @@ public class SendMoneyController {
 
                 break;
             case 4: {
+            }
+
+                break;
+            case 5: {
             }
 
                 break;
@@ -451,6 +471,10 @@ public class SendMoneyController {
 
     public void cancel(ActionEvent event) {
         overlayUI.done();
+    }
+
+    public void sendSubtangle(ActionEvent event) {
+
     }
 
     public void send(ActionEvent event) {
