@@ -130,22 +130,21 @@ public class TokenBaseController {
         requestParam.put("addresses", addresses);
         String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokenSerials.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        
-        
+
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
         List<TokenSerial> tokenSerials = getTokensResponse.getTokenSerials();
-        
+
         if (tokenSerials != null) {
             for (TokenSerial tokenSerial : tokenSerials) {
                 Coin fromAmount = Coin.valueOf(tokenSerial.getAmount(), tokenSerial.getTokenid());
-                
+
                 HashMap<String, Object> map = new HashMap<String, Object>();
                 map.put("amount", fromAmount.toPlainString());
                 map.put("tokenid", tokenSerial.getTokenid());
                 map.put("tokenindex", tokenSerial.getTokenindex());
                 map.put("signnumber", tokenSerial.getSignnumber());
                 map.put("count", tokenSerial.getCount());
-                
+
                 tokenData.add(map);
             }
         }
@@ -176,7 +175,14 @@ public class TokenBaseController {
             for (Map<String, Object> map : list) {
                 multiMap.put((String) map.get("tokenid"), (boolean) map.get("multiserial"));
                 String temp = ((boolean) map.get("multiserial")) ? Main.getText("yes") : Main.getText("no");
-                String temp1 = ((boolean) map.get("asmarket")) ? Main.getText("yes") : Main.getText("no");
+                int tokentype = (int) map.get("tokenType");
+                String temp1 = Main.getText("Token");
+                if (tokentype == 1) {
+                    temp1 = Main.getText("market");
+                }
+                if (tokentype == 2) {
+                    temp1 = Main.getText("subtangle");
+                }
                 String temp2 = ((boolean) map.get("tokenstop")) ? Main.getText("yes") : Main.getText("no");
                 map.put("multiserial", temp);
                 map.put("asmarket", temp1);
@@ -227,9 +233,9 @@ public class TokenBaseController {
         String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getMultiSignWithTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         log.debug(response);
-        
-        
-        final SearchMultiSignResponse searchMultiSignResponse = Json.jsonmapper().readValue(response, SearchMultiSignResponse.class);
+
+        final SearchMultiSignResponse searchMultiSignResponse = Json.jsonmapper().readValue(response,
+                SearchMultiSignResponse.class);
         if (searchMultiSignResponse.getMultiSignList() != null) {
             for (Map<String, Object> map : searchMultiSignResponse.getMultiSignList()) {
                 int signnumber = (Integer) map.get("signnumber");
