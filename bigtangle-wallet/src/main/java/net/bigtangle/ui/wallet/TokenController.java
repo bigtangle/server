@@ -634,8 +634,9 @@ public class TokenController extends TokenBaseController {
             byte[] pubKey = outKey.getPubKey();
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
-            requestParam.put("amount",
-                    Coin.parseCoin(stockAmount11.getText(), Utils.HEX.decode(tokenid11.getValue())).getValue());
+            // requestParam.put("amount",
+            // Coin.parseCoin(stockAmount11.getText(),
+            // Utils.HEX.decode(tokenid11.getValue())).getValue());
             requestParam.put("tokenname", stockName11.getText());
             requestParam.put("url", urlTF1.getText());
             requestParam.put("signnumber", signnumberTF1.getText());

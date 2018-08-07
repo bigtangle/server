@@ -190,9 +190,12 @@ public class TokenBaseController {
                 if (amountMap.containsKey(map.get("tokenid"))) {
                     long count = Long.parseLong(amountMap.get((String) map.get("tokenid")).toString());
                     Coin fromAmount = Coin.valueOf(count, (String) map.get("tokenid"));
-                    map.put("amount", fromAmount.toPlainString());
+                    String amountString = fromAmount.toPlainString();
+                    if (amountString.startsWith("0"))
+                        amountString = "";
+                    map.put("amount", amountString);
                 } else {
-                    map.put("amount", "0");
+                    map.put("amount", "");
                 }
 
                 tokenData.add(map);
