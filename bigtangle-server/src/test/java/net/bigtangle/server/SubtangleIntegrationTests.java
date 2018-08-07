@@ -42,6 +42,7 @@ import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
+import net.bigtangle.server.config.SubtangleConfiguration;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
@@ -141,9 +142,15 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         }
         return coinbase;
     }
+    
+    @Autowired
+    private SubtangleConfiguration subtangleConfiguration;
 
     @Test
     public void testGiveMoney() throws Exception {
+        logger.info("subtangleConfiguration.active = " + subtangleConfiguration.isActive());
+        assertTrue(subtangleConfiguration.isActive());
+        
         ECKey subtangleKey = new ECKey();
         this.createTokenSubtangleId(subtangleKey);
         
