@@ -86,6 +86,9 @@ public class TokenController extends TokenBaseController {
     public TextField stockAmount;
 
     @FXML
+    public TextArea stockDescription;
+
+    @FXML
     public ComboBox<String> tokenid1;
     @FXML
     public ChoiceBox<String> signAddrChoiceBox;
@@ -105,7 +108,26 @@ public class TokenController extends TokenBaseController {
     public TextField signnumberTF;
 
     @FXML
-    public TextArea stockDescription;
+    public TextField stockName11;
+    @FXML
+    public ComboBox<String> tokenid11;
+    @FXML
+    public CheckBox tokenstopCheckBox1;
+
+    @FXML
+    public TextField stockAmount11;
+
+    @FXML
+    public TextArea stockDescription11;
+
+    @FXML
+    public TextField urlTF1;
+    @FXML
+    public TextField signnumberTF1;
+    @FXML
+    public TextField signPubkeyTF1;
+    @FXML
+    public ChoiceBox<String> signAddrChoiceBox1;
 
     @FXML
     public TextField marketName;
@@ -328,6 +350,26 @@ public class TokenController extends TokenBaseController {
         }
     }
 
+    public void addSIgnAddressA(ActionEvent event) {
+        try {
+            String temp = signnumberTF1.getText();
+            if (temp != null && !temp.isEmpty() && temp.matches("[1-9]\\d*")) {
+
+                int signnumber = Integer.parseInt(temp);
+                if (signnumber >= 1) {
+                    String address = signPubkeyTF1.getText();
+                    if (address != null && !address.isEmpty() && !signAddrChoiceBox1.getItems().contains(address)) {
+                        signAddrChoiceBox1.getItems().add(address);
+                        signAddrChoiceBox1.getSelectionModel().selectLast();
+                    }
+                }
+            }
+            signPubkeyTF1.setText("");
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+    }
+
     public void addPubkey() {
         String temp = signnumberTF.getText();
         if (temp != null && !temp.isEmpty() && temp.matches("[1-9]\\d*")) {
@@ -423,6 +465,10 @@ public class TokenController extends TokenBaseController {
 
     public void removeSignAddress(ActionEvent event) {
         signAddrChoiceBox.getItems().remove(signAddrChoiceBox.getValue());
+    }
+
+    public void removeSignAddressA(ActionEvent event) {
+        signAddrChoiceBox1.getItems().remove(signAddrChoiceBox1.getValue());
     }
 
     public void showToken(String newtokenid) throws Exception {
@@ -549,6 +595,70 @@ public class TokenController extends TokenBaseController {
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
+
+    }
+
+    public void saveMultiSubtangle(ActionEvent event) {
+        try {
+            ECKey outKey = null;
+
+            KeyParameter aesKey = null;
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            if (!"".equals(Main.password.trim())) {
+                aesKey = keyCrypter.deriveKey(Main.password);
+            }
+            List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
+
+            if (Main.bitcoin.wallet().isEncrypted()) {
+                outKey = issuedKeys.get(0);
+            } else {
+                outKey = Main.bitcoin.wallet().currentReceiveKey();
+            }
+
+            if (signnumberTF1.getText() == null || signnumberTF1.getText().trim().isEmpty()) {
+                GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
+                return;
+            }
+            if (!signnumberTF1.getText().matches("[1-9]\\d*")) {
+                GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
+                return;
+            }
+            if (signnumberTF1.getText() != null && !signnumberTF1.getText().trim().isEmpty()
+                    && signnumberTF1.getText().matches("[1-9]\\d*")
+                    && Long.parseLong(signnumberTF1.getText().trim()) > signAddrChoiceBox1.getItems().size()) {
+
+                GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
+                return;
+            }
+
+            byte[] pubKey = outKey.getPubKey();
+            HashMap<String, Object> requestParam = new HashMap<String, Object>();
+            requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
+            requestParam.put("amount",
+                    Coin.parseCoin(stockAmount11.getText(), Utils.HEX.decode(tokenid11.getValue())).getValue());
+            requestParam.put("tokenname", stockName11.getText());
+            requestParam.put("url", urlTF1.getText());
+            requestParam.put("signnumber", signnumberTF1.getText());
+            requestParam.put("description", stockDescription11.getText());
+            requestParam.put("tokenHex", tokenid11.getValue());
+            requestParam.put("multiserial", true);
+            requestParam.put("asmarket", false);
+            requestParam.put("tokenstop", tokenstopCheckBox1.selectedProperty().get());
+            doSaveSubtangle(requestParam);
+            GuiUtils.informationalAlert("", Main.getText("s_c_m"));
+            Main.instance.controller.initTableView();
+            checkGuiThread();
+            initTableView();
+            initMultisignTableView();
+            overlayUI.done();
+            // tabPane.getSelectionModel().clearAndSelect(4);
+        } catch (IgnoreServiceException e) {
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+    }
+
+    public void doSaveSubtangle(HashMap<String, Object> map) {
 
     }
 
