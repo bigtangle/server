@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.cassandra.utils.Hex;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
