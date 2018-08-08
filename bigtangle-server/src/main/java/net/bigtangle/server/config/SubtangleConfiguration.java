@@ -1,23 +1,21 @@
 package net.bigtangle.server.config;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConfigurationProperties(prefix = "subtangle")
 public class SubtangleConfiguration {
 
-	@Value("${active:false}")
+	@Value("${subtangle.active:false}")
 	private boolean active;
 
-
+	@Value("${subtangle.pubKeyHex}")
 	private String pubKeyHex;
 
-
+	@Value("${subtangle.priKeyHex}")
 	private String priKeyHex;
 
-	
+	@Value("${subtangle.parentContextRoot}")
 	private String parentContextRoot;
 
 	public String getPubKeyHex() {
