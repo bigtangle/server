@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.cassandra.utils.Hex;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -146,6 +147,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
     @Autowired
     private SubtangleConfiguration subtangleConfiguration;
 
+    @SuppressWarnings("deprecation")
     @Test
     public void testGiveMoney() throws Exception {
         logger.info("subtangle configuration active : " + subtangleConfiguration.isActive());
@@ -153,9 +155,13 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         
         logger.info("subtangle configuration hashKey : " + subtangleConfiguration.getPubKeyHex());
         ECKey subtangleKey = 
-                new ECKey(Utils.HEX.decode(subtangleConfiguration.getPubKeyHex()),
-                        Utils.HEX.decode(subtangleConfiguration.getPriKeyHex()));
- 
+                new ECKey(Utils.HEX.decode(subtangleConfiguration.getPriKeyHex()),
+                        Utils.HEX.decode(subtangleConfiguration.getPubKeyHex()));
+        // ECKey subtangleKey = new ECKey();
+        
+//       System.out.println(Utils.HEX.encode(subtangleKey.getPubKey()));
+//       System.out.println(Utils.HEX.encode(subtangleKey.getPrivKeyBytes()));
+        
         this.createTokenSubtangleId(subtangleKey);
         
         ECKey outKey = new ECKey();
