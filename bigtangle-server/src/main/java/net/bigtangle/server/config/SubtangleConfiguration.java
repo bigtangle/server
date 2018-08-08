@@ -11,13 +11,13 @@ public class SubtangleConfiguration {
 	@Value("${active:false}")
 	private boolean active;
 
-	@Value("${pubKeyHex}")
+
 	private String pubKeyHex;
 
-	@Value("${priKeyHex}")
+
 	private String priKeyHex;
 
-	@Value("${parentContextRoot}")
+	
 	private String parentContextRoot;
 
 	public String getPubKeyHex() {

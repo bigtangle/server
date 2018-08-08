@@ -36,7 +36,7 @@ public class ResetTest extends AbstractIntegrationTest {
     // must fix for testnet and mainnet
     public void testGenesisBlockHash() throws Exception {
         assertTrue(networkParameters.getGenesisBlock().getHash().toString()
-                .equals("1f8e1cc52556af4cb7be5af3faf0a729dd2ac75b26c52459809b449fcaa6282a"));
+                .equals("53984d20e419b739d7836803be6b217e882ab86e23aaadb8e82ccf3a30d80ff5"));
 
     }
 }
