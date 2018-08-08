@@ -8,15 +8,47 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "subtangle")
 public class SubtangleConfiguration {
 
-    @Value("${active:false}")
-    private boolean active;
+	@Value("${active:false}")
+	private boolean active;
 
-    public boolean isActive() {
-        return active;
-    }
+	@Value("${pubKeyHex}")
+	private String pubKeyHex;
 
-    public void setActive(boolean active) {
-        this.active = active;
-    }
+	@Value("${priKeyHex}")
+	private String priKeyHex;
 
+	@Value("${parentContextRoot}")
+	private String parentContextRoot;
+
+	public String getPubKeyHex() {
+		return pubKeyHex;
+	}
+
+	public void setPubKeyHex(String pubKeyHex) {
+		this.pubKeyHex = pubKeyHex;
+	}
+
+	public String getPriKeyHex() {
+		return priKeyHex;
+	}
+
+	public void setPriKeyHex(String priKeyHex) {
+		this.priKeyHex = priKeyHex;
+	}
+
+	public boolean isActive() {
+		return active;
+	}
+
+	public void setActive(boolean active) {
+		this.active = active;
+	}
+
+	public String getParentContextRoot() {
+		return parentContextRoot;
+	}
+
+	public void setParentContextRoot(String parentContextRoot) {
+		this.parentContextRoot = parentContextRoot;
+	}
 }

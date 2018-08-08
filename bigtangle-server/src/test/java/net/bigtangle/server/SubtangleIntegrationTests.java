@@ -148,10 +148,11 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
 
     @Test
     public void testGiveMoney() throws Exception {
-        logger.info("subtangleConfiguration.active = " + subtangleConfiguration.isActive());
+        logger.info("subtangle configuration active : " + subtangleConfiguration.isActive());
         assertTrue(subtangleConfiguration.isActive());
         
-        ECKey subtangleKey = new ECKey();
+        logger.info("subtangle configuration hashKey : " + subtangleConfiguration.getPubKeyHex());
+        ECKey subtangleKey = ECKey.fromPublicOnly(Utils.HEX.decode(subtangleConfiguration.getPubKeyHex()));
         this.createTokenSubtangleId(subtangleKey);
         
         ECKey outKey = new ECKey();
@@ -159,7 +160,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         this.giveMoneySubtangleId(subtangleKey, amount, outKey.getPubKey());
         
         Coin coinbase = getBalanceCoin(subtangleKey, NetworkParameters.BIGNETCOIN_TOKENID);
-        logger.info("coinbase : " + coinbase);
+        logger.info("get balance coin : " + coinbase);
         
         assertTrue(amount == coinbase.getValue());
     }
