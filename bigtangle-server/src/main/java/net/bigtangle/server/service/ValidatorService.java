@@ -687,6 +687,7 @@ public class ValidatorService {
 		if (b.getBlock().getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION)
 			blockConflicts.add(new ConflictCandidate(b,
 					new TokenInfo().parse(b.getBlock().getTransactions().get(0).getData()).getTokenSerial()));
+		// TODO tokenserial might be the wrong thing to compare here
 
 		return blockConflicts;
 	}

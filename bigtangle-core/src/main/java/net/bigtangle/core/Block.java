@@ -1039,7 +1039,7 @@ public class Block extends Message {
         return prevBlockHash;
     }
 
-    void setPrevBlockHash(Sha256Hash prevBlockHash) {
+    public void setPrevBlockHash(Sha256Hash prevBlockHash) {
         unCacheHeader();
         this.prevBlockHash = prevBlockHash;
         this.hash = null;

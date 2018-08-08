@@ -24,9 +24,14 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.PrunedException;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.TokenSerial;
+import net.bigtangle.core.TokenType;
+import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -334,6 +339,75 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		// }
 		// milestoneService.update();
 		// }
+	}
+
+	@Test
+	public void testTokenIssuances() throws Exception {
+		store.resetStore();
+
+		// Generate an eligible issuance
+		ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+        TokenInfo tokenInfo = new TokenInfo();
+        Tokens tokens = new Tokens(Utils.HEX.encode(pubKey), "test", "", "", 1, false, TokenType.token.ordinal(), false);
+        tokenInfo.setTokens(tokens);
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
+        Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+		milestoneService.update();
+		
+		// Should go through
+		assertTrue(blockService.getBlockEvaluation(block1.getHash()).isMilestone());
+		Transaction tx1 = block1.getTransactions().get(0);
+		assertTrue(store.getTransactionOutput(tx1.getHash(), 0).isConfirmed());
+
+		// Remove it from the milestone
+		Block rollingBlock = networkParameters.getGenesisBlock();
+		for (int i = 1; i < 5; i++) {
+			rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+					0, rollingBlock.getHash());
+			blockgraph.add(rollingBlock, true);
+		}
+		milestoneService.update();
+		
+		// Should be out
+		assertFalse(blockService.getBlockEvaluation(block1.getHash()).isMilestone());
+		assertFalse(store.getTransactionOutput(tx1.getHash(), 0).isConfirmed());
+		//TODO assertFalse any token table data that should not be true anymore
+
+		// Make another conflicting one that goes through
+        Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
+		Block block2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, genHash, genHash);
+        rollingBlock = block2;
+		for (int i = 1; i < 30; i++) {
+			rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+					0, rollingBlock.getHash());
+			blockgraph.add(rollingBlock, true);
+		}
+		milestoneService.update();
+		
+		// New one should be in, the old one should be out
+		assertTrue(blockService.getBlockEvaluation(block2.getHash()).isMilestone());
+		Transaction tx2 = block2.getTransactions().get(0);
+		assertTrue(store.getTransactionOutput(tx2.getHash(), 0).isConfirmed());
+
+		assertFalse(blockService.getBlockEvaluation(block1.getHash()).isMilestone());
+		assertFalse(store.getTransactionOutput(tx1.getHash(), 0).isConfirmed());
+
+		// Check that not both of them can go through
+		rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+				0, block1.getHash());
+		blockgraph.add(rollingBlock, true);
+		milestoneService.update();
+
+		assertFalse(blockService.getBlockEvaluation(block2.getHash()).isMilestone() && blockService.getBlockEvaluation(block1.getHash()).isMilestone());
+		assertFalse(store.getTransactionOutput(tx2.getHash(), 0).isConfirmed() && store.getTransactionOutput(tx1.getHash(), 0).isConfirmed());
+
+		// TODO Generate differing ineligible issuances
+		// TODO Generate issuance continuation
 	}
 
 	@Test
