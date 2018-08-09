@@ -6,47 +6,47 @@ import org.springframework.stereotype.Component;
 @Component
 public class SubtangleConfiguration {
 
-	@Value("${subtangle.active:false}")
-	private boolean active;
+    @Value("${subtangle.active:false}")
+    private boolean active;
 
-	@Value("${subtangle.pubKeyHex}")
-	private String pubKeyHex;
+    @Value("${subtangle.pubKeyHex}")
+    private String pubKeyHex;
 
-	@Value("${subtangle.priKeyHex}")
-	private String priKeyHex;
+    @Value("${subtangle.priKeyHex}")
+    private String priKeyHex;
 
-	@Value("${subtangle.parentContextRoot}")
-	private String parentContextRoot;
+    @Value("${subtangle.parentContextRoot}")
+    private String parentContextRoot;
 
-	public String getPubKeyHex() {
-		return pubKeyHex;
-	}
+    public String getPubKeyHex() {
+        return pubKeyHex;
+    }
 
-	public void setPubKeyHex(String pubKeyHex) {
-		this.pubKeyHex = pubKeyHex;
-	}
+    public void setPubKeyHex(String pubKeyHex) {
+        this.pubKeyHex = pubKeyHex;
+    }
 
-	public String getPriKeyHex() {
-		return priKeyHex;
-	}
+    public String getPriKeyHex() {
+        return priKeyHex;
+    }
 
-	public void setPriKeyHex(String priKeyHex) {
-		this.priKeyHex = priKeyHex;
-	}
+    public void setPriKeyHex(String priKeyHex) {
+        this.priKeyHex = priKeyHex;
+    }
 
-	public boolean isActive() {
-		return active;
-	}
+    public boolean isActive() {
+        return active;
+    }
 
-	public void setActive(boolean active) {
-		this.active = active;
-	}
+    public void setActive(boolean active) {
+        this.active = active;
+    }
 
-	public String getParentContextRoot() {
-		return parentContextRoot;
-	}
+    public String getParentContextRoot() {
+        return parentContextRoot;
+    }
 
-	public void setParentContextRoot(String parentContextRoot) {
-		this.parentContextRoot = parentContextRoot;
-	}
+    public void setParentContextRoot(String parentContextRoot) {
+        this.parentContextRoot = parentContextRoot;
+    }
 }

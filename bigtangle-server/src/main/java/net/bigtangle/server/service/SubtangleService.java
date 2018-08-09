@@ -1,32 +1,46 @@
 package net.bigtangle.server.service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionInput;
+import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
+import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
+import net.bigtangle.script.Script;
+import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.config.SubtangleConfiguration;
 import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @Service
 public class SubtangleService {
 
+    @SuppressWarnings("deprecation")
     public void giveMoneyToTargetAccount() throws Exception {
-        ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(subtangleConfiguration.getPubKeyHex()));
+        ECKey signKey = new ECKey(Utils.HEX.decode(subtangleConfiguration.getPriKeyHex()), 
+                Utils.HEX.decode(subtangleConfiguration.getPubKeyHex()));
         List<ECKey> keys = new ArrayList<>();
-        keys.add(ecKey);
+        keys.add(signKey);
 
         List<UTXO> outputs = this.getRemoteBalances(false, keys);
         if (outputs.isEmpty()) {
@@ -34,23 +48,84 @@ public class SubtangleService {
         }
 
         for (UTXO output : outputs) {
-            String blockHashHex = output.getBlockHashHex();
-            Block block = this.getRemoteBlock(blockHashHex);
-            for (Transaction transaction : block.getTransactions()) {
-                if (transaction.getToAddressInSubtangle() == null) {
+            try {
+                String blockHashHex = output.getBlockHashHex();
+                Block block = this.getRemoteBlock(blockHashHex);
+                byte[] toAddressInSubtangle = block.getTransactions().get(0).getToAddressInSubtangle();
+                if (toAddressInSubtangle == null) {
                     continue;
                 }
+                Coin coinbase = output.getValue();
+
+                Block b = transactionService.askTransactionBlock();
+                b.setBlockType(Block.BLOCKTYPE_CROSSTANGLE);
+                b.addCoinbaseTransaction(signKey.getPubKey(), coinbase);
+                blockService.saveBlock(b);
+
+                Address address = new Address(this.networkParameters, toAddressInSubtangle);
+                this.giveMoney(signKey, address, coinbase);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            Coin coinbase = output.getValue();
-            Block b = transactionService.askTransactionBlock();
-            b.addCoinbaseTransaction(ecKey.getPubKey(), coinbase);
-            blockService.saveBlock(b);
         }
     }
-    
+
+    public void giveMoney(ECKey signKey, Address address, Coin amount) throws Exception {
+        UTXO findOutput = null;
+        for (UTXO output : getBalancesUTOXList(false, signKey, amount.getTokenid())) {
+            if (Arrays.equals(NetworkParameters.BIGNETCOIN_TOKENID, output.getValue().getTokenid())) {
+                findOutput = output;
+            }
+        }
+        if (findOutput == null) {
+            return;
+        }
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, findOutput, 0);
+        Transaction transaction = new Transaction(networkParameters);
+        transaction.addOutput(amount, address);
+
+        TransactionInput input = transaction.addInput(spendableOutput);
+        Sha256Hash sighash = transaction.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
+                false);
+
+        TransactionSignature tsrecsig = new TransactionSignature(signKey.sign(sighash), Transaction.SigHash.ALL, false);
+        Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+        input.setScriptSig(inputScript);
+
+        Block b = transactionService.askTransactionBlock();
+        b.addTransaction(transaction);
+        b.solve();
+        this.blockService.saveBlock(b);
+    }
+
+    private List<UTXO> getBalancesUTOXList(boolean withZero, ECKey signKey, byte[] tokenid) {
+        Set<byte[]> pubKeyHashs = new HashSet<byte[]>();
+        pubKeyHashs.add(signKey.toAddress(this.networkParameters).getHash160());
+        GetBalancesResponse getBalancesResponse = (GetBalancesResponse) walletService
+                .getAccountBalanceInfo(pubKeyHashs);
+        List<UTXO> listUTXO = new ArrayList<UTXO>();
+        for (UTXO utxo : getBalancesResponse.getOutputs()) {
+            if (withZero) {
+                listUTXO.add(utxo);
+            } else if (utxo.getValue().getValue() > 0) {
+                listUTXO.add(utxo);
+            }
+        }
+        for (Iterator<UTXO> iterator = listUTXO.iterator(); iterator.hasNext();) {
+            UTXO utxo = iterator.next();
+            if (!Arrays.equals(utxo.getValue().getTokenid(), tokenid)) {
+                iterator.remove();
+            }
+        }
+        return listUTXO;
+    }
+
+    @Autowired
+    private WalletService walletService;
+
     @Autowired
     private BlockService blockService;
-    
+
     @Autowired
     private TransactionService transactionService;
 
@@ -78,7 +153,7 @@ public class SubtangleService {
 
         return listUTXO;
     }
-    
+
     public Block getRemoteBlock(String blockHashHex) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hashHex", blockHashHex);
@@ -88,7 +163,7 @@ public class SubtangleService {
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         return block;
     }
-    
+
     @Autowired
     private NetworkParameters networkParameters;
 

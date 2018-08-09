@@ -750,6 +750,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 return false;
             }
         }
+        
+        if (block.getBlockType() == Block.BLOCKTYPE_CROSSTANGLE) {
+            return true;
+        }
 
         checkSolidityTransfer(block, height);
         

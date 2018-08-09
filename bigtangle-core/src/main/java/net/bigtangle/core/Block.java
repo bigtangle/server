@@ -696,6 +696,10 @@ public class Block extends Message {
         if (getBlockType() == Block.BLOCKTYPE_INITIAL) {
             return true;
         }
+        
+        if (getBlockType() == Block.BLOCKTYPE_CROSSTANGLE) {
+            return true;
+        }
 
         // This part is key - it is what proves the block was as difficult to
         // make as it claims
@@ -869,11 +873,14 @@ public class Block extends Message {
             }
         } else if ((blockType == Block.BLOCKTYPE_TRANSFER) || (blockType == Block.BLOCKTYPE_USERDATA)
                 || (blockType == Block.BLOCKTYPE_VOS) || (blockType == Block.BLOCKTYPE_GOVERNANCE)
-                || (blockType == Block.BLOCKTYPE_FILE) || (blockType == Block.BLOCKTYPE_VOS_EXECUTE
-                || (blockType == Block.BLOCKTYPE_CROSSTANGLE))) {
-            for (Transaction tx : transactions)
-                if (tx.isCoinBase())
+                || (blockType == Block.BLOCKTYPE_FILE) || (blockType == Block.BLOCKTYPE_VOS_EXECUTE)) {
+            for (Transaction tx : transactions) {
+                if (tx.isCoinBase()) {
                     throw new VerificationException("TX is coinbase when it should not be.");
+                }
+            }
+        } else if (blockType == Block.BLOCKTYPE_CROSSTANGLE) {
+            
         } else
             throw new VerificationException("Blocktype not implemented!");
     }
@@ -1254,7 +1261,7 @@ public class Block extends Message {
 
     public boolean allowCoinbaseTransaction() {
         return blockType == Block.BLOCKTYPE_INITIAL || blockType == Block.BLOCKTYPE_TOKEN_CREATION
-                || blockType == Block.BLOCKTYPE_REWARD;
+                || blockType == Block.BLOCKTYPE_REWARD || blockType == Block.BLOCKTYPE_CROSSTANGLE;
     }
 
     private static Random gen = new Random();

@@ -14,23 +14,23 @@ import net.bigtangle.server.service.SubtangleService;
 @EnableAsync
 public class ScheduleSubtangleService {
 
-	private static final Logger logger = LoggerFactory.getLogger(ScheduleSubtangleService.class);
+    private static final Logger logger = LoggerFactory.getLogger(ScheduleSubtangleService.class);
 
-	@Autowired
-	private SubtangleConfiguration subtangleConfiguration;
+    @Autowired
+    private SubtangleConfiguration subtangleConfiguration;
 
-	@Scheduled(fixedRateString = "${subtangle.rate:10000}")
-	public void updateSubtangleService() {
-		if (subtangleConfiguration.isActive()) {
-			try {
-				logger.debug(" Start ScheduleSubtangleService: ");
-				subtangleService.giveMoneyToTargetAccount();
-			} catch (Exception e) {
-				logger.warn("ScheduleSubtangleService ", e);
-			}
-		}
-	}
-	
-	@Autowired
-	private SubtangleService subtangleService;
+    @Scheduled(fixedRateString = "${subtangle.rate:10000}")
+    public void updateSubtangleService() {
+        if (subtangleConfiguration.isActive()) {
+            try {
+                logger.debug(" Start ScheduleSubtangleService: ");
+                subtangleService.giveMoneyToTargetAccount();
+            } catch (Exception e) {
+                logger.warn("ScheduleSubtangleService ", e);
+            }
+        }
+    }
+
+    @Autowired
+    private SubtangleService subtangleService;
 }
