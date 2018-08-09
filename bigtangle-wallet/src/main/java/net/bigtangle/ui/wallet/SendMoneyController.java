@@ -19,6 +19,7 @@
 package net.bigtangle.ui.wallet;
 
 import static com.google.common.base.Preconditions.checkState;
+import static net.bigtangle.ui.wallet.Main.bitcoin;
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -521,7 +522,18 @@ public class SendMoneyController {
     }
 
     public void paySubtangle() throws Exception {
-        ECKey genesiskey = Main.bitcoin.wallet().currentReceiveKey();
+        KeyParameter aesKey = null;
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
+        List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
+        ECKey genesiskey = null;
+        if (bitcoin.wallet().isEncrypted()) {
+            genesiskey = issuedKeys.get(0);
+        } else {
+            genesiskey = Main.bitcoin.wallet().currentReceiveKey();
+        }
         int index = tokeninfo1.getSelectionModel().getSelectedIndex();
         String outputStr = this.subtangleHashHexList.get(index);
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -534,17 +546,20 @@ public class SendMoneyController {
 
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(Main.params, findOutput, 0);
         Transaction transaction = new Transaction(Main.params);
-        Coin coinbase = Coin.valueOf(Long.parseLong(amountEdit2.getText()), NetworkParameters.BIGNETCOIN_TOKENID);
-        Address address = Address.fromBase58(Main.params, addressComboBox2.getValue());
+        Coin coinbase = Coin.valueOf(Long.parseLong(amountEdit2.getText()), Utils.HEX.decode(btcLabel2.getText()));
+        // Address address = Address.fromBase58(Main.params,
+        // addressComboBox2.getValue());
+        Address address = ECKey.fromPublicOnly(Utils.HEX.decode(subtangleComboBox.getValue())).toAddress(Main.params);
         transaction.addOutput(coinbase, address);
-        transaction.setSubtangleID(Utils.HEX.decode(subtangleComboBox.getValue()));
+
+        transaction.setSubtangleID(Address.fromBase58(Main.params, addressComboBox2.getValue()).getHash160());
 
         TransactionInput input = transaction.addInput(spendableOutput);
         Sha256Hash sighash = transaction.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                 false);
 
-        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
-                false);
+        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash, aesKey),
+                Transaction.SigHash.ALL, false);
         Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
         input.setScriptSig(inputScript);
 
@@ -999,7 +1014,7 @@ public class SendMoneyController {
         TransactionSignature transactionSignature = new TransactionSignature(ecKey.sign(sighash, aesKey),
                 Transaction.SigHash.ALL, false);
 
-        ECKey.ECDSASignature party1Signature = ecKey.sign(transaction0.getHash());
+        ECKey.ECDSASignature party1Signature = ecKey.sign(transaction0.getHash(), aesKey);
         byte[] buf1 = party1Signature.encodeToDER();
 
         requestParam.clear();
