@@ -112,7 +112,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(amount, NetworkParameters.BIGNETCOIN_TOKENID);
         Address address = outKey.toAddress(this.networkParameters);
         transaction.addOutput(coinbase, address);
-        transaction.setSubtangleID(toAddressInSubtangle.getHash160()  );
+        transaction.setToAddressInSubtangle(toAddressInSubtangle.getHash160()  );
 
         TransactionInput input = transaction.addInput(spendableOutput);
         Sha256Hash sighash = transaction.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,

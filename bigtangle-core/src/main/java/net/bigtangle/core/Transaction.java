@@ -210,7 +210,7 @@ public class Transaction extends ChildMessage {
     private String dataClassName;
 
     @Nullable
-    private byte[] subtangleID;
+    private byte[] toAddressInSubtangle;
 
     public Transaction(NetworkParameters params) {
         super(params);
@@ -628,7 +628,7 @@ public class Transaction extends ChildMessage {
         len = readUint32();
         optimalEncodingMessageSize += 4;
         if (len > 0) {
-            this.subtangleID = readBytes((int) len);
+            this.toAddressInSubtangle = readBytes((int) len);
             optimalEncodingMessageSize += len;
         }
 
@@ -1233,11 +1233,11 @@ public class Transaction extends ChildMessage {
             stream.write(this.data);
         }
         
-        if (this.subtangleID == null) {
+        if (this.toAddressInSubtangle == null) {
             uint32ToByteStreamLE(0L, stream);
         } else {
-            uint32ToByteStreamLE(this.subtangleID.length, stream);
-            stream.write(this.subtangleID);
+            uint32ToByteStreamLE(this.toAddressInSubtangle.length, stream);
+            stream.write(this.toAddressInSubtangle);
         }
 
         if (this.dataSignature == null) {
@@ -1534,12 +1534,12 @@ public class Transaction extends ChildMessage {
         this.dataClassName = dataclassname;
     }
 
-    public byte[] getSubtangleID() {
-        return subtangleID;
+    public byte[] getToAddressInSubtangle() {
+        return toAddressInSubtangle;
     }
 
-    public void setSubtangleID(byte[] subtangleID) {
-        this.subtangleID = subtangleID;
+    public void setToAddressInSubtangle(byte[] subtangleID) {
+        this.toAddressInSubtangle = subtangleID;
     }
     
 }

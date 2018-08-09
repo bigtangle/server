@@ -552,7 +552,7 @@ public class SendMoneyController {
         Address address = ECKey.fromPublicOnly(Utils.HEX.decode(subtangleComboBox.getValue())).toAddress(Main.params);
         transaction.addOutput(coinbase, address);
 
-        transaction.setSubtangleID(Address.fromBase58(Main.params, addressComboBox2.getValue()).getHash160());
+        transaction.setToAddressInSubtangle(Address.fromBase58(Main.params, addressComboBox2.getValue()).getHash160());
 
         TransactionInput input = transaction.addInput(spendableOutput);
         Sha256Hash sighash = transaction.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,

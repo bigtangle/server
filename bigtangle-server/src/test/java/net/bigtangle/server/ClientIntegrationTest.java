@@ -72,7 +72,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         byte[] subtangleID = new byte[32];
         new Random().nextBytes(subtangleID);
 
-        transaction.setSubtangleID(subtangleID);
+        transaction.setToAddressInSubtangle(subtangleID);
         
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
@@ -90,8 +90,8 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
         Transaction transaction2 = block.getTransactions().get(0);
         assertNotNull(subtangleID);
-        assertTrue(Arrays.equals(subtangleID, transaction.getSubtangleID()));
-        assertTrue(Arrays.equals(subtangleID, transaction2.getSubtangleID()));
+        assertTrue(Arrays.equals(subtangleID, transaction.getToAddressInSubtangle()));
+        assertTrue(Arrays.equals(subtangleID, transaction2.getToAddressInSubtangle()));
     }
 
     @Test

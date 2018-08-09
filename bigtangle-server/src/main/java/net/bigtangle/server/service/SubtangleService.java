@@ -37,7 +37,7 @@ public class SubtangleService {
             String blockHashHex = output.getBlockHashHex();
             Block block = this.getRemoteBlock(blockHashHex);
             for (Transaction transaction : block.getTransactions()) {
-                if (transaction.getSubtangleID() == null) {
+                if (transaction.getToAddressInSubtangle() == null) {
                     continue;
                 }
             }
