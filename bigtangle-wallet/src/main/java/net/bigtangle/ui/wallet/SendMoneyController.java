@@ -65,6 +65,7 @@ import net.bigtangle.core.PayMultiSignAddress;
 import net.bigtangle.core.PayMultiSignExt;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UserSettingData;
@@ -512,7 +513,49 @@ public class SendMoneyController {
     }
 
     public void sendSubtangle(ActionEvent event) {
+        try {
+            paySubtangle();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+    }
 
+    public void paySubtangle() throws Exception {
+        ECKey genesiskey = Main.bitcoin.wallet().currentReceiveKey();
+        int index = tokeninfo1.getSelectionModel().getSelectedIndex();
+        String outputStr = this.subtangleHashHexList.get(index);
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("hexStr", outputStr);
+        String resp = OkHttp3Util.postString(Main.getContextRoot() + ReqCmd.outputsWithHexStr.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+
+        HashMap<String, Object> outputs_ = Json.jsonmapper().readValue(resp, HashMap.class);
+        UTXO findOutput = MapToBeanMapperUtil.parseUTXO((HashMap<String, Object>) outputs_.get("outputs"));
+
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(Main.params, findOutput, 0);
+        Transaction transaction = new Transaction(Main.params);
+        Coin coinbase = Coin.valueOf(Long.parseLong(amountEdit2.getText()), NetworkParameters.BIGNETCOIN_TOKENID);
+        Address address = Address.fromBase58(Main.params, addressComboBox2.getValue());
+        transaction.addOutput(coinbase, address);
+        transaction.setSubtangleID(Utils.HEX.decode(subtangleComboBox.getValue()));
+
+        TransactionInput input = transaction.addInput(spendableOutput);
+        Sha256Hash sighash = transaction.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
+                false);
+
+        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+                false);
+        Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+        input.setScriptSig(inputScript);
+
+        HashMap requestParam0 = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(Main.getContextRoot() + ReqCmd.askTransaction,
+                Json.jsonmapper().writeValueAsString(requestParam0));
+        Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
+        rollingBlock.addTransaction(transaction);
+        rollingBlock.solve();
+
+        OkHttp3Util.post(Main.getContextRoot() + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
     }
 
     public void send(ActionEvent event) {
