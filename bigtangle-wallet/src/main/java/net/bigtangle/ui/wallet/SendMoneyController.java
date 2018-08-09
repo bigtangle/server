@@ -250,14 +250,15 @@ public class SendMoneyController {
             }
         }
         tokeninfo.setItems(tokenData);
-        tokeninfo1.setItems(tokenData);
+        // tokeninfo1.setItems(tokenData);
         tokeninfo11.setItems(tokenData);
         tokeninfo.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
             btcLabel.setText(names.get(newv.intValue()));
         });
-        tokeninfo1.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
-            btcLabel2.setText(names.get(newv.intValue()));
-        });
+        // tokeninfo1.getSelectionModel().selectedIndexProperty().addListener((ov,
+        // oldv, newv) -> {
+        // btcLabel2.setText(names.get(newv.intValue()));
+        // });
         tokeninfo11.getSelectionModel().selectedIndexProperty().addListener((ov, oldv, newv) -> {
             btcLabel11.setText(names.get(newv.intValue()));
         });
@@ -299,6 +300,7 @@ public class SendMoneyController {
     }
 
     private List<String> hashHexList = new ArrayList<String>();
+    private List<String> subtangleHashHexList = new ArrayList<String>();
 
     @FXML
     public void initialize() throws Exception {
@@ -307,17 +309,27 @@ public class SendMoneyController {
         ObservableList<UTXOModel> utxoModels = Main.instance.getUtxoData();
         if (utxoModels != null && !utxoModels.isEmpty()) {
             for (UTXOModel utxoModel : utxoModels) {
+                String temp = utxoModel.getBalance() + "," + utxoModel.getTokenid() + "," + utxoModel.getMinimumsign();
+                tokeninfo1.getItems().add(temp);
+                subtangleHashHexList.add(utxoModel.getHash() + ":" + utxoModel.getOutputindex());
                 if (!"".equals(utxoModel.getMinimumsign().trim()) && !utxoModel.getMinimumsign().trim().equals("0")
                         && !utxoModel.getMinimumsign().trim().equals("1")) {
-                    String temp = utxoModel.getBalance() + "," + utxoModel.getTokenid() + ","
-                            + utxoModel.getMinimumsign();
+
                     multiUtxoChoiceBox.getItems().add(temp);
                     multiUtxoChoiceBox1.getItems().add(temp);
-                    tokeninfo1.getItems().add(temp);
+
                     hashHexList.add(utxoModel.getHash() + ":" + utxoModel.getOutputindex());
                 }
 
             }
+            tokeninfo1.getSelectionModel().selectedItemProperty().addListener((ov, oldv, newv) -> {
+                if (newv != null && !newv.trim().equals("")) {
+                    amountEdit2.setText(newv.split(",")[0]);
+                    signnumberString = newv.split(",")[2];
+                    // signnumberTFA.setText(newv.split(",")[2]);
+                    btcLabel2.setText(newv.split(",")[1]);
+                }
+            });
             multiUtxoChoiceBox.getSelectionModel().selectedItemProperty().addListener((ov, oldv, newv) -> {
                 if (newv != null && !newv.trim().equals("")) {
                     amountEdit1.setText(newv.split(",")[0]);
