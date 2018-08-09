@@ -23,55 +23,63 @@ import net.bigtangle.utils.OkHttp3Util;
 @Service
 public class SubtangleService {
 
-	public void giveMoneyToTargetAccount() throws Exception {
-		ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(subtangleConfiguration.getPubKeyHex()));
-		List<ECKey> keys = new ArrayList<>();
-		keys.add(ecKey);
+    public void giveMoneyToTargetAccount() throws Exception {
+        ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(subtangleConfiguration.getPubKeyHex()));
+        List<ECKey> keys = new ArrayList<>();
+        keys.add(ecKey);
 
-		List<UTXO> outputs = this.getRemoteBalances(false, keys);
-		if (outputs.isEmpty()) {
-			return;
-		}
+        List<UTXO> outputs = this.getRemoteBalances(false, keys);
+        if (outputs.isEmpty()) {
+            return;
+        }
 
-		for (UTXO output : outputs) {
-			String blockHashHex = output.getBlockHashHex();
-			Block block = this.getRemoteBlock(blockHashHex);
-			for (Transaction transaction : block.getTransactions()) {
-				if (transaction.getSubtangleID() == null) {
-					continue;
-				}
-			}
-			Coin coinbase = output.getValue();
-			
-		}
-	}
+        for (UTXO output : outputs) {
+            String blockHashHex = output.getBlockHashHex();
+            Block block = this.getRemoteBlock(blockHashHex);
+            for (Transaction transaction : block.getTransactions()) {
+                if (transaction.getSubtangleID() == null) {
+                    continue;
+                }
+            }
+            Coin coinbase = output.getValue();
+            Block b = transactionService.askTransactionBlock();
+            b.addCoinbaseTransaction(ecKey.getPubKey(), coinbase);
+            blockService.saveBlock(b);
+        }
+    }
+    
+    @Autowired
+    private BlockService blockService;
+    
+    @Autowired
+    private TransactionService transactionService;
 
-	public List<UTXO> getRemoteBalances(boolean withZero, List<ECKey> keys) throws Exception {
-		List<UTXO> listUTXO = new ArrayList<UTXO>();
-		List<String> keyStrHex000 = new ArrayList<String>();
+    public List<UTXO> getRemoteBalances(boolean withZero, List<ECKey> keys) throws Exception {
+        List<UTXO> listUTXO = new ArrayList<UTXO>();
+        List<String> keyStrHex000 = new ArrayList<String>();
 
-		for (ECKey ecKey : keys) {
-			keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
-		}
+        for (ECKey ecKey : keys) {
+            keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
+        }
 
-		String contextRoot = subtangleConfiguration.getParentContextRoot();
-		String response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
-				Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
+        String contextRoot = subtangleConfiguration.getParentContextRoot();
+        String response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
+                Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
 
-		GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
+        GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
 
-		for (UTXO utxo : getBalancesResponse.getOutputs()) {
-			if (withZero) {
-				listUTXO.add(utxo);
-			} else if (utxo.getValue().getValue() > 0) {
-				listUTXO.add(utxo);
-			}
-		}
+        for (UTXO utxo : getBalancesResponse.getOutputs()) {
+            if (withZero) {
+                listUTXO.add(utxo);
+            } else if (utxo.getValue().getValue() > 0) {
+                listUTXO.add(utxo);
+            }
+        }
 
-		return listUTXO;
-	}
-	
-	public Block getRemoteBlock(String blockHashHex) throws Exception {
+        return listUTXO;
+    }
+    
+    public Block getRemoteBlock(String blockHashHex) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hashHex", blockHashHex);
         String contextRoot = subtangleConfiguration.getParentContextRoot();
@@ -79,11 +87,11 @@ public class SubtangleService {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         return block;
-	}
-	
-	@Autowired
-	private NetworkParameters networkParameters;
+    }
+    
+    @Autowired
+    private NetworkParameters networkParameters;
 
-	@Autowired
-	private SubtangleConfiguration subtangleConfiguration;
+    @Autowired
+    private SubtangleConfiguration subtangleConfiguration;
 }
