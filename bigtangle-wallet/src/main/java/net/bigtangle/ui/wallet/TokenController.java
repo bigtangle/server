@@ -978,8 +978,8 @@ public class TokenController extends TokenBaseController {
         }
 
         try {
-            Main.addToken(CONTEXT_ROOT, rowData.get("tokenname").toString(), rowData.get("tokenid").toString(),
-                    DataClassName.TOKEN.name());
+            Main.addToken(CONTEXT_ROOT, rowData.get("tokenname").toString() + ":" + rowData.get("asmarket"),
+                    rowData.get("tokenid").toString(), DataClassName.TOKEN.name());
             GuiUtils.informationalAlert("", Main.getText("addwatchedSuccess"), "");
         } catch (Exception e) {
             GuiUtils.crashAlert(e);

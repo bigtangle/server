@@ -583,12 +583,20 @@ public class Main extends Application {
     }
 
     public static List<String> initToken4block() throws Exception {
-        TokenInfo tokenInfo = (TokenInfo) getUserdata(DataClassName.TOKEN.name());
-        List<Tokens> list = tokenInfo.getPositveTokenList();
+        WatchedInfo tokenInfo = (WatchedInfo) getUserdata(DataClassName.TOKEN.name());
+        if (tokenInfo == null) {
+            return null;
+        }
+        List<UserSettingData> list = tokenInfo.getUserSettingDatas();
         List<String> addressList = new ArrayList<String>();
-        if (list != null) {
-            for (Tokens tokens : list) {
-                addressList.add(tokens.getTokenid() + "," + tokens.getTokenname());
+        if (list != null && !list.isEmpty()) {
+            for (UserSettingData userSettingData : list) {
+                if (userSettingData.getDomain().equals(DataClassName.TOKEN.name())
+                        && userSettingData.getValue().endsWith(":" + Main.getText("Token"))) {
+                    addressList.add(userSettingData.getKey() + ","
+                            + userSettingData.getValue().substring(0, userSettingData.getValue().lastIndexOf(":")));
+                }
+
             }
         }
         return addressList;
@@ -944,12 +952,6 @@ public class Main extends Application {
             }
             ContactInfo contactInfo = new ContactInfo().parse(bytes);
             return contactInfo;
-        } else if (DataClassName.TOKEN.name().equals(type)) {
-            if (bytes == null || bytes.length == 0) {
-                return new TokenInfo();
-            }
-            TokenInfo tokenInfo = new TokenInfo().parse(bytes);
-            return tokenInfo;
         } else if (DataClassName.MYHOMEADDRESS.name().equals(type)) {
             if (bytes == null || bytes.length == 0) {
                 return new MyHomeAddress();

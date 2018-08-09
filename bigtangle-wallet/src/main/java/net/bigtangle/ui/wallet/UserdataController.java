@@ -40,7 +40,9 @@ import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Uploadfile;
 import net.bigtangle.core.UploadfileInfo;
+import net.bigtangle.core.UserSettingData;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.WatchedInfo;
 import net.bigtangle.core.http.server.resp.UserDataResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.params.ReqCmd;
@@ -528,15 +530,21 @@ public class UserdataController {
 
     public void initTokenTableView() {
         try {
-            TokenInfo tokenInfo = (TokenInfo) Main.getUserdata(DataClassName.TOKEN.name());
-            List<Tokens> list = tokenInfo.getPositveTokenList();
+            WatchedInfo tokenInfo = (WatchedInfo) Main.getUserdata(DataClassName.TOKEN.name());
+            if (tokenInfo == null) {
+                return;
+            }
+            List<UserSettingData> list = tokenInfo.getUserSettingDatas();
             ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();
             if (list != null && !list.isEmpty()) {
-                for (Tokens tokens : list) {
-                    Map<String, Object> map = new HashMap<String, Object>();
-                    map.put("tokenname", tokens.getTokenname());
-                    map.put("tokenid", tokens.getTokenid());
-                    allData.add(map);
+                for (UserSettingData userSettingData : list) {
+                    if (userSettingData.getDomain().equals(DataClassName.TOKEN.name())) {
+                        Map<String, Object> map = new HashMap<String, Object>();
+                        map.put("tokenname", userSettingData.getValue());
+                        map.put("tokenid", userSettingData.getKey());
+                        allData.add(map);
+                    }
+
                 }
                 wachtedTokenTableview.setItems(allData);
                 tokennameColumn.setCellValueFactory(new MapValueFactory("tokenname"));

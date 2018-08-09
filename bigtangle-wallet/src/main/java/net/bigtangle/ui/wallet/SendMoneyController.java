@@ -55,6 +55,7 @@ import javafx.stage.FileChooser;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.InsufficientMoneyException;
 import net.bigtangle.core.Json;
@@ -66,7 +67,9 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
+import net.bigtangle.core.UserSettingData;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.WatchedInfo;
 import net.bigtangle.core.http.server.resp.PayMultiSignAddressListResponse;
 import net.bigtangle.core.http.server.resp.PayMultiSignDetailsResponse;
 import net.bigtangle.core.http.server.resp.PayMultiSignListResponse;
@@ -185,6 +188,9 @@ public class SendMoneyController {
     @FXML
     public Label btcLabel2;
 
+    @FXML
+    public ComboBox<String> subtangleComboBox;
+
     String utxoKey;
     String signnumberString = "0";
     String signnumberStringA = "0";
@@ -196,10 +202,29 @@ public class SendMoneyController {
 
         try {
             initTokeninfo();
+            initSubtangle();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
 
+    }
+
+    public void initSubtangle() throws Exception {
+        ObservableList<String> allData = FXCollections.observableArrayList();
+        WatchedInfo watchedInfo = (WatchedInfo) Main.getUserdata(DataClassName.WATCHED.name());
+        if (watchedInfo == null) {
+            return;
+        }
+        List<UserSettingData> list = watchedInfo.getUserSettingDatas();
+        if (list != null && !list.isEmpty()) {
+            for (UserSettingData userSettingData : list) {
+                if (userSettingData.getDomain().equals(DataClassName.TOKEN.name())
+                        && userSettingData.getValue().endsWith(":" + Main.getText("subtangle"))) {
+                    allData.add(userSettingData.getKey() + ":" + userSettingData.getValue());
+                }
+            }
+        }
+        subtangleComboBox.setItems(allData);
     }
 
     public void initTokeninfo() {
@@ -288,6 +313,7 @@ public class SendMoneyController {
                             + utxoModel.getMinimumsign();
                     multiUtxoChoiceBox.getItems().add(temp);
                     multiUtxoChoiceBox1.getItems().add(temp);
+                    tokeninfo1.getItems().add(temp);
                     hashHexList.add(utxoModel.getHash() + ":" + utxoModel.getOutputindex());
                 }
 
