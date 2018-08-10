@@ -104,8 +104,8 @@ import net.bigtangle.wallet.DeterministicSeed;
 
 public class Main extends Application {
     public static NetworkParameters params = UnitTestParams.get();
-    public static final String APP_NAME = "Bigtangle  Wallet " + Main.version;
-    public static final String version = "0.2.0";
+    public static final String APP_NAME = "Bigtangle  Wallet Test " + Main.version;
+    public static final String version = "0.3.0";
     public static String keyFileDirectory = ".";
     public static String keyFilePrefix = "bigtangle";
     public static WalletAppKit bitcoin;
