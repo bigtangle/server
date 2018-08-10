@@ -456,6 +456,7 @@ public class TokenController extends TokenBaseController {
         }
         tokenid.setItems(tokenData);
         tokenid1.setItems(tokenData);
+        tokenid11.setItems(tokenData);
         marketid.setItems(tokenData);
         tokenid1.getSelectionModel().selectedItemProperty().addListener((ov, oldv, newv) -> {
             try {
