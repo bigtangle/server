@@ -65,7 +65,7 @@ public class SubtangleService {
                 Address address = new Address(this.networkParameters, toAddressInSubtangle);
                 this.giveMoney(signKey, address, coinbase);
             } catch (Exception e) {
-                e.printStackTrace();
+                //e.printStackTrace();
             }
         }
     }

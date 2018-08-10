@@ -33,6 +33,7 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
 
+@SuppressWarnings("rawtypes")
 public class TokenBaseController {
     @FXML
     public TableView<Map> tokensTable;
@@ -112,6 +113,7 @@ public class TokenBaseController {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Deprecated
     public void initSerialTableView() throws Exception {
         KeyParameter aesKey = null;
@@ -156,7 +158,7 @@ public class TokenBaseController {
         tokenserialTable.setItems(tokenData);
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({ "unchecked" })
     public void initTableView() throws Exception {
         String name = nameTextField.getText();
         String CONTEXT_ROOT = Main.getContextRoot();
@@ -216,7 +218,7 @@ public class TokenBaseController {
         tokensTable.setItems(tokenData);
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({ "unchecked" })
     public void initMultisignTableView() throws Exception {
         KeyParameter aesKey = null;
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();

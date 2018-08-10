@@ -53,6 +53,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.core.http.server.resp.MultiSignResponse;
+import net.bigtangle.core.http.server.resp.OutputsDetailsResponse;
 import net.bigtangle.core.http.server.resp.PayMultiSignAddressListResponse;
 import net.bigtangle.core.http.server.resp.PayMultiSignDetailsResponse;
 import net.bigtangle.core.http.server.resp.PayMultiSignResponse;
@@ -63,7 +64,6 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.MilestoneService;
-import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
@@ -331,7 +331,6 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         return payMultiSign;
     }
 
-    @SuppressWarnings("unchecked")
     public void payMultiSign(ECKey ecKey, String orderid, NetworkParameters networkParameters, String contextRoot)
             throws Exception {
         List<String> pubKeys = new ArrayList<String>();
@@ -352,8 +351,9 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam));
         System.out.println(resp);
 
-        HashMap<String, Object> outputs_ = Json.jsonmapper().readValue(resp, HashMap.class);
-        UTXO u = MapToBeanMapperUtil.parseUTXO((HashMap<String, Object>) outputs_.get("outputs"));
+        OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
+        UTXO u = outputsDetailsResponse.getOutputs();
+        
         TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(networkParameters, u, 0);
         Script multisigScript_ = multisigOutput_.getScriptPubKey();
 

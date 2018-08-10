@@ -72,6 +72,7 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UserSettingData;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.WatchedInfo;
+import net.bigtangle.core.http.server.resp.OutputsDetailsResponse;
 import net.bigtangle.core.http.server.resp.PayMultiSignAddressListResponse;
 import net.bigtangle.core.http.server.resp.PayMultiSignDetailsResponse;
 import net.bigtangle.core.http.server.resp.PayMultiSignListResponse;
@@ -85,13 +86,13 @@ import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.ui.wallet.utils.WTUtils;
-import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet;
 
+@SuppressWarnings({"rawtypes", "unused"})
 public class SendMoneyController {
 
     private static final Logger log = LoggerFactory.getLogger(SendMoneyController.class);
@@ -157,6 +158,7 @@ public class SendMoneyController {
 
     public Main.OverlayUI<?> overlayUI;
 
+    @SuppressWarnings("unused")
     private String mOrderid;
     private Transaction mTransaction;
     @FXML
@@ -398,7 +400,7 @@ public class SendMoneyController {
         initSignTable();
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({ "unchecked" })
     public void initSignTable() throws Exception {
         KeyParameter aesKey = null;
         List<String> pubKeys = new ArrayList<String>();
@@ -541,9 +543,9 @@ public class SendMoneyController {
         String resp = OkHttp3Util.postString(Main.getContextRoot() + ReqCmd.outputsWithHexStr.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
-        HashMap<String, Object> outputs_ = Json.jsonmapper().readValue(resp, HashMap.class);
-        UTXO findOutput = MapToBeanMapperUtil.parseUTXO((HashMap<String, Object>) outputs_.get("outputs"));
-
+        OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
+        UTXO findOutput = outputsDetailsResponse.getOutputs();
+        
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(Main.params, findOutput, 0);
         Transaction transaction = new Transaction(Main.params);
         Coin coinbase = Coin.valueOf(Long.parseLong(amountEdit2.getText()), Utils.HEX.decode(btcLabel2.getText()));
@@ -563,9 +565,8 @@ public class SendMoneyController {
         Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
         input.setScriptSig(inputScript);
 
-        HashMap requestParam0 = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(Main.getContextRoot() + ReqCmd.askTransaction,
-                Json.jsonmapper().writeValueAsString(requestParam0));
+                Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
         Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(transaction);
         rollingBlock.solve();
@@ -831,7 +832,6 @@ public class SendMoneyController {
         this.launchPayMultiSignA(Main.params, ContextRoot);
     }
 
-    @SuppressWarnings("unchecked")
     public void launchPayMultiSign(NetworkParameters networkParameters, String contextRoot) throws Exception {
         int index = multiUtxoChoiceBox.getSelectionModel().getSelectedIndex();
         String outputStr = this.hashHexList.get(index);
@@ -840,9 +840,9 @@ public class SendMoneyController {
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsWithHexStr.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
-        HashMap<String, Object> outputs_ = Json.jsonmapper().readValue(resp, HashMap.class);
-        UTXO utxo = MapToBeanMapperUtil.parseUTXO((HashMap<String, Object>) outputs_.get("outputs"));
-
+        OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
+        UTXO utxo = outputsDetailsResponse.getOutputs();
+        
         TransactionOutput multisigOutput = new FreeStandingTransactionOutput(networkParameters, utxo, 0);
         Transaction transaction = new Transaction(Main.params);
 
@@ -874,7 +874,6 @@ public class SendMoneyController {
                 Json.jsonmapper().writeValueAsString(payMultiSign));
     }
 
-    @SuppressWarnings("unchecked")
     public void launchPayMultiSignA(NetworkParameters networkParameters, String contextRoot) throws Exception {
         int index = multiUtxoChoiceBox1.getSelectionModel().getSelectedIndex();
         if (index == -1) {
@@ -886,9 +885,9 @@ public class SendMoneyController {
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsWithHexStr.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
-        HashMap<String, Object> outputs_ = Json.jsonmapper().readValue(resp, HashMap.class);
-        UTXO utxo = MapToBeanMapperUtil.parseUTXO((HashMap<String, Object>) outputs_.get("outputs"));
-
+        OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
+        UTXO utxo = outputsDetailsResponse.getOutputs();
+        
         TransactionOutput multisigOutput = new FreeStandingTransactionOutput(networkParameters, utxo, 0);
         Transaction transaction = new Transaction(Main.params);
 
@@ -973,7 +972,6 @@ public class SendMoneyController {
         this.payMultiSign(currentECKey, orderid, Main.params, ContextRoot);
     }
 
-    @SuppressWarnings("unchecked")
     public void payMultiSign(ECKey ecKey, String orderid, NetworkParameters networkParameters, String contextRoot)
             throws Exception {
         List<String> pubKeys = new ArrayList<String>();
@@ -995,8 +993,9 @@ public class SendMoneyController {
                 Json.jsonmapper().writeValueAsString(requestParam));
         log.debug(resp);
 
-        HashMap<String, Object> outputs_ = Json.jsonmapper().readValue(resp, HashMap.class);
-        UTXO u = MapToBeanMapperUtil.parseUTXO((HashMap<String, Object>) outputs_.get("outputs"));
+        OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
+        UTXO u = outputsDetailsResponse.getOutputs();
+        
         TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(networkParameters, u, 0);
         Script multisigScript_ = multisigOutput_.getScriptPubKey();
 

@@ -60,6 +60,7 @@ import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.ui.wallet.utils.WTUtils;
 import net.bigtangle.utils.OkHttp3Util;
 
+@SuppressWarnings("rawtypes")
 public class TokenController extends TokenBaseController {
 
     private static final Logger log = LoggerFactory.getLogger(TokenController.class);
@@ -212,6 +213,7 @@ public class TokenController extends TokenBaseController {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void editToken(ActionEvent event) throws Exception {
         String CONTEXT_ROOT = Main.getContextRoot();
         Map<String, Object> rowdata = tokenserialTable.getSelectionModel().getSelectedItem();
@@ -278,6 +280,7 @@ public class TokenController extends TokenBaseController {
 
     }
 
+    @SuppressWarnings("unchecked")
     public void againPublish(ActionEvent event) throws Exception {
         String CONTEXT_ROOT = Main.getContextRoot();
         Map<String, Object> rowdata = tokenserialTable.getSelectionModel().getSelectedItem();
@@ -813,6 +816,7 @@ public class TokenController extends TokenBaseController {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void doMultiSign() throws Exception {
 
         KeyParameter aesKey = null;
@@ -970,6 +974,7 @@ public class TokenController extends TokenBaseController {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void add2positve(ActionEvent event) {
         String CONTEXT_ROOT = Main.getContextRoot();
         Map<String, Object> rowData = tokensTable.getSelectionModel().getSelectedItem();

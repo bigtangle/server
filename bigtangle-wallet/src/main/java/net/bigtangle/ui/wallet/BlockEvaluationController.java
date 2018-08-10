@@ -134,6 +134,7 @@ public class BlockEvaluationController {
         }
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private void initCompare() {
         try {
             Map<String, String> keyMap = new HashMap<String, String>();

@@ -297,7 +297,6 @@ public class UserdataController {
 
     public void initMyAddress() {
         try {
-            String CONTEXT_ROOT = Main.getContextRoot();
             MyHomeAddress myHomeAddress = (MyHomeAddress) Main.getUserdata(DataClassName.MYHOMEADDRESS.name());
             countryTF.setText(myHomeAddress.getCountry());
             provinceTF.setText(myHomeAddress.getProvince());
@@ -435,6 +434,7 @@ public class UserdataController {
         }
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public void initContactTableView() {
         try {
             ContactInfo contactInfo = (ContactInfo) Main.getUserdata(DataClassName.CONTACTINFO.name());
@@ -454,9 +454,9 @@ public class UserdataController {
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
-
     }
-
+    
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public void initFileTableView() {
         try {
             UploadfileInfo uploadfileInfo = (UploadfileInfo) Main.getUserdata(DataClassName.UPLOADFILE.name());
@@ -479,6 +479,7 @@ public class UserdataController {
         }
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private void initOtherTableView(List<String> pubkeyList) {
         ObservableList<String> userdata = FXCollections.observableArrayList(DataClassName.SERVERURL.name(),
                 DataClassName.LANG.name());
@@ -528,6 +529,7 @@ public class UserdataController {
         }
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public void initTokenTableView() {
         try {
             WatchedInfo tokenInfo = (WatchedInfo) Main.getUserdata(DataClassName.TOKEN.name());

@@ -20,13 +20,9 @@ package net.bigtangle.ui.wallet;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javafx.beans.binding.Bindings.createBooleanBinding;
-import static javafx.beans.binding.Bindings.equal;
-import static javafx.beans.binding.Bindings.not;
 import static javafx.beans.binding.Bindings.or;
 import static net.bigtangle.ui.wallet.utils.GuiUtils.checkGuiThread;
 import static net.bigtangle.ui.wallet.utils.GuiUtils.informationalAlert;
-import static net.bigtangle.ui.wallet.utils.WTUtils.didThrow;
-import static net.bigtangle.ui.wallet.utils.WTUtils.unchecked;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -51,10 +47,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextArea;
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.Utils;
-import net.bigtangle.crypto.MnemonicCode;
 import net.bigtangle.params.MainNetParams;
-import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.wallet.DeterministicSeed;
 import net.bigtangle.wallet.KeyChainGroup;
 
@@ -70,7 +63,7 @@ public class WalletSettingsController {
     @FXML
     Button restoreButton;
 
-    public Main.OverlayUI overlayUI;
+    public Main.OverlayUI<?> overlayUI;
 
     private KeyParameter aesKey;
 
@@ -100,11 +93,11 @@ public class WalletSettingsController {
         // Set the mnemonic seed words.
         final List<String> mnemonicCode = seed.getMnemonicCode();
         checkNotNull(mnemonicCode); // Already checked for encryption.
-        String origWords = Utils.join(mnemonicCode);
+        //String origWords = Utils.join(mnemonicCode);
        // wordsArea.setText(origWords);
 
         // Validate words as they are being typed.
-        MnemonicCode codec = unchecked(MnemonicCode::new);
+        //MnemonicCode codec = unchecked(MnemonicCode::new);
 //        TextFieldValidator validator = new TextFieldValidator(wordsArea,
 //                text -> !didThrow(() -> codec.check(Splitter.on(' ').splitToList(text))));
 

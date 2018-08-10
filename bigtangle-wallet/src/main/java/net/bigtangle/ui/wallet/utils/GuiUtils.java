@@ -195,6 +195,7 @@ public class GuiUtils {
      * files from local disk, allowing live editing whilst the app runs without
      * rebuilds.
      */
+    @SuppressWarnings("unused")
     public static URL getResource(String name) {
         if (false)
             return unchecked(() -> new URL("file:///your/path/here/src/main/wallettemplate/" + name));
