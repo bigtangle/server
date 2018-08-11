@@ -37,8 +37,8 @@ public class SubtangleService {
 
     @SuppressWarnings("deprecation")
     public void giveMoneyToTargetAccount() throws Exception {
-        ECKey signKey = new ECKey(Utils.HEX.decode(subtangleConfiguration.getPriKeyHex()), 
-                Utils.HEX.decode(subtangleConfiguration.getPubKeyHex()));
+        ECKey signKey = new ECKey(Utils.HEX.decode(subtangleConfiguration.getPriKeyHex0()), 
+                Utils.HEX.decode(subtangleConfiguration.getPubKeyHex0()));
         List<ECKey> keys = new ArrayList<>();
         keys.add(signKey);
 
@@ -64,10 +64,35 @@ public class SubtangleService {
 
                 Address address = new Address(this.networkParameters, toAddressInSubtangle);
                 this.giveMoney(signKey, address, coinbase);
+                
+                this.giveRemoteMoney(signKey, coinbase, output);
             } catch (Exception e) {
                 //e.printStackTrace();
             }
         }
+    }
+
+    @SuppressWarnings("deprecation")
+    private void giveRemoteMoney(ECKey signKey, Coin amount, UTXO output) throws Exception {
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, output, 0);
+        Transaction transaction = new Transaction(networkParameters);
+        
+        ECKey outKey = new ECKey(Utils.HEX.decode(subtangleConfiguration.getPriKeyHex1()), 
+                Utils.HEX.decode(subtangleConfiguration.getPubKeyHex1()));
+        transaction.addOutput(amount, outKey);
+
+        TransactionInput input = transaction.addInput(spendableOutput);
+        Sha256Hash sighash = transaction.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
+                false);
+
+        TransactionSignature tsrecsig = new TransactionSignature(signKey.sign(sighash), Transaction.SigHash.ALL, false);
+        Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+        input.setScriptSig(inputScript);
+
+        Block b = transactionService.askTransactionBlock();
+        b.addTransaction(transaction);
+        b.solve();
+        this.blockService.saveBlock(b);
     }
 
     public void giveMoney(ECKey signKey, Address address, Coin amount) throws Exception {

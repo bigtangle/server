@@ -9,30 +9,20 @@ public class SubtangleConfiguration {
     @Value("${subtangle.active:false}")
     private boolean active;
 
-    @Value("${subtangle.pubKeyHex}")
-    private String pubKeyHex;
+    @Value("${subtangle.pubKeyHex0}")
+    private String pubKeyHex0;
 
-    @Value("${subtangle.priKeyHex}")
-    private String priKeyHex;
+    @Value("${subtangle.priKeyHex0}")
+    private String priKeyHex0;
+    
+    @Value("${subtangle.pubKeyHex1}")
+    private String pubKeyHex1;
+
+    @Value("${subtangle.priKeyHex1}")
+    private String priKeyHex1;
 
     @Value("${subtangle.parentContextRoot}")
     private String parentContextRoot;
-
-    public String getPubKeyHex() {
-        return pubKeyHex;
-    }
-
-    public void setPubKeyHex(String pubKeyHex) {
-        this.pubKeyHex = pubKeyHex;
-    }
-
-    public String getPriKeyHex() {
-        return priKeyHex;
-    }
-
-    public void setPriKeyHex(String priKeyHex) {
-        this.priKeyHex = priKeyHex;
-    }
 
     public boolean isActive() {
         return active;
@@ -48,5 +38,37 @@ public class SubtangleConfiguration {
 
     public void setParentContextRoot(String parentContextRoot) {
         this.parentContextRoot = parentContextRoot;
+    }
+
+    public String getPubKeyHex0() {
+        return pubKeyHex0;
+    }
+
+    public void setPubKeyHex0(String pubKeyHex0) {
+        this.pubKeyHex0 = pubKeyHex0;
+    }
+
+    public String getPriKeyHex0() {
+        return priKeyHex0;
+    }
+
+    public void setPriKeyHex0(String priKeyHex0) {
+        this.priKeyHex0 = priKeyHex0;
+    }
+
+    public String getPubKeyHex1() {
+        return pubKeyHex1;
+    }
+
+    public void setPubKeyHex1(String pubKeyHex1) {
+        this.pubKeyHex1 = pubKeyHex1;
+    }
+
+    public String getPriKeyHex1() {
+        return priKeyHex1;
+    }
+
+    public void setPriKeyHex1(String priKeyHex1) {
+        this.priKeyHex1 = priKeyHex1;
     }
 }

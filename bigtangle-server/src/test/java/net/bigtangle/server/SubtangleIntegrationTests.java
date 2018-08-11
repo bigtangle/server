@@ -152,10 +152,10 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         logger.info("subtangle configuration active : " + subtangleConfiguration.isActive());
       //  assertTrue(subtangleConfiguration.isActive());
         
-        logger.info("subtangle configuration hashKey : " + subtangleConfiguration.getPubKeyHex());
+        logger.info("subtangle configuration hashKey : " + subtangleConfiguration.getPubKeyHex0());
         ECKey subtangleKey = 
-                new ECKey(Utils.HEX.decode(subtangleConfiguration.getPriKeyHex()),
-                        Utils.HEX.decode(subtangleConfiguration.getPubKeyHex()));
+                new ECKey(Utils.HEX.decode(subtangleConfiguration.getPriKeyHex0()),
+                        Utils.HEX.decode(subtangleConfiguration.getPubKeyHex0()));
         // ECKey subtangleKey = new ECKey();
         
 //       System.out.println(Utils.HEX.encode(subtangleKey.getPubKey()));
