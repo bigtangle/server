@@ -28,17 +28,17 @@ object JdbcTest {
 
     val sqlContext = new SQLContext(sc)
 
-    val headers = sqlContext.read
+    val blocks = sqlContext.read
       .format("jdbc")
       .option("url", "jdbc:mysql://localhost:3306/info")
       .option("user", "root")
       .option("password", "test1234")
       .option("dbtable", "blocks")
       .load()
-    headers.printSchema()
+    blocks.printSchema()
 
  
-    headers.createOrReplaceTempView("headers")
+  blocks.createOrReplaceTempView("blocks")
  
  
       
