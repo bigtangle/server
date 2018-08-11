@@ -7,7 +7,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import net.bigtangle.server.config.SubtangleConfiguration;
+import net.bigtangle.subtangle.SubtangleConfiguration;
 import net.bigtangle.subtangle.service.SubtangleService;
 
 @Component

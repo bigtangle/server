@@ -28,10 +28,10 @@ import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.server.config.SubtangleConfiguration;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.server.service.WalletService;
+import net.bigtangle.subtangle.SubtangleConfiguration;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 

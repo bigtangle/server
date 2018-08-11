@@ -42,7 +42,6 @@ import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.server.config.SubtangleConfiguration;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
@@ -142,20 +141,15 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         }
         return coinbase;
     }
-    
-    @Autowired
-    private SubtangleConfiguration subtangleConfiguration;
+ 
 
     @SuppressWarnings("deprecation")
     @Test
-    public void testGiveMoney() throws Exception {
-        logger.info("subtangle configuration active : " + subtangleConfiguration.isActive());
-      //  assertTrue(subtangleConfiguration.isActive());
+    public void testGiveMoney() throws Exception { 
         
-        logger.info("subtangle configuration hashKey : " + subtangleConfiguration.getPubKeyHex0());
         ECKey subtangleKey = 
-                new ECKey(Utils.HEX.decode(subtangleConfiguration.getPriKeyHex0()),
-                        Utils.HEX.decode(subtangleConfiguration.getPubKeyHex0()));
+                new ECKey(Utils.HEX.decode("1430ec255d2f92eb8d6702c2282187d8ce92f78c878248f51ae316fe995d896c"),
+                        Utils.HEX.decode("02b9416f95f21953232df29d89ee5c8d1b648bfe8d55c8e53705d4a452264a98f0"));
         // ECKey subtangleKey = new ECKey();
         
 //       System.out.println(Utils.HEX.encode(subtangleKey.getPubKey()));
