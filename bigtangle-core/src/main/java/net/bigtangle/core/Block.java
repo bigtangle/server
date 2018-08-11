@@ -696,10 +696,7 @@ public class Block extends Message {
         if (getBlockType() == Block.BLOCKTYPE_INITIAL) {
             return true;
         }
-        
-        if (getBlockType() == Block.BLOCKTYPE_CROSSTANGLE) {
-            return true;
-        }
+
 
         // This part is key - it is what proves the block was as difficult to
         // make as it claims
