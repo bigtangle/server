@@ -5,7 +5,7 @@ val javaTargetVersion = sys.props.getOrElse("JAVATARGET", default = "1.8")
 lazy val commonSettings: Seq[Def.Setting[_]] = Defaults.coreDefaultSettings ++ Seq(
   organization := "net.bigtangle",
   version := "0.1.0-SNAPSHOT",
-  scalaVersion := "2.11.8",
+  scalaVersion := "2.11.11",
   resolvers ++= Dependencies.repos,
   credentials += Credentials(Path.userHome / ".sbt" / ".credentials"),
   dependencyOverrides += "org.scala-lang" % "scala-library" % scalaVersion.value,
@@ -31,7 +31,7 @@ lazy val rootSettings = Seq(
   test := {}
 )
 
-lazy val root = (Sproject in file("."))
+lazy val root = (project in file("."))
   .settings(
     commonSettings,
     rootSettings,

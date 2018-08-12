@@ -37,14 +37,10 @@ object JdbcTest {
       .load()
     blocks.printSchema()
 
- 
-  blocks.createOrReplaceTempView("blocks")
- 
- 
-      
+    blocks.createOrReplaceTempView("blocks")
+
     val SELECT_SQL = "SELECT  hash ,  prevblockhash ,  prevbranchblockhash ,  block FROM blocks "
 
-      
     val df = sqlContext.sql(SELECT_SQL)
 
     //as  Followers prevblockhash follows hash
@@ -65,7 +61,7 @@ object JdbcTest {
       (Edge(bytestoLong(row.getAs[Array[Byte]](2)), bytestoLong(row.getAs[Array[Byte]](0)), "")))
     val myGraph = Graph(myVertices, myEdges.union(myEdges2))
 
-    myGraph.vertices.collect
+    val test = myGraph.vertices.collect
 
     // Run PageRank
     val ranks = myGraph.pageRank(0.0001).vertices
