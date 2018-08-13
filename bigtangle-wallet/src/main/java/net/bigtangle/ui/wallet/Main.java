@@ -217,9 +217,9 @@ public class Main extends Application {
 
             }
             watchedInfo.setUserSettingDatas(temps);
-        } else {
-            watchedInfo.getUserSettingDatas().add(userSettingData);
-        }
+        } // else {
+        watchedInfo.getUserSettingDatas().add(userSettingData);
+        // }
 
         coinbase.setDataClassName(type);
         coinbase.setData(watchedInfo.toByteArray());
