@@ -44,6 +44,11 @@ public class Tokens implements java.io.Serializable {
 
     private int tokenType;
 
+    
+    //for check if solidity 
+    private String prevTokenBlockHashHex;
+    
+    
     public int getTokenType() {
         return tokenType;
     }
@@ -108,6 +113,14 @@ public class Tokens implements java.io.Serializable {
 
     public void setTokenstop(boolean tokenstop) {
         this.tokenstop = tokenstop;
+    }
+
+    public String getPrevTokenBlockHashHex() {
+        return prevTokenBlockHashHex;
+    }
+
+    public void setPrevTokenBlockHashHex(String prevTokenBlockHashHex) {
+        this.prevTokenBlockHashHex = prevTokenBlockHashHex;
     }
 
     @Override
