@@ -5,7 +5,7 @@
 package net.bigtangle.core;
 
 public class Tokens implements java.io.Serializable {
-    
+
     private static final long serialVersionUID = 6992138619113601243L;
 
     public Tokens(String tokenid, String tokenname, String description, String url, long signnumber,
@@ -19,25 +19,31 @@ public class Tokens implements java.io.Serializable {
         this.tokenType = tokenType;
         this.tokenstop = tokenstop;
     }
-    
+
+    public Tokens(String tokenid, String tokenname) {
+        this.tokenid = tokenid;
+        this.tokenname = tokenname;
+
+    }
+
     public Tokens() {
         super();
     }
 
     private String tokenid;
-    
+
     private String tokenname;
-    
+
     private String description;
-    
+
     private String url;
-    
+
     private long signnumber;
-    
+
     private boolean multiserial;
-    
+
     private int tokenType;
-    
+
     public int getTokenType() {
         return tokenType;
     }
@@ -122,6 +128,5 @@ public class Tokens implements java.io.Serializable {
         this.tokenstop = tokens.isTokenstop();
         return this;
     }
-    
-    
+
 }
