@@ -1,8 +1,12 @@
 package de.gd.analytics.test
 
 import org.apache.spark.SparkConf
+import com.google.common.base.Stopwatch;
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext
+import org.apache.spark.graphx.Pregel
+import org.apache.spark.graphx
+import org.apache.spark.graphx._
 
 import com.typesafe.config.ConfigFactory
 import org.apache.spark.rdd.RDD
@@ -13,6 +17,8 @@ import net.bigtangle.core.Sha256Hash
 import net.bigtangle.core.NetworkParameters
 import net.bigtangle.params.UnitTestParams
 import net.bigtangle.core.BlockWrap
+import net.bigtangle.core.BlockEvaluation
+import java.util.concurrent.TimeUnit
 
 object JdbcTest {
   def main(args: Array[String]) {
@@ -39,7 +45,7 @@ object JdbcTest {
 
     blocks.createOrReplaceTempView("blocks")
 
-    val SELECT_SQL = "SELECT  hash ,  prevblockhash ,  prevbranchblockhash ,  block FROM blocks "
+    val SELECT_SQL = "SELECT  hash, rating, depth, cumulativeweight, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained ,  prevblockhash ,  prevbranchblockhash ,  block FROM blocks "
 
     val df = sqlContext.sql(SELECT_SQL)
 
@@ -50,31 +56,79 @@ object JdbcTest {
       Sha256Hash.of(payload).toBigInteger().longValue()
     }
 
-    val bytestoBlock = (data: Array[Byte]) =>
-      { new BlockWrap(data, UnitTestParams.get()) };
+    val bytestoBlock = (data: Array[Byte], eval: BlockEvaluation) =>
+      { new BlockWrap(data, eval, UnitTestParams.get()) };
+    val toBlockEvaluation = (x$1: Sha256Hash, x$2: Long, x$3: Long, x$4: Long, x$5: Long, x$6: Boolean, x$7: Long, x$8: Long, x$9: Long, x$10: Boolean) =>
+      { BlockEvaluation.build(x$1, x$2, x$3, x$4, x$5, x$6, x$7, x$8, x$9, x$10) };
 
     val myVertices = rows.map(
-      row => (bytestoLong(row.getAs[Array[Byte]](0)), bytestoBlock(row.getAs[Array[Byte]](3))))
-    val myEdges = rows.map(row =>
-      (Edge(bytestoLong(row.getAs[Array[Byte]](1)), bytestoLong(row.getAs[Array[Byte]](0)), "")))
-    val myEdges2 = rows.map(row =>
-      (Edge(bytestoLong(row.getAs[Array[Byte]](2)), bytestoLong(row.getAs[Array[Byte]](0)), "")))
+      row => (bytestoLong(row.getAs[Array[Byte]](0)), bytestoBlock(
+        row.getAs[Array[Byte]](12),
+        toBlockEvaluation(
+          Sha256Hash.wrap(row.getAs[Array[Byte]](0)),
+          row.getLong(1),
+          row.getLong(2),
+          row.getLong(3),
+          row.getLong(4),
+          row.getBoolean(5),
+          row.getLong(6),
+          row.getLong(7),
+          row.getLong(8),
+          row.getBoolean(9)))))
+
+    // TODO use byte arrays for vertex ids
+    val myEdges = rows.filter(row => !Sha256Hash.wrap(row.getAs[Array[Byte]](0)).equals(UnitTestParams.get.getGenesisBlock.getHash)).map(row =>
+      (Edge(bytestoLong(row.getAs[Array[Byte]](0)), bytestoLong(row.getAs[Array[Byte]](10)), "")))
+    val myEdges2 = rows.filter(row => !Sha256Hash.wrap(row.getAs[Array[Byte]](0)).equals(UnitTestParams.get.getGenesisBlock.getHash)).map(row =>
+      (Edge(bytestoLong(row.getAs[Array[Byte]](0)), bytestoLong(row.getAs[Array[Byte]](11)), "")))
     val myGraph = Graph(myVertices, myEdges.union(myEdges2))
 
-    val test = myGraph.vertices.collect
+    val test1 = myGraph.vertices.collect
 
-    // Run PageRank
-    val ranks = myGraph.pageRank(0.0001).vertices
-    println(ranks.collect().mkString("\n"))
+    val watch = Stopwatch.createStarted();
+    val test2 = updateDepth(myGraph).vertices.collect
+    print("Maintained update time " + watch.elapsed(TimeUnit.MILLISECONDS));
 
-    //  df.foreach(  attributes => "Name: " + attributes(0))
-    //val myVertices = df.map( _.getByte(0).toLong )
-
-    // val edgeRDD = edgeDF.map { row => Edge(row.getByte(1).toLong, row.getByte(0).toLong, "") }
-
-    //
-    //    val graph = Graph.fromEdges[Int, Double](edgesRDD, 0)
-
+    assert(test1.map(e => e._2.getBlockEvaluation.getDepth).deep == test2.map(e => e._2.getBlockEvaluation.getDepth).deep)
   }
 
+  /**
+   * Test spark implementation for depth updates
+   */
+  def updateDepth(targetGraph: Graph[BlockWrap, String]): Graph[BlockWrap, String] = {
+    
+    targetGraph.cache()
+    val maxHeight = targetGraph.vertices.map(_._2.getBlockEvaluation.getHeight).reduce(Math.max(_, _))
+
+    // Define the three functions needed to implement depth updates in the GraphX
+    // version of Pregel
+    def vertexProgram(id: VertexId, attr: BlockWrap, msgSum: Long): BlockWrap = {
+      val eval = new BlockEvaluation(attr.getBlockEvaluation)
+      eval.setDepth(msgSum)
+      new BlockWrap(attr.getBlock, eval, UnitTestParams.get)
+    }
+
+    def sendMessage(edge: EdgeTriplet[BlockWrap, String]) = {
+      val src = edge.srcAttr.getBlockEvaluation
+      val dst = edge.dstAttr.getBlockEvaluation
+      if (src.isMaintained()) {
+        Iterator((edge.dstId, src.getDepth + 1L))
+      } else {
+        Iterator.empty
+      }
+    }
+
+    def messageCombiner(a: Long, b: Long): Long = {
+      Math.max(a, b)
+    }
+
+    // The initial message received by all vertices in the update
+    val initialMessage = 0L
+
+    // Execute a dynamic version of Pregel.
+//    Pregel(targetGraph, initialMessage, Int.MaxValue, EdgeDirection.Out)(
+//      vertexProgram, sendMessage, messageCombiner)
+    HeightDescendingPregel(targetGraph, initialMessage, Int.MaxValue, EdgeDirection.Out, maxHeight)(
+      vertexProgram, sendMessage, messageCombiner)
+  }
 }

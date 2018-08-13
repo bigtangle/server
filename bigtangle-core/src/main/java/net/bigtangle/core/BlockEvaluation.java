@@ -48,6 +48,19 @@ public class BlockEvaluation implements Serializable {
         return blockEvaluation;
     }
 
+    public BlockEvaluation(BlockEvaluation other) {
+        setBlockHash(other.blockHash);
+        setRating(other.rating);
+        setDepth(other.depth);
+        setCumulativeWeight(other.cumulativeWeight);
+        setHeight(other.height);
+        setMilestone(other.milestone);
+        setMilestoneLastUpdateTime(other.milestoneLastUpdateTime);
+        setMilestoneDepth(other.milestoneDepth);
+        setInsertTime(other.insertTime);
+        setMaintained(other.maintained);
+    }
+
     // hash of corresponding block
     private Sha256Hash blockHash;
 
@@ -60,7 +73,6 @@ public class BlockEvaluation implements Serializable {
     // count of indirect approver blocks
     private long cumulativeWeight;
 
-  
     // longest path to genesis block
     private long height;
 
@@ -80,7 +92,6 @@ public class BlockEvaluation implements Serializable {
     // pruned
     private boolean maintained;
     // only relevant for mining reward blocks, true if local assessment deems
- 
 
     public Sha256Hash getBlockHash() {
         return blockHash;
@@ -114,8 +125,6 @@ public class BlockEvaluation implements Serializable {
         this.cumulativeWeight = cumulativeWeight;
     }
 
-   
-
     public long getHeight() {
         return height;
     }
@@ -146,7 +155,12 @@ public class BlockEvaluation implements Serializable {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        return getBlockHash().equals(((BlockEvaluation) o).getBlockHash());
+//        return false;
+        return getBlockHash().equals(((BlockEvaluation) o).getBlockHash()) && rating == ((BlockEvaluation) o).rating
+                && depth == ((BlockEvaluation) o).depth && cumulativeWeight == ((BlockEvaluation) o).cumulativeWeight
+                && height == ((BlockEvaluation) o).height && milestone == ((BlockEvaluation) o).milestone
+                && milestoneLastUpdateTime == ((BlockEvaluation) o).milestoneLastUpdateTime && milestoneDepth == ((BlockEvaluation) o).milestoneDepth
+                && insertTime == ((BlockEvaluation) o).insertTime && maintained == ((BlockEvaluation) o).maintained;
     }
 
     @Override
@@ -178,5 +192,4 @@ public class BlockEvaluation implements Serializable {
         this.maintained = maintained;
     }
 
- 
 }

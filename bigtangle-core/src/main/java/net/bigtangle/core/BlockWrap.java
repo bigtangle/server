@@ -32,11 +32,11 @@ public class BlockWrap implements Serializable {
     }
 
     //Used in Spark 
-    public BlockWrap(byte[] blockbyte, NetworkParameters params) {
+    public BlockWrap(byte[] blockbyte, BlockEvaluation blockEvaluation, NetworkParameters params) {
         super();
         this.params = params;
-        block = params.getDefaultSerializer().makeBlock(blockbyte);
-
+        this.block = params.getDefaultSerializer().makeBlock(blockbyte);
+        this.blockEvaluation = blockEvaluation;
     }
     
     //Used in Spark 
@@ -48,14 +48,15 @@ public class BlockWrap implements Serializable {
         if (params == null)
             params = UnitTestParams.get();
         block = params.getDefaultSerializer().makeBlock(dataRead);
+        blockEvaluation = (BlockEvaluation) aInputStream.readObject();
     }
     
     //Used in Spark 
     private void writeObject(ObjectOutputStream aOutputStream) throws IOException {
-
         byte[] a = block.bitcoinSerialize();
         aOutputStream.writeInt(a.length);
-        aOutputStream.writeObject(a);
+        aOutputStream.write(a);
+        aOutputStream.writeObject(blockEvaluation);
     }
 
     /**
@@ -79,6 +80,8 @@ public class BlockWrap implements Serializable {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
+        // TODO revert since this will break existing code!
+//        return false;
         return getBlock().equals(((BlockWrap) o).getBlock())
                 && getBlockEvaluation().equals(((BlockWrap) o).getBlockEvaluation());
     }
