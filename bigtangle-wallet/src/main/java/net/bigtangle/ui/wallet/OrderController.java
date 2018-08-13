@@ -9,6 +9,7 @@ import static com.google.common.base.Preconditions.checkState;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,7 +41,9 @@ import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Tokens;
+import net.bigtangle.core.UserSettingData;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.WatchedInfo;
 import net.bigtangle.core.http.ordermatch.resp.GetOrderResponse;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.params.OrdermatchReqCmd;
@@ -136,7 +139,17 @@ public class OrderController extends ExchangeController {
             stateRB1.setUserData("publish");
             stateRB2.setUserData("match");
             stateRB3.setUserData("finish");
-            Main.tokenInfo = (TokenInfo) Main.getUserdata(DataClassName.TOKEN.name());
+            WatchedInfo watchedInfo = (WatchedInfo) Main.getUserdata(DataClassName.TOKEN.name());
+            Main.tokenInfo = new TokenInfo();
+            List<UserSettingData> list = watchedInfo.getUserSettingDatas();
+            for (UserSettingData userSettingData : list) {
+                if (DataClassName.TOKEN.name().equals(userSettingData.getDomain().trim())) {
+                    log.info(userSettingData.getKey());
+                    log.info(userSettingData.getValue());
+                    Main.tokenInfo.getPositveTokenList()
+                            .add(new Tokens(userSettingData.getKey(), userSettingData.getValue()));
+                }
+            }
             initMarketComboBox();
             myListener = (ov1, o1, n1) -> {
                 if (n1 != null && !n1.isEmpty()) {
@@ -262,7 +275,7 @@ public class OrderController extends ExchangeController {
                 int stateIndex = orderPublish.getState();
                 OrderState orderState = OrderState.values()[stateIndex];
                 map.put("state", Main.getText(orderState.name()));
-                
+
                 byte[] tokenid = null;
                 if (StringUtils.isNotBlank(orderPublish.getTokenId())) {
                     tokenid = Utils.HEX.decode((String) map.get("tokenId"));
