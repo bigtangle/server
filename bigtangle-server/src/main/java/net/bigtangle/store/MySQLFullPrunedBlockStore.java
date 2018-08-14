@@ -89,14 +89,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    hash varbinary(32) NOT NULL,\n"
             + "    CONSTRAINT tips_pk PRIMARY KEY (hash) USING BTREE \n" + ")\n";
 
-    //currently add on confirm, should add on block add and use confirmed/unconfirmed
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
-            
-            + "    blockhash varbinary(32) NOT NULL,\n"
-            + "    confirmed boolean NOT NULL,\n" 
             + "    tokenid varchar(255) NOT NULL  ,\n"
-            + "    tokenindex bigint NOT NULL   ,\n"
-            + "    amount bigint(20) ,\n" 
             + "    tokenname varchar(255) ,\n"
             + "    description varchar(255) ,\n" 
             + "    url varchar(255) ,\n" 
@@ -104,26 +98,27 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    multiserial boolean,\n" 
             + "    tokentype int(11),\n" 
             + "    tokenstop boolean,\n"
-            + "    PRIMARY KEY (blockhash) \n)";
+            + "    PRIMARY KEY (tokenid) \n)";
 
-    //update on confirm
     private static final String CREATE_MULTISIGNADDRESS_TABLE = "CREATE TABLE multisignaddress (\n"
-            + "    blockhash varbinary(32) NOT NULL,\n"
+            + "    tokenid varchar(255) NOT NULL  ,\n" 
             + "    address varchar(255),\n"
             + "    pubKeyHex varchar(255),\n"
             + "    posIndex int(11),\n"
-            + "    PRIMARY KEY (blockhash, address) \n)";
+            + "    PRIMARY KEY (tokenid, address) \n)";
 
-    //help for sign process
+    private static final String CREATE_TOKENSERIAL_TABLE = "CREATE TABLE tokenserial (\n"
+            + "    tokenid varchar(255) NOT NULL  ,\n" 
+            + "    tokenindex bigint NOT NULL   ,\n"
+            + "    amount bigint(20) ,\n" 
+            + "    PRIMARY KEY (tokenid, tokenindex) \n)";
+
     private static final String CREATE_MULTISIGNBY_TABLE = "CREATE TABLE multisignby (\n"
-            
-            + "    blockhash varbinary(32) NOT NULL,\n"
-            
             + "    tokenid varchar(255) NOT NULL  ,\n" 
             + "    tokenindex bigint NOT NULL   ,\n"
             + "    address varchar(255),\n" 
-            + "    PRIMARY KEY (blockhash,tokenindex, address) \n)";
-    //only display , remove?
+            + "    PRIMARY KEY (tokenid,tokenindex, address) \n)";
+    
     private static final String CREATE_MULTISIGN_TABLE = "CREATE TABLE multisign (\n"
             + "    id varchar(255) NOT NULL  ,\n" 
             + "    tokenid varchar(255) NOT NULL  ,\n" 
@@ -209,7 +204,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_TIPS_TABLE);
         sqlStatements.add(CREATE_TOKENS_TABLE);
         sqlStatements.add(CREATE_MULTISIGNADDRESS_TABLE);
-   
+        sqlStatements.add(CREATE_TOKENSERIAL_TABLE);
         sqlStatements.add(CREATE_MULTISIGNBY_TABLE);
         sqlStatements.add(CREATE_MULTISIGN_TABLE);
         sqlStatements.add(CREATE_TX_REWARD_TABLE);
