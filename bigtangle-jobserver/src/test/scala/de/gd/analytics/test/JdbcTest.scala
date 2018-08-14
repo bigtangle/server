@@ -88,6 +88,8 @@ object JdbcTest {
     val watch = Stopwatch.createStarted();
     val test2 = updateDepth(myGraph).vertices.collect
     print("Maintained update time " + watch.elapsed(TimeUnit.MILLISECONDS));
+    
+    // TODO rating select tips, then (weight depth milestonedepth rating), then milestone, then maintained
 
     assert(test1.map(e => e._2.getBlockEvaluation.getDepth).deep == test2.map(e => e._2.getBlockEvaluation.getDepth).deep)
   }

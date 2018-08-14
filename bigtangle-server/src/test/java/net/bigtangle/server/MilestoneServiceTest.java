@@ -325,21 +325,22 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertEquals(-1, blockService.getBlockEvaluation(b8weight3.getHash()).getMilestoneDepth());
         assertEquals(-1, blockService.getBlockEvaluation(b8weight4.getHash()).getMilestoneDepth());
 
-        // DEBUG USE
-        // for (int j = 1; j < 5; j++) {
-        // for (int i = 1; i < 25; i++) {
-        // Pair<Sha256Hash, Sha256Hash> tipsToApprove =
-        // tipsService.getValidatedBlockPair();
-        // Block r1 = blockService.getBlock(tipsToApprove.getLeft());
-        // Block r2 = blockService.getBlock(tipsToApprove.getRight());
-        // Block b = BlockForTest.createNextBlock(r2,
-        // Block.BLOCK_VERSION_GENESIS,
-        // outKey.getPubKey(), 0,
-        // r1.getHash());
-        // blockgraph.add(b, true);
-        // }
-        // milestoneService.update();
-        // }
+    }
+
+    // DEBUG USE
+    @Test
+    public void buildMultilinearTangle() throws Exception {
+        store.resetStore();
+        
+        for (int j = 0; j < 20; j++) {
+            Block rollingBlock = networkParameters.getGenesisBlock();
+            for (int i = 1; i < 50; i++) {
+                rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+                        0, rollingBlock.getHash());
+                blockgraph.add(rollingBlock, true);
+            }
+        }
+        milestoneService.update();
     }
 
     @Test
@@ -410,7 +411,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         assertFalse(blockService.getBlockEvaluation(block2.getHash()).isMilestone()
                 && blockService.getBlockEvaluation(block1.getHash()).isMilestone());
-       
+
         // TODO Generate differing ineligible issuances
         // TODO Generate issuance continuation
     }

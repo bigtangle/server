@@ -114,71 +114,58 @@ object HeightDescendingPregel extends Logging {
    * @return the resulting graph at the end of the computation
    *
    */
-  def apply[ED: ClassTag, A: ClassTag]
-     (graph: Graph[BlockWrap, ED],
-      initialMsg: A,
-      maxIterations: Int = Int.MaxValue,
-      activeDirection: EdgeDirection = EdgeDirection.Either,
-      startHeight: Long)
-     (vprog: (VertexId, BlockWrap, A) => BlockWrap,
-      sendMsg: EdgeTriplet[BlockWrap, ED] => Iterator[(VertexId, A)],
-      mergeMsg: (A, A) => A)
-    : Graph[BlockWrap, ED] =
-  {
-    require(maxIterations > 0, s"Maximum number of iterations must be greater than 0," +
-      s" but got ${maxIterations}")
+  def apply[ED: ClassTag, A: ClassTag](
+    graph: Graph[BlockWrap, ED],
+    initialMsg: A,
+    maxIterations: Int = Int.MaxValue,
+    activeDirection: EdgeDirection = EdgeDirection.Either,
+    startHeight: Long)(
+    vprog: (VertexId, BlockWrap, A) => BlockWrap,
+    sendMsg: EdgeTriplet[BlockWrap, ED] => Iterator[(VertexId, A)],
+    mergeMsg: (A, A) => A): Graph[BlockWrap, ED] =
+    {
+      require(maxIterations > 0, s"Maximum number of iterations must be greater than 0," +
+        s" but got ${maxIterations}")
 
-    val checkpointInterval = graph.vertices.sparkContext.getConf
-      .getInt("spark.graphx.pregel.checkpointInterval", -1)
-    
       graph.cache()
-    var heightVertices = graph.vertices.filter(_._2.getBlockEvaluation.getHeight == startHeight)
-    
-    var g = graph.mapVertices((vid, vdata) => vprog(vid, vdata, initialMsg))
-    val graphCheckpointer = new PeriodicGraphCheckpointer[BlockWrap, ED](
-      checkpointInterval, graph.vertices.sparkContext)
-    graphCheckpointer.update(g)
+      var heightVertices = graph.vertices.filter(_._2.getBlockEvaluation.getHeight == startHeight)
 
-    // compute the messages
-    var messages = GraphXUtils.mapReduceTriplets(g, sendMsg, mergeMsg, Some((heightVertices, activeDirection)))
-    val messageCheckpointer = new PeriodicRDDCheckpointer[(VertexId, A)](
-      checkpointInterval, graph.vertices.sparkContext)
-    messageCheckpointer.update(messages.asInstanceOf[RDD[(VertexId, A)]])
-    var activeMessages = messages.count()
+      var g = graph.mapVertices((vid, vdata) => vprog(vid, vdata, initialMsg))
 
-    // Loop
-    var prevG: Graph[BlockWrap, ED] = null
-    var i = 0
-    while (activeMessages > 0 && i < maxIterations) {
-      // Receive the messages and update the vertices.
-      prevG = g
-      g = g.joinVertices(messages)(vprog)
-      graphCheckpointer.update(g)
+      // compute the messages
+      var messages = GraphXUtils.mapReduceTriplets(g, sendMsg, mergeMsg, Some((heightVertices, activeDirection)))
+      var activeMessages = messages.count()
 
-      heightVertices = g.vertices.filter(_._2.getBlockEvaluation.getHeight == startHeight - i - 1)
-      // Send new messages, skipping edges where neither side received a message. We must cache
-      // messages so it can be materialized on the next line, allowing us to uncache the previous
-      // iteration.
-      messages = GraphXUtils.mapReduceTriplets(
-        g, sendMsg, mergeMsg, Some((heightVertices, activeDirection)))
-      // The call to count() materializes `messages` and the vertices of `g`. This hides oldMessages
-      // (depended on by the vertices of g) and the vertices of prevG (depended on by oldMessages
-      // and the vertices of g).
-      messageCheckpointer.update(messages.asInstanceOf[RDD[(VertexId, A)]])
-      activeMessages = messages.count()
+      // Loop
+      var prevG: Graph[BlockWrap, ED] = null
+      var i = 0
+      while (activeMessages > 0 && i < maxIterations) {
+        // Receive the messages and update the vertices.
+        prevG = g
+        g = g.joinVertices(messages)(vprog)
 
-      logInfo("Pregel finished iteration " + i)
+        val oldMessages = messages
+        // Send new messages on height lowered by one
+        heightVertices = g.vertices.filter(_._2.getBlockEvaluation.getHeight == startHeight - i - 1)
+        messages = GraphXUtils.mapReduceTriplets(
+          g, sendMsg, mergeMsg, Some((heightVertices, activeDirection)))
 
-      // Unpersist the RDDs hidden by newly-materialized RDDs
-      prevG.unpersistVertices(blocking = false)
-      prevG.edges.unpersist(blocking = false)
-      // count the iteration
-      i += 1
-    }
-    messageCheckpointer.unpersistDataSet()
-    graphCheckpointer.deleteAllCheckpoints()
-    messageCheckpointer.deleteAllCheckpoints()
-    g
-  } // end of apply
+        // The call to count() materializes `messages` and the vertices of `g`. This hides oldMessages
+        // (depended on by the vertices of g) and the vertices of prevG (depended on by oldMessages
+        // and the vertices of g).
+        activeMessages = messages.count()
+
+        logInfo("Pregel finished iteration " + i)
+
+        // Unpersist the RDDs hidden by newly-materialized RDDs
+        oldMessages.unpersist(blocking = false)
+        prevG.unpersistVertices(blocking = false)
+        prevG.edges.unpersist(blocking = false)
+
+        // count the iteration
+        i += 1
+      }
+      g
+    } // end of apply
 
 } // end of class Pregel
