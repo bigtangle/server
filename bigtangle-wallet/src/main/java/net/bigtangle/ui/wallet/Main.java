@@ -958,6 +958,10 @@ public class Main extends Application {
             pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
         }
 
+        if (DataClassName.TOKEN.name().equals(type) || DataClassName.LANG.name().equals(type)
+                || DataClassName.SERVERURL.name().equals(type)) {
+            type = DataClassName.WATCHED.name();
+        }
         requestParam.put("pubKey", pubKeyTo.getPublicKeyAsHex());
         requestParam.put("dataclassname", type);
         byte[] bytes = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getUserData.name(),

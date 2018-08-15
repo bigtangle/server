@@ -144,10 +144,8 @@ public class OrderController extends ExchangeController {
             List<UserSettingData> list = watchedInfo.getUserSettingDatas();
             for (UserSettingData userSettingData : list) {
                 if (DataClassName.TOKEN.name().equals(userSettingData.getDomain().trim())) {
-                    log.info(userSettingData.getKey());
-                    log.info(userSettingData.getValue());
-                    Main.tokenInfo.getPositveTokenList()
-                            .add(new Tokens(userSettingData.getKey(), userSettingData.getValue()));
+                    Main.tokenInfo.getPositveTokenList().add(new Tokens(userSettingData.getKey(),
+                            userSettingData.getValue().substring(0, userSettingData.getValue().indexOf(":"))));
                 }
             }
             initMarketComboBox();
