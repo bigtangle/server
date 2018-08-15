@@ -79,8 +79,7 @@ public class TransactionService {
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
         Block r2 = blockService.getBlock(tipsToApprove.getRight());
 
-        return new Block(this.networkParameters, r1.getHash(), r2.getHash(), Block.BLOCKTYPE_TRANSFER,
-                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+        return new Block(this.networkParameters, r1, r2);
 
     }
 
@@ -93,18 +92,27 @@ public class TransactionService {
             throws Exception {
         Block r1 = blockService.getBlock(prevTrunk);
         Block r2 = blockService.getBlock(prevBranch);
-        long blocktype0 = Block.BLOCKTYPE_REWARD;
-        Block block = new Block(networkParameters, r1.getHash(), r2.getHash(), blocktype0,
-                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
-
+      
+     
+        Block block = new Block(networkParameters, r1, r2);
+        block.setBlockType(Block.BLOCKTYPE_REWARD);
         // TODO check if eligible and drop if not
         block.addTransaction(
                 validatorService.generateMiningRewardTX(r1.getHash(), r2.getHash(), prevRewardHash).getLeft());
+        
+        //TODO how to adjust difficulty linear depends on number of approved blocks
+        adjustDifficulty(block, 0);
+        
         block.solve();
         blockgraph.add(block, true);
         return block;
     }
-
+    
+    public void adjustDifficulty(Block block, long tps) {
+        
+        
+    }
+    
     public boolean getUTXOSpent(TransactionOutPoint txout) {
         try {
             if (txout.isCoinBase())

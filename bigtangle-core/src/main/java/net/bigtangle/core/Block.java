@@ -91,8 +91,7 @@ public class Block extends Message {
      * hash solutions. Used in unit testing.
      */
     public static final long EASIEST_DIFFICULTY_TARGET = 0x207fFFFFL;
-    // As client provided difficult for proof of work
-    public static final long CLIENT_DIFFICULTY_TARGET = 541065215;
+
     /** Value to use if the block height is unknown */
     public static final int BLOCK_HEIGHT_UNKNOWN = -1;
     /** Height of the first block */
@@ -110,6 +109,8 @@ public class Block extends Message {
     private long time;
     private long nonce;
 
+    private long difficultyTarget; // "nBits"
+    private long lastMiningRewardBlock; // last approved reward blocks max
     // Utils.sha256hash160
     private byte[] minerAddress;
 
@@ -167,20 +168,32 @@ public class Block extends Message {
 
     Block(NetworkParameters params, long setVersion) {
 
-        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, Block.BLOCKTYPE_TRANSFER, 0);
+        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, Block.BLOCKTYPE_TRANSFER, 0, 0,
+                EASIEST_DIFFICULTY_TARGET);
     }
 
     public Block(NetworkParameters params, long blockVersionGenesis, long blocktypeTransfer) {
 
-        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, blocktypeTransfer, 0);
+        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, blocktypeTransfer, 0, 0, EASIEST_DIFFICULTY_TARGET);
+    }
+
+    public Block(NetworkParameters params, Block r1, Block r2) {
+
+        this(params, r1.getHash(), r2.getHash(), Block.BLOCKTYPE_TRANSFER,
+                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()),
+                Math.max(r1.getLastMiningRewardBlock(), r2.getLastMiningRewardBlock()),
+                r1.getLastMiningRewardBlock() > r2.getLastMiningRewardBlock() ? r1.getDifficultyTarget()
+                        : r2.getDifficultyTarget());
+
     }
 
     public Block(NetworkParameters params, Sha256Hash prevBlockHash, Sha256Hash prevBranchBlockHash, long blocktype,
-            long minTime) {
+            long minTime, long lastMiningRewardBlock, long difficultyTarget) {
         super(params);
         // Set up a few basic things. We are not complete after this though.
-        version = Block.BLOCK_VERSION_GENESIS;
-        // difficultyTarget = EASIEST_DIFFICULTY_TARGET;
+        this.version = Block.BLOCK_VERSION_GENESIS;
+        this.difficultyTarget = difficultyTarget;
+        this.lastMiningRewardBlock = lastMiningRewardBlock;
         this.time = System.currentTimeMillis() / 1000;
         if (this.time < minTime)
             this.time = minTime;
@@ -188,7 +201,7 @@ public class Block extends Message {
         this.prevBranchBlockHash = prevBranchBlockHash;
 
         this.blockType = blocktype;
-        minerAddress = new byte[20];
+        this.minerAddress = new byte[20];
         length = HEADER_SIZE;
         this.transactions = new ArrayList<>();
     }
@@ -266,42 +279,6 @@ public class Block extends Message {
     }
 
     /**
-     * Construct a block initialized with all the given fields.
-     * 
-     * @param params
-     *            Which network the block is for.
-     * @param version
-     *            This should usually be set to 1 or 2, depending on if the
-     *            height is in the coinbase input.
-     * @param prevBlockHash
-     *            Reference to previous block in the chain or
-     *            {@link Sha256Hash#ZERO_HASH} if genesis.
-     * @param merkleRoot
-     *            The root of the merkle tree formed by the transactions.
-     * @param time
-     *            UNIX time when the block was mined.
-     * @param difficultyTarget
-     *            Number which this block hashes lower than.
-     * @param nonce
-     *            Arbitrary number to make the block hash lower than the target.
-     * @param transactions
-     *            List of transactions including the coinbase.
-     */
-    public Block(NetworkParameters params, long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, long time,
-            long difficultyTarget, long nonce, List<Transaction> transactions, Sha256Hash prevBranchBlockHash) {
-        super(params);
-        this.version = version;
-        this.prevBlockHash = prevBlockHash;
-        this.prevBranchBlockHash = prevBranchBlockHash;
-        this.merkleRoot = merkleRoot;
-        this.time = time;
-        // this.difficultyTarget = difficultyTarget;
-        this.nonce = nonce;
-        this.transactions = new LinkedList<Transaction>();
-        this.transactions.addAll(transactions);
-    }
-
-    /**
      * Parse transactions from the block.
      * 
      * @param transactionsOffset
@@ -342,7 +319,8 @@ public class Block extends Message {
         prevBranchBlockHash = readHash();
         merkleRoot = readHash();
         time = readUint32();
-        // difficultyTarget = readUint32();
+        difficultyTarget = readUint32();
+        lastMiningRewardBlock = readUint32();
         nonce = readUint32();
         minerAddress = readBytes(20);
         blockType = readUint32();
@@ -381,7 +359,8 @@ public class Block extends Message {
         stream.write(prevBranchBlockHash.getReversedBytes());
         stream.write(getMerkleRoot().getReversedBytes());
         Utils.uint32ToByteStreamLE(time, stream);
-        // Utils.uint32ToByteStreamLE(difficultyTarget, stream);
+        Utils.uint32ToByteStreamLE(difficultyTarget, stream);
+        Utils.uint32ToByteStreamLE(lastMiningRewardBlock, stream);
         Utils.uint32ToByteStreamLE(nonce, stream);
         stream.write(minerAddress);
 
@@ -603,7 +582,8 @@ public class Block extends Message {
         block.merkleRoot = getMerkleRoot();
         block.version = version;
         block.time = time;
-        // block.difficultyTarget = difficultyTarget
+        block.difficultyTarget = difficultyTarget;
+        block.lastMiningRewardBlock = lastMiningRewardBlock;
         block.minerAddress = minerAddress;
         block.equihashProof = equihashProof;
 
@@ -632,8 +612,7 @@ public class Block extends Message {
         s.append("   branch: ").append(getPrevBranchBlockHash()).append("\n");
         s.append("   merkle: ").append(getMerkleRoot()).append("\n");
         s.append("   time: ").append(time).append(" (").append(Utils.dateTimeFormat(time * 1000)).append(")\n");
-        // s.append(" difficulty target (nBits):
-        // ").append(difficultyTarget).append("\n");
+        s.append(" difficulty target (nBits):    ").append(difficultyTarget).append("\n");
         s.append("   nonce: ").append(nonce).append("\n");
         if (minerAddress != null)
             s.append("   mineraddress: ").append(new Address(params, minerAddress)).append("\n");
@@ -679,7 +658,7 @@ public class Block extends Message {
      * is thrown.
      */
     public BigInteger getDifficultyTargetAsInteger() throws VerificationException {
-        BigInteger target = Utils.decodeCompactBits(EASIEST_DIFFICULTY_TARGET);
+        BigInteger target = Utils.decodeCompactBits(difficultyTarget);
         // Utils.encodeCompactBits(target.divide(new BigInteger("2")));
         if (target.signum() < 0 || target.compareTo(NetworkParameters.MAX_TARGET) > 0)
             throw new VerificationException("Difficulty target is bad: " + target.toString());
@@ -696,7 +675,6 @@ public class Block extends Message {
         if (getBlockType() == Block.BLOCKTYPE_INITIAL) {
             return true;
         }
-
 
         // This part is key - it is what proves the block was as difficult to
         // make as it claims
@@ -877,7 +855,7 @@ public class Block extends Message {
                 }
             }
         } else if (blockType == Block.BLOCKTYPE_CROSSTANGLE) {
-            
+
         } else
             throw new VerificationException("Blocktype not implemented!");
     }
@@ -1366,6 +1344,22 @@ public class Block extends Message {
 
     public void setEquihashProof(EquihashProof equihashProof) {
         this.equihashProof = equihashProof;
+    }
+
+    public long getDifficultyTarget() {
+        return difficultyTarget;
+    }
+
+    public void setDifficultyTarget(long difficultyTarget) {
+        this.difficultyTarget = difficultyTarget;
+    }
+
+    public long getLastMiningRewardBlock() {
+        return lastMiningRewardBlock;
+    }
+
+    public void setLastMiningRewardBlock(long lastMiningRewardBlock) {
+        this.lastMiningRewardBlock = lastMiningRewardBlock;
     }
 
 }
