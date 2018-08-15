@@ -92,7 +92,7 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet;
 
-@SuppressWarnings({"rawtypes", "unused"})
+@SuppressWarnings({ "rawtypes", "unused" })
 public class SendMoneyController {
 
     private static final Logger log = LoggerFactory.getLogger(SendMoneyController.class);
@@ -545,13 +545,16 @@ public class SendMoneyController {
 
         OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
         UTXO findOutput = outputsDetailsResponse.getOutputs();
-        
+
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(Main.params, findOutput, 0);
         Transaction transaction = new Transaction(Main.params);
         Coin coinbase = Coin.valueOf(Long.parseLong(amountEdit2.getText()), Utils.HEX.decode(btcLabel2.getText()));
         // Address address = Address.fromBase58(Main.params,
         // addressComboBox2.getValue());
-        Address address = ECKey.fromPublicOnly(Utils.HEX.decode(subtangleComboBox.getValue())).toAddress(Main.params);
+        Address address = ECKey
+                .fromPublicOnly(Utils.HEX
+                        .decode(subtangleComboBox.getValue().substring(0, subtangleComboBox.getValue().indexOf(":"))))
+                .toAddress(Main.params);
         transaction.addOutput(coinbase, address);
 
         transaction.setToAddressInSubtangle(Address.fromBase58(Main.params, addressComboBox2.getValue()).getHash160());
@@ -842,7 +845,7 @@ public class SendMoneyController {
 
         OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
         UTXO utxo = outputsDetailsResponse.getOutputs();
-        
+
         TransactionOutput multisigOutput = new FreeStandingTransactionOutput(networkParameters, utxo, 0);
         Transaction transaction = new Transaction(Main.params);
 
@@ -887,7 +890,7 @@ public class SendMoneyController {
 
         OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
         UTXO utxo = outputsDetailsResponse.getOutputs();
-        
+
         TransactionOutput multisigOutput = new FreeStandingTransactionOutput(networkParameters, utxo, 0);
         Transaction transaction = new Transaction(Main.params);
 
@@ -995,7 +998,7 @@ public class SendMoneyController {
 
         OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
         UTXO u = outputsDetailsResponse.getOutputs();
-        
+
         TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(networkParameters, u, 0);
         Script multisigScript_ = multisigOutput_.getScriptPubKey();
 
