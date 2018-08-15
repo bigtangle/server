@@ -699,6 +699,20 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         if (block.getTimeSeconds() < storedPrev.getHeader().getTimeSeconds()
                 || block.getTimeSeconds() < storedPrevBranch.getHeader().getTimeSeconds())
             return false;
+        
+        if (block.getBlockType() != Block.BLOCKTYPE_REWARD) {
+            if (block.getLastMiningRewardBlock() == storedPrev.getHeader().getLastMiningRewardBlock()
+                    && block.getDifficultyTarget() != storedPrev.getHeader().getDifficultyTarget())
+                return false;
+            
+            if (block.getLastMiningRewardBlock() == storedPrevBranch.getHeader().getLastMiningRewardBlock()
+                    && block.getDifficultyTarget() != storedPrevBranch.getHeader().getDifficultyTarget())
+                return false;
+
+            if (block.getLastMiningRewardBlock() != storedPrevBranch.getHeader().getLastMiningRewardBlock()
+                    && block.getLastMiningRewardBlock() != storedPrev.getHeader().getLastMiningRewardBlock())
+                return false;
+        } 
 
         // Check formal correctness of TXs and their data
         try {
@@ -731,6 +745,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             if (!referenceReward.getLeft().getHash().equals(block.getTransactions().get(0).getHash()))
                 return false;
 
+            // TODO check correct difficulty
         }
 
         // Check genesis block specific validity, can only one genesis block
