@@ -144,8 +144,8 @@ public class OrderController extends ExchangeController {
             List<UserSettingData> list = watchedInfo.getUserSettingDatas();
             for (UserSettingData userSettingData : list) {
                 if (DataClassName.TOKEN.name().equals(userSettingData.getDomain().trim())) {
-                    Main.tokenInfo.getPositveTokenList().add(new Tokens(userSettingData.getKey(),
-                            userSettingData.getValue().substring(0, userSettingData.getValue().indexOf(":"))));
+                    Main.tokenInfo.getPositveTokenList()
+                            .add(new Tokens(userSettingData.getKey(), userSettingData.getValue()));
                 }
             }
             initMarketComboBox();
@@ -359,9 +359,12 @@ public class OrderController extends ExchangeController {
             }
             if (Main.tokenInfo != null && Main.tokenInfo.getPositveTokenList() != null) {
                 for (Tokens p : Main.tokenInfo.getPositveTokenList()) {
-                    if (!isSystemCoin(p.getTokenname() + ":" + p.getTokenid())) {
-                        if (!tokenData.contains(p.getTokenname() + ":" + p.getTokenid())) {
-                            tokenData.add(p.getTokenname() + ":" + p.getTokenid());
+                    if (!isSystemCoin(p.getTokenname() + ":" + p.getTokenid())
+                            && p.getTokenname().endsWith(":" + Main.getText("Token"))) {
+                        if (!tokenData.contains(
+                                p.getTokenname().substring(0, p.getTokenname().indexOf(":")) + ":" + p.getTokenid())) {
+                            tokenData.add(p.getTokenname().substring(0, p.getTokenname().indexOf(":")) + ":"
+                                    + p.getTokenid());
                         }
 
                     }
