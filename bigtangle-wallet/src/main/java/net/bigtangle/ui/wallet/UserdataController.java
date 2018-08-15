@@ -40,9 +40,7 @@ import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Uploadfile;
 import net.bigtangle.core.UploadfileInfo;
-import net.bigtangle.core.UserSettingData;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.WatchedInfo;
 import net.bigtangle.core.http.server.resp.UserDataResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.params.ReqCmd;
@@ -455,7 +453,7 @@ public class UserdataController {
             GuiUtils.crashAlert(e);
         }
     }
-    
+
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void initFileTableView() {
         try {
@@ -514,7 +512,11 @@ public class UserdataController {
                         .get("userSettingDatas");
                 if (userSettingDatas != null && !userSettingDatas.isEmpty()) {
                     for (Map<String, Object> map : userSettingDatas) {
-                        allData.add(map);
+                        if (DataClassName.LANG.name().equals(map.get("domain"))
+                                || DataClassName.SERVERURL.name().equals(map.get("domain"))) {
+                            allData.add(map);
+                        }
+
                     }
                 }
 
@@ -530,28 +532,52 @@ public class UserdataController {
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    public void initTokenTableView() {
-        try {
-            WatchedInfo tokenInfo = (WatchedInfo) Main.getUserdata(DataClassName.TOKEN.name());
-            if (tokenInfo == null) {
-                return;
-            }
-            List<UserSettingData> list = tokenInfo.getUserSettingDatas();
-            ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();
-            if (list != null && !list.isEmpty()) {
-                for (UserSettingData userSettingData : list) {
-                    if (userSettingData.getDomain().equals(DataClassName.TOKEN.name())) {
-                        Map<String, Object> map = new HashMap<String, Object>();
-                        map.put("tokenname", userSettingData.getValue());
-                        map.put("tokenid", userSettingData.getKey());
+    public void initWatchedTokenTabe() throws Exception {
+        KeyParameter aesKey = null;
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
+        List<String> pubKeyList = new ArrayList<String>();
+        for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
+            pubKeyList.add(ecKey.getPublicKeyAsHex());
+        }
+        int blocktype = (int) Block.BLOCKTYPE_USERDATA;
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("blocktype", blocktype);
+        requestParam.put("pubKeyList", pubKeyList);
+
+        String CONTEXT_ROOT = Main.getContextRoot();
+        String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.userDataList.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+
+        UserDataResponse userDataResponse = Json.jsonmapper().readValue(resp, UserDataResponse.class);
+        List<String> dataList = userDataResponse.getDataList();
+
+        ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();
+        for (String hexStr : dataList) {
+            byte[] data = Utils.HEX.decode(hexStr);
+            HashMap<String, Object> userdataKV = Json.jsonmapper().readValue(new String(data), HashMap.class);
+            List<Map<String, Object>> userSettingDatas = (List<Map<String, Object>>) userdataKV.get("userSettingDatas");
+            if (userSettingDatas != null && !userSettingDatas.isEmpty()) {
+                for (Map<String, Object> map : userSettingDatas) {
+                    if (DataClassName.TOKEN.name().equals(map.get("domain"))
+                            || DataClassName.TOKEN.name().equals(map.get("domain"))) {
                         allData.add(map);
                     }
 
                 }
-                wachtedTokenTableview.setItems(allData);
-                tokennameColumn.setCellValueFactory(new MapValueFactory("tokenname"));
-                tokenidColumn.setCellValueFactory(new MapValueFactory("tokenid"));
             }
+            wachtedTokenTableview.setItems(allData);
+            tokennameColumn.setCellValueFactory(new MapValueFactory("value"));
+            tokenidColumn.setCellValueFactory(new MapValueFactory("key"));
+
+        }
+    }
+
+    private void initTokenTableView() {
+        try {
+            initWatchedTokenTabe();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
