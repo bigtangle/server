@@ -328,20 +328,20 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     }
 
     // DEBUG USE
-    @Test
-    public void buildMultilinearTangle() throws Exception {
-        store.resetStore();
-        
-        for (int j = 0; j < 20; j++) {
-            Block rollingBlock = networkParameters.getGenesisBlock();
-            for (int i = 1; i < 50; i++) {
-                rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                        0, rollingBlock.getHash());
-                blockgraph.add(rollingBlock, true);
-            }
-        }
-        milestoneService.update();
-    }
+//    @Test
+//    public void buildMultilinearTangle() throws Exception {
+//        store.resetStore();
+//        
+//        for (int j = 0; j < 1; j++) {
+//            Block rollingBlock = networkParameters.getGenesisBlock();
+//            for (int i = 1; i < 50; i++) {
+//                rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+//                        0, rollingBlock.getHash());
+//                blockgraph.add(rollingBlock, true);
+//            }
+//        }
+//        milestoneService.update();
+//    }
 
     @Test
     public void testTokenIssuanceReorg() throws Exception {

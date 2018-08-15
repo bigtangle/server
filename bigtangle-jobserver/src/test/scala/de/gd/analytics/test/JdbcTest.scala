@@ -20,6 +20,7 @@ import net.bigtangle.core.BlockWrap
 import net.bigtangle.core.BlockEvaluation
 import java.util.concurrent.TimeUnit
 
+// Run a test from MilestoneServiceTest, then this to validate our algorithm in scala
 object JdbcTest {
   def main(args: Array[String]) {
     val conf = new SparkConf().setMaster("local[4]").setAppName("FirstJob")
@@ -82,16 +83,16 @@ object JdbcTest {
     val myEdges2 = rows.filter(row => !Sha256Hash.wrap(row.getAs[Array[Byte]](0)).equals(UnitTestParams.get.getGenesisBlock.getHash)).map(row =>
       (Edge(bytestoLong(row.getAs[Array[Byte]](0)), bytestoLong(row.getAs[Array[Byte]](11)), "")))
     val myGraph = Graph(myVertices, myEdges.union(myEdges2))
-
-    val test1 = myGraph.vertices.collect
-
-    val watch = Stopwatch.createStarted();
-    val test2 = updateDepth(myGraph).vertices.collect
-    print("Maintained update time " + watch.elapsed(TimeUnit.MILLISECONDS));
+    val originalBlocks = myGraph.vertices.collect
     
-    // TODO rating select tips, then (weight depth milestonedepth rating), then milestone, then maintained
-
-    assert(test1.map(e => e._2.getBlockEvaluation.getDepth).deep == test2.map(e => e._2.getBlockEvaluation.getDepth).deep)
+    // Run test for update depth
+    val watch = Stopwatch.createStarted();
+    val depthUpdatedBlocks = updateDepth(myGraph).vertices.collect
+    print("Update time " + watch.elapsed(TimeUnit.MILLISECONDS));
+    assert(originalBlocks.map(e => e._2.getBlockEvaluation.getDepth).deep == depthUpdatedBlocks.map(e => e._2.getBlockEvaluation.getDepth).deep)
+    
+    // TODO rating select tips, then (weight depth milestonedepth rating), then milestone, then maintained separately
+    // TODO both in normal pregel (good since allows for max iterations) and custom pregel
   }
 
   /**
@@ -107,7 +108,7 @@ object JdbcTest {
     def vertexProgram(id: VertexId, attr: BlockWrap, msgSum: Long): BlockWrap = {
       val eval = new BlockEvaluation(attr.getBlockEvaluation)
       eval.setDepth(msgSum)
-      new BlockWrap(attr.getBlock, eval, UnitTestParams.get)
+      new BlockWrap(attr.getBlock.bitcoinSerialize(), eval, UnitTestParams.get)
     }
 
     def sendMessage(edge: EdgeTriplet[BlockWrap, String]) = {
@@ -128,9 +129,9 @@ object JdbcTest {
     val initialMessage = 0L
 
     // Execute a dynamic version of Pregel.
-//    Pregel(targetGraph, initialMessage, Int.MaxValue, EdgeDirection.Out)(
-//      vertexProgram, sendMessage, messageCombiner)
-    HeightDescendingPregel(targetGraph, initialMessage, Int.MaxValue, EdgeDirection.Out, maxHeight)(
+    Pregel(targetGraph, initialMessage, Int.MaxValue, EdgeDirection.Out)(
       vertexProgram, sendMessage, messageCombiner)
+//    HeightDescendingPregel(targetGraph, initialMessage, Int.MaxValue, EdgeDirection.Out, maxHeight)(
+//      vertexProgram, sendMessage, messageCombiner)
   }
 }

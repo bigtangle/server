@@ -11,7 +11,7 @@ import java.io.Serializable;
  */
 public class BlockEvaluation implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 8388463657969339286L;
 
     public String getBlockHexStr() {
         return Utils.HEX.encode(this.blockHash.getBytes());
@@ -155,11 +155,11 @@ public class BlockEvaluation implements Serializable {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-//        return false;
         return getBlockHash().equals(((BlockEvaluation) o).getBlockHash()) && rating == ((BlockEvaluation) o).rating
                 && depth == ((BlockEvaluation) o).depth && cumulativeWeight == ((BlockEvaluation) o).cumulativeWeight
                 && height == ((BlockEvaluation) o).height && milestone == ((BlockEvaluation) o).milestone
-                && milestoneLastUpdateTime == ((BlockEvaluation) o).milestoneLastUpdateTime && milestoneDepth == ((BlockEvaluation) o).milestoneDepth
+                && milestoneLastUpdateTime == ((BlockEvaluation) o).milestoneLastUpdateTime
+                && milestoneDepth == ((BlockEvaluation) o).milestoneDepth
                 && insertTime == ((BlockEvaluation) o).insertTime && maintained == ((BlockEvaluation) o).maintained;
     }
 
