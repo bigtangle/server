@@ -204,23 +204,37 @@ public class Main extends Application {
         List<UserSettingData> userSettingDatas = watchedInfo.getUserSettingDatas();
         List<UserSettingData> temps = new ArrayList<>();
 
-        if (userSettingDatas != null && !userSettingDatas.isEmpty()) {
-            for (UserSettingData userSettingData2 : userSettingDatas) {
-                if (DataClassName.SERVERURL.name().equals(userSettingData2.getDomain())
-                        || DataClassName.LANG.name().equals(userSettingData2.getDomain())) {
-                    if (domain.equals(userSettingData2.getDomain())) {
-                        userSettingData2.setValue(tokenname);
+        if (userSettingDatas != null && !userSettingDatas.isEmpty() && userSettingDatas.get(0).getKey() != null
+                && !userSettingDatas.get(0).getKey().trim().isEmpty()) {
+            if (!DataClassName.SERVERURL.name().equals(domain) && !DataClassName.LANG.name().equals(domain)) {
+                watchedInfo.getUserSettingDatas().add(userSettingData);
+            } else {
+                if (DataClassName.SERVERURL.name().equals(domain)) {
+                    for (UserSettingData userSettingData2 : userSettingDatas) {
+                        if (!DataClassName.SERVERURL.name().equals(userSettingData2.getDomain())) {
+                            temps.add(userSettingData2);
+                        }
+
+                    }
+
+                } else if (DataClassName.LANG.name().equals(domain)) {
+                    for (UserSettingData userSettingData2 : userSettingDatas) {
+                        if (!DataClassName.LANG.name().equals(userSettingData2.getDomain())) {
+                            temps.add(userSettingData2);
+                        }
+
                     }
 
                 }
-                temps.add(userSettingData2);
+                temps.add(userSettingData);
+                watchedInfo.setUserSettingDatas(temps);
 
             }
-            watchedInfo.setUserSettingDatas(temps);
-        } // else {
-        watchedInfo.getUserSettingDatas().add(userSettingData);
-        // }
+        } else {
+            watchedInfo.getUserSettingDatas().add(userSettingData);
 
+        }
+        // watchedInfo.getUserSettingDatas().add(userSettingData);
         coinbase.setDataClassName(type);
         coinbase.setData(watchedInfo.toByteArray());
 
@@ -794,6 +808,8 @@ public class Main extends Application {
 
     public static void addUsersettingData() {
         try {
+            log.info("===========");
+            log.info(IpAddress);
             addToken(getContextRoot(), lang, DataClassName.LANG.name(), DataClassName.LANG.name());
             addToken(getContextRoot(), IpAddress, DataClassName.SERVERURL.name(), DataClassName.SERVERURL.name());
         } catch (Exception e) {
