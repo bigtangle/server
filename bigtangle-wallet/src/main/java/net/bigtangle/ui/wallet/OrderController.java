@@ -360,7 +360,10 @@ public class OrderController extends ExchangeController {
             if (Main.tokenInfo != null && Main.tokenInfo.getPositveTokenList() != null) {
                 for (Tokens p : Main.tokenInfo.getPositveTokenList()) {
                     if (!isSystemCoin(p.getTokenname() + ":" + p.getTokenid())) {
-                        tokenData.add(p.getTokenname() + ":" + p.getTokenid());
+                        if (!tokenData.contains(p.getTokenname() + ":" + p.getTokenid())) {
+                            tokenData.add(p.getTokenname() + ":" + p.getTokenid());
+                        }
+
                     }
                 }
             }
