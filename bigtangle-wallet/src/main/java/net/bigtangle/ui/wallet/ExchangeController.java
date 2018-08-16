@@ -31,7 +31,6 @@ import javafx.stage.FileChooser;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
-import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.TokenInfo;
@@ -125,7 +124,7 @@ public class ExchangeController {
 
     private boolean isWatched(String tokenid) {
         try {
-            TokenInfo tokenInfo = (TokenInfo) Main.getUserdata(DataClassName.TOKEN.name());
+            TokenInfo tokenInfo = Main.tokenInfo;
             if (tokenInfo == null) {
                 return false;
             }
@@ -149,9 +148,9 @@ public class ExchangeController {
     public void initTable() throws Exception {
         String CONTEXT_ROOT = Main.getContextRoot();
         String response0 = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getMarkets.name(), "{}");
-        
-        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response0,GetTokensResponse.class);
-        
+
+        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response0, GetTokensResponse.class);
+
         ObservableList<Map<String, Object>> exchangeData = FXCollections.observableArrayList();
         KeyParameter aesKey = null;
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
@@ -176,10 +175,11 @@ public class ExchangeController {
                 continue;
             }
             // TODO check market in watched list or default
-            if (!url.contains("market.bigtangle.net") || !url.contains("test2market.bigtangle.net")) {
+            if (!url.contains("market.bigtangle.net") || !url.contains("test2market.bigtangle.net")
+                    || !url.contains("http://localhost:8089")) {
                 boolean watchedFlag = isWatched(tokenid);
                 if (!watchedFlag) {
-                   continue;
+                    continue;
                 }
             }
             try {
@@ -242,14 +242,14 @@ public class ExchangeController {
         requestParam.put("name", null);
         String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        
+
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
         for (Tokens tokens : getTokensResponse.getTokens()) {
             String tokenHex = tokens.getTokenid();
             String tokenname = tokens.getTokenname();
             tokenData.add(tokenname + " : " + tokenHex);
         }
-        
+
         toTokenHexComboBox.setItems(tokenData);
         fromTokenHexComboBox.setItems(tokenData);
 
@@ -280,7 +280,8 @@ public class ExchangeController {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", orderid);
 
-        OkHttp3Util.post(ContextRoot + OrdermatchReqCmd.cancelOrder.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        OkHttp3Util.post(ContextRoot + OrdermatchReqCmd.cancelOrder.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
         overlayUI.done();
     }
 
@@ -522,7 +523,7 @@ public class ExchangeController {
         requestParam0.put("tokenid", tokenid);
         String resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
-        
+
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
         String marketURL = getTokensResponse.getToken().getUrl();
 
@@ -535,13 +536,12 @@ public class ExchangeController {
             GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_d1"));
         }
         this.mOrderid = stringValueOf(rowData.get("orderid"));
-        
+
         try {
             PayOrder payOrder = new PayOrder(Main.bitcoin.wallet(), this.mOrderid, ContextRoot + "/", marketURL + "/");
             payOrder.sign();
             this.initTable();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
         // overlayUI.done();

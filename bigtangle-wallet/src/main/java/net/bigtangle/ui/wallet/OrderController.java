@@ -259,6 +259,8 @@ public class OrderController extends ExchangeController {
             try {
                 response = OkHttp3Util.post(url + "/" + OrdermatchReqCmd.getOrders.name(),
                         Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+                log.info("+++++++++");
+                log.info(response);
             } catch (Exception e) {
                 continue;
             }
@@ -275,8 +277,9 @@ public class OrderController extends ExchangeController {
                 map.put("state", Main.getText(orderState.name()));
 
                 byte[] tokenid = null;
+
                 if (StringUtils.isNotBlank(orderPublish.getTokenId())) {
-                    tokenid = Utils.HEX.decode((String) map.get("tokenId"));
+                    tokenid = Utils.HEX.decode(orderPublish.getTokenId());
                 }
                 Coin fromAmount = Coin.valueOf(orderPublish.getPrice(), tokenid);
                 Coin toAmount = Coin.valueOf(orderPublish.getAmount(), tokenid);
