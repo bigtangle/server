@@ -29,8 +29,6 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.PrunedException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.TokenSerial;
-import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
@@ -351,14 +349,17 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
-        Tokens tokens = new Tokens(Utils.HEX.encode(pubKey), "test", "", "", 1, false, TokenType.token.ordinal(),
-                false);
+        
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        
+        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 1, amount, false, true);
+        tokenInfo.setTokens(tokens);
+        
         tokenInfo.setTokens(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        Coin coinbase = Coin.valueOf(77777L, pubKey);
-        long amount = coinbase.getValue();
-        tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
+        
         Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
         milestoneService.update();
 
@@ -383,7 +384,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
     }
 
-   //TODO  @Test
+    @Test
     public void testTokenIssuanceConflict() throws Exception {
         store.resetStore();
 
@@ -391,14 +392,16 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
-        Tokens tokens = new Tokens(Utils.HEX.encode(pubKey), "test", "", "", 1, false, TokenType.token.ordinal(),
-                false);
+        
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 1,
+                amount, false, true);
+
         tokenInfo.setTokens(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        Coin coinbase = Coin.valueOf(77777L, pubKey);
-        long amount = coinbase.getValue();
-        tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
+
         Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
 
         // Make another conflicting one that goes through

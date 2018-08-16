@@ -18,8 +18,6 @@ import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.TokenSerial;
-import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
@@ -36,7 +34,6 @@ import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.tools.config.Configure;
 import net.bigtangle.utils.OkHttp3Util;
-import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 public class GiveMoneyUtils {
@@ -47,9 +44,6 @@ public class GiveMoneyUtils {
             return;
         }
         TokenInfo tokenInfo = new TokenInfo();
-        Tokens tokens = new Tokens(tokenId, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "",
-                ecKeys.size(), true, TokenType.token.ordinal(), false);
-        tokenInfo.setTokens(tokens);
         for (ECKey ecKey : ecKeys) {
             tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenId, "", ecKey.getPublicKeyAsHex()));
         }
@@ -64,8 +58,10 @@ public class GiveMoneyUtils {
                 TokenSerialIndexResponse.class);
         Integer tokenindex = tokenSerialIndexResponse.getTokenindex();
 
-        tokenInfo.setTokenSerial(new TokenSerial(tokenId, tokenindex, amount));
-
+        Tokens tokens = Tokens.buildSimpleTokenInfo(false, tokenId, UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(), "", ecKeys.size(), tokenindex, amount, true, false);
+        tokenInfo.setTokens(tokens);
+        
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -181,18 +177,17 @@ public class GiveMoneyUtils {
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
 
-        String tokenname = UUIDUtil.randomUUID();
-        Tokens tokens = new Tokens(Utils.HEX.encode(pubKey), tokenname, tokenname, "", 1, false, TokenType.token.ordinal(), false);
-        tokenInfo.setTokens(tokens);
-
+        String tokenId = Utils.HEX.encode(pubKey);
         tokenInfo.getMultiSignAddresses()
-                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+                .add(new MultiSignAddress(tokenId, "", outKey.getPublicKeyAsHex()));
 
         Coin basecoin = Coin.valueOf(10000000L, pubKey);
-
         long amount = basecoin.getValue();
-        tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
-
+        
+        Tokens tokens = Tokens.buildSimpleTokenInfo(false, tokenId, UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(), "", 1, 0, amount, false, true);
+        tokenInfo.setTokens(tokens);
+        
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));

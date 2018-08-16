@@ -41,8 +41,6 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.TokenSerial;
-import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
@@ -244,33 +242,32 @@ public abstract class AbstractIntegrationTest {
 
   
     public void testCreateMultiSig() throws JsonProcessingException, Exception {
-
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
-        Tokens tokens = new Tokens(Utils.HEX.encode(pubKey), "test", "", "", 1, false, TokenType.token.ordinal(), false);
+        
+        String tokenid = Utils.HEX.encode(pubKey);
+        
+        Coin basecoin = Coin.valueOf(77777L, pubKey);
+        long amount = basecoin.getValue();
+        
+        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", tokenid, "test", "", 1, 1, amount, false, true);
         tokenInfo.setTokens(tokens);
 
         // add MultiSignAddress item
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-
-        Coin basecoin = Coin.valueOf(77777L, pubKey);
-
-        long amount = basecoin.getValue();
-        tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
-
+        
         walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, null);
     }
-
  
     public void testCreateMarket() throws JsonProcessingException, Exception {
-
         ECKey outKey = walletKeys.get(1);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
-        Tokens tokens = new Tokens(Utils.HEX.encode(pubKey), "p2p", "", "http://localhost:80089", 1, false, TokenType.market.ordinal(),
-                false);
+        
+        String tokenid = Utils.HEX.encode(pubKey);
+        Tokens tokens = Tokens.buildMarketTokenInfo(true, "", tokenid, "p2p", "", "http://localhost:80089");
         tokenInfo.setTokens(tokens);
 
         // add MultiSignAddress item
@@ -278,10 +275,6 @@ public abstract class AbstractIntegrationTest {
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
         Coin basecoin = Coin.valueOf(0, pubKey);
-
-        long amount = basecoin.getValue();
-        tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
-
         walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, null);
     }
 

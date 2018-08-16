@@ -8,56 +8,44 @@ public class Tokens implements java.io.Serializable {
 
     private static final long serialVersionUID = 6992138619113601243L;
 
-    public Tokens(String tokenid, String tokenname, String description, String url, long signnumber,
-            boolean multiserial, int tokenType, boolean tokenstop) {
-        this.tokenid = tokenid;
-        this.tokenname = tokenname;
-        this.description = description;
-        this.url = url;
-        this.signnumber = signnumber;
-        this.multiserial = multiserial;
-        this.tokenType = tokenType;
-        this.tokenstop = tokenstop;
-    }
-
     public Tokens(String tokenid, String tokenname) {
         this.tokenid = tokenid;
         this.tokenname = tokenname;
-
     }
 
     public Tokens() {
-        super();
     }
 
+    private String blockhash;
+    private boolean confirmed;
     private String tokenid;
-
+    private int tokenindex;
+    private long amount;
     private String tokenname;
-
     private String description;
-
     private String url;
-
-    private long signnumber;
-
+    private int signnumber;
     private boolean multiserial;
-
-    private int tokenType;
-
-    
-    //for check if solidity 
-    private String prevTokenBlockHashHex;
-    
-    
-    public int getTokenType() {
-        return tokenType;
-    }
-
-    public void setTokenType(int tokenType) {
-        this.tokenType = tokenType;
-    }
-
+    private int tokentype;
     private boolean tokenstop;
+    // for check if solidity
+    private String prevblockhash;
+
+    public String getBlockhash() {
+        return blockhash;
+    }
+
+    public void setBlockhash(String blockhash) {
+        this.blockhash = blockhash;
+    }
+
+    public boolean isConfirmed() {
+        return confirmed;
+    }
+
+    public void setConfirmed(boolean confirmed) {
+        this.confirmed = confirmed;
+    }
 
     public String getTokenid() {
         return tokenid;
@@ -65,6 +53,22 @@ public class Tokens implements java.io.Serializable {
 
     public void setTokenid(String tokenid) {
         this.tokenid = tokenid;
+    }
+
+    public int getTokenindex() {
+        return tokenindex;
+    }
+
+    public void setTokenindex(int tokenindex) {
+        this.tokenindex = tokenindex;
+    }
+
+    public long getAmount() {
+        return amount;
+    }
+
+    public void setAmount(long amount) {
+        this.amount = amount;
     }
 
     public String getTokenname() {
@@ -91,11 +95,11 @@ public class Tokens implements java.io.Serializable {
         this.url = url;
     }
 
-    public long getSignnumber() {
+    public int getSignnumber() {
         return signnumber;
     }
 
-    public void setSignnumber(long signnumber) {
+    public void setSignnumber(int signnumber) {
         this.signnumber = signnumber;
     }
 
@@ -107,6 +111,14 @@ public class Tokens implements java.io.Serializable {
         this.multiserial = multiserial;
     }
 
+    public int getTokentype() {
+        return tokentype;
+    }
+
+    public void setTokentype(int tokentype) {
+        this.tokentype = tokentype;
+    }
+
     public boolean isTokenstop() {
         return tokenstop;
     }
@@ -115,31 +127,62 @@ public class Tokens implements java.io.Serializable {
         this.tokenstop = tokenstop;
     }
 
-    public String getPrevTokenBlockHashHex() {
-        return prevTokenBlockHashHex;
+    public String getPrevblockhash() {
+        return prevblockhash;
     }
 
-    public void setPrevTokenBlockHashHex(String prevTokenBlockHashHex) {
-        this.prevTokenBlockHashHex = prevTokenBlockHashHex;
+    public void setPrevblockhash(String prevblockhash) {
+        this.prevblockhash = prevblockhash;
     }
 
-    @Override
-    public String toString() {
-        return "Tokens [tokenid=" + tokenid + ", tokenname=" + tokenname + ", description=" + description + ", url="
-                + url + ", signnumber=" + signnumber + ", multiserial=" + multiserial + ", tokenType=" + tokenType
-                + ", tokenstop=" + tokenstop + "]";
+    public static Tokens buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname, String description, 
+            int signnumber, int tokenindex, long amount, boolean multiserial, boolean tokenstop) {
+        Tokens tokens = new Tokens();
+        tokens.setTokenid(tokenid);
+        tokens.setTokenname(tokenname);
+        tokens.setDescription(description);
+        tokens.tokenstop = tokenstop;
+        tokens.multiserial = multiserial;
+        tokens.tokentype = TokenType.token.ordinal();
+        tokens.signnumber = signnumber;
+        tokens.amount = amount;
+        tokens.tokenindex = tokenindex;
+        tokens.confirmed = confirmed;
+        tokens.prevblockhash = prevblockhash;
+        return tokens;
     }
 
-    public Tokens copy(Tokens tokens) {
-        this.tokenid = tokens.getTokenid();
-        this.tokenname = tokens.getTokenname();
-        this.description = tokens.getDescription();
-        this.url = tokens.getUrl();
-        this.signnumber = tokens.getSignnumber();
-        this.multiserial = tokens.isMultiserial();
-        this.tokenType = tokens.getTokenType();
-        this.tokenstop = tokens.isTokenstop();
-        return this;
+    public static Tokens buildMarketTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname, String description, String url) {
+        Tokens tokens = new Tokens();
+        tokens.setTokenid(tokenid);
+        tokens.setTokenname(tokenname);
+        tokens.setDescription(description);
+        tokens.setUrl(url);
+        tokens.tokenstop = true;
+        tokens.multiserial = false;
+        tokens.tokentype = TokenType.market.ordinal();
+        tokens.signnumber = 1;
+        tokens.amount = 0;
+        tokens.tokenindex = 1;
+        tokens.confirmed = confirmed;
+        tokens.prevblockhash = prevblockhash;
+        return tokens;
     }
 
+    public static Tokens buildSubtangleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname, String description, String url) {
+        Tokens tokens = new Tokens();
+        tokens.setTokenid(tokenid);
+        tokens.setTokenname(tokenname);
+        tokens.setDescription(description);
+        tokens.setUrl(url);
+        tokens.tokenstop = true;
+        tokens.multiserial = false;
+        tokens.tokentype = TokenType.subtangle.ordinal();
+        tokens.signnumber = 1;
+        tokens.amount = 0;
+        tokens.tokenindex = 1;
+        tokens.confirmed = confirmed;
+        tokens.prevblockhash = prevblockhash;
+        return tokens;
+    }
 }

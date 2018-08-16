@@ -3,6 +3,8 @@ package net.bigtangle.core;
 public class MultiSignAddress implements java.io.Serializable {
 
     private static final long serialVersionUID = -2956933642847534834L;
+    
+    private String blockhash;
 
     private String tokenid;
     
@@ -43,6 +45,14 @@ public class MultiSignAddress implements java.io.Serializable {
     public void setAddress(String address) {
         this.address = address;
     }
+    
+    public String getBlockhash() {
+        return blockhash;
+    }
+
+    public void setBlockhash(String blockhash) {
+        this.blockhash = blockhash;
+    }
 
     public MultiSignAddress(String tokenid, String address, String pubKeyHex) {
         this.tokenid = tokenid;
@@ -51,13 +61,5 @@ public class MultiSignAddress implements java.io.Serializable {
     }
 
     public MultiSignAddress() {
-    }
-
-    public MultiSignAddress copy(MultiSignAddress multiSignAddress) {
-        this.tokenid = multiSignAddress.getTokenid();
-        this.address = multiSignAddress.getAddress();
-        this.pubKeyHex = multiSignAddress.getPubKeyHex();
-        this.posIndex = multiSignAddress.getPosIndex();
-        return this;
     }
 }

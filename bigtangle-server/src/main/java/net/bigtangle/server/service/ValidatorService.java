@@ -35,6 +35,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenSerial;
+import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
@@ -684,9 +685,13 @@ public class ValidatorService {
 					.add(new ConflictCandidate(b, Utils.readInt64(b.getBlock().getTransactions().get(0).getData(), 0)));
 
 		// Dynamic conflicts: token issuance ids
-		if (b.getBlock().getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION)
-			blockConflicts.add(new ConflictCandidate(b,
-					new TokenInfo().parse(b.getBlock().getTransactions().get(0).getData()).getTokenSerial()));
+		if (b.getBlock().getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION) {
+		    TokenInfo tokenInfo = new TokenInfo().parse(b.getBlock().getTransactions().get(0).getData());
+		    Tokens tokens = tokenInfo.getTokens();
+		    TokenSerial tokenSerial = new TokenSerial(tokens.getTokenid(), tokens.getTokenindex(), tokens.getAmount());
+			blockConflicts.add(new ConflictCandidate(b, tokenSerial));
+		}
+		
 		// TODO tokenserial might be the wrong thing to compare here
 
 		return blockConflicts;

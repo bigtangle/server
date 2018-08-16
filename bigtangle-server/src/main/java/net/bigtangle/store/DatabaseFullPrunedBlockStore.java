@@ -83,7 +83,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_TIPS_TABLE = "DROP TABLE tips";
     public static String DROP_TOKENS_TABLE = "DROP TABLE tokens";
     public static String DROP_MULTISIGNADDRESS_TABLE = "DROP TABLE multisignaddress";
-    public static String DROP_TOKENSERIAL_TABLE = "DROP TABLE tokenserial";
     public static String DROP_MULTISIGNBY_TABLE = "DROP TABLE multisignby";
     public static String DROP_MULTISIGN_TABLE = "DROP TABLE multisign";
     public static String DROP_TX_REWARDS_TABLE = "DROP TABLE txreward";
@@ -199,20 +198,27 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " WHERE  outputs.hash = ? AND outputindex= ?" + afterSelect();
     protected String SELECT_MAX_IMPORT_TIME_SQL = "SELECT MAX(inserttime) " + "FROM blocks";
 
-    protected String SELECT_MAX_TOKENID_SQL = "select max(tokenid) from tokens";
     protected String INSERT_TOKENS_SQL = getInsert()
-            + "  INTO tokens (tokenid, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-
+            + " INTO tokens (blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop, prevblockhash) "
+            + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    
     protected String UPDATE_TOKENS_SQL = getUpdate()
-            + "  tokens set tokenname = ?, description = ?, url = ?, signnumber = ?, multiserial = ?, tokentype = ?, tokenstop = ? WHERE tokenid = ?";
+            + " tokens SET tokenid = ?, tokenindex = ?, amount = ?, tokenname = ?, description = ?, url = ?, signnumber = ?, multiserial = ?, tokentype = ?, tokenstop =? "
+            + " WHERE blockhash = ?";
+    
+    protected String SELECT_TOKENS_SQL = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop "
+            + " FROM tokens WHERE confirmed = 1";
+    
+    protected String SELECT_MARKET_TOKENS_SQL = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop "
+            + " FROM tokens WHERE tokentype = 1 and confirmed = 1";
 
-    protected String SELECT_TOKENS_SQL = "select tokenid, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop from tokens";
+    protected String SELECT_TOKENS_ACOUNT_MAP_SQL = "SELECT tokenid, SUM(amount) as amount FROM tokens WHERE confirmed = 1 GROUP BY tokenid";
 
-    protected String SELECT_MARKET_TOKENS_SQL = "select tokenid, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop from tokens WHERE tokentype=1";
-
-    protected String SELECT_TOKENS_ACOUNT_MAP_SQL = "select tokenid,sum(amount) as amount from tokenserial GROUP BY tokenid";
-
-    protected String SELECT_TOKENS_INFO_SQL = "select tokenid, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop from tokens where tokenid = ?";
+    protected String SELECT_TOKENS_INFO_SQL = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop"
+            + " FROM tokens WHERE tokenid = ? AND confirmed = 1";
+    
+    protected String COUNT_TOKENSINDEX_SQL = "SELECT max(tokenindex) as count "
+            + " FROM tokens WHERE tokenid = ? AND confirmed = 1";
 
     protected String UPDATE_SETTINGS_SQL = getUpdate() + " settings SET settingvalue = ? WHERE name = ?";
     protected String UPDATE_BLOCKS_SQL = getUpdate() + " blocks SET wasundoable=? WHERE hash=?";
@@ -251,19 +257,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected abstract String getUpdateBlockevaluationUnmaintainAllSQL();
 
-    protected String SELECT_MULTISIGNADDRESS_SQL = "SELECT tokenid, address, pubKeyHex, posIndex FROM multisignaddress WHERE tokenid = ?";
+    protected String SELECT_MULTISIGNADDRESS_SQL = "SELECT blockhash, tokenid, address, pubKeyHex, posIndex FROM multisignaddress WHERE tokenid = ? AND blockhash = ?";
     protected String INSERT_MULTISIGNADDRESS_SQL = "INSERT INTO multisignaddress (tokenid, address, pubKeyHex, posIndex) VALUES (?, ?, ?, ?)";
     protected String DELETE_MULTISIGNADDRESS_SQL = "DELETE FROM multisignaddress WHERE tokenid = ? AND address = ?";
     protected String COUNT_MULTISIGNADDRESS_SQL = "SELECT COUNT(*) as count FROM multisignaddress WHERE tokenid = ?";
     protected String SELECT_MULTISIGNADDRESSINFO_SQL = "SELECT tokenid, address FROM multisignaddress WHERE tokenid = ? AND address = ?";
-    protected String DELETE_MULTISIGNADDRESS_SQL0 = "DELETE FROM multisignaddress WHERE tokenid = ?";
-
-    protected String INSERT_TOKENSERIAL_SQL = "INSERT INTO tokenserial (tokenid, tokenindex, amount) VALUES (?, ?, ?)";
-    protected String UPDATE_TOKENSERIAL_SQL = "UPDATE tokenserial SET amount = ? WHERE tokenid = ? AND tokenindex = ?";
-    protected String SELECT_TOKENSERIAL_SQL = "SELECT tokenid, tokenindex, amount FROM tokenserial WHERE tokenid = ? AND tokenindex = ?";
-    protected String SELECT_TOKENSERIAL0_SQL = "SELECT tokenid, tokenindex, amount FROM tokenserial WHERE tokenid = ?";
-    protected String SELECT_SEARCH_TOKENSERIAL_SQL = "SELECT tokenid, tokenindex, amount FROM tokenserial ";
-    protected String COUNT_TOKENSERIAL0_SQL = "SELECT COUNT(*) as count FROM tokenserial WHERE tokenid = ?";
+    protected String DELETE_MULTISIGNADDRESS_SQL0 = "DELETE FROM multisignaddress WHERE tokenid = ? AND blockhash = ?";
 
     protected String SELECT_SEARCH_TOKENSERIAL_ALL_SQL = "SELECT ts.tokenid as tokenid, tokenindex, amount,signnumber,"
             + "(select count(address) FROM multisign ms WHERE ts.tokenid=ms.tokenid and ts.tokenindex=ms.tokenindex AND ms.sign=1) as count "
@@ -467,7 +466,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_TIPS_TABLE);
         sqlStatements.add(DROP_TOKENS_TABLE);
         sqlStatements.add(DROP_MULTISIGNADDRESS_TABLE);
-        sqlStatements.add(DROP_TOKENSERIAL_TABLE);
         sqlStatements.add(DROP_MULTISIGNBY_TABLE);
         sqlStatements.add(DROP_MULTISIGN_TABLE);
         sqlStatements.add(DROP_TX_REWARDS_TABLE);
@@ -563,10 +561,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      */
     protected String getDeleteOpenoutputsSQL() {
         return DELETE_OUTPUTS_SQL;
-    }
-
-    protected String getSelectMaxTokenIdSQL() {
-        return SELECT_MAX_TOKENID_SQL;
     }
 
     /**
@@ -2092,49 +2086,29 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public int getMaxTokenId() throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(getSelectMaxTokenIdSQL());
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (!resultSet.next()) {
-                return 1;
-            }
-            int tokenid = (int) resultSet.getLong(1);
-            return tokenid == 0 ? 1 : tokenid;
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
-    @Override
     public List<Tokens> getTokensList() throws BlockStoreException {
         List<Tokens> list = new ArrayList<Tokens>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            String sql = SELECT_TOKENS_SQL + " WHERE tokentype=0 ";
+            String sql = SELECT_TOKENS_SQL + " AND tokentype=0 ";
             preparedStatement = conn.get().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
+                // blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop
                 Tokens tokens = new Tokens();
+                tokens.setBlockhash(resultSet.getString("blockhash"));
+                tokens.setConfirmed(resultSet.getBoolean("confirmed"));
                 tokens.setTokenid(resultSet.getString("tokenid"));
+                tokens.setTokenindex(resultSet.getInt("tokenindex"));
+                tokens.setAmount(resultSet.getLong("amount"));
                 tokens.setTokenname(resultSet.getString("tokenname"));
                 tokens.setDescription(resultSet.getString("description"));
-                tokens.setTokenType(resultSet.getInt("tokentype"));
-                tokens.setSignnumber(resultSet.getLong("signnumber"));
-                tokens.setMultiserial(resultSet.getBoolean("multiserial"));
-                tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
                 tokens.setUrl(resultSet.getString("url"));
+                tokens.setSignnumber(resultSet.getInt("signnumber"));
+                tokens.setMultiserial(resultSet.getBoolean("multiserial"));
+                tokens.setTokentype(resultSet.getInt("tokentype"));
+                tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
                 list.add(tokens);
             }
             return list;
@@ -2159,16 +2133,21 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_MARKET_TOKENS_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
+            // blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop
             while (resultSet.next()) {
                 Tokens tokens = new Tokens();
+                tokens.setBlockhash(resultSet.getString("blockhash"));
+                tokens.setConfirmed(resultSet.getBoolean("confirmed"));
                 tokens.setTokenid(resultSet.getString("tokenid"));
+                tokens.setTokenindex(resultSet.getInt("tokenindex"));
+                tokens.setAmount(resultSet.getLong("amount"));
                 tokens.setTokenname(resultSet.getString("tokenname"));
                 tokens.setDescription(resultSet.getString("description"));
-                tokens.setTokenType(resultSet.getInt("tokentype"));
-                tokens.setSignnumber(resultSet.getLong("signnumber"));
-                tokens.setMultiserial(resultSet.getBoolean("multiserial"));
-                tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
                 tokens.setUrl(resultSet.getString("url"));
+                tokens.setSignnumber(resultSet.getInt("signnumber"));
+                tokens.setMultiserial(resultSet.getBoolean("multiserial"));
+                tokens.setTokentype(resultSet.getInt("tokentype"));
+                tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
                 list.add(tokens);
             }
             return list;
@@ -2218,7 +2197,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            String sql = SELECT_TOKENS_SQL + " WHERE 1=1";
+            String sql = SELECT_TOKENS_SQL + " AND 1=1";
             if (name != null && !"".equals(name.trim())) {
                 sql += " AND (tokenname LIKE '%" + name + "%' OR description LIKE '%" + name + "%')";
             }
@@ -2226,14 +2205,18 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 Tokens tokens = new Tokens();
+                tokens.setBlockhash(resultSet.getString("blockhash"));
+                tokens.setConfirmed(resultSet.getBoolean("confirmed"));
                 tokens.setTokenid(resultSet.getString("tokenid"));
+                tokens.setTokenindex(resultSet.getInt("tokenindex"));
+                tokens.setAmount(resultSet.getLong("amount"));
                 tokens.setTokenname(resultSet.getString("tokenname"));
                 tokens.setDescription(resultSet.getString("description"));
-                tokens.setTokenType(resultSet.getInt("tokentype"));
-                tokens.setSignnumber(resultSet.getLong("signnumber"));
-                tokens.setMultiserial(resultSet.getBoolean("multiserial"));
-                tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
                 tokens.setUrl(resultSet.getString("url"));
+                tokens.setSignnumber(resultSet.getInt("signnumber"));
+                tokens.setMultiserial(resultSet.getBoolean("multiserial"));
+                tokens.setTokentype(resultSet.getInt("tokentype"));
+                tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
                 list.add(tokens);
             }
             return list;
@@ -2252,25 +2235,44 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public void saveTokens(Tokens tokens) throws BlockStoreException {
-        this.saveTokens(tokens.getTokenid(), tokens.getTokenname(), tokens.getDescription(), tokens.getUrl(),
-                tokens.getSignnumber(), tokens.isMultiserial(), tokens.getTokenType(), tokens.isTokenstop());
+        String blockhash = tokens.getBlockhash();
+        boolean confirmed = tokens.isConfirmed();
+        String tokenid = tokens.getTokenid();
+        int tokenindex = tokens.getTokenindex();
+        long amount = tokens.getAmount();
+        String tokenname = tokens.getTokenname();
+        String description = tokens.getDescription();
+        String url = tokens.getUrl();
+        int signnumber = tokens.getSignnumber();
+        boolean multiserial = tokens.isMultiserial();
+        int tokentype = tokens.getTokentype();
+        boolean tokenstop = tokens.isTokenstop();
+        String prevblockhash = tokens.getPrevblockhash();
+        this.saveTokens(blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop, prevblockhash);
     }
 
     @Override
-    public void saveTokens(String tokenid, String tokenname, String description, String url, long signnumber,
-            boolean multiserial, int tokenType, boolean tokenstop) throws BlockStoreException {
+    public void saveTokens(String blockhash, boolean confirmed, String tokenid, int tokenindex, long amount,
+            String tokenname, String description, String url, int signnumber, boolean multiserial, int tokentype, 
+            boolean tokenstop, String prevblockhash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
+            // blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop
             preparedStatement = conn.get().prepareStatement(INSERT_TOKENS_SQL);
-            preparedStatement.setString(1, tokenid);
-            preparedStatement.setString(2, tokenname);
-            preparedStatement.setString(3, description);
-            preparedStatement.setString(4, url);
-            preparedStatement.setLong(5, signnumber);
-            preparedStatement.setBoolean(6, multiserial);
-            preparedStatement.setInt(7, tokenType);
-            preparedStatement.setBoolean(8, tokenstop);
+            preparedStatement.setString(1, blockhash);
+            preparedStatement.setBoolean(2, confirmed);
+            preparedStatement.setString(3, tokenid);
+            preparedStatement.setInt(4, tokenindex);
+            preparedStatement.setLong(5, amount);
+            preparedStatement.setString(6, tokenname);
+            preparedStatement.setString(7, description);
+            preparedStatement.setString(8, url);
+            preparedStatement.setInt(9, signnumber);
+            preparedStatement.setBoolean(10, multiserial);
+            preparedStatement.setInt(11, tokentype);
+            preparedStatement.setBoolean(12, tokenstop);
+            preparedStatement.setString(13, prevblockhash);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -2290,15 +2292,18 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
+            // tokenid = ?, tokenindex = ?, amount = ?, tokenname = ?, description = ?, url = ?, signnumber = ?, multiserial = ?, tokentype = ?, tokenstop =?
             preparedStatement = conn.get().prepareStatement(UPDATE_TOKENS_SQL);
-            preparedStatement.setString(1, tokens.getTokenname());
-            preparedStatement.setString(2, tokens.getDescription());
-            preparedStatement.setString(3, tokens.getUrl());
-            preparedStatement.setLong(4, tokens.getSignnumber());
-            preparedStatement.setBoolean(5, tokens.isMultiserial());
-            preparedStatement.setInt(6, tokens.getTokenType());
-            preparedStatement.setBoolean(7, tokens.isTokenstop());
-            preparedStatement.setString(8, tokens.getTokenid());
+            preparedStatement.setString(1, tokens.getTokenid());
+            preparedStatement.setInt(2, tokens.getTokenindex());
+            preparedStatement.setLong(3, tokens.getAmount());
+            preparedStatement.setString(4, tokens.getTokenname());
+            preparedStatement.setString(5, tokens.getDescription());
+            preparedStatement.setString(6, tokens.getUrl());
+            preparedStatement.setInt(7, tokens.getSignnumber());
+            preparedStatement.setBoolean(8, tokens.isMultiserial());
+            preparedStatement.setInt(9, tokens.getTokentype());
+            preparedStatement.setBoolean(10, tokens.isTokenstop());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -2407,13 +2412,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<MultiSignAddress> getMultiSignAddressListByTokenid(String tokenid) throws BlockStoreException {
+    public List<MultiSignAddress> getMultiSignAddressListByTokenidAndBlockHashHex(String tokenid, 
+            String prevblockhash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         List<MultiSignAddress> list = new ArrayList<MultiSignAddress>();
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_MULTISIGNADDRESS_SQL);
             preparedStatement.setString(1, tokenid);
+            preparedStatement.setString(2, prevblockhash);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 String tokenid0 = resultSet.getString("tokenid");
@@ -2485,29 +2492,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void insertTokenSerial(TokenSerial tokenSerial) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(INSERT_TOKENSERIAL_SQL);
-            preparedStatement.setString(1, tokenSerial.getTokenid());
-            preparedStatement.setLong(2, tokenSerial.getTokenindex());
-            preparedStatement.setLong(3, tokenSerial.getAmount());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
-    @Override
     public void insertMultisignby(MultiSignBy multisignby) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -2556,24 +2540,54 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
+    public int getCalMaxTokenIndex(String tokenid) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(COUNT_TOKENSINDEX_SQL);
+            preparedStatement.setString(1, tokenid);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getInt("count");
+            }
+            return 0;
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
     public Tokens getTokensInfo(String tokenid) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
+            // blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop
             preparedStatement = conn.get().prepareStatement(SELECT_TOKENS_INFO_SQL);
             preparedStatement.setString(1, tokenid);
             ResultSet resultSet = preparedStatement.executeQuery();
             Tokens tokens = null;
             if (resultSet.next()) {
                 tokens = new Tokens();
+                tokens.setBlockhash(resultSet.getString("blockhash"));
+                tokens.setConfirmed(resultSet.getBoolean("confirmed"));
                 tokens.setTokenid(resultSet.getString("tokenid"));
+                tokens.setTokenindex(resultSet.getInt("tokenindex"));
+                tokens.setAmount(resultSet.getLong("amount"));
                 tokens.setTokenname(resultSet.getString("tokenname"));
                 tokens.setDescription(resultSet.getString("description"));
-                tokens.setTokenType(resultSet.getInt("tokentype"));
-                tokens.setSignnumber(resultSet.getLong("signnumber"));
-                tokens.setMultiserial(resultSet.getBoolean("multiserial"));
-                tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
                 tokens.setUrl(resultSet.getString("url"));
+                tokens.setSignnumber(resultSet.getInt("signnumber"));
+                tokens.setMultiserial(resultSet.getBoolean("multiserial"));
+                tokens.setTokentype(resultSet.getInt("tokentype"));
+                tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
             }
             return tokens;
         } catch (SQLException ex) {
@@ -2592,7 +2606,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public List<TokenSerial> getSearchTokenSerialInfo(String tokenid, List<String> addresses)
             throws BlockStoreException {
         List<TokenSerial> list = new ArrayList<TokenSerial>();
-        maybeConnect();
+        return list;
+        /*maybeConnect();
         PreparedStatement preparedStatement = null;
         String sql = SELECT_SEARCH_TOKENSERIAL_ALL_SQL;
         if (addresses != null && !addresses.isEmpty()) {
@@ -2633,37 +2648,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     throw new BlockStoreException("Failed to close PreparedStatement");
                 }
             }
-        }
-    }
-
-    @Override
-    public TokenSerial getTokenSerialInfo(String tokenid, long tokenindex) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TOKENSERIAL_SQL);
-            preparedStatement.setString(1, tokenid);
-            preparedStatement.setLong(2, tokenindex);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            TokenSerial tokenSerial = null;
-            if (resultSet.next()) {
-                // String tokenid = resultSet.getString("tokenid");
-                // long tokenindex = resultSet.getLong("tokenindex");
-                long amount = resultSet.getLong("amount");
-                tokenSerial = new TokenSerial(tokenid, tokenindex, amount);
-            }
-            return tokenSerial;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
+        }*/
     }
 
     @Override
@@ -2745,29 +2730,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     preparedStatement.close();
                 } catch (SQLException e) {
                     throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public void updateTokenSerial(TokenSerial tokenSerial0) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_TOKENSERIAL_SQL);
-            preparedStatement.setLong(1, tokenSerial0.getAmount());
-            preparedStatement.setString(2, tokenSerial0.getTokenid());
-            preparedStatement.setLong(3, tokenSerial0.getTokenindex());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
                 }
             }
         }
@@ -3031,12 +2993,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void deleteMultiSignAddressByTokenid(String tokenid) throws BlockStoreException {
+    public void deleteMultiSignAddressByTokenidAndBlockhash(String tokenid, String blockhash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(DELETE_MULTISIGNADDRESS_SQL0);
             preparedStatement.setString(1, tokenid);
+            preparedStatement.setString(2, blockhash);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -3046,31 +3009,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     preparedStatement.close();
                 } catch (SQLException e) {
                     throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public int getCountTokenSerialNumber(String tokenid) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(COUNT_TOKENSERIAL0_SQL);
-            preparedStatement.setString(1, tokenid);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                return resultSet.getInt("count");
-            }
-            return 0;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
                 }
             }
         }

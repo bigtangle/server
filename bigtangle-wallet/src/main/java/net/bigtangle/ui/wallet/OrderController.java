@@ -252,7 +252,7 @@ public class OrderController extends ExchangeController {
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
 
         for (Tokens tokens : getTokensResponse.getTokens()) {
-            if (tokens.getTokenType() != TokenType.market.ordinal()) {
+            if (tokens.getTokentype() != TokenType.market.ordinal()) {
                 continue;
             }
             String url = tokens.getUrl();
@@ -352,7 +352,7 @@ public class OrderController extends ExchangeController {
         } else {
             for (Tokens tokens : getTokensResponse.getTokens()) {
                 String tokenHex = tokens.getTokenid();
-                if (tokens.getTokenType() != TokenType.token.ordinal()) {
+                if (tokens.getTokentype() != TokenType.token.ordinal()) {
                     continue;
                 }
                 String tokenname = tokens.getTokenname();
