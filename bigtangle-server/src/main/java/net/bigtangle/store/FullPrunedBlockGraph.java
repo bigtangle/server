@@ -49,7 +49,6 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.StoredUndoableBlock;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
@@ -315,7 +314,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         return address;
     }
 
-    private void synchronizationToken(TokenInfo tokenInfo) throws BlockStoreException {
+    private void synchronizationToken(TokenInfo tokenInfo, String blockhash) throws BlockStoreException {
         Tokens token = tokenInfo.getTokens();
         if (token == null) {
             return;
@@ -323,39 +322,24 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         if (token.getTokenid().equals(NetworkParameters.BIGNETCOIN_TOKENID_STRING)) {
             return;
         }
-        Tokens token0 = this.blockStore.getTokensInfo(token.getTokenid());
-        if (token0 == null) {
-            token0 = new Tokens().copy(token);
-            this.blockStore.saveTokens(token0);
-        } else {
-            token0.copy(token);
-            this.blockStore.updateTokens(token0);
-        }
+
+        Tokens tokens = tokenInfo.getTokens();
+        tokens.setBlockhash(blockhash);
+        tokens.setConfirmed(false);
+        this.blockStore.saveTokens(tokens);
+
         if (tokenInfo.getMultiSignAddresses().size() > 0) {
-            this.blockStore.deleteMultiSignAddressByTokenid(token.getTokenid());
+            this.blockStore.deleteMultiSignAddressByTokenidAndBlockhash(token.getTokenid(), token.getPrevblockhash());
         }
+        
         int index = 1;
         for (MultiSignAddress multiSignAddress : tokenInfo.getMultiSignAddresses()) {
             byte[] pubKey = Utils.HEX.decode(multiSignAddress.getPubKeyHex());
             multiSignAddress.setAddress(ECKey.fromPublicOnly(pubKey).toAddress(networkParameters).toBase58());
-            MultiSignAddress multiSignAddress0 = this.blockStore.getMultiSignAddressInfo(multiSignAddress.getTokenid(),
-                    multiSignAddress.getAddress());
-            if (multiSignAddress0 == null) {
-                multiSignAddress0 = new MultiSignAddress().copy(multiSignAddress);
-                multiSignAddress0.setPosIndex(index);
-                blockStore.insertMultiSignAddress(multiSignAddress0);
-                index++;
-            }
-        }
-        TokenSerial tokenSerial = tokenInfo.getTokenSerial();
-        TokenSerial tokenSerial0 = this.blockStore.getTokenSerialInfo(tokenSerial.getTokenid(),
-                tokenSerial.getTokenindex());
-        if (tokenSerial0 == null) {
-            tokenSerial0 = new TokenSerial().copy(tokenSerial);
-            blockStore.insertTokenSerial(tokenSerial0);
-        } else {
-            tokenSerial0.copy(tokenSerial);
-            blockStore.updateTokenSerial(tokenSerial0);
+            multiSignAddress.setPosIndex(index);
+            multiSignAddress.setBlockhash(blockhash);
+            blockStore.insertMultiSignAddress(multiSignAddress);
+            index++;
         }
     }
 
@@ -460,7 +444,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             if (tx.getData() != null) {
                 byte[] buf = tx.getData();
                 TokenInfo tokenInfo = new TokenInfo().parse(buf);
-                this.synchronizationToken(tokenInfo);
+                this.synchronizationToken(tokenInfo, block.getHashAsString());
             }
         }
 

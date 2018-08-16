@@ -85,9 +85,8 @@ public class TokensService {
             if (tokens != null) {
                 throw new BlockStoreException("token can't update");
             }
-
-            TokenSerial tokenSerial = tokenInfo.getTokenSerial();
-            List<MultiSign> multiSigns = this.store.getMultiSignListByTokenid(tokenid, tokenSerial.getTokenindex());
+            Tokens tokens2 = tokenInfo.getTokens();
+            List<MultiSign> multiSigns = this.store.getMultiSignListByTokenid(tokenid, tokens2.getTokenindex());
             int signnumber = 0;
             for (MultiSign multiSign : multiSigns) {
                 if (multiSign.getSign() == 1) {

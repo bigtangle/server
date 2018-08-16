@@ -10,8 +10,6 @@ public class TokenInfo implements java.io.Serializable {
     private Tokens tokens;
     private List<Tokens> positveTokenList = new ArrayList<Tokens>();
 
-    private TokenSerial tokenSerial;
-
     private List<MultiSignAddress> multiSignAddresses;
 
     public byte[] toByteArray() {
@@ -31,7 +29,6 @@ public class TokenInfo implements java.io.Serializable {
             if (tokenInfo == null)
                 return this;
             this.tokens = tokenInfo.getTokens();
-            this.tokenSerial = tokenInfo.getTokenSerial();
             this.positveTokenList = tokenInfo.getPositveTokenList();
             this.multiSignAddresses.clear();
             this.multiSignAddresses.addAll(tokenInfo.getMultiSignAddresses());
@@ -47,14 +44,6 @@ public class TokenInfo implements java.io.Serializable {
 
     public void setTokens(Tokens tokens) {
         this.tokens = tokens;
-    }
-
-    public TokenSerial getTokenSerial() {
-        return tokenSerial;
-    }
-
-    public void setTokenSerial(TokenSerial tokenSerial) {
-        this.tokenSerial = tokenSerial;
     }
 
     public List<MultiSignAddress> getMultiSignAddresses() {

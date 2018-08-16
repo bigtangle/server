@@ -41,8 +41,6 @@ import net.bigtangle.core.PayMultiSignAddress;
 import net.bigtangle.core.PrunedException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.TokenSerial;
-import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
@@ -466,8 +464,8 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(amount, tokenid);
 
         TokenInfo tokenInfo = new TokenInfo();
-        Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", -1, true,
-                TokenType.market.ordinal(), true);
+        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(), -1, 0, amount, true, false);
         tokenInfo.setTokens(tokens);
 
         block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
@@ -493,8 +491,9 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(amount, tokenid);
 
         TokenInfo tokenInfo = new TokenInfo();
-        Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true,
-                TokenType.market.ordinal(), true);
+        
+        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(), 3, 1, amount, true, false);
         tokenInfo.setTokens(tokens);
 
         block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
@@ -520,20 +519,19 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(amount, tokenid);
 
         TokenInfo tokenInfo = new TokenInfo();
-        Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true,
-                TokenType.market.ordinal(), true);
-        tokenInfo.setTokens(tokens);
 
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
         requestParam00.put("tokenid", tokenid);
         String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getCalTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
-        
+
         TokenSerialIndexResponse tokenSerialIndexResponse = Json.jsonmapper().readValue(resp2,
                 TokenSerialIndexResponse.class);
         Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
         
-        tokenInfo.setTokenSerial(new TokenSerial(tokenid, tokenindex_, 100000000));
+        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
+        tokenInfo.setTokens(tokens);
 
         block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
         block.solve();
@@ -558,20 +556,19 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(amount, tokenid);
 
         TokenInfo tokenInfo = new TokenInfo();
-        Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true,
-                TokenType.market.ordinal(), true);
-        tokenInfo.setTokens(tokens);
-
+        
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
         requestParam00.put("tokenid", tokenid);
         String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getCalTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
-        
+
         TokenSerialIndexResponse tokenSerialIndexResponse = Json.jsonmapper().readValue(resp2,
                 TokenSerialIndexResponse.class);
         Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
         
-        tokenInfo.setTokenSerial(new TokenSerial(tokenid, tokenindex_, 100000000));
+        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
+        tokenInfo.setTokens(tokens);
 
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(0).getPublicKeyAsHex()));
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(1).getPublicKeyAsHex()));
@@ -584,7 +581,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         System.out.println("resp : " + resp);
         assertEquals(duration, 101);
     }
-
+    
     @SuppressWarnings("unchecked")
     @Test
     public void testMultiSigMultiSignDatasignatureAddress() throws Exception {
@@ -600,20 +597,19 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(amount, tokenid);
 
         TokenInfo tokenInfo = new TokenInfo();
-        Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true,
-                TokenType.market.ordinal(), true);
-        tokenInfo.setTokens(tokens);
-
+        
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
         requestParam00.put("tokenid", tokenid);
         String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getCalTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
-        
+
         TokenSerialIndexResponse tokenSerialIndexResponse = Json.jsonmapper().readValue(resp2,
                 TokenSerialIndexResponse.class);
         Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
-        
-        tokenInfo.setTokenSerial(new TokenSerial(tokenid, tokenindex_, 100000000));
+
+        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
+        tokenInfo.setTokens(tokens);
 
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(0).getPublicKeyAsHex()));
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(1).getPublicKeyAsHex()));
@@ -636,7 +632,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String blockhashHex = multiSignResponse.getMultiSigns().get((int) tokenindex_ - 1).getBlockhashHex();
         byte[] payloadBytes = Utils.HEX.decode(blockhashHex);
         Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
-        
+
         Transaction transaction = block0.getTransactions().get(0);
         List<MultiSignBy> multiSignBies = null;
         if (transaction.getDataSignature() == null) {
@@ -682,20 +678,19 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(amount, tokenid);
 
         TokenInfo tokenInfo = new TokenInfo();
-        Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true,
-                TokenType.market.ordinal(), true);
-        tokenInfo.setTokens(tokens);
-
+        
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
         requestParam00.put("tokenid", tokenid);
         String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getCalTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
-       
+
         TokenSerialIndexResponse tokenSerialIndexResponse = Json.jsonmapper().readValue(resp2,
                 TokenSerialIndexResponse.class);
         Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
         
-        tokenInfo.setTokenSerial(new TokenSerial(tokenid, tokenindex_, 100000000));
+        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
+        tokenInfo.setTokens(tokens);
 
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(0).getPublicKeyAsHex()));
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(1).getPublicKeyAsHex()));
@@ -713,11 +708,12 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         requestParam0.put("address", keys.get(0).toAddress(networkParameters).toBase58());
         resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultiSignWithAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
-        
+
         MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
-        byte[] payloadBytes = Utils.HEX.decode((String) multiSignResponse.getMultiSigns().get((int) tokenindex_ - 1).getBlockhashHex());
+        byte[] payloadBytes = Utils.HEX
+                .decode((String) multiSignResponse.getMultiSigns().get((int) tokenindex_ - 1).getBlockhashHex());
         Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
-        
+
         Transaction transaction = block0.getTransactions().get(0);
         List<MultiSignBy> multiSignBies = null;
         if (transaction.getDataSignature() == null) {
@@ -760,20 +756,19 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(amount, tokenid);
 
         TokenInfo tokenInfo = new TokenInfo();
-        Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true,
-                TokenType.market.ordinal(), true);
-        tokenInfo.setTokens(tokens);
-
+        
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
         requestParam00.put("tokenid", tokenid);
         String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getCalTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
-        
+
         TokenSerialIndexResponse tokenSerialIndexResponse = Json.jsonmapper().readValue(resp2,
                 TokenSerialIndexResponse.class);
         Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
         
-        tokenInfo.setTokenSerial(new TokenSerial(tokenid, tokenindex_, 100000000));
+        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
+        tokenInfo.setTokens(tokens);
 
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(0).getPublicKeyAsHex()));
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(1).getPublicKeyAsHex()));
@@ -793,9 +788,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
         MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
-        byte[] payloadBytes = Utils.HEX.decode((String) multiSignResponse.getMultiSigns().get((int) tokenindex_ - 1).getBlockhashHex());
+        byte[] payloadBytes = Utils.HEX
+                .decode((String) multiSignResponse.getMultiSigns().get((int) tokenindex_ - 1).getBlockhashHex());
         Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
-        
+
         Transaction transaction = block0.getTransactions().get(0);
         List<MultiSignBy> multiSignBies = null;
         if (transaction.getDataSignature() == null) {
@@ -831,21 +827,20 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         ECKey outKey = keys.get(6);
         byte[] pubKey = outKey.getPubKey();
+        String tokenid = Utils.HEX.encode(pubKey);
         for (int i = 1; i <= 2; i++) {
-
             TokenInfo tokenInfo = new TokenInfo();
-            Tokens tokens = new Tokens(Utils.HEX.encode(pubKey), "test", "", "", 1, false, TokenType.token.ordinal(), false);
+            
+            Coin basecoin = Coin.valueOf(100000L, pubKey);
+            long amount = basecoin.getValue();
+            Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+                    UUID.randomUUID().toString(), 1, 1, amount, true, false);
             tokenInfo.setTokens(tokens);
 
             // add MultiSignAddress item
             tokenInfo.getMultiSignAddresses()
                     .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-
-            Coin basecoin = Coin.valueOf(100000L, pubKey);
-
-            long amount = basecoin.getValue();
-            tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
-
+            
             HashMap<String, String> requestParam = new HashMap<String, String>();
             byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
@@ -884,8 +879,13 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String tokenid = keys.get(3).getPublicKeyAsHex();
         for (int i = 1; i <= 2; i++) {
             TokenInfo tokenInfo = new TokenInfo();
-            Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true,
-                    TokenType.market.ordinal(), false);
+            
+            int amount = 100000000;
+            Coin basecoin = Coin.valueOf(amount, tokenid);
+            
+            Integer tokenindex_ = 1;
+            Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+                    UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
             tokenInfo.setTokens(tokens);
 
             ECKey key1 = keys.get(0);
@@ -896,13 +896,6 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
             ECKey key3 = keys.get(2);
             tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key3.getPublicKeyAsHex()));
-
-            int amount = 100000000;
-            Coin basecoin = Coin.valueOf(amount, tokenid);
-
-            Integer tokenindex_ = 1;
-
-            tokenInfo.setTokenSerial(new TokenSerial(tokenid, tokenindex_, 100000000));
 
             HashMap<String, String> requestParam = new HashMap<String, String>();
             byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
@@ -942,7 +935,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
                 String blockhashHex = multiSignResponse.getMultiSigns().get((int) i - 1).getBlockhashHex();
                 byte[] payloadBytes = Utils.HEX.decode(blockhashHex);
-                
+
                 Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
                 Transaction transaction = block0.getTransactions().get(0);
 
@@ -980,9 +973,21 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
         String tokenid = keys.get(5).getPublicKeyAsHex();
 
+        int amount = 678900000;
+        Coin basecoin = Coin.valueOf(amount, tokenid);
+
         TokenInfo tokenInfo = new TokenInfo();
-        Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true,
-                TokenType.market.ordinal(), false);
+
+        HashMap<String, String> requestParam00 = new HashMap<String, String>();
+        requestParam00.put("tokenid", tokenid);
+        String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getCalTokenIndex.name(),
+                Json.jsonmapper().writeValueAsString(requestParam00));
+        TokenSerialIndexResponse tokenSerialIndexResponse = Json.jsonmapper().readValue(resp2,
+                TokenSerialIndexResponse.class);
+        Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
+
+        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
         tokenInfo.setTokens(tokens);
 
         ECKey key1 = keys.get(0);
@@ -993,19 +998,6 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
         ECKey key3 = keys.get(2);
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key3.getPublicKeyAsHex()));
-
-        int amount = 678900000;
-        Coin basecoin = Coin.valueOf(amount, tokenid);
-
-        HashMap<String, String> requestParam00 = new HashMap<String, String>();
-        requestParam00.put("tokenid", tokenid);
-        String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getCalTokenIndex.name(),
-                Json.jsonmapper().writeValueAsString(requestParam00));
-        
-        TokenSerialIndexResponse tokenSerialIndexResponse = Json.jsonmapper().readValue(resp2, TokenSerialIndexResponse.class);
-        Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
-
-        tokenInfo.setTokenSerial(new TokenSerial(tokenid, tokenindex_, 100000000));
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
@@ -1031,11 +1023,11 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultiSignWithAddress.name(),
                     Json.jsonmapper().writeValueAsString(requestParam0));
             System.out.println(resp);
-            
+
             MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
             String blockhashHex = multiSignResponse.getMultiSigns().get((int) tokenindex_ - 1).getBlockhashHex();
             byte[] payloadBytes = Utils.HEX.decode(blockhashHex);
-            
+
             Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
             Transaction transaction = block0.getTransactions().get(0);
 
@@ -1069,6 +1061,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         }
         // checkBalance(tokenid, ecKeys );
     }
+
 
     @Test
     public void testECKey() {
@@ -1119,27 +1112,32 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         String tokenid = keys.get(7).getPublicKeyAsHex();
         TokenInfo tokenInfo = new TokenInfo();
-        Tokens tokens = new Tokens(tokenid, UUID.randomUUID().toString(), UUID.randomUUID().toString(), "", 3, true,
-                TokenType.market.ordinal(), true);
-        tokenInfo.setTokens(tokens);
-        ECKey key1 = keys.get(0);
-        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key1.getPublicKeyAsHex()));
-        ECKey key2 = keys.get(1);
-        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key2.getPublicKeyAsHex()));
-        ECKey key3 = keys.get(2);
-        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key3.getPublicKeyAsHex()));
-        int amount = 100000000;
-        Coin basecoin = Coin.valueOf(amount, tokenid);
+
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
         requestParam00.put("tokenid", tokenid);
         String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getCalTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
-        
+
         TokenSerialIndexResponse tokenSerialIndexResponse = Json.jsonmapper().readValue(resp2,
                 TokenSerialIndexResponse.class);
         Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
+
+        int amount = 100000000;
+        Coin basecoin = Coin.valueOf(amount, tokenid);
         
-        tokenInfo.setTokenSerial(new TokenSerial(tokenid, tokenindex_, 100000000));
+        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
+        tokenInfo.setTokens(tokens);
+
+        ECKey key1 = keys.get(0);
+        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key1.getPublicKeyAsHex()));
+
+        ECKey key2 = keys.get(1);
+        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key2.getPublicKeyAsHex()));
+
+        ECKey key3 = keys.get(2);
+        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key3.getPublicKeyAsHex()));
+
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -1156,9 +1154,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
         MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
-        byte[] payloadBytes = Utils.HEX.decode((String) multiSignResponse.getMultiSigns().get((int) tokenindex_ - 1).getBlockhashHex());
+        byte[] payloadBytes = Utils.HEX
+                .decode((String) multiSignResponse.getMultiSigns().get((int) tokenindex_ - 1).getBlockhashHex());
         Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
-        
+
         Transaction transaction = block0.getTransactions().get(0);
 
         TokenInfo updateTokenInfo = new TokenInfo().parse(transaction.getData());
@@ -1166,7 +1165,8 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         ECKey key4 = keys.get(3);
         updateTokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key4.getPublicKeyAsHex()));
         requestParam = new HashMap<String, String>();
-        data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
         Block block_ = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
         block_.addCoinbaseTransaction(key4.getPubKey(), basecoin, updateTokenInfo);

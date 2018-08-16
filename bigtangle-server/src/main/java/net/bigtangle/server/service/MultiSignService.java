@@ -20,7 +20,6 @@ import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
@@ -66,7 +65,8 @@ public class MultiSignService {
             TokenInfo tokenInfo = new TokenInfo().parse(transaction.getData());
             map.put("signnumber", tokenInfo.getTokens().getSignnumber());
             map.put("tokenname", tokenInfo.getTokens().getTokenname());
-            Coin fromAmount = Coin.valueOf(tokenInfo.getTokenSerial().getAmount(), multiSign.getTokenid());
+
+            Coin fromAmount = Coin.valueOf(tokenInfo.getTokens().getAmount(), multiSign.getTokenid());
             map.put("amount", fromAmount.toPlainString());
             int signcount = 0;
             if (transaction.getDataSignature() == null) {
@@ -86,7 +86,7 @@ public class MultiSignService {
     private NetworkParameters networkParameters;
 
     public AbstractResponse getNextTokenSerialIndex(String tokenid) throws BlockStoreException {
-        int count = this.store.getCountTokenSerialNumber(tokenid);
+        int count = this.store.getCalMaxTokenIndex(tokenid);
         return TokenSerialIndexResponse.createTokenSerialIndexResponse(count + 1);
     }
 
@@ -98,19 +98,19 @@ public class MultiSignService {
             TokenInfo tokenInfo = new TokenInfo().parse(buf);
             final Tokens tokens = tokenInfo.getTokens();
 
-            List<MultiSignAddress> multiSignAddresses = store.getMultiSignAddressListByTokenid(tokens.getTokenid());
+            String prevblockhash = tokens.getPrevblockhash();
+            List<MultiSignAddress> multiSignAddresses = store
+                    .getMultiSignAddressListByTokenidAndBlockHashHex(tokens.getTokenid(), prevblockhash);
             if (multiSignAddresses.size() == 0) {
                 multiSignAddresses = tokenInfo.getMultiSignAddresses();
             }
-
-            final TokenSerial tokenSerial = tokenInfo.getTokenSerial();
 
             for (MultiSignAddress multiSignAddress : multiSignAddresses) {
                 byte[] pubKey = Utils.HEX.decode(multiSignAddress.getPubKeyHex());
                 multiSignAddress.setAddress(ECKey.fromPublicOnly(pubKey).toAddress(networkParameters).toBase58());
 
                 String tokenid = multiSignAddress.getTokenid();
-                long tokenindex = tokenSerial.getTokenindex();
+                long tokenindex = tokens.getTokenindex();
                 String address = multiSignAddress.getAddress();
                 int count = store.getCountMultiSignAlready(tokenid, tokenindex, address);
                 if (count == 0) {
@@ -135,7 +135,7 @@ public class MultiSignService {
                     store.updateMultiSign(tokenid, tokenindex, address, block.bitcoinSerialize(), 1);
                 }
             }
-            store.updateMultiSignBlockBitcoinSerialize(tokens.getTokenid(), tokenSerial.getTokenindex(),
+            store.updateMultiSignBlockBitcoinSerialize(tokens.getTokenid(), tokens.getTokenindex(),
                     block.bitcoinSerialize());
             this.store.commitDatabaseBatchWrite();
 
@@ -170,19 +170,17 @@ public class MultiSignService {
                 throw new BlockStoreException("tokeninfo can not reissue");
             }
 
-            if (tokens.getSignnumber() <= 0)
+            if (tokens.getSignnumber() <= 0) {
                 throw new BlockStoreException("signnumber value <= 0");
-
-            final TokenSerial tokenSerial = tokenInfo.getTokenSerial();
-            if (tokenSerial == null) {
-                throw new BlockStoreException("tokenserial is null");
             }
             // as conflict
-            if (!allowConflicts && (tokens0 != null && tokenSerial.getTokenindex() == 1L)) {
+            if (!allowConflicts && (tokens0 != null && tokens.getTokenindex() <= 1L)) {
                 throw new BlockStoreException("tokens already existed");
             }
 
-            List<MultiSignAddress> multiSignAddresses = store.getMultiSignAddressListByTokenid(tokens.getTokenid());
+            String prevblockhash = tokens.getPrevblockhash();
+            List<MultiSignAddress> multiSignAddresses = store
+                    .getMultiSignAddressListByTokenidAndBlockHashHex(tokens.getTokenid(), prevblockhash);
             if (multiSignAddresses.size() == 0) {
                 multiSignAddresses = tokenInfo.getMultiSignAddresses();
             }

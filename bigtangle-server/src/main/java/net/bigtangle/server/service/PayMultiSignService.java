@@ -28,10 +28,10 @@ import net.bigtangle.store.FullPrunedBlockStore;
 
 @Service
 public class PayMultiSignService {
-    
+
     @Autowired
     protected FullPrunedBlockStore store;
-    
+
     public AbstractResponse getPayMultiSignDetails(String orderid) throws BlockStoreException {
         PayMultiSign payMultiSign = this.store.getPayMultiSignWithOrderid(orderid);
         return PayMultiSignDetailsResponse.create(payMultiSign);
@@ -47,7 +47,9 @@ public class PayMultiSignService {
         if (tokens.getSignnumber() < 2) {
             throw new BlockStoreException("token can't multi sign");
         }
-        List<MultiSignAddress> multiSignAddresses = this.store.getMultiSignAddressListByTokenid(tokens.getTokenid());
+        String prevblockhash = tokens.getPrevblockhash();
+        List<MultiSignAddress> multiSignAddresses = this.store
+                .getMultiSignAddressListByTokenidAndBlockHashHex(tokens.getTokenid(), prevblockhash);
         if (multiSignAddresses.isEmpty()) {
             throw new BlockStoreException("multisignaddress list is empty");
         }
@@ -62,29 +64,31 @@ public class PayMultiSignService {
             this.store.insertPayMultiSignAddress(payMultiSignAddress);
         }
     }
-    
+
     @Autowired
     private NetworkParameters networkParameters;
-    
-    public AbstractResponse payMultiSign(Map<String, Object> request) throws BlockStoreException, Exception{
+
+    public AbstractResponse payMultiSign(Map<String, Object> request) throws BlockStoreException, Exception {
         String orderid = (String) request.get("orderid");
-        
+
         PayMultiSign payMultiSign_ = this.store.getPayMultiSignWithOrderid(orderid);
-        
+
         List<PayMultiSignAddress> payMultiSignAddresses_ = this.store.getPayMultiSignAddressWithOrderid(orderid);
         HashMap<String, PayMultiSignAddress> payMultiSignAddresseRes = new HashMap<String, PayMultiSignAddress>();
-        for (PayMultiSignAddress payMultiSignAddress : payMultiSignAddresses_) payMultiSignAddresseRes.put(payMultiSignAddress.getPubKey(), payMultiSignAddress);
+        for (PayMultiSignAddress payMultiSignAddress : payMultiSignAddresses_)
+            payMultiSignAddresseRes.put(payMultiSignAddress.getPubKey(), payMultiSignAddress);
         if (payMultiSignAddresseRes.isEmpty()) {
             throw new BlockStoreException("pay multisign addresse res is empty");
         }
-        
+
         String pubKey0 = (String) request.get("pubKey");
         if (!payMultiSignAddresseRes.containsKey(pubKey0)) {
             throw new BlockStoreException("pay multisign addresse list is empty");
         }
-        
-        Transaction transaction = networkParameters.getDefaultSerializer().makeTransaction(payMultiSign_.getBlockhash());
-        
+
+        Transaction transaction = networkParameters.getDefaultSerializer()
+                .makeTransaction(payMultiSign_.getBlockhash());
+
         byte[] pubKey = Utils.HEX.decode(pubKey0);
         byte[] data = transaction.getHash().getBytes();
         byte[] signature = Utils.HEX.decode((String) request.get("signature"));
@@ -92,13 +96,13 @@ public class PayMultiSignService {
         if (!success) {
             throw new BlockStoreException("multisign signature error");
         }
-        
-//        int signIndex = this.store.getMaxPayMultiSignAddressSignIndex(orderid);
-//        signIndex++;
-        
+
+        // int signIndex = this.store.getMaxPayMultiSignAddressSignIndex(orderid);
+        // signIndex++;
+
         byte[] signInputData = Utils.HEX.decode((String) request.get("signInputData"));
         this.store.updatePayMultiSignAddressSign(orderid, pubKey0, 1, signInputData);
-        
+
         int count = this.store.getCountPayMultiSignAddressStatus(orderid);
         if (payMultiSign_.getMinsignnumber() <= count) {
             return PayMultiSignResponse.create(true);
@@ -106,7 +110,7 @@ public class PayMultiSignService {
             return PayMultiSignResponse.create(false);
         }
     }
-    
+
     private PayMultiSign convertTransactionDataToPayMultiSign(byte[] data) throws BlockStoreException, Exception {
         String jsonStr = new String(data);
         PayMultiSign payMultiSign = Json.jsonmapper().readValue(jsonStr, PayMultiSign.class);

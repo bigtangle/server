@@ -162,11 +162,6 @@ public class BlockService {
     @Autowired
     private BlockRequester blockRequester;
 
-    public int getNextTokenId() throws BlockStoreException {
-        int maxTokenId = store.getMaxTokenId();
-        return maxTokenId + 1;
-    }
-
     /**
      * Adds the specified block and all approved blocks to the milestone. This
      * will connect all transactions of the block by marking used UTXOs spent

@@ -166,7 +166,7 @@ public class ExchangeController {
         }
         for (Tokens tokens : getTokensResponse.getTokens()) {
             String tokenid = tokens.getTokenid();
-            if (tokens.getTokenType() != TokenType.market.ordinal()) {
+            if (tokens.getTokentype() != TokenType.market.ordinal()) {
                 continue;
             }
             String url = tokens.getUrl();

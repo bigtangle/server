@@ -23,8 +23,6 @@ import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.TokenSerial;
-import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
@@ -237,16 +235,14 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
     public void createToken(ECKey ecKey) throws Exception {
         byte[] pubKey = ecKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
-        Tokens tokens = new Tokens(Utils.HEX.encode(pubKey), "test", "", "", 1, false, TokenType.token.ordinal(), false);
+        
+        Coin basecoin = Coin.valueOf(100000L, pubKey);
+        long amount = basecoin.getValue();
+        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 0, 1, amount, false, true);
         tokenInfo.setTokens(tokens);
 
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", ecKey.getPublicKeyAsHex()));
-
-        Coin basecoin = Coin.valueOf(100000L, pubKey);
-
-        long amount = basecoin.getValue();
-        tokenInfo.setTokenSerial(new TokenSerial(tokens.getTokenid(), 0, amount));
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
