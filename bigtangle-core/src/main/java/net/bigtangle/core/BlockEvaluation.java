@@ -162,27 +162,6 @@ public class BlockEvaluation implements Serializable {
         this.milestoneLastUpdateTime = milestoneLastUpdateTime;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        return getBlockHash().equals(((BlockEvaluation) o).getBlockHash());
-//        return getBlockHash().equals(((BlockEvaluation) o).getBlockHash()) && rating == ((BlockEvaluation) o).rating
-//                && depth == ((BlockEvaluation) o).depth && cumulativeWeight == ((BlockEvaluation) o).cumulativeWeight
-//                && height == ((BlockEvaluation) o).height && milestone == ((BlockEvaluation) o).milestone
-//                && milestoneLastUpdateTime == ((BlockEvaluation) o).milestoneLastUpdateTime
-//                && milestoneDepth == ((BlockEvaluation) o).milestoneDepth
-//                && insertTime == ((BlockEvaluation) o).insertTime && maintained == ((BlockEvaluation) o).maintained
-//                && weightHashes == ((BlockEvaluation) o).weightHashes;
-    }
-
-    @Override
-    public int hashCode() {
-        return getBlockHash().hashCode();
-    }
-
     public long getMilestoneDepth() {
         return milestoneDepth;
     }

@@ -16,7 +16,7 @@ import org.apache.spark.graphx.Graph
 import net.bigtangle.core.Sha256Hash
 import net.bigtangle.core.NetworkParameters
 import net.bigtangle.params.UnitTestParams
-import net.bigtangle.core.BlockWrap
+import net.bigtangle.core.BlockWrapSpark
 import net.bigtangle.core.BlockEvaluation
 import java.util.concurrent.TimeUnit
 import java.util.HashSet
@@ -64,7 +64,7 @@ object JdbcTest {
     }
 
     val bytestoBlock = (data: Array[Byte], eval: BlockEvaluation) =>
-      { new BlockWrap(data, eval, UnitTestParams.get()) };
+      { new BlockWrapSpark(data, eval, UnitTestParams.get()) };
     val toBlockEvaluation = (x$1: Sha256Hash, x$2: Long, x$3: Long, x$4: Long, x$5: Long, x$6: Boolean, x$7: Long, x$8: Long, x$9: Long, x$10: Boolean) =>
       { BlockEvaluation.build(x$1, x$2, x$3, x$4, x$5, x$6, x$7, x$8, x$9, x$10) };
 
@@ -121,13 +121,13 @@ object JdbcTest {
   /**
    * Test spark implementation for depth updates
    */
-  def update(targetGraph: Graph[BlockWrap, String]): Graph[BlockWrap, String] = {
+  def update(targetGraph: Graph[BlockWrapSpark, String]): Graph[BlockWrapSpark, String] = {
     targetGraph.cache()
     val maxHeight = targetGraph.vertices.map(_._2.getBlockEvaluation.getHeight).reduce(Math.max(_, _))
 
     // Define the three functions needed to implement depth updates in the GraphX
     // version of Pregel
-    def vertexProgram(id: VertexId, attr: BlockWrap, msgSum: (HashSet[Sha256Hash], Long, Long)): BlockWrap = {
+    def vertexProgram(id: VertexId, attr: BlockWrapSpark, msgSum: (HashSet[Sha256Hash], Long, Long)): BlockWrapSpark = {
       val eval = new BlockEvaluation(attr.getBlockEvaluation)
 
       // do nothing if not maintained
@@ -146,10 +146,10 @@ object JdbcTest {
       eval.setDepth(msgSum._2)
       eval.setMilestoneDepth(msgSum._3)
 
-      new BlockWrap(attr.getBlock.bitcoinSerialize(), eval, UnitTestParams.get)
+      new BlockWrapSpark(attr.getBlock.bitcoinSerialize(), eval, UnitTestParams.get)
     }
 
-    def sendMessage(edge: EdgeTriplet[BlockWrap, String]) = {
+    def sendMessage(edge: EdgeTriplet[BlockWrapSpark, String]) = {
       val src = edge.srcAttr.getBlockEvaluation
       val dst = edge.dstAttr.getBlockEvaluation
       if (src.isMaintained()) {
