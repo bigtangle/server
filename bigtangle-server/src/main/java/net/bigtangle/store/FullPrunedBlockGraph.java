@@ -49,7 +49,6 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.StoredUndoableBlock;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
@@ -326,6 +325,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         Tokens tokens = tokenInfo.getTokens();
         tokens.setBlockhash(blockhash);
+        tokens.setConfirmed(false);
         this.blockStore.saveTokens(tokens);
 
         if (tokenInfo.getMultiSignAddresses().size() > 0) {
