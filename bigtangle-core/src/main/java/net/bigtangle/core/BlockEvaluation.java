@@ -5,6 +5,7 @@
 package net.bigtangle.core;
 
 import java.io.Serializable;
+import java.util.HashSet;
 
 /*
  * Evaluation of block, variable in time
@@ -13,15 +14,56 @@ public class BlockEvaluation implements Serializable {
 
     private static final long serialVersionUID = 8388463657969339286L;
 
-    public String getBlockHexStr() {
-        return Utils.HEX.encode(this.blockHash.getBytes());
-    }
+    // Hash of corresponding block
+    private Sha256Hash blockHash;
 
-    public void setBlockHexStr(String blockHexStr) {
-        this.blockHash = Sha256Hash.wrap(blockHexStr);
-    }
+    // Percentage of MCMC selected tips approving this block
+    private long rating;
+
+    // Longest path to tip
+    private long depth;
+
+    // Count of indirect approver blocks
+    private long cumulativeWeight;
+
+    // Longest path to genesis block
+    private long height;
+
+    // If true, this block is considered locally confirmed, e.g. sufficient rating etc.
+    private boolean milestone;
+
+    // Timestamp for entry into milestone as true, reset if flip to false
+    private long milestoneLastUpdateTime;
+
+    // Longest path length to any indirect milestone approver
+    private long milestoneDepth;
+    
+    // Timestamp for entry into evaluations/reception time
+    private long insertTime;
+    
+    // If false, this block has no influence on MCMC
+    private boolean maintained;
+
+    /* unpersisted weightHashes for Spark, includes own hash */
+    private HashSet<Sha256Hash> weightHashes;
 
     private BlockEvaluation() {
+        weightHashes = new HashSet<Sha256Hash>();
+    }
+
+    // deep copy constructor
+    public BlockEvaluation(BlockEvaluation other) {
+        setBlockHash(other.blockHash);
+        setRating(other.rating);
+        setDepth(other.depth);
+        setCumulativeWeight(other.cumulativeWeight);
+        setHeight(other.height);
+        setMilestone(other.milestone);
+        setMilestoneLastUpdateTime(other.milestoneLastUpdateTime);
+        setMilestoneDepth(other.milestoneDepth);
+        setInsertTime(other.insertTime);
+        setMaintained(other.maintained);
+        setWeightHashes(new HashSet<Sha256Hash>(other.weightHashes));
     }
 
     public static BlockEvaluation buildInitial(Block block) {
@@ -48,50 +90,21 @@ public class BlockEvaluation implements Serializable {
         return blockEvaluation;
     }
 
-    public BlockEvaluation(BlockEvaluation other) {
-        setBlockHash(other.blockHash);
-        setRating(other.rating);
-        setDepth(other.depth);
-        setCumulativeWeight(other.cumulativeWeight);
-        setHeight(other.height);
-        setMilestone(other.milestone);
-        setMilestoneLastUpdateTime(other.milestoneLastUpdateTime);
-        setMilestoneDepth(other.milestoneDepth);
-        setInsertTime(other.insertTime);
-        setMaintained(other.maintained);
+    public String getBlockHexStr() {
+        return Utils.HEX.encode(this.blockHash.getBytes());
     }
 
-    // hash of corresponding block
-    private Sha256Hash blockHash;
+    public void setBlockHexStr(String blockHexStr) {
+        this.blockHash = Sha256Hash.wrap(blockHexStr);
+    }
 
-    // percentage of MCMC selected tips approving this block
-    private long rating;
+    public HashSet<Sha256Hash> getWeightHashes() {
+        return weightHashes;
+    }
 
-    // longest path to tip
-    private long depth;
-
-    // count of indirect approver blocks
-    private long cumulativeWeight;
-
-    // longest path to genesis block
-    private long height;
-
-    // rating >= 75 && depth > MINDEPTH && no conflict set to true
-    // if set to true for older than 7 days, remove it from this table
-    private boolean milestone;
-
-    // Timestamp for entry into milestone as true, reset if flip to false
-    private long milestoneLastUpdateTime;
-
-    // NEW FIELDS
-    // Longest path length to any indirect milestone approver
-    private long milestoneDepth;
-    // Timestamp for entry into evaluations/reception time
-    private long insertTime;
-    // if set to false, this evaluation is not maintained anymore and can be
-    // pruned
-    private boolean maintained;
-    // only relevant for mining reward blocks, true if local assessment deems
+    public void setWeightHashes(HashSet<Sha256Hash> weightHashes) {
+        this.weightHashes = weightHashes;
+    }
 
     public Sha256Hash getBlockHash() {
         return blockHash;
@@ -155,12 +168,14 @@ public class BlockEvaluation implements Serializable {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        return getBlockHash().equals(((BlockEvaluation) o).getBlockHash()) && rating == ((BlockEvaluation) o).rating
-                && depth == ((BlockEvaluation) o).depth && cumulativeWeight == ((BlockEvaluation) o).cumulativeWeight
-                && height == ((BlockEvaluation) o).height && milestone == ((BlockEvaluation) o).milestone
-                && milestoneLastUpdateTime == ((BlockEvaluation) o).milestoneLastUpdateTime
-                && milestoneDepth == ((BlockEvaluation) o).milestoneDepth
-                && insertTime == ((BlockEvaluation) o).insertTime && maintained == ((BlockEvaluation) o).maintained;
+        return getBlockHash().equals(((BlockEvaluation) o).getBlockHash());
+//        return getBlockHash().equals(((BlockEvaluation) o).getBlockHash()) && rating == ((BlockEvaluation) o).rating
+//                && depth == ((BlockEvaluation) o).depth && cumulativeWeight == ((BlockEvaluation) o).cumulativeWeight
+//                && height == ((BlockEvaluation) o).height && milestone == ((BlockEvaluation) o).milestone
+//                && milestoneLastUpdateTime == ((BlockEvaluation) o).milestoneLastUpdateTime
+//                && milestoneDepth == ((BlockEvaluation) o).milestoneDepth
+//                && insertTime == ((BlockEvaluation) o).insertTime && maintained == ((BlockEvaluation) o).maintained
+//                && weightHashes == ((BlockEvaluation) o).weightHashes;
     }
 
     @Override

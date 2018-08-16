@@ -229,20 +229,20 @@ public class MilestoneService {
 	 */
 	private void updateRating() throws BlockStoreException {
 		// Select #tipCount solid tips via MCMC
-		HashMap<BlockWrap, HashSet<UUID>> selectedTipApprovers = new HashMap<BlockWrap, HashSet<UUID>>(
+		HashMap<Sha256Hash, HashSet<UUID>> selectedTipApprovers = new HashMap<Sha256Hash, HashSet<UUID>>(
 				NetworkParameters.MAX_RATING_TIP_COUNT);
 		List<BlockWrap> selectedTips = tipsService.getRatingTips(NetworkParameters.MAX_RATING_TIP_COUNT);
 
 		// Initialize all approvers as UUID
 		for (BlockWrap selectedTip : selectedTips) {
 			UUID randomUUID = UUID.randomUUID();
-			if (selectedTipApprovers.containsKey(selectedTip)) {
-				HashSet<UUID> result = selectedTipApprovers.get(selectedTip);
+			if (selectedTipApprovers.containsKey(selectedTip.getBlockHash())) {
+				HashSet<UUID> result = selectedTipApprovers.get(selectedTip.getBlockHash());
 				result.add(randomUUID);
 			} else {
 				HashSet<UUID> result = new HashSet<>();
 				result.add(randomUUID);
-				selectedTipApprovers.put(selectedTip, result);
+				selectedTipApprovers.put(selectedTip.getBlockHash(), result);
 			}
 		}
 
@@ -261,8 +261,8 @@ public class MilestoneService {
 
 			// Add your own hashes as reference if current block is one of the
 			// selected tips
-			if (selectedTipApprovers.containsKey(currentBlock))
-				approvers.get(currentBlock.getBlockHash()).addAll(selectedTipApprovers.get(currentBlock));
+			if (selectedTipApprovers.containsKey(currentBlock.getBlockHash()))
+				approvers.get(currentBlock.getBlockHash()).addAll(selectedTipApprovers.get(currentBlock.getBlockHash()));
 
 			// Add all current references to both approved blocks (initialize if
 			// not yet initialized)

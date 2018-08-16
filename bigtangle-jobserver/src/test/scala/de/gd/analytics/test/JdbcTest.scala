@@ -19,6 +19,12 @@ import net.bigtangle.params.UnitTestParams
 import net.bigtangle.core.BlockWrap
 import net.bigtangle.core.BlockEvaluation
 import java.util.concurrent.TimeUnit
+import java.util.HashSet
+import java.io.ObjectOutputStream
+import java.io.ByteArrayOutputStream
+import java.io.ObjectInputStream
+import java.io.ByteArrayInputStream
+
 
 // Run a test from MilestoneServiceTest, then this to validate our algorithm in scala
 object JdbcTest {
@@ -82,32 +88,64 @@ object JdbcTest {
       (Edge(bytestoLong(row.getAs[Array[Byte]](0)), bytestoLong(row.getAs[Array[Byte]](10)), "")))
     val myEdges2 = rows.filter(row => !Sha256Hash.wrap(row.getAs[Array[Byte]](0)).equals(UnitTestParams.get.getGenesisBlock.getHash)).map(row =>
       (Edge(bytestoLong(row.getAs[Array[Byte]](0)), bytestoLong(row.getAs[Array[Byte]](11)), "")))
-    val myGraph = Graph(myVertices, myEdges.union(myEdges2))
+    val myGraph = Graph(myVertices, myEdges.union(myEdges2)).cache
     val originalBlocks = myGraph.vertices.collect
-    
+
     // Run test for update depth
     val watch = Stopwatch.createStarted();
-    val depthUpdatedBlocks = updateDepth(myGraph).vertices.collect
+    val updatedGraph = update(myGraph).cache
+    val updatedBlocks = updatedGraph.vertices.collect
     print("Update time " + watch.elapsed(TimeUnit.MILLISECONDS));
-    assert(originalBlocks.map(e => e._2.getBlockEvaluation.getDepth).deep == depthUpdatedBlocks.map(e => e._2.getBlockEvaluation.getDepth).deep)
     
+    // Debug output
+//    updatedBlocks.map(_._2).sortBy(b => b.getBlock.getHashAsString).foreach(b => {
+//      println(b.getBlock.getHashAsString)
+//      print(" depth:")
+//      println(b.getBlockEvaluation.getDepth)
+//      print(" mdepth:")
+//      println(b.getBlockEvaluation.getMilestoneDepth)
+//      print(" weight:")
+//      println(b.getBlockEvaluation.getCumulativeWeight)
+//      println(" ;")
+//    })
+    
+    
+
+    assert(originalBlocks.map(e => e._2.getBlockEvaluation.getDepth).deep == updatedBlocks.map(e => e._2.getBlockEvaluation.getDepth).deep)
+    assert(originalBlocks.map(e => e._2.getBlockEvaluation.getMilestoneDepth).deep == updatedBlocks.map(e => e._2.getBlockEvaluation.getMilestoneDepth).deep)
+    assert(originalBlocks.map(e => e._2.getBlockEvaluation.getCumulativeWeight).deep == updatedBlocks.map(e => e._2.getBlockEvaluation.getCumulativeWeight).deep)
+
     // TODO rating select tips, then (weight depth milestonedepth rating), then milestone, then maintained separately
-    // TODO both in normal pregel (good since allows for max iterations) and custom pregel
   }
 
   /**
    * Test spark implementation for depth updates
    */
-  def updateDepth(targetGraph: Graph[BlockWrap, String]): Graph[BlockWrap, String] = {
-    
+  def update(targetGraph: Graph[BlockWrap, String]): Graph[BlockWrap, String] = {
     targetGraph.cache()
     val maxHeight = targetGraph.vertices.map(_._2.getBlockEvaluation.getHeight).reduce(Math.max(_, _))
 
     // Define the three functions needed to implement depth updates in the GraphX
     // version of Pregel
-    def vertexProgram(id: VertexId, attr: BlockWrap, msgSum: Long): BlockWrap = {
+    def vertexProgram(id: VertexId, attr: BlockWrap, msgSum: (HashSet[Sha256Hash], Long, Long)): BlockWrap = {
       val eval = new BlockEvaluation(attr.getBlockEvaluation)
-      eval.setDepth(msgSum)
+
+      // do nothing if not maintained
+      if (!eval.isMaintained())
+        attr
+
+      // initial msg handling (initial msg always has depth == 0)
+      if (msgSum._2 == 0L) {
+        //eval.setWeightHashes(new HashSet[Sha256Hash]())
+        eval.getWeightHashes.add(eval.getBlockHash)
+      }
+
+      eval.getWeightHashes.addAll(msgSum._1)
+
+      eval.setCumulativeWeight(eval.getWeightHashes.size())
+      eval.setDepth(msgSum._2)
+      eval.setMilestoneDepth(msgSum._3)
+
       new BlockWrap(attr.getBlock.bitcoinSerialize(), eval, UnitTestParams.get)
     }
 
@@ -115,23 +153,26 @@ object JdbcTest {
       val src = edge.srcAttr.getBlockEvaluation
       val dst = edge.dstAttr.getBlockEvaluation
       if (src.isMaintained()) {
-        Iterator((edge.dstId, src.getDepth + 1L))
+        Iterator((edge.dstId, (src.getWeightHashes, src.getDepth + 1L, if (dst.isMilestone) src.getMilestoneDepth + 1L else src.getMilestoneDepth)))
       } else {
         Iterator.empty
       }
     }
 
-    def messageCombiner(a: Long, b: Long): Long = {
-      Math.max(a, b)
+    def messageCombiner(a: (HashSet[Sha256Hash], Long, Long), b: (HashSet[Sha256Hash], Long, Long)): (HashSet[Sha256Hash], Long, Long) = {
+      val approvingHashes = new HashSet[Sha256Hash]()
+      approvingHashes.addAll(a._1)
+      approvingHashes.addAll(b._1)
+      (approvingHashes, Math.max(a._2, b._2), Math.max(a._3, b._3))
     }
 
     // The initial message received by all vertices in the update
-    val initialMessage = 0L
+    val initialMessage = (new HashSet[Sha256Hash](), 0L, -1L)
 
     // Execute a dynamic version of Pregel.
     Pregel(targetGraph, initialMessage, Int.MaxValue, EdgeDirection.Out)(
       vertexProgram, sendMessage, messageCombiner)
-//    HeightDescendingPregel(targetGraph, initialMessage, Int.MaxValue, EdgeDirection.Out, maxHeight)(
-//      vertexProgram, sendMessage, messageCombiner)
+    //    HeightDescendingPregel(targetGraph, initialMessage, Int.MaxValue, EdgeDirection.Out, maxHeight)(
+    //      vertexProgram, sendMessage, messageCombiner)
   }
 }

@@ -66,7 +66,12 @@ public class Block extends Message {
      * How many bytes are required to represent a block header WITHOUT the
      * trailing 00 length byte.
      */
-    public static final int HEADER_SIZE = 80 + 32 + 20 + EquihashProof.BYTE_LENGTH;
+    public static final int HEADER_SIZE = 80 // bitcoin
+            + 32 // additional branch prev block
+            + 20 // miner address
+            + EquihashProof.BYTE_LENGTH // PoW
+            + 4 // timestamp from int to long
+            + 2 * 8; // difficulty and sequence long
 
     static final long ALLOWED_TIME_DRIFT = 5 * 60;
 
@@ -318,9 +323,9 @@ public class Block extends Message {
         prevBlockHash = readHash();
         prevBranchBlockHash = readHash();
         merkleRoot = readHash();
-        time = readUint32();
-        difficultyTarget = readUint32();
-        lastMiningRewardBlock = readUint32();
+        time = readInt64();
+        difficultyTarget = readInt64();
+        lastMiningRewardBlock = readInt64();
         nonce = readUint32();
         minerAddress = readBytes(20);
         blockType = readUint32();
@@ -358,9 +363,9 @@ public class Block extends Message {
         stream.write(prevBlockHash.getReversedBytes());
         stream.write(prevBranchBlockHash.getReversedBytes());
         stream.write(getMerkleRoot().getReversedBytes());
-        Utils.uint32ToByteStreamLE(time, stream);
-        Utils.uint32ToByteStreamLE(difficultyTarget, stream);
-        Utils.uint32ToByteStreamLE(lastMiningRewardBlock, stream);
+        Utils.int64ToByteStreamLE(time, stream);
+        Utils.int64ToByteStreamLE(difficultyTarget, stream);
+        Utils.int64ToByteStreamLE(lastMiningRewardBlock, stream);
         Utils.uint32ToByteStreamLE(nonce, stream);
         stream.write(minerAddress);
 
