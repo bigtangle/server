@@ -25,7 +25,6 @@ import java.io.ByteArrayOutputStream
 import java.io.ObjectInputStream
 import java.io.ByteArrayInputStream
 
-
 // Run a test from MilestoneServiceTest, then this to validate our algorithm in scala
 object JdbcTest {
   def main(args: Array[String]) {
@@ -96,83 +95,171 @@ object JdbcTest {
     val updatedGraph = update(myGraph).cache
     val updatedBlocks = updatedGraph.vertices.collect
     print("Update time " + watch.elapsed(TimeUnit.MILLISECONDS));
-    
-    // Debug output
-//    updatedBlocks.map(_._2).sortBy(b => b.getBlock.getHashAsString).foreach(b => {
-//      println(b.getBlock.getHashAsString)
-//      print(" depth:")
-//      println(b.getBlockEvaluation.getDepth)
-//      print(" mdepth:")
-//      println(b.getBlockEvaluation.getMilestoneDepth)
-//      print(" weight:")
-//      println(b.getBlockEvaluation.getCumulativeWeight)
-//      println(" ;")
-//    })
-    
-    
 
+    // Debug output
+    //    updatedBlocks.map(_._2).sortBy(b => b.getBlock.getHashAsString).foreach(b => {
+    //      println(b.getBlock.getHashAsString)
+    //      print(" depth:")
+    //      println(b.getBlockEvaluation.getDepth)
+    //      print(" mdepth:")
+    //      println(b.getBlockEvaluation.getMilestoneDepth)
+    //      print(" weight:")
+    //      println(b.getBlockEvaluation.getCumulativeWeight)
+    //      println(" ;")
+    //    })
+
+    assert(originalBlocks.map(e => e._2.getBlock).deep == updatedBlocks.map(e => e._2.getBlock).deep)
     assert(originalBlocks.map(e => e._2.getBlockEvaluation.getDepth).deep == updatedBlocks.map(e => e._2.getBlockEvaluation.getDepth).deep)
     assert(originalBlocks.map(e => e._2.getBlockEvaluation.getMilestoneDepth).deep == updatedBlocks.map(e => e._2.getBlockEvaluation.getMilestoneDepth).deep)
     assert(originalBlocks.map(e => e._2.getBlockEvaluation.getCumulativeWeight).deep == updatedBlocks.map(e => e._2.getBlockEvaluation.getCumulativeWeight).deep)
 
+    // TODO use dynamic MAX_STEPS
     // TODO rating select tips, then (weight depth milestonedepth rating), then milestone, then maintained separately
+
+    // MCMC Scheme for askTransaction
+    // as found in reference implementation?
+    // or microbatching blockaddition+pregelselection as with rating tips
+
+    // to fix the problem of long candlesticks eating computational resources during MCMC, we shall
+    // use pregel to precompute conflictpoint sets of maintained blocks (which is all blocks reachable by MCMC)
+    // then batch select via pregel MCMC:
+    //Up to MAX_STEPS steps far
+    //If reaching MAX_STEPS and still not a tip, we can:
+    // Simply fail -> Deadlock potential if everything always fails
+    // Simply take the current block as tip -> adds weight to the path to encourage milestoning it, but also loses hashpower and mostly creates orphans
+    //this would enable a candlestick attack, since building the heaviest candlestick makes everyone else waste hashpower
+    //however, this is fine. we can calculate the lost hashpower to be very low if alpha is very low.
+    //it suffices to set alpha<=3ln2/(tps*confirmationdelay) to keep divergence probability approximately over 1/3
+    //this does, however, allow for more rewards for the candlestick attacker, since the lost hashpower is usually going to orphan
+    //also, this allows for skipping whole height intervals, which is why 1. we need non-fixed reward intervals and 2.
+    //but there will be an equilibrium ??? TODO
+
+    // Update Scheme (MAX_STEPS = MAXVALUE FOR NOW SO IT WILL WORK ALWAYS, ALTHOUGH INFINITELY SLOW IN CASE OF SUCCESSFUL ATTACK)
+
+    // PHASE 2: run MCMC for rating tips (needs conflictpoints since we don't want invalid blocks to hijack rating)
+    //Assume constant graph, then use Pregel and some kind of pair synchronization
+    // PHASE 4: new milestone blocks are evaluated: get subgraph of approved non-milestone of new milestone blocks and mapreduce to conflictpoint sets
+    //resolveconflicts sequentially? (can be parallelized), add to milestone, then persist if wanted (old graph.join)
+    // PHASE 5: set maintain = reachable by MCMC in MAX_STEPS, then persist (old graph.join)
+    //can also additionally unmaintain unconfirmed blocks where conflicting with confirmed unmaintained milestone
+
+    // Maintained has three states: confirmed unmaintained (ideally prunable after a while), unconfirmed maintained and unconfirmed unmaintained (newest blocks out of reach)
+    // this will prevent the problem of needing to maintain infinitely many blocks in ddos
+  }
+
+  /**
+   * Test spark implementation for phase 1
+   */
+  // PHASE 1: batch precompute (maintained only) MAX_STEPS @vertex: conflictpoint sets + milestone validity, outgoing weight unnormalized, transient dicerolls
+  //@edges: applicable diceroll interval for sendmsg
+  def phase1(targetGraph: Graph[BlockWrapSpark, String]): Graph[BlockWrapSpark, String] = {
+    // TODO dynamic step amount
+    val MAX_STEPS = 500
+
+    // For maintained part of the graph only
+    val maintainedGraph = targetGraph.subgraph(
+      vpred = (vid, vdata: BlockWrapSpark) => vdata.getBlockEvaluation.isMaintained())
+
+    // The initial message received by all vertices in the update
+    val initialMessage = (new HashSet[Sha256Hash](), 0L, -1L)
+
+    // Define the three functions needed to implement updates in the GraphX
+    // version of Pregel
+    def vertexProgram(id: VertexId, prevBlockWrap: BlockWrapSpark, msgSum: (HashSet[Sha256Hash], Long, Long)): BlockWrapSpark = {
+      // Skip updating if not maintained
+
+      // Initialization (initial msg always has depth == 0)
+
+      // Calculate new statistics
+
+      // Build new updated BlockWrap instance
+    }
+
+    def sendMessage(edge: EdgeTriplet[BlockWrapSpark, String]) = {
+      // Skip sending to and from unmaintained blocks
+
+      // Calculate messages
+    }
+
+    def messageCombiner(a: (HashSet[Sha256Hash], Long, Long), b: (HashSet[Sha256Hash], Long, Long)): (HashSet[Sha256Hash], Long, Long) = {
+      // Combine multiple incoming messages into one
+
+    }
+
+    // Execute a dynamic version of Pregel.
+    Pregel(targetGraph, initialMessage, Int.MaxValue, EdgeDirection.Out)(
+      vertexProgram, sendMessage, messageCombiner)
   }
 
   /**
    * Test spark implementation for depth updates
    */
+  // PHASE 3: update for (unconfirmed), TODO add rating and MAX_STEPS, then persist if wanted (old graph.join)
   def update(targetGraph: Graph[BlockWrapSpark, String]): Graph[BlockWrapSpark, String] = {
-    targetGraph.cache()
-    val maxHeight = targetGraph.vertices.map(_._2.getBlockEvaluation.getHeight).reduce(Math.max(_, _))
-
-    // Define the three functions needed to implement depth updates in the GraphX
-    // version of Pregel
-    def vertexProgram(id: VertexId, attr: BlockWrapSpark, msgSum: (HashSet[Sha256Hash], Long, Long)): BlockWrapSpark = {
-      val eval = new BlockEvaluation(attr.getBlockEvaluation)
-
-      // do nothing if not maintained
-      if (!eval.isMaintained())
-        attr
-
-      // initial msg handling (initial msg always has depth == 0)
-      if (msgSum._2 == 0L) {
-        //eval.setWeightHashes(new HashSet[Sha256Hash]())
-        eval.getWeightHashes.add(eval.getBlockHash)
-      }
-
-      eval.getWeightHashes.addAll(msgSum._1)
-
-      eval.setCumulativeWeight(eval.getWeightHashes.size())
-      eval.setDepth(msgSum._2)
-      eval.setMilestoneDepth(msgSum._3)
-
-      new BlockWrapSpark(attr.getBlock.bitcoinSerialize(), eval, UnitTestParams.get)
-    }
-
-    def sendMessage(edge: EdgeTriplet[BlockWrapSpark, String]) = {
-      val src = edge.srcAttr.getBlockEvaluation
-      val dst = edge.dstAttr.getBlockEvaluation
-      if (src.isMaintained()) {
-        Iterator((edge.dstId, (src.getWeightHashes, src.getDepth + 1L, if (dst.isMilestone) src.getMilestoneDepth + 1L else src.getMilestoneDepth)))
-      } else {
-        Iterator.empty
-      }
-    }
-
-    def messageCombiner(a: (HashSet[Sha256Hash], Long, Long), b: (HashSet[Sha256Hash], Long, Long)): (HashSet[Sha256Hash], Long, Long) = {
-      val approvingHashes = new HashSet[Sha256Hash]()
-      approvingHashes.addAll(a._1)
-      approvingHashes.addAll(b._1)
-      (approvingHashes, Math.max(a._2, b._2), Math.max(a._3, b._3))
-    }
 
     // The initial message received by all vertices in the update
     val initialMessage = (new HashSet[Sha256Hash](), 0L, -1L)
 
+    // Define the three functions needed to implement updates in the GraphX
+    // version of Pregel
+    def vertexProgram(id: VertexId, prevBlockWrap: BlockWrapSpark, msgSum: (HashSet[Sha256Hash], Long, Long)): BlockWrapSpark = {
+      // Skip updating if not maintained
+      if (!prevBlockWrap.getBlockEvaluation.isMaintained())
+        prevBlockWrap
+
+      // Initialization (initial msg always has depth == 0)
+      if (msgSum._2 == 0L) {
+        prevBlockWrap.setWeightHashes(new HashSet[Sha256Hash]())
+        prevBlockWrap.getWeightHashes.add(prevBlockWrap.getBlockHash)
+      }
+
+      // Calculate new statistics
+      val statistics = new BlockEvaluation(prevBlockWrap.getBlockEvaluation)
+      prevBlockWrap.getWeightHashes.addAll(msgSum._1)
+      statistics.setCumulativeWeight(prevBlockWrap.getWeightHashes.size())
+      statistics.setDepth(msgSum._2)
+      statistics.setMilestoneDepth(msgSum._3)
+
+      // Build new updated BlockWrap instance
+      val updatedBlockWrap = new BlockWrapSpark(prevBlockWrap.getBlock, statistics, UnitTestParams.get)
+      updatedBlockWrap.setWeightHashes(prevBlockWrap.getWeightHashes)
+      updatedBlockWrap
+    }
+
+    def sendMessage(edge: EdgeTriplet[BlockWrapSpark, String]) = {
+      // Skip sending to and from unmaintained blocks
+      if (!edge.srcAttr.getBlockEvaluation.isMaintained() || !edge.dstAttr.getBlockEvaluation.isMaintained()) {
+        Iterator.empty
+      }
+
+      val srcEval = edge.srcAttr.getBlockEvaluation
+      val dstEval = edge.dstAttr.getBlockEvaluation
+
+      // Calculate messages
+      val sentWeightHashes = edge.srcAttr.getWeightHashes
+      val sentDepth = srcEval.getDepth + 1L;
+      val sentMilestoneDepth = if (dstEval.isMilestone) srcEval.getMilestoneDepth + 1L else srcEval.getMilestoneDepth;
+
+      Iterator((edge.dstId, (sentWeightHashes, sentDepth, sentMilestoneDepth)))
+    }
+
+    def messageCombiner(a: (HashSet[Sha256Hash], Long, Long), b: (HashSet[Sha256Hash], Long, Long)): (HashSet[Sha256Hash], Long, Long) = {
+      // Combine multiple incoming messages into one
+      val mergedWeightHashes = new HashSet[Sha256Hash]()
+      mergedWeightHashes.addAll(a._1)
+      mergedWeightHashes.addAll(b._1)
+      val mergedDepth = Math.max(a._2, b._2);
+      val mergedMilestoneDepth = Math.max(a._3, b._3);
+
+      (mergedWeightHashes, mergedDepth, mergedMilestoneDepth)
+    }
+
     // Execute a dynamic version of Pregel.
     Pregel(targetGraph, initialMessage, Int.MaxValue, EdgeDirection.Out)(
       vertexProgram, sendMessage, messageCombiner)
-    //    HeightDescendingPregel(targetGraph, initialMessage, Int.MaxValue, EdgeDirection.Out, maxHeight)(
-    //      vertexProgram, sendMessage, messageCombiner)
+
+    //val maxHeight = targetGraph.vertices.map(_._2.getBlockEvaluation.getHeight).reduce(Math.max(_, _))
+    //HeightDescendingPregel(targetGraph, initialMessage, Int.MaxValue, EdgeDirection.Out, maxHeight)(
+    //  vertexProgram, sendMessage, messageCombiner)
   }
 }

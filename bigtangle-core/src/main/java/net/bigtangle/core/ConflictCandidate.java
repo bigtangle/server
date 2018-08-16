@@ -1,10 +1,6 @@
-package net.bigtangle.server.service;
+package net.bigtangle.core;
 
 import com.google.common.base.Objects;
-
-import net.bigtangle.core.BlockWrap;
-import net.bigtangle.core.TokenSerial;
-import net.bigtangle.core.TransactionOutPoint;
 
 public class ConflictCandidate {
 

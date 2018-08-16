@@ -9,16 +9,33 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.HashSet;
 
 import net.bigtangle.params.UnitTestParams;
 
 public class BlockWrapSpark extends BlockWrap implements Serializable {
     private static final long serialVersionUID = 660084694396085961L;
 
+    /** unpersisted members for Spark calculations, weightHashes includes own hash */
+    private HashSet<Sha256Hash> weightHashes;
+    private HashSet<ConflictPoint> approvedNonMilestoneConflicts;
+    
+    
+    
+    //@vertex: conflictpoint sets + milestone validity, outgoing weight unnormalized, transient dicerolls
+    //@edges: applicable diceroll interval for sendmsg
+    
+    
     // Used in Spark
     @SuppressWarnings("unused")
     private BlockWrapSpark() {
         super();
+        weightHashes = new HashSet<>();
+    }
+
+    // Used in Spark
+    public BlockWrapSpark(Block block, BlockEvaluation blockEvaluation, NetworkParameters params) {
+        super(block, blockEvaluation, params);
     }
 
     // Used in Spark
@@ -27,6 +44,7 @@ public class BlockWrapSpark extends BlockWrap implements Serializable {
     }
 
     // Used in Spark
+    @SuppressWarnings("unchecked")
     private void readObject(ObjectInputStream aInputStream) throws ClassNotFoundException, IOException {
         int length = aInputStream.readInt();
         byte[] dataRead = new byte[length];
@@ -38,6 +56,7 @@ public class BlockWrapSpark extends BlockWrap implements Serializable {
 
         block = params.getDefaultSerializer().makeBlock(dataRead);
         blockEvaluation = (BlockEvaluation) aInputStream.readObject();
+        weightHashes = (HashSet<Sha256Hash>) aInputStream.readObject();
     }
 
     // Used in Spark
@@ -46,6 +65,7 @@ public class BlockWrapSpark extends BlockWrap implements Serializable {
         aOutputStream.writeInt(a.length);
         aOutputStream.write(a);
         aOutputStream.writeObject(blockEvaluation);
+        aOutputStream.writeObject(weightHashes);
     }
 
     @Override
@@ -66,11 +86,19 @@ public class BlockWrapSpark extends BlockWrap implements Serializable {
                 && getBlockEvaluation().getMilestoneDepth() == ((BlockWrapSpark) o).getBlockEvaluation().getMilestoneDepth()
                 && getBlockEvaluation().getInsertTime() == ((BlockWrapSpark) o).getBlockEvaluation().getInsertTime()
                 && getBlockEvaluation().isMaintained() == ((BlockWrapSpark) o).getBlockEvaluation().isMaintained()
-                && getBlockEvaluation().getWeightHashes() == ((BlockWrapSpark) o).getBlockEvaluation().getWeightHashes();
+                && getWeightHashes() == ((BlockWrapSpark) o).getWeightHashes();
     }
 
     @Override
     public int hashCode() {
         return getBlockHash().hashCode();
+    }
+
+    public HashSet<Sha256Hash> getWeightHashes() {
+        return weightHashes;
+    }
+
+    public void setWeightHashes(HashSet<Sha256Hash> weightHashes) {
+        this.weightHashes = weightHashes;
     }
 }

@@ -5,7 +5,6 @@
 package net.bigtangle.core;
 
 import java.io.Serializable;
-import java.util.HashSet;
 
 /*
  * Evaluation of block, variable in time
@@ -44,11 +43,7 @@ public class BlockEvaluation implements Serializable {
     // If false, this block has no influence on MCMC
     private boolean maintained;
 
-    /* unpersisted weightHashes for Spark, includes own hash */
-    private HashSet<Sha256Hash> weightHashes;
-
     private BlockEvaluation() {
-        weightHashes = new HashSet<Sha256Hash>();
     }
 
     // deep copy constructor
@@ -63,7 +58,6 @@ public class BlockEvaluation implements Serializable {
         setMilestoneDepth(other.milestoneDepth);
         setInsertTime(other.insertTime);
         setMaintained(other.maintained);
-        setWeightHashes(new HashSet<Sha256Hash>(other.weightHashes));
     }
 
     public static BlockEvaluation buildInitial(Block block) {
@@ -96,14 +90,6 @@ public class BlockEvaluation implements Serializable {
 
     public void setBlockHexStr(String blockHexStr) {
         this.blockHash = Sha256Hash.wrap(blockHexStr);
-    }
-
-    public HashSet<Sha256Hash> getWeightHashes() {
-        return weightHashes;
-    }
-
-    public void setWeightHashes(HashSet<Sha256Hash> weightHashes) {
-        this.weightHashes = weightHashes;
     }
 
     public Sha256Hash getBlockHash() {

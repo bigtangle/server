@@ -3,14 +3,11 @@
  *  
  *******************************************************************************/
 
-package net.bigtangle.server.service;
+package net.bigtangle.core;
 
 import javax.annotation.Nullable;
 
 import com.google.common.base.Objects;
-
-import net.bigtangle.core.TokenSerial;
-import net.bigtangle.core.TransactionOutPoint;
 
 public class ConflictPoint {
     private ConflictType type;
