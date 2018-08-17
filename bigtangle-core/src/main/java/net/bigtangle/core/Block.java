@@ -118,7 +118,7 @@ public class Block extends Message {
     // Utils.sha256hash160
     private byte[] minerAddress;
 
-    // TODO use enum or subclasses
+    // TODO use enum
     private long blockType;
 
     // If NetworkParameters.USE_EQUIHASH, this field will contain the PoW
@@ -1246,55 +1246,31 @@ public class Block extends Message {
     private static Random gen = new Random();
 
     /**
-     * Returns a solved block that builds on top of this one. This exists for
-     * unit tests. In this variant you can specify a public key (pubkey) for use
-     * in generating coinbase blocks.
+     * Returns a solved, valid empty block that builds on top of this one and the specified other Block. 
      * 
      * @param height
      *            block height, if known, or -1 otherwise.
      */
 
-    public Block createNextBlock(@Nullable final Address to, final long version, @Nullable TransactionOutPoint prevOut,
-            final long time, final byte[] pubKey, final int height, Sha256Hash prevBranchBlockHash,
-            byte[] mineraddress) {
+    public Block createNextBlock(Block branchBlock, final long version, byte[] mineraddress) {
         Block b = new Block(params, version);
-        // b.setDifficultyTarget(difficultyTarget);
-        // only BLOCKTYPE_TOKEN_CREATION, BLOCKTYPE_REWARD, BLOCKTYPE_INITIAL
 
         b.setMinerAddress(mineraddress);
-        if (to != null) {
-            // Add a transaction paying 50 coins to the "to" address.
-            Transaction t = new Transaction(params);
-
-            // The input does not really need to be a valid signature, as long
-            // as it has the right general form.
-            TransactionInput input;
-            if (prevOut == null) {
-                input = new TransactionInput(params, t, Script.createInputScript(EMPTY_BYTES, EMPTY_BYTES));
-                // Importantly the outpoint hash cannot be zero as that's how we
-                // detect a coinbase transaction in isolation
-                // but it must be unique to avoid 'different' transactions
-                // looking the same.
-                byte[] counter = new byte[32];
-                counter[0] = (byte) txCounter;
-                counter[1] = (byte) (txCounter++ >> 8);
-                input.getOutpoint().setHash(Sha256Hash.wrap(counter));
-            } else {
-                input = new TransactionInput(params, t, Script.createInputScript(EMPTY_BYTES, EMPTY_BYTES));
-            }
-            t.addInput(input);
-            b.addTransaction(t);
-        }
-
         b.setPrevBlockHash(getHash());
-        b.setPrevBranchBlockHash(prevBranchBlockHash);
+        b.setPrevBranchBlockHash(branchBlock.getHash());
+        
+        // Set difficulty according to previous consensus
+        //only BLOCKTYPE_REWARD and BLOCKTYPE_INITIAL should overwrite this
+        b.setLastMiningRewardBlock(Math.max(lastMiningRewardBlock, branchBlock.lastMiningRewardBlock));       
+        b.setDifficultyTarget(lastMiningRewardBlock >= branchBlock.lastMiningRewardBlock ? difficultyTarget : branchBlock.difficultyTarget);        
 
         // Don't let timestamp go backwards, ex the genesis block
+        long minTime = Math.max(getTimeSeconds(), branchBlock.getTimeSeconds());
         if (blockType != Block.BLOCKTYPE_INITIAL) {
-            if (getTimeSeconds() >= time)
+            if (getTimeSeconds() >= minTime)
                 b.setTime(getTimeSeconds() + 1);
             else
-                b.setTime(time);
+                b.setTime(minTime);
         }
         b.solve();
         try {

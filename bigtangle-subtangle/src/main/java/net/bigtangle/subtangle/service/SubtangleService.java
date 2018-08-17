@@ -101,7 +101,7 @@ public class SubtangleService {
     public void giveMoney(ECKey signKey, Address address, Coin amount) throws Exception {
         UTXO findOutput = null;
         for (UTXO output : getBalancesUTOXList(false, signKey, amount.getTokenid())) {
-            if (Arrays.equals(NetworkParameters.BIGNETCOIN_TOKENID, output.getValue().getTokenid())) {
+            if (Arrays.equals(NetworkParameters.BIGTANGLE_TOKENID, output.getValue().getTokenid())) {
                 findOutput = output;
             }
         }

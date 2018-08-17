@@ -16,7 +16,6 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -142,8 +141,7 @@ public class BlockTest {
     @Test
     public void testUpdateLength() {
         NetworkParameters params = UnitTestParams.get();
-        Block block = BlockForTest.createNextBlock(params.getGenesisBlock(),Block.BLOCK_VERSION_GENESIS,
-                new ECKey().getPubKey(), Block.BLOCK_HEIGHT_GENESIS, params.getGenesisBlock().getHash());
+        Block block = BlockForTest.createNextBlock(params.getGenesisBlock(),Block.BLOCK_VERSION_GENESIS, params.getGenesisBlock());
        // assertEquals(block.bitcoinSerialize().length, block.length);
         final int origBlockLen = block.length;
         Transaction tx = new Transaction(params);
@@ -219,7 +217,7 @@ public class BlockTest {
         final String MINING_PRIVATE_KEY = "5JDxPrBRghF1EvSBjDigywqfmAjpHPmTJxYtQTYJxJRHLLQA4mG";
 
         final long BLOCK_NONCE = 3973947400L;
-        final Coin BALANCE_AFTER_BLOCK = Coin.valueOf(22223642,NetworkParameters.BIGNETCOIN_TOKENID);
+        final Coin BALANCE_AFTER_BLOCK = Coin.valueOf(22223642,NetworkParameters.BIGTANGLE_TOKENID);
         final NetworkParameters PARAMS = MainNetParams.get();
 
         Block block169482 = PARAMS.getDefaultSerializer()

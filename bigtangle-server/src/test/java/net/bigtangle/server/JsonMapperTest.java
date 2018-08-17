@@ -71,7 +71,7 @@ public class JsonMapperTest {
     	sha256Hash = Json.jsonmapper().readValue(jsonStr, Sha256Hash.class);
     	System.out.println(Utils.HEX.encode(sha256Hash.getBytes()));
     	
-    	Coin coin = Coin.valueOf(10000, NetworkParameters.BIGNETCOIN_TOKENID);
+    	Coin coin = Coin.valueOf(10000, NetworkParameters.BIGTANGLE_TOKENID);
     	jsonStr = Json.jsonmapper().writeValueAsString(coin);
     	
     	System.out.println(jsonStr);

@@ -29,10 +29,8 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderPublish;
-import net.bigtangle.core.OrderPublishList;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
-import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.ordermatch.resp.GetOrderResponse;
@@ -56,7 +54,6 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     private ScheduleOrderMatchService scheduleOrderMatchService;
 
     @Test
-    @SuppressWarnings("unchecked")
     public void deleteOrder() throws Exception {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         HashMap<String, Object> request = new HashMap<String, Object>();
@@ -80,9 +77,8 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         GetOrderResponse getOrderResponse = Json.jsonmapper().readValue(resp, GetOrderResponse.class);
         OrderPublish orderPublish = getOrderResponse.getOrders().get(0);
 
-        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(null, Block.BLOCK_VERSION_GENESIS,
-                (TransactionOutPoint) null, Utils.currentTimeSeconds(), outKey.getPubKey(), 1,
-                networkParameters.getGenesisBlock().getHash(), outKey.getPubKeyHash());
+        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock(),
+                Block.BLOCK_VERSION_GENESIS, outKey.getPubKeyHash());
         Transaction transaction = new Transaction(this.networkParameters);
         transaction.setData(orderPublish.getOrderId().getBytes());
 
@@ -152,7 +148,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         List<UTXO> ulist = testTransactionAndGetBalances();
         UTXO myutxo = null;
         for (UTXO u : ulist) {
-            if (Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGNETCOIN_TOKENID)) {
+            if (Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
                 myutxo = u;
             }
         }
@@ -276,7 +272,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         UTXO utxo = null;
         List<UTXO> ulist = testTransactionAndGetBalances();
         for (UTXO u : ulist) {
-            if (!Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGNETCOIN_TOKENID)) {
+            if (!Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
                 utxo = u;
             }
         }

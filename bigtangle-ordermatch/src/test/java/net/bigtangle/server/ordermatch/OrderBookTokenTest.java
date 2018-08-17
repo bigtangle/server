@@ -30,7 +30,7 @@ public class OrderBookTokenTest extends AbstractIntegrationTest {
     @Before
     public void setUp() {
         orderBookResult = new HashMap<String, OrderBook>();
-        orderBookResult.put(Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID), this.createOrderBook());
+        orderBookResult.put(Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID), this.createOrderBook());
     }
     
     public OrderBook createOrderBook() {
@@ -49,7 +49,7 @@ public class OrderBookTokenTest extends AbstractIntegrationTest {
     
     @Test
     public void testOrderMatch() {
-        String tokenSTR = Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID);
+        String tokenSTR = Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID);
         OrderBook book = this.getOrderBookWithTokenId(tokenSTR);
         book.enter(1, Side.SELL, 1001, 100);
         book.enter(2, Side.BUY,  1004,  50);

@@ -233,7 +233,7 @@ public class MainController {
                 }
                 Main.validTokenMap.put(key, addressList);
             }
-            if (utxo.getTokenId().trim().equals(NetworkParameters.BIGNETCOIN_TOKENID_STRING)) {
+            if (utxo.getTokenId().trim().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
                 Main.validAddressSet.add(address);
             }
 
@@ -347,7 +347,7 @@ public class MainController {
         if (utxoTable.getSelectionModel().getSelectedItem() != null) {
             String address = utxoTable.getSelectionModel().getSelectedItem().getAddress();
             String tokeninfo = utxoTable.getSelectionModel().getSelectedItem().getTokenid();
-            if (tokeninfo.split(":")[1].trim().equals(NetworkParameters.BIGNETCOIN_TOKENID_STRING)) {
+            if (tokeninfo.split(":")[1].trim().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
                 order.controller.initAddress(address);
             }
 

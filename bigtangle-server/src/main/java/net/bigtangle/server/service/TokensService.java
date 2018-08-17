@@ -29,7 +29,7 @@ import net.bigtangle.utils.MonetaryFormat;
 public class TokensService {
 
     public AbstractResponse getTokenById(String tokenid) throws BlockStoreException {
-        Token tokens = this.store.getTokensInfo(tokenid);
+        Token tokens = this.store.getToken(tokenid);
         AbstractResponse response = GetTokensResponse.create(tokens);
         return response;
     }
@@ -43,7 +43,7 @@ public class TokensService {
     public AbstractResponse getTokensList() throws BlockStoreException {
         List<Token> list = new ArrayList<Token>();
         Token tokens = new Token();
-        tokens.setTokenid(Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID));
+        tokens.setTokenid(Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID));
         tokens.setTokenname(MonetaryFormat.CODE_BTC);
         list.add(tokens);
         list.addAll(store.getTokensList());
@@ -53,7 +53,7 @@ public class TokensService {
     public AbstractResponse getTokensList(String name) throws BlockStoreException {
         List<Token> list = new ArrayList<Token>();
         Token tokens = new Token();
-        tokens.setTokenid(Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID));
+        tokens.setTokenid(Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID));
         tokens.setTokenname(MonetaryFormat.CODE_BTC);
         list.add(tokens);
         list.addAll(store.getTokensList(name));
@@ -81,7 +81,7 @@ public class TokensService {
             TokenInfo tokenInfo = new TokenInfo().parse(buf);
 
             final String tokenid = tokenInfo.getTokens().getTokenid();
-            Token tokens = this.store.getTokensInfo(tokenid);
+            Token tokens = this.store.getToken(tokenid);
             if (tokens != null) {
                 throw new BlockStoreException("token can't update");
             }

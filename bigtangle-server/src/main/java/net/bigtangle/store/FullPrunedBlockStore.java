@@ -236,20 +236,29 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
 	public boolean getTxRewardConfirmed(Sha256Hash hash) throws BlockStoreException;
 
-	public void insertTxReward(Sha256Hash hash, long prevHeight, boolean eligibility)
+	public void insertTxReward(Sha256Hash hash, long prevHeight, boolean eligibility, Sha256Hash prevBlockHash)
 			throws BlockStoreException;
 
 	public void updateTxRewardConfirmed(Sha256Hash hash, boolean b) throws BlockStoreException;
 
+    public void updateTxRewardSpent(Sha256Hash hash, boolean b, Sha256Hash spenderHash) throws BlockStoreException;
+
 	public long getMaxPrevTxRewardHeight() throws BlockStoreException;
 
-	// TODO orderly
+	public boolean getTxRewardSpent(Sha256Hash hash) throws BlockStoreException;
+
+	public Sha256Hash getTxRewardSpender(Sha256Hash hash) throws BlockStoreException;
+
+	public Sha256Hash getTxRewardPrevBlockHash(Sha256Hash hash) throws BlockStoreException;
+
     /* Token TXOs */
 	public void insertToken(String blockhash, Token tokens) throws BlockStoreException;
 
     public void insertToken(String blockhash, boolean confirmed, String tokenid, int tokenindex, long amount,
             String tokenname, String description, String url, int signnumber, boolean multiserial, int tokentype,
             boolean tokenstop, String prevblockhash) throws BlockStoreException;
+
+    public Token getToken(String blockhash) throws BlockStoreException;
 
     public String getTokenPrevblockhash(String blockhash) throws BlockStoreException;
 
@@ -298,8 +307,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 	public void insertMultisignby(MultiSignBy multisignby) throws BlockStoreException;
 
 	public int getCountMultiSignAddress(String tokenid) throws BlockStoreException;
-
-	public Token getTokensInfo(String tokenid) throws BlockStoreException;
 
 	public MultiSignAddress getMultiSignAddressInfo(String tokenid, String address) throws BlockStoreException;
 

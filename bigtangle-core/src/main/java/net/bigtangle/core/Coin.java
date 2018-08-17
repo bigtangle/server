@@ -39,12 +39,12 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     /**
      * Zero Bitcoins.
      */
-    public static final Coin ZERO = Coin.valueOf(0, NetworkParameters.BIGNETCOIN_TOKENID);
+    public static final Coin ZERO = Coin.valueOf(0, NetworkParameters.BIGTANGLE_TOKENID);
 
     /**
      * One Bitcoin.
      */
-    public static final Coin COIN = Coin.valueOf(COIN_VALUE, NetworkParameters.BIGNETCOIN_TOKENID);
+    public static final Coin COIN = Coin.valueOf(COIN_VALUE, NetworkParameters.BIGTANGLE_TOKENID);
 
     /**
      * 0.01 Bitcoins. This unit is not really used much.
@@ -60,14 +60,14 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      * A satoshi is the smallest unit that can be transferred. 100 million of
      * them fit into a Bitcoin.
      */
-    public static final Coin SATOSHI = Coin.valueOf(1, NetworkParameters.BIGNETCOIN_TOKENID);
+    public static final Coin SATOSHI = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
 
     public static final Coin FIFTY_COINS = COIN.multiply(50);
 
     /**
      * Represents a monetary value of minus one satoshi.
      */
-    public static final Coin NEGATIVE_SATOSHI = Coin.valueOf(-1, NetworkParameters.BIGNETCOIN_TOKENID);
+    public static final Coin NEGATIVE_SATOSHI = Coin.valueOf(-1, NetworkParameters.BIGTANGLE_TOKENID);
 
     /**
      * The number of satoshis of this monetary value.

@@ -362,9 +362,9 @@ public class SendMoneyController {
         addressComboBox2.setItems(addressData);
         // new BitcoinAddressValidator(Main.params, addressComboBox, sendBtn);
         new TextFieldValidator(amountEdit, text -> !WTUtils
-                .didThrow(() -> checkState(Coin.parseCoin(text, NetworkParameters.BIGNETCOIN_TOKENID).isPositive())));
+                .didThrow(() -> checkState(Coin.parseCoin(text, NetworkParameters.BIGTANGLE_TOKENID).isPositive())));
         new TextFieldValidator(amountEdit1, text -> !WTUtils
-                .didThrow(() -> checkState(Coin.parseCoin(text, NetworkParameters.BIGNETCOIN_TOKENID).isPositive())));
+                .didThrow(() -> checkState(Coin.parseCoin(text, NetworkParameters.BIGTANGLE_TOKENID).isPositive())));
         tabPane.getSelectionModel().selectedIndexProperty().addListener((ov, t, t1) -> {
             int index = t1.intValue();
             switch (index) {

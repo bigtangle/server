@@ -44,7 +44,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         UTXO utxo = null;
         List<UTXO> ulist = testTransactionAndGetBalances();
         for (UTXO u : ulist) {
-            if (!Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGNETCOIN_TOKENID)) {
+            if (!Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
                 utxo = u;
             }
         }
@@ -74,7 +74,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         List<UTXO> ulist = testTransactionAndGetBalances();
         UTXO myutxo = null;
         for (UTXO u : ulist) {
-            if (Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGNETCOIN_TOKENID)) {
+            if (Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
                 myutxo = u;
             }
         }

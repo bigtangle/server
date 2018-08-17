@@ -32,7 +32,7 @@ public class MonetaryFormatTest {
 
    //@Test
     public void testDigits() throws Exception {
-        assertEquals("١٢.٣٤٥٦٧٨٩٠", NO_CODE.digits('\u0660').format(Coin.valueOf(1234567890l,NetworkParameters.BIGNETCOIN_TOKENID)).toString());
+        assertEquals("١٢.٣٤٥٦٧٨٩٠", NO_CODE.digits('\u0660').format(Coin.valueOf(1234567890l,NetworkParameters.BIGTANGLE_TOKENID)).toString());
     }
 
     @Test
@@ -43,12 +43,12 @@ public class MonetaryFormatTest {
 
   //  @Test
     public void testGrouping() throws Exception {
-        assertEquals("0.1", format(Coin.parseCoin("0.1",NetworkParameters.BIGNETCOIN_TOKENID), 0, 1, 2, 3));
-        assertEquals("0.010", format(Coin.parseCoin("0.01",NetworkParameters.BIGNETCOIN_TOKENID), 0, 1, 2, 3));
-        assertEquals("0.001", format(Coin.parseCoin("0.001",NetworkParameters.BIGNETCOIN_TOKENID), 0, 1, 2, 3));
-        assertEquals("0.000100", format(Coin.parseCoin("0.0001",NetworkParameters.BIGNETCOIN_TOKENID), 0, 1, 2, 3));
-        assertEquals("0.000010", format(Coin.parseCoin("0.00001",NetworkParameters.BIGNETCOIN_TOKENID), 0, 1, 2, 3));
-        assertEquals("0.000001", format(Coin.parseCoin("0.000001",NetworkParameters.BIGNETCOIN_TOKENID), 0, 1, 2, 3));
+        assertEquals("0.1", format(Coin.parseCoin("0.1",NetworkParameters.BIGTANGLE_TOKENID), 0, 1, 2, 3));
+        assertEquals("0.010", format(Coin.parseCoin("0.01",NetworkParameters.BIGTANGLE_TOKENID), 0, 1, 2, 3));
+        assertEquals("0.001", format(Coin.parseCoin("0.001",NetworkParameters.BIGTANGLE_TOKENID), 0, 1, 2, 3));
+        assertEquals("0.000100", format(Coin.parseCoin("0.0001",NetworkParameters.BIGTANGLE_TOKENID), 0, 1, 2, 3));
+        assertEquals("0.000010", format(Coin.parseCoin("0.00001",NetworkParameters.BIGTANGLE_TOKENID), 0, 1, 2, 3));
+        assertEquals("0.000001", format(Coin.parseCoin("0.000001",NetworkParameters.BIGTANGLE_TOKENID), 0, 1, 2, 3));
     }
 
     @Test
@@ -87,7 +87,7 @@ public class MonetaryFormatTest {
      //   assertEquals("1.00000005", format(pivot, 0, 7, 1));
      //   assertEquals("1.0000001", format(pivot, 0, 7));
 
-        final Coin value = Coin.valueOf(1122334455667788l,NetworkParameters.BIGNETCOIN_TOKENID);
+        final Coin value = Coin.valueOf(1122334455667788l,NetworkParameters.BIGTANGLE_TOKENID);
       //  assertEquals("112233445566778", format(value, 0, 0));
       // assertEquals("112233445566.7", format(value, 0, 1));
       //  assertEquals("11223344.5567", format(value, 0, 2, 2));
@@ -130,7 +130,7 @@ public class MonetaryFormatTest {
         assertEquals("1000.0005", format(pivot, 3, 3, 1));
         assertEquals("1000.001", format(pivot, 3, 3));
 
-        final Coin value = Coin.valueOf(1122334455667788l,NetworkParameters.BIGNETCOIN_TOKENID);
+        final Coin value = Coin.valueOf(1122334455667788l,NetworkParameters.BIGTANGLE_TOKENID);
         assertEquals("11223344557", format(value, 3, 0));
         assertEquals("11223344556.7", format(value, 3, 1));
         assertEquals("11223344556.68", format(value, 3, 2));
@@ -167,7 +167,7 @@ public class MonetaryFormatTest {
         assertEquals("1000000.1", format(pivot, 6, 1));
         assertEquals("1000000.1", format(pivot, 6, 0, 1));
 
-        final Coin value = Coin.valueOf(1122334455667788l,NetworkParameters.BIGNETCOIN_TOKENID);
+        final Coin value = Coin.valueOf(1122334455667788l,NetworkParameters.BIGTANGLE_TOKENID);
         assertEquals("11223344556678", format(value, 6, 0));
         assertEquals("11223344556677.88", format(value, 6, 2));
         assertEquals("11223344556677.9", format(value, 6, 1));
@@ -220,7 +220,7 @@ public class MonetaryFormatTest {
  
     @Test
     public void withLocale() throws Exception {
-        final Coin value = Coin.valueOf(-1234567891l,NetworkParameters.BIGNETCOIN_TOKENID);
+        final Coin value = Coin.valueOf(-1234567891l,NetworkParameters.BIGTANGLE_TOKENID);
         assertEquals("-1234567.891", NO_CODE.withLocale(Locale.US).format(value).toString());
         assertEquals("-1234567,891", NO_CODE.withLocale(Locale.GERMANY).format(value).toString());
       //  assertEquals("-१२.३४५६७८९०", NO_CODE.withLocale(new Locale("hi", "IN")).format(value).toString()); // Devanagari
@@ -228,69 +228,69 @@ public class MonetaryFormatTest {
 
     @Test
     public void parse() throws Exception {
-        assertEquals(Coin.COIN, NO_CODE.parse("1",NetworkParameters.BIGNETCOIN_TOKENID));
-        assertEquals(Coin.COIN, NO_CODE.parse("1.",NetworkParameters.BIGNETCOIN_TOKENID));
-        assertEquals(Coin.COIN, NO_CODE.parse("1.0",NetworkParameters.BIGNETCOIN_TOKENID));
-        assertEquals(Coin.COIN, NO_CODE.decimalMark(',').parse("1,0",NetworkParameters.BIGNETCOIN_TOKENID));
-        assertEquals(Coin.COIN, NO_CODE.parse("01.0000000000",NetworkParameters.BIGNETCOIN_TOKENID));
-        assertEquals(Coin.COIN, NO_CODE.positiveSign('+').parse("+1.0",NetworkParameters.BIGNETCOIN_TOKENID));
-        assertEquals(Coin.COIN.negate(), NO_CODE.parse("-1",NetworkParameters.BIGNETCOIN_TOKENID));
-        assertEquals(Coin.COIN.negate(), NO_CODE.parse("-1.0",NetworkParameters.BIGNETCOIN_TOKENID));
+        assertEquals(Coin.COIN, NO_CODE.parse("1",NetworkParameters.BIGTANGLE_TOKENID));
+        assertEquals(Coin.COIN, NO_CODE.parse("1.",NetworkParameters.BIGTANGLE_TOKENID));
+        assertEquals(Coin.COIN, NO_CODE.parse("1.0",NetworkParameters.BIGTANGLE_TOKENID));
+        assertEquals(Coin.COIN, NO_CODE.decimalMark(',').parse("1,0",NetworkParameters.BIGTANGLE_TOKENID));
+        assertEquals(Coin.COIN, NO_CODE.parse("01.0000000000",NetworkParameters.BIGTANGLE_TOKENID));
+        assertEquals(Coin.COIN, NO_CODE.positiveSign('+').parse("+1.0",NetworkParameters.BIGTANGLE_TOKENID));
+        assertEquals(Coin.COIN.negate(), NO_CODE.parse("-1",NetworkParameters.BIGTANGLE_TOKENID));
+        assertEquals(Coin.COIN.negate(), NO_CODE.parse("-1.0",NetworkParameters.BIGTANGLE_TOKENID));
 
-        assertEquals(Coin.CENT, NO_CODE.parse(".01",NetworkParameters.BIGNETCOIN_TOKENID));
+        assertEquals(Coin.CENT, NO_CODE.parse(".01",NetworkParameters.BIGTANGLE_TOKENID));
  
       
-        assertEquals(Coin.CENT, NO_CODE.withLocale(new Locale("hi", "IN")).parse(".०१",NetworkParameters.BIGNETCOIN_TOKENID)); // Devanagari
+        assertEquals(Coin.CENT, NO_CODE.withLocale(new Locale("hi", "IN")).parse(".०१",NetworkParameters.BIGTANGLE_TOKENID)); // Devanagari
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidEmpty() throws Exception {
-        NO_CODE.parse("",NetworkParameters.BIGNETCOIN_TOKENID);
+        NO_CODE.parse("",NetworkParameters.BIGTANGLE_TOKENID);
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidWhitespaceBefore() throws Exception {
-        NO_CODE.parse(" 1",NetworkParameters.BIGNETCOIN_TOKENID);
+        NO_CODE.parse(" 1",NetworkParameters.BIGTANGLE_TOKENID);
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidWhitespaceSign() throws Exception {
-        NO_CODE.parse("- 1",NetworkParameters.BIGNETCOIN_TOKENID);
+        NO_CODE.parse("- 1",NetworkParameters.BIGTANGLE_TOKENID);
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidWhitespaceAfter() throws Exception {
-        NO_CODE.parse("1 ",NetworkParameters.BIGNETCOIN_TOKENID);
+        NO_CODE.parse("1 ",NetworkParameters.BIGTANGLE_TOKENID);
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidMultipleDecimalMarks() throws Exception {
-        NO_CODE.parse("1.0.0",NetworkParameters.BIGNETCOIN_TOKENID);
+        NO_CODE.parse("1.0.0",NetworkParameters.BIGTANGLE_TOKENID);
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidDecimalMark() throws Exception {
-        NO_CODE.decimalMark(',').parse("1.0",NetworkParameters.BIGNETCOIN_TOKENID);
+        NO_CODE.decimalMark(',').parse("1.0",NetworkParameters.BIGTANGLE_TOKENID);
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidPositiveSign() throws Exception {
-        NO_CODE.positiveSign('@').parse("+1.0",NetworkParameters.BIGNETCOIN_TOKENID);
+        NO_CODE.positiveSign('@').parse("+1.0",NetworkParameters.BIGTANGLE_TOKENID);
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidNegativeSign() throws Exception {
-        NO_CODE.negativeSign('@').parse("-1.0",NetworkParameters.BIGNETCOIN_TOKENID);
+        NO_CODE.negativeSign('@').parse("-1.0",NetworkParameters.BIGTANGLE_TOKENID);
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidHugeNumber() throws Exception {
-        NO_CODE.parse("99999999999999999999",NetworkParameters.BIGNETCOIN_TOKENID);
+        NO_CODE.parse("99999999999999999999",NetworkParameters.BIGTANGLE_TOKENID);
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidHugeNegativeNumber() throws Exception {
-        NO_CODE.parse("-99999999999999999999",NetworkParameters.BIGNETCOIN_TOKENID);
+        NO_CODE.parse("-99999999999999999999",NetworkParameters.BIGTANGLE_TOKENID);
     }
 
   

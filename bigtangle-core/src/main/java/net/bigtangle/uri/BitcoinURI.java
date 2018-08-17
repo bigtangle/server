@@ -232,7 +232,7 @@ public class BitcoinURI {
                 // Decode the amount (contains an optional decimal component to
                 // 8dp).
                 try {
-                    Coin amount = Coin.parseCoin(valueToken, NetworkParameters.BIGNETCOIN_TOKENID);
+                    Coin amount = Coin.parseCoin(valueToken, NetworkParameters.BIGTANGLE_TOKENID);
 //                    if (params != null && amount.isGreaterThan(params.getMaxMoney()))
 //                        throw new BitcoinURIParseException("Max number of coins exceeded");
                     if (amount.signum() < 0)

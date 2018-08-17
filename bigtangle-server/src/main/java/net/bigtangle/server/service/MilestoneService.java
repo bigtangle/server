@@ -44,7 +44,7 @@ public class MilestoneService {
 	@Autowired
 	private BlockService blockService;
 	@Autowired
-	private TipService tipsService;
+	private TipsService tipsService;
 	@Autowired
 	private ValidatorService validatorService;
 

@@ -22,7 +22,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
-import net.bigtangle.server.service.TipService;
+import net.bigtangle.server.service.TipsService;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -33,7 +33,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 	private MilestoneService milestoneService;
 
     @Autowired
-    private TipService tipsService;
+    private TipsService tipsService;
 
     @Autowired
     private BlockService blockService;
@@ -44,15 +44,14 @@ public class TipsServiceTest extends AbstractIntegrationTest {
     public List<Block> createLinearBlock() throws Exception {
         List<Block> blocks = new ArrayList<Block>();
         Block rollingBlock1 = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
+                Block.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
         blockgraph.add(rollingBlock1,true);
         blocks.add(rollingBlock1);
        //log.debug("create block, hash : " + rollingBlock1.getHashAsString());
 
         Block rollingBlock = rollingBlock1;
         for (int i = 1; i < 5; i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS,
-                    outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS,networkParameters.getGenesisBlock());
             blockgraph.add(rollingBlock,true);
            log.debug("create block, hash : " + rollingBlock.getHashAsString());
             blocks.add(rollingBlock);
@@ -64,17 +63,12 @@ public class TipsServiceTest extends AbstractIntegrationTest {
     public List<Block> createBlock() throws Exception {
 
         Block b0 = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
-                outKey.getPubKey(), height++, networkParameters.getGenesisBlock().getHash());
-        Block b1 = BlockForTest.createNextBlock(b0, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                height++, networkParameters.getGenesisBlock().getHash());
-        Block b2 = BlockForTest.createNextBlock(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                height++, b0.getHash());
-        Block b3 = BlockForTest.createNextBlock(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                height++, b2.getHash());
-        Block b4 = BlockForTest.createNextBlock(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                height++, b2.getHash());
-        Block b5 = BlockForTest.createNextBlock(b4, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                height++, b1.getHash());
+                networkParameters.getGenesisBlock());
+        Block b1 = BlockForTest.createNextBlock(b0, Block.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
+        Block b2 = BlockForTest.createNextBlock(b1, Block.BLOCK_VERSION_GENESIS, b0);
+        Block b3 = BlockForTest.createNextBlock(b1, Block.BLOCK_VERSION_GENESIS, b2);
+        Block b4 = BlockForTest.createNextBlock(b3, Block.BLOCK_VERSION_GENESIS,b2);
+        Block b5 = BlockForTest.createNextBlock(b4, Block.BLOCK_VERSION_GENESIS, b1);
         List<Block> blocks = new ArrayList<Block>();
         blocks.add(b0);
         blocks.add(b1);
@@ -104,19 +98,14 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         }
     }
 
-  //  @Test
-    //fixme dead lock
+    @Test
     public void getBlockToApproveTest2() throws Exception {
         createBlock();
-        ECKey outKey = new ECKey();
-        int height = 1;
-
         for (int i = 1; i < 20; i++) {
         	Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
             Block r1 = blockService.getBlock(tipsToApprove.getLeft());
             Block r2 = blockService.getBlock(tipsToApprove.getRight());
-            Block rollingBlock = BlockForTest.createNextBlock(r2, Block.BLOCK_VERSION_GENESIS,
-                    outKey.getPubKey(), height++, r1.getHash());
+            Block rollingBlock = BlockForTest.createNextBlock(r2, Block.BLOCK_VERSION_GENESIS,r1);
             blockgraph.add(rollingBlock,true);
            log.debug("create block  : " + i + " " + rollingBlock);
         }

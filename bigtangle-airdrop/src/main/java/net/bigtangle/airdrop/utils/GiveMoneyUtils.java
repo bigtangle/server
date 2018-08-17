@@ -87,7 +87,7 @@ public class GiveMoneyUtils {
         Transaction doublespent = new Transaction(networkParameters);
 
         for (Map.Entry<String, Integer> entry : giveMoneyResult.entrySet()) {
-            Coin amount = Coin.valueOf(entry.getValue() * 1000, NetworkParameters.BIGNETCOIN_TOKENID);
+            Coin amount = Coin.valueOf(entry.getValue() * 1000, NetworkParameters.BIGTANGLE_TOKENID);
             Address address = Address.fromBase58(networkParameters, entry.getKey());
             doublespent.addOutput(amount, address);
             coinbase = coinbase.add(amount);

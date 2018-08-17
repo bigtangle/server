@@ -203,7 +203,7 @@ public abstract class AbstractIntegrationTest {
     public void testInitWallet() throws Exception {
 
         testCreateMultiSig();
-        //testCreateMarket();
+        testCreateMarket();
         milestoneService.update();
 
         List<UTXO> ux = testTransactionAndGetBalances();
@@ -228,7 +228,7 @@ public abstract class AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
 
-        Coin amount = Coin.parseCoin("3333333", NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin amount = Coin.parseCoin("3333333", NetworkParameters.BIGTANGLE_TOKENID);
         SendRequest request = SendRequest.to(walletKeys.get(1).toAddress(networkParameters), amount);
         coinbaseWallet.completeTx(request);
         rollingBlock.addTransaction(request.tx);
@@ -251,7 +251,7 @@ public abstract class AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(77777L, pubKey);
         long amount = basecoin.getValue();
         
-        Token tokens = Token.buildSimpleTokenInfo(true, networkParameters.getGenesisBlock().getHashAsString(), tokenid, "test", "", 1, 1, amount, false, true);
+        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test", "", 1, 0, amount, false, true);
         tokenInfo.setTokens(tokens);
 
         // add MultiSignAddress item
@@ -267,7 +267,7 @@ public abstract class AbstractIntegrationTest {
         TokenInfo tokenInfo = new TokenInfo();
         
         String tokenid = Utils.HEX.encode(pubKey);
-        Token tokens = Token.buildMarketTokenInfo(true, networkParameters.getGenesisBlock().getHashAsString(), tokenid, "p2p", "", "http://localhost:80089");
+        Token tokens = Token.buildMarketTokenInfo(true, "", tokenid, "p2p", "", "http://localhost:80089");
         tokenInfo.setTokens(tokens);
 
         // add MultiSignAddress item

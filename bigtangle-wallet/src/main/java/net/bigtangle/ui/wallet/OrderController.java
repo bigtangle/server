@@ -380,7 +380,7 @@ public class OrderController extends ExchangeController {
     }
 
     public boolean isSystemCoin(String token) {
-        return ("BIG:" + NetworkParameters.BIGNETCOIN_TOKENID_STRING).equals(token);
+        return ("BIG:" + NetworkParameters.BIGTANGLE_TOKENID_STRING).equals(token);
 
     }
 
@@ -401,7 +401,7 @@ public class OrderController extends ExchangeController {
         byte[] pubKeyHash = Address.fromBase58(Main.params, addressComboBox.getValue()).getHash160();
 
         Coin coin = Main.calculateTotalUTXOList(pubKeyHash,
-                typeStr.equals("sell") ? tokenid : NetworkParameters.BIGNETCOIN_TOKENID_STRING);
+                typeStr.equals("sell") ? tokenid : NetworkParameters.BIGTANGLE_TOKENID_STRING);
         long amount = Coin.parseCoinValue(this.amountTextField.getText());
 
         if (coin.getValue() < amount) {

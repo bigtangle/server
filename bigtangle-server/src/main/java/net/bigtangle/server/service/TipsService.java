@@ -25,8 +25,8 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.store.FullPrunedBlockStore;
 
 @Service
-public class TipService {
-	private final Logger log = LoggerFactory.getLogger(TipService.class);
+public class TipsService {
+	private final Logger log = LoggerFactory.getLogger(TipsService.class);
 
 	@Autowired
 	protected FullPrunedBlockStore store;
@@ -136,6 +136,7 @@ public class TipService {
 		// Repeatedly perform transitions until the final tip is found
 		List<BlockWrap> approvers = store.getSolidApproverBlocks(currentBlock.getBlock().getHash());
 		approvers.removeIf(b -> b.getBlockEvaluation().getInsertTime() > maxTime);
+		// TODO performValidatedStep instead
 		BlockWrap nextBlock = performTransition(currentBlock, approvers);
 
 		while (currentBlock != nextBlock) {

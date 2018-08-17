@@ -43,6 +43,8 @@ import net.bigtangle.utils.VersionTally;
  */
 public abstract class NetworkParameters {
 
+    // TODO use configurable fields
+    
 	/**
 	 * The string returned by getId() for the main, production network where people
 	 * trade things.
@@ -53,9 +55,9 @@ public abstract class NetworkParameters {
 	/** Unit test network. */
 	public static final String ID_UNITTESTNET = "net.bigtangle.unittest";
 
-	// Token id for System Coin
-	public static final String BIGNETCOIN_TOKENID_STRING = "0000000000000000000000000000000000000000";
-	public static final byte[] BIGNETCOIN_TOKENID = HEX.decode(BIGNETCOIN_TOKENID_STRING);
+	// Token id for System Coin 
+	public static final String BIGTANGLE_TOKENID_STRING = "0000000000000000000000000000000000000000";
+	public static final byte[] BIGTANGLE_TOKENID = HEX.decode(BIGTANGLE_TOKENID_STRING);
 
 	// DUMMY Token id byte[20]
 	public static final byte[] DUMMY_TOKENID = HEX.decode("1111111111111111111111111111111111111111");
@@ -151,7 +153,7 @@ public abstract class NetworkParameters {
 	public static void add(NetworkParameters params, String account, Transaction coinbase) {
 		// account space seperate lis with amount, many public keys
 		String[] list = account.split(",");
-		Coin base = Coin.valueOf(Long.valueOf(list[0]), BIGNETCOIN_TOKENID);
+		Coin base = Coin.valueOf(Long.valueOf(list[0]), BIGTANGLE_TOKENID);
 		List<ECKey> keys = new ArrayList<ECKey>();
 		for (int i = 1; i < list.length; i++) {
 			keys.add(ECKey.fromPublicOnly(Utils.HEX.decode(list[i].trim())));
@@ -497,4 +499,9 @@ public abstract class NetworkParameters {
 	public long getRewardHeightInterval() {
 		return REWARD_HEIGHT_INTERVAL;
 	}
+
+	// TODO set
+    public int getTargetTPS() {
+        return 10;
+    }
 }

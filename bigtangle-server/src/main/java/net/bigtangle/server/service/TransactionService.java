@@ -49,7 +49,7 @@ public class TransactionService {
     @Autowired
     private BlockService blockService;
     @Autowired
-    protected TipService tipService;
+    protected TipsService tipService;
     @Autowired
     protected MilestoneService milestoneService;
     @Autowired

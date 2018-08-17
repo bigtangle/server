@@ -35,7 +35,7 @@ public class TokenCoinbase {
     private Map<String, Coin> values = new HashMap<String, Coin>();
     
     public Coin getCoinDefaultValue() {
-        Coin coin = this.values.get(NetworkParameters.BIGNETCOIN_TOKENID_STRING);
+        Coin coin = this.values.get(NetworkParameters.BIGTANGLE_TOKENID_STRING);
         if (coin == null) {
             return Coin.ZERO;
         }

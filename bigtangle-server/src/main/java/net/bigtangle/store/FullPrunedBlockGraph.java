@@ -399,6 +399,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             confirmToken(block.getHashAsString());
         }
 
+        // TODO unify logic, see above
         if (block.getBlockType() == Block.BLOCKTYPE_USERDATA || block.getBlockType() == Block.BLOCKTYPE_VOS) {
             Transaction tx = block.getTransactions().get(0);
             if (tx.getData() != null && tx.getDataSignature() != null) {
@@ -446,15 +447,18 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     private void confirmReward(Block block) throws BlockStoreException {
-        // TODO
+        // Set used other output spent
+        blockStore.updateTxRewardSpent(blockStore.getTxRewardPrevBlockHash(block.getHash()), true, block.getHash());
+
+        // Set own output confirmed
         blockStore.updateTxRewardConfirmed(block.getHash(), true);
     }
 
     private void confirmToken(String blockhash) throws BlockStoreException {
         // Set used other output spent
         blockStore.updateTokenSpent(blockStore.getTokenPrevblockhash(blockhash), true, blockhash);
-        
-        // Set own output confirmed 
+
+        // Set own output confirmed
         blockStore.updateTokenConfirmed(blockhash, true);
     }
 
@@ -470,7 +474,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
         }
 
-        // Set own outputs confirmed 
+        // Set own outputs confirmed
         for (TransactionOutput out : tx.getOutputs()) {
             blockStore.updateTransactionOutputConfirmed(tx.getHash(), out.getIndex(), true);
             blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), out.getIndex(), blockhash);
@@ -529,23 +533,31 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             unconfirmToken(block.getHashAsString());
         }
     }
-    // TODO unify all like unconfirm/confirm token
 
     private void unconfirmReward(Block block) throws BlockStoreException {
+        // Unconfirm dependents
+        if (blockStore.getTxRewardSpent(block.getHash())) {
+            removeBlockFromMilestone(blockStore.getTxRewardSpender(block.getHash()));
+        }
+
+        // Set used other output unspent
+        blockStore.updateTxRewardSpent(blockStore.getTxRewardPrevBlockHash(block.getHash()), false, null);
+
+        // Set own output unconfirmed
         blockStore.updateTxRewardConfirmed(block.getHash(), false);
+    
     }
 
     private void unconfirmToken(String blockhash) throws BlockStoreException {
         // Unconfirm dependents
         if (blockStore.getTokenSpent(blockhash)) {
             removeBlockFromMilestone(Sha256Hash.wrap(blockStore.getTokenSpender(blockhash)));
-            blockStore.updateTokenSpent(blockhash, false, null); // TODO needed??
         }
-        
+
         // Set used other output unspent
         blockStore.updateTokenSpent(blockStore.getTokenPrevblockhash(blockhash), false, null);
-        
-        // Set own output unconfirmed 
+
+        // Set own output unconfirmed
         blockStore.updateTokenConfirmed(blockhash, false);
     }
 
@@ -562,7 +574,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             if (blockStore.getTransactionOutput(tx.getHash(), txout.getIndex()).isSpent()) {
                 removeBlockFromMilestone(
                         blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()).getBlockHash());
-                blockStore.updateTransactionOutputSpent(tx.getHash(), txout.getIndex(), false, null); // TODO needed??
                 blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), txout.getIndex(), null);
             }
             blockStore.updateTransactionOutputConfirmed(tx.getHash(), txout.getIndex(), false);
@@ -613,11 +624,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             bb.getLong(); // nextReward
             bb.get(hashBytes, 0, 32); // prevRewardHash
             prevRewardHash = Sha256Hash.wrap(hashBytes);
-            
-            Triple<Transaction, Boolean, Long> referenceReward = validatorService.generateMiningRewardTX(
-                    storedPrev.getHeader(), storedPrevBranch.getHeader(), prevRewardHash);
 
-            blockStore.insertTxReward(block.getHash(), fromHeight, referenceReward.getMiddle());
+            Triple<Transaction, Boolean, Long> referenceReward = validatorService
+                    .generateMiningRewardTX(storedPrev.getHeader(), storedPrevBranch.getHeader(), prevRewardHash);
+
+            blockStore.insertTxReward(block.getHash(), fromHeight, referenceReward.getMiddle(), prevRewardHash);
         }
 
         if (block.getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION) {
@@ -680,11 +691,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      */
     @Override
     protected boolean checkSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height,
-            boolean allowConflicts) throws BlockStoreException, VerificationException {
+            boolean allowConflicts) throws VerificationException {
         // Check timestamp
         if (block.getBlockType() == Block.BLOCKTYPE_REWARD) {
             // Enforce timestamp equal to previous max for reward blocktypes
-            if (block.getTimeSeconds() != Math.max(storedPrev.getHeader().getTimeSeconds(), storedPrevBranch.getHeader().getTimeSeconds()))
+            if (block.getTimeSeconds() != Math.max(storedPrev.getHeader().getTimeSeconds(),
+                    storedPrevBranch.getHeader().getTimeSeconds()))
                 return false;
         } else {
             // Usually just enforce monotone increase
@@ -693,6 +705,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 return false;
         }
 
+        // Check difficulty and last consensus
         if (block.getBlockType() != Block.BLOCKTYPE_REWARD) {
             if (block.getLastMiningRewardBlock() == storedPrev.getHeader().getLastMiningRewardBlock()
                     && block.getDifficultyTarget() != storedPrev.getHeader().getDifficultyTarget())
@@ -720,34 +733,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 return false;
             }
         }
-       
-        
+
         // Check issuance block specific validity
         if (block.getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION) {
             try {
-                if (block.getTransactions().isEmpty()) {
-                    return false;
-                }
-                Transaction tx = block.getTransactions().get(0);
-                if (tx.getData() == null) {
-                    return false;
-                }
-                byte[] buf = tx.getData();
-                TokenInfo tokenInfo = new TokenInfo().parse(buf);
-                if (tokenInfo.getTokens() == null) {
-                    return false;
-                }
-                if (tokenInfo.getMultiSignAddresses() == null) {
-                    return false;
-                }
-                if (tokenInfo.getTokens().getTokenid().equals(NetworkParameters.BIGNETCOIN_TOKENID_STRING)) {
-                    return false;
-                }
-                
-                // TODO tokenPrevBlockHash.equals("") <=> index == 0
-                // Check according to previous issuance, or if it does not exist the normal signature
-                // TODO check not boolean tokenstop = tokens.isTokenstop();
-                if (!this.multiSignService.checkMultiSignPre(block, allowConflicts)) {
+                // Check according to previous issuance, or if it does not exist
+                // the normal signature
+                if (!this.multiSignService.checkToken(block, allowConflicts)) {
                     return false;
                 }
             } catch (Exception e) {
@@ -757,44 +749,61 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
 
         if (block.getBlockType() == Block.BLOCKTYPE_CROSSTANGLE) {
+            // TODO
             return true;
         }
 
-        checkSolidityTransfer(block, height);
-        
-        // TODO auslagern in eigene Funktionen
+        try {
+            checkSolidityTransfer(block, height);
+        } catch (BlockStoreException e1) {
+            log.info("", e1);
+            return false;
+        }
+
         // Check reward block specific solidity
         if (block.getBlockType() == Block.BLOCKTYPE_REWARD) {
-            // Get reward data from previous reward cycle
-            Sha256Hash prevRewardHash = null;
-            @SuppressWarnings("unused")
-            long fromHeight = 0, nextPerTxReward = 0;
-            try {
-                byte[] hashBytes = new byte[32];
-                ByteBuffer bb = ByteBuffer.wrap(block.getTransactions().get(0).getData());
-                fromHeight = bb.getLong();
-                nextPerTxReward = bb.getLong();
-                bb.get(hashBytes, 0, 32);
-                prevRewardHash = Sha256Hash.wrap(hashBytes);
-            } catch (Exception e) {
-                e.printStackTrace();
+            if (!checkSolidityReward(block, storedPrev, storedPrevBranch))
                 return false;
-            }
+        }
+
+        return true;
+    }
+
+    private boolean checkSolidityReward(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch) {
+        // Get reward data from previous reward cycle
+        Sha256Hash prevRewardHash = null;
+        @SuppressWarnings("unused")
+        long fromHeight = 0, nextPerTxReward = 0;
+        try {
+            byte[] hashBytes = new byte[32];
+            ByteBuffer bb = ByteBuffer.wrap(block.getTransactions().get(0).getData());
+            fromHeight = bb.getLong();
+            nextPerTxReward = bb.getLong();
+            bb.get(hashBytes, 0, 32);
+            prevRewardHash = Sha256Hash.wrap(hashBytes);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        try {
+            Triple<Transaction, Boolean, Long> rewardEligibleDifficulty = validatorService
+                    .generateMiningRewardTX(storedPrev.getHeader(), storedPrevBranch.getHeader(), prevRewardHash);
 
             // Reward must have been built correctly.
-            Triple<Transaction, Boolean, Long> rewardEligibleDifficulty = validatorService.generateMiningRewardTX(
-                    storedPrev.getHeader(), storedPrevBranch.getHeader(), prevRewardHash);
             if (!rewardEligibleDifficulty.getLeft().getHash().equals(block.getTransactions().get(0).getHash()))
                 return false;
 
             // Difficulty must be correct
             if (rewardEligibleDifficulty.getRight() != block.getDifficultyTarget())
                 return false;
-
-            if (Math.max(storedPrev.getHeader().getLastMiningRewardBlock(), storedPrevBranch.getHeader().getLastMiningRewardBlock()) != block.getLastMiningRewardBlock())
+            if (Math.max(storedPrev.getHeader().getLastMiningRewardBlock(),
+                    storedPrevBranch.getHeader().getLastMiningRewardBlock()) + 1 != block.getLastMiningRewardBlock())
                 return false;
+        } catch (BlockStoreException e) {
+            log.info("", e);
+            return false;
         }
-
         return true;
     }
 

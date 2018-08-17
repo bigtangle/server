@@ -108,7 +108,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
         List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
         
         ECKey outKey = new ECKey();
-        Coin coinbase = Coin.valueOf(1, NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin coinbase = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
         this.giveBlockDoubleSpentTransaction(block, outKey, coinbase, outputs);
         block.solve();
         try {
@@ -122,7 +122,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
     private void giveBlockDoubleSpentTransaction(Block rollingBlock, ECKey outKey, Coin coinbase, List<UTXO> outputs)
             throws Exception {
         for (UTXO output : outputs) {
-            if (Arrays.equals(output.getValue().getTokenid(), NetworkParameters.BIGNETCOIN_TOKENID)) {
+            if (Arrays.equals(output.getValue().getTokenid(), NetworkParameters.BIGTANGLE_TOKENID)) {
                 giveBlockDoubleSpentTransaction(rollingBlock, outKey, coinbase, output);
                 return;
             }
@@ -175,7 +175,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
         List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
         
         ECKey outKey = new ECKey();
-        Coin coinbase = Coin.valueOf(1, NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin coinbase = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
         giveBlockDoubleSpentTransaction(block, outKey, coinbase, outputs.get(0));
         block.solve();
         

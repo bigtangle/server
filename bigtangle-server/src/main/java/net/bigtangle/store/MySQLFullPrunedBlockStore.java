@@ -78,6 +78,16 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    spenderblockhash  varbinary(32),\n"
             + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex) USING BTREE \n" + ")\n";
     
+    private static final String CREATE_TX_REWARD_TABLE = "CREATE TABLE txreward (\n"
+            + "   blockhash varbinary(32) NOT NULL,\n" 
+            + "   prevheight bigint NOT NULL,\n"
+            + "   confirmed boolean NOT NULL,\n" 
+            + "   spent boolean NOT NULL,\n"
+            + "   spenderblockhash varbinary(32),\n"
+            + "   eligibility boolean NOT NULL,\n"
+            + "   prevblockhash varbinary(32),\n"
+            + "   PRIMARY KEY (blockhash) )";
+    
     private static final String CREATE_OUTPUT_MULTI_TABLE = "CREATE TABLE outputsmulti (\n" 
             + "    hash varbinary(32) NOT NULL,\n"
             + "    outputindex bigint NOT NULL,\n" 
@@ -89,7 +99,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    hash varbinary(32) NOT NULL,\n"
             + "    CONSTRAINT tips_pk PRIMARY KEY (hash) USING BTREE \n" + ")\n";
 
-private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
+    private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
             + "    blockhash varchar(255) NOT NULL,\n"
             + "    confirmed boolean NOT NULL,\n" 
             + "    tokenid varchar(255) NOT NULL  ,\n"
@@ -148,13 +158,6 @@ private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
             + "    signIndex int(11) NOT NULL,\n"
             + "    signInputData mediumblob,\n"
             + "    PRIMARY KEY (orderid, pubKey) \n)";
-    
-    private static final String CREATE_TX_REWARD_TABLE = "CREATE TABLE txreward (\n"
-            + "   blockhash varbinary(32) NOT NULL,\n" 
-            + "   prevheight bigint NOT NULL,\n"
-            + "   confirmed boolean NOT NULL,\n" 
-            + "   eligibility boolean NOT NULL,\n"
-            + "   PRIMARY KEY (blockhash) )";
     
     private static final String CREATE_USERDATA_TABLE = "CREATE TABLE userdata (\n" 
             + "    blockhash varbinary(32) NOT NULL,\n"

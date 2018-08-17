@@ -112,7 +112,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         ECKey genesiskey = ECKey.fromPublicOnly(Utils.HEX.decode(NetworkParameters.testPub));
         List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
         TransactionOutput transactionOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0), 0);
-        Coin amount = Coin.valueOf(2, NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         Transaction tx = new Transaction(networkParameters);
         tx.addOutput(new TransactionOutput(networkParameters, tx, amount, outKey));
         TransactionInput input = tx.addInput(transactionOutput);
@@ -202,12 +202,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public Block getRollingBlock(ECKey outKey) throws Exception {
         Context.propagate(new Context(networkParameters));
         Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++,
-                networkParameters.getGenesisBlock().getHash());
+                Block.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
         blockgraph.add(rollingBlock,true);
         for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                    height++, networkParameters.getGenesisBlock().getHash());
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
             blockgraph.add(rollingBlock,true);
         }
         return rollingBlock;
@@ -228,8 +226,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         ECKey outKey = new ECKey();
         Block rollingBlock = this.getRollingBlock(outKey);
 
-        rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                height++, networkParameters.getGenesisBlock().getHash());
+        rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
 
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
@@ -239,7 +236,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         wallet.setUTXOProvider(store);
 
         ECKey toKey = wallet.freshReceiveKey();
-        Coin amount = Coin.valueOf(100, NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin amount = Coin.valueOf(100, NetworkParameters.BIGTANGLE_TOKENID);
 
         Transaction t = new Transaction(networkParameters);
         t.addOutput(new TransactionOutput(networkParameters, t, amount, toKey));

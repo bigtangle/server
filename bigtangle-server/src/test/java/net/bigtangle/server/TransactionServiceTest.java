@@ -69,7 +69,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         
         Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, wallet1Keys_);
 
-        Coin amount0 = Coin.parseCoin("0.15", NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin amount0 = Coin.parseCoin("0.15", NetworkParameters.BIGTANGLE_TOKENID);
         multiSigTransaction.addOutput(amount0, scriptPubKey);
         // get new Block to be used from server
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -97,7 +97,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
        TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, ulist.get(0), 0);
         Script multisigScript1 = multisigOutput.getScriptPubKey();
        
-        Coin amount1 = Coin.parseCoin("0.05", NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin amount1 = Coin.parseCoin("0.05", NetworkParameters.BIGTANGLE_TOKENID);
         
         Coin amount2 = multisigOutput.getValue().subtract(amount1);
         
@@ -156,7 +156,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
 
-        Coin amount = Coin.parseCoin("0.001", NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin amount = Coin.parseCoin("0.001", NetworkParameters.BIGTANGLE_TOKENID);
         SendRequest request = SendRequest.to(walletKeys.get(1).toAddress(networkParameters), amount);
         walletAppKit.wallet().completeTx(request);
         rollingBlock.addTransaction(request.tx);

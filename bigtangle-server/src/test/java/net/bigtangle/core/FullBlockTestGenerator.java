@@ -214,13 +214,13 @@ public class FullBlockTestGenerator {
         Queue<TransactionOutPointWithValue> spendableOutputs = new LinkedList<TransactionOutPointWithValue>();
 
         int chainHeadHeight = 1;
-        Block chainHead =BlockForTest.createNextBlock( params.getGenesisBlock(),Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey, chainHeadHeight,params.getGenesisBlock().getHash());
+        Block chainHead =BlockForTest.createNextBlock( params.getGenesisBlock(),Block.BLOCK_VERSION_GENESIS, params.getGenesisBlock());
         blocks.add(new BlockAndValidity(chainHead, true, false, chainHead.getHash(), 1, "Initial Block"));
         spendableOutputs.offer(new TransactionOutPointWithValue(
                 new TransactionOutPoint(params, 0, chainHead.getTransactions().get(0).getHash()),
                 FIFTY_COINS, chainHead.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
         for (int i = 1; i < params.getSpendableCoinbaseDepth(); i++) {
-            chainHead = BlockForTest.createNextBlock(chainHead,Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey, chainHeadHeight,params.getGenesisBlock().getHash());
+            chainHead = BlockForTest.createNextBlock(chainHead,Block.BLOCK_VERSION_GENESIS, params.getGenesisBlock());
             chainHeadHeight++;
             blocks.add(new BlockAndValidity(chainHead, true, false, chainHead.getHash(), i+1, "Initial Block chain output generation"));
             spendableOutputs.offer(new TransactionOutPointWithValue(
@@ -1339,7 +1339,7 @@ public class FullBlockTestGenerator {
         NewBlock b68 = createNextBlock(b65, chainHeadHeight + 21, null, SATOSHI.multiply(10));
         {
             Transaction tx = new Transaction(params);
-            tx.addOutput(out20.value.subtract(Coin.valueOf(9,NetworkParameters.BIGNETCOIN_TOKENID)), OP_TRUE_SCRIPT);
+            tx.addOutput(out20.value.subtract(Coin.valueOf(9,NetworkParameters.BIGTANGLE_TOKENID)), OP_TRUE_SCRIPT);
             addOnlyInputToTransaction(tx, out20, 0);
             b68.addTransaction(tx);
         }
@@ -1349,7 +1349,7 @@ public class FullBlockTestGenerator {
         NewBlock b69 = createNextBlock(b65, chainHeadHeight + 21, null, SATOSHI.multiply(10));
         {
             Transaction tx = new Transaction(params);
-            tx.addOutput(out20.value.subtract(Coin.valueOf(10,NetworkParameters.BIGNETCOIN_TOKENID)), OP_TRUE_SCRIPT);
+            tx.addOutput(out20.value.subtract(Coin.valueOf(10,NetworkParameters.BIGTANGLE_TOKENID)), OP_TRUE_SCRIPT);
             addOnlyInputToTransaction(tx, out20, 0);
             b69.addTransaction(tx);
         }
@@ -1808,7 +1808,7 @@ public class FullBlockTestGenerator {
         Coin coinbaseValue = FIFTY_COINS.shiftRight(nextBlockHeight / params.getSubsidyDecreaseBlockCount())
                 .add((prevOut != null ? prevOut.value.subtract(SATOSHI) : ZERO))
                 .add(additionalCoinbaseValue == null ? ZERO : additionalCoinbaseValue);
-        Block block = BlockForTest.createNextBlock(baseBlock,Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey,   nextBlockHeight,params.getGenesisBlock().getHash());
+        Block block = BlockForTest.createNextBlock(baseBlock,Block.BLOCK_VERSION_GENESIS, params.getGenesisBlock());
         Transaction t = new Transaction(params);
         if (prevOut != null) {
             // Entirely invalid scriptPubKey to ensure we aren't pre-verifying too much

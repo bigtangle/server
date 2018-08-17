@@ -96,7 +96,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
 
         UTXO findOutput = null;
         for (UTXO output : testTransactionAndGetBalances(false, genesiskey)) {
-            if (Arrays.equals(NetworkParameters.BIGNETCOIN_TOKENID, output.getValue().getTokenid())) {
+            if (Arrays.equals(NetworkParameters.BIGTANGLE_TOKENID, output.getValue().getTokenid())) {
                 findOutput = output;
             }
         }
@@ -104,7 +104,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
 
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, findOutput, 0);
         Transaction transaction = new Transaction(networkParameters);
-        Coin coinbase = Coin.valueOf(amount, NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin coinbase = Coin.valueOf(amount, NetworkParameters.BIGTANGLE_TOKENID);
         Address address = outKey.toAddress(this.networkParameters);
         transaction.addOutput(coinbase, address);
         transaction.setToAddressInSubtangle(toAddressInSubtangle.getHash160()  );
@@ -157,7 +157,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         long amount = 1000;
         this.giveMoneySubtangleId(subtangleKey, amount, outKey.toAddress(this.networkParameters));
         
-        Coin coinbase = getBalanceCoin(subtangleKey, NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin coinbase = getBalanceCoin(subtangleKey, NetworkParameters.BIGTANGLE_TOKENID);
         logger.info("get balance coin : " + coinbase);
         
         assertTrue(amount == coinbase.getValue());

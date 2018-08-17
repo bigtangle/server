@@ -98,7 +98,7 @@ public class Transaction extends ChildMessage {
      * If feePerKb is lower than this, Bitcoin Core will treat it as if there
      * were no fee.
      */
-    public static final Coin REFERENCE_DEFAULT_MIN_TX_FEE = Coin.valueOf(5000, NetworkParameters.BIGNETCOIN_TOKENID); // 0.05
+    public static final Coin REFERENCE_DEFAULT_MIN_TX_FEE = Coin.valueOf(5000, NetworkParameters.BIGTANGLE_TOKENID); // 0.05
     // mBTC
 
     /**
@@ -106,7 +106,7 @@ public class Transaction extends ChildMessage {
      * couple of blocks. This should be adjusted from time to time. Last
      * adjustment: February 2017.
      */
-    public static final Coin DEFAULT_TX_FEE = Coin.valueOf(100000, NetworkParameters.BIGNETCOIN_TOKENID); // 1
+    public static final Coin DEFAULT_TX_FEE = Coin.valueOf(100000, NetworkParameters.BIGTANGLE_TOKENID); // 1
                                                                                                           // mBTC
 
     /**
@@ -115,7 +115,7 @@ public class Transaction extends ChildMessage {
      * by assuming a standard output will be 34 bytes, and then using the
      * formula used in {@link TransactionOutput#getMinNonDustValue(Coin)}.
      */
-    public static final Coin MIN_NONDUST_OUTPUT = Coin.valueOf(2730, NetworkParameters.BIGNETCOIN_TOKENID); // satoshis
+    public static final Coin MIN_NONDUST_OUTPUT = Coin.valueOf(2730, NetworkParameters.BIGTANGLE_TOKENID); // satoshis
 
     // These are bitcoin serialized.
     private long version;

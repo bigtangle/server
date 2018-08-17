@@ -42,7 +42,7 @@ import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
-import net.bigtangle.server.service.TipService;
+import net.bigtangle.server.service.TipsService;
 import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.OkHttp3Util;
@@ -89,7 +89,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     @Autowired
     protected FullPrunedBlockStore store;
     @Autowired
-    private TipService tipsService;
+    private TipsService tipsService;
 
     ECKey outKey = new ECKey();
 
@@ -98,10 +98,10 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         store.resetStore();
 
         Block b1 = createAndAddNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
-                outKey.getPubKey(), networkParameters.getGenesisBlock().getHash());
+                outKey.getPubKey(), networkParameters.getGenesisBlock());
         Block b2 = createAndAddNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
-                outKey.getPubKey(), networkParameters.getGenesisBlock().getHash());
-        Block b3 = createAndAddNextBlock(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b2.getHash());
+                outKey.getPubKey(), networkParameters.getGenesisBlock());
+        Block b3 = createAndAddNextBlock(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b2);
         milestoneService.update();
         assertTrue(blockService.getBlockEvaluation(b1.getHash()).isMilestone());
         assertTrue(blockService.getBlockEvaluation(b2.getHash()).isMilestone());
@@ -114,7 +114,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
                 0);
-        Coin amount = Coin.valueOf(2, NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         Transaction doublespendTX = new Transaction(networkParameters);
         doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount, outKey));
         TransactionInput input = doublespendTX.addInput(spendableOutput);
@@ -128,22 +128,22 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         // Create blocks with a conflict
         Block b5 = createAndAddNextBlockWithTransaction(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                b3.getHash(), doublespendTX);
-        Block b5link = createAndAddNextBlock(b5, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b5.getHash());
-        Block b6 = createAndAddNextBlock(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b3.getHash());
-        Block b7 = createAndAddNextBlock(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b3.getHash());
+                b3, doublespendTX);
+        Block b5link = createAndAddNextBlock(b5, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b5);
+        Block b6 = createAndAddNextBlock(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b3);
+        Block b7 = createAndAddNextBlock(b3, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b3);
         Block b8 = createAndAddNextBlockWithTransaction(b6, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                b7.getHash(), doublespendTX);
-        Block b8link = createAndAddNextBlock(b8, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8.getHash());
-        Block b9 = createAndAddNextBlock(b5link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b6.getHash());
-        Block b10 = createAndAddNextBlock(b9, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
-        Block b11 = createAndAddNextBlock(b9, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
-        Block b12 = createAndAddNextBlock(b5link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
-        Block b13 = createAndAddNextBlock(b5link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
-        Block b14 = createAndAddNextBlock(b5link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link.getHash());
-        Block bOrphan1 = createAndAddNextBlock(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b1.getHash());
+                b7, doublespendTX);
+        Block b8link = createAndAddNextBlock(b8, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8);
+        Block b9 = createAndAddNextBlock(b5link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b6);
+        Block b10 = createAndAddNextBlock(b9, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link);
+        Block b11 = createAndAddNextBlock(b9, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link);
+        Block b12 = createAndAddNextBlock(b5link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link);
+        Block b13 = createAndAddNextBlock(b5link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link);
+        Block b14 = createAndAddNextBlock(b5link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link);
+        Block bOrphan1 = createAndAddNextBlock(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b1);
         Block bOrphan5 = createAndAddNextBlock(b5link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                b5link.getHash());
+                b5link);
         milestoneService.update();
         assertTrue(blockService.getBlockEvaluation(b1.getHash()).isMilestone());
         assertTrue(blockService.getBlockEvaluation(b2.getHash()).isMilestone());
@@ -167,13 +167,13 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         // disconnect block
         // 5+link and connect block 8+link instead
         Block b8weight1 = createAndAddNextBlock(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                b8link.getHash());
+                b8link);
         Block b8weight2 = createAndAddNextBlock(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                b8link.getHash());
+                b8link);
         Block b8weight3 = createAndAddNextBlock(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                b8link.getHash());
+                b8link);
         Block b8weight4 = createAndAddNextBlock(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                b8link.getHash());
+                b8link);
         milestoneService.update();
         assertTrue(blockService.getBlockEvaluation(b1.getHash()).isMilestone());
         assertTrue(blockService.getBlockEvaluation(b2.getHash()).isMilestone());
@@ -353,7 +353,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         
-        Token tokens = Token.buildSimpleTokenInfo(true, networkParameters.getGenesisBlock().getHashAsString(), Utils.HEX.encode(pubKey), "Test", "Test", 1, 1, amount, false, true);
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount, false, true);
         tokenInfo.setTokens(tokens);
         
         tokenInfo.setTokens(tokens);
@@ -367,12 +367,12 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(block1.getHash()).isMilestone());
         Transaction tx1 = block1.getTransactions().get(0);
         assertTrue(store.getTransactionOutput(tx1.getHash(), 0).isConfirmed());
+        assertTrue(store.getTokenConfirmed(block1.getHashAsString()));
 
         // Remove it from the milestone
         Block rollingBlock = networkParameters.getGenesisBlock();
         for (int i = 1; i < 5; i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                    0, rollingBlock.getHash());
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
             blockgraph.add(rollingBlock, true);
         }
         milestoneService.update();
@@ -380,8 +380,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         // Should be out
         assertFalse(blockService.getBlockEvaluation(block1.getHash()).isMilestone());
         assertFalse(store.getTransactionOutput(tx1.getHash(), 0).isConfirmed());
-        // TODO assertFalse any token table data that should not be true anymore
-
+        assertFalse(store.getTokenConfirmed(block1.getHashAsString()));
     }
 
     @Test
@@ -395,7 +394,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 1,
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0,
                 amount, false, true);
 
         tokenInfo.setTokens(tokens);
@@ -407,8 +406,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         // Make another conflicting one that goes through
         Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
         Block block2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, genHash, genHash);
-        Block rollingBlock = BlockForTest.createNextBlock(block2, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0,
-                block1.getHash());
+        Block rollingBlock = BlockForTest.createNextBlock(block2, Block.BLOCK_VERSION_GENESIS, block1);
         blockgraph.add(rollingBlock, true);
         milestoneService.update();
 
@@ -425,14 +423,13 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0, networkParameters.getGenesisBlock().getHash());
+                Block.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
         blockgraph.add(rollingBlock, true);
 
         Block preLastRollingBlock = null;
         for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + 10; i++) {
             preLastRollingBlock = rollingBlock;
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                    0, rollingBlock.getHash());
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
             blockgraph.add(rollingBlock, true);
         }
 
@@ -459,8 +456,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         // updated
         rollingBlock = rewardBlock2;
         for (int i = 1; i < 30; i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                    0, rollingBlock.getHash());
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
             blockgraph.add(rollingBlock, true);
         }
         milestoneService.update();
@@ -473,8 +469,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         // updated
         rollingBlock = rewardBlock3;
         for (int i = 1; i < 60; i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                    0, rollingBlock.getHash());
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
             blockgraph.add(rollingBlock, true);
         }
         milestoneService.update();
@@ -493,8 +488,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
             Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
             Block r1 = blockService.getBlock(tipsToApprove.getLeft());
             Block r2 = blockService.getBlock(tipsToApprove.getRight());
-            Block b = BlockForTest.createNextBlock(r2, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0,
-                    r1.getHash());
+            Block b = BlockForTest.createNextBlock(r2, Block.BLOCK_VERSION_GENESIS, r1);
             blockgraph.add(b, true);
         }
         milestoneService.update();
@@ -509,16 +503,16 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         // Generate two blocks
         createAndAddNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                networkParameters.getGenesisBlock().getHash());
+                networkParameters.getGenesisBlock());
         createAndAddNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                networkParameters.getGenesisBlock().getHash());
+                networkParameters.getGenesisBlock());
         milestoneService.update();
 
         // Generate block normally now
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
         Block r2 = blockService.getBlock(tipsToApprove.getRight());
-        Block b = BlockForTest.createNextBlock(r2, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0, r1.getHash());
+        Block b = BlockForTest.createNextBlock(r2, Block.BLOCK_VERSION_GENESIS,  r1);
         blockgraph.add(b, true);
     }
 
@@ -528,12 +522,11 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         // Generate blocks until first ones become unmaintained
         Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0, networkParameters.getGenesisBlock().getHash());
+                Block.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
         blockgraph.add(rollingBlock, true);
 
         for (int i = 0; i < NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 5; i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                    0, rollingBlock.getHash());
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS,rollingBlock);
             blockgraph.add(rollingBlock, true);
         }
         milestoneService.update();
@@ -546,12 +539,11 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         // Generate longer new Tangle
         rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
-                outKey.getPubKey(), 0, networkParameters.getGenesisBlock().getHash());
+                networkParameters.getGenesisBlock());
         blockgraph.add(rollingBlock, true);
 
         for (int i = 0; i < NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 25; i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                    0, rollingBlock.getHash());
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
             blockgraph.add(rollingBlock, true);
         }
         milestoneService.update();
@@ -573,7 +565,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
                 0);
-        Coin amount = Coin.valueOf(2, NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         Transaction doublespendTX = new Transaction(networkParameters);
         doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount, outKey));
         TransactionInput input = doublespendTX.addInput(spendableOutput);
@@ -587,18 +579,17 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         // Create blocks with conflict
         Block b1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), networkParameters.getGenesisBlock().getHash(),
+                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), networkParameters.getGenesisBlock(),
                 doublespendTX);
         blockgraph.add(b1, true);
         Block b2 = createAndAddNextBlockWithTransaction(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                b1.getHash(), doublespendTX);
+                b1, doublespendTX);
         blockgraph.add(b2, true);
 
         // Approve these blocks by adding linear tangle onto them
         Block rollingBlock = b2;
         for (int i = 0; i < 10; i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                    0, rollingBlock.getHash());
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
             blockgraph.add(rollingBlock, true);
         }
         milestoneService.update();
@@ -612,8 +603,8 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
             Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
             Block r1 = blockService.getBlock(tipsToApprove.getLeft());
             Block r2 = blockService.getBlock(tipsToApprove.getRight());
-            Block b = BlockForTest.createNextBlock(r2, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), 0,
-                    r1.getHash());
+            Block b = BlockForTest.createNextBlock(r2, Block.BLOCK_VERSION_GENESIS,
+                    r1);
             blockgraph.add(b, true);
             log.debug("create block  : " + i + " " + rollingBlock);
         }
@@ -625,17 +616,17 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(b2.getHash()).getRating() < 50);
     }
 
-    private Block createAndAddNextBlock(Block b1, long bVersion, byte[] pubKey, Sha256Hash b2)
+    private Block createAndAddNextBlock(Block b1, long bVersion, byte[] pubKey, Block b2)
             throws VerificationException, PrunedException {
-        Block block = BlockForTest.createNextBlock(b1, bVersion, pubKey, 0, b2);
+        Block block = BlockForTest.createNextBlock(b1, bVersion, b2);
         this.blockgraph.add(block, true);
         log.debug("created block:" + block.getHashAsString());
         return block;
     }
 
-    private Block createAndAddNextBlockWithTransaction(Block b1, long bVersion, byte[] pubKey, Sha256Hash b2,
+    private Block createAndAddNextBlockWithTransaction(Block b1, long bVersion, byte[] pubKey, Block b2,
             Transaction prevOut) throws VerificationException, PrunedException {
-        Block block = BlockForTest.createNextBlock(b1, bVersion, pubKey, 0, b2);
+        Block block = BlockForTest.createNextBlock(b1, bVersion, b2);
         block.addTransaction(prevOut);
         block.solve();
         this.blockgraph.add(block, true);

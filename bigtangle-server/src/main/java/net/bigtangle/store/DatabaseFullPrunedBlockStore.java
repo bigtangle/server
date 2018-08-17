@@ -93,44 +93,45 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_LOGRESULT_TABLE = "DROP TABLE logresult";
 
     // Queries SQL.
-    protected String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
-    protected String INSERT_SETTINGS_SQL = getInsert() + "  INTO settings(name, settingvalue) VALUES(?, ?)";
+    protected final String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
+    protected final String INSERT_SETTINGS_SQL = getInsert() + "  INTO settings(name, settingvalue) VALUES(?, ?)";
 
-    protected String SELECT_BLOCKS_SQL = "SELECT  height, block, wasundoable,prevblockhash,prevbranchblockhash,mineraddress,"
+    protected final String SELECT_BLOCKS_SQL = "SELECT  height, block, wasundoable,prevblockhash,prevbranchblockhash,mineraddress,"
             + "blocktype FROM blocks WHERE hash = ?" + afterSelect();
 
-    protected String SELECT_UNSOLIDBLOCKS_SQL = "SELECT  hash,   block,  inserttime FROM unsolidblocks oder by inserttime asc"
+    protected final String SELECT_UNSOLIDBLOCKS_SQL = "SELECT  hash,   block,  inserttime FROM unsolidblocks oder by inserttime asc"
             + afterSelect();
 
-    protected String SELECT_BLOCKS_HEIGHT_SQL = "SELECT block FROM blocks WHERE height >= ?" + afterSelect()
+    protected final String SELECT_BLOCKS_HEIGHT_SQL = "SELECT block FROM blocks WHERE height >= ?" + afterSelect()
             + " order by height asc ";
-    protected String SELECT_SOLID_APPROVER_BLOCKS_SQL = "SELECT hash, rating, depth, cumulativeweight, "
+    protected final String SELECT_SOLID_APPROVER_BLOCKS_SQL = "SELECT hash, rating, depth, cumulativeweight, "
             + "  height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained,"
             + "   block FROM blocks" + " WHERE (prevblockhash = ? OR prevbranchblockhash = ?)" + afterSelect();
-    protected String SELECT_SOLID_APPROVER_HASHES_SQL = "SELECT hash FROM blocks " + " "
+    protected final String SELECT_SOLID_APPROVER_HASHES_SQL = "SELECT hash FROM blocks " + " "
             + "WHERE  (blocks.prevblockhash = ? OR blocks.prevbranchblockhash = ?)" + afterSelect();
 
-    protected String INSERT_BLOCKS_SQL = getInsert() + "  INTO blocks(hash,  height, block, wasundoable,prevblockhash,"
+    protected final String INSERT_BLOCKS_SQL = getInsert()
+            + "  INTO blocks(hash,  height, block, wasundoable,prevblockhash,"
             + "prevbranchblockhash,mineraddress,blocktype " + "  , rating, depth, cumulativeweight, "
             + "milestone, milestonelastupdate, milestonedepth, inserttime, maintained )"
             + " VALUES(?, ?, ?, ?, ?,?,  ?, ?, ?, ?, ?, ?, ?,  ?, ?, ?)";
 
-    protected String INSERT_UNSOLIDBLOCKS_SQL = getInsert() + "  INTO unsolidblocks(hash,   block,  inserttime  )"
+    protected final String INSERT_UNSOLIDBLOCKS_SQL = getInsert() + "  INTO unsolidblocks(hash,   block,  inserttime  )"
             + " VALUES(?, ?, ? )";
 
-    protected String SELECT_OUTPUTS_COUNT_SQL = "SELECT COUNT(*) FROM outputs WHERE hash = ?";
-    protected String INSERT_OUTPUTS_SQL = getInsert()
+    protected final String SELECT_OUTPUTS_COUNT_SQL = "SELECT COUNT(*) FROM outputs WHERE hash = ?";
+    protected final String INSERT_OUTPUTS_SQL = getInsert()
             + " INTO outputs (hash, outputindex, height, coinvalue, scriptbytes, toaddress, addresstargetable,"
             + " coinbase, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending)"
             + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?)";
 
-    protected String SELECT_OUTPUTS_SQL = "SELECT height, coinvalue, scriptbytes, coinbase, toaddress,"
+    protected final String SELECT_OUTPUTS_SQL = "SELECT height, coinvalue, scriptbytes, coinbase, toaddress,"
             + " addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, "
             + "spendpending FROM outputs WHERE hash = ? AND outputindex = ?";
 
-    protected String DELETE_OUTPUTS_SQL = "DELETE FROM outputs WHERE hash = ? AND outputindex= ?";
+    protected final String DELETE_OUTPUTS_SQL = "DELETE FROM outputs WHERE hash = ? AND outputindex= ?";
 
-    protected String SELECT_TRANSACTION_OUTPUTS_SQL = "SELECT " + "outputs.hash, coinvalue, scriptbytes, height, "
+    protected final String SELECT_TRANSACTION_OUTPUTS_SQL = "SELECT " + "outputs.hash, coinvalue, scriptbytes, height, "
             + " outputs.outputindex, coinbase, " + "case  when outputs.toaddress ='' then outputsmulti.toaddress "
             + "when outputs.toaddress is null then outputsmulti.toaddress "
             + " else outputs.toaddress end, addresstargetable, blockhash, tokenid, "
@@ -139,181 +140,190 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " ON outputs.hash = outputsmulti.hash AND outputs.outputindex = outputsmulti.outputindex "
             + " WHERE outputs.toaddress = ? " + " OR outputsmulti.toaddress = ?";
 
-    protected String SELECT_TRANSACTION_OUTPUTS_TOKEN_SQL = "SELECT " + " outputs.hash, coinvalue, "
+    protected final String SELECT_TRANSACTION_OUTPUTS_TOKEN_SQL = "SELECT " + " outputs.hash, coinvalue, "
             + " scriptbytes, height, outputs.outputindex, coinbase, outputs.toaddress, addresstargetable,"
             + " blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending "
             + " FROM outputs LEFT JOIN outputsmulti "
             + " ON outputs.hash = outputsmulti.hash AND outputs.outputindex = outputsmulti.outputindex "
             + " WHERE (outputs.toaddress = ? " + " OR outputsmulti.toaddress = ?) " + " AND tokenid = ?";
 
-    protected String SELECT_DUMP_OUTPUTS_SQL = "SELECT coinvalue, scriptbytes FROM outputs";
+    protected final String SELECT_DUMP_OUTPUTS_SQL = "SELECT coinvalue, scriptbytes FROM outputs";
 
     // Tables exist SQL.
-    protected String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM settings WHERE 1 = 2";
+    protected final String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM settings WHERE 1 = 2";
 
-    protected String DELETE_UNSOLIDBLOCKS_SQL = "DELETE FROM unsolidblocks WHERE hash = ?";
-    protected String DELETE_OLD_UNSOLIDBLOCKS_SQL = "DELETE FROM unsolidblocks WHERE inserttime <= ?";
-    protected String DELETE_TIP_SQL = "DELETE FROM tips WHERE hash = ?";
-    protected String INSERT_TIP_SQL = getInsert() + "  INTO tips (hash) VALUES (?)";
+    protected final String DELETE_UNSOLIDBLOCKS_SQL = "DELETE FROM unsolidblocks WHERE hash = ?";
+    protected final String DELETE_OLD_UNSOLIDBLOCKS_SQL = "DELETE FROM unsolidblocks WHERE inserttime <= ?";
+    protected final String DELETE_TIP_SQL = "DELETE FROM tips WHERE hash = ?";
+    protected final String INSERT_TIP_SQL = getInsert() + "  INTO tips (hash) VALUES (?)";
 
-    protected String SELECT_BLOCKEVALUATION_SQL = "SELECT hash, rating, depth, cumulativeweight, "
+    protected final String SELECT_BLOCKEVALUATION_SQL = "SELECT hash, rating, depth, cumulativeweight, "
             + " height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained"
             + "  FROM blocks WHERE hash = ?" + afterSelect();
 
-    protected String SELECT_BLOCKWRAP_SQL = "SELECT hash, rating, depth, cumulativeweight, "
+    protected final String SELECT_BLOCKWRAP_SQL = "SELECT hash, rating, depth, cumulativeweight, "
             + " height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained,"
             + "  block FROM blocks WHERE hash = ?" + afterSelect();
 
-    protected String SELECT_COUNT_MILESTONE_SQL = "SELECT COUNT(*) as count FROM blocks WHERE milestone = true AND height >= ? AND height <= ?";
+    protected final String SELECT_COUNT_MILESTONE_SQL = "SELECT COUNT(*) as count FROM blocks WHERE milestone = true AND height >= ? AND height <= ?";
 
-    protected String SELECT_ALL_BLOCKEVALUATIONS_SQL = "SELECT hash, "
+    protected final String SELECT_ALL_BLOCKEVALUATIONS_SQL = "SELECT hash, "
             + "rating, depth, cumulativeweight,  height, milestone,"
             + " milestonelastupdate, milestonedepth, inserttime, maintained " + " FROM blocks ";
 
-    protected String SELECT_NONSOLID_BLOCKS_SQL = "select hash, block, inserttime from unsolidblocks order by inserttime asc ";
+    protected final String SELECT_NONSOLID_BLOCKS_SQL = "select hash, block, inserttime from unsolidblocks order by inserttime asc ";
 
-    protected String SELECT_BLOCKWRAPS_TO_ADD_TO_MILESTONE_SQL = "SELECT hash, "
+    protected final String SELECT_BLOCKWRAPS_TO_ADD_TO_MILESTONE_SQL = "SELECT hash, "
             + "rating, depth, cumulativeweight, height, milestone, milestonelastupdate,"
             + " milestonedepth, inserttime, maintained, block " + "FROM blocks WHERE  milestone = false AND rating >= "
             + NetworkParameters.MILESTONE_UPPER_THRESHOLD + " AND depth >= ?" + afterSelect();
-    protected String SELECT_MAINTAINED_BLOCKS_SQL = "SELECT hash " + "FROM blocks WHERE maintained = true"
+    protected final String SELECT_MAINTAINED_BLOCKS_SQL = "SELECT hash " + "FROM blocks WHERE maintained = true"
             + afterSelect();
-    protected String SELECT_BLOCKS_IN_MILESTONEDEPTH_INTERVAL_SQL = "SELECT hash, "
+    protected final String SELECT_BLOCKS_IN_MILESTONEDEPTH_INTERVAL_SQL = "SELECT hash, "
             + "rating, depth, cumulativeweight,  height, milestone, milestonelastupdate,"
             + " milestonedepth, inserttime, maintained, block "
             + "FROM blocks WHERE milestone = true AND milestonedepth >= ? AND milestonedepth <= ?" + afterSelect();
-    protected String SELECT_BLOCKS_TO_REMOVE_FROM_MILESTONE_SQL = "SELECT hash, rating, depth, "
+    protected final String SELECT_BLOCKS_TO_REMOVE_FROM_MILESTONE_SQL = "SELECT hash, rating, depth, "
             + "cumulativeweight,  height, milestone, milestonelastupdate," + " milestonedepth, inserttime, maintained"
             + " FROM blocks WHERE  milestone = true AND rating <= " + NetworkParameters.MILESTONE_LOWER_THRESHOLD
             + afterSelect();
-    protected String SELECT_SOLID_TIPS_SQL = "SELECT blocks.hash, rating, depth, cumulativeweight, "
+    protected final String SELECT_SOLID_TIPS_SQL = "SELECT blocks.hash, rating, depth, cumulativeweight, "
             + " height, milestone, milestonelastupdate, milestonedepth, inserttime," + "maintained, block FROM blocks "
             + "INNER JOIN tips ON tips.hash=blocks.hash" + afterSelect();
-    protected String SELECT_SOLID_BLOCKS_OF_HEIGHT_SQL = "SELECT hash, rating, depth, "
+    protected final String SELECT_SOLID_BLOCKS_OF_HEIGHT_SQL = "SELECT hash, rating, depth, "
             + "cumulativeweight, height, milestone, milestonelastupdate, " + "milestonedepth, inserttime, maintained "
             + "FROM blocks WHERE  height = ?" + afterSelect();
-    protected String SELECT_OUTPUT_SPENDER_SQL = "SELECT blocks.hash," + " rating, depth, cumulativeweight,   "
+    protected final String SELECT_OUTPUT_SPENDER_SQL = "SELECT blocks.hash," + " rating, depth, cumulativeweight,   "
             + "blocks.height, milestone, milestonelastupdate, " + "milestonedepth, inserttime, maintained "
             + "FROM blocks INNER JOIN outputs ON outputs.spenderblockhash=blocks.hash"
             + " WHERE  outputs.hash = ? AND outputindex= ?" + afterSelect();
-    protected String SELECT_MAX_IMPORT_TIME_SQL = "SELECT MAX(inserttime) " + "FROM blocks";
+    protected final String SELECT_MAX_IMPORT_TIME_SQL = "SELECT MAX(inserttime) " + "FROM blocks";
 
-    protected String INSERT_TOKENS_SQL = getInsert()
+    protected final String INSERT_TOKENS_SQL = getInsert()
             + " INTO tokens (blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop, prevblockhash, spent, spenderblockhash) "
             + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-    protected String SELECT_TOKEN_SPENT_SQL = "SELECT spent FROM tokens WHERE blockhash = ?";
+    protected final String SELECT_TOKEN_SPENT_SQL = "SELECT spent FROM tokens WHERE blockhash = ?";
 
-    protected String SELECT_TOKEN_CONFIRMED_SQL = "SELECT confirmed FROM tokens WHERE blockhash = ?";
+    protected final String SELECT_TOKEN_CONFIRMED_SQL = "SELECT confirmed FROM tokens WHERE blockhash = ?";
 
-    protected String SELECT_TOKEN_ANY_CONFIRMED_SQL = "SELECT confirmed FROM tokens WHERE tokenid = ? AND tokenindex = ? AND confirmed = true";
+    protected final String SELECT_TOKEN_ANY_CONFIRMED_SQL = "SELECT confirmed FROM tokens WHERE tokenid = ? AND tokenindex = ? AND confirmed = true";
 
-    protected String SELECT_TOKEN_ISSUING_CONFIRMED_BLOCK_SQL = "SELECT blockhash FROM tokens WHERE tokenid = ? AND tokenindex = ? AND confirmed = true";
+    protected final String SELECT_TOKEN_ISSUING_CONFIRMED_BLOCK_SQL = "SELECT blockhash FROM tokens WHERE tokenid = ? AND tokenindex = ? AND confirmed = true";
 
-    protected String SELECT_TOKEN_SPENDER_SQL = "SELECT spenderblockhash FROM tokens WHERE blockhash = ?";
+    protected final String SELECT_TOKEN_SPENDER_SQL = "SELECT spenderblockhash FROM tokens WHERE blockhash = ?";
 
-    protected String SELECT_TOKEN_PREVBLOCKHASH_SQL = "SELECT prevblockhash FROM tokens WHERE blockhash = ?";
+    protected final String SELECT_TOKEN_PREVBLOCKHASH_SQL = "SELECT prevblockhash FROM tokens WHERE blockhash = ?";
 
-    protected String UPDATE_TOKEN_SPENT_SQL = getUpdate() + " tokens SET spent = ?, spenderblockhash = ? "
+    protected final String SELECT_TOKEN_SQL = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop"
+            + " FROM tokens WHERE blockhash = ?";
+
+    protected final String UPDATE_TOKEN_SPENT_SQL = getUpdate() + " tokens SET spent = ?, spenderblockhash = ? "
             + " WHERE blockhash = ?";
 
-    protected String UPDATE_TOKEN_CONFIRMED_SQL = getUpdate() + " tokens SET confirmed = ? " + " WHERE blockhash = ?";
+    protected final String UPDATE_TOKEN_CONFIRMED_SQL = getUpdate() + " tokens SET confirmed = ? "
+            + " WHERE blockhash = ?";
 
-    protected String SELECT_TOKENS_SQL = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop "
+    protected final String SELECT_CONFIRMED_TOKENS_SQL = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop "
             + " FROM tokens WHERE confirmed = 1";
 
-    protected String SELECT_MARKET_TOKENS_SQL = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop "
+    protected final String SELECT_MARKET_TOKENS_SQL = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop "
             + " FROM tokens WHERE tokentype = 1 and confirmed = 1";
 
-    protected String SELECT_TOKENS_ACOUNT_MAP_SQL = "SELECT tokenid, SUM(amount) as amount FROM tokens WHERE confirmed = 1 GROUP BY tokenid";
+    protected final String SELECT_TOKENS_ACOUNT_MAP_SQL = "SELECT tokenid, SUM(amount) as amount FROM tokens WHERE confirmed = 1 GROUP BY tokenid";
 
-    protected String SELECT_TOKENS_INFO_SQL = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop"
-            + " FROM tokens WHERE tokenid = ? AND confirmed = 1";
-    
-    protected String COUNT_TOKENSINDEX_SQL = "SELECT blockhash, tokenindex FROM tokens WHERE tokenid = ? AND confirmed = 1 ORDER BY tokenindex DESC limit 1";
+    protected final String COUNT_TOKENSINDEX_SQL = "SELECT blockhash, tokenindex FROM tokens WHERE tokenid = ? AND confirmed = 1 ORDER BY tokenindex DESC limit 1";
 
-    protected String UPDATE_SETTINGS_SQL = getUpdate() + " settings SET settingvalue = ? WHERE name = ?";
-    protected String UPDATE_BLOCKS_SQL = getUpdate() + " blocks SET wasundoable=? WHERE hash=?";
+    protected final String UPDATE_SETTINGS_SQL = getUpdate() + " settings SET settingvalue = ? WHERE name = ?";
+    protected final String UPDATE_BLOCKS_SQL = getUpdate() + " blocks SET wasundoable=? WHERE hash=?";
 
-    protected String UPDATE_OUTPUTS_SPENT_SQL = getUpdate()
+    protected final String UPDATE_OUTPUTS_SPENT_SQL = getUpdate()
             + " outputs SET spent = ?, spenderblockhash = ? WHERE hash = ? AND outputindex= ?";
 
-    protected String UPDATE_OUTPUTS_CONFIRMED_SQL = getUpdate()
+    protected final String UPDATE_OUTPUTS_CONFIRMED_SQL = getUpdate()
             + " outputs SET confirmed = ? WHERE hash = ? AND outputindex= ?";
 
-    protected String UPDATE_OUTPUTS_SPENDPENDING_SQL = getUpdate()
+    protected final String UPDATE_OUTPUTS_SPENDPENDING_SQL = getUpdate()
             + " outputs SET spendpending = ? WHERE hash = ? AND outputindex= ?";
 
-    protected String UPDATE_OUTPUTS_CONFIRMING_BLOCK_SQL = getUpdate()
+    protected final String UPDATE_OUTPUTS_CONFIRMING_BLOCK_SQL = getUpdate()
             + " outputs SET blockhash = ? WHERE hash = ? AND outputindex= ?";
 
-    protected String UPDATE_BLOCKEVALUATION_DEPTH_SQL = getUpdate() + " blocks SET depth = ? WHERE hash = ?";
+    protected final String UPDATE_BLOCKEVALUATION_DEPTH_SQL = getUpdate() + " blocks SET depth = ? WHERE hash = ?";
 
-    protected String UPDATE_BLOCKEVALUATION_WEIGHT_AND_DEPTH_SQL = getUpdate()
+    protected final String UPDATE_BLOCKEVALUATION_WEIGHT_AND_DEPTH_SQL = getUpdate()
             + " blocks SET cumulativeweight = ?, depth = ? WHERE hash = ?";
 
-    protected String UPDATE_BLOCKEVALUATION_CUMULATIVEWEIGHT_SQL = getUpdate()
+    protected final String UPDATE_BLOCKEVALUATION_CUMULATIVEWEIGHT_SQL = getUpdate()
             + " blocks SET cumulativeweight = ? WHERE hash = ?";
 
-    protected String UPDATE_BLOCKEVALUATION_HEIGHT_SQL = getUpdate() + " blocks SET height = ? WHERE hash = ?";
+    protected final String UPDATE_BLOCKEVALUATION_HEIGHT_SQL = getUpdate() + " blocks SET height = ? WHERE hash = ?";
 
-    protected String UPDATE_BLOCKEVALUATION_MILESTONE_SQL = getUpdate()
+    protected final String UPDATE_BLOCKEVALUATION_MILESTONE_SQL = getUpdate()
             + " blocks SET milestone = ?,milestonelastupdate= ?  WHERE hash = ?";
 
-    protected String UPDATE_BLOCKEVALUATION_RATING_SQL = getUpdate() + " blocks SET rating = ? WHERE hash = ?";
+    protected final String UPDATE_BLOCKEVALUATION_RATING_SQL = getUpdate() + " blocks SET rating = ? WHERE hash = ?";
 
-    protected String UPDATE_BLOCKEVALUATION_MILESTONEDEPTH_SQL = getUpdate()
+    protected final String UPDATE_BLOCKEVALUATION_MILESTONEDEPTH_SQL = getUpdate()
             + " blocks SET milestonedepth = ? WHERE hash = ?";
 
-    protected String UPDATE_BLOCKEVALUATION_MAINTAINED_SQL = getUpdate() + " blocks SET maintained = ? WHERE hash = ?";
+    protected final String UPDATE_BLOCKEVALUATION_MAINTAINED_SQL = getUpdate()
+            + " blocks SET maintained = ? WHERE hash = ?";
 
     protected abstract String getUpdateBlockevaluationUnmaintainAllSQL();
 
-    protected String SELECT_MULTISIGNADDRESS_SQL = "SELECT blockhash, tokenid, address, pubKeyHex, posIndex FROM multisignaddress WHERE tokenid = ? AND blockhash = ?";
-    protected String INSERT_MULTISIGNADDRESS_SQL = "INSERT INTO multisignaddress (tokenid, address, pubKeyHex, posIndex,blockhash) VALUES (?, ?, ?, ?,?)";
-    protected String DELETE_MULTISIGNADDRESS_SQL = "DELETE FROM multisignaddress WHERE tokenid = ? AND address = ?";
-    protected String COUNT_MULTISIGNADDRESS_SQL = "SELECT COUNT(*) as count FROM multisignaddress WHERE tokenid = ?";
-    protected String SELECT_MULTISIGNADDRESSINFO_SQL = "SELECT tokenid, address FROM multisignaddress WHERE tokenid = ? AND address = ?";
-    protected String DELETE_MULTISIGNADDRESS_SQL0 = "DELETE FROM multisignaddress WHERE tokenid = ? AND blockhash = ?";
+    protected final String SELECT_MULTISIGNADDRESS_SQL = "SELECT blockhash, tokenid, address, pubKeyHex, posIndex FROM multisignaddress WHERE tokenid = ? AND blockhash = ?";
+    protected final String INSERT_MULTISIGNADDRESS_SQL = "INSERT INTO multisignaddress (tokenid, address, pubKeyHex, posIndex,blockhash) VALUES (?, ?, ?, ?,?)";
+    protected final String DELETE_MULTISIGNADDRESS_SQL = "DELETE FROM multisignaddress WHERE tokenid = ? AND address = ?";
+    protected final String COUNT_MULTISIGNADDRESS_SQL = "SELECT COUNT(*) as count FROM multisignaddress WHERE tokenid = ?";
+    protected final String SELECT_MULTISIGNADDRESSINFO_SQL = "SELECT tokenid, address FROM multisignaddress WHERE tokenid = ? AND address = ?";
+    protected final String DELETE_MULTISIGNADDRESS_SQL0 = "DELETE FROM multisignaddress WHERE tokenid = ? AND blockhash = ?";
 
-    protected String SELECT_SEARCH_TOKENSERIAL_ALL_SQL = "SELECT ts.tokenid as tokenid, tokenindex, amount,signnumber,"
+    protected final String SELECT_SEARCH_TOKENSERIAL_ALL_SQL = "SELECT ts.tokenid as tokenid, tokenindex, amount,signnumber,"
             + "(select count(address) FROM multisign ms WHERE ts.tokenid=ms.tokenid and ts.tokenindex=ms.tokenindex AND ms.sign=1) as count "
             + "FROM tokenserial ts  " + "LEFT JOIN multisignaddress msa ON ts.tokenid=msa.tokenid "
             + "LEFT JOIN tokens t ON ts.tokenid=t.tokenid WHERE 1=1 ";
 
-    protected String INSERT_MULTISIGNBY_SQL = "INSERT INTO multisignby (tokenid, tokenindex, address) VALUES (?, ?, ?)";
-    protected String SELECT_MULTISIGNBY_SQL = "SELECT COUNT(*) as count FROM multisignby WHERE tokenid = ? AND tokenindex = ? AND address = ?";
-    protected String SELECT_MULTISIGNBY0_SQL = "SELECT COUNT(*) as count FROM multisignby WHERE tokenid = ? AND tokenindex = ?";
-    protected String SELECT_MULTISIGNBY000_SQL = "SELECT tokenid, tokenindex, address FROM multisignby WHERE tokenid = ? AND tokenindex = ? AND address = ?";
+    protected final String INSERT_MULTISIGNBY_SQL = "INSERT INTO multisignby (tokenid, tokenindex, address) VALUES (?, ?, ?)";
+    protected final String SELECT_MULTISIGNBY_SQL = "SELECT COUNT(*) as count FROM multisignby WHERE tokenid = ? AND tokenindex = ? AND address = ?";
+    protected final String SELECT_MULTISIGNBY0_SQL = "SELECT COUNT(*) as count FROM multisignby WHERE tokenid = ? AND tokenindex = ?";
+    protected final String SELECT_MULTISIGNBY000_SQL = "SELECT tokenid, tokenindex, address FROM multisignby WHERE tokenid = ? AND tokenindex = ? AND address = ?";
 
-    protected String SELECT_MULTISIGN_ADDRESS_ALL_SQL = "SELECT id, tokenid, tokenindex, address, blockhash, sign,(select count(ms1.sign) from multisign ms1 where ms1.tokenid=tokenid and tokenindex=ms1.tokenindex and ms1.sign!=0 ) as count FROM multisign  WHERE 1=1 ";
-    protected String SELECT_MULTISIGN_ADDRESS_SQL = "SELECT id, tokenid, tokenindex, address, blockhash, sign FROM multisign WHERE address = ? ORDER BY tokenindex ASC";
-    protected String INSERT_MULTISIGN_SQL = "INSERT INTO multisign (tokenid, tokenindex, address, blockhash, sign, id) VALUES (?, ?, ?, ?, ?, ?)";
-    protected String UPDATE_MULTISIGN_SQL = "UPDATE multisign SET blockhash = ?, sign = ? WHERE tokenid = ? AND tokenindex = ? AND address = ?";
-    protected String UPDATE_MULTISIGN0_SQL = "UPDATE multisign SET blockhash = ? WHERE tokenid = ? AND tokenindex = ? AND address = ?";
-    protected String UPDATE_MULTISIGN1_SQL = "UPDATE multisign SET blockhash = ? WHERE tokenid = ? AND tokenindex = ?";
-    protected String SELECT_COUNT_MULTISIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = ? AND tokenindex = ? AND address = ?";
-    protected String DELETE_MULTISIGN_SQL = "DELETE FROM multisign WHERE tokenid = ?";
+    protected final String SELECT_MULTISIGN_ADDRESS_ALL_SQL = "SELECT id, tokenid, tokenindex, address, blockhash, sign,(select count(ms1.sign) from multisign ms1 where ms1.tokenid=tokenid and tokenindex=ms1.tokenindex and ms1.sign!=0 ) as count FROM multisign  WHERE 1=1 ";
+    protected final String SELECT_MULTISIGN_ADDRESS_SQL = "SELECT id, tokenid, tokenindex, address, blockhash, sign FROM multisign WHERE address = ? ORDER BY tokenindex ASC";
+    protected final String INSERT_MULTISIGN_SQL = "INSERT INTO multisign (tokenid, tokenindex, address, blockhash, sign, id) VALUES (?, ?, ?, ?, ?, ?)";
+    protected final String UPDATE_MULTISIGN_SQL = "UPDATE multisign SET blockhash = ?, sign = ? WHERE tokenid = ? AND tokenindex = ? AND address = ?";
+    protected final String UPDATE_MULTISIGN0_SQL = "UPDATE multisign SET blockhash = ? WHERE tokenid = ? AND tokenindex = ? AND address = ?";
+    protected final String UPDATE_MULTISIGN1_SQL = "UPDATE multisign SET blockhash = ? WHERE tokenid = ? AND tokenindex = ?";
+    protected final String SELECT_COUNT_MULTISIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = ? AND tokenindex = ? AND address = ?";
+    protected final String DELETE_MULTISIGN_SQL = "DELETE FROM multisign WHERE tokenid = ?";
 
-    protected String SELECT_COUNT_MULTISIGN_SIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = ? AND tokenindex = ? AND sign = ?";
+    protected final String SELECT_COUNT_MULTISIGN_SIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = ? AND tokenindex = ? AND sign = ?";
 
-    protected String INSERT_TX_REWARD_SQL = getInsert()
-            + "  INTO txreward (blockhash, prevheight, confirmed, eligibility) VALUES (?, ?, ?, ?)";
-    protected String SELECT_CONFIRMED_TX_REWARD_SQL = "SELECT blockhash FROM txreward WHERE prevheight = ?";
-    protected String SELECT_MAX_TX_REWARD_HEIGHT_SQL = "SELECT MAX(prevheight) "
+    /* REWARD BLOCKS */
+    protected final String INSERT_TX_REWARD_SQL = getInsert()
+            + "  INTO txreward (blockhash, prevheight, confirmed, spent, spenderblockhash, eligibility, prevblockhash) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    protected final String SELECT_CONFIRMED_TX_REWARD_SQL = "SELECT blockhash FROM txreward WHERE prevheight = ?";
+    protected final String SELECT_MAX_TX_REWARD_HEIGHT_SQL = "SELECT MAX(prevheight) "
             + "FROM txreward WHERE confirmed = true";
-    protected String SELECT_TX_REWARD_CONFIRMED_SQL = "SELECT confirmed " + "FROM txreward WHERE blockhash = ?";
-    protected String SELECT_TX_REWARD_ELIGIBLE_SQL = "SELECT eligibility " + "FROM txreward WHERE blockhash = ?";
-    protected String UPDATE_TX_REWARD_CONFIRMED_SQL = "UPDATE txreward SET confirmed = ? WHERE blockhash = ?";
+    protected final String SELECT_TX_REWARD_CONFIRMED_SQL = "SELECT confirmed " + "FROM txreward WHERE blockhash = ?";
+    protected final String SELECT_TX_REWARD_ELIGIBLE_SQL = "SELECT eligibility " + "FROM txreward WHERE blockhash = ?";
+    protected final String SELECT_TX_REWARD_SPENT_SQL = "SELECT spent " + "FROM txreward WHERE blockhash = ?";
+    protected final String SELECT_TX_REWARD_SPENDER_SQL = "SELECT spenderblockhash "
+            + "FROM txreward WHERE blockhash = ?";
+    protected final String SELECT_TX_REWARD_PREVBLOCKHASH_SQL = "SELECT prevblockhash " + "FROM txreward WHERE blockhash = ?";
+    protected final String UPDATE_TX_REWARD_CONFIRMED_SQL = "UPDATE txreward SET confirmed = ? WHERE blockhash = ?";
+    protected final String UPDATE_TX_REWARD_SPENT_SQL = "UPDATE txreward SET spent = ?, spenderblockhash = ? WHERE blockhash = ?";
 
-    protected String INSERT_OUTPUTSMULTI_SQL = "insert into outputsmulti (hash, toaddress, outputindex, minimumsign) values (?, ?, ?, ?)";
+    /* OTHER */
+    protected final String INSERT_OUTPUTSMULTI_SQL = "insert into outputsmulti (hash, toaddress, outputindex, minimumsign) values (?, ?, ?, ?)";
 
-    protected String SELECT_USERDATA_SQL = "SELECT blockhash, dataclassname, data, pubKey, blocktype FROM userdata WHERE dataclassname = ? and pubKey = ?";
-    protected String INSERT_USERDATA_SQL = "INSERT INTO userdata (blockhash, dataclassname, data, pubKey, blocktype) VALUES (?, ?, ?, ?, ?)";
-    protected String UPDATE_USERDATA_SQL = "UPDATE userdata SET blockhash = ?, data = ? WHERE dataclassname = ? and pubKey = ?";
+    protected final String SELECT_USERDATA_SQL = "SELECT blockhash, dataclassname, data, pubKey, blocktype FROM userdata WHERE dataclassname = ? and pubKey = ?";
+    protected final String INSERT_USERDATA_SQL = "INSERT INTO userdata (blockhash, dataclassname, data, pubKey, blocktype) VALUES (?, ?, ?, ?, ?)";
+    protected final String UPDATE_USERDATA_SQL = "UPDATE userdata SET blockhash = ?, data = ? WHERE dataclassname = ? and pubKey = ?";
 
-    protected String INSERT_LOGRESULT_SQL = "INSERT INTO logresult (logResultId, logContent, submitDate) VALUE (?, ?, ?)";
-    protected String SELECT_LOGRESULT_SQL = "SELECT logResultId, logContent, submitDate FROM logresult WHERE logResultId = ?";
+    protected final String INSERT_LOGRESULT_SQL = "INSERT INTO logresult (logResultId, logContent, submitDate) VALUE (?, ?, ?)";
+    protected final String SELECT_LOGRESULT_SQL = "SELECT logResultId, logContent, submitDate FROM logresult WHERE logResultId = ?";
 
     protected NetworkParameters params;
     protected ThreadLocal<Connection> conn;
@@ -730,7 +740,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      */
     private void createNewStore(NetworkParameters params) throws BlockStoreException {
         try {
-            // Set up the genesis block.
+            // Set up the genesis block and initial state of tables
             StoredBlock storedGenesisHeader = new StoredBlock(params.getGenesisBlock(), 0);
             List<Transaction> genesisTransactions = Lists.newLinkedList();
             StoredUndoableBlock storedGenesis = new StoredUndoableBlock(params.getGenesisBlock().getHash(),
@@ -739,14 +749,19 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             saveGenesisTransactionOutput(params.getGenesisBlock());
             updateBlockEvaluationMilestone(params.getGenesisBlock().getHash(), true);
 
-            insertTxReward(params.getGenesisBlock().getHash(), -NetworkParameters.REWARD_HEIGHT_INTERVAL, true);
+            // Just fill the tables with some valid data
+            // Reward output table
+            insertTxReward(params.getGenesisBlock().getHash(), -NetworkParameters.REWARD_HEIGHT_INTERVAL, true,
+                    params.getGenesisBlock().getHash());
             updateTxRewardConfirmed(params.getGenesisBlock().getHash(), true);
 
-            Token tokens = Token.buildSimpleTokenInfo(true, "", NetworkParameters.BIGNETCOIN_TOKENID_STRING, "BIG",
+            // Token output table
+            Token tokens = Token.buildSimpleTokenInfo(true, "", NetworkParameters.BIGTANGLE_TOKENID_STRING, "BIG",
                     "BIG currency", 1, 0, 0, false, true);
             insertToken(params.getGenesisBlock().getHashAsString(), tokens);
             updateTokenConfirmed(params.getGenesisBlock().getHashAsString(), true);
 
+            // Tip table
             insertTip(params.getGenesisBlock().getHash());
         } catch (VerificationException e) {
             throw new RuntimeException(e); // Cannot happen.
@@ -2002,14 +2017,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected abstract String getUpdateOutputsSpentSQL();
 
     @Override
-    public void updateTransactionOutputSpent(Sha256Hash prevTxHash, long index, boolean b, Sha256Hash spenderBlock)
+    public void updateTransactionOutputSpent(Sha256Hash prevTxHash, long index, boolean b, @Nullable Sha256Hash spenderBlockHash)
             throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(getUpdateOutputsSpentSQL());
             preparedStatement.setBoolean(1, b);
-            preparedStatement.setBytes(2, spenderBlock != null ? spenderBlock.getBytes() : null);
+            preparedStatement.setBytes(2, spenderBlockHash != null ? spenderBlockHash.getBytes() : null);
             preparedStatement.setBytes(3, prevTxHash.getBytes());
             preparedStatement.setLong(4, index);
             preparedStatement.executeUpdate();
@@ -2109,7 +2124,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            String sql = SELECT_TOKENS_SQL + " AND tokentype=0 ";
+            String sql = SELECT_CONFIRMED_TOKENS_SQL + " AND tokentype=0 ";
             preparedStatement = conn.get().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -2218,7 +2233,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            String sql = SELECT_TOKENS_SQL + " AND 1=1";
+            String sql = SELECT_CONFIRMED_TOKENS_SQL + " AND 1=1";
             if (name != null && !"".equals(name.trim())) {
                 sql += " AND (tokenname LIKE '%" + name + "%' OR description LIKE '%" + name + "%')";
             }
@@ -2257,7 +2272,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public void insertToken(String blockhash, Token tokens) throws BlockStoreException {
         boolean confirmed = false;
-        // TODO check correctness of all these fields
         String tokenid = tokens.getTokenid();
         int tokenindex = tokens.getTokenindex();
         long amount = tokens.getAmount();
@@ -2452,7 +2466,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void updateTokenSpent(String prevBlockhash, boolean b, String blockhash) throws BlockStoreException {
+    public void updateTokenSpent(String blockhash, boolean b, String spenderBlockHash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -2461,8 +2475,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             // tokentype = ?, tokenstop =?
             preparedStatement = conn.get().prepareStatement(UPDATE_TOKEN_SPENT_SQL);
             preparedStatement.setBoolean(1, b);
-            preparedStatement.setString(2, blockhash);
-            preparedStatement.setString(3, prevBlockhash);
+            preparedStatement.setString(2, spenderBlockHash);
+            preparedStatement.setString(3, blockhash);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -2739,7 +2753,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 return tokens;
             } else {
                 tokens.setBlockhash("");
-                tokens.setTokenindex(0);
+                tokens.setTokenindex(0); // TODO should be -1 if there is none
             }
             return tokens;
         } catch (SQLException e) {
@@ -2756,14 +2770,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public Token getTokensInfo(String tokenid) throws BlockStoreException {
+    public Token getToken(String blockhash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             // blockhash, confirmed, tokenid, tokenindex, amount, tokenname,
             // description, url, signnumber, multiserial, tokentype, tokenstop
-            preparedStatement = conn.get().prepareStatement(SELECT_TOKENS_INFO_SQL);
-            preparedStatement.setString(1, tokenid);
+            preparedStatement = conn.get().prepareStatement(SELECT_TOKEN_SQL);
+            preparedStatement.setString(1, blockhash);
             ResultSet resultSet = preparedStatement.executeQuery();
             Token tokens = null;
             if (resultSet.next()) {
@@ -3298,6 +3312,75 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
+    public boolean getTxRewardSpent(Sha256Hash hash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_SPENT_SQL);
+            preparedStatement.setBytes(1, hash.getBytes());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            return resultSet.getBoolean(1);
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public Sha256Hash getTxRewardSpender(Sha256Hash hash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_SPENDER_SQL);
+            preparedStatement.setBytes(1, hash.getBytes());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            return Sha256Hash.wrap(resultSet.getBytes(1));
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public Sha256Hash getTxRewardPrevBlockHash(Sha256Hash hash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_PREVBLOCKHASH_SQL);
+            preparedStatement.setBytes(1, hash.getBytes());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            return Sha256Hash.wrap(resultSet.getBytes(1));
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
     public boolean getTxRewardConfirmed(Sha256Hash hash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -3321,7 +3404,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void insertTxReward(Sha256Hash hash, long prevHeight, boolean eligibility) throws BlockStoreException {
+    public void insertTxReward(Sha256Hash hash, long prevHeight, boolean eligibility, Sha256Hash prevBlockHash)
+            throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -3329,7 +3413,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setBytes(1, hash.getBytes());
             preparedStatement.setLong(2, prevHeight);
             preparedStatement.setBoolean(3, false);
-            preparedStatement.setBoolean(4, eligibility);
+            preparedStatement.setBoolean(4, false);
+            preparedStatement.setBytes(5, null);
+            preparedStatement.setBoolean(6, eligibility);
+            preparedStatement.setBytes(7, prevBlockHash.getBytes());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -3352,6 +3439,29 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement = conn.get().prepareStatement(UPDATE_TX_REWARD_CONFIRMED_SQL);
             preparedStatement.setBoolean(1, b);
             preparedStatement.setBytes(2, hash.getBytes());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void updateTxRewardSpent(Sha256Hash hash, boolean b, @Nullable Sha256Hash spenderBlockHash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(UPDATE_TX_REWARD_SPENT_SQL);
+            preparedStatement.setBoolean(1, b);
+            preparedStatement.setBytes(2, spenderBlockHash == null ? null : spenderBlockHash.getBytes());
+            preparedStatement.setBytes(3, hash.getBytes());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);

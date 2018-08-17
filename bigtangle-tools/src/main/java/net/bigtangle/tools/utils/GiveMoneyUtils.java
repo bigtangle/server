@@ -124,7 +124,7 @@ public class GiveMoneyUtils {
 
         System.out.println(outputs.size());
 
-        Coin coinbase = Coin.valueOf(9999L, NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin coinbase = Coin.valueOf(9999L, NetworkParameters.BIGTANGLE_TOKENID);
 
         Transaction doublespent = new Transaction(Configure.PARAMS);
         doublespent.addOutput(new TransactionOutput(Configure.PARAMS, doublespent, coinbase, ecKey));

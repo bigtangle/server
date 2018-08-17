@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Random;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import net.bigtangle.core.Address;
@@ -36,12 +37,12 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.server.service.TipService;
+import net.bigtangle.server.service.TipsService;
 
 public class FakeTxBuilder {
 
     @Autowired
-    private static TipService tipsManager;
+    private static TipsService tipsManager;
 
     /** Create a fake transaction, without change. */
     public static Transaction createFakeTx(final NetworkParameters params) {
@@ -83,7 +84,7 @@ public class FakeTxBuilder {
         TransactionOutput outputToMe = new TransactionOutput(params, t, value, to);
         t.addOutput(outputToMe);
         TransactionOutput change = new TransactionOutput(params, t,
-                valueOf(Coin.COIN_VALUE * 1 + 11, NetworkParameters.BIGNETCOIN_TOKENID), changeOutput);
+                valueOf(Coin.COIN_VALUE * 1 + 11, NetworkParameters.BIGTANGLE_TOKENID), changeOutput);
         t.addOutput(change);
         // Make a previous tx simply to send us sufficient coins. This prev tx
         // is not really valid but it doesn't
@@ -127,7 +128,7 @@ public class FakeTxBuilder {
         // matter for our purposes.
         Transaction prevTx1 = new Transaction(params);
         TransactionOutput prevOut1 = new TransactionOutput(params, prevTx1,
-                Coin.valueOf(split, NetworkParameters.BIGNETCOIN_TOKENID), to);
+                Coin.valueOf(split, NetworkParameters.BIGTANGLE_TOKENID), to);
         prevTx1.addOutput(prevOut1);
         // Connect it.
         t.addInput(prevOut1).setScriptSig(ScriptBuilder.createInputScript(TransactionSignature.dummy()));
@@ -136,7 +137,7 @@ public class FakeTxBuilder {
         // Do it again
         Transaction prevTx2 = new Transaction(params);
         TransactionOutput prevOut2 = new TransactionOutput(params, prevTx2,
-                Coin.valueOf(value.getValue() - split, NetworkParameters.BIGNETCOIN_TOKENID), to);
+                Coin.valueOf(value.getValue() - split, NetworkParameters.BIGTANGLE_TOKENID), to);
         prevTx2.addOutput(prevOut2);
         t.addInput(prevOut2).setScriptSig(ScriptBuilder.createInputScript(TransactionSignature.dummy()));
 
@@ -164,7 +165,7 @@ public class FakeTxBuilder {
         TransactionOutput outputToMe = new TransactionOutput(params, t, value, to);
         t.addOutput(outputToMe);
         TransactionOutput change = new TransactionOutput(params, t,
-                valueOf(Coin.COIN_VALUE * 1 + 11, NetworkParameters.BIGNETCOIN_TOKENID), new ECKey());
+                valueOf(Coin.COIN_VALUE * 1 + 11, NetworkParameters.BIGTANGLE_TOKENID), new ECKey());
         t.addOutput(change);
         // Make a previous tx simply to send us sufficient coins. This prev tx
         // is not really valid but it doesn't
@@ -191,7 +192,7 @@ public class FakeTxBuilder {
         TransactionOutput outputToMe = new TransactionOutput(params, t, value, to);
         t.addOutput(outputToMe);
         TransactionOutput change = new TransactionOutput(params, t,
-                valueOf(Coin.COIN_VALUE * 1 + 11, NetworkParameters.BIGNETCOIN_TOKENID), new ECKey().toAddress(params));
+                valueOf(Coin.COIN_VALUE * 1 + 11, NetworkParameters.BIGTANGLE_TOKENID), new ECKey().toAddress(params));
         t.addOutput(change);
         // Make a feeder tx that sends to the from address specified. This
         // feeder tx is not really valid but it doesn't
@@ -282,12 +283,10 @@ public class FakeTxBuilder {
             long timeSeconds, int height, Transaction... transactions) {
         try {
             Block previousBlock = previousStoredBlock.getHeader();
-            Address to = new ECKey().toAddress(previousBlock.getParams());
-            Block b = BlockForTest.createNextBlock(previousBlock, to, version, timeSeconds, height,
-                    previousBlock.getHash());
+            Block b = BlockForTest.createNextBlock(previousBlock, version, previousBlock);
             // Coinbase tx was already added.
             for (Transaction tx : transactions) {
-           //     tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
+                // tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
                 b.addTransaction(tx);
             }
             b.solve();
@@ -333,16 +332,16 @@ public class FakeTxBuilder {
     }
 
     public static Block makeSolvedTestBlock(BlockStore blockStore, Address coinsTo) throws Exception {
-        Block b = BlockForTest.createNextBlock(
-                blockStore.get(tipsManager.getValidatedBlockPair().getLeft()).getHeader(), coinsTo,
-                tipsManager.getValidatedBlockPair().getRight());
+        Pair<Sha256Hash, Sha256Hash> validatedBlockPair = tipsManager.getValidatedBlockPair();
+        Block b = BlockForTest.createNextBlock(blockStore.get(validatedBlockPair.getLeft()).getHeader(), coinsTo,
+                blockStore.get(validatedBlockPair.getRight()).getHeader());
         b.solve();
         return b;
     }
 
     public static Block makeSolvedTestBlock(Block prev, Transaction... transactions) throws BlockStoreException {
         Address to = new ECKey().toAddress(prev.getParams());
-        Block b = BlockForTest.createNextBlock(prev, to, prev.getHash());
+        Block b = BlockForTest.createNextBlock(prev, to, prev);
         // Coinbase tx already exists.
         for (Transaction tx : transactions) {
             b.addTransaction(tx);
@@ -353,7 +352,7 @@ public class FakeTxBuilder {
 
     public static Block makeSolvedTestBlock(Block prev, Address to, Transaction... transactions)
             throws BlockStoreException {
-        Block b = BlockForTest.createNextBlock(prev, to, prev.getHash());
+        Block b = BlockForTest.createNextBlock(prev, to, prev);
         // Coinbase tx already exists.
         for (Transaction tx : transactions) {
             b.addTransaction(tx);

@@ -32,14 +32,14 @@ public class BitcoinURITest {
 
         // simple example
         assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS + "?amount=12.34&label=Hello&message=AMessage",
-                BitcoinURI.convertToBitcoinURI(goodAddress, parseCoin("12.34", NetworkParameters.BIGNETCOIN_TOKENID),
+                BitcoinURI.convertToBitcoinURI(goodAddress, parseCoin("12.34", NetworkParameters.BIGTANGLE_TOKENID),
                         "Hello", "AMessage"));
 
         // example with spaces, ampersand and plus
         assertEquals(
                 "bitcoin:" + MAINNET_GOOD_ADDRESS
                         + "?amount=12.34&label=Hello%20World&message=Mess%20%26%20age%20%2B%20hope",
-                BitcoinURI.convertToBitcoinURI(goodAddress, parseCoin("12.34", NetworkParameters.BIGNETCOIN_TOKENID),
+                BitcoinURI.convertToBitcoinURI(goodAddress, parseCoin("12.34", NetworkParameters.BIGTANGLE_TOKENID),
                         "Hello World", "Mess & age + hope"));
 
         // no amount, label present, message present
@@ -48,21 +48,21 @@ public class BitcoinURITest {
 
         // amount present, no label, message present
         assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS + "?amount=0.1&message=glory", BitcoinURI.convertToBitcoinURI(
-                goodAddress, parseCoin("0.1", NetworkParameters.BIGNETCOIN_TOKENID), null, "glory"));
+                goodAddress, parseCoin("0.1", NetworkParameters.BIGTANGLE_TOKENID), null, "glory"));
         assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS + "?amount=0.1&message=glory", BitcoinURI
-                .convertToBitcoinURI(goodAddress, parseCoin("0.1", NetworkParameters.BIGNETCOIN_TOKENID), "", "glory"));
+                .convertToBitcoinURI(goodAddress, parseCoin("0.1", NetworkParameters.BIGTANGLE_TOKENID), "", "glory"));
 
         // amount present, label present, no message
         assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS + "?amount=12.34&label=Hello", BitcoinURI.convertToBitcoinURI(
-                goodAddress, parseCoin("12.34", NetworkParameters.BIGNETCOIN_TOKENID), "Hello", null));
+                goodAddress, parseCoin("12.34", NetworkParameters.BIGTANGLE_TOKENID), "Hello", null));
         assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS + "?amount=12.34&label=Hello", BitcoinURI.convertToBitcoinURI(
-                goodAddress, parseCoin("12.34", NetworkParameters.BIGNETCOIN_TOKENID), "Hello", ""));
+                goodAddress, parseCoin("12.34", NetworkParameters.BIGTANGLE_TOKENID), "Hello", ""));
 
         // amount present, no label, no message
         assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS + "?amount=1000", BitcoinURI.convertToBitcoinURI(goodAddress,
-                parseCoin("1000", NetworkParameters.BIGNETCOIN_TOKENID), null, null));
+                parseCoin("1000", NetworkParameters.BIGTANGLE_TOKENID), null, null));
         assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS + "?amount=1000", BitcoinURI.convertToBitcoinURI(goodAddress,
-                parseCoin("1000", NetworkParameters.BIGNETCOIN_TOKENID), "", ""));
+                parseCoin("1000", NetworkParameters.BIGTANGLE_TOKENID), "", ""));
 
         // no amount, label present, no message
         assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS + "?label=Hello",
@@ -88,7 +88,7 @@ public class BitcoinURITest {
 
         assertEquals("test:" + MAINNET_GOOD_ADDRESS + "?amount=12.34&label=Hello&message=AMessage",
                 BitcoinURI.convertToBitcoinURI(Address.fromBase58(alternativeParameters, MAINNET_GOOD_ADDRESS),
-                        parseCoin("12.34", NetworkParameters.BIGNETCOIN_TOKENID), "Hello", "AMessage"));
+                        parseCoin("12.34", NetworkParameters.BIGTANGLE_TOKENID), "Hello", "AMessage"));
     }
 
     @Test

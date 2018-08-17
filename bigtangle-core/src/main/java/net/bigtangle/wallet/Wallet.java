@@ -2367,7 +2367,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
 				BigInteger txOutputTotalNum = new BigInteger(txOutputTotal.toString());
 				txOutputTotalNum = txOutputTotalNum.multiply(new BigInteger(txOwnedInputsTotal.toString()));
 				txOutputTotalNum = txOutputTotalNum.divide(new BigInteger(txInputsTotal.toString()));
-				txOutputTotal = Coin.valueOf(txOutputTotalNum.longValue(), NetworkParameters.BIGNETCOIN_TOKENID);
+				txOutputTotal = Coin.valueOf(txOutputTotalNum.longValue(), NetworkParameters.BIGTANGLE_TOKENID);
 			}
 			total = total.add(txOutputTotal);
 

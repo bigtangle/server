@@ -12,7 +12,7 @@ public class TokenInfo implements java.io.Serializable {
     private static final long serialVersionUID = 1554582498768357964L;
 
     private Token tokens;
-    private List<Token> positveTokenList = new ArrayList<Token>(); //TODO remove
+    private List<Token> positveTokenList = new ArrayList<Token>(); 
 
     private List<MultiSignAddress> multiSignAddresses;
 

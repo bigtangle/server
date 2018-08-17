@@ -150,7 +150,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         Transaction doublespent = new Transaction(networkParameters);
 
         for (Map.Entry<String, Integer> entry : giveMoneyResult.entrySet()) {
-            Coin amount = Coin.valueOf(entry.getValue() * 1000, NetworkParameters.BIGNETCOIN_TOKENID);
+            Coin amount = Coin.valueOf(entry.getValue() * 1000, NetworkParameters.BIGTANGLE_TOKENID);
             Address address = Address.fromBase58(networkParameters, entry.getKey());
             doublespent.addOutput(amount, address);
             coinbase = coinbase.add(amount);
@@ -204,7 +204,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         
         for (int i = 0; i < 3; i ++) {
             Transaction transaction = new Transaction(this.networkParameters);
-            Coin amount = Coin.parseCoin("10000", NetworkParameters.BIGNETCOIN_TOKENID);
+            Coin amount = Coin.parseCoin("10000", NetworkParameters.BIGTANGLE_TOKENID);
             transaction.addOutput(amount, outKey);
             
             SendRequest request = SendRequest.forTx(transaction);
@@ -240,7 +240,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         Transaction transaction = new Transaction(this.networkParameters);
         for (int i = 0; i < 3; i ++) {
         	ECKey outKey = new ECKey();
-            Coin amount = Coin.parseCoin("3", NetworkParameters.BIGNETCOIN_TOKENID);
+            Coin amount = Coin.parseCoin("3", NetworkParameters.BIGTANGLE_TOKENID);
             transaction.addOutput(amount, outKey);
         }
         
@@ -304,7 +304,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         List<UTXO> ulist = testTransactionAndGetBalances();
         UTXO myutxo = null;
         for (UTXO u : ulist) {
-            if (Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGNETCOIN_TOKENID)) {
+            if (Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
                 myutxo = u;
             }
         }
@@ -362,7 +362,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         UTXO utxo = null;
         List<UTXO> ulist = testTransactionAndGetBalances();
         for (UTXO u : ulist) {
-            if (!Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGNETCOIN_TOKENID)) {
+            if (!Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
                 utxo = u;
             }
         }
@@ -612,7 +612,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
         Address destination = Address.fromBase58(networkParameters, "mqrXsaFj9xV9tKAw7YeP1B6zPmfEP2kjfK");
 
-        Coin amount = Coin.parseCoin("0.02", NetworkParameters.BIGNETCOIN_TOKENID);
+        Coin amount = Coin.parseCoin("0.02", NetworkParameters.BIGTANGLE_TOKENID);
         SendRequest request = SendRequest.to(destination, amount);
         request.tx.setMemo("memo");
         walletAppKit.wallet().completeTx(request);

@@ -40,7 +40,7 @@ public class PayMultiSignService {
     public void launchPayMultiSign(byte[] data) throws BlockStoreException, Exception {
         PayMultiSign payMultiSign = convertTransactionDataToPayMultiSign(data);
         String tokenid = payMultiSign.getTokenid();
-        Token tokens = this.store.getTokensInfo(tokenid);
+        Token tokens = this.store.getToken(tokenid);
         if (tokens == null) {
             throw new BlockStoreException("token not existed");
         }

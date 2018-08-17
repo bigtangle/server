@@ -38,7 +38,6 @@ public class TransactionTest {
 
     @Before
     public void setUp() throws Exception {
-        Context context = new Context(PARAMS);
         tx = FakeTxBuilder.createFakeTx(PARAMS);
     }
 
@@ -252,26 +251,26 @@ public class TransactionTest {
      * could wreak multithreading havoc.
      */
    // @Test
-    public void testHashForSignatureThreadSafety() {
-        Block genesis = UnitTestParams.get().getGenesisBlock();
-        Block block1 = BlockForTest.createNextBlock(genesis,new ECKey().toAddress(UnitTestParams.get()),
-                genesis.getTransactions().get(0).getOutput(0).getOutPointFor(), genesis.getHash());
-
-        final Transaction tx = block1.getTransactions().get(1);
-        final String txHash = tx.getHashAsString();
-        final String txNormalizedHash = tx.hashForSignature(0, new byte[0], Transaction.SigHash.ALL.byteValue())
-                .toString();
-
-        for (int i = 0; i < 100; i++) {
-            // ensure the transaction object itself was not modified; if it was,
-            // the hash will change
-            assertEquals(txHash, tx.getHashAsString());
-            new Thread() {
-                public void run() {
-                    assertEquals(txNormalizedHash,
-                            tx.hashForSignature(0, new byte[0], Transaction.SigHash.ALL.byteValue()).toString());
-                }
-            };
-        }
-    }
+//    public void testHashForSignatureThreadSafety() {
+//        Block genesis = UnitTestParams.get().getGenesisBlock();
+//        Block block1 = BlockForTest.createNextBlock(genesis,new ECKey().toAddress(UnitTestParams.get()),
+//                genesis.getTransactions().get(0).getOutput(0).getOutPointFor(), genesis.getHash());
+//
+//        final Transaction tx = block1.getTransactions().get(1);
+//        final String txHash = tx.getHashAsString();
+//        final String txNormalizedHash = tx.hashForSignature(0, new byte[0], Transaction.SigHash.ALL.byteValue())
+//                .toString();
+//
+//        for (int i = 0; i < 100; i++) {
+//            // ensure the transaction object itself was not modified; if it was,
+//            // the hash will change
+//            assertEquals(txHash, tx.getHashAsString());
+//            new Thread() {
+//                public void run() {
+//                    assertEquals(txNormalizedHash,
+//                            tx.hashForSignature(0, new byte[0], Transaction.SigHash.ALL.byteValue()).toString());
+//                }
+//            };
+//        }
+//    }
 }

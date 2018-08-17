@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Comparator;
@@ -39,6 +40,7 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.UTXO;
+import net.bigtangle.core.Utils;
 import net.bigtangle.script.Script;
 import net.bigtangle.store.FullPrunedBlockStore;
 
@@ -226,21 +228,45 @@ public class ValidatorService {
 
     private long calculateNextDifficulty(long prevDifficulty, BlockWrap prevTrunkBlock, BlockWrap prevBranchBlock,
             BlockWrap prevRewardBlock, long totalRewardCount) {
+        // The following equals current time by consensus rules
         long currentTime = Math.max(prevTrunkBlock.getBlock().getTimeSeconds(),
-                prevBranchBlock.getBlock().getTimeSeconds()); // Approximately
-                                                              // current time
-        long passedSeconds = Math.max(1, (currentTime - prevRewardBlock.getBlock().getTimeSeconds()));
-        long difficulty = prevDifficulty * totalRewardCount / 100000 / passedSeconds;
-        return difficulty;
+                prevBranchBlock.getBlock().getTimeSeconds()); 
+        long timespan = Math.max(1, (currentTime - prevRewardBlock.getBlock().getTimeSeconds()));
+        
+        BigInteger prevTarget = Utils.decodeCompactBits(prevDifficulty);
+        BigInteger newTarget = prevTarget.multiply(BigInteger.valueOf(networkParameters.getTargetTPS()));
+        newTarget = newTarget.multiply(BigInteger.valueOf(timespan));
+        newTarget = newTarget.divide(BigInteger.valueOf(totalRewardCount));
+        
+        BigInteger maxNewTarget = prevTarget.multiply(BigInteger.valueOf(4));
+        BigInteger minNewTarget = prevTarget.divide(BigInteger.valueOf(4));
+        
+        if (newTarget.compareTo(maxNewTarget) > 0) {
+            newTarget = maxNewTarget;
+        }
+        
+        if (newTarget.compareTo(minNewTarget) < 0) {
+            newTarget = minNewTarget;
+        }
+
+        if (newTarget.compareTo(NetworkParameters.MAX_TARGET) > 0) {
+            logger.info("Difficulty hit proof of work limit: {}", newTarget.toString(16));
+            newTarget = NetworkParameters.MAX_TARGET;
+        }
+
+        return Utils.encodeCompactBits(newTarget);
     }
 
     private long calculateNextTxReward(BlockWrap prevTrunkBlock, BlockWrap prevBranchBlock, BlockWrap prevRewardBlock,
             long currPerTxReward, long totalRewardCount) {
+        // The following equals current time by consensus rules
         long currentTime = Math.max(prevTrunkBlock.getBlock().getTimeSeconds(),
-                prevBranchBlock.getBlock().getTimeSeconds()); // Approximately
-                                                              // current time
-        long passedSeconds = Math.max(1, (currentTime - prevRewardBlock.getBlock().getTimeSeconds()));
-        long nextPerTxReward = NetworkParameters.TARGET_YEARLY_MINING_PAYOUT * passedSeconds / 31536000L
+                prevBranchBlock.getBlock().getTimeSeconds()); 
+        long timespan = Math.max(1, (currentTime - prevRewardBlock.getBlock().getTimeSeconds()));
+        
+        // TODO include result from difficulty adjustment
+        //BigInteger result = BigInteger.valueOf(currPerTxReward);
+        long nextPerTxReward = NetworkParameters.TARGET_YEARLY_MINING_PAYOUT * timespan / 31536000L
                 / totalRewardCount;
         nextPerTxReward = Math.max(nextPerTxReward, currPerTxReward / 4);
         nextPerTxReward = Math.min(nextPerTxReward, currPerTxReward * 4);
@@ -276,9 +302,8 @@ public class ValidatorService {
     }
 
     /**
-     * Remove blocks from blocksToAdd that have at least one transaction input
-     * with its corresponding output not found in the outputs table and remove
-     * their approvers recursively too
+     * Remove blocks from blocksToAdd that have at least one used output
+     * not confirmed yet
      * 
      * @param blocksToAdd
      * @return true if a block was removed
@@ -288,7 +313,7 @@ public class ValidatorService {
         return removeWherePreconditionsUnfulfilled(blocksToAdd, false);
     }
 
-    public boolean removeWherePreconditionsUnfulfilled(Collection<BlockWrap> blocksToAdd, boolean returnOnFirstRemoval)
+    public boolean removeWherePreconditionsUnfulfilled(Collection<BlockWrap> blocksToAdd, boolean returnOnFail)
             throws BlockStoreException {
         boolean removed = false;
 
@@ -300,7 +325,6 @@ public class ValidatorService {
                     continue;
                 UTXO utxo = transactionService.getUTXO(in.getOutpoint());
                 if (utxo == null || !utxo.isConfirmed()) {
-                    // TODO refactor this
                     removed = true;
                     blockService.removeBlockAndApproversFrom(blocksToAdd, b);
                     continue;
@@ -633,36 +657,6 @@ public class ValidatorService {
         }
     }
 
-    private boolean alreadySpent(TransactionOutPoint transactionOutPoint) {
-        return transactionService.getUTXOSpent(transactionOutPoint) && getSpendingBlock(transactionOutPoint) != null
-                && getSpendingBlock(transactionOutPoint).getBlockEvaluation().isMaintained();
-    }
-
-    private BlockWrap getIntervalRewardingBlock(long height) throws BlockStoreException {
-        return store.getBlockWrap(store.getConfirmedRewardBlock(height));
-    }
-
-    private boolean alreadyRewarded(long height) throws BlockStoreException {
-        return height <= store.getMaxPrevTxRewardHeight() + NetworkParameters.REWARD_HEIGHT_INTERVAL;
-    }
-
-    private BlockWrap getSpendingBlock(TransactionOutPoint transactionOutPoint) {
-        try {
-            return store.getBlockWrap(transactionService.getUTXOSpender(transactionOutPoint).getBlockHash());
-        } catch (BlockStoreException e) {
-            return null;
-        }
-    }
-
-    // TODO REFACTOR
-    private boolean alreadyIssued(Token token) throws BlockStoreException {
-        return store.getTokenAnyConfirmed(token.getTokenid(), token.getTokenindex());
-    }
-
-    private BlockWrap getTokenIssuingBlock(Token token) throws BlockStoreException {
-        return store.getTokenIssuingConfirmedBlock(token.getTokenid(), token.getTokenindex());
-    }
-
     public boolean isEligibleForMCMC(BlockWrap block, HashSet<BlockWrap> currentApprovedNonMilestoneBlocks) {
         if (block.getBlockEvaluation().isMilestone())
             return true;
@@ -718,5 +712,34 @@ public class ValidatorService {
                 return true;
             }
         });
+    }
+
+    private boolean alreadySpent(TransactionOutPoint transactionOutPoint) {
+        return transactionService.getUTXOSpent(transactionOutPoint) && getSpendingBlock(transactionOutPoint) != null
+                && getSpendingBlock(transactionOutPoint).getBlockEvaluation().isMaintained();
+    }
+
+    private BlockWrap getIntervalRewardingBlock(long height) throws BlockStoreException {
+        return store.getBlockWrap(store.getConfirmedRewardBlock(height));
+    }
+
+    private boolean alreadyRewarded(long height) throws BlockStoreException {
+        return height <= store.getMaxPrevTxRewardHeight() + NetworkParameters.REWARD_HEIGHT_INTERVAL;
+    }
+
+    private BlockWrap getSpendingBlock(TransactionOutPoint transactionOutPoint) {
+        try {
+            return store.getBlockWrap(transactionService.getUTXOSpender(transactionOutPoint).getBlockHash());
+        } catch (BlockStoreException e) {
+            return null;
+        }
+    }
+
+    private boolean alreadyIssued(Token token) throws BlockStoreException {
+        return store.getTokenAnyConfirmed(token.getTokenid(), token.getTokenindex());
+    }
+
+    private BlockWrap getTokenIssuingBlock(Token token) throws BlockStoreException {
+        return store.getTokenIssuingConfirmedBlock(token.getTokenid(), token.getTokenindex());
     }
 }

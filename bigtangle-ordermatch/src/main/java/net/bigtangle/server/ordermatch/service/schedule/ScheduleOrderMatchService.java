@@ -80,7 +80,7 @@ public class ScheduleOrderMatchService {
                                 Exchange exchange = new Exchange(incomingOrder.getOrderId(), incomingOrder.getAddress(),
                                         incomingOrder.getTokenId(), String.valueOf(match.executedQuantity),
                                         restingOrder.getOrderId(), restingOrder.getAddress(),
-                                        Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID),
+                                        Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID),
                                         String.valueOf(match.executedQuantity * match.price / Coin.COIN_VALUE),
                                         new byte[0], incomingOrder.getMarket());
                                 this.store.saveExchange(exchange);
@@ -88,7 +88,7 @@ public class ScheduleOrderMatchService {
                                 Exchange exchange = new Exchange(restingOrder.getOrderId(), restingOrder.getAddress(),
                                         restingOrder.getTokenId(), String.valueOf(match.executedQuantity),
                                         incomingOrder.getOrderId(), incomingOrder.getAddress(),
-                                        Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID),
+                                        Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID),
                                         String.valueOf(match.executedQuantity * match.price / Coin.COIN_VALUE),
                                         new byte[0], restingOrder.getMarket());
                                 // add exchange to store
