@@ -7,7 +7,6 @@ package net.bigtangle.store;
 
 import static com.google.common.base.Preconditions.checkState;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
@@ -33,9 +32,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
@@ -45,7 +41,6 @@ import net.bigtangle.core.Context;
 import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
-import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.PrunedException;
@@ -628,10 +623,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             Transaction tx = block.getTransactions().get(0);
             if (tx.getData() != null) {
                 byte[] buf = tx.getData();
-                TokenInfo tokenInfo;
                 try {
-                    tokenInfo = new TokenInfo().parse(buf);
-                    this.blockStore.saveTokens(tokenInfo.getTokens());
+                    TokenInfo tokenInfo = new TokenInfo().parse(buf);
+                    Tokens tokens = tokenInfo.getTokens();
+                    tokens.setBlockhash(block.getHashAsString());
+                    this.blockStore.saveTokens(tokens);
                 } catch (Exception e) {
                     log.error("not possible checked before", e);
                 }
@@ -766,7 +762,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 if (tokenInfo.getMultiSignAddresses() == null) {
                     return false;
                 }
-                this.blockStore.saveTokens(tokenInfo.getTokens());
+                Tokens tokens = tokenInfo.getTokens();
+                tokens.setBlockhash(block.getHashAsString());
+                this.blockStore.saveTokens(tokens);
                 if (tokenInfo.getTokens().getTokenid().equals(NetworkParameters.BIGNETCOIN_TOKENID_STRING)) {
                     return false;
                 }

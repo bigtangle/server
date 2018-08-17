@@ -49,7 +49,7 @@ import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.core.http.server.resp.MultiSignResponse;
 import net.bigtangle.core.http.server.resp.SearchMultiSignResponse;
-import net.bigtangle.core.http.server.resp.TokenSerialIndexResponse;
+import net.bigtangle.core.http.server.resp.TokenIndexResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -892,14 +892,15 @@ public class TokenController extends TokenBaseController {
         String resp2 = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getCalTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
-        TokenSerialIndexResponse tokenSerialIndexResponse = Json.jsonmapper().readValue(resp2,
-                TokenSerialIndexResponse.class);
-        Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
+        TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2,
+                TokenIndexResponse.class);
+        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+        String prevblockhash = tokenIndexResponse.getBlockhash();
         
         long amount = Coin.parseCoin(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue())).getValue();
         Coin basecoin = Coin.valueOf(amount, Main.getString(map.get("tokenHex")).trim());
 
-        Tokens tokens = Tokens.buildSimpleTokenInfo(false, "", 
+        Tokens tokens = Tokens.buildSimpleTokenInfo(false, prevblockhash, 
                 Main.getString(map.get("tokenHex")).trim(), Main.getString(map.get("tokenname")).trim(), Main.getString(map.get("description")).trim(),
                 Integer.parseInt(this.signnumberTF.getText().trim()), tokenindex_, amount, true, (boolean) map.get("tokenstop"));
         tokens.setUrl( Main.getString(map.get("url")).trim());

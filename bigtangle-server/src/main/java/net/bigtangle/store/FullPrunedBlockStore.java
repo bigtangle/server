@@ -371,7 +371,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
 	LogResult queryLogResultById(String logResultId) throws BlockStoreException;
 
-    int getCalMaxTokenIndex(String tokenid) throws BlockStoreException;
+    Tokens getCalMaxTokenIndex(String tokenid) throws BlockStoreException;
 
     List<TokenSerial> getSearchTokenSerialInfo(String tokenid, List<String> addresses) throws BlockStoreException;
 }

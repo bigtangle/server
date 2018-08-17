@@ -217,8 +217,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String SELECT_TOKENS_INFO_SQL = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop"
             + " FROM tokens WHERE tokenid = ? AND confirmed = 1";
     
-    protected String COUNT_TOKENSINDEX_SQL = "SELECT max(tokenindex) as count "
-            + " FROM tokens WHERE tokenid = ? AND confirmed = 1";
+    protected String COUNT_TOKENSINDEX_SQL = "SELECT blockhash, tokenindex FROM tokens WHERE tokenid = ? AND confirmed = 1 ORDER BY tokenindex DESC limit 1";
 
     protected String UPDATE_SETTINGS_SQL = getUpdate() + " settings SET settingvalue = ? WHERE name = ?";
     protected String UPDATE_BLOCKS_SQL = getUpdate() + " blocks SET wasundoable=? WHERE hash=?";
@@ -2533,17 +2532,23 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public int getCalMaxTokenIndex(String tokenid) throws BlockStoreException {
+    public Tokens getCalMaxTokenIndex(String tokenid) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(COUNT_TOKENSINDEX_SQL);
             preparedStatement.setString(1, tokenid);
             ResultSet resultSet = preparedStatement.executeQuery();
+            Tokens tokens = new Tokens();
             if (resultSet.next()) {
-                return resultSet.getInt("count");
+                tokens.setBlockhash(resultSet.getString("blockhash"));
+                tokens.setTokenindex(resultSet.getInt("tokenindex"));
+                return tokens;
+            } else {
+                tokens.setBlockhash("");
+                tokens.setTokenindex(0);
             }
-            return 0;
+            return tokens;
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {

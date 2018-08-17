@@ -27,7 +27,7 @@ import net.bigtangle.core.http.AbstractResponse;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.MultiSignResponse;
 import net.bigtangle.core.http.server.resp.SearchMultiSignResponse;
-import net.bigtangle.core.http.server.resp.TokenSerialIndexResponse;
+import net.bigtangle.core.http.server.resp.TokenIndexResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.UUIDUtil;
 
@@ -86,8 +86,8 @@ public class MultiSignService {
     private NetworkParameters networkParameters;
 
     public AbstractResponse getNextTokenSerialIndex(String tokenid) throws BlockStoreException {
-        int count = this.store.getCalMaxTokenIndex(tokenid);
-        return TokenSerialIndexResponse.createTokenSerialIndexResponse(count + 1);
+        Tokens tokens = this.store.getCalMaxTokenIndex(tokenid);
+        return TokenIndexResponse.createTokenSerialIndexResponse(tokens.getTokenindex() + 1, tokens.getBlockhash());
     }
 
     public void saveMultiSign(Block block) throws BlockStoreException, Exception {
