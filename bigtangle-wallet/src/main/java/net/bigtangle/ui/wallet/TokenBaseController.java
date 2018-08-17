@@ -177,7 +177,7 @@ public class TokenBaseController {
             for (Map<String, Object> map : list) {
                 multiMap.put((String) map.get("tokenid"), (boolean) map.get("multiserial"));
                 String temp = ((boolean) map.get("multiserial")) ? Main.getText("yes") : Main.getText("no");
-                int tokentype = (int) map.get("tokenType");
+                int tokentype = (int) map.get("tokentype");
                 String temp1 = Main.getText("Token");
                 if (tokentype == 1) {
                     temp1 = Main.getText("market");
