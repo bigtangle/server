@@ -16,7 +16,7 @@ import org.apache.spark.graphx.Graph
 import net.bigtangle.core.Sha256Hash
 import net.bigtangle.core.NetworkParameters
 import net.bigtangle.params.UnitTestParams
-import net.bigtangle.core.BlockWrapSpark
+import net.bigtangle.spark.BlockWrapSpark
 import net.bigtangle.core.BlockEvaluation
 import java.util.concurrent.TimeUnit
 import java.util.HashSet
@@ -28,6 +28,7 @@ import net.bigtangle.core.ConflictCandidate
 import scala.collection.immutable.Nil
 import java.util.ArrayList
 import scala.collection.mutable.ListMap
+import net.bigtangle.spark.BlockWrapSpark
 
 // Run a test from MilestoneServiceTest, then this to validate our algorithm in scala
 object JdbcTest {
