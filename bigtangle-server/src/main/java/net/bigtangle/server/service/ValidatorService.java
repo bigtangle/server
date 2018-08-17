@@ -342,7 +342,8 @@ public class ValidatorService {
             }
 
             if (block.getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION) {
-                if (!store.getTokenConfirmed(store.getTokenPrevblockhash(b.getBlock().getHashAsString()))) {
+                String tokenPrevBlockHash = store.getTokenPrevblockhash(b.getBlock().getHashAsString());
+                if (!tokenPrevBlockHash.equals("") && !store.getTokenConfirmed(tokenPrevBlockHash)) {
                     removed = true;
                     blockService.removeBlockAndApproversFrom(blocksToAdd, b);
                     continue;

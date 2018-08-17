@@ -27,7 +27,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
 import net.bigtangle.core.http.server.resp.MultiSignResponse;
-import net.bigtangle.core.http.server.resp.TokenSerialIndexResponse;
+import net.bigtangle.core.http.server.resp.TokenIndexResponse;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
@@ -54,12 +54,13 @@ public class GiveMoneyUtils {
         String resp2 = OkHttp3Util.postString(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.getCalTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
-        TokenSerialIndexResponse tokenSerialIndexResponse = Json.jsonmapper().readValue(resp2,
-                TokenSerialIndexResponse.class);
-        Integer tokenindex = tokenSerialIndexResponse.getTokenindex();
-
-        Token tokens = Token.buildSimpleTokenInfo(false, tokenId, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), "", ecKeys.size(), tokenindex, amount, true, false);
+        TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2,
+                TokenIndexResponse.class);
+        Integer tokenindex = tokenIndexResponse.getTokenindex();
+        String prevblockhash = tokenIndexResponse.getBlockhash();
+        
+        Token tokens = Token.buildSimpleTokenInfo(false, prevblockhash, tokenId, UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(), ecKeys.size(), tokenindex, amount, true, false);
         tokenInfo.setTokens(tokens);
         
         HashMap<String, String> requestParam = new HashMap<String, String>();

@@ -56,7 +56,7 @@ import net.bigtangle.core.http.server.resp.PayMultiSignAddressListResponse;
 import net.bigtangle.core.http.server.resp.PayMultiSignDetailsResponse;
 import net.bigtangle.core.http.server.resp.PayMultiSignResponse;
 import net.bigtangle.core.http.server.resp.SettingResponse;
-import net.bigtangle.core.http.server.resp.TokenSerialIndexResponse;
+import net.bigtangle.core.http.server.resp.TokenIndexResponse;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
@@ -525,11 +525,11 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getCalTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
-        TokenSerialIndexResponse tokenSerialIndexResponse = Json.jsonmapper().readValue(resp2,
-                TokenSerialIndexResponse.class);
-        Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
-        
-        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+        TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2,
+                TokenIndexResponse.class);
+        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+        String prevblockhash = tokenIndexResponse.getBlockhash();
+        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
         tokenInfo.setTokens(tokens);
 
@@ -562,11 +562,12 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getCalTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
-        TokenSerialIndexResponse tokenSerialIndexResponse = Json.jsonmapper().readValue(resp2,
-                TokenSerialIndexResponse.class);
-        Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
+        TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2,
+                TokenIndexResponse.class);
+        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+        String prevblockhash = tokenIndexResponse.getBlockhash();
         
-        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
         tokenInfo.setTokens(tokens);
 
@@ -603,11 +604,12 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getCalTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
-        TokenSerialIndexResponse tokenSerialIndexResponse = Json.jsonmapper().readValue(resp2,
-                TokenSerialIndexResponse.class);
-        Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
-
-        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+        TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2,
+                TokenIndexResponse.class);
+        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+        String prevblockhash = tokenIndexResponse.getBlockhash();
+        
+        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
         tokenInfo.setTokens(tokens);
 
@@ -684,11 +686,12 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getCalTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
-        TokenSerialIndexResponse tokenSerialIndexResponse = Json.jsonmapper().readValue(resp2,
-                TokenSerialIndexResponse.class);
-        Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
+        TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2,
+                TokenIndexResponse.class);
+        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+        String prevblockhash = tokenIndexResponse.getBlockhash();
         
-        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
         tokenInfo.setTokens(tokens);
 
@@ -762,11 +765,12 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getCalTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
-        TokenSerialIndexResponse tokenSerialIndexResponse = Json.jsonmapper().readValue(resp2,
-                TokenSerialIndexResponse.class);
-        Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
+        TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2,
+                TokenIndexResponse.class);
+        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+        String prevblockhash = tokenIndexResponse.getBlockhash();
         
-        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
         tokenInfo.setTokens(tokens);
 
@@ -982,11 +986,13 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         requestParam00.put("tokenid", tokenid);
         String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getCalTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
-        TokenSerialIndexResponse tokenSerialIndexResponse = Json.jsonmapper().readValue(resp2,
-                TokenSerialIndexResponse.class);
-        Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
-
-        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+        
+        TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2,
+                TokenIndexResponse.class);
+        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+        String prevblockhash = tokenIndexResponse.getBlockhash();
+        
+        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
         tokenInfo.setTokens(tokens);
 
@@ -1118,14 +1124,15 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getCalTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
-        TokenSerialIndexResponse tokenSerialIndexResponse = Json.jsonmapper().readValue(resp2,
-                TokenSerialIndexResponse.class);
-        Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
-
+        TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2,
+                TokenIndexResponse.class);
+        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+        String prevblockhash = tokenIndexResponse.getBlockhash();
+        
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
         
-        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
         tokenInfo.setTokens(tokens);
 

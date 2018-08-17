@@ -623,10 +623,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         if (block.getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION) {
             Transaction tx = block.getTransactions().get(0);
             if (tx.getData() != null) {
-                byte[] buf = tx.getData();
-                TokenInfo tokenInfo;
                 try {
-                    tokenInfo = new TokenInfo().parse(buf);
+                    byte[] buf = tx.getData();
+                    TokenInfo tokenInfo = new TokenInfo().parse(buf);
                     this.blockStore.insertToken(block.getHashAsString(), tokenInfo.getTokens());
                 } catch (Exception e) {
                     log.error("not possible checked before", e);
@@ -721,6 +720,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 return false;
             }
         }
+       
         
         // Check issuance block specific validity
         if (block.getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION) {
@@ -744,6 +744,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     return false;
                 }
                 
+                // TODO tokenPrevBlockHash.equals("") <=> index == 0
                 // Check according to previous issuance, or if it does not exist the normal signature
                 // TODO check not boolean tokenstop = tokens.isTokenstop();
                 if (!this.multiSignService.checkMultiSignPre(block, allowConflicts)) {

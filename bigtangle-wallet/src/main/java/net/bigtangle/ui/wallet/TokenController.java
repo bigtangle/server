@@ -49,7 +49,7 @@ import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.core.http.server.resp.MultiSignResponse;
 import net.bigtangle.core.http.server.resp.SearchMultiSignResponse;
-import net.bigtangle.core.http.server.resp.TokenSerialIndexResponse;
+import net.bigtangle.core.http.server.resp.TokenIndexResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -525,10 +525,10 @@ public class TokenController extends TokenBaseController {
             }
 
             TokenInfo tokenInfo = new TokenInfo();
-            
+
             Coin basecoin = Coin.parseCoin(stockAmount.getText(), Utils.HEX.decode(tokenid.getValue()));
             long amount = basecoin.getValue();
-            
+
             Token tokens = Token.buildSimpleTokenInfo(false, "", tokenid.getValue().trim(), stockName.getText().trim(),
                     stockDescription.getText().trim(), 1, 0, amount, false, true);
             tokens.setUrl(stockUrl.getText().trim());
@@ -582,9 +582,9 @@ public class TokenController extends TokenBaseController {
             }
 
             TokenInfo tokenInfo = new TokenInfo();
-            
-            Token tokens = Token.buildMarketTokenInfo(false, "", marketid.getValue().trim(), marketName.getText().trim(),
-                    marketDescription.getText().trim(), marketurl.getText());
+
+            Token tokens = Token.buildMarketTokenInfo(false, "", marketid.getValue().trim(),
+                    marketName.getText().trim(), marketDescription.getText().trim(), marketurl.getText());
             tokenInfo.setTokens(tokens);
 
             // add MultiSignAddress item
@@ -684,7 +684,7 @@ public class TokenController extends TokenBaseController {
             }
         }
         Coin basecoin = Coin.valueOf(0, Main.getString(map.get("tokenHex")).trim());
-        
+
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -886,25 +886,26 @@ public class TokenController extends TokenBaseController {
         String CONTEXT_ROOT = Main.getContextRoot();
 
         TokenInfo tokenInfo = new TokenInfo();
-        
+
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
         requestParam00.put("tokenid", Main.getString(map.get("tokenHex")).trim());
         String resp2 = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getCalTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
-        TokenSerialIndexResponse tokenSerialIndexResponse = Json.jsonmapper().readValue(resp2,
-                TokenSerialIndexResponse.class);
-        Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
-        
+        TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
+        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+        String prevblockhash = tokenIndexResponse.getBlockhash();
+
         long amount = Coin.parseCoin(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue())).getValue();
         Coin basecoin = Coin.valueOf(amount, Main.getString(map.get("tokenHex")).trim());
 
-        Token tokens = Token.buildSimpleTokenInfo(false, "", 
-                Main.getString(map.get("tokenHex")).trim(), Main.getString(map.get("tokenname")).trim(), Main.getString(map.get("description")).trim(),
-                Integer.parseInt(this.signnumberTF.getText().trim()), tokenindex_, amount, true, (boolean) map.get("tokenstop"));
-        tokens.setUrl( Main.getString(map.get("url")).trim());
+        Token tokens = Token.buildSimpleTokenInfo(false, prevblockhash, Main.getString(map.get("tokenHex")).trim(),
+                Main.getString(map.get("tokenname")).trim(), Main.getString(map.get("description")).trim(),
+                Integer.parseInt(this.signnumberTF.getText().trim()), tokenindex_, amount, true,
+                (boolean) map.get("tokenstop"));
+        tokens.setUrl(Main.getString(map.get("url")).trim());
         tokenInfo.setTokens(tokens);
-        
+
         if (signAddrChoiceBox.getItems() != null && !signAddrChoiceBox.getItems().isEmpty()) {
             for (String pubKeyHex : signAddrChoiceBox.getItems()) {
                 ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(pubKeyHex));
