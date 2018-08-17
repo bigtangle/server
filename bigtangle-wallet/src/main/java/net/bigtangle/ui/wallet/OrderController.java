@@ -259,8 +259,6 @@ public class OrderController extends ExchangeController {
             try {
                 response = OkHttp3Util.post(url + "/" + OrdermatchReqCmd.getOrders.name(),
                         Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-                log.info("+++++++++");
-                log.info(response);
             } catch (Exception e) {
                 continue;
             }

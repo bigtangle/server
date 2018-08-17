@@ -808,8 +808,6 @@ public class Main extends Application {
 
     public static void addUsersettingData() {
         try {
-            log.info("===========");
-            log.info(IpAddress);
             addToken(getContextRoot(), lang, DataClassName.LANG.name(), DataClassName.LANG.name());
             addToken(getContextRoot(), IpAddress, DataClassName.SERVERURL.name(), DataClassName.SERVERURL.name());
         } catch (Exception e) {
