@@ -7,7 +7,6 @@ package net.bigtangle.store;
 
 import static com.google.common.base.Preconditions.checkState;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
@@ -27,14 +26,11 @@ import java.util.concurrent.FutureTask;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
@@ -45,7 +41,6 @@ import net.bigtangle.core.Context;
 import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
-import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.PrunedException;
@@ -53,7 +48,6 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.StoredUndoableBlock;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -318,23 +312,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         return address;
     }
 
-    private void confirmToken(String blockhash) throws BlockStoreException {
-        //TODO unify confirm/unconfirm
-//        blockStore.updateTokenConfirmed(tx.getHash(), out.getIndex(), true);
-//        blockStore.updateTokenSpent(blockStore.getTokenPrevblockhash(blockhash), true, blockhash);
-//        blockStore.updateTokenConfirmed(blockhash, true);
-    }
-
-    private void unconfirmToken(String blockhash) throws BlockStoreException {
-        //TODO unify confirm/unconfirm
-        //unconfirm spender if exists
-//        if (blockStore.getTokenSpent(blockhash)) {
-//            removeBlockFromMilestone(blockStore.getTokenSpender(blockhash));
-//            blockStore.updateTokenSpent(blockhash, false, null);
-//        }
-//        blockStore.updateTokenConfirmed(blockhash, false);
-    }
-
     private void synchronizationUserData(Sha256Hash blockhash, DataClassName dataClassName, byte[] data, String pubKey,
             long blocktype) throws BlockStoreException {
         UserData userData = this.blockStore.queryUserDataWithPubKeyAndDataclassname(dataClassName.name(), pubKey);
@@ -419,7 +396,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // For token creations, update token db
         if (block.getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION) {
-            this.confirmToken(block.getHashAsString());
+            confirmToken(block.getHashAsString());
         }
 
         if (block.getBlockType() == Block.BLOCKTYPE_USERDATA || block.getBlockType() == Block.BLOCKTYPE_VOS) {
@@ -469,24 +446,31 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     private void confirmReward(Block block) throws BlockStoreException {
+        // TODO
         blockStore.updateTxRewardConfirmed(block.getHash(), true);
     }
 
+    private void confirmToken(String blockhash) throws BlockStoreException {
+        // Set used other output spent
+        blockStore.updateTokenSpent(blockStore.getTokenPrevblockhash(blockhash), true, blockhash);
+        
+        // Set own output confirmed 
+        blockStore.updateTokenConfirmed(blockhash, true);
+    }
+
     private void confirmTransaction(final Transaction tx, Sha256Hash blockhash) throws BlockStoreException {
-        // For each used input, set its corresponding UTXO to spent
+        // Set used other outputs spent
         if (!tx.isCoinBase()) {
             for (TransactionInput in : tx.getInputs()) {
-                UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(),
-                        in.getOutpoint().getIndex());
+                UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(), in.getOutpoint().getIndex());
                 if (prevOut == null || prevOut.isSpent() || !prevOut.isConfirmed())
                     throw new VerificationException(
                             "Attempted to spend a non-existent, already spent or unconfirmed output!");
-                blockStore.updateTransactionOutputSpent(prevOut.getHash(), prevOut.getIndex(), true,
-                        blockhash);
+                blockStore.updateTransactionOutputSpent(prevOut.getHash(), prevOut.getIndex(), true, blockhash);
             }
         }
 
-        // For each output, set it to confirmed
+        // Set own outputs confirmed 
         for (TransactionOutput out : tx.getOutputs()) {
             blockStore.updateTransactionOutputConfirmed(tx.getHash(), out.getIndex(), true);
             blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), out.getIndex(), blockhash);
@@ -542,15 +526,27 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // For token creations, update token db
         if (block.getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION) {
-            // TODO revert token db changes here (revert
-            // synchronizationToken(TokenInfo))
-            // TODO unsolidify other issuances of this public key?
+            unconfirmToken(block.getHashAsString());
         }
     }
+    // TODO unify all like unconfirm/confirm token
 
     private void unconfirmReward(Block block) throws BlockStoreException {
-        // TODO analogous to other confirm/unconfirms
         blockStore.updateTxRewardConfirmed(block.getHash(), false);
+    }
+
+    private void unconfirmToken(String blockhash) throws BlockStoreException {
+        // Unconfirm dependents
+        if (blockStore.getTokenSpent(blockhash)) {
+            removeBlockFromMilestone(Sha256Hash.wrap(blockStore.getTokenSpender(blockhash)));
+            blockStore.updateTokenSpent(blockhash, false, null); // TODO needed??
+        }
+        
+        // Set used other output unspent
+        blockStore.updateTokenSpent(blockStore.getTokenPrevblockhash(blockhash), false, null);
+        
+        // Set own output unconfirmed 
+        blockStore.updateTokenConfirmed(blockhash, false);
     }
 
     /**
@@ -561,18 +557,18 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * @throws BlockStoreException
      */
     private void unconfirmTransaction(Transaction tx, Block parentBlock) throws BlockStoreException {
-        // Mark all outputs unconfirmed and remove dependents
+        // Set own outputs unconfirmed and remove dependents
         for (TransactionOutput txout : tx.getOutputs()) {
             if (blockStore.getTransactionOutput(tx.getHash(), txout.getIndex()).isSpent()) {
                 removeBlockFromMilestone(
                         blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()).getBlockHash());
-                blockStore.updateTransactionOutputSpent(tx.getHash(), txout.getIndex(), false, null);
+                blockStore.updateTransactionOutputSpent(tx.getHash(), txout.getIndex(), false, null); // TODO needed??
                 blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), txout.getIndex(), null);
             }
             blockStore.updateTransactionOutputConfirmed(tx.getHash(), txout.getIndex(), false);
         }
 
-        // Mark all outputs used by tx input as unspent
+        // Set other outputs used as unspent
         if (!tx.isCoinBase()) {
             for (TransactionInput txin : tx.getInputs()) {
                 blockStore.updateTransactionOutputSpent(txin.getOutpoint().getHash(), txin.getOutpoint().getIndex(),
@@ -617,11 +613,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             bb.getLong(); // nextReward
             bb.get(hashBytes, 0, 32); // prevRewardHash
             prevRewardHash = Sha256Hash.wrap(hashBytes);
-            // Reward must have been built correctly.
-            Pair<Transaction, Boolean> referenceReward = validatorService.generateMiningRewardTX(
-                    storedPrev.getHeader().getHash(), storedPrevBranch.getHeader().getHash(), prevRewardHash);
+            
+            Triple<Transaction, Boolean, Long> referenceReward = validatorService.generateMiningRewardTX(
+                    storedPrev.getHeader(), storedPrevBranch.getHeader(), prevRewardHash);
 
-            blockStore.insertTxReward(block.getHash(), fromHeight, referenceReward.getRight());
+            blockStore.insertTxReward(block.getHash(), fromHeight, referenceReward.getMiddle());
         }
 
         if (block.getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION) {
@@ -631,7 +627,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 TokenInfo tokenInfo;
                 try {
                     tokenInfo = new TokenInfo().parse(buf);
-                    this.blockStore.saveTokens(tokenInfo.getTokens());
+                    this.blockStore.insertToken(block.getHashAsString(), tokenInfo.getTokens());
                 } catch (Exception e) {
                     log.error("not possible checked before", e);
                 }
@@ -687,9 +683,16 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     protected boolean checkSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height,
             boolean allowConflicts) throws BlockStoreException, VerificationException {
         // Check timestamp
-        if (block.getTimeSeconds() < storedPrev.getHeader().getTimeSeconds()
-                || block.getTimeSeconds() < storedPrevBranch.getHeader().getTimeSeconds())
-            return false;
+        if (block.getBlockType() == Block.BLOCKTYPE_REWARD) {
+            // Enforce timestamp equal to previous max for reward blocktypes
+            if (block.getTimeSeconds() != Math.max(storedPrev.getHeader().getTimeSeconds(), storedPrevBranch.getHeader().getTimeSeconds()))
+                return false;
+        } else {
+            // Usually just enforce monotone increase
+            if (block.getTimeSeconds() < storedPrev.getHeader().getTimeSeconds()
+                    || block.getTimeSeconds() < storedPrevBranch.getHeader().getTimeSeconds())
+                return false;
+        }
 
         if (block.getBlockType() != Block.BLOCKTYPE_REWARD) {
             if (block.getLastMiningRewardBlock() == storedPrev.getHeader().getLastMiningRewardBlock()
@@ -712,6 +715,53 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             return false;
         }
 
+        // Check genesis block specific validity, can only one genesis block
+        if (block.getBlockType() == Block.BLOCKTYPE_INITIAL) {
+            if (!block.getHash().equals(networkParameters.getGenesisBlock().getHash())) {
+                return false;
+            }
+        }
+        
+        // Check issuance block specific validity
+        if (block.getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION) {
+            try {
+                if (block.getTransactions().isEmpty()) {
+                    return false;
+                }
+                Transaction tx = block.getTransactions().get(0);
+                if (tx.getData() == null) {
+                    return false;
+                }
+                byte[] buf = tx.getData();
+                TokenInfo tokenInfo = new TokenInfo().parse(buf);
+                if (tokenInfo.getTokens() == null) {
+                    return false;
+                }
+                if (tokenInfo.getMultiSignAddresses() == null) {
+                    return false;
+                }
+                if (tokenInfo.getTokens().getTokenid().equals(NetworkParameters.BIGNETCOIN_TOKENID_STRING)) {
+                    return false;
+                }
+                
+                // Check according to previous issuance, or if it does not exist the normal signature
+                // TODO check not boolean tokenstop = tokens.isTokenstop();
+                if (!this.multiSignService.checkMultiSignPre(block, allowConflicts)) {
+                    return false;
+                }
+            } catch (Exception e) {
+                log.error("", e);
+                return false;
+            }
+        }
+
+        if (block.getBlockType() == Block.BLOCKTYPE_CROSSTANGLE) {
+            return true;
+        }
+
+        checkSolidityTransfer(block, height);
+        
+        // TODO auslagern in eigene Funktionen
         // Check reward block specific solidity
         if (block.getBlockType() == Block.BLOCKTYPE_REWARD) {
             // Get reward data from previous reward cycle
@@ -731,56 +781,18 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
 
             // Reward must have been built correctly.
-            Pair<Transaction, Boolean> referenceReward = validatorService.generateMiningRewardTX(
-                    storedPrev.getHeader().getHash(), storedPrevBranch.getHeader().getHash(), prevRewardHash);
-            if (!referenceReward.getLeft().getHash().equals(block.getTransactions().get(0).getHash()))
+            Triple<Transaction, Boolean, Long> rewardEligibleDifficulty = validatorService.generateMiningRewardTX(
+                    storedPrev.getHeader(), storedPrevBranch.getHeader(), prevRewardHash);
+            if (!rewardEligibleDifficulty.getLeft().getHash().equals(block.getTransactions().get(0).getHash()))
                 return false;
 
-            // TODO check correct difficulty
-        }
-
-        // Check genesis block specific validity, can only one genesis block
-        if (block.getBlockType() == Block.BLOCKTYPE_INITIAL) {
-            if (!block.getHash().equals(networkParameters.getGenesisBlock().getHash())) {
+            // Difficulty must be correct
+            if (rewardEligibleDifficulty.getRight() != block.getDifficultyTarget())
                 return false;
-            }
-        }
-        // Check issuance block specific validity
-        if (block.getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION) {
-            try {
-                if (!this.multiSignService.checkMultiSignPre(block, allowConflicts)) {
-                    return false;
-                }
-                if (block.getTransactions().isEmpty()) {
-                    return false;
-                }
-                Transaction tx = block.getTransactions().get(0);
-                if (tx.getData() == null) {
-                    return false;
-                }
-                byte[] buf = tx.getData();
-                TokenInfo tokenInfo = new TokenInfo().parse(buf);
-                if (tokenInfo.getTokens() == null) {
-                    return false;
-                }
-                if (tokenInfo.getMultiSignAddresses() == null) {
-                    return false;
-                }
-                this.blockStore.saveTokens(tokenInfo.getTokens());
-                if (tokenInfo.getTokens().getTokenid().equals(NetworkParameters.BIGNETCOIN_TOKENID_STRING)) {
-                    return false;
-                }
-            } catch (Exception e) {
-                log.error("", e);
+
+            if (Math.max(storedPrev.getHeader().getLastMiningRewardBlock(), storedPrevBranch.getHeader().getLastMiningRewardBlock()) != block.getLastMiningRewardBlock())
                 return false;
-            }
         }
-
-        if (block.getBlockType() == Block.BLOCKTYPE_CROSSTANGLE) {
-            return true;
-        }
-
-        checkSolidityTransfer(block, height);
 
         return true;
     }

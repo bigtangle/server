@@ -16,7 +16,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.PayMultiSignAddress;
 import net.bigtangle.core.PayMultiSignExt;
-import net.bigtangle.core.Tokens;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.AbstractResponse;
@@ -40,7 +40,7 @@ public class PayMultiSignService {
     public void launchPayMultiSign(byte[] data) throws BlockStoreException, Exception {
         PayMultiSign payMultiSign = convertTransactionDataToPayMultiSign(data);
         String tokenid = payMultiSign.getTokenid();
-        Tokens tokens = this.store.getTokensInfo(tokenid);
+        Token tokens = this.store.getTokensInfo(tokenid);
         if (tokens == null) {
             throw new BlockStoreException("token not existed");
         }

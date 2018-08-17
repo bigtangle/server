@@ -113,7 +113,7 @@ public class TipService {
 	// Does not redo finding next step if next step was still valid
 	private BlockWrap validateOrPerformValidatedStep(BlockWrap fromBlock, HashSet<BlockWrap> currentApprovedNonMilestoneBlocks,
 			BlockWrap potentialNextBlock) throws BlockStoreException {
-		if (!validatorService.isIneligibleForSelection(potentialNextBlock, currentApprovedNonMilestoneBlocks))
+		if (validatorService.isEligibleForMCMC(potentialNextBlock, currentApprovedNonMilestoneBlocks))
 			return potentialNextBlock;
 		else 
 			return performValidatedStep(fromBlock, currentApprovedNonMilestoneBlocks);
@@ -128,7 +128,7 @@ public class TipService {
 			// Find results until one is valid/eligible
 			result = performTransition(fromBlock, candidates);
 			candidates.remove(result);
-		} while (validatorService.isIneligibleForSelection(result, currentApprovedNonMilestoneBlocks));
+		} while (!validatorService.isEligibleForMCMC(result, currentApprovedNonMilestoneBlocks));
 		return result;
 	}
 

@@ -36,7 +36,7 @@ import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.MyHomeAddress;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.Tokens;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Uploadfile;
 import net.bigtangle.core.UploadfileInfo;
@@ -268,9 +268,9 @@ public class UserdataController {
             Transaction coinbase = new Transaction(Main.params);
 
             TokenInfo tokenInfo = (TokenInfo) Main.getUserdata(DataClassName.TOKEN.name());
-            List<Tokens> list = tokenInfo.getPositveTokenList();
-            List<Tokens> tempList = new ArrayList<Tokens>();
-            for (Tokens tokens : list) {
+            List<Token> list = tokenInfo.getPositveTokenList();
+            List<Token> tempList = new ArrayList<Token>();
+            for (Token tokens : list) {
                 if (name.trim().equals(tokens.getTokenname().trim())
                         && tokenid.trim().equals(tokens.getTokenid().trim())) {
                     continue;

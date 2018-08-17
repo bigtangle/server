@@ -20,7 +20,7 @@ import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.Tokens;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.AbstractResponse;
@@ -96,7 +96,7 @@ public class MultiSignService {
             Transaction transaction = block.getTransactions().get(0);
             byte[] buf = transaction.getData();
             TokenInfo tokenInfo = new TokenInfo().parse(buf);
-            final Tokens tokens = tokenInfo.getTokens();
+            final Token tokens = tokenInfo.getTokens();
 
             String prevblockhash = tokens.getPrevblockhash();
             List<MultiSignAddress> multiSignAddresses = store
@@ -148,9 +148,10 @@ public class MultiSignService {
     /*
      * check unique as conflicts
      */
-    // TODO change to unified logic (see mining rewards)
+    // TODO fully check
     public boolean checkMultiSignPre(Block block, boolean allowConflicts) throws BlockStoreException, Exception {
         try {
+            // TODO make into checkToken
             if (block.getTransactions() == null || block.getTransactions().isEmpty()) {
                 throw new BlockStoreException("block transaction is empty");
             }
@@ -161,11 +162,11 @@ public class MultiSignService {
             }
             byte[] buf = transaction.getData();
             TokenInfo tokenInfo = new TokenInfo().parse(buf);
-            final Tokens tokens = tokenInfo.getTokens();
+            final Token tokens = tokenInfo.getTokens();
             if (tokens == null) {
                 throw new BlockStoreException("tokeninfo is null");
             }
-            Tokens tokens0 = store.getTokensInfo(tokens.getTokenid());
+            Token tokens0 = store.getTokensInfo(tokens.getTokenid());
             if (!allowConflicts && tokens0 != null && tokens0.isTokenstop()) {
                 throw new BlockStoreException("tokeninfo can not reissue");
             }
@@ -174,11 +175,17 @@ public class MultiSignService {
                 throw new BlockStoreException("signnumber value <= 0");
             }
             // as conflict
-            if (!allowConflicts && (tokens0 != null && tokens.getTokenindex() <= 1L)) {
+            if (!allowConflicts && tokens0 != null && tokens.getTokenindex() <= 1L) {
                 throw new BlockStoreException("tokens already existed");
+                // TODO correct?
             }
 
             String prevblockhash = tokens.getPrevblockhash();
+
+            // TODO check anhand prevblockhash
+            
+            
+            
             List<MultiSignAddress> multiSignAddresses = store
                     .getMultiSignAddressListByTokenidAndBlockHashHex(tokens.getTokenid(), prevblockhash);
             if (multiSignAddresses.size() == 0) {

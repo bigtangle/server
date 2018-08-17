@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.VerificationException;
@@ -96,21 +98,20 @@ public class TransactionService {
      
         Block block = new Block(networkParameters, r1, r2);
         block.setBlockType(Block.BLOCKTYPE_REWARD);
-        // TODO check if eligible and drop if not
-        block.addTransaction(
-                validatorService.generateMiningRewardTX(r1.getHash(), r2.getHash(), prevRewardHash).getLeft());
+        Triple<Transaction, Boolean, Long> generated = validatorService.generateMiningRewardTX(r1, r2, prevRewardHash);
         
-        //TODO how to adjust difficulty linear depends on number of approved blocks
-        adjustDifficulty(block, 0);
+        if (!generated.getMiddle())
+            logger.warn("Generated reward block is deemed ineligible! Try again later?");
+        
+        block.addTransaction(generated.getLeft());
+        block.setDifficultyTarget(generated.getRight());
+        block.setLastMiningRewardBlock(Math.max(r1.getLastMiningRewardBlock(), r2.getLastMiningRewardBlock()) + 1);
+        // Enforce timestamp equal to previous max for reward blocktypes
+        block.setTime(Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
         
         block.solve();
         blockgraph.add(block, true);
         return block;
-    }
-    
-    public void adjustDifficulty(Block block, long tps) {
-        
-        
     }
     
     public boolean getUTXOSpent(TransactionOutPoint txout) {

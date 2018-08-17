@@ -40,7 +40,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenType;
-import net.bigtangle.core.Tokens;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.UserSettingData;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.WatchedInfo;
@@ -145,7 +145,7 @@ public class OrderController extends ExchangeController {
             for (UserSettingData userSettingData : list) {
                 if (DataClassName.TOKEN.name().equals(userSettingData.getDomain().trim())) {
                     Main.tokenInfo.getPositveTokenList()
-                            .add(new Tokens(userSettingData.getKey(), userSettingData.getValue()));
+                            .add(new Token(userSettingData.getKey(), userSettingData.getValue()));
                 }
             }
             initMarketComboBox();
@@ -251,7 +251,7 @@ public class OrderController extends ExchangeController {
 
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
 
-        for (Tokens tokens : getTokensResponse.getTokens()) {
+        for (Token tokens : getTokensResponse.getTokens()) {
             if (tokens.getTokentype() != TokenType.market.ordinal()) {
                 continue;
             }
@@ -316,7 +316,7 @@ public class OrderController extends ExchangeController {
         String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getMarkets.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
-        for (Tokens tokens : getTokensResponse.getTokens()) {
+        for (Token tokens : getTokensResponse.getTokens()) {
             String tokenHex = tokens.getTokenid();
             String tokenname = tokens.getTokenname();
             tokenData.add(tokenname + " : " + tokenHex);
@@ -348,7 +348,7 @@ public class OrderController extends ExchangeController {
                 }
             }
         } else {
-            for (Tokens tokens : getTokensResponse.getTokens()) {
+            for (Token tokens : getTokensResponse.getTokens()) {
                 String tokenHex = tokens.getTokenid();
                 if (tokens.getTokentype() != TokenType.token.ordinal()) {
                     continue;
@@ -359,7 +359,7 @@ public class OrderController extends ExchangeController {
                 }
             }
             if (Main.tokenInfo != null && Main.tokenInfo.getPositveTokenList() != null) {
-                for (Tokens p : Main.tokenInfo.getPositveTokenList()) {
+                for (Token p : Main.tokenInfo.getPositveTokenList()) {
                     if (!isSystemCoin(p.getTokenname() + ":" + p.getTokenid())
                             && p.getTokenname().endsWith(":" + Main.getText("Token"))) {
                         if (!tokenData.contains(
@@ -440,7 +440,7 @@ public class OrderController extends ExchangeController {
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
-        Tokens token_ = getTokensResponse.getToken();
+        Token token_ = getTokensResponse.getToken();
 
         String url = token_.getUrl();
         OkHttp3Util.post(url + "/" + OrdermatchReqCmd.saveOrder.name(),

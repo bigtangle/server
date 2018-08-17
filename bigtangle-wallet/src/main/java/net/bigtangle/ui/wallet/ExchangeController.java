@@ -35,7 +35,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenType;
-import net.bigtangle.core.Tokens;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -128,11 +128,11 @@ public class ExchangeController {
             if (tokenInfo == null) {
                 return false;
             }
-            List<Tokens> tokenList = tokenInfo.getPositveTokenList();
+            List<Token> tokenList = tokenInfo.getPositveTokenList();
             if (tokenList == null || tokenList.isEmpty()) {
                 return false;
             }
-            for (Tokens token : tokenList) {
+            for (Token token : tokenList) {
                 if (tokenid.equals(token.getTokenid())) {
                     return true;
                 }
@@ -164,7 +164,7 @@ public class ExchangeController {
             String address = ecKey.toAddress(Main.params).toString();
             addressList.add(address);
         }
-        for (Tokens tokens : getTokensResponse.getTokens()) {
+        for (Token tokens : getTokensResponse.getTokens()) {
             String tokenid = tokens.getTokenid();
             if (tokens.getTokentype() != TokenType.market.ordinal()) {
                 continue;
@@ -244,7 +244,7 @@ public class ExchangeController {
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
-        for (Tokens tokens : getTokensResponse.getTokens()) {
+        for (Token tokens : getTokensResponse.getTokens()) {
             String tokenHex = tokens.getTokenid();
             String tokenname = tokens.getTokenname();
             tokenData.add(tokenname + " : " + tokenHex);

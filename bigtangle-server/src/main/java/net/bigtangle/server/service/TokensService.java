@@ -17,7 +17,7 @@ import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenSerial;
-import net.bigtangle.core.Tokens;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.AbstractResponse;
@@ -29,20 +29,20 @@ import net.bigtangle.utils.MonetaryFormat;
 public class TokensService {
 
     public AbstractResponse getTokenById(String tokenid) throws BlockStoreException {
-        Tokens tokens = this.store.getTokensInfo(tokenid);
+        Token tokens = this.store.getTokensInfo(tokenid);
         AbstractResponse response = GetTokensResponse.create(tokens);
         return response;
     }
 
     public AbstractResponse getMarketTokensList() throws BlockStoreException {
-        List<Tokens> list = new ArrayList<Tokens>();
+        List<Token> list = new ArrayList<Token>();
         list.addAll(store.getMarketTokenList());
         return GetTokensResponse.create(list);
     }
 
     public AbstractResponse getTokensList() throws BlockStoreException {
-        List<Tokens> list = new ArrayList<Tokens>();
-        Tokens tokens = new Tokens();
+        List<Token> list = new ArrayList<Token>();
+        Token tokens = new Token();
         tokens.setTokenid(Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID));
         tokens.setTokenname(MonetaryFormat.CODE_BTC);
         list.add(tokens);
@@ -51,8 +51,8 @@ public class TokensService {
     }
 
     public AbstractResponse getTokensList(String name) throws BlockStoreException {
-        List<Tokens> list = new ArrayList<Tokens>();
-        Tokens tokens = new Tokens();
+        List<Token> list = new ArrayList<Token>();
+        Token tokens = new Token();
         tokens.setTokenid(Utils.HEX.encode(NetworkParameters.BIGNETCOIN_TOKENID));
         tokens.setTokenname(MonetaryFormat.CODE_BTC);
         list.add(tokens);
@@ -81,11 +81,11 @@ public class TokensService {
             TokenInfo tokenInfo = new TokenInfo().parse(buf);
 
             final String tokenid = tokenInfo.getTokens().getTokenid();
-            Tokens tokens = this.store.getTokensInfo(tokenid);
+            Token tokens = this.store.getTokensInfo(tokenid);
             if (tokens != null) {
                 throw new BlockStoreException("token can't update");
             }
-            Tokens tokens2 = tokenInfo.getTokens();
+            Token tokens2 = tokenInfo.getTokens();
             List<MultiSign> multiSigns = this.store.getMultiSignListByTokenid(tokenid, tokens2.getTokenindex());
             int signnumber = 0;
             for (MultiSign multiSign : multiSigns) {

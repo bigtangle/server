@@ -26,7 +26,7 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.StoredUndoableBlock;
 import net.bigtangle.core.TokenSerial;
-import net.bigtangle.core.Tokens;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UTXOProvider;
 import net.bigtangle.core.UserData;
@@ -199,7 +199,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 	public HashSet<Sha256Hash> getMaintainedBlockHashes() throws BlockStoreException;
 
  
-
+    /* Block Evaluation */
 	public void updateBlockEvaluationCumulativeWeight(Sha256Hash blockhash, long weight) throws BlockStoreException;
 
 	public void updateBlockEvaluationDepth(Sha256Hash blockhash, long depth) throws BlockStoreException;
@@ -221,7 +221,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
 	public long getCountMilestoneBlocksInInterval(long fromHeight, long toHeight) throws BlockStoreException;
 
-	/* UTXOs */
+	/* TXOs */
 	public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, long index, boolean b, Sha256Hash spenderBlock)
 			throws BlockStoreException;
 
@@ -229,6 +229,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
 	public void updateTransactionOutputSpendPending(Sha256Hash hash, long index, boolean b) throws BlockStoreException;
 
+    /* Reward TXOs */
 	public Sha256Hash getConfirmedRewardBlock(long height) throws BlockStoreException;
 
 	public boolean getTxRewardEligible(Sha256Hash hash) throws BlockStoreException;
@@ -242,20 +243,42 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
 	public long getMaxPrevTxRewardHeight() throws BlockStoreException;
 
-	public List<Tokens> getTokensList() throws BlockStoreException;
+	// TODO orderly
+    /* Token TXOs */
+	public void insertToken(String blockhash, Token tokens) throws BlockStoreException;
 
-	public List<Tokens> getMarketTokenList() throws BlockStoreException;
-
-	public List<Tokens> getTokensList(String name) throws BlockStoreException;
-
-	public Map<String, Long> getTokenAmountMap(String name) throws BlockStoreException;
-
-	public void saveTokens(Tokens tokens) throws BlockStoreException;
-
-    public void saveTokens(String blockhash, boolean confirmed, String tokenid, int tokenindex, long amount,
+    public void insertToken(String blockhash, boolean confirmed, String tokenid, int tokenindex, long amount,
             String tokenname, String description, String url, int signnumber, boolean multiserial, int tokentype,
             boolean tokenstop, String prevblockhash) throws BlockStoreException;
 
+    public String getTokenPrevblockhash(String blockhash) throws BlockStoreException;
+
+    public boolean getTokenSpent(String blockhash) throws BlockStoreException;
+
+    public boolean getTokenConfirmed(String blockHash) throws BlockStoreException;
+
+    public String getTokenSpender(String blockhash) throws BlockStoreException;
+
+    public boolean getTokenAnyConfirmed(String tokenid, int tokenindex) throws BlockStoreException;
+
+    public BlockWrap getTokenIssuingConfirmedBlock(String tokenid, int tokenindex) throws BlockStoreException;
+
+    public void updateTokenSpent(String tokenPrevblockhash, boolean spent, String blockhash) throws BlockStoreException;
+
+    public void updateTokenConfirmed(String blockhash, boolean confirmed) throws BlockStoreException;
+
+    
+    /* Wallet / Informational */
+    public List<Token> getTokensList() throws BlockStoreException;
+
+    public List<TokenSerial> getSearchTokenSerialInfo(String tokenid, List<String> addresses) throws BlockStoreException;
+
+    public List<Token> getMarketTokenList() throws BlockStoreException;
+
+    public List<Token> getTokensList(String name) throws BlockStoreException;
+
+    public Map<String, Long> getTokenAmountMap(String name) throws BlockStoreException;
+    
 	public List<BlockEvaluation> getSearchBlockEvaluations(List<String> address) throws BlockStoreException;
 
 	public List<BlockEvaluation> getSearchBlockEvaluations(List<String> address, String lastestAmount)
@@ -264,10 +287,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 	public void streamBlocks(long heightstart, KafkaMessageProducer kafkaMessageProducer) throws BlockStoreException;
 
 	void updateMultiSignBlockBitcoinSerialize(String tokenid, long tokenindex, byte[] bytes) throws BlockStoreException;
-
-	// public List<TokenSerial> getTokenSerialListByTokenid(String tokenid);
-	//
-	// public List<MultiSignBy> getMultiSignByListByTokenid(String tokenid);
 
 	public List<MultiSignAddress> getMultiSignAddressListByTokenidAndBlockHashHex(String tokenid, String prevblockhash)
 	        throws BlockStoreException;
@@ -280,7 +299,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
 	public int getCountMultiSignAddress(String tokenid) throws BlockStoreException;
 
-	public Tokens getTokensInfo(String tokenid) throws BlockStoreException;
+	public Token getTokensInfo(String tokenid) throws BlockStoreException;
 
 	public MultiSignAddress getMultiSignAddressInfo(String tokenid, String address) throws BlockStoreException;
 
@@ -288,8 +307,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 			throws BlockStoreException;
 
 	public int getCountMultiSignByAlready(String tokenid, long tokenindex) throws BlockStoreException;
-
-	public void updateTokenConfirmed(String blockhash, boolean confirmed) throws BlockStoreException;
 
 	public List<MultiSign> getMultiSignListByTokenid(String tokenid, List<String> addresses, boolean isSign)
 			throws BlockStoreException;
@@ -372,6 +389,4 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 	LogResult queryLogResultById(String logResultId) throws BlockStoreException;
 
     int getCalMaxTokenIndex(String tokenid) throws BlockStoreException;
-
-    List<TokenSerial> getSearchTokenSerialInfo(String tokenid, List<String> addresses) throws BlockStoreException;
 }

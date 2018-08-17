@@ -41,7 +41,7 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.Tokens;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
@@ -203,7 +203,7 @@ public abstract class AbstractIntegrationTest {
     public void testInitWallet() throws Exception {
 
         testCreateMultiSig();
-        testCreateMarket();
+        //testCreateMarket();
         milestoneService.update();
 
         List<UTXO> ux = testTransactionAndGetBalances();
@@ -251,7 +251,7 @@ public abstract class AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(77777L, pubKey);
         long amount = basecoin.getValue();
         
-        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", tokenid, "test", "", 1, 1, amount, false, true);
+        Token tokens = Token.buildSimpleTokenInfo(true, networkParameters.getGenesisBlock().getHashAsString(), tokenid, "test", "", 1, 1, amount, false, true);
         tokenInfo.setTokens(tokens);
 
         // add MultiSignAddress item
@@ -267,7 +267,7 @@ public abstract class AbstractIntegrationTest {
         TokenInfo tokenInfo = new TokenInfo();
         
         String tokenid = Utils.HEX.encode(pubKey);
-        Tokens tokens = Tokens.buildMarketTokenInfo(true, "", tokenid, "p2p", "", "http://localhost:80089");
+        Token tokens = Token.buildMarketTokenInfo(true, networkParameters.getGenesisBlock().getHashAsString(), tokenid, "p2p", "", "http://localhost:80089");
         tokenInfo.setTokens(tokens);
 
         // add MultiSignAddress item

@@ -7,7 +7,7 @@ public class UserdataInfo implements java.io.Serializable {
 
     private static final long serialVersionUID = 1554582498768357964L;
 
-    private Tokens tokens;
+    private Token tokens;
     
     private TokenSerial tokenSerial;
     
@@ -38,11 +38,11 @@ public class UserdataInfo implements java.io.Serializable {
         return this;
     }
 
-    public Tokens getTokens() {
+    public Token getTokens() {
         return tokens;
     }
 
-    public void setTokens(Tokens tokens) {
+    public void setTokens(Token tokens) {
         this.tokens = tokens;
     }
     

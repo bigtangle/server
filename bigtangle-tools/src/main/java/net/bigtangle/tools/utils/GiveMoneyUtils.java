@@ -18,7 +18,7 @@ import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.Tokens;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -58,7 +58,7 @@ public class GiveMoneyUtils {
                 TokenSerialIndexResponse.class);
         Integer tokenindex = tokenSerialIndexResponse.getTokenindex();
 
-        Tokens tokens = Tokens.buildSimpleTokenInfo(false, tokenId, UUID.randomUUID().toString(),
+        Token tokens = Token.buildSimpleTokenInfo(false, tokenId, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), "", ecKeys.size(), tokenindex, amount, true, false);
         tokenInfo.setTokens(tokens);
         
@@ -184,7 +184,7 @@ public class GiveMoneyUtils {
         Coin basecoin = Coin.valueOf(10000000L, pubKey);
         long amount = basecoin.getValue();
         
-        Tokens tokens = Tokens.buildSimpleTokenInfo(false, tokenId, UUID.randomUUID().toString(),
+        Token tokens = Token.buildSimpleTokenInfo(false, tokenId, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), "", 1, 0, amount, false, true);
         tokenInfo.setTokens(tokens);
         

@@ -41,7 +41,7 @@ import net.bigtangle.core.PayMultiSignAddress;
 import net.bigtangle.core.PrunedException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.Tokens;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
@@ -464,7 +464,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(amount, tokenid);
 
         TokenInfo tokenInfo = new TokenInfo();
-        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), -1, 0, amount, true, false);
         tokenInfo.setTokens(tokens);
 
@@ -492,7 +492,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
         TokenInfo tokenInfo = new TokenInfo();
         
-        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, 1, amount, true, false);
         tokenInfo.setTokens(tokens);
 
@@ -529,7 +529,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 TokenSerialIndexResponse.class);
         Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
         
-        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
         tokenInfo.setTokens(tokens);
 
@@ -566,7 +566,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 TokenSerialIndexResponse.class);
         Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
         
-        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
         tokenInfo.setTokens(tokens);
 
@@ -607,7 +607,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 TokenSerialIndexResponse.class);
         Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
 
-        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
         tokenInfo.setTokens(tokens);
 
@@ -688,7 +688,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 TokenSerialIndexResponse.class);
         Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
         
-        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
         tokenInfo.setTokens(tokens);
 
@@ -766,7 +766,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 TokenSerialIndexResponse.class);
         Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
         
-        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
         tokenInfo.setTokens(tokens);
 
@@ -833,7 +833,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             
             Coin basecoin = Coin.valueOf(100000L, pubKey);
             long amount = basecoin.getValue();
-            Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+            Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
                     UUID.randomUUID().toString(), 1, 1, amount, true, false);
             tokenInfo.setTokens(tokens);
 
@@ -884,7 +884,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             Coin basecoin = Coin.valueOf(amount, tokenid);
             
             Integer tokenindex_ = 1;
-            Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+            Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
                     UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
             tokenInfo.setTokens(tokens);
 
@@ -986,7 +986,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 TokenSerialIndexResponse.class);
         Integer tokenindex_ = tokenSerialIndexResponse.getTokenindex();
 
-        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
         tokenInfo.setTokens(tokens);
 
@@ -1125,7 +1125,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
         
-        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
         tokenInfo.setTokens(tokens);
 

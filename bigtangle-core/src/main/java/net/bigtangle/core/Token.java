@@ -4,19 +4,19 @@
  *******************************************************************************/
 package net.bigtangle.core;
 
-public class Tokens implements java.io.Serializable {
+public class Token implements java.io.Serializable {
+    // TODO clean up: remove confirmed, blockhash maybe
 
     private static final long serialVersionUID = 6992138619113601243L;
 
-    public Tokens(String tokenid, String tokenname) {
+    public Token(String tokenid, String tokenname) {
         this.tokenid = tokenid;
         this.tokenname = tokenname;
     }
 
-    public Tokens() {
+    public Token() {
     }
-
-    private String blockhash;
+    
     private boolean confirmed;
     private String tokenid;
     private int tokenindex;
@@ -28,8 +28,12 @@ public class Tokens implements java.io.Serializable {
     private boolean multiserial;
     private int tokentype;
     private boolean tokenstop;
-    // for check if solidity
+    
+    // for solidity checks
     private String prevblockhash;
+
+    // not serialized on the wire
+    private String blockhash;
 
     public String getBlockhash() {
         return blockhash;
@@ -135,9 +139,9 @@ public class Tokens implements java.io.Serializable {
         this.prevblockhash = prevblockhash;
     }
 
-    public static Tokens buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname, String description, 
+    public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname, String description, 
             int signnumber, int tokenindex, long amount, boolean multiserial, boolean tokenstop) {
-        Tokens tokens = new Tokens();
+        Token tokens = new Token();
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
         tokens.setDescription(description);
@@ -152,8 +156,8 @@ public class Tokens implements java.io.Serializable {
         return tokens;
     }
 
-    public static Tokens buildMarketTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname, String description, String url) {
-        Tokens tokens = new Tokens();
+    public static Token buildMarketTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname, String description, String url) {
+        Token tokens = new Token();
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
         tokens.setDescription(description);
@@ -169,8 +173,8 @@ public class Tokens implements java.io.Serializable {
         return tokens;
     }
 
-    public static Tokens buildSubtangleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname, String description, String url) {
-        Tokens tokens = new Tokens();
+    public static Token buildSubtangleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname, String description, String url) {
+        Token tokens = new Token();
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
         tokens.setDescription(description);

@@ -103,6 +103,8 @@ private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
             + "    tokentype int(11),\n" 
             + "    tokenstop boolean,\n"
             + "    prevblockhash varchar(255) NOT NULL,\n"
+            + "    spent boolean NOT NULL,\n"
+            + "    spenderblockhash  varbinary(32),\n"
             + "    PRIMARY KEY (blockhash) \n)";
 
     //update on confirm
@@ -308,5 +310,4 @@ private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
     protected String getUpdateBlockevaluationUnmaintainAllSQL() {
         return getUpdate() + " blocks SET maintained = false WHERE maintained = true";
     }
-
 }

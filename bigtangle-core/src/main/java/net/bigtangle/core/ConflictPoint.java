@@ -18,7 +18,7 @@ public class ConflictPoint {
     @Nullable
     private long connectedRewardHeight;
     @Nullable
-    private TokenSerial connectedTokenSerial;
+    private Token connectedToken;
 
     public ConflictPoint(TransactionOutPoint connectedOutpoint) {
         super();
@@ -32,12 +32,13 @@ public class ConflictPoint {
         this.connectedRewardHeight = fromHeight;
     }
 
-    public ConflictPoint(TokenSerial serial) {
+    public ConflictPoint(Token token) {
         super();
         this.type = ConflictType.TOKENISSUANCE;
-        this.connectedTokenSerial = serial;
+        this.connectedToken = token;
     }
-
+    
+    // TODO Refactor stop using equals (here and in spark too)
     @Override
     public boolean equals(Object o) {
         if (this == o)
@@ -52,8 +53,8 @@ public class ConflictPoint {
         case REWARDISSUANCE:
             return getConnectedRewardHeight() == other.getConnectedRewardHeight();
         case TOKENISSUANCE:
-            return getConnectedTokenSerial().getTokenindex() == other.getConnectedTokenSerial().getTokenindex()
-                    && getConnectedTokenSerial().getTokenid().equals(other.getConnectedTokenSerial().getTokenid());
+            return getConnectedToken().getTokenindex() == other.getConnectedToken().getTokenindex()
+                    && getConnectedToken().getTokenid().equals(other.getConnectedToken().getTokenid());
         case TXOUT:
             return getConnectedOutpoint().getIndex() == other.getConnectedOutpoint().getIndex()
                     && getConnectedOutpoint().getHash().equals(other.getConnectedOutpoint().getHash());
@@ -68,7 +69,7 @@ public class ConflictPoint {
         case REWARDISSUANCE:
             return Objects.hashCode(getConnectedRewardHeight());
         case TOKENISSUANCE:
-            return Objects.hashCode(getConnectedTokenSerial().getTokenindex(), getConnectedTokenSerial().getTokenid());
+            return Objects.hashCode(getConnectedToken().getTokenindex(), getConnectedToken().getTokenid());
         case TXOUT:
             return Objects.hashCode(getConnectedOutpoint().getIndex(), getConnectedOutpoint().getHash());
         default:
@@ -92,7 +93,7 @@ public class ConflictPoint {
         return connectedRewardHeight;
     }
 
-    public TokenSerial getConnectedTokenSerial() {
-        return connectedTokenSerial;
+    public Token getConnectedToken() {
+        return connectedToken;
     }
 }

@@ -76,7 +76,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.ScriptException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.Tokens;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
@@ -399,7 +399,7 @@ public class Main extends Application {
 
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
         Map<String, String> map = new HashMap<String, String>();
-        for (Tokens tokens : getTokensResponse.getTokens()) {
+        for (Token tokens : getTokensResponse.getTokens()) {
             map.put(Main.getString(tokens.getTokenid()), Main.getString(tokens.getTokenname()));
         }
         return map;

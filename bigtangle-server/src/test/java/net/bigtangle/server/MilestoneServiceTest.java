@@ -29,7 +29,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.PrunedException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.Tokens;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -353,7 +353,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         
-        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 1, amount, false, true);
+        Token tokens = Token.buildSimpleTokenInfo(true, networkParameters.getGenesisBlock().getHashAsString(), Utils.HEX.encode(pubKey), "Test", "Test", 1, 1, amount, false, true);
         tokenInfo.setTokens(tokens);
         
         tokenInfo.setTokens(tokens);
@@ -395,7 +395,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
-        Tokens tokens = Tokens.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 1,
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 1,
                 amount, false, true);
 
         tokenInfo.setTokens(tokens);

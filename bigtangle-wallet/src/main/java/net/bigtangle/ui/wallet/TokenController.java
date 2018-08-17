@@ -42,7 +42,7 @@ import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.Tokens;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
@@ -443,7 +443,7 @@ public class TokenController extends TokenBaseController {
         for (ECKey key : keys) {
             String temp = Utils.HEX.encode(key.getPubKey());
             boolean flag = true;
-            for (Tokens tokens : getTokensResponse.getTokens()) {
+            for (Token tokens : getTokensResponse.getTokens()) {
                 String tokenHex = tokens.getTokenid();
                 if (temp.equals(tokenHex)) {
                     if (!tokens.isMultiserial()) {
@@ -529,7 +529,7 @@ public class TokenController extends TokenBaseController {
             Coin basecoin = Coin.parseCoin(stockAmount.getText(), Utils.HEX.decode(tokenid.getValue()));
             long amount = basecoin.getValue();
             
-            Tokens tokens = Tokens.buildSimpleTokenInfo(false, "", tokenid.getValue().trim(), stockName.getText().trim(),
+            Token tokens = Token.buildSimpleTokenInfo(false, "", tokenid.getValue().trim(), stockName.getText().trim(),
                     stockDescription.getText().trim(), 1, 0, amount, false, true);
             tokens.setUrl(stockUrl.getText().trim());
             tokenInfo.setTokens(tokens);
@@ -583,7 +583,7 @@ public class TokenController extends TokenBaseController {
 
             TokenInfo tokenInfo = new TokenInfo();
             
-            Tokens tokens = Tokens.buildMarketTokenInfo(false, "", marketid.getValue().trim(), marketName.getText().trim(),
+            Token tokens = Token.buildMarketTokenInfo(false, "", marketid.getValue().trim(), marketName.getText().trim(),
                     marketDescription.getText().trim(), marketurl.getText());
             tokenInfo.setTokens(tokens);
 
@@ -672,7 +672,7 @@ public class TokenController extends TokenBaseController {
 
         TokenInfo tokenInfo = new TokenInfo();
 
-        Tokens tokens = Tokens.buildSubtangleTokenInfo(false, "", String.valueOf(map.get("tokenHex")).trim(),
+        Token tokens = Token.buildSubtangleTokenInfo(false, "", String.valueOf(map.get("tokenHex")).trim(),
                 Main.getString(map.get("tokenname")).trim(), Main.getString(map.get("description")).trim(),
                 Main.getString(map.get("url")).trim());
         tokenInfo.setTokens(tokens);
@@ -899,7 +899,7 @@ public class TokenController extends TokenBaseController {
         long amount = Coin.parseCoin(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue())).getValue();
         Coin basecoin = Coin.valueOf(amount, Main.getString(map.get("tokenHex")).trim());
 
-        Tokens tokens = Tokens.buildSimpleTokenInfo(false, "", 
+        Token tokens = Token.buildSimpleTokenInfo(false, "", 
                 Main.getString(map.get("tokenHex")).trim(), Main.getString(map.get("tokenname")).trim(), Main.getString(map.get("description")).trim(),
                 Integer.parseInt(this.signnumberTF.getText().trim()), tokenindex_, amount, true, (boolean) map.get("tokenstop"));
         tokens.setUrl( Main.getString(map.get("url")).trim());

@@ -76,9 +76,8 @@ public class BlockWrap {
             try {
                 TokenInfo tokenInfo;
                     tokenInfo = new TokenInfo().parse(this.getBlock().getTransactions().get(0).getData());
-                Tokens tokens = tokenInfo.getTokens();
-                TokenSerial tokenSerial = new TokenSerial(tokens.getTokenid(), tokens.getTokenindex(), tokens.getAmount());
-                blockConflicts.add(new ConflictCandidate(this, tokenSerial));
+                Token tokens = tokenInfo.getTokens();
+                blockConflicts.add(new ConflictCandidate(this, tokens));
             } catch (IOException e) {
                 e.printStackTrace();
             }

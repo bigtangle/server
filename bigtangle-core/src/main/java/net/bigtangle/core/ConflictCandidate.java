@@ -19,10 +19,10 @@ public class ConflictCandidate {
         this.conflictPoint = new ConflictPoint(fromHeight);
     }
 
-    public ConflictCandidate(BlockWrap block, TokenSerial serial) {
+    public ConflictCandidate(BlockWrap block, Token getConnectedToken) {
         super();
         this.block = block;
-        this.conflictPoint = new ConflictPoint(serial);
+        this.conflictPoint = new ConflictPoint(getConnectedToken);
     }
 
     public ConflictCandidate(BlockWrap block, ConflictPoint conflictPoint) {

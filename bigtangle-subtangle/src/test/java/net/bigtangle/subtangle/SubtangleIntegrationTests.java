@@ -29,7 +29,7 @@ import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.Tokens;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -56,7 +56,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
     public void createTokenSubtangleId(ECKey ecKey) throws Exception {
         byte[] pubKey = ecKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
-        Tokens tokens = Tokens.buildSubtangleTokenInfo(false, Utils.HEX.encode(pubKey), "Test", "Test", "", "");
+        Token tokens = Token.buildSubtangleTokenInfo(false, Utils.HEX.encode(pubKey), "Test", "Test", "", "");
         tokenInfo.setTokens(tokens);
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokens.getTokenid(), "", ecKey.getPublicKeyAsHex()));
 

@@ -11,8 +11,8 @@ public class TokenInfo implements java.io.Serializable {
 
     private static final long serialVersionUID = 1554582498768357964L;
 
-    private Tokens tokens;
-    private List<Tokens> positveTokenList = new ArrayList<Tokens>(); //TODO remove
+    private Token tokens;
+    private List<Token> positveTokenList = new ArrayList<Token>(); //TODO remove
 
     private List<MultiSignAddress> multiSignAddresses;
 
@@ -37,11 +37,11 @@ public class TokenInfo implements java.io.Serializable {
         return this;
     }
 
-    public Tokens getTokens() {
+    public Token getTokens() {
         return tokens;
     }
 
-    public void setTokens(Tokens tokens) {
+    public void setTokens(Token tokens) {
         this.tokens = tokens;
     }
 
@@ -57,11 +57,11 @@ public class TokenInfo implements java.io.Serializable {
         this.multiSignAddresses = new ArrayList<>();
     }
 
-    public List<Tokens> getPositveTokenList() {
+    public List<Token> getPositveTokenList() {
         return positveTokenList;
     }
 
-    public void setPositveTokenList(List<Tokens> positveTokenList) {
+    public void setPositveTokenList(List<Token> positveTokenList) {
         this.positveTokenList = positveTokenList;
     }
 }
