@@ -227,4 +227,18 @@ See above
 2) restirct access of block transaction 
 3) interface to add user access list as KYC
 
- 
+
+
+# add new api service for server batchBlock
+Client send a block without solve
+
+batchBlock (blockbyte)
+
+write the  unsolved blocks in table BatchedBlock
+   blockhash, block, inserttime
+schedule job to create new Block
+read the BatchedBlock with maximal size, extract all transactions from BatchedBlock
+delete the entries
+and add transactions to new Block , then  do a block solve 
+
+
