@@ -72,7 +72,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
         transaction.setToAddressInSubtangle(subtangleID);
         
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_CROSSTANGLE);
@@ -106,7 +106,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(0L, pubKey);
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
@@ -177,7 +177,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         input.setScriptSig(inputScript);
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction,
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip,
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(doublespent);
@@ -211,7 +211,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
             coinbaseWallet.completeTx(request);
             
             HashMap<String, String> requestParam = new HashMap<String, String>();
-            byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction, Json.jsonmapper().writeValueAsString(requestParam));
+            byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
             Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
             rollingBlock.addTransaction(request.tx);
             rollingBlock.solve();
@@ -248,7 +248,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         coinbaseWallet.completeTx(request);
         
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction, Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
@@ -342,7 +342,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     public void exchangeTokenComplete(Transaction tx) throws Exception {
         // get new Block to be used from server
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(tx);
@@ -354,7 +354,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
     public void payToken(ECKey outKey) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         logger.info("resp block, hex : " + Utils.HEX.encode(data));
@@ -394,7 +394,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         vos.setContent("test");
         
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = this.networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_VOS);
@@ -481,7 +481,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     
     public void testSaveOVSExecute(ECKey outKey) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = this.networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_VOS_EXECUTE);
@@ -517,7 +517,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     @Test
     public void testSaveUserData() throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_USERDATA);
@@ -582,7 +582,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
         requestParam.clear();
-        data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(), Json.jsonmapper().writeValueAsString(requestParam));
         block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_USERDATA);
         
@@ -605,7 +605,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     public void createTransaction() throws Exception {
         milestoneService.update();
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         logger.info("resp block, hex : " + Utils.HEX.encode(data));

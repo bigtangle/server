@@ -63,7 +63,7 @@ public class GiveMoneyUtils {
         tokenInfo.setTokens(tokens);
         
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Configure.PARAMS.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
@@ -189,7 +189,7 @@ public class GiveMoneyUtils {
         tokenInfo.setTokens(tokens);
         
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Configure.PARAMS.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
@@ -219,7 +219,7 @@ public class GiveMoneyUtils {
 
     public static Block getAskTransactionBlock() throws JsonProcessingException, Exception {
         final Map<String, Object> requestParam = new HashMap<String, Object>();
-        byte[] data = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         return Configure.PARAMS.getDefaultSerializer().makeBlock(data);
     }

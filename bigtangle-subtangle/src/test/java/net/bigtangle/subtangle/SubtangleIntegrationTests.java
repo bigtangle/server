@@ -62,7 +62,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
 
         Coin basecoin = Coin.valueOf(0L, pubKey);
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
@@ -118,7 +118,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         input.setScriptSig(inputScript);
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction,
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip,
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(transaction);

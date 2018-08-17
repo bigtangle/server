@@ -568,7 +568,7 @@ public class SendMoneyController {
         Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
         input.setScriptSig(inputScript);
 
-        byte[] data = OkHttp3Util.post(Main.getContextRoot() + ReqCmd.askTransaction,
+        byte[] data = OkHttp3Util.post(Main.getContextRoot() + ReqCmd.getTip,
                 Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
         Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(transaction);
@@ -596,7 +596,7 @@ public class SendMoneyController {
                             !addressComboBox.getValue().contains(",") ? addressComboBox.getValue()
                                     : addressComboBox.getValue().split(",")[1]);
             HashMap<String, String> requestParam = new HashMap<String, String>();
-            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.askTransaction.name(),
+            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTip.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
 
             Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
@@ -675,7 +675,7 @@ public class SendMoneyController {
             multiSigTransaction.addOutput(amount0, scriptPubKey);
             // get new Block to be used from server
             HashMap<String, String> requestParam = new HashMap<String, String>();
-            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.askTransaction.name(),
+            byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTip.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
 
@@ -1051,7 +1051,7 @@ public class SendMoneyController {
             Script inputScript = ScriptBuilder.createMultiSigInputScriptBytes(sigs);
             transaction0.getInput(0).setScriptSig(inputScript);
 
-            byte[] buf = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+            byte[] buf = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
             rollingBlock.addTransaction(transaction0);

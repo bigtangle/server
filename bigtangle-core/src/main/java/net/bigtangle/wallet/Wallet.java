@@ -3576,7 +3576,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
 			throws JsonProcessingException, Exception {
 
 		HashMap<String, String> requestParam = new HashMap<String, String>();
-		byte[] data = OkHttp3Util.post(serverurl + ReqCmd.askTransaction.name(),
+		byte[] data = OkHttp3Util.post(serverurl + ReqCmd.getTip.name(),
 				Json.jsonmapper().writeValueAsString(requestParam));
 		Block block = params.getDefaultSerializer().makeBlock(data);
 		block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
@@ -3611,7 +3611,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
 			Sha256Hash overrideHash1, Sha256Hash overrideHash2) throws JsonProcessingException, Exception {
 
 		HashMap<String, String> requestParam = new HashMap<String, String>();
-		byte[] data = OkHttp3Util.post(serverurl + ReqCmd.askTransaction.name(),
+		byte[] data = OkHttp3Util.post(serverurl + ReqCmd.getTip.name(),
 				Json.jsonmapper().writeValueAsString(requestParam));
 		Block block = params.getDefaultSerializer().makeBlock(data);
 		block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);

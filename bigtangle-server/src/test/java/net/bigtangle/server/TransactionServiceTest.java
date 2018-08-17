@@ -73,7 +73,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         multiSigTransaction.addOutput(amount0, scriptPubKey);
         // get new Block to be used from server
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
 
@@ -133,7 +133,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
 //        request = SendRequest.forTx(multiSigTransaction_);
 //        walletAppKit.wallet().completeTx(request);
         
-        data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(), Json.jsonmapper().writeValueAsString(requestParam));
         rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(transaction0);
      //   rollingBlock.addTransaction(transaction1);
@@ -152,7 +152,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
 
         // get new Block to be used from server
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
 

@@ -87,7 +87,7 @@ public class DispatcherController {
             ReqCmd reqCmd0000 = ReqCmd.valueOf(reqCmd);
             switch (reqCmd0000) {
 
-            case askTransaction: {
+            case getTip: {
                 byte[] data = transactionService.askTransaction().array();
                 this.outPointBinaryArray(httpServletResponse, data);
             }   
