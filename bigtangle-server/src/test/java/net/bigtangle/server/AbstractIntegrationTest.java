@@ -224,7 +224,7 @@ public abstract class AbstractIntegrationTest {
         coinbaseWallet.setServerURL(contextRoot);
         // get new Block to be used from server
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction,
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip,
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
 

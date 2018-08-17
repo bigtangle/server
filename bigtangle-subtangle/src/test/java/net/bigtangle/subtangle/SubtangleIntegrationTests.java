@@ -56,13 +56,13 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
     public void createTokenSubtangleId(ECKey ecKey) throws Exception {
         byte[] pubKey = ecKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
-        Tokens tokens = Tokens.buildSubtangleTokenInfo(false, Utils.HEX.encode(pubKey), "Test", "Test", "");
+        Tokens tokens = Tokens.buildSubtangleTokenInfo(false, Utils.HEX.encode(pubKey), "Test", "Test", "", "");
         tokenInfo.setTokens(tokens);
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokens.getTokenid(), "", ecKey.getPublicKeyAsHex()));
 
         Coin basecoin = Coin.valueOf(0L, pubKey);
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
@@ -118,7 +118,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         input.setScriptSig(inputScript);
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction,
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip,
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(transaction);

@@ -37,7 +37,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 	
 	public void payToken(ECKey outKey) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         LOGGER.info("resp block, hex : " + Utils.HEX.encode(data));

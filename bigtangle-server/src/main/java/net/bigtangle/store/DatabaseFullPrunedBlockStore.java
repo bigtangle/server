@@ -258,7 +258,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected abstract String getUpdateBlockevaluationUnmaintainAllSQL();
 
     protected String SELECT_MULTISIGNADDRESS_SQL = "SELECT blockhash, tokenid, address, pubKeyHex, posIndex FROM multisignaddress WHERE tokenid = ? AND blockhash = ?";
-    protected String INSERT_MULTISIGNADDRESS_SQL = "INSERT INTO multisignaddress (tokenid, address, pubKeyHex, posIndex) VALUES (?, ?, ?, ?)";
+    protected String INSERT_MULTISIGNADDRESS_SQL = "INSERT INTO multisignaddress (tokenid, address, pubKeyHex, posIndex,blockhash) VALUES (?, ?, ?, ?,?)";
     protected String DELETE_MULTISIGNADDRESS_SQL = "DELETE FROM multisignaddress WHERE tokenid = ? AND address = ?";
     protected String COUNT_MULTISIGNADDRESS_SQL = "SELECT COUNT(*) as count FROM multisignaddress WHERE tokenid = ?";
     protected String SELECT_MULTISIGNADDRESSINFO_SQL = "SELECT tokenid, address FROM multisignaddress WHERE tokenid = ? AND address = ?";
@@ -2455,6 +2455,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setString(2, multiSignAddress.getAddress());
             preparedStatement.setString(3, multiSignAddress.getPubKeyHex());
             preparedStatement.setInt(4, multiSignAddress.getPosIndex());
+            preparedStatement.setString( 5,multiSignAddress.getBlockhash() );
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);

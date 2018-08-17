@@ -174,7 +174,7 @@ public class Main extends Application {
             // blocktype = NetworkParameters.BLOCKTYPE_USERDATA_TOKEN;
         }
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Main.params.getDefaultSerializer().makeBlock(data);
         block.setBlockType(blocktype);
@@ -408,7 +408,7 @@ public class Main extends Application {
     public static void addAddress2block(String name, String address) throws Exception {
         String CONTEXT_ROOT = getContextRoot();
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Main.params.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_USERDATA);
@@ -808,8 +808,6 @@ public class Main extends Application {
 
     public static void addUsersettingData() {
         try {
-            log.info("===========");
-            log.info(IpAddress);
             addToken(getContextRoot(), lang, DataClassName.LANG.name(), DataClassName.LANG.name());
             addToken(getContextRoot(), IpAddress, DataClassName.SERVERURL.name(), DataClassName.SERVERURL.name());
         } catch (Exception e) {
@@ -855,7 +853,7 @@ public class Main extends Application {
         String CONTEXT_ROOT = Main.IpAddress + "/"; // http://" + Main.IpAddress
                                                     // + ":" + Main.port + "/";
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
         rollingBlock.solve();

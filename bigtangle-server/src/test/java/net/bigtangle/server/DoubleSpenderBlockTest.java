@@ -88,7 +88,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
     public void test50AskTransactionBlock() throws Exception {
         for (int i = 0; i < 50; i++) {
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
-            byte[] buf = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+            byte[] buf = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = networkParameters.getDefaultSerializer().makeBlock(buf);
             block.solve();
@@ -99,7 +99,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
             }
         }
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        byte[] buf = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] buf = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(buf);
         
@@ -136,7 +136,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
         Sha256Hash sha256Hash1, sha256Hash2;
         {
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
-            byte[] buf = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+            byte[] buf = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
             rollingBlock.solve();
@@ -145,7 +145,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
         }
         {
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
-            byte[] buf = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+            byte[] buf = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
             rollingBlock.solve();
@@ -245,7 +245,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
                 .add(new MultiSignAddress(tokens.getTokenid(), "", ecKey.getPublicKeyAsHex()));
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);

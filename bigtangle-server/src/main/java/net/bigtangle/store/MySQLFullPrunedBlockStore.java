@@ -107,7 +107,7 @@ private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
 
     //update on confirm
     private static final String CREATE_MULTISIGNADDRESS_TABLE = "CREATE TABLE multisignaddress (\n"
-            + "    blockhash varbinary(32) NOT NULL,\n"
+            + "    blockhash varchar(255) NOT NULL,\n"
             + "    tokenid varchar(255) NOT NULL  ,\n"
             + "    address varchar(255),\n"
             + "    pubKeyHex varchar(255),\n"

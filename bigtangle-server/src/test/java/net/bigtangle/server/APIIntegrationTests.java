@@ -122,14 +122,14 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         input.setScriptSig(inputScript);
         
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        byte[] buf = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] buf = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(), Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
         rollingBlock.addTransaction(tx);
         rollingBlock.solve();
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
         
         Transaction tx_ = rollingBlock.getTransactions().get(0);
-        buf = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        buf = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(), Json.jsonmapper().writeValueAsString(requestParam));
         rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
         rollingBlock.addTransaction(tx_);
         rollingBlock.solve();
@@ -396,7 +396,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             Script inputScript = ScriptBuilder.createMultiSigInputScriptBytes(sigs);
             transaction0.getInput(0).setScriptSig(inputScript);
 
-            byte[] buf = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+            byte[] buf = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
             rollingBlock.addTransaction(transaction0);
@@ -410,7 +410,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public void testMultiSigTokenIsNull() throws Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
@@ -433,7 +433,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public void testMultiSigTokenInfoIsNull() throws Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
@@ -455,7 +455,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public void testMultiSigTokenInfoSignnumberZero() throws Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
@@ -482,7 +482,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public void testMultiSigTokenSerialIsNull() throws Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
@@ -510,7 +510,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public void testMultiSigMultiSignAddressSizeZero() throws Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
@@ -547,7 +547,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public void testMultiSigMultiSignAddressSizeSignnumber() throws Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
@@ -587,7 +587,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public void testMultiSigMultiSignDatasignatureAddress() throws Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
@@ -668,7 +668,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public void testMultiSigMultiSignSignatureError() throws Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
@@ -747,7 +747,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public void testMultiSigMultiSignSignatureSuccess() throws Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
@@ -842,7 +842,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                     .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
             
             HashMap<String, String> requestParam = new HashMap<String, String>();
-            byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+            byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = networkParameters.getDefaultSerializer().makeBlock(data);
             block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
@@ -898,7 +898,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key3.getPublicKeyAsHex()));
 
             HashMap<String, String> requestParam = new HashMap<String, String>();
-            byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+            byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = networkParameters.getDefaultSerializer().makeBlock(data);
             block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
@@ -1000,7 +1000,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key3.getPublicKeyAsHex()));
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
@@ -1095,7 +1095,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
     public byte[] getAskTransactionBlock() throws JsonProcessingException, Exception {
         final Map<String, Object> request = new HashMap<String, Object>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(request));
         return data;
     }
@@ -1139,7 +1139,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key3.getPublicKeyAsHex()));
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
@@ -1165,7 +1165,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         ECKey key4 = keys.get(3);
         updateTokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key4.getPublicKeyAsHex()));
         requestParam = new HashMap<String, String>();
-        data = OkHttp3Util.post(contextRoot + ReqCmd.askTransaction.name(),
+        data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block_ = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);

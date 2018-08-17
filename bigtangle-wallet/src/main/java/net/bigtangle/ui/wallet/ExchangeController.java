@@ -294,7 +294,7 @@ public class ExchangeController {
         Main.bitcoin.wallet().signTransaction(request);
 
         String ContextRoot = Main.getContextRoot();
-        byte[] data = OkHttp3Util.post(ContextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(ContextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
         Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(mTransaction);
@@ -480,7 +480,7 @@ public class ExchangeController {
 
         String ContextRoot = Main.getContextRoot();
 
-        byte[] data = OkHttp3Util.post(ContextRoot + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(ContextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
         Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(transaction);

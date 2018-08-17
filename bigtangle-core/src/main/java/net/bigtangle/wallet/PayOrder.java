@@ -76,7 +76,7 @@ public class PayOrder {
         this.wallet().setServerURL(this.serverURL);
         this.wallet().signTransaction(request);
 
-        byte[] data = OkHttp3Util.post(this.serverURL + ReqCmd.askTransaction.name(),
+        byte[] data = OkHttp3Util.post(this.serverURL + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
         Block rollingBlock = this.wallet().getNetworkParameters().getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(transaction);
