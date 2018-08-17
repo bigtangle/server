@@ -189,7 +189,7 @@ public abstract class AbstractBlockGraph {
     public abstract boolean shouldVerifyTransactions();
 
 
-    protected abstract boolean savePre(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height,
+    protected abstract boolean connectUTXOs(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height,
             boolean allowConflicts) throws BlockStoreException, VerificationException;
 
     protected abstract boolean checkSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch,

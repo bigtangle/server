@@ -16,5 +16,5 @@ public enum ReqCmd {
 
     launchPayMultiSign, payMultiSign, getPayMultiSignList, getPayMultiSignAddressList, payMultiSignDetails,
 
-    getVOSExecuteList, version, submitLogResult, outputsWithHexStr;
+    getVOSExecuteList, version, submitLogResult, getOutputWithKey;
 }

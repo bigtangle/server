@@ -300,7 +300,7 @@ public class DispatcherController {
             }
                 break;
                 
-            case outputsWithHexStr: {
+            case getOutputWithKey: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String hexStr = (String) request.get("hexStr");

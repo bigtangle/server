@@ -5,6 +5,7 @@
 
 package net.bigtangle.core;
 
+import java.io.IOException;
 import java.util.HashSet;
 
 /**
@@ -72,13 +73,16 @@ public class BlockWrap {
 
         // Dynamic conflicts: token issuance ids
         if (this.getBlock().getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION) {
-            TokenInfo tokenInfo = new TokenInfo().parse(this.getBlock().getTransactions().get(0).getData());
-            Tokens tokens = tokenInfo.getTokens();
-            TokenSerial tokenSerial = new TokenSerial(tokens.getTokenid(), tokens.getTokenindex(), tokens.getAmount());
-            blockConflicts.add(new ConflictCandidate(this, tokenSerial));
+            try {
+                TokenInfo tokenInfo;
+                    tokenInfo = new TokenInfo().parse(this.getBlock().getTransactions().get(0).getData());
+                Tokens tokens = tokenInfo.getTokens();
+                TokenSerial tokenSerial = new TokenSerial(tokens.getTokenid(), tokens.getTokenindex(), tokens.getAmount());
+                blockConflicts.add(new ConflictCandidate(this, tokenSerial));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-        
-        // TODO tokenserial might be the wrong thing to compare here
 
         return blockConflicts;
     }

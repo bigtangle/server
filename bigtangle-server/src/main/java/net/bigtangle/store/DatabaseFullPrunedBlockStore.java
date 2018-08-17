@@ -202,8 +202,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " INTO tokens (blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop, prevblockhash) "
             + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
-    protected String UPDATE_TOKENS_SQL = getUpdate()
-            + " tokens SET tokenid = ?, tokenindex = ?, amount = ?, tokenname = ?, description = ?, url = ?, signnumber = ?, multiserial = ?, tokentype = ?, tokenstop =? "
+    protected String UPDATE_TOKEN_CONFIRMED_SQL = getUpdate()
+            + " tokens SET confirmed = ? "
             + " WHERE blockhash = ?";
     
     protected String SELECT_TOKENS_SQL = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop "
@@ -2288,22 +2288,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void updateTokens(Tokens tokens) throws BlockStoreException {
+    public void updateTokenConfirmed(String blockHash, boolean confirmed) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             // tokenid = ?, tokenindex = ?, amount = ?, tokenname = ?, description = ?, url = ?, signnumber = ?, multiserial = ?, tokentype = ?, tokenstop =?
-            preparedStatement = conn.get().prepareStatement(UPDATE_TOKENS_SQL);
-            preparedStatement.setString(1, tokens.getTokenid());
-            preparedStatement.setInt(2, tokens.getTokenindex());
-            preparedStatement.setLong(3, tokens.getAmount());
-            preparedStatement.setString(4, tokens.getTokenname());
-            preparedStatement.setString(5, tokens.getDescription());
-            preparedStatement.setString(6, tokens.getUrl());
-            preparedStatement.setInt(7, tokens.getSignnumber());
-            preparedStatement.setBoolean(8, tokens.isMultiserial());
-            preparedStatement.setInt(9, tokens.getTokentype());
-            preparedStatement.setBoolean(10, tokens.isTokenstop());
+            preparedStatement = conn.get().prepareStatement(UPDATE_TOKEN_CONFIRMED_SQL);
+            preparedStatement.setBoolean(1, confirmed);
+            preparedStatement.setString(2, blockHash);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
