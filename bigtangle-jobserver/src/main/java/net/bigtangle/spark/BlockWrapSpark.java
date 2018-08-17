@@ -3,7 +3,7 @@
  *  
  *******************************************************************************/
 
-package net.bigtangle.core;
+package net.bigtangle.spark;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -11,6 +11,12 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.HashSet;
 
+import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.BlockWrap;
+import net.bigtangle.core.ConflictCandidate;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.params.UnitTestParams;
 import scala.collection.mutable.ListMap;
 
