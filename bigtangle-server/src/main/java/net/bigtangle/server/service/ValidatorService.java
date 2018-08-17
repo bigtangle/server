@@ -34,14 +34,11 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ConflictCandidate;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenSerial;
-import net.bigtangle.core.Tokens;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.UTXO;
-import net.bigtangle.core.Utils;
 import net.bigtangle.script.Script;
 import net.bigtangle.store.FullPrunedBlockStore;
 
@@ -555,7 +552,7 @@ public class ValidatorService {
 			Collection<ConflictCandidate> conflictingOutPoints) throws BlockStoreException {
 		// Get conflicts that are spent more than once in the
 		// candidates
-		List<ConflictCandidate> candidateCandidateConflicts = blocksToAdd.stream().map(b -> toConflictCandidates(b))
+		List<ConflictCandidate> candidateCandidateConflicts = blocksToAdd.stream().map(b -> b.toConflictCandidates())
 				.flatMap(i -> i.stream()).collect(Collectors.groupingBy(i -> i.getConflictPoint())).values().stream()
 				.filter(l -> l.size() > 1).flatMap(l -> l.stream()).collect(Collectors.toList());
 
@@ -576,7 +573,7 @@ public class ValidatorService {
 			Collection<ConflictCandidate> conflictingOutPoints, Collection<BlockWrap> conflictingMilestoneBlocks)
 			throws BlockStoreException {
 		// Find all conflict candidates in blocks to add
-		List<ConflictCandidate> conflicts = blocksToAdd.stream().map(b -> toConflictCandidates(b))
+		List<ConflictCandidate> conflicts = blocksToAdd.stream().map(b -> b.toConflictCandidates())
 				.flatMap(i -> i.stream()).collect(Collectors.toList());
 
 		// Find only those that are conflicting with milestone
@@ -665,37 +662,11 @@ public class ValidatorService {
 		}
 
 		// Find all conflict candidates in blocks to add
-		List<ConflictCandidate> conflicts = newApprovedNonMilestoneBlocks.stream().map(b -> toConflictCandidates(b))
+		List<ConflictCandidate> conflicts = newApprovedNonMilestoneBlocks.stream().map(b -> b.toConflictCandidates())
 				.flatMap(i -> i.stream()).collect(Collectors.toList());
 
 		// Find only those that are conflicting with milestone
 		return isConflictingWithMilestone(conflicts);
-	}
-
-	public HashSet<ConflictCandidate> toConflictCandidates(BlockWrap b) {
-		HashSet<ConflictCandidate> blockConflicts = new HashSet<>();
-
-		// Create pairs of blocks and used non-coinbase utxos from block
-		// Dynamic conflicts: conflicting transactions
-		b.getBlock().getTransactions().stream().flatMap(t -> t.getInputs().stream()).filter(in -> !in.isCoinBase())
-				.map(in -> new ConflictCandidate(b, in.getOutpoint())).forEach(c -> blockConflicts.add(c));
-
-		// Dynamic conflicts: mining reward height intervals
-		if (b.getBlock().getBlockType() == Block.BLOCKTYPE_REWARD)
-			blockConflicts
-					.add(new ConflictCandidate(b, Utils.readInt64(b.getBlock().getTransactions().get(0).getData(), 0)));
-
-		// Dynamic conflicts: token issuance ids
-		if (b.getBlock().getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION) {
-		    TokenInfo tokenInfo = new TokenInfo().parse(b.getBlock().getTransactions().get(0).getData());
-		    Tokens tokens = tokenInfo.getTokens();
-		    TokenSerial tokenSerial = new TokenSerial(tokens.getTokenid(), tokens.getTokenindex(), tokens.getAmount());
-			blockConflicts.add(new ConflictCandidate(b, tokenSerial));
-		}
-		
-		// TODO tokenserial might be the wrong thing to compare here
-
-		return blockConflicts;
 	}
 
 	public boolean isConflictingWithMilestone(Collection<ConflictCandidate> blockConflicts) {

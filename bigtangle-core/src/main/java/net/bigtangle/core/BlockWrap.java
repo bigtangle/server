@@ -5,6 +5,8 @@
 
 package net.bigtangle.core;
 
+import java.util.HashSet;
+
 /**
  * Wraps a {@link Block} object with extra data that can be derived from the
  * blockstore
@@ -53,5 +55,31 @@ public class BlockWrap {
 
     public Sha256Hash getBlockHash() {
         return block.getHash();
+    }
+    
+    public HashSet<ConflictCandidate> toConflictCandidates() {
+        HashSet<ConflictCandidate> blockConflicts = new HashSet<>();
+
+        // Create pairs of blocks and used non-coinbase utxos from block
+        // Dynamic conflicts: conflicting transactions
+        this.getBlock().getTransactions().stream().flatMap(t -> t.getInputs().stream()).filter(in -> !in.isCoinBase())
+                .map(in -> new ConflictCandidate(this, in.getOutpoint())).forEach(c -> blockConflicts.add(c));
+
+        // Dynamic conflicts: mining reward height intervals
+        if (this.getBlock().getBlockType() == Block.BLOCKTYPE_REWARD)
+            blockConflicts
+                    .add(new ConflictCandidate(this, Utils.readInt64(this.getBlock().getTransactions().get(0).getData(), 0)));
+
+        // Dynamic conflicts: token issuance ids
+        if (this.getBlock().getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION) {
+            TokenInfo tokenInfo = new TokenInfo().parse(this.getBlock().getTransactions().get(0).getData());
+            Tokens tokens = tokenInfo.getTokens();
+            TokenSerial tokenSerial = new TokenSerial(tokens.getTokenid(), tokens.getTokenindex(), tokens.getAmount());
+            blockConflicts.add(new ConflictCandidate(this, tokenSerial));
+        }
+        
+        // TODO tokenserial might be the wrong thing to compare here
+
+        return blockConflicts;
     }
 }

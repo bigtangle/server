@@ -24,6 +24,10 @@ import java.io.ObjectOutputStream
 import java.io.ByteArrayOutputStream
 import java.io.ObjectInputStream
 import java.io.ByteArrayInputStream
+import net.bigtangle.core.ConflictCandidate
+import scala.collection.immutable.Nil
+import java.util.ArrayList
+import scala.collection.mutable.ListMap
 
 // Run a test from MilestoneServiceTest, then this to validate our algorithm in scala
 object JdbcTest {
@@ -84,34 +88,31 @@ object JdbcTest {
 
     // TODO use byte arrays for vertex ids
     val myEdges = rows.filter(row => !Sha256Hash.wrap(row.getAs[Array[Byte]](0)).equals(UnitTestParams.get.getGenesisBlock.getHash)).map(row =>
-      (Edge(bytestoLong(row.getAs[Array[Byte]](0)), bytestoLong(row.getAs[Array[Byte]](10)), "")))
+      (Edge(bytestoLong(row.getAs[Array[Byte]](0)), bytestoLong(row.getAs[Array[Byte]](10)), (0.0, 0.0))))
     val myEdges2 = rows.filter(row => !Sha256Hash.wrap(row.getAs[Array[Byte]](0)).equals(UnitTestParams.get.getGenesisBlock.getHash)).map(row =>
-      (Edge(bytestoLong(row.getAs[Array[Byte]](0)), bytestoLong(row.getAs[Array[Byte]](11)), "")))
+      (Edge(bytestoLong(row.getAs[Array[Byte]](0)), bytestoLong(row.getAs[Array[Byte]](11)), (0.0, 0.0))))
     val myGraph = Graph(myVertices, myEdges.union(myEdges2)).cache
     val originalBlocks = myGraph.vertices.collect
 
     // Run test for update depth
     val watch = Stopwatch.createStarted();
-    val updatedGraph = update(myGraph).cache
+    val updatedGraph = phase3(myGraph).cache
     val updatedBlocks = updatedGraph.vertices.collect
     print("Update time " + watch.elapsed(TimeUnit.MILLISECONDS));
 
-    // Debug output
+    //Debug output
     //    updatedBlocks.map(_._2).sortBy(b => b.getBlock.getHashAsString).foreach(b => {
     //      println(b.getBlock.getHashAsString)
-    //      print(" depth:")
-    //      println(b.getBlockEvaluation.getDepth)
-    //      print(" mdepth:")
-    //      println(b.getBlockEvaluation.getMilestoneDepth)
     //      print(" weight:")
     //      println(b.getBlockEvaluation.getCumulativeWeight)
-    //      println(" ;")
     //    })
 
     assert(originalBlocks.map(e => e._2.getBlock).deep == updatedBlocks.map(e => e._2.getBlock).deep)
     assert(originalBlocks.map(e => e._2.getBlockEvaluation.getDepth).deep == updatedBlocks.map(e => e._2.getBlockEvaluation.getDepth).deep)
     assert(originalBlocks.map(e => e._2.getBlockEvaluation.getMilestoneDepth).deep == updatedBlocks.map(e => e._2.getBlockEvaluation.getMilestoneDepth).deep)
     assert(originalBlocks.map(e => e._2.getBlockEvaluation.getCumulativeWeight).deep == updatedBlocks.map(e => e._2.getBlockEvaluation.getCumulativeWeight).deep)
+
+    print(sc.getCheckpointDir)
 
     // TODO use dynamic MAX_STEPS
     // TODO rating select tips, then (weight depth milestonedepth rating), then milestone, then maintained separately
@@ -125,14 +126,17 @@ object JdbcTest {
     // then batch select via pregel MCMC:
     //Up to MAX_STEPS steps far
     //If reaching MAX_STEPS and still not a tip, we can:
-    // Simply fail -> Deadlock potential if everything always fails
-    // Simply take the current block as tip -> adds weight to the path to encourage milestoning it, but also loses hashpower and mostly creates orphans
+    //- fail
+    //-> Deadlock if everything always fails
+    //- take the current block as tip
+    //-> adds weight to the path to encourage milestoning it, but also loses hashpower and mostly creates orphans
     //this would enable a candlestick attack, since building the heaviest candlestick makes everyone else waste hashpower
     //however, this is fine. we can calculate the lost hashpower to be very low if alpha is very low.
     //it suffices to set alpha<=3ln2/(tps*confirmationdelay) to keep divergence probability approximately over 1/3
     //this does, however, allow for more rewards for the candlestick attacker, since the lost hashpower is usually going to orphan
-    //also, this allows for skipping whole height intervals, which is why 1. we need non-fixed reward intervals and 2.
-    //but there will be an equilibrium ??? TODO
+    //also, this allows for skipping whole height intervals, which is why 1. we need non-fixed reward intervals and
+    //2. (if we make blocks conflict with unapproved blocks of height lower than own height - x it would fix itself since candlesticks become invalid)
+    //there must be an equilibrium (only exists if candlesticks invalid as above) ??? TODO
 
     // Update Scheme (MAX_STEPS = MAXVALUE FOR NOW SO IT WILL WORK ALWAYS, ALTHOUGH INFINITELY SLOW IN CASE OF SUCCESSFUL ATTACK)
 
@@ -147,15 +151,123 @@ object JdbcTest {
     // this will prevent the problem of needing to maintain infinitely many blocks in ddos
   }
 
+  def transitionWeight(deltaWeight: Long): Double = {
+    // TODO
+    val alpha = 0.1
+
+    // Calculate transition weight
+    Math.exp(-alpha * deltaWeight)
+  }
+
+  // TODO try out random walk library
   /**
    * Test spark implementation for phase 1
    */
   // PHASE 1: batch precompute (maintained only) MAX_STEPS @vertex: conflictpoint sets + milestone validity, outgoing weight unnormalized, transient dicerolls
   //@edges: applicable diceroll interval for sendmsg
-  def phase1(targetGraph: Graph[BlockWrapSpark, String]): Graph[BlockWrapSpark, String] = {
-    // TODO dynamic step amount
-    val MAX_STEPS = 500
+  def phase1(targetGraph: Graph[BlockWrapSpark, (Double, Double)]): Graph[BlockWrapSpark, (Double, Double)] = {
+    // TODO dynamic step amount less than infinity will lead to problems, since then it could be possible for a conflict to be forgotten.
+    //On the other hand, infinity can make it take infinitely long if there is some kind of long snake that is referenced.
+    //Since this can happen either way, we need to prevent this by:
+    //- setting blocks to conflicting with all blocks lower than e.g. their height - 1000 that are not approved by them
+    //-> unscalable calculation, have to go through everything every time
+    //-
 
+    // For maintained part of the graph only
+    var maintainedGraph = targetGraph.subgraph(
+      vpred = (vid, vdata: BlockWrapSpark) => vdata.getBlockEvaluation.isMaintained())
+
+    // The initial message received by all vertices in the update
+    val initialMessage = new HashSet[ConflictCandidate]
+
+    // Define functions for Pregel
+    def vertexProgram(id: VertexId, blockWrap: BlockWrapSpark, msgSum: HashSet[ConflictCandidate]): BlockWrapSpark = {
+      // Build new updated BlockWrap instance
+      val updatedBlockWrap = new BlockWrapSpark(blockWrap)
+
+      if (msgSum.isEmpty()) {
+        // Initialization (initial msg always empty)
+        updatedBlockWrap.setApprovedNonMilestoneConflicts(updatedBlockWrap.toConflictCandidates)
+        updatedBlockWrap.setReceivedConflictPoints(updatedBlockWrap.toConflictCandidates)
+      } else {
+        // Else from new message
+        updatedBlockWrap.getApprovedNonMilestoneConflicts.addAll(msgSum)
+        updatedBlockWrap.setReceivedConflictPoints(msgSum)
+      }
+
+      // Return new updated BlockWrap instance
+      updatedBlockWrap
+    }
+
+    def sendMessage(edge: EdgeTriplet[BlockWrapSpark, (Double, Double)]) = {
+      // Calculate messages
+      val sentConflicts = edge.srcAttr.getReceivedConflictPoints
+
+      Iterator((edge.dstId, sentConflicts))
+    }
+
+    def messageCombiner(a: HashSet[ConflictCandidate], b: HashSet[ConflictCandidate]): HashSet[ConflictCandidate] = {
+      // Combine multiple incoming messages into one
+      val mergedConflicts = new HashSet[ConflictCandidate]()
+      mergedConflicts.addAll(a)
+      mergedConflicts.addAll(b)
+      mergedConflicts
+    }
+
+    //(TODO perhaps maintained as well here)
+    // Execute a dynamic version of Pregel to compute conflict candidate sets
+    maintainedGraph = Pregel(maintainedGraph, initialMessage, Int.MaxValue, EdgeDirection.Out)(
+      vertexProgram, sendMessage, messageCombiner)
+
+    // Calculate milestone validity of blocks
+    maintainedGraph = maintainedGraph.mapVertices((vid, vdata) => {
+      vdata.setMilestoneConsistent(true)
+      vdata
+      // TODO port validatorservice to spark?
+    })
+
+    // Aggregate outgoing weight unnormalized
+    val outgoingWeights = maintainedGraph.aggregateMessages[ListMap[Sha256Hash, Double]](
+      triplet => {
+        val msg = new ListMap[Sha256Hash, Double]
+        msg += (triplet.srcAttr.getBlockHash -> transitionWeight(triplet.dstAttr.getBlockEvaluation.getCumulativeWeight - triplet.srcAttr.getBlockEvaluation.getCumulativeWeight))
+        triplet.sendToDst(msg)
+      },
+      (a, b) => {
+        a ++ b
+      })
+    maintainedGraph = maintainedGraph.joinVertices(outgoingWeights) { (vid, vdata, weights) =>
+      {
+        val sum = weights.map(_._2).reduce((a, b) => a + b)
+        vdata.setIncomingTransitionWeightSum(sum)
+        vdata.setIncomingTransitionWeights(weights)
+        vdata
+      }
+    }
+
+    // Give edges their applicable diceroll interval
+    maintainedGraph = maintainedGraph.mapTriplets(triplet => {
+      val indexedList = triplet.dstAttr.getIncomingTransitionWeights.zipWithIndex
+      val index = indexedList.find(p => p._1._1.equals(triplet.srcAttr.getBlockHash)).get._2
+      val intervalStart = indexedList.filter(p => p._2 < index).map(p => p._1._2).reduce((a, b) => a + b) / triplet.dstAttr.getIncomingTransitionWeightSum
+      val intervalEnd = indexedList.filter(p => p._2 <= index).map(p => p._1._2).reduce((a, b) => a + b) / triplet.dstAttr.getIncomingTransitionWeightSum
+      (intervalStart, intervalEnd)
+    })
+
+    // Perform dicerolls and MCMC in Pregel
+    val walkerInits = maintainedGraph.vertices.take(5)
+    // pregel random transitions
+
+    maintainedGraph
+  }
+
+  // TODO height difference scaler ameliorates prebuilding (candlestick) a bit at least
+  //also, by punishing candlesticks (set flag ineligible if too far) and stopping where we are at it will be fixed?
+  /**
+   * Test spark implementation for depth updates
+   */
+  // PHASE 3: update for (maintained), TODO add rating and MAX_STEPS, then persist if wanted (old graph.join)
+  def phase3(targetGraph: Graph[BlockWrapSpark, (Double, Double)]): Graph[BlockWrapSpark, (Double, Double)] = {
     // For maintained part of the graph only
     val maintainedGraph = targetGraph.subgraph(
       vpred = (vid, vdata: BlockWrapSpark) => vdata.getBlockEvaluation.isMaintained())
@@ -163,82 +275,35 @@ object JdbcTest {
     // The initial message received by all vertices in the update
     val initialMessage = (new HashSet[Sha256Hash](), 0L, -1L)
 
-    // Define the three functions needed to implement updates in the GraphX
-    // version of Pregel
-    def vertexProgram(id: VertexId, prevBlockWrap: BlockWrapSpark, msgSum: (HashSet[Sha256Hash], Long, Long)): BlockWrapSpark = {
-      // Skip updating if not maintained
-
-      // Initialization (initial msg always has depth == 0)
-
-      // Calculate new statistics
-
+    // Define functions for Pregel
+    def vertexProgram(id: VertexId, blockWrap: BlockWrapSpark, msgSum: (HashSet[Sha256Hash], Long, Long)): BlockWrapSpark = {
       // Build new updated BlockWrap instance
-    }
+      val updatedBlockWrap = new BlockWrapSpark(blockWrap)
 
-    def sendMessage(edge: EdgeTriplet[BlockWrapSpark, String]) = {
-      // Skip sending to and from unmaintained blocks
-
-      // Calculate messages
-    }
-
-    def messageCombiner(a: (HashSet[Sha256Hash], Long, Long), b: (HashSet[Sha256Hash], Long, Long)): (HashSet[Sha256Hash], Long, Long) = {
-      // Combine multiple incoming messages into one
-
-    }
-
-    // Execute a dynamic version of Pregel.
-    Pregel(targetGraph, initialMessage, Int.MaxValue, EdgeDirection.Out)(
-      vertexProgram, sendMessage, messageCombiner)
-  }
-
-  /**
-   * Test spark implementation for depth updates
-   */
-  // PHASE 3: update for (unconfirmed), TODO add rating and MAX_STEPS, then persist if wanted (old graph.join)
-  def update(targetGraph: Graph[BlockWrapSpark, String]): Graph[BlockWrapSpark, String] = {
-
-    // The initial message received by all vertices in the update
-    val initialMessage = (new HashSet[Sha256Hash](), 0L, -1L)
-
-    // Define the three functions needed to implement updates in the GraphX
-    // version of Pregel
-    def vertexProgram(id: VertexId, prevBlockWrap: BlockWrapSpark, msgSum: (HashSet[Sha256Hash], Long, Long)): BlockWrapSpark = {
-      // Skip updating if not maintained
-      if (!prevBlockWrap.getBlockEvaluation.isMaintained())
-        prevBlockWrap
-
-      // Initialization (initial msg always has depth == 0)
       if (msgSum._2 == 0L) {
-        prevBlockWrap.setWeightHashes(new HashSet[Sha256Hash]())
-        prevBlockWrap.getWeightHashes.add(prevBlockWrap.getBlockHash)
+        // Initialization (initial msg always has depth == 0)
+        updatedBlockWrap.getWeightHashes.add(updatedBlockWrap.getBlockHash)
+        updatedBlockWrap.getReceivedWeightHashes.add(updatedBlockWrap.getBlockHash)
+      } else {
+        // Else from new message
+        updatedBlockWrap.getWeightHashes.addAll(msgSum._1)
+        updatedBlockWrap.setReceivedWeightHashes(msgSum._1)
       }
 
       // Calculate new statistics
-      val statistics = new BlockEvaluation(prevBlockWrap.getBlockEvaluation)
-      prevBlockWrap.getWeightHashes.addAll(msgSum._1)
-      statistics.setCumulativeWeight(prevBlockWrap.getWeightHashes.size())
-      statistics.setDepth(msgSum._2)
-      statistics.setMilestoneDepth(msgSum._3)
+      updatedBlockWrap.getBlockEvaluation.setCumulativeWeight(updatedBlockWrap.getWeightHashes.size())
+      updatedBlockWrap.getBlockEvaluation.setDepth(msgSum._2)
+      updatedBlockWrap.getBlockEvaluation.setMilestoneDepth(msgSum._3)
 
-      // Build new updated BlockWrap instance
-      val updatedBlockWrap = new BlockWrapSpark(prevBlockWrap.getBlock, statistics, UnitTestParams.get)
-      updatedBlockWrap.setWeightHashes(prevBlockWrap.getWeightHashes)
+      // Return new updated BlockWrap instance
       updatedBlockWrap
     }
 
-    def sendMessage(edge: EdgeTriplet[BlockWrapSpark, String]) = {
-      // Skip sending to and from unmaintained blocks
-      if (!edge.srcAttr.getBlockEvaluation.isMaintained() || !edge.dstAttr.getBlockEvaluation.isMaintained()) {
-        Iterator.empty
-      }
-
-      val srcEval = edge.srcAttr.getBlockEvaluation
-      val dstEval = edge.dstAttr.getBlockEvaluation
-
+    def sendMessage(edge: EdgeTriplet[BlockWrapSpark, (Double, Double)]) = {
       // Calculate messages
-      val sentWeightHashes = edge.srcAttr.getWeightHashes
-      val sentDepth = srcEval.getDepth + 1L;
-      val sentMilestoneDepth = if (dstEval.isMilestone) srcEval.getMilestoneDepth + 1L else srcEval.getMilestoneDepth;
+      val sentWeightHashes = edge.srcAttr.getReceivedWeightHashes
+      val sentDepth = edge.srcAttr.getBlockEvaluation.getDepth + 1L;
+      val sentMilestoneDepth = if (edge.dstAttr.getBlockEvaluation.isMilestone) edge.srcAttr.getBlockEvaluation.getMilestoneDepth + 1L else edge.srcAttr.getBlockEvaluation.getMilestoneDepth;
 
       Iterator((edge.dstId, (sentWeightHashes, sentDepth, sentMilestoneDepth)))
     }
@@ -255,11 +320,7 @@ object JdbcTest {
     }
 
     // Execute a dynamic version of Pregel.
-    Pregel(targetGraph, initialMessage, Int.MaxValue, EdgeDirection.Out)(
+    Pregel(maintainedGraph, initialMessage, Int.MaxValue, EdgeDirection.Out)(
       vertexProgram, sendMessage, messageCombiner)
-
-    //val maxHeight = targetGraph.vertices.map(_._2.getBlockEvaluation.getHeight).reduce(Math.max(_, _))
-    //HeightDescendingPregel(targetGraph, initialMessage, Int.MaxValue, EdgeDirection.Out, maxHeight)(
-    //  vertexProgram, sendMessage, messageCombiner)
   }
 }

@@ -12,35 +12,58 @@ import java.io.Serializable;
 import java.util.HashSet;
 
 import net.bigtangle.params.UnitTestParams;
+import scala.collection.mutable.ListMap;
 
+/**
+ * Wraps BlockWraps for Spark serialization and adds Spark computation result members.
+ *
+ */
 public class BlockWrapSpark extends BlockWrap implements Serializable {
     private static final long serialVersionUID = 660084694396085961L;
 
-    /** unpersisted members for Spark calculations, weightHashes includes own hash */
+    /** db-transient members for temporary Spark calculations */
     private HashSet<Sha256Hash> weightHashes;
-    private HashSet<ConflictPoint> approvedNonMilestoneConflicts;
-    
-    
+    private HashSet<Sha256Hash> receivedWeightHashes;
+    private HashSet<ConflictCandidate> approvedNonMilestoneConflicts;
+    private HashSet<ConflictCandidate> receivedConflictPoints;
+    private boolean milestoneConsistent;
+    private double incomingTransitionWeightSum;
+    private ListMap<Sha256Hash, scala.Double> incomingTransitionWeights;
+    private double currentTransitionRealization;
     
     //@vertex: conflictpoint sets + milestone validity, outgoing weight unnormalized, transient dicerolls
     //@edges: applicable diceroll interval for sendmsg
     
     
-    // Used in Spark
+    // Empty constructor for serialization in Spark
     @SuppressWarnings("unused")
     private BlockWrapSpark() {
         super();
-        weightHashes = new HashSet<>();
     }
 
     // Used in Spark
     public BlockWrapSpark(Block block, BlockEvaluation blockEvaluation, NetworkParameters params) {
         super(block, blockEvaluation, params);
+        weightHashes = new HashSet<>();
+        receivedWeightHashes = new HashSet<>();
+        approvedNonMilestoneConflicts = new HashSet<>();
+        receivedConflictPoints = new HashSet<>();
     }
 
     // Used in Spark
     public BlockWrapSpark(byte[] blockbyte, BlockEvaluation blockEvaluation, NetworkParameters params) {
         super(params.getDefaultSerializer().makeBlock(blockbyte), blockEvaluation, params);
+        weightHashes = new HashSet<>();
+        receivedWeightHashes = new HashSet<>();
+        approvedNonMilestoneConflicts = new HashSet<>();
+        receivedConflictPoints = new HashSet<>();
+    }
+    
+    public BlockWrapSpark(BlockWrapSpark other) {
+        super(other.getBlock(), new BlockEvaluation(other.getBlockEvaluation()), other.params);
+        weightHashes = new HashSet<>(other.getWeightHashes());
+        receivedWeightHashes = new HashSet<>(other.getReceivedWeightHashes());
+        approvedNonMilestoneConflicts = new HashSet<>(other.getApprovedNonMilestoneConflicts());
     }
 
     // Used in Spark
@@ -57,6 +80,13 @@ public class BlockWrapSpark extends BlockWrap implements Serializable {
         block = params.getDefaultSerializer().makeBlock(dataRead);
         blockEvaluation = (BlockEvaluation) aInputStream.readObject();
         weightHashes = (HashSet<Sha256Hash>) aInputStream.readObject();
+        receivedWeightHashes = (HashSet<Sha256Hash>) aInputStream.readObject();
+        approvedNonMilestoneConflicts = (HashSet<ConflictCandidate>) aInputStream.readObject();
+        receivedConflictPoints = (HashSet<ConflictCandidate>) aInputStream.readObject();
+        milestoneConsistent = aInputStream.readBoolean();
+        incomingTransitionWeightSum = aInputStream.readDouble();
+        incomingTransitionWeights = (ListMap<Sha256Hash, scala.Double>) aInputStream.readObject();
+        currentTransitionRealization = aInputStream.readDouble();
     }
 
     // Used in Spark
@@ -66,6 +96,13 @@ public class BlockWrapSpark extends BlockWrap implements Serializable {
         aOutputStream.write(a);
         aOutputStream.writeObject(blockEvaluation);
         aOutputStream.writeObject(weightHashes);
+        aOutputStream.writeObject(receivedWeightHashes);
+        aOutputStream.writeObject(approvedNonMilestoneConflicts);
+        aOutputStream.writeObject(receivedConflictPoints);
+        aOutputStream.writeBoolean(milestoneConsistent);
+        aOutputStream.writeDouble(incomingTransitionWeightSum);
+        aOutputStream.writeObject(incomingTransitionWeights);
+        aOutputStream.writeDouble(currentTransitionRealization);
     }
 
     @Override
@@ -100,5 +137,61 @@ public class BlockWrapSpark extends BlockWrap implements Serializable {
 
     public void setWeightHashes(HashSet<Sha256Hash> weightHashes) {
         this.weightHashes = weightHashes;
+    }
+
+    public double getCurrentTransitionRealization() {
+        return currentTransitionRealization;
+    }
+
+    public void setCurrentTransitionRealization(double currentTransitionRealization) {
+        this.currentTransitionRealization = currentTransitionRealization;
+    }
+
+    public HashSet<Sha256Hash> getReceivedWeightHashes() {
+        return receivedWeightHashes;
+    }
+
+    public void setReceivedWeightHashes(HashSet<Sha256Hash> receivedHashes) {
+        this.receivedWeightHashes = receivedHashes;
+    }
+
+    public HashSet<ConflictCandidate> getReceivedConflictPoints() {
+        return receivedConflictPoints;
+    }
+
+    public void setReceivedConflictPoints(HashSet<ConflictCandidate> receivedConflictPoints) {
+        this.receivedConflictPoints = receivedConflictPoints;
+    }
+
+    public HashSet<ConflictCandidate> getApprovedNonMilestoneConflicts() {
+        return approvedNonMilestoneConflicts;
+    }
+
+    public void setApprovedNonMilestoneConflicts(HashSet<ConflictCandidate> approvedNonMilestoneConflicts) {
+        this.approvedNonMilestoneConflicts = approvedNonMilestoneConflicts;
+    }
+
+    public boolean isMilestoneConsistent() {
+        return milestoneConsistent;
+    }
+
+    public void setMilestoneConsistent(boolean milestoneConsistent) {
+        this.milestoneConsistent = milestoneConsistent;
+    }
+
+    public double getIncomingTransitionWeightSum() {
+        return incomingTransitionWeightSum;
+    }
+
+    public void setIncomingTransitionWeightSum(double currentIncomingWeightSum) {
+        this.incomingTransitionWeightSum = currentIncomingWeightSum;
+    }
+
+    public ListMap<Sha256Hash, scala.Double> getIncomingTransitionWeights() {
+        return incomingTransitionWeights;
+    }
+
+    public void setIncomingTransitionWeights(ListMap<Sha256Hash, scala.Double> incomingTransitionWeights) {
+        this.incomingTransitionWeights = incomingTransitionWeights;
     }
 }
