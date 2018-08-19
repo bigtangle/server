@@ -251,7 +251,7 @@ public abstract class AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(77777L, pubKey);
         long amount = basecoin.getValue();
         
-        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test", "", 1, 0, amount, false, true);
+        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "人民币支票", "", 1, 0, amount, false, true);
         tokenInfo.setTokens(tokens);
 
         // add MultiSignAddress item
@@ -267,7 +267,7 @@ public abstract class AbstractIntegrationTest {
         TokenInfo tokenInfo = new TokenInfo();
         
         String tokenid = Utils.HEX.encode(pubKey);
-        Token tokens = Token.buildMarketTokenInfo(true, "", tokenid, "p2p", "", "http://localhost:80089");
+        Token tokens = Token.buildMarketTokenInfo(true, "", tokenid, "p2p", "", "http://localhost:8089");
         tokenInfo.setTokens(tokens);
 
         // add MultiSignAddress item

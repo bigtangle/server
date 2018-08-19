@@ -242,3 +242,16 @@ delete the entries
 and add transactions to new Block , then  do a block solve 
 
 
+
+## write serials article:
+
+
+1) Is Bigtangle a true successor to Bitcoin?
+
+2) Is Bigtangle with Subnet a protocol for internet of value
+
+3) What is the Intrinsic Values of BigTangle?
+
+4) Is the bigtangle exchange true decentralized?
+
+5) Is the feeless better than model with fee? 
