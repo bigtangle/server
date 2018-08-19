@@ -30,6 +30,7 @@ import org.springframework.cache.annotation.Cacheable;
 import com.google.common.collect.Lists;
 
 import net.bigtangle.core.Address;
+import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
@@ -49,8 +50,8 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.StoredBlockBinary;
 import net.bigtangle.core.StoredUndoableBlock;
-import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Token;
+import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
@@ -91,6 +92,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_PAYMULTISIGNADDRESS_TABLE = "DROP TABLE paymultisignaddress";
     public static String DROP_VOSEXECUTE_TABLE = "DROP TABLE vosexecute";
     public static String DROP_LOGRESULT_TABLE = "DROP TABLE logresult";
+    public static String DROP_BATCHBLOCK_TABLE = "DROP TABLE batchblock";
 
     // Queries SQL.
     protected final String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
@@ -324,7 +326,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected final String INSERT_LOGRESULT_SQL = "INSERT INTO logresult (logResultId, logContent, submitDate) VALUE (?, ?, ?)";
     protected final String SELECT_LOGRESULT_SQL = "SELECT logResultId, logContent, submitDate FROM logresult WHERE logResultId = ?";
-
+    
+    protected final String INSERT_BATCHBLOCK_SQL = "INSERT INTO batchblock (hash, block, inserttime) VALUE (?, ?, ?)";
+    protected final String DELETE_BATCHBLOCK_SQL = "DELETE FROM batchblock WHERE hash = ?";
+    protected final String SELECT_BATCHBLOCK_SQL = "SELECT hash, block, inserttime FROM batchblock order by inserttime ASC";
+    
     protected NetworkParameters params;
     protected ThreadLocal<Connection> conn;
     protected List<Connection> allConnections;
@@ -496,6 +502,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_PAYMULTISIGNADDRESS_TABLE);
         sqlStatements.add(DROP_VOSEXECUTE_TABLE);
         sqlStatements.add(DROP_LOGRESULT_TABLE);
+        sqlStatements.add(DROP_BATCHBLOCK_TABLE);
         return sqlStatements;
     }
 
@@ -4198,6 +4205,79 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             logResult.setLogContent(resultSet.getString("logContent"));
             logResult.setSubmitDate(resultSet.getDate("submitDate"));
             return logResult;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void insertBatchBlock(Block block) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(INSERT_BATCHBLOCK_SQL);
+            preparedStatement.setBytes(1, block.getHash().getBytes());
+            preparedStatement.setBytes(2, block.bitcoinSerialize());
+            preparedStatement.setTimestamp(3, new java.sql.Timestamp(System.currentTimeMillis()));
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void deleteBatchBlock(Sha256Hash hash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(DELETE_BATCHBLOCK_SQL);
+            preparedStatement.setBytes(1, hash.getBytes());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }        
+    }
+
+    @Override
+    public List<BatchBlock> getBatchBlockList() throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_BATCHBLOCK_SQL);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            List<BatchBlock> list = new ArrayList<BatchBlock>();
+            while (resultSet.next()) {
+                BatchBlock batchBlock = new BatchBlock();
+                batchBlock.setHash(Sha256Hash.wrap(resultSet.getBytes("hash")));
+                batchBlock.setBlock(resultSet.getBytes("block"));
+                batchBlock.setInsertTime(resultSet.getDate("inserttime"));
+                list.add(batchBlock);
+            }
+            return list;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } finally {

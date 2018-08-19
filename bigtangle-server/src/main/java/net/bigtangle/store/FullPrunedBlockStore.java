@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 
+import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStore;
@@ -396,6 +397,12 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 	LogResult queryLogResultById(String logResultId) throws BlockStoreException;
 
     Token getCalMaxTokenIndex(String tokenid) throws BlockStoreException;
+
+    void insertBatchBlock(Block block) throws BlockStoreException;
+    
+    void deleteBatchBlock(Sha256Hash hash) throws BlockStoreException;
+    
+    List<BatchBlock> getBatchBlockList() throws BlockStoreException;
 
 //    List<TokenSerial> getSearchTokenSerialInfo(String tokenid, List<String> addresses) throws BlockStoreException;
 }

@@ -297,4 +297,9 @@ public class BlockService {
             Log.warn("", e);
         }
     }
+
+    public void batchBlock(byte[] bodyByte) throws BlockStoreException {
+        Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
+        this.store.insertBatchBlock(block);
+    }
 }

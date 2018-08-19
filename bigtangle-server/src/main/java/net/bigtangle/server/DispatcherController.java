@@ -95,7 +95,12 @@ public class DispatcherController {
 
             case saveBlock: {
                 blockService.saveBinaryArrayToBlock(bodyByte);
-            
+                this.outPrintJSONString(httpServletResponse, OkResponse.create());
+            }
+                break;
+                
+            case batchBlock: {
+                blockService.batchBlock(bodyByte);
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
                 break;
@@ -111,14 +116,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-  
-//            case exchangeToken: {
-//                String reqStr = new String(bodyByte, "UTF-8");
-//                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-//                logger.debug("exchangeToken, {}", request);
-//            }
-//                break;
-
+                
             case getTokens: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -143,11 +141,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-//            case getAllEvaluations: {
-//                AbstractResponse response = GetBlockEvaluationsResponse.create(blockService.getAllBlockEvaluations());
-//                this.outPrintJSONString(httpServletResponse, response);
-//            }
-//                break;
+                
             case getBalances: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 List<String> keyStrHex000 = Json.jsonmapper().readValue(reqStr, List.class);
