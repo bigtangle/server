@@ -73,10 +73,11 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.MyHomeAddress;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.ProtocolException;
 import net.bigtangle.core.ScriptException;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Token;
+import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
@@ -737,8 +738,14 @@ public class Main extends Application {
         }
         boolean flag1 = false;
         boolean flag2 = false;
-        if (data != null && data.length != 0) {
-            Block block = Main.params.getDefaultSerializer().makeBlock(data);
+        Block block =null;
+        try {
+            block= Main.params.getDefaultSerializer().makeBlock(data);
+        }catch (ProtocolException e) {
+            // TODO: handle exception with version changed
+        }
+        if (data != null && data.length != 0 && block !=null) {
+          
             boolean flag = true;
             if (block == null) {
                 flag = false;
