@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -76,9 +77,11 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         
         BatchBlock batchBlock = batchBlocks.get(0);
         
-        String hex1 = Utils.HEX.encode(block.bitcoinSerialize());
-        String hex2 = Utils.HEX.encode(batchBlock.getBlock());
-        assertEquals(hex1, hex2);
+        //String hex1 = Utils.HEX.encode(block.bitcoinSerialize());
+        //String hex2 = Utils.HEX.encode(batchBlock.getBlock());
+        //assertEquals(hex1, hex2);
+        
+        assertArrayEquals(block.bitcoinSerialize(), batchBlock.getBlock());
         
         this.store.deleteBatchBlock(batchBlock.getHash());
         batchBlocks = this.store.getBatchBlockList();
