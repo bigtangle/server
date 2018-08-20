@@ -147,6 +147,7 @@ public class MultiSignService {
     }
 
     /*
+     * TODO move to fullP...
      * check unique as conflicts
      */
     public boolean checkToken(Block block, boolean allowConflicts) throws VerificationException {

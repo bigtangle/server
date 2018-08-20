@@ -1,11 +1,5 @@
 #TODO:
-
-
-
-
-
-# Spark implementation of milestone:
-
+## Spark implementation of milestone:
 1) load the init data for Hbase
 2) build the graph 
 3) evaluation of milestone
@@ -13,17 +7,9 @@
 5) read the new data from hbase or read it from kafka stream
 6) milestone update and write evaluation data into hbase
 
+## application monitoring health check and metrics
 
-
-
-
-# application monitoring heath check  and metrics
-
-
-* in FullPrunedBlockGraph.removeTransactionsFromMilestone(): implement reversion of synchronizationToken()
-* see open problems
-
-#Cleanup for source release
+## Cleanup for source release
 * Copyright notices fix
 * Deprecated 'Bitcoin' mentions to be removed
 * No StoredBlock
@@ -53,15 +39,14 @@
 * refactor out AbstractBlockGraph and make it a service
 * refactor blockservice, transactionservice methods
 
-
-#Icebox:
+## Icebox:
 * pruned validation process
 * rating low pass filter 
 * rebuild Tangle fcn, reattach tx fcn
 * Reorg detection
 
 
-#Smart Contracts
+## Smart Contracts
 Let there be contract blocks with sequence numbers signifying state changes.
 Let the reward be split among all miners in the next mining reward block.
 Let all nodes validate all smart contracts that are approved.
@@ -71,7 +56,7 @@ Spam protection?
 Too much to calculate?  
 
 
-#BigTangle Intranets
+## BigTangle Intranets
 
 The BigTangle software can be deployed in private or other trusted environments, allowing one to run private, owned BigTangle networks with different rule sets. These BigTangle networks are arranged in a hierarchy, i.e. they possess a parent Tangle such as the Mainnet between which a transfer of values is facilitated. For this purpose, each new Tangle has its own interface accounts (addresses) from which it is possible to transfer funds into the parent Tangle and vice versa. 
 A user interested in transferring funds from the parent Tangle into one of its registered child Tangles can transfer tokens to one of the child Tangle's interface accounts, at which points they are either accepted into the child Tangle or returned. Inside of such Intranets, the consensus protocol, transparency levels, permissiveness and other rules are set by the trusted Intranet owner and transfers of value can be performed internally as it is pleased. For example, in a work agency intranet it would be possible for clients to pay values to work forces in private and in arbitration of the owning work agency. 
@@ -129,7 +114,7 @@ Subtangle
  payment to target address
 
 
-#Problems and proposed solutions
+## Problems and proposed solutions
 * Timing for mining tx generation
 
 ```
@@ -222,14 +207,15 @@ Needs changing the algorithm since it currently relies on getting updated blocke
 See above
 ```
 
-# setup of securiry of permissioned bigtangle
-1) disable check of other wallet other then yours in wallet
+## setup of securiry of permissioned bigtangle
+1) disable check of other wallet other then yours in wallet //K: should require valid signature for checking balance
 2) restirct access of block transaction 
 3) interface to add user access list as KYC
 
 
 
-# add new api service for server batchBlock
+
+## add new api service for server batchBlock
 Client send a block without solve
 
 batchBlock (blockbyte)

@@ -1,3 +1,4 @@
+
 package de.gd.analytics.test
 
 import org.apache.spark.SparkConf
@@ -148,6 +149,9 @@ object JdbcTest {
     // PHASE 5: set maintain = reachable by MCMC in MAX_STEPS, then persist (old graph.join)
     //can also additionally unmaintain unconfirmed blocks where conflicting with confirmed unmaintained milestone
 
+    //CANNOT set unmaintained in future, would allow deadlock!
+    // eligible has three states: computed ok, no and uncomputed
+
     // Maintained has three states: confirmed unmaintained (ideally prunable after a while), unconfirmed maintained and unconfirmed unmaintained (newest blocks out of reach)
     // this will prevent the problem of needing to maintain infinitely many blocks in ddos
   }
@@ -171,8 +175,10 @@ object JdbcTest {
     //On the other hand, infinity can make it take infinitely long if there is some kind of long snake that is referenced.
     //Since this can happen either way, we need to prevent this by:
     //- setting blocks to conflicting with all blocks lower than e.g. their height - 1000 that are not approved by them
-    //-> unscalable calculation, have to go through everything every time
-    //-
+    //-> unscalable
+    //-just set any unconfirmed unmaintained approvers also unconfirmed unmaintained?? should work most of the time
+    //-> deadlock?
+     
 
     // For maintained part of the graph only
     var maintainedGraph = targetGraph.subgraph(
