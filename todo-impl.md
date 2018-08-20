@@ -1,4 +1,8 @@
 #TODO:
+## POW
+
+## parameter tuning
+
 ## Spark implementation of milestone:
 1) load the init data for Hbase
 2) build the graph 
