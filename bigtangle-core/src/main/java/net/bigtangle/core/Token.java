@@ -167,7 +167,7 @@ public class Token implements java.io.Serializable {
         tokens.tokentype = TokenType.market.ordinal();
         tokens.signnumber = 1;
         tokens.amount = 0;
-        tokens.tokenindex = 1;
+        tokens.tokenindex = 0;
         tokens.confirmed = confirmed;
         tokens.prevblockhash = prevblockhash;
         return tokens;
@@ -189,4 +189,14 @@ public class Token implements java.io.Serializable {
         tokens.prevblockhash = prevblockhash;
         return tokens;
     }
+
+    @Override
+    public String toString() {
+        return "Token [confirmed=" + confirmed + ", tokenid=" + tokenid + ", tokenindex=" + tokenindex + ", amount="
+                + amount + ", tokenname=" + tokenname + ", description=" + description + ", url=" + url
+                + ", signnumber=" + signnumber + ", multiserial=" + multiserial + ", tokentype=" + tokentype
+                + ", tokenstop=" + tokenstop + ", prevblockhash=" + prevblockhash + ", blockhash=" + blockhash + "]";
+    }
+    
+    
 }

@@ -64,4 +64,11 @@ public class TokenInfo implements java.io.Serializable {
     public void setPositveTokenList(List<Token> positveTokenList) {
         this.positveTokenList = positveTokenList;
     }
+
+    @Override
+    public String toString() {
+        return "TokenInfo [tokens=" + tokens + ", multiSignAddresses=" + multiSignAddresses + "]";
+    }
+    
+    
 }

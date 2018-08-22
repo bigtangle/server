@@ -198,7 +198,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     throw e;
                 }
             } else {
+                if(allowConflicts) {
                 insertUnsolidBlock(block);
+                }
+                else {
+                    throw new BlockStoreException("checkSolidity failed.");
+                }
                 return false;
             }
         } catch (Exception exception) {
