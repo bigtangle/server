@@ -3,8 +3,8 @@ server:
   net: ${SERVER_NET:Unittest}
   requester: ${REQUESTER:}
   mineraddress: ${SERVER_MINERADDRESS:mjWvzPZz4YJtWqb7ux7cdgq5G7rzkg3bXG}
-  serverversion: ${SERVERVERSION:0.2.0}
-  clientversion: ${CLIENTVERSION:0.2.0}
+  serverversion: ${SERVERVERSION:0.3.1}
+  clientversion: ${CLIENTVERSION:0.3.1}
 
 
 

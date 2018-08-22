@@ -17,6 +17,7 @@ import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -39,8 +40,19 @@ public class BlockBatchService {
     @Autowired
     private BlockService blockService;
 
+    @Autowired
+    private ScheduleConfiguration scheduleConfiguration;
+
     @Scheduled(fixedRateString = "10000")
+
     public void batch() {
+        if (scheduleConfiguration.isMilestone_active()) {
+            batchDo();
+        }
+
+    }
+
+    public void batchDo() {
         logger.info("BlockBatchService start");
         try {
             List<BatchBlock> batchBlocks = this.store.getBatchBlockList();

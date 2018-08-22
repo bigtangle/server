@@ -103,7 +103,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.version.name(), Json.jsonmapper().writeValueAsString(requestParam));
         SettingResponse settingResponse = Json.jsonmapper().readValue(resp, SettingResponse.class);
         String version = settingResponse.getVersion();
-        assertTrue(version.equals("0.2.0"));
+        assertTrue(version.equals("0.3.1"));
     }
     
     //FIXME @Test
@@ -1028,7 +1028,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             System.out.println(resp);
 
             MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
-            String blockhashHex = multiSignResponse.getMultiSigns().get((int) tokenindex_ - 1).getBlockhashHex();
+            String blockhashHex = multiSignResponse.getMultiSigns().get((int) tokenindex_ ).getBlockhashHex();
             byte[] payloadBytes = Utils.HEX.decode(blockhashHex);
 
             Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
@@ -1159,7 +1159,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
         MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
         byte[] payloadBytes = Utils.HEX
-                .decode((String) multiSignResponse.getMultiSigns().get((int) tokenindex_ - 1).getBlockhashHex());
+                .decode((String) multiSignResponse.getMultiSigns().get((int) tokenindex_ ).getBlockhashHex());
         Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
 
         Transaction transaction = block0.getTransactions().get(0);
