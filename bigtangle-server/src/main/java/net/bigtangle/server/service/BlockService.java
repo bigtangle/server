@@ -171,7 +171,7 @@ public class BlockService {
      * @throws BlockStoreException
      */
     public void confirm(BlockEvaluation blockEvaluation) throws BlockStoreException {
-        blockgraph.addBlockToMilestone(blockEvaluation.getBlockHash());
+        blockgraph.confirm(blockEvaluation.getBlockHash());
     }
 
     /**
@@ -183,7 +183,7 @@ public class BlockService {
      * @throws BlockStoreException
      */
     public void unconfirm(BlockEvaluation blockEvaluation) throws BlockStoreException {
-        blockgraph.removeBlockFromMilestone(blockEvaluation.getBlockHash());
+        blockgraph.unconfirm(blockEvaluation.getBlockHash());
     }
 
     /**

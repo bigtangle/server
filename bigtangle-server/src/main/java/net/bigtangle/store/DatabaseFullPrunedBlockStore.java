@@ -2760,7 +2760,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 return tokens;
             } else {
                 tokens.setBlockhash("");
-                tokens.setTokenindex(-1); // TODO should be -1 if there is none
+                tokens.setTokenindex(-1);
             }
             return tokens;
         } catch (SQLException e) {

@@ -365,10 +365,22 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * will connect all transactions of the block by marking used UTXOs spent
      * and adding new UTXOs to the db.
      * 
-     * @param blockEvaluation
+     * @param blockHash
      * @throws BlockStoreException
      */
-    public void addBlockToMilestone(Sha256Hash blockHash) throws BlockStoreException {
+    public void confirm(Sha256Hash blockHash) throws BlockStoreException {
+        // Write to DB
+        try {
+            blockStore.beginDatabaseBatchWrite();
+            addBlockToMilestone(blockHash);
+            blockStore.commitDatabaseBatchWrite();
+        } catch (BlockStoreException e) {
+            blockStore.abortDatabaseBatchWrite();
+            throw e;
+        }
+    }
+    
+    private void addBlockToMilestone(Sha256Hash blockHash) throws BlockStoreException {
         BlockWrap blockWrap = blockStore.getBlockWrap(blockHash);
         BlockEvaluation blockEvaluation = blockWrap.getBlockEvaluation();
         Block block = blockWrap.getBlock();
@@ -488,14 +500,26 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     /**
-     * Removes the specified block and all its output spenders and approvers
-     * from the milestone. This will disconnect all transactions of the block by
-     * marking used UTXOs unspent and removing UTXOs of the block from the DB.
+     * Adds the specified block and all approved blocks to the milestone. This
+     * will connect all transactions of the block by marking used UTXOs spent
+     * and adding new UTXOs to the db.
      * 
-     * @param blockEvaluation
+     * @param blockHash
      * @throws BlockStoreException
      */
-    public void removeBlockFromMilestone(Sha256Hash blockHash) throws BlockStoreException {
+    public void unconfirm(Sha256Hash blockHash) throws BlockStoreException {
+        // Write to DB
+        try {
+            blockStore.beginDatabaseBatchWrite();
+            removeBlockFromMilestone(blockHash);
+            blockStore.commitDatabaseBatchWrite();
+        } catch (BlockStoreException e) {
+            blockStore.abortDatabaseBatchWrite();
+            throw e;
+        }
+    }
+
+    private void removeBlockFromMilestone(Sha256Hash blockHash) throws BlockStoreException {
         BlockWrap blockWrap = blockStore.getBlockWrap(blockHash);
         BlockEvaluation blockEvaluation = blockWrap.getBlockEvaluation();
         Block block = blockWrap.getBlock();
