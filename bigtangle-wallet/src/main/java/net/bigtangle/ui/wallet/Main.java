@@ -255,7 +255,7 @@ public class Main extends Application {
         block.addTransaction(coinbase);
         block.solve();
 
-        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
+      //TODO  OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
         if (DataClassName.WATCHED.name().equals(type)) {
             byte[] buf = block.bitcoinSerialize();
             if (buf == null) {
@@ -738,52 +738,52 @@ public class Main extends Application {
         }
         boolean flag1 = false;
         boolean flag2 = false;
-        Block block =null;
-        try {
-            block= Main.params.getDefaultSerializer().makeBlock(data);
-        }catch (ProtocolException e) {
-            // TODO: handle exception with version changed
-        }
-        if (data != null && data.length != 0 && block !=null) {
-          
-            boolean flag = true;
-            if (block == null) {
-                flag = false;
-            }
-            if (block.getTransactions() == null || block.getTransactions().isEmpty()) {
-                flag = false;
-            }
-            if (flag) {
-                Transaction transaction = block.getTransactions().get(0);
-                byte[] buf = transaction.getData();
-                try {
-                    WatchedInfo watchedInfo = new WatchedInfo().parse(buf);
-                    List<UserSettingData> list = watchedInfo.getUserSettingDatas();
-                    if (list != null && !list.isEmpty()) {
-                        for (UserSettingData userSettingData : list) {
-                            if (userSettingData.getDomain().equals(DataClassName.SERVERURL.name())) {
-                                if (userSettingData.getValue() != null
-                                        || !userSettingData.getValue().trim().isEmpty()) {
-                                    flag1 = true;
-                                    IpAddress = userSettingData.getValue();
-                                }
+        if (data != null && data.length != 0) {
 
-                            }
-                            if (userSettingData.getDomain().equals(DataClassName.LANG.name())) {
-                                if (userSettingData.getValue() != null
-                                        || !userSettingData.getValue().trim().isEmpty()) {
-                                    flag2 = true;
-                                    lang = userSettingData.getValue();
-                                }
+            Block block = null;
+            try {
+                block = Main.params.getDefaultSerializer().makeBlock(data);
+            } catch (ProtocolException e) {
+                // TODO: handle exception with version changed
+                log.warn("", e);
+            }
+            if (block != null) {
+                boolean flag = true;
+                if (block.getTransactions() == null || block.getTransactions().isEmpty()) {
+                    flag = false;
+                }
+                if (flag) {
+                    Transaction transaction = block.getTransactions().get(0);
+                    byte[] buf = transaction.getData();
+                    try {
+                        WatchedInfo watchedInfo = new WatchedInfo().parse(buf);
+                        List<UserSettingData> list = watchedInfo.getUserSettingDatas();
+                        if (list != null && !list.isEmpty()) {
+                            for (UserSettingData userSettingData : list) {
+                                if (userSettingData.getDomain().equals(DataClassName.SERVERURL.name())) {
+                                    if (userSettingData.getValue() != null
+                                            || !userSettingData.getValue().trim().isEmpty()) {
+                                        flag1 = true;
+                                        IpAddress = userSettingData.getValue();
+                                    }
 
+                                }
+                                if (userSettingData.getDomain().equals(DataClassName.LANG.name())) {
+                                    if (userSettingData.getValue() != null
+                                            || !userSettingData.getValue().trim().isEmpty()) {
+                                        flag2 = true;
+                                        lang = userSettingData.getValue();
+                                    }
+
+                                }
                             }
                         }
+                    } catch (Exception e) {
+                        log.error("", e);
                     }
-                } catch (Exception e) {
-                    log.error("", e);
                 }
-            }
 
+            }
         }
         if (args == null || args.length == 0) {
             if (!flag2) {

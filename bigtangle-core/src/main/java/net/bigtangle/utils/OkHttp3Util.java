@@ -126,8 +126,8 @@ public class OkHttp3Util {
 
     @SuppressWarnings("unused")
     private static OkHttpClient getOkHttpClientSafe() {
-        OkHttpClient client = new OkHttpClient.Builder().connectTimeout(6, TimeUnit.MINUTES)
-                .writeTimeout(6, TimeUnit.MINUTES).readTimeout(6, TimeUnit.MINUTES).build();
+        OkHttpClient client = new OkHttpClient.Builder().connectTimeout(2, TimeUnit.MINUTES)
+                .writeTimeout(2, TimeUnit.MINUTES).readTimeout(2, TimeUnit.MINUTES).build();
         return client;
     }
 
@@ -162,8 +162,8 @@ public class OkHttp3Util {
                         public boolean verify(String hostname, SSLSession session) {
                             return true;
                         }
-                    }).connectTimeout(60, TimeUnit.MINUTES).writeTimeout(60, TimeUnit.MINUTES)
-                    .readTimeout(60, TimeUnit.MINUTES).build();
+                    }).connectTimeout(2, TimeUnit.MINUTES).writeTimeout(2, TimeUnit.MINUTES)
+                    .readTimeout(2, TimeUnit.MINUTES).build();
 
             return client;
         } catch (Exception e) {
