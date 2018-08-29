@@ -28,7 +28,7 @@
 	</appender>
 
 	<root level="${LOGGING_LEVEL:-INFO}">
-	   <appender-ref ref="stdout1" />      
+	<!--  <appender-ref ref="stdout1" />       -->  
 		<appender-ref ref="FILE" />
 	</root>
 
