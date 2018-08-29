@@ -175,8 +175,7 @@ public class ExchangeController {
                 continue;
             }
             // TODO check market in watched list or default
-            if (!url.contains("market.bigtangle.net") || !url.contains("test2market.bigtangle.net")
-                    || !url.contains("http://localhost:8089")) {
+            if (!url.contains("market.bigtangle.net") && !url.contains("test2market.bigtangle.net")) {
                 boolean watchedFlag = isWatched(tokenid);
                 if (!watchedFlag) {
                     continue;
