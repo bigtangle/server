@@ -24,10 +24,7 @@ import net.bigtangle.core.VerificationException;
 
 /**
  * <p>
- * A full pruned block store using the MySQL database engine. As an added bonus
- * an address index is calculated, so you can use
- * {@link #calculateBalanceForAddress(net.bigtangle.core.Address)} to quickly
- * look up the quantity of bitcoins controlled by that address.
+ *   
  * </p>
  */
 
@@ -38,78 +35,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     @Override
     public List<BlockWrap> getSolidApproverBlocks(Sha256Hash hash) throws BlockStoreException {
         return null;
-//        List<StoredBlock> storedBlocks = new ArrayList<StoredBlock>();
-//        maybeConnect();
-//        PreparedStatement s = null;
-//        try {
-//            String SELECT_SOLID_APPROVER_BLOCKS_SQL = "SELECT  headers.height, header, wasundoable,prevblockhash,"
-//                    + "prevbranchblockhash,mineraddress,tokenid,blocktype FROM headers INNER JOIN blockevaluation"
-//                    + " ON headers.hash=blockevaluation.hash WHERE blockevaluation.solid = true AND (prevblockhash = ?)"
-//                    + afterSelect();
-//            s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_BLOCKS_SQL);
-//            s.setString(1, Utils.HEX.encode(hash.getBytes()));
-//            // s.setString(2, Utils.HEX.encode(hash.getBytes()));
-//            ResultSet results = s.executeQuery();
-//            while (results.next()) {
-//                // Parse it.
-//                int height = results.getInt(1);
-//                Block b = params.getDefaultSerializer().makeBlock(results.getBytes(2));
-//                b.verifyHeader();
-//                storedBlocks.add(new StoredBlock(b, height));
-//            }
-//        } catch (SQLException ex) {
-//            throw new BlockStoreException(ex);
-//        } catch (ProtocolException e) {
-//            // Corrupted database.
-//            throw new BlockStoreException(e);
-//        } catch (VerificationException e) {
-//            // Should not be able to happen unless the database contains bad
-//            // blocks.
-//            throw new BlockStoreException(e);
-//        } finally {
-//            if (s != null) {
-//                try {
-//                    s.close();
-//                } catch (SQLException e) {
-//                    throw new BlockStoreException("Failed to close PreparedStatement");
-//                }
-//            }
-//        }
-//        try {
-//            String SELECT_SOLID_APPROVER_BLOCKS_SQL = "SELECT  headers.height, header, wasundoable,prevblockhash,"
-//                    + "prevbranchblockhash,mineraddress,tokenid,blocktype FROM headers INNER JOIN blockevaluation"
-//                    + " ON headers.hash=blockevaluation.hash WHERE blockevaluation.solid = true AND (prevbranchblockhash = ?)"
-//                    + afterSelect();
-//            s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_BLOCKS_SQL);
-//            s.setString(1, Utils.HEX.encode(hash.getBytes()));
-//            // s.setString(2, Utils.HEX.encode(hash.getBytes()));
-//            ResultSet results = s.executeQuery();
-//            while (results.next()) {
-//                // Parse it.
-//                int height = results.getInt(1);
-//                Block b = params.getDefaultSerializer().makeBlock(results.getBytes(2));
-//                b.verifyHeader();
-//                storedBlocks.add(new StoredBlock(b, height));
-//            }
-//        } catch (SQLException ex) {
-//            throw new BlockStoreException(ex);
-//        } catch (ProtocolException e) {
-//            // Corrupted database.
-//            throw new BlockStoreException(e);
-//        } catch (VerificationException e) {
-//            // Should not be able to happen unless the database contains bad
-//            // blocks.
-//            throw new BlockStoreException(e);
-//        } finally {
-//            if (s != null) {
-//                try {
-//                    s.close();
-//                } catch (SQLException e) {
-//                    throw new BlockStoreException("Failed to close PreparedStatement");
-//                }
-//            }
-//        }
-//        return storedBlocks;
+
     }
 
     @Override
@@ -183,42 +109,167 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String DATABASE_CONNECTION_URL_PREFIX = "jdbc:log4jdbc:phoenix:thin:url=http://";
 
     // create table SQL
-    public static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" + "    name varchar(32) not null,\n"
-            + "    settingvalue VARBINARY(10000),\n" + "    CONSTRAINT setting_pk PRIMARY KEY (name)  \n" + ")\n";
+    // create table SQL
+    public static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" 
+            + "    name varchar(32) NOT NULL,\n"
+            + "    settingvalue  varbinary(800000),\n" 
+            + "    CONSTRAINT setting_pk PRIMARY KEY (name)  \n" + ")\n";
 
-    public static final String CREATE_BLOCKS_TABLE = "CREATE TABLE headers (\n" + "    hash BINARY(32) not null,\n"
-            + "    height bigint ,\n" + "    header VARBINARY(4000) ,\n" + "    wasundoable boolean ,\n"
-            + "    prevblockhash VARCHAR(255) ,\n" + "    prevbranchblockhash VARCHAR(255) ,\n"
-            + "    mineraddress VARBINARY(255),\n" + "    tokenid VARBINARY(255),\n" + "    blocktype bigint ,\n"
+    public static final String CREATE_BLOCKS_TABLE = "CREATE TABLE blocks (\n"
+            + "    hash binary(32) NOT NULL,\n"
+            + "    height bigint NOT NULL,\n"
+            + "    block varbinary(800000) NOT NULL,\n"
+            + "    wasundoable boolean NOT NULL,\n" 
+            + "    prevblockhash  binary(32) NOT NULL,\n"
+            + "    prevbranchblockhash  binary(32) NOT NULL,\n" 
+            + "    mineraddress varbinary(255),\n"
+            + "    tokenid varbinary(255),\n" 
+            + "    blocktype bigint NOT NULL,\n"
+            + "    rating bigint ,\n"
+            + "    depth bigint,\n"
+            + "    cumulativeweight  bigint ,\n" 
+            + "    milestone boolean,\n" 
+            + "    milestonelastupdate bigint,\n" 
+            + "    milestonedepth bigint,\n"
+            + "    inserttime bigint,\n" 
+            + "    maintained boolean,\n"
             + "    CONSTRAINT headers_pk PRIMARY KEY (hash)  \n" + ")";
 
-    public static final String CREATE_UNDOABLE_TABLE = "CREATE TABLE undoableblocks (\n"
-            + "    hash VARBINARY(32) not null,\n" + "    height bigint ,\n" + "    txoutchanges VARBINARY(4000),\n"
-            + "    transactions VARBINARY(4000),\n" + "    CONSTRAINT undoableblocks_pk PRIMARY KEY (hash)  \n" + ")\n";
+    public static final String CREATE_UNSOLIDBLOCKS_TABLE = "CREATE TABLE unsolidblocks (\n"
+            + "    hash binary(32) NOT NULL,\n"
+            + "    block varbinary(800000) NOT NULL,\n"
+            + "    inserttime bigint,\n" 
+            + "    CONSTRAINT unsolidblocks_pk PRIMARY KEY (hash)  \n" + ")";
+            
+    public static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" 
+            + "    hash binary(32) NOT NULL,\n"
+            + "    outputindex bigint NOT NULL,\n"
+            + "    height bigint NOT NULL,\n"
+            + "    coinvalue bigint NOT NULL,\n" 
+            + "    scriptbytes varbinary(800000) NOT NULL,\n"
+            + "    toaddress varchar(255),\n" 
+            + "    addresstargetable bigint,\n" 
+            + "    coinbase boolean,\n"
+            + "    blockhash  binary(32) NOT NULL,\n" 
+            + "    tokenid varchar(255),\n"
+            + "    fromaddress varchar(255),\n" 
+            + "    memo varchar(80),\n" 
+            + "    spent boolean NOT NULL,\n"
+            + "    confirmed boolean NOT NULL,\n" 
+            + "    spendpending boolean NOT NULL,\n"
+            + "    spenderblockhash  binary(32),\n"
+            + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex)  \n" + ")\n";
+    
+    public static final String CREATE_TX_REWARD_TABLE = "CREATE TABLE txreward (\n"
+            + "   blockhash binary(32) NOT NULL,\n" 
+            + "   prevheight bigint NOT NULL,\n"
+            + "   confirmed boolean NOT NULL,\n" 
+            + "   spent boolean NOT NULL,\n"
+            + "   spenderblockhash binary(32),\n"
+            + "   eligibility boolean NOT NULL,\n"
+            + "   prevblockhash binary(32),\n"
+            + "   PRIMARY KEY (blockhash) )";
+    
+    public static final String CREATE_OUTPUT_MULTI_TABLE = "CREATE TABLE outputsmulti (\n" 
+            + "    hash binary(32) NOT NULL,\n"
+            + "    outputindex bigint NOT NULL,\n" 
+            + "    toaddress varchar(255) NOT NULL,\n"
+            + "    minimumsign bigint NOT NULL,\n"
+            + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex, toaddress)  \n" + ")\n";
 
-    public static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" + "    hash binary(32) not null,\n"
-            + "    outputindex bigint not null,\n" + "    height bigint ,\n" + "    coinvalue bigint ,\n"
-            + "    scriptbytes VARBINARY(4000) ,\n" + "    toaddress varchar(255),\n"
-            + "    addresstargetable bigint,\n" + "    coinbase boolean,\n" + "    blockhash  VARBINARY(32)  ,\n"
-            + "    tokenid varchar(255),\n" + "    fromaddress varchar(35),\n" + "    description varchar(80),\n"
-            + "    spent boolean ,\n" + "    confirmed boolean ,\n" + "    spendpending boolean ,\n"
-            + "    spenderblockhash  VARBINARY(32),\n" + "    CONSTRAINT outputs_pk PRIMARY KEY (hash,outputindex)  \n"
-            + ")\n";
-
-    public static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" + "    hash VARBINARY(32) not null,\n"
+    public static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n"
+            + "    hash binary(32) NOT NULL,\n"
             + "    CONSTRAINT tips_pk PRIMARY KEY (hash)  \n" + ")\n";
 
-    public static final String CREATE_BLOCKEVALUATION_TABLE = "CREATE TABLE blockevaluation (\n"
-            + "    blockhash BINARY(32) not null,\n" + "    rating bigint ,\n" + "    depth bigint,\n"
-            + "    cumulativeweight  bigint ,\n" + "    solid boolean ,\n" + "    height bigint,\n"
-            + "    milestone boolean,\n" + "    milestonelastupdate bigint,\n" + "    milestonedepth bigint,\n"
-            + "    inserttime bigint,\n" + "    maintained boolean,\n" + "    rewardvalidityassessment boolean,\n"
-            + "    CONSTRAINT blockevaluation_pk PRIMARY KEY (blockhash) )\n";
-
     public static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
-            + "    tokenid VARBINARY(255) not null ,\n" + "    tokenname varchar(255)  ,\n" + "    amount bigint ,\n"
-            + "    description varchar(255),\n" + "    blocktype integer ,\n"
-            + "    CONSTRAINT tokenid_pk PRIMARY KEY (tokenid) \n)";
+            + "    blockhash varchar(255) NOT NULL,\n"
+            + "    confirmed boolean NOT NULL,\n" 
+            + "    tokenid varchar(255) NOT NULL  ,\n"
+            + "    tokenindex bigint NOT NULL   ,\n"
+            + "    amount bigint(20) ,\n" 
+            + "    tokenname varchar(255) ,\n"
+            + "    description varchar(255) ,\n" 
+            + "    url varchar(255) ,\n" 
+            + "    signnumber bigint NOT NULL   ,\n"
+            + "    multiserial boolean,\n" 
+            + "    tokentype int(11),\n" 
+            + "    tokenstop boolean,\n"
+            + "    prevblockhash varchar(255) NOT NULL,\n"
+            + "    spent boolean NOT NULL,\n"
+            + "    spenderblockhash  binary(32),\n"
+            + "    PRIMARY KEY (blockhash) \n)";
+
+    //update on confirm
+    public static final String CREATE_MULTISIGNADDRESS_TABLE = "CREATE TABLE multisignaddress (\n"
+            + "    blockhash varchar(255) NOT NULL,\n"
+            + "    tokenid varchar(255) NOT NULL  ,\n"
+            + "    address varchar(255),\n"
+            + "    pubKeyHex varchar(255),\n"
+            + "    posIndex int(11),\n"
+            + "    PRIMARY KEY (blockhash, tokenid, address) \n)";
+
+    public static final String CREATE_MULTISIGNBY_TABLE = "CREATE TABLE multisignby (\n"
+            + "    tokenid varchar(255) NOT NULL  ,\n" 
+            + "    tokenindex bigint NOT NULL   ,\n"
+            + "    address varchar(255),\n" 
+            + "    PRIMARY KEY (tokenid,tokenindex, address) \n)";
+    
+    public static final String CREATE_MULTISIGN_TABLE = "CREATE TABLE multisign (\n"
+            + "    id varchar(255) NOT NULL  ,\n" 
+            + "    tokenid varchar(255) NOT NULL  ,\n" 
+            + "    tokenindex bigint NOT NULL   ,\n"
+            + "    address varchar(255),\n"
+            + "    blockhash  varbinary(800000) NOT NULL,\n"
+            + "    sign int(11) NOT NULL,\n"
+            + "    PRIMARY KEY (id) \n)";
+
+    public static final String CREATE_PAYMULTISIGN_TABLE = "CREATE TABLE paymultisign (\n"
+            + "    orderid varchar(255) NOT NULL  ,\n" 
+            + "    tokenid varchar(255) NOT NULL  ,\n" 
+            + "    toaddress varchar(255) NOT NULL,\n"
+            + "    blockhash varbinary(800000) NOT NULL,\n"
+            + "    amount bigint(20) ,\n"
+            + "    minsignnumber bigint(20) ,\n"
+            + "    outpusHashHex varchar(255) ,\n"
+            + "    PRIMARY KEY (orderid) \n)";
+    
+    public static final String CREATE_PAYMULTISIGNADDRESS_TABLE = "CREATE TABLE paymultisignaddress (\n"
+            + "    orderid varchar(255) NOT NULL  ,\n" 
+            + "    pubKey varchar(255),\n"
+            + "    sign int(11) NOT NULL,\n"
+            + "    signIndex int(11) NOT NULL,\n"
+            + "    signInputData varbinary(800000),\n"
+            + "    PRIMARY KEY (orderid, pubKey) \n)";
+    
+    public static final String CREATE_USERDATA_TABLE = "CREATE TABLE userdata (\n" 
+            + "    blockhash binary(32) NOT NULL,\n"
+            + "    dataclassname varchar(255) NOT NULL,\n" 
+            + "    data varbinary(800000) NOT NULL,\n"
+            + "    pubKey varchar(255),\n" 
+            + "    blocktype bigint,\n" 
+             + "   CONSTRAINT userdata_pk PRIMARY KEY (dataclassname, pubKey)  \n" + ")";
+    
+    public static final String CREATE_VOSEXECUTE_TABLE = "CREATE TABLE vosexecute (\n" 
+            + "    vosKey varchar(255) NOT NULL,\n"
+            + "    pubKey varchar(255) NOT NULL,\n" 
+            + "    execute bigint NOT NULL,\n" 
+            + "    data varbinary(800000) NOT NULL,\n"
+            + "    startDate datetime NOT NULL,\n"
+            + "    endDate datetime NOT NULL,\n"
+             + "   CONSTRAINT vosexecute_pk PRIMARY KEY (vosKey, pubKey)  \n" + ")";
+    
+    public static final String CREATE_LOGRESULT_TABLE = "CREATE TABLE logresult (\n" 
+            + "    logResultId varchar(255) NOT NULL,\n"
+            + "    logContent varchar(255) NOT NULL,\n" 
+            + "    submitDate datetime NOT NULL,\n"
+             + "   CONSTRAINT vosexecute_pk PRIMARY KEY (logResultId)  \n" + ")";
+    
+    public static final String CREATE_BATCHBLOCK_TABLE = "CREATE TABLE batchblock (\n" 
+            + "    hash binary(32) NOT NULL,\n"
+            + "    block varbinary(800000) NOT NULL,\n"
+            + "    inserttime datetime NOT NULL,\n"
+             + "   CONSTRAINT batchblock_pk PRIMARY KEY (hash)  \n" + ")";
+
 
     public PhoenixBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
             String username, String password) throws BlockStoreException {
@@ -238,7 +289,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_BLOCKS_TABLE);
         sqlStatements.add(CREATE_OUTPUT_TABLE);
         sqlStatements.add(CREATE_TIPS_TABLE);
-        sqlStatements.add(CREATE_BLOCKEVALUATION_TABLE);
+    
         sqlStatements.add(CREATE_TOKENS_TABLE);
         return sqlStatements;
     }
@@ -314,35 +365,35 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
 
     @Override
     protected String getUpdateBlockEvaluationCumulativeweightSQL() {
-        return getUpdate() + " blockevaluation (cumulativeweight, blockhash) VALUES (?, ?)";
+        return getUpdate() + " blocks (cumulativeweight, blockhash) VALUES (?, ?)";
     }
 
     @Override
     protected String getUpdateBlockEvaluationDepthSQL() {
-        return getUpdate() + " blockevaluation (depth, blockhash) VALUES (?, ?)";
+        return getUpdate() + " blocks (depth, blockhash) VALUES (?, ?)";
     }
 
   
     @Override
     public String getUpdateBlockEvaluationMilestoneSQL() {
-        return getUpdate() + " blockevaluation (milestone,milestonelastupdate, hash) VALUES (?, ?, ?)";
+        return getUpdate() + " blocks (milestone,milestonelastupdate, hash) VALUES (?, ?, ?)";
     }
 
     @Override
     protected String getUpdateBlockEvaluationRatingSQL() {
-        return getUpdate() + " blockevaluation (rating, hash) VALUES (?, ?)";
+        return getUpdate() + " blocks (rating, hash) VALUES (?, ?)";
     }
 
   
 
     @Override
     protected String getUpdateBlockEvaluationMilestoneDepthSQL() {
-        return getUpdate() + " blockevaluation (milestonedepth, hash) VALUES (?, ?)";
+        return getUpdate() + " blocks (milestonedepth, hash) VALUES (?, ?)";
     }
 
     @Override
     protected String getUpdateBlockEvaluationMaintainedSQL() {
-        return getUpdate() + " blockevaluation (maintained, hash) VALUES (?, ?)";
+        return getUpdate() + " blocks (maintained, hash) VALUES (?, ?)";
     }
 
    
@@ -364,7 +415,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
 
     @Override
     protected String getUpdateBlockevaluationUnmaintainAllSQL() {
-        return getUpdate() + " blockevaluation (maintained) VALUES (false)";
+        return getUpdate() + " blocks (maintained) VALUES (false)";
     }
 
 }
