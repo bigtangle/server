@@ -231,6 +231,7 @@ read the BatchedBlock with maximal size, extract all transactions from BatchedBl
 delete the entries
 and add transactions to new Block , then  do a block solve 
 
+add wallet pro Server config? or client config?
 
 
 ## write serials article:
@@ -245,3 +246,31 @@ and add transactions to new Block , then  do a block solve
 4) Is the bigtangle exchange true decentralized?
 
 5) Is the feeless better than model with fee? 
+
+
+## decentralized ordermatch
+ 1) order Block
+ 2) order value is locked for usage until the order deleted or cleared
+ last price
+  user order: buy gold X ,  price as caution
+   * Buy side: User signs payment to special address: 111111* with amount = last price * order volume
+      
+   * sell side = USER SIGNS THE ORDER 
+     User signs transfer order volume Y to special address
+     
+ 3) ordermatching collect the order block and apply matching method, This method must run on all servers and produce some results.
+ like reward block, the order matching block collect all order blocks by his referenced.
+ 
+ Calculation: 1) determine the price, using the maximal volume
+ 			order execution with first in, first served 
+ # clearing process:
+ 	User must pay the amount= max{ 0,  (Ist price - Last Price)* order volume}
+ 	if user does not pay the additional amount, then the caution will be distributed to all selected seller 
+ 	transfer the order volume and BIG coin from special address to all users.
+ 	
+ 	unmatched order get the BIG and token back from 
+ 	     
+ 
+## hbase
+
+
