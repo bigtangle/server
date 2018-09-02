@@ -274,3 +274,8 @@ add wallet pro Server config? or client config?
 ## hbase
 
 
+## fix problem of requester for missing previous block
+
+## ask broadcast of blocks and condition
+
+## remove BIG double in list of tokens
