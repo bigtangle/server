@@ -15,9 +15,9 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenSerial;
-import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.AbstractResponse;
@@ -42,20 +42,12 @@ public class TokensService {
 
     public AbstractResponse getTokensList() throws BlockStoreException {
         List<Token> list = new ArrayList<Token>();
-        Token tokens = new Token();
-        tokens.setTokenid(Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID));
-        tokens.setTokenname(MonetaryFormat.CODE_BTC);
-        list.add(tokens);
         list.addAll(store.getTokensList());
         return GetTokensResponse.create(list);
     }
 
     public AbstractResponse getTokensList(String name) throws BlockStoreException {
         List<Token> list = new ArrayList<Token>();
-        Token tokens = new Token();
-        tokens.setTokenid(Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID));
-        tokens.setTokenname(MonetaryFormat.CODE_BTC);
-        list.add(tokens);
         list.addAll(store.getTokensList(name));
         Map<String, Long> map = store.getTokenAmountMap(name);
         return GetTokensResponse.create(list, map);
