@@ -139,14 +139,7 @@ public class MainController {
                     serverPane.setVisible(false);
                     buttonHBox.setVisible(false);
                     passwordHBox.setVisible(true);
-                    blockSolveTypeCheckBox.selectedProperty().addListener((ov, oldv, newv) -> {
-                        try {
-                            Main.addToken(Main.getContextRoot(), newv.toString(), DataClassName.BlockSolveType.name(),
-                                    DataClassName.BlockSolveType.name());
-                        } catch (Exception e) {
-                            GuiUtils.crashAlert(e);
-                        }
-                    });
+
                 } else {
                     searchPane.setVisible(true);
                     serverPane.setVisible(true);
@@ -154,9 +147,16 @@ public class MainController {
                     passwordHBox.setVisible(false);
                 }
                 Server.setText(Main.IpAddress);
-                // Main.addToken(Main.getContextRoot(), Main.IpAddress,
-                // "mainServer",
-                // DataClassName.SERVERURL.name());
+
+                blockSolveTypeCheckBox.selectedProperty().addListener((ov, oldv, newv) -> {
+                    log.info(newv + "");
+                    try {
+                        Main.addToken(Main.getContextRoot(), newv.toString(), DataClassName.BlockSolveType.name(),
+                                DataClassName.BlockSolveType.name());
+                    } catch (Exception e) {
+                        GuiUtils.crashAlert(e);
+                    }
+                });
                 initTableView();
             }
         } catch (Exception e) {
