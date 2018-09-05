@@ -149,7 +149,6 @@ public class MainController {
                 Server.setText(Main.IpAddress);
 
                 blockSolveTypeCheckBox.selectedProperty().addListener((ov, oldv, newv) -> {
-                    log.info(newv + "");
                     try {
                         Main.addToken(Main.getContextRoot(), newv.toString(), DataClassName.BlockSolveType.name(),
                                 DataClassName.BlockSolveType.name());
