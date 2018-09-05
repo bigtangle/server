@@ -38,9 +38,9 @@ import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderPublish;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenType;
-import net.bigtangle.core.Token;
 import net.bigtangle.core.UserSettingData;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.WatchedInfo;
@@ -139,7 +139,7 @@ public class OrderController extends ExchangeController {
             stateRB1.setUserData("publish");
             stateRB2.setUserData("match");
             stateRB3.setUserData("finish");
-            WatchedInfo watchedInfo = (WatchedInfo) Main.getUserdata(DataClassName.TOKEN.name());
+            WatchedInfo watchedInfo = (WatchedInfo) Main.getUserdata(DataClassName.TOKEN.name(), true);
             Main.tokenInfo = new TokenInfo();
             List<UserSettingData> list = watchedInfo.getUserSettingDatas();
             for (UserSettingData userSettingData : list) {

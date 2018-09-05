@@ -203,7 +203,7 @@ public class Main extends Application {
         userSettingData.setDomain(domain);
         userSettingData.setKey(tokenid);
         userSettingData.setValue(tokenname);
-        WatchedInfo watchedInfo = (WatchedInfo) getUserdata(DataClassName.WATCHED.name());
+        WatchedInfo watchedInfo = (WatchedInfo) getUserdata(DataClassName.WATCHED.name(), true);
         if (watchedInfo == null)
             return;
         List<UserSettingData> userSettingDatas = watchedInfo.getUserSettingDatas();
@@ -445,7 +445,7 @@ public class Main extends Application {
         Contact contact = new Contact();
         contact.setName(name);
         contact.setAddress(address);
-        ContactInfo contactInfo = (ContactInfo) getUserdata(DataClassName.CONTACTINFO.name());
+        ContactInfo contactInfo = (ContactInfo) getUserdata(DataClassName.CONTACTINFO.name(), false);
 
         List<Contact> list = contactInfo.getContactList();
         list.add(contact);
@@ -487,7 +487,7 @@ public class Main extends Application {
     public static List<String> initAddress4block() throws Exception {
 
         List<String> addressList = new ArrayList<String>();
-        ContactInfo contactInfo = (ContactInfo) getUserdata(DataClassName.CONTACTINFO.name());
+        ContactInfo contactInfo = (ContactInfo) getUserdata(DataClassName.CONTACTINFO.name(), false);
 
         List<Contact> list = contactInfo.getContactList();
         for (Contact contact : list) {
@@ -612,7 +612,7 @@ public class Main extends Application {
     }
 
     public static List<String> initToken4block() throws Exception {
-        WatchedInfo tokenInfo = (WatchedInfo) getUserdata(DataClassName.TOKEN.name());
+        WatchedInfo tokenInfo = (WatchedInfo) getUserdata(DataClassName.TOKEN.name(), true);
         if (tokenInfo == null) {
             return null;
         }
@@ -958,60 +958,93 @@ public class Main extends Application {
                                      // Main.port + "/";
     }
 
-    public static Serializable getUserdata(String type) throws Exception {
-        String CONTEXT_ROOT = Main.IpAddress + "/"; // http://" + Main.IpAddress
-                                                    // + ":" + Main.port + "/";
-        HashMap<String, String> requestParam = new HashMap<String, String>();
+    public static Serializable getUserdata(String type, boolean isClient) throws Exception {
+        Serializable userdata = null;
+        if (isClient) {
+            File file = new File(Main.keyFileDirectory + "/usersetting.block");
+            byte[] data = null;
+            if (file.exists()) {
+                data = FileUtil.readFile(file);
+            }
+            if (data != null && data.length != 0) {
+                Block block = null;
 
-        KeyParameter aesKey = null;
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
-        if (!"".equals(Main.password.trim())) {
-            aesKey = keyCrypter.deriveKey(Main.password);
-        }
-        List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
+                block = Main.params.getDefaultSerializer().makeBlock(data);
+                if (block != null) {
+                    boolean flag = true;
+                    if (block.getTransactions() == null || block.getTransactions().isEmpty()) {
+                        flag = false;
+                    }
+                    if (flag) {
+                        Transaction transaction = block.getTransactions().get(0);
+                        byte[] buf = transaction.getData();
 
-        ECKey pubKeyTo = null;
-        if (bitcoin.wallet().isEncrypted()) {
-            pubKeyTo = issuedKeys.get(0);
+                        userdata = new WatchedInfo().parse(buf);
+                    }
+
+                }
+            }
+            return userdata;
         } else {
-            pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
-        }
+            String CONTEXT_ROOT = Main.IpAddress + "/"; // http://" +
+                                                        // Main.IpAddress
+            // + ":" + Main.port + "/";
+            HashMap<String, String> requestParam = new HashMap<String, String>();
 
-        if (DataClassName.TOKEN.name().equals(type) || DataClassName.LANG.name().equals(type)
-                || DataClassName.SERVERURL.name().equals(type)) {
-            type = DataClassName.WATCHED.name();
-        }
-        requestParam.put("pubKey", pubKeyTo.getPublicKeyAsHex());
-        requestParam.put("dataclassname", type);
-        byte[] bytes = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getUserData.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        if (DataClassName.CONTACTINFO.name().equals(type)) {
-            if (bytes == null || bytes.length == 0) {
-                return new ContactInfo();
+            KeyParameter aesKey = null;
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            if (!"".equals(Main.password.trim())) {
+                aesKey = keyCrypter.deriveKey(Main.password);
             }
-            ContactInfo contactInfo = new ContactInfo().parse(bytes);
-            return contactInfo;
-        } else if (DataClassName.MYHOMEADDRESS.name().equals(type)) {
-            if (bytes == null || bytes.length == 0) {
-                return new MyHomeAddress();
+            List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
+
+            ECKey pubKeyTo = null;
+            if (bitcoin.wallet().isEncrypted()) {
+                pubKeyTo = issuedKeys.get(0);
+            } else {
+                pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
             }
-            MyHomeAddress myHomeAddress = new MyHomeAddress().parse(bytes);
-            return myHomeAddress;
-        } else if (DataClassName.UPLOADFILE.name().equals(type)) {
-            if (bytes == null || bytes.length == 0) {
-                return new UploadfileInfo();
+
+            if (DataClassName.TOKEN.name().equals(type) || DataClassName.LANG.name().equals(type)
+                    || DataClassName.SERVERURL.name().equals(type)
+                    || DataClassName.BlockSolveType.name().equals(type)) {
+                type = DataClassName.WATCHED.name();
             }
-            UploadfileInfo uploadfileInfo = new UploadfileInfo().parse(bytes);
-            return uploadfileInfo;
-        } else if (DataClassName.SERVERURL.name().equals(type) || DataClassName.LANG.name().equals(type)
-                || DataClassName.TOKEN.name().equals(type) || DataClassName.WATCHED.name().equals(type)) {
-            if (bytes == null || bytes.length == 0) {
-                return new WatchedInfo();
+            requestParam.put("pubKey", pubKeyTo.getPublicKeyAsHex());
+            requestParam.put("dataclassname", type);
+            byte[] bytes = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getUserData.name(),
+                    Json.jsonmapper().writeValueAsString(requestParam));
+            if (DataClassName.CONTACTINFO.name().equals(type)) {
+                if (bytes == null || bytes.length == 0) {
+                    return new ContactInfo();
+                }
+                ContactInfo contactInfo = new ContactInfo().parse(bytes);
+                return contactInfo;
+            } else if (DataClassName.MYHOMEADDRESS.name().equals(type)) {
+                if (bytes == null || bytes.length == 0) {
+                    return new MyHomeAddress();
+                }
+                MyHomeAddress myHomeAddress = new MyHomeAddress().parse(bytes);
+                return myHomeAddress;
+            } else if (DataClassName.UPLOADFILE.name().equals(type)) {
+                if (bytes == null || bytes.length == 0) {
+                    return new UploadfileInfo();
+                }
+                UploadfileInfo uploadfileInfo = new UploadfileInfo().parse(bytes);
+                return uploadfileInfo;
+            } else if (DataClassName.SERVERURL.name().equals(type) || DataClassName.LANG.name().equals(type)
+                    || DataClassName.TOKEN.name().equals(type) || DataClassName.WATCHED.name().equals(type)) {
+                WatchedInfo watchedInfo = null;
+
+                if (bytes == null || bytes.length == 0) {
+                    return new WatchedInfo();
+                }
+                watchedInfo = new WatchedInfo().parse(bytes);
+
+                return watchedInfo;
+            } else {
+                return null;
             }
-            WatchedInfo watchedInfo = new WatchedInfo().parse(bytes);
-            return watchedInfo;
-        } else {
-            return null;
         }
 
     }

@@ -224,7 +224,7 @@ public class UserdataController {
         Contact contact = new Contact();
         contact.setName(nameTF.getText());
         contact.setAddress(addressTF.getText());
-        ContactInfo contactInfo = (ContactInfo) Main.getUserdata(DataClassName.CONTACTINFO.name());
+        ContactInfo contactInfo = (ContactInfo) Main.getUserdata(DataClassName.CONTACTINFO.name(), false);
 
         List<Contact> list = contactInfo.getContactList();
         list.add(contact);
@@ -275,7 +275,7 @@ public class UserdataController {
 
             Transaction coinbase = new Transaction(Main.params);
 
-            TokenInfo tokenInfo = (TokenInfo) Main.getUserdata(DataClassName.TOKEN.name());
+            TokenInfo tokenInfo = (TokenInfo) Main.getUserdata(DataClassName.TOKEN.name(), true);
             List<Token> list = tokenInfo.getPositveTokenList();
             List<Token> tempList = new ArrayList<Token>();
             for (Token tokens : list) {
@@ -303,7 +303,7 @@ public class UserdataController {
 
     public void initMyAddress() {
         try {
-            MyHomeAddress myHomeAddress = (MyHomeAddress) Main.getUserdata(DataClassName.MYHOMEADDRESS.name());
+            MyHomeAddress myHomeAddress = (MyHomeAddress) Main.getUserdata(DataClassName.MYHOMEADDRESS.name(), false);
             countryTF.setText(myHomeAddress.getCountry());
             provinceTF.setText(myHomeAddress.getProvince());
             cityTF.setText(myHomeAddress.getCity());
@@ -389,7 +389,7 @@ public class UserdataController {
 
             Transaction coinbase = new Transaction(Main.params);
 
-            ContactInfo contactInfo = (ContactInfo) Main.getUserdata(DataClassName.CONTACTINFO.name());
+            ContactInfo contactInfo = (ContactInfo) Main.getUserdata(DataClassName.CONTACTINFO.name(), false);
             List<Contact> list = contactInfo.getContactList();
             List<Contact> tempList = new ArrayList<Contact>();
             for (Contact contact : list) {
@@ -443,7 +443,7 @@ public class UserdataController {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void initContactTableView() {
         try {
-            ContactInfo contactInfo = (ContactInfo) Main.getUserdata(DataClassName.CONTACTINFO.name());
+            ContactInfo contactInfo = (ContactInfo) Main.getUserdata(DataClassName.CONTACTINFO.name(), false);
             List<Contact> list = contactInfo.getContactList();
             ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();
             if (list != null && !list.isEmpty()) {
@@ -465,7 +465,7 @@ public class UserdataController {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void initFileTableView() {
         try {
-            UploadfileInfo uploadfileInfo = (UploadfileInfo) Main.getUserdata(DataClassName.UPLOADFILE.name());
+            UploadfileInfo uploadfileInfo = (UploadfileInfo) Main.getUserdata(DataClassName.UPLOADFILE.name(), false);
             List<Uploadfile> list = uploadfileInfo.getfUploadfiles();
             ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();
             if (list != null && !list.isEmpty()) {
@@ -785,7 +785,7 @@ public class UserdataController {
             uploadfile.setName(filenameTF.getText());
             uploadfile.setMaxsize(file.length());
 
-            UploadfileInfo uploadfileInfo = (UploadfileInfo) Main.getUserdata(DataClassName.UPLOADFILE.name());
+            UploadfileInfo uploadfileInfo = (UploadfileInfo) Main.getUserdata(DataClassName.UPLOADFILE.name(), false);
             List<Uploadfile> uploadfiles = uploadfileInfo.getfUploadfiles();
             uploadfiles.add(uploadfile);
             uploadfileInfo.setfUploadfiles(uploadfiles);

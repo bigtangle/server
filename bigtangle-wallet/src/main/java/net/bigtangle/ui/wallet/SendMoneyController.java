@@ -215,7 +215,7 @@ public class SendMoneyController {
 
     public void initSubtangle() throws Exception {
         ObservableList<String> allData = FXCollections.observableArrayList();
-        WatchedInfo watchedInfo = (WatchedInfo) Main.getUserdata(DataClassName.WATCHED.name());
+        WatchedInfo watchedInfo = (WatchedInfo) Main.getUserdata(DataClassName.WATCHED.name(), true);
         if (watchedInfo == null) {
             return;
         }
