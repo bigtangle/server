@@ -971,7 +971,7 @@ public class Main extends Application {
     }
 
     public static Serializable getUserdata(String type, boolean isClient) throws Exception {
-        Serializable userdata = null;
+        Serializable userdata = new WatchedInfo();;
         if (isClient) {
             File file = new File(Main.keyFileDirectory + "/usersetting.block");
             byte[] data = null;
