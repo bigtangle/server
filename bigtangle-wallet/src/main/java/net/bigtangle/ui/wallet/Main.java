@@ -179,8 +179,20 @@ public class Main extends Application {
             // blocktype = NetworkParameters.BLOCKTYPE_USERDATA_TOKEN;
         }
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] data = null;
+        File file = new File(Main.keyFileDirectory + "/usersetting.block");
+        if (!file.exists()) {
+            data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+                    Json.jsonmapper().writeValueAsString(requestParam));
+        } else {
+            if (DataClassName.WATCHED.name().equals(type)) {
+                data = FileUtil.readFile(new File(Main.keyFileDirectory + "/usersetting.block"));
+            } else {
+                data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+                        Json.jsonmapper().writeValueAsString(requestParam));
+            }
+        }
+
         Block block = Main.params.getDefaultSerializer().makeBlock(data);
         block.setBlockType(blocktype);
         ECKey pubKeyTo = null;
@@ -276,7 +288,7 @@ public class Main extends Application {
                 return;
             }
 
-            File file = new File(Main.keyFileDirectory + "/usersetting.block");
+            file = new File(Main.keyFileDirectory + "/usersetting.block");
             if (file.exists()) {
                 file.delete();
             }
