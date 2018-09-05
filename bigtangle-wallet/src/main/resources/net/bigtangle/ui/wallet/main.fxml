@@ -38,7 +38,7 @@
 				</TableColumn>
 			</columns>
 		</TableView>
-		<HBox fx:id="buttonHBox" layoutX="16.0" layoutY="115.0" prefHeight="23.0" prefWidth="836.0" spacing="20">
+		<HBox fx:id="buttonHBox" layoutX="16.0" layoutY="115.0" prefHeight="23.0" prefWidth="717.0" spacing="20">
 			<children>
 				<Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" defaultButton="true" mnemonicParsing="false" onAction="#sendMoneyOut" text="%Transfer" />
 				<Button defaultButton="true" mnemonicParsing="false" onAction="#orders" text="%market" />
@@ -48,7 +48,6 @@
             <Button defaultButton="true" mnemonicParsing="false" onAction="#userdataList" text="%userdata" />
             <Button defaultButton="true" mnemonicParsing="false" onAction="#vos" text="%vos" />
 				<Button defaultButton="true" onAction="#settingsClicked" text="%Settings" />
-            <CheckBox fx:id="blockSolveTypeCheckBox" alignment="BOTTOM_RIGHT" mnemonicParsing="false" text="%BlockSolveType" />
 			</children>
 		</HBox>
 		<AnchorPane fx:id="serverPane" layoutX="140.0" layoutY="25.0" prefHeight="23.0" prefWidth="673.0">

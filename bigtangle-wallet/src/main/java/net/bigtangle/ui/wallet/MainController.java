@@ -122,8 +122,6 @@ public class MainController {
     public TextField Server;
     @FXML
     public TextField IPPort;
-    @FXML
-    public CheckBox blockSolveTypeCheckBox;
 
     @FXML
     public TextField addressTextField;
@@ -148,14 +146,6 @@ public class MainController {
                 }
                 Server.setText(Main.IpAddress);
 
-                blockSolveTypeCheckBox.selectedProperty().addListener((ov, oldv, newv) -> {
-                    try {
-                        Main.addToken(Main.getContextRoot(), newv.toString(), DataClassName.BlockSolveType.name(),
-                                DataClassName.BlockSolveType.name());
-                    } catch (Exception e) {
-                        GuiUtils.crashAlert(e);
-                    }
-                });
                 initTableView();
             }
         } catch (Exception e) {

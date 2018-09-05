@@ -18,6 +18,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
@@ -35,12 +36,14 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.MyHomeAddress;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Token;
+import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Uploadfile;
 import net.bigtangle.core.UploadfileInfo;
+import net.bigtangle.core.UserSettingData;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.WatchedInfo;
 import net.bigtangle.core.http.server.resp.UserDataResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.params.ReqCmd;
@@ -114,6 +117,11 @@ public class UserdataController {
     @FXML
     public ComboBox<String> domianComboBox;
 
+    @FXML
+    public CheckBox blockSolveTypeCheckBox;
+    @FXML
+    public CheckBox languageCheckBox;
+
     public Main.OverlayUI<?> overlayUI;
 
     @FXML
@@ -150,7 +158,7 @@ public class UserdataController {
                     initFileTableView();
                 }
                 case 4: {
-                    initOtherTableView(list);
+                    initOtherTable();
                 }
                     break;
                 }
@@ -477,10 +485,113 @@ public class UserdataController {
         }
     }
 
+    private void initOtherTable() {
+        try {
+            initOtherTableView4file();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+    }
+
+    private void initOtherTableView4file() throws Exception {
+        blockSolveTypeCheckBox.selectedProperty().addListener((ov, oldv, newv) -> {
+            try {
+                Main.addToken(Main.getContextRoot(), newv.toString(), DataClassName.BlockSolveType.name(),
+                        DataClassName.BlockSolveType.name());
+            } catch (Exception e) {
+                GuiUtils.crashAlert(e);
+            }
+        });
+        languageCheckBox.selectedProperty().addListener((ov, oldv, newv) -> {
+            try {
+                Main.addToken(Main.getContextRoot(), newv ? "cn" : "en", DataClassName.LANG.name(),
+                        DataClassName.LANG.name());
+            } catch (Exception e) {
+                GuiUtils.crashAlert(e);
+            }
+        });
+        ObservableList<String> userdata = FXCollections.observableArrayList(DataClassName.SERVERURL.name());
+        domianComboBox.setItems(userdata);
+        File file = new File(Main.keyFileDirectory + "/usersetting.block");
+        byte[] data = null;
+        if (file.exists()) {
+            data = FileUtil.readFile(file);
+        }
+        if (data != null && data.length != 0) {
+
+            Block block = null;
+
+            block = Main.params.getDefaultSerializer().makeBlock(data);
+
+            if (block != null) {
+                boolean flag = true;
+                if (block.getTransactions() == null || block.getTransactions().isEmpty()) {
+                    flag = false;
+                }
+                if (flag) {
+                    Transaction transaction = block.getTransactions().get(0);
+                    byte[] buf = transaction.getData();
+
+                    WatchedInfo watchedInfo = new WatchedInfo().parse(buf);
+                    List<UserSettingData> list = watchedInfo.getUserSettingDatas();
+                    if (list != null && !list.isEmpty()) {
+                        ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();
+
+                        for (UserSettingData userSettingData : list) {
+
+                            if (DataClassName.SERVERURL.name().equals(userSettingData.getDomain())) {
+                                Map<String, Object> map = new HashMap<String, Object>();
+                                map.put("key", userSettingData.getKey());
+                                map.put("value", userSettingData.getValue());
+                                map.put("domaijj", userSettingData.getDomain());
+                                allData.add(map);
+                            }
+                            if (DataClassName.LANG.name().equals(userSettingData.getDomain())) {
+                                if ("cn".equals(userSettingData.getValue())) {
+                                    languageCheckBox.setSelected(true);
+                                } else {
+                                    languageCheckBox.setSelected(false);
+                                }
+                            }
+                            if (DataClassName.BlockSolveType.name().equals(userSettingData.getDomain())) {
+                                if ("true".equals(userSettingData.getValue())) {
+                                    blockSolveTypeCheckBox.setSelected(true);
+                                } else {
+                                    blockSolveTypeCheckBox.setSelected(false);
+                                }
+                            }
+                        }
+                        otherTableview.setItems(allData);
+                        keyColumn.setCellValueFactory(new MapValueFactory("key"));
+                        valueColumn.setCellValueFactory(new MapValueFactory("value"));
+                        domainColumn.setCellValueFactory(new MapValueFactory("domain"));
+                    }
+
+                }
+
+            }
+        }
+    }
+
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private void initOtherTableView(List<String> pubkeyList) {
-        ObservableList<String> userdata = FXCollections.observableArrayList(DataClassName.SERVERURL.name(),
-                DataClassName.LANG.name());
+        blockSolveTypeCheckBox.selectedProperty().addListener((ov, oldv, newv) -> {
+            try {
+                Main.addToken(Main.getContextRoot(), newv.toString(), DataClassName.BlockSolveType.name(),
+                        DataClassName.BlockSolveType.name());
+            } catch (Exception e) {
+                GuiUtils.crashAlert(e);
+            }
+        });
+        languageCheckBox.selectedProperty().addListener((ov, oldv, newv) -> {
+            try {
+                Main.addToken(Main.getContextRoot(), newv ? "cn" : "en", DataClassName.LANG.name(),
+                        DataClassName.LANG.name());
+            } catch (Exception e) {
+                GuiUtils.crashAlert(e);
+            }
+        });
+        ObservableList<String> userdata = FXCollections.observableArrayList(DataClassName.SERVERURL.name());
         domianComboBox.setItems(userdata);
         try {
             KeyParameter aesKey = null;
@@ -512,8 +623,7 @@ public class UserdataController {
                         .get("userSettingDatas");
                 if (userSettingDatas != null && !userSettingDatas.isEmpty()) {
                     for (Map<String, Object> map : userSettingDatas) {
-                        if (DataClassName.LANG.name().equals(map.get("domain"))
-                                || DataClassName.SERVERURL.name().equals(map.get("domain"))) {
+                        if (DataClassName.SERVERURL.name().equals(map.get("domain"))) {
                             allData.add(map);
                         }
 
@@ -531,8 +641,57 @@ public class UserdataController {
         }
     }
 
+    public void initWatchedTokenTable4file() throws Exception {
+        File file = new File(Main.keyFileDirectory + "/usersetting.block");
+        byte[] data = null;
+        if (file.exists()) {
+            data = FileUtil.readFile(file);
+        }
+        boolean flag1 = false;
+        boolean flag2 = false;
+        if (data != null && data.length != 0) {
+
+            Block block = null;
+
+            block = Main.params.getDefaultSerializer().makeBlock(data);
+
+            if (block != null) {
+                boolean flag = true;
+                if (block.getTransactions() == null || block.getTransactions().isEmpty()) {
+                    flag = false;
+                }
+                if (flag) {
+                    Transaction transaction = block.getTransactions().get(0);
+                    byte[] buf = transaction.getData();
+
+                    WatchedInfo watchedInfo = new WatchedInfo().parse(buf);
+                    List<UserSettingData> list = watchedInfo.getUserSettingDatas();
+                    if (list != null && !list.isEmpty()) {
+                        ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();
+
+                        for (UserSettingData userSettingData : list) {
+
+                            if (DataClassName.TOKEN.name().equals(userSettingData.getDomain())) {
+                                Map<String, Object> map = new HashMap<String, Object>();
+                                map.put("key", userSettingData.getKey());
+                                map.put("value", userSettingData.getValue());
+                                map.put("domaijj", userSettingData.getDomain());
+                                allData.add(map);
+                            }
+                        }
+                        wachtedTokenTableview.setItems(allData);
+                        tokennameColumn.setCellValueFactory(new MapValueFactory("value"));
+                        tokenidColumn.setCellValueFactory(new MapValueFactory("key"));
+                    }
+
+                }
+
+            }
+        }
+    }
+
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    public void initWatchedTokenTabe() throws Exception {
+    public void initWatchedTokenTable() throws Exception {
         KeyParameter aesKey = null;
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
@@ -577,7 +736,7 @@ public class UserdataController {
 
     private void initTokenTableView() {
         try {
-            initWatchedTokenTabe();
+            initWatchedTokenTable4file();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }

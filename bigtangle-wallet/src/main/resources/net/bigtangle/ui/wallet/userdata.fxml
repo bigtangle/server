@@ -100,11 +100,13 @@
                            </columns>
                         </TableView>
                         <Button cancelButton="true" layoutX="767.0" layoutY="499.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />
-                        <Label layoutX="353.0" layoutY="44.0" prefHeight="15.0" prefWidth="99.0" text="%userdataValue" />
-                        <TextField fx:id="valueTF" layoutX="452.0" layoutY="40.0" prefHeight="23.0" prefWidth="131.0" />
-                        <Button layoutX="652.0" layoutY="40.0" mnemonicParsing="false" onAction="#saveOther" text="%add" />
-                        <Label layoutX="36.0" layoutY="44.0" prefHeight="15.0" prefWidth="116.0" text="%userdataDomain" />
-                        <ComboBox fx:id="domianComboBox" layoutX="152.0" layoutY="39.0" prefWidth="150.0" />
+                        <Label layoutX="353.0" layoutY="29.0" prefHeight="15.0" prefWidth="99.0" text="%userdataValue" />
+                        <TextField fx:id="valueTF" layoutX="452.0" layoutY="25.0" prefHeight="23.0" prefWidth="131.0" />
+                        <Button layoutX="652.0" layoutY="25.0" mnemonicParsing="false" onAction="#saveOther" text="%add" />
+                        <Label layoutX="36.0" layoutY="29.0" prefHeight="15.0" prefWidth="116.0" text="%userdataDomain" />
+                        <ComboBox fx:id="domianComboBox" layoutX="152.0" layoutY="24.0" prefWidth="150.0" />
+                        <CheckBox fx:id="blockSolveTypeCheckBox" alignment="BOTTOM_RIGHT" layoutX="353.0" layoutY="57.0" mnemonicParsing="false" text="%BlockSolveType" />
+                        <CheckBox fx:id="languageCheckBox" alignment="BOTTOM_RIGHT" layoutX="39.0" layoutY="57.0" mnemonicParsing="false" text="%chinese" />
                      </children>
                   </AnchorPane>
                </content>
