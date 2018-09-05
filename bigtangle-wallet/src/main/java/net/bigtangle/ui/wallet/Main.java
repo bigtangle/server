@@ -174,6 +174,10 @@ public class Main extends Application {
             type = DataClassName.WATCHED.name();
             // blocktype = NetworkParameters.BLOCKTYPE_USERDATA_TOKEN;
         }
+        if (DataClassName.BlockSolveType.name().equals(type)) {
+            type = DataClassName.WATCHED.name();
+            // blocktype = NetworkParameters.BLOCKTYPE_USERDATA_TOKEN;
+        }
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -207,7 +211,8 @@ public class Main extends Application {
 
         if (userSettingDatas != null && !userSettingDatas.isEmpty() && userSettingDatas.get(0).getKey() != null
                 && !userSettingDatas.get(0).getKey().trim().isEmpty()) {
-            if (!DataClassName.SERVERURL.name().equals(domain) && !DataClassName.LANG.name().equals(domain)) {
+            if (!DataClassName.SERVERURL.name().equals(domain) && !DataClassName.LANG.name().equals(domain)
+                    && !DataClassName.BlockSolveType.name().equals(domain)) {
                 watchedInfo.getUserSettingDatas().add(userSettingData);
             } else {
                 if (DataClassName.SERVERURL.name().equals(domain)) {
@@ -221,6 +226,14 @@ public class Main extends Application {
                 } else if (DataClassName.LANG.name().equals(domain)) {
                     for (UserSettingData userSettingData2 : userSettingDatas) {
                         if (!DataClassName.LANG.name().equals(userSettingData2.getDomain())) {
+                            temps.add(userSettingData2);
+                        }
+
+                    }
+
+                } else if (DataClassName.BlockSolveType.name().equals(domain)) {
+                    for (UserSettingData userSettingData2 : userSettingDatas) {
+                        if (!DataClassName.BlockSolveType.name().equals(userSettingData2.getDomain())) {
                             temps.add(userSettingData2);
                         }
 
@@ -255,7 +268,8 @@ public class Main extends Application {
         block.addTransaction(coinbase);
         block.solve();
 
-      //TODO  OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
+        // TODO OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(),
+        // block.bitcoinSerialize());
         if (DataClassName.WATCHED.name().equals(type)) {
             byte[] buf = block.bitcoinSerialize();
             if (buf == null) {

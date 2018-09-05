@@ -43,6 +43,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TableColumn;
@@ -55,6 +56,7 @@ import javafx.util.Duration;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
@@ -120,6 +122,8 @@ public class MainController {
     public TextField Server;
     @FXML
     public TextField IPPort;
+    @FXML
+    public CheckBox blockSolveTypeCheckBox;
 
     @FXML
     public TextField addressTextField;
@@ -135,6 +139,14 @@ public class MainController {
                     serverPane.setVisible(false);
                     buttonHBox.setVisible(false);
                     passwordHBox.setVisible(true);
+                    blockSolveTypeCheckBox.selectedProperty().addListener((ov, oldv, newv) -> {
+                        try {
+                            Main.addToken(Main.getContextRoot(), newv.toString(), DataClassName.BlockSolveType.name(),
+                                    DataClassName.BlockSolveType.name());
+                        } catch (Exception e) {
+                            GuiUtils.crashAlert(e);
+                        }
+                    });
                 } else {
                     searchPane.setVisible(true);
                     serverPane.setVisible(true);
