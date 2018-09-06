@@ -171,13 +171,14 @@ object JdbcTest {
   // PHASE 1: batch precompute (maintained only) MAX_STEPS @vertex: conflictpoint sets + milestone validity, outgoing weight unnormalized, transient dicerolls
   //@edges: applicable diceroll interval for sendmsg
   def phase1(targetGraph: Graph[BlockWrapSpark, (Double, Double)]): Graph[BlockWrapSpark, (Double, Double)] = {
-    // TODO dynamic step amount less than infinity will lead to problems, since then it could be possible for a conflict to be forgotten.
+    // dynamic step count less than infinity may lead to problems, since it could be possible to not catch up anymore.
     //On the other hand, infinity can make it take infinitely long if there is some kind of long snake that is referenced.
     //Since this can happen either way, we need to prevent this by:
     //- setting blocks to conflicting with all blocks lower than e.g. their height - 1000 that are not approved by them
     //-> unscalable
     //-just set any unconfirmed unmaintained approvers also unconfirmed unmaintained?? should work most of the time
     //-> deadlock?
+    //- iteratively build the required statistics over multiple iterations of phase 1-5
      
 
     // For maintained part of the graph only

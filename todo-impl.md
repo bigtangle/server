@@ -14,7 +14,11 @@
 ## application monitoring health check and metrics
 
 ## Cleanup for source release
+before any release
 * Copyright notices fix
+* Remove private data such as passwords/keys from source release
+
+eventually?
 * Deprecated 'Bitcoin' mentions to be removed
 * No StoredBlock
 * BlockStatistics instead of BlockEvaluation
