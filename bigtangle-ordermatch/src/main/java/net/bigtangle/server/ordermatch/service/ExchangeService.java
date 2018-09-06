@@ -58,7 +58,7 @@ public class ExchangeService {
         String signtype = (String) request.get("signtype");
         byte[] data = Utils.HEX.decode(dataHex);
         this.store.updateExchangeSign(orderid, signtype, data);
-
+        exchange = this.store.getExchangeInfoByOrderid(orderid);
         if (exchange.getToSign() == 1 && exchange.getFromSign() == 1 && StringUtils.isNotBlank(exchange.getToOrderId())
                 && StringUtils.isNotBlank(exchange.getFromOrderId())) {
             this.store.updateOrderPublishState(exchange.getToOrderId(), OrderState.finish.ordinal());
