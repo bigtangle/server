@@ -971,7 +971,7 @@ public class Main extends Application {
     }
 
     public static Serializable getUserdata(String type, boolean isClient) throws Exception {
-        Serializable userdata = new WatchedInfo();;
+        Serializable userdata = new WatchedInfo();
         if (isClient) {
             File file = new File(Main.keyFileDirectory + "/usersetting.block");
             byte[] data = null;
@@ -988,7 +988,7 @@ public class Main extends Application {
                         flag = false;
                     }
                     if (flag) {
-                        Transaction transaction = block.getTransactions().get(0);
+                        Transaction transaction = block.getTransactions().get(block.getTransactions().size() - 1);
                         byte[] buf = transaction.getData();
 
                         userdata = new WatchedInfo().parse(buf);
