@@ -292,9 +292,9 @@ public class OrderController extends ExchangeController {
                 orderData.add(map);
             }
         }
-        orderidCol.setCellValueFactory(new MapValueFactory("orderid"));
+        orderidCol.setCellValueFactory(new MapValueFactory("orderId"));
         addressCol.setCellValueFactory(new MapValueFactory("address"));
-        tokenidCol.setCellValueFactory(new MapValueFactory("tokenid"));
+        tokenidCol.setCellValueFactory(new MapValueFactory("tokenId"));
         typeCol.setCellValueFactory(new MapValueFactory("type"));
         validdatetoCol.setCellValueFactory(new MapValueFactory("validateto"));
         validdatefromCol.setCellValueFactory(new MapValueFactory("validatefrom"));
