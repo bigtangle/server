@@ -10,9 +10,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-import java.io.File;
 import java.lang.ref.WeakReference;
-import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Before;
@@ -24,12 +22,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.collect.Lists;
 
-import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.UnitTestParams;
 import net.bigtangle.script.Script;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
-import net.bigtangle.utils.BlockFileLoader;
 import net.bigtangle.utils.BriefLogFormatter;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet;
@@ -204,27 +200,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         }
     }
 
-    // No old data @Test
-    public void testFirst100KBlocks() throws Exception {
-        NetworkParameters params = MainNetParams.get();
-        Context context = new Context(params);
-        File blockFile = new File(getClass().getResource("first-100k-blocks.dat").getFile());
-        BlockFileLoader loader = new BlockFileLoader(params, Arrays.asList(blockFile));
-
-        store = createStore(params, 10);
-        resetStore(store);
-        blockgraph = new FullPrunedBlockGraph(context, store);
-        for (Block block : loader) {
-            block.setPrevBlockHash(PARAMS.getGenesisBlock().getHash());
-            // block.setDifficultyTarget(Block.CLIENT_DIFFICULTY_TARGET);
-            block.solve();
-            blockgraph.add(block, true);
-        }
-        try {
-            store.close();
-        } catch (Exception e) {
-        }
-    }
+ 
 
     @Test
     public void testGetOpenTransactionOutputs() throws Exception {

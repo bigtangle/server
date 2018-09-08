@@ -5,33 +5,36 @@
 
 package net.bigtangle.wallet;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-
-import net.bigtangle.core.*;
-import net.bigtangle.crypto.*;
-import net.bigtangle.params.MainNetParams;
-import net.bigtangle.params.UnitTestParams;
-import net.bigtangle.utils.BriefLogFormatter;
-import net.bigtangle.utils.Threading;
-import net.bigtangle.wallet.DeterministicKeyChain;
-import net.bigtangle.wallet.DeterministicSeed;
-import net.bigtangle.wallet.KeyChain;
-import net.bigtangle.wallet.KeyChainFactory;
-import net.bigtangle.wallet.Protos;
-import net.bigtangle.wallet.UnreadableWalletException;
-import net.bigtangle.wallet.listeners.AbstractKeyChainEventListener;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.spongycastle.crypto.params.KeyParameter;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.junit.Assert.*;
+import org.junit.Before;
+import org.junit.Test;
+import org.spongycastle.crypto.params.KeyParameter;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+
+import net.bigtangle.core.Address;
+import net.bigtangle.core.BloomFilter;
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Utils;
+import net.bigtangle.crypto.ChildNumber;
+import net.bigtangle.crypto.DeterministicKey;
+import net.bigtangle.crypto.KeyCrypter;
+import net.bigtangle.params.MainNetParams;
+import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.utils.BriefLogFormatter;
 
 public class DeterministicKeyChainTest {
     private DeterministicKeyChain chain;
@@ -166,12 +169,7 @@ public class DeterministicKeyChainTest {
         final List<List<ECKey>> listenerKeys = Lists.newArrayList();
         long secs = 1389353062L;
         chain = new DeterministicKeyChain(ENTROPY, "", secs);
-        chain.addEventListener(new AbstractKeyChainEventListener() {
-            @Override
-            public void onKeysAdded(List<ECKey> keys) {
-                listenerKeys.add(keys);
-            }
-        }, Threading.SAME_THREAD);
+   
         assertEquals(0, listenerKeys.size());
         chain.setLookaheadSize(5);
         assertEquals(0, listenerKeys.size());

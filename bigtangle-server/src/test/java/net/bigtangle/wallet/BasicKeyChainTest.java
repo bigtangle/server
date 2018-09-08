@@ -5,6 +5,24 @@
 
 package net.bigtangle.wallet;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.junit.Before;
+import org.junit.Test;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
@@ -14,24 +32,6 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypter;
 import net.bigtangle.crypto.KeyCrypterException;
 import net.bigtangle.crypto.KeyCrypterScrypt;
-import net.bigtangle.utils.Threading;
-import net.bigtangle.wallet.BasicKeyChain;
-import net.bigtangle.wallet.KeyChain;
-import net.bigtangle.wallet.Protos;
-import net.bigtangle.wallet.UnreadableWalletException;
-import net.bigtangle.wallet.listeners.AbstractKeyChainEventListener;
-
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.junit.Assert.*;
 
 public class BasicKeyChainTest {
     private BasicKeyChain chain;
@@ -43,13 +43,7 @@ public class BasicKeyChainTest {
         chain = new BasicKeyChain();
         onKeysAdded = new AtomicReference<List<ECKey>>();
         onKeysAddedRan = new AtomicBoolean();
-        chain.addEventListener(new AbstractKeyChainEventListener() {
-            @Override
-            public void onKeysAdded(List<ECKey> keys2) {
-                onKeysAdded.set(keys2);
-                onKeysAddedRan.set(true);
-            }
-        }, Threading.SAME_THREAD);
+       
     }
 
     @Test
