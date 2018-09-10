@@ -282,4 +282,8 @@ add wallet pro Server config? or client config?
 
 ## ask broadcast of blocks and condition
 
-## remove BIG double in list of tokens
+## TokenID uses address instead of pulic key to protect public key.
+
+## optional remainder to new address after transfer (UTXO), problem with multi signature?
+
+## copy back the original licence copy right and authors
