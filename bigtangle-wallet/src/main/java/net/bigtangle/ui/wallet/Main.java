@@ -779,7 +779,7 @@ public class Main extends Application {
                     flag = false;
                 }
                 if (flag) {
-                    Transaction transaction = block.getTransactions().get(0);
+                    Transaction transaction = block.getTransactions().get(block.getTransactions().size() - 1);
                     byte[] buf = transaction.getData();
                     try {
                         WatchedInfo watchedInfo = new WatchedInfo().parse(buf);

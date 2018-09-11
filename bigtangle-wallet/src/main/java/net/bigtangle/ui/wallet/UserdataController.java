@@ -619,52 +619,27 @@ public class UserdataController {
     }
 
     public void initWatchedTokenTable4file() throws Exception {
-        File file = new File(Main.keyFileDirectory + "/usersetting.block");
-        byte[] data = null;
-        if (file.exists()) {
-            data = FileUtil.readFile(file);
-        }
-        boolean flag1 = false;
-        boolean flag2 = false;
-        if (data != null && data.length != 0) {
 
-            Block block = null;
+        WatchedInfo watchedInfo = (WatchedInfo) Main.getUserdata(DataClassName.WATCHED.name(), true);
+        List<UserSettingData> list = watchedInfo.getUserSettingDatas();
+        if (list != null && !list.isEmpty()) {
+            ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();
 
-            block = Main.params.getDefaultSerializer().makeBlock(data);
+            for (UserSettingData userSettingData : list) {
 
-            if (block != null) {
-                boolean flag = true;
-                if (block.getTransactions() == null || block.getTransactions().isEmpty()) {
-                    flag = false;
+                if (DataClassName.TOKEN.name().equals(userSettingData.getDomain())) {
+                    Map<String, Object> map = new HashMap<String, Object>();
+                    map.put("key", userSettingData.getKey());
+                    map.put("value", userSettingData.getValue());
+                    map.put("domaijj", userSettingData.getDomain());
+                    allData.add(map);
                 }
-                if (flag) {
-                    Transaction transaction = block.getTransactions().get(0);
-                    byte[] buf = transaction.getData();
-
-                    WatchedInfo watchedInfo = new WatchedInfo().parse(buf);
-                    List<UserSettingData> list = watchedInfo.getUserSettingDatas();
-                    if (list != null && !list.isEmpty()) {
-                        ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();
-
-                        for (UserSettingData userSettingData : list) {
-
-                            if (DataClassName.TOKEN.name().equals(userSettingData.getDomain())) {
-                                Map<String, Object> map = new HashMap<String, Object>();
-                                map.put("key", userSettingData.getKey());
-                                map.put("value", userSettingData.getValue());
-                                map.put("domaijj", userSettingData.getDomain());
-                                allData.add(map);
-                            }
-                        }
-                        wachtedTokenTableview.setItems(allData);
-                        tokennameColumn.setCellValueFactory(new MapValueFactory("value"));
-                        tokenidColumn.setCellValueFactory(new MapValueFactory("key"));
-                    }
-
-                }
-
             }
+            wachtedTokenTableview.setItems(allData);
+            tokennameColumn.setCellValueFactory(new MapValueFactory("value"));
+            tokenidColumn.setCellValueFactory(new MapValueFactory("key"));
         }
+
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
