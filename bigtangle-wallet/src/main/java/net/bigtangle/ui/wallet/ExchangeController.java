@@ -33,9 +33,9 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenType;
-import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -537,6 +537,7 @@ public class ExchangeController {
         this.mOrderid = stringValueOf(rowData.get("orderid"));
 
         try {
+            Main.exchangeSignInit(this.mOrderid);
             PayOrder payOrder = new PayOrder(Main.bitcoin.wallet(), this.mOrderid, ContextRoot + "/", marketURL + "/");
             payOrder.sign();
             this.initTable();
