@@ -109,6 +109,7 @@ import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.utils.BriefLogFormatter;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
+import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.DeterministicSeed;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
@@ -1186,5 +1187,45 @@ public class Main extends Application {
             OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
 
         }
+    }
+
+    public static void launchPayMultiSign(NetworkParameters networkParameters, String contextRoot, String hash,
+            long index, String value, String addressString, String signnum) throws Exception {
+        String outputStr = hash + ":" + index;
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("hexStr", outputStr);
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputWithKey.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+
+        OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
+        UTXO utxo = outputsDetailsResponse.getOutputs();
+
+        TransactionOutput multisigOutput = new FreeStandingTransactionOutput(networkParameters, utxo, 0);
+        Transaction transaction = new Transaction(Main.params);
+
+        Coin amount = Coin.parseCoin(value, utxo.getValue().tokenid);
+
+        Address address = Address.fromBase58(networkParameters, addressString);
+        transaction.addOutput(amount, address);
+
+        Coin amount2 = multisigOutput.getValue().subtract(amount);
+        transaction.addOutput(amount2, multisigOutput.getScriptPubKey());
+
+        transaction.addInput(multisigOutput);
+        transaction.setMemo("order sell");
+
+        PayMultiSign payMultiSign = new PayMultiSign();
+        payMultiSign.setOrderid(UUIDUtil.randomUUID());
+        payMultiSign.setTokenid(utxo.getValue().getTokenHex());
+        payMultiSign.setBlockhashHex(Utils.HEX.encode(transaction.bitcoinSerialize()));
+        payMultiSign.setToaddress(address.toBase58());
+        payMultiSign.setAmount(amount.getValue());
+
+        int signnumber = Integer.parseInt(signnum);
+        payMultiSign.setMinsignnumber(signnumber);
+        payMultiSign.setOutpusHashHex(utxo.getHashHex());
+
+        OkHttp3Util.post(contextRoot + ReqCmd.launchPayMultiSign.name(),
+                Json.jsonmapper().writeValueAsString(payMultiSign));
     }
 }
