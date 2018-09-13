@@ -80,6 +80,7 @@
 								<RadioButton fx:id="sellRadioButton" layoutX="296.0" layoutY="381.0" mnemonicParsing="false" text="%SELL" toggleGroup="$buySellTG" />
 								<TextField fx:id="fromTimeTF" layoutX="486.0" layoutY="267.0" maxWidth="40.0" minWidth="140.0" prefWidth="40.0" promptText="00:00:00" text="00:00:00" />
 								<TextField fx:id="toTimeTF" layoutX="488.0" layoutY="322.0" maxWidth="140.0" minWidth="140.0" prefWidth="140.0" promptText="00:00:00" text="00:00:00" />
+                        <Label layoutX="644.0" layoutY="215.0" prefHeight="15.0" prefWidth="247.0" text="%systemCoin" />
 							</children>
 						</AnchorPane>
 					</content>
