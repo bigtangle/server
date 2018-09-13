@@ -398,22 +398,7 @@ public class OrderController extends ExchangeController {
         log.debug(tokenComboBox.getValue());
         String tokenid = tokenComboBox.getValue().split(":")[1].trim();
         String typeStr = (String) buySellTG.getSelectedToggle().getUserData().toString();
-        if ("sell".equals(typeStr)) {
-            ObservableList<UTXOModel> utxoModels = Main.instance.getUtxoData();
-            if (utxoModels != null && !utxoModels.isEmpty()) {
-                for (UTXOModel utxoModel : utxoModels) {
-                    String temp = utxoModel.getTokenid().substring(utxoModel.getTokenid().indexOf(":") + 1);
-                    int minimumSign = Integer.parseInt(utxoModel.getMinimumsign());
-
-                    if (tokenid.equals(temp) && minimumSign >= 2) {
-                        String addressString = "";
-                        Main.launchPayMultiSign(Main.params, Main.getContextRoot(), utxoModel.getHash(),
-                                utxoModel.getOutputindex(), utxoModel.getBalance(), addressString,
-                                utxoModel.getMinimumsign());
-                    }
-                }
-            }
-        }
+        
         byte[] pubKeyHash = Address.fromBase58(Main.params, addressComboBox.getValue()).getHash160();
 
         Coin coin = Main.calculateTotalUTXOList(pubKeyHash,

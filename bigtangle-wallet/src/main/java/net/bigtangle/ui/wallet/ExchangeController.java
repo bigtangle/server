@@ -175,7 +175,8 @@ public class ExchangeController {
                 continue;
             }
             // TODO check market in watched list or default
-            if (!url.contains("market.bigtangle.net") && !url.contains("test2market.bigtangle.net")) {
+            if (!url.contains("market.bigtangle.net") && !url.contains("test2market.bigtangle.net")
+                    && !url.contains("localhost:8089")) {
                 boolean watchedFlag = isWatched(tokenid);
                 if (!watchedFlag) {
                     continue;
@@ -535,10 +536,29 @@ public class ExchangeController {
             GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_d1"));
         }
         this.mOrderid = stringValueOf(rowData.get("orderid"));
-
+        String fromOrderId = stringValueOf(rowData.get("fromOrderId"));
+        String fromTokenHex = stringValueOf(rowData.get("fromTokenHex"));
+        String fromAmount = stringValueOf(rowData.get("fromAmount"));
+        String fromAddress = stringValueOf(rowData.get("fromAddress"));
+        String toAddress = stringValueOf(rowData.get("toAddress"));
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        KeyParameter aesKey = null;
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
+        List<ECKey> list = Main.bitcoin.wallet().walletKeys(aesKey);
+        boolean flag = false;
+        for (ECKey ecKey : list) {
+            if (toAddress.equals(ecKey.toAddress(Main.params).toBase58())) {
+                flag = true;
+                break;
+            }
+        }
         try {
-            Main.exchangeSignInit(this.mOrderid);
+            Main.exchangeSignInit(fromOrderId);
             PayOrder payOrder = new PayOrder(Main.bitcoin.wallet(), this.mOrderid, ContextRoot + "/", marketURL + "/");
+            payOrder.setAesKey(aesKey);
+            payOrder.setSellFlag(flag);
             payOrder.sign();
             this.initTable();
         } catch (Exception e) {

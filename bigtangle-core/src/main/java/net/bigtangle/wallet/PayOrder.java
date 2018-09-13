@@ -6,12 +6,15 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+import org.spongycastle.crypto.params.KeyParameter;
+
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
@@ -21,6 +24,7 @@ import net.bigtangle.core.http.server.resp.GetOutputsResponse;
 import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
 public class PayOrder {
@@ -34,6 +38,8 @@ public class PayOrder {
     private String marketURL;
 
     private String serverURL;
+    private KeyParameter aesKey = null;
+    private boolean sellFlag;
 
     public PayOrder(Wallet wallet, String orderid, String serverURL, String marketURL) throws Exception {
         this.wallet = wallet;
@@ -52,6 +58,43 @@ public class PayOrder {
     }
 
     public void sign() throws Exception {
+
+        List<ECKey> ecKeys = wallet.walletKeys(aesKey);
+        List<UTXO> utxos = this.getUTXOWithECKeyList(ecKeys, Utils.HEX.decode(this.exchange.getFromTokenHex()));
+        if (sellFlag) {
+            for (UTXO utxo : utxos) {
+                if (utxo.getMinimumsign() < 2) {
+                    continue;
+                }
+                TransactionOutput multisigOutput = new FreeStandingTransactionOutput(wallet.getParams(), utxo, 0);
+                Transaction transaction = new Transaction(wallet.getParams());
+
+                Coin amount = Coin.parseCoin(utxo.getValue().toPlainString(), utxo.getValue().tokenid);
+
+                Address address = Address.fromBase58(wallet.getParams(), this.exchange.getFromAddress());
+                transaction.addOutput(amount, address);
+
+                Coin amount2 = multisigOutput.getValue().subtract(amount);
+                transaction.addOutput(amount2, multisigOutput.getScriptPubKey());
+
+                transaction.addInput(multisigOutput);
+                transaction.setMemo("order sell");
+
+                PayMultiSign payMultiSign = new PayMultiSign();
+                payMultiSign.setOrderid(UUIDUtil.randomUUID());
+                payMultiSign.setTokenid(utxo.getValue().getTokenHex());
+                payMultiSign.setBlockhashHex(Utils.HEX.encode(transaction.bitcoinSerialize()));
+                payMultiSign.setToaddress(address.toBase58());
+                payMultiSign.setAmount(amount.getValue());
+
+                payMultiSign.setMinsignnumber(utxo.getMinimumsign());
+                payMultiSign.setOutpusHashHex(utxo.getHashHex());
+
+                OkHttp3Util.post(this.serverURL + ReqCmd.launchPayMultiSign.name(),
+                        Json.jsonmapper().writeValueAsString(payMultiSign));
+            }
+        }
+
         String dataHex = this.exchange.getDataHex();
         if (dataHex.isEmpty()) {
             this.signOrderTransaction();
@@ -166,8 +209,8 @@ public class PayOrder {
             List<UTXO> outputs = new ArrayList<UTXO>();
             outputs.addAll(
                     this.getUTXOWithPubKeyHash(toAddress00.getHash160(), Utils.HEX.decode(fromCoin.getTokenHex())));
-            outputs.addAll(
-                    this.getUTXOWithECKeyList(this.wallet().walletKeys(), Utils.HEX.decode(toCoin.getTokenHex())));
+            outputs.addAll(this.getUTXOWithECKeyList(this.wallet().walletKeys(aesKey),
+                    Utils.HEX.decode(toCoin.getTokenHex())));
 
             SendRequest req = SendRequest.to(toAddress00, toCoin);
             req.tx.addOutput(fromCoin, fromAddress00);
@@ -343,5 +386,21 @@ public class PayOrder {
                 Json.jsonmapper().writeValueAsString(requestParam));
         ExchangeInfoResponse exchangeInfoResponse = Json.jsonmapper().readValue(respone, ExchangeInfoResponse.class);
         return exchangeInfoResponse.getExchange();
+    }
+
+    public KeyParameter getAesKey() {
+        return aesKey;
+    }
+
+    public void setAesKey(KeyParameter aesKey) {
+        this.aesKey = aesKey;
+    }
+
+    public boolean isSellFlag() {
+        return sellFlag;
+    }
+
+    public void setSellFlag(boolean sellFlag) {
+        this.sellFlag = sellFlag;
     }
 }
