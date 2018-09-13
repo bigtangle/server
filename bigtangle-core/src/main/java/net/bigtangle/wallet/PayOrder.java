@@ -63,35 +63,36 @@ public class PayOrder {
         List<UTXO> utxos = this.getUTXOWithECKeyList(ecKeys, Utils.HEX.decode(this.exchange.getFromTokenHex()));
         if (sellFlag) {
             for (UTXO utxo : utxos) {
-                if (utxo.getMinimumsign() < 2) {
-                    continue;
+                if (utxo.getTokenId().equals(this.exchange.getFromTokenHex()) && utxo.getMinimumsign() >= 2
+                        && utxo.getValue().value >= Long.parseLong(this.exchange.getFromAmount()) * 1000) {
+
+                    TransactionOutput multisigOutput = new FreeStandingTransactionOutput(wallet.getParams(), utxo, 0);
+                    Transaction transaction = new Transaction(wallet.getParams());
+
+                    Coin amount = Coin.parseCoin(utxo.getValue().toPlainString(), utxo.getValue().tokenid);
+
+                    Address address = Address.fromBase58(wallet.getParams(), this.exchange.getFromAddress());
+                    transaction.addOutput(amount, address);
+
+                    Coin amount2 = multisigOutput.getValue().subtract(amount);
+                    transaction.addOutput(amount2, multisigOutput.getScriptPubKey());
+
+                    transaction.addInput(multisigOutput);
+                    transaction.setMemo("order sell");
+
+                    PayMultiSign payMultiSign = new PayMultiSign();
+                    payMultiSign.setOrderid(UUIDUtil.randomUUID());
+                    payMultiSign.setTokenid(utxo.getValue().getTokenHex());
+                    payMultiSign.setBlockhashHex(Utils.HEX.encode(transaction.bitcoinSerialize()));
+                    payMultiSign.setToaddress(address.toBase58());
+                    payMultiSign.setAmount(amount.getValue());
+
+                    payMultiSign.setMinsignnumber(utxo.getMinimumsign());
+                    payMultiSign.setOutpusHashHex(utxo.getHashHex());
+
+                    OkHttp3Util.post(this.serverURL + ReqCmd.launchPayMultiSign.name(),
+                            Json.jsonmapper().writeValueAsString(payMultiSign));
                 }
-                TransactionOutput multisigOutput = new FreeStandingTransactionOutput(wallet.getParams(), utxo, 0);
-                Transaction transaction = new Transaction(wallet.getParams());
-
-                Coin amount = Coin.parseCoin(utxo.getValue().toPlainString(), utxo.getValue().tokenid);
-
-                Address address = Address.fromBase58(wallet.getParams(), this.exchange.getFromAddress());
-                transaction.addOutput(amount, address);
-
-                Coin amount2 = multisigOutput.getValue().subtract(amount);
-                transaction.addOutput(amount2, multisigOutput.getScriptPubKey());
-
-                transaction.addInput(multisigOutput);
-                transaction.setMemo("order sell");
-
-                PayMultiSign payMultiSign = new PayMultiSign();
-                payMultiSign.setOrderid(UUIDUtil.randomUUID());
-                payMultiSign.setTokenid(utxo.getValue().getTokenHex());
-                payMultiSign.setBlockhashHex(Utils.HEX.encode(transaction.bitcoinSerialize()));
-                payMultiSign.setToaddress(address.toBase58());
-                payMultiSign.setAmount(amount.getValue());
-
-                payMultiSign.setMinsignnumber(utxo.getMinimumsign());
-                payMultiSign.setOutpusHashHex(utxo.getHashHex());
-
-                OkHttp3Util.post(this.serverURL + ReqCmd.launchPayMultiSign.name(),
-                        Json.jsonmapper().writeValueAsString(payMultiSign));
             }
         }
 
