@@ -147,8 +147,7 @@ public class MultiSignService {
     }
 
     /*
-     * TODO move to fullP...
-     * check unique as conflicts
+     * TODO move to fullP... check unique as conflicts
      */
     public boolean checkToken(Block block, boolean allowConflicts) throws VerificationException {
         try {
@@ -174,11 +173,11 @@ public class MultiSignService {
             if (currentToken.getTokens().getTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
                 throw new VerificationException("Not allowed");
             }
-            
 
             // Check all token fields
             if (currentToken.getTokens().getAmount() > Long.MAX_VALUE) {
-                // TODO check that amount of all tokens is lower than Long.MAX_VALUE
+                // TODO check that amount of all tokens is lower than
+                // Long.MAX_VALUE
                 throw new VerificationException("Too many tokens");
             }
             if (currentToken.getTokens().getDescription().length() > 500) {
@@ -197,7 +196,6 @@ public class MultiSignService {
                 // TODO define max values
                 throw new VerificationException("Too long");
             }
-            
 
             // Check previous issuance hash exists or initial issuance
             if ((currentToken.getTokens().getPrevblockhash().equals("")
@@ -209,7 +207,6 @@ public class MultiSignService {
 
             if (currentToken.getTokens().getTokenindex() != 0) {
             }
-            
 
             // Must define enough permissioned addresses
             if (currentToken.getTokens().getSignnumber() > currentToken.getMultiSignAddresses().size()) {
@@ -252,10 +249,9 @@ public class MultiSignService {
                         prevToken.getPrevblockhash());
             } else {
                 permissionedAddresses = new ArrayList<>();
-                
-                
+
                 // TODO add pubkey tokenid instead:
-                //permissionedAddresses.add(){
+                // permissionedAddresses.add(){
                 permissionedAddresses = currentToken.getMultiSignAddresses();
             }
 
@@ -316,7 +312,7 @@ public class MultiSignService {
             if (tokens == null) {
                 throw new BlockStoreException("tokeninfo is null");
             }
-            Token tokens0 = store.getToken(tokens.getTokenid());
+            Token tokens0 = store.getToken(tokens.getBlockhash());
             if (!allowConflicts && tokens0 != null && tokens0.isTokenstop()) {
                 throw new BlockStoreException("tokeninfo can not reissue");
             }

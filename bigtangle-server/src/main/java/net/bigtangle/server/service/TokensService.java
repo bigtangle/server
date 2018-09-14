@@ -73,7 +73,7 @@ public class TokensService {
             TokenInfo tokenInfo = new TokenInfo().parse(buf);
 
             final String tokenid = tokenInfo.getTokens().getTokenid();
-            Token tokens = this.store.getToken(tokenid);
+            Token tokens = this.store.getToken(tokenInfo.getTokens().getBlockhash());
             if (tokens != null) {
                 throw new BlockStoreException("token can't update");
             }
