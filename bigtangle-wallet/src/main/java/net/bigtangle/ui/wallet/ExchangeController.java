@@ -536,10 +536,6 @@ public class ExchangeController {
             GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_d1"));
         }
         this.mOrderid = stringValueOf(rowData.get("orderid"));
-        String fromOrderId = stringValueOf(rowData.get("fromOrderId"));
-        String fromTokenHex = stringValueOf(rowData.get("fromTokenHex"));
-        String fromAmount = stringValueOf(rowData.get("fromAmount"));
-        String fromAddress = stringValueOf(rowData.get("fromAddress"));
         String toAddress = stringValueOf(rowData.get("toAddress"));
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
         KeyParameter aesKey = null;
@@ -555,7 +551,7 @@ public class ExchangeController {
             }
         }
         try {
-            Main.exchangeSignInit(fromOrderId);
+            Main.exchangeSignInit(mOrderid);
             PayOrder payOrder = new PayOrder(Main.bitcoin.wallet(), this.mOrderid, ContextRoot + "/", marketURL + "/");
             payOrder.setAesKey(aesKey);
             payOrder.setSellFlag(flag);
