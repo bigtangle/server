@@ -551,12 +551,11 @@ public class ExchangeController {
             }
         }
         try {
-           
+
             PayOrder payOrder = new PayOrder(Main.bitcoin.wallet(), this.mOrderid, ContextRoot + "/", marketURL + "/");
             payOrder.setAesKey(aesKey);
             payOrder.setSellFlag(flag);
             payOrder.sign();
-            Main.exchangeSignInit(mOrderid);
             this.initTable();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
