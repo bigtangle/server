@@ -91,6 +91,7 @@ public class PayOrder {
                     transaction.setMemo("order sell");
 
                     PayMultiSign payMultiSign = new PayMultiSign();
+                    payMultiSign.setTokenBlockhashHex(utxo.getBlockHashHex());
                     payMultiSign.setOrderid(UUIDUtil.randomUUID());
                     payMultiSign.setTokenid(utxo.getValue().getTokenHex());
                     payMultiSign.setBlockhashHex(Utils.HEX.encode(transaction.bitcoinSerialize()));

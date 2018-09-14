@@ -5,23 +5,24 @@ public class PayMultiSign implements java.io.Serializable {
     private static final long serialVersionUID = 8438153762231442643L;
 
     private String orderid;
-    
+
     private String tokenid;
-    
+
     private String toaddress;
-    
+
     private String blockhashHex;
-    
+    private String tokenBlockhashHex;
+
     private byte[] blockhash;
-    
+
     private long amount;
-    
+
     private long minsignnumber;
-    
+
     private String pubKeyHex;
-    
+
     private String outpusHashHex;
-    
+
     public String getOutpusHashHex() {
         return outpusHashHex;
     }
@@ -92,5 +93,13 @@ public class PayMultiSign implements java.io.Serializable {
 
     public void setBlockhash(byte[] blockhash) {
         this.blockhash = blockhash;
+    }
+
+    public String getTokenBlockhashHex() {
+        return tokenBlockhashHex;
+    }
+
+    public void setTokenBlockhashHex(String tokenBlockhashHex) {
+        this.tokenBlockhashHex = tokenBlockhashHex;
     }
 }

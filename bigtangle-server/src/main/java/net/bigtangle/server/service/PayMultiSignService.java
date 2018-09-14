@@ -40,7 +40,7 @@ public class PayMultiSignService {
     public void launchPayMultiSign(byte[] data) throws BlockStoreException, Exception {
         PayMultiSign payMultiSign = convertTransactionDataToPayMultiSign(data);
         String tokenid = payMultiSign.getTokenid();
-        Token tokens = this.store.getToken(payMultiSign.getBlockhashHex());
+        Token tokens = this.store.getToken(payMultiSign.getTokenBlockhashHex());
         if (tokens == null) {
             throw new BlockStoreException("token not existed");
         }
@@ -97,7 +97,8 @@ public class PayMultiSignService {
             throw new BlockStoreException("multisign signature error");
         }
 
-        // int signIndex = this.store.getMaxPayMultiSignAddressSignIndex(orderid);
+        // int signIndex =
+        // this.store.getMaxPayMultiSignAddressSignIndex(orderid);
         // signIndex++;
 
         byte[] signInputData = Utils.HEX.decode((String) request.get("signInputData"));
