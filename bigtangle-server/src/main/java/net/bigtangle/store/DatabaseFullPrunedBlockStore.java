@@ -313,12 +313,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_TX_REWARD_SPENT_SQL = "SELECT spent " + "FROM txreward WHERE blockhash = ?";
     protected final String SELECT_TX_REWARD_SPENDER_SQL = "SELECT spenderblockhash "
             + "FROM txreward WHERE blockhash = ?";
-    protected final String SELECT_TX_REWARD_PREVBLOCKHASH_SQL = "SELECT prevblockhash " + "FROM txreward WHERE blockhash = ?";
+    protected final String SELECT_TX_REWARD_PREVBLOCKHASH_SQL = "SELECT prevblockhash "
+            + "FROM txreward WHERE blockhash = ?";
     protected final String UPDATE_TX_REWARD_CONFIRMED_SQL = "UPDATE txreward SET confirmed = ? WHERE blockhash = ?";
     protected final String UPDATE_TX_REWARD_SPENT_SQL = "UPDATE txreward SET spent = ?, spenderblockhash = ? WHERE blockhash = ?";
 
     /* OTHER */
     protected final String INSERT_OUTPUTSMULTI_SQL = "insert into outputsmulti (hash, toaddress, outputindex, minimumsign) values (?, ?, ?, ?)";
+    protected final String SELECT_OUTPUTSMULTI_SQL = "select hash, toaddress, outputindex, minimumsign from outputsmulti where hash=? and outputindex=?";
 
     protected final String SELECT_USERDATA_SQL = "SELECT blockhash, dataclassname, data, pubKey, blocktype FROM userdata WHERE dataclassname = ? and pubKey = ?";
     protected final String INSERT_USERDATA_SQL = "INSERT INTO userdata (blockhash, dataclassname, data, pubKey, blocktype) VALUES (?, ?, ?, ?, ?)";
@@ -326,11 +328,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected final String INSERT_LOGRESULT_SQL = "INSERT INTO logresult (logResultId, logContent, submitDate) VALUE (?, ?, ?)";
     protected final String SELECT_LOGRESULT_SQL = "SELECT logResultId, logContent, submitDate FROM logresult WHERE logResultId = ?";
-    
+
     protected final String INSERT_BATCHBLOCK_SQL = "INSERT INTO batchblock (hash, block, inserttime) VALUE (?, ?, ?)";
     protected final String DELETE_BATCHBLOCK_SQL = "DELETE FROM batchblock WHERE hash = ?";
     protected final String SELECT_BATCHBLOCK_SQL = "SELECT hash, block, inserttime FROM batchblock order by inserttime ASC";
-    
+
     protected NetworkParameters params;
     protected ThreadLocal<Connection> conn;
     protected List<Connection> allConnections;
@@ -2024,8 +2026,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected abstract String getUpdateOutputsSpentSQL();
 
     @Override
-    public void updateTransactionOutputSpent(Sha256Hash prevTxHash, long index, boolean b, @Nullable Sha256Hash spenderBlockHash)
-            throws BlockStoreException {
+    public void updateTransactionOutputSpent(Sha256Hash prevTxHash, long index, boolean b,
+            @Nullable Sha256Hash spenderBlockHash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -3461,7 +3463,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void updateTxRewardSpent(Sha256Hash hash, boolean b, @Nullable Sha256Hash spenderBlockHash) throws BlockStoreException {
+    public void updateTxRewardSpent(Sha256Hash hash, boolean b, @Nullable Sha256Hash spenderBlockHash)
+            throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -3552,6 +3555,38 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 }
             }
         }
+    }
+
+    public List<OutputsMulti> queryOutputsMultiByHashAndIndex(byte[] hash, long index) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        List<OutputsMulti> list = new ArrayList<OutputsMulti>();
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_OUTPUTSMULTI_SQL);
+            preparedStatement.setBytes(1, hash);
+            preparedStatement.setLong(2, index);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                Sha256Hash sha256Hash = Sha256Hash.of(resultSet.getBytes("hash"));
+                String address = resultSet.getString("toaddress");
+                long outputindex = resultSet.getLong("outputindex");
+                long minimumSignCount = resultSet.getLong("minimumSignCount");
+                OutputsMulti outputsMulti = new OutputsMulti(sha256Hash, address, outputindex, minimumSignCount);
+                list.add(outputsMulti);
+            }
+            return list;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+
     }
 
     @Override
@@ -4259,7 +4294,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     throw new BlockStoreException("Could not close statement");
                 }
             }
-        }        
+        }
     }
 
     @Override

@@ -13,6 +13,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.PayMultiSignAddress;
 import net.bigtangle.core.PayMultiSignExt;
@@ -56,6 +57,40 @@ public class PayMultiSignService {
         // check param
         this.store.insertPayPayMultiSign(payMultiSign);
         for (MultiSignAddress multiSignAddress : multiSignAddresses) {
+            PayMultiSignAddress payMultiSignAddress = new PayMultiSignAddress();
+            payMultiSignAddress.setOrderid(payMultiSign.getOrderid());
+            payMultiSignAddress.setSign(0);
+            payMultiSignAddress.setPubKey(multiSignAddress.getPubKeyHex());
+            payMultiSignAddress.setSignIndex(multiSignAddress.getPosIndex());
+            this.store.insertPayMultiSignAddress(payMultiSignAddress);
+        }
+    }
+
+    public void launchPayMultiSignA(byte[] data) throws BlockStoreException, Exception {
+        PayMultiSign payMultiSign = convertTransactionDataToPayMultiSign(data);
+
+        Token tokens = this.store.getToken(payMultiSign.getTokenBlockhashHex());
+        if (tokens == null) {
+            throw new BlockStoreException("token not existed");
+        }
+        if (tokens.getSignnumber() < 2) {
+            throw new BlockStoreException("token can't multi sign");
+        }
+
+        String hashhex = payMultiSign.getOutpusHashHex();
+        long index = payMultiSign.getOutputsindex();
+        List<OutputsMulti> outputsMultis = this.store.queryOutputsMultiByHashAndIndex(Utils.HEX.decode(hashhex), index);
+
+        // String prevblockhash = tokens.getPrevblockhash();
+        // List<MultiSignAddress> multiSignAddresses = this.store
+        // .getMultiSignAddressListByTokenidAndBlockHashHex(tokens.getTokenid(),
+        // prevblockhash);
+        if (outputsMultis.isEmpty()) {
+            throw new BlockStoreException("multisignaddress list is empty");
+        }
+        // check param
+        this.store.insertPayPayMultiSign(payMultiSign);
+        for (OutputsMulti outputsMulti : outputsMultis) {
             PayMultiSignAddress payMultiSignAddress = new PayMultiSignAddress();
             payMultiSignAddress.setOrderid(payMultiSign.getOrderid());
             payMultiSignAddress.setSign(0);
