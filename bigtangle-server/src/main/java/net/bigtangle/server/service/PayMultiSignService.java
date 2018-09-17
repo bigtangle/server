@@ -105,6 +105,7 @@ public class PayMultiSignService {
     @Autowired
     private NetworkParameters networkParameters;
 
+    @SuppressWarnings("unlikely-arg-type")
     public AbstractResponse payMultiSign(Map<String, Object> request) throws BlockStoreException, Exception {
         String orderid = (String) request.get("orderid");
 
