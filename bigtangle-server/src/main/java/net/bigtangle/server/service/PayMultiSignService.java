@@ -90,13 +90,15 @@ public class PayMultiSignService {
         }
         // check param
         this.store.insertPayPayMultiSign(payMultiSign);
+        int i = 0;
         for (OutputsMulti outputsMulti : outputsMultis) {
             PayMultiSignAddress payMultiSignAddress = new PayMultiSignAddress();
             payMultiSignAddress.setOrderid(payMultiSign.getOrderid());
             payMultiSignAddress.setSign(0);
-            payMultiSignAddress.setPubKey(multiSignAddress.getPubKeyHex());
-            payMultiSignAddress.setSignIndex(multiSignAddress.getPosIndex());
+            payMultiSignAddress.setPubKey(outputsMulti.getToAddress());
+            payMultiSignAddress.setSignIndex(i);
             this.store.insertPayMultiSignAddress(payMultiSignAddress);
+            i++;
         }
     }
 
@@ -117,7 +119,7 @@ public class PayMultiSignService {
         }
 
         String pubKey0 = (String) request.get("pubKey");
-        if (!payMultiSignAddresseRes.containsKey(pubKey0)) {
+        if (!payMultiSignAddresseRes.containsKey(ECKey.fromPublicOnly(Utils.HEX.decode(pubKey0)))) {
             throw new BlockStoreException("pay multisign addresse list is empty");
         }
 
