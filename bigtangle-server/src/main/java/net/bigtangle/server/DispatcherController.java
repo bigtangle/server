@@ -65,32 +65,33 @@ public class DispatcherController {
 
     @Autowired
     private MultiSignService multiSignService;
-    
+
     @Autowired
     private PayMultiSignService payMultiSignService;
-    
+
     @Autowired
     private VOSExecuteService vosExecuteService;
-    
+
     @Autowired
     private SettingService settingService;
-    
+
     @Autowired
     private LogResultService logResultService;
 
     @SuppressWarnings("unchecked")
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
-    public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] bodyByte, 
+    public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] bodyByte,
             HttpServletResponse httpServletResponse, HttpServletRequest httprequest) throws Exception {
         try {
-            logger.info("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),  bodyByte.length);
+            logger.info("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
+                    bodyByte.length);
             ReqCmd reqCmd0000 = ReqCmd.valueOf(reqCmd);
             switch (reqCmd0000) {
 
             case getTip: {
                 byte[] data = transactionService.askTransaction().array();
                 this.outPointBinaryArray(httpServletResponse, data);
-            }   
+            }
                 break;
 
             case saveBlock: {
@@ -98,7 +99,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
                 break;
-                
+
             case batchBlock: {
                 blockService.batchBlock(bodyByte);
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
@@ -116,7 +117,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-                
+
             case getTokens: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -141,7 +142,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-                
+
             case getBalances: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 List<String> keyStrHex000 = Json.jsonmapper().readValue(reqStr, List.class);
@@ -209,7 +210,7 @@ public class DispatcherController {
                 break;
             case multiSign: {
                 Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
-                this.multiSignService.multiSign(block,true);
+                this.multiSignService.multiSign(block, true);
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
                 break;
@@ -221,7 +222,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-          
+
             case getCalTokenIndex: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -236,7 +237,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
                 break;
-                
+
             case getUserData: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -246,7 +247,7 @@ public class DispatcherController {
                 this.outPointBinaryArray(httpServletResponse, buf);
             }
                 break;
-                
+
             case userDataList: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -257,11 +258,11 @@ public class DispatcherController {
             }
                 break;
             case launchPayMultiSign: {
-                this.payMultiSignService.launchPayMultiSign(bodyByte);
+                this.payMultiSignService.launchPayMultiSignA(bodyByte);
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
                 break;
-                
+
             case payMultiSign: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -269,7 +270,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-                
+
             case getPayMultiSignList: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 List<String> keyStrHex000 = Json.jsonmapper().readValue(reqStr, List.class);
@@ -293,7 +294,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-                
+
             case getOutputWithKey: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -302,7 +303,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-                
+
             case getVOSExecuteList: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -311,13 +312,13 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-                
+
             case version: {
                 AbstractResponse response = settingService.clientVersion();
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-                
+
             case submitLogResult: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -343,12 +344,14 @@ public class DispatcherController {
 
     public void outPointBinaryArray(HttpServletResponse httpServletResponse, byte[] data) throws Exception {
         httpServletResponse.setCharacterEncoding("UTF-8");
-//        ServletOutputStream servletOutputStream = httpServletResponse.getOutputStream();
+        // ServletOutputStream servletOutputStream =
+        // httpServletResponse.getOutputStream();
         HashMap<String, Object> result = new HashMap<String, Object>();
         result.put("dataHex", Utils.HEX.encode(data));
-        /*servletOutputStream.write(data);
-        servletOutputStream.flush();
-        servletOutputStream.close();*/
+        /*
+         * servletOutputStream.write(data); servletOutputStream.flush();
+         * servletOutputStream.close();
+         */
         PrintWriter printWriter = httpServletResponse.getWriter();
         printWriter.append(Json.jsonmapper().writeValueAsString(result));
         printWriter.flush();
@@ -366,9 +369,8 @@ public class DispatcherController {
 
     @Autowired
     private NetworkParameters networkParameters;
-    
+
     @Autowired
     private UserDataService userDataService;
 
-  
 }
