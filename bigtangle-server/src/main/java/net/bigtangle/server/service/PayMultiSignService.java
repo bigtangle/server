@@ -120,8 +120,8 @@ public class PayMultiSignService {
         }
 
         String pubKey0 = (String) request.get("pubKey");
-        if (!payMultiSignAddresseRes
-                .containsKey(ECKey.fromPublicOnly(Utils.HEX.decode(pubKey0)).toAddress(networkParameters).toString())) {
+        String address0 = ECKey.fromPublicOnly(Utils.HEX.decode(pubKey0)).toAddress(networkParameters).toString();
+        if (!payMultiSignAddresseRes.containsKey(address0)) {
             throw new BlockStoreException("pay multisign addresse list is empty");
         }
 
@@ -141,7 +141,7 @@ public class PayMultiSignService {
         // signIndex++;
 
         byte[] signInputData = Utils.HEX.decode((String) request.get("signInputData"));
-        this.store.updatePayMultiSignAddressSign(orderid, pubKey0, 1, signInputData);
+        this.store.updatePayMultiSignAddressSign(orderid, address0, 1, signInputData);
 
         int count = this.store.getCountPayMultiSignAddressStatus(orderid);
         if (payMultiSign_.getMinsignnumber() <= count) {
