@@ -144,7 +144,7 @@ public class PayMultiSignService {
         this.store.updatePayMultiSignAddressSign(orderid, address0, 1, signInputData);
 
         int count = this.store.getCountPayMultiSignAddressStatus(orderid);
-        if (payMultiSign_.getMinsignnumber() <= count) {
+        if (payMultiSign_.getMinsignnumber() >= count) {
             return PayMultiSignResponse.create(true);
         } else {
             return PayMultiSignResponse.create(false);
