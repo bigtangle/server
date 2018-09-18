@@ -120,7 +120,8 @@ public class PayMultiSignService {
         }
 
         String pubKey0 = (String) request.get("pubKey");
-        if (!payMultiSignAddresseRes.containsKey(ECKey.fromPublicOnly(Utils.HEX.decode(pubKey0)))) {
+        if (!payMultiSignAddresseRes
+                .containsKey(ECKey.fromPublicOnly(Utils.HEX.decode(pubKey0)).toAddress(networkParameters).toString())) {
             throw new BlockStoreException("pay multisign addresse list is empty");
         }
 
