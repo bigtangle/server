@@ -405,7 +405,7 @@ public class SendMoneyController {
         KeyParameter aesKey = null;
         List<String> pubKeys = new ArrayList<String>();
         for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
-            pubKeys.add(ecKey.getPublicKeyAsHex());
+            pubKeys.add(ecKey.toAddress(Main.params).toString());
         }
         String ContextRoot = Main.getContextRoot();
         String resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getPayMultiSignList.name(),
@@ -964,7 +964,7 @@ public class SendMoneyController {
                 continue;
             }
             for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
-                if (ecKey.getPublicKeyAsHex().equals(payMultiSignAddress.getPubKey())) {
+                if (ecKey.toAddress(Main.params).toString().equals(payMultiSignAddress.getPubKey())) {
                     currentECKey = ecKey;
                     break;
                 }
@@ -993,7 +993,7 @@ public class SendMoneyController {
         PayMultiSign payMultiSign_ = payMultiSignDetailsResponse.getPayMultiSign();
 
         requestParam.clear();
-        requestParam.put("hexStr", payMultiSign_.getOutpusHashHex());
+        requestParam.put("hexStr", payMultiSign_.getOutpusHashHex()+":"+payMultiSign_.getOutputsindex());
         resp = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputWithKey.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         log.debug(resp);
