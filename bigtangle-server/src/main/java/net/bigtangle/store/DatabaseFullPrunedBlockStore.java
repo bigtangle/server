@@ -3570,7 +3570,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 Sha256Hash sha256Hash = Sha256Hash.of(resultSet.getBytes("hash"));
                 String address = resultSet.getString("toaddress");
                 long outputindex = resultSet.getLong("outputindex");
-                long minimumSignCount = resultSet.getLong("minimumSignCount");
+                long minimumSignCount = resultSet.getLong("minimumsign");
                 OutputsMulti outputsMulti = new OutputsMulti(sha256Hash, address, outputindex, minimumSignCount);
                 list.add(outputsMulti);
             }
