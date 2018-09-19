@@ -423,7 +423,7 @@ public class SendMoneyController {
             map.put("toaddress", payMultiSign.getToaddress());
             map.put("minsignnumber", payMultiSign.getMinsignnumber());
             map.put("sign", payMultiSign.getSign());
-            map.put("amount", payMultiSign.getAmount()/1000);
+            map.put("amount", payMultiSign.getAmount() / 1000);
             map.put("realSignnumber", payMultiSign.getRealSignnumber());
             map.put("orderid", payMultiSign.getOrderid());
             signData.add(map);
@@ -827,12 +827,14 @@ public class SendMoneyController {
         // memoTF1
         String ContextRoot = Main.getContextRoot();
         this.launchPayMultiSign(Main.params, ContextRoot);
+        initSignTable();
     }
 
     public void signA(ActionEvent event) throws Exception {
 
         String ContextRoot = Main.getContextRoot();
         this.launchPayMultiSignA(Main.params, ContextRoot);
+        initSignTable();
     }
 
     public void launchPayMultiSign(NetworkParameters networkParameters, String contextRoot) throws Exception {
@@ -993,7 +995,7 @@ public class SendMoneyController {
         PayMultiSign payMultiSign_ = payMultiSignDetailsResponse.getPayMultiSign();
 
         requestParam.clear();
-        requestParam.put("hexStr", payMultiSign_.getOutpusHashHex()+":"+payMultiSign_.getOutputsindex());
+        requestParam.put("hexStr", payMultiSign_.getOutpusHashHex() + ":" + payMultiSign_.getOutputsindex());
         resp = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputWithKey.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         log.debug(resp);
@@ -1059,6 +1061,8 @@ public class SendMoneyController {
             rollingBlock.addTransaction(transaction0);
             rollingBlock.solve();
             OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+            initSignTable();
+            Main.instance.controller.initTableView();
         }
     }
 
