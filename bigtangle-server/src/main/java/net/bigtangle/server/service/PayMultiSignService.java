@@ -69,10 +69,11 @@ public class PayMultiSignService {
     public void launchPayMultiSignA(byte[] data) throws BlockStoreException, Exception {
         PayMultiSign payMultiSign = convertTransactionDataToPayMultiSign(data);
 
-//        Token tokens = this.store.getToken(payMultiSign.getTokenBlockhashHex());
-//        if (tokens == null) {
-//            throw new BlockStoreException("token not existed");
-//        }
+        // Token tokens =
+        // this.store.getToken(payMultiSign.getTokenBlockhashHex());
+        // if (tokens == null) {
+        // throw new BlockStoreException("token not existed");
+        // }
         if (payMultiSign.getMinsignnumber() < 2) {
             throw new BlockStoreException("token can't multi sign");
         }
