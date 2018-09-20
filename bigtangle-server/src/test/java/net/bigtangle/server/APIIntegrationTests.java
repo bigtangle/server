@@ -40,8 +40,8 @@ import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.PayMultiSignAddress;
 import net.bigtangle.core.PrunedException;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Token;
+import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
@@ -297,6 +297,120 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         }
     }
 
+    @Test
+    public void testCreateMultiSigListA() throws Exception {
+        for (int i = 0; i < 1; i++) {
+            testCreateMultiSig();
+        }
+        ECKey outKey = new ECKey();
+        PayMultiSign payMultiSign = launchPayMultiSignA(outKey);
+
+        // for (int i = 0; i < 3; i++) {
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("orderid", payMultiSign.getOrderid());
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getPayMultiSignAddressList.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+
+        PayMultiSignAddressListResponse payMultiSignAddressListResponse = Json.jsonmapper().readValue(resp,
+                PayMultiSignAddressListResponse.class);
+        List<PayMultiSignAddress> payMultiSignAddresses = payMultiSignAddressListResponse.getPayMultiSignAddresses();
+        assertTrue(payMultiSignAddresses.size() > 0);
+        KeyParameter aesKey = null;
+        ECKey currentECKey = null;
+
+        for (PayMultiSignAddress payMultiSignAddress : payMultiSignAddresses) {
+            if (payMultiSignAddress.getSign() == 1) {
+                continue;
+            }
+            for (ECKey ecKey : walletAppKit.wallet().walletKeys(aesKey)) {
+                if (ecKey.toAddress(networkParameters).toString().equals(payMultiSignAddress.getPubKey())) {
+                    currentECKey = ecKey;
+                    this.payMultiSign(currentECKey, payMultiSign.getOrderid(), networkParameters, contextRoot);
+                    break;
+                }
+            }
+        }
+
+        // }
+        List<UTXO> utxos = testTransactionAndGetBalances(false, outKey);
+        assertTrue(utxos != null && utxos.size() > 0);
+        System.out.println("===================");
+        for (UTXO utxo : utxos) {
+            logger.info(utxo.toString());
+        }
+        payMultiSign = launchPayMultiSignA(outKey);
+
+        // for (int i = 0; i < 3; i++) {
+        requestParam = new HashMap<String, Object>();
+        requestParam.put("orderid", payMultiSign.getOrderid());
+        resp = OkHttp3Util.postString(contextRoot + ReqCmd.getPayMultiSignAddressList.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+
+        payMultiSignAddressListResponse = Json.jsonmapper().readValue(resp, PayMultiSignAddressListResponse.class);
+        payMultiSignAddresses = payMultiSignAddressListResponse.getPayMultiSignAddresses();
+        assertTrue(payMultiSignAddresses.size() > 0);
+        aesKey = null;
+        currentECKey = null;
+
+        for (PayMultiSignAddress payMultiSignAddress : payMultiSignAddresses) {
+            if (payMultiSignAddress.getSign() == 1) {
+                continue;
+            }
+            for (ECKey ecKey : walletAppKit.wallet().walletKeys(aesKey)) {
+                if (ecKey.toAddress(networkParameters).toString().equals(payMultiSignAddress.getPubKey())) {
+                    currentECKey = ecKey;
+                    this.payMultiSign(currentECKey, payMultiSign.getOrderid(), networkParameters, contextRoot);
+                    break;
+                }
+            }
+        }
+
+        // }
+        utxos = testTransactionAndGetBalances(false, outKey);
+        System.out.println("111111111111111");
+        assertTrue(utxos != null && utxos.size() > 0);
+        for (UTXO utxo : utxos) {
+            logger.info(utxo.toString());
+        }
+
+    }
+
+    private PayMultiSign launchPayMultiSignA(ECKey outKey) throws Exception, JsonProcessingException {
+        List<ECKey> ecKeys = new ArrayList<ECKey>();
+        ecKeys.add(walletKeys.get(0));
+        ecKeys.add(walletKeys.get(1));
+        ecKeys.add(walletKeys.get(2));
+
+        String tokenid = walletAppKit.wallet().walletKeys(null).get(5).getPublicKeyAsHex();
+        Coin amount = Coin.parseCoin("12", Utils.HEX.decode(tokenid));
+
+        UTXO output = testTransactionAndGetBalances(tokenid, false, ecKeys);
+
+        // filter the
+        TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, output, 0);
+        Transaction transaction = new Transaction(networkParameters);
+        transaction.addOutput(amount, outKey);
+
+        Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(3, ecKeys);
+        Coin amount2 = multisigOutput.getValue().subtract(amount);
+        transaction.addOutput(amount2, scriptPubKey);
+
+        transaction.addInput(multisigOutput);
+
+        PayMultiSign payMultiSign = new PayMultiSign();
+        payMultiSign.setOrderid(UUIDUtil.randomUUID());
+        payMultiSign.setTokenid(tokenid);
+        payMultiSign.setBlockhashHex(Utils.HEX.encode(transaction.bitcoinSerialize()));
+        payMultiSign.setToaddress(outKey.toAddress(networkParameters).toBase58());
+        payMultiSign.setAmount(amount.getValue());
+        payMultiSign.setMinsignnumber(3);
+        payMultiSign.setOutpusHashHex(output.getHashHex());
+
+        OkHttp3Util.post(contextRoot + ReqCmd.launchPayMultiSign.name(),
+                Json.jsonmapper().writeValueAsString(payMultiSign));
+        return payMultiSign;
+    }
+
     private PayMultiSign launchPayMultiSign() throws Exception, JsonProcessingException {
         List<ECKey> ecKeys = new ArrayList<ECKey>();
         ecKeys.add(walletKeys.get(0));
@@ -350,7 +464,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         PayMultiSign payMultiSign_ = payMultiSignDetailsResponse.getPayMultiSign();
 
         requestParam.clear();
-        requestParam.put("hexStr", payMultiSign_.getOutpusHashHex());
+        requestParam.put("hexStr", payMultiSign_.getOutpusHashHex() + ":" + payMultiSign_.getOutputsindex());
         resp = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputWithKey.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         System.out.println(resp);
