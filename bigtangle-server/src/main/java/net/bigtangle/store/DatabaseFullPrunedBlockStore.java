@@ -3915,7 +3915,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         if (pubKeys.isEmpty()) {
             return new ArrayList<PayMultiSign>();
         }
-        String sql = "SELECT paymultisign.orderid, tokenid, toaddress, blockhash, amount, minsignnumber, outpusHashHex"
+        String sql = "SELECT paymultisign.orderid, tokenid, toaddress, blockhash, amount, minsignnumber, outpusHashHex,sign,(select count(1) from  paymultisignaddress t where t.orderid=paymultisign.orderid) as signcount "
                 + " FROM paymultisign LEFT JOIN paymultisignaddress ON paymultisign.orderid = paymultisignaddress.orderid "
                 + " WHERE paymultisignaddress.pubKey ";
         StringBuffer stringBuffer = new StringBuffer();
@@ -3938,6 +3938,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 payMultiSign.setTokenid(resultSet.getString("tokenid"));
                 payMultiSign.setBlockhashHex(Utils.HEX.encode(payMultiSign.getBlockhash()));
                 payMultiSign.setOutpusHashHex(resultSet.getString("outpusHashHex"));
+                payMultiSign.setSign(resultSet.getInt("sign"));
+                payMultiSign.setSigncount(resultSet.getInt("signcount"));
                 list.add(payMultiSign);
             }
             return list;

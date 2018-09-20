@@ -172,8 +172,8 @@ public class PayMultiSignService {
             payMultiSignExt.setToaddress(payMultiSign.getToaddress());
             payMultiSignExt.setTokenid(payMultiSign.getTokenid());
             payMultiSignExt.setOutpusHashHex(payMultiSign.getOutpusHashHex());
-            payMultiSignExt.setSign(1);
-            payMultiSignExt.setRealSignnumber(100);
+            payMultiSignExt.setSign(payMultiSign.getSign());
+            payMultiSignExt.setRealSignnumber(payMultiSign.getSigncount());
             payMultiSignExts.add(payMultiSignExt);
         }
         return PayMultiSignListResponse.create(payMultiSignExts);

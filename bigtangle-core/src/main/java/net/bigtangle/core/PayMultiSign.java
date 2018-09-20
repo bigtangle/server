@@ -23,6 +23,8 @@ public class PayMultiSign implements java.io.Serializable {
 
     private String outpusHashHex;
     private long outputsindex;
+    private int sign;
+    private int signcount;
 
     public String getOutpusHashHex() {
         return outpusHashHex;
@@ -110,5 +112,21 @@ public class PayMultiSign implements java.io.Serializable {
 
     public void setOutputsindex(long outputsindex) {
         this.outputsindex = outputsindex;
+    }
+
+    public int getSign() {
+        return sign;
+    }
+
+    public void setSign(int sign) {
+        this.sign = sign;
+    }
+
+    public int getSigncount() {
+        return signcount;
+    }
+
+    public void setSigncount(int signcount) {
+        this.signcount = signcount;
     }
 }

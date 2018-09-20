@@ -426,6 +426,9 @@ public class SendMoneyController {
             map.put("amount", payMultiSign.getAmount() / 1000);
             map.put("realSignnumber", payMultiSign.getRealSignnumber());
             map.put("orderid", payMultiSign.getOrderid());
+            map.put("isSignAll",
+                    payMultiSign.getRealSignnumber() >= payMultiSign.getMinsignnumber() ? Main.getText("yes")
+                            : Main.getText("no"));
             signData.add(map);
         }
 
@@ -436,6 +439,7 @@ public class SendMoneyController {
         isMySignColumn.setCellValueFactory(new MapValueFactory("signFlag"));
         realSignnumColumn.setCellValueFactory(new MapValueFactory("realSignnumber"));
         orderidColumn.setCellValueFactory(new MapValueFactory("orderid"));
+        isSignAllColumn.setCellValueFactory(new MapValueFactory("isSignAll"));
         this.signTable.setItems(signData);
     }
 

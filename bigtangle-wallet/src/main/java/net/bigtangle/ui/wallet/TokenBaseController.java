@@ -246,9 +246,9 @@ public class TokenBaseController {
                 int signnumber = (Integer) map.get("signnumber");
                 int signcount = (Integer) map.get("signcount");
                 if (signnumber <= signcount) {
-                    map.put("isSignAll", "true");
+                    map.put("isSignAll", Main.getText("yes"));
                 } else {
-                    map.put("isSignAll", "false");
+                    map.put("isSignAll", Main.getText("no"));
                 }
                 tokenData.add(map);
             }
