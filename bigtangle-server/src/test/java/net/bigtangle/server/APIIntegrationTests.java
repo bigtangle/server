@@ -338,11 +338,11 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         for (UTXO utxo : utxos) {
             logger.info(utxo.toString());
         }
-        payMultiSign = launchPayMultiSignA(outKey);
+        PayMultiSign payMultiSign1 = launchPayMultiSignA(outKey);
 
         // for (int i = 0; i < 3; i++) {
         requestParam = new HashMap<String, Object>();
-        requestParam.put("orderid", payMultiSign.getOrderid());
+        requestParam.put("orderid", payMultiSign1.getOrderid());
         resp = OkHttp3Util.postString(contextRoot + ReqCmd.getPayMultiSignAddressList.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
@@ -359,7 +359,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             for (ECKey ecKey : walletAppKit.wallet().walletKeys(aesKey)) {
                 if (ecKey.toAddress(networkParameters).toString().equals(payMultiSignAddress.getPubKey())) {
                     currentECKey = ecKey;
-                    this.payMultiSign(currentECKey, payMultiSign.getOrderid(), networkParameters, contextRoot);
+                    this.payMultiSign(currentECKey, payMultiSign1.getOrderid(), networkParameters, contextRoot);
                     break;
                 }
             }
