@@ -69,7 +69,7 @@ public class PayOrder {
 
     public void sign() throws Exception {
 
-        List<ECKey> ecKeys = wallet.walletKeys(aesKey);
+       /* List<ECKey> ecKeys = wallet.walletKeys(aesKey);
         List<UTXO> utxos = this.getUTXOWithECKeyList(ecKeys, Utils.HEX.decode(this.exchange.getFromTokenHex()));
         if (sellFlag) {
             for (UTXO utxo : utxos) {
@@ -106,7 +106,7 @@ public class PayOrder {
                     exchangeSignInit(this.exchange.getOrderid());
                 }
             }
-        }
+        }*/
 
         String dataHex = this.exchange.getDataHex();
         if (dataHex.isEmpty()) {
