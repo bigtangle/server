@@ -1,3 +1,8 @@
+/*******************************************************************************
+ *  Copyright   2018  Inasset GmbH. 
+ *  
+ *******************************************************************************/
+
 package net.bigtangle.core.http.server.resp;
 
 import net.bigtangle.core.http.AbstractResponse;

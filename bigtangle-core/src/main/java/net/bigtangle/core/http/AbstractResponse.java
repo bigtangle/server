@@ -2,6 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
+
 package net.bigtangle.core.http;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;

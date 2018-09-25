@@ -1,3 +1,8 @@
+/*******************************************************************************
+ *  Copyright   2018  Inasset GmbH. 
+ *  
+ *******************************************************************************/
+
 package net.bigtangle.core;
 
 public class MultiSignBy implements java.io.Serializable {
