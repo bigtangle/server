@@ -398,7 +398,7 @@ public class OrderController extends ExchangeController {
         log.debug(tokenComboBox.getValue());
         String tokenid = tokenComboBox.getValue().split(":")[1].trim();
         String typeStr = (String) buySellTG.getSelectedToggle().getUserData().toString();
-        
+
         byte[] pubKeyHash = Address.fromBase58(Main.params, addressComboBox.getValue()).getHash160();
 
         Coin coin = Main.calculateTotalUTXOList(pubKeyHash,
@@ -424,6 +424,7 @@ public class OrderController extends ExchangeController {
         requestParam.put("address", addressComboBox.getValue());
         // String tokenid = this.tokenComboBox.getValue().split(":")[1].trim();
         requestParam.put("tokenid", tokenid);
+        requestParam.put("address", Main.validOutputMultiMap.get(tokenid));
         requestParam.put("type", typeStr.equals("sell") ? 1 : 0);
         long price = Coin.parseCoinValue(this.limitTextField.getText());
         requestParam.put("price", price);

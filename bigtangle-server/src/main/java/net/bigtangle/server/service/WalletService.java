@@ -22,6 +22,7 @@ import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UTXOProviderException;
@@ -53,7 +54,7 @@ public class WalletService {
             Coin v = output.getValue();
             if (values.containsKey(v.getTokenHex())) {
                 Coin nv = values.get(v.getTokenHex()).add(v);
-                values.put(output.getValue().getTokenHex(), nv); 
+                values.put(output.getValue().getTokenHex(), nv);
             } else {
                 values.put(v.getTokenHex(), v);
             }
@@ -167,6 +168,12 @@ public class WalletService {
     public AbstractResponse getOutputsWithHexStr(String hexStr) throws BlockStoreException {
         UTXO output = getStoredOutputsWithHexStr(hexStr);
         return OutputsDetailsResponse.create(output);
+    }
+
+    public AbstractResponse getOutputsMultiList(String hexStr, int index) throws BlockStoreException {
+        List<OutputsMulti> outputsMultis = this.store.queryOutputsMultiByHashAndIndex(Utils.HEX.decode(hexStr), index);
+
+        return OutputsDetailsResponse.create(outputsMultis);
     }
 
     private UTXO getStoredOutputsWithHexStr(String hexStr) throws BlockStoreException {

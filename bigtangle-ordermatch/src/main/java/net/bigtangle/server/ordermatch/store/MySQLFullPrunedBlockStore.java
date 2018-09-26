@@ -66,6 +66,12 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   fromOrderId varchar(255),\n" 
             + "   market varchar(255),\n"
             + "   PRIMARY KEY (orderid) )";
+    
+    private static final String CREATE_EXCHANGE_MULTISIGN_TABLE = "CREATE TABLE exchange_multisign (\n"
+//            + "   id varchar(255) NOT NULL,\n"
+            + "   orderid varchar(255) ,\n" 
+            + "   pubkey varchar(255),\n"
+            + "    )";
 
     private static final String CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX = "CREATE INDEX exchange_fromAddress_idx ON exchange (fromAddress) USING btree";
     private static final String CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX = "CREATE INDEX exchange_toAddress_idx ON exchange (toAddress) USING btree";
@@ -90,6 +96,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_ORDERPUBLISH_TABLE);
         sqlStatements.add(CREATE_ORDERMATCH_TABLE);
         sqlStatements.add(CREATE_EXCHANGE_TABLE);
+        sqlStatements.add(CREATE_EXCHANGE_MULTISIGN_TABLE);
         return sqlStatements;
     }
 

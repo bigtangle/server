@@ -303,6 +303,15 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
+            case getOutputMultiList: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String hexStr = (String) request.get("hexStr");
+                int index = (int) request.get("index");
+                AbstractResponse response = walletService.getOutputsMultiList(hexStr, index);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
 
             case getVOSExecuteList: {
                 String reqStr = new String(bodyByte, "UTF-8");

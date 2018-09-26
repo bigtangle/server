@@ -43,7 +43,6 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TableColumn;
@@ -56,13 +55,14 @@ import javafx.util.Duration;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
-import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
+import net.bigtangle.core.http.server.resp.OutputsDetailsResponse;
 import net.bigtangle.core.http.server.resp.SettingResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletAppKit;
@@ -223,6 +223,23 @@ public class MainController {
             String hash = utxo.getHashHex();
             long outputindex = utxo.getIndex();
             String key = Utils.HEX.encode(tokenid);
+            int signnum = Integer.parseInt(minimumsign);
+            if (signnum >= 2) {
+                HashMap<String, Object> requestParam = new HashMap<String, Object>();
+                requestParam.put("hexStr", hash);
+                requestParam.put("index", outputindex);
+                String response0 = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getOutputMultiList.name(),
+                        Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+                Set<String> addressList = new HashSet<String>();
+                OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(response0,
+                        OutputsDetailsResponse.class);
+                List<OutputsMulti> outputsMultis = outputsDetailsResponse.getOutputsMultis();
+                for (OutputsMulti outputsMulti : outputsMultis) {
+                    addressList.add(outputsMulti.getToAddress());
+                }
+
+                Main.validOutputMultiMap.put(key, addressList);
+            }
             if (Main.validTokenMap.get(key) == null) {
                 Set<String> addressList = new HashSet<String>();
                 addressList.add(address);
