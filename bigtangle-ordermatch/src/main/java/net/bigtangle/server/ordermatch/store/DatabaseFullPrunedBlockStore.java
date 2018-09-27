@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -28,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Exchange;
+import net.bigtangle.core.ExchangeMulti;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderMatch;
 import net.bigtangle.core.OrderPublish;
@@ -53,10 +55,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_ORDERPUBLISH_TABLE = "DROP TABLE orderpublish";
     public static String DROP_ORDERMATCH_TABLE = "DROP TABLE ordermatch";
     public static String DROP_EXCHANGE_TABLE = "DROP TABLE exchange";
+    public static String DROP_EXCHANGEMULTI_TABLE = "DROP TABLE exchange_multisign";
 
     protected String INSERT_ORDERPUBLISH_SQL = getInsert()
             + "  INTO orderpublish (orderid, address, tokenid, type, validateto, validatefrom,"
             + " price, amount, state, market, submitDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+    protected String INSERT_EXCHANGEMULTI_SQL = getInsert() + "  INTO exchange_multisign (orderid, pubkey) VALUES (?, ?)";
+
     protected String SELECT_ORDERPUBLISH_SQL = "SELECT orderid, address, tokenid, type,"
             + " validateto, validatefrom, price, amount, state, market FROM orderpublish";
 
@@ -66,19 +72,19 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String INSERT_EXCHANGE_SQL = getInsert()
             + "  INTO exchange (orderid, fromAddress, fromTokenHex, fromAmount,"
             + " toAddress, toTokenHex, toAmount, data, toSign, fromSign, toOrderId, fromOrderId, market) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    protected String SELECT_EXCHANGE_SQL = "SELECT orderid, fromAddress, "
+    protected String SELECT_EXCHANGE_SQL = "SELECT DISTINCT orderid, fromAddress, "
             + "fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, "
             + "data, toSign, fromSign, toOrderId, fromOrderId, market "
-            + "FROM exchange WHERE (fromAddress = ? OR toAddress = ?) AND (toSign = false OR fromSign = false)"
+            + "FROM exchange e WHERE (toSign = false OR fromSign = false) AND (fromAddress = ? OR toAddress = ? ) "
             + afterSelect();
     protected String SELECT_EXCHANGE_ORDERID_SQL = "SELECT orderid,"
             + " fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex,"
             + " toAmount, data, toSign, fromSign, toOrderId, fromOrderId, market FROM exchange WHERE orderid = ?";
-    
+
     protected String DELETE_EXCHANGE_SQL = "DELETE FROM exchange WHERE toOrderId = ? OR fromOrderId = ?";
     protected String DELETE_ORDERPUBLISH_SQL = "DELETE FROM orderpublish WHERE orderid = ?";
     protected String DELETE_ORDERMATCH_SQL = "DELETE FROM ordermatch WHERE restingOrderId = ? OR incomingOrderId = ?";
-    
+
     // Tables exist SQL.
     protected String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM orderpublish WHERE 1 = 2";
 
@@ -218,6 +224,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_ORDERPUBLISH_TABLE);
         sqlStatements.add(DROP_ORDERMATCH_TABLE);
         sqlStatements.add(DROP_EXCHANGE_TABLE);
+        //sqlStatements.add(DROP_EXCHANGEMULTI_TABLE);
         return sqlStatements;
     }
 
@@ -308,7 +315,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
+
     protected String getTablesExistSQL() {
         return SELECT_CHECK_TABLES_EXIST_SQL;
     }
@@ -367,7 +374,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         if (log.isDebugEnabled())
             log.debug("Starting database batch write with connection: " + conn.get().toString());
         try {
-            conn.get().setAutoCommit(false);    
+            conn.get().setAutoCommit(false);
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         }
@@ -494,6 +501,28 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
+    public void saveExchangeMulti(ExchangeMulti exchangeMulti) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(INSERT_EXCHANGEMULTI_SQL);
+            preparedStatement.setString(1, exchangeMulti.getOrderid());
+            preparedStatement.setString(2, exchangeMulti.getPubkey());
+
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
     @Override
     public List<OrderPublish> getOrderPublishListWithCondition(Map<String, Object> request) throws BlockStoreException {
         maybeConnect();
@@ -577,8 +606,62 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         List<Exchange> list = new ArrayList<Exchange>();
+        String sql = SELECT_EXCHANGE_SQL;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_EXCHANGE_SQL);
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setString(1, address);
+            preparedStatement.setString(2, address);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                Exchange exchange = new Exchange();
+                exchange.setOrderid(resultSet.getString("orderid"));
+                exchange.setFromAddress(resultSet.getString("fromAddress"));
+                exchange.setFromTokenHex(resultSet.getString("fromTokenHex"));
+                exchange.setFromAmount(resultSet.getString("fromAmount"));
+                exchange.setToAddress(resultSet.getString("toAddress"));
+                exchange.setToTokenHex(resultSet.getString("toTokenHex"));
+                exchange.setToAmount(resultSet.getString("toAmount"));
+                exchange.setData(resultSet.getBytes("data"));
+                exchange.setToSign(resultSet.getInt("toSign"));
+                exchange.setFromSign(resultSet.getInt("fromSign"));
+                exchange.setToOrderId(resultSet.getString("toOrderId"));
+                exchange.setFromOrderId(resultSet.getString("fromOrderId"));
+                exchange.setMarket(resultSet.getString("market"));
+                list.add(exchange);
+            }
+            return list;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<Exchange> getExchangeListWithAddress(String address, Set<String> addresses) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        List<Exchange> list = new ArrayList<Exchange>();
+        String sql = SELECT_EXCHANGE_SQL;
+        if (addresses != null && !addresses.isEmpty()) {
+            String sql1 = "OR EXISTS (SELECT orderid FROM exchange_multisign em WHERE em.orderid=e.fromOrderId AND em.pubkey in(";
+            String temp = "";
+            for (String signaddress : addresses) {
+                temp += "," + signaddress;
+            }
+
+            sql1 += temp.substring(1) + "))";
+            sql = sql.substring(0, sql.lastIndexOf(")" + afterSelect())) + sql1 + ")" + afterSelect();
+        }
+
+        try {
+            preparedStatement = conn.get().prepareStatement(sql);
             preparedStatement.setString(1, address);
             preparedStatement.setString(2, address);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -824,7 +907,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public List<UTXO> getOpenTransactionOutputs(List<Address> addresses, byte[] tokenid) throws UTXOProviderException {
         return null;
     }
-    
 
     @Override
     public void deleteOrderPublish(String orderid) throws BlockStoreException {

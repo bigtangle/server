@@ -7,10 +7,12 @@ package net.bigtangle.server.ordermatch.store;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Exchange;
+import net.bigtangle.core.ExchangeMulti;
 import net.bigtangle.core.OrderMatch;
 import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.StoredBlock;
@@ -66,7 +68,7 @@ import net.bigtangle.core.UTXOProvider;
  * </p>
  */
 public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
-    
+
     void beginDatabaseBatchWrite() throws BlockStoreException;
 
     void commitDatabaseBatchWrite() throws BlockStoreException;
@@ -75,6 +77,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void saveOrderPublish(OrderPublish orderPublish) throws BlockStoreException;
 
+    public void saveExchangeMulti(ExchangeMulti exchangeMulti) throws BlockStoreException;
+
     public void saveOrderMatch(OrderMatch orderMatch) throws BlockStoreException;
 
     public List<OrderPublish> getOrderPublishListWithCondition(Map<String, Object> request) throws BlockStoreException;
@@ -82,6 +86,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void saveExchange(Exchange exchange) throws BlockStoreException;
 
     public List<Exchange> getExchangeListWithAddress(String address) throws BlockStoreException;
+
+    public List<Exchange> getExchangeListWithAddress(String address, Set<String> addresses) throws BlockStoreException;
 
     public void updateExchangeSign(String orderid, String signtype, byte[] data) throws BlockStoreException;
 
@@ -98,7 +104,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     void deleteOrderPublish(String orderid) throws BlockStoreException;
 
     void deleteExchangeInfo(String orderid) throws BlockStoreException;
-    
+
     void deleteOrderMatch(String orderid) throws BlockStoreException;
 
     List<OrderPublish> getOrderPublishListRemoveDaily(int i) throws BlockStoreException;

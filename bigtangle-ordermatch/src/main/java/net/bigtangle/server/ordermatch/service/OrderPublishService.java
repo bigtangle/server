@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.ExchangeMulti;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.OrderPublish;
@@ -35,6 +36,7 @@ public class OrderPublishService {
     public AbstractResponse saveOrderPublish(Map<String, Object> request) throws Exception {
         String address = (String) request.get("address");
         String tokenid = (String) request.get("tokenid");
+        List<String> signaddress = (List<String>) request.get("signaddress");
         int type = (Integer) request.get("type");
         String validateto = (String) request.get("validateto");
         String validatefrom = (String) request.get("validatefrom");
@@ -56,6 +58,17 @@ public class OrderPublishService {
         // add market
         OrderPublish order = OrderPublish.create(address, tokenid, type, toDate, fromDate, price, amount, market);
         store.saveOrderPublish(order);
+        if (type == 1) {
+            if (signaddress != null && !signaddress.isEmpty()) {
+                for (String addr : signaddress) {
+                    ExchangeMulti exchangeMulti = new ExchangeMulti();
+                    exchangeMulti.setOrderid(order.getOrderId());
+                    exchangeMulti.setPubkey(addr);
+                    store.saveExchangeMulti(exchangeMulti);
+                }
+            }
+
+        }
 
         OrderBook orderBook = orderBookHolder.getOrderBookWithTokenId(tokenid);
         synchronized (this) {
@@ -76,7 +89,7 @@ public class OrderPublishService {
 
         MultiSignByRequest multiSignByRequest = Json.jsonmapper().readValue(transaction.getDataSignature(),
                 MultiSignByRequest.class);
-        
+
         MultiSignBy multiSignBy = multiSignByRequest.getMultiSignBies().get(0);
         byte[] pubKey = Utils.HEX.decode(multiSignBy.getPublickey());
         byte[] data = transaction.getHash().getBytes();
@@ -117,6 +130,7 @@ public class OrderPublishService {
         List<OrderPublish> orders = this.store.getOrderPublishListWithCondition(request);
         return GetOrderResponse.create(orders);
     }
+
     public List<OrderPublish> getOrderPublishListWithNotMatch() throws BlockStoreException {
         List<OrderPublish> orders = this.store.getOrderPublishListWithNotMatch();
         return orders;
