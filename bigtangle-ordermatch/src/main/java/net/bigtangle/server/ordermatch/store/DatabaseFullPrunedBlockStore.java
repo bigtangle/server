@@ -513,7 +513,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement = conn.get().prepareStatement(INSERT_EXCHANGEMULTI_SQL);
             preparedStatement.setString(1, exchangeMulti.getOrderid());
             preparedStatement.setString(2, exchangeMulti.getPubkey());
-
+            preparedStatement.setInt(3, exchangeMulti.getSign());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
