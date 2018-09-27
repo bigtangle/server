@@ -287,3 +287,17 @@ add wallet pro Server config? or client config?
 ## optional remainder to new address after transfer (UTXO), problem with multi signature?
 
 ## copy back the original licence copy right and authors
+
+## KYC 
+add possible to attach address at payment to KYC
+** User upload the passport and encrypted with public key same as token
+** user transfer the passport to a known address of verification
+** verification is finished and transfer to public address 
+** check of kyc: find the address as token in public address
+
+## setup a list of token as same token
+** user config in setting to load the same token list from a URL (token issuer) 
+** mark the same token in display and mark the revoked token in color for help 
+**  watched one token will accept all same token.
+
+
