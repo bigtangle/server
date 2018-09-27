@@ -94,4 +94,12 @@ public class ExchangeService {
         }
         return GetExchangeResponse.create(list);
     }
+
+    public AbstractResponse getBatchExchangeListByAddressListA(List<String> address) throws BlockStoreException {
+        List<Exchange> list = new ArrayList<Exchange>();
+        for (String s : address) {
+            list.addAll(this.store.getExchangeListWithAddressA(s));
+        }
+        return GetExchangeResponse.create(list);
+    }
 }

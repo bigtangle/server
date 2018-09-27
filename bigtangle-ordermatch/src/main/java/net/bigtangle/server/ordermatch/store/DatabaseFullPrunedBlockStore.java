@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -61,7 +60,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "  INTO orderpublish (orderid, address, tokenid, type, validateto, validatefrom,"
             + " price, amount, state, market, submitDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-    protected String INSERT_EXCHANGEMULTI_SQL = getInsert() + "  INTO exchange_multisign (orderid, pubkey) VALUES (?, ?)";
+    protected String INSERT_EXCHANGEMULTI_SQL = getInsert()
+            + "  INTO exchange_multisign (orderid, pubkey) VALUES (?, ?)";
 
     protected String SELECT_ORDERPUBLISH_SQL = "SELECT orderid, address, tokenid, type,"
             + " validateto, validatefrom, price, amount, state, market FROM orderpublish";
@@ -76,6 +76,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, "
             + "data, toSign, fromSign, toOrderId, fromOrderId, market "
             + "FROM exchange e WHERE (toSign = false OR fromSign = false) AND (fromAddress = ? OR toAddress = ? ) "
+            + afterSelect();
+    protected String SELECT_EXCHANGE_SQL_A = "SELECT DISTINCT orderid, fromAddress, "
+            + "fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, "
+            + "data, toSign, fromSign, toOrderId, fromOrderId, market "
+            + "FROM exchange e WHERE (toSign = false OR fromSign = false) AND (fromAddress = ? OR toAddress = ? OR toOrderId in(SELECT DISTINCT em.orderid FROM exchange_multisign em WHERE pubkey=?)) "
             + afterSelect();
     protected String SELECT_EXCHANGE_ORDERID_SQL = "SELECT orderid,"
             + " fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex,"
@@ -224,7 +229,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_ORDERPUBLISH_TABLE);
         sqlStatements.add(DROP_ORDERMATCH_TABLE);
         sqlStatements.add(DROP_EXCHANGE_TABLE);
-        //sqlStatements.add(DROP_EXCHANGEMULTI_TABLE);
+        // sqlStatements.add(DROP_EXCHANGEMULTI_TABLE);
         return sqlStatements;
     }
 
@@ -644,26 +649,17 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<Exchange> getExchangeListWithAddress(String address, Set<String> addresses) throws BlockStoreException {
+    public List<Exchange> getExchangeListWithAddressA(String address) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         List<Exchange> list = new ArrayList<Exchange>();
-        String sql = SELECT_EXCHANGE_SQL;
-        if (addresses != null && !addresses.isEmpty()) {
-            String sql1 = "OR EXISTS (SELECT orderid FROM exchange_multisign em WHERE em.orderid=e.fromOrderId AND em.pubkey in(";
-            String temp = "";
-            for (String signaddress : addresses) {
-                temp += "," + signaddress;
-            }
-
-            sql1 += temp.substring(1) + "))";
-            sql = sql.substring(0, sql.lastIndexOf(")" + afterSelect())) + sql1 + ")" + afterSelect();
-        }
+        String sql = SELECT_EXCHANGE_SQL_A;
 
         try {
             preparedStatement = conn.get().prepareStatement(sql);
             preparedStatement.setString(1, address);
             preparedStatement.setString(2, address);
+            preparedStatement.setString(3, address);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 Exchange exchange = new Exchange();

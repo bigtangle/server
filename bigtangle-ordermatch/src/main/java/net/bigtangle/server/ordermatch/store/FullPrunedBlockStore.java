@@ -7,7 +7,6 @@ package net.bigtangle.server.ordermatch.store;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.BlockStoreException;
@@ -87,7 +86,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public List<Exchange> getExchangeListWithAddress(String address) throws BlockStoreException;
 
-    public List<Exchange> getExchangeListWithAddress(String address, Set<String> addresses) throws BlockStoreException;
+    public List<Exchange> getExchangeListWithAddressA(String address) throws BlockStoreException;
 
     public void updateExchangeSign(String orderid, String signtype, byte[] data) throws BlockStoreException;
 
