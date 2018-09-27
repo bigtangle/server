@@ -74,10 +74,53 @@ public class PayOrder {
     }
 
     public void sign() throws Exception {
+        List<ECKey> ecKeys = wallet.walletKeys(aesKey);
 
         List<ExchangeMulti> exchangeMultis = this.exchange.getExchangeMultis();
         if (exchangeMultis != null && !exchangeMultis.isEmpty()) {
-            List<ECKey> ecKeys = wallet.walletKeys(aesKey);
+            int flag = 0;// 0:buy,1:sell,2:sign
+            List<String> myaddresses = new ArrayList<String>();
+            for (ECKey key : ecKeys) {
+                myaddresses.add(key.toAddress(wallet.params).toString());
+            }
+            if (myaddresses.contains(this.exchange.getToAddress())) {
+                flag = 1;
+            }
+
+            int size = exchangeMultis.size();
+            int signCount = 0;
+            int fromsign = this.exchange.getFromSign();
+            int tosign = this.exchange.getToSign();
+            int othersign = 0;
+            for (ExchangeMulti exchangeMulti : exchangeMultis) {
+                if (myaddresses.contains(exchangeMulti.getPubkey())) {
+                    flag = 2;
+                    if (exchangeMulti.getSign() == 1) {
+                        othersign = 1;
+                    }
+                    break;
+                }
+            }
+
+            for (ExchangeMulti exchangeMulti : exchangeMultis) {
+                if (exchangeMulti.getSign() == 1) {
+                    signCount++;
+                }
+            }
+
+            if (flag == 0) {
+                if (fromsign == 0) {
+
+                }
+            }
+            if (flag == 1) {
+                if (tosign == 0) {
+
+                }
+            }
+            if (flag == 2) {
+
+            }
             List<UTXO> utxos = this.getUTXOWithECKeyList(ecKeys, Utils.HEX.decode(this.exchange.getFromTokenHex()));
             if (sellFlag) {
                 for (UTXO utxo : utxos) {
