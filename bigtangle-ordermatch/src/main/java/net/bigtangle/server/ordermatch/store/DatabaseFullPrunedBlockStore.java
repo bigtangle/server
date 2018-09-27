@@ -61,7 +61,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " price, amount, state, market, submitDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     protected String INSERT_EXCHANGEMULTI_SQL = getInsert()
-            + "  INTO exchange_multisign (orderid, pubkey) VALUES (?, ?)";
+            + "  INTO exchange_multisign (orderid, pubkey,sign) VALUES (?, ?,?)";
 
     protected String SELECT_ORDERPUBLISH_SQL = "SELECT orderid, address, tokenid, type,"
             + " validateto, validatefrom, price, amount, state, market FROM orderpublish";
@@ -229,7 +229,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_ORDERPUBLISH_TABLE);
         sqlStatements.add(DROP_ORDERMATCH_TABLE);
         sqlStatements.add(DROP_EXCHANGE_TABLE);
-        // sqlStatements.add(DROP_EXCHANGEMULTI_TABLE);
+        sqlStatements.add(DROP_EXCHANGEMULTI_TABLE);
         return sqlStatements;
     }
 
@@ -789,6 +789,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public Exchange getExchangeInfoByOrderid(String orderid) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
+        PreparedStatement sub_preparedStatement = null;
+        String sql = "SELECT orderid,pubkey,sign FROM exchange_multisign WHERE orderid=?";
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_EXCHANGE_ORDERID_SQL);
             preparedStatement.setString(1, orderid);
@@ -810,6 +812,16 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             exchange.setToOrderId(resultSet.getString("toOrderId"));
             exchange.setFromOrderId(resultSet.getString("fromOrderId"));
             exchange.setMarket(resultSet.getString("market"));
+            sub_preparedStatement = conn.get().prepareStatement(sql);
+            sub_preparedStatement.setString(1, exchange.getToOrderId());
+            ResultSet sub_resultSet = preparedStatement.executeQuery();
+            List<ExchangeMulti> list = new ArrayList<ExchangeMulti>();
+
+            while (sub_resultSet.next()) {
+                list.add(new ExchangeMulti(exchange.getToOrderId(), sub_resultSet.getString("pubkey"),
+                        sub_resultSet.getInt("sign")));
+            }
+            exchange.setExchangeMultis(list);
             return exchange;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);

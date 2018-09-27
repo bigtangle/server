@@ -64,6 +64,7 @@ public class OrderPublishService {
                     ExchangeMulti exchangeMulti = new ExchangeMulti();
                     exchangeMulti.setOrderid(order.getOrderId());
                     exchangeMulti.setPubkey(addr);
+                    exchangeMulti.setSign(0);
                     store.saveExchangeMulti(exchangeMulti);
                 }
             }

@@ -424,7 +424,13 @@ public class OrderController extends ExchangeController {
         requestParam.put("address", addressComboBox.getValue());
         // String tokenid = this.tokenComboBox.getValue().split(":")[1].trim();
         requestParam.put("tokenid", tokenid);
-        requestParam.put("signaddress", Main.validOutputMultiMap.get(tokenid));
+        if (typeStr.equals("sell")) {
+            Set<String> addrSet = Main.validOutputMultiMap.get(tokenid);
+            if (addrSet != null && !addrSet.isEmpty()) {
+                addrSet.remove(addressComboBox.getValue());
+                requestParam.put("signaddress", Main.validOutputMultiMap.get(tokenid));
+            }
+        }
         requestParam.put("type", typeStr.equals("sell") ? 1 : 0);
         long price = Coin.parseCoinValue(this.limitTextField.getText());
         requestParam.put("price", price);

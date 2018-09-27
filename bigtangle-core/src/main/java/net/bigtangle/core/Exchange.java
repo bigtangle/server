@@ -5,6 +5,7 @@
 package net.bigtangle.core;
 
 import java.beans.Transient;
+import java.util.List;
 
 import javax.sound.midi.VoiceStatus;
 
@@ -41,6 +42,8 @@ public class Exchange implements java.io.Serializable {
     private String fromOrderId;
     
     private String market;
+    
+    private List<ExchangeMulti> exchangeMultis;
     
     public String getMarket() {
         return market;
@@ -183,5 +186,13 @@ public class Exchange implements java.io.Serializable {
 
     public void setToAmount(String toAmount) {
         this.toAmount = toAmount;
+    }
+
+    public List<ExchangeMulti> getExchangeMultis() {
+        return exchangeMultis;
+    }
+
+    public void setExchangeMultis(List<ExchangeMulti> exchangeMultis) {
+        this.exchangeMultis = exchangeMultis;
     }
 }

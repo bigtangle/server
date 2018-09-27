@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import org.spongycastle.asn1.eac.Flags;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import net.bigtangle.core.Address;
@@ -19,6 +18,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Exchange;
+import net.bigtangle.core.ExchangeMulti;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.PayMultiSign;
@@ -40,7 +40,6 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.utils.OkHttp3Util;
-import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
 public class PayOrder {
@@ -116,13 +115,18 @@ public class PayOrder {
          * Json.jsonmapper().writeValueAsString(payMultiSign));
          * exchangeSignInit(this.exchange.getOrderid()); } } }
          */
+        List<ExchangeMulti> exchangeMultis = this.exchange.getExchangeMultis();
+        if (exchangeMultis != null && !exchangeMultis.isEmpty()) {
 
-        String dataHex = this.exchange.getDataHex();
-        if (dataHex.isEmpty()) {
-            this.signOrderTransaction();
         } else {
-            this.signOrderComplete();
+            String dataHex = this.exchange.getDataHex();
+            if (dataHex.isEmpty()) {
+                this.signOrderTransaction();
+            } else {
+                this.signOrderComplete();
+            }
         }
+
     }
 
     private Wallet wallet() {
