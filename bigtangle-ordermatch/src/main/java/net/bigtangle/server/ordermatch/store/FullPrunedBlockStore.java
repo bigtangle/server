@@ -78,6 +78,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void saveExchangeMulti(ExchangeMulti exchangeMulti) throws BlockStoreException;
 
+    public void updataExchangeMulti(String orderid, String address, byte[] data) throws BlockStoreException;
+
     public void saveOrderMatch(OrderMatch orderMatch) throws BlockStoreException;
 
     public List<OrderPublish> getOrderPublishListWithCondition(Map<String, Object> request) throws BlockStoreException;
@@ -89,6 +91,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public List<Exchange> getExchangeListWithAddressA(String address) throws BlockStoreException;
 
     public void updateExchangeSign(String orderid, String signtype, byte[] data) throws BlockStoreException;
+
+    public void updateExchangeSignData(String orderid, byte[] data) throws BlockStoreException;
 
     public OrderPublish getOrderPublishByOrderid(String orderid) throws BlockStoreException;
 

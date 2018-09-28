@@ -8,5 +8,5 @@ public enum OrdermatchReqCmd {
 
     saveOrder, getOrders, deleteOrder, exchangeInfo,
 
-    saveExchange, getExchange, signTransaction, cancelOrder, getBatchExchange;
+    saveExchange, getExchange, signTransaction, cancelOrder, getBatchExchange,multisign;
 }

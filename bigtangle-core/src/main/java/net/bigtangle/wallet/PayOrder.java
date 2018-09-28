@@ -15,6 +15,7 @@ import org.spongycastle.crypto.params.KeyParameter;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Exchange;
@@ -40,7 +41,6 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.utils.OkHttp3Util;
-import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
 public class PayOrder {
@@ -80,8 +80,15 @@ public class PayOrder {
         if (exchangeMultis != null && !exchangeMultis.isEmpty()) {
             int flag = 0;// 0:buy,1:sell,2:sign
             List<String> myaddresses = new ArrayList<String>();
+            ECKey signEckey = null;
             for (ECKey key : ecKeys) {
                 myaddresses.add(key.toAddress(wallet.params).toString());
+                if (sellFlag) {
+                    if (this.exchange.getToAddress().equals(key.toAddress(wallet.params).toString())) {
+                        signEckey = key;
+                    }
+                }
+
             }
             if (myaddresses.contains(this.exchange.getToAddress())) {
                 flag = 1;
@@ -109,56 +116,54 @@ public class PayOrder {
             }
 
             if (flag == 0) {
-                if (fromsign == 0) {
+                if (fromsign == 0 && this.exchange.getSigs().isEmpty()) {
 
                 }
             }
             if (flag == 1) {
                 if (tosign == 0) {
+                    String dataHex = this.exchange.getDataHex();
+                    if (!dataHex.isEmpty()) {
+                        List<UTXO> utxos = this.getUTXOWithECKeyList(ecKeys,
+                                Utils.HEX.decode(this.exchange.getFromTokenHex()));
 
+                        for (UTXO utxo : utxos) {
+                            if (utxo.getTokenId().equals(this.exchange.getFromTokenHex()) && utxo.getMinimumsign() >= 2
+                                    && utxo.getValue().value >= Long.parseLong(this.exchange.getFromAmount())) {
+                                TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(wallet.params,
+                                        utxo, 0);
+                                Script multisigScript_ = multisigOutput_.getScriptPubKey();
+
+                                byte[] buf = Utils.HEX.decode(dataHex);
+                                ExchangeReload exchangeReload = this.reloadTransaction(buf);
+                                Transaction transaction0 = exchangeReload.getTransaction();
+                                if (transaction0 == null) {
+                                    return;
+                                }
+                                Sha256Hash sighash = transaction0.hashForSignature(0, multisigScript_,
+                                        Transaction.SigHash.ALL, false);
+                                TransactionSignature transactionSignature = new TransactionSignature(
+                                        signEckey.sign(sighash, aesKey), Transaction.SigHash.ALL, false);
+
+                                ECKey.ECDSASignature party1Signature = signEckey.sign(transaction0.getHash(), aesKey);
+                                byte[] signature = party1Signature.encodeToDER();
+                                boolean success = ECKey.verify(transaction0.getHash().getBytes(), signature,
+                                        signEckey.getPubKey());
+                                if (!success) {
+                                    throw new BlockStoreException("multisign signature error");
+                                }
+
+                            }
+
+                        }
+
+                    }
                 }
             }
             if (flag == 2) {
 
             }
-            List<UTXO> utxos = this.getUTXOWithECKeyList(ecKeys, Utils.HEX.decode(this.exchange.getFromTokenHex()));
-            if (sellFlag) {
-                for (UTXO utxo : utxos) {
-                    if (utxo.getTokenId().equals(this.exchange.getFromTokenHex()) && utxo.getMinimumsign() >= 2
-                            && utxo.getValue().value >= Long.parseLong(this.exchange.getFromAmount())) {
 
-                        TransactionOutput multisigOutput = new FreeStandingTransactionOutput(wallet.getParams(), utxo,
-                                0);
-                        Transaction transaction = new Transaction(wallet.getParams());
-
-                        Coin amount = Coin.parseCoin(utxo.getValue().toPlainString(), utxo.getValue().tokenid);
-
-                        Address address = Address.fromBase58(wallet.getParams(), this.exchange.getFromAddress());
-                        transaction.addOutput(amount, address);
-
-                        Coin amount2 = multisigOutput.getValue().subtract(amount);
-                        transaction.addOutput(amount2, multisigOutput.getScriptPubKey());
-
-                        transaction.addInput(multisigOutput);
-                        transaction.setMemo("order sell");
-
-                        PayMultiSign payMultiSign = new PayMultiSign();
-                        payMultiSign.setTokenBlockhashHex(utxo.getBlockHashHex());
-                        payMultiSign.setOrderid(UUIDUtil.randomUUID());
-                        payMultiSign.setTokenid(utxo.getValue().getTokenHex());
-                        payMultiSign.setBlockhashHex(Utils.HEX.encode(transaction.bitcoinSerialize()));
-                        payMultiSign.setToaddress(address.toBase58());
-                        payMultiSign.setAmount(amount.getValue());
-
-                        payMultiSign.setMinsignnumber(utxo.getMinimumsign());
-                        payMultiSign.setOutpusHashHex(utxo.getHashHex());
-
-                        OkHttp3Util.post(this.serverURL + ReqCmd.launchPayMultiSign.name(),
-                                Json.jsonmapper().writeValueAsString(payMultiSign));
-                        exchangeSignInit(this.exchange.getOrderid());
-                    }
-                }
-            }
         } else {
             String dataHex = this.exchange.getDataHex();
             if (dataHex.isEmpty()) {
@@ -278,13 +283,7 @@ public class PayOrder {
                     this.getUTXOWithPubKeyHash(toAddress00.getHash160(), Utils.HEX.decode(fromCoin.getTokenHex())));
             outputs.addAll(this.getUTXOWithECKeyList(this.wallet().walletKeys(aesKey),
                     Utils.HEX.decode(toCoin.getTokenHex())));
-            boolean flag = false;
-            for (UTXO utxo : outputs) {
-                if (utxo.isMultiSig()) {
-                    flag = true;
-                    break;
-                }
-            }
+
             SendRequest req = SendRequest.to(toAddress00, toCoin);
             req.tx.addOutput(fromCoin, fromAddress00);
 

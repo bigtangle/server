@@ -84,7 +84,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + afterSelect();
     protected String SELECT_EXCHANGE_ORDERID_SQL = "SELECT orderid,"
             + " fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex,"
-            + " toAmount, data, toSign, fromSign, toOrderId, fromOrderId, market FROM exchange WHERE orderid = ?";
+            + " toAmount, data, toSign, fromSign, toOrderId, fromOrderId, market,signInputData FROM exchange WHERE orderid = ?";
 
     protected String DELETE_EXCHANGE_SQL = "DELETE FROM exchange WHERE toOrderId = ? OR fromOrderId = ?";
     protected String DELETE_ORDERPUBLISH_SQL = "DELETE FROM orderpublish WHERE orderid = ?";
@@ -748,6 +748,54 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
+    public void updateExchangeSignData(String orderid, byte[] data) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            String sql = "UPDATE exchange SET toSign = 1, signInputData = ? WHERE orderid = ?";
+
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setString(2, orderid);
+            preparedStatement.setBytes(1, data);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void updataExchangeMulti(String orderid, String address, byte[] data) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            String sql = "UPDATE exchange_multisign SET signInputData=?,sign=1 WHERE orderid=? ";
+
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setString(2, orderid);
+            preparedStatement.setBytes(1, data);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
     public OrderPublish getOrderPublishByOrderid(String orderid) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -790,7 +838,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         PreparedStatement sub_preparedStatement = null;
-        String sql = "SELECT orderid,pubkey,sign FROM exchange_multisign WHERE orderid=?";
+        String sql = "SELECT orderid,pubkey,sign,signInputData FROM exchange_multisign WHERE orderid=?";
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_EXCHANGE_ORDERID_SQL);
             preparedStatement.setString(1, orderid);
@@ -812,14 +860,17 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             exchange.setToOrderId(resultSet.getString("toOrderId"));
             exchange.setFromOrderId(resultSet.getString("fromOrderId"));
             exchange.setMarket(resultSet.getString("market"));
+
+            exchange.getSigs().add(resultSet.getBytes("signInputData"));
             sub_preparedStatement = conn.get().prepareStatement(sql);
             sub_preparedStatement.setString(1, exchange.getToOrderId());
             ResultSet sub_resultSet = preparedStatement.executeQuery();
             List<ExchangeMulti> list = new ArrayList<ExchangeMulti>();
 
             while (sub_resultSet.next()) {
+                exchange.getSigs().add(sub_resultSet.getBytes("signInputData"));
                 list.add(new ExchangeMulti(exchange.getToOrderId(), sub_resultSet.getString("pubkey"),
-                        sub_resultSet.getInt("sign")));
+                        sub_resultSet.getBytes("signInputData"), sub_resultSet.getInt("sign")));
             }
             exchange.setExchangeMultis(list);
             return exchange;

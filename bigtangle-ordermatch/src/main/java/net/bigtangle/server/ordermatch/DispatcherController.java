@@ -75,6 +75,14 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
+            case multisign: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                AbstractResponse response = exchangeService.signMultiTransaction(request);
+
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
 
             case getExchange: {
                 String reqStr = new String(bodyByte, "UTF-8");

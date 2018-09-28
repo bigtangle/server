@@ -12,12 +12,22 @@ public class ExchangeMulti implements java.io.Serializable {
 
     private String pubkey;
 
+    private byte[] signInputData;
+
+    public ExchangeMulti(String orderid, String pubkey, byte[] signInputData, int sign) {
+        super();
+        this.orderid = orderid;
+        this.pubkey = pubkey;
+        this.signInputData = signInputData;
+        this.sign = sign;
+    }
+
+    private int sign;
+
     public ExchangeMulti() {
         super();
         // TODO Auto-generated constructor stub
     }
-
-    private int sign;
 
     public ExchangeMulti(String orderid, String pubkey, int sign) {
         super();
@@ -48,6 +58,14 @@ public class ExchangeMulti implements java.io.Serializable {
 
     public void setSign(int sign) {
         this.sign = sign;
+    }
+
+    public byte[] getSignInputData() {
+        return signInputData;
+    }
+
+    public void setSignInputData(byte[] signInputData) {
+        this.signInputData = signInputData;
     }
 
 }

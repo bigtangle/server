@@ -64,13 +64,15 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   fromSign integer,\n" 
             + "   toOrderId varchar(255),\n"
             + "   fromOrderId varchar(255),\n" 
-            + "   market varchar(255),\n"
+            + "   market varchar(255),\n" 
+            + "   signInputData varbinary(5000),\n"
             + "   PRIMARY KEY (orderid) )";
     
     private static final String CREATE_EXCHANGE_MULTISIGN_TABLE = "CREATE TABLE exchange_multisign (\n"
 //            + "   id varchar(255) NOT NULL,\n"
             + "   orderid varchar(255) ,\n" 
             + "   pubkey varchar(255),\n"
+            + "   signInputData varbinary(5000),\n"
             + "   sign integer\n"
             + "    )";
 

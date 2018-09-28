@@ -5,6 +5,7 @@
 package net.bigtangle.core;
 
 import java.beans.Transient;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.sound.midi.VoiceStatus;
@@ -18,33 +19,34 @@ public class Exchange implements java.io.Serializable {
     private static final long serialVersionUID = -702493172094450451L;
 
     private String orderid;
-    
+
     private String fromAddress;
-    
+
     private String fromTokenHex;
-    
+
     private String fromAmount;
-    
+
     private String toAddress;
-    
+
     private String toTokenHex;
-    
+
     private String toAmount;
-    
+
     private byte[] data;
-    
+
     private int toSign;
-    
+
     private int fromSign;
-    
+
     private String toOrderId;
-    
+
     private String fromOrderId;
-    
+
     private String market;
-    
+
     private List<ExchangeMulti> exchangeMultis;
-    
+    private List<byte[]> sigs = new ArrayList<byte[]>();
+
     public String getMarket() {
         return market;
     }
@@ -85,8 +87,8 @@ public class Exchange implements java.io.Serializable {
         this.fromSign = fromSign;
     }
 
-    public Exchange(String fromAddress, String fromTokenHex, String fromAmount, String toAddress,
-            String toTokenHex, String toAmount, byte[] data) {
+    public Exchange(String fromAddress, String fromTokenHex, String fromAmount, String toAddress, String toTokenHex,
+            String toAmount, byte[] data) {
         this.orderid = UUIDUtil.randomUUID();
         this.fromAddress = fromAddress;
         this.fromTokenHex = fromTokenHex;
@@ -96,9 +98,9 @@ public class Exchange implements java.io.Serializable {
         this.toAmount = toAmount;
         this.data = data;
     }
-    
-    public Exchange(String fromOrderId, String fromAddress, String fromTokenHex, String fromAmount, String toOrderId, String toAddress,
-            String toTokenHex, String toAmount, byte[] data, String market) {
+
+    public Exchange(String fromOrderId, String fromAddress, String fromTokenHex, String fromAmount, String toOrderId,
+            String toAddress, String toTokenHex, String toAmount, byte[] data, String market) {
         this(fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, data);
         this.toOrderId = toOrderId;
         this.fromOrderId = fromOrderId;
@@ -112,22 +114,22 @@ public class Exchange implements java.io.Serializable {
     public byte[] getData() {
         return data;
     }
-    
+
     public String getDataHex() {
-    	if (this.data == null) {
-    		return "";
-    	}
+        if (this.data == null) {
+            return "";
+        }
         return Utils.HEX.encode(this.data);
     }
-    
-	public void setDataHex(String dataHex) {
-		if (StringUtils.isBlank(dataHex)) {
-			this.data = null;
-		} else {
-			this.data = Utils.HEX.decode(dataHex);
-		}
-	}
-    
+
+    public void setDataHex(String dataHex) {
+        if (StringUtils.isBlank(dataHex)) {
+            this.data = null;
+        } else {
+            this.data = Utils.HEX.decode(dataHex);
+        }
+    }
+
     public void setData(byte[] data) {
         this.data = data;
     }
@@ -194,5 +196,13 @@ public class Exchange implements java.io.Serializable {
 
     public void setExchangeMultis(List<ExchangeMulti> exchangeMultis) {
         this.exchangeMultis = exchangeMultis;
+    }
+
+    public List<byte[]> getSigs() {
+        return sigs;
+    }
+
+    public void setSigs(List<byte[]> sigs) {
+        this.sigs = sigs;
     }
 }

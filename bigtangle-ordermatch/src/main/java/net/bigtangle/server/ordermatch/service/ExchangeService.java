@@ -42,6 +42,34 @@ public class ExchangeService {
         return AbstractResponse.createEmptyResponse();
     }
 
+    public AbstractResponse signMultiTransaction(Map<String, Object> request) throws BlockStoreException {
+        String dataHex = (String) request.get("dataHex");
+        String signInputDataHex = (String) request.get("signInputDataHex");
+        String orderid = (String) request.get("orderid");
+
+        Exchange exchange = this.store.getExchangeInfoByOrderid(orderid);
+        OrderPublish orderPublish1 = this.store.getOrderPublishByOrderid(exchange.getToOrderId());
+        OrderPublish orderPublish2 = this.store.getOrderPublishByOrderid(exchange.getFromOrderId());
+
+        if (orderPublish1.getState() == OrderState.finish.ordinal()
+                || orderPublish2.getState() == OrderState.finish.ordinal()) {
+            throw new BlockStoreException("order publish state finish");
+        }
+        if (signInputDataHex != null && !signInputDataHex.isEmpty()) {
+            this.store.updateExchangeSignData(orderid, Utils.HEX.decode(signInputDataHex));
+        }
+        String signtype = (String) request.get("signtype");
+        byte[] data = Utils.HEX.decode(dataHex);
+        this.store.updateExchangeSign(orderid, signtype, data);
+        exchange = this.store.getExchangeInfoByOrderid(orderid);
+        if (exchange.getToSign() == 1 && exchange.getFromSign() == 1 && StringUtils.isNotBlank(exchange.getToOrderId())
+                && StringUtils.isNotBlank(exchange.getFromOrderId())) {
+            this.store.updateOrderPublishState(exchange.getToOrderId(), OrderState.finish.ordinal());
+            this.store.updateOrderPublishState(exchange.getFromOrderId(), OrderState.finish.ordinal());
+        }
+        return AbstractResponse.createEmptyResponse();
+    }
+
     public AbstractResponse signTransaction(Map<String, Object> request) throws BlockStoreException {
         String dataHex = (String) request.get("dataHex");
         String orderid = (String) request.get("orderid");
