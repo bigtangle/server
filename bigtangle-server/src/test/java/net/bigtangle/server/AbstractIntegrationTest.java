@@ -141,14 +141,19 @@ public abstract class AbstractIntegrationTest {
 
     public void walletKeys() throws Exception {
         KeyParameter aesKey = null;
-        walletAppKit = new WalletAppKit(networkParameters, new File("../bigtangle-wallet"), "bigtangle");
+        File f = new File("./logs/" , "bigtangle");
+        if(f.exists()) f.delete();
+        walletAppKit = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle");
         walletAppKit.wallet().setServerURL(contextRoot);
         walletKeys = walletAppKit.wallet().walletKeys(aesKey);
     }
 
     public void wallet1() throws Exception {
         KeyParameter aesKey = null;
-        walletAppKit1 = new WalletAppKit(networkParameters, new File("../bigtangle-wallet"), "bigtangle1");
+        //delete first
+        File f = new File("./logs/" , "bigtangle1");
+        if(f.exists()) f.delete();
+        walletAppKit1 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle1");
         walletAppKit1.wallet().setServerURL(contextRoot);
 
         wallet1Keys = walletAppKit1.wallet().walletKeys(aesKey);

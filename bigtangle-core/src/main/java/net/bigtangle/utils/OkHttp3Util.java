@@ -34,7 +34,7 @@ import okhttp3.Response;
 public class OkHttp3Util {
 
     private static final Logger logger = LoggerFactory.getLogger(OkHttp3Util.class);
-
+    private static long timeoutMinute=6;
     private static OkHttpClient client = null;
 
     public static String post(String url, byte[] b) throws Exception {
@@ -126,8 +126,8 @@ public class OkHttp3Util {
 
     @SuppressWarnings("unused")
     private static OkHttpClient getOkHttpClientSafe() {
-        OkHttpClient client = new OkHttpClient.Builder().connectTimeout(2, TimeUnit.MINUTES)
-                .writeTimeout(2, TimeUnit.MINUTES).readTimeout(2, TimeUnit.MINUTES).build();
+        OkHttpClient client = new OkHttpClient.Builder().connectTimeout(timeoutMinute, TimeUnit.MINUTES)
+                .writeTimeout(timeoutMinute, TimeUnit.MINUTES).readTimeout(timeoutMinute, TimeUnit.MINUTES).build();
         return client;
     }
 
@@ -162,8 +162,8 @@ public class OkHttp3Util {
                         public boolean verify(String hostname, SSLSession session) {
                             return true;
                         }
-                    }).connectTimeout(2, TimeUnit.MINUTES).writeTimeout(2, TimeUnit.MINUTES)
-                    .readTimeout(2, TimeUnit.MINUTES).build();
+                    }).connectTimeout(timeoutMinute, TimeUnit.MINUTES).writeTimeout(timeoutMinute, TimeUnit.MINUTES)
+                    .readTimeout(timeoutMinute, TimeUnit.MINUTES).build();
 
             return client;
         } catch (Exception e) {
