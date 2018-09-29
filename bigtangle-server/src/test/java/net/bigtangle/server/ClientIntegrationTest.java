@@ -759,7 +759,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     public void createTransaction() throws Exception {
-        milestoneService.update();
+
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));

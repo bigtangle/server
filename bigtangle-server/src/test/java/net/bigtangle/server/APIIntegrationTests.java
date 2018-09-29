@@ -228,33 +228,6 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
     }
 
-    public ECKey createWalletAndAddCoin() throws Exception, PrunedException {
-        ECKey outKey = new ECKey();
-        Block rollingBlock = this.getRollingBlock(outKey);
-
-        rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS,
-                networkParameters.getGenesisBlock());
-
-        Transaction transaction = rollingBlock.getTransactions().get(0);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
-        byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
-
-        Wallet wallet = new Wallet(networkParameters);
-        wallet.setUTXOProvider(store);
-
-        ECKey toKey = wallet.freshReceiveKey();
-        Coin amount = Coin.valueOf(100, NetworkParameters.BIGTANGLE_TOKENID);
-
-        Transaction t = new Transaction(networkParameters);
-        t.addOutput(new TransactionOutput(networkParameters, t, amount, toKey));
-        t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
-
-        rollingBlock.addTransaction(t);
-        rollingBlock.solve();
-        blockgraph.add(rollingBlock, true);
-        milestoneService.update();
-        return toKey;
-    }
 
     @Test
     public void testCreateMultiSigList() throws Exception {

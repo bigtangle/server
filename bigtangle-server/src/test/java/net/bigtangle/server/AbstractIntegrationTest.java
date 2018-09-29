@@ -35,6 +35,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
@@ -217,15 +218,15 @@ public abstract class AbstractIntegrationTest {
 
         testCreateMultiSig();
         testCreateMarket();
+        testInitTransferWallet();
         milestoneService.update();
-
+        testInitTransferWalletPayToTestPub();
         List<UTXO> ux = testTransactionAndGetBalances();
         // assertTrue(!ux.isEmpty());
         for (UTXO u : ux) {
             log.debug(u.toString());
         }
 
-        // testInitTransferWallet();
     }
 
     // transfer the coin deon test key to address in wallet
@@ -252,6 +253,29 @@ public abstract class AbstractIntegrationTest {
 
     }
 
+   //pay back to the testPub for usage in other test
+    public void testInitTransferWalletPayToTestPub() throws Exception {
+
+        // get new Block to be used from server
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
+        ECKey toKey= new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        Coin amount = Coin.parseCoin("10002.001", NetworkParameters.BIGTANGLE_TOKENID);
+        Address address = new Address(networkParameters, toKey.getPubKeyHash());
+        
+        SendRequest request = SendRequest.to(address, amount);
+        walletAppKit.wallet().completeTx(request);
+        rollingBlock.addTransaction(request.tx);
+        rollingBlock.solve();
+
+        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+
+        checkBalance(amount, walletKeys);
+
+    }
+    
     public void testCreateMultiSig() throws JsonProcessingException, Exception {
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
