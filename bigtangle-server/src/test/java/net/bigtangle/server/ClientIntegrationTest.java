@@ -476,12 +476,12 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         testCreateMultiSig(keys);
         List<UTXO> utxos = testTransactionAndGetBalances(false, keys);
         for (UTXO utxo : utxos) {
-            System.err.println(utxo.toString());
+            System.err.println(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
         }
         UTXO yourutxo = utxos.get(0);
         List<UTXO> ulist = testTransactionAndGetBalances();
         for (UTXO utxo : ulist) {
-            System.err.println(utxo.toString());
+            System.err.println(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
         }
         UTXO myutxo = null;
         for (UTXO u : ulist) {
@@ -544,11 +544,11 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         exchangeTokenComplete(req.tx);
         List<UTXO> templist = testTransactionAndGetBalances(false, keys);
         for (UTXO utxo : templist) {
-            System.err.println(utxo.toString());
+            System.err.println(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
         }
         List<UTXO> templist1 = testTransactionAndGetBalances();
         for (UTXO utxo : templist1) {
-            System.err.println(utxo.toString());
+            System.err.println(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
         }
         if (myutxo.isMultiSig()) {
             List<ECKey> signKeys = new ArrayList<>();
