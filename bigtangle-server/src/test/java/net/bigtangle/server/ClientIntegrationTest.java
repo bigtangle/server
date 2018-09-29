@@ -66,6 +66,7 @@ import net.bigtangle.wallet.Wallet.MissingSigsMode;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ClientIntegrationTest extends AbstractIntegrationTest {
 
+    private static final Logger log = LoggerFactory.getLogger(ClientIntegrationTest.class);
     @Test
     public void testBatchBlock() throws Exception {
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
@@ -320,7 +321,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     public void exchangeToken() throws Exception {
         // get token from wallet to spent
         ECKey yourKey = walletAppKit1.wallet().walletKeys(null).get(0);
-        System.err.println("toKey : " + yourKey.toAddress(networkParameters).toBase58());
+        log.debug("toKey : " + yourKey.toAddress(networkParameters).toBase58());
 
         payToken(yourKey);
         List<ECKey> keys = new ArrayList<ECKey>();
@@ -334,7 +335,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
                 myutxo = u;
             }
         }
-        System.err.println("outKey : " + myutxo.getAddress());
+        log.debug("outKey : " + myutxo.getAddress());
 
         Coin amount = Coin.valueOf(10000, yourutxo.getValue().tokenid);
         SendRequest req = SendRequest.to(new Address(networkParameters, myutxo.getAddress()), amount);
@@ -376,12 +377,12 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         testCreateMultiSigToken(keys);
         List<UTXO> utxos = testTransactionAndGetBalances(false, keys);
         for (UTXO utxo : utxos) {
-            System.err.println(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
+            log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
         }
         UTXO yourutxo = utxos.get(0);
         List<UTXO> ulist = testTransactionAndGetBalances();
         for (UTXO utxo : ulist) {
-            System.err.println(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
+            log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
         }
         UTXO myutxo = null;
         for (UTXO u : ulist) {
@@ -389,7 +390,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
                 myutxo = u;
             }
         }
-        System.err.println("outKey : " + myutxo.getAddress());
+        log.debug("outKey : " + myutxo.getAddress());
 
         Coin amount = Coin.valueOf(10000, yourutxo.getValue().tokenid);
 
@@ -435,15 +436,13 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         req = SendRequest.forTx(transaction);
 
         exchangeTokenComplete(req.tx);
-        List<UTXO> templist = testTransactionAndGetBalances(false, keys);
-        for (UTXO utxo : templist) {
-            System.err.println(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
-        }
-        List<UTXO> templist1 = testTransactionAndGetBalances();
-        for (UTXO utxo : templist1) {
-            System.err.println(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
-        }
 
+        for (UTXO utxo :  testTransactionAndGetBalances(false, keys)) {
+            log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
+        } 
+        for (UTXO utxo : testTransactionAndGetBalances()) {
+            log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
+        }
         Address destination = Address.fromBase58(networkParameters, yourutxo.getAddress());
         amount = Coin.valueOf(1000, myutxo.getValue().tokenid);
         req = SendRequest.to(destination, amount);
@@ -451,7 +450,12 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         walletAppKit.wallet().signTransaction(req);
 
         exchangeTokenComplete(req.tx);
-
+        for (UTXO utxo :  testTransactionAndGetBalances(false, keys)) {
+            log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
+        } 
+        for (UTXO utxo : testTransactionAndGetBalances()) {
+            log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
+        }
     }
 
     public void exchangeTokenComplete(Transaction tx) throws Exception {
