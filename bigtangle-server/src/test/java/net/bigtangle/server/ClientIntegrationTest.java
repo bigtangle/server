@@ -368,6 +368,15 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    public void testExchangeTokenMultiManyPart() throws Exception {
+        //  5 token 1 
+        //2 token sign1  sign2  3 sign2 , sing4
+        
+        //BiG system 
+        //
+        
+    }
+    @Test
     public void testExchangeTokenMulti() throws Exception {
 
         List<ECKey> keys = walletAppKit1.wallet().walletKeys(null);
