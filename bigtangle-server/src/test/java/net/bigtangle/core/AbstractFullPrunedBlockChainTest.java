@@ -261,68 +261,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
     @Autowired
 
-    // TODO @Test
-    public void testUTXOProviderWithWallet() throws Exception {
-        final int UNDOABLE_BLOCKS_STORED = 1000;
-        store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
-
-        // Check that we aren't accidentally leaving any references
-        // to the full StoredUndoableBlock's lying around (ie memory leaks)
-        ECKey outKey = new ECKey();
-        int height = 1;
-
-        // Build some blocks on genesis block to create a spendable output.
-        Block rollingBlock = BlockForTest.createNextBlock(PARAMS.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
-                PARAMS.getGenesisBlock());
-        blockgraph.add(rollingBlock, true);
-        Transaction transaction = rollingBlock.getTransactions().get(0);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, transaction.getHash());
-        byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
-        for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS,
-                    PARAMS.getGenesisBlock());
-            blockgraph.add(rollingBlock, true);
-        }
-        // rollingBlock =
-        // BlockForTest.createNextBlockWithCoinbase(rollingBlock,null,PARAMS.getGenesisBlock().getHash());
-
-        // Create 1 BTA spend to a key in this wallet (to ourselves).
-        Wallet wallet = new Wallet(PARAMS);
-
-        wallet.setUTXOProvider(store);
-        ECKey toKey = wallet.freshReceiveKey();
-        Coin amount = Coin.valueOf(10000000, NetworkParameters.BIGTANGLE_TOKENID);
-
-        Transaction t = new Transaction(PARAMS);
-        t.addOutput(new TransactionOutput(PARAMS, t, amount, toKey));
-        t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
-
-        rollingBlock.addTransaction(t);
-        rollingBlock.solve();
-        blockgraph.add(rollingBlock, true);
-        ;
-
-        // Create another spend of 1/2 the value of BTA we have available using
-        // the wallet (store coin selector).
-        ECKey toKey2 = new ECKey();
-        Coin amount2 = amount.divide(2);
-        Address address2 = new Address(PARAMS, toKey2.getPubKeyHash());
-        SendRequest req = SendRequest.to(address2, amount2);
-        wallet.completeTx(req);
-
-        // There should be one pending tx (our spend).
-        assertEquals("Wrong number of PENDING.4", 1, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
-        Coin totalPendingTxAmount = Coin.ZERO;
-        for (Transaction tx : wallet.getPendingTransactions()) {
-            totalPendingTxAmount = totalPendingTxAmount.add(tx.getValueSentToMe(wallet));
-        }
-
-        try {
-            store.close();
-        } catch (Exception e) {
-        }
-    }
-
+ 
     /**
      * Test that if the block height is missing from coinbase of a version 2
      * block, it's rejected.
