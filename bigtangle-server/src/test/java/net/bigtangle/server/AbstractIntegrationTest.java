@@ -220,7 +220,7 @@ public abstract class AbstractIntegrationTest {
         testCreateMarket();
         testInitTransferWallet();
         milestoneService.update();
-        testInitTransferWalletPayToTestPub();
+        //testInitTransferWalletPayToTestPub();
         List<UTXO> ux = testTransactionAndGetBalances();
         // assertTrue(!ux.isEmpty());
         for (UTXO u : ux) {
@@ -232,6 +232,12 @@ public abstract class AbstractIntegrationTest {
     // transfer the coin deon test key to address in wallet
     @SuppressWarnings("deprecation")
     public void testInitTransferWallet() throws Exception {
+        ECKey  fromkey=   new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        HashMap<String, Integer> giveMoneyResult = new HashMap<String, Integer>();
+        giveMoneyResult.put(walletKeys.get(1).toAddress(networkParameters).toString(), 3333333);
+        walletAppKit.wallet().payMoneyToECKeyList(giveMoneyResult, fromkey);
+    }
+    public void testInitTransferWallet1() throws Exception {
 
         Wallet coinbaseWallet = new Wallet(networkParameters);
         coinbaseWallet.importKey(new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub)));
