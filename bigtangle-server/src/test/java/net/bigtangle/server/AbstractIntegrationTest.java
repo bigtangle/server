@@ -185,8 +185,7 @@ public abstract class AbstractIntegrationTest {
     public List<UTXO> testTransactionAndGetBalances(boolean withZero, List<ECKey> keys) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         List<String> keyStrHex000 = new ArrayList<String>();
-        keys.add(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(networkParameters.testPriv),
-                Utils.HEX.decode(networkParameters.testPub)));
+ 
         for (ECKey ecKey : keys) {
             // keyStrHex000.add(ecKey.toAddress(networkParameters).toString());
             keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
@@ -237,51 +236,8 @@ public abstract class AbstractIntegrationTest {
         giveMoneyResult.put(walletKeys.get(1).toAddress(networkParameters).toString(), 3333333);
         walletAppKit.wallet().payMoneyToECKeyList(giveMoneyResult, fromkey);
     }
-    public void testInitTransferWallet1() throws Exception {
-
-        Wallet coinbaseWallet = new Wallet(networkParameters);
-        coinbaseWallet.importKey(new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub)));
-        coinbaseWallet.setServerURL(contextRoot);
-        // get new Block to be used from server
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
-        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
-
-        Coin amount = Coin.parseCoin("3333333", NetworkParameters.BIGTANGLE_TOKENID);
-        SendRequest request = SendRequest.to(walletKeys.get(1).toAddress(networkParameters), amount);
-        coinbaseWallet.completeTx(request);
-        rollingBlock.addTransaction(request.tx);
-        rollingBlock.solve();
-
-        checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize()));
-
-        checkBalance(amount, walletKeys);
-
-    }
-
-   //pay back to the testPub for usage in other test
-    public void testInitTransferWalletPayToTestPub() throws Exception {
-
-        // get new Block to be used from server
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
-        ECKey toKey= new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        Coin amount = Coin.parseCoin("10002.001", NetworkParameters.BIGTANGLE_TOKENID);
-        Address address = new Address(networkParameters, toKey.getPubKeyHash());
-        
-        SendRequest request = SendRequest.to(address, amount);
-        walletAppKit.wallet().completeTx(request);
-        rollingBlock.addTransaction(request.tx);
-        rollingBlock.solve();
-
-        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
-
-        checkBalance(amount, walletKeys);
-
-    }
     
+  
     public void testCreateMultiSig() throws JsonProcessingException, Exception {
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();

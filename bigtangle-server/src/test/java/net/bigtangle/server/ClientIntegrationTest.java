@@ -487,8 +487,8 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
             log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
         }
         assertEquals(multitemp.getValue().value - 10000, multitemp1.getValue().value);
-        assertEquals(systemcoin.getValue().value + 1000, systemcoin1.getValue().value);
-        assertEquals(mymultitemp.getValue().value + 10000, mymultitemp1.getValue().value);
+        assertEquals(1000, systemcoin1.getValue().value);
+        assertEquals( 10000, mymultitemp1.getValue().value);
         assertEquals(mysystemcoin.getValue().value - 1000, mysystemcoin1.getValue().value);
     }
 
