@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.UUID;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,8 +24,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.BatchBlock;
@@ -52,8 +49,6 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.VOS;
 import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
-import net.bigtangle.core.http.server.resp.MultiSignResponse;
-import net.bigtangle.core.http.server.resp.TokenIndexResponse;
 import net.bigtangle.core.http.server.resp.UserDataResponse;
 import net.bigtangle.core.http.server.resp.VOSExecuteListResponse;
 import net.bigtangle.crypto.TransactionSignature;
@@ -123,103 +118,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         assertTrue(Arrays.equals(subtangleID, transaction2.getToAddressInSubtangle()));
     }
 
-    public void testCreateMultiSig(List<ECKey> keys) throws JsonProcessingException, Exception {
-        // Setup transaction and signatures
-        // List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
 
-        String tokenid = keys.get(5).getPublicKeyAsHex();
-
-        int amount = 678900000;
-        Coin basecoin = Coin.valueOf(amount, tokenid);
-
-        TokenInfo tokenInfo = new TokenInfo();
-
-        HashMap<String, String> requestParam00 = new HashMap<String, String>();
-        requestParam00.put("tokenid", tokenid);
-        String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getCalTokenIndex.name(),
-                Json.jsonmapper().writeValueAsString(requestParam00));
-
-        TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
-        String prevblockhash = tokenIndexResponse.getBlockhash();
-
-        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
-        tokenInfo.setTokens(tokens);
-
-        ECKey key1 = keys.get(0);
-        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key1.getPublicKeyAsHex()));
-
-        ECKey key2 = keys.get(1);
-        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key2.getPublicKeyAsHex()));
-
-        ECKey key3 = keys.get(2);
-        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key3.getPublicKeyAsHex()));
-
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
-        block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
-        block.solve();
-
-        System.out.println("block hash : " + block.getHashAsString());
-
-        // save block
-        OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
-
-        List<ECKey> ecKeys = new ArrayList<ECKey>();
-        ecKeys.add(key1);
-        ecKeys.add(key2);
-        ecKeys.add(key3);
-
-        for (ECKey ecKey : ecKeys) {
-            HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
-            requestParam0.put("address", ecKey.toAddress(networkParameters).toBase58());
-            String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultiSignWithAddress.name(),
-                    Json.jsonmapper().writeValueAsString(requestParam0));
-            System.out.println(resp);
-
-            MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
-            String blockhashHex = multiSignResponse.getMultiSigns().get((int) tokenindex_).getBlockhashHex();
-            byte[] payloadBytes = Utils.HEX.decode(blockhashHex);
-
-            Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
-            Transaction transaction = block0.getTransactions().get(0);
-
-            List<MultiSignBy> multiSignBies = null;
-            if (transaction.getDataSignature() == null) {
-                multiSignBies = new ArrayList<MultiSignBy>();
-            } else {
-                MultiSignByRequest multiSignByRequest = Json.jsonmapper().readValue(transaction.getDataSignature(),
-                        MultiSignByRequest.class);
-                multiSignBies = multiSignByRequest.getMultiSignBies();
-            }
-            Sha256Hash sighash = transaction.getHash();
-            ECKey.ECDSASignature party1Signature = ecKey.sign(sighash);
-            byte[] buf1 = party1Signature.encodeToDER();
-
-            MultiSignBy multiSignBy0 = new MultiSignBy();
-            multiSignBy0.setTokenid(tokenid);
-            multiSignBy0.setTokenindex(tokenindex_);
-            multiSignBy0.setAddress(ecKey.toAddress(networkParameters).toBase58());
-            multiSignBy0.setPublickey(Utils.HEX.encode(ecKey.getPubKey()));
-            multiSignBy0.setSignature(Utils.HEX.encode(buf1));
-            multiSignBies.add(multiSignBy0);
-            MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
-            transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
-            checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block0.bitcoinSerialize()));
-
-        }
-        this.wallet1();
-        for (ECKey ecKey : walletAppKit1.wallet().walletKeys(null)) {
-            System.out.println(ecKey.getPublicKeyAsHex());
-        }
-        // checkBalance(tokenid, ecKeys );
-    }
-
-    @Test
     public void createTokenSubtangle() throws Exception {
         ECKey ecKey = new ECKey();
         byte[] pubKey = ecKey.getPubKey();
@@ -467,13 +366,14 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         // logger.info("getExchange resp : " + requestParam);
     }
 
-    @SuppressWarnings("deprecation")
+ 
+ 
     @Test
-    public void exchangeTokenA() throws Exception {
+    public void testExchangeTokenMulti() throws Exception {
 
         List<ECKey> keys = walletAppKit1.wallet().walletKeys(null);
-        List<ECKey> mykeys = walletAppKit.wallet().walletKeys(null);
-        testCreateMultiSig(keys);
+ 
+        testCreateMultiSigToken(keys);
         List<UTXO> utxos = testTransactionAndGetBalances(false, keys);
         for (UTXO utxo : utxos) {
             System.err.println(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
@@ -497,49 +397,42 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
         // ulist.addAll(utxos);
         Transaction transaction = new Transaction(networkParameters);
-        if (yourutxo.isMultiSig()) {
-            List<ECKey> signKeys = new ArrayList<>();
-            signKeys.add(keys.get(0));
-            signKeys.add(keys.get(1));
-            signKeys.add(keys.get(2));
 
-            TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, yourutxo, 0);
+        List<ECKey> signKeys = new ArrayList<>();
+        signKeys.add(keys.get(0));
+        signKeys.add(keys.get(1));
+        signKeys.add(keys.get(2));
 
-            transaction.addOutput(amount, new Address(networkParameters, myutxo.getAddress()));
+        TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, yourutxo, 0);
 
-            Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(3, signKeys);
-            Coin amount2 = multisigOutput.getValue().subtract(amount);
-            transaction.addOutput(amount2, scriptPubKey);
+        transaction.addOutput(amount, new Address(networkParameters, myutxo.getAddress()));
 
-            transaction.addInput(multisigOutput);
+        Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(3, signKeys);
+        Coin amount2 = multisigOutput.getValue().subtract(amount);
+        transaction.addOutput(amount2, scriptPubKey);
 
-            List<byte[]> sigs = new ArrayList<byte[]>();
-            for (ECKey ecKey : signKeys) {
-                TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(networkParameters, yourutxo, 0);
-                Script multisigScript_ = multisigOutput_.getScriptPubKey();
+        transaction.addInput(multisigOutput);
 
-                Sha256Hash sighash = transaction.hashForSignature(0, multisigScript_, Transaction.SigHash.ALL, false);
-                TransactionSignature transactionSignature = new TransactionSignature(ecKey.sign(sighash, null),
-                        Transaction.SigHash.ALL, false);
+        List<byte[]> sigs = new ArrayList<byte[]>();
+        for (ECKey ecKey : signKeys) {
+            TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(networkParameters, yourutxo, 0);
+            Script multisigScript_ = multisigOutput_.getScriptPubKey();
 
-                ECKey.ECDSASignature party1Signature = ecKey.sign(transaction.getHash(), null);
-                byte[] signature = party1Signature.encodeToDER();
-                boolean success = ECKey.verify(transaction.getHash().getBytes(), signature, ecKey.getPubKey());
-                if (!success) {
-                    throw new BlockStoreException("key multisign signature error");
-                }
-                sigs.add(transactionSignature.encodeToBitcoin());
+            Sha256Hash sighash = transaction.hashForSignature(0, multisigScript_, Transaction.SigHash.ALL, false);
+            TransactionSignature transactionSignature = new TransactionSignature(ecKey.sign(sighash, null),
+                    Transaction.SigHash.ALL, false);
+
+            ECKey.ECDSASignature party1Signature = ecKey.sign(transaction.getHash(), null);
+            byte[] signature = party1Signature.encodeToDER();
+            boolean success = ECKey.verify(transaction.getHash().getBytes(), signature, ecKey.getPubKey());
+            if (!success) {
+                throw new BlockStoreException("key multisign signature error");
             }
-            Script inputScript = ScriptBuilder.createMultiSigInputScriptBytes(sigs);
-            transaction.getInput(0).setScriptSig(inputScript);
-            req = SendRequest.forTx(transaction);
-        } else {
-
-            Address destination = Address.fromBase58(networkParameters, myutxo.getAddress());
-            req = SendRequest.to(destination, amount);
-            walletAppKit1.wallet().completeTx(req);
-            walletAppKit1.wallet().signTransaction(req);
+            sigs.add(transactionSignature.encodeToBitcoin());
         }
+        Script inputScript = ScriptBuilder.createMultiSigInputScriptBytes(sigs);
+        transaction.getInput(0).setScriptSig(inputScript);
+        req = SendRequest.forTx(transaction);
 
         exchangeTokenComplete(req.tx);
         List<UTXO> templist = testTransactionAndGetBalances(false, keys);
@@ -550,50 +443,12 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         for (UTXO utxo : templist1) {
             System.err.println(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
         }
-        if (myutxo.isMultiSig()) {
-            List<ECKey> signKeys = new ArrayList<>();
-            signKeys.add(mykeys.get(0));
-            signKeys.add(mykeys.get(1));
-            signKeys.add(mykeys.get(2));
-            amount = Coin.valueOf(10000, myutxo.getValue().tokenid);
-            TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, myutxo, 0);
 
-            transaction.addOutput(amount, new Address(networkParameters, yourutxo.getAddress()));
-
-            Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(3, signKeys);
-            Coin amount2 = multisigOutput.getValue().subtract(amount);
-            transaction.addOutput(amount2, scriptPubKey);
-
-            transaction.addInput(multisigOutput);
-
-            List<byte[]> sigs = new ArrayList<byte[]>();
-            for (ECKey ecKey : signKeys) {
-                TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(networkParameters, myutxo, 0);
-                Script multisigScript_ = multisigOutput_.getScriptPubKey();
-
-                Sha256Hash sighash = transaction.hashForSignature(0, multisigScript_, Transaction.SigHash.ALL, false);
-                TransactionSignature transactionSignature = new TransactionSignature(ecKey.sign(sighash, null),
-                        Transaction.SigHash.ALL, false);
-
-                ECKey.ECDSASignature party1Signature = ecKey.sign(transaction.getHash(), null);
-                byte[] signature = party1Signature.encodeToDER();
-                boolean success = ECKey.verify(transaction.getHash().getBytes(), signature, ecKey.getPubKey());
-                if (!success) {
-                    throw new BlockStoreException("key multisign signature error");
-                }
-                sigs.add(transactionSignature.encodeToBitcoin());
-            }
-            Script inputScript = ScriptBuilder.createMultiSigInputScriptBytes(sigs);
-            transaction.getInput(0).setScriptSig(inputScript);
-            req = SendRequest.forTx(transaction);
-        } else {
-
-            Address destination = Address.fromBase58(networkParameters, yourutxo.getAddress());
-            amount = Coin.valueOf(1000, myutxo.getValue().tokenid);
-            req = SendRequest.to(destination, amount);
-            walletAppKit.wallet().completeTx(req);
-            walletAppKit.wallet().signTransaction(req);
-        }
+        Address destination = Address.fromBase58(networkParameters, yourutxo.getAddress());
+        amount = Coin.valueOf(1000, myutxo.getValue().tokenid);
+        req = SendRequest.to(destination, amount);
+        walletAppKit.wallet().completeTx(req);
+        walletAppKit.wallet().signTransaction(req);
 
         exchangeTokenComplete(req.tx);
 
@@ -642,6 +497,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         checkBalance(utxo.getValue(), walletAppKit1.wallet().walletKeys(null));
     }
 
+   
     public void payTokenA(ECKey outKey) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),

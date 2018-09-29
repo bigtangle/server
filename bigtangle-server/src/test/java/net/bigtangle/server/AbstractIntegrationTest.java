@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -39,12 +40,18 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
+import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.Transaction;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
+import net.bigtangle.core.http.server.resp.MultiSignResponse;
+import net.bigtangle.core.http.server.resp.TokenIndexResponse;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.DBStoreConfiguration;
@@ -301,4 +308,103 @@ public abstract class AbstractIntegrationTest {
         assertTrue(myutxo != null);
         assertTrue(myutxo.getAddress() != null && !myutxo.getAddress().isEmpty());
     }
+    
+    
+    //create a token with multi sign
+    public void testCreateMultiSigToken(List<ECKey> keys) throws JsonProcessingException, Exception {
+        // Setup transaction and signatures
+        // List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
+
+        String tokenid = keys.get(5).getPublicKeyAsHex();
+
+        int amount = 678900000;
+        Coin basecoin = Coin.valueOf(amount, tokenid);
+
+        TokenInfo tokenInfo = new TokenInfo();
+
+        HashMap<String, String> requestParam00 = new HashMap<String, String>();
+        requestParam00.put("tokenid", tokenid);
+        String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getCalTokenIndex.name(),
+                Json.jsonmapper().writeValueAsString(requestParam00));
+
+        TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
+        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+        String prevblockhash = tokenIndexResponse.getBlockhash();
+
+        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
+        tokenInfo.setTokens(tokens);
+
+        ECKey key1 = keys.get(0);
+        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key1.getPublicKeyAsHex()));
+
+        ECKey key2 = keys.get(1);
+        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key2.getPublicKeyAsHex()));
+
+        ECKey key3 = keys.get(2);
+        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key3.getPublicKeyAsHex()));
+
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+        block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
+        block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
+        block.solve();
+
+        log.debug("block hash : " + block.getHashAsString());
+
+        // save block, but no signature and is not saved as block, but in a table for signs
+        OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
+
+        List<ECKey> ecKeys = new ArrayList<ECKey>();
+        ecKeys.add(key1);
+        ecKeys.add(key2);
+        ecKeys.add(key3);
+
+        for (ECKey ecKey : ecKeys) {
+            HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
+            requestParam0.put("address", ecKey.toAddress(networkParameters).toBase58());
+            String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultiSignWithAddress.name(),
+                    Json.jsonmapper().writeValueAsString(requestParam0));
+            System.out.println(resp);
+
+            MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
+            String blockhashHex = multiSignResponse.getMultiSigns().get((int) tokenindex_).getBlockhashHex();
+            byte[] payloadBytes = Utils.HEX.decode(blockhashHex);
+
+            Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
+            Transaction transaction = block0.getTransactions().get(0);
+
+            List<MultiSignBy> multiSignBies = null;
+            if (transaction.getDataSignature() == null) {
+                multiSignBies = new ArrayList<MultiSignBy>();
+            } else {
+                MultiSignByRequest multiSignByRequest = Json.jsonmapper().readValue(transaction.getDataSignature(),
+                        MultiSignByRequest.class);
+                multiSignBies = multiSignByRequest.getMultiSignBies();
+            }
+            Sha256Hash sighash = transaction.getHash();
+            ECKey.ECDSASignature party1Signature = ecKey.sign(sighash);
+            byte[] buf1 = party1Signature.encodeToDER();
+
+            MultiSignBy multiSignBy0 = new MultiSignBy();
+            multiSignBy0.setTokenid(tokenid);
+            multiSignBy0.setTokenindex(tokenindex_);
+            multiSignBy0.setAddress(ecKey.toAddress(networkParameters).toBase58());
+            multiSignBy0.setPublickey(Utils.HEX.encode(ecKey.getPubKey()));
+            multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+            multiSignBies.add(multiSignBy0);
+            MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
+            transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
+            checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block0.bitcoinSerialize()));
+
+        }
+        this.wallet1();
+        for (ECKey ecKey : walletAppKit1.wallet().walletKeys(null)) {
+            log.debug(ecKey.getPublicKeyAsHex());
+        }
+        // checkBalance(tokenid, ecKeys );
+    }
+
 }
