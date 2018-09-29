@@ -276,6 +276,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             testCreateMultiSig();
         }
         ECKey outKey = new ECKey();
+        //pay to address outKey, remainder return to walletKeys with multi signs 
         PayMultiSign payMultiSign = launchPayMultiSignA(outKey);
 
         // for (int i = 0; i < 3; i++) {
@@ -304,8 +305,8 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             }
         }
 
-        // }
-        List<UTXO> utxos = testTransactionAndGetBalances(false, outKey);
+        // this is utxo of outKey, which is not a multi signatures
+        List<UTXO> utxos = testTransactionAndGetBalances(false, walletKeys);
         assertTrue(utxos != null && utxos.size() > 0);
         System.out.println("===================");
         for (UTXO utxo : utxos) {
@@ -363,7 +364,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, output, 0);
         Transaction transaction = new Transaction(networkParameters);
         transaction.addOutput(amount, outKey);
-
+        //remainder of utxo goes here with multi sign keys ecKeys
         Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(3, ecKeys);
         Coin amount2 = multisigOutput.getValue().subtract(amount);
         transaction.addOutput(amount2, scriptPubKey);
@@ -415,8 +416,8 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         payMultiSign.setToaddress(outKey.toAddress(networkParameters).toBase58());
         payMultiSign.setAmount(amount.getValue());
         payMultiSign.setMinsignnumber(3);
-        payMultiSign.setOutpusHashHex(output.getHashHex() + ":" + output.getIndex());
-
+        payMultiSign.setOutpusHashHex(output.getHashHex()  );
+        payMultiSign.setOutputsindex(  output.getIndex());
         OkHttp3Util.post(contextRoot + ReqCmd.launchPayMultiSign.name(),
                 Json.jsonmapper().writeValueAsString(payMultiSign));
         return payMultiSign;

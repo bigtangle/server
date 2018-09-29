@@ -170,52 +170,14 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         HashMap<String, Integer> giveMoneyResult = new HashMap<>();
         for (int i = 0; i < 3; i++) {
             ECKey outKey = new ECKey();
-            giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), 1000);
+            giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), 1000* 1000);
         }
-
-        Coin coinbase = Coin.ZERO;
-        Transaction doublespent = new Transaction(networkParameters);
-
-        for (Map.Entry<String, Integer> entry : giveMoneyResult.entrySet()) {
-            Coin amount = Coin.valueOf(entry.getValue() * 1000, NetworkParameters.BIGTANGLE_TOKENID);
-            Address address = Address.fromBase58(networkParameters, entry.getKey());
-            doublespent.addOutput(amount, address);
-            coinbase = coinbase.add(amount);
-        }
-
-        UTXO findOutput = null;
-        for (UTXO output : testTransactionAndGetBalances(false, genesiskey)) {
-            if (Arrays.equals(coinbase.getTokenid(), output.getValue().getTokenid())) {
-                findOutput = output;
-            }
-        }
-
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, findOutput, 0);
-        Coin amount = spendableOutput.getValue().subtract(coinbase);
-
-        doublespent.addOutput(amount, genesiskey);
-        TransactionInput input = doublespent.addInput(spendableOutput);
-        Sha256Hash sighash = doublespent.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
-                false);
-
-        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
-                false);
-        Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
-        input.setScriptSig(inputScript);
-
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
-        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
-        rollingBlock.addTransaction(doublespent);
-        rollingBlock.solve();
-
-        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+       walletAppKit.wallet().payMoneyToECKeyList(giveMoneyResult, genesiskey);
 
         for (UTXO utxo : testTransactionAndGetBalances(false, genesiskey)) {
-            logger.info("UTXO : " + utxo);
-            if (Arrays.equals(coinbase.getTokenid(), utxo.getValue().getTokenid())) {
-                assertTrue(utxo.getValue().value == 999999997000000L);
-            }
+            logger.info("UTXO : " + utxo); 
+                assertTrue(utxo.getValue().value == 999999993666667l);
+            
         }
     }
 
