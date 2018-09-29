@@ -475,8 +475,14 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         List<ECKey> mykeys = walletAppKit.wallet().walletKeys(null);
         testCreateMultiSig(keys);
         List<UTXO> utxos = testTransactionAndGetBalances(false, keys);
+        for (UTXO utxo : utxos) {
+            System.err.println(utxo.toString());
+        }
         UTXO yourutxo = utxos.get(0);
         List<UTXO> ulist = testTransactionAndGetBalances();
+        for (UTXO utxo : ulist) {
+            System.err.println(utxo.toString());
+        }
         UTXO myutxo = null;
         for (UTXO u : ulist) {
             if (Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
@@ -489,7 +495,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
         SendRequest req = null;
 
-        ulist.addAll(utxos);
+        // ulist.addAll(utxos);
         Transaction transaction = new Transaction(networkParameters);
         if (yourutxo.isMultiSig()) {
             List<ECKey> signKeys = new ArrayList<>();
@@ -536,7 +542,14 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         }
 
         exchangeTokenComplete(req.tx);
-
+        List<UTXO> templist = testTransactionAndGetBalances(false, keys);
+        for (UTXO utxo : templist) {
+            System.err.println(utxo.toString());
+        }
+        List<UTXO> templist1 = testTransactionAndGetBalances();
+        for (UTXO utxo : templist1) {
+            System.err.println(utxo.toString());
+        }
         if (myutxo.isMultiSig()) {
             List<ECKey> signKeys = new ArrayList<>();
             signKeys.add(mykeys.get(0));
@@ -576,6 +589,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         } else {
 
             Address destination = Address.fromBase58(networkParameters, yourutxo.getAddress());
+            amount = Coin.valueOf(1000, myutxo.getValue().tokenid);
             req = SendRequest.to(destination, amount);
             walletAppKit.wallet().completeTx(req);
             walletAppKit.wallet().signTransaction(req);

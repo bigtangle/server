@@ -40,8 +40,8 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Token;
+import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
@@ -172,7 +172,8 @@ public abstract class AbstractIntegrationTest {
     public List<UTXO> testTransactionAndGetBalances(boolean withZero, List<ECKey> keys) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         List<String> keyStrHex000 = new ArrayList<String>();
-
+        keys.add(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(networkParameters.testPriv),
+                Utils.HEX.decode(networkParameters.testPub)));
         for (ECKey ecKey : keys) {
             // keyStrHex000.add(ecKey.toAddress(networkParameters).toString());
             keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
@@ -207,12 +208,12 @@ public abstract class AbstractIntegrationTest {
         milestoneService.update();
 
         List<UTXO> ux = testTransactionAndGetBalances();
-    //    assertTrue(!ux.isEmpty());
+        // assertTrue(!ux.isEmpty());
         for (UTXO u : ux) {
             log.debug(u.toString());
         }
 
-      //  testInitTransferWallet();
+        // testInitTransferWallet();
     }
 
     // transfer the coin deon test key to address in wallet
@@ -224,8 +225,7 @@ public abstract class AbstractIntegrationTest {
         coinbaseWallet.setServerURL(contextRoot);
         // get new Block to be used from server
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip,
-                Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
 
         Coin amount = Coin.parseCoin("3333333", NetworkParameters.BIGTANGLE_TOKENID);
@@ -240,32 +240,31 @@ public abstract class AbstractIntegrationTest {
 
     }
 
-  
     public void testCreateMultiSig() throws JsonProcessingException, Exception {
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
-        
+
         String tokenid = Utils.HEX.encode(pubKey);
-        
+
         Coin basecoin = Coin.valueOf(77777L, pubKey);
         long amount = basecoin.getValue();
-        
+
         Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "浜烘皯甯佹敮绁�", "", 1, 0, amount, false, true);
         tokenInfo.setTokens(tokens);
 
         // add MultiSignAddress item
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        
+
         walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, null);
     }
- 
+
     public void testCreateMarket() throws JsonProcessingException, Exception {
         ECKey outKey = walletKeys.get(1);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
-        
+
         String tokenid = Utils.HEX.encode(pubKey);
         Token tokens = Token.buildMarketTokenInfo(true, "", tokenid, "p2p", "", "http://localhost:8089");
         tokenInfo.setTokens(tokens);
