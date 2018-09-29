@@ -542,7 +542,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
             signKeys.add(mykeys.get(0));
             signKeys.add(mykeys.get(1));
             signKeys.add(mykeys.get(2));
-
+            amount = Coin.valueOf(10000, myutxo.getValue().tokenid);
             TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, myutxo, 0);
 
             transaction.addOutput(amount, new Address(networkParameters, yourutxo.getAddress()));
@@ -555,7 +555,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
             List<byte[]> sigs = new ArrayList<byte[]>();
             for (ECKey ecKey : signKeys) {
-                TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(networkParameters, yourutxo, 0);
+                TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(networkParameters, myutxo, 0);
                 Script multisigScript_ = multisigOutput_.getScriptPubKey();
 
                 Sha256Hash sighash = transaction.hashForSignature(0, multisigScript_, Transaction.SigHash.ALL, false);
