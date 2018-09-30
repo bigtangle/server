@@ -238,7 +238,7 @@ public class MainController {
                     addressList.add(outputsMulti.getToAddress());
                 }
 
-                Main.validOutputMultiMap.put(key, addressList);
+                Main.validOutputMultiMap.put(key + ":" + outputindex, addressList);
             }
             if (Main.validTokenMap.get(key) == null) {
                 Set<String> addressList = new HashSet<String>();

@@ -348,16 +348,7 @@ public class OrderController extends ExchangeController {
                 }
             }
         } else {
-            for (Token tokens : getTokensResponse.getTokens()) {
-                String tokenHex = tokens.getTokenid();
-                if (tokens.getTokentype() != TokenType.token.ordinal()) {
-                    continue;
-                }
-                String tokenname = tokens.getTokenname();
-                if (!isSystemCoin(tokenname + ":" + tokenHex)) {
-                    tokenData.add(tokenname + ":" + tokenHex);
-                }
-            }
+
             if (Main.tokenInfo != null && Main.tokenInfo.getPositveTokenList() != null) {
                 for (Token p : Main.tokenInfo.getPositveTokenList()) {
                     if (!isSystemCoin(p.getTokenname() + ":" + p.getTokenid())
@@ -368,6 +359,17 @@ public class OrderController extends ExchangeController {
                                     + p.getTokenid());
                         }
 
+                    }
+                }
+            } else {
+                for (Token tokens : getTokensResponse.getTokens()) {
+                    String tokenHex = tokens.getTokenid();
+                    if (tokens.getTokentype() != TokenType.token.ordinal()) {
+                        continue;
+                    }
+                    String tokenname = tokens.getTokenname();
+                    if (!isSystemCoin(tokenname + ":" + tokenHex)) {
+                        tokenData.add(tokenname + ":" + tokenHex);
                     }
                 }
             }
