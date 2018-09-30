@@ -247,7 +247,10 @@ public class ExchangeController {
         for (Token tokens : getTokensResponse.getTokens()) {
             String tokenHex = tokens.getTokenid();
             String tokenname = tokens.getTokenname();
-            tokenData.add(tokenname + " : " + tokenHex);
+            if (Main.getNoMultiTokens().contains(tokenHex)) {
+                tokenData.add(tokenname + " : " + tokenHex);
+            }
+
         }
 
         toTokenHexComboBox.setItems(tokenData);
@@ -268,6 +271,14 @@ public class ExchangeController {
     }
 
     public void exchangeCoin(ActionEvent event) throws Exception {
+        if (!Main.getNoMultiTokens().contains(toTokenHexComboBox.getValue())) {
+            GuiUtils.informationalAlert("", Main.getText("noMulti"), "");
+            return;
+        }
+        if (!Main.getNoMultiTokens().contains(fromTokenHexComboBox.getValue())) {
+            GuiUtils.informationalAlert("", Main.getText("noMulti"), "");
+            return;
+        }
         exchange("");
         overlayUI.done();
     }

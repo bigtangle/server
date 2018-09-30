@@ -355,8 +355,11 @@ public class OrderController extends ExchangeController {
                             && p.getTokenname().endsWith(":" + Main.getText("Token"))) {
                         if (!tokenData.contains(
                                 p.getTokenname().substring(0, p.getTokenname().indexOf(":")) + ":" + p.getTokenid())) {
-                            tokenData.add(p.getTokenname().substring(0, p.getTokenname().indexOf(":")) + ":"
-                                    + p.getTokenid());
+                            if (Main.getNoMultiTokens().contains(p.getTokenid())) {
+                                tokenData.add(p.getTokenname().substring(0, p.getTokenname().indexOf(":")) + ":"
+                                        + p.getTokenid());
+                            }
+
                         }
 
                     }
@@ -364,6 +367,12 @@ public class OrderController extends ExchangeController {
             } else {
                 for (Token tokens : getTokensResponse.getTokens()) {
                     String tokenHex = tokens.getTokenid();
+                    if (tokens.isMultiserial()) {
+                        continue;
+                    }
+                    if (tokens.getSignnumber() >= 2) {
+                        continue;
+                    }
                     if (tokens.getTokentype() != TokenType.token.ordinal()) {
                         continue;
                     }

@@ -86,6 +86,7 @@ public class EckeyController {
 
     }
 
+
     public void addKey(String password) {
         ECKey newKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(newPrivateKeyTextField.getText()),
                 Utils.HEX.decode(newPubkeyTextField.getText()));

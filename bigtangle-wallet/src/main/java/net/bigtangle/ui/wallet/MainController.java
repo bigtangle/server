@@ -211,6 +211,7 @@ public class MainController {
         ObservableList<UTXOModel> subutxos = FXCollections.observableArrayList();
         Main.validTokenMap.clear();
         Main.validAddressSet.clear();
+        Main.validTokenSet.clear();
         for (UTXO utxo : getBalancesResponse.getOutputs()) {
             Coin c = utxo.getValue();
             String balance = c.toPlainString();
@@ -224,22 +225,29 @@ public class MainController {
             long outputindex = utxo.getIndex();
             String key = Utils.HEX.encode(tokenid);
             int signnum = Integer.parseInt(minimumsign);
-            if (signnum >= 2) {
-                HashMap<String, Object> requestParam = new HashMap<String, Object>();
-                requestParam.put("hexStr", hash);
-                requestParam.put("index", outputindex);
-                String response0 = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getOutputMultiList.name(),
-                        Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-                Set<String> addressList = new HashSet<String>();
-                OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(response0,
-                        OutputsDetailsResponse.class);
-                List<OutputsMulti> outputsMultis = outputsDetailsResponse.getOutputsMultis();
-                for (OutputsMulti outputsMulti : outputsMultis) {
-                    addressList.add(outputsMulti.getToAddress());
-                }
-
-                Main.validOutputMultiMap.put(key + ":" + outputindex, addressList);
+            if (!utxo.isMultiSig()) {
+                Main.validTokenSet.add(Main.getString(hashNameMap.get(key)) + ":" + key);
             }
+            // if (signnum >= 2) {
+            // HashMap<String, Object> requestParam = new HashMap<String,
+            // Object>();
+            // requestParam.put("hexStr", hash);
+            // requestParam.put("index", outputindex);
+            // String response0 = OkHttp3Util.post(CONTEXT_ROOT +
+            // ReqCmd.getOutputMultiList.name(),
+            // Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+            // Set<String> addressList = new HashSet<String>();
+            // OutputsDetailsResponse outputsDetailsResponse =
+            // Json.jsonmapper().readValue(response0,
+            // OutputsDetailsResponse.class);
+            // List<OutputsMulti> outputsMultis =
+            // outputsDetailsResponse.getOutputsMultis();
+            // for (OutputsMulti outputsMulti : outputsMultis) {
+            // addressList.add(outputsMulti.getToAddress());
+            // }
+            //
+            // Main.validOutputMultiMap.put(key, addressList);
+            // }
             if (Main.validTokenMap.get(key) == null) {
                 Set<String> addressList = new HashSet<String>();
                 addressList.add(address);
@@ -273,11 +281,10 @@ public class MainController {
         Main.instance.getUtxoData().addAll(subutxos);
 
         ObservableList<CoinModel> subcoins = FXCollections.observableArrayList();
-        Main.validTokenSet.clear();
+
         for (Coin coin : getBalancesResponse.getTokens()) {
             if (!coin.isZero()) {
-                Main.validTokenSet.add(Main.getString(hashNameMap.get(Utils.HEX.encode(coin.tokenid))) + ":"
-                        + Utils.HEX.encode(coin.tokenid));
+
                 if (myPositvleTokens != null && !"".equals(myPositvleTokens.trim())
                         && !myPositvleTokens.trim().isEmpty()) {
                     if (myPositvleTokens.contains(Utils.HEX.encode(coin.tokenid))) {
