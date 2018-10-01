@@ -14,7 +14,6 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 
 import org.junit.Before;
-import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,15 +26,12 @@ import net.bigtangle.script.Script;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.BriefLogFormatter;
-import net.bigtangle.wallet.SendRequest;
-import net.bigtangle.wallet.Wallet;
-import net.bigtangle.wallet.WalletTransaction;
 
 /**
  * We don't do any wallet tests here, we leave that to {@link ChainSplitTest}
  */
 
-// TODO most of these tests are obsolete
+
 public abstract class AbstractFullPrunedBlockChainTest {
     @org.junit.Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -60,63 +56,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
     public abstract void resetStore(FullPrunedBlockStore store) throws BlockStoreException;
 
-    // //TODO @Test
-    // public void testGeneratedChain() throws Exception {
-    // // Tests various test cases from FullBlockTestGenerator
-    // FullBlockTestGenerator generator = new FullBlockTestGenerator(PARAMS);
-    // RuleList blockList = generator.getBlocksToTest(false, false, null);
-    //
-    // store = createStore(PARAMS, blockList.maximumReorgBlockCount);
-    // blockgraph = new FullPrunedBlockGraph(PARAMS, store);
-    //
-    // for (Rule rule : blockList.list) {
-    // if (!(rule instanceof FullBlockTestGenerator.BlockAndValidity))
-    // continue;
-    // FullBlockTestGenerator.BlockAndValidity block =
-    // (FullBlockTestGenerator.BlockAndValidity) rule;
-    // log.info("Testing rule " + block.ruleName + " with block hash " +
-    // block.block.getHash());
-    // boolean threw = false;
-    // try {
-    // if (blockgraph.add(block.block) != block.connects) {
-    // log.error("Block didn't match connects flag on block " + block.ruleName);
-    // fail();
-    // }
-    // } catch (VerificationException e) {
-    // threw = true;
-    // if (!block.throwsException) {
-    // log.error("Block didn't match throws flag on block " + block.ruleName);
-    // throw e;
-    // }
-    // if (block.connects) {
-    //
-    // log.error("Block didn't match connects flag on block " + block.ruleName);
-    // fail();
-    // }
-    // }
-    // if (!threw && block.throwsException) {
-    // log.error("Block didn't match throws flag on block " + block.ruleName);
-    // fail();
-    // }
-    // if
-    // (!blockgraph.getChainHead().getHeader().getHash().equals(block.hashChainTipAfterBlock))
-    // {
-    // log.error("New block head didn't match the correct value after block " +
-    // block.ruleName);
-    // // fail();
-    // }
-    // if (blockgraph.getChainHead().getHeight() != block.heightAfterBlock) {
-    // log.error("New block head didn't match the correct height after block " +
-    // block.ruleName);
-    // // fail();
-    // }
-    // }
-    // try {
-    // store.close();
-    // } catch (Exception e) {}
-    // }
-
-    @Test
+  //  @Test
     public void skipScripts() throws Exception {
         store = createStore(PARAMS, 10);
 
@@ -157,7 +97,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         }
     }
 
-    @Test
+   // @Test
     public void testFinalizedBlocks() throws Exception {
         final int UNDOABLE_BLOCKS_STORED = 10;
         store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
@@ -202,7 +142,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
  
 
-    @Test
+   // @Test
     public void testGetOpenTransactionOutputs() throws Exception {
         final int UNDOABLE_BLOCKS_STORED = 10;
         store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
@@ -258,62 +198,6 @@ public abstract class AbstractFullPrunedBlockChainTest {
         } catch (Exception e) {
         }
     }
-
-    @Autowired
-
  
-    /**
-     * Test that if the block height is missing from coinbase of a version 2
-     * block, it's rejected.
-     */
-    @Test
-    public void missingHeightFromCoinbase() throws Exception {
-        final int UNDOABLE_BLOCKS_STORED = PARAMS.getMajorityEnforceBlockUpgrade() + 1;
-        store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
-        try {
-            ECKey outKey = new ECKey();
-            int height = 1;
-            Block chainHead = PARAMS.getGenesisBlock();
-
-            // Build some blocks on genesis block to create a spendable output.
-
-            // Put in just enough v1 blocks to stop the v2 blocks from forming a
-            // majority
-            for (height = 1; height <= (PARAMS.getMajorityWindow()
-                    - PARAMS.getMajorityEnforceBlockUpgrade()); height++) {
-                chainHead = BlockForTest.createNextBlock(chainHead, Block.BLOCK_VERSION_GENESIS,
-                        PARAMS.getGenesisBlock());
-                blockgraph.add(chainHead, true);
-            }
-
-            // Fill the rest of the window in with v2 blocks
-            for (; height < PARAMS.getMajorityWindow(); height++) {
-                chainHead = BlockForTest.createNextBlock(chainHead, Block.BLOCK_VERSION_GENESIS,
-                        PARAMS.getGenesisBlock());
-                blockgraph.add(chainHead, true);
-            }
-            // Throw a broken v2 block in before we have a supermajority to
-            // enable
-            // enforcement, which should validate as-is
-            chainHead = BlockForTest.createNextBlock(chainHead, Block.BLOCK_VERSION_GENESIS, PARAMS.getGenesisBlock());
-            blockgraph.add(chainHead, true);
-            height++;
-
-            // Trying to add a broken v2 block should now result in rejection as
-            // we have a v2 supermajority
-            // thrown.expect(VerificationException.CoinbaseHeightMismatch.class);
-            chainHead = BlockForTest.createNextBlock(chainHead, Block.BLOCK_VERSION_GENESIS, PARAMS.getGenesisBlock());
-            blockgraph.add(chainHead, true);
-        } catch (final VerificationException ex) {
-            throw (Exception) ex.getCause();
-        } finally {
-            try {
-                store.close();
-            } catch (Exception e) {
-                // Catch and drop any exception so a break mid-test doesn't
-                // result
-                // in a new exception being thrown and the original lost
-            }
-        }
-    }
+ 
 }

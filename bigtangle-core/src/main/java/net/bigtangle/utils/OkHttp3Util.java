@@ -106,7 +106,7 @@ public class OkHttp3Util {
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
         if (result2.get("errorcode") != null) {
             int error = (Integer) result2.get("errorcode");
-            if (error == 100) {
+            if (error > 0) {
                 if (result2.get("message") == null) {
                     throw new RuntimeException("server erorr:" + error);
                 } else {

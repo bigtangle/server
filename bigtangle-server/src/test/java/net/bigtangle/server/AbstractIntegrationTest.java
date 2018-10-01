@@ -286,6 +286,11 @@ public abstract class AbstractIntegrationTest {
         assertTrue(error == code);
     }
 
+    public void checkBalance(Coin coin, ECKey ecKey) throws Exception {
+        ArrayList<ECKey> a=  new ArrayList<ECKey>();
+        a.add(ecKey);
+        checkBalance(coin,  a);
+    }
     public void checkBalance(Coin coin, List<ECKey> a) throws Exception {
         milestoneService.update();
         List<UTXO> ulist = testTransactionAndGetBalances(false, a);

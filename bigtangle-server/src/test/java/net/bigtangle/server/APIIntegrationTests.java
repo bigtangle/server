@@ -7,6 +7,7 @@ package net.bigtangle.server;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -24,7 +25,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockForTest;
@@ -38,13 +41,11 @@ import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.PayMultiSignAddress;
-import net.bigtangle.core.PrunedException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
-import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
@@ -70,6 +71,8 @@ import net.bigtangle.wallet.Wallet;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class APIIntegrationTests extends AbstractIntegrationTest {
+
+    private static final Logger log = LoggerFactory.getLogger(APIIntegrationTests.class);
 
     public void testMultiSignByJson() throws Exception {
         List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
@@ -228,7 +231,6 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
     }
 
-
     @Test
     public void testCreateMultiSigList() throws Exception {
         for (int i = 0; i < 1; i++) {
@@ -276,8 +278,9 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             testCreateMultiSig();
         }
         ECKey outKey = new ECKey();
-        //pay to address outKey, remainder return to walletKeys with multi signs 
-        PayMultiSign payMultiSign = launchPayMultiSignA(outKey);
+        // pay to address outKey, remainder return to walletKeys with multi
+        // signs
+        PayMultiSign payMultiSign = launchPayMultiSign(outKey);
 
         // for (int i = 0; i < 3; i++) {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -299,20 +302,20 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             for (ECKey ecKey : walletAppKit.wallet().walletKeys(aesKey)) {
                 if (ecKey.toAddress(networkParameters).toString().equals(payMultiSignAddress.getPubKey())) {
                     currentECKey = ecKey;
-                    this.payMultiSign(currentECKey, payMultiSign.getOrderid(), networkParameters, contextRoot);
                     break;
                 }
             }
+            this.payMultiSign(currentECKey, payMultiSign.getOrderid(), networkParameters, contextRoot);
         }
 
         // this is utxo of outKey, which is not a multi signatures
-        List<UTXO> utxos = testTransactionAndGetBalances(false, walletKeys);
+        List<UTXO> utxos = testTransactionAndGetBalances(false, outKey);
         assertTrue(utxos != null && utxos.size() > 0);
-        System.out.println("===================");
+        log.debug("===================");
         for (UTXO utxo : utxos) {
             logger.info(utxo.toString());
         }
-        PayMultiSign payMultiSign1 = launchPayMultiSignA(outKey);
+        PayMultiSign payMultiSign1 = launchPayMultiSign(outKey);
 
         // for (int i = 0; i < 3; i++) {
         requestParam = new HashMap<String, Object>();
@@ -333,15 +336,16 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             for (ECKey ecKey : walletAppKit.wallet().walletKeys(aesKey)) {
                 if (ecKey.toAddress(networkParameters).toString().equals(payMultiSignAddress.getPubKey())) {
                     currentECKey = ecKey;
-                    this.payMultiSign(currentECKey, payMultiSign1.getOrderid(), networkParameters, contextRoot);
                     break;
                 }
             }
+            this.payMultiSign(currentECKey, payMultiSign1.getOrderid(), networkParameters, contextRoot);
+
         }
 
         // }
         utxos = testTransactionAndGetBalances(false, outKey);
-        System.out.println("111111111111111");
+        log.debug("111111111111111");
         assertTrue(utxos != null && utxos.size() > 0);
         for (UTXO utxo : utxos) {
             logger.info(utxo.toString());
@@ -349,7 +353,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
     }
 
-    private PayMultiSign launchPayMultiSignA(ECKey outKey) throws Exception, JsonProcessingException {
+    private PayMultiSign launchPayMultiSign(ECKey outKey) throws Exception, JsonProcessingException {
         List<ECKey> ecKeys = new ArrayList<ECKey>();
         ecKeys.add(walletKeys.get(0));
         ecKeys.add(walletKeys.get(1));
@@ -364,8 +368,8 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, output, 0);
         Transaction transaction = new Transaction(networkParameters);
         transaction.addOutput(amount, outKey);
-        //remainder of utxo goes here with multi sign keys ecKeys
-        Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(3, ecKeys);
+        // remainder of utxo goes here with multi sign keys ecKeys
+        Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, ecKeys);
         Coin amount2 = multisigOutput.getValue().subtract(amount);
         transaction.addOutput(amount2, scriptPubKey);
 
@@ -387,40 +391,9 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     }
 
     private PayMultiSign launchPayMultiSign() throws Exception, JsonProcessingException {
-        List<ECKey> ecKeys = new ArrayList<ECKey>();
-        ecKeys.add(walletKeys.get(0));
-        ecKeys.add(walletKeys.get(1));
-        ecKeys.add(walletKeys.get(2));
 
         ECKey outKey = new ECKey();
-        String tokenid = walletAppKit.wallet().walletKeys(null).get(5).getPublicKeyAsHex();
-        Coin amount = Coin.parseCoin("12", Utils.HEX.decode(tokenid));
-
-        UTXO output = testTransactionAndGetBalances(tokenid, false, ecKeys);
-
-        // filter the
-        TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, output, 0);
-        Transaction transaction = new Transaction(networkParameters);
-        transaction.addOutput(amount, outKey);
-
-        Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(3, ecKeys);
-        Coin amount2 = multisigOutput.getValue().subtract(amount);
-        transaction.addOutput(amount2, scriptPubKey);
-
-        transaction.addInput(multisigOutput);
-
-        PayMultiSign payMultiSign = new PayMultiSign();
-        payMultiSign.setOrderid(UUIDUtil.randomUUID());
-        payMultiSign.setTokenid(tokenid);
-        payMultiSign.setBlockhashHex(Utils.HEX.encode(transaction.bitcoinSerialize()));
-        payMultiSign.setToaddress(outKey.toAddress(networkParameters).toBase58());
-        payMultiSign.setAmount(amount.getValue());
-        payMultiSign.setMinsignnumber(3);
-        payMultiSign.setOutpusHashHex(output.getHashHex()  );
-        payMultiSign.setOutputsindex(  output.getIndex());
-        OkHttp3Util.post(contextRoot + ReqCmd.launchPayMultiSign.name(),
-                Json.jsonmapper().writeValueAsString(payMultiSign));
-        return payMultiSign;
+        return launchPayMultiSign(outKey);
     }
 
     public void payMultiSign(ECKey ecKey, String orderid, NetworkParameters networkParameters, String contextRoot)
@@ -442,18 +415,18 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         requestParam.put("hexStr", payMultiSign_.getOutpusHashHex() + ":" + payMultiSign_.getOutputsindex());
         resp = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputWithKey.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
-        System.out.println(resp);
+        log.debug(resp);
 
         OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
         UTXO u = outputsDetailsResponse.getOutputs();
 
-        TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(networkParameters, u, 0);
-        Script multisigScript_ = multisigOutput_.getScriptPubKey();
+        TransactionOutput multisigOutput_1 = new FreeStandingTransactionOutput(networkParameters, u, 0);
+        Script multisigScript_1 = multisigOutput_1.getScriptPubKey();
 
         byte[] payloadBytes = Utils.HEX.decode((String) payMultiSign_.getBlockhashHex());
         Transaction transaction0 = networkParameters.getDefaultSerializer().makeTransaction(payloadBytes);
 
-        Sha256Hash sighash = transaction0.hashForSignature(0, multisigScript_, Transaction.SigHash.ALL, false);
+        Sha256Hash sighash = transaction0.hashForSignature(0, multisigScript_1, Transaction.SigHash.ALL, false);
         TransactionSignature transactionSignature = new TransactionSignature(ecKey.sign(sighash),
                 Transaction.SigHash.ALL, false);
 
@@ -467,42 +440,50 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         requestParam.put("signInputData", Utils.HEX.encode(transactionSignature.encodeToBitcoin()));
         resp = OkHttp3Util.postString(contextRoot + ReqCmd.payMultiSign.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
-        System.out.println(resp);
+        log.debug(resp);
 
         PayMultiSignResponse payMultiSignResponse = Json.jsonmapper().readValue(resp, PayMultiSignResponse.class);
         boolean success = payMultiSignResponse.isSuccess();
         if (success) {
-            requestParam.clear();
-            requestParam.put("orderid", (String) payMultiSign_.getOrderid());
-            resp = OkHttp3Util.postString(contextRoot + ReqCmd.getPayMultiSignAddressList.name(),
-                    Json.jsonmapper().writeValueAsString(requestParam));
-            System.out.println(resp);
-
-            PayMultiSignAddressListResponse payMultiSignAddressListResponse = Json.jsonmapper().readValue(resp,
-                    PayMultiSignAddressListResponse.class);
-            List<PayMultiSignAddress> payMultiSignAddresses = payMultiSignAddressListResponse
-                    .getPayMultiSignAddresses();
-
-            List<byte[]> sigs = new ArrayList<byte[]>();
-            for (PayMultiSignAddress payMultiSignAddress : payMultiSignAddresses) {
-                String signInputDataHex = payMultiSignAddress.getSignInputDataHex();
-                sigs.add(Utils.HEX.decode(signInputDataHex));
-            }
-
-            Script inputScript = ScriptBuilder.createMultiSigInputScriptBytes(sigs);
-            transaction0.getInput(0).setScriptSig(inputScript);
-
-            byte[] buf = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
-                    Json.jsonmapper().writeValueAsString(requestParam));
-            Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
-            rollingBlock.addTransaction(transaction0);
-            rollingBlock.solve();
-            checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize()));
+            PayMultiSave(networkParameters, contextRoot, requestParam, payMultiSign_, transaction0);
         }
     }
 
+    private void PayMultiSave(NetworkParameters networkParameters, String contextRoot,
+            HashMap<String, Object> requestParam, PayMultiSign payMultiSign_, Transaction transaction0)
+            throws Exception, JsonProcessingException, IOException, JsonParseException, JsonMappingException {
+        String resp;
+        requestParam.clear();
+        requestParam.put("orderid", (String) payMultiSign_.getOrderid());
+        resp = OkHttp3Util.postString(contextRoot + ReqCmd.getPayMultiSignAddressList.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        log.debug(resp);
+
+        PayMultiSignAddressListResponse payMultiSignAddressListResponse = Json.jsonmapper().readValue(resp,
+                PayMultiSignAddressListResponse.class);
+        List<PayMultiSignAddress> payMultiSignAddresses = payMultiSignAddressListResponse.getPayMultiSignAddresses();
+
+        List<TransactionSignature> sigs = new ArrayList<TransactionSignature>();
+        for (PayMultiSignAddress payMultiSignAddress : payMultiSignAddresses) {
+            String signInputDataHex = payMultiSignAddress.getSignInputDataHex();
+            TransactionSignature sig = TransactionSignature.decodeFromBitcoin(Utils.HEX.decode(signInputDataHex), true,
+                    false);
+            sigs.add(sig);
+        }
+
+        Script inputScript = ScriptBuilder.createMultiSigInputScript(sigs);
+        transaction0.getInput(0).setScriptSig(inputScript);
+
+        byte[] buf = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
+        rollingBlock.addTransaction(transaction0);
+        rollingBlock.solve();
+        checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize()));
+    }
+
     @SuppressWarnings("unchecked")
-    @Test
+    @Test(expected = RuntimeException.class)
     public void testMultiSigTokenIsNull() throws Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -520,7 +501,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String resp = OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
         int duration = (Integer) result2.get("errorcode");
-        System.out.println("resp : " + resp);
+        log.debug("resp : " + resp);
         assertEquals(duration, 101);
     }
 
@@ -542,7 +523,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String resp = OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
         int duration = (Integer) result2.get("errorcode");
-        System.out.println("resp : " + resp);
+        log.debug("resp : " + resp);
         assertEquals(duration, 101);
     }
 
@@ -569,7 +550,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String resp = OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
         int duration = (Integer) result2.get("errorcode");
-        System.out.println("resp : " + resp);
+        log.debug("resp : " + resp);
         assertEquals(duration, 101);
     }
 
@@ -597,7 +578,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String resp = OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
         int duration = (Integer) result2.get("errorcode");
-        System.out.println("resp : " + resp);
+        log.debug("resp : " + resp);
         assertEquals(duration, 101);
     }
 
@@ -633,7 +614,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String resp = OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
         int duration = (Integer) result2.get("errorcode");
-        System.out.println("resp : " + resp);
+        log.debug("resp : " + resp);
         assertEquals(duration, 101);
     }
 
@@ -673,12 +654,12 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String resp = OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
         int duration = (Integer) result2.get("errorcode");
-        System.out.println("resp : " + resp);
+        log.debug("resp : " + resp);
         assertEquals(duration, 101);
     }
 
     @SuppressWarnings("unchecked")
-    @Test
+    @Test(expected = RuntimeException.class)
     public void testMultiSigMultiSignDatasignatureAddress() throws Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -715,7 +696,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String resp = OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
         // int duration = (Integer) result2.get("errorcode");
-        // System.out.println("resp : " + resp);
+        // log.debug("resp : " + resp);
         // assertEquals(duration, 0);
 
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
@@ -754,12 +735,12 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
         result2 = Json.jsonmapper().readValue(resp, HashMap.class);
         int duration = (Integer) result2.get("errorcode");
-        System.out.println("resp : " + resp);
+        log.debug("resp : " + resp);
         assertEquals(duration, 101);
     }
 
     @SuppressWarnings("unchecked")
-    @Test
+    @Test(expected = RuntimeException.class)
     public void testMultiSigMultiSignSignatureError() throws Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -796,7 +777,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String resp = OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
         // int duration = (Integer) result2.get("errorcode");
-        // System.out.println("resp : " + resp);
+        // log.debug("resp : " + resp);
         // assertEquals(duration, 0);
 
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
@@ -829,11 +810,12 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         multiSignBies.add(multiSignBy0);
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
+
         resp = OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block0.bitcoinSerialize());
 
         result2 = Json.jsonmapper().readValue(resp, HashMap.class);
         int duration = (Integer) result2.get("errorcode");
-        System.out.println("resp : " + resp);
+        log.debug("resp : " + resp);
         assertTrue(duration == 101);
     }
 
@@ -874,7 +856,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         String resp = OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
         int duration = (Integer) result2.get("errorcode");
-        System.out.println("resp : " + resp);
+        log.debug("resp : " + resp);
         assertEquals(duration, 0);
 
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
@@ -913,7 +895,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
         result2 = Json.jsonmapper().readValue(resp, HashMap.class);
         duration = (Integer) result2.get("errorcode");
-        System.out.println("resp : " + resp);
+        log.debug("resp : " + resp);
         assertEquals(duration, 0);
     }
 
@@ -1000,13 +982,13 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
             block.solve();
 
-            System.out.println("block hash : " + block.getHashAsString());
+            log.debug("block hash : " + block.getHashAsString());
 
             // save block
             String resp000 = OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
             HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
             int duration = (Integer) result000.get("errorcode");
-            System.out.println("resp : " + resp000);
+            log.debug("resp : " + resp000);
             if (i == 1) {
                 assertEquals(duration, 0);
             }
@@ -1025,7 +1007,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 requestParam0.put("address", ecKey.toAddress(networkParameters).toBase58());
                 String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultiSignWithAddress.name(),
                         Json.jsonmapper().writeValueAsString(requestParam0));
-                System.out.println(resp);
+                log.debug(resp);
 
                 MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
                 String blockhashHex = multiSignResponse.getMultiSigns().get((int) i - 1).getBlockhashHex();
@@ -1056,7 +1038,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
                 transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
                 resp = OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block0.bitcoinSerialize());
-                System.out.println("resp : " + resp);
+                log.debug("resp : " + resp);
             }
         }
     }
@@ -1095,7 +1077,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         byte[] data = new byte[len];
         byteBuffer.get(data);
         Block r1 = networkParameters.getDefaultSerializer().makeBlock(data);
-        System.out.println("block len : " + len + " conv : " + r1.getHashAsString());
+        log.debug("block len : " + len + " conv : " + r1.getHashAsString());
         return r1;
     }
 
