@@ -35,7 +35,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
@@ -60,8 +59,6 @@ import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.OkHttp3Util;
-import net.bigtangle.wallet.SendRequest;
-import net.bigtangle.wallet.Wallet;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {})
@@ -78,11 +75,14 @@ public abstract class AbstractIntegrationTest {
     public String contextRoot;
     public List<ECKey> walletKeys;
     public List<ECKey> wallet1Keys;
+    public List<ECKey> wallet2Keys;
+    public List<ECKey> signKeys;
 
     WalletAppKit walletAppKit;
     protected static ObjectMapper objectMapper;
 
     WalletAppKit walletAppKit1;
+    WalletAppKit walletAppKit2;
     @Autowired
     protected WebApplicationContext webContext;
 
@@ -121,6 +121,7 @@ public abstract class AbstractIntegrationTest {
 
         testInitWallet();
         wallet1();
+        wallet2();
 
     }
 
@@ -142,8 +143,9 @@ public abstract class AbstractIntegrationTest {
 
     public void walletKeys() throws Exception {
         KeyParameter aesKey = null;
-        File f = new File("./logs/" , "bigtangle");
-        if(f.exists()) f.delete();
+        File f = new File("./logs/", "bigtangle");
+        if (f.exists())
+            f.delete();
         walletAppKit = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle");
         walletAppKit.wallet().setServerURL(contextRoot);
         walletKeys = walletAppKit.wallet().walletKeys(aesKey);
@@ -151,13 +153,26 @@ public abstract class AbstractIntegrationTest {
 
     public void wallet1() throws Exception {
         KeyParameter aesKey = null;
-        //delete first
-        File f = new File("./logs/" , "bigtangle1");
-        if(f.exists()) f.delete();
+        // delete first
+        File f = new File("./logs/", "bigtangle1");
+        if (f.exists())
+            f.delete();
         walletAppKit1 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle1");
         walletAppKit1.wallet().setServerURL(contextRoot);
 
         wallet1Keys = walletAppKit1.wallet().walletKeys(aesKey);
+    }
+
+    public void wallet2() throws Exception {
+        KeyParameter aesKey = null;
+        // delete first
+        File f = new File("./logs/", "bigtangle2");
+        if (f.exists())
+            f.delete();
+        walletAppKit2 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle2");
+        walletAppKit2.wallet().setServerURL(contextRoot);
+
+        wallet2Keys = walletAppKit2.wallet().walletKeys(aesKey);
     }
 
     public List<UTXO> testTransactionAndGetBalances() throws Exception {
@@ -185,7 +200,7 @@ public abstract class AbstractIntegrationTest {
     public List<UTXO> testTransactionAndGetBalances(boolean withZero, List<ECKey> keys) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         List<String> keyStrHex000 = new ArrayList<String>();
- 
+
         for (ECKey ecKey : keys) {
             // keyStrHex000.add(ecKey.toAddress(networkParameters).toString());
             keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
@@ -219,7 +234,7 @@ public abstract class AbstractIntegrationTest {
         testCreateMarket();
         testInitTransferWallet();
         milestoneService.update();
-        //testInitTransferWalletPayToTestPub();
+        // testInitTransferWalletPayToTestPub();
         List<UTXO> ux = testTransactionAndGetBalances();
         // assertTrue(!ux.isEmpty());
         for (UTXO u : ux) {
@@ -231,13 +246,12 @@ public abstract class AbstractIntegrationTest {
     // transfer the coin deon test key to address in wallet
     @SuppressWarnings("deprecation")
     public void testInitTransferWallet() throws Exception {
-        ECKey  fromkey=   new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey fromkey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         HashMap<String, Integer> giveMoneyResult = new HashMap<String, Integer>();
         giveMoneyResult.put(walletKeys.get(1).toAddress(networkParameters).toString(), 3333333);
         walletAppKit.wallet().payMoneyToECKeyList(giveMoneyResult, fromkey);
     }
-    
-  
+
     public void testCreateMultiSig() throws JsonProcessingException, Exception {
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
@@ -287,10 +301,11 @@ public abstract class AbstractIntegrationTest {
     }
 
     public void checkBalance(Coin coin, ECKey ecKey) throws Exception {
-        ArrayList<ECKey> a=  new ArrayList<ECKey>();
+        ArrayList<ECKey> a = new ArrayList<ECKey>();
         a.add(ecKey);
-        checkBalance(coin,  a);
+        checkBalance(coin, a);
     }
+
     public void checkBalance(Coin coin, List<ECKey> a) throws Exception {
         milestoneService.update();
         List<UTXO> ulist = testTransactionAndGetBalances(false, a);
@@ -304,14 +319,13 @@ public abstract class AbstractIntegrationTest {
         assertTrue(myutxo != null);
         assertTrue(myutxo.getAddress() != null && !myutxo.getAddress().isEmpty());
     }
-    
-    
-    //create a token with multi sign
+
+    // create a token with multi sign
     public void testCreateMultiSigToken(List<ECKey> keys) throws JsonProcessingException, Exception {
         // Setup transaction and signatures
         // List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
 
-        String tokenid = keys.get(5).getPublicKeyAsHex();
+        String tokenid = keys.get(0).getPublicKeyAsHex();
 
         int amount = 678900000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
@@ -331,14 +345,11 @@ public abstract class AbstractIntegrationTest {
                 UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
         tokenInfo.setTokens(tokens);
 
-        ECKey key1 = keys.get(0);
+        ECKey key1 = keys.get(1);
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key1.getPublicKeyAsHex()));
 
-        ECKey key2 = keys.get(1);
+        ECKey key2 = keys.get(2);
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key2.getPublicKeyAsHex()));
-
-        ECKey key3 = keys.get(2);
-        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key3.getPublicKeyAsHex()));
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
@@ -350,13 +361,13 @@ public abstract class AbstractIntegrationTest {
 
         log.debug("block hash : " + block.getHashAsString());
 
-        // save block, but no signature and is not saved as block, but in a table for signs
+        // save block, but no signature and is not saved as block, but in a
+        // table for signs
         OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
 
         List<ECKey> ecKeys = new ArrayList<ECKey>();
         ecKeys.add(key1);
         ecKeys.add(key2);
-        ecKeys.add(key3);
 
         for (ECKey ecKey : ecKeys) {
             HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
@@ -396,10 +407,10 @@ public abstract class AbstractIntegrationTest {
             checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block0.bitcoinSerialize()));
 
         }
-        this.wallet1();
-        for (ECKey ecKey : walletAppKit1.wallet().walletKeys(null)) {
-            log.debug(ecKey.getPublicKeyAsHex());
-        }
+        // this.wallet1();
+        // for (ECKey ecKey : walletAppKit1.wallet().walletKeys(null)) {
+        // log.debug(ecKey.getPublicKeyAsHex());
+        // }
         // checkBalance(tokenid, ecKeys );
     }
 

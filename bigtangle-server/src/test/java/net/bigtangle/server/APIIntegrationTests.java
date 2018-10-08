@@ -12,6 +12,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -277,7 +278,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         for (int i = 0; i < 1; i++) {
             testCreateMultiSig();
         }
-        ECKey outKey = new ECKey();
+        ECKey outKey = walletKeys.get(0);
         // pay to address outKey, remainder return to walletKeys with multi
         // signs
         PayMultiSign payMultiSign = launchPayMultiSign(outKey);
@@ -294,18 +295,21 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         assertTrue(payMultiSignAddresses.size() > 0);
         KeyParameter aesKey = null;
         ECKey currentECKey = null;
-
+        int i = 1;
         for (PayMultiSignAddress payMultiSignAddress : payMultiSignAddresses) {
             if (payMultiSignAddress.getSign() == 1) {
                 continue;
             }
-            for (ECKey ecKey : walletAppKit.wallet().walletKeys(aesKey)) {
-                if (ecKey.toAddress(networkParameters).toString().equals(payMultiSignAddress.getPubKey())) {
-                    currentECKey = ecKey;
-                    break;
-                }
-            }
+            // for (ECKey ecKey : walletAppKit1.wallet().walletKeys(aesKey)) {
+            // if
+            // (ecKey.toAddress(networkParameters).toString().equals(payMultiSignAddress.getPubKey()))
+            // {
+            currentECKey = signKeys.get(i++);
             this.payMultiSign(currentECKey, payMultiSign.getOrderid(), networkParameters, contextRoot);
+            // break;
+            // }
+            // }
+
         }
 
         // this is utxo of outKey, which is not a multi signatures
@@ -328,19 +332,20 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         assertTrue(payMultiSignAddresses.size() > 0);
         aesKey = null;
         currentECKey = null;
-
+        int j = 1;
         for (PayMultiSignAddress payMultiSignAddress : payMultiSignAddresses) {
             if (payMultiSignAddress.getSign() == 1) {
                 continue;
             }
-            for (ECKey ecKey : walletAppKit.wallet().walletKeys(aesKey)) {
-                if (ecKey.toAddress(networkParameters).toString().equals(payMultiSignAddress.getPubKey())) {
-                    currentECKey = ecKey;
-                    break;
-                }
-            }
-            this.payMultiSign(currentECKey, payMultiSign1.getOrderid(), networkParameters, contextRoot);
-
+            // for (ECKey ecKey : walletAppKit1.wallet().walletKeys(aesKey)) {
+            // if
+            // (ecKey.toAddress(networkParameters).toString().equals(payMultiSignAddress.getPubKey()))
+            // {
+            currentECKey = signKeys.get(j++);
+            this.payMultiSign(currentECKey, payMultiSign.getOrderid(), networkParameters, contextRoot);
+            // break;
+            // }
+            // }
         }
 
         // }
@@ -355,21 +360,21 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
     private PayMultiSign launchPayMultiSign(ECKey outKey) throws Exception, JsonProcessingException {
         List<ECKey> ecKeys = new ArrayList<ECKey>();
-        ecKeys.add(walletKeys.get(0));
-        ecKeys.add(walletKeys.get(1));
-        ecKeys.add(walletKeys.get(2));
+        // ecKeys.add(walletKeys.get(0));
+        ecKeys.add(signKeys.get(1));
+        ecKeys.add(signKeys.get(2));
 
         String tokenid = walletAppKit.wallet().walletKeys(null).get(5).getPublicKeyAsHex();
         Coin amount = Coin.parseCoin("12", Utils.HEX.decode(tokenid));
 
-        UTXO output = testTransactionAndGetBalances(tokenid, false, ecKeys);
+        UTXO output = testTransactionAndGetBalances(tokenid, false, signKeys);
 
         // filter the
         TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, output, 0);
         Transaction transaction = new Transaction(networkParameters);
         transaction.addOutput(amount, outKey);
         // remainder of utxo goes here with multi sign keys ecKeys
-        Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, ecKeys);
+        Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, signKeys);
         Coin amount2 = multisigOutput.getValue().subtract(amount);
         transaction.addOutput(amount2, scriptPubKey);
 
@@ -1046,9 +1051,12 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     @Test
     public void testCreateMultiSig() throws JsonProcessingException, Exception {
         // Setup transaction and signatures
-        List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
+        signKeys = new LinkedList<ECKey>();
+        signKeys.add(walletAppKit.wallet().walletKeys(null).get(0));
+        signKeys.add(walletAppKit1.wallet().walletKeys(null).get(0));
+        signKeys.add(walletAppKit2.wallet().walletKeys(null).get(0));
 
-        testCreateMultiSigToken(keys);
+        testCreateMultiSigToken(signKeys);
     }
 
     @Test
