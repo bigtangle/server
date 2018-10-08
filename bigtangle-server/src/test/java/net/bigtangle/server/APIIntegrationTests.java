@@ -363,13 +363,13 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Coin amount = Coin.parseCoin("12", Utils.HEX.decode(tokenid));
 
         UTXO output = testTransactionAndGetBalances(tokenid, false, signKeys);
-
+        System.err.println(output.toString());
         // filter the
         TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, output, 0);
         Transaction transaction = new Transaction(networkParameters);
         transaction.addOutput(amount, outKey);
         // remainder of utxo goes here with multi sign keys ecKeys
-        Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, signKeys);
+        Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, ecKeys);
         Coin amount2 = multisigOutput.getValue().subtract(amount);
         transaction.addOutput(amount2, scriptPubKey);
 
@@ -381,7 +381,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         payMultiSign.setBlockhashHex(Utils.HEX.encode(transaction.bitcoinSerialize()));
         payMultiSign.setToaddress(outKey.toAddress(networkParameters).toBase58());
         payMultiSign.setAmount(amount.getValue());
-        payMultiSign.setMinsignnumber(3);
+        payMultiSign.setMinsignnumber(2);
         payMultiSign.setOutpusHashHex(output.getHashHex());
         payMultiSign.setOutputsindex(output.getIndex());
 
