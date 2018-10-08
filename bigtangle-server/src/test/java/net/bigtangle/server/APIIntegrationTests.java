@@ -295,20 +295,17 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         assertTrue(payMultiSignAddresses.size() > 0);
         KeyParameter aesKey = null;
         ECKey currentECKey = null;
-        int i = 1;
         for (PayMultiSignAddress payMultiSignAddress : payMultiSignAddresses) {
             if (payMultiSignAddress.getSign() == 1) {
                 continue;
             }
-            // for (ECKey ecKey : walletAppKit1.wallet().walletKeys(aesKey)) {
-            // if
-            // (ecKey.toAddress(networkParameters).toString().equals(payMultiSignAddress.getPubKey()))
-            // {
-            currentECKey = signKeys.get(i++);
-            this.payMultiSign(currentECKey, payMultiSign.getOrderid(), networkParameters, contextRoot);
-            // break;
-            // }
-            // }
+            for (ECKey ecKey : signKeys) {
+                if (ecKey.toAddress(networkParameters).toString().equals(payMultiSignAddress.getPubKey())) {
+                    currentECKey = ecKey;
+                    this.payMultiSign(currentECKey, payMultiSign.getOrderid(), networkParameters, contextRoot);
+                    break;
+                }
+            }
 
         }
 
@@ -332,20 +329,18 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         assertTrue(payMultiSignAddresses.size() > 0);
         aesKey = null;
         currentECKey = null;
-        int j = 1;
         for (PayMultiSignAddress payMultiSignAddress : payMultiSignAddresses) {
             if (payMultiSignAddress.getSign() == 1) {
                 continue;
             }
-            // for (ECKey ecKey : walletAppKit1.wallet().walletKeys(aesKey)) {
-            // if
-            // (ecKey.toAddress(networkParameters).toString().equals(payMultiSignAddress.getPubKey()))
-            // {
-            currentECKey = signKeys.get(j++);
-            this.payMultiSign(currentECKey, payMultiSign.getOrderid(), networkParameters, contextRoot);
-            // break;
-            // }
-            // }
+            for (ECKey ecKey : signKeys) {
+                if (ecKey.toAddress(networkParameters).toString().equals(payMultiSignAddress.getPubKey())) {
+                    currentECKey = ecKey;
+                    this.payMultiSign(currentECKey, payMultiSign.getOrderid(), networkParameters, contextRoot);
+                    break;
+                }
+            }
+
         }
 
         // }
@@ -364,7 +359,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         ecKeys.add(signKeys.get(1));
         ecKeys.add(signKeys.get(2));
 
-        String tokenid = walletAppKit.wallet().walletKeys(null).get(5).getPublicKeyAsHex();
+        String tokenid = signKeys.get(0).getPublicKeyAsHex();
         Coin amount = Coin.parseCoin("12", Utils.HEX.decode(tokenid));
 
         UTXO output = testTransactionAndGetBalances(tokenid, false, signKeys);
@@ -1051,6 +1046,8 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     @Test
     public void testCreateMultiSig() throws JsonProcessingException, Exception {
         // Setup transaction and signatures
+        wallet1();
+        wallet2();
         signKeys = new LinkedList<ECKey>();
         signKeys.add(walletAppKit.wallet().walletKeys(null).get(0));
         signKeys.add(walletAppKit1.wallet().walletKeys(null).get(0));

@@ -230,7 +230,7 @@ public abstract class AbstractIntegrationTest {
 
     public void testInitWallet() throws Exception {
 
-        testCreateMultiSig();
+       // testCreateMultiSig();
         testCreateMarket();
         testInitTransferWallet();
         milestoneService.update();
@@ -342,7 +342,7 @@ public abstract class AbstractIntegrationTest {
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
+                UUID.randomUUID().toString(), 2, tokenindex_, amount, true, false);
         tokenInfo.setTokens(tokens);
 
         ECKey key1 = keys.get(1);
@@ -356,7 +356,7 @@ public abstract class AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
-        block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
+        block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
         block.solve();
 
         log.debug("block hash : " + block.getHashAsString());
