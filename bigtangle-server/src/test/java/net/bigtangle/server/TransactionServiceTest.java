@@ -32,8 +32,6 @@ import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.server.service.BlockService;
-import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.wallet.SendRequest;
@@ -46,16 +44,14 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
     @Autowired
     private NetworkParameters networkParameters;
 
-    @Test
-    // transfer the coin to address with multisign for spent
-    public void testMultiSigns() throws Exception {
+    
+  
+    
+    //pay to mutilsigns keys wallet1Keys_part
+    public void createMultiSigns(List<ECKey> wallet1Keys_part) throws Exception {
 
         Transaction multiSigTransaction = new Transaction(networkParameters);
-
-        List<ECKey> wallet1Keys_part = new ArrayList<ECKey>();
-        wallet1Keys_part.add(wallet1Keys.get(0));
-        wallet1Keys_part.add(wallet1Keys.get(1));
-
+ 
         for (ECKey ecKey : wallet1Keys_part)
             log.debug(ecKey.getPublicKeyAsHex());
 
@@ -76,23 +72,38 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
 
         checkBalance(amount0, wallet1Keys_part);
-
-        ECKey receiverkey = walletAppKit.wallet().currentReceiveKey();
+    }
+    @Test
+    // transfer the coin to address with multisign for spent
+    public void testMultiSigns() throws Exception {
+       
+        List<ECKey> wallet1Keys_part = new ArrayList<ECKey>();
+        wallet1Keys_part.add(wallet1Keys.get(0));
+        wallet1Keys_part.add(wallet1Keys.get(1));
+        createMultiSigns(wallet1Keys_part);
+        multiSigns(walletAppKit.wallet().currentReceiveKey(),wallet1Keys_part );
+        multiSigns(walletAppKit2.wallet().currentReceiveKey(),wallet1Keys_part );
+        multiSigns(walletAppKit1.wallet().currentReceiveKey(),wallet1Keys_part );
+    } 
+    
+    public void multiSigns(ECKey receiverkey, List<ECKey> wallet1Keys_part) throws Exception { 
 
         List<UTXO> ulist = testTransactionAndGetBalances(false, wallet1Keys_part);
 
         TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, ulist.get(0), 0);
         Script multisigScript1 = multisigOutput.getScriptPubKey();
 
-        Coin amount1 = Coin.parseCoin("0.05", NetworkParameters.BIGTANGLE_TOKENID);
+        Coin amount1 = Coin.parseCoin("0.03", NetworkParameters.BIGTANGLE_TOKENID);
 
         Coin amount2 = multisigOutput.getValue().subtract(amount1);
 
         Transaction transaction0 = new Transaction(networkParameters);
         transaction0.addOutput(amount1, receiverkey);
         // add remainder back
+        Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, wallet1Keys_part);
         transaction0.addOutput(amount2, scriptPubKey);
-        TransactionInput input = transaction0.addInput(multisigOutput);
+    
+         transaction0.addInput(multisigOutput);
 
         Transaction transaction_ = networkParameters.getDefaultSerializer()
                 .makeTransaction(transaction0.bitcoinSerialize());
@@ -100,15 +111,16 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         TransactionInput input2 = transaction0.getInput(0);
 
         Sha256Hash sighash = transaction0.hashForSignature(0, multisigScript1, Transaction.SigHash.ALL, false);
-        TransactionSignature tsrecsig = new TransactionSignature(wallet1Keys.get(0).sign(sighash),
+        TransactionSignature tsrecsig = new TransactionSignature(wallet1Keys_part.get(0).sign(sighash),
                 Transaction.SigHash.ALL, false);
-        TransactionSignature tsintsig = new TransactionSignature(wallet1Keys.get(1).sign(sighash),
+        TransactionSignature tsintsig = new TransactionSignature(wallet1Keys_part.get(1).sign(sighash),
                 Transaction.SigHash.ALL, false);
         Script inputScript = ScriptBuilder.createMultiSigInputScript(ImmutableList.of(tsrecsig, tsintsig));
         input2.setScriptSig(inputScript);
 
-        data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(), Json.jsonmapper().writeValueAsString(requestParam));
-        rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+          byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(), Json.jsonmapper().writeValueAsString(requestParam));
+       Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(transaction0);
 
         rollingBlock.solve();

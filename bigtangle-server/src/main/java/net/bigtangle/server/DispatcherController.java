@@ -258,7 +258,7 @@ public class DispatcherController {
             }
                 break;
             case launchPayMultiSign: {
-                this.payMultiSignService.launchPayMultiSignA(bodyByte);
+                this.payMultiSignService.launchPayMultiSign(bodyByte);
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
                 break;

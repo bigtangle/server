@@ -879,7 +879,7 @@ public class SendMoneyController {
 
         int signnumber = Integer.parseInt(signnumberString);
         payMultiSign.setMinsignnumber(signnumber);
-        payMultiSign.setOutpusHashHex(utxo.getHashHex());
+        payMultiSign.setOutputHashHex(utxo.getHashHex());
 
         OkHttp3Util.post(contextRoot + ReqCmd.launchPayMultiSign.name(),
                 Json.jsonmapper().writeValueAsString(payMultiSign));
@@ -926,7 +926,7 @@ public class SendMoneyController {
         payMultiSign.setAmount(amount.getValue());
 
         payMultiSign.setMinsignnumber(keys.size());
-        payMultiSign.setOutpusHashHex(utxo.getHashHex() + ":" + utxo.getIndex());
+        payMultiSign.setOutputHashHex(utxo.getHashHex() + ":" + utxo.getIndex());
 
         OkHttp3Util.post(contextRoot + ReqCmd.launchPayMultiSign.name(),
                 Json.jsonmapper().writeValueAsString(payMultiSign));
@@ -999,7 +999,7 @@ public class SendMoneyController {
         PayMultiSign payMultiSign_ = payMultiSignDetailsResponse.getPayMultiSign();
 
         requestParam.clear();
-        requestParam.put("hexStr", payMultiSign_.getOutpusHashHex() + ":" + payMultiSign_.getOutputsindex());
+        requestParam.put("hexStr", payMultiSign_.getOutputHashHex() + ":" + payMultiSign_.getOutputsindex());
         resp = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputWithKey.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         log.debug(resp);

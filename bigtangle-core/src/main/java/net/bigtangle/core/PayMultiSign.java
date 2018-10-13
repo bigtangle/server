@@ -26,17 +26,17 @@ public class PayMultiSign implements java.io.Serializable {
 
     private String pubKeyHex;
 
-    private String outpusHashHex;
+    private String outputHashHex;
     private long outputsindex;
     private int sign;
     private int signcount;
 
-    public String getOutpusHashHex() {
-        return outpusHashHex;
+    public String getOutputHashHex() {
+        return outputHashHex;
     }
 
-    public void setOutpusHashHex(String outpusHashHex) {
-        this.outpusHashHex = outpusHashHex;
+    public void setOutputHashHex(String outpusHashHex) {
+        this.outputHashHex = outpusHashHex;
     }
 
     public String getPubKeyHex() {

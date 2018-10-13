@@ -11,13 +11,11 @@ import org.springframework.stereotype.Service;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
-import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.PayMultiSignAddress;
 import net.bigtangle.core.PayMultiSignExt;
-import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.AbstractResponse;
@@ -33,59 +31,22 @@ public class PayMultiSignService {
     @Autowired
     protected FullPrunedBlockStore store;
 
+    @Autowired
+    private NetworkParameters networkParameters;
+
     public AbstractResponse getPayMultiSignDetails(String orderid) throws BlockStoreException {
         PayMultiSign payMultiSign = this.store.getPayMultiSignWithOrderid(orderid);
         return PayMultiSignDetailsResponse.create(payMultiSign);
     }
+ 
 
     public void launchPayMultiSign(byte[] data) throws BlockStoreException, Exception {
         PayMultiSign payMultiSign = convertTransactionDataToPayMultiSign(data);
-        String tokenid = payMultiSign.getTokenid();
-        Token tokens = this.store.getToken(payMultiSign.getTokenBlockhashHex());
-        if (tokens == null) {
-            throw new BlockStoreException("token not existed");
-        }
-        if (tokens.getSignnumber() < 2) {
-            throw new BlockStoreException("token can't multi sign");
-        }
-        String prevblockhash = tokens.getPrevblockhash();
-        List<MultiSignAddress> multiSignAddresses = this.store
-                .getMultiSignAddressListByTokenidAndBlockHashHex(tokens.getTokenid(), prevblockhash);
-        if (multiSignAddresses.isEmpty()) {
-            throw new BlockStoreException("multisignaddress list is empty");
-        }
-        // check param
-        this.store.insertPayPayMultiSign(payMultiSign);
-        for (MultiSignAddress multiSignAddress : multiSignAddresses) {
-            PayMultiSignAddress payMultiSignAddress = new PayMultiSignAddress();
-            payMultiSignAddress.setOrderid(payMultiSign.getOrderid());
-            payMultiSignAddress.setSign(0);
-            payMultiSignAddress.setPubKey(multiSignAddress.getPubKeyHex());
-            payMultiSignAddress.setSignIndex(multiSignAddress.getPosIndex());
-            this.store.insertPayMultiSignAddress(payMultiSignAddress);
-        }
-    }
 
-    public void launchPayMultiSignA(byte[] data) throws BlockStoreException, Exception {
-        PayMultiSign payMultiSign = convertTransactionDataToPayMultiSign(data);
-
-        // Token tokens =
-        // this.store.getToken(payMultiSign.getTokenBlockhashHex());
-        // if (tokens == null) {
-        // throw new BlockStoreException("token not existed");
-        // }
-        if (payMultiSign.getMinsignnumber() < 2) {
-            throw new BlockStoreException("token can't multi sign");
-        }
-
-        String hashhex = payMultiSign.getOutpusHashHex();
+        String hashhex = payMultiSign.getOutputHashHex();
         long index = payMultiSign.getOutputsindex();
         List<OutputsMulti> outputsMultis = this.store.queryOutputsMultiByHashAndIndex(Utils.HEX.decode(hashhex), index);
 
-        // String prevblockhash = tokens.getPrevblockhash();
-        // List<MultiSignAddress> multiSignAddresses = this.store
-        // .getMultiSignAddressListByTokenidAndBlockHashHex(tokens.getTokenid(),
-        // prevblockhash);
         if (outputsMultis.isEmpty()) {
             throw new BlockStoreException("multisignaddress list is empty");
         }
@@ -103,10 +64,7 @@ public class PayMultiSignService {
         }
     }
 
-    @Autowired
-    private NetworkParameters networkParameters;
-
-    @SuppressWarnings("unlikely-arg-type")
+ 
     public AbstractResponse payMultiSign(Map<String, Object> request) throws BlockStoreException, Exception {
         String orderid = (String) request.get("orderid");
 
@@ -171,7 +129,7 @@ public class PayMultiSignService {
             payMultiSignExt.setOrderid(payMultiSign.getOrderid());
             payMultiSignExt.setToaddress(payMultiSign.getToaddress());
             payMultiSignExt.setTokenid(payMultiSign.getTokenid());
-            payMultiSignExt.setOutpusHashHex(payMultiSign.getOutpusHashHex());
+            payMultiSignExt.setOutputHashHex(payMultiSign.getOutputHashHex());
             payMultiSignExt.setSign(payMultiSign.getSign());
             payMultiSignExt.setRealSignnumber(payMultiSign.getSigncount());
             payMultiSignExts.add(payMultiSignExt);

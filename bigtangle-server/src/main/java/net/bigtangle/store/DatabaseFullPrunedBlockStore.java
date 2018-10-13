@@ -3728,7 +3728,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setBytes(4, payMultiSign.getBlockhash());
             preparedStatement.setLong(5, payMultiSign.getAmount());
             preparedStatement.setLong(6, payMultiSign.getMinsignnumber());
-            preparedStatement.setString(7, payMultiSign.getOutpusHashHex());
+            preparedStatement.setString(7, payMultiSign.getOutputHashHex());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -3839,7 +3839,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             payMultiSign.setToaddress(resultSet.getString("toaddress"));
             payMultiSign.setTokenid(resultSet.getString("tokenid"));
             payMultiSign.setBlockhashHex(Utils.HEX.encode(payMultiSign.getBlockhash()));
-            payMultiSign.setOutpusHashHex(resultSet.getString("outpusHashHex"));
+            payMultiSign.setOutputHashHex(resultSet.getString("outpusHashHex"));
             return payMultiSign;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
@@ -3937,7 +3937,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 payMultiSign.setToaddress(resultSet.getString("toaddress"));
                 payMultiSign.setTokenid(resultSet.getString("tokenid"));
                 payMultiSign.setBlockhashHex(Utils.HEX.encode(payMultiSign.getBlockhash()));
-                payMultiSign.setOutpusHashHex(resultSet.getString("outpusHashHex"));
+                payMultiSign.setOutputHashHex(resultSet.getString("outpusHashHex"));
                 payMultiSign.setSign(resultSet.getInt("sign"));
                 payMultiSign.setSigncount(resultSet.getInt("signcount"));
                 list.add(payMultiSign);

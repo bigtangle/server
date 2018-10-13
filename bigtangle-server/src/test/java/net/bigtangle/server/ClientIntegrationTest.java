@@ -14,7 +14,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 import org.junit.Test;
@@ -42,7 +41,6 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
-import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
@@ -67,6 +65,11 @@ import net.bigtangle.wallet.Wallet.MissingSigsMode;
 public class ClientIntegrationTest extends AbstractIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(ClientIntegrationTest.class);
+    @Autowired
+    private NetworkParameters networkParameters;
+ 
+    @Autowired
+    private MilestoneService milestoneService;
 
     @Test
     public void testBatchBlock() throws Exception {
@@ -175,7 +178,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
        walletAppKit.wallet().payMoneyToECKeyList(giveMoneyResult, genesiskey);
 
         for (UTXO utxo : testTransactionAndGetBalances(false, genesiskey)) {
-            logger.info("UTXO : " + utxo); 
+            log.info("UTXO : " + utxo); 
                 assertTrue(utxo.getValue().value == 999999993666667l);
             
         }
@@ -210,11 +213,11 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
             List<TransactionOutput> candidates = coinbaseWallet.calculateAllSpendCandidates(false);
             for (TransactionOutput transactionOutput : candidates) {
-                logger.info("UTXO : " + transactionOutput);
+                log.info("UTXO : " + transactionOutput);
             }
 
             for (UTXO output : this.testTransactionAndGetBalances(true, outKey)) {
-                logger.info("UTXO : " + output);
+                log.info("UTXO : " + output);
             }
         }
     }
@@ -247,19 +250,14 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
         List<TransactionOutput> candidates = coinbaseWallet.calculateAllSpendCandidates(false);
         for (TransactionOutput transactionOutput : candidates) {
-            logger.info("UTXO : " + transactionOutput);
+            log.info("UTXO : " + transactionOutput);
         }
         /*
          * for (UTXO output : this.testTransactionAndGetBalances(true, outKey))
-         * { logger.info("UTXO : " + output); }
+         * { log.info("UTXO : logtput); }
          */
     }
 
-    @Autowired
-    private NetworkParameters networkParameters;
-    private static final Logger logger = LoggerFactory.getLogger(ClientIntegrationTest.class);
-    @Autowired
-    private MilestoneService milestoneService;
 
     @Test
     public void searchBlock() throws Exception {
@@ -274,17 +272,18 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         String response = OkHttp3Util.post(contextRoot + ReqCmd.searchBlock.name(),
                 Json.jsonmapper().writeValueAsString(request).getBytes());
 
-        logger.info("searchBlock resp : " + response);
+        log.info("searchBlock resp : " + response);
 
     }
 
     @SuppressWarnings("deprecation")
     @Test
     public void exchangeToken() throws Exception {
+        //create token
         // get token from wallet to spent
         ECKey yourKey = walletAppKit1.wallet().walletKeys(null).get(0);
         log.debug("toKey : " + yourKey.toAddress(networkParameters).toBase58());
-
+        testCreateToken();
         payToken(yourKey);
         List<ECKey> keys = new ArrayList<ECKey>();
         keys.add(yourKey);
@@ -303,8 +302,8 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         SendRequest req = SendRequest.to(new Address(networkParameters, myutxo.getAddress()), amount);
         req.tx.addOutput(myutxo.getValue(), new Address(networkParameters, yourutxo.getAddress()));
 
-        System.out.println(myutxo.getAddress() + ", " + myutxo.getValue());
-        System.out.println(yourutxo.getAddress() + ", " + amount);
+        log.debug(myutxo.getAddress() + ", " + myutxo.getValue());
+        log.debug(yourutxo.getAddress() + ", " + amount);
 
         req.missingSigsMode = MissingSigsMode.USE_OP_ZERO;
         ulist.addAll(utxos);
@@ -326,7 +325,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         // OrdermatchReqCmd.getExchange.name(),
         // Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
-        // logger.info("getExchange resp : " + requestParam);
+        // log.info("getExchange resp : " + requestParam);
     }
 
     @Test
@@ -342,8 +341,8 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     public void testExchangeTokenMulti() throws Exception {
 
         List<ECKey> keys = walletAppKit1.wallet().walletKeys(null);
-
-        testCreateMultiSigToken(keys);
+        TokenInfo tokenInfo = new TokenInfo();
+        testCreateMultiSigToken(keys, tokenInfo);
         UTXO multitemp = null;
         UTXO systemcoin = null;
         List<UTXO> utxos = testTransactionAndGetBalances(false, keys);
@@ -473,7 +472,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         rollingBlock.solve();
 
         String res = OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
-        System.out.println(res);
+        log.debug(res);
     }
 
     public void payToken(ECKey outKey) throws Exception {
@@ -481,7 +480,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
-        logger.info("resp block, hex : " + Utils.HEX.encode(data));
+        log.info("resp block, hex : " + Utils.HEX.encode(data));
         // get other tokenid from wallet
         UTXO utxo = null;
         List<UTXO> ulist = testTransactionAndGetBalances();
@@ -491,17 +490,17 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
             }
         }
-        System.out.println(utxo.getValue());
+        log.debug(utxo.getValue().toString());
         // Coin baseCoin = utxo.getValue().subtract(Coin.parseCoin("10000",
         // utxo.getValue().getTokenid()));
-        // System.out.println(baseCoin);
+        // log.debug(baseCoin);
         Address destination = outKey.toAddress(networkParameters);
         SendRequest request = SendRequest.to(destination, utxo.getValue());
         walletAppKit.wallet().completeTx(request);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
         checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize()));
-        logger.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
+        log.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
 
         checkBalance(utxo.getValue(), walletAppKit1.wallet().walletKeys(null));
     }
@@ -511,7 +510,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
-        logger.info("resp block, hex : " + Utils.HEX.encode(data));
+        log.info("resp block, hex : " + Utils.HEX.encode(data));
         // get other tokenid from wallet
         UTXO utxo = null;
         List<UTXO> ulist = testTransactionAndGetBalances();
@@ -522,17 +521,17 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
                 }
             }
         }
-        System.out.println(utxo.getValue());
+        log.debug(utxo.getValue().toString());
         // Coin baseCoin = utxo.getValue().subtract(Coin.parseCoin("10000",
         // utxo.getValue().getTokenid()));
-        // System.out.println(baseCoin);
+        // log.debug(baseCoin);
         Address destination = outKey.toAddress(networkParameters);
         SendRequest request = SendRequest.to(destination, utxo.getValue());
         walletAppKit.wallet().completeTx(request);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
         checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize()));
-        logger.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
+        log.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
 
         checkBalance(utxo.getValue(), walletAppKit1.wallet().walletKeys(null));
     }
@@ -768,7 +767,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
-        logger.info("resp block, hex : " + Utils.HEX.encode(data));
+        log.info("resp block, hex : " + Utils.HEX.encode(data));
 
         Address destination = Address.fromBase58(networkParameters, "mqrXsaFj9xV9tKAw7YeP1B6zPmfEP2kjfK");
 
@@ -782,16 +781,16 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         rollingBlock.solve();
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
-        logger.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
+        log.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
 
         testTransactionAndGetBalances();
 
         Transaction transaction = (Transaction) networkParameters.getDefaultSerializer()
                 .makeTransaction(request.tx.bitcoinSerialize());
-        logger.info("transaction, memo : " + transaction.getMemo());
-        // logger.info("transaction, tokens : " +
+        log.info("transaction, memo : " + transaction.getMemo());
+        // log.info("transaction, tokens : " +
         // Json.jsonmapper().writeValueAsString(transaction.getTokenInfo()));
-        logger.info("transaction, datatype : " + transaction.getDataClassName());
+        log.info("transaction, datatype : " + transaction.getDataClassName());
     }
 
 }

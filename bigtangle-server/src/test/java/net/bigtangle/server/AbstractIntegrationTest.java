@@ -76,7 +76,7 @@ public abstract class AbstractIntegrationTest {
     public List<ECKey> walletKeys;
     public List<ECKey> wallet1Keys;
     public List<ECKey> wallet2Keys;
-    public List<ECKey> signKeys;
+   
 
     WalletAppKit walletAppKit;
     protected static ObjectMapper objectMapper;
@@ -243,7 +243,7 @@ public abstract class AbstractIntegrationTest {
 
     }
 
-    // transfer the coin deon test key to address in wallet
+    // transfer the coin from pub testPub to address in wallet
     @SuppressWarnings("deprecation")
     public void testInitTransferWallet() throws Exception {
         ECKey fromkey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
@@ -252,7 +252,7 @@ public abstract class AbstractIntegrationTest {
         walletAppKit.wallet().payMoneyToECKeyList(giveMoneyResult, fromkey);
     }
 
-    public void testCreateMultiSig() throws JsonProcessingException, Exception {
+    public void testCreateToken() throws JsonProcessingException, Exception {
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
@@ -318,10 +318,11 @@ public abstract class AbstractIntegrationTest {
         }
         assertTrue(myutxo != null);
         assertTrue(myutxo.getAddress() != null && !myutxo.getAddress().isEmpty());
+        log.debug(myutxo.toString());
     }
 
     // create a token with multi sign
-    public void testCreateMultiSigToken(List<ECKey> keys) throws JsonProcessingException, Exception {
+    public void testCreateMultiSigToken(List<ECKey> keys,  TokenInfo tokenInfo) throws JsonProcessingException, Exception {
         // Setup transaction and signatures
         // List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
 
@@ -330,7 +331,7 @@ public abstract class AbstractIntegrationTest {
         int amount = 678900000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
 
-        TokenInfo tokenInfo = new TokenInfo();
+       // TokenInfo tokenInfo = new TokenInfo();
 
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
         requestParam00.put("tokenid", tokenid);
@@ -407,11 +408,8 @@ public abstract class AbstractIntegrationTest {
             checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block0.bitcoinSerialize()));
 
         }
-        // this.wallet1();
-        // for (ECKey ecKey : walletAppKit1.wallet().walletKeys(null)) {
-        // log.debug(ecKey.getPublicKeyAsHex());
-        // }
-        // checkBalance(tokenid, ecKeys );
+        
+        checkBalance(basecoin, key1);
     }
 
 }
