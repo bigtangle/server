@@ -3717,7 +3717,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public void insertPayPayMultiSign(PayMultiSign payMultiSign) throws BlockStoreException {
-        String sql = "insert into paymultisign (orderid, tokenid, toaddress, blockhash, amount, minsignnumber, outpusHashHex) values (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "insert into paymultisign (orderid, tokenid, toaddress, blockhash, amount, minsignnumber,"
+                + " outputHashHex,  outputindex) values (?, ?, ?, ?, ?, ?, ?,?)";
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -3729,6 +3730,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setLong(5, payMultiSign.getAmount());
             preparedStatement.setLong(6, payMultiSign.getMinsignnumber());
             preparedStatement.setString(7, payMultiSign.getOutputHashHex());
+            preparedStatement.setLong(8, payMultiSign.getOutputindex());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -3821,7 +3823,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public PayMultiSign getPayMultiSignWithOrderid(String orderid) throws BlockStoreException {
-        String sql = "select orderid, tokenid, toaddress, blockhash, amount, minsignnumber, outpusHashHex from paymultisign where orderid = ?";
+        String sql = "select orderid, tokenid, toaddress, blockhash, amount, minsignnumber, outputHashHex, outputindex from paymultisign where orderid = ?";
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -3839,7 +3841,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             payMultiSign.setToaddress(resultSet.getString("toaddress"));
             payMultiSign.setTokenid(resultSet.getString("tokenid"));
             payMultiSign.setBlockhashHex(Utils.HEX.encode(payMultiSign.getBlockhash()));
-            payMultiSign.setOutputHashHex(resultSet.getString("outpusHashHex"));
+            payMultiSign.setOutputHashHex(resultSet.getString("outputHashHex"));
+            payMultiSign.setOutputindex(resultSet.getLong("outputindex"));
             return payMultiSign;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
@@ -3915,7 +3918,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         if (pubKeys.isEmpty()) {
             return new ArrayList<PayMultiSign>();
         }
-        String sql = "SELECT paymultisign.orderid, tokenid, toaddress, blockhash, amount, minsignnumber, outpusHashHex,sign,(select count(1) from  paymultisignaddress t where t.orderid=paymultisign.orderid) as signcount "
+        String sql = "SELECT paymultisign.orderid, tokenid, toaddress, blockhash, amount, minsignnumber, outputHashHex,"
+                + "outputindex, sign,(select count(1) from  paymultisignaddress t where t.orderid=paymultisign.orderid) as signcount "
                 + " FROM paymultisign LEFT JOIN paymultisignaddress ON paymultisign.orderid = paymultisignaddress.orderid "
                 + " WHERE paymultisignaddress.pubKey ";
         StringBuffer stringBuffer = new StringBuffer();
@@ -3937,7 +3941,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 payMultiSign.setToaddress(resultSet.getString("toaddress"));
                 payMultiSign.setTokenid(resultSet.getString("tokenid"));
                 payMultiSign.setBlockhashHex(Utils.HEX.encode(payMultiSign.getBlockhash()));
-                payMultiSign.setOutputHashHex(resultSet.getString("outpusHashHex"));
+                payMultiSign.setOutputHashHex(resultSet.getString("outputHashHex"));
+                payMultiSign.setOutputindex(resultSet.getLong("outputindex"));
                 payMultiSign.setSign(resultSet.getInt("sign"));
                 payMultiSign.setSigncount(resultSet.getInt("signcount"));
                 list.add(payMultiSign);

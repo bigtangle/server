@@ -268,7 +268,7 @@ add wallet pro Server config? or client config?
  Calculation: 1) determine the price, using the maximal volume
  			order execution with first in, first served 
  # clearing process:
- 	User must pay the amount= max{ 0,  (Ist price - Last Price)* order volume}
+ 	User must pay the amount= max{ 0,  (Is price - Last Price)* order volume}
  	if user does not pay the additional amount, then the caution will be distributed to all selected seller 
  	transfer the order volume and BIG coin from special address to all users.
  	
@@ -282,11 +282,8 @@ add wallet pro Server config? or client config?
 
 ## ask broadcast of blocks and condition
 
-## TokenID uses address instead of pulic key to protect public key.
-
 ## optional remainder to new address after transfer (UTXO), problem with multi signature?
 
-## copy back the original licence copy right and authors
 
 ## KYC 
 add possible to attach address at payment to KYC
@@ -300,4 +297,8 @@ add possible to attach address at payment to KYC
 ** mark the same token in display and mark the revoked token in color for help 
 **  watched one token will accept all same token.
 
+## multi level airdrop  10 level
+## email add to airdrop
+
+## direct buy from Wechat
 

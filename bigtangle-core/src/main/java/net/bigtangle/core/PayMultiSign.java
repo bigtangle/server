@@ -27,7 +27,7 @@ public class PayMultiSign implements java.io.Serializable {
     private String pubKeyHex;
 
     private String outputHashHex;
-    private long outputsindex;
+    private long outputindex;
     private int sign;
     private int signcount;
 
@@ -35,8 +35,8 @@ public class PayMultiSign implements java.io.Serializable {
         return outputHashHex;
     }
 
-    public void setOutputHashHex(String outpusHashHex) {
-        this.outputHashHex = outpusHashHex;
+    public void setOutputHashHex(String outputHashHex) {
+        this.outputHashHex = outputHashHex;
     }
 
     public String getPubKeyHex() {
@@ -111,12 +111,12 @@ public class PayMultiSign implements java.io.Serializable {
         this.tokenBlockhashHex = tokenBlockhashHex;
     }
 
-    public long getOutputsindex() {
-        return outputsindex;
+    public long getOutputindex() {
+        return outputindex;
     }
 
-    public void setOutputsindex(long outputsindex) {
-        this.outputsindex = outputsindex;
+    public void setOutputindex(long outputsindex) {
+        this.outputindex = outputsindex;
     }
 
     public int getSign() {

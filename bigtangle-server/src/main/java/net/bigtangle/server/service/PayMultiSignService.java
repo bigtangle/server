@@ -44,7 +44,7 @@ public class PayMultiSignService {
         PayMultiSign payMultiSign = convertTransactionDataToPayMultiSign(data);
 
         String hashhex = payMultiSign.getOutputHashHex();
-        long index = payMultiSign.getOutputsindex();
+        long index = payMultiSign.getOutputindex();
         List<OutputsMulti> outputsMultis = this.store.queryOutputsMultiByHashAndIndex(Utils.HEX.decode(hashhex), index);
 
         if (outputsMultis.isEmpty()) {
@@ -130,6 +130,7 @@ public class PayMultiSignService {
             payMultiSignExt.setToaddress(payMultiSign.getToaddress());
             payMultiSignExt.setTokenid(payMultiSign.getTokenid());
             payMultiSignExt.setOutputHashHex(payMultiSign.getOutputHashHex());
+            payMultiSignExt.setOutputindex(  payMultiSign.getOutputindex());
             payMultiSignExt.setSign(payMultiSign.getSign());
             payMultiSignExt.setRealSignnumber(payMultiSign.getSigncount());
             payMultiSignExts.add(payMultiSignExt);
