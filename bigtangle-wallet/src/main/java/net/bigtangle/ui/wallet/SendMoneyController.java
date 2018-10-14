@@ -869,7 +869,7 @@ public class SendMoneyController {
         transaction.setMemo(memoTF1.getText());
 
         PayMultiSign payMultiSign = new PayMultiSign();
-        payMultiSign.setOutputsindex(utxo.getIndex());
+        payMultiSign.setOutputindex(utxo.getIndex());
         payMultiSign.setTokenBlockhashHex(utxo.getBlockHashHex());
         payMultiSign.setOrderid(UUIDUtil.randomUUID());
         payMultiSign.setTokenid(utxo.getValue().getTokenHex());
@@ -999,7 +999,7 @@ public class SendMoneyController {
         PayMultiSign payMultiSign_ = payMultiSignDetailsResponse.getPayMultiSign();
 
         requestParam.clear();
-        requestParam.put("hexStr", payMultiSign_.getOutputHashHex() + ":" + payMultiSign_.getOutputsindex());
+        requestParam.put("hexStr", payMultiSign_.getOutputHashHex() + ":" + payMultiSign_.getOutputindex());
         resp = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputWithKey.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         log.debug(resp);
