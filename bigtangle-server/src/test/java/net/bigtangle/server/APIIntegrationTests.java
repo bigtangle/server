@@ -231,7 +231,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testCreateMultiSigListA() throws Exception {
+    public void testCreateMultiSigList() throws Exception {
         List<ECKey> signKeys = new LinkedList<ECKey>();
         signKeys.add(walletAppKit.wallet().walletKeys(null).get(0));
         signKeys.add(walletAppKit1.wallet().walletKeys(null).get(0));
@@ -305,6 +305,14 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
         transaction.addInput(multisigOutput);
 
+        PayMultiSign payMultiSign = createPayMultiSign(toKey, amount, output, transaction);
+
+        OkHttp3Util.post(contextRoot + ReqCmd.launchPayMultiSign.name(),
+                Json.jsonmapper().writeValueAsString(payMultiSign));
+        return payMultiSign;
+    }
+
+    private PayMultiSign createPayMultiSign(ECKey toKey, Coin amount, UTXO output, Transaction transaction) {
         PayMultiSign payMultiSign = new PayMultiSign();
         payMultiSign.setOrderid(UUIDUtil.randomUUID());
         payMultiSign.setTokenid(amount.getTokenHex());
@@ -314,9 +322,6 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         payMultiSign.setMinsignnumber(2);
         payMultiSign.setOutputHashHex(output.getHashHex());
         payMultiSign.setOutputindex(output.getIndex());
-
-        OkHttp3Util.post(contextRoot + ReqCmd.launchPayMultiSign.name(),
-                Json.jsonmapper().writeValueAsString(payMultiSign));
         return payMultiSign;
     }
 

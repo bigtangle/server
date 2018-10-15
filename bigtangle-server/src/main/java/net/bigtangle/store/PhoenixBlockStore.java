@@ -117,14 +117,14 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
 
     public static final String CREATE_BLOCKS_TABLE = "CREATE TABLE blocks (\n"
             + "    hash binary(32) NOT NULL,\n"
-            + "    height bigint NOT NULL,\n"
-            + "    block varbinary(800000) NOT NULL,\n"
-            + "    wasundoable boolean NOT NULL,\n" 
-            + "    prevblockhash  binary(32) NOT NULL,\n"
-            + "    prevbranchblockhash  binary(32) NOT NULL,\n" 
+            + "    height bigint ,\n"
+            + "    block varbinary(800000) ,\n"
+            + "    wasundoable boolean ,\n" 
+            + "    prevblockhash  binary(32) ,\n"
+            + "    prevbranchblockhash  binary(32) ,\n" 
             + "    mineraddress varbinary(255),\n"
             + "    tokenid varbinary(255),\n" 
-            + "    blocktype bigint NOT NULL,\n"
+            + "    blocktype bigint ,\n"
             + "    rating bigint ,\n"
             + "    depth bigint,\n"
             + "    cumulativeweight  bigint ,\n" 
@@ -137,44 +137,44 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
 
     public static final String CREATE_UNSOLIDBLOCKS_TABLE = "CREATE TABLE unsolidblocks (\n"
             + "    hash binary(32) NOT NULL,\n"
-            + "    block varbinary(800000) NOT NULL,\n"
+            + "    block varbinary(800000) ,\n"
             + "    inserttime bigint,\n" 
             + "    CONSTRAINT unsolidblocks_pk PRIMARY KEY (hash)  \n" + ")";
             
     public static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" 
             + "    hash binary(32) NOT NULL,\n"
-            + "    outputindex bigint NOT NULL,\n"
-            + "    height bigint NOT NULL,\n"
-            + "    coinvalue bigint NOT NULL,\n" 
-            + "    scriptbytes varbinary(800000) NOT NULL,\n"
+            + "    outputindex bigint ,\n"
+            + "    height bigint ,\n"
+            + "    coinvalue bigint ,\n" 
+            + "    scriptbytes varbinary(800000) ,\n"
             + "    toaddress varchar(255),\n" 
             + "    addresstargetable bigint,\n" 
             + "    coinbase boolean,\n"
-            + "    blockhash  binary(32) NOT NULL,\n" 
+            + "    blockhash  binary(32) ,\n" 
             + "    tokenid varchar(255),\n"
             + "    fromaddress varchar(255),\n" 
             + "    memo varchar(80),\n" 
-            + "    spent boolean NOT NULL,\n"
-            + "    confirmed boolean NOT NULL,\n" 
-            + "    spendpending boolean NOT NULL,\n"
+            + "    spent boolean ,\n"
+            + "    confirmed boolean ,\n" 
+            + "    spendpending boolean ,\n"
             + "    spenderblockhash  binary(32),\n"
             + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex)  \n" + ")\n";
     
     public static final String CREATE_TX_REWARD_TABLE = "CREATE TABLE txreward (\n"
             + "   blockhash binary(32) NOT NULL,\n" 
-            + "   prevheight bigint NOT NULL,\n"
-            + "   confirmed boolean NOT NULL,\n" 
-            + "   spent boolean NOT NULL,\n"
+            + "   prevheight bigint ,\n"
+            + "   confirmed boolean ,\n" 
+            + "   spent boolean ,\n"
             + "   spenderblockhash binary(32),\n"
-            + "   eligibility boolean NOT NULL,\n"
+            + "   eligibility boolean ,\n"
             + "   prevblockhash binary(32),\n"
             + "   PRIMARY KEY (blockhash) )";
     
     public static final String CREATE_OUTPUT_MULTI_TABLE = "CREATE TABLE outputsmulti (\n" 
             + "    hash binary(32) NOT NULL,\n"
-            + "    outputindex bigint NOT NULL,\n" 
-            + "    toaddress varchar(255) NOT NULL,\n"
-            + "    minimumsign bigint NOT NULL,\n"
+            + "    outputindex bigint ,\n" 
+            + "    toaddress varchar(255) ,\n"
+            + "    minimumsign bigint ,\n"
             + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex, toaddress)  \n" + ")\n";
 
     public static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n"
@@ -183,26 +183,26 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
 
     public static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
             + "    blockhash varchar(255) NOT NULL,\n"
-            + "    confirmed boolean NOT NULL,\n" 
-            + "    tokenid varchar(255) NOT NULL  ,\n"
-            + "    tokenindex bigint NOT NULL   ,\n"
+            + "    confirmed boolean ,\n" 
+            + "    tokenid varchar(255)   ,\n"
+            + "    tokenindex bigint    ,\n"
             + "    amount bigint(20) ,\n" 
             + "    tokenname varchar(255) ,\n"
             + "    description varchar(255) ,\n" 
             + "    url varchar(255) ,\n" 
-            + "    signnumber bigint NOT NULL   ,\n"
+            + "    signnumber bigint    ,\n"
             + "    multiserial boolean,\n" 
             + "    tokentype int(11),\n" 
             + "    tokenstop boolean,\n"
-            + "    prevblockhash varchar(255) NOT NULL,\n"
-            + "    spent boolean NOT NULL,\n"
+            + "    prevblockhash varchar(255) ,\n"
+            + "    spent boolean ,\n"
             + "    spenderblockhash  binary(32),\n"
             + "    PRIMARY KEY (blockhash) \n)";
 
     //update on confirm
     public static final String CREATE_MULTISIGNADDRESS_TABLE = "CREATE TABLE multisignaddress (\n"
             + "    blockhash varchar(255) NOT NULL,\n"
-            + "    tokenid varchar(255) NOT NULL  ,\n"
+            + "    tokenid varchar(255)   ,\n"
             + "    address varchar(255),\n"
             + "    pubKeyHex varchar(255),\n"
             + "    posIndex int(11),\n"
@@ -210,41 +210,42 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
 
     public static final String CREATE_MULTISIGNBY_TABLE = "CREATE TABLE multisignby (\n"
             + "    tokenid varchar(255) NOT NULL  ,\n" 
-            + "    tokenindex bigint NOT NULL   ,\n"
+            + "    tokenindex bigint    ,\n"
             + "    address varchar(255),\n" 
             + "    PRIMARY KEY (tokenid,tokenindex, address) \n)";
     
     public static final String CREATE_MULTISIGN_TABLE = "CREATE TABLE multisign (\n"
             + "    id varchar(255) NOT NULL  ,\n" 
-            + "    tokenid varchar(255) NOT NULL  ,\n" 
-            + "    tokenindex bigint NOT NULL   ,\n"
+            + "    tokenid varchar(255)   ,\n" 
+            + "    tokenindex bigint    ,\n"
             + "    address varchar(255),\n"
-            + "    blockhash  varbinary(800000) NOT NULL,\n"
-            + "    sign int(11) NOT NULL,\n"
+            + "    blockhash  varbinary(800000) ,\n"
+            + "    sign int(11) ,\n"
             + "    PRIMARY KEY (id) \n)";
 
     public static final String CREATE_PAYMULTISIGN_TABLE = "CREATE TABLE paymultisign (\n"
             + "    orderid varchar(255) NOT NULL  ,\n" 
-            + "    tokenid varchar(255) NOT NULL  ,\n" 
-            + "    toaddress varchar(255) NOT NULL,\n"
-            + "    blockhash varbinary(800000) NOT NULL,\n"
+            + "    tokenid varchar(255)   ,\n" 
+            + "    toaddress varchar(255) ,\n"
+            + "    blockhash varbinary(800000) ,\n"
             + "    amount bigint(20) ,\n"
             + "    minsignnumber bigint(20) ,\n"
-            + "    outpusHashHex varchar(255) ,\n"
+         + "    outputHashHex varchar(255) ,\n"
+         + "    outputindex bigint(20) ,\n"
             + "    PRIMARY KEY (orderid) \n)";
     
     public static final String CREATE_PAYMULTISIGNADDRESS_TABLE = "CREATE TABLE paymultisignaddress (\n"
             + "    orderid varchar(255) NOT NULL  ,\n" 
-            + "    pubKey varchar(255),\n"
-            + "    sign int(11) NOT NULL,\n"
-            + "    signIndex int(11) NOT NULL,\n"
+            + "    pubKey varchar(255) NOT NULL,\n"
+            + "    sign int(11) ,\n"
+            + "    signIndex int(11) ,\n"
             + "    signInputData varbinary(800000),\n"
             + "    PRIMARY KEY (orderid, pubKey) \n)";
     
     public static final String CREATE_USERDATA_TABLE = "CREATE TABLE userdata (\n" 
             + "    blockhash binary(32) NOT NULL,\n"
             + "    dataclassname varchar(255) NOT NULL,\n" 
-            + "    data varbinary(800000) NOT NULL,\n"
+            + "    data varbinary(800000) ,\n"
             + "    pubKey varchar(255),\n" 
             + "    blocktype bigint,\n" 
              + "   CONSTRAINT userdata_pk PRIMARY KEY (dataclassname, pubKey)  \n" + ")";
@@ -252,25 +253,25 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     public static final String CREATE_VOSEXECUTE_TABLE = "CREATE TABLE vosexecute (\n" 
             + "    vosKey varchar(255) NOT NULL,\n"
             + "    pubKey varchar(255) NOT NULL,\n" 
-            + "    execute bigint NOT NULL,\n" 
-            + "    data varbinary(800000) NOT NULL,\n"
-            + "    startDate datetime NOT NULL,\n"
-            + "    endDate datetime NOT NULL,\n"
+            + "    execute bigint ,\n" 
+            + "    data varbinary(800000) ,\n"
+            + "    startDate datetime ,\n"
+            + "    endDate datetime ,\n"
              + "   CONSTRAINT vosexecute_pk PRIMARY KEY (vosKey, pubKey)  \n" + ")";
     
     public static final String CREATE_LOGRESULT_TABLE = "CREATE TABLE logresult (\n" 
             + "    logResultId varchar(255) NOT NULL,\n"
-            + "    logContent varchar(255) NOT NULL,\n" 
-            + "    submitDate datetime NOT NULL,\n"
+            + "    logContent varchar(255) ,\n" 
+            + "    submitDate datetime ,\n"
              + "   CONSTRAINT vosexecute_pk PRIMARY KEY (logResultId)  \n" + ")";
     
     public static final String CREATE_BATCHBLOCK_TABLE = "CREATE TABLE batchblock (\n" 
             + "    hash binary(32) NOT NULL,\n"
-            + "    block varbinary(800000) NOT NULL,\n"
-            + "    inserttime datetime NOT NULL,\n"
+            + "    block varbinary(800000) ,\n"
+            + "    inserttime datetime ,\n"
              + "   CONSTRAINT batchblock_pk PRIMARY KEY (hash)  \n" + ")";
 
-
+    
     public PhoenixBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
             String username, String password) throws BlockStoreException {
         super(params, DATABASE_CONNECTION_URL_PREFIX + hostname + ";serialization=PROTOBUF", fullStoreDepth, username,
@@ -287,10 +288,21 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         List<String> sqlStatements = new ArrayList<String>();
         sqlStatements.add(CREATE_SETTINGS_TABLE);
         sqlStatements.add(CREATE_BLOCKS_TABLE);
+        sqlStatements.add(CREATE_UNSOLIDBLOCKS_TABLE);
         sqlStatements.add(CREATE_OUTPUT_TABLE);
+        sqlStatements.add(CREATE_OUTPUT_MULTI_TABLE);
         sqlStatements.add(CREATE_TIPS_TABLE);
-    
         sqlStatements.add(CREATE_TOKENS_TABLE);
+        sqlStatements.add(CREATE_MULTISIGNADDRESS_TABLE);
+        sqlStatements.add(CREATE_MULTISIGNBY_TABLE);
+        sqlStatements.add(CREATE_MULTISIGN_TABLE);
+        sqlStatements.add(CREATE_TX_REWARD_TABLE);
+        sqlStatements.add(CREATE_USERDATA_TABLE);
+        sqlStatements.add(CREATE_PAYMULTISIGN_TABLE);
+        sqlStatements.add(CREATE_PAYMULTISIGNADDRESS_TABLE);
+        sqlStatements.add(CREATE_VOSEXECUTE_TABLE);
+        sqlStatements.add(CREATE_LOGRESULT_TABLE);
+        sqlStatements.add(CREATE_BATCHBLOCK_TABLE);
         return sqlStatements;
     }
 
@@ -298,23 +310,23 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     protected List<String> getCreateIndexesSQL() {
         List<String> sqlStatements = new ArrayList<String>();
         int index = new Random().nextInt(1000);
-        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON headers (prevblockhash)");
-        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON headers (prevbranchblockhash)");
+        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blocks (prevblockhash)");
+        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blocks (prevbranchblockhash)");
         sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON outputs (toaddress)");
         sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON outputs (tokenid)");
-        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blockevaluation (solid)");
-        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blockevaluation (milestone)");
-        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blockevaluation (rating)");
-        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blockevaluation (depth)");
-        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blockevaluation (milestonedepth)");
-        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blockevaluation (height)");
+//        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blockevaluation (solid)");
+//        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blockevaluation (milestone)");
+//        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blockevaluation (rating)");
+//        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blockevaluation (depth)");
+//        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blockevaluation (milestonedepth)");
+//        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blockevaluation (height)");
 //        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON exchange (fromAddress)");
 //        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON exchange (toAddress)");
 //        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON exchange (toSign)");
 //        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON exchange (fromSign)");
         sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON tokens (tokenname)");
         sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON tokens (description)");
-        sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blockevaluation (maintained)");
+    //    sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON blockevaluation (maintained)");
         sqlStatements.add("CREATE LOCAL INDEX idx_" + (index++) + " ON orderpublish (orderid)");
         return sqlStatements;
     }

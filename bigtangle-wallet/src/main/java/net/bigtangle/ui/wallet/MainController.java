@@ -228,26 +228,7 @@ public class MainController {
             if (!utxo.isMultiSig()) {
                 Main.validTokenSet.add(Main.getString(hashNameMap.get(key)) + ":" + key);
             }
-            // if (signnum >= 2) {
-            // HashMap<String, Object> requestParam = new HashMap<String,
-            // Object>();
-            // requestParam.put("hexStr", hash);
-            // requestParam.put("index", outputindex);
-            // String response0 = OkHttp3Util.post(CONTEXT_ROOT +
-            // ReqCmd.getOutputMultiList.name(),
-            // Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-            // Set<String> addressList = new HashSet<String>();
-            // OutputsDetailsResponse outputsDetailsResponse =
-            // Json.jsonmapper().readValue(response0,
-            // OutputsDetailsResponse.class);
-            // List<OutputsMulti> outputsMultis =
-            // outputsDetailsResponse.getOutputsMultis();
-            // for (OutputsMulti outputsMulti : outputsMultis) {
-            // addressList.add(outputsMulti.getToAddress());
-            // }
-            //
-            // Main.validOutputMultiMap.put(key, addressList);
-            // }
+   
             if (Main.validTokenMap.get(key) == null) {
                 Set<String> addressList = new HashSet<String>();
                 addressList.add(address);
