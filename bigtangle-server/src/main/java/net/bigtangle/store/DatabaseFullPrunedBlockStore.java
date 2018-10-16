@@ -3919,7 +3919,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             return new ArrayList<PayMultiSign>();
         }
         String sql = "SELECT paymultisign.orderid, tokenid, toaddress, blockhash, amount, minsignnumber, outputHashHex,"
-                + "outputindex, sign,(select count(1) from  paymultisignaddress t where t.orderid=paymultisign.orderid) as signcount "
+                + "outputindex, sign,(select count(1) from  paymultisignaddress t where t.orderid=paymultisign.orderid AND sign!=0) as signcount "
                 + " FROM paymultisign LEFT JOIN paymultisignaddress ON paymultisign.orderid = paymultisignaddress.orderid "
                 + " WHERE paymultisignaddress.pubKey ";
         StringBuffer stringBuffer = new StringBuffer();
