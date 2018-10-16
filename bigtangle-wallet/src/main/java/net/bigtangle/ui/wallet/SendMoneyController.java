@@ -687,7 +687,10 @@ public class SendMoneyController {
             Main.bitcoin.wallet().completeTx(request);
             rollingBlock.addTransaction(request.tx);
             rollingBlock.solve();
+
             OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+            GuiUtils.informationalAlert("", Main.getText("alreadySend"), "");
+            overlayUI.done();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
@@ -831,14 +834,20 @@ public class SendMoneyController {
         // memoTF1
         String ContextRoot = Main.getContextRoot();
         this.launchPayMultiSign(Main.params, ContextRoot);
+        GuiUtils.informationalAlert("", Main.getText("alreadySend"), "");
+
         initSignTable();
+        overlayUI.done();
     }
 
     public void signA(ActionEvent event) throws Exception {
 
         String ContextRoot = Main.getContextRoot();
         this.launchPayMultiSignA(Main.params, ContextRoot);
+        GuiUtils.informationalAlert("", Main.getText("alreadySend"), "");
+
         initSignTable();
+        overlayUI.done();
     }
 
     public void launchPayMultiSign(NetworkParameters networkParameters, String contextRoot) throws Exception {
@@ -1066,7 +1075,7 @@ public class SendMoneyController {
             rollingBlock.addTransaction(transaction0);
             rollingBlock.solve();
             OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
-            
+
             Main.instance.controller.initTableView();
         }
     }
