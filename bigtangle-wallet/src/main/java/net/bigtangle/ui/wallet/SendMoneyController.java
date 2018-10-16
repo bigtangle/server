@@ -926,8 +926,8 @@ public class SendMoneyController {
         payMultiSign.setAmount(amount.getValue());
 
         payMultiSign.setMinsignnumber(keys.size());
-        payMultiSign.setOutputHashHex(utxo.getHashHex() + ":" + utxo.getIndex());
-
+        payMultiSign.setOutputHashHex(utxo.getHashHex());
+        payMultiSign.setOutputindex(utxo.getIndex());
         OkHttp3Util.post(contextRoot + ReqCmd.launchPayMultiSign.name(),
                 Json.jsonmapper().writeValueAsString(payMultiSign));
     }
