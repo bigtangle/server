@@ -1038,6 +1038,7 @@ public class SendMoneyController {
 
         PayMultiSignResponse payMultiSignResponse = Json.jsonmapper().readValue(resp, PayMultiSignResponse.class);
         boolean success = payMultiSignResponse.isSuccess();
+        initSignTable();
         if (success) {
             requestParam.clear();
             requestParam.put("orderid", (String) payMultiSign_.getOrderid());
@@ -1065,7 +1066,7 @@ public class SendMoneyController {
             rollingBlock.addTransaction(transaction0);
             rollingBlock.solve();
             OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
-            initSignTable();
+            
             Main.instance.controller.initTableView();
         }
     }
