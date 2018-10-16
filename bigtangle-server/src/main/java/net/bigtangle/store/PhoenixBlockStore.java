@@ -253,22 +253,22 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     public static final String CREATE_VOSEXECUTE_TABLE = "CREATE TABLE vosexecute (\n" 
             + "    vosKey varchar(255) NOT NULL,\n"
             + "    pubKey varchar(255) NOT NULL,\n" 
-            + "    execute bigint ,\n" 
+            + "    vosexecute bigint ,\n" 
             + "    data varbinary(800000) ,\n"
-            + "    startDate datetime ,\n"
-            + "    endDate datetime ,\n"
+            + "    startDate bigint ,\n"
+            + "    endDate bigint ,\n"
              + "   CONSTRAINT vosexecute_pk PRIMARY KEY (vosKey, pubKey)  \n" + ")";
     
     public static final String CREATE_LOGRESULT_TABLE = "CREATE TABLE logresult (\n" 
             + "    logResultId varchar(255) NOT NULL,\n"
             + "    logContent varchar(255) ,\n" 
-            + "    submitDate datetime ,\n"
+            + "    submitDate bigint ,\n"
              + "   CONSTRAINT vosexecute_pk PRIMARY KEY (logResultId)  \n" + ")";
     
     public static final String CREATE_BATCHBLOCK_TABLE = "CREATE TABLE batchblock (\n" 
             + "    hash binary(32) NOT NULL,\n"
             + "    block varbinary(800000) ,\n"
-            + "    inserttime datetime ,\n"
+            + "    inserttime bigint ,\n"
              + "   CONSTRAINT batchblock_pk PRIMARY KEY (hash)  \n" + ")";
 
     
