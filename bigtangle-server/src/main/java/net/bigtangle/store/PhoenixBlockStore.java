@@ -143,7 +143,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             
     public static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" 
             + "    hash binary(32) NOT NULL,\n"
-            + "    outputindex bigint ,\n"
+            + "    outputindex bigint  NOT NULL,\n"
             + "    height bigint ,\n"
             + "    coinvalue bigint ,\n" 
             + "    scriptbytes varbinary(800000) ,\n"
@@ -168,12 +168,12 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             + "   spenderblockhash binary(32),\n"
             + "   eligibility boolean ,\n"
             + "   prevblockhash binary(32),\n"
-            + "   PRIMARY KEY (blockhash) )";
+            + "   CONSTRAINT txreward_pk PRIMARY KEY (blockhash) )";
     
     public static final String CREATE_OUTPUT_MULTI_TABLE = "CREATE TABLE outputsmulti (\n" 
             + "    hash binary(32) NOT NULL,\n"
-            + "    outputindex bigint ,\n" 
-            + "    toaddress varchar(255) ,\n"
+            + "    outputindex bigint NOT NULL,\n" 
+            + "    toaddress varchar(255) NOT NULL,\n"
             + "    minimumsign bigint ,\n"
             + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex, toaddress)  \n" + ")\n";
 
@@ -192,27 +192,27 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             + "    url varchar(255) ,\n" 
             + "    signnumber bigint    ,\n"
             + "    multiserial boolean,\n" 
-            + "    tokentype int(11),\n" 
+            + "    tokentype integer,\n" 
             + "    tokenstop boolean,\n"
             + "    prevblockhash varchar(255) ,\n"
             + "    spent boolean ,\n"
             + "    spenderblockhash  binary(32),\n"
-            + "    PRIMARY KEY (blockhash) \n)";
+            + "    CONSTRAINT tokens_pk  PRIMARY KEY (blockhash) \n)";
 
     //update on confirm
     public static final String CREATE_MULTISIGNADDRESS_TABLE = "CREATE TABLE multisignaddress (\n"
             + "    blockhash varchar(255) NOT NULL,\n"
-            + "    tokenid varchar(255)   ,\n"
-            + "    address varchar(255),\n"
+            + "    tokenid varchar(255)   NOT NULL,\n"
+            + "    address varchar(255) NOT NULL,\n"
             + "    pubKeyHex varchar(255),\n"
-            + "    posIndex int(11),\n"
-            + "    PRIMARY KEY (blockhash, tokenid, address) \n)";
+            + "    posIndex integer(11),\n"
+            + "   CONSTRAINT multisignaddress_pk PRIMARY KEY (blockhash, tokenid, address) \n)";
 
     public static final String CREATE_MULTISIGNBY_TABLE = "CREATE TABLE multisignby (\n"
             + "    tokenid varchar(255) NOT NULL  ,\n" 
-            + "    tokenindex bigint    ,\n"
-            + "    address varchar(255),\n" 
-            + "    PRIMARY KEY (tokenid,tokenindex, address) \n)";
+            + "    tokenindex bigint    NOT NULL,\n"
+            + "    address varchar(255) NOT NULL,\n" 
+            + "    CONSTRAINT multisignby_pk PRIMARY KEY (tokenid,tokenindex, address) \n)";
     
     public static final String CREATE_MULTISIGN_TABLE = "CREATE TABLE multisign (\n"
             + "    id varchar(255) NOT NULL  ,\n" 
@@ -220,8 +220,8 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             + "    tokenindex bigint    ,\n"
             + "    address varchar(255),\n"
             + "    blockhash  varbinary(800000) ,\n"
-            + "    sign int(11) ,\n"
-            + "    PRIMARY KEY (id) \n)";
+            + "    sign integer(11) ,\n"
+            + "  CONSTRAINT multisign_pk  PRIMARY KEY (id) \n)";
 
     public static final String CREATE_PAYMULTISIGN_TABLE = "CREATE TABLE paymultisign (\n"
             + "    orderid varchar(255) NOT NULL  ,\n" 
@@ -232,21 +232,21 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             + "    minsignnumber bigint(20) ,\n"
          + "    outputHashHex varchar(255) ,\n"
          + "    outputindex bigint(20) ,\n"
-            + "    PRIMARY KEY (orderid) \n)";
+            + "    CONSTRAINT paymultisign_pk PRIMARY KEY (orderid) \n)";
     
     public static final String CREATE_PAYMULTISIGNADDRESS_TABLE = "CREATE TABLE paymultisignaddress (\n"
             + "    orderid varchar(255) NOT NULL  ,\n" 
             + "    pubKey varchar(255) NOT NULL,\n"
-            + "    sign int(11) ,\n"
-            + "    signIndex int(11) ,\n"
+            + "    sign integer(11) ,\n"
+            + "    signIndex integer(11) ,\n"
             + "    signInputData varbinary(800000),\n"
-            + "    PRIMARY KEY (orderid, pubKey) \n)";
+            + "    CONSTRAINT paymultisignaddress_pk PRIMARY KEY (orderid, pubKey) \n)";
     
     public static final String CREATE_USERDATA_TABLE = "CREATE TABLE userdata (\n" 
-            + "    blockhash binary(32) NOT NULL,\n"
+            + "    blockhash binary(32) ,\n"
             + "    dataclassname varchar(255) NOT NULL,\n" 
             + "    data varbinary(800000) ,\n"
-            + "    pubKey varchar(255),\n" 
+            + "    pubKey varchar(255) NOT NULL,\n" 
             + "    blocktype bigint,\n" 
              + "   CONSTRAINT userdata_pk PRIMARY KEY (dataclassname, pubKey)  \n" + ")";
     

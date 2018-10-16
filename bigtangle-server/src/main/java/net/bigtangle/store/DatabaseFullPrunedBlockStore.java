@@ -76,23 +76,23 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static final String VERSION_SETTING = "version";
 
     // Drop table SQL.
-    public static String DROP_SETTINGS_TABLE = "DROP TABLE settings";
-    public static String DROP_BLOCKS_TABLE = "DROP TABLE blocks";
-    public static String DROP_UNSOLIDBLOCKS_TABLE = "DROP TABLE unsolidblocks";
-    public static String DROP_OPEN_OUTPUT_TABLE = "DROP TABLE outputs";
-    public static String DROP_OUTPUTSMULTI_TABLE = "DROP TABLE outputsmulti";
-    public static String DROP_TIPS_TABLE = "DROP TABLE tips";
-    public static String DROP_TOKENS_TABLE = "DROP TABLE tokens";
-    public static String DROP_MULTISIGNADDRESS_TABLE = "DROP TABLE multisignaddress";
-    public static String DROP_MULTISIGNBY_TABLE = "DROP TABLE multisignby";
-    public static String DROP_MULTISIGN_TABLE = "DROP TABLE multisign";
-    public static String DROP_TX_REWARDS_TABLE = "DROP TABLE txreward";
-    public static String DROP_USERDATA_TABLE = "DROP TABLE userdata";
-    public static String DROP_PAYMULTISIGN_TABLE = "DROP TABLE paymultisign";
-    public static String DROP_PAYMULTISIGNADDRESS_TABLE = "DROP TABLE paymultisignaddress";
-    public static String DROP_VOSEXECUTE_TABLE = "DROP TABLE vosexecute";
-    public static String DROP_LOGRESULT_TABLE = "DROP TABLE logresult";
-    public static String DROP_BATCHBLOCK_TABLE = "DROP TABLE batchblock";
+    public static String DROP_SETTINGS_TABLE = "DROP TABLE IF EXISTS settings";
+    public static String DROP_BLOCKS_TABLE = "DROP TABLE IF EXISTS blocks";
+    public static String DROP_UNSOLIDBLOCKS_TABLE = "DROP TABLE IF EXISTS unsolidblocks";
+    public static String DROP_OPEN_OUTPUT_TABLE = "DROP TABLE IF EXISTS outputs";
+    public static String DROP_OUTPUTSMULTI_TABLE = "DROP TABLE IF EXISTS outputsmulti";
+    public static String DROP_TIPS_TABLE = "DROP TABLE IF EXISTS tips";
+    public static String DROP_TOKENS_TABLE = "DROP TABLE IF EXISTS tokens";
+    public static String DROP_MULTISIGNADDRESS_TABLE = "DROP TABLE IF EXISTS multisignaddress";
+    public static String DROP_MULTISIGNBY_TABLE = "DROP TABLE IF EXISTS multisignby";
+    public static String DROP_MULTISIGN_TABLE = "DROP TABLE IF EXISTS multisign";
+    public static String DROP_TX_REWARDS_TABLE = "DROP TABLE IF EXISTS txreward";
+    public static String DROP_USERDATA_TABLE = "DROP TABLE IF EXISTS userdata";
+    public static String DROP_PAYMULTISIGN_TABLE = "DROP TABLE IF EXISTS paymultisign";
+    public static String DROP_PAYMULTISIGNADDRESS_TABLE = "DROP TABLE IF EXISTS paymultisignaddress";
+    public static String DROP_VOSEXECUTE_TABLE = "DROP TABLE IF EXISTS vosexecute";
+    public static String DROP_LOGRESULT_TABLE = "DROP TABLE IF EXISTS logresult";
+    public static String DROP_BATCHBLOCK_TABLE = "DROP TABLE IF EXISTS batchblock";
 
     // Queries SQL.
     protected final String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
