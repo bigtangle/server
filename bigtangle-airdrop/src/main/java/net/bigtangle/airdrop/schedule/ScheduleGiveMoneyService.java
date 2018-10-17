@@ -94,7 +94,12 @@ public class ScheduleGiveMoneyService {
                         if (pubkey == null || pubkey.isEmpty()) {
                             continue;
                         }
-                        giveMoneyResult.put(pubkey, 1000 / 5);
+                        if (giveMoneyResult.containsKey("pubkey")) {
+                            giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + 1000 / 5);
+                        } else {
+                            giveMoneyResult.put(pubkey, 1000 / 5);
+                        }
+
                     }
 
                 Map<String, HashMap<String, String>> wechatInviteResult2 = this.store
@@ -104,7 +109,11 @@ public class ScheduleGiveMoneyService {
                         if (pubkey == null || pubkey.isEmpty()) {
                             continue;
                         }
-                        giveMoneyResult.put(pubkey, 1000 / 5 / 5);
+                        if (giveMoneyResult.containsKey("pubkey")) {
+                            giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + 1000 / 5 / 5);
+                        } else {
+                            giveMoneyResult.put(pubkey, 1000 / 5 / 5);
+                        }
                     }
                 Map<String, HashMap<String, String>> wechatInviteResult3 = this.store
                         .queryByUWechatInvitePubKeyInviterIdMap(wechatInviteResult2.get("wechatInviterId").values());
@@ -113,7 +122,11 @@ public class ScheduleGiveMoneyService {
                         if (pubkey == null || pubkey.isEmpty()) {
                             continue;
                         }
-                        giveMoneyResult.put(pubkey, 1000 / 5 / 5 / 5);
+                        if (giveMoneyResult.containsKey("pubkey")) {
+                            giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + 1000 / 5 / 5 / 5);
+                        } else {
+                            giveMoneyResult.put(pubkey, 1000 / 5 / 5 / 5);
+                        }
                     }
                 Map<String, HashMap<String, String>> wechatInviteResult4 = this.store
                         .queryByUWechatInvitePubKeyInviterIdMap(wechatInviteResult3.get("wechatInviterId").values());
@@ -122,7 +135,11 @@ public class ScheduleGiveMoneyService {
                         if (pubkey == null || pubkey.isEmpty()) {
                             continue;
                         }
-                        giveMoneyResult.put(pubkey, 1000 / 5 / 5 / 5 / 5);
+                        if (giveMoneyResult.containsKey("pubkey")) {
+                            giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + 1000 / 5 / 5 / 5 / 5);
+                        } else {
+                            giveMoneyResult.put(pubkey, 1000 / 5 / 5 / 5 / 5);
+                        }
                     }
                 if (giveMoneyResult.isEmpty()) {
                     return;
