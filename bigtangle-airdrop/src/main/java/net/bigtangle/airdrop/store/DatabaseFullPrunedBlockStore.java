@@ -12,9 +12,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -37,7 +39,7 @@ import net.bigtangle.core.VerificationException;
  * 
  */
 public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockStore {
-    
+
     public void clearWechatInviteStatusZero() throws BlockStoreException {
         String sql = "update wechatinvite set status = 0";
         maybeConnect();
@@ -59,7 +61,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
+
     private static final Logger log = LoggerFactory.getLogger(DatabaseFullPrunedBlockStore.class);
 
     protected String VERSION_SETTING = "version";
@@ -67,7 +69,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     // Drop table SQL.
     public static String DROP_WECHATINVITE_TABLE = "DROP TABLE wechatinvite";
     public static String DROP_WECHATREWARD_TABLE = "DROP TABLE wechatreward";
-    
+
     // Tables exist SQL.
     protected String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM wechatreward WHERE 1 = 2";
 
@@ -83,7 +85,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public ThreadLocal<Connection> getConnection() {
         return this.conn;
     }
-    
+
     @Override
     public void updateWechatInviteStatus(String id, int status) throws BlockStoreException {
         String sql = "update wechatinvite set status = ? where id = ?";
@@ -108,7 +110,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
+
     public HashMap<String, String> queryByUWechatInvitePubKeyMapping(Set<String> wechatIdSet)
             throws BlockStoreException {
         if (wechatIdSet.isEmpty()) {
@@ -145,7 +147,49 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
+
+    public Map<String, HashMap<String, String>> queryByUWechatInvitePubKeyInviterIdMap(Collection<String> wechatIdSet)
+            throws BlockStoreException {
+        if (wechatIdSet.isEmpty()) {
+            return new HashMap<String, HashMap<String, String>>();
+        }
+        StringBuffer stringBuffer = new StringBuffer();
+        for (String s : wechatIdSet) {
+            stringBuffer.append(",").append("'").append(s).append("'");
+        }
+        String sql = "select wechatId, pubkey from wechatinvite where wechatId in (" + stringBuffer.substring(1) + ")";
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(sql);
+            ResultSet resultSet = s.executeQuery();
+            HashMap<String, String> map = new HashMap<String, String>();
+            HashMap<String, String> map1 = new HashMap<String, String>();
+            Map<String, HashMap<String, String>> temp = new HashMap<String, HashMap<String, String>>();
+            while (resultSet.next()) {
+                map.put(resultSet.getString("wechatId"), resultSet.getString("pubkey"));
+                map1.put(resultSet.getString("wechatId"), resultSet.getString("wechatInviterId"));
+            }
+            temp.put("pubkey", map);
+            temp.put("wechatInviterId", map1);
+            return temp;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
     public List<WechatInvite> queryByUnfinishedWechatInvite() throws BlockStoreException {
         String sql = "select id, wechatId, wechatInviterId, createTime, status from wechatinvite where status = 0";
         List<WechatInvite> wechatInvites = new ArrayList<WechatInvite>();
@@ -379,7 +423,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
+
     protected String getTablesExistSQL() {
         return SELECT_CHECK_TABLES_EXIST_SQL;
     }
@@ -438,7 +482,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         if (log.isDebugEnabled())
             log.debug("Starting database batch write with connection: " + conn.get().toString());
         try {
-            conn.get().setAutoCommit(false);    
+            conn.get().setAutoCommit(false);
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         }

@@ -58,13 +58,13 @@ public class ScheduleGiveMoneyService {
                         list = new ArrayList<WechatInvite>();
                         dataMap.put(wechatInvite.getWechatinviterId(), list);
                     }
-                    list.add(wechatInvite);
+                    dataMap.get(wechatInvite.getWechatinviterId()).add(wechatInvite);
                 }
                 if (dataMap.isEmpty()) {
                     return;
                 }
-                HashMap<String, String> wechatInviteResult = this.store
-                        .queryByUWechatInvitePubKeyMapping(dataMap.keySet());
+                Map<String, HashMap<String, String>> wechatInviteResult = this.store
+                        .queryByUWechatInvitePubKeyInviterIdMap(dataMap.keySet());
                 if (wechatInviteResult.isEmpty()) {
                     return;
                 }
@@ -73,7 +73,7 @@ public class ScheduleGiveMoneyService {
                         .hasNext();) {
                     Map.Entry<String, List<WechatInvite>> entry = iterator.next();
                     String wechatinviterId = entry.getKey();
-                    String pubkey = wechatInviteResult.get(wechatinviterId);
+                    String pubkey = wechatInviteResult.get("pubkey").get(wechatinviterId);
                     if (!StringUtils.nonEmptyString(pubkey)) {
                         iterator.remove();
                         continue;
@@ -83,13 +83,50 @@ public class ScheduleGiveMoneyService {
                         iterator.remove();
                         continue;
                     }
+
                     giveMoneyResult.put(pubkey, (count + 1) * 1000);
                 }
 
+                Map<String, HashMap<String, String>> wechatInviteResult1 = this.store
+                        .queryByUWechatInvitePubKeyInviterIdMap(wechatInviteResult.get("wechatInviterId").values());
+                if (wechatInviteResult1.get("pubkey") != null && !wechatInviteResult1.get("pubkey").isEmpty())
+                    for (String pubkey : wechatInviteResult1.get("pubkey").values()) {
+                        if (pubkey == null || pubkey.isEmpty()) {
+                            continue;
+                        }
+                        giveMoneyResult.put(pubkey, 1000 / 5);
+                    }
+
+                Map<String, HashMap<String, String>> wechatInviteResult2 = this.store
+                        .queryByUWechatInvitePubKeyInviterIdMap(wechatInviteResult1.get("wechatInviterId").values());
+                if (wechatInviteResult2.get("pubkey") != null && !wechatInviteResult2.get("pubkey").isEmpty())
+                    for (String pubkey : wechatInviteResult2.get("pubkey").values()) {
+                        if (pubkey == null || pubkey.isEmpty()) {
+                            continue;
+                        }
+                        giveMoneyResult.put(pubkey, 1000 / 5 / 5);
+                    }
+                Map<String, HashMap<String, String>> wechatInviteResult3 = this.store
+                        .queryByUWechatInvitePubKeyInviterIdMap(wechatInviteResult2.get("wechatInviterId").values());
+                if (wechatInviteResult3.get("pubkey") != null && !wechatInviteResult3.get("pubkey").isEmpty())
+                    for (String pubkey : wechatInviteResult3.get("pubkey").values()) {
+                        if (pubkey == null || pubkey.isEmpty()) {
+                            continue;
+                        }
+                        giveMoneyResult.put(pubkey, 1000 / 5 / 5 / 5);
+                    }
+                Map<String, HashMap<String, String>> wechatInviteResult4 = this.store
+                        .queryByUWechatInvitePubKeyInviterIdMap(wechatInviteResult3.get("wechatInviterId").values());
+                if (wechatInviteResult4.get("pubkey") != null && !wechatInviteResult4.get("pubkey").isEmpty())
+                    for (String pubkey : wechatInviteResult4.get("pubkey").values()) {
+                        if (pubkey == null || pubkey.isEmpty()) {
+                            continue;
+                        }
+                        giveMoneyResult.put(pubkey, 1000 / 5 / 5 / 5 / 5);
+                    }
                 if (giveMoneyResult.isEmpty()) {
                     return;
                 }
-
                 giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult);
 
                 for (Map.Entry<String, List<WechatInvite>> entry : dataMap.entrySet()) {
