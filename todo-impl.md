@@ -301,4 +301,24 @@ add possible to attach address at payment to KYC
 ## email add to airdrop
 
 ## direct buy from Wechat
+## monitoring of application 
+## linkedin  marketing (Air Drop)
 
+1) message to  to set the password 
+	example cc.bigtangle.net/public/register?username=$id&invitedby=LinkedinBigtangle
+		register page ask user to set passwort
+   use the same logic as wechat invite and write the user and 
+2)  user can login and upload the public key and display 
+
+3) Display amount BIG=1 Million (market value ICO =45 Dollar) 
+
+BL write invite inlcude the link to evaluation of software and prospect /all
+
+## permission bigTangle
+* the block solve is done on the server only 
+* constant block producer on each node, no race condition of hash power and no software manipulation
+ 
+ changes needed:  
+    1) confiure the block solve and tip selection on the server only
+    2) protect the kafka stream to connected with keys
+    3) add filter for KYC public keys 
