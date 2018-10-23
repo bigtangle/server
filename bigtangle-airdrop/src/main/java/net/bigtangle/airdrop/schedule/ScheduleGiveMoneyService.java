@@ -6,9 +6,11 @@ package net.bigtangle.airdrop.schedule;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,8 +54,13 @@ public class ScheduleGiveMoneyService {
                     }
                 }
                 HashMap<String, List<WechatInvite>> dataMap = new HashMap<String, List<WechatInvite>>();
+                Set<String> subInvitedSet = new HashSet<>();
+
                 for (WechatInvite wechatInvite : wechatInvites) {
                     List<WechatInvite> list = dataMap.get(wechatInvite.getWechatinviterId());
+                    if ("LinkedinBigtangle".equals(wechatInvite.getWechatinviterId())) {
+                        subInvitedSet.add(wechatInvite.getWechatId());
+                    }
                     if (list == null) {
                         list = new ArrayList<WechatInvite>();
                         dataMap.put(wechatInvite.getWechatinviterId(), list);
@@ -139,6 +146,19 @@ public class ScheduleGiveMoneyService {
                             giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + 1000 / 5 / 5 / 5 / 5);
                         } else {
                             giveMoneyResult.put(pubkey, 1000 / 5 / 5 / 5 / 5);
+                        }
+                    }
+                Map<String, HashMap<String, String>> wechatInviteResult5 = this.store
+                        .queryByUWechatInvitePubKeyInviterIdMap(subInvitedSet);
+                if (wechatInviteResult4.get("pubkey") != null && !wechatInviteResult4.get("pubkey").isEmpty())
+                    for (String pubkey : wechatInviteResult4.get("pubkey").values()) {
+                        if (pubkey == null || pubkey.isEmpty()) {
+                            continue;
+                        }
+                        if (giveMoneyResult.containsKey("pubkey")) {
+                            giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + 100000);
+                        } else {
+                            giveMoneyResult.put(pubkey, 100000);
                         }
                     }
                 if (giveMoneyResult.isEmpty()) {
