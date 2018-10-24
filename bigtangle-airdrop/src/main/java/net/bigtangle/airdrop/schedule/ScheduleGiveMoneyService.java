@@ -93,84 +93,104 @@ public class ScheduleGiveMoneyService {
 
                     giveMoneyResult.put(pubkey, (count + 1) * 1000);
                 }
+                if (wechatInviteResult.get("wechatInviterId") != null
+                        && !wechatInviteResult.get("wechatInviterId").isEmpty()) {
 
-                Map<String, HashMap<String, String>> wechatInviteResult1 = this.store
-                        .queryByUWechatInvitePubKeyInviterIdMap(wechatInviteResult.get("wechatInviterId").values());
-                if (wechatInviteResult1.get("pubkey") != null && !wechatInviteResult1.get("pubkey").isEmpty())
-                    for (String pubkey : wechatInviteResult1.get("pubkey").values()) {
-                        if (pubkey == null || pubkey.isEmpty()) {
-                            continue;
-                        }
-                        logger.debug("==============");
-                        logger.debug(pubkey);
-                        if (giveMoneyResult.containsKey("pubkey")) {
-                            giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + 1000 / 5);
-                        } else {
-                            giveMoneyResult.put(pubkey, 1000 / 5);
-                        }
+                    Map<String, HashMap<String, String>> wechatInviteResult1 = this.store
+                            .queryByUWechatInvitePubKeyInviterIdMap(wechatInviteResult.get("wechatInviterId").values());
+                    if (wechatInviteResult1.get("pubkey") != null && !wechatInviteResult1.get("pubkey").isEmpty())
+                        for (String pubkey : wechatInviteResult1.get("pubkey").values()) {
+                            if (pubkey == null || pubkey.isEmpty()) {
+                                continue;
+                            }
+                            logger.debug("==============");
+                            logger.debug(pubkey);
+                            if (giveMoneyResult.containsKey("pubkey")) {
+                                giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + 1000 / 5);
+                            } else {
+                                giveMoneyResult.put(pubkey, 1000 / 5);
+                            }
 
-                    }
+                        }
+                    if (wechatInviteResult1.get("wechatInviterId") != null
+                            && !wechatInviteResult1.get("wechatInviterId").isEmpty()) {
+                        Map<String, HashMap<String, String>> wechatInviteResult2 = this.store
+                                .queryByUWechatInvitePubKeyInviterIdMap(
+                                        wechatInviteResult1.get("wechatInviterId").values());
+                        if (wechatInviteResult2.get("pubkey") != null && !wechatInviteResult2.get("pubkey").isEmpty())
+                            for (String pubkey : wechatInviteResult2.get("pubkey").values()) {
+                                if (pubkey == null || pubkey.isEmpty()) {
+                                    continue;
+                                }
+                                logger.debug("==============");
+                                logger.debug(pubkey);
+                                if (giveMoneyResult.containsKey("pubkey")) {
+                                    giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + 1000 / 5 / 5);
+                                } else {
+                                    giveMoneyResult.put(pubkey, 1000 / 5 / 5);
+                                }
+                            }
+                        if (wechatInviteResult2.get("wechatInviterId") != null
+                                && !wechatInviteResult2.get("wechatInviterId").isEmpty()) {
+                            Map<String, HashMap<String, String>> wechatInviteResult3 = this.store
+                                    .queryByUWechatInvitePubKeyInviterIdMap(
+                                            wechatInviteResult2.get("wechatInviterId").values());
+                            if (wechatInviteResult3.get("pubkey") != null
+                                    && !wechatInviteResult3.get("pubkey").isEmpty())
+                                for (String pubkey : wechatInviteResult3.get("pubkey").values()) {
+                                    if (pubkey == null || pubkey.isEmpty()) {
+                                        continue;
+                                    }
+                                    logger.debug("==============");
+                                    logger.debug(pubkey);
+                                    if (giveMoneyResult.containsKey("pubkey")) {
+                                        giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + 1000 / 5 / 5 / 5);
+                                    } else {
+                                        giveMoneyResult.put(pubkey, 1000 / 5 / 5 / 5);
+                                    }
+                                }
+                            if (wechatInviteResult3.get("wechatInviterId") != null
+                                    && !wechatInviteResult3.get("wechatInviterId").isEmpty()) {
+                                Map<String, HashMap<String, String>> wechatInviteResult4 = this.store
+                                        .queryByUWechatInvitePubKeyInviterIdMap(
+                                                wechatInviteResult3.get("wechatInviterId").values());
+                                if (wechatInviteResult4.get("pubkey") != null
+                                        && !wechatInviteResult4.get("pubkey").isEmpty())
+                                    for (String pubkey : wechatInviteResult4.get("pubkey").values()) {
+                                        if (pubkey == null || pubkey.isEmpty()) {
+                                            continue;
+                                        }
+                                        logger.debug("==============");
+                                        logger.debug(pubkey);
+                                        if (giveMoneyResult.containsKey("pubkey")) {
+                                            giveMoneyResult.put(pubkey,
+                                                    giveMoneyResult.get("pubkey") + 1000 / 5 / 5 / 5 / 5);
+                                        } else {
+                                            giveMoneyResult.put(pubkey, 1000 / 5 / 5 / 5 / 5);
+                                        }
+                                    }
 
-                Map<String, HashMap<String, String>> wechatInviteResult2 = this.store
-                        .queryByUWechatInvitePubKeyInviterIdMap(wechatInviteResult1.get("wechatInviterId").values());
-                if (wechatInviteResult2.get("pubkey") != null && !wechatInviteResult2.get("pubkey").isEmpty())
-                    for (String pubkey : wechatInviteResult2.get("pubkey").values()) {
-                        if (pubkey == null || pubkey.isEmpty()) {
-                            continue;
-                        }
-                        logger.debug("==============");
-                        logger.debug(pubkey);
-                        if (giveMoneyResult.containsKey("pubkey")) {
-                            giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + 1000 / 5 / 5);
-                        } else {
-                            giveMoneyResult.put(pubkey, 1000 / 5 / 5);
+                            }
                         }
                     }
-                Map<String, HashMap<String, String>> wechatInviteResult3 = this.store
-                        .queryByUWechatInvitePubKeyInviterIdMap(wechatInviteResult2.get("wechatInviterId").values());
-                if (wechatInviteResult3.get("pubkey") != null && !wechatInviteResult3.get("pubkey").isEmpty())
-                    for (String pubkey : wechatInviteResult3.get("pubkey").values()) {
-                        if (pubkey == null || pubkey.isEmpty()) {
-                            continue;
+                }
+                if (subInvitedSet != null && !subInvitedSet.isEmpty()) {
+                    Map<String, HashMap<String, String>> wechatInviteResult5 = this.store
+                            .queryByUWechatInvitePubKeyInviterIdMap(subInvitedSet);
+                    if (wechatInviteResult5.get("pubkey") != null && !wechatInviteResult5.get("pubkey").isEmpty())
+                        for (String pubkey : wechatInviteResult5.get("pubkey").values()) {
+                            if (pubkey == null || pubkey.isEmpty()) {
+                                continue;
+                            }
+                            logger.debug("==============");
+                            logger.debug(pubkey);
+                            if (giveMoneyResult.containsKey("pubkey")) {
+                                giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + 100000);
+                            } else {
+                                giveMoneyResult.put(pubkey, 100000);
+                            }
                         }
-                        logger.debug("==============");
-                        logger.debug(pubkey);
-                        if (giveMoneyResult.containsKey("pubkey")) {
-                            giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + 1000 / 5 / 5 / 5);
-                        } else {
-                            giveMoneyResult.put(pubkey, 1000 / 5 / 5 / 5);
-                        }
-                    }
-                Map<String, HashMap<String, String>> wechatInviteResult4 = this.store
-                        .queryByUWechatInvitePubKeyInviterIdMap(wechatInviteResult3.get("wechatInviterId").values());
-                if (wechatInviteResult4.get("pubkey") != null && !wechatInviteResult4.get("pubkey").isEmpty())
-                    for (String pubkey : wechatInviteResult4.get("pubkey").values()) {
-                        if (pubkey == null || pubkey.isEmpty()) {
-                            continue;
-                        }
-                        logger.debug("==============");
-                        logger.debug(pubkey);
-                        if (giveMoneyResult.containsKey("pubkey")) {
-                            giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + 1000 / 5 / 5 / 5 / 5);
-                        } else {
-                            giveMoneyResult.put(pubkey, 1000 / 5 / 5 / 5 / 5);
-                        }
-                    }
-                Map<String, HashMap<String, String>> wechatInviteResult5 = this.store
-                        .queryByUWechatInvitePubKeyInviterIdMap(subInvitedSet);
-                if (wechatInviteResult4.get("pubkey") != null && !wechatInviteResult4.get("pubkey").isEmpty())
-                    for (String pubkey : wechatInviteResult4.get("pubkey").values()) {
-                        if (pubkey == null || pubkey.isEmpty()) {
-                            continue;
-                        }
-                        logger.debug("==============");
-                        logger.debug(pubkey);
-                        if (giveMoneyResult.containsKey("pubkey")) {
-                            giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + 100000);
-                        } else {
-                            giveMoneyResult.put(pubkey, 100000);
-                        }
-                    }
+                }
                 if (giveMoneyResult.isEmpty()) {
                     return;
                 }
