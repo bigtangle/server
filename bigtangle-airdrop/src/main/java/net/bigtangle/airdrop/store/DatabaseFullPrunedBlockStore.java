@@ -157,7 +157,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         for (String s : wechatIdSet) {
             stringBuffer.append(",").append("'").append(s).append("'");
         }
-        String sql = "select wechatId, pubkey from wechatinvite where wechatId in (" + stringBuffer.substring(1) + ")";
+        String sql = "select wechatId, pubkey,wechatInviterId from wechatinvite where wechatId in (" + stringBuffer.substring(1) + ")";
         maybeConnect();
         PreparedStatement s = null;
         try {
