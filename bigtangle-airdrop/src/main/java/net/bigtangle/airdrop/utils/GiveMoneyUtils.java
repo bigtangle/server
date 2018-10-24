@@ -55,13 +55,13 @@ public class GiveMoneyUtils {
 
     @Autowired
     private ServerConfiguration serverConfiguration;
-    
+
     private List<UTXO> getTransactionAndGetBalances(ECKey ecKey) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         List<String> keyStrHex000 = new ArrayList<String>();
         keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
         String contextRoot = serverConfiguration.getServerURL();
-        
+
         String response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
                 Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
 
@@ -87,10 +87,15 @@ public class GiveMoneyUtils {
         Transaction doublespent = new Transaction(networkParameters);
 
         for (Map.Entry<String, Integer> entry : giveMoneyResult.entrySet()) {
-            Coin amount = Coin.valueOf(entry.getValue() * 1000, NetworkParameters.BIGTANGLE_TOKENID);
-            Address address = Address.fromBase58(networkParameters, entry.getKey());
-            doublespent.addOutput(amount, address);
-            coinbase = coinbase.add(amount);
+            try {
+                Coin amount = Coin.valueOf(entry.getValue() * 1000, NetworkParameters.BIGTANGLE_TOKENID);
+                Address address = Address.fromBase58(networkParameters, entry.getKey());
+                doublespent.addOutput(amount, address);
+                coinbase = coinbase.add(amount);
+            } catch (Exception e) {
+                LOGGER.error("=============");
+                LOGGER.info("error : " + entry.getKey());
+            }
         }
 
         UTXO findOutput = null;
@@ -114,18 +119,17 @@ public class GiveMoneyUtils {
         input.setScriptSig(inputScript);
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip,
-                Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(doublespent);
         rollingBlock.solve();
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
-        
+
         for (TransactionOutput transactionOutput : doublespent.getOutputs()) {
             LOGGER.info("give mount output value : " + transactionOutput.getValue());
         }
     }
-    
+
     private static final Logger LOGGER = LoggerFactory.getLogger(GiveMoneyUtils.class);
 }
