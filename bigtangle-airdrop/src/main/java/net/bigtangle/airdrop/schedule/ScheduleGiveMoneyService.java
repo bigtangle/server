@@ -101,6 +101,8 @@ public class ScheduleGiveMoneyService {
                         if (pubkey == null || pubkey.isEmpty()) {
                             continue;
                         }
+                        logger.debug("==============");
+                        logger.debug(pubkey);
                         if (giveMoneyResult.containsKey("pubkey")) {
                             giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + 1000 / 5);
                         } else {
@@ -116,6 +118,8 @@ public class ScheduleGiveMoneyService {
                         if (pubkey == null || pubkey.isEmpty()) {
                             continue;
                         }
+                        logger.debug("==============");
+                        logger.debug(pubkey);
                         if (giveMoneyResult.containsKey("pubkey")) {
                             giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + 1000 / 5 / 5);
                         } else {
@@ -129,6 +133,8 @@ public class ScheduleGiveMoneyService {
                         if (pubkey == null || pubkey.isEmpty()) {
                             continue;
                         }
+                        logger.debug("==============");
+                        logger.debug(pubkey);
                         if (giveMoneyResult.containsKey("pubkey")) {
                             giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + 1000 / 5 / 5 / 5);
                         } else {
@@ -142,6 +148,8 @@ public class ScheduleGiveMoneyService {
                         if (pubkey == null || pubkey.isEmpty()) {
                             continue;
                         }
+                        logger.debug("==============");
+                        logger.debug(pubkey);
                         if (giveMoneyResult.containsKey("pubkey")) {
                             giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + 1000 / 5 / 5 / 5 / 5);
                         } else {
@@ -155,6 +163,8 @@ public class ScheduleGiveMoneyService {
                         if (pubkey == null || pubkey.isEmpty()) {
                             continue;
                         }
+                        logger.debug("==============");
+                        logger.debug(pubkey);
                         if (giveMoneyResult.containsKey("pubkey")) {
                             giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + 100000);
                         } else {
