@@ -74,7 +74,7 @@ public class GiveMoneyUtils {
         return listUTXO;
     }
 
-    public void batchGiveMoneyToECKeyList(HashMap<String, Integer> giveMoneyResult) throws Exception {
+    public synchronized void batchGiveMoneyToECKeyList(HashMap<String, Integer> giveMoneyResult) throws Exception {
         String contextRoot = serverConfiguration.getServerURL();
         if (giveMoneyResult.isEmpty()) {
             return;
@@ -88,7 +88,7 @@ public class GiveMoneyUtils {
 
         for (Map.Entry<String, Integer> entry : giveMoneyResult.entrySet()) {
             try {
-                Coin amount = Coin.valueOf(entry.getValue() * 1000, NetworkParameters.BIGTANGLE_TOKENID);
+                Coin amount = Coin.valueOf(entry.getValue(), NetworkParameters.BIGTANGLE_TOKENID);
                 Address address = Address.fromBase58(networkParameters, entry.getKey());
                 doublespent.addOutput(amount, address);
                 coinbase = coinbase.add(amount);
