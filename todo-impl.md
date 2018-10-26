@@ -322,3 +322,7 @@ BL write invite inlcude the link to evaluation of software and prospect /all
     1) confiure the block solve and tip selection on the server only
     2) protect the kafka stream to connected with keys
     3) add filter for KYC public keys 
+
+    
+## no empty block tip selection avoid conflicts  blocks
+## empty block with preferenced to select blocks in conflicts

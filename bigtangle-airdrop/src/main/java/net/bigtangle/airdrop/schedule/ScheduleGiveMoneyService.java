@@ -31,6 +31,10 @@ import net.bigtangle.core.BlockStoreException;
 @EnableAsync
 public class ScheduleGiveMoneyService {
 
+    private static final String LINKEDIN_BIGTANGLE = "LinkedinBigtangle";
+
+    private static final int linkedinMoney = 100000;
+
     private static final int wechatReward = 1000;
 
     private static final Logger logger = LoggerFactory.getLogger(ScheduleGiveMoneyService.class);
@@ -76,17 +80,19 @@ public class ScheduleGiveMoneyService {
                 if (giveMoneyResult.isEmpty()) {
                     return;
                 }
-                giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult);
-
+              if(  giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult)) {
+                     //only update, if money is given
                 for (Map.Entry<String, List<WechatInvite>> entry : dataMap.entrySet()) {
                     logger.info("wechat invite give money : " + entry.getKey() + ", money : "
-                            + (entry.getValue().size() * 1000));
+                            + (entry.getValue().size() * wechatReward));
                     for (WechatInvite wechatInvite : entry.getValue()) {
                         this.store.updateWechatInviteStatus(wechatInvite.getId(), 1);
                         logger.info("wechat invite update status, id : " + wechatInvite.getId() + ", success");
                     }
                 }
-
+                
+                
+              }
             } catch (Exception e) {
                 logger.warn("ScheduleGiveMoneyService", e);
             }
@@ -118,7 +124,7 @@ public class ScheduleGiveMoneyService {
             Set<String> subInvitedSet) {
         for (WechatInvite wechatInvite : wechatInvites) {
             List<WechatInvite> list = dataMap.get(wechatInvite.getWechatinviterId());
-            if ("LinkedinBigtangle".equals(wechatInvite.getWechatinviterId())) {
+            if (LINKEDIN_BIGTANGLE.equals(wechatInvite.getWechatinviterId())) {
                 subInvitedSet.add(wechatInvite.getWechatId());
             }
             if (list == null) {
@@ -144,9 +150,9 @@ public class ScheduleGiveMoneyService {
                     logger.debug("==============");
                     logger.debug(pubkey);
                     if (giveMoneyResult.containsKey("pubkey")) {
-                        giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + 1000 / 5);
+                        giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + wechatReward / 5);
                     } else {
-                        giveMoneyResult.put(pubkey, 1000 / 5);
+                        giveMoneyResult.put(pubkey, wechatReward / 5);
                     }
 
                 }
@@ -163,9 +169,9 @@ public class ScheduleGiveMoneyService {
                         logger.debug("==============");
                         logger.debug(pubkey);
                         if (giveMoneyResult.containsKey("pubkey")) {
-                            giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + 1000 / 5 / 5);
+                            giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + wechatReward / 5 / 5);
                         } else {
-                            giveMoneyResult.put(pubkey, 1000 / 5 / 5);
+                            giveMoneyResult.put(pubkey, wechatReward / 5 / 5);
                         }
                     }
                 if (wechatInviteResult2.get("wechatInviterId") != null
@@ -182,9 +188,9 @@ public class ScheduleGiveMoneyService {
                             logger.debug("==============");
                             logger.debug(pubkey);
                             if (giveMoneyResult.containsKey("pubkey")) {
-                                giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + 1000 / 5 / 5 / 5);
+                                giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + wechatReward / 5 / 5 / 5);
                             } else {
-                                giveMoneyResult.put(pubkey, 1000 / 5 / 5 / 5);
+                                giveMoneyResult.put(pubkey, wechatReward / 5 / 5 / 5);
                             }
                         }
                     if (wechatInviteResult3.get("wechatInviterId") != null
@@ -202,9 +208,9 @@ public class ScheduleGiveMoneyService {
                                 logger.debug(pubkey);
                                 if (giveMoneyResult.containsKey("pubkey")) {
                                     giveMoneyResult.put(pubkey,
-                                            giveMoneyResult.get("pubkey") + 1000 / 5 / 5 / 5 / 5);
+                                            giveMoneyResult.get("pubkey") + wechatReward / 5 / 5 / 5 / 5);
                                 } else {
-                                    giveMoneyResult.put(pubkey, 1000 / 5 / 5 / 5 / 5);
+                                    giveMoneyResult.put(pubkey, wechatReward / 5 / 5 / 5 / 5);
                                 }
                             }
 
@@ -227,9 +233,9 @@ public class ScheduleGiveMoneyService {
                     logger.debug("==============");
                     logger.debug(pubkey);
                     if (giveMoneyResult.containsKey("pubkey")) {
-                        giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + 100000);
+                        giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + linkedinMoney);
                     } else {
-                        giveMoneyResult.put(pubkey, 100000);
+                        giveMoneyResult.put(pubkey, linkedinMoney);
                     }
                 }
         }

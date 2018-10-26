@@ -74,10 +74,10 @@ public class GiveMoneyUtils {
         return listUTXO;
     }
 
-    public synchronized void batchGiveMoneyToECKeyList(HashMap<String, Integer> giveMoneyResult) throws Exception {
+    public synchronized boolean batchGiveMoneyToECKeyList(HashMap<String, Integer> giveMoneyResult) throws Exception {
         String contextRoot = serverConfiguration.getServerURL();
         if (giveMoneyResult.isEmpty()) {
-            return;
+            return true;
         }
         @SuppressWarnings("deprecation")
         ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPriv),
@@ -88,7 +88,7 @@ public class GiveMoneyUtils {
 
         for (Map.Entry<String, Integer> entry : giveMoneyResult.entrySet()) {
             try {
-                Coin amount = Coin.valueOf(entry.getValue(), NetworkParameters.BIGTANGLE_TOKENID);
+                Coin amount = Coin.parseCoin(entry.getValue().toString(), NetworkParameters.BIGTANGLE_TOKENID);
                 Address address = Address.fromBase58(networkParameters, entry.getKey());
                 doublespent.addOutput(amount, address);
                 coinbase = coinbase.add(amount);
@@ -105,7 +105,7 @@ public class GiveMoneyUtils {
             }
         }
         //no double spending and wait
-       if( findOutput.isSpendPending() ) return;
+       if( findOutput.isSpendPending() ) return false;
         
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, findOutput, 0);
         Coin amount = spendableOutput.getValue().subtract(coinbase);
@@ -131,6 +131,7 @@ public class GiveMoneyUtils {
         for (TransactionOutput transactionOutput : doublespent.getOutputs()) {
             LOGGER.info("give mount output value : " + transactionOutput.getValue());
         }
+        return true;
     }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GiveMoneyUtils.class);
