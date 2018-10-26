@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 
 import com.google.common.base.Stopwatch;
 
+import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.NetworkParameters;
@@ -56,12 +58,34 @@ public class TipsService {
 		return results;
 	}
 
-	public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair() throws BlockStoreException {
+    /**
+     * Selects two blocks to approve via MCMC
+     * 
+     * @return Two blockhashes selected via MCMC
+     * @throws BlockStoreException
+     */
+    public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair() throws BlockStoreException {
+        return getValidatedBlockPair(new HashSet<>());
+    }
+
+    /**
+     * Selects two blocks to approve via MCMC for the given prototype block such that the two approved blocks are not conflicting with the prototype block itself
+     * 
+     * @param prototype Invalid block that uses the contents of the 
+     * @return Two blockhashes selected via MCMC
+     * @throws BlockStoreException
+     */
+    public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair(Block prototype) throws BlockStoreException {
+        HashSet<BlockWrap> currentApprovedNonMilestoneBlocks = new HashSet<>();
+        currentApprovedNonMilestoneBlocks.add(new BlockWrap(prototype, BlockEvaluation.getPrototypeEvaluation(prototype), networkParameters));
+        return getValidatedBlockPair(currentApprovedNonMilestoneBlocks);
+    }
+
+	private Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair(HashSet<BlockWrap> currentApprovedNonMilestoneBlocks) throws BlockStoreException {
 		Stopwatch watch = Stopwatch.createStarted();
 		List<BlockWrap> entryPoints = getValidationEntryPoints(2);
 		BlockWrap left = entryPoints.get(0);
 		BlockWrap right = entryPoints.get(1);
-		HashSet<BlockWrap> currentApprovedNonMilestoneBlocks = new HashSet<>();
 		
 		//Unnecessary: left/right are never non-milestone initially
 		//blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, left);
@@ -170,23 +194,23 @@ public class TipsService {
 	 * 
 	 * @param currentBlock
 	 *            the block to take a step from
-	 * @param approvers
+	 * @param candidates
 	 *            all blocks approving the block that are allowed to go to
 	 * @return currentBlock if no further steps possible, else a new block from
 	 *         approvers
 	 */
-	public BlockWrap performTransition(BlockWrap currentBlock, List<BlockWrap> approvers) {
-		if (approvers.size() == 0) {
+	public BlockWrap performTransition(BlockWrap currentBlock, List<BlockWrap> candidates) {
+		if (candidates.size() == 0) {
 			return currentBlock;
-		} else if (approvers.size() == 1) {
-			return approvers.get(0);
+		} else if (candidates.size() == 1) {
+			return candidates.get(0);
 		} else {
-			double[] transitionWeights = new double[approvers.size()];
+			double[] transitionWeights = new double[candidates.size()];
 			double transitionWeightSum = 0;
 			long currentCumulativeWeight = currentBlock.getBlockEvaluation().getCumulativeWeight();
 
 			// Calculate the unnormalized transition weights
-			for (int i = 0; i < approvers.size(); i++) {
+			for (int i = 0; i < candidates.size(); i++) {
 				// Aviv Zohar: Scale alpha up if very deep to prevent splitting attack
 				double alpha = 0.1
 						* Math.exp(0.05 * Math.max(0.0, (currentBlock.getBlockEvaluation().getMilestoneDepth() - 30)));
@@ -197,16 +221,16 @@ public class TipsService {
 				
 				// Calculate transition weights
 				transitionWeights[i] = Math.exp(-alpha
-						* (currentCumulativeWeight - approvers.get(i).getBlockEvaluation().getCumulativeWeight()));
+						* (currentCumulativeWeight - candidates.get(i).getBlockEvaluation().getCumulativeWeight()));
 				transitionWeightSum += transitionWeights[i];
 			}
 
 			// Randomly select one of the approvers by transition probabilities
 			double transitionRealization = seed.nextDouble() * transitionWeightSum;
-			for (int i = 0; i < approvers.size(); i++) {
+			for (int i = 0; i < candidates.size(); i++) {
 				transitionRealization -= transitionWeights[i];
 				if (transitionRealization <= 0) {
-					return approvers.get(i);
+					return candidates.get(i);
 				}
 			}
 
