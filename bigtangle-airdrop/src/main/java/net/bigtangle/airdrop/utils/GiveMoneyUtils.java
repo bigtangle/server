@@ -104,7 +104,9 @@ public class GiveMoneyUtils {
                 findOutput = output;
             }
         }
-
+        //no double spending and wait
+       if( findOutput.isSpendPending() ) return;
+        
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, findOutput, 0);
         Coin amount = spendableOutput.getValue().subtract(coinbase);
 
