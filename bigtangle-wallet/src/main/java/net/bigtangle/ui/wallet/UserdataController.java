@@ -194,7 +194,7 @@ public class UserdataController {
             String type = domianComboBox.getValue();
 
             Main.addToken(CONTEXT_ROOT, valueTF.getText(), type, type);
-            initOtherTableView(list);
+            initOtherTableView4file();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
@@ -524,7 +524,7 @@ public class UserdataController {
                     Map<String, Object> map = new HashMap<String, Object>();
                     map.put("key", userSettingData.getKey());
                     map.put("value", userSettingData.getValue());
-                    map.put("domaijj", userSettingData.getDomain());
+                    map.put("domain", userSettingData.getDomain());
                     allData.add(map);
                 }
                 if (DataClassName.LANG.name().equals(userSettingData.getDomain())) {
@@ -605,6 +605,7 @@ public class UserdataController {
                         }
 
                     }
+
                 }
 
             }
