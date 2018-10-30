@@ -1,0 +1,52 @@
+plugins {
+    id 'org.sonarqube' version '2.2.1'
+    id 'jacoco'
+    id 'application'
+}
+
+
+defaultTasks 'clean', 'build'
+
+distributions {
+    main {
+        contents {
+            baseName = "bigtangle-emptyblock"
+        }
+    }
+}
+
+
+dependencies {
+
+     compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version:'4.3'
+     compile group: 'com.google.code.findbugs', name: 'jsr305', version:ver.jsr305
+     compile group: 'org.apache.kafka', name: 'kafka-streams', version:ver.kafka
+      compile group: 'ch.qos.logback', name: 'logback-classic', version:'1.0.0'
+     compile project(':bigtangle-core')
+}
+
+mainClassName = "net.bigtangle.tools.Simulator"
+//applicationDefaultJvmArgs = ["-Dlogging.config=/etc/processor/logback.xml"]
+applicationDefaultJvmArgs = ["-Dlog.root.level=WARN", "-Dlog.net.bigtangle.level=INFO", "-Xmx2g"]
+
+jar {
+    manifest {
+        attributes("Main-Class": mainClassName)
+    }
+}
+
+task createDistributable(type: Copy) { 
+    def distDir = file('build/dist')
+    from('build/libs') {
+        include '*.jar'
+        rename '.*', 'bigtangle-emptyblock.jar'
+        into 'build/libs'
+    }
+    from('etc/') {
+        include 'Dockerfile'
+        include 'entrypoint.sh'
+    }
+    destinationDir distDir
+}
+
+createDistributable.dependsOn distTar

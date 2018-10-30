@@ -326,3 +326,7 @@ BL write invite inlcude the link to evaluation of software and prospect /all
     
 ## no empty block tip selection avoid conflicts  blocks
 ## empty block with preferenced to select blocks in conflicts
+
+## display the history of spent transaction with 
+   all my address or a given address
+   select 1 Month, 6  or date from  date to 
