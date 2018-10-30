@@ -48,20 +48,14 @@ public class SendEmptyBlock {
         boolean c = true;
         int i = 0;
         while (c) {
-
             try {
-                // Thread.sleep(1000);
                 sendEmptyBlock.send();
-
             } catch (JsonProcessingException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.warn("", e);
             } catch (Exception e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.warn("", e);
             }
         }
-
     }
 
     public void send() throws JsonProcessingException, Exception {
