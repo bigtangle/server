@@ -158,6 +158,11 @@ void App::onConsoleCommand(char command)
             Workers::setEnabled(true);
         }
         break;
+    case 't':
+        LOG_INFO("testing");
+        //Workers::set
+        break;
+
 
     case 3:
         LOG_WARN("Ctrl+C received, exiting");

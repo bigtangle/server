@@ -35,6 +35,10 @@
 class JobResult
 {
 public:
+    enum ValidationStatus {
+        NoValidation, ValidationSucceeded, ValidationFailed
+    };
+
     inline JobResult() : poolId(0), diff(0), nonce(0) {}
     inline JobResult(int poolId, const xmrig::Id &jobId, uint32_t nonce, const uint8_t *result, uint32_t diff, const xmrig::Algorithm &algorithm) :
         poolId(poolId),
@@ -45,6 +49,19 @@ public:
     {
         memcpy(this->result, result, sizeof(this->result));
     }
+
+    inline JobResult(int poolId, const xmrig::Id &jobId, uint32_t nonce, const uint8_t *result, uint32_t diff, const xmrig::Algorithm &algorithm, bool validationSuccess) :
+            poolId(poolId),
+            diff(diff),
+            nonce(nonce),
+            algorithm(algorithm),
+            jobId(jobId)
+    {
+        memcpy(this->result, result, sizeof(this->result));
+
+        validationStatus = validationSuccess ? ValidationStatus ::ValidationSucceeded : ValidationStatus::ValidationFailed;
+    }
+
 
 
     inline uint64_t actualDiff() const
@@ -59,6 +76,8 @@ public:
     uint8_t result[32];
     xmrig::Algorithm algorithm;
     xmrig::Id jobId;
+    ValidationStatus validationStatus = NoValidation;
+
 };
 
 #endif /* __JOBRESULT_H__ */

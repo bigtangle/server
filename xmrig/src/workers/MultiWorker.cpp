@@ -99,24 +99,42 @@ void MultiWorker<N>::start()
             consumeJob();
         }
 
-        while (!Workers::isOutdated(m_sequence)) {
-            if ((m_count & 0x7) == 0) {
-                storeStats();
-            }
 
-            m_thread->fn(m_state.job.algorithm().variant())(m_state.blob, m_state.job.size(), m_hash, m_ctx);
-
-            for (size_t i = 0; i < N; ++i) {
-                if (*reinterpret_cast<uint64_t*>(m_hash + (i * 32) + 24) < m_state.job.target()) {
-                    Workers::submit(JobResult(m_state.job.poolId(), m_state.job.id(), *nonce(i), m_hash + (i * 32), m_state.job.diff(), m_state.job.algorithm()));
+        if(m_state.job.isValidation()) {
+            if(!Workers::isOutdated(m_sequence) && id() == 0) {
+                if ((m_count & 0x7) == 0) {
+                    storeStats();
                 }
 
-                *nonce(i) += 1;
+                *nonce(0) = m_state.job.validationNonce();
+                m_thread->fn(m_state.job.algorithm().variant())(m_state.blob, m_state.job.size(), m_hash, m_ctx);
+
+                auto success = *reinterpret_cast<uint64_t*>(m_hash + 24) < m_state.job.target();
+                Workers::submit(JobResult(m_state.job.poolId(), m_state.job.id(), *nonce(0), m_hash, m_state.job.diff(), m_state.job.algorithm(), success));
+                m_count += 1;
             }
-
-            m_count += N;
-
             std::this_thread::yield();
+        }
+        else {
+            while (!Workers::isOutdated(m_sequence)) {
+                if ((m_count & 0x7) == 0) {
+                    storeStats();
+                }
+
+                m_thread->fn(m_state.job.algorithm().variant())(m_state.blob, m_state.job.size(), m_hash, m_ctx);
+
+                for (size_t i = 0; i < N; ++i) {
+                    if (*reinterpret_cast<uint64_t*>(m_hash + (i * 32) + 24) < m_state.job.target()) {
+                        Workers::submit(JobResult(m_state.job.poolId(), m_state.job.id(), *nonce(i), m_hash + (i * 32), m_state.job.diff(), m_state.job.algorithm()));
+                    }
+
+                    *nonce(i) += 1;
+                }
+
+                m_count += N;
+
+                std::this_thread::yield();
+            }
         }
 
         consumeJob();

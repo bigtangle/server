@@ -246,3 +246,8 @@ xmrig::Variant Job::variant() const
 
     return m_algorithm.variant();
 }
+
+void Job::setNonce(unsigned int nonce) {
+    m_isValidation = true;
+    m_nonce = nonce;
+}

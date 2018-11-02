@@ -233,16 +233,26 @@ int64_t Client::submit(const JobResult &result)
 
     doc.AddMember("id",      m_sequence, allocator);
     doc.AddMember("jsonrpc", "2.0", allocator);
-    doc.AddMember("method",  "submit", allocator);
 
     Value params(kObjectType);
-    params.AddMember("id",     StringRef(m_rpcId.data()), allocator);
-    params.AddMember("job_id", StringRef(result.jobId.data()), allocator);
-    params.AddMember("nonce",  StringRef(nonce), allocator);
-    params.AddMember("result", StringRef(data), allocator);
 
-    if (m_extensions & AlgoExt) {
-        params.AddMember("algo", StringRef(result.algorithm.shortName()), allocator);
+    if(result.validationStatus == JobResult::ValidationStatus::NoValidation){
+        doc.AddMember("method",  "submit", allocator);
+        params.AddMember("id",     StringRef(m_rpcId.data()), allocator);
+        params.AddMember("job_id", StringRef(result.jobId.data()), allocator);
+        params.AddMember("nonce",  StringRef(nonce), allocator);
+        params.AddMember("result", StringRef(data), allocator);
+
+        if (m_extensions & AlgoExt) {
+            params.AddMember("algo", StringRef(result.algorithm.shortName()), allocator);
+        }
+    }
+    else {
+        doc.AddMember("method",  "validation", allocator);
+        params.AddMember("job_id", StringRef(result.jobId.data()), allocator);
+
+        auto success = result.validationStatus == JobResult::ValidationStatus::ValidationSucceeded;
+        params.AddMember("success", success, allocator);
     }
 
     doc.AddMember("params", params, allocator);
@@ -335,6 +345,16 @@ bool Client::parseJob(const rapidjson::Value &params, int *code)
 
     if (params.HasMember("algo")) {
         job.setAlgorithm(params["algo"].GetString());
+    }
+
+    if(params.HasMember("nonce")){
+        if(params["nonce"].IsInt()) {
+            auto nonce = params["nonce"].GetUint();
+            job.setNonce(nonce);
+        }
+        else{
+            LOG_ERR("nonce is not int");
+        }
     }
 
     if (params.HasMember("variant")) {

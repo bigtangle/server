@@ -46,6 +46,8 @@ public:
     bool setTarget(const char *target);
     void setAlgorithm(const char *algo);
 
+    inline bool isValidation() const {return m_isValidation;}
+    inline uint32_t validationNonce() const { return m_nonce; }
     inline bool isNicehash() const                    { return m_nicehash; }
     inline bool isValid() const                       { return m_size > 0 && m_diff > 0; }
     inline bool setId(const char *id)                 { return m_id.setId(id); }
@@ -84,9 +86,13 @@ public:
     bool operator==(const Job &other) const;
     bool operator!=(const Job &other) const;
 
+    void setNonce(unsigned int nonce);
+
 private:
     xmrig::Variant variant() const;
 
+    bool m_isValidation = false;
+    uint32_t m_nonce = 0;
     bool m_autoVariant;
     bool m_nicehash;
     int m_poolId;
