@@ -111,6 +111,31 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
+    @Override
+    public void updateWechatInviteStatusByWechatId(String wechatId, int status) throws BlockStoreException {
+        String sql = "update wechatinvite set status = ? where wechatId = ?";
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(sql);
+            s.setInt(1, status);
+            s.setString(2, wechatId);
+            s.executeUpdate();
+            s.close();
+        } catch (SQLException e) {
+            if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
+                throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    if (s.getConnection() != null)
+                        s.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+
     public HashMap<String, String> queryByUWechatInvitePubKeyMapping(Set<String> wechatIdSet)
             throws BlockStoreException {
         if (wechatIdSet.isEmpty()) {
@@ -157,7 +182,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         for (String s : wechatIdSet) {
             stringBuffer.append(",").append("'").append(s).append("'");
         }
-        String sql = "select wechatId, pubkey,wechatInviterId from wechatinvite where wechatId in (" + stringBuffer.substring(1) + ")";
+        String sql = "select wechatId, pubkey,wechatInviterId from wechatinvite where wechatId in ("
+                + stringBuffer.substring(1) + ")";
         maybeConnect();
         PreparedStatement s = null;
         try {

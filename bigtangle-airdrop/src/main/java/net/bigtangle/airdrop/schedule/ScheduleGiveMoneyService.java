@@ -76,23 +76,26 @@ public class ScheduleGiveMoneyService {
                 wechatToplevel(dataMap, wechatInviteResult, giveMoneyResult);
                 wechatRecursive(wechatInviteResult, giveMoneyResult);
                 giveMoneyLinkedin(subInvitedSet, giveMoneyResult);
-                
+
                 if (giveMoneyResult.isEmpty()) {
                     return;
                 }
-              if(  giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult)) {
-                     //only update, if money is given
-                for (Map.Entry<String, List<WechatInvite>> entry : dataMap.entrySet()) {
-                    logger.info("wechat invite give money : " + entry.getKey() + ", money : "
-                            + (entry.getValue().size() * wechatReward));
-                    for (WechatInvite wechatInvite : entry.getValue()) {
-                        this.store.updateWechatInviteStatus(wechatInvite.getId(), 1);
-                        logger.info("wechat invite update status, id : " + wechatInvite.getId() + ", success");
+                if (giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult)) {
+                    // only update, if money is given
+                    for (Map.Entry<String, List<WechatInvite>> entry : dataMap.entrySet()) {
+                        logger.info("wechat invite give money : " + entry.getKey() + ", money : "
+                                + (entry.getValue().size() * wechatReward));
+                        for (WechatInvite wechatInvite : entry.getValue()) {
+                            this.store.updateWechatInviteStatus(wechatInvite.getId(), 1);
+                            logger.info("wechat invite update status, id : " + wechatInvite.getId() + ", success");
+                        }
                     }
+                    for (String wechatId : subInvitedSet) {
+                        this.store.updateWechatInviteStatusByWechatId(wechatId, 1);
+                        logger.info("wechat invite update status, wechatId : " + wechatId + ", success");
+                    }
+
                 }
-                
-                
-              }
             } catch (Exception e) {
                 logger.warn("ScheduleGiveMoneyService", e);
             }
@@ -137,8 +140,7 @@ public class ScheduleGiveMoneyService {
 
     private void wechatRecursive(Map<String, HashMap<String, String>> wechatInviteResult,
             HashMap<String, Integer> giveMoneyResult) throws BlockStoreException {
-        if (wechatInviteResult.get("wechatInviterId") != null
-                && !wechatInviteResult.get("wechatInviterId").isEmpty()) {
+        if (wechatInviteResult.get("wechatInviterId") != null && !wechatInviteResult.get("wechatInviterId").isEmpty()) {
 
             Map<String, HashMap<String, String>> wechatInviteResult1 = this.store
                     .queryByUWechatInvitePubKeyInviterIdMap(wechatInviteResult.get("wechatInviterId").values());
@@ -159,8 +161,7 @@ public class ScheduleGiveMoneyService {
             if (wechatInviteResult1.get("wechatInviterId") != null
                     && !wechatInviteResult1.get("wechatInviterId").isEmpty()) {
                 Map<String, HashMap<String, String>> wechatInviteResult2 = this.store
-                        .queryByUWechatInvitePubKeyInviterIdMap(
-                                wechatInviteResult1.get("wechatInviterId").values());
+                        .queryByUWechatInvitePubKeyInviterIdMap(wechatInviteResult1.get("wechatInviterId").values());
                 if (wechatInviteResult2.get("pubkey") != null && !wechatInviteResult2.get("pubkey").isEmpty())
                     for (String pubkey : wechatInviteResult2.get("pubkey").values()) {
                         if (pubkey == null || pubkey.isEmpty()) {
@@ -179,8 +180,7 @@ public class ScheduleGiveMoneyService {
                     Map<String, HashMap<String, String>> wechatInviteResult3 = this.store
                             .queryByUWechatInvitePubKeyInviterIdMap(
                                     wechatInviteResult2.get("wechatInviterId").values());
-                    if (wechatInviteResult3.get("pubkey") != null
-                            && !wechatInviteResult3.get("pubkey").isEmpty())
+                    if (wechatInviteResult3.get("pubkey") != null && !wechatInviteResult3.get("pubkey").isEmpty())
                         for (String pubkey : wechatInviteResult3.get("pubkey").values()) {
                             if (pubkey == null || pubkey.isEmpty()) {
                                 continue;
@@ -198,8 +198,7 @@ public class ScheduleGiveMoneyService {
                         Map<String, HashMap<String, String>> wechatInviteResult4 = this.store
                                 .queryByUWechatInvitePubKeyInviterIdMap(
                                         wechatInviteResult3.get("wechatInviterId").values());
-                        if (wechatInviteResult4.get("pubkey") != null
-                                && !wechatInviteResult4.get("pubkey").isEmpty())
+                        if (wechatInviteResult4.get("pubkey") != null && !wechatInviteResult4.get("pubkey").isEmpty())
                             for (String pubkey : wechatInviteResult4.get("pubkey").values()) {
                                 if (pubkey == null || pubkey.isEmpty()) {
                                     continue;

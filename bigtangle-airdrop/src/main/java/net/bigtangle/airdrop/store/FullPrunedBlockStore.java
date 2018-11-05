@@ -67,20 +67,21 @@ import net.bigtangle.core.StoredUndoableBlock;
  * </p>
  */
 public interface FullPrunedBlockStore {
-    
+
     void beginDatabaseBatchWrite() throws BlockStoreException;
 
     void commitDatabaseBatchWrite() throws BlockStoreException;
 
     void abortDatabaseBatchWrite() throws BlockStoreException;
-    
+
     public void resetStore() throws BlockStoreException;
-    
+
     /** Closes the store. */
     void close() throws BlockStoreException;
 
     /**
      * Get the {@link net.bigtangle.core.NetworkParameters} of this store.
+     * 
      * @return The network params.
      */
     NetworkParameters getParams();
@@ -88,9 +89,13 @@ public interface FullPrunedBlockStore {
     List<WechatInvite> queryByUnfinishedWechatInvite() throws BlockStoreException;
 
     HashMap<String, String> queryByUWechatInvitePubKeyMapping(Set<String> keySet) throws BlockStoreException;
-    Map<String, HashMap<String, String>> queryByUWechatInvitePubKeyInviterIdMap(Collection<String> keySet) throws BlockStoreException;
+
+    Map<String, HashMap<String, String>> queryByUWechatInvitePubKeyInviterIdMap(Collection<String> keySet)
+            throws BlockStoreException;
 
     void updateWechatInviteStatus(String id, int status) throws BlockStoreException;
+
+    void updateWechatInviteStatusByWechatId(String wechatId, int status) throws BlockStoreException;
 
     void clearWechatInviteStatusZero() throws BlockStoreException;
 }
