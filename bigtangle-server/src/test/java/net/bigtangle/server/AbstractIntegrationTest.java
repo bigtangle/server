@@ -76,7 +76,6 @@ public abstract class AbstractIntegrationTest {
     public List<ECKey> walletKeys;
     public List<ECKey> wallet1Keys;
     public List<ECKey> wallet2Keys;
-   
 
     WalletAppKit walletAppKit;
     protected static ObjectMapper objectMapper;
@@ -230,7 +229,7 @@ public abstract class AbstractIntegrationTest {
 
     public void testInitWallet() throws Exception {
 
-       // testCreateMultiSig();
+        // testCreateMultiSig();
         testCreateMarket();
         testInitTransferWallet();
         milestoneService.update();
@@ -322,7 +321,8 @@ public abstract class AbstractIntegrationTest {
     }
 
     // create a token with multi sign
-    public void testCreateMultiSigToken(List<ECKey> keys,  TokenInfo tokenInfo) throws JsonProcessingException, Exception {
+    public void testCreateMultiSigToken(List<ECKey> keys, TokenInfo tokenInfo)
+            throws JsonProcessingException, Exception {
         // Setup transaction and signatures
         // List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
 
@@ -331,7 +331,7 @@ public abstract class AbstractIntegrationTest {
         int amount = 678900000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
 
-       // TokenInfo tokenInfo = new TokenInfo();
+        // TokenInfo tokenInfo = new TokenInfo();
 
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
         requestParam00.put("tokenid", tokenid);
@@ -408,7 +408,7 @@ public abstract class AbstractIntegrationTest {
             checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block0.bitcoinSerialize()));
 
         }
-        
+
         checkBalance(basecoin, key1);
     }
 

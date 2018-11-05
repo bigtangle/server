@@ -44,7 +44,7 @@ public class ScheduleMilestoneService {
      * read data from table oder by insert time,  use add Block to check again, 
      * if missing previous,  it may request network for the blocks 
      */
-    @Scheduled(fixedRateString = "${service.updateUnsolideService.rate:30000}")
+//    @Scheduled(fixedRateString = "${service.updateUnsolideService.rate:30000}")
     public void updateUnsolideService() {
         
             try {
