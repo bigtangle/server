@@ -38,7 +38,43 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
 
     @Override
     public List<BlockWrap> getSolidApproverBlocks(Sha256Hash hash) throws BlockStoreException {
-        return null;
+        List<BlockWrap> storedBlocks = new ArrayList<BlockWrap>();
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_BLOCKS_SQL);
+            s.setString(1, hash.toString());
+            s.setString(2, hash.toString());
+            ResultSet resultSet = s.executeQuery();
+            while (resultSet.next()) {
+                BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)),
+                        resultSet.getLong(2), resultSet.getLong(3), resultSet.getLong(4), resultSet.getLong(5),
+                        resultSet.getBoolean(6), resultSet.getLong(7), resultSet.getLong(8), resultSet.getLong(9),
+                        resultSet.getBoolean(10));
+
+                Block block = params.getDefaultSerializer().makeBlock(resultSet.getBytes(11));
+                block.verifyHeader();
+                storedBlocks.add(new BlockWrap(block, blockEvaluation, params));
+            }
+            return storedBlocks;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            // Corrupted database.
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            // Should not be able to happen unless the database contains bad
+            // blocks.
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
 
     }
 
@@ -462,4 +498,27 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         }
     }
 
+    public void updateBlockEvaluationWeightAndDepth(Sha256Hash blockhash, long weight, long depth)
+            throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+        maybeConnect();
+        try {
+            String sql = getUpdate() + " blocks (cumulativeweight, depth, hash) VALUES (?,?,?)";
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setLong(1, weight);
+            preparedStatement.setLong(2, depth);
+            preparedStatement.setBytes(3, blockhash.getBytes());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
 }
