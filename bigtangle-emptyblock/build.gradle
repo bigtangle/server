@@ -25,7 +25,7 @@ dependencies {
      compile project(':bigtangle-core')
 }
 
-mainClassName = "net.bigtangle.tools.Simulator"
+mainClassName = "net.bigtangle.tools.SendEmptyBlock"
 //applicationDefaultJvmArgs = ["-Dlogging.config=/etc/processor/logback.xml"]
 applicationDefaultJvmArgs = ["-Dlog.root.level=WARN", "-Dlog.net.bigtangle.level=INFO", "-Xmx2g"]
 
