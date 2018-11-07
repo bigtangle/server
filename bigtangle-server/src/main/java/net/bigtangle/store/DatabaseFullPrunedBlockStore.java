@@ -227,14 +227,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " WHERE blockhash = ?";
 
     protected final String SELECT_CONFIRMED_TOKENS_SQL = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop "
-            + " FROM tokens WHERE confirmed = 1";
+            + " FROM tokens WHERE confirmed = true";
 
     protected final String SELECT_MARKET_TOKENS_SQL = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop "
-            + " FROM tokens WHERE tokentype = 1 and confirmed = 1";
+            + " FROM tokens WHERE tokentype = 1 and confirmed = true";
 
-    protected final String SELECT_TOKENS_ACOUNT_MAP_SQL = "SELECT tokenid, SUM(amount) as amount FROM tokens WHERE confirmed = 1 GROUP BY tokenid";
+    protected final String SELECT_TOKENS_ACOUNT_MAP_SQL = "SELECT tokenid, SUM(amount) as amount FROM tokens WHERE confirmed = true GROUP BY tokenid";
 
-    protected final String COUNT_TOKENSINDEX_SQL = "SELECT blockhash, tokenindex FROM tokens WHERE tokenid = ? AND confirmed = 1 ORDER BY tokenindex DESC limit 1";
+    protected final String COUNT_TOKENSINDEX_SQL = "SELECT blockhash, tokenindex FROM tokens WHERE tokenid = ? AND confirmed = true ORDER BY tokenindex DESC limit 1";
 
     protected final String UPDATE_SETTINGS_SQL = getUpdate() + " settings SET settingvalue = ? WHERE name = ?";
     protected final String UPDATE_BLOCKS_SQL = getUpdate() + " blocks SET wasundoable=? WHERE hash=?";
@@ -2242,7 +2242,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            String sql = SELECT_CONFIRMED_TOKENS_SQL + " AND 1=1";
+            String sql = SELECT_CONFIRMED_TOKENS_SQL;
             if (name != null && !"".equals(name.trim())) {
                 sql += " AND (tokenname LIKE '%" + name + "%' OR description LIKE '%" + name + "%')";
             }
