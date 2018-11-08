@@ -612,8 +612,8 @@ public class Main extends Application {
         s.append("   " + Main.getText("merkle") + ": ").append(block.getMerkleRoot()).append("\n");
         s.append("   " + Main.getText("time") + ": ").append(block.getTimeSeconds()).append(" (")
                 .append(Utils.dateTimeFormat(block.getTimeSeconds() * 1000)).append(")\n");
-        // s.append(" difficulty target (nBits):
-        // ").append(difficultyTarget).append("\n");
+
+        s.append("   " + Main.getText("difficultytarget") + ": ").append(block.getDifficultyTarget()).append("\n");
         s.append("   " + Main.getText("nonce") + ": ").append(block.getNonce()).append("\n");
         if (block.getMinerAddress() != null)
             s.append("   " + Main.getText("mineraddress") + ": ").append(new Address(params, block.getMinerAddress()))

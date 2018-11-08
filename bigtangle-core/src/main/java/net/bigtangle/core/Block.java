@@ -631,7 +631,7 @@ public class Block extends Message {
         s.append("   branch: ").append(getPrevBranchBlockHash()).append("\n");
         s.append("   merkle: ").append(getMerkleRoot()).append("\n");
         s.append("   time: ").append(time).append(" (").append(Utils.dateTimeFormat(time * 1000)).append(")\n");
-        s.append(" difficulty target (nBits):    ").append(difficultyTarget).append("\n");
+        s.append("   difficulty target (nBits):    ").append(difficultyTarget).append("\n");
         s.append("   nonce: ").append(nonce).append("\n");
         if (minerAddress != null)
             s.append("   mineraddress: ").append(new Address(params, minerAddress)).append("\n");
