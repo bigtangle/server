@@ -559,7 +559,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public void resetStore() throws BlockStoreException {
         maybeConnect();
         try {
-            deleteStore();
+         //   deleteStore();
             createTables();
         } catch (SQLException ex) {
             log.warn("Warning: deleteStore", ex);

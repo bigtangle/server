@@ -20,11 +20,11 @@ spring:
 
 db:
   dbtype: ${DBTYPE:mysql}
-  hostname: ${DB_HOSTNAME:10.1.0.18}
+  hostname: ${DB_HOSTNAME:localhost}
   port: ${DB_PORT:3306}
   dbName: ${DB_NAME:info}
   username: ${DB_USERNAME:root}
-  password: ${DB_PASSWORD:sA4wPOef26HX5ynT}
+  password: ${DB_PASSWORD:test1234}
 
 service:
   giveMoneyService:
