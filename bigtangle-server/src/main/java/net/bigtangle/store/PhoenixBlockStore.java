@@ -18,6 +18,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.BlockWrap;
+import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.ProtocolException;
 import net.bigtangle.core.Sha256Hash;
@@ -415,6 +416,10 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             s.setLong(2, r.getHeight());
             s.setBytes(3, block.unsafeBitcoinSerialize());
             s.setBoolean(4, false);
+            if (block.getPrevBlockHash().toString()==null||"".equals(block.getPrevBlockHash().toString())) {
+                System.out.println("===============================================");
+               
+            }
             s.setString(5, Utils.HEX.encode(block.getPrevBlockHash().getBytes()));
             s.setString(6, Utils.HEX.encode(block.getPrevBranchBlockHash().getBytes()));
             s.setBytes(7, block.getMinerAddress());
@@ -439,7 +444,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             // It is possible we try to add a duplicate StoredBlock if we
             // upgraded
             // In that case, we just update the entry to mark it wasUndoable
-            if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
+            if (e != null && e.getSQLState() != null && !(e.getSQLState().equals(getDuplicateKeyErrorCode())))
                 throw e;
             Block block = params.getDefaultSerializer().makeBlock(r.getBlockBytes());
             PreparedStatement s = conn.get().prepareStatement(getUpdateHeadersSQL());
@@ -509,6 +514,102 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             preparedStatement.setLong(2, depth);
             preparedStatement.setBytes(3, blockhash.getBytes());
             preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    public void saveMultiSign(MultiSign multiSign) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            String sql = getUpdate()
+                    + "  multisign (tokenid, tokenindex, address, blockhash, sign, id) VALUES (?, ?, ?, ?, ?, ?)";
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setString(1, multiSign.getTokenid());
+            preparedStatement.setLong(2, multiSign.getTokenindex());
+            preparedStatement.setString(3, multiSign.getAddress());
+            preparedStatement.setBytes(4, multiSign.getBlockhash());
+            preparedStatement.setInt(5, 0);
+            preparedStatement.setString(6, multiSign.getId());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    public void updateMultiSign(String tokenid, int tokenindex, String address, byte[] blockhash, int sign)
+            throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        PreparedStatement tempPreparedStatement = null;
+        String tempSQL = "select id from multisign where tokenid=? and tokenindex=? and address=?";
+        try {
+
+            tempPreparedStatement = conn.get().prepareStatement(tempSQL);
+            tempPreparedStatement.setString(1, tokenid);
+            tempPreparedStatement.setLong(2, tokenindex);
+            tempPreparedStatement.setString(3, address);
+            ResultSet resultSet = tempPreparedStatement.executeQuery();
+            if (resultSet.next()) {
+                String sql = getUpdate() + " multisign(blockhash , sign, id) VALUES (?, ?, ?)";
+                preparedStatement = conn.get().prepareStatement(sql);
+                preparedStatement.setBytes(1, blockhash);
+                preparedStatement.setInt(2, sign);
+                preparedStatement.setString(3, resultSet.getString("id"));
+
+                preparedStatement.executeUpdate();
+            }
+
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    public void updateMultiSignBlockBitcoinSerialize(String tokenid, long tokenindex, byte[] bytes)
+            throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            PreparedStatement tempPreparedStatement = null;
+            String tempSQL = "select id from multisign where tokenid=? and tokenindex=?";
+
+            tempPreparedStatement = conn.get().prepareStatement(tempSQL);
+            tempPreparedStatement.setString(1, tokenid);
+            tempPreparedStatement.setLong(2, tokenindex);
+            ResultSet resultSet = tempPreparedStatement.executeQuery();
+            if (resultSet.next()) {
+                String sql = getUpdate() + " multisign(blockhash , id) VALUES (?,  ?)";
+                preparedStatement = conn.get().prepareStatement(sql);
+                preparedStatement.setBytes(1, bytes);
+                preparedStatement.setString(2, resultSet.getString("id"));
+                preparedStatement.executeUpdate();
+            }
+
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {
