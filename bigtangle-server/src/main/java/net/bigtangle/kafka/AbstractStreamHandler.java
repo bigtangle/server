@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import net.bigtangle.server.config.ServerConfiguration;
-
+import static org.apache.kafka.streams.KafkaStreams.State.RUNNING;
 public abstract class AbstractStreamHandler {
 
     @Autowired
@@ -82,5 +82,8 @@ public abstract class AbstractStreamHandler {
     private String getApplicationId() {
         return BlockStreamHandler.class.getCanonicalName() + "_" + this.getClass().getSimpleName() + "_"
                 + kafkaConfiguration.getConsumerIdSuffix();
+    }
+    public boolean isRunning() {
+        return   org.apache.kafka.streams.KafkaStreams.State.RUNNING.equals(streams.state());
     }
 }
