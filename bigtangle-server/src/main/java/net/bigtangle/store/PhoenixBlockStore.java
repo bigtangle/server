@@ -416,9 +416,9 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             s.setLong(2, r.getHeight());
             s.setBytes(3, block.unsafeBitcoinSerialize());
             s.setBoolean(4, false);
-            if (block.getPrevBlockHash().toString()==null||"".equals(block.getPrevBlockHash().toString())) {
+            if (block.getPrevBlockHash().toString() == null || "".equals(block.getPrevBlockHash().toString())) {
                 System.out.println("===============================================");
-               
+
             }
             s.setString(5, Utils.HEX.encode(block.getPrevBlockHash().getBytes()));
             s.setString(6, Utils.HEX.encode(block.getPrevBranchBlockHash().getBytes()));
@@ -606,6 +606,40 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
                 String sql = getUpdate() + " multisign(blockhash , id) VALUES (?,  ?)";
                 preparedStatement = conn.get().prepareStatement(sql);
                 preparedStatement.setBytes(1, bytes);
+                preparedStatement.setString(2, resultSet.getString("id"));
+                preparedStatement.executeUpdate();
+            }
+
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    public void updateMultiSignBlockHash(String tokenid, long tokenindex, String address, byte[] blockhash)
+            throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            PreparedStatement tempPreparedStatement = null;
+            String tempSQL = "select id from multisign where tokenid=? and tokenindex=? AND address = ?";
+
+            tempPreparedStatement = conn.get().prepareStatement(tempSQL);
+            tempPreparedStatement.setString(1, tokenid);
+            tempPreparedStatement.setLong(2, tokenindex);
+            tempPreparedStatement.setString(3, address);
+            ResultSet resultSet = tempPreparedStatement.executeQuery();
+            if (resultSet.next()) {
+                String sql = getUpdate() + " multisign(blockhash , id) VALUES (?,  ?)";
+                preparedStatement = conn.get().prepareStatement(sql);
+                preparedStatement.setBytes(1, blockhash);
                 preparedStatement.setString(2, resultSet.getString("id"));
                 preparedStatement.executeUpdate();
             }
