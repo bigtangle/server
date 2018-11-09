@@ -36,7 +36,7 @@
 										<TableColumn fx:id="maintainedColumn" prefWidth="50.0" text="%maintained" />
 		
 										<TableColumn fx:id="milestoneLastUpdateTimeColumn" prefWidth="148.0" text="%milestoneLastUpdateTime" />
-										<TableColumn fx:id="insertTimeColumn" prefWidth="154.0" text="%insertTime" />
+										<TableColumn fx:id="insertTimeColumn" prefWidth="210.0" text="%insertTime" />
 									</columns>
 								</TableView>
 								<Button cancelButton="true" layoutX="927.0" layoutY="514.0" maxWidth="60.0" minWidth="60.0" mnemonicParsing="false" onAction="#closeUI" prefWidth="60.0" text="%close" />
@@ -57,7 +57,7 @@
 									<columns>
 										<TableColumn fx:id="blockhashColumn1" prefWidth="638.0" text="%blockhash" />
 										<TableColumn fx:id="ratingColumn1" prefWidth="120.0" text="%rating" />
-										<TableColumn fx:id="cumulativeWeightColumn1" prefWidth="209.0" text="%cumulativeWeight" />
+										<TableColumn fx:id="cumulativeWeightColumn1" prefWidth="218.0" text="%cumulativeWeight" />
 									</columns>
 								</TableView>
 								<Button cancelButton="true" layoutX="900.0" layoutY="506.0" maxWidth="60.0" minWidth="60.0" mnemonicParsing="false" onAction="#closeUI" prefWidth="60.0" text="%close" />
