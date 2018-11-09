@@ -217,7 +217,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     public List<WechatInvite> queryByUnfinishedWechatInvite() throws BlockStoreException {
-        String sql = "select id, wechatId, wechatInviterId, createTime, status from wechatinvite where status = 0";
+        String sql = "select id, wechatId, wechatInviterId, createTime, status,pubkey  from wechatinvite where status = 0";
         List<WechatInvite> wechatInvites = new ArrayList<WechatInvite>();
         maybeConnect();
         PreparedStatement s = null;
@@ -231,6 +231,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 wechatInvite.setWechatinviterId(resultSet.getString("wechatinviterId"));
                 wechatInvite.setCreateTime(resultSet.getDate("createTime"));
                 wechatInvite.setStatus(resultSet.getInt("status"));
+                wechatInvite.setPubkey(resultSet.getString("pubkey"));
                 wechatInvites.add(wechatInvite);
             }
             return wechatInvites;
@@ -559,7 +560,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public void resetStore() throws BlockStoreException {
         maybeConnect();
         try {
-         //   deleteStore();
+            // deleteStore();
             createTables();
         } catch (SQLException ex) {
             log.warn("Warning: deleteStore", ex);

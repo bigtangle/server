@@ -25,7 +25,9 @@ import net.bigtangle.airdrop.bean.WechatInvite;
 import net.bigtangle.airdrop.config.ScheduleConfiguration;
 import net.bigtangle.airdrop.store.FullPrunedBlockStore;
 import net.bigtangle.airdrop.utils.GiveMoneyUtils;
+import net.bigtangle.core.Address;
 import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.params.UnitTestParams;
 
 @Component
 @EnableAsync
@@ -86,8 +88,17 @@ public class ScheduleGiveMoneyService {
                         logger.info("wechat invite give money : " + entry.getKey() + ", money : "
                                 + (entry.getValue().size() * wechatReward));
                         for (WechatInvite wechatInvite : entry.getValue()) {
-                            this.store.updateWechatInviteStatus(wechatInvite.getId(), 1);
-                            logger.info("wechat invite update status, id : " + wechatInvite.getId() + ", success");
+                            boolean flag = true;
+                            try {
+                                Address.fromBase58(UnitTestParams.get(), wechatInvite.getPubkey());
+                            } catch (Exception e) {
+                                flag = false;
+                            }
+                            if (flag) {
+                                this.store.updateWechatInviteStatus(wechatInvite.getId(), 1);
+                                logger.info("wechat invite update status, id : " + wechatInvite.getId() + ", success");
+                            }
+
                         }
                     }
                     for (String wechatId : subInvitedSet) {
@@ -128,7 +139,16 @@ public class ScheduleGiveMoneyService {
         for (WechatInvite wechatInvite : wechatInvites) {
             List<WechatInvite> list = dataMap.get(wechatInvite.getWechatinviterId());
             if (LINKEDIN_BIGTANGLE.equals(wechatInvite.getWechatinviterId())) {
-                subInvitedSet.add(wechatInvite.getWechatId());
+                boolean flag = true;
+                try {
+                    Address.fromBase58(UnitTestParams.get(), wechatInvite.getPubkey());
+                } catch (Exception e) {
+                    flag = false;
+                }
+                if (flag) {
+                    subInvitedSet.add(wechatInvite.getWechatId());
+                }
+
             }
             if (list == null) {
                 list = new ArrayList<WechatInvite>();

@@ -4,55 +4,64 @@ import java.util.Date;
 
 public class WechatInvite implements java.io.Serializable {
 
-	private static final long serialVersionUID = -6728871579815689943L;
+    private static final long serialVersionUID = -6728871579815689943L;
 
-	private String id;
-	
-	private String wechatId;
-	
-	private String wechatinviterId;
-	
-	private Date createTime;
-	
-	private int status;
+    private String id;
 
-	public int getStatus() {
-		return status;
-	}
+    private String wechatId;
 
-	public void setStatus(int status) {
-		this.status = status;
-	}
+    private String wechatinviterId;
 
-	public String getId() {
-		return id;
-	}
+    private Date createTime;
 
-	public void setId(String id) {
-		this.id = id;
-	}
+    private int status;
+    private String pubkey;
 
-	public String getWechatId() {
-		return wechatId;
-	}
+    public int getStatus() {
+        return status;
+    }
 
-	public void setWechatId(String wechatId) {
-		this.wechatId = wechatId;
-	}
+    public void setStatus(int status) {
+        this.status = status;
+    }
 
-	public String getWechatinviterId() {
-		return wechatinviterId;
-	}
+    public String getId() {
+        return id;
+    }
 
-	public void setWechatinviterId(String wechatinviterId) {
-		this.wechatinviterId = wechatinviterId;
-	}
+    public void setId(String id) {
+        this.id = id;
+    }
 
-	public Date getCreateTime() {
-		return createTime;
-	}
+    public String getWechatId() {
+        return wechatId;
+    }
 
-	public void setCreateTime(Date createTime) {
-		this.createTime = createTime;
-	}
+    public void setWechatId(String wechatId) {
+        this.wechatId = wechatId;
+    }
+
+    public String getWechatinviterId() {
+        return wechatinviterId;
+    }
+
+    public void setWechatinviterId(String wechatinviterId) {
+        this.wechatinviterId = wechatinviterId;
+    }
+
+    public Date getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
+
+    public String getPubkey() {
+        return pubkey;
+    }
+
+    public void setPubkey(String pubkey) {
+        this.pubkey = pubkey;
+    }
 }
