@@ -37,7 +37,7 @@ public class ScheduleGiveMoneyService {
 
     private static final int linkedinMoney = 100000;
 
-    private static final int wechatReward = 10000;
+    private static final int wechatReward = 100000;
 
     private static final Logger logger = LoggerFactory.getLogger(ScheduleGiveMoneyService.class);
 
