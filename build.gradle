@@ -4,7 +4,7 @@ apply from: "dependencies.gradle"
 allprojects {
 
     project.group = 'net.bigtangle'
-    project.version = '0.3.1'
+    project.version = '0.3.2'
 
     ext {
         projectName = rootProject.name + '.' + project.name
