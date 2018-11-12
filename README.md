@@ -3,13 +3,6 @@
 You have two options, the preferred option is that you compile yourself. The second option is that you utilize the provided jar, which is released regularly (when new updates occur) here: [ Releases](https://).
 
 
-
-#### Locally
-
-```
-java -jar bigtangle-server.jar -Xms512m -Xmx1g 
-```
-
 ### Compiling yourself  
 
 Make sure to have Java 8 installed on your computer.

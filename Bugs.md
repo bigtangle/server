@@ -47,6 +47,5 @@ userdata and vos modify param from eckey to list of eckey
 
 
 
-## rolling update of database table setting with a version and update the sql scripts against the version
 
 

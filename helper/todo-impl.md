@@ -325,8 +325,17 @@ BL write invite inlcude the link to evaluation of software and prospect /all
 
     
 ## no empty block tip selection avoid conflicts  blocks
-## empty block with preferenced to select blocks in conflicts
+## empty block to select blocks in conflicts first
 
 ## display the history of spent transaction with 
    all my address or a given address
    select 1 Month, 6  or date from  date to 
+   
+## add restriction airdrop 
+
+## rolling update of database table setting with a version and update the sql scripts against the version
+
+## reentry of transaction in case of conflicts and low rating
+
+
+## problem that schedule is down.  --> monitoring prometheus
