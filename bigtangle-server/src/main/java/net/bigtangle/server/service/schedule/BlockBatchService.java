@@ -53,30 +53,32 @@ public class BlockBatchService {
     }
 
     public void batchDo() {
-        logger.info("BlockBatchService start");
-        try {
-            List<BatchBlock> batchBlocks = this.store.getBatchBlockList();
-            if (batchBlocks.isEmpty()) {
-                return;
-            }
-            Block block = transactionService.askTransactionBlock();
-            for (BatchBlock batchBlock : batchBlocks) {
-                byte[] payloadBytes = batchBlock.getBlock();
-                Block putBlock = this.networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
-                for (Transaction transaction : putBlock.getTransactions()) {
-                    block.addTransaction(transaction);
+        if (scheduleConfiguration.isMilestone_active()) {
+            logger.info("BlockBatchService start");
+            try {
+                List<BatchBlock> batchBlocks = this.store.getBatchBlockList();
+                if (batchBlocks.isEmpty()) {
+                    return;
                 }
+                Block block = transactionService.askTransactionBlock();
+                for (BatchBlock batchBlock : batchBlocks) {
+                    byte[] payloadBytes = batchBlock.getBlock();
+                    Block putBlock = this.networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
+                    for (Transaction transaction : putBlock.getTransactions()) {
+                        block.addTransaction(transaction);
+                    }
+                }
+                if (block.getTransactions().size() == 0) {
+                    return;
+                }
+                block.solve();
+                blockService.saveBlock(block);
+                for (BatchBlock batchBlock : batchBlocks) {
+                    this.store.deleteBatchBlock(batchBlock.getHash());
+                }
+            } catch (Exception e) {
+                logger.info("BlockBatchService error", e);
             }
-            if (block.getTransactions().size() == 0) {
-                return;
-            }
-            block.solve();
-            blockService.saveBlock(block);
-            for (BatchBlock batchBlock : batchBlocks) {
-                this.store.deleteBatchBlock(batchBlock.getHash());
-            }
-        } catch (Exception e) {
-            logger.info("BlockBatchService error", e);
         }
     }
 }

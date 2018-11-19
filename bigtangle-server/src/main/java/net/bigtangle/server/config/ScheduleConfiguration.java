@@ -15,8 +15,8 @@ public class ScheduleConfiguration {
     @Value("${milestoneschedule.active:false}")
     boolean milestone_active;
 
-    @Value("${orderMatchService.active:false}")
-    boolean ordermatch_active;
+    @Value("${blockBatchService.active:false}")
+    boolean blockBatchService_active;
 
     public boolean isMilestone_active() {
         return milestone_active;
@@ -26,12 +26,14 @@ public class ScheduleConfiguration {
         this.milestone_active = milestone_active;
     }
 
-    public boolean isOrdermatch_active() {
-        return ordermatch_active;
+    public boolean isBlockBatchService_active() {
+        return blockBatchService_active;
     }
 
-    public void setOrdermatch_active(boolean ordermatch_active) {
-        this.ordermatch_active = ordermatch_active;
+    public void setBlockBatchService_active(boolean blockBatchService_active) {
+        this.blockBatchService_active = blockBatchService_active;
     }
+
+  
 
 }
