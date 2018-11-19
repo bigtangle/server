@@ -339,3 +339,5 @@ BL write invite inlcude the link to evaluation of software and prospect /all
 
 
 ## problem that schedule is down.  --> monitoring prometheus
+
+## save kafka offset and write to database 
