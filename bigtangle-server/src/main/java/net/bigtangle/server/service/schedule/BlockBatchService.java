@@ -46,14 +46,14 @@ public class BlockBatchService {
     @Scheduled(fixedRateString = "10000")
 
     public void batch() {
-        if (scheduleConfiguration.isMilestone_active()) {
+        if (scheduleConfiguration.isBlockBatchService_active()) {
             batchDo();
         }
 
     }
 
     public void batchDo() {
-        if (scheduleConfiguration.isMilestone_active()) {
+
             logger.info("BlockBatchService start");
             try {
                 List<BatchBlock> batchBlocks = this.store.getBatchBlockList();
@@ -80,5 +80,5 @@ public class BlockBatchService {
                 logger.info("BlockBatchService error", e);
             }
         }
-    }
+
 }

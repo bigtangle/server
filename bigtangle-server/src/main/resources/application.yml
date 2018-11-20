@@ -24,6 +24,7 @@ service:
   milestoneschedule:
     rate: ${SERVICE_MILESTONE_RATE:15000}
     active: ${SERVICE_MILESTONE_ACTIVE:false}
+    
 kafka:
   bootstrapServers: ${BOOT_STRAP_SERVERS:}
   topicOutName: ${TOPIC_OUT_NAME:bigtangle}

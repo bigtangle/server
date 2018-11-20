@@ -304,7 +304,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
 
     @Override
     public String toString() {
-        return "[" + value + ", " + getTokenHex() + "]";
+        return "[" + toPlainString() + " #" + getTokenHex() + "]";
     }
 
     @Override
