@@ -12,25 +12,34 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import net.bigtangle.server.config.ScheduleConfiguration;
-import net.bigtangle.server.service.MilestoneService;
+import net.bigtangle.server.service.BlockService;
 
 @Component
 @EnableAsync
-public class ScheduleMilestoneService {
-    private static final Logger logger = LoggerFactory.getLogger(ScheduleMilestoneService.class);
-    @Autowired
-    private MilestoneService milestoneService;
+public class ScheduleUnsolidBlockService {
+    private static final Logger logger = LoggerFactory.getLogger(ScheduleUnsolidBlockService.class);
+
     @Autowired
     private ScheduleConfiguration scheduleConfiguration;
 
-    @Scheduled(fixedRateString = "${service.milestoneschedule.rate:10000}")
-    public void updateMilestoneService() {
+    @Autowired
+    private  BlockService blockService;
+
+    /*
+     * unsolid blocks can be solid, if previous can be found  in  network etc.
+     * read data from table oder by insert time,  use add Block to check again, 
+     * if missing previous,  it may request network for the blocks 
+     */
+    @Scheduled(fixedRateString = "${service.updateUnsolideService.rate:5000}")
+    public void updateUnsolideService() {
         if (scheduleConfiguration.isMilestone_active()) {
             try {
                 logger.debug(" Start ScheduleMilestoneService: ");
-                milestoneService.update();
+                blockService. deleteOldUnsolidBlock();
+                blockService.reCheckUnsolidBlock(); 
+           
             } catch (Exception e) {
-                logger.warn("updateMilestoneService ", e);
+                logger.warn("updateUnsolideService ", e);
             }
         }
     }
