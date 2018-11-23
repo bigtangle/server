@@ -60,7 +60,7 @@ public class Context {
      * @param params The network parameters that will be associated with this context.
      */
     public Context(NetworkParameters params) {
-        log.info("Creating  {} context.", VersionMessage.BITCOINJ_VERSION);
+        log.info("Creating  {} context.", VersionMessage.BIGTANGLE_VERSION);
         
         this.params = params;
         lastConstructed = this;

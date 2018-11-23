@@ -332,6 +332,7 @@ BL write invite inlcude the link to evaluation of software and prospect /all
    select 1 Month, 6  or date from  date to 
    
 ## add restriction airdrop 
+user must be activated via email and ask verification via mobile number after rewards > 10 millions
 
 ## rolling update of database table setting with a version and update the sql scripts against the version
 
@@ -341,3 +342,5 @@ BL write invite inlcude the link to evaluation of software and prospect /all
 ## problem that schedule is down.  --> monitoring prometheus
 
 ## save kafka offset and write to database 
+
+## add height in block?

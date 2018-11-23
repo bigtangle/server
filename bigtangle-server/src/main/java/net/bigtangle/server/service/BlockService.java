@@ -120,30 +120,34 @@ public class BlockService {
                 logger.debug("addConnected from reCheckUnsolidBlock " + block);
                 continue;
             }
-            try {
-                if (block.getBlockType() == Block.BLOCKTYPE_INITIAL)  {
-                    continue;
-                }
-                StoredBlock storedBlock0 = this.store.get(block.getPrevBlockHash());
-               
-                if (storedBlock0 == null) {
-                    byte[] re = blockRequester.requestBlock(block.getPrevBlockHash());
-                    if (re != null) {
-                        blockgraph.add((Block) networkParameters.getDefaultSerializer().makeBlock(re), true);
+            requestPrev(block);
+        }
+    }
 
-                    }
-                }
-                StoredBlock storedBlock1 = this.store.get(block.getPrevBranchBlockHash());
-                if (storedBlock1 == null) {
-                    byte[] re = blockRequester.requestBlock(block.getPrevBranchBlockHash());
-                    if (re != null) {
-                        blockgraph.add((Block) networkParameters.getDefaultSerializer().makeBlock(re), true);
-
-                    }
-                }
-            } catch (Exception e) {
-                logger.debug("", e );
+    public void requestPrev(Block block) {
+        try {
+            if (block.getBlockType() == Block.BLOCKTYPE_INITIAL)  {
+                return;
             }
+            StoredBlock storedBlock0 = this.store.get(block.getPrevBlockHash());
+           
+            if (storedBlock0 == null) {
+                byte[] re = blockRequester.requestBlock(block.getPrevBlockHash());
+                if (re != null) {
+                    blockgraph.add((Block) networkParameters.getDefaultSerializer().makeBlock(re), true);
+
+                }
+            }
+            StoredBlock storedBlock1 = this.store.get(block.getPrevBranchBlockHash());
+            if (storedBlock1 == null) {
+                byte[] re = blockRequester.requestBlock(block.getPrevBranchBlockHash());
+                if (re != null) {
+                    blockgraph.add((Block) networkParameters.getDefaultSerializer().makeBlock(re), true);
+
+                }
+            }
+        } catch (Exception e) {
+            logger.debug("", e );
         }
     }
 

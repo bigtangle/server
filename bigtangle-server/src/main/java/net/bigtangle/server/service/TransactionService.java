@@ -138,7 +138,7 @@ public class TransactionService {
         return store.getTransactionOutput(out.getHash(), out.getIndex());
     }
 
-    public Optional<Block> addConnected(byte[] bytes, boolean emptyBlock) {
+    public Optional<Block> addConnected(byte[] bytes, boolean emptyBlock, boolean request) {
         try {
             Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bytes);
             if (!checkBlockExists(block)) {
@@ -147,6 +147,8 @@ public class TransactionService {
                     logger.debug("addConnected from kafka " + block);
                 } else {
                     logger.debug(" unsolid block from kafka " + block);
+                  if( request) blockService.requestPrev(block);
+                   
                 }
                 return Optional.of(block);
             } else {
