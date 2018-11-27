@@ -39,7 +39,7 @@ public class ScheduleGiveMoneyService {
 
     private static final int wechatReward = 1000;
     private static final int wechatRewardfactor = 10;
-    
+
     private static final Logger logger = LoggerFactory.getLogger(ScheduleGiveMoneyService.class);
 
     @Autowired
@@ -138,24 +138,29 @@ public class ScheduleGiveMoneyService {
     private void collectLinkedin(List<WechatInvite> wechatInvites, HashMap<String, List<WechatInvite>> dataMap,
             Set<String> subInvitedSet) {
         for (WechatInvite wechatInvite : wechatInvites) {
+            boolean flag = true;
+            try {
+                Address.fromBase58(UnitTestParams.get(), wechatInvite.getPubkey());
+            } catch (Exception e) {
+                flag = false;
+            }
+            if (!flag) {
+                continue;
+            }
             List<WechatInvite> list = dataMap.get(wechatInvite.getWechatinviterId());
+
             if (LINKEDIN_BIGTANGLE.equals(wechatInvite.getWechatinviterId())) {
-                boolean flag = true;
-                try {
-                    Address.fromBase58(UnitTestParams.get(), wechatInvite.getPubkey());
-                } catch (Exception e) {
-                    flag = false;
-                }
-                if (flag) {
-                    subInvitedSet.add(wechatInvite.getWechatId());
-                }
+
+                subInvitedSet.add(wechatInvite.getWechatId());
 
             }
+
             if (list == null) {
                 list = new ArrayList<WechatInvite>();
                 dataMap.put(wechatInvite.getWechatinviterId(), list);
             }
             dataMap.get(wechatInvite.getWechatinviterId()).add(wechatInvite);
+
         }
     }
 
@@ -172,8 +177,8 @@ public class ScheduleGiveMoneyService {
                     }
                     logger.debug("==============");
                     logger.debug(pubkey);
-                    if (giveMoneyResult.containsKey("pubkey")) {
-                        giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + wechatReward / wechatRewardfactor);
+                    if (giveMoneyResult.containsKey(pubkey)) {
+                        giveMoneyResult.put(pubkey, giveMoneyResult.get(pubkey) + wechatReward / wechatRewardfactor);
                     } else {
                         giveMoneyResult.put(pubkey, wechatReward / wechatRewardfactor);
                     }
@@ -190,8 +195,9 @@ public class ScheduleGiveMoneyService {
                         }
                         logger.debug("==============");
                         logger.debug(pubkey);
-                        if (giveMoneyResult.containsKey("pubkey")) {
-                            giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + wechatReward / wechatRewardfactor / wechatRewardfactor);
+                        if (giveMoneyResult.containsKey(pubkey)) {
+                            giveMoneyResult.put(pubkey, giveMoneyResult.get(pubkey)
+                                    + wechatReward / wechatRewardfactor / wechatRewardfactor);
                         } else {
                             giveMoneyResult.put(pubkey, wechatReward / wechatRewardfactor / wechatRewardfactor);
                         }
@@ -208,10 +214,12 @@ public class ScheduleGiveMoneyService {
                             }
                             logger.debug("==============");
                             logger.debug(pubkey);
-                            if (giveMoneyResult.containsKey("pubkey")) {
-                                giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + wechatReward / wechatRewardfactor / wechatRewardfactor / wechatRewardfactor);
+                            if (giveMoneyResult.containsKey(pubkey)) {
+                                giveMoneyResult.put(pubkey, giveMoneyResult.get(pubkey)
+                                        + wechatReward / wechatRewardfactor / wechatRewardfactor / wechatRewardfactor);
                             } else {
-                                giveMoneyResult.put(pubkey, wechatReward / wechatRewardfactor / wechatRewardfactor / wechatRewardfactor);
+                                giveMoneyResult.put(pubkey,
+                                        wechatReward / wechatRewardfactor / wechatRewardfactor / wechatRewardfactor);
                             }
                         }
                     if (wechatInviteResult3.get("wechatInviterId") != null
@@ -226,11 +234,13 @@ public class ScheduleGiveMoneyService {
                                 }
                                 logger.debug("==============");
                                 logger.debug(pubkey);
-                                if (giveMoneyResult.containsKey("pubkey")) {
+                                if (giveMoneyResult.containsKey(pubkey)) {
                                     giveMoneyResult.put(pubkey,
-                                            giveMoneyResult.get("pubkey") + wechatReward / wechatRewardfactor / wechatRewardfactor / wechatRewardfactor / wechatRewardfactor);
+                                            giveMoneyResult.get(pubkey) + wechatReward / wechatRewardfactor
+                                                    / wechatRewardfactor / wechatRewardfactor / wechatRewardfactor);
                                 } else {
-                                    giveMoneyResult.put(pubkey, wechatReward / wechatRewardfactor / wechatRewardfactor / wechatRewardfactor / wechatRewardfactor);
+                                    giveMoneyResult.put(pubkey, wechatReward / wechatRewardfactor / wechatRewardfactor
+                                            / wechatRewardfactor / wechatRewardfactor);
                                 }
                             }
 
