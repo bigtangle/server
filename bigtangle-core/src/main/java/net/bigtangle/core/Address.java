@@ -115,9 +115,9 @@ public class Address extends VersionedChecksummedBytes {
     public Address(@Nullable NetworkParameters params, String address) throws AddressFormatException {
         super(address);
         if (params != null) {
-            if (!isAcceptableVersion(params, version)) {
-                throw new WrongNetworkException(version, params.getAcceptableAddressCodes());
-            }
+//            if (!isAcceptableVersion(params, version)) {
+//                throw new WrongNetworkException(version, params.getAcceptableAddressCodes());
+//            }
             this.params = params;
         } else {
             NetworkParameters paramsFound = null;
