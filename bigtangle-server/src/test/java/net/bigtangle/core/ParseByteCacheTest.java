@@ -35,7 +35,7 @@ import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.Utils;
 import net.bigtangle.params.MainNetParams;
-import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.params.MainNetParams;
 import net.bigtangle.store.MemoryBlockStore;
 import net.bigtangle.wallet.Wallet;
 
@@ -61,7 +61,7 @@ public class ParseByteCacheTest {
                     + "c7 36 7a 7a 25 3b c1 13  52 23 ad b9 a4 68 bb 3a");
 
     private BlockStore blockStore;
-    private static final NetworkParameters PARAMS = UnitTestParams.get();
+    private static final NetworkParameters PARAMS = MainNetParams.get();
 
     private byte[] b1Bytes;
     private byte[] b1BytesWithHeader;

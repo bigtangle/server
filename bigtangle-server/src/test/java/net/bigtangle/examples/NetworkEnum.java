@@ -7,7 +7,7 @@ package net.bigtangle.examples;
 
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.params.MainNetParams;
-import net.bigtangle.params.TestNet3Params;
+import net.bigtangle.params.MainNetParams;
 
 public enum NetworkEnum {
     MAIN,
@@ -21,9 +21,9 @@ public enum NetworkEnum {
             case PROD:
                 return MainNetParams.get();
             case TEST:
-                return TestNet3Params.get(); 
+                return MainNetParams.get(); 
             default:
-                return TestNet3Params.get();
+                return MainNetParams.get();
         }
     }
 }

@@ -11,7 +11,7 @@ import org.junit.Test;
 import net.bigtangle.core.AlertMessage;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.params.MainNetParams;
 
 import static net.bigtangle.core.Utils.HEX;
 import static org.junit.Assert.assertEquals;
@@ -24,7 +24,7 @@ public class AlertMessageTest {
     @Before
     public void setUp() throws Exception {
         final ECKey key = ECKey.fromPrivate(TEST_KEY_PRIV);
-        params = new UnitTestParams() {
+        params = new MainNetParams() {
             @Override
             public byte[] getAlertSigningKey() {
                 return key.getPubKey();

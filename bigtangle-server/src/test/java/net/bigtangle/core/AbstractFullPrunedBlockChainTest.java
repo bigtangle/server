@@ -21,7 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.collect.Lists;
 
-import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.params.MainNetParams;
 import net.bigtangle.script.Script;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -38,7 +38,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractFullPrunedBlockChainTest.class);
 
-    protected static final NetworkParameters PARAMS = new UnitTestParams();
+    protected static final NetworkParameters PARAMS = new MainNetParams();
 
     @Autowired
     protected FullPrunedBlockGraph blockgraph;

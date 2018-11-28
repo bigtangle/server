@@ -27,7 +27,7 @@ import net.bigtangle.airdrop.store.FullPrunedBlockStore;
 import net.bigtangle.airdrop.utils.GiveMoneyUtils;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.BlockStoreException;
-import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.params.MainNetParams;
 
 @Component
 @EnableAsync
@@ -91,7 +91,7 @@ public class ScheduleGiveMoneyService {
                         for (WechatInvite wechatInvite : entry.getValue()) {
                             boolean flag = true;
                             try {
-                                Address.fromBase58(UnitTestParams.get(), wechatInvite.getPubkey());
+                                Address.fromBase58(MainNetParams.get(), wechatInvite.getPubkey());
                             } catch (Exception e) {
                                 flag = false;
                             }
@@ -140,7 +140,7 @@ public class ScheduleGiveMoneyService {
         for (WechatInvite wechatInvite : wechatInvites) {
             boolean flag = true;
             try {
-                Address.fromBase58(UnitTestParams.get(), wechatInvite.getPubkey());
+                Address.fromBase58(MainNetParams.get(), wechatInvite.getPubkey());
             } catch (Exception e) {
                 flag = false;
             }

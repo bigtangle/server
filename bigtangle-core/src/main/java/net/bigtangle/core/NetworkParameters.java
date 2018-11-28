@@ -34,8 +34,7 @@ import javax.annotation.Nullable;
 import com.google.common.base.Objects;
 
 import net.bigtangle.params.MainNetParams;
-import net.bigtangle.params.TestNet3Params;
-import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.params.MainNetParams;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.utils.MonetaryFormat;
@@ -65,8 +64,7 @@ public abstract class NetworkParameters {
 	 * trade things.
 	 */
 	public static final String ID_MAINNET = "net.bigtangle";
-	/** The string returned by getId() for the testnet. */
-	public static final String ID_TESTNET = "net.bigtangle.test";
+
 	/** Unit test network. */
 	public static final String ID_UNITTESTNET = "net.bigtangle.unittest";
 
@@ -211,10 +209,8 @@ public abstract class NetworkParameters {
 	public static NetworkParameters fromID(String id) {
 		if (id.equals(ID_MAINNET)) {
 			return MainNetParams.get();
-		} else if (id.equals(ID_TESTNET)) {
-			return TestNet3Params.get();
 		} else if (id.equals(ID_UNITTESTNET)) {
-			return UnitTestParams.get();
+			return MainNetParams.get();
 		} else {
 			return null;
 		}

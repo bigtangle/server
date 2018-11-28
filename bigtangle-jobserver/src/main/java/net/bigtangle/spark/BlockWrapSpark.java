@@ -17,7 +17,7 @@ import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.ConflictCandidate;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.params.MainNetParams;
 import scala.collection.mutable.ListMap;
 
 /**
@@ -81,7 +81,7 @@ public class BlockWrapSpark extends BlockWrap implements Serializable {
 
         // TODO remember the params
         if (params == null)
-            params = UnitTestParams.get();
+            params = MainNetParams.get();
 
         block = params.getDefaultSerializer().makeBlock(dataRead);
         blockEvaluation = (BlockEvaluation) aInputStream.readObject();

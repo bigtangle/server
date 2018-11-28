@@ -40,12 +40,7 @@ import net.bigtangle.wallet.SendRequest;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TransactionServiceTest extends AbstractIntegrationTest {
     private static final Logger log = LoggerFactory.getLogger(TransactionServiceTest.class);
-
-    @Autowired
-    private NetworkParameters networkParameters;
-
-    
-  
+ 
     
     //pay to mutilsigns keys wallet1Keys_part
     public void createMultiSigns(List<ECKey> wallet1Keys_part) throws Exception {

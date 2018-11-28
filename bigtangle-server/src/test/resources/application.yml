@@ -1,12 +1,15 @@
 server:
   port: ${SERVER_PORT:8088}
-  net: ${SERVER_NET:Unittest}
+  net: ${SERVER_NET:Mainnet}
   requester: ${REQUESTER:}
   mineraddress: ${SERVER_MINERADDRESS:mjWvzPZz4YJtWqb7ux7cdgq5G7rzkg3bXG}
-  serverversion: ${SERVERVERSION:0.3.1}
-  clientversion: ${CLIENTVERSION:0.3.1}
-
-
+  serverversion: ${SERVERVERSION:0.3.2}
+  clientversion: ${CLIENTVERSION:0.3.2}
+  ssl:
+    enabled: ${SSL:false}
+    key-store: ${KEYSTORE:src/main/resources/ca.pkcs12}
+    key-store-password: ${KEYSTOREPW:changeit}
+    keyStoreType: ${KEYSTORETYPE:PKCS12}
 
 db:
   dbtype: ${DBTYPE:mysql}
@@ -21,11 +24,20 @@ service:
   milestoneschedule:
     rate: ${SERVICE_MILESTONE_RATE:15000}
     active: ${SERVICE_MILESTONE_ACTIVE:false}
-
     
 kafka:
   bootstrapServers: ${BOOT_STRAP_SERVERS:}
   topicOutName: ${TOPIC_OUT_NAME:bigtangle}
-  topicOut2Name: ${TOPIC_OUT2_NAME:bigtangle2}
-  consumerIdSuffix: ${CONSUMERIDSUFFIX:453456}
-
+  consumerIdSuffix: ${CONSUMERIDSUFFIX:bigtangletest}
+management:
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    prometheus:
+      enabled: true

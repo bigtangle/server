@@ -5,41 +5,63 @@
 
 package net.bigtangle.script;
 
+import static net.bigtangle.core.Utils.HEX;
+import static net.bigtangle.script.ScriptOpCodes.OP_0;
+import static net.bigtangle.script.ScriptOpCodes.OP_INVALIDOPCODE;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.math.BigInteger;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.hamcrest.core.IsNot;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
-import net.bigtangle.core.*;
+import net.bigtangle.core.Address;
+import net.bigtangle.core.Context;
+import net.bigtangle.core.DumpedPrivateKey;
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.ScriptException;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Transaction.SigHash;
+import net.bigtangle.core.TransactionInput;
+import net.bigtangle.core.TransactionOutPoint;
+import net.bigtangle.core.TransactionOutput;
+import net.bigtangle.core.UnsafeByteArrayOutputStream;
+import net.bigtangle.core.Utils;
+import net.bigtangle.core.VerificationException;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.MainNetParams;
-import net.bigtangle.params.TestNet3Params;
-import net.bigtangle.script.Script;
-import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.script.ScriptChunk;
-import net.bigtangle.script.ScriptOpCodes;
+import net.bigtangle.params.MainNetParams;
 import net.bigtangle.script.Script.VerifyFlag;
-
-import org.hamcrest.core.IsNot;
-import org.junit.Assert;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.math.BigInteger;
-import java.nio.charset.Charset;
-import java.util.*;
-
-import static net.bigtangle.core.Utils.HEX;
-import static net.bigtangle.script.ScriptOpCodes.OP_0;
-import static net.bigtangle.script.ScriptOpCodes.OP_INVALIDOPCODE;
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.*;
-import org.junit.Before;
 
 public class ScriptTest {
     // From tx 05e04c26c12fe408a3c1b71aa7996403f6acad1045252b1c62e055496f4d2cb1 on the testnet.
@@ -48,7 +70,7 @@ public class ScriptTest {
 
     static final String pubkeyProg = "76a91433e81a941e64cda12c6a299ed322ddbdd03f8d0e88ac";
 
-    private static final NetworkParameters PARAMS = TestNet3Params.get();
+    private static final NetworkParameters PARAMS = MainNetParams.get();
 
     private static final Logger log = LoggerFactory.getLogger(ScriptTest.class);
 

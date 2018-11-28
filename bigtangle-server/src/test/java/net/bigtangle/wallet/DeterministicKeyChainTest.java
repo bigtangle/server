@@ -33,7 +33,7 @@ import net.bigtangle.crypto.ChildNumber;
 import net.bigtangle.crypto.DeterministicKey;
 import net.bigtangle.crypto.KeyCrypter;
 import net.bigtangle.params.MainNetParams;
-import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.params.MainNetParams;
 import net.bigtangle.utils.BriefLogFormatter;
 
 public class DeterministicKeyChainTest {
@@ -58,9 +58,9 @@ public class DeterministicKeyChainTest {
         ECKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertFalse(key2.isPubKeyOnly());
 
-        final Address address = Address.fromBase58(UnitTestParams.get(), "n1bQNoEx8uhmCzzA5JPG6sFdtsUQhwiQJV");
-        assertEquals(address, key1.toAddress(UnitTestParams.get()));
-        assertEquals("mnHUcqUVvrfi5kAaXJDQzBb9HsWs78b42R", key2.toAddress(UnitTestParams.get()).toString());
+        final Address address = Address.fromBase58(MainNetParams.get(), "n1bQNoEx8uhmCzzA5JPG6sFdtsUQhwiQJV");
+        assertEquals(address, key1.toAddress(MainNetParams.get()));
+        assertEquals("mnHUcqUVvrfi5kAaXJDQzBb9HsWs78b42R", key2.toAddress(MainNetParams.get()).toString());
         assertEquals(key1, chain.findKeyFromPubHash(address.getHash160()));
         assertEquals(key2, chain.findKeyFromPubKey(key2.getPubKey()));
 
@@ -69,7 +69,7 @@ public class DeterministicKeyChainTest {
 
         ECKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
         assertFalse(key3.isPubKeyOnly());
-        assertEquals("mqumHgVDqNzuXNrszBmi7A2UpmwaPMx4HQ", key3.toAddress(UnitTestParams.get()).toString());
+        assertEquals("mqumHgVDqNzuXNrszBmi7A2UpmwaPMx4HQ", key3.toAddress(MainNetParams.get()).toString());
         key3.sign(Sha256Hash.ZERO_HASH);
         assertFalse(key3.isPubKeyOnly());
     }
@@ -89,16 +89,16 @@ public class DeterministicKeyChainTest {
         ECKey key1 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         ECKey key2 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
 
-        final Address address = Address.fromBase58(UnitTestParams.get(), "n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X");
-        assertEquals(address, key1.toAddress(UnitTestParams.get()));
-        assertEquals("mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", key2.toAddress(UnitTestParams.get()).toString());
+        final Address address = Address.fromBase58(MainNetParams.get(), "n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X");
+        assertEquals(address, key1.toAddress(MainNetParams.get()));
+        assertEquals("mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", key2.toAddress(MainNetParams.get()).toString());
         assertEquals(key1, chain1.findKeyFromPubHash(address.getHash160()));
         assertEquals(key2, chain1.findKeyFromPubKey(key2.getPubKey()));
 
         key1.sign(Sha256Hash.ZERO_HASH);
 
         ECKey key3 = chain1.getKey(KeyChain.KeyPurpose.CHANGE);
-        assertEquals("mpjRhk13rvV7vmnszcUQVYVQzy4HLTPTQU", key3.toAddress(UnitTestParams.get()).toString());
+        assertEquals("mpjRhk13rvV7vmnszcUQVYVQzy4HLTPTQU", key3.toAddress(MainNetParams.get()).toString());
         key3.sign(Sha256Hash.ZERO_HASH);
     }
 
@@ -123,8 +123,8 @@ public class DeterministicKeyChainTest {
         DeterministicKeyChain chain1 = new AccountOneChain(ENTROPY, "", secs);
         ECKey key1 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
 
-        final Address address = Address.fromBase58(UnitTestParams.get(), "n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X");
-        assertEquals(address, key1.toAddress(UnitTestParams.get()));
+        final Address address = Address.fromBase58(MainNetParams.get(), "n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X");
+        assertEquals(address, key1.toAddress(MainNetParams.get()));
 
         DeterministicKey watching = chain1.getWatchingKey();
 
@@ -144,14 +144,14 @@ public class DeterministicKeyChainTest {
         chain1 = DeterministicKeyChain.fromProtobuf(keys, null, factory).get(0);
 
         ECKey key2 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        assertEquals("mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", key2.toAddress(UnitTestParams.get()).toString());
+        assertEquals("mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", key2.toAddress(MainNetParams.get()).toString());
         assertEquals(key1, chain1.findKeyFromPubHash(address.getHash160()));
         assertEquals(key2, chain1.findKeyFromPubKey(key2.getPubKey()));
 
         key1.sign(Sha256Hash.ZERO_HASH);
 
         ECKey key3 = chain1.getKey(KeyChain.KeyPurpose.CHANGE);
-        assertEquals("mpjRhk13rvV7vmnszcUQVYVQzy4HLTPTQU", key3.toAddress(UnitTestParams.get()).toString());
+        assertEquals("mpjRhk13rvV7vmnszcUQVYVQzy4HLTPTQU", key3.toAddress(MainNetParams.get()).toString());
         key3.sign(Sha256Hash.ZERO_HASH);
 
         assertEquals(watching, chain1.getWatchingKey());

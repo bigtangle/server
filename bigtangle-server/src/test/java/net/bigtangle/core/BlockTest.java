@@ -26,14 +26,14 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.io.ByteStreams;
 
 import net.bigtangle.params.MainNetParams;
-import net.bigtangle.params.TestNet3Params;
-import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.params.MainNetParams;
+import net.bigtangle.params.MainNetParams;
 import net.bigtangle.script.ScriptOpCodes;
 import net.bigtangle.wallet.Wallet;
 //TODO no binary blockBytes
 @Ignore
 public class BlockTest {
-    private static final NetworkParameters PARAMS = TestNet3Params.get();
+    private static final NetworkParameters PARAMS = MainNetParams.get();
 
     public static final byte[] blockBytes;
 
@@ -76,7 +76,7 @@ public class BlockTest {
     //TODO NO BINARY @Test
     public void testProofOfWork() throws Exception {
         // This params accepts any difficulty target.
-        NetworkParameters params = UnitTestParams.get();
+        NetworkParameters params = MainNetParams.get();
         Block block = params.getDefaultSerializer().makeBlock(blockBytes);
 
         // Blocks contain their own difficulty target. The BlockChain
@@ -140,7 +140,7 @@ public class BlockTest {
 
     @Test
     public void testUpdateLength() {
-        NetworkParameters params = UnitTestParams.get();
+        NetworkParameters params = MainNetParams.get();
         Block block = BlockForTest.createNextBlock(params.getGenesisBlock(),Block.BLOCK_VERSION_GENESIS, params.getGenesisBlock());
        // assertEquals(block.bitcoinSerialize().length, block.length);
         final int origBlockLen = block.length;
@@ -182,7 +182,7 @@ public class BlockTest {
         // contains a coinbase transaction whose height is two bytes, which is
         // shorter than we see in most other cases.
 
-        Block block = TestNet3Params.get().getDefaultSerializer()
+        Block block = MainNetParams.get().getDefaultSerializer()
                 .makeBlock(ByteStreams.toByteArray(getClass().getResourceAsStream("block_testnet21066.dat")));
 
         // Check block.
@@ -196,7 +196,7 @@ public class BlockTest {
         // fit in two bytes. This test primarily ensures script encoding checks
         // are applied correctly.
 
-        block = TestNet3Params.get().getDefaultSerializer()
+        block = MainNetParams.get().getDefaultSerializer()
                 .makeBlock(ByteStreams.toByteArray(getClass().getResourceAsStream("block_testnet32768.dat")));
 
         // Check block.

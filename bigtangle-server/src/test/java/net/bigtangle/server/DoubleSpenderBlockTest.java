@@ -6,11 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-import org.junit.Test;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -22,8 +21,8 @@ import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Token;
+import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -39,10 +38,9 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Ignore
 public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
-
-    @Autowired
-    private NetworkParameters networkParameters;
+ 
 
     public Thread createThreadCountDownLatch(int method, CountDownLatch countDownLatch) {
         Thread thread = new Thread(new Runnable() {
@@ -62,11 +60,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
         return thread;
     }
     
-    @Test
-    public void initializationTest() {
-    	
-    }
-
+  
     //@Test
     public void testThreadDoubleSpenderRace() throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(2);

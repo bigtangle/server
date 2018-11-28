@@ -33,13 +33,13 @@ import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Utils;
 import net.bigtangle.kits.WalletAppKit;
-import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.params.MainNetParams;
 import net.bigtangle.wallet.Wallet;
 import okhttp3.OkHttpClient;
 
 public class CreateMarket {
 
-    public static NetworkParameters params = UnitTestParams.get();
+    public static NetworkParameters params = MainNetParams.get();
 
     OkHttpClient client = new OkHttpClient();
 

@@ -29,13 +29,13 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.params.ReqCmd;
-import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.params.MainNetParams;
 import net.bigtangle.utils.OkHttp3Util;
 import okhttp3.OkHttpClient;
 
 public class SendEmptyBlock {
 
-    public static NetworkParameters params = UnitTestParams.get();
+    public static NetworkParameters params = MainNetParams.get();
 
     OkHttpClient client = new OkHttpClient();
 

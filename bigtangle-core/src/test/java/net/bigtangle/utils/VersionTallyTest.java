@@ -13,12 +13,12 @@ import org.junit.Test;
 
 import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.params.MainNetParams;
 import net.bigtangle.utils.BriefLogFormatter;
 import net.bigtangle.utils.VersionTally;
 
 public class VersionTallyTest {
-    private static final NetworkParameters PARAMS = UnitTestParams.get();
+    private static final NetworkParameters PARAMS = MainNetParams.get();
 
     public VersionTallyTest() {
     }

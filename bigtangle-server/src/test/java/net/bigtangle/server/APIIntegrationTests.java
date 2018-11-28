@@ -96,10 +96,8 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         }
     }
 
-    @Autowired
-    private NetworkParameters networkParameters;
-    private int height = 1;
-
+   
+     
     @Test
     public void testClientVersion() throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();

@@ -21,7 +21,7 @@ package org.apache.spark.examples.sql.streaming
 import java.util.UUID
 
 import org.apache.spark.sql.SparkSession
-import net.bigtangle.params.UnitTestParams
+import net.bigtangle.params.MainNetParams
 
 /**
  * Consumes messages from one or more topics in Kafka and does wordcount.
@@ -76,7 +76,7 @@ object StructuredKafkaWordCount {
       .load()
     //.selectExpr("(CAST( value) AS  Array[Byte] ) ")
     // .as[Array[Byte]]
-    val params = UnitTestParams.get();
+    val params = MainNetParams.get();
 
     // Generate running word count
     // println(lines.count())

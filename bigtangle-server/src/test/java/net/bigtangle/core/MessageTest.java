@@ -11,14 +11,14 @@ import net.bigtangle.core.Message;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.ProtocolException;
 import net.bigtangle.core.VarInt;
-import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.params.MainNetParams;
 
 public class MessageTest {
 
     // If readStr() is vulnerable this causes OutOfMemory
     @Test(expected = ProtocolException.class)
     public void readStrOfExtremeLength() throws Exception {
-        NetworkParameters params = UnitTestParams.get();
+        NetworkParameters params = MainNetParams.get();
         VarInt length = new VarInt(Integer.MAX_VALUE);
         byte[] payload = length.encode();
         new VarStrMessage(params, payload);
@@ -38,7 +38,7 @@ public class MessageTest {
     // If readBytes() is vulnerable this causes OutOfMemory
     @Test(expected = ProtocolException.class)
     public void readByteArrayOfExtremeLength() throws Exception {
-        NetworkParameters params = UnitTestParams.get();
+        NetworkParameters params = MainNetParams.get();
         VarInt length = new VarInt(Integer.MAX_VALUE);
         byte[] payload = length.encode();
         new VarBytesMessage(params, payload);

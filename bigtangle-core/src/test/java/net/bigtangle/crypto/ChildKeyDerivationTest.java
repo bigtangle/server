@@ -18,15 +18,8 @@ import org.spongycastle.crypto.params.KeyParameter;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.crypto.ChildNumber;
-import net.bigtangle.crypto.DeterministicKey;
-import net.bigtangle.crypto.HDKeyDerivation;
-import net.bigtangle.crypto.HDUtils;
-import net.bigtangle.crypto.KeyCrypter;
-import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.params.MainNetParams;
-import net.bigtangle.params.TestNet3Params;
-import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.params.MainNetParams;
 
 /**
  * This test is adapted from Armory's BIP 32 tests.
@@ -196,12 +189,7 @@ public class ChildKeyDerivationTest {
         String priv58 = key1.serializePrivB58(params);
         assertEquals("xpub661MyMwAqRbcF7mq7Aejj5xZNzFfgi3ABamE9FedDHVmViSzSxYTgAQGcATDo2J821q7Y9EAagjg5EP3L7uBZk11PxZU3hikL59dexfLkz3", pub58);
         assertEquals("xprv9s21ZrQH143K2dhN197jMx1ppxRBHFKJpMqdLsF1ewxncv7quRED8N5nksxphju3W7naj1arF56L5PUEWfuSk8h73Sb2uh7bSwyXNrjzhAZ", priv58);
-        params = TestNet3Params.get();
-        pub58 = key1.serializePubB58(params);
-        priv58 = key1.serializePrivB58(params);
-        assertEquals("tpubD6NzVbkrYhZ4WuxgZMdpw1Hvi7MKg6YDjDMXVohmZCFfF17hXBPYpc56rCY1KXFMovN29ik37nZimQseiykRTBTJTZJmjENyv2k3R12BJ1M", pub58);
-        assertEquals("tprv8ZgxMBicQKsPdSvtfhyEXbdp95qPWmMK9ukkDHfU8vTGQWrvtnZxe7TEg48Ui7HMsZKMj7CcQRg8YF1ydtFPZBxha5oLa3qeN3iwpYhHPVZ", priv58);
-    }
+          }
 
     @Test
     public void serializeToTextAndBytes() {
@@ -244,7 +232,7 @@ public class ChildKeyDerivationTest {
 
     @Test
     public void parentlessDeserialization() {
-        NetworkParameters params = UnitTestParams.get();
+        NetworkParameters params = MainNetParams.get();
         DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("satoshi lives!".getBytes());
         DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO_HARDENED);
         DeterministicKey key3 = HDKeyDerivation.deriveChildKey(key2, ChildNumber.ZERO_HARDENED);

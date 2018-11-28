@@ -16,7 +16,7 @@ import org.apache.spark.graphx.Edge
 import org.apache.spark.graphx.Graph
 import net.bigtangle.core.Sha256Hash
 import net.bigtangle.core.NetworkParameters
-import net.bigtangle.params.UnitTestParams
+import net.bigtangle.params.MainNetParams
 import net.bigtangle.spark.BlockWrapSpark
 import net.bigtangle.core.BlockEvaluation
 import java.util.concurrent.TimeUnit
@@ -69,7 +69,7 @@ object JdbcTest {
     }
 
     val bytestoBlock = (data: Array[Byte], eval: BlockEvaluation) =>
-      { new BlockWrapSpark(data, eval, UnitTestParams.get()) };
+      { new BlockWrapSpark(data, eval, MainNetParams.get()) };
     val toBlockEvaluation = (x$1: Sha256Hash, x$2: Long, x$3: Long, x$4: Long, x$5: Long, x$6: Boolean, x$7: Long, x$8: Long, x$9: Long, x$10: Boolean) =>
       { BlockEvaluation.build(x$1, x$2, x$3, x$4, x$5, x$6, x$7, x$8, x$9, x$10) };
 
@@ -89,9 +89,9 @@ object JdbcTest {
           row.getBoolean(9)))))
 
     // TODO use byte arrays for vertex ids
-    val myEdges = rows.filter(row => !Sha256Hash.wrap(row.getAs[Array[Byte]](0)).equals(UnitTestParams.get.getGenesisBlock.getHash)).map(row =>
+    val myEdges = rows.filter(row => !Sha256Hash.wrap(row.getAs[Array[Byte]](0)).equals(MainNetParams.get.getGenesisBlock.getHash)).map(row =>
       (Edge(bytestoLong(row.getAs[Array[Byte]](0)), bytestoLong(row.getAs[Array[Byte]](10)), (0.0, 0.0))))
-    val myEdges2 = rows.filter(row => !Sha256Hash.wrap(row.getAs[Array[Byte]](0)).equals(UnitTestParams.get.getGenesisBlock.getHash)).map(row =>
+    val myEdges2 = rows.filter(row => !Sha256Hash.wrap(row.getAs[Array[Byte]](0)).equals(MainNetParams.get.getGenesisBlock.getHash)).map(row =>
       (Edge(bytestoLong(row.getAs[Array[Byte]](0)), bytestoLong(row.getAs[Array[Byte]](11)), (0.0, 0.0))))
     val myGraph = Graph(myVertices, myEdges.union(myEdges2)).cache
     val originalBlocks = myGraph.vertices.collect

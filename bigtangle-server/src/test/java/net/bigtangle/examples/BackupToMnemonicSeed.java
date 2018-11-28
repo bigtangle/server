@@ -20,7 +20,7 @@ package net.bigtangle.examples;
 
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Utils;
-import net.bigtangle.params.TestNet3Params;
+import net.bigtangle.params.MainNetParams;
 import net.bigtangle.wallet.DeterministicSeed;
 import net.bigtangle.wallet.Wallet;
 
@@ -36,7 +36,7 @@ public class BackupToMnemonicSeed {
 
     public static void main(String[] args) {
 
-        NetworkParameters params = TestNet3Params.get();
+        NetworkParameters params = MainNetParams.get();
         Wallet wallet = new Wallet(params);
 
         DeterministicSeed seed = wallet.getKeyChainSeed();

@@ -94,7 +94,6 @@ import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.ReqCmd;
-import net.bigtangle.params.UnitTestParams;
 import net.bigtangle.script.Script;
 import net.bigtangle.ui.wallet.controls.NotificationBarPane;
 import net.bigtangle.ui.wallet.utils.FileUtil;
@@ -106,7 +105,7 @@ import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.DeterministicSeed;
 
 public class Main extends Application {
-    public static NetworkParameters params = UnitTestParams.get();
+    public static NetworkParameters params = MainNetParams.get();
     public static final String APP_NAME = "Bigtangle  Wallet Test " + Main.version;
     public static final String version = "0.3.2";
     public static String keyFileDirectory = ".";

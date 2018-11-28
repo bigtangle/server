@@ -5,21 +5,12 @@
 
 package net.bigtangle.core;
 
-import org.junit.Test;
-
-import net.bigtangle.core.Address;
-import net.bigtangle.core.AddressFormatException;
-import net.bigtangle.core.DumpedPrivateKey;
-import net.bigtangle.core.ECKey;
-import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.Utils;
-import net.bigtangle.core.VersionedChecksummedBytes;
-import net.bigtangle.core.WrongNetworkException;
-import net.bigtangle.params.MainNetParams;
-import net.bigtangle.params.Networks;
-import net.bigtangle.params.TestNet3Params;
-import net.bigtangle.script.Script;
-import net.bigtangle.script.ScriptBuilder;
+import static net.bigtangle.core.Utils.HEX;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -28,11 +19,17 @@ import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.List;
 
-import static net.bigtangle.core.Utils.HEX;
-import static org.junit.Assert.*;
+import org.junit.Test;
+
+import net.bigtangle.params.MainNetParams;
+import net.bigtangle.params.Networks;
+import net.bigtangle.params.MainNetParams;
+import net.bigtangle.params.MainNetParams;
+import net.bigtangle.script.Script;
+import net.bigtangle.script.ScriptBuilder;
 
 public class AddressTest {
-    static final NetworkParameters testParams = TestNet3Params.get();
+    static final NetworkParameters testParams = MainNetParams.get();
     static final NetworkParameters mainParams = MainNetParams.get();
 
     @Test
@@ -102,20 +99,13 @@ public class AddressTest {
         } catch (WrongNetworkException e) {
             // Success.
             assertEquals(e.verCode, MainNetParams.get().getAddressHeader());
-            assertTrue(Arrays.equals(e.acceptableVersions, TestNet3Params.get().getAcceptableAddressCodes()));
+            assertTrue(Arrays.equals(e.acceptableVersions, MainNetParams.get().getAcceptableAddressCodes()));
         } catch (AddressFormatException e) {
             fail();
         }
     }
 
-    @Test
-    public void getNetwork() throws Exception {
-        NetworkParameters params = Address.getParametersFromAddress("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
-        assertEquals(MainNetParams.get().getId(), params.getId());
-        params = Address.getParametersFromAddress("n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
-        assertEquals(TestNet3Params.get().getId(), params.getId());
-    }
-
+ 
     @Test
     public void getAltNetwork() throws Exception {
         // An alternative network
@@ -151,25 +141,21 @@ public class AddressTest {
         Address mainNetP2SHAddress = Address.fromBase58(MainNetParams.get(), "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
         assertEquals(mainNetP2SHAddress.version, MainNetParams.get().p2shHeader);
         assertTrue(mainNetP2SHAddress.isP2SHAddress());
-        Address testNetP2SHAddress = Address.fromBase58(TestNet3Params.get(), "2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe");
-        assertEquals(testNetP2SHAddress.version, TestNet3Params.get().p2shHeader);
+        Address testNetP2SHAddress = Address.fromBase58(MainNetParams.get(), "2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe");
+        assertEquals(testNetP2SHAddress.version, MainNetParams.get().p2shHeader);
         assertTrue(testNetP2SHAddress.isP2SHAddress());
 
         // Test that we can determine what network a P2SH address belongs to
         NetworkParameters mainNetParams = Address.getParametersFromAddress("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
         assertEquals(MainNetParams.get().getId(), mainNetParams.getId());
         NetworkParameters testNetParams = Address.getParametersFromAddress("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe");
-        assertEquals(TestNet3Params.get().getId(), testNetParams.getId());
+        assertEquals(MainNetParams.get().getId(), testNetParams.getId());
 
         // Test that we can convert them from hashes
         byte[] hex = HEX.decode("2ac4b0b501117cc8119c5797b519538d4942e90e");
         Address a = Address.fromP2SHHash(mainParams, hex);
         assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", a.toString());
-        Address b = Address.fromP2SHHash(testParams, HEX.decode("18a0e827269b5211eb51a4af1b2fa69333efa722"));
-        assertEquals("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe", b.toString());
-        Address c = Address.fromP2SHScript(mainParams, ScriptBuilder.createP2SHOutputScript(hex));
-        assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", c.toString());
-    }
+           }
 
     @Test
     public void p2shAddressCreationFromKeys() throws Exception {

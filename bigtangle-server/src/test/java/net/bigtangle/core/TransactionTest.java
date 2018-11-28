@@ -17,7 +17,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import net.bigtangle.crypto.TransactionSignature;
-import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.params.MainNetParams;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.testing.FakeTxBuilder;
@@ -31,7 +31,7 @@ import net.bigtangle.testing.FakeTxBuilder;
  * as well.
  */
 public class TransactionTest {
-    private static final NetworkParameters PARAMS = UnitTestParams.get();
+    private static final NetworkParameters PARAMS = MainNetParams.get();
     private static final Address ADDRESS = new ECKey().toAddress(PARAMS);
 
     private Transaction tx;
@@ -252,8 +252,8 @@ public class TransactionTest {
      */
    // @Test
 //    public void testHashForSignatureThreadSafety() {
-//        Block genesis = UnitTestParams.get().getGenesisBlock();
-//        Block block1 = BlockForTest.createNextBlock(genesis,new ECKey().toAddress(UnitTestParams.get()),
+//        Block genesis = MainNetParams.get().getGenesisBlock();
+//        Block block1 = BlockForTest.createNextBlock(genesis,new ECKey().toAddress(MainNetParams.get()),
 //                genesis.getTransactions().get(0).getOutput(0).getOutPointFor(), genesis.getHash());
 //
 //        final Transaction tx = block1.getTransactions().get(1);

@@ -12,7 +12,7 @@ import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.ByteArraySerializer
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
 import org.apache.spark.sql.SparkSession
-import net.bigtangle.params.UnitTestParams
+import net.bigtangle.params.MainNetParams
 import net.bigtangle.core.Block
 import net.bigtangle.stream.Logs
  
@@ -59,7 +59,7 @@ object BlockKafka {
       ConsumerStrategies.Subscribe[String, Array[Byte]](topicsSet, kafkaParams))
 
     val f = messages.map { msg =>
-      val rollingBlock = UnitTestParams.get().getDefaultSerializer().makeBlock(msg.value());
+      val rollingBlock = MainNetParams.get().getDefaultSerializer().makeBlock(msg.value());
       println(rollingBlock)
 
     }

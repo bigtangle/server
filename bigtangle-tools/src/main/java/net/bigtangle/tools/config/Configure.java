@@ -1,7 +1,7 @@
 package net.bigtangle.tools.config;
 
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.params.MainNetParams;
 
 public class Configure {
 
@@ -9,5 +9,5 @@ public class Configure {
 
     public final static String ORDER_MATCH_CONTEXT_ROOT = "http://localhost:8089/";
 
-    public final static NetworkParameters PARAMS = UnitTestParams.get();
+    public final static NetworkParameters PARAMS = MainNetParams.get();
 }

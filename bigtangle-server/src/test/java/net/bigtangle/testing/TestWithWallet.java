@@ -17,7 +17,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.VerificationException;
-import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.params.MainNetParams;
 import net.bigtangle.store.MemoryBlockStore;
 import net.bigtangle.utils.BriefLogFormatter;
 import net.bigtangle.wallet.Wallet;
@@ -31,7 +31,7 @@ import net.bigtangle.wallet.Wallet;
  * fee per kilobyte to zero in setUp.
  */
 public class TestWithWallet {
-    protected static final NetworkParameters PARAMS = UnitTestParams.get();
+    protected static final NetworkParameters PARAMS = MainNetParams.get();
     protected ECKey myKey;
     protected Address myAddress;
     protected Wallet wallet;

@@ -29,7 +29,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
-import net.bigtangle.params.UnitTestParams;
+import net.bigtangle.params.MainNetParams;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.utils.OkHttp3Util;
@@ -90,7 +90,7 @@ public class GiveMoneyUtils {
         for (Map.Entry<String, Integer> entry : giveMoneyResult.entrySet()) {
             try {
                 Coin amount = Coin.parseCoin(entry.getValue().toString(), NetworkParameters.BIGTANGLE_TOKENID);
-                Address address = Address.fromBase58(UnitTestParams.get(), entry.getKey());
+                Address address = Address.fromBase58(MainNetParams.get(), entry.getKey());
                 doublespent.addOutput(amount, address);
                 coinbase = coinbase.add(amount);
             } catch (Exception e) {

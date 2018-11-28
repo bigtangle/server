@@ -65,8 +65,7 @@ import net.bigtangle.wallet.Wallet.MissingSigsMode;
 public class ClientIntegrationTest extends AbstractIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(ClientIntegrationTest.class);
-    @Autowired
-    private NetworkParameters networkParameters;
+ 
  
     @Autowired
     private MilestoneService milestoneService;
