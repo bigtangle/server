@@ -198,10 +198,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     throw e;
                 }
             } else {
-                if(allowConflicts) {
-                insertUnsolidBlock(block);
-                }
-                else {
+                if (allowConflicts) {
+                    insertUnsolidBlock(block);
+                } else {
                     throw new BlockStoreException("checkSolidity failed.");
                 }
                 return false;
@@ -379,7 +378,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             throw e;
         }
     }
-    
+
     private void addBlockToMilestone(Sha256Hash blockHash) throws BlockStoreException {
         BlockWrap blockWrap = blockStore.getBlockWrap(blockHash);
         BlockEvaluation blockEvaluation = blockWrap.getBlockEvaluation();
@@ -574,7 +573,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Set own output unconfirmed
         blockStore.updateTxRewardConfirmed(block.getHash(), false);
-    
+
     }
 
     private void unconfirmToken(String blockhash) throws BlockStoreException {
@@ -692,6 +691,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                         Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0);
                 // Filter zero UTXO
                 if (!newOut.getValue().isZero()) {
+                    newOut.setTime(block.getTimeSeconds());
                     blockStore.addUnspentTransactionOutput(newOut);
                 }
                 if (script.isSentToMultiSig()) {

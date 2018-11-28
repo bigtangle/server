@@ -76,6 +76,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    confirmed boolean NOT NULL,\n" 
             + "    spendpending boolean NOT NULL,\n"
             + "    spenderblockhash  varbinary(32),\n"
+            + "    time  bigint,\n"
             + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex) USING BTREE \n" + ")\n";
     
     private static final String CREATE_TX_REWARD_TABLE = "CREATE TABLE txreward (\n"
