@@ -124,12 +124,16 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_OUTPUTS_COUNT_SQL = "SELECT COUNT(*) FROM outputs WHERE hash = ?";
     protected final String INSERT_OUTPUTS_SQL = getInsert()
             + " INTO outputs (hash, outputindex, height, coinvalue, scriptbytes, toaddress, addresstargetable,"
-            + " coinbase, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending)"
-            + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?)";
+            + " coinbase, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending,time)"
+            + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?,?)";
 
     protected final String SELECT_OUTPUTS_SQL = "SELECT height, coinvalue, scriptbytes, coinbase, toaddress,"
             + " addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, "
             + "spendpending FROM outputs WHERE hash = ? AND outputindex = ?";
+
+    protected final String SELECT_OUTPUTS_HISTORY_SQL = "SELECT height, coinvalue, scriptbytes, coinbase, toaddress,"
+            + " addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, "
+            + "spendpending FROM outputs WHERE 1=1";
 
     protected final String DELETE_OUTPUTS_SQL = "DELETE FROM outputs WHERE hash = ? AND outputindex= ?";
 
@@ -1117,6 +1121,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setBoolean(13, out.isSpent());
             s.setBoolean(14, out.isConfirmed());
             s.setBoolean(15, out.isSpendPending());
+            s.setLong(16, out.getTime());
             s.executeUpdate();
             s.close();
         } catch (SQLException e) {
@@ -1450,6 +1455,77 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 storedBlockHashes.add(params.getDefaultSerializer().makeBlock(resultSet.getBytes("block")));
             }
             return storedBlockHashes;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<UTXO> getOutputsHistory(String fromaddress, String toaddress, Long starttime, Long endtime)
+            throws BlockStoreException {
+        List<UTXO> UTXOs = new ArrayList<UTXO>();
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            String sql = SELECT_OUTPUTS_HISTORY_SQL;
+            if (fromaddress != null && !"".equals(fromaddress.trim())) {
+                sql += "AND fromaddress=?";
+            }
+            if (toaddress != null && !"".equals(toaddress.trim())) {
+                sql += "AND toaddress=?";
+            }
+            if (starttime != null) {
+                sql += "AND time>=?";
+            }
+            if (endtime != null) {
+                sql += "AND time<=?";
+            }
+            preparedStatement = conn.get().prepareStatement(sql);
+            int i = 1;
+            if (fromaddress != null && !"".equals(fromaddress.trim())) {
+                preparedStatement.setString(i++, fromaddress);
+            }
+            if (toaddress != null && !"".equals(toaddress.trim())) {
+                preparedStatement.setString(i++, fromaddress);
+            }
+            if (starttime != null) {
+                preparedStatement.setLong(i++, starttime);
+            }
+            if (endtime != null) {
+                preparedStatement.setLong(i++, starttime);
+            }
+            ResultSet rs = preparedStatement.executeQuery();
+            while (rs.next()) {
+                Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));
+                Coin amount = Coin.valueOf(rs.getLong(2), rs.getString(10));
+                byte[] scriptBytes = rs.getBytes(3);
+                int height = rs.getInt(4);
+                int index = rs.getInt(5);
+                boolean coinbase = rs.getBoolean(6);
+                String toAddress = rs.getString(7);
+                Sha256Hash blockhash = rs.getBytes(9) != null ? Sha256Hash.wrap(rs.getBytes(9)) : null;
+
+                String fromaddress1 = rs.getString(11);
+                String memo = rs.getString(12);
+                boolean spent = rs.getBoolean(13);
+                boolean confirmed = rs.getBoolean(14);
+                boolean spendPending = rs.getBoolean(15);
+                String tokenid = rs.getString("tokenid");
+                long minimumsign = rs.getLong("minimumsign");
+                UTXO output = new UTXO(hash, index, amount, height, coinbase, new Script(scriptBytes), toAddress,
+                        blockhash, fromaddress1, memo, tokenid, spent, confirmed, spendPending, minimumsign);
+                output.setTime(rs.getLong("time"));
+                UTXOs.add(output);
+            }
+            return UTXOs;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } finally {

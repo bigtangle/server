@@ -405,6 +405,9 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     List<BatchBlock> getBatchBlockList() throws BlockStoreException;
 
+    List<UTXO> getOutputsHistory(String fromaddress, String toaddress, Long starttime, Long endtime)
+            throws BlockStoreException;
+
     // List<TokenSerial> getSearchTokenSerialInfo(String tokenid, List<String>
     // addresses) throws BlockStoreException;
 }

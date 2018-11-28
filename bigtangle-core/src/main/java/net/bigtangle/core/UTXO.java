@@ -95,6 +95,7 @@ public class UTXO {
     private boolean confirmed;
     private boolean spendPending;
     private String tokenId;
+    private long time;
 
     private long minimumsign;
 
@@ -196,8 +197,8 @@ public class UTXO {
     }
 
     /**
-     * The Script object which you can use to get address, script bytes or script
-     * type.
+     * The Script object which you can use to get address, script bytes or
+     * script type.
      */
     @Transient
     public Script getScript() {
@@ -238,8 +239,8 @@ public class UTXO {
     }
 
     /**
-     * The address of this output, can be the empty string if none was provided at
-     * construction time or was deserialized
+     * The address of this output, can be the empty string if none was provided
+     * at construction time or was deserialized
      */
     public String getAddress() {
         return address;
@@ -345,6 +346,14 @@ public class UTXO {
 
     public void setMinimumsign(long minimumsign) {
         this.minimumsign = minimumsign;
+    }
+
+    public long getTime() {
+        return time;
+    }
+
+    public void setTime(long time) {
+        this.time = time;
     }
 
 }
