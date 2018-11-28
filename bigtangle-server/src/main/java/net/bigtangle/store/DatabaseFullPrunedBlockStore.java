@@ -131,9 +131,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, "
             + "spendpending FROM outputs WHERE hash = ? AND outputindex = ?";
 
-    protected final String SELECT_OUTPUTS_HISTORY_SQL = "SELECT height, coinvalue, scriptbytes, coinbase, toaddress,"
-            + " addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, "
-            + "spendpending FROM outputs WHERE 1=1";
+    protected final String SELECT_OUTPUTS_HISTORY_SQL = "SELECT hash,outputindex,height, coinvalue, scriptbytes, toaddress ,"
+            + " addresstargetable, coinbase,blockhash, tokenid, fromaddress, memo, spent, confirmed, "
+            + "spendpending,time FROM outputs WHERE 1=1";
 
     protected final String DELETE_OUTPUTS_SQL = "DELETE FROM outputs WHERE hash = ? AND outputindex= ?";
 
@@ -1504,20 +1504,20 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
             ResultSet rs = preparedStatement.executeQuery();
             while (rs.next()) {
-                Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));
-                Coin amount = Coin.valueOf(rs.getLong(2), rs.getString(10));
-                byte[] scriptBytes = rs.getBytes(3);
-                int height = rs.getInt(4);
-                int index = rs.getInt(5);
-                boolean coinbase = rs.getBoolean(6);
-                String toAddress = rs.getString(7);
-                Sha256Hash blockhash = rs.getBytes(9) != null ? Sha256Hash.wrap(rs.getBytes(9)) : null;
+                Sha256Hash hash = Sha256Hash.wrap(rs.getBytes("hash"));
+                Coin amount = Coin.valueOf(rs.getLong("coinvalue"), rs.getString("tokenid"));
+                byte[] scriptBytes = rs.getBytes("scriptbytes");
+                int height = rs.getInt("height");
+                int index = rs.getInt("outputindex");
+                boolean coinbase = rs.getBoolean("coinbase");
+                String toAddress = rs.getString("toaddress");
+                Sha256Hash blockhash = rs.getBytes("blockhash") != null ? Sha256Hash.wrap(rs.getBytes("blockhash")) : null;
 
-                String fromaddress1 = rs.getString(11);
-                String memo = rs.getString(12);
-                boolean spent = rs.getBoolean(13);
-                boolean confirmed = rs.getBoolean(14);
-                boolean spendPending = rs.getBoolean(15);
+                String fromaddress1 = rs.getString("fromaddress");
+                String memo = rs.getString("memo");
+                boolean spent = rs.getBoolean("spent");
+                boolean confirmed = rs.getBoolean("confirmed");
+                boolean spendPending = rs.getBoolean("spendpending");
                 String tokenid = rs.getString("tokenid");
                 long minimumsign = rs.getLong("minimumsign");
                 UTXO output = new UTXO(hash, index, amount, height, coinbase, new Script(scriptBytes), toAddress,
