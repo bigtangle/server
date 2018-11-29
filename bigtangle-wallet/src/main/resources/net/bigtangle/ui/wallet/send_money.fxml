@@ -324,11 +324,11 @@
                   </VBox>
                </content>
             </Tab>
-            <Tab closable="false" text="%multiSign">
+            <Tab closable="false" text="%history">
                <content>
                   <AnchorPane maxHeight="600.0" maxWidth="1000.0" minHeight="600.0" minWidth="1000.0" prefHeight="600.0" prefWidth="1000.0" style="-fx-background-color: white;">
                      <children>
-                        <TableView fx:id="historyTable" layoutX="14.0" layoutY="88.0" maxWidth="900.0" minWidth="900.0" prefHeight="436.0" prefWidth="900.0">
+                        <TableView fx:id="historyTable" layoutX="14.0" layoutY="137.0" maxWidth="900.0" minWidth="900.0" prefHeight="387.0" prefWidth="900.0">
                            <columns>
                               <TableColumn fx:id="tokenCol" prefWidth="279.0" text="%token" />
                               <TableColumn fx:id="fromAddressCol" prefWidth="279.0" text="%fromAddress" />
@@ -340,8 +340,15 @@
                            </columns>
                         </TableView>
                         <Button cancelButton="true" layoutX="833.0" layoutY="538.0" mnemonicParsing="false" onAction="#cancel" text="%Cancel" />
-                        <Button defaultButton="true" layoutX="711.0" layoutY="538.0" mnemonicParsing="false" onAction="#multiSign" text="%multiSign" />
-                        <Button defaultButton="true" layoutX="558.0" layoutY="538.0" mnemonicParsing="false" onAction="#editSign" text="%Edit" />
+                        <Label layoutX="14.0" layoutY="44.0" prefHeight="15.0" prefWidth="117.0" text="%fromAddress" />
+                        <TextField fx:id="fromaddressTF" layoutX="166.0" layoutY="41.0" prefHeight="23.0" prefWidth="300.0" />
+                        <Label layoutX="477.0" layoutY="44.0" prefHeight="15.0" prefWidth="161.0" text="%toAddress" />
+                        <TextField fx:id="toaddressTF" layoutX="603.0" layoutY="48.0" prefHeight="23.0" prefWidth="262.0" />
+                        <Label layoutX="14.0" layoutY="103.0" prefHeight="15.0" prefWidth="119.0" text="%starttime" />
+                        <Label layoutX="477.0" layoutY="103.0" prefHeight="15.0" prefWidth="107.0" text="%endtime" />
+                        <Button defaultButton="true" layoutX="669.0" layoutY="538.0" mnemonicParsing="false" onAction="#searchHistory" prefHeight="23.0" prefWidth="100.0" text="%Search" />
+                        <DatePicker fx:id="starttimeDP" layoutX="166.0" layoutY="99.0" prefHeight="23.0" prefWidth="300.0" />
+                        <DatePicker fx:id="endtimeDP" layoutX="603.0" layoutY="99.0" prefHeight="23.0" prefWidth="262.0" />
                      </children>
                   </AnchorPane>
                </content>

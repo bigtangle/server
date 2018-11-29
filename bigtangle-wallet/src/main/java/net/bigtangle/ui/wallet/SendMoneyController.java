@@ -23,7 +23,10 @@ import static net.bigtangle.ui.wallet.Main.bitcoin;
 
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +46,7 @@ import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TabPane;
@@ -222,6 +226,15 @@ public class SendMoneyController {
     public TableColumn<Map, String> amountCol;
     @FXML
     public TableColumn<Map, String> timeCol;
+
+    @FXML
+    public TextField fromaddressTF;
+    @FXML
+    public TextField toaddressTF;
+    @FXML
+    public DatePicker starttimeDP;
+    @FXML
+    public DatePicker endtimeDP;
 
     public void initChoicebox() {
 
@@ -414,7 +427,7 @@ public class SendMoneyController {
 
                 break;
             case 6: {
-                
+
             }
 
                 break;
@@ -472,7 +485,21 @@ public class SendMoneyController {
 
     @SuppressWarnings({ "unchecked" })
     public void initHistoryTable() throws Exception {
+
         Map<String, Object> param = new HashMap<String, Object>();
+        param.put("fromaddress", fromaddressTF.getText());
+        param.put("toaddress", toaddressTF.getText());
+        ZoneId zoneId = ZoneId.systemDefault();
+        if (starttimeDP.getValue() != null) {
+            ZonedDateTime zdt = starttimeDP.getValue().atStartOfDay(zoneId);
+            Date date = Date.from(zdt.toInstant());
+            param.put("starttime", date.getTime());
+        }
+        if (endtimeDP.getValue() != null) {
+            ZonedDateTime zdt = endtimeDP.getValue().atStartOfDay(zoneId);
+            Date date = Date.from(zdt.toInstant());
+            param.put("endtime", date.getTime());
+        }
         String ContextRoot = Main.getContextRoot();
         String resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getOutputsHistory.name(),
                 Json.jsonmapper().writeValueAsString(param));
@@ -897,6 +924,14 @@ public class SendMoneyController {
 
         initSignTable();
         overlayUI.done();
+    }
+
+    public void searchHistory(ActionEvent event) {
+        try {
+            initHistoryTable();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
     }
 
     public void signA(ActionEvent event) throws Exception {
