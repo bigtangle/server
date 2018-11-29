@@ -503,7 +503,7 @@ public class SendMoneyController {
         String ContextRoot = Main.getContextRoot();
         String resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getOutputsHistory.name(),
                 Json.jsonmapper().writeValueAsString(param));
-
+        log.debug(resp);
         GetOutputsResponse response = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
         List<UTXO> utxos = response.getOutputs();
 

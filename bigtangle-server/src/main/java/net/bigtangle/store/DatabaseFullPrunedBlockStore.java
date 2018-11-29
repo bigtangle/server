@@ -1519,7 +1519,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 boolean confirmed = rs.getBoolean("confirmed");
                 boolean spendPending = rs.getBoolean("spendpending");
                 String tokenid = rs.getString("tokenid");
-                long minimumsign = rs.getLong("minimumsign");
+                long minimumsign = 0;
                 UTXO output = new UTXO(hash, index, amount, height, coinbase, new Script(scriptBytes), toAddress,
                         blockhash, fromaddress1, memo, tokenid, spent, confirmed, spendPending, minimumsign);
                 output.setTime(rs.getLong("time"));
