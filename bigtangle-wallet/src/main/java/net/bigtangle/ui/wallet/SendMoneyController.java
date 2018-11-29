@@ -72,6 +72,7 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UserSettingData;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.WatchedInfo;
+import net.bigtangle.core.http.server.resp.GetOutputsResponse;
 import net.bigtangle.core.http.server.resp.OutputsDetailsResponse;
 import net.bigtangle.core.http.server.resp.PayMultiSignAddressListResponse;
 import net.bigtangle.core.http.server.resp.PayMultiSignDetailsResponse;
@@ -171,14 +172,21 @@ public class SendMoneyController {
     public TextField signAddressTF11;
     @FXML
     public ChoiceBox<String> signAddressChoiceBox;;
-
+    @FXML
     public TableView<Map> signTable;
+    @FXML
     public TableColumn<Map, String> addressColumn;
+    @FXML
     public TableColumn<Map, String> signnumberColumn;
+    @FXML
     public TableColumn<Map, String> realSignnumColumn;
+    @FXML
     public TableColumn<Map, String> isSignAllColumn;
+    @FXML
     public TableColumn<Map, String> isMySignColumn;
+    @FXML
     public TableColumn<Map, String> amountColumn;
+    @FXML
     public TableColumn<Map, String> orderidColumn;
 
     @FXML
@@ -201,6 +209,19 @@ public class SendMoneyController {
 
     @FXML
     public TabPane tabPane;
+
+    @FXML
+    public TableView<Map> historyTable;
+    @FXML
+    public TableColumn<Map, String> tokenCol;
+    @FXML
+    public TableColumn<Map, String> fromAddressCol;
+    @FXML
+    public TableColumn<Map, String> toAddressCol;
+    @FXML
+    public TableColumn<Map, String> amountCol;
+    @FXML
+    public TableColumn<Map, String> timeCol;
 
     public void initChoicebox() {
 
@@ -392,12 +413,18 @@ public class SendMoneyController {
             }
 
                 break;
+            case 6: {
+                
+            }
+
+                break;
             default: {
             }
                 break;
             }
         });
         initSignTable();
+        initHistoryTable();
     }
 
     @SuppressWarnings({ "unchecked" })
@@ -440,6 +467,38 @@ public class SendMoneyController {
         realSignnumColumn.setCellValueFactory(new MapValueFactory("realSignnumber"));
         orderidColumn.setCellValueFactory(new MapValueFactory("orderid"));
         isSignAllColumn.setCellValueFactory(new MapValueFactory("isSignAll"));
+        this.signTable.setItems(signData);
+    }
+
+    @SuppressWarnings({ "unchecked" })
+    public void initHistoryTable() throws Exception {
+        Map<String, Object> param = new HashMap<String, Object>();
+        String ContextRoot = Main.getContextRoot();
+        String resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getOutputsHistory.name(),
+                Json.jsonmapper().writeValueAsString(param));
+
+        GetOutputsResponse response = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
+        List<UTXO> utxos = response.getOutputs();
+
+        ObservableList<Map> signData = FXCollections.observableArrayList();
+        for (UTXO utxo : utxos) {
+            HashMap<String, Object> map = new HashMap<String, Object>();
+
+            map.put("token", utxo.getTokenId());
+            map.put("toaddress", utxo.getAddress());
+            map.put("fromaddress", utxo.getFromaddress());
+            map.put("time", utxo.getTime());
+            map.put("amount", utxo.getValue().toPlainString());
+
+            signData.add(map);
+        }
+
+        tokenCol.setCellValueFactory(new MapValueFactory("token"));
+        fromAddressCol.setCellValueFactory(new MapValueFactory("fromaddress"));
+        toAddressCol.setCellValueFactory(new MapValueFactory("toaddress"));
+        amountCol.setCellValueFactory(new MapValueFactory("amount"));
+        timeCol.setCellValueFactory(new MapValueFactory("time"));
+
         this.signTable.setItems(signData);
     }
 

@@ -324,6 +324,28 @@
                   </VBox>
                </content>
             </Tab>
+            <Tab closable="false" text="%multiSign">
+               <content>
+                  <AnchorPane maxHeight="600.0" maxWidth="1000.0" minHeight="600.0" minWidth="1000.0" prefHeight="600.0" prefWidth="1000.0" style="-fx-background-color: white;">
+                     <children>
+                        <TableView fx:id="historyTable" layoutX="14.0" layoutY="88.0" maxWidth="900.0" minWidth="900.0" prefHeight="436.0" prefWidth="900.0">
+                           <columns>
+                              <TableColumn fx:id="tokenCol" prefWidth="279.0" text="%token" />
+                              <TableColumn fx:id="fromAddressCol" prefWidth="279.0" text="%fromAddress" />
+                              <TableColumn fx:id="toAddressCol" prefWidth="82.0" text="%toAddress" />
+                              <TableColumn fx:id="amountCol" prefWidth="110.0" text="%amount" />
+                              <TableColumn fx:id="timeCol" prefWidth="134.0" text="%time" />
+                              <TableColumn fx:id="isMySignColumn1" prefWidth="101.0" text="%isMySign" />
+                              <TableColumn fx:id="amountColumn1" prefWidth="75.0" text="%Amount" />
+                           </columns>
+                        </TableView>
+                        <Button cancelButton="true" layoutX="833.0" layoutY="538.0" mnemonicParsing="false" onAction="#cancel" text="%Cancel" />
+                        <Button defaultButton="true" layoutX="711.0" layoutY="538.0" mnemonicParsing="false" onAction="#multiSign" text="%multiSign" />
+                        <Button defaultButton="true" layoutX="558.0" layoutY="538.0" mnemonicParsing="false" onAction="#editSign" text="%Edit" />
+                     </children>
+                  </AnchorPane>
+               </content>
+            </Tab>
          </tabs>
       </TabPane>
 		<HBox alignment="CENTER" maxWidth="1000.0" minWidth="1000.0" prefHeight="68.0" prefWidth="1000.0" styleClass="title-banner">

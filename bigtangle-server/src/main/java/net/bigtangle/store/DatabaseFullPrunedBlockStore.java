@@ -1475,18 +1475,18 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            String sql = SELECT_OUTPUTS_HISTORY_SQL;
+            String sql = SELECT_OUTPUTS_HISTORY_SQL+" AND spent=true ";
             if (fromaddress != null && !"".equals(fromaddress.trim())) {
-                sql += "AND fromaddress=?";
+                sql += " AND fromaddress=?";
             }
             if (toaddress != null && !"".equals(toaddress.trim())) {
-                sql += "AND toaddress=?";
+                sql += " AND toaddress=?";
             }
             if (starttime != null) {
-                sql += "AND time>=?";
+                sql += " AND time>=?";
             }
             if (endtime != null) {
-                sql += "AND time<=?";
+                sql += " AND time<=?";
             }
             preparedStatement = conn.get().prepareStatement(sql);
             int i = 1;

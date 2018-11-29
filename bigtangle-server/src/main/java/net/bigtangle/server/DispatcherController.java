@@ -117,6 +117,18 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
+            case getOutputsHistory: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String fromaddress = request.get("fromaddress") == null ? "" : request.get("fromaddress").toString();
+                String toaddress = request.get("toaddress") == null ? "" : request.get("toaddress").toString();
+                Long starttime = request.get("starttime") == null ? null
+                        : Long.valueOf(request.get("starttime").toString());
+                Long endtime = request.get("endtime") == null ? null : Long.valueOf(request.get("endtime").toString());
+                AbstractResponse response = walletService.getOutputsHistory(fromaddress, toaddress, starttime, endtime);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
 
             case getTokens: {
                 String reqStr = new String(bodyByte, "UTF-8");

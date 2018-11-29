@@ -151,6 +151,13 @@ public class WalletService {
         return GetOutputsResponse.create(outputs);
     }
 
+    public AbstractResponse getOutputsHistory(String fromaddress, String toaddress, Long starttime, Long endtime)
+            throws Exception {
+        List<UTXO> outputs = this.store.getOutputsHistory(fromaddress, toaddress, starttime, endtime);
+
+        return GetOutputsResponse.create(outputs);
+    }
+
     public AbstractResponse getAccountOutputsWithToken(byte[] pubKey, byte[] tokenid) {
         List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
         pubKeyHashs.add(pubKey);
