@@ -66,9 +66,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String VERSION_SETTING = "version";
 
-    // Drop table SQL.
-    public static String DROP_WECHATINVITE_TABLE = "DROP TABLE wechatinvite";
-    public static String DROP_WECHATREWARD_TABLE = "DROP TABLE wechatreward";
+   
 
     // Tables exist SQL.
     protected String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM wechatreward WHERE 1 = 2";
@@ -288,7 +286,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         this.password = password;
         this.conn = new ThreadLocal<Connection>();
         this.allConnections = new LinkedList<Connection>();
-        create();
+    //    create();
     }
 
     public void create() throws BlockStoreException {
@@ -358,8 +356,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      */
     protected List<String> getDropTablesSQL() {
         List<String> sqlStatements = new ArrayList<String>();
-        sqlStatements.add(DROP_WECHATINVITE_TABLE);
-        sqlStatements.add(DROP_WECHATREWARD_TABLE);
+    
         return sqlStatements;
     }
 

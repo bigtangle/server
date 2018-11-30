@@ -149,11 +149,7 @@ public class ScheduleGiveMoneyService {
             }
             List<WechatInvite> list = dataMap.get(wechatInvite.getWechatinviterId());
 
-            if (LINKEDIN_BIGTANGLE.equals(wechatInvite.getWechatinviterId())) {
-
-                subInvitedSet.add(wechatInvite.getWechatId());
-
-            }
+            
 
             if (list == null) {
                 list = new ArrayList<WechatInvite>();
