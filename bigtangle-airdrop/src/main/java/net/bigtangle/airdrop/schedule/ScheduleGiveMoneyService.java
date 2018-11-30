@@ -33,10 +33,8 @@ import net.bigtangle.params.MainNetParams;
 @EnableAsync
 public class ScheduleGiveMoneyService {
 
-    private static final String LINKEDIN_BIGTANGLE = "LinkedinBigtangle";
-
-    private static final int linkedinMoney = 100000;
-
+ 
+ 
     private static final int wechatReward = 1000;
     private static final int wechatRewardfactor = 10;
 
@@ -66,8 +64,10 @@ public class ScheduleGiveMoneyService {
                 HashMap<String, List<WechatInvite>> dataMap = new HashMap<String, List<WechatInvite>>();
                 Set<String> subInvitedSet = new HashSet<>();
 
-                collectLinkedin(wechatInvites, dataMap, subInvitedSet);
+                collectDatamap(wechatInvites, dataMap, subInvitedSet);
                 if (dataMap.isEmpty()) {
+                    logger.debug(" dataMap isEmpty " + wechatInvites);
+                    
                     return;
                 }
                 Map<String, HashMap<String, String>> wechatInviteResult = this.store
@@ -78,7 +78,7 @@ public class ScheduleGiveMoneyService {
                 HashMap<String, Integer> giveMoneyResult = new HashMap<String, Integer>();
                 wechatToplevel(dataMap, wechatInviteResult, giveMoneyResult);
                 wechatRecursive(wechatInviteResult, giveMoneyResult);
-                giveMoneyLinkedin(subInvitedSet, giveMoneyResult);
+            
 
                 if (giveMoneyResult.isEmpty()) {
                     return;
@@ -135,7 +135,7 @@ public class ScheduleGiveMoneyService {
         }
     }
 
-    private void collectLinkedin(List<WechatInvite> wechatInvites, HashMap<String, List<WechatInvite>> dataMap,
+    private void collectDatamap(List<WechatInvite> wechatInvites, HashMap<String, List<WechatInvite>> dataMap,
             Set<String> subInvitedSet) {
         for (WechatInvite wechatInvite : wechatInvites) {
             boolean flag = true;
@@ -245,25 +245,5 @@ public class ScheduleGiveMoneyService {
             }
         }
     }
-
-    private void giveMoneyLinkedin(Set<String> subInvitedSet, HashMap<String, Integer> giveMoneyResult)
-            throws BlockStoreException {
-        if (subInvitedSet != null && !subInvitedSet.isEmpty()) {
-            Map<String, HashMap<String, String>> wechatInviteResult5 = this.store
-                    .queryByUWechatInvitePubKeyInviterIdMap(subInvitedSet);
-            if (wechatInviteResult5.get("pubkey") != null && !wechatInviteResult5.get("pubkey").isEmpty())
-                for (String pubkey : wechatInviteResult5.get("pubkey").values()) {
-                    if (pubkey == null || pubkey.isEmpty()) {
-                        continue;
-                    }
-                    logger.debug("==============");
-                    logger.debug(pubkey);
-                    if (giveMoneyResult.containsKey("pubkey")) {
-                        giveMoneyResult.put(pubkey, giveMoneyResult.get("pubkey") + linkedinMoney);
-                    } else {
-                        giveMoneyResult.put(pubkey, linkedinMoney);
-                    }
-                }
-        }
-    }
+ 
 }
