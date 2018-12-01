@@ -138,6 +138,7 @@ public class ScheduleGiveMoneyService {
         for (WechatInvite wechatInvite : wechatInvites) {
             boolean flag = true;
             try {
+                logger.debug("wechatid:"+wechatInvite.getWechatId());
                 Address.fromBase58(MainNetParams.get(), wechatInvite.getPubkey());
             } catch (Exception e) {
                 logger.error("", e);
