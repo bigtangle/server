@@ -33,8 +33,6 @@ import net.bigtangle.params.MainNetParams;
 @EnableAsync
 public class ScheduleGiveMoneyService {
 
- 
- 
     private static final int wechatReward = 1000;
     private static final int wechatRewardfactor = 10;
 
@@ -67,7 +65,7 @@ public class ScheduleGiveMoneyService {
                 collectDatamap(wechatInvites, dataMap, subInvitedSet);
                 if (dataMap.isEmpty()) {
                     logger.debug(" dataMap isEmpty " + wechatInvites);
-                    
+
                     return;
                 }
                 Map<String, HashMap<String, String>> wechatInviteResult = this.store
@@ -78,7 +76,6 @@ public class ScheduleGiveMoneyService {
                 HashMap<String, Integer> giveMoneyResult = new HashMap<String, Integer>();
                 wechatToplevel(dataMap, wechatInviteResult, giveMoneyResult);
                 wechatRecursive(wechatInviteResult, giveMoneyResult);
-            
 
                 if (giveMoneyResult.isEmpty()) {
                     return;
@@ -93,6 +90,7 @@ public class ScheduleGiveMoneyService {
                             try {
                                 Address.fromBase58(MainNetParams.get(), wechatInvite.getPubkey());
                             } catch (Exception e) {
+                                logger.error("", e);
                                 flag = false;
                             }
                             if (flag) {
@@ -142,14 +140,13 @@ public class ScheduleGiveMoneyService {
             try {
                 Address.fromBase58(MainNetParams.get(), wechatInvite.getPubkey());
             } catch (Exception e) {
+                logger.error("", e);
                 flag = false;
             }
             if (!flag) {
                 continue;
             }
             List<WechatInvite> list = dataMap.get(wechatInvite.getWechatinviterId());
-
-            
 
             if (list == null) {
                 list = new ArrayList<WechatInvite>();
@@ -245,5 +242,5 @@ public class ScheduleGiveMoneyService {
             }
         }
     }
- 
+
 }
