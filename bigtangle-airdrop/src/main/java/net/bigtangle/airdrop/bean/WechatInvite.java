@@ -64,4 +64,10 @@ public class WechatInvite implements java.io.Serializable {
     public void setPubkey(String pubkey) {
         this.pubkey = pubkey;
     }
+
+	@Override
+	public String toString() {
+		return "WechatInvite [id=" + id + ", wechatId=" + wechatId + ", wechatinviterId=" + wechatinviterId
+				+ ", createTime=" + createTime + ", status=" + status + ", pubkey=" + pubkey + "]";
+	}
 }
