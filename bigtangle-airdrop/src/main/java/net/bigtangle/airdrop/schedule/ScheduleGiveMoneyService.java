@@ -68,6 +68,7 @@ public class ScheduleGiveMoneyService {
 
                     return;
                 }
+                logger.debug("size:"+dataMap.size());
                 Map<String, HashMap<String, String>> wechatInviteResult = this.store
                         .queryByUWechatInvitePubKeyInviterIdMap(dataMap.keySet());
                 if (wechatInviteResult.isEmpty()) {
@@ -114,10 +115,12 @@ public class ScheduleGiveMoneyService {
 
     private void wechatToplevel(HashMap<String, List<WechatInvite>> dataMap,
             Map<String, HashMap<String, String>> wechatInviteResult, HashMap<String, Integer> giveMoneyResult) {
+        logger.debug("wechatToplevel");
         for (Iterator<Map.Entry<String, List<WechatInvite>>> iterator = dataMap.entrySet().iterator(); iterator
                 .hasNext();) {
             Map.Entry<String, List<WechatInvite>> entry = iterator.next();
             String wechatinviterId = entry.getKey();
+            logger.debug("wechatid:"+wechatinviterId);
             String pubkey = wechatInviteResult.get("pubkey").get(wechatinviterId);
             if (!StringUtils.nonEmptyString(pubkey)) {
                 iterator.remove();
