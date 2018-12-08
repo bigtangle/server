@@ -344,3 +344,21 @@ user must be activated via email and ask verification via mobile number after re
 ## save kafka offset and write to database 
 
 ## add height in block?
+
+##  cost function for proof of work 
+ 1) pay fee for simple difficulty, For example alpha BIG and 
+ 2) adjust difficulty beta
+ For each interval [h1,h2] exists a cost function
+ The function for TPS = F(standard hardware) * Inflation (hardware upgrade)
+ Number of block with Fee * alpha + Number of blocks with nDifficulty * beta
+ 
+ 3) the cost 
+ 
+## wallet with two windows size 1000* 800 and 1600 * 1000  
+
+## xmrig integration
+
+https://github.com/xmrig/xmrig
+
+
+ 
