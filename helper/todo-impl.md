@@ -289,6 +289,7 @@ add wallet pro Server config? or client config?
 add possible to attach address at payment to KYC
 ** User upload the passport and encrypted with public key same as token
 ** user transfer the passport to a known address of verification
+** User add post address +contact mobile number data in data windows
 ** verification is finished and transfer to public address 
 ** check of kyc: find the address as token in public address
 
@@ -345,14 +346,10 @@ user must be activated via email and ask verification via mobile number after re
 
 ## add height in block?
 
-##  cost function for proof of work 
- 1) pay fee for simple difficulty, For example alpha BIG and 
- 2) adjust difficulty beta
- For each interval [h1,h2] exists a cost function
- The function for TPS = F(standard hardware) * Inflation (hardware upgrade)
- Number of block with Fee * alpha + Number of blocks with nDifficulty * beta
+## add wallet option to pay fees for miner, miner has incentive to create real blocks, not only empty block. 
+ 1) server config and set price
+ 2)check mining address 
  
- 3) the cost 
  
 ## wallet with two windows size 1000* 800 and 1600 * 1000  
 
