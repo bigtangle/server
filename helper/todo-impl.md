@@ -215,11 +215,19 @@ Needs changing the algorithm since it currently relies on getting updated blocke
 See above
 ```
 
-## setup of securiry of permissioned bigtangle
+## setup of security of permissioned bigtangle
 1) disable check of other wallet other then yours in wallet //K: should require valid signature for checking balance
-2) restirct access of block transaction 
-3) interface to add user access list as KYC
+2) restrict access of block transaction 
+3) interface to add user access list as KYC User table as
+4) define admin in config and setting 
 
+* the block solve is done on the server only 
+* constant block producer on each node, no race condition of hash power and no software manipulation
+ 
+ changes needed:  
+    1) configure the block solve and tip selection on the server only
+    2) protect the kafka stream to connected with keys
+    3) add filter for KYC public keys 
 
 
 
@@ -298,31 +306,16 @@ add possible to attach address at payment to KYC
 ** mark the same token in display and mark the revoked token in color for help 
 **  watched one token will accept all same token.
 
-## multi level airdrop  10 level
-## email add to airdrop
+## multi level airdrop  5 level -> done
+## email add to airdrop -> done
 
-## direct buy from Wechat
+## direct buy/sell from Wechat
 ## monitoring of application 
-## linkedin  marketing (Air Drop)
+## linkedin  marketing -> done
 
-1) message to  to set the password 
-	example cc.bigtangle.net/public/register?username=$id&invitedby=LinkedinBigtangle
-		register page ask user to set passwort
-   use the same logic as wechat invite and write the user and 
-2)  user can login and upload the public key and display 
-
-3) Display amount BIG=1 Million (market value ICO =45 Dollar) 
-
-BL write invite inlcude the link to evaluation of software and prospect /all
 
 ## permission bigTangle
-* the block solve is done on the server only 
-* constant block producer on each node, no race condition of hash power and no software manipulation
- 
- changes needed:  
-    1) confiure the block solve and tip selection on the server only
-    2) protect the kafka stream to connected with keys
-    3) add filter for KYC public keys 
+
 
     
 ## no empty block tip selection avoid conflicts  blocks
@@ -331,7 +324,7 @@ BL write invite inlcude the link to evaluation of software and prospect /all
 ## display the history of spent transaction with 
    all my address or a given address
    select 1 Month, 6  or date from  date to 
-   
+   -> TODO 
 ## add restriction airdrop 
 user must be activated via email and ask verification via mobile number after rewards > 10 millions
 
@@ -349,6 +342,7 @@ user must be activated via email and ask verification via mobile number after re
 ## add wallet option to pay fees for miner, miner has incentive to create real blocks, not only empty block. 
  1) server config and set price
  2)check mining address 
+ 3) miner set user table for fees in monthly
  
  
 ## wallet with two windows size 1000* 800 and 1600 * 1000  
