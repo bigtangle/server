@@ -336,7 +336,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String INSERT_BATCHBLOCK_SQL = "INSERT INTO batchblock (hash, block, inserttime) VALUE (?, ?, ?)";
     protected final String DELETE_BATCHBLOCK_SQL = "DELETE FROM batchblock WHERE hash = ?";
     protected final String SELECT_BATCHBLOCK_SQL = "SELECT hash, block, inserttime FROM batchblock order by inserttime ASC";
-
+    protected final String INSERT_SUBTANGLE_PERMISSION_SQL = "INSERT INTO  subtangle_permission (pubkey, userdataPubkey , status) VALUE (?, ?, ?)";
+    protected final String UPATE_SUBTANGLE_PERMISSION_SQL = "UPDATE   subtangle_permission set status=? WHERE  pubkey=? AND userdataPubkey=?";
     protected NetworkParameters params;
     protected ThreadLocal<Connection> conn;
     protected List<Connection> allConnections;
@@ -346,7 +347,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String password;
     protected String schemaName;
 
-    public ThreadLocal<Connection> getConnection() {
+    public ThreadLocal<Connection> getConnection() {                                      
         return this.conn;
     }
 
@@ -1475,7 +1476,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            String sql = SELECT_OUTPUTS_HISTORY_SQL+" AND spent=false ";
+            String sql = SELECT_OUTPUTS_HISTORY_SQL + " AND spent=false ";
             if (fromaddress != null && !"".equals(fromaddress.trim())) {
                 sql += " AND fromaddress=?";
             }
@@ -1511,7 +1512,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 int index = rs.getInt("outputindex");
                 boolean coinbase = rs.getBoolean("coinbase");
                 String toAddress = rs.getString("toaddress");
-                Sha256Hash blockhash = rs.getBytes("blockhash") != null ? Sha256Hash.wrap(rs.getBytes("blockhash")) : null;
+                Sha256Hash blockhash = rs.getBytes("blockhash") != null ? Sha256Hash.wrap(rs.getBytes("blockhash"))
+                        : null;
 
                 String fromaddress1 = rs.getString("fromaddress");
                 String memo = rs.getString("memo");

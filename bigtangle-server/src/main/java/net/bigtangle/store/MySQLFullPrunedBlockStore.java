@@ -189,6 +189,11 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    block mediumblob NOT NULL,\n"
             + "    inserttime datetime NOT NULL,\n"
              + "   CONSTRAINT batchblock_pk PRIMARY KEY (hash) USING BTREE \n" + ")";
+    private static final String CREATE_SUBTANGLE_PERMISSION_TABLE = "CREATE TABLE subtangle_permission (\n" 
+            + "    pubkey varchar(255) NOT NULL,\\n"
+            + "    userdataPubkey varchar(255) NOT NULL,\\n"
+            + "    status varchar(255) NOT NULL,\\n"
+             + "   CONSTRAINT batchblock_pk PRIMARY KEY (pubkey,userdataPubkey) USING BTREE \n" + ")";
 
     // Some indexes to speed up inserts
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_height_toaddress_idx ON outputs (hash, outputindex, height, toaddress) USING btree";
@@ -227,6 +232,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_VOSEXECUTE_TABLE);
         sqlStatements.add(CREATE_LOGRESULT_TABLE);
         sqlStatements.add(CREATE_BATCHBLOCK_TABLE);
+        sqlStatements.add(CREATE_SUBTANGLE_PERMISSION_TABLE);
         return sqlStatements;
     }
 
