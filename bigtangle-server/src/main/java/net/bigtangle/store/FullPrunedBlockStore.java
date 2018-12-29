@@ -408,6 +408,9 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     List<UTXO> getOutputsHistory(String fromaddress, String toaddress, Long starttime, Long endtime)
             throws BlockStoreException;
 
+    void insertSubtanglePermission(String pubkey, String userdatapubkey, String status) throws BlockStoreException;
+    List<Map<String, String>> getAllSubtanglePermissionList() throws BlockStoreException;
+    List<Map<String, String>> getSubtanglePermissionListByPubkey(String pubkey) throws BlockStoreException;
     // List<TokenSerial> getSearchTokenSerialInfo(String tokenid, List<String>
     // addresses) throws BlockStoreException;
 }
