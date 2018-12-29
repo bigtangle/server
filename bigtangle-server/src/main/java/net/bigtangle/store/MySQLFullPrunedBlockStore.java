@@ -193,7 +193,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    pubkey varchar(255) NOT NULL,\\n"
             + "    userdataPubkey varchar(255) NOT NULL,\\n"
             + "    status varchar(255) NOT NULL,\\n"
-             + "   CONSTRAINT batchblock_pk PRIMARY KEY (pubkey,userdataPubkey) USING BTREE \n" + ")";
+             + "   CONSTRAINT batchblock_pk PRIMARY KEY (pubkey) USING BTREE \n" + ")";
 
     // Some indexes to speed up inserts
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_height_toaddress_idx ON outputs (hash, outputindex, height, toaddress) USING btree";
