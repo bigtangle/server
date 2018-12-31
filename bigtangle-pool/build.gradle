@@ -1,0 +1,21 @@
+dependencies {
+      
+    compile project(':bigtangle-core')
+    
+       /**
+     * test dependencies
+     */
+    testCompile group: 'org.easymock', name: 'easymock', version:  ver.easymock
+    testCompile group: 'junit', name: 'junit',  version:ver.junit
+    testCompile group: 'com.google.code.findbugs', name: 'jsr305', version:ver.jsr305
+}
+
+apply plugin: 'maven-publish'
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+} 

@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import net.bigtangle.server.config.ServerConfiguration;
-import static org.apache.kafka.streams.KafkaStreams.State.RUNNING;
 public abstract class AbstractStreamHandler {
 
     @Autowired
