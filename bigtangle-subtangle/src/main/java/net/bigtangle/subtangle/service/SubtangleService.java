@@ -61,7 +61,7 @@ public class SubtangleService {
                 Coin coinbase = output.getValue();
 
                 Block b = transactionService.askTransactionBlock();
-                b.setBlockType(Block.BLOCKTYPE_CROSSTANGLE);
+                b.setBlockType(Block.Type.BLOCKTYPE_CROSSTANGLE);
                 b.addCoinbaseTransaction(signKey.getPubKey(), coinbase);
                 blockService.saveBlock(b);
 

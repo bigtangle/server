@@ -8,6 +8,8 @@ package net.bigtangle.core;
 import java.io.IOException;
 import java.util.HashSet;
 
+import org.apache.commons.lang3.NotImplementedException;
+
 /**
  * Wraps a {@link Block} object with extra data that can be derived from the
  * blockstore
@@ -61,18 +63,27 @@ public class BlockWrap {
     public HashSet<ConflictCandidate> toConflictCandidates() {
         HashSet<ConflictCandidate> blockConflicts = new HashSet<>();
 
-        // Create pairs of blocks and used non-coinbase utxos from block
-        // Dynamic conflicts: conflicting transactions
+        // Dynamic conflicts: conflicting transaction outpoints
         this.getBlock().getTransactions().stream().flatMap(t -> t.getInputs().stream()).filter(in -> !in.isCoinBase())
                 .map(in -> new ConflictCandidate(this, in.getOutpoint())).forEach(c -> blockConflicts.add(c));
-
-        // Dynamic conflicts: mining reward height intervals
-        if (this.getBlock().getBlockType() == Block.BLOCKTYPE_REWARD)
-            blockConflicts
-                    .add(new ConflictCandidate(this, Utils.readInt64(this.getBlock().getTransactions().get(0).getData(), 0)));
-
-        // Dynamic conflicts: token issuance ids
-        if (this.getBlock().getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION) {
+        
+        switch (getBlock().getBlockType()) {
+        case BLOCKTYPE_CROSSTANGLE:
+            break;
+        case BLOCKTYPE_FILE:
+            break;
+        case BLOCKTYPE_GOVERNANCE:
+            break;
+        case BLOCKTYPE_INITIAL:
+            break;
+        case BLOCKTYPE_REWARD:
+            // Dynamic conflicts: mining reward height intervals
+            blockConflicts.add(new ConflictCandidate(this, Utils.readInt64(this.getBlock().getTransactions().get(0).getData(), 0)));
+            // TODO change to add sequence number
+            break;
+        case BLOCKTYPE_TOKEN_CREATION:
+            // Dynamic conflicts: token issuance ids
+            // TODO change to add sequence number
             try {
                 TokenInfo tokenInfo;
                     tokenInfo = new TokenInfo().parse(this.getBlock().getTransactions().get(0).getData());
@@ -81,6 +92,18 @@ public class BlockWrap {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            break;
+        case BLOCKTYPE_TRANSFER:
+            break;
+        case BLOCKTYPE_USERDATA:
+            break;
+        case BLOCKTYPE_VOS:
+            break;
+        case BLOCKTYPE_VOS_EXECUTE:
+            break;
+        default:
+            throw new NotImplementedException("Not implemented");
+        
         }
 
         return blockConflicts;

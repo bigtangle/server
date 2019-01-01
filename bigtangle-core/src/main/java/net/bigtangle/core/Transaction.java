@@ -1395,7 +1395,6 @@ public class Transaction extends ChildMessage {
      * </p>
      *
      * <ul>
-     * <li>That there is at least one input and output.</li>
      * <li>That the serialized size is not larger than the max block size.</li>
      * <li>That no outputs have negative value.</li>
      * <li>That the outputs do not sum to larger than the max allowed quantity
@@ -1407,8 +1406,6 @@ public class Transaction extends ChildMessage {
      * @throws VerificationException
      */
     public void verify() throws VerificationException {
-        if (inputs.size() == 0 || outputs.size() == 0)
-            throw new VerificationException.EmptyInputsOrOutputs();
         if (this.getMessageSize() > Block.MAX_DEFAULT_BLOCK_SIZE)
             throw new VerificationException.LargerThanMaxBlockSize();
 

@@ -41,18 +41,6 @@ public class TransactionTest {
         tx = FakeTxBuilder.createFakeTx(PARAMS);
     }
 
-    @Test(expected = VerificationException.EmptyInputsOrOutputs.class)
-    public void emptyOutputs() throws Exception {
-        tx.clearOutputs();
-        tx.verify();
-    }
-
-    @Test(expected = VerificationException.EmptyInputsOrOutputs.class)
-    public void emptyInputs() throws Exception {
-        tx.clearInputs();
-        tx.verify();
-    }
-
     @Test(expected = VerificationException.LargerThanMaxBlockSize.class)
     public void tooHuge() throws Exception {
         tx.getInput(0).setScriptBytes(new byte[Block.MAX_DEFAULT_BLOCK_SIZE]);

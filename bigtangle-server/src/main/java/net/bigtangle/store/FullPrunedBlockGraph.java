@@ -26,6 +26,7 @@ import java.util.concurrent.FutureTask;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -404,19 +405,28 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (final Transaction tx : block.getTransactions()) {
             confirmTransaction(tx, block.getHash());
         }
-
-        // For rewards, update reward to be confirmed now
-        if (block.getBlockType() == Block.BLOCKTYPE_REWARD) {
+        
+        switch (block.getBlockType()) {
+        case BLOCKTYPE_CROSSTANGLE:
+            break;
+        case BLOCKTYPE_FILE:
+            break;
+        case BLOCKTYPE_GOVERNANCE:
+            break;
+        case BLOCKTYPE_INITIAL:
+            break;
+        case BLOCKTYPE_REWARD:
+            // For rewards, update reward to be confirmed now
             confirmReward(block);
-        }
-
-        // For token creations, update token db
-        if (block.getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION) {
+            break;
+        case BLOCKTYPE_TOKEN_CREATION:
+            // For token creations, update token db
             confirmToken(block.getHashAsString());
-        }
-
-        // TODO unify logic, see above
-        if (block.getBlockType() == Block.BLOCKTYPE_USERDATA || block.getBlockType() == Block.BLOCKTYPE_VOS) {
+            break;
+        case BLOCKTYPE_TRANSFER:
+            break;
+        case BLOCKTYPE_USERDATA:
+        case BLOCKTYPE_VOS:
             Transaction tx = block.getTransactions().get(0);
             if (tx.getData() != null && tx.getDataSignature() != null) {
                 try {
@@ -432,33 +442,37 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                         throw new BlockStoreException("multisign signature error");
                     }
                     this.synchronizationUserData(block.getHash(), DataClassName.valueOf(tx.getDataClassName()),
-                            tx.getData(), (String) multiSignBy.get("publickey"), block.getBlockType());
+                            tx.getData(), (String) multiSignBy.get("publickey"), block.getBlockType().ordinal());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-        }
-
-        if (block.getBlockType() == Block.BLOCKTYPE_VOS_EXECUTE) {
-            Transaction tx = block.getTransactions().get(0);
-            if (tx.getData() != null && tx.getDataSignature() != null) {
+            break;
+        case BLOCKTYPE_VOS_EXECUTE:
+            // TODO unify logic, see above
+            Transaction tx1 = block.getTransactions().get(0);
+            if (tx1.getData() != null && tx1.getDataSignature() != null) {
                 try {
                     @SuppressWarnings("unchecked")
-                    List<HashMap<String, Object>> multiSignBies = Json.jsonmapper().readValue(tx.getDataSignature(),
+                    List<HashMap<String, Object>> multiSignBies = Json.jsonmapper().readValue(tx1.getDataSignature(),
                             List.class);
                     Map<String, Object> multiSignBy = multiSignBies.get(0);
                     byte[] pubKey = Utils.HEX.decode((String) multiSignBy.get("publickey"));
-                    byte[] data = tx.getHash().getBytes();
+                    byte[] data = tx1.getHash().getBytes();
                     byte[] signature = Utils.HEX.decode((String) multiSignBy.get("signature"));
                     boolean success = ECKey.verify(data, signature, pubKey);
                     if (!success) {
                         throw new BlockStoreException("multisign signature error");
                     }
-                    this.synchronizationVOSData(tx.getData());
+                    this.synchronizationVOSData(tx1.getData());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
+            break;
+        default:
+            throw new NotImplementedException();
+        
         }
     }
 
@@ -552,12 +566,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
 
         // For rewards, update reward db
-        if (block.getBlockType() == Block.BLOCKTYPE_REWARD) {
+        if (block.getBlockType() == Block.Type.BLOCKTYPE_REWARD) {
             unconfirmReward(block);
         }
 
         // For token creations, update token db
-        if (block.getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION) {
+        if (block.getBlockType() == Block.Type.BLOCKTYPE_TOKEN_CREATION) {
             unconfirmToken(block.getHashAsString());
         }
     }
@@ -642,37 +656,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     @Override
     protected boolean connectUTXOs(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height,
             boolean allowConflicts) throws BlockStoreException, VerificationException {
-        if (block.getBlockType() == Block.BLOCKTYPE_REWARD) {
-            // Get reward data from previous reward cycle
-            Sha256Hash prevRewardHash = null;
-            long fromHeight = 0;
-            byte[] hashBytes = new byte[32];
-            ByteBuffer bb = ByteBuffer.wrap(block.getTransactions().get(0).getData());
-            fromHeight = bb.getLong();
-            bb.getLong(); // nextReward
-            bb.get(hashBytes, 0, 32); // prevRewardHash
-            prevRewardHash = Sha256Hash.wrap(hashBytes);
-
-            Triple<Transaction, Boolean, Long> referenceReward = validatorService
-                    .generateMiningRewardTX(storedPrev.getHeader(), storedPrevBranch.getHeader(), prevRewardHash);
-
-            blockStore.insertTxReward(block.getHash(), fromHeight, referenceReward.getMiddle(), prevRewardHash);
-        }
-
-        if (block.getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION) {
-            Transaction tx = block.getTransactions().get(0);
-            if (tx.getData() != null) {
-                try {
-                    byte[] buf = tx.getData();
-                    TokenInfo tokenInfo = new TokenInfo().parse(buf);
-                    this.blockStore.insertToken(block.getHashAsString(), tokenInfo.getTokens());
-                } catch (Exception e) {
-                    log.error("not possible checked before", e);
-                }
-
-            }
-        }
-
         for (final Transaction tx : block.getTransactions()) {
             boolean isCoinBase = tx.isCoinBase();
             if (!isCoinBase) {
@@ -705,6 +688,38 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 }
             }
         }
+        
+        if (block.getBlockType() == Block.Type.BLOCKTYPE_REWARD) {
+            // Get reward data from previous reward cycle
+            Sha256Hash prevRewardHash = null;
+            long fromHeight = 0;
+            byte[] hashBytes = new byte[32];
+            ByteBuffer bb = ByteBuffer.wrap(block.getTransactions().get(0).getData());
+            fromHeight = bb.getLong();
+            bb.getLong(); // nextReward
+            bb.get(hashBytes, 0, 32); // prevRewardHash
+            prevRewardHash = Sha256Hash.wrap(hashBytes);
+
+            Triple<Transaction, Boolean, Long> referenceReward = validatorService
+                    .generateMiningRewardTX(storedPrev.getHeader(), storedPrevBranch.getHeader(), prevRewardHash);
+
+            blockStore.insertTxReward(block.getHash(), fromHeight, referenceReward.getMiddle(), prevRewardHash);
+        }
+
+        if (block.getBlockType() == Block.Type.BLOCKTYPE_TOKEN_CREATION) {
+            Transaction tx = block.getTransactions().get(0);
+            if (tx.getData() != null) {
+                try {
+                    byte[] buf = tx.getData();
+                    TokenInfo tokenInfo = new TokenInfo().parse(buf);
+                    this.blockStore.insertToken(block.getHashAsString(), tokenInfo.getTokens());
+                } catch (Exception e) {
+                    log.error("not possible checked before", e);
+                }
+
+            }
+        }
+
 
         return true;
     }
@@ -722,8 +737,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     protected boolean checkSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height,
             boolean allowConflicts) throws VerificationException {
         // Check timestamp
-        if (block.getBlockType() == Block.BLOCKTYPE_REWARD) {
-            // Enforce timestamp equal to previous max for reward blocktypes
+        if (block.getBlockType() == Block.Type.BLOCKTYPE_REWARD) {
+            // Enforce timestamp equal to previous max for reward blocks
             if (block.getTimeSeconds() != Math.max(storedPrev.getHeader().getTimeSeconds(),
                     storedPrevBranch.getHeader().getTimeSeconds()))
                 return false;
@@ -734,8 +749,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 return false;
         }
 
-        // Check difficulty and last consensus
-        if (block.getBlockType() != Block.BLOCKTYPE_REWARD) {
+        // Check difficulty and last consensus is passed through correctly
+        if (block.getBlockType() != Block.Type.BLOCKTYPE_REWARD) {
             if (block.getLastMiningRewardBlock() == storedPrev.getHeader().getLastMiningRewardBlock()
                     && block.getDifficultyTarget() != storedPrev.getHeader().getDifficultyTarget())
                 return false;
@@ -757,14 +772,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
 
         // Check genesis block specific validity, can only one genesis block
-        if (block.getBlockType() == Block.BLOCKTYPE_INITIAL) {
+        if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
             if (!block.getHash().equals(networkParameters.getGenesisBlock().getHash())) {
                 return false;
             }
         }
 
         // Check issuance block specific validity
-        if (block.getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION) {
+        if (block.getBlockType() == Block.Type.BLOCKTYPE_TOKEN_CREATION) {
             try {
                 // Check according to previous issuance, or if it does not exist
                 // the normal signature
@@ -777,7 +792,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
         }
 
-        if (block.getBlockType() == Block.BLOCKTYPE_CROSSTANGLE) {
+        if (block.getBlockType() == Block.Type.BLOCKTYPE_CROSSTANGLE) {
             // TODO
             return true;
         }
@@ -790,7 +805,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
 
         // Check reward block specific solidity
-        if (block.getBlockType() == Block.BLOCKTYPE_REWARD) {
+        if (block.getBlockType() == Block.Type.BLOCKTYPE_REWARD) {
             if (!checkSolidityReward(block, storedPrev, storedPrevBranch))
                 return false;
         }

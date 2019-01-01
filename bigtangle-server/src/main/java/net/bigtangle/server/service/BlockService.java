@@ -126,7 +126,7 @@ public class BlockService {
 
     public void requestPrev(Block block) {
         try {
-            if (block.getBlockType() == Block.BLOCKTYPE_INITIAL)  {
+            if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL)  {
                 return;
             }
             StoredBlock storedBlock0 = this.store.get(block.getPrevBlockHash());

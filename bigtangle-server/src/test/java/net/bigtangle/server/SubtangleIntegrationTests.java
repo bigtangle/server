@@ -69,7 +69,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
+        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
         block.addCoinbaseTransaction(ecKey.getPubKey(), basecoin, tokenInfo);
 
         Transaction transaction = block.getTransactions().get(0);

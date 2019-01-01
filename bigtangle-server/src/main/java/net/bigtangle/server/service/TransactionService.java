@@ -97,7 +97,7 @@ public class TransactionService {
       
      
         Block block = new Block(networkParameters, r1, r2);
-        block.setBlockType(Block.BLOCKTYPE_REWARD);
+        block.setBlockType(Block.Type.BLOCKTYPE_REWARD);
         Triple<Transaction, Boolean, Long> generated = validatorService.generateMiningRewardTX(r1, r2, prevRewardHash);
         
         if (!generated.getMiddle())

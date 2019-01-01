@@ -33,12 +33,6 @@ public class VerificationException extends RuntimeException {
         super(msg, t);
     }
 
-    public static class EmptyInputsOrOutputs extends VerificationException {
-        public EmptyInputsOrOutputs() {
-            super("Transaction had no inputs or no outputs.");
-        }
-    }
-
     public static class LargerThanMaxBlockSize extends VerificationException {
         public LargerThanMaxBlockSize() {
             super("Transaction larger than MAX_BLOCK_SIZE");

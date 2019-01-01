@@ -424,7 +424,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
             s.setString(6, Utils.HEX.encode(block.getPrevBranchBlockHash().getBytes()));
             s.setBytes(7, block.getMinerAddress());
 
-            s.setLong(8, block.getBlockType());
+            s.setLong(8, block.getBlockType().ordinal());
             int j = 7;
             s.setLong(j + 2, blockEvaluation.getRating());
             s.setLong(j + 3, blockEvaluation.getDepth());

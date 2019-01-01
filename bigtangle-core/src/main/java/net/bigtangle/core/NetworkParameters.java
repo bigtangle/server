@@ -34,7 +34,6 @@ import javax.annotation.Nullable;
 import com.google.common.base.Objects;
 
 import net.bigtangle.params.MainNetParams;
-import net.bigtangle.params.MainNetParams;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.utils.MonetaryFormat;
@@ -148,7 +147,7 @@ public abstract class NetworkParameters {
 	}
 
 	public static Block createGenesis(NetworkParameters params) {
-		Block genesisBlock = new Block(params, Block.BLOCK_VERSION_GENESIS, Block.BLOCKTYPE_INITIAL);
+		Block genesisBlock = new Block(params, Block.BLOCK_VERSION_GENESIS, Block.Type.BLOCKTYPE_INITIAL.ordinal());
 		genesisBlock.setTime(1532896109L);
 //		genesisBlock.setTime(1231006505L);
 

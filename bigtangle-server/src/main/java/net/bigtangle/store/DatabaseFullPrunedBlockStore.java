@@ -843,7 +843,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setBytes(6, block.getPrevBranchBlockHash().getBytes());
             s.setBytes(7, block.getMinerAddress());
 
-            s.setLong(8, block.getBlockType());
+            s.setLong(8, block.getBlockType().ordinal());
             int j = 7;
             s.setLong(j + 2, blockEvaluation.getRating());
             s.setLong(j + 3, blockEvaluation.getDepth());
@@ -2018,7 +2018,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public void insertUnsolid(Block block) throws BlockStoreException {
-        if (block.getBlockType() == Block.BLOCKTYPE_INITIAL) {
+        if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
             return;
         }
         PreparedStatement preparedStatement = null;

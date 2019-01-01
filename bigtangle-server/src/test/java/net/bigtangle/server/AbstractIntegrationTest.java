@@ -356,7 +356,7 @@ public abstract class AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
+        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
         block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
         block.solve();
 

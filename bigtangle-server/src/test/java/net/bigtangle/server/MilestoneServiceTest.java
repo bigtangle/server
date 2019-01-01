@@ -57,7 +57,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         for (int i = 0; i < 10; i++) {
             Sha256Hash sha256Hash1 = getRandomSha256Hash();
             Sha256Hash sha256Hash2 = getRandomSha256Hash();
-            Block block = new Block(this.networkParameters, sha256Hash1, sha256Hash2, Block.BLOCKTYPE_TRANSFER,
+            Block block = new Block(this.networkParameters, sha256Hash1, sha256Hash2, Block.Type.BLOCKTYPE_TRANSFER,
                     System.currentTimeMillis() / 1000, 0, Block.EASIEST_DIFFICULTY_TARGET);
             block.solve();
             System.out.println(block.getHashAsString());

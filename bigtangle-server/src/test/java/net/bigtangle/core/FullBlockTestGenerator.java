@@ -928,7 +928,7 @@ public class FullBlockTestGenerator {
 
         // A valid block created exactly like b44 to make sure the creation itself works
         Block b44 = new Block(params, Block.BLOCK_VERSION_GENESIS, 
-                Block.BLOCKTYPE_TRANSFER);
+                Block.Type.BLOCKTYPE_TRANSFER.ordinal());
         byte[] outScriptBytes = ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(coinbaseOutKeyPubKey)).getProgram();
         {
             //b44.setDifficultyTarget(b43.block.getDifficultyTarget());
@@ -953,7 +953,7 @@ public class FullBlockTestGenerator {
 
         // A block with a non-coinbase as the first tx
         Block b45 =   new Block(params, Block.BLOCK_VERSION_GENESIS, 
-                Block.BLOCKTYPE_TRANSFER);
+                Block.Type.BLOCKTYPE_TRANSFER.ordinal());
         {
             //b45.setDifficultyTarget(b44.getDifficultyTarget());
             //b45.addCoinbaseTransaction(pubKey, coinbaseValue);
@@ -980,7 +980,7 @@ public class FullBlockTestGenerator {
 
         // A block with no txn
         Block b46 = new   Block(params, Block.BLOCK_VERSION_GENESIS, 
-                Block.BLOCKTYPE_TRANSFER);
+                Block.Type.BLOCKTYPE_TRANSFER.ordinal());
         {
             b46.transactions = new ArrayList<Transaction>();
            // b46.setDifficultyTarget(b44.getDifficultyTarget());

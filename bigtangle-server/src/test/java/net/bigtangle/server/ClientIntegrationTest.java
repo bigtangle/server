@@ -105,7 +105,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(Block.BLOCKTYPE_CROSSTANGLE);
+        block.setBlockType(Block.Type.BLOCKTYPE_CROSSTANGLE);
         block.addTransaction(transaction);
         block.solve();
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
@@ -138,7 +138,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(Block.BLOCKTYPE_TOKEN_CREATION);
+        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
         block.addCoinbaseTransaction(ecKey.getPubKey(), basecoin, tokenInfo);
 
         Transaction transaction = block.getTransactions().get(0);
@@ -551,7 +551,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = this.networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(Block.BLOCKTYPE_VOS);
+        block.setBlockType(Block.Type.BLOCKTYPE_VOS);
 
         Transaction coinbase = new Transaction(this.networkParameters);
         coinbase.setDataClassName(DataClassName.VOS.name());
@@ -575,7 +575,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
         milestoneService.update();
 
-        int blocktype = (int) Block.BLOCKTYPE_VOS;
+        int blocktype = (int) Block.Type.BLOCKTYPE_VOS.ordinal();
 
         List<String> pubKeyList = new ArrayList<String>();
         pubKeyList.add(outKey.getPublicKeyAsHex());
@@ -640,7 +640,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = this.networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(Block.BLOCKTYPE_VOS_EXECUTE);
+        block.setBlockType(Block.Type.BLOCKTYPE_VOS_EXECUTE);
 
         Transaction coinbase = new Transaction(this.networkParameters);
         VOSExecute vosExecute = new VOSExecute();
@@ -676,7 +676,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(Block.BLOCKTYPE_USERDATA);
+        block.setBlockType(Block.Type.BLOCKTYPE_USERDATA);
         ECKey outKey = new ECKey();
 
         Transaction transaction = new Transaction(networkParameters);
@@ -741,7 +741,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         requestParam.clear();
         data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(), Json.jsonmapper().writeValueAsString(requestParam));
         block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(Block.BLOCKTYPE_USERDATA);
+        block.setBlockType(Block.Type.BLOCKTYPE_USERDATA);
 
         block.addTransaction(transaction);
         block.solve();

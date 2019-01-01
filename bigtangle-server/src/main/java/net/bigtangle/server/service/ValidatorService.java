@@ -330,8 +330,19 @@ public class ValidatorService {
                     continue;
                 }
             }
-
-            if (block.getBlockType() == Block.BLOCKTYPE_REWARD) {
+            
+            // TODO add preconditions
+            switch (block.getBlockType()) {
+            case BLOCKTYPE_CROSSTANGLE:
+                break;
+            case BLOCKTYPE_FILE:
+                break;
+            case BLOCKTYPE_GOVERNANCE:
+                break;
+            case BLOCKTYPE_INITIAL:
+                break;
+            case BLOCKTYPE_REWARD:
+                // TODO
                 // Previous reward must have been confirmed
                 Sha256Hash prevRewardHash = null;
                 try {
@@ -363,15 +374,26 @@ public class ValidatorService {
                     blockService.removeBlockAndApproversFrom(blocksToAdd, b);
                     continue;
                 }
-            }
-
-            if (block.getBlockType() == Block.BLOCKTYPE_TOKEN_CREATION) {
+                break;
+            case BLOCKTYPE_TOKEN_CREATION:
                 String tokenPrevBlockHash = store.getTokenPrevblockhash(b.getBlock().getHashAsString());
                 if (!tokenPrevBlockHash.equals("") && !store.getTokenConfirmed(tokenPrevBlockHash)) {
                     removed = true;
                     blockService.removeBlockAndApproversFrom(blocksToAdd, b);
                     continue;
                 }
+                break;
+            case BLOCKTYPE_TRANSFER:
+                break;
+            case BLOCKTYPE_USERDATA:
+                break;
+            case BLOCKTYPE_VOS:
+                break;
+            case BLOCKTYPE_VOS_EXECUTE:
+                break;
+            default:
+                throw new NotImplementedException();
+            
             }
         }
 

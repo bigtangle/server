@@ -128,7 +128,7 @@ public class Block extends Message {
     private long difficultyTarget; // "nBits"
     private long lastMiningRewardBlock; // last approved reward blocks max
     private byte[] minerAddress; // Utils.sha256hash160
-    private long blockType;
+    private Type blockType;
 
     // If NetworkParameters.USE_EQUIHASH, this field will contain the PoW
     // solution
@@ -154,53 +154,45 @@ public class Block extends Message {
     // (which Message needs)
     protected int optimalEncodingMessageSize;
 
-    public static final long BLOCKTYPE_CROSSTANGLE = 9; // transfer from mainnet
-                                                        // to permissioned
-                                                        // bigtangle
-    public static final long BLOCKTYPE_VOS_EXECUTE = 8; // VOS execution result
-
-    public static final long BLOCKTYPE_FILE = 7; // upload file
-
-    public static final long BLOCKTYPE_GOVERNANCE = 6; // Governance of software
-                                                       // update and community
-
-    public static final long BLOCKTYPE_VOS = 5; // Smart contracts for using
-                                                // Docker and Kubernetes
-
-    public static final long BLOCKTYPE_USERDATA = 4; // user defined data
-
-    public static final long BLOCKTYPE_TOKEN_CREATION = 3; // Custom token
-                                                           // issuance
-
-    public static final long BLOCKTYPE_REWARD = 2; // Rewards of mining
-
-    public static final long BLOCKTYPE_TRANSFER = 1; // transfer of token
-
-    // BLOCKTYPE
-    public static final long BLOCKTYPE_INITIAL = 0; // Genesis block
+    // BLOCKTYPES
+    // TODO implement all conditions for each block type in all switches
+    public enum Type {
+        BLOCKTYPE_INITIAL, // Genesis block
+        BLOCKTYPE_TRANSFER, // Default block
+        BLOCKTYPE_REWARD, // Rewards of mining
+        BLOCKTYPE_TOKEN_CREATION, // Custom token issuance
+        BLOCKTYPE_USERDATA, // User-defined data
+        BLOCKTYPE_VOS, // Smart contracts
+        BLOCKTYPE_GOVERNANCE, // Governance of software
+        BLOCKTYPE_FILE, // User-defined file
+        BLOCKTYPE_VOS_EXECUTE, // VOS execution result
+        BLOCKTYPE_CROSSTANGLE, // transfer from mainnet to permissioned
+    }
 
     Block(NetworkParameters params, long setVersion) {
-
-        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, Block.BLOCKTYPE_TRANSFER, 0, 0,
+        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, Block.Type.BLOCKTYPE_TRANSFER.ordinal(), 0, 0,
                 EASIEST_DIFFICULTY_TARGET);
     }
 
-    public Block(NetworkParameters params, long blockVersionGenesis, long blocktypeTransfer) {
-
-        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, blocktypeTransfer, 0, 0, EASIEST_DIFFICULTY_TARGET);
+    public Block(NetworkParameters params, long blockVersionGenesis, long type) {
+        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, type, 0, 0, EASIEST_DIFFICULTY_TARGET);
     }
 
     public Block(NetworkParameters params, Block r1, Block r2) {
-
-        this(params, r1.getHash(), r2.getHash(), Block.BLOCKTYPE_TRANSFER,
+        this(params, r1.getHash(), r2.getHash(), Block.Type.BLOCKTYPE_TRANSFER.ordinal(),
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()),
                 Math.max(r1.getLastMiningRewardBlock(), r2.getLastMiningRewardBlock()),
                 r1.getLastMiningRewardBlock() > r2.getLastMiningRewardBlock() ? r1.getDifficultyTarget()
                         : r2.getDifficultyTarget());
-
+    }
+    
+    public Block(NetworkParameters params, Sha256Hash prevBlockHash, Sha256Hash prevBranchBlockHash, long blocktype,
+            long minTime, long lastMiningRewardBlock, long difficultyTarget) {
+        this(params, prevBlockHash, prevBranchBlockHash, Type.values()[(int) blocktype],
+                minTime, lastMiningRewardBlock, difficultyTarget);
     }
 
-    public Block(NetworkParameters params, Sha256Hash prevBlockHash, Sha256Hash prevBranchBlockHash, long blocktype,
+    public Block(NetworkParameters params, Sha256Hash prevBlockHash, Sha256Hash prevBranchBlockHash, Type blocktype,
             long minTime, long lastMiningRewardBlock, long difficultyTarget) {
         super(params);
         // Set up a few basic things. We are not complete after this though.
@@ -336,7 +328,7 @@ public class Block extends Message {
         lastMiningRewardBlock = readInt64();
         nonce = readUint32();
         minerAddress = readBytes(20);
-        blockType = readUint32();
+        blockType = Type.values()[(int) readUint32()];
 
         hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(payload, offset, cursor - offset));
         headerBytesValid = serializer.isParseRetainMode();
@@ -375,7 +367,7 @@ public class Block extends Message {
         Utils.int64ToByteStreamLE(lastMiningRewardBlock, stream);
         Utils.uint32ToByteStreamLE(nonce, stream);
         stream.write(minerAddress);
-        Utils.uint32ToByteStreamLE(blockType, stream);
+        Utils.uint32ToByteStreamLE(blockType.ordinal(), stream);
     }
 
     void writePoW(OutputStream stream) throws IOException {
@@ -681,7 +673,7 @@ public class Block extends Message {
      */
     protected boolean checkProofOfWork(boolean throwException) throws VerificationException {
         // No PoW for genesis block
-        if (getBlockType() == Block.BLOCKTYPE_INITIAL) {
+        if (getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
             return true;
         }
 
@@ -839,13 +831,27 @@ public class Block extends Message {
      */
     public void checkTransactionSolidity(final long height) throws VerificationException {
         // The transactions must adhere to their block type rules
-        if (blockType == Block.BLOCKTYPE_TOKEN_CREATION) {
-            if (transactions.size() != 1)
-                throw new VerificationException("Too many or too few transactions for token creation.");
-
-            if (!transactions.get(0).isCoinBase())
-                throw new VerificationException("TX is not coinbase when it should be.");
-        } else if (blockType == Block.BLOCKTYPE_REWARD) {
+        switch (blockType) {
+        case BLOCKTYPE_CROSSTANGLE:
+            // TODO
+            break;
+        case BLOCKTYPE_FILE:
+            for (Transaction tx : transactions) {
+                if (tx.isCoinBase()) {
+                    throw new VerificationException("TX is coinbase when it should not be.");
+                }
+            }
+            break;
+        case BLOCKTYPE_GOVERNANCE:
+            for (Transaction tx : transactions) {
+                if (tx.isCoinBase()) {
+                    throw new VerificationException("TX is coinbase when it should not be.");
+                }
+            }
+            break;
+        case BLOCKTYPE_INITIAL:
+            break;
+        case BLOCKTYPE_REWARD:
             if (transactions.size() != 1)
                 throw new VerificationException("Too many or too few transactions for token creation.");
 
@@ -853,6 +859,7 @@ public class Block extends Message {
                 throw new VerificationException("TX is not coinbase when it should be.");
 
             // Check that the tx has correct data (long fromHeight)
+            // TODO virtual tx
             try {
                 if (transactions.get(0).getData() == null)
                     throw new VerificationException("Missing fromHeight");
@@ -862,18 +869,45 @@ public class Block extends Message {
             } catch (ArrayIndexOutOfBoundsException e) {
                 throw new VerificationException(e);
             }
-        } else if ((blockType == Block.BLOCKTYPE_TRANSFER) || (blockType == Block.BLOCKTYPE_USERDATA)
-                || (blockType == Block.BLOCKTYPE_VOS) || (blockType == Block.BLOCKTYPE_GOVERNANCE)
-                || (blockType == Block.BLOCKTYPE_FILE) || (blockType == Block.BLOCKTYPE_VOS_EXECUTE)) {
+            break;
+        case BLOCKTYPE_TOKEN_CREATION:
+            if (transactions.size() != 1)
+                throw new VerificationException("Too many or too few transactions for token creation.");
+
+            if (!transactions.get(0).isCoinBase())
+                throw new VerificationException("TX is not coinbase when it should be.");
+            break;
+        case BLOCKTYPE_TRANSFER:
             for (Transaction tx : transactions) {
                 if (tx.isCoinBase()) {
                     throw new VerificationException("TX is coinbase when it should not be.");
                 }
             }
-        } else if (blockType == Block.BLOCKTYPE_CROSSTANGLE) {
-
-        } else
-            throw new VerificationException("Blocktype not implemented!");
+            break;
+        case BLOCKTYPE_USERDATA:
+            for (Transaction tx : transactions) {
+                if (tx.isCoinBase()) {
+                    throw new VerificationException("TX is coinbase when it should not be.");
+                }
+            }
+            break;
+        case BLOCKTYPE_VOS:
+            for (Transaction tx : transactions) {
+                if (tx.isCoinBase()) {
+                    throw new VerificationException("TX is coinbase when it should not be.");
+                }
+            }
+            break;
+        case BLOCKTYPE_VOS_EXECUTE:
+            for (Transaction tx : transactions) {
+                if (tx.isCoinBase()) {
+                    throw new VerificationException("TX is coinbase when it should not be.");
+                }
+            }
+            break;
+        default: 
+                throw new VerificationException("Blocktype not implemented!");
+        }
     }
 
     /**
@@ -930,15 +964,13 @@ public class Block extends Message {
             if (!allowCoinbaseTransaction() && transaction.isCoinBase()) {
                 throw new VerificationException("Coinbase Transaction is not allowed for this block type");
             }
-            if (blockType != Block.BLOCKTYPE_USERDATA && blockType != Block.BLOCKTYPE_VOS
-                    && blockType != Block.BLOCKTYPE_VOS_EXECUTE && blockType != Block.BLOCKTYPE_CROSSTANGLE) {
-                transaction.verify();
-            }
+            
+            transaction.verify();
         }
     }
 
     private int getMaxBlockSize() {
-        if (getBlockType() == Block.BLOCKTYPE_INITIAL) {
+        if (getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
             return Integer.MAX_VALUE;
         } else {
             return MAX_DEFAULT_BLOCK_SIZE;
@@ -1251,8 +1283,21 @@ public class Block extends Message {
     public static final byte[] EMPTY_BYTES = new byte[32];
 
     public boolean allowCoinbaseTransaction() {
-        return blockType == Block.BLOCKTYPE_INITIAL || blockType == Block.BLOCKTYPE_TOKEN_CREATION
-                || blockType == Block.BLOCKTYPE_REWARD || blockType == Block.BLOCKTYPE_CROSSTANGLE;
+        switch (blockType) {
+        case BLOCKTYPE_INITIAL:
+        case BLOCKTYPE_TOKEN_CREATION: // checked separately somewhere else TODO where?
+        case BLOCKTYPE_REWARD: // TODO remove this and build virtual txs 
+        case BLOCKTYPE_CROSSTANGLE: // TODO should be checked separately somewhere else?
+            return true;
+        case BLOCKTYPE_FILE:
+        case BLOCKTYPE_GOVERNANCE:
+        case BLOCKTYPE_TRANSFER:
+        case BLOCKTYPE_USERDATA:
+        case BLOCKTYPE_VOS:
+        case BLOCKTYPE_VOS_EXECUTE:
+            return false;
+        }
+        return false;
     }
 
     private static Random gen = new Random();
@@ -1278,7 +1323,7 @@ public class Block extends Message {
 
         // Don't let timestamp go backwards, ex the genesis block
         long minTime = Math.max(getTimeSeconds(), branchBlock.getTimeSeconds());
-        if (blockType != Block.BLOCKTYPE_INITIAL) {
+        if (blockType != Block.Type.BLOCKTYPE_INITIAL) {
             if (getTimeSeconds() >= minTime)
                 b.setTime(getTimeSeconds() + 1);
             else
@@ -1316,11 +1361,15 @@ public class Block extends Message {
         this.hash = null;
     }
 
-    public long getBlockType() {
+    public Type getBlockType() {
         return blockType;
     }
 
     public void setBlockType(long blocktype) {
+        setBlockType(Type.values()[(int) blocktype]);
+    }
+
+    public void setBlockType(Type blocktype) {
         unCacheHeader();
         this.blockType = blocktype;
         this.hash = null;
