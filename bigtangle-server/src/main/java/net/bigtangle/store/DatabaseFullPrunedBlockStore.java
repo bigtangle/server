@@ -93,6 +93,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_VOSEXECUTE_TABLE = "DROP TABLE IF EXISTS vosexecute";
     public static String DROP_LOGRESULT_TABLE = "DROP TABLE IF EXISTS logresult";
     public static String DROP_BATCHBLOCK_TABLE = "DROP TABLE IF EXISTS batchblock";
+    public static String DROP_SUBTANGLE_PERMISSION_TABLE = "DROP TABLE IF EXISTS subtangle_permission";
 
     // Queries SQL.
     protected final String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
@@ -523,6 +524,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_VOSEXECUTE_TABLE);
         sqlStatements.add(DROP_LOGRESULT_TABLE);
         sqlStatements.add(DROP_BATCHBLOCK_TABLE);
+        sqlStatements.add(DROP_SUBTANGLE_PERMISSION_TABLE);
         return sqlStatements;
     }
 

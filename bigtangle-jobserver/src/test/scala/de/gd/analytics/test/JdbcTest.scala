@@ -97,10 +97,11 @@ object JdbcTest {
     val originalBlocks = myGraph.vertices.collect
 
     // Run test for update depth
-    val watch = Stopwatch.createStarted();
+    val watch = new Stopwatch();
+    watch.start();
     val updatedGraph = phase3(myGraph).cache
     val updatedBlocks = updatedGraph.vertices.collect
-    print("Update time " + watch.elapsed(TimeUnit.MILLISECONDS));
+    print("Update time " + watch.elapsedMillis());
 
     //Debug output
     //    updatedBlocks.map(_._2).sortBy(b => b.getBlock.getHashAsString).foreach(b => {
@@ -116,45 +117,49 @@ object JdbcTest {
 
     print(sc.getCheckpointDir)
 
-    // TODO use dynamic MAX_STEPS
-    // TODO rating select tips, then (weight depth milestonedepth rating), then milestone, then maintained separately
-
-    // MCMC Scheme for askTransaction
-    // as found in reference implementation?
-    // or microbatching blockaddition+pregelselection as with rating tips
-
-    // to fix the problem of long candlesticks eating computational resources during MCMC, we shall
-    // use pregel to precompute conflictpoint sets of maintained blocks (which is all blocks reachable by MCMC)
-    // then batch select via pregel MCMC:
-    //Up to MAX_STEPS steps far
-    //If reaching MAX_STEPS and still not a tip, we can:
-    //- fail
-    //-> Deadlock if everything always fails
-    //- take the current block as tip
-    //-> adds weight to the path to encourage milestoning it, but also loses hashpower and mostly creates orphans
-    //this would enable a candlestick attack, since building the heaviest candlestick makes everyone else waste hashpower
-    //however, this is fine. we can calculate the lost hashpower to be very low if alpha is very low.
-    //it suffices to set alpha<=3ln2/(tps*confirmationdelay) to keep divergence probability approximately over 1/3
-    //this does, however, allow for more rewards for the candlestick attacker, since the lost hashpower is usually going to orphan
-    //also, this allows for skipping whole height intervals, which is why 1. we need non-fixed reward intervals and
-    //2. (if we make blocks conflict with unapproved blocks of height lower than own height - x it would fix itself since candlesticks become invalid)
-    //there must be an equilibrium (only exists if candlesticks invalid as above) ??? TODO
-
-    // Update Scheme (MAX_STEPS = MAXVALUE FOR NOW SO IT WILL WORK ALWAYS, ALTHOUGH INFINITELY SLOW IN CASE OF SUCCESSFUL ATTACK)
-
-    // PHASE 2: run MCMC for rating tips (needs conflictpoints since we don't want invalid blocks to hijack rating)
-    //Assume constant graph, then use Pregel and some kind of pair synchronization
-    // PHASE 4: new milestone blocks are evaluated: get subgraph of approved non-milestone of new milestone blocks and mapreduce to conflictpoint sets
-    //resolveconflicts sequentially? (can be parallelized), add to milestone, then persist if wanted (old graph.join)
-    // PHASE 5: set maintain = reachable by MCMC in MAX_STEPS, then persist (old graph.join)
-    //can also additionally unmaintain unconfirmed blocks where conflicting with confirmed unmaintained milestone
-
-    //CANNOT set unmaintained in future, would allow deadlock!
-    // eligible has three states: computed ok, no and uncomputed
-
-    // Maintained has three states: confirmed unmaintained (ideally prunable after a while), unconfirmed maintained and unconfirmed unmaintained (newest blocks out of reach)
-    // this will prevent the problem of needing to maintain infinitely many blocks in ddos
   }
+  
+  // TODO use dynamic MAX_STEPS
+  // TODO rating select tips, then (weight depth milestonedepth rating), then milestone, then maintained separately
+
+  // MCMC Scheme for askTransaction
+  // as found in reference implementation?
+  // or microbatching blockaddition+pregelselection as with rating tips
+
+  // to fix the problem of long candlesticks eating computational resources during MCMC, we shall
+  // use pregel to precompute conflictpoint sets of maintained blocks (which is all blocks reachable by MCMC)
+  // then batch select via pregel MCMC:
+  //Up to MAX_STEPS steps far
+  //If reaching MAX_STEPS and still not a tip, we can:
+  //- fail
+  //-> Deadlock if everything always fails
+  //- take the current block as tip
+  //-> adds weight to the path to encourage milestoning it, but also loses hashpower and mostly creates orphans
+  //this would enable a candlestick attack, since building the heaviest candlestick makes everyone else waste hashpower
+  //however, this is fine. we can calculate the lost hashpower to be very low if alpha is very low.
+  //it suffices to set alpha<=3ln2/(tps*confirmationdelay) to keep divergence probability approximately over 1/3
+  //this does, however, allow for more rewards for the candlestick attacker, since the lost hashpower is usually going to orphan
+  //also, this allows for skipping whole height intervals, which is why 1. we need non-fixed reward intervals and
+  //2. (if we make blocks conflict with unapproved blocks of height lower than own height - x it would fix itself since candlesticks become invalid)
+  //there must be an equilibrium (only exists if candlesticks invalid as above) ??? TODO
+
+  // Update Scheme (MAX_STEPS = MAXVALUE FOR NOW SO IT WILL WORK ALWAYS, ALTHOUGH INFINITELY SLOW IN CASE OF SUCCESSFUL ATTACK)
+
+  // PHASE 1: batch precompute (maintained only) MAX_STEPS @vertex: conflictpoint sets + milestone validity, outgoing weight unnormalized, transient dicerolls
+  //@edges: applicable diceroll interval for sendmsg
+  // PHASE 2: run MCMC for rating tips (needs conflictpoints since we don't want invalid blocks to hijack rating)
+  //Assume constant graph, then use Pregel and some kind of pair synchronization
+  // PHASE 3: update for (maintained), TODO add rating and MAX_STEPS, then persist if wanted (old graph.join)
+  // PHASE 4: new milestone blocks are evaluated: get subgraph of approved non-milestone of new milestone blocks and mapreduce to conflictpoint sets
+  //resolveconflicts sequentially? (can be parallelized), add to milestone, then persist if wanted (old graph.join)
+  // PHASE 5: set maintain = reachable by MCMC in MAX_STEPS, then persist (old graph.join)
+  //can also additionally unmaintain unconfirmed blocks where conflicting with confirmed unmaintained milestone
+
+  //CANNOT set unmaintained in future, would allow deadlock!
+  // eligible has three states: computed ok, no and uncomputed
+
+  // Maintained has three states: confirmed unmaintained (ideally prunable after a while), unconfirmed maintained and unconfirmed unmaintained (newest blocks out of reach)
+  // this will prevent the problem of needing to maintain infinitely many blocks in ddos
 
   def transitionWeight(deltaWeight: Long): Double = {
     // TODO
