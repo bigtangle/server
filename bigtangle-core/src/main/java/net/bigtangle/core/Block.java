@@ -81,11 +81,11 @@ public class Block extends Message {
      * trailing 00 length byte.
      */
     public static final int HEADER_SIZE = 80 // bitcoin
+            + 4 // timestamp from int to long
+            + 2 * 8 // difficulty and sequence long
             + 32 // additional branch prev block
             + 20 // miner address
-            + EquihashProof.BYTE_LENGTH // PoW
-            + 4 // timestamp from int to long
-            + 2 * 8; // difficulty and sequence long
+            + (NetworkParameters.USE_EQUIHASH ? EquihashProof.BYTE_LENGTH : 0); // for Equihash
 
     static final long ALLOWED_TIME_DRIFT = 5 * 60;
 
@@ -121,19 +121,13 @@ public class Block extends Message {
     // Fields defined as part of the protocol format.
     private long version;
     private Sha256Hash prevBlockHash;
-    // Add as tangle
-    private Sha256Hash prevBranchBlockHash;
-
+    private Sha256Hash prevBranchBlockHash; // second predecessor
     private Sha256Hash merkleRoot;
     private long time;
     private long nonce;
-
     private long difficultyTarget; // "nBits"
     private long lastMiningRewardBlock; // last approved reward blocks max
-    // Utils.sha256hash160
-    private byte[] minerAddress;
-
-    // TODO use enum
+    private byte[] minerAddress; // Utils.sha256hash160
     private long blockType;
 
     // If NetworkParameters.USE_EQUIHASH, this field will contain the PoW
@@ -370,10 +364,9 @@ public class Block extends Message {
             stream.write(payload, offset, HEADER_SIZE);
             return;
         }
+        
         // fall back to manual write
-
         Utils.uint32ToByteStreamLE(version, stream);
-
         stream.write(prevBlockHash.getReversedBytes());
         stream.write(prevBranchBlockHash.getReversedBytes());
         stream.write(getMerkleRoot().getReversedBytes());
@@ -382,7 +375,6 @@ public class Block extends Message {
         Utils.int64ToByteStreamLE(lastMiningRewardBlock, stream);
         Utils.uint32ToByteStreamLE(nonce, stream);
         stream.write(minerAddress);
-
         Utils.uint32ToByteStreamLE(blockType, stream);
     }
 
@@ -685,12 +677,10 @@ public class Block extends Message {
     }
 
     /**
-     * Returns true if the hash of the block is OK (lower than difficulty
-     * target).
+     * Returns true if the PoW of the block is OK
      */
     protected boolean checkProofOfWork(boolean throwException) throws VerificationException {
-        // fix none for genesis block
-
+        // No PoW for genesis block
         if (getBlockType() == Block.BLOCKTYPE_INITIAL) {
             return true;
         }
@@ -711,21 +701,28 @@ public class Block extends Message {
         // blocks.
 
         // Equihash
-        if (NetworkParameters.USE_EQUIHASH)
-            if (!EquihashSolver.testProof(params.equihashN, params.equihashK, getHash(), getEquihashProof()))
-                return false;
-
-        BigInteger target = getDifficultyTargetAsInteger();
-
-        BigInteger h = calculatePoWHash().toBigInteger();
-        if (h.compareTo(target) > 0) {
-            // Proof of work check failed!
-            if (throwException)
-                throw new VerificationException(
-                        "Hash is higher than target: " + getHashAsString() + " vs " + target.toString(16));
-            else
-                return false;
+        if (NetworkParameters.USE_EQUIHASH) {
+            if (!EquihashSolver.testProof(params.equihashN, params.equihashK, getHash(), getEquihashProof())) {
+                // Proof of work check failed!
+                if (throwException)
+                    throw new VerificationException("Equihash proof is wrong");
+                else
+                    return false;
+            }
+        } else {
+            BigInteger target = getDifficultyTargetAsInteger();
+            BigInteger h = calculatePoWHash().toBigInteger();
+            
+            if (h.compareTo(target) > 0) {
+                // Proof of work check failed!
+                if (throwException)
+                    throw new VerificationException(
+                            "Hash is higher than target: " + getHashAsString() + " vs " + target.toString(16));
+                else
+                    return false;
+            }
         }
+
         return true;
     }
 

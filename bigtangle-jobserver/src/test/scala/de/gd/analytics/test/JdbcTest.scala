@@ -101,7 +101,7 @@ object JdbcTest {
     watch.start();
     val updatedGraph = phase3(myGraph).cache
     val updatedBlocks = updatedGraph.vertices.collect
-    print("Update time " + watch.elapsedMillis());
+    println("Update time " + watch.elapsedMillis());
 
     //Debug output
     //    updatedBlocks.map(_._2).sortBy(b => b.getBlock.getHashAsString).foreach(b => {
@@ -115,7 +115,9 @@ object JdbcTest {
     assert(originalBlocks.map(e => e._2.getBlockEvaluation.getMilestoneDepth).deep == updatedBlocks.map(e => e._2.getBlockEvaluation.getMilestoneDepth).deep)
     assert(originalBlocks.map(e => e._2.getBlockEvaluation.getCumulativeWeight).deep == updatedBlocks.map(e => e._2.getBlockEvaluation.getCumulativeWeight).deep)
 
-    print(sc.getCheckpointDir)
+    println(sc.getCheckpointDir)
+    
+    println("All ok");
 
   }
   
