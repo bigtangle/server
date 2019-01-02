@@ -338,12 +338,17 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String DELETE_BATCHBLOCK_SQL = "DELETE FROM batchblock WHERE hash = ?";
     protected final String SELECT_BATCHBLOCK_SQL = "SELECT hash, block, inserttime FROM batchblock order by inserttime ASC";
     protected final String INSERT_SUBTANGLE_PERMISSION_SQL = "INSERT INTO  subtangle_permission (pubkey, userdataPubkey , status) VALUE (?, ?, ?)";
+
+    protected final String DELETE_SUBTANGLE_PERMISSION_SQL = "DELETE FROM  subtangle_permission WHERE pubkey=?";
+
     protected final String UPATE_SUBTANGLE_PERMISSION_SQL = "UPDATE   subtangle_permission set status=? WHERE  pubkey=? AND userdataPubkey=?";
     protected final String UPATE_SUBTANGLE_PERMISSION_A_SQL = "UPDATE   subtangle_permission set status=? WHERE  pubkey=? ";
 
     protected final String SELECT_ALL_SUBTANGLE_PERMISSION_SQL = "SELECT   pubkey, userdataPubkey , status FROM subtangle_permission ";
 
     protected final String SELECT_SUBTANGLE_PERMISSION_SQL = "SELECT   pubkey, userdataPubkey , status FROM subtangle_permission WHERE pubkey=?";
+
+    protected final String SELECT_SUBTANGLE_PERMISSION_BY_PUBKEYS_SQL = "SELECT   pubkey, userdataPubkey , status FROM subtangle_permission WHERE 1=1 ";
 
     protected NetworkParameters params;
     protected ThreadLocal<Connection> conn;
@@ -4451,6 +4456,27 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
+    public void deleteSubtanglePermission(String pubkey) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(DELETE_SUBTANGLE_PERMISSION_SQL);
+            preparedStatement.setString(1, pubkey);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
     public List<Map<String, String>> getAllSubtanglePermissionList() throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -4488,6 +4514,41 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_ALL_SUBTANGLE_PERMISSION_SQL);
             preparedStatement.setString(1, pubkey);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                Map<String, String> map = new HashMap<String, String>();
+                map.put("pubkey", resultSet.getString("pubkey"));
+                map.put("userdataPubkey", resultSet.getString("userdataPubkey"));
+                map.put("status", resultSet.getString("status"));
+                list.add(map);
+            }
+            return list;
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<Map<String, String>> getSubtanglePermissionListByPubkeys(List<String> pubkeys)
+            throws BlockStoreException {
+        String sql = SELECT_SUBTANGLE_PERMISSION_BY_PUBKEYS_SQL + " AND pubkey ";
+        StringBuffer stringBuffer = new StringBuffer();
+        for (String pubKey : pubkeys)
+            stringBuffer.append(",'").append(pubKey).append("'");
+        sql += " in (" + stringBuffer.substring(1) + ")";
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        List<Map<String, String>> list = new ArrayList<Map<String, String>>();
+        try {
+            preparedStatement = conn.get().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 Map<String, String> map = new HashMap<String, String>();

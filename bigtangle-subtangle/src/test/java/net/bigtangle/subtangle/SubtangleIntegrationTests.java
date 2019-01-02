@@ -52,7 +52,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
     private NetworkParameters networkParameters;
 
     private static final Logger logger = LoggerFactory.getLogger(SubtangleIntegrationTests.class);
-    
+
     public void createTokenSubtangleId(ECKey ecKey) throws Exception {
         byte[] pubKey = ecKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
@@ -106,7 +106,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(amount, NetworkParameters.BIGTANGLE_TOKENID);
         Address address = outKey.toAddress(this.networkParameters);
         transaction.addOutput(coinbase, address);
-        transaction.setToAddressInSubtangle(toAddressInSubtangle.getHash160()  );
+        transaction.setToAddressInSubtangle(toAddressInSubtangle.getHash160());
 
         TransactionInput input = transaction.addInput(spendableOutput);
         Sha256Hash sighash = transaction.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
@@ -118,15 +118,14 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         input.setScriptSig(inputScript);
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip,
-                Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(transaction);
         rollingBlock.solve();
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
     }
-    
+
     public Coin getBalanceCoin(ECKey ecKey, byte[] tokenid) throws Exception {
         Coin coinbase = Coin.valueOf(0, tokenid);
         for (UTXO output : testTransactionAndGetBalances(false, ecKey)) {
@@ -136,7 +135,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         }
         return coinbase;
     }
-    
+
     @Autowired
     private SubtangleConfiguration subtangleConfiguration;
 
@@ -144,26 +143,36 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
     @Test
     public void testGiveMoney() throws Exception {
         logger.info("subtangle configuration active : " + subtangleConfiguration.isActive());
-      //  assertTrue(subtangleConfiguration.isActive());
-        
+        // assertTrue(subtangleConfiguration.isActive());
+
         logger.info("subtangle configuration hashKey : " + subtangleConfiguration.getPubKeyHex0());
-        ECKey subtangleKey = 
-                new ECKey(Utils.HEX.decode(subtangleConfiguration.getPriKeyHex0()),
-                        Utils.HEX.decode(subtangleConfiguration.getPubKeyHex0()));
+        ECKey subtangleKey = new ECKey(Utils.HEX.decode(subtangleConfiguration.getPriKeyHex0()),
+                Utils.HEX.decode(subtangleConfiguration.getPubKeyHex0()));
         // ECKey subtangleKey = new ECKey();
-        
-//       System.out.println(Utils.HEX.encode(subtangleKey.getPubKey()));
-//       System.out.println(Utils.HEX.encode(subtangleKey.getPrivKeyBytes()));
-        
+
+        // System.out.println(Utils.HEX.encode(subtangleKey.getPubKey()));
+        // System.out.println(Utils.HEX.encode(subtangleKey.getPrivKeyBytes()));
+
         this.createTokenSubtangleId(subtangleKey);
-        
+
         ECKey outKey = new ECKey();
         long amount = 1000;
         this.giveMoneySubtangleId(subtangleKey, amount, outKey.toAddress(this.networkParameters));
-        
+
         Coin coinbase = getBalanceCoin(subtangleKey, NetworkParameters.BIGTANGLE_TOKENID);
         logger.info("get balance coin : " + coinbase);
-        
+
         assertTrue(amount == coinbase.getValue());
+    }
+
+    @Test
+    public void testVeryKey() throws Exception {
+        String pubkey = "";
+        ECKey key = ECKey.fromPublicOnly(Utils.HEX.decode(pubkey));
+        byte[] output = key.sign(Sha256Hash.ZERO_HASH).encodeToDER();
+        assertTrue(key.verify(Sha256Hash.ZERO_HASH.getBytes(), output));
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        requestParam.put("pubkey", pubkey);
+        OkHttp3Util.post(contextRoot + ReqCmd.regSubtangle, Json.jsonmapper().writeValueAsString(requestParam));
     }
 }

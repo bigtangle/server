@@ -38,6 +38,7 @@ import net.bigtangle.server.service.LogResultService;
 import net.bigtangle.server.service.MultiSignService;
 import net.bigtangle.server.service.PayMultiSignService;
 import net.bigtangle.server.service.SettingService;
+import net.bigtangle.server.service.SubtanglePermissionService;
 import net.bigtangle.server.service.TokensService;
 import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.server.service.UserDataService;
@@ -74,6 +75,9 @@ public class DispatcherController {
 
     @Autowired
     private SettingService settingService;
+
+    @Autowired
+    private SubtanglePermissionService subtanglePermissionService;
 
     @Autowired
     private LogResultService logResultService;
@@ -342,7 +346,30 @@ public class DispatcherController {
             case regSubtangle: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String pubkey = (String) request.get("pubkey");
+                subtanglePermissionService.savePubkey(pubkey);
+                this.outPrintJSONString(httpServletResponse, OkResponse.create());
+            }
+                break;
+            case getSubtanglePermissionList: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String pubkey = (String) request.get("pubkey");
+                AbstractResponse response = subtanglePermissionService.getSubtanglePermissionList(pubkey);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+            case getAllSubtanglePermissionList: {
 
+                AbstractResponse response = subtanglePermissionService.getAllSubtanglePermissionList();
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+            case getSubtanglePermissionListByPubkeys: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                List<String> pubkeys = Json.jsonmapper().readValue(reqStr, List.class);
+                AbstractResponse response = subtanglePermissionService.getSubtanglePermissionList(pubkeys);
+                this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
 
