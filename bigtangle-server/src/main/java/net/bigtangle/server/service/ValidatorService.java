@@ -301,6 +301,9 @@ public class ValidatorService {
         return totalRewardCount;
     }
 
+    // TODO make new function since for rating purposes, it must be possible to reorg, i.e. allow spent prev UTXOs / unconfirmed prev UTXOs
+    // TODO make new function since for MCMC selection purposes, it must disallow spent prev UTXOs / unconfirmed prev UTXOs
+    // TODO make new function since for resolving conflicts in milestone updater, it must disallow unconfirmed prev UTXOs and spent UTXOs if unmaintained (unundoable) spend
     /**
      * Remove blocks from blocksToAdd that have at least one used output
      * not confirmed yet
@@ -319,21 +322,28 @@ public class ValidatorService {
 
         for (BlockWrap b : new HashSet<BlockWrap>(blocksToAdd)) {
             Block block = b.getBlock();
+            // Blocks that are in the milestone are always ok
+            if (b.getBlockEvaluation().isMilestone())
+                continue;
+            
+            // For non-milestone blocks, the TXs must be consistent with the current milestone
             for (TransactionInput in : block.getTransactions().stream().flatMap(t -> t.getInputs().stream())
                     .collect(Collectors.toList())) {
                 if (in.isCoinBase())
                     continue;
                 UTXO utxo = transactionService.getUTXO(in.getOutpoint());
-                if (utxo == null || !utxo.isConfirmed()) {
+                
+                // used UTXOs must be confirmed and unspent
+                if (utxo == null || !utxo.isConfirmed() || utxo.isSpent()) {
                     removed = true;
                     blockService.removeBlockAndApproversFrom(blocksToAdd, b);
                     continue;
                 }
             }
             
-            // TODO add preconditions
             switch (block.getBlockType()) {
             case BLOCKTYPE_CROSSTANGLE:
+                // TODO
                 break;
             case BLOCKTYPE_FILE:
                 break;
@@ -353,7 +363,8 @@ public class ValidatorService {
                     bb.get(hashBytes, 0, 32);
                     prevRewardHash = Sha256Hash.wrap(hashBytes);
 
-                    if (!store.getTxRewardConfirmed(prevRewardHash)) {
+                    // used UTXOs must be confirmed and unspent
+                    if (!store.getTxRewardConfirmed(prevRewardHash) || store.getTxRewardSpent(prevRewardHash)) {
                         removed = true;
                         blockService.removeBlockAndApproversFrom(blocksToAdd, b);
                         continue;
@@ -377,7 +388,10 @@ public class ValidatorService {
                 break;
             case BLOCKTYPE_TOKEN_CREATION:
                 String tokenPrevBlockHash = store.getTokenPrevblockhash(b.getBlock().getHashAsString());
-                if (!tokenPrevBlockHash.equals("") && !store.getTokenConfirmed(tokenPrevBlockHash)) {
+                
+                // used UTXOs must be confirmed and unspent
+                if (!tokenPrevBlockHash.equals("") && (!store.getTokenConfirmed(tokenPrevBlockHash)
+                        || store.getTokenSpent(tokenPrevBlockHash))) {
                     removed = true;
                     blockService.removeBlockAndApproversFrom(blocksToAdd, b);
                     continue;
@@ -431,7 +445,7 @@ public class ValidatorService {
         HashSet<ConflictCandidate> conflictingOutPoints = new HashSet<ConflictCandidate>();
         HashSet<BlockWrap> conflictingMilestoneBlocks = new HashSet<BlockWrap>();
 
-        // Find all conflicts in the new blocks
+        // Find all conflicts in the new blocks + maintained milestone blocks
         findConflicts(blocksToAdd, conflictingOutPoints, conflictingMilestoneBlocks);
 
         // Resolve all conflicts by grouping by UTXO ordered by descending

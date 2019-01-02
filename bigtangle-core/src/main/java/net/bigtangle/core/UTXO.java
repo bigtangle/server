@@ -39,6 +39,7 @@ import net.bigtangle.script.Script;
  * transaction. It avoids having to store the entire parentTransaction just to
  * get the hash and index. Useful when working with free standing outputs.
  */
+// TODO rename this to TXO
 public class UTXO {
 
     public UTXO() {

@@ -762,6 +762,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             if (block.getLastMiningRewardBlock() != storedPrevBranch.getHeader().getLastMiningRewardBlock()
                     && block.getLastMiningRewardBlock() != storedPrev.getHeader().getLastMiningRewardBlock())
                 return false;
+            
+            // TODO last consensus
         }
 
         // Check formal correctness of TXs and their data
