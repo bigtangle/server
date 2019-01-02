@@ -174,11 +174,22 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
                 b8link);
         Block b8weight4 = createAndAddNextBlock(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                 b8link);
+
+        //extra weights to ensure this works
+        createAndAddNextBlock(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link);
+        createAndAddNextBlock(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link);
+        createAndAddNextBlock(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link);
+        createAndAddNextBlock(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link);
+        createAndAddNextBlock(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link);
+        createAndAddNextBlock(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link);
+        createAndAddNextBlock(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link);
+        createAndAddNextBlock(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link);
+        
         milestoneService.update();
         assertTrue(blockService.getBlockEvaluation(b1.getHash()).isMilestone());
         assertTrue(blockService.getBlockEvaluation(b2.getHash()).isMilestone());
         assertTrue(blockService.getBlockEvaluation(b3.getHash()).isMilestone());
-        // sometimes this won't work (which is fine since probabilistic)
+        // sometimes this won't work since probabilistic. this is tested later with additional weights
         assertFalse(blockService.getBlockEvaluation(b5.getHash()).isMilestone());
         assertFalse(blockService.getBlockEvaluation(b5link.getHash()).isMilestone());
         assertTrue(blockService.getBlockEvaluation(b6.getHash()).isMilestone());
@@ -274,17 +285,17 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertEquals(0, blockService.getBlockEvaluation(b8weight4.getHash()).getDepth());
 
         // Check cumulative weights (handmade tests)
-        assertEquals(22,
+        assertEquals(30,
                 blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash()).getCumulativeWeight());
-        assertEquals(20, blockService.getBlockEvaluation(b1.getHash()).getCumulativeWeight());
-        assertEquals(19, blockService.getBlockEvaluation(b2.getHash()).getCumulativeWeight());
-        assertEquals(18, blockService.getBlockEvaluation(b3.getHash()).getCumulativeWeight());
+        assertEquals(28, blockService.getBlockEvaluation(b1.getHash()).getCumulativeWeight());
+        assertEquals(27, blockService.getBlockEvaluation(b2.getHash()).getCumulativeWeight());
+        assertEquals(26, blockService.getBlockEvaluation(b3.getHash()).getCumulativeWeight());
         assertEquals(9, blockService.getBlockEvaluation(b5.getHash()).getCumulativeWeight());
         assertEquals(8, blockService.getBlockEvaluation(b5link.getHash()).getCumulativeWeight());
-        assertEquals(13, blockService.getBlockEvaluation(b6.getHash()).getCumulativeWeight());
-        assertEquals(12, blockService.getBlockEvaluation(b7.getHash()).getCumulativeWeight());
-        assertEquals(11, blockService.getBlockEvaluation(b8.getHash()).getCumulativeWeight());
-        assertEquals(10, blockService.getBlockEvaluation(b8link.getHash()).getCumulativeWeight());
+        assertEquals(21, blockService.getBlockEvaluation(b6.getHash()).getCumulativeWeight());
+        assertEquals(20, blockService.getBlockEvaluation(b7.getHash()).getCumulativeWeight());
+        assertEquals(19, blockService.getBlockEvaluation(b8.getHash()).getCumulativeWeight());
+        assertEquals(18, blockService.getBlockEvaluation(b8link.getHash()).getCumulativeWeight());
         assertEquals(3, blockService.getBlockEvaluation(b9.getHash()).getCumulativeWeight());
         assertEquals(1, blockService.getBlockEvaluation(b10.getHash()).getCumulativeWeight());
         assertEquals(1, blockService.getBlockEvaluation(b11.getHash()).getCumulativeWeight());
@@ -323,23 +334,20 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertEquals(-1, blockService.getBlockEvaluation(b8weight3.getHash()).getMilestoneDepth());
         assertEquals(-1, blockService.getBlockEvaluation(b8weight4.getHash()).getMilestoneDepth());
 
+        // Added: extra weights to ensure this works
+        createAndAddNextBlock(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link);
+        createAndAddNextBlock(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link);
+        createAndAddNextBlock(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link);
+        createAndAddNextBlock(b8link, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), b8link);
+        
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(b5.getHash()).isMilestone());
+        assertFalse(blockService.getBlockEvaluation(b5link.getHash()).isMilestone());
+        assertTrue(blockService.getBlockEvaluation(b6.getHash()).isMilestone());
+        assertTrue(blockService.getBlockEvaluation(b7.getHash()).isMilestone());
+        assertTrue(blockService.getBlockEvaluation(b8.getHash()).isMilestone());
+        assertTrue(blockService.getBlockEvaluation(b8link.getHash()).isMilestone());
     }
-
-    // DEBUG USE
-//    @Test
-//    public void buildMultilinearTangle() throws Exception {
-//        store.resetStore();
-//        
-//        for (int j = 0; j < 1; j++) {
-//            Block rollingBlock = networkParameters.getGenesisBlock();
-//            for (int i = 1; i < 50; i++) {
-//                rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-//                        0, rollingBlock.getHash());
-//                blockgraph.add(rollingBlock, true);
-//            }
-//        }
-//        milestoneService.update();
-//    }
 
     @Test
     public void testTokenIssuanceReorg() throws Exception {

@@ -68,7 +68,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    toaddress varchar(255),\n" 
             + "    addresstargetable bigint,\n" 
             + "    coinbase boolean,\n"
-            + "    blockhash  varbinary(32) NOT NULL,\n" 
+            + "    blockhash varbinary(32),\n" // confirming blockhash 
             + "    tokenid varchar(255),\n"
             + "    fromaddress varchar(255),\n" 
             + "    memo varchar(80),\n" 
@@ -76,7 +76,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    confirmed boolean NOT NULL,\n" 
             + "    spendpending boolean NOT NULL,\n"
             + "    spenderblockhash  varbinary(32),\n"
-            + "    time  bigint,\n"
+            + "    time bigint NOT NULL,\n"
             + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex) USING BTREE \n" + ")\n";
     
     private static final String CREATE_TX_REWARD_TABLE = "CREATE TABLE txreward (\n"

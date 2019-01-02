@@ -312,7 +312,7 @@ public class MilestoneService {
 			// VALIDITY CHECKS
 			validatorService.resolveValidityConflicts(blocksToAdd, true);
 
-			// Finally add the found new milestone blocks to the milestone
+			// Finally add the resolved new milestone blocks to the milestone
 			for (BlockWrap block : blocksToAdd)
 				blockService.confirm(block.getBlockEvaluation());
 

@@ -385,7 +385,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         BlockEvaluation blockEvaluation = blockWrap.getBlockEvaluation();
         Block block = blockWrap.getBlock();
 
-        // If already connected, return
+        // If already confirmed, return
         if (blockEvaluation.isMilestone())
             return;
 
@@ -393,7 +393,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // infinite recursions
         blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), true);
 
-        // Connect all approved blocks first (check if actually needed)
+        // Connect all approved blocks first
         addBlockToMilestone(block.getPrevBlockHash());
         addBlockToMilestone(block.getPrevBranchBlockHash());
 
@@ -497,15 +497,27 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         if (!tx.isCoinBase()) {
             for (TransactionInput in : tx.getInputs()) {
                 UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(), in.getOutpoint().getIndex());
-                if (prevOut == null || prevOut.isSpent() || !prevOut.isConfirmed())
-                    throw new VerificationException(
-                            "Attempted to spend a non-existent, already spent or unconfirmed output!");
+                
+                // Sanity check
+                if (prevOut == null)
+                    throw new VerificationException("Attempted to spend a non-existent output!");
+                if (prevOut.isSpent())
+                    throw new VerificationException("Attempted to spend an already spent output!");
+                if (!prevOut.isConfirmed())
+                    throw new VerificationException("Attempted to spend an unconfirmed output!");
+                
                 blockStore.updateTransactionOutputSpent(prevOut.getHash(), prevOut.getIndex(), true, blockhash);
             }
         }
 
-        // Set own outputs confirmed
+        // Set own outputs confirmed (may be non-existent if value is zero)
         for (TransactionOutput out : tx.getOutputs()) {
+            UTXO utxo = blockStore.getTransactionOutput(out.getOutPointFor().getHash(), out.getOutPointFor().getIndex());
+            
+            // Sanity check
+            if (utxo != null && utxo.isSpent())
+                throw new VerificationException("Attempted to reset an already spent output! Cannot happen.");
+            
             blockStore.updateTransactionOutputConfirmed(tx.getHash(), out.getIndex(), true);
             blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), out.getIndex(), blockhash);
             blockStore.updateTransactionOutputSpent(tx.getHash(), out.getIndex(), false, null);
@@ -537,7 +549,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         BlockEvaluation blockEvaluation = blockWrap.getBlockEvaluation();
         Block block = blockWrap.getBlock();
 
-        // If already disconnected, return
+        // If already unconfirmed, return
         if (!blockEvaluation.isMilestone())
             return;
 
@@ -548,6 +560,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (Sha256Hash approver : blockStore.getSolidApproverBlockHashes(blockEvaluation.getBlockHash())) {
             removeBlockFromMilestone(approver);
         }
+        
+        // TODO disconnect all dependents here... type-specific dependents, each blocktype should implement its own disconnectdependents etc.  
 
         unconfirmBlock(block);
     }
@@ -564,6 +578,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (Transaction tx : block.getTransactions()) {
             unconfirmTransaction(tx, block);
         }
+
+        // TODO disconnect type-specific UTXOs, each blocktype should implement its own
 
         // For rewards, update reward db
         if (block.getBlockType() == Block.Type.BLOCKTYPE_REWARD) {
@@ -611,22 +627,30 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * @throws BlockStoreException
      */
     private void unconfirmTransaction(Transaction tx, Block parentBlock) throws BlockStoreException {
-        // Set own outputs unconfirmed and remove dependents
-        for (TransactionOutput txout : tx.getOutputs()) {
-            if (blockStore.getTransactionOutput(tx.getHash(), txout.getIndex()).isSpent()) {
-                removeBlockFromMilestone(
-                        blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()).getBlockHash());
-                blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), txout.getIndex(), null);
-            }
-            blockStore.updateTransactionOutputConfirmed(tx.getHash(), txout.getIndex(), false);
-        }
-
-        // Set other outputs used as unspent
+        // Set used outputs as unspent
         if (!tx.isCoinBase()) {
             for (TransactionInput txin : tx.getInputs()) {
                 blockStore.updateTransactionOutputSpent(txin.getOutpoint().getHash(), txin.getOutpoint().getIndex(),
                         false, null);
             }
+        }
+        
+        // Set own outputs unconfirmed and TODO no longer remove dependents
+        for (TransactionOutput txout : tx.getOutputs()) {
+            UTXO utxo = blockStore.getTransactionOutput(tx.getHash(), txout.getIndex());
+            
+            // TODO move
+            if (utxo.isSpent()) {
+                removeBlockFromMilestone(
+                        blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()).getBlockHash());
+            }
+            
+            // Sanity check
+            if (utxo.isSpent())
+                throw new RuntimeException("Attempted to unconfirm a spent output!");
+
+            blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), txout.getIndex(), null);
+            blockStore.updateTransactionOutputConfirmed(tx.getHash(), txout.getIndex(), false);
         }
     }
 
@@ -670,7 +694,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             for (TransactionOutput out : tx.getOutputs()) {
                 Script script = getScript(out.getScriptBytes());
                 UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), height, isCoinBase, script,
-                        getScriptAddress(script), block.getHash(), out.getFromaddress(), tx.getMemo(),
+                        getScriptAddress(script), null, out.getFromaddress(), tx.getMemo(),
                         Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0);
                 // Filter zero UTXO
                 if (!newOut.getValue().isZero()) {
