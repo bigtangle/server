@@ -343,11 +343,13 @@ public class ValidatorService {
 
     private long calculateNextTxReward(BlockWrap prevTrunkBlock, BlockWrap prevBranchBlock, BlockWrap prevRewardBlock,
             long currPerTxReward, long totalRewardCount) {
-        // The following equals current time by consensus rules
+        // The following is used as proxy for current time by consensus rules
         long currentTime = Math.max(prevTrunkBlock.getBlock().getTimeSeconds(),
                 prevBranchBlock.getBlock().getTimeSeconds()); 
         long timespan = Math.max(1, (currentTime - prevRewardBlock.getBlock().getTimeSeconds()));
         
+        // TODO virtual txs for reward
+        // TODO RewardInfo parse fully, also same VOSInfo
         // TODO include result from difficulty adjustment
         //BigInteger result = BigInteger.valueOf(currPerTxReward);
         long nextPerTxReward = NetworkParameters.TARGET_YEARLY_MINING_PAYOUT * timespan / 31536000L

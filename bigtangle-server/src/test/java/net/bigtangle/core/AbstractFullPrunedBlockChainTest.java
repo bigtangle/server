@@ -85,7 +85,9 @@ public abstract class AbstractFullPrunedBlockChainTest {
         input.clearScriptBytes();
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
-        blockgraph.setRunScripts(false);
+        
+        // TAKEN OUT validatorService.setRunScripts(false);
+        
         try {
             blockgraph.add(rollingBlock, true);
         } catch (VerificationException e) {

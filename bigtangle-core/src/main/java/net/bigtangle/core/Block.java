@@ -1301,8 +1301,6 @@ public class Block extends Message {
         adjustLength(transactions.size(), coinbase.length);
     }
 
-    public static final byte[] EMPTY_BYTES = new byte[32];
-
     public boolean allowCoinbaseTransaction() {
         return blockType.allowCoinbaseTransaction();
     }

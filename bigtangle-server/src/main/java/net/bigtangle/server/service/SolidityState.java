@@ -24,7 +24,7 @@ public class SolidityState {
         this.missingDependency = missingDependency;
     }
 
-    public State getReason() {
+    public State getState() {
         return state;
     }
 

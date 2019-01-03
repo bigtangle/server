@@ -85,11 +85,9 @@ public class BlockWrap {
         case BLOCKTYPE_REWARD:
             // Dynamic conflicts: mining reward height intervals
             blockConflicts.add(new ConflictCandidate(this, Utils.readInt64(this.getBlock().getTransactions().get(0).getData(), 0)));
-            // TODO change to add sequence number
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             // Dynamic conflicts: token issuance ids
-            // TODO change to add sequence number
             try {
                 TokenInfo tokenInfo;
                     tokenInfo = new TokenInfo().parse(this.getBlock().getTransactions().get(0).getData());

@@ -5,25 +5,16 @@
 
 package net.bigtangle.store;
 
-import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
-
-import javax.annotation.Nullable;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.StoredBlock;
-import net.bigtangle.core.TransactionOutputChanges;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.server.service.SolidityState;
 import net.bigtangle.utils.Threading;
-import net.bigtangle.utils.VersionTally;
 import net.bigtangle.wallet.Wallet;
 
 /**
@@ -99,35 +90,19 @@ import net.bigtangle.wallet.Wallet;
  * </p>
  */
 public abstract class AbstractBlockGraph {
-    private static final Logger log = LoggerFactory.getLogger(AbstractBlockGraph.class);
     protected final ReentrantLock lock = Threading.lock("blocktangle");
 
     /** Keeps a map of block hashes to StoredBlocks. */
-    private final BlockStore blockStore;
-
+    protected final BlockStore blockStore;
     protected final NetworkParameters params;
-
-    /** False positive estimation uses a double exponential moving average. */
-    public static final double FP_ESTIMATOR_ALPHA = 0.0001;
-    /** False positive estimation uses a double exponential moving average. */
-    public static final double FP_ESTIMATOR_BETA = 0.01;
-
-    private double falsePositiveRate;
-    private double falsePositiveTrend;
-    private double previousFalsePositiveRate;
-
-    protected final VersionTally versionTally;
 
     /**
      * Constructs a BlockTangle connected to the given list of listeners (eg,
      * wallets) and a store.
      */
-    public AbstractBlockGraph(Context context, List<? extends Wallet> wallets, BlockStore blockStore)
-            throws BlockStoreException {
+    public AbstractBlockGraph(Context context, BlockStore blockStore) throws BlockStoreException {
         this.blockStore = blockStore;
         this.params = context.getParams();
-
-        this.versionTally = new VersionTally(context.getParams());
     }
 
     /**
@@ -139,134 +114,33 @@ public abstract class AbstractBlockGraph {
     }
 
     /**
-     * Adds/updates the given {@link Block} with the block store. This version
-     * is used when the transactions have not been verified.
+     * Insert a currently unsolid block with the given SolidityState. The block
+     * can then wait until the missing dependency is resolved.
      * 
-     * @param storedPrev
-     *            The {@link StoredBlock} which immediately precedes block.
      * @param block
-     *            The {@link Block} to add/update.
-     * @return the newly created {@link StoredBlock}
+     *            The unsolid block
+     * @param solidityState
+     *            The current solidity state of the block
+     * @throws BlockStoreException
      */
-    protected abstract StoredBlock addToBlockStore(StoredBlock storedPrev, StoredBlock storedBlockPrevBranch,
-            Block block) throws BlockStoreException, VerificationException;
-
-    protected abstract void insertUnsolidBlock(Block block, SolidityState solidityState) throws BlockStoreException, VerificationException;
-
-    /**
-     * Adds/updates the given {@link StoredBlock} with the block store. This
-     * version is used when the transactions have already been verified to
-     * properly spend txOutputChanges.
-     * 
-     * @param storedPrev
-     *            The {@link StoredBlock} which immediately precedes block.
-     * @param header
-     *            The {@link StoredBlock} to add/update.
-     * @param txOutputChanges
-     *            The total sum of all changes made by this block to the set of
-     *            open transaction outputs (from a call to connectTransactions),
-     *            if in fully verifying mode (null otherwise).
-     * @return the newly created {@link StoredBlock}
-     */
-    protected abstract StoredBlock addToBlockStore(StoredBlock storedPrev, StoredBlock storedBlockPrevBranch,
-            Block header, @Nullable TransactionOutputChanges txOutputChanges)
-            throws BlockStoreException, VerificationException;
+    protected abstract void insertUnsolidBlock(Block block, SolidityState solidityState)
+            throws BlockStoreException;
 
     /**
      * Processes a received block and tries to add it to the chain. If there's
      * something wrong with the block an exception is thrown. If the block is OK
      * but cannot be connected to the chain at this time, returns false. If the
-     * block can be connected to the chain, returns true. Accessing block's
-     * transactions in another thread while this method runs may result in
-     * undefined behavior.
+     * block can be connected to the chain, returns true.
+     * 
+     * @param block
+     *            The block to add.
+     * @param allowUnsolid
+     *            If set to false, will not allow unsolid blocks onto the
+     *            waiting list.
+     * @return true if the block can be connected to the chain, false if not
+     *         possible currently.
+     * @throws VerificationException
+     *             if the block cannot be added to the chain.
      */
- 
-    
-    /**
-     * Whether or not we are maintaining a set of unspent outputs and are
-     * verifying all transactions. Also indicates that all calls to add() should
-     * provide a block containing transactions
-     */
-    public abstract boolean shouldVerifyTransactions();
-
-
-    protected abstract boolean connectUTXOs(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height) throws BlockStoreException, VerificationException;
-
-    protected abstract boolean checkSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch,
-            long height, boolean allowConflicts) throws BlockStoreException, VerificationException;
-
-
-    /**
-     * The false positive rate is the average over all blockchain transactions
-     * of:
-     *
-     * - 1.0 if the transaction was false-positive (was irrelevant to all
-     * listeners) - 0.0 if the transaction was relevant or filtered out
-     */
-    public double getFalsePositiveRate() {
-        return falsePositiveRate;
-    }
-
-    /*
-     * We completed handling of a filtered block. Update false-positive estimate
-     * based on the total number of transactions in the original block.
-     *
-     * count includes filtered transactions, transactions that were passed in
-     * and were relevant and transactions that were false positives (i.e.
-     * includes all transactions in the block).
-     */
-    public void trackFilteredTransactions(int count) {
-        // Track non-false-positives in batch. Each non-false-positive counts as
-        // 0.0 towards the estimate.
-        //
-        // This is slightly off because we are applying false positive tracking
-        // before non-FP tracking,
-        // which counts FP as if they came at the beginning of the block.
-        // Assuming uniform FP
-        // spread in a block, this will somewhat underestimate the FP rate (5%
-        // for 1000 tx block).
-        double alphaDecay = Math.pow(1 - FP_ESTIMATOR_ALPHA, count);
-
-        // new_rate = alpha_decay * new_rate
-        falsePositiveRate = alphaDecay * falsePositiveRate;
-
-        double betaDecay = Math.pow(1 - FP_ESTIMATOR_BETA, count);
-
-        // trend = beta * (new_rate - old_rate) + beta_decay * trend
-        falsePositiveTrend = FP_ESTIMATOR_BETA * count * (falsePositiveRate - previousFalsePositiveRate)
-                + betaDecay * falsePositiveTrend;
-
-        // new_rate += alpha_decay * trend
-        falsePositiveRate += alphaDecay * falsePositiveTrend;
-
-        // Stash new_rate in old_rate
-        previousFalsePositiveRate = falsePositiveRate;
-    }
-
-    /* Irrelevant transactions were received. Update false-positive estimate. */
-    public void trackFalsePositives(int count) {
-        // Track false positives in batch by adding alpha to the false positive
-        // estimate once per count.
-        // Each false positive counts as 1.0 towards the estimate.
-        falsePositiveRate += FP_ESTIMATOR_ALPHA * count;
-        if (count > 0)
-            log.debug("{} false positives, current rate = {} trend = {}", count, falsePositiveRate, falsePositiveTrend);
-    }
-
-    /**
-     * Resets estimates of false positives. Used when the filter is sent to the
-     * peer.
-     */
-    public void resetFalsePositiveEstimate() {
-        falsePositiveRate = 0;
-        falsePositiveTrend = 0;
-        previousFalsePositiveRate = 0;
-    }
-
-    protected VersionTally getVersionTally() {
-        return versionTally;
-    }
- 
-
-    protected abstract void solidifyBlock(Block block) throws BlockStoreException;
+    public abstract boolean add(Block block, boolean allowUnsolid) throws VerificationException;
 }
