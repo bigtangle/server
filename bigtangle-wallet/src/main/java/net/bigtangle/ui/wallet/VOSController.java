@@ -27,6 +27,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.cell.MapValueFactory;
 import net.bigtangle.core.Block;
+import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
@@ -152,7 +153,7 @@ public class VOSController {
             for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
                 pubKeyList.add(ecKey.getPublicKeyAsHex());
             }
-            int blocktype = (int) Block.BLOCKTYPE_VOS;
+             Type blocktype = Block.Type.BLOCKTYPE_VOS;
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("blocktype", blocktype);
             requestParam.put("pubKeyList", pubKeyList);
@@ -200,7 +201,7 @@ public class VOSController {
             byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTip.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
-            block.setBlockType(Block.BLOCKTYPE_VOS);
+            block.setBlockType(Block.Type.BLOCKTYPE_VOS);
             KeyParameter aesKey = null;
             final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
             if (!"".equals(Main.password.trim())) {

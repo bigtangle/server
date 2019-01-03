@@ -64,6 +64,7 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
+import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Contact;
 import net.bigtangle.core.ContactInfo;
@@ -163,7 +164,7 @@ public class Main extends Application {
 
     public static void addToken(String contextRoot, String tokenname, String tokenid, String type) throws Exception {
         String domain = type;
-        long blocktype = Block.BLOCKTYPE_USERDATA;
+          Type blocktype = Block.Type.BLOCKTYPE_USERDATA;
         if (DataClassName.SERVERURL.name().equals(type)) {
             type = DataClassName.WATCHED.name();
             // blocktype = NetworkParameters.BLOCKTYPE_USERDATA_SERVERURL;
@@ -440,7 +441,7 @@ public class Main extends Application {
         byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Main.params.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(Block.BLOCKTYPE_USERDATA);
+        block.setBlockType(Block.Type.BLOCKTYPE_USERDATA);
         KeyParameter aesKey = null;
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
