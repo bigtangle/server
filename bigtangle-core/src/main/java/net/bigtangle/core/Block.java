@@ -154,19 +154,52 @@ public class Block extends Message {
     // (which Message needs)
     protected int optimalEncodingMessageSize;
 
-    // BLOCKTYPES
     // TODO implement all conditions for each block type in all switches
+    /** To add new BLOCKTYPES, implement their rules in:
+     * ValidatorService.checkTypeSpecificBlockSolidity
+     * ValidatorService.checkTypeSpecificTransactionSolidity
+     * BlockWrap.addTypeSpecificConflictCandidates
+     * connectBlock
+     * removeWherePreconditionsUnfulfilled
+     * confirmBlock
+     * unconfirmBlock
+     */
     public enum Type {
-        BLOCKTYPE_INITIAL, // Genesis block
-        BLOCKTYPE_TRANSFER, // Default block
-        BLOCKTYPE_REWARD, // Rewards of mining
-        BLOCKTYPE_TOKEN_CREATION, // Custom token issuance
-        BLOCKTYPE_USERDATA, // User-defined data
-        BLOCKTYPE_VOS, // Smart contracts
-        BLOCKTYPE_GOVERNANCE, // Governance of software
-        BLOCKTYPE_FILE, // User-defined file
-        BLOCKTYPE_VOS_EXECUTE, // VOS execution result
-        BLOCKTYPE_CROSSTANGLE, // transfer from mainnet to permissioned
+        BLOCKTYPE_INITIAL(true, 0, 0, Integer.MAX_VALUE), // Genesis block
+        BLOCKTYPE_TRANSFER(false, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // Default block
+        BLOCKTYPE_REWARD(true, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // Rewards of mining
+        BLOCKTYPE_TOKEN_CREATION(true, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // Custom token issuance
+        BLOCKTYPE_USERDATA(false, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // User-defined data
+        BLOCKTYPE_VOS(false, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // Smart contracts
+        BLOCKTYPE_GOVERNANCE(false, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // Governance of software
+        BLOCKTYPE_FILE(false, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // User-defined file
+        BLOCKTYPE_VOS_EXECUTE(false, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // VOS execution result
+        BLOCKTYPE_CROSSTANGLE(true, 1, 1, MAX_DEFAULT_BLOCK_SIZE); // transfer from mainnet to permissioned
+
+        private boolean allowCoinbaseTransaction;
+        private int powMultiplier; // TODO use
+        private int rewardMultiplier; // TODO use
+        private int maxSize;
+        
+        private Type(boolean allowCoinbaseTransaction, int powMultiplier, int rewardMultiplier, int maxSize) {
+            this.allowCoinbaseTransaction = allowCoinbaseTransaction;
+            this.powMultiplier = powMultiplier;
+            this.rewardMultiplier = rewardMultiplier;
+            this.maxSize = maxSize;
+        }
+        
+        public boolean allowCoinbaseTransaction() {
+            return allowCoinbaseTransaction;
+        }
+        public int getPowMultiplier() {
+            return powMultiplier;
+        }
+        public int getRewardMultiplier() {
+            return rewardMultiplier;
+        }
+        public int getMaxBlockSize() {
+            return maxSize;
+        }
     }
 
     Block(NetworkParameters params, long setVersion) {
@@ -966,11 +999,7 @@ public class Block extends Message {
     }
 
     private int getMaxBlockSize() {
-        if (getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
-            return Integer.MAX_VALUE;
-        } else {
-            return MAX_DEFAULT_BLOCK_SIZE;
-        }
+        return blockType.getMaxBlockSize();
     }
 
     /**
@@ -1279,21 +1308,7 @@ public class Block extends Message {
     public static final byte[] EMPTY_BYTES = new byte[32];
 
     public boolean allowCoinbaseTransaction() {
-        switch (blockType) {
-        case BLOCKTYPE_INITIAL:
-        case BLOCKTYPE_TOKEN_CREATION: // checked separately somewhere else TODO where?
-        case BLOCKTYPE_REWARD: // TODO remove this and build virtual txs 
-        case BLOCKTYPE_CROSSTANGLE: // TODO should be checked separately somewhere else?
-            return true;
-        case BLOCKTYPE_FILE:
-        case BLOCKTYPE_GOVERNANCE:
-        case BLOCKTYPE_TRANSFER:
-        case BLOCKTYPE_USERDATA:
-        case BLOCKTYPE_VOS:
-        case BLOCKTYPE_VOS_EXECUTE:
-            return false;
-        }
-        return false;
+        return blockType.allowCoinbaseTransaction();
     }
 
     private static Random gen = new Random();
@@ -1304,7 +1319,6 @@ public class Block extends Message {
      * @param height
      *            block height, if known, or -1 otherwise.
      */
-
     public Block createNextBlock(Block branchBlock, final long version, byte[] mineraddress) {
         Block b = new Block(params, version);
 
@@ -1319,12 +1333,10 @@ public class Block extends Message {
 
         // Don't let timestamp go backwards, ex the genesis block
         long minTime = Math.max(getTimeSeconds(), branchBlock.getTimeSeconds());
-        if (blockType != Block.Type.BLOCKTYPE_INITIAL) {
-            if (getTimeSeconds() >= minTime)
-                b.setTime(getTimeSeconds() + 1);
-            else
-                b.setTime(minTime);
-        }
+        if (getTimeSeconds() >= minTime)
+            b.setTime(getTimeSeconds() + 1);
+        else
+            b.setTime(minTime);
         b.solve();
         try {
             b.verifyHeader();

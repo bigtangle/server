@@ -67,7 +67,13 @@ public class BlockWrap {
         this.getBlock().getTransactions().stream().flatMap(t -> t.getInputs().stream()).filter(in -> !in.isCoinBase())
                 .map(in -> new ConflictCandidate(this, in.getOutpoint())).forEach(c -> blockConflicts.add(c));
         
-        switch (getBlock().getBlockType()) {
+        addTypeSpecificConflictCandidates(blockConflicts);
+
+        return blockConflicts;
+    }
+
+    private void addTypeSpecificConflictCandidates(HashSet<ConflictCandidate> blockConflicts) {
+        switch (this.getBlock().getBlockType()) {
         case BLOCKTYPE_CROSSTANGLE:
             break;
         case BLOCKTYPE_FILE:
@@ -102,10 +108,57 @@ public class BlockWrap {
         case BLOCKTYPE_VOS_EXECUTE:
             break;
         default:
-            throw new NotImplementedException("Not implemented");
+            throw new NotImplementedException("Blocktype not implemented!");
         
         }
-
-        return blockConflicts;
     }
+    
+//    public HashSet<ConflictCandidate> toConflictCandidates() {
+//        HashSet<ConflictCandidate> blockConflicts = new HashSet<>();
+//
+//        // Dynamic conflicts: conflicting transaction outpoints
+//        this.getBlock().getTransactions().stream().flatMap(t -> t.getInputs().stream()).filter(in -> !in.isCoinBase())
+//                .map(in -> new ConflictCandidate(this, in.getOutpoint())).forEach(c -> blockConflicts.add(c));
+//        
+//        switch (getBlock().getBlockType()) {
+//        case BLOCKTYPE_CROSSTANGLE:
+//            break;
+//        case BLOCKTYPE_FILE:
+//            break;
+//        case BLOCKTYPE_GOVERNANCE:
+//            break;
+//        case BLOCKTYPE_INITIAL:
+//            break;
+//        case BLOCKTYPE_REWARD:
+//            // Dynamic conflicts: mining reward height intervals
+//            blockConflicts.add(new ConflictCandidate(this, Utils.readInt64(this.getBlock().getTransactions().get(0).getData(), 0)));
+//            // TODO change to add sequence number
+//            break;
+//        case BLOCKTYPE_TOKEN_CREATION:
+//            // Dynamic conflicts: token issuance ids
+//            // TODO change to add sequence number
+//            try {
+//                TokenInfo tokenInfo;
+//                    tokenInfo = new TokenInfo().parse(this.getBlock().getTransactions().get(0).getData());
+//                Token tokens = tokenInfo.getTokens();
+//                blockConflicts.add(new ConflictCandidate(this, tokens));
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//            break;
+//        case BLOCKTYPE_TRANSFER:
+//            break;
+//        case BLOCKTYPE_USERDATA:
+//            break;
+//        case BLOCKTYPE_VOS:
+//            break;
+//        case BLOCKTYPE_VOS_EXECUTE:
+//            break;
+//        default:
+//            throw new NotImplementedException("Not implemented");
+//        
+//        }
+//
+//        return blockConflicts;
+//    }
 }

@@ -462,6 +462,11 @@ public abstract class NetworkParameters {
 
 		return flags;
 	}
+	
+    public EnumSet<Script.VerifyFlag> getTransactionVerificationFlags(final Block block, final Transaction transaction,
+            final VersionTally tally) {
+        return getTransactionVerificationFlags(block, transaction);
+    }
 
 	/**
 	 * The flags indicating which script validation tests should be applied to the
@@ -476,8 +481,7 @@ public abstract class NetworkParameters {
 	 *            height of the block, if known, null otherwise. Returned tests
 	 *            should be a safe subset if block height is unknown.
 	 */
-	public EnumSet<Script.VerifyFlag> getTransactionVerificationFlags(final Block block, final Transaction transaction,
-			final VersionTally tally) {
+	public EnumSet<Script.VerifyFlag> getTransactionVerificationFlags(final Block block, final Transaction transaction) {
 		final EnumSet<Script.VerifyFlag> verifyFlags = EnumSet.noneOf(Script.VerifyFlag.class);
 		// if (block.getTimeSeconds() >= NetworkParameters.BIP16_ENFORCE_TIME)
 		verifyFlags.add(Script.VerifyFlag.P2SH);

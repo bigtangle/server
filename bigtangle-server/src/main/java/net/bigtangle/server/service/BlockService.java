@@ -37,7 +37,7 @@ import net.bigtangle.wallet.DefaultCoinSelector;
 
 /**
  * <p>
- * A Block provides service for blocks with store.
+ * Provides services for blocks.
  * </p>
  */
 @Service

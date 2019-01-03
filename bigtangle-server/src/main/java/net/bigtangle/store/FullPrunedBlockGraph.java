@@ -183,8 +183,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 throw e;
             }
             checkState(lock.isHeldByCurrentThread());
-
-            if (checkSolidity(block, storedPrev, storedPrevBranch, height, allowConflicts)) {
+            
+            // TODO after checkSolidity do checkValidity
+            if (validatorService.checkBlockSolidity(block, storedPrev, storedPrevBranch, height, allowConflicts)) {
                 // Write to DB
                 try {
                     blockStore.beginDatabaseBatchWrite();
@@ -773,7 +774,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 return false;
         }
 
-        // Check difficulty and last consensus is passed through correctly
+        // Check difficulty and last consensus reward block is passed through correctly
         if (block.getBlockType() != Block.Type.BLOCKTYPE_REWARD) {
             if (block.getLastMiningRewardBlock() == storedPrev.getHeader().getLastMiningRewardBlock()
                     && block.getDifficultyTarget() != storedPrev.getHeader().getDifficultyTarget())

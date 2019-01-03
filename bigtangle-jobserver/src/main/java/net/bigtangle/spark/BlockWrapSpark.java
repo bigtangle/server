@@ -27,7 +27,7 @@ import scala.collection.mutable.ListMap;
 public class BlockWrapSpark extends BlockWrap implements Serializable {
     private static final long serialVersionUID = 660084694396085961L;
 
-    /** db-transient members for temporary Spark calculations */
+    /** transient members for temporary Spark calculations */
     private HashSet<Sha256Hash> weightHashes;
     private HashSet<Sha256Hash> receivedWeightHashes;
     private HashSet<ConflictCandidate> approvedNonMilestoneConflicts;

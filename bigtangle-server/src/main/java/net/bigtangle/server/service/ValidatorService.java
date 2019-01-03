@@ -6,19 +6,30 @@ package net.bigtangle.server.service;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.directory.api.util.exception.NotImplementedException;
@@ -35,14 +46,19 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ConflictCandidate;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
+import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.VerificationException;
 import net.bigtangle.script.Script;
+import net.bigtangle.script.Script.VerifyFlag;
 import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.utils.ContextPropagatingThreadFactory;
 
 @Service
 public class ValidatorService {
@@ -55,9 +71,77 @@ public class ValidatorService {
     protected NetworkParameters networkParameters;
     @Autowired
     private TransactionService transactionService;
+    @Autowired
+    private MultiSignService multiSignService;
+    @Autowired
+    private NetworkParameters params;
 
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
+    ExecutorService scriptVerificationExecutor = Executors.newFixedThreadPool(
+            Runtime.getRuntime().availableProcessors(), new ContextPropagatingThreadFactory("Script verification"));
+
+    /**
+     * A job submitted to the executor which verifies signatures.
+     */
+    private static class Verifier implements Callable<VerificationException> {
+        final Transaction tx;
+        final List<Script> prevOutScripts;
+        final Set<VerifyFlag> verifyFlags;
+
+        public Verifier(final Transaction tx, final List<Script> prevOutScripts, final Set<VerifyFlag> verifyFlags) {
+            this.tx = tx;
+            this.prevOutScripts = prevOutScripts;
+            this.verifyFlags = verifyFlags;
+        }
+
+        @Nullable
+        @Override
+        public VerificationException call() throws Exception {
+            try {
+                ListIterator<Script> prevOutIt = prevOutScripts.listIterator();
+                for (int index = 0; index < tx.getInputs().size(); index++) {
+                    tx.getInputs().get(index).getScriptSig().correctlySpends(tx, index, prevOutIt.next(), verifyFlags);
+                }
+            } catch (VerificationException e) {
+                return e;
+            }
+            return null;
+        }
+    }
+
+    /**
+     * Get the {@link Script} from the script bytes or return Script of empty
+     * byte array.
+     */
+    private Script getScript(byte[] scriptBytes) {
+        try {
+            return new Script(scriptBytes);
+        } catch (Exception e) {
+            return new Script(new byte[0]);
+        }
+    }
+
+    /**
+     * Get the address from the {@link Script} if it exists otherwise return
+     * empty string "".
+     *
+     * @param script
+     *            The script.
+     * @return The address.
+     */
+    private String getScriptAddress(@Nullable Script script) {
+        String address = "";
+        try {
+            if (script != null) {
+                address = script.getToAddress(params, true).toString();
+            }
+        } catch (Exception e) {
+            // e.printStackTrace();
+        }
+        return address;
+    }
+    
     /**
      * Deterministically creates a mining reward transaction based on the
      * previous blocks and previous reward transaction.
@@ -777,5 +861,342 @@ public class ValidatorService {
 
     private BlockWrap getTokenIssuingBlock(Token token) throws BlockStoreException {
         return store.getTokenIssuingConfirmedBlock(token.getTokenid(), token.getTokenindex());
+    }
+    
+    /*
+     * Check if the block is made correctly. Allow conflicts for transaction
+     * data (non-Javadoc)
+     * 
+     * @see
+     * net.bigtangle.store.AbstractBlockGraph#checkSolidity(net.bigtangle.core.
+     * Block, net.bigtangle.core.StoredBlock, net.bigtangle.core.StoredBlock,
+     * long)
+     */
+    public boolean checkBlockSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height,
+            boolean allowConflicts) throws VerificationException {
+        // Check timestamp: enforce monotone time increase
+        if (block.getTimeSeconds() < storedPrev.getHeader().getTimeSeconds()
+                || block.getTimeSeconds() < storedPrevBranch.getHeader().getTimeSeconds())
+            return false;
+
+        // Check difficulty and latest consensus reward block is passed through correctly
+        if (block.getBlockType() != Block.Type.BLOCKTYPE_REWARD && block.getBlockType() != Block.Type.BLOCKTYPE_INITIAL) {
+            if (storedPrev.getHeader().getLastMiningRewardBlock() >= storedPrevBranch.getHeader().getLastMiningRewardBlock()) {
+                if (block.getLastMiningRewardBlock() != storedPrev.getHeader().getLastMiningRewardBlock()
+                        || block.getDifficultyTarget() != storedPrev.getHeader().getDifficultyTarget()) 
+                    return false;
+            } else {
+                if (block.getLastMiningRewardBlock() != storedPrevBranch.getHeader().getLastMiningRewardBlock()
+                        || block.getDifficultyTarget() != storedPrevBranch.getHeader().getDifficultyTarget()) 
+                    return false;
+            }
+        }
+
+        // Check correctness of TXs and their data
+        if (!checkTransactionSolidity(block, height))
+            return false;
+
+        // Check type-specific solidity
+        if (!checkTypeSpecificBlockSolidity(block, storedPrev, storedPrevBranch, allowConflicts))
+            return false;
+
+        return true;
+    }
+
+    private boolean checkTypeSpecificBlockSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch,
+            boolean allowConflicts) {
+        switch (block.getBlockType()) {
+        case BLOCKTYPE_CROSSTANGLE:
+            // TODO
+            break;
+        case BLOCKTYPE_FILE:
+            break;
+        case BLOCKTYPE_GOVERNANCE:
+            break;
+        case BLOCKTYPE_INITIAL:
+            // Check genesis block specific validity, can only one genesis block
+            if (!block.getHash().equals(networkParameters.getGenesisBlock().getHash())) {
+                return false;
+            }
+            break;
+        case BLOCKTYPE_REWARD:
+            // Check reward block specific solidity
+            // Get reward data from previous reward cycle
+            Sha256Hash prevRewardHash = null;
+            @SuppressWarnings("unused")
+            long fromHeight = 0, nextPerTxReward = 0;
+            try {
+                byte[] hashBytes = new byte[32];
+                ByteBuffer bb = ByteBuffer.wrap(block.getTransactions().get(0).getData());
+                fromHeight = bb.getLong();
+                nextPerTxReward = bb.getLong();
+                bb.get(hashBytes, 0, 32);
+                prevRewardHash = Sha256Hash.wrap(hashBytes);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
+
+            try {
+                Triple<Transaction, Boolean, Long> rewardEligibleDifficulty = generateMiningRewardTX(storedPrev.getHeader(), storedPrevBranch.getHeader(), prevRewardHash);
+
+                // Reward must have been built correctly.
+                if (!rewardEligibleDifficulty.getLeft().getHash().equals(block.getTransactions().get(0).getHash()))
+                    return false;
+
+                // Difficulty must be correct
+                if (rewardEligibleDifficulty.getRight() != block.getDifficultyTarget())
+                    return false;
+                if (Math.max(storedPrev.getHeader().getLastMiningRewardBlock(),
+                        storedPrevBranch.getHeader().getLastMiningRewardBlock()) + 1 != block.getLastMiningRewardBlock())
+                    return false;
+            } catch (BlockStoreException e) {
+                logger.info("", e);
+                return false;
+            }
+            break;
+        case BLOCKTYPE_TOKEN_CREATION:
+            // Check issuance block specific validity
+            try {
+                // TODO
+                // Check according to previous issuance, or if it does not exist
+                // the normal signature
+                if (!this.multiSignService.checkToken(block, allowConflicts)) {
+                    return false;
+                }
+            } catch (Exception e) {
+                logger.error("", e);
+                return false;
+            }
+            break;
+        case BLOCKTYPE_TRANSFER:
+            break;
+        case BLOCKTYPE_USERDATA:
+            break;
+        case BLOCKTYPE_VOS:
+            break;
+        case BLOCKTYPE_VOS_EXECUTE:
+            break;
+        default:
+            throw new NotImplementedException("Blocktype not implemented!");
+        
+        }
+        
+        return true;
+    }
+
+    private boolean checkTransactionSolidity(Block block, long height) {
+        List<Transaction> transactions = block.getTransactions();
+        
+        // Coinbase allowance
+        for (Transaction tx : transactions) {
+            if (tx.isCoinBase() && !block.allowCoinbaseTransaction()) {
+                return false;
+            }
+        }
+        
+        // The transactions must adhere to their block type rules
+        if (!checkTypeSpecificTransactionSolidity(block))
+            return false;
+        
+        LinkedList<UTXO> txOutsSpent = new LinkedList<UTXO>();
+        LinkedList<UTXO> txOutsCreated = new LinkedList<UTXO>();
+        long sigOps = 0;
+
+        try {
+            if (scriptVerificationExecutor.isShutdown())
+                scriptVerificationExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+            List<Future<VerificationException>> listScriptVerificationResults = new ArrayList<Future<VerificationException>>(
+                    block.getTransactions().size());
+
+            if (!params.isCheckpoint(height)) {
+                for (Transaction tx : block.getTransactions()) {
+                    final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx);
+
+                    if (verifyFlags.contains(VerifyFlag.P2SH))
+                        sigOps += tx.getSigOpCount();
+                }
+            }
+
+            for (final Transaction tx : block.getTransactions()) {
+                boolean isCoinBase = tx.isCoinBase();
+                Map<String, Coin> valueIn = new HashMap<String, Coin>();
+                Map<String, Coin> valueOut = new HashMap<String, Coin>();
+
+                final List<Script> prevOutScripts = new LinkedList<Script>();
+                final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx);
+                if (!isCoinBase) {
+                    for (int index = 0; index < tx.getInputs().size(); index++) {
+                        TransactionInput in = tx.getInputs().get(index);
+                        UTXO prevOut = store.getTransactionOutput(in.getOutpoint().getHash(),
+                                in.getOutpoint().getIndex());
+                        if (prevOut == null)
+                            throw new VerificationException("Block attempts to spend a not yet existent output!");
+
+                        if (valueIn.containsKey(Utils.HEX.encode(prevOut.getValue().getTokenid()))) {
+                            valueIn.put(Utils.HEX.encode(prevOut.getValue().getTokenid()), valueIn
+                                    .get(Utils.HEX.encode(prevOut.getValue().getTokenid())).add(prevOut.getValue()));
+                        } else {
+                            valueIn.put(Utils.HEX.encode(prevOut.getValue().getTokenid()), prevOut.getValue());
+
+                        }
+                        if (verifyFlags.contains(VerifyFlag.P2SH)) {
+                            if (prevOut.getScript().isPayToScriptHash())
+                                sigOps += Script.getP2SHSigOpCount(in.getScriptBytes());
+                            if (sigOps > Block.MAX_BLOCK_SIGOPS)
+                                throw new VerificationException("Too many P2SH SigOps in block");
+                        }
+                        prevOutScripts.add(prevOut.getScript());
+                        txOutsSpent.add(prevOut);
+                    }
+                }
+                Sha256Hash hash = tx.getHash();
+                for (TransactionOutput out : tx.getOutputs()) {
+                    if (valueOut.containsKey(Utils.HEX.encode(out.getValue().getTokenid()))) {
+                        valueOut.put(Utils.HEX.encode(out.getValue().getTokenid()),
+                                valueOut.get(Utils.HEX.encode(out.getValue().getTokenid())).add(out.getValue()));
+                    } else {
+                        valueOut.put(Utils.HEX.encode(out.getValue().getTokenid()), out.getValue());
+                    }
+                    // For each output, add it to the set of unspent outputs so
+                    // it can be consumed
+                    // in future.
+                    Script script = getScript(out.getScriptBytes());
+                    UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), height, isCoinBase, script,
+                            getScriptAddress(script), block.getHash(), out.getFromaddress(), tx.getMemo(),
+                            Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0);
+
+                    txOutsCreated.add(newOut);
+                }
+                if (!checkOutputSigns(valueOut))
+                    throw new VerificationException("Transaction output value out of range");
+                if (isCoinBase) {
+                    // coinbaseValue = valueOut;
+                } else {
+                    if (!checkInputOutput(valueIn, valueOut))
+                        throw new VerificationException("Transaction input value out of range");
+                    // totalFees = totalFees.add(valueIn.subtract(valueOut));
+                }
+
+                if (!isCoinBase) {
+                    // Because correctlySpends modifies transactions, this must
+                    // come after we are done with tx
+                    FutureTask<VerificationException> future = new FutureTask<VerificationException>(
+                            new Verifier(tx, prevOutScripts, verifyFlags));
+                    scriptVerificationExecutor.execute(future);
+                    listScriptVerificationResults.add(future);
+                }
+            }
+            for (Future<VerificationException> future : listScriptVerificationResults) {
+                VerificationException e;
+                try {
+                    e = future.get();
+                } catch (InterruptedException thrownE) {
+                    throw new RuntimeException(thrownE); // Shouldn't happen
+                } catch (ExecutionException thrownE) {
+                    // log.error("Script.correctlySpends threw a non-normal
+                    // exception: " ,thrownE );
+                    throw new VerificationException(
+                            "Bug in Script.correctlySpends, likely script malformed in some new and interesting way.",
+                            thrownE);
+                }
+                if (e != null)
+                    throw e;
+            }
+        } catch (VerificationException e) {
+            scriptVerificationExecutor.shutdownNow();
+            logger.info("", e);
+            return false;
+        } catch (BlockStoreException e) {
+            scriptVerificationExecutor.shutdownNow();
+            logger.info("", e);
+            return false;
+        }
+        
+        return true;
+    }
+
+    private boolean checkOutputSigns(Map<String, Coin> valueOut) {
+        for (Map.Entry<String, Coin> entry : valueOut.entrySet()) {
+            // System.out.println(entry.getKey() + "/" + entry.getValue());
+            if (entry.getValue().signum() < 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean checkInputOutput(Map<String, Coin> valueInput, Map<String, Coin> valueOut) {
+        for (Map.Entry<String, Coin> entry : valueOut.entrySet()) {
+            if (!valueInput.containsKey(entry.getKey())) {
+                return false;
+            } else {
+                if (valueInput.get(entry.getKey()).compareTo(entry.getValue()) < 0)
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Verify the transactions on a block partly (for solidity).
+     *
+     * @throws VerificationException
+     *             if there was an error verifying the block.
+     */
+    private boolean checkTypeSpecificTransactionSolidity(Block block) {
+        List<Transaction> transactions = block.getTransactions();
+        switch (block.getBlockType()) {
+        case BLOCKTYPE_CROSSTANGLE:
+            break;
+        case BLOCKTYPE_FILE:
+            break;
+        case BLOCKTYPE_GOVERNANCE:
+            break;
+        case BLOCKTYPE_INITIAL:
+            break;
+        case BLOCKTYPE_REWARD:
+            if (transactions.size() != 1)
+                return false; //Too many or too few transactions for token creation
+
+            if (!transactions.get(0).isCoinBase())
+                return false; //TX is not coinbase when it should be
+
+            // Check that the tx has correct data (long fromHeight)
+            // TODO overhaul
+            try {
+                byte[] data = transactions.get(0).getData();
+                if (data == null || data.length < 8)
+                    return false; //Missing fromHeight data
+                long u = Utils.readInt64(data, 0);
+                if (u % NetworkParameters.REWARD_HEIGHT_INTERVAL != 0)
+                    return false; //Invalid fromHeight
+            } catch (ArrayIndexOutOfBoundsException e) {
+                // Cannot happen
+                e.printStackTrace();
+                return false; 
+            }
+            break;
+        case BLOCKTYPE_TOKEN_CREATION:
+            if (transactions.size() != 1)
+                return false; //Too many or too few transactions for token creation
+
+            if (!transactions.get(0).isCoinBase())
+                return false; //TX is not coinbase when it should be;
+            break;
+        case BLOCKTYPE_TRANSFER:
+            break;
+        case BLOCKTYPE_USERDATA:
+            break;
+        case BLOCKTYPE_VOS:
+            break;
+        case BLOCKTYPE_VOS_EXECUTE:
+            break;
+        default: 
+                throw new NotImplementedException("Blocktype not implemented!");
+        }
+        
+        return true;
     }
 }
