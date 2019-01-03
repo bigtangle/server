@@ -81,10 +81,11 @@ public class Block extends Message {
      * trailing 00 length byte.
      */
     public static final int HEADER_SIZE = 80 // bitcoin
-            + 4 // timestamp from int to long
-            + 2 * 8 // difficulty and sequence long
             + 32 // additional branch prev block
+            + 2 * 4 // time and difftarget from int to long
+            + 8 // sequence (lastMiningReward) long
             + 20 // miner address
+            + 4 // blockType
             + (NetworkParameters.USE_EQUIHASH ? EquihashProof.BYTE_LENGTH : 0); // for Equihash
 
     static final long ALLOWED_TIME_DRIFT = 5 * 60;
@@ -124,9 +125,9 @@ public class Block extends Message {
     private Sha256Hash prevBranchBlockHash; // second predecessor
     private Sha256Hash merkleRoot;
     private long time;
-    private long nonce;
     private long difficultyTarget; // "nBits"
     private long lastMiningRewardBlock; // last approved reward blocks max
+    private long nonce;
     private byte[] minerAddress; // Utils.sha256hash160
     private Type blockType;
 
