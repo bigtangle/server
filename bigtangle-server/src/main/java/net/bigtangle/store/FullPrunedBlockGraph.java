@@ -10,8 +10,8 @@ import static com.google.common.base.Preconditions.checkState;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -61,6 +61,8 @@ import net.bigtangle.core.VerificationException;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.Script.VerifyFlag;
 import net.bigtangle.server.service.MultiSignService;
+import net.bigtangle.server.service.SolidityState;
+import net.bigtangle.server.service.SolidityState.State;
 import net.bigtangle.server.service.ValidatorService;
 import net.bigtangle.utils.ContextPropagatingThreadFactory;
 import net.bigtangle.wallet.Wallet;
@@ -151,44 +153,46 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     // filteredTxHashList contains all transactions, filteredTxn just a subset
-    private boolean add(Block block, boolean tryConnecting, boolean allowConflicts)
+    private boolean add(Block block, boolean tryConnecting, boolean allowUnsolid)
             throws BlockStoreException, VerificationException, PrunedException {
         lock.lock();
         try {
-            final StoredBlock storedPrev;
-            final StoredBlock storedPrevBranch;
-            final long height;
-            final EnumSet<Block.VerifyFlag> flags;
-
             // Check the block is formally valid
             try {
                 block.verifyHeader();
-                storedPrev = blockStore.get(block.getPrevBlockHash());
-                storedPrevBranch = blockStore.get(block.getPrevBranchBlockHash());
-
-                if (storedPrev != null && storedPrevBranch != null) {
-                    height = Math.max(storedPrev.getHeight(), storedPrevBranch.getHeight()) + 1;
-                } else {
-                    insertUnsolidBlock(block);
-                    return false;
-                }
-
-                flags = params.getBlockVerificationFlags(block, versionTally, height);
                 if (shouldVerifyTransactions())
-                    block.verifyTransactions(height, flags);
+                    block.verifyTransactions();
+                
             } catch (VerificationException e) {
                 log.error("Failed to verify block: ", e);
                 log.error(block.getHashAsString());
                 throw e;
             }
             checkState(lock.isHeldByCurrentThread());
+
+            StoredBlock storedPrev = blockStore.get(block.getPrevBlockHash());
+            StoredBlock storedPrevBranch = blockStore.get(block.getPrevBranchBlockHash());
             
-            // TODO after checkSolidity do checkValidity
-            if (validatorService.checkBlockSolidity(block, storedPrev, storedPrevBranch, height, allowConflicts)) {
-                // Write to DB
+            // Check the block's solidity, if dependency missing, put on waiting list unless disallowed
+            SolidityState solidityState = validatorService.checkBlockSolidity(block, storedPrev, storedPrevBranch);
+            if (!solidityState.isOK()) {
+                if (solidityState.getReason() == State.Unfixable) {
+                    throw new BlockStoreException("This block is invalid.");
+                } else if (allowUnsolid) {
+                    insertUnsolidBlock(block, solidityState);
+                } else {
+                    throw new BlockStoreException("checkSolidity failed.");
+                }
+                return false;
+            }
+            
+            // All dependencies exist, we can check for validity
+            long height = Math.max(storedPrev.getHeight(), storedPrevBranch.getHeight()) + 1;
+            if (validatorService.checkBlockValidity(block, storedPrev, storedPrevBranch, height)) {
+                // Write to DB if valid
                 try {
                     blockStore.beginDatabaseBatchWrite();
-                    connectBlock(block, storedPrev, storedPrevBranch, height, allowConflicts);
+                    connectBlock(block, storedPrev, storedPrevBranch, height);
                     blockStore.commitDatabaseBatchWrite();
                     return true;
                 } catch (BlockStoreException e) {
@@ -196,11 +200,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     throw e;
                 }
             } else {
-                if (allowConflicts) {
-                    insertUnsolidBlock(block);
-                } else {
-                    throw new BlockStoreException("checkSolidity failed.");
-                }
+                // Drop forever if invalid
+                log.debug("Dropping invalid block!");
                 return false;
             }
         } catch (Exception exception) {
@@ -211,10 +212,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void connectBlock(final Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height, boolean allowConflicts)
+    private void connectBlock(final Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height)
             throws BlockStoreException, VerificationException, PrunedException {
         checkState(lock.isHeldByCurrentThread());
-        connectUTXOs(block, storedPrev, storedPrevBranch, height, allowConflicts);
+        connectUTXOs(block, storedPrev, storedPrevBranch, height);
         connectTypeSpecificUTXOs(block, storedPrev, storedPrevBranch);
         addToBlockStore(storedPrev, storedPrevBranch, block);
         solidifyBlock(block);
@@ -530,7 +531,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Write to DB
         try {
             blockStore.beginDatabaseBatchWrite();
-            removeBlockFromMilestone(blockHash);
+            HashSet<Sha256Hash> traversedBlockHashes = new HashSet<>();
+            removeBlockFromMilestone(blockHash, traversedBlockHashes);
             blockStore.commitDatabaseBatchWrite();
         } catch (BlockStoreException e) {
             blockStore.abortDatabaseBatchWrite();
@@ -538,30 +540,32 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void removeBlockFromMilestone(Sha256Hash blockHash) throws BlockStoreException {
+    private void removeBlockFromMilestone(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes) throws BlockStoreException {
         BlockWrap blockWrap = blockStore.getBlockWrap(blockHash);
         BlockEvaluation blockEvaluation = blockWrap.getBlockEvaluation();
         Block block = blockWrap.getBlock();
 
         // If already unconfirmed, return
-        if (!blockEvaluation.isMilestone())
+        if (!blockEvaluation.isMilestone() || traversedBlockHashes.contains(blockHash))
             return;
+        
+        // Unconfirm all dependents
+        unconfirmDependents(block, traversedBlockHashes);
+         
+        // Then unconfirm the block itself
+        unconfirmBlock(block);
 
         // Set milestone false and update latestMilestoneUpdateTime
         blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), false);
         
-        // Disconnect all dependents
-        unconfirmDependents(block);
-         
-        // Then unconfirm the block itself
-        unconfirmBlock(block);
+        // Keep track of unconfirmed blocks
+        traversedBlockHashes.add(blockHash);
     }
 
-    private void unconfirmDependents(Block block) throws BlockStoreException {
-        // Disconnect all approver blocks first
-        // TODO this will blow up the stack... go by ascending height
+    private void unconfirmDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes) throws BlockStoreException {
+        // Unconfirm all approver blocks first
         for (Sha256Hash approver : blockStore.getSolidApproverBlockHashes(block.getHash())) {
-            removeBlockFromMilestone(approver);
+            removeBlockFromMilestone(approver, traversedBlockHashes);
         }
         
         // Disconnect all transaction output dependents
@@ -570,7 +574,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 UTXO utxo = blockStore.getTransactionOutput(tx.getHash(), txout.getIndex());
                 if (utxo.isSpent()) {
                     removeBlockFromMilestone(
-                            blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()).getBlockHash());
+                            blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()).getBlockHash(), traversedBlockHashes);
                 }
             }
         }
@@ -586,10 +590,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_INITIAL:
             break;
         case BLOCKTYPE_REWARD:
-            unconfirmRewardDependents(block);
+            unconfirmRewardDependents(block, traversedBlockHashes);
             break;
         case BLOCKTYPE_TOKEN_CREATION:
-            unconfirmTokenDependents(block.getHashAsString());
+            unconfirmTokenDependents(block.getHashAsString(), traversedBlockHashes);
             break;
         case BLOCKTYPE_TRANSFER:
             break;
@@ -605,17 +609,17 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void unconfirmRewardDependents(Block block) throws BlockStoreException {
+    private void unconfirmRewardDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes) throws BlockStoreException {
         // Unconfirm dependents
         if (blockStore.getTxRewardSpent(block.getHash())) {
-            removeBlockFromMilestone(blockStore.getTxRewardSpender(block.getHash()));
+            removeBlockFromMilestone(blockStore.getTxRewardSpender(block.getHash()), traversedBlockHashes);
         }
     }
 
-    private void unconfirmTokenDependents(String blockhash) throws BlockStoreException {
+    private void unconfirmTokenDependents(String blockhash, HashSet<Sha256Hash> traversedBlockHashes) throws BlockStoreException {
         // Unconfirm dependents
         if (blockStore.getTokenSpent(blockhash)) {
-            removeBlockFromMilestone(Sha256Hash.wrap(blockStore.getTokenSpender(blockhash)));
+            removeBlockFromMilestone(Sha256Hash.wrap(blockStore.getTokenSpender(blockhash)), traversedBlockHashes);
         }
     }
 
@@ -718,7 +722,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     @Override
-    protected void insertUnsolidBlock(Block block) throws BlockStoreException {
+    protected void insertUnsolidBlock(Block block, SolidityState solidityState) throws BlockStoreException {
         blockStore.insertUnsolid(block);
     }
 
@@ -732,8 +736,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * long)
      */
     @Override
-    protected boolean connectUTXOs(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height,
-            boolean allowConflicts) throws BlockStoreException, VerificationException {
+    protected boolean connectUTXOs(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height) throws BlockStoreException, VerificationException {
         for (final Transaction tx : block.getTransactions()) {
             boolean isCoinBase = tx.isCoinBase();
             if (!isCoinBase) {

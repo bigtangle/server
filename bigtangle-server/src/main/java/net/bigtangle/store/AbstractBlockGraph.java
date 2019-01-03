@@ -21,6 +21,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.TransactionOutputChanges;
 import net.bigtangle.core.VerificationException;
+import net.bigtangle.server.service.SolidityState;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.utils.VersionTally;
 import net.bigtangle.wallet.Wallet;
@@ -150,7 +151,7 @@ public abstract class AbstractBlockGraph {
     protected abstract StoredBlock addToBlockStore(StoredBlock storedPrev, StoredBlock storedBlockPrevBranch,
             Block block) throws BlockStoreException, VerificationException;
 
-    protected abstract void insertUnsolidBlock(Block block) throws BlockStoreException, VerificationException;
+    protected abstract void insertUnsolidBlock(Block block, SolidityState solidityState) throws BlockStoreException, VerificationException;
 
     /**
      * Adds/updates the given {@link StoredBlock} with the block store. This
@@ -189,8 +190,7 @@ public abstract class AbstractBlockGraph {
     public abstract boolean shouldVerifyTransactions();
 
 
-    protected abstract boolean connectUTXOs(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height,
-            boolean allowConflicts) throws BlockStoreException, VerificationException;
+    protected abstract boolean connectUTXOs(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height) throws BlockStoreException, VerificationException;
 
     protected abstract boolean checkSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch,
             long height, boolean allowConflicts) throws BlockStoreException, VerificationException;

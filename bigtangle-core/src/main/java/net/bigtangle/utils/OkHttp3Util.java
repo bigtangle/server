@@ -108,10 +108,10 @@ public class OkHttp3Util {
             int error = (Integer) result2.get("errorcode");
             if (error > 0) {
                 if (result2.get("message") == null) {
-                    throw new RuntimeException("server erorr:" + error);
+                    throw new RuntimeException("Server Error:" + error);
                 } else {
 
-                    throw new RuntimeException("server erorr:" + result2.get("message"));
+                    throw new RuntimeException("Server Error:" + result2.get("message"));
                 }
             }
         }

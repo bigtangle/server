@@ -52,7 +52,7 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class MilestoneServiceTest extends AbstractIntegrationTest {
 
-    @Test
+    @Test(expected = RuntimeException.class)
     public void testUnsolidBlock() throws Exception {
         for (int i = 0; i < 10; i++) {
             Sha256Hash sha256Hash1 = getRandomSha256Hash();

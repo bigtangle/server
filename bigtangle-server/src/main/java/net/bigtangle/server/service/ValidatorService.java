@@ -427,7 +427,6 @@ public class ValidatorService {
             
             switch (block.getBlockType()) {
             case BLOCKTYPE_CROSSTANGLE:
-                // TODO
                 break;
             case BLOCKTYPE_FILE:
                 break;
@@ -866,14 +865,8 @@ public class ValidatorService {
     /*
      * Check if the block is made correctly. Allow conflicts for transaction
      * data (non-Javadoc)
-     * 
-     * @see
-     * net.bigtangle.store.AbstractBlockGraph#checkSolidity(net.bigtangle.core.
-     * Block, net.bigtangle.core.StoredBlock, net.bigtangle.core.StoredBlock,
-     * long)
      */
-    public boolean checkBlockSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height,
-            boolean allowConflicts) throws VerificationException {
+    public boolean checkBlockValidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height) throws VerificationException {
         // Check timestamp: enforce monotone time increase
         if (block.getTimeSeconds() < storedPrev.getHeader().getTimeSeconds()
                 || block.getTimeSeconds() < storedPrevBranch.getHeader().getTimeSeconds())
@@ -893,21 +886,20 @@ public class ValidatorService {
         }
 
         // Check correctness of TXs and their data
-        if (!checkTransactionSolidity(block, height))
+        if (!checkTransactionalValidity(block, height))
             return false;
 
-        // Check type-specific solidity
-        if (!checkTypeSpecificBlockSolidity(block, storedPrev, storedPrevBranch, allowConflicts))
+        // Check type-specific validity
+        if (!checkTypeSpecificValidity(block, storedPrev, storedPrevBranch))
             return false;
 
         return true;
     }
 
-    private boolean checkTypeSpecificBlockSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch,
-            boolean allowConflicts) {
+    private boolean checkTypeSpecificValidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch) {
+        List<Transaction> transactions = block.getTransactions();
         switch (block.getBlockType()) {
         case BLOCKTYPE_CROSSTANGLE:
-            // TODO
             break;
         case BLOCKTYPE_FILE:
             break;
@@ -920,7 +912,28 @@ public class ValidatorService {
             }
             break;
         case BLOCKTYPE_REWARD:
-            // Check reward block specific solidity
+            if (transactions.size() != 1)
+                return false; //Too many or too few transactions for token creation
+
+            if (!transactions.get(0).isCoinBase())
+                return false; //TX is not coinbase when it should be
+
+            // Check that the tx has correct data (long fromHeight)
+            // TODO overhaul
+            try {
+                byte[] data = transactions.get(0).getData();
+                if (data == null || data.length < 8)
+                    return false; //Missing fromHeight data
+                long u = Utils.readInt64(data, 0);
+                if (u % NetworkParameters.REWARD_HEIGHT_INTERVAL != 0)
+                    return false; //Invalid fromHeight
+            } catch (ArrayIndexOutOfBoundsException e) {
+                // Cannot happen
+                e.printStackTrace();
+                return false; 
+            }
+
+            // Check reward block specific validity
             // Get reward data from previous reward cycle
             Sha256Hash prevRewardHash = null;
             @SuppressWarnings("unused")
@@ -954,20 +967,29 @@ public class ValidatorService {
                 logger.info("", e);
                 return false;
             }
+            
             break;
         case BLOCKTYPE_TOKEN_CREATION:
+            if (transactions.size() != 1)
+                return false; //Too many or too few transactions for token creation
+
+            if (!transactions.get(0).isCoinBase())
+                return false; //TX is not coinbase when it should be;
+            
             // Check issuance block specific validity
             try {
-                // TODO overhaul
+                // TODO overhaul this, allowConflicts does not exist anymore. Instead, split in checks solidity and validity
+                
                 // Check according to previous issuance, or if it does not exist
                 // the normal signature
-                if (!this.multiSignService.checkToken(block, allowConflicts)) {
+                if (!this.multiSignService.checkToken(block, false)) {
                     return false;
                 }
             } catch (Exception e) {
                 logger.error("", e);
                 return false;
             }
+            
             break;
         case BLOCKTYPE_TRANSFER:
             break;
@@ -977,15 +999,14 @@ public class ValidatorService {
             break;
         case BLOCKTYPE_VOS_EXECUTE:
             break;
-        default:
-            throw new NotImplementedException("Blocktype not implemented!");
-        
+        default: 
+                throw new NotImplementedException("Blocktype not implemented!");
         }
-        
+
         return true;
     }
 
-    private boolean checkTransactionSolidity(Block block, long height) {
+    private boolean checkTransactionalValidity(Block block, long height) {
         List<Transaction> transactions = block.getTransactions();
         
         // Coinbase allowance
@@ -995,10 +1016,7 @@ public class ValidatorService {
             }
         }
         
-        // The transactions must adhere to their block type rules
-        if (!checkTypeSpecificTransactionSolidity(block))
-            return false;
-        
+        // Transaction validity
         LinkedList<UTXO> txOutsSpent = new LinkedList<UTXO>();
         LinkedList<UTXO> txOutsCreated = new LinkedList<UTXO>();
         long sigOps = 0;
@@ -1031,8 +1049,10 @@ public class ValidatorService {
                         TransactionInput in = tx.getInputs().get(index);
                         UTXO prevOut = store.getTransactionOutput(in.getOutpoint().getHash(),
                                 in.getOutpoint().getIndex());
-                        if (prevOut == null)
-                            throw new VerificationException("Block attempts to spend a not yet existent output!");
+                        if (prevOut == null) {
+                            // Cannot happen due to solidity checks before
+                            throw new RuntimeException("Block attempts to spend a not yet existent output!");
+                        }
 
                         if (valueIn.containsKey(Utils.HEX.encode(prevOut.getValue().getTokenid()))) {
                             valueIn.put(Utils.HEX.encode(prevOut.getValue().getTokenid()), valueIn
@@ -1139,13 +1159,33 @@ public class ValidatorService {
         return true;
     }
 
-    /**
-     * Verify the transactions on a block partly (for solidity).
-     *
-     * @throws VerificationException
-     *             if there was an error verifying the block.
+    /*
+     * Checks if the block has all of its dependencies to fully determine its validity. 
+     * If SolidityState.getFailState() is returned, this is equivalent to the block always being invalid.
      */
-    private boolean checkTypeSpecificTransactionSolidity(Block block) {
+    public SolidityState checkBlockSolidity(Block block, @Nullable StoredBlock storedPrev, @Nullable StoredBlock storedPrevBranch) throws BlockStoreException {
+        if (storedPrev == null) {
+            return SolidityState.from(block.getPrevBlockHash());
+        }
+        
+        if (storedPrevBranch == null) {
+            return SolidityState.from(block.getPrevBranchBlockHash());
+        }
+        
+        SolidityState transactionalSolidityState = checkTransactionalSolidity(block);
+        if (!transactionalSolidityState.isOK()) {
+            return transactionalSolidityState;
+        }
+
+        SolidityState typeSpecificSolidityState = checkTypeSpecificSolidity(block);
+        if (!transactionalSolidityState.isOK()) {
+            return typeSpecificSolidityState;
+        }
+
+        return SolidityState.getSuccessState();
+    }
+
+    private SolidityState checkTypeSpecificSolidity(Block block) throws BlockStoreException {
         List<Transaction> transactions = block.getTransactions();
         switch (block.getBlockType()) {
         case BLOCKTYPE_CROSSTANGLE:
@@ -1155,35 +1195,73 @@ public class ValidatorService {
         case BLOCKTYPE_GOVERNANCE:
             break;
         case BLOCKTYPE_INITIAL:
-            break;
+            return SolidityState.getFailState();
         case BLOCKTYPE_REWARD:
             if (transactions.size() != 1)
-                return false; //Too many or too few transactions for token creation
+                return SolidityState.getFailState(); //Too many or too few transactions for token creation
 
             if (!transactions.get(0).isCoinBase())
-                return false; //TX is not coinbase when it should be
+                return SolidityState.getFailState(); //TX is not coinbase when it should be
 
             // Check that the tx has correct data (long fromHeight)
             // TODO overhaul
             try {
                 byte[] data = transactions.get(0).getData();
                 if (data == null || data.length < 8)
-                    return false; //Missing fromHeight data
+                    return SolidityState.getFailState(); //Missing fromHeight data
                 long u = Utils.readInt64(data, 0);
                 if (u % NetworkParameters.REWARD_HEIGHT_INTERVAL != 0)
-                    return false; //Invalid fromHeight
+                    return SolidityState.getFailState(); //Invalid fromHeight
             } catch (ArrayIndexOutOfBoundsException e) {
                 // Cannot happen
                 e.printStackTrace();
-                return false; 
+                return SolidityState.getFailState(); 
             }
+
+            // Check reward block specific validity
+            // Get reward data from previous reward cycle
+            Sha256Hash prevRewardHash = null;
+            @SuppressWarnings("unused")
+            long fromHeight = 0, nextPerTxReward = 0;
+            try {
+                byte[] hashBytes = new byte[32];
+                ByteBuffer bb = ByteBuffer.wrap(block.getTransactions().get(0).getData());
+                fromHeight = bb.getLong();
+                nextPerTxReward = bb.getLong();
+                bb.get(hashBytes, 0, 32);
+                prevRewardHash = Sha256Hash.wrap(hashBytes);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return SolidityState.getFailState();
+            }
+            
+            // The previous reward hash must exist to build upon
+            if (store.get(prevRewardHash) == null)
+                return SolidityState.from(prevRewardHash);
+            
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             if (transactions.size() != 1)
-                return false; //Too many or too few transactions for token creation
+                return SolidityState.getFailState(); //Too many or too few transactions for token creation
 
             if (!transactions.get(0).isCoinBase())
-                return false; //TX is not coinbase when it should be;
+                return SolidityState.getFailState(); //TX is not coinbase when it should be;
+            
+            // Check issuance block specific validity
+            // TODO add waiting for older token issuance
+            try {
+                // TODO overhaul this, allowConflicts does not exist anymore. Instead, split in checks solidity and validity
+                
+                // Check according to previous issuance, or if it does not exist
+                // the normal signature
+                if (!this.multiSignService.checkToken(block, false)) {
+                    return SolidityState.getFailState();
+                }
+            } catch (Exception e) {
+                logger.error("", e);
+                return SolidityState.getFailState();
+            }
+            
             break;
         case BLOCKTYPE_TRANSFER:
             break;
@@ -1196,7 +1274,25 @@ public class ValidatorService {
         default: 
                 throw new NotImplementedException("Blocktype not implemented!");
         }
+
+        return SolidityState.getSuccessState();
+    }
+
+    private SolidityState checkTransactionalSolidity(Block block) throws BlockStoreException {
+        // All used transaction outputs must exist 
+        for (final Transaction tx : block.getTransactions()) {
+            if (!tx.isCoinBase()) {
+                for (int index = 0; index < tx.getInputs().size(); index++) {
+                    TransactionInput in = tx.getInputs().get(index);
+                    UTXO prevOut = store.getTransactionOutput(in.getOutpoint().getHash(),
+                            in.getOutpoint().getIndex());
+                    if (prevOut == null) {
+                        return SolidityState.from(in.getOutpoint());
+                    }
+                }
+            }
+        }
         
-        return true;
+        return SolidityState.getSuccessState();
     }
 }

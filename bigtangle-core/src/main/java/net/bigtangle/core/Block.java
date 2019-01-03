@@ -160,11 +160,10 @@ public class Block extends Message {
      * FullPrunedBlockGraph.confirmBlock
      * FullPrunedBlockGraph.unconfirmBlock
      * FullPrunedBlockGraph.unconfirmDependents
-     * ValidatorService.checkTypeSpecificBlockSolidity
-     * ValidatorService.checkTypeSpecificTransactionSolidity
+     * ValidatorService.checkTypeSpecificSolidity
+     * ValidatorService.checkTypeSpecificValidity
      * TODO removeWherePreconditionsUnfulfilled
      * BlockWrap.addTypeSpecificConflictCandidates
-     * TODO checkValidity
      */
     public enum Type {
         BLOCKTYPE_INITIAL(true, 0, 0, Integer.MAX_VALUE), // Genesis block
@@ -965,18 +964,12 @@ public class Block extends Message {
     }
 
     /**
-     * Checks the block contents
+     * Checks the block contents formally
      *
-     * @param height
-     *            block height, if known, or -1 otherwise. If valid, used to
-     *            validate the coinbase input script of v2 and above blocks.
-     * @param flags
-     *            flags to indicate which tests should be applied (i.e. whether
-     *            to test for height in the coinbase transaction).
      * @throws VerificationException
      *             if there was an error verifying the block.
      */
-    public void verifyTransactions(final long height, final EnumSet<VerifyFlag> flags) throws VerificationException {
+    public void verifyTransactions() throws VerificationException {
         // Now we need to check that the body of the block actually matches the
         // headers. The network won't generate
         // an invalid block, but if we didn't validate this then an untrusted
@@ -1018,7 +1011,7 @@ public class Block extends Message {
      */
     public void verify(final int height, final EnumSet<VerifyFlag> flags) throws VerificationException {
         verifyHeader();
-        verifyTransactions(height, flags);
+        verifyTransactions();
     }
 
     @Override
