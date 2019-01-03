@@ -140,7 +140,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     public boolean add(Block block, boolean allowConflicts) throws VerificationException, PrunedException {
         try {
-            return add(block, true, null, null, allowConflicts);
+            return add(block, true, allowConflicts);
         } catch (BlockStoreException e) {
             log.debug("", e);
             throw new RuntimeException(e);
@@ -151,8 +151,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     // filteredTxHashList contains all transactions, filteredTxn just a subset
-    private boolean add(Block block, boolean tryConnecting, @Nullable List<Sha256Hash> filteredTxHashList,
-            @Nullable Map<Sha256Hash, Transaction> filteredTxn, boolean allowConflicts)
+    private boolean add(Block block, boolean tryConnecting, boolean allowConflicts)
             throws BlockStoreException, VerificationException, PrunedException {
         lock.lock();
         try {
@@ -189,10 +188,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 // Write to DB
                 try {
                     blockStore.beginDatabaseBatchWrite();
-                    connectUTXOs(block, storedPrev, storedPrevBranch, height, allowConflicts);
-                    connectBlock(block, storedPrev, storedPrevBranch, shouldVerifyTransactions(), filteredTxHashList,
-                            filteredTxn);
-                    solidifyBlock(block);
+                    connectBlock(block, storedPrev, storedPrevBranch, height, allowConflicts);
                     blockStore.commitDatabaseBatchWrite();
                     return true;
                 } catch (BlockStoreException e) {
@@ -215,17 +211,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    // expensiveChecks enables checks that require looking at blocks further
-    // back in the tangle
-    // than the previous one when connecting (eg median timestamp check)
-    // It could be exposed, but for now we just set it to
-    // shouldVerifyTransactions()
-    private void connectBlock(final Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch,
-            boolean expensiveChecks, @Nullable final List<Sha256Hash> filteredTxHashList,
-            @Nullable final Map<Sha256Hash, Transaction> filteredTxn)
+    private void connectBlock(final Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height, boolean allowConflicts)
             throws BlockStoreException, VerificationException, PrunedException {
         checkState(lock.isHeldByCurrentThread());
+        connectUTXOs(block, storedPrev, storedPrevBranch, height, allowConflicts);
+        connectTypeSpecificUTXOs(block, storedPrev, storedPrevBranch);
         addToBlockStore(storedPrev, storedPrevBranch, block);
+        solidifyBlock(block);
     }
 
     @Override
@@ -407,6 +399,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             confirmTransaction(tx, block.getHash());
         }
         
+        // type-specific updates
         switch (block.getBlockType()) {
         case BLOCKTYPE_CROSSTANGLE:
             break;
@@ -427,6 +420,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_TRANSFER:
             break;
         case BLOCKTYPE_USERDATA:
+            break;
         case BLOCKTYPE_VOS:
             Transaction tx = block.getTransactions().get(0);
             if (tx.getData() != null && tx.getDataSignature() != null) {
@@ -450,7 +444,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
             break;
         case BLOCKTYPE_VOS_EXECUTE:
-            // TODO unify logic, see above
             Transaction tx1 = block.getTransactions().get(0);
             if (tx1.getData() != null && tx1.getDataSignature() != null) {
                 try {
@@ -556,15 +549,74 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Set milestone false and update latestMilestoneUpdateTime
         blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), false);
+        
+        // Disconnect all dependents
+        unconfirmDependents(block);
+         
+        // Then unconfirm the block itself
+        unconfirmBlock(block);
+    }
 
+    private void unconfirmDependents(Block block) throws BlockStoreException {
         // Disconnect all approver blocks first
-        for (Sha256Hash approver : blockStore.getSolidApproverBlockHashes(blockEvaluation.getBlockHash())) {
+        // TODO this will blow up the stack... go by ascending height
+        for (Sha256Hash approver : blockStore.getSolidApproverBlockHashes(block.getHash())) {
             removeBlockFromMilestone(approver);
         }
         
-        // TODO disconnect all dependents here... type-specific dependents, each blocktype should implement its own disconnectdependents etc.  
+        // Disconnect all transaction output dependents
+        for (Transaction tx : block.getTransactions()) {
+            for (TransactionOutput txout : tx.getOutputs()) {
+                UTXO utxo = blockStore.getTransactionOutput(tx.getHash(), txout.getIndex());
+                if (utxo.isSpent()) {
+                    removeBlockFromMilestone(
+                            blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()).getBlockHash());
+                }
+            }
+        }
+        
+        // Disconnect all type-specific dependents
+        switch (block.getBlockType()) {
+        case BLOCKTYPE_CROSSTANGLE:
+            break;
+        case BLOCKTYPE_FILE:
+            break;
+        case BLOCKTYPE_GOVERNANCE:
+            break;
+        case BLOCKTYPE_INITIAL:
+            break;
+        case BLOCKTYPE_REWARD:
+            unconfirmRewardDependents(block);
+            break;
+        case BLOCKTYPE_TOKEN_CREATION:
+            unconfirmTokenDependents(block.getHashAsString());
+            break;
+        case BLOCKTYPE_TRANSFER:
+            break;
+        case BLOCKTYPE_USERDATA:
+            break;
+        case BLOCKTYPE_VOS:
+            break;
+        case BLOCKTYPE_VOS_EXECUTE:
+            break;
+        default:
+            throw new NotImplementedException();
+        
+        }
+    }
 
-        unconfirmBlock(block);
+    private void unconfirmRewardDependents(Block block) throws BlockStoreException {
+        // Unconfirm dependents
+        if (blockStore.getTxRewardSpent(block.getHash())) {
+            removeBlockFromMilestone(blockStore.getTxRewardSpender(block.getHash()));
+        }
+    }
+
+    private void unconfirmTokenDependents(String blockhash) throws BlockStoreException {
+        // Unconfirm dependents
+        if (blockStore.getTokenSpent(blockhash)) {
+            removeBlockFromMilestone(Sha256Hash.wrap(blockStore.getTokenSpender(blockhash)));
+        }
     }
 
     /**
@@ -575,30 +627,42 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      *             exist in the block store at all.
      */
     private void unconfirmBlock(Block block) throws BlockStoreException {
-        // Handle all transactions of the block
+        // Unconfirm all transactions of the block
         for (Transaction tx : block.getTransactions()) {
             unconfirmTransaction(tx, block);
         }
-
-        // TODO disconnect type-specific UTXOs, each blocktype should implement its own
-
-        // For rewards, update reward db
-        if (block.getBlockType() == Block.Type.BLOCKTYPE_REWARD) {
+        
+        // Then unconfirm type-specific stuff
+        switch (block.getBlockType()) {
+        case BLOCKTYPE_CROSSTANGLE:
+            break;
+        case BLOCKTYPE_FILE:
+            break;
+        case BLOCKTYPE_GOVERNANCE:
+            break;
+        case BLOCKTYPE_INITIAL:
+            break;
+        case BLOCKTYPE_REWARD:
             unconfirmReward(block);
-        }
-
-        // For token creations, update token db
-        if (block.getBlockType() == Block.Type.BLOCKTYPE_TOKEN_CREATION) {
+            break;
+        case BLOCKTYPE_TOKEN_CREATION:
             unconfirmToken(block.getHashAsString());
+            break;
+        case BLOCKTYPE_TRANSFER:
+            break;
+        case BLOCKTYPE_USERDATA:
+            break;
+        case BLOCKTYPE_VOS:
+            break;
+        case BLOCKTYPE_VOS_EXECUTE:
+            break;
+        default:
+            throw new NotImplementedException();
+        
         }
     }
 
     private void unconfirmReward(Block block) throws BlockStoreException {
-        // Unconfirm dependents
-        if (blockStore.getTxRewardSpent(block.getHash())) {
-            removeBlockFromMilestone(blockStore.getTxRewardSpender(block.getHash()));
-        }
-
         // Set used other output unspent
         blockStore.updateTxRewardSpent(blockStore.getTxRewardPrevBlockHash(block.getHash()), false, null);
 
@@ -608,11 +672,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     private void unconfirmToken(String blockhash) throws BlockStoreException {
-        // Unconfirm dependents
-        if (blockStore.getTokenSpent(blockhash)) {
-            removeBlockFromMilestone(Sha256Hash.wrap(blockStore.getTokenSpender(blockhash)));
-        }
-
         // Set used other output unspent
         blockStore.updateTokenSpent(blockStore.getTokenPrevblockhash(blockhash), false, null);
 
@@ -636,17 +695,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
         }
         
-        // Set own outputs unconfirmed and TODO no longer remove dependents
+        // Set own outputs unconfirmed
         for (TransactionOutput txout : tx.getOutputs()) {
             UTXO utxo = blockStore.getTransactionOutput(tx.getHash(), txout.getIndex());
             
-            // TODO move
-            if (utxo.isSpent()) {
-                removeBlockFromMilestone(
-                        blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()).getBlockHash());
-            }
-            
-            // Sanity check
+            // Sanity check no dependents
             if (utxo.isSpent())
                 throw new RuntimeException("Attempted to unconfirm a spent output!");
 
@@ -713,7 +766,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 }
             }
         }
-        
+        return true;
+    }
+
+    private void connectTypeSpecificUTXOs(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch)
+            throws BlockStoreException {
         if (block.getBlockType() == Block.Type.BLOCKTYPE_REWARD) {
             // Get reward data from previous reward cycle
             Sha256Hash prevRewardHash = null;
@@ -744,9 +801,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
             }
         }
-
-
-        return true;
     }
 
     /*

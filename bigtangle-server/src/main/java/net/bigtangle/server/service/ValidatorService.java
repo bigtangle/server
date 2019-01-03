@@ -958,7 +958,7 @@ public class ValidatorService {
         case BLOCKTYPE_TOKEN_CREATION:
             // Check issuance block specific validity
             try {
-                // TODO
+                // TODO overhaul
                 // Check according to previous issuance, or if it does not exist
                 // the normal signature
                 if (!this.multiSignService.checkToken(block, allowConflicts)) {

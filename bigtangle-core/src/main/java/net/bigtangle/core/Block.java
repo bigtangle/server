@@ -155,14 +155,16 @@ public class Block extends Message {
     protected int optimalEncodingMessageSize;
 
     // TODO implement all conditions for each block type in all switches
-    /** To add new BLOCKTYPES, implement their rules in:
+    /** To add new BLOCKTYPES, implement their rules in the switches:
+     * FullPrunedBlockGraph.connectBlock
+     * FullPrunedBlockGraph.confirmBlock
+     * FullPrunedBlockGraph.unconfirmBlock
+     * FullPrunedBlockGraph.unconfirmDependents
      * ValidatorService.checkTypeSpecificBlockSolidity
      * ValidatorService.checkTypeSpecificTransactionSolidity
+     * TODO removeWherePreconditionsUnfulfilled
      * BlockWrap.addTypeSpecificConflictCandidates
-     * connectBlock
-     * removeWherePreconditionsUnfulfilled
-     * confirmBlock
-     * unconfirmBlock
+     * TODO checkValidity
      */
     public enum Type {
         BLOCKTYPE_INITIAL(true, 0, 0, Integer.MAX_VALUE), // Genesis block
