@@ -421,8 +421,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_TRANSFER:
             break;
         case BLOCKTYPE_USERDATA:
-            break;
-        case BLOCKTYPE_VOS:
             Transaction tx = block.getTransactions().get(0);
             if (tx.getData() != null && tx.getDataSignature() != null) {
                 try {
@@ -443,6 +441,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     e.printStackTrace();
                 }
             }
+            break;
+        case BLOCKTYPE_VOS:
             break;
         case BLOCKTYPE_VOS_EXECUTE:
             Transaction tx1 = block.getTransactions().get(0);
