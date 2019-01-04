@@ -1,5 +1,6 @@
 package net.bigtangle.server.service;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -147,13 +148,9 @@ public class MultiSignService {
     }
 
     /*
-     * TODO move to fullP... check unique as conflicts
+     * TODO move to validatorservice
      */
     public boolean checkToken(Block block, boolean allowConflicts) throws VerificationException {
-        try {
-            // TODO stop using json parser, also either drop null checks
-            // entirely or get all of them
-            // Unnecessary checks
             if (block.getTransactions() == null || block.getTransactions().isEmpty()) {
                 throw new VerificationException("block has no transaction");
             }
@@ -161,40 +158,43 @@ public class MultiSignService {
             if (tx.getData() == null) {
                 throw new VerificationException("transaction has no data");
             }
-            TokenInfo currentToken = new TokenInfo().parse(tx.getData());
+            TokenInfo currentToken = null;
+            try {
+                // TODO stop using json parser
+                currentToken = new TokenInfo().parse(tx.getData());
+            } catch (IOException e) {
+                log.info("Token data malformed! ", e);
+                throw new VerificationException("Token data malformed! ", e);
+            }
             if (currentToken.getTokens() == null) {
                 throw new VerificationException("getTokens is null");
             }
             if (currentToken.getMultiSignAddresses() == null) {
                 throw new VerificationException("getMultiSignAddresses is null");
             }
-
-            // No BIGs
             if (currentToken.getTokens().getTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
+                // No BIGs
                 throw new VerificationException("Not allowed");
             }
-
-            // Check all token fields
-            if (currentToken.getTokens().getAmount() > Long.MAX_VALUE) {
-                // TODO check that amount of all tokens is lower than
-                // Long.MAX_VALUE
-                throw new VerificationException("Too many tokens");
+            if (currentToken.getTokens().getTokenindex() > NetworkParameters.TOKEN_MAX_ISSUANCE_NUMBER) {
+                // Check that the token has not been issued too often
+                throw new VerificationException("Too many token issuances");
             }
-            if (currentToken.getTokens().getDescription().length() > 500) {
-                // TODO define max values
-                throw new VerificationException("Too long");
+            if (currentToken.getTokens().getAmount() > Long.MAX_VALUE / NetworkParameters.TOKEN_MAX_ISSUANCE_NUMBER) {
+                // Check that max amount of issued tokens never overflows
+                throw new VerificationException("Too many tokens issued");
+            }
+            if (currentToken.getTokens().getDescription().length() > NetworkParameters.TOKEN_MAX_DESC_LENGTH) {
+                throw new VerificationException("Too long description");
+            }
+            if (currentToken.getTokens().getTokenname().length() > NetworkParameters.TOKEN_MAX_NAME_LENGTH) {
+                throw new VerificationException("Too long name");
+            }
+            if (currentToken.getTokens().getUrl() != null && currentToken.getTokens().getUrl().length() > NetworkParameters.TOKEN_MAX_URL_LENGTH) {
+                throw new VerificationException("Too long url");
             }
             if (currentToken.getTokens().getSignnumber() < 0) {
-                // TODO define max values
                 throw new VerificationException("Invalid sign number");
-            }
-            if (currentToken.getTokens().getTokenname().length() > 50) {
-                // TODO define max values
-                throw new VerificationException("Too long");
-            }
-            if (currentToken.getTokens().getUrl() != null && currentToken.getTokens().getUrl().length() > 100) {
-                // TODO define max values
-                throw new VerificationException("Too long");
             }
 
             // Check previous issuance hash exists or initial issuance
@@ -218,41 +218,43 @@ public class MultiSignService {
             List<MultiSignAddress> permissionedAddresses = null;
             // If not initial issuance, we check according to the previous token
             if (currentToken.getTokens().getTokenindex() != 0) {
-                // Previous issuance must exist to check solidity
-                prevToken = store.getToken(currentToken.getTokens().getPrevblockhash());
-                if (prevToken == null) {
-                    throw new VerificationException("Previous token does not exist");
+                try {
+                    // Previous issuance must exist to check solidity
+                    prevToken = store.getToken(currentToken.getTokens().getPrevblockhash());
+                    if (prevToken == null) {
+                        throw new VerificationException("Previous token does not exist");
+                    }
+    
+                    // Compare members of previous and current issuance
+                    if (!currentToken.getTokens().getTokenid().equals(prevToken.getTokenid())) {
+                        throw new VerificationException("Wrong token ID");
+                    }
+                    if (currentToken.getTokens().getTokenindex() != prevToken.getTokenindex() + 1) {
+                        throw new VerificationException("Wrong token index");
+                    }
+                    if (!currentToken.getTokens().getTokenname().equals(prevToken.getTokenname())) {
+                        throw new VerificationException("Cannot change token name");
+                    }
+                    if (currentToken.getTokens().getTokentype() != prevToken.getTokentype()) {
+                        throw new VerificationException("Cannot change token type");
+                    }
+    
+                    // Must allow more issuances
+                    if (prevToken.isTokenstop()) {
+                        throw new VerificationException("Previous token does not allow further issuance");
+                    }
+    
+                    // Get addresses allowed to reissue
+                    permissionedAddresses = store.getMultiSignAddressListByTokenidAndBlockHashHex(prevToken.getTokenid(),
+                                prevToken.getPrevblockhash());
+                } catch (BlockStoreException e) {
+                    // Cannot happen, previous token must exist
+                    e.printStackTrace();
                 }
-
-                // TODO what is multiserial?
-                // Compare members of previous and current issuance
-                if (!currentToken.getTokens().getTokenid().equals(prevToken.getTokenid())) {
-                    throw new VerificationException("Wrong token ID");
-                }
-                if (currentToken.getTokens().getTokenindex() != prevToken.getTokenindex() + 1) {
-                    throw new VerificationException("Wrong token index");
-                }
-                if (!currentToken.getTokens().getTokenname().equals(prevToken.getTokenname())) {
-                    throw new VerificationException("Cannot change token name");
-                }
-                if (currentToken.getTokens().getTokentype() != prevToken.getTokentype()) {
-                    throw new VerificationException("Cannot change token type");
-                }
-
-                // Must allow more issuances
-                if (prevToken.isTokenstop()) {
-                    throw new VerificationException("Previous token does not allow further issuance");
-                }
-
-                // Get addresses allowed to reissue
-                permissionedAddresses = store.getMultiSignAddressListByTokenidAndBlockHashHex(prevToken.getTokenid(),
-                        prevToken.getPrevblockhash());
             } else {
                 permissionedAddresses = new ArrayList<>();
-
-                // TODO add pubkey tokenid instead:
-                // permissionedAddresses.add(){
-                permissionedAddresses = currentToken.getMultiSignAddresses();
+                MultiSignAddress firstTokenAddress = new MultiSignAddress(currentToken.getTokens().getTokenid(), "", currentToken.getTokens().getTokenid());
+                permissionedAddresses.add(firstTokenAddress);
             }
 
             for (MultiSignAddress multiSignAddress : permissionedAddresses) {
@@ -267,7 +269,13 @@ public class MultiSignService {
             int signatureCount = 0;
             // Get signatures from transaction
             String jsonStr = new String(tx.getDataSignature());
-            MultiSignByRequest multiSignByRequest = Json.jsonmapper().readValue(jsonStr, MultiSignByRequest.class);
+            MultiSignByRequest multiSignByRequest;
+            try {
+                multiSignByRequest = Json.jsonmapper().readValue(jsonStr, MultiSignByRequest.class);
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new VerificationException(e);
+            }
             for (MultiSignBy multiSignBy : multiSignByRequest.getMultiSignBies()) {
                 String address = multiSignBy.getAddress();
                 if (!multiSignAddressRes.containsKey(address)) {
@@ -288,16 +296,11 @@ public class MultiSignService {
             int requiredSignatureCount = prevToken == null ? currentToken.getTokens().getSignnumber()
                     : prevToken.getSignnumber();
             return signatureCount >= requiredSignatureCount;
-        } catch (Exception e) {
-            log.info("token error", e);
-            throw new VerificationException("token error", e);
-        }
     }
 
     public boolean checkMultiSignPre(Block block, boolean allowConflicts) throws BlockStoreException, Exception {
         try {
-            // TODO this has nothing to do with tokens, remove any mentions of
-            // tokens
+            // TODO check this
 
             if (block.getTransactions() == null || block.getTransactions().isEmpty()) {
                 throw new BlockStoreException("block transaction is empty");
@@ -332,10 +335,8 @@ public class MultiSignService {
                 multiSignAddresses = tokenInfo.getMultiSignAddresses();
             }
             if (multiSignAddresses.size() == 0) {
-            // TODO dead code
                 throw new BlockStoreException("multisignaddresse list size = 0");
             }
-            // TODO check pubkey signs tokenid if tokenindex=0
             for (MultiSignAddress multiSignAddress : multiSignAddresses) {
                 byte[] pubKey = Utils.HEX.decode(multiSignAddress.getPubKeyHex());
                 multiSignAddress.setAddress(ECKey.fromPublicOnly(pubKey).toAddress(networkParameters).toBase58());
@@ -392,8 +393,6 @@ public class MultiSignService {
     }
 
     public void multiSign(Block block, boolean allowConflicts) throws Exception {
-        // TODO rethink multisign, cannot save unsolid incomplete, use own table
-
         if (this.checkMultiSignPre(block, allowConflicts)) {
             // data save only on this server, not in block.
             this.saveMultiSign(block);

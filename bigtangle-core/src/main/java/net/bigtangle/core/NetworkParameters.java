@@ -55,8 +55,6 @@ import net.bigtangle.utils.VersionTally;
  * </p>
  */
 public abstract class NetworkParameters {
-
-    // TODO use configurable fields
     
 	/**
 	 * The string returned by getId() for the main, production network where people
@@ -66,18 +64,6 @@ public abstract class NetworkParameters {
 
 	/** Unit test network. */
 	public static final String ID_UNITTESTNET = "net.bigtangle.unittest";
-
-	// Token id for System Coin 
-	public static final String BIGTANGLE_TOKENID_STRING = "0000000000000000000000000000000000000000";
-	public static final byte[] BIGTANGLE_TOKENID = HEX.decode(BIGTANGLE_TOKENID_STRING);
-
-	// DUMMY Token id byte[20]
-	public static final byte[] DUMMY_TOKENID = HEX.decode("1111111111111111111111111111111111111111");
-
-	// Use Equihash
-	public static final boolean USE_EQUIHASH = false;
-
-	public static final long INITIAL_TX_REWARD = 10L;
 
 	protected Block genesisBlock;
 	protected BigInteger maxTarget;
@@ -96,10 +82,6 @@ public abstract class NetworkParameters {
 	protected int majorityEnforceBlockUpgrade;
 	protected int majorityRejectBlockOutdated;
 	protected int majorityWindow;
-
-	// Equihash Parameters
-	protected int equihashN;
-	protected int equihashK;
 
 	/**
 	 * See getId(). This may be null for old deserialized wallets. In that case we
@@ -120,24 +102,34 @@ public abstract class NetworkParameters {
 	protected Map<Long, Sha256Hash> checkpoints = new HashMap<Long, Sha256Hash>();
 	protected transient MessageSerializer defaultSerializer = null;
 
-	/**
-	 * Blocks with a timestamp after this should enforce BIP 16, aka "Pay to script
-	 * hash". This BIP changed the network rules in a soft-forking manner, that is,
-	 * blocks that don't follow the rules are accepted but not mined upon and thus
-	 * will be quickly re-orged out as long as the majority are enforcing the rule.
-	 */
-	public static final int BIP16_ENFORCE_TIME = 1333238400;
-
+	// Consensus settings
 	public static final int MILESTONE_UPPER_THRESHOLD = 70;
 	public static final int MILESTONE_LOWER_THRESHOLD = 67;
-	public static final int MAX_RATING_TIP_COUNT = 100;
-
+	public static final int NUMBER_RATING_TIPS = 100;
 	public static final long ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF = 60;
 	public static final long ENTRYPOINT_TIPSELECTION_DEPTH_CUTOFF = 20;
 
-	public static final int REWARD_HEIGHT_INTERVAL = 100;
-	public static final BigInteger MAX_TARGET = Utils.decodeCompactBits(0x207fFFFFL);
-	public static final long TARGET_YEARLY_MINING_PAYOUT = 20000000000L; //3 digits after comma, 2% of 1 trillion total supply
+    // Token ID for System Coin 
+    public static final String BIGTANGLE_TOKENID_STRING = "0000000000000000000000000000000000000000"; 
+    public static final byte[] BIGTANGLE_TOKENID = HEX.decode(BIGTANGLE_TOKENID_STRING);
+
+    // Use Equihash
+    public static final boolean USE_EQUIHASH = false;
+    protected int equihashN;
+    protected int equihashK;
+
+    // Reward and Difficulty Synchronization
+    public static final long INITIAL_TX_REWARD = 10L;
+    public static final int REWARD_HEIGHT_INTERVAL_MIN = 100;
+    public static final BigInteger MAX_TARGET = Utils.decodeCompactBits(0x207fFFFFL);
+    public static final long TARGET_YEARLY_MINING_PAYOUT = 20000000000L; //3 digits after comma, 2% of 1 trillion total supply
+    public static final int TARGET_MAX_TPS = 10;
+
+    // Token config
+    public static final long TOKEN_MAX_ISSUANCE_NUMBER = Integer.MAX_VALUE;
+    public static final int TOKEN_MAX_NAME_LENGTH = 50;
+    public static final int TOKEN_MAX_DESC_LENGTH = 500;
+    public static final int TOKEN_MAX_URL_LENGTH = 100;
 
 	public static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
 	public static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
@@ -225,16 +217,6 @@ public abstract class NetworkParameters {
 	}
 
 	/**
-	 * Throws an exception if the block's difficulty is not correct.
-	 *
-	 * @throws VerificationException
-	 *             if the block's difficulty is not correct.
-	 */
-	// public abstract void checkDifficultyTransitions(StoredBlock storedPrev,
-	// Block next, final BlockStore blockStore)
-	// throws VerificationException, BlockStoreException;
-
-	/**
 	 * Returns true if the block height is either not a checkpoint, or is a
 	 * checkpoint and the hash matches.
 	 */
@@ -277,13 +259,6 @@ public abstract class NetworkParameters {
 	 * Bitcoin implemenetations. For a block to be valid, it must be eventually
 	 * possible to work backwards to the genesis block by following the
 	 * prevBlockHash pointers in the block headers.
-	 * </p>
-	 *
-	 * <p>
-	 * The genesis blocks for both test and main networks contain the timestamp of
-	 * when they were created, and a message in the coinbase transaction. It says,
-	 * <i>"The Times 03/Jan/2009 Chancellor on brink of second bailout for
-	 * banks"</i>.
 	 * </p>
 	 */
 	public Block getGenesisBlock() {
@@ -514,13 +489,4 @@ public abstract class NetworkParameters {
 			return bitcoinProtocol;
 		}
 	}
-
-	public long getRewardHeightInterval() {
-		return REWARD_HEIGHT_INTERVAL;
-	}
-
-	// TODO set
-    public int getTargetTPS() {
-        return 10;
-    }
 }

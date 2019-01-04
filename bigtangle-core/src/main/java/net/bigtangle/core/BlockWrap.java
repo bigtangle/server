@@ -86,7 +86,7 @@ public class BlockWrap {
             // Dynamic conflicts: mining rewards require the previous reward
             try {
                 RewardInfo rewardInfo = RewardInfo.parse(this.getBlock().getTransactions().get(0).getData());
-                blockConflicts.add(ConflictCandidate.fromRewardBlockHash(this, rewardInfo.getPrevRewardHash()));
+                blockConflicts.add(ConflictCandidate.fromReward(this, rewardInfo));
             } catch (IOException e) {
                 // Cannot happen since any blocks added already were checked.
                 e.printStackTrace();

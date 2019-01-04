@@ -16,25 +16,25 @@ public class ConflictPoint {
     @Nullable
     private TransactionOutPoint connectedOutpoint;
     @Nullable
-    private String connectedPrevRewardHash;
+    private RewardInfo connectedReward;
     @Nullable
     private Token connectedToken;
 
-    private ConflictPoint(ConflictType type, TransactionOutPoint connectedOutpoint, String connectedPrevReward,
-            Token connectedPrevToken) {
+    private ConflictPoint(ConflictType type, TransactionOutPoint connectedOutpoint, RewardInfo reward,
+            Token connectedToken) {
         super();
         this.type = type;
         this.connectedOutpoint = connectedOutpoint;
-        this.connectedPrevRewardHash = connectedPrevReward;
-        this.connectedToken = connectedPrevToken;
+        this.connectedReward = reward;
+        this.connectedToken = connectedToken;
     }
 
     public static ConflictPoint fromTransactionOutpoint(TransactionOutPoint connectedOutpoint) {
         return new ConflictPoint(ConflictType.TXOUT, connectedOutpoint, null, null);
     }
 
-    public static ConflictPoint fromRewardBlockHash(String prevRewardHash) {
-        return new ConflictPoint(ConflictType.REWARDISSUANCE, null, prevRewardHash, null);
+    public static ConflictPoint fromReward(RewardInfo reward) {
+        return new ConflictPoint(ConflictType.REWARDISSUANCE, null, reward, null);
     }
 
     public static ConflictPoint fromToken(Token token) {
@@ -54,7 +54,7 @@ public class ConflictPoint {
 
         switch (type) {
         case REWARDISSUANCE:
-            return getConnectedPrevReward().equals(other.getConnectedPrevReward());
+            return getConnectedReward().getPrevRewardHash().equals(other.getConnectedReward().getPrevRewardHash());
         case TOKENISSUANCE:
             // Dynamic conflicts: token issuances with index>0 require the previous issuance, while index=0 uses the tokenid as conflict point
             if (getConnectedToken().getTokenindex() != other.getConnectedToken().getTokenindex())
@@ -75,7 +75,7 @@ public class ConflictPoint {
     public int hashCode() {
         switch (type) {
         case REWARDISSUANCE:
-            return Objects.hashCode(getConnectedPrevReward());
+            return Objects.hashCode(getConnectedReward().getPrevRewardHash());
         case TOKENISSUANCE:
             return Objects.hashCode(getConnectedToken().getPrevblockhash());
         case TXOUT:
@@ -97,8 +97,8 @@ public class ConflictPoint {
         return connectedOutpoint;
     }
 
-    public String getConnectedPrevReward() {
-        return connectedPrevRewardHash;
+    public RewardInfo getConnectedReward() {
+        return connectedReward;
     }
 
     public Token getConnectedToken() {

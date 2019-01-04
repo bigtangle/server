@@ -22,8 +22,8 @@ public class ConflictCandidate {
         return new ConflictCandidate(block, ConflictPoint.fromTransactionOutpoint(connectedOutpoint));
     }
 
-    public static ConflictCandidate fromRewardBlockHash(BlockWrap block, String prevRewardHash) {
-        return new ConflictCandidate(block, ConflictPoint.fromRewardBlockHash(prevRewardHash));
+    public static ConflictCandidate fromReward(BlockWrap block, RewardInfo reward) {
+        return new ConflictCandidate(block, ConflictPoint.fromReward(reward));
     }
 
     public static ConflictCandidate fromToken(BlockWrap block, Token token) {

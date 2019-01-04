@@ -19,11 +19,9 @@ import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Transaction;
-import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.AbstractResponse;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
-import net.bigtangle.utils.MonetaryFormat;
 
 @Service
 public class TokensService {

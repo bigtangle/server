@@ -792,7 +792,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
             // Just fill the tables with some valid data
             // Reward output table
-            insertTxReward(params.getGenesisBlock().getHash(), -NetworkParameters.REWARD_HEIGHT_INTERVAL, true,
+            insertTxReward(params.getGenesisBlock().getHash(), -NetworkParameters.REWARD_HEIGHT_INTERVAL_MIN, true,
                     params.getGenesisBlock().getHash());
             updateTxRewardConfirmed(params.getGenesisBlock().getHash(), true);
 

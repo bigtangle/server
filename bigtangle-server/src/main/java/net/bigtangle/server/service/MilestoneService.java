@@ -230,8 +230,8 @@ public class MilestoneService {
 	private void updateRating() throws BlockStoreException {
 		// Select #tipCount solid tips via MCMC
 		HashMap<Sha256Hash, HashSet<UUID>> selectedTipApprovers = new HashMap<Sha256Hash, HashSet<UUID>>(
-				NetworkParameters.MAX_RATING_TIP_COUNT);
-		List<BlockWrap> selectedTips = tipsService.getRatingTips(NetworkParameters.MAX_RATING_TIP_COUNT);
+				NetworkParameters.NUMBER_RATING_TIPS);
+		List<BlockWrap> selectedTips = tipsService.getRatingTips(NetworkParameters.NUMBER_RATING_TIPS);
 
 		// Initialize all approvers as UUID
 		for (BlockWrap selectedTip : selectedTips) {

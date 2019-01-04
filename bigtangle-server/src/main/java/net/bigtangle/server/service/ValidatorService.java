@@ -174,7 +174,7 @@ public class ValidatorService {
             RewardInfo rewardInfo = RewardInfo.parse(prevRewardBlock.getBlock().getTransactions().get(0).getData());
             
             prevToHeight = rewardInfo.getToHeight();
-            minHeight = prevToHeight + networkParameters.getRewardHeightInterval() - 1;
+            minHeight = prevToHeight + (long) NetworkParameters.REWARD_HEIGHT_INTERVAL_MIN - 1;
             perTxReward = rewardInfo.getNextPerTxReward();
 
             if (prevTrunkBlock.getBlockEvaluation().getHeight() < minHeight - 1
@@ -188,7 +188,7 @@ public class ValidatorService {
         }
         
         long fromHeight = prevToHeight + 1;
-        long toHeight = prevToHeight + networkParameters.getRewardHeightInterval();
+        long toHeight = prevToHeight + (long) NetworkParameters.REWARD_HEIGHT_INTERVAL_MIN;
 
         // Initialize
         Set<BlockWrap> currentHeightBlocks = new HashSet<>();
@@ -313,7 +313,7 @@ public class ValidatorService {
         long timespan = Math.max(1, (currentTime - prevRewardBlock.getBlock().getTimeSeconds()));
 
         BigInteger prevTarget = Utils.decodeCompactBits(prevDifficulty);
-        BigInteger newTarget = prevTarget.multiply(BigInteger.valueOf(networkParameters.getTargetTPS()));
+        BigInteger newTarget = prevTarget.multiply(BigInteger.valueOf(NetworkParameters.TARGET_MAX_TPS));
         newTarget = newTarget.multiply(BigInteger.valueOf(timespan));
         newTarget = newTarget.divide(BigInteger.valueOf(totalRewardCount));
 
@@ -442,7 +442,7 @@ public class ValidatorService {
                 else
                     return store.getTokenSpent(connectedToken.getPrevblockhash());
             case REWARDISSUANCE:
-                return store.getTxRewardSpent(Sha256Hash.wrap(c.getConflictPoint().getConnectedPrevReward()));
+                return store.getTxRewardSpent(Sha256Hash.wrap(c.getConflictPoint().getConnectedReward().getPrevRewardHash()));
             default:
                 throw new NotImplementedException();
         }
@@ -461,7 +461,7 @@ public class ValidatorService {
             else
                 return store.getTokenConfirmed(connectedToken.getPrevblockhash());
         case REWARDISSUANCE:
-            return store.getTxRewardConfirmed(Sha256Hash.wrap(c.getConflictPoint().getConnectedPrevReward()));
+            return store.getTxRewardConfirmed(Sha256Hash.wrap(c.getConflictPoint().getConnectedReward().getPrevRewardHash()));
         default:
             throw new NotImplementedException();
     }
@@ -858,7 +858,7 @@ public class ValidatorService {
             }
             break;
         case REWARDISSUANCE:
-            final Sha256Hash txRewardSpender = store.getTxRewardSpender(Sha256Hash.wrap(c.getConflictPoint().getConnectedPrevReward()));
+            final Sha256Hash txRewardSpender = store.getTxRewardSpender(Sha256Hash.wrap(c.getConflictPoint().getConnectedReward().getPrevRewardHash()));
             if (txRewardSpender == null)
                 return null;
             milestoneBlock = store.getBlockWrap(txRewardSpender);
@@ -1210,6 +1210,7 @@ public class ValidatorService {
      */
     public SolidityState checkBlockSolidity(Block block, @Nullable StoredBlock storedPrev,
             @Nullable StoredBlock storedPrevBranch) throws BlockStoreException {
+        // Merge into validity?
         if (storedPrev == null) {
             return SolidityState.from(block.getPrevBlockHash());
         }
@@ -1264,7 +1265,7 @@ public class ValidatorService {
                     return SolidityState.getFailState();         
                 
                 // TODO Ensure all fields of RewardInfo are ok
-                if (rewardInfo.getToHeight() % NetworkParameters.REWARD_HEIGHT_INTERVAL != NetworkParameters.REWARD_HEIGHT_INTERVAL - 1)
+                if (rewardInfo.getToHeight() % NetworkParameters.REWARD_HEIGHT_INTERVAL_MIN != NetworkParameters.REWARD_HEIGHT_INTERVAL_MIN - 1)
                     return SolidityState.getFailState(); // Invalid fromHeight
                 
                 // TODO check FromHeight is starting from prevToHeight+1

@@ -437,7 +437,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         blockgraph.add(rollingBlock, true);
 
         Block preLastRollingBlock = null;
-        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + 10; i++) {
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL_MIN + 10; i++) {
             preLastRollingBlock = rollingBlock;
             rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
             blockgraph.add(rollingBlock, true);
