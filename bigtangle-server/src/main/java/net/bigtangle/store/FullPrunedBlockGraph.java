@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
@@ -597,15 +598,25 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.deleteTip(block.getPrevBranchBlockHash());
         blockStore.deleteTip(block.getHash());
         blockStore.insertTip(block.getHash());
+
+        blockStore.commitDatabaseBatchWrite();
+        // Finally, look in the solidity waiting queue for blocks that are still waiting
+        
+        // It could be a missing block...
+        blockStore.getUnsolidBlocks(block.getHash().getBytes()).stream().forEach(b -> add(b, true));;
+        // Or it could be a missing transaction
+        for (TransactionOutput txout : block.getTransactions().stream().flatMap(t -> t.getOutputs().stream()).collect(Collectors.toList())) {
+            blockStore.getUnsolidBlocks(txout.getOutPointFor().bitcoinSerialize()).stream().forEach(b -> add(b, true));;
+        }
     }
 
     @Override
     protected void insertUnsolidBlock(Block block, SolidityState solidityState) throws BlockStoreException {
-        // TODO solidity waiting list
         if (solidityState.isOK() || solidityState.getState() == State.Unfixable)
             return;
         
-        blockStore.insertUnsolid(block);
+        // Insert waiting into solidity waiting queue until dependency is resolved
+        blockStore.insertUnsolid(block, solidityState);
     }
 
     /*

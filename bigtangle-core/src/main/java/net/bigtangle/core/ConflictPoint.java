@@ -86,6 +86,7 @@ public class ConflictPoint {
     }
 
     public enum ConflictType {
+        // TODO refactor all occurrences
         TXOUT, TOKENISSUANCE, REWARDISSUANCE
     }
 

@@ -57,6 +57,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    hash varbinary(32) NOT NULL,\n"
             + "    block mediumblob NOT NULL,\n"
             + "    inserttime bigint,\n" 
+            + "    reason bigint NOT NULL,\n"
+            + "    missingdependency mediumblob NOT NULL,\n"
             + "    CONSTRAINT unsolidblocks_pk PRIMARY KEY (hash) USING BTREE \n" + ")";
             
     private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" 

@@ -6,6 +6,8 @@ package net.bigtangle.server;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
@@ -54,22 +56,56 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     
     // TODO test all consensus rules as soon as they are finished, i.e. code coverage + rule coverage
 
-    @Test(expected = RuntimeException.class)
-    public void testUnsolidBlock() throws Exception {
-        for (int i = 0; i < 10; i++) {
-            Sha256Hash sha256Hash1 = getRandomSha256Hash();
-            Sha256Hash sha256Hash2 = getRandomSha256Hash();
-            Block block = new Block(this.networkParameters, sha256Hash1, sha256Hash2, Block.Type.BLOCKTYPE_TRANSFER,
-                    System.currentTimeMillis() / 1000, 0, Block.EASIEST_DIFFICULTY_TARGET);
-            block.solve();
-            System.out.println(block.getHashAsString());
-            OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-            }
-        }
+    @Test
+    public void testUnsolidBlockAllowed() throws Exception {
+        Sha256Hash sha256Hash1 = getRandomSha256Hash();
+        Sha256Hash sha256Hash2 = getRandomSha256Hash();
+        Block block = new Block(this.networkParameters, sha256Hash1, sha256Hash2, Block.Type.BLOCKTYPE_TRANSFER,
+                System.currentTimeMillis() / 1000, 0, Block.EASIEST_DIFFICULTY_TARGET);
+        block.solve();
+        System.out.println(block.getHashAsString());
+
+        // Send over kafka method to allow unsolids
+        transactionService.addConnected(block.bitcoinSerialize(), true, false);
     }
+    
+    @Test(expected = RuntimeException.class)
+    public void testUnsolidBlockDisallowed() throws Exception {
+        Sha256Hash sha256Hash1 = getRandomSha256Hash();
+        Sha256Hash sha256Hash2 = getRandomSha256Hash();
+        Block block = new Block(this.networkParameters, sha256Hash1, sha256Hash2, Block.Type.BLOCKTYPE_TRANSFER,
+                System.currentTimeMillis() / 1000, 0, Block.EASIEST_DIFFICULTY_TARGET);
+        block.solve();
+        System.out.println(block.getHashAsString());
+
+        // Send over API method to disallow unsolids
+        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
+    }
+
+    @Test
+    public void testUnsolidBlockReconnect() throws Exception {
+        Block depBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
+                networkParameters.getGenesisBlock());
+        
+        Sha256Hash sha256Hash = depBlock.getHash();
+        Block block = new Block(this.networkParameters, sha256Hash, sha256Hash, Block.Type.BLOCKTYPE_TRANSFER,
+                System.currentTimeMillis() / 1000, 0, Block.EASIEST_DIFFICULTY_TARGET);
+        block.solve();
+        System.out.println(block.getHashAsString());
+        transactionService.addConnected(block.bitcoinSerialize(), true, false);
+        
+        // Should not be added since insolid
+        assertNull(store.get(block.getHash()));
+
+        // Add missing dependency
+        this.blockgraph.add(depBlock, true);
+
+        // After adding the missing dependency, should be added 
+        assertNotNull(store.get(block.getHash()));
+        assertNotNull(store.get(depBlock.getHash()));
+    }
+    
+    // TODO test waiting for outputs
 
     public Sha256Hash getRandomSha256Hash() {
         byte[] rawHashBytes = new byte[32];

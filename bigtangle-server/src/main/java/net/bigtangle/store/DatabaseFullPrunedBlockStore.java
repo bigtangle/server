@@ -23,6 +23,7 @@ import java.util.Properties;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
@@ -62,6 +63,7 @@ import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.script.Script;
+import net.bigtangle.server.service.SolidityState;
 
 /**
  * <p>
@@ -102,7 +104,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_BLOCKS_SQL = "SELECT  height, block, wasundoable,prevblockhash,prevbranchblockhash,mineraddress,"
             + "blocktype FROM blocks WHERE hash = ?" + afterSelect();
 
-    protected final String SELECT_UNSOLIDBLOCKS_SQL = "SELECT  hash,   block,  inserttime FROM unsolidblocks oder by inserttime asc"
+    protected final String SELECT_UNSOLIDBLOCKS_SQL = "SELECT  hash,   block,  inserttime FROM unsolidblocks order by inserttime asc"
+            + afterSelect();
+
+    protected final String SELECT_UNSOLIDBLOCKS_FROM_DEPENDENCY_SQL = "SELECT block FROM unsolidblocks WHERE missingDependency = ? "
             + afterSelect();
 
     protected final String SELECT_BLOCKS_HEIGHT_SQL = "SELECT block FROM blocks WHERE height >= ?" + afterSelect()
@@ -119,8 +124,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "milestone, milestonelastupdate, milestonedepth, inserttime, maintained )"
             + " VALUES(?, ?, ?, ?, ?,?,  ?, ?, ?, ?, ?, ?, ?,  ?, ?, ?)";
 
-    protected final String INSERT_UNSOLIDBLOCKS_SQL = getInsert() + "  INTO unsolidblocks(hash,   block,  inserttime  )"
-            + " VALUES(?, ?, ? )";
+    protected final String INSERT_UNSOLIDBLOCKS_SQL = getInsert() + "  INTO unsolidblocks(hash,   block,  inserttime  , reason, missingdependency)"
+            + " VALUES(?, ?, ?, ?, ? )";
 
     protected final String SELECT_OUTPUTS_COUNT_SQL = "SELECT COUNT(*) FROM outputs WHERE hash = ?";
     protected final String INSERT_OUTPUTS_SQL = getInsert()
@@ -2029,7 +2034,36 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void insertUnsolid(Block block) throws BlockStoreException {
+    public HashSet<Block> getUnsolidBlocks(byte[] dep) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement s = null;
+        HashSet<Block> resultSet = new HashSet<>();
+        try {
+            // Since both waiting reasons are hashes, we can simply look for the hashes
+            s = conn.get().prepareStatement(SELECT_UNSOLIDBLOCKS_FROM_DEPENDENCY_SQL);
+            s.setBytes(1, dep);
+            ResultSet results = s.executeQuery();
+            while (results.next()) {
+                Block block = params.getDefaultSerializer().makeBlock(results.getBytes(1));
+                block.verifyHeader();
+                resultSet.add(block);
+            }
+            return resultSet;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void insertUnsolid(Block block, SolidityState solidityState) throws BlockStoreException {
         if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
             return;
         }
@@ -2040,6 +2074,20 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setBytes(1, block.getHash().getBytes());
             preparedStatement.setBytes(2, block.bitcoinSerialize());
             preparedStatement.setLong(3, block.getTimeSeconds());
+            preparedStatement.setLong(4, solidityState.getState().ordinal());
+            switch (solidityState.getState()) {
+            case MissingPredecessor:
+            case MissingTransactionOutput:
+                preparedStatement.setBytes(5, solidityState.getMissingDependency());
+                break;
+            case Success:
+                throw new RuntimeException("Should not happen");
+            case Unfixable:
+                throw new RuntimeException("Should not happen");
+            default:
+                throw new NotImplementedException();
+            
+            }
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))

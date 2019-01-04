@@ -33,6 +33,7 @@ import net.bigtangle.core.UTXOProvider;
 import net.bigtangle.core.UserData;
 import net.bigtangle.core.VOSExecute;
 import net.bigtangle.kafka.KafkaMessageProducer;
+import net.bigtangle.server.service.SolidityState;
 
 /**
  * <p>
@@ -389,7 +390,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public List<Block> getNonSolidBlocks() throws BlockStoreException;
 
-    void insertUnsolid(Block block) throws BlockStoreException;
+    void insertUnsolid(Block block, SolidityState solidityState) throws BlockStoreException;
 
     void deleteUnsolid(Sha256Hash blockhash) throws BlockStoreException;
 
@@ -421,4 +422,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     List<Map<String, String>> getSubtanglePermissionListByPubkeys(List<String> pubkeys) throws BlockStoreException;
     // List<TokenSerial> getSearchTokenSerialInfo(String tokenid, List<String>
     // addresses) throws BlockStoreException;
+
+    HashSet<Block> getUnsolidBlocks(byte[] dep) throws BlockStoreException;
 }
