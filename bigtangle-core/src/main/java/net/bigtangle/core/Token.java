@@ -5,8 +5,6 @@
 package net.bigtangle.core;
 
 public class Token implements java.io.Serializable {
-    // TODO clean up: remove confirmed, blockhash maybe
-
     private static final long serialVersionUID = 6992138619113601243L;
 
     public Token(String tokenid, String tokenname) {

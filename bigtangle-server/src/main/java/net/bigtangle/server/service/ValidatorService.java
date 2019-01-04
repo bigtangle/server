@@ -4,8 +4,8 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
+import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -28,6 +28,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
@@ -40,17 +41,19 @@ import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
+import net.bigtangle.core.Block.Type;
+import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ConflictCandidate;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
-import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
@@ -141,7 +144,7 @@ public class ValidatorService {
         }
         return address;
     }
-    
+
     /**
      * Deterministically creates a mining reward transaction based on the
      * previous blocks and previous reward transaction.
@@ -166,30 +169,26 @@ public class ValidatorService {
 
         // Read previous reward block's data
         BlockWrap prevRewardBlock = store.getBlockWrap(prevRewardHash);
-        long fromHeight = 0, toHeight = 0, minHeight = 0, perTxReward = 0;
+        long prevToHeight = 0, minHeight = 0, perTxReward = 0;
         try {
-            if (prevRewardBlock.getBlock().getHash().equals(networkParameters.getGenesisBlock().getHash())) {
-                fromHeight = 0;
-                toHeight = fromHeight + networkParameters.getRewardHeightInterval() - 1;
-                minHeight = toHeight;
-                perTxReward = NetworkParameters.INITIAL_TX_REWARD;
-
-            } else {
-                ByteBuffer bb = ByteBuffer.wrap(prevRewardBlock.getBlock().getTransactions().get(0).getData());
-                fromHeight = bb.getLong() + networkParameters.getRewardHeightInterval();
-                toHeight = fromHeight + networkParameters.getRewardHeightInterval() - 1;
-                minHeight = toHeight;
-                perTxReward = bb.getLong();
-            }
+            RewardInfo rewardInfo = RewardInfo.parse(prevRewardBlock.getBlock().getTransactions().get(0).getData());
+            
+            prevToHeight = rewardInfo.getToHeight();
+            minHeight = prevToHeight + networkParameters.getRewardHeightInterval() - 1;
+            perTxReward = rewardInfo.getNextPerTxReward();
 
             if (prevTrunkBlock.getBlockEvaluation().getHeight() < minHeight - 1
                     && prevBranchBlock.getBlockEvaluation().getHeight() < minHeight - 1)
                 return null;
 
-        } catch (Exception e) {
+        } catch (IOException e) {
+            // Cannot happen since checked before
             e.printStackTrace();
-            return null;
+            throw new RuntimeException(e);
         }
+        
+        long fromHeight = prevToHeight + 1;
+        long toHeight = prevToHeight + networkParameters.getRewardHeightInterval();
 
         // Initialize
         Set<BlockWrap> currentHeightBlocks = new HashSet<>();
@@ -288,13 +287,9 @@ public class ValidatorService {
         long nextPerTxReward = calculateNextTxReward(prevTrunkBlock, prevBranchBlock, prevRewardBlock, perTxReward,
                 totalRewardCount);
 
-        // Build the type-specific tx data (fromHeight, nextPerTxReward,
-        // prevRewardHash)
-        ByteBuffer bb = ByteBuffer.allocate(48);
-        bb.putLong(fromHeight);
-        bb.putLong(nextPerTxReward);
-        bb.put(prevRewardHash.getBytes());
-        tx.setData(bb.array());
+        // Build the type-specific tx data
+        RewardInfo rewardInfo = new RewardInfo(fromHeight, toHeight, nextPerTxReward, prevRewardHash.toString());
+        tx.setData(rewardInfo.toByteArray());
 
         // Check eligibility: sufficient amount of milestone blocks approved?
         if (!checkEligibility(fromHeight, toHeight, totalRewardCount))
@@ -314,21 +309,21 @@ public class ValidatorService {
             BlockWrap prevRewardBlock, long totalRewardCount) {
         // The following equals current time by consensus rules
         long currentTime = Math.max(prevTrunkBlock.getBlock().getTimeSeconds(),
-                prevBranchBlock.getBlock().getTimeSeconds()); 
+                prevBranchBlock.getBlock().getTimeSeconds());
         long timespan = Math.max(1, (currentTime - prevRewardBlock.getBlock().getTimeSeconds()));
-        
+
         BigInteger prevTarget = Utils.decodeCompactBits(prevDifficulty);
         BigInteger newTarget = prevTarget.multiply(BigInteger.valueOf(networkParameters.getTargetTPS()));
         newTarget = newTarget.multiply(BigInteger.valueOf(timespan));
         newTarget = newTarget.divide(BigInteger.valueOf(totalRewardCount));
-        
+
         BigInteger maxNewTarget = prevTarget.multiply(BigInteger.valueOf(4));
         BigInteger minNewTarget = prevTarget.divide(BigInteger.valueOf(4));
-        
+
         if (newTarget.compareTo(maxNewTarget) > 0) {
             newTarget = maxNewTarget;
         }
-        
+
         if (newTarget.compareTo(minNewTarget) < 0) {
             newTarget = minNewTarget;
         }
@@ -345,15 +340,14 @@ public class ValidatorService {
             long currPerTxReward, long totalRewardCount) {
         // The following is used as proxy for current time by consensus rules
         long currentTime = Math.max(prevTrunkBlock.getBlock().getTimeSeconds(),
-                prevBranchBlock.getBlock().getTimeSeconds()); 
+                prevBranchBlock.getBlock().getTimeSeconds());
         long timespan = Math.max(1, (currentTime - prevRewardBlock.getBlock().getTimeSeconds()));
-        
+
         // TODO virtual txs for reward
         // TODO RewardInfo parse fully, also same VOSInfo
         // TODO include result from difficulty adjustment
-        //BigInteger result = BigInteger.valueOf(currPerTxReward);
-        long nextPerTxReward = NetworkParameters.TARGET_YEARLY_MINING_PAYOUT * timespan / 31536000L
-                / totalRewardCount;
+        // BigInteger result = BigInteger.valueOf(currPerTxReward);
+        long nextPerTxReward = NetworkParameters.TARGET_YEARLY_MINING_PAYOUT * timespan / 31536000L / totalRewardCount;
         nextPerTxReward = Math.max(nextPerTxReward, currPerTxReward / 4);
         nextPerTxReward = Math.min(nextPerTxReward, currPerTxReward * 4);
         nextPerTxReward = Math.max(nextPerTxReward, 1);
@@ -387,134 +381,202 @@ public class ValidatorService {
         return totalRewardCount;
     }
 
-    // TODO make new function since for rating purposes, it must be possible to reorg, i.e. allow spent prev UTXOs / unconfirmed prev UTXOs
-    // TODO make new function since for MCMC selection purposes, it must disallow spent prev UTXOs / unconfirmed prev UTXOs
-    // TODO make new function since for resolving conflicts in milestone updater, it must disallow unconfirmed prev UTXOs and spent UTXOs if unmaintained (unundoable) spend
     /**
-     * Remove blocks from blocksToAdd that have at least one used output
-     * not confirmed yet
+     * Checks if the given block is eligible to be walked to during local
+     * approval tip selection given the current set of non-milestone blocks to
+     * include. This is the case if the block + the set is compatible with the
+     * current milestone. It must disallow spent prev UTXOs / unconfirmed prev UTXOs
      * 
-     * @param blocksToAdd
-     * @return true if a block was removed
-     * @throws BlockStoreException
+     * @param block
+     *            The block to check for eligibility.
+     * @param currentApprovedNonMilestoneBlocks
+     *            The set of all currently approved non-milestone blocks. Note
+     *            that this set is assumed to be compatible with the current
+     *            milestone.
+     * @return true if the given block is eligible to be walked to during
+     *         approval tip selection.
+     * @throws BlockStoreException 
      */
-    public boolean removeWherePreconditionsUnfulfilled(Collection<BlockWrap> blocksToAdd) throws BlockStoreException {
-        return removeWherePreconditionsUnfulfilled(blocksToAdd, false);
+    public boolean isEligibleForApprovalSelection(BlockWrap block,
+            HashSet<BlockWrap> currentApprovedNonMilestoneBlocks) throws BlockStoreException {
+        // Any milestone blocks are always compatible with the current milestone
+        if (block.getBlockEvaluation().isMilestone())
+            return true;
+
+        // Get sets of all / all new non-milestone blocks when approving the
+        // specified block in combination with the currently included blocks
+        @SuppressWarnings("unchecked")
+        HashSet<BlockWrap> allApprovedNonMilestoneBlocks = (HashSet<BlockWrap>) currentApprovedNonMilestoneBlocks.clone();
+        blockService.addApprovedNonMilestoneBlocksTo(allApprovedNonMilestoneBlocks, block);
+        @SuppressWarnings("unchecked")
+        HashSet<BlockWrap> newApprovedNonMilestoneBlocks = (HashSet<BlockWrap>) allApprovedNonMilestoneBlocks.clone();
+        newApprovedNonMilestoneBlocks.removeAll(currentApprovedNonMilestoneBlocks);
+
+        // If there exists a new block whose dependency is already spent
+        // (conflicting with milestone) or not confirmed yet (missing other milestones), we fail to
+        // approve this block since the current milestone takes precedence / doesn't allow for the addition of these blocks
+        if (findBlockWithSpentOrUnconfirmedInputs(newApprovedNonMilestoneBlocks))
+            return false;
+
+        // If conflicts among the approved non-milestone blocks exist, cannot approve
+        HashSet<ConflictCandidate> conflictingOutPoints = new HashSet<>();
+        findCandidateConflicts(allApprovedNonMilestoneBlocks, conflictingOutPoints);
+        if (!conflictingOutPoints.isEmpty())
+            return false;
+
+        // Otherwise, the new approved block set is compatible with current milestone
+        return true;
     }
-
-    public boolean removeWherePreconditionsUnfulfilled(Collection<BlockWrap> blocksToAdd, boolean returnOnFail)
-            throws BlockStoreException {
-        boolean removed = false;
-
-        for (BlockWrap b : new HashSet<BlockWrap>(blocksToAdd)) {
-            Block block = b.getBlock();
-            // Blocks that are in the milestone are always ok
-            if (b.getBlockEvaluation().isMilestone())
-                continue;
-            
-            // For non-milestone blocks, the TXs must be consistent with the current milestone
-            for (TransactionInput in : block.getTransactions().stream().flatMap(t -> t.getInputs().stream())
-                    .collect(Collectors.toList())) {
-                if (in.isCoinBase())
-                    continue;
-                UTXO utxo = transactionService.getUTXO(in.getOutpoint());
+    
+    
+    private boolean isSpent(ConflictCandidate c) throws BlockStoreException {
+        switch (c.getConflictPoint().getType()) {
+            case TXOUT:
+                return transactionService.getUTXOSpent(c.getConflictPoint().getConnectedOutpoint());
+            case TOKENISSUANCE:
+                final Token connectedToken = c.getConflictPoint().getConnectedToken();
                 
-                // used UTXOs must be confirmed and unspent
-                if (utxo == null || !utxo.isConfirmed() || utxo.isSpent()) {
-                    removed = true;
-                    blockService.removeBlockAndApproversFrom(blocksToAdd, b);
-                    continue;
-                }
-            }
-            
-            switch (block.getBlockType()) {
-            case BLOCKTYPE_CROSSTANGLE:
-                break;
-            case BLOCKTYPE_FILE:
-                break;
-            case BLOCKTYPE_GOVERNANCE:
-                break;
-            case BLOCKTYPE_INITIAL:
-                break;
-            case BLOCKTYPE_REWARD:
-                // TODO
-                // Previous reward must have been confirmed
-                Sha256Hash prevRewardHash = null;
-                try {
-                    byte[] hashBytes = new byte[32];
-                    ByteBuffer bb = ByteBuffer.wrap(block.getTransactions().get(0).getData());
-                    bb.getLong();
-                    bb.getLong();
-                    bb.get(hashBytes, 0, 32);
-                    prevRewardHash = Sha256Hash.wrap(hashBytes);
-
-                    // used UTXOs must be confirmed and unspent
-                    if (!store.getTxRewardConfirmed(prevRewardHash) || store.getTxRewardSpent(prevRewardHash)) {
-                        removed = true;
-                        blockService.removeBlockAndApproversFrom(blocksToAdd, b);
-                        continue;
-                    }
-                } catch (Exception c) {
-                    c.printStackTrace();
-                    removed = true;
-                    blockService.removeBlockAndApproversFrom(blocksToAdd, b);
-                    continue;
-                }
-
-                // If ineligible, preconditions are sufficient age and milestone
-                // rating range
-                if (!store.getTxRewardEligible(block.getHash())
-                        && !(b.getBlockEvaluation().getRating() > NetworkParameters.MILESTONE_UPPER_THRESHOLD
-                                && b.getBlockEvaluation().getInsertTime() < System.currentTimeMillis() / 1000 - 30)) {
-                    removed = true;
-                    blockService.removeBlockAndApproversFrom(blocksToAdd, b);
-                    continue;
-                }
-                break;
-            case BLOCKTYPE_TOKEN_CREATION:
-                String tokenPrevBlockHash = store.getTokenPrevblockhash(b.getBlock().getHashAsString());
-                
-                // used UTXOs must be confirmed and unspent
-                if (!tokenPrevBlockHash.equals("") && (!store.getTokenConfirmed(tokenPrevBlockHash)
-                        || store.getTokenSpent(tokenPrevBlockHash))) {
-                    removed = true;
-                    blockService.removeBlockAndApproversFrom(blocksToAdd, b);
-                    continue;
-                }
-                break;
-            case BLOCKTYPE_TRANSFER:
-                break;
-            case BLOCKTYPE_USERDATA:
-                break;
-            case BLOCKTYPE_VOS:
-                break;
-            case BLOCKTYPE_VOS_EXECUTE:
-                break;
+                // Initial issuances are allowed iff no other same token issuances are confirmed
+                if (connectedToken.getTokenindex() == 0)
+                    return store.getTokenAnyConfirmed(connectedToken.getTokenid(), connectedToken.getTokenindex()); 
+                else
+                    return store.getTokenSpent(connectedToken.getPrevblockhash());
+            case REWARDISSUANCE:
+                return store.getTxRewardSpent(Sha256Hash.wrap(c.getConflictPoint().getConnectedPrevReward()));
             default:
                 throw new NotImplementedException();
-            
-            }
         }
-
-        return removed;
+    }
+    
+    private boolean isConfirmed(ConflictCandidate c) throws BlockStoreException {
+        switch (c.getConflictPoint().getType()) {
+        case TXOUT:
+            return transactionService.getUTXOConfirmed(c.getConflictPoint().getConnectedOutpoint());
+        case TOKENISSUANCE:
+            final Token connectedToken = c.getConflictPoint().getConnectedToken();
+            
+            // Initial issuances are allowed iff no other same token issuances are confirmed
+            if (connectedToken.getTokenindex() == 0)
+                return !store.getTokenAnyConfirmed(connectedToken.getTokenid(), connectedToken.getTokenindex()); 
+            else
+                return store.getTokenConfirmed(connectedToken.getPrevblockhash());
+        case REWARDISSUANCE:
+            return store.getTxRewardConfirmed(Sha256Hash.wrap(c.getConflictPoint().getConnectedPrevReward()));
+        default:
+            throw new NotImplementedException();
+    }
     }
 
+    private boolean findBlockWithSpentOrUnconfirmedInputs(HashSet<BlockWrap> newApprovedNonMilestoneBlocks) {
+        // Get all conflict candidates in blocks
+        Stream<ConflictCandidate> candidates = newApprovedNonMilestoneBlocks.stream().map(b -> b.toConflictCandidates())
+                .flatMap(i -> i.stream());
+
+        // Find conflict candidates whose used outputs are already spent or still unconfirmed
+        return candidates
+                .filter((ConflictCandidate c) -> {
+                    try {
+                        return isSpent(c) || !isConfirmed(c);
+                    } catch (BlockStoreException e) {
+                        e.printStackTrace();
+                    }
+                    return false;
+                })
+                .findFirst()
+                .isPresent();
+    }
+
+    /**
+     * Remove blocks from blocksToAdd that have at least one used output not
+     * confirmed yet. They may however be spent already -> conflict.
+     * 
+     * @param blocksToAdd
+     * @throws BlockStoreException
+     */
+    public void removeWherePreconditionsUnfulfilled(Collection<BlockWrap> blocksToAdd)
+            throws BlockStoreException {
+        new HashSet<BlockWrap>(blocksToAdd).stream()
+        .filter(b -> !b.getBlockEvaluation().isMilestone()) // Milestones are always ok
+        .flatMap(b -> b.toConflictCandidates().stream())
+        .filter(c -> {
+            try {
+                return !isConfirmed(c); // Any candidates where used output unconfirmed
+            } catch (BlockStoreException e) {
+                // Cannot happen.
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+        }).forEach(c -> {
+            try {
+                blockService.removeBlockAndApproversFrom(blocksToAdd, c.getBlock());                
+            } catch (BlockStoreException e) {
+                // Cannot happen.
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+        });
+
+        // Additionally, for reward blocks they must be eligible
+        // If ineligible, preconditions are sufficient age and milestone
+        // rating range
+        new HashSet<BlockWrap>(blocksToAdd).stream()
+        .filter(b -> b.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD) // prefilter for reward blocks
+        .forEach(b -> {
+            try {
+              if (!store.getTxRewardEligible(b.getBlock().getHash())
+                      && !(b.getBlockEvaluation().getRating() > NetworkParameters.MILESTONE_UPPER_THRESHOLD
+                              && b.getBlockEvaluation().getInsertTime() < System.currentTimeMillis() / 1000 - 30)) 
+                  blockService.removeBlockAndApproversFrom(blocksToAdd, b);
+            } catch (BlockStoreException e) {
+                // Cannot happen.
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    // disallow unconfirmed prev UTXOs and spent UTXOs if
+    // unmaintained (unundoable) spend
     public void resolveValidityConflicts(Set<BlockWrap> blocksToAdd, boolean unconfirmLosingMilestones)
             throws BlockStoreException {
         // Remove blocks and their approvers that have at least one input
-        // with its corresponding output not confirmed yet / nonexistent
+        // with its corresponding output not confirmed yet
         removeWherePreconditionsUnfulfilled(blocksToAdd);
 
-        // Resolve conflicting block combinations
-        // resolvePrunedConflicts(blocksToAdd);
+        // Resolve conflicting block combinations:
+        // Disallow conflicts with unmaintained/pruned milestone blocks,
+        //  i.e. remove those whose input is already spent by such blocks
+        resolvePrunedConflicts(blocksToAdd);
+        
+        // Then resolve conflicts between maintained milestone + new candidates
+        // This may trigger reorgs, i.e. unconfirming current milestones!
         resolveUndoableConflicts(blocksToAdd, unconfirmLosingMilestones);
 
         // Remove blocks and their approvers that have at least one input
-        // with its corresponding output not confirmed yet / nonexistent
-        // Needed since while resolving undoable conflicts, milestone blocks
-        // could be
-        // unconfirmed
+        // with its corresponding output not confirmed yet
+        // This is needed since reorgs could have been triggered
         removeWherePreconditionsUnfulfilled(blocksToAdd);
+    }
+
+    private void resolvePrunedConflicts(Set<BlockWrap> blocksToAdd) throws BlockStoreException {
+        // Find all conflict candidates in blocks to add
+        List<ConflictCandidate> conflicts = blocksToAdd.stream().map(b -> b.toConflictCandidates())
+                .flatMap(i -> i.stream()).collect(Collectors.toList());
+
+        // Find only those that are spent in milestone
+        filterSpent(conflicts);
+
+        // Add the conflicting candidates and milestone blocks to given set
+        for (ConflictCandidate c : conflicts) {
+            // Find the spending block we are competing with
+            BlockWrap milestoneBlock = getSpendingBlock(c);
+            
+            // If it is pruned or not maintained, we drop the blocks and warn
+            if (milestoneBlock == null || !milestoneBlock.getBlockEvaluation().isMaintained()) {
+                blockService.removeBlockAndApproversFrom(blocksToAdd, c.getBlock());
+                logger.error("Dropping would-be blocks due to pruning. Reorg not possible!");
+            }
+        }
     }
 
     /**
@@ -525,13 +587,13 @@ public class ValidatorService {
      * @param unconfirmLosingMilestones
      * @throws BlockStoreException
      */
-    public void resolveUndoableConflicts(Collection<BlockWrap> blocksToAdd, boolean unconfirmLosingMilestones)
+    private void resolveUndoableConflicts(Collection<BlockWrap> blocksToAdd, boolean unconfirmLosingMilestones)
             throws BlockStoreException {
         HashSet<ConflictCandidate> conflictingOutPoints = new HashSet<ConflictCandidate>();
         HashSet<BlockWrap> conflictingMilestoneBlocks = new HashSet<BlockWrap>();
 
         // Find all conflicts in the new blocks + maintained milestone blocks
-        findConflicts(blocksToAdd, conflictingOutPoints, conflictingMilestoneBlocks);
+        findFixableConflicts(blocksToAdd, conflictingOutPoints, conflictingMilestoneBlocks);
 
         // Resolve all conflicts by grouping by UTXO ordered by descending
         // rating
@@ -550,8 +612,7 @@ public class ValidatorService {
         }
 
         // For candidates that have been eliminated (conflictingOutPoints in
-        // blocksToAdd
-        // \ winningBlocks) remove them from blocksToAdd
+        // blocksToAdd \ winningBlocks) remove them from blocksToAdd
         for (ConflictCandidate b : conflictingOutPoints.stream()
                 .filter(b -> blocksToAdd.contains(b.getBlock()) && losingBlocks.contains(b.getBlock()))
                 .collect(Collectors.toList())) {
@@ -701,16 +762,16 @@ public class ValidatorService {
     }
 
     /**
-     * Finds conflicts in blocksToAdd
+     * Finds conflicts in blocksToAdd itself and with the milestone.
      * 
      * @param blocksToAdd
      * @param conflictingOutPoints
      * @throws BlockStoreException
      */
-    public void findConflicts(Collection<BlockWrap> blocksToAdd, Collection<ConflictCandidate> conflictingOutPoints,
+    public void findFixableConflicts(Collection<BlockWrap> blocksToAdd, Collection<ConflictCandidate> conflictingOutPoints,
             Collection<BlockWrap> conflictingMilestoneBlocks) throws BlockStoreException {
 
-        findMilestoneConflicts(blocksToAdd, conflictingOutPoints, conflictingMilestoneBlocks);
+        findUndoableMilestoneConflicts(blocksToAdd, conflictingOutPoints, conflictingMilestoneBlocks);
         findCandidateConflicts(blocksToAdd, conflictingOutPoints);
     }
 
@@ -742,35 +803,28 @@ public class ValidatorService {
      * @param conflictingOutPoints
      * @throws BlockStoreException
      */
-    private void findMilestoneConflicts(Collection<BlockWrap> blocksToAdd,
+    // TODO should be sets not collections
+    private void findUndoableMilestoneConflicts(Collection<BlockWrap> blocksToAdd,
             Collection<ConflictCandidate> conflictingOutPoints, Collection<BlockWrap> conflictingMilestoneBlocks)
             throws BlockStoreException {
         // Find all conflict candidates in blocks to add
         List<ConflictCandidate> conflicts = blocksToAdd.stream().map(b -> b.toConflictCandidates())
                 .flatMap(i -> i.stream()).collect(Collectors.toList());
 
-        // Find only those that are conflicting with milestone
-        filterConflictingWithMilestone(conflicts);
+        // Find only those that are spent in milestone
+        filterSpent(conflicts);
 
         // Add the conflicting candidates and milestone blocks to given set
         for (ConflictCandidate c : conflicts) {
+            // Find the spending block we are competing with
+            BlockWrap milestoneBlock = getSpendingBlock(c);
+            
+            // Only go through if the milestone block is maintained, i.e. undoable
+            if (milestoneBlock == null || !milestoneBlock.getBlockEvaluation().isMaintained())
+                continue;
 
             // Add milestone block
-            BlockWrap milestoneBlock = null;
-            switch (c.getConflictPoint().getType()) {
-            case TXOUT:
-                milestoneBlock = getSpendingBlock(c.getConflictPoint().getConnectedOutpoint());
-                break;
-            case TOKENISSUANCE:
-                milestoneBlock = getTokenIssuingBlock(c.getConflictPoint().getConnectedToken());
-                break;
-            case REWARDISSUANCE:
-                milestoneBlock = getIntervalRewardingBlock(c.getConflictPoint().getConnectedRewardHeight());
-                break;
-            default:
-                throw new NotImplementedException();
-            }
-            conflictingOutPoints.add(new ConflictCandidate(milestoneBlock, c.getConflictPoint()));
+            conflictingOutPoints.add(ConflictCandidate.fromConflictPoint(milestoneBlock, c.getConflictPoint()));
             conflictingMilestoneBlocks.add(milestoneBlock);
 
             // Then add corresponding new block
@@ -778,56 +832,47 @@ public class ValidatorService {
         }
     }
 
-    public boolean isEligibleForMCMC(BlockWrap block, HashSet<BlockWrap> currentApprovedNonMilestoneBlocks) {
-        if (block.getBlockEvaluation().isMilestone())
-            return true;
-
-        @SuppressWarnings("unchecked")
-        HashSet<BlockWrap> newApprovedNonMilestoneBlocks = (HashSet<BlockWrap>) currentApprovedNonMilestoneBlocks
-                .clone();
-        try {
-            blockService.addApprovedNonMilestoneBlocksTo(newApprovedNonMilestoneBlocks, block);
-        } catch (BlockStoreException e) {
-            e.printStackTrace();
-            return false;
+    // Returns null if no spending block found
+    // TODO refactor this garbage
+    private BlockWrap getSpendingBlock(ConflictCandidate c) throws BlockStoreException {
+        BlockWrap milestoneBlock = null;
+        switch (c.getConflictPoint().getType()) {
+        case TXOUT:
+            final BlockEvaluation utxoSpender = transactionService.getUTXOSpender(c.getConflictPoint().getConnectedOutpoint());
+            if (utxoSpender == null)
+                return null;
+            milestoneBlock = store.getBlockWrap(utxoSpender.getBlockHash());
+            break;
+        case TOKENISSUANCE:
+            final Token connectedToken = c.getConflictPoint().getConnectedToken();
+            
+            // Initial issuances are competing with each other
+            if (connectedToken.getTokenindex() == 0) {
+                return store.getTokenIssuingConfirmedBlock(connectedToken.getTokenid(), connectedToken.getTokenindex()); 
+            }
+            else {
+                final String tokenSpender = store.getTokenSpender(connectedToken.getPrevblockhash());
+                if (tokenSpender == null)
+                    return null;
+                milestoneBlock = store.getBlockWrap(Sha256Hash.wrap(tokenSpender));
+            }
+            break;
+        case REWARDISSUANCE:
+            final Sha256Hash txRewardSpender = store.getTxRewardSpender(Sha256Hash.wrap(c.getConflictPoint().getConnectedPrevReward()));
+            if (txRewardSpender == null)
+                return null;
+            milestoneBlock = store.getBlockWrap(txRewardSpender);
+            break;
+        default:
+            throw new NotImplementedException();
         }
-
-        // Remove blocks and their approvers that have at least one input
-        // with its corresponding output not confirmed yet
-        try {
-            if (removeWherePreconditionsUnfulfilled(newApprovedNonMilestoneBlocks, true))
-                return false;
-        } catch (BlockStoreException e) {
-            e.printStackTrace();
-            return false;
-        }
-
-        // Find all conflict candidates in blocks to add
-        List<ConflictCandidate> conflicts = newApprovedNonMilestoneBlocks.stream().map(b -> b.toConflictCandidates())
-                .flatMap(i -> i.stream()).collect(Collectors.toList());
-
-        // Find only those that are conflicting with milestone
-        return !isConflictingWithMilestone(conflicts);
+        return milestoneBlock;
     }
 
-    public boolean isConflictingWithMilestone(Collection<ConflictCandidate> blockConflicts) {
-        filterConflictingWithMilestone(blockConflicts);
-        return !blockConflicts.isEmpty();
-    }
-
-    public void filterConflictingWithMilestone(Collection<ConflictCandidate> blockConflicts) {
+    public void filterSpent(Collection<ConflictCandidate> blockConflicts) {
         blockConflicts.removeIf(c -> {
             try {
-                switch (c.getConflictPoint().getType()) {
-                case TXOUT:
-                    return !alreadySpent(c.getConflictPoint().getConnectedOutpoint());
-                case TOKENISSUANCE:
-                    return !alreadyIssued(c.getConflictPoint().getConnectedToken());
-                case REWARDISSUANCE:
-                    return !alreadyRewarded(c.getConflictPoint().getConnectedRewardHeight());
-                default:
-                    throw new NotImplementedException();
-                }
+                return !isSpent(c);
             } catch (BlockStoreException e) {
                 e.printStackTrace();
                 return true;
@@ -835,54 +880,29 @@ public class ValidatorService {
         });
     }
 
-    private boolean alreadySpent(TransactionOutPoint transactionOutPoint) {
-        return transactionService.getUTXOSpent(transactionOutPoint) && getSpendingBlock(transactionOutPoint) != null
-                && getSpendingBlock(transactionOutPoint).getBlockEvaluation().isMaintained();
-    }
-
-    private BlockWrap getIntervalRewardingBlock(long height) throws BlockStoreException {
-        return store.getBlockWrap(store.getConfirmedRewardBlock(height));
-    }
-
-    private boolean alreadyRewarded(long height) throws BlockStoreException {
-        return height <= store.getMaxPrevTxRewardHeight() + NetworkParameters.REWARD_HEIGHT_INTERVAL;
-    }
-
-    private BlockWrap getSpendingBlock(TransactionOutPoint transactionOutPoint) {
-        try {
-            return store.getBlockWrap(transactionService.getUTXOSpender(transactionOutPoint).getBlockHash());
-        } catch (BlockStoreException e) {
-            return null;
-        }
-    }
-
-    private boolean alreadyIssued(Token token) throws BlockStoreException {
-        return store.getTokenAnyConfirmed(token.getTokenid(), token.getTokenindex());
-    }
-
-    private BlockWrap getTokenIssuingBlock(Token token) throws BlockStoreException {
-        return store.getTokenIssuingConfirmedBlock(token.getTokenid(), token.getTokenindex());
-    }
-    
     /*
      * Check if the block is made correctly. Allow conflicts for transaction
      * data (non-Javadoc)
      */
-    public boolean checkBlockValidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height) throws VerificationException {
+    public boolean checkBlockValidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height)
+            throws VerificationException {
         // Check timestamp: enforce monotone time increase
         if (block.getTimeSeconds() < storedPrev.getHeader().getTimeSeconds()
                 || block.getTimeSeconds() < storedPrevBranch.getHeader().getTimeSeconds())
             return false;
 
-        // Check difficulty and latest consensus reward block is passed through correctly
-        if (block.getBlockType() != Block.Type.BLOCKTYPE_REWARD && block.getBlockType() != Block.Type.BLOCKTYPE_INITIAL) {
-            if (storedPrev.getHeader().getLastMiningRewardBlock() >= storedPrevBranch.getHeader().getLastMiningRewardBlock()) {
+        // Check difficulty and latest consensus reward block is passed through
+        // correctly
+        if (block.getBlockType() != Block.Type.BLOCKTYPE_REWARD
+                && block.getBlockType() != Block.Type.BLOCKTYPE_INITIAL) {
+            if (storedPrev.getHeader().getLastMiningRewardBlock() >= storedPrevBranch.getHeader()
+                    .getLastMiningRewardBlock()) {
                 if (block.getLastMiningRewardBlock() != storedPrev.getHeader().getLastMiningRewardBlock()
-                        || block.getDifficultyTarget() != storedPrev.getHeader().getDifficultyTarget()) 
+                        || block.getDifficultyTarget() != storedPrev.getHeader().getDifficultyTarget())
                     return false;
             } else {
                 if (block.getLastMiningRewardBlock() != storedPrevBranch.getHeader().getLastMiningRewardBlock()
-                        || block.getDifficultyTarget() != storedPrevBranch.getHeader().getDifficultyTarget()) 
+                        || block.getDifficultyTarget() != storedPrevBranch.getHeader().getDifficultyTarget())
                     return false;
             }
         }
@@ -908,80 +928,102 @@ public class ValidatorService {
         case BLOCKTYPE_GOVERNANCE:
             break;
         case BLOCKTYPE_INITIAL:
-            // Check genesis block specific validity, can only one genesis block
-            if (!block.getHash().equals(networkParameters.getGenesisBlock().getHash())) {
-                return false;
-            }
+//            // Check genesis block specific validity, can only one genesis block
+//            if (!block.getHash().equals(networkParameters.getGenesisBlock().getHash())) {
+//                return false;
+//            }
             break;
         case BLOCKTYPE_REWARD:
-            if (transactions.size() != 1)
-                return false; //Too many or too few transactions for token creation
-
-            if (!transactions.get(0).isCoinBase())
-                return false; //TX is not coinbase when it should be
+//            if (transactions.size() != 1)
+//                return false; // Too many or too few transactions for token
+//                              // creation
+//
+//            if (!transactions.get(0).isCoinBase())
+//                return false; // TX is not coinbase when it should be
 
             // Check that the tx has correct data (long fromHeight)
             // TODO overhaul
             try {
-                byte[] data = transactions.get(0).getData();
-                if (data == null || data.length < 8)
-                    return false; //Missing fromHeight data
-                long u = Utils.readInt64(data, 0);
-                if (u % NetworkParameters.REWARD_HEIGHT_INTERVAL != 0)
-                    return false; //Invalid fromHeight
-            } catch (ArrayIndexOutOfBoundsException e) {
+                RewardInfo rewardInfo = RewardInfo.parse(transactions.get(0).getData());                
+                Sha256Hash prevRewardHash = Sha256Hash.wrap(rewardInfo.getPrevRewardHash());
+                
+                // Check if eligible
+                try {
+                    Triple<Transaction, Boolean, Long> rewardEligibleDifficulty = generateMiningRewardTX(
+                            storedPrev.getHeader(), storedPrevBranch.getHeader(), prevRewardHash);
+
+                    // Reward must have been built correctly.
+                    if (!rewardEligibleDifficulty.getLeft().getHash().equals(block.getTransactions().get(0).getHash()))
+                        return false;
+
+                    // Difficulty must be correct
+                    if (rewardEligibleDifficulty.getRight() != block.getDifficultyTarget())
+                        return false;
+                    if (Math.max(storedPrev.getHeader().getLastMiningRewardBlock(),
+                            storedPrevBranch.getHeader().getLastMiningRewardBlock())
+                            + 1 != block.getLastMiningRewardBlock())
+                        return false;
+                } catch (BlockStoreException e) {
+                    logger.info("", e);
+                    return false;
+                }
+                
+            } catch (IOException e) {
                 // Cannot happen
                 e.printStackTrace();
-                return false; 
+                throw new RuntimeException(e);
             }
 
             // Check reward block specific validity
             // Get reward data from previous reward cycle
-            Sha256Hash prevRewardHash = null;
-            @SuppressWarnings("unused")
-            long fromHeight = 0, nextPerTxReward = 0;
-            try {
-                byte[] hashBytes = new byte[32];
-                ByteBuffer bb = ByteBuffer.wrap(block.getTransactions().get(0).getData());
-                fromHeight = bb.getLong();
-                nextPerTxReward = bb.getLong();
-                bb.get(hashBytes, 0, 32);
-                prevRewardHash = Sha256Hash.wrap(hashBytes);
-            } catch (Exception e) {
-                e.printStackTrace();
-                return false;
-            }
+//            Sha256Hash prevRewardHash = null;
+//            @SuppressWarnings("unused")
+//            long fromHeight = 0, nextPerTxReward = 0;
+//            try {
+//                byte[] hashBytes = new byte[32];
+//                ByteBuffer bb = ByteBuffer.wrap(block.getTransactions().get(0).getData());
+//                fromHeight = bb.getLong();
+//                nextPerTxReward = bb.getLong();
+//                bb.get(hashBytes, 0, 32);
+//                prevRewardHash = Sha256Hash.wrap(hashBytes);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//                return false;
+//            }
+//
+//            try {
+//                Triple<Transaction, Boolean, Long> rewardEligibleDifficulty = generateMiningRewardTX(
+//                        storedPrev.getHeader(), storedPrevBranch.getHeader(), prevRewardHash);
+//
+//                // Reward must have been built correctly.
+//                if (!rewardEligibleDifficulty.getLeft().getHash().equals(block.getTransactions().get(0).getHash()))
+//                    return false;
+//
+//                // Difficulty must be correct
+//                if (rewardEligibleDifficulty.getRight() != block.getDifficultyTarget())
+//                    return false;
+//                if (Math.max(storedPrev.getHeader().getLastMiningRewardBlock(),
+//                        storedPrevBranch.getHeader().getLastMiningRewardBlock())
+//                        + 1 != block.getLastMiningRewardBlock())
+//                    return false;
+//            } catch (BlockStoreException e) {
+//                logger.info("", e);
+//                return false;
+//            }
 
-            try {
-                Triple<Transaction, Boolean, Long> rewardEligibleDifficulty = generateMiningRewardTX(storedPrev.getHeader(), storedPrevBranch.getHeader(), prevRewardHash);
-
-                // Reward must have been built correctly.
-                if (!rewardEligibleDifficulty.getLeft().getHash().equals(block.getTransactions().get(0).getHash()))
-                    return false;
-
-                // Difficulty must be correct
-                if (rewardEligibleDifficulty.getRight() != block.getDifficultyTarget())
-                    return false;
-                if (Math.max(storedPrev.getHeader().getLastMiningRewardBlock(),
-                        storedPrevBranch.getHeader().getLastMiningRewardBlock()) + 1 != block.getLastMiningRewardBlock())
-                    return false;
-            } catch (BlockStoreException e) {
-                logger.info("", e);
-                return false;
-            }
-            
             break;
         case BLOCKTYPE_TOKEN_CREATION:
-            if (transactions.size() != 1)
-                return false; //Too many or too few transactions for token creation
+//            if (transactions.size() != 1)
+//                return false; // Too many or too few transactions for token
+//                              // creation
+//
+//            if (!transactions.get(0).isCoinBase())
+//                return false; // TX is not coinbase when it should be;
 
-            if (!transactions.get(0).isCoinBase())
-                return false; //TX is not coinbase when it should be;
-            
             // Check issuance block specific validity
             try {
-                // TODO overhaul this, allowConflicts does not exist anymore. Instead, split in checks solidity and validity
-                
+                // TODO split in checks of solidity and validity
+
                 // Check according to previous issuance, or if it does not exist
                 // the normal signature
                 if (!this.multiSignService.checkToken(block, false)) {
@@ -991,7 +1033,7 @@ public class ValidatorService {
                 logger.error("", e);
                 return false;
             }
-            
+
             break;
         case BLOCKTYPE_TRANSFER:
             break;
@@ -1001,8 +1043,8 @@ public class ValidatorService {
             break;
         case BLOCKTYPE_VOS_EXECUTE:
             break;
-        default: 
-                throw new NotImplementedException("Blocktype not implemented!");
+        default:
+            throw new NotImplementedException("Blocktype not implemented!");
         }
 
         return true;
@@ -1010,14 +1052,14 @@ public class ValidatorService {
 
     private boolean checkTransactionalValidity(Block block, long height) {
         List<Transaction> transactions = block.getTransactions();
-        
+
         // Coinbase allowance
         for (Transaction tx : transactions) {
             if (tx.isCoinBase() && !block.allowCoinbaseTransaction()) {
                 return false;
             }
         }
-        
+
         // Transaction validity
         LinkedList<UTXO> txOutsSpent = new LinkedList<UTXO>();
         LinkedList<UTXO> txOutsCreated = new LinkedList<UTXO>();
@@ -1135,7 +1177,7 @@ public class ValidatorService {
             logger.info("", e);
             return false;
         }
-        
+
         return true;
     }
 
@@ -1162,18 +1204,20 @@ public class ValidatorService {
     }
 
     /*
-     * Checks if the block has all of its dependencies to fully determine its validity. 
-     * If SolidityState.getFailState() is returned, this is equivalent to the block always being invalid.
+     * Checks if the block has all of its dependencies to fully determine its
+     * validity. If SolidityState.getFailState() is returned, this is equivalent
+     * to the block always being invalid.
      */
-    public SolidityState checkBlockSolidity(Block block, @Nullable StoredBlock storedPrev, @Nullable StoredBlock storedPrevBranch) throws BlockStoreException {
+    public SolidityState checkBlockSolidity(Block block, @Nullable StoredBlock storedPrev,
+            @Nullable StoredBlock storedPrevBranch) throws BlockStoreException {
         if (storedPrev == null) {
             return SolidityState.from(block.getPrevBlockHash());
         }
-        
+
         if (storedPrevBranch == null) {
             return SolidityState.from(block.getPrevBranchBlockHash());
         }
-        
+
         SolidityState transactionalSolidityState = checkTransactionalSolidity(block);
         if (!transactionalSolidityState.isOK()) {
             return transactionalSolidityState;
@@ -1200,60 +1244,60 @@ public class ValidatorService {
             return SolidityState.getFailState();
         case BLOCKTYPE_REWARD:
             if (transactions.size() != 1)
-                return SolidityState.getFailState(); //Too many or too few transactions for token creation
+                return SolidityState.getFailState(); // Incorrect tx count
 
             if (!transactions.get(0).isCoinBase())
-                return SolidityState.getFailState(); //TX is not coinbase when it should be
+                return SolidityState.getFailState(); // TX is not coinbase
 
-            // Check that the tx has correct data (long fromHeight)
-            // TODO overhaul
+            // Check that the tx has correct data
             try {
-                byte[] data = transactions.get(0).getData();
-                if (data == null || data.length < 8)
-                    return SolidityState.getFailState(); //Missing fromHeight data
-                long u = Utils.readInt64(data, 0);
-                if (u % NetworkParameters.REWARD_HEIGHT_INTERVAL != 0)
-                    return SolidityState.getFailState(); //Invalid fromHeight
-            } catch (ArrayIndexOutOfBoundsException e) {
-                // Cannot happen
-                e.printStackTrace();
-                return SolidityState.getFailState(); 
-            }
-
-            // Check reward block specific validity
-            // Get reward data from previous reward cycle
-            Sha256Hash prevRewardHash = null;
-            @SuppressWarnings("unused")
-            long fromHeight = 0, nextPerTxReward = 0;
-            try {
-                byte[] hashBytes = new byte[32];
-                ByteBuffer bb = ByteBuffer.wrap(block.getTransactions().get(0).getData());
-                fromHeight = bb.getLong();
-                nextPerTxReward = bb.getLong();
-                bb.get(hashBytes, 0, 32);
-                prevRewardHash = Sha256Hash.wrap(hashBytes);
-            } catch (Exception e) {
-                e.printStackTrace();
+                RewardInfo rewardInfo = RewardInfo.parse(transactions.get(0).getData());
+                
+                // Ensure dependency (prev reward hash) exists
+                StoredBlock dependency = store.get(Sha256Hash.wrap(rewardInfo.getPrevRewardHash()));
+                if (dependency == null)       
+                    return SolidityState.from(Sha256Hash.wrap(rewardInfo.getPrevRewardHash())); 
+                
+                // TODO move the stuff below to validity OR simply merge validity into solidity since failstate = invalid?
+                // Ensure dependency (prev reward hash) is valid
+                if (dependency.getHeader().getBlockType() != Type.BLOCKTYPE_INITIAL && dependency.getHeader().getBlockType() != Type.BLOCKTYPE_REWARD)
+                    return SolidityState.getFailState();         
+                
+                // TODO Ensure all fields of RewardInfo are ok
+                if (rewardInfo.getToHeight() % NetworkParameters.REWARD_HEIGHT_INTERVAL != NetworkParameters.REWARD_HEIGHT_INTERVAL - 1)
+                    return SolidityState.getFailState(); // Invalid fromHeight
+                
+                // TODO check FromHeight is starting from prevToHeight+1
+                
+                // TODO remove rewardInfo.getNextPerTxReward() and save in db just in time;
+                
+//                byte[] data = ;
+//                if (data == null || data.length < 8)
+//                    return SolidityState.getFailState(); // Missing fromHeight
+//                                                         // data
+//                long u = Utils.readInt64(data, 0);
+//                if (rewardInfo.getFromHeight() % NetworkParameters.REWARD_HEIGHT_INTERVAL != 0)
+//                    return SolidityState.getFailState(); // Invalid fromHeight
+                
+            } catch (IOException e) {
+                // Incorrect data format
                 return SolidityState.getFailState();
             }
-            
-            // The previous reward hash must exist to build upon
-            if (store.get(prevRewardHash) == null)
-                return SolidityState.from(prevRewardHash);
             
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             if (transactions.size() != 1)
-                return SolidityState.getFailState(); //Too many or too few transactions for token creation
+                return SolidityState.getFailState(); // Incorrect tx count
 
             if (!transactions.get(0).isCoinBase())
-                return SolidityState.getFailState(); //TX is not coinbase when it should be;
+                return SolidityState.getFailState(); // TX is not coinbase
             
-            // Check issuance block specific validity
-            // TODO add waiting for older token issuance
             try {
-                // TODO overhaul this, allowConflicts does not exist anymore. Instead, split in checks solidity and validity
-                
+                // TODO add waiting for older token issuance by
+                // TODO split in checks solidity and validity
+
+                // TODO if (tokenInfo.getTokens().getTokenindex() == 0) do not add on solidity waiting list
+
                 // Check according to previous issuance, or if it does not exist
                 // the normal signature
                 if (!this.multiSignService.checkToken(block, false)) {
@@ -1263,7 +1307,7 @@ public class ValidatorService {
                 logger.error("", e);
                 return SolidityState.getFailState();
             }
-            
+
             break;
         case BLOCKTYPE_TRANSFER:
             break;
@@ -1273,28 +1317,27 @@ public class ValidatorService {
             break;
         case BLOCKTYPE_VOS_EXECUTE:
             break;
-        default: 
-                throw new NotImplementedException("Blocktype not implemented!");
+        default:
+            throw new NotImplementedException("Blocktype not implemented!");
         }
 
         return SolidityState.getSuccessState();
     }
 
     private SolidityState checkTransactionalSolidity(Block block) throws BlockStoreException {
-        // All used transaction outputs must exist 
+        // All used transaction outputs must exist
         for (final Transaction tx : block.getTransactions()) {
             if (!tx.isCoinBase()) {
                 for (int index = 0; index < tx.getInputs().size(); index++) {
                     TransactionInput in = tx.getInputs().get(index);
-                    UTXO prevOut = store.getTransactionOutput(in.getOutpoint().getHash(),
-                            in.getOutpoint().getIndex());
+                    UTXO prevOut = store.getTransactionOutput(in.getOutpoint().getHash(), in.getOutpoint().getIndex());
                     if (prevOut == null) {
                         return SolidityState.from(in.getOutpoint());
                     }
                 }
             }
         }
-        
+
         return SolidityState.getSuccessState();
     }
 }

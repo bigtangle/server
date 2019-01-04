@@ -165,6 +165,7 @@ public class Block extends Message {
      * ValidatorService.checkTypeSpecificValidity
      * TODO removeWherePreconditionsUnfulfilled
      * BlockWrap.addTypeSpecificConflictCandidates
+     * if dynamic conflicts: ConflictCandidate and ConflictPoint + switches
      */
     public enum Type {
         BLOCKTYPE_INITIAL(true, 0, 0, Integer.MAX_VALUE), // Genesis block
@@ -179,8 +180,8 @@ public class Block extends Message {
         BLOCKTYPE_CROSSTANGLE(true, 1, 1, MAX_DEFAULT_BLOCK_SIZE); // transfer from mainnet to permissioned
 
         private boolean allowCoinbaseTransaction;
-        private int powMultiplier; // TODO use
-        private int rewardMultiplier; // TODO use
+        private int powMultiplier; // TODO use in reward calcs
+        private int rewardMultiplier; // TODO use in reward calcs
         private int maxSize;
         
         private Type(boolean allowCoinbaseTransaction, int powMultiplier, int rewardMultiplier, int maxSize) {
@@ -849,96 +850,6 @@ public class Block extends Message {
             levelOffset += levelSize;
         }
         return tree;
-    }
-
-    /**
-     * Verify the transactions on a block partly (for solidity).
-     *
-     * @param height
-     *            block height, if known, or -1 otherwise. If provided, used to
-     *            validate the coinbase input script of v2 and above blocks.
-     * @throws VerificationException
-     *             if there was an error verifying the block.
-     */
-    public void checkTransactionSolidity(final long height) throws VerificationException {
-        // The transactions must adhere to their block type rules
-        switch (blockType) {
-        case BLOCKTYPE_CROSSTANGLE:
-            // TODO
-            break;
-        case BLOCKTYPE_FILE:
-            for (Transaction tx : transactions) {
-                if (tx.isCoinBase()) {
-                    throw new VerificationException("TX is coinbase when it should not be.");
-                }
-            }
-            break;
-        case BLOCKTYPE_GOVERNANCE:
-            for (Transaction tx : transactions) {
-                if (tx.isCoinBase()) {
-                    throw new VerificationException("TX is coinbase when it should not be.");
-                }
-            }
-            break;
-        case BLOCKTYPE_INITIAL:
-            break;
-        case BLOCKTYPE_REWARD:
-            if (transactions.size() != 1)
-                throw new VerificationException("Too many or too few transactions for token creation.");
-
-            if (!transactions.get(0).isCoinBase())
-                throw new VerificationException("TX is not coinbase when it should be.");
-
-            // Check that the tx has correct data (long fromHeight)
-            // TODO virtual tx
-            try {
-                if (transactions.get(0).getData() == null)
-                    throw new VerificationException("Missing fromHeight");
-                long u = Utils.readInt64(transactions.get(0).getData(), 0);
-                if (u % NetworkParameters.REWARD_HEIGHT_INTERVAL != 0)
-                    throw new VerificationException("Invalid fromHeight");
-            } catch (ArrayIndexOutOfBoundsException e) {
-                throw new VerificationException(e);
-            }
-            break;
-        case BLOCKTYPE_TOKEN_CREATION:
-            if (transactions.size() != 1)
-                throw new VerificationException("Too many or too few transactions for token creation.");
-
-            if (!transactions.get(0).isCoinBase())
-                throw new VerificationException("TX is not coinbase when it should be.");
-            break;
-        case BLOCKTYPE_TRANSFER:
-            for (Transaction tx : transactions) {
-                if (tx.isCoinBase()) {
-                    throw new VerificationException("TX is coinbase when it should not be.");
-                }
-            }
-            break;
-        case BLOCKTYPE_USERDATA:
-            for (Transaction tx : transactions) {
-                if (tx.isCoinBase()) {
-                    throw new VerificationException("TX is coinbase when it should not be.");
-                }
-            }
-            break;
-        case BLOCKTYPE_VOS:
-            for (Transaction tx : transactions) {
-                if (tx.isCoinBase()) {
-                    throw new VerificationException("TX is coinbase when it should not be.");
-                }
-            }
-            break;
-        case BLOCKTYPE_VOS_EXECUTE:
-            for (Transaction tx : transactions) {
-                if (tx.isCoinBase()) {
-                    throw new VerificationException("TX is coinbase when it should not be.");
-                }
-            }
-            break;
-        default: 
-                throw new VerificationException("Blocktype not implemented!");
-        }
     }
 
     /**

@@ -51,6 +51,8 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class MilestoneServiceTest extends AbstractIntegrationTest {
+    
+    // TODO test all consensus rules as soon as they are finished, i.e. code coverage + rule coverage
 
     @Test(expected = RuntimeException.class)
     public void testUnsolidBlock() throws Exception {

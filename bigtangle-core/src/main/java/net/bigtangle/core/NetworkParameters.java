@@ -149,15 +149,20 @@ public abstract class NetworkParameters {
 	public static Block createGenesis(NetworkParameters params) {
 		Block genesisBlock = new Block(params, Block.BLOCK_VERSION_GENESIS, Block.Type.BLOCKTYPE_INITIAL.ordinal());
 		genesisBlock.setTime(1532896109L);
-//		genesisBlock.setTime(1231006505L);
 
 		Transaction coinbase = new Transaction(params);
 		final ScriptBuilder inputBuilder = new ScriptBuilder();
 		coinbase.addInput(new TransactionInput(params, coinbase, inputBuilder.build().getProgram()));
+		
+		RewardInfo rewardInfo = new RewardInfo(-2l, -1l, NetworkParameters.INITIAL_TX_REWARD, Sha256Hash.ZERO_HASH.toString());
+		
+		coinbase.setData(rewardInfo.toByteArray());
 		add(params, testCoin + "," + testPub, coinbase);
 		genesisBlock.addTransaction(coinbase);
 		genesisBlock.setNonce(0);
+		
 		//genesisBlock.solve();
+		
 		return genesisBlock;
 
 	}

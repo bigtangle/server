@@ -7,7 +7,7 @@ package net.bigtangle.store;
 
 import static com.google.common.base.Preconditions.checkState;
 
-import java.nio.ByteBuffer;
+import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,6 +33,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OutputsMulti;
+import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.StoredUndoableBlock;
@@ -292,7 +293,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             // For token creations, update token db
-            confirmToken(block.getHashAsString());
+            confirmToken(block);
             break;
         case BLOCKTYPE_TRANSFER:
             break;
@@ -354,12 +355,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.updateTxRewardConfirmed(block.getHash(), true);
     }
 
-    private void confirmToken(String blockhash) throws BlockStoreException {
+    private void confirmToken(Block block) throws BlockStoreException {
         // Set used other output spent
-        blockStore.updateTokenSpent(blockStore.getTokenPrevblockhash(blockhash), true, blockhash);
+        blockStore.updateTokenSpent(blockStore.getTokenPrevblockhash(block.getHashAsString()), true, block.getHashAsString());
 
         // Set own output confirmed
-        blockStore.updateTokenConfirmed(blockhash, true);
+        blockStore.updateTokenConfirmed(block.getHashAsString(), true);
     }
 
     private void confirmTransaction(final Transaction tx, Sha256Hash blockhash) throws BlockStoreException {
@@ -656,19 +657,23 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             throws BlockStoreException {
         if (block.getBlockType() == Block.Type.BLOCKTYPE_REWARD) {
             // Get reward data from previous reward cycle
-            Sha256Hash prevRewardHash = null;
-            long fromHeight = 0;
-            byte[] hashBytes = new byte[32];
-            ByteBuffer bb = ByteBuffer.wrap(block.getTransactions().get(0).getData());
-            fromHeight = bb.getLong();
-            bb.getLong(); // nextReward
-            bb.get(hashBytes, 0, 32); // prevRewardHash
-            prevRewardHash = Sha256Hash.wrap(hashBytes);
-
-            Triple<Transaction, Boolean, Long> referenceReward = validatorService
-                    .generateMiningRewardTX(storedPrev.getHeader(), storedPrevBranch.getHeader(), prevRewardHash);
-
-            blockStore.insertTxReward(block.getHash(), fromHeight, referenceReward.getMiddle(), prevRewardHash);
+            try {
+                List<Transaction> transactions = block.getTransactions();
+                RewardInfo rewardInfo = RewardInfo.parse(transactions.get(0).getData());
+                
+                Sha256Hash prevRewardHash = Sha256Hash.wrap(rewardInfo.getPrevRewardHash());
+                long fromHeight = rewardInfo.getFromHeight();
+    
+                // TODO
+                Triple<Transaction, Boolean, Long> referenceReward = validatorService
+                        .generateMiningRewardTX(storedPrev.getHeader(), storedPrevBranch.getHeader(), prevRewardHash);
+    
+                blockStore.insertTxReward(block.getHash(), fromHeight, referenceReward.getMiddle(), prevRewardHash);
+            } catch (IOException e) {
+                // Cannot happen when connecting
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
         }
 
         if (block.getBlockType() == Block.Type.BLOCKTYPE_TOKEN_CREATION) {

@@ -239,24 +239,25 @@ public class BlockService {
      * @param milestoneEvaluation
      * @throws BlockStoreException
      */
-    public void addApprovedNonMilestoneBlocksTo(Collection<BlockWrap> evaluations, BlockWrap block)
-            throws BlockStoreException {
-        addApprovedNonMilestoneBlocksTo(evaluations, block, null);
-    }
-    
-    public void addApprovedNonMilestoneBlocksTo(Collection<BlockWrap> evaluations, BlockWrap block, Collection<BlockWrap> exclusions)
-            throws BlockStoreException {
+    public void addApprovedNonMilestoneBlocksTo(Collection<BlockWrap> evaluations, BlockWrap block) {
     	if (block == null)
     		return; 
     	
-        if (block.getBlockEvaluation().isMilestone() || evaluations.contains(block) || (exclusions != null && exclusions.contains(block)))
+        if (block.getBlockEvaluation().isMilestone() || evaluations.contains(block))
             return;
 
         // Add this block and add all of its approved non-milestone blocks
         evaluations.add(block);
-
-        BlockWrap prevTrunk = store.getBlockWrap(block.getBlock().getPrevBlockHash());
-        BlockWrap prevBranch = store.getBlockWrap(block.getBlock().getPrevBranchBlockHash());
+        
+        BlockWrap prevTrunk, prevBranch;        
+        try {
+            prevTrunk = store.getBlockWrap(block.getBlock().getPrevBlockHash());
+            prevBranch = store.getBlockWrap(block.getBlock().getPrevBranchBlockHash());
+        } catch (BlockStoreException e) {
+            // Cannot happen
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
 
         if (prevTrunk != null)
             addApprovedNonMilestoneBlocksTo(evaluations, prevTrunk);

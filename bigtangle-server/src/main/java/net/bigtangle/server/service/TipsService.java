@@ -41,6 +41,17 @@ public class TipsService {
 
 	private static Random seed = new Random();
 
+	/**
+	 * Performs MCMC without walker restrictions.
+	 * Note: We cannot disallow blocks conflicting with the
+     * milestone, since reorgs must be allowed to happen. We cannot check if
+     * given blocks are eligible without the milestone since that is not
+     * efficiently computable.
+     * 
+	 * @param count The number of rating tips.
+	 * @return A list of rating tips.
+	 * @throws BlockStoreException
+	 */
 	public List<BlockWrap> getRatingTips(int count) throws BlockStoreException {
 		Stopwatch watch = Stopwatch.createStarted();
 
@@ -137,7 +148,7 @@ public class TipsService {
 	// Does not redo finding next step if next step was still valid
 	private BlockWrap validateOrPerformValidatedStep(BlockWrap fromBlock, HashSet<BlockWrap> currentApprovedNonMilestoneBlocks,
 			BlockWrap potentialNextBlock) throws BlockStoreException {
-		if (validatorService.isEligibleForMCMC(potentialNextBlock, currentApprovedNonMilestoneBlocks))
+		if (validatorService.isEligibleForApprovalSelection(potentialNextBlock, currentApprovedNonMilestoneBlocks))
 			return potentialNextBlock;
 		else 
 			return performValidatedStep(fromBlock, currentApprovedNonMilestoneBlocks);
@@ -152,7 +163,7 @@ public class TipsService {
 			// Find results until one is valid/eligible
 			result = performTransition(fromBlock, candidates);
 			candidates.remove(result);
-		} while (!validatorService.isEligibleForMCMC(result, currentApprovedNonMilestoneBlocks));
+		} while (!validatorService.isEligibleForApprovalSelection(result, currentApprovedNonMilestoneBlocks));
 		return result;
 	}
 
@@ -160,7 +171,6 @@ public class TipsService {
 		// Repeatedly perform transitions until the final tip is found
 		List<BlockWrap> approvers = store.getSolidApproverBlocks(currentBlock.getBlock().getHash());
 		approvers.removeIf(b -> b.getBlockEvaluation().getInsertTime() > maxTime);
-		// TODO performValidatedStep instead
 		BlockWrap nextBlock = performTransition(currentBlock, approvers);
 
 		while (currentBlock != nextBlock) {
@@ -169,23 +179,6 @@ public class TipsService {
 			approvers.removeIf(b -> b.getBlockEvaluation().getInsertTime() > maxTime);
 			nextBlock = performTransition(currentBlock, approvers);
 		}
-		return currentBlock;
-	}
-
-	@SuppressWarnings("unused")
-	private BlockWrap getValidatedRatingBlock(BlockWrap currentBlock) throws BlockStoreException {
-		HashSet<BlockWrap> currentApprovedNonMilestoneBlocks = new HashSet<>();
-
-		// Perform next step
-		BlockWrap nextLeft = performValidatedStep(currentBlock, currentApprovedNonMilestoneBlocks);
-		
-		// Go forward while validating
-		while (nextLeft != currentBlock) {
-			currentBlock = nextLeft;
-			blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, currentBlock);
-			nextLeft = performValidatedStep(currentBlock, currentApprovedNonMilestoneBlocks);
-		}
-
 		return currentBlock;
 	}
 

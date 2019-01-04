@@ -114,24 +114,16 @@ public class TransactionService {
         return block;
     }
     
-    public boolean getUTXOSpent(TransactionOutPoint txout) {
-        try {
-            if (txout.isCoinBase())
-                return false;
-            return store.getTransactionOutput(txout.getHash(), txout.getIndex()).isSpent();
-        } catch (BlockStoreException e) {
-            logger.debug("", e);
-        }
-        return true;
+    public boolean getUTXOSpent(TransactionOutPoint txout) throws BlockStoreException {
+        return store.getTransactionOutput(txout.getHash(), txout.getIndex()).isSpent();
     }
 
-    public BlockEvaluation getUTXOSpender(TransactionOutPoint txout) {
-        try {
-            return store.getTransactionOutputSpender(txout.getHash(), txout.getIndex());
-        } catch (BlockStoreException e) {
-            e.printStackTrace();
-        }
-        return null;
+    public boolean getUTXOConfirmed(TransactionOutPoint txout) throws BlockStoreException {
+        return store.getTransactionOutput(txout.getHash(), txout.getIndex()).isConfirmed();
+    }
+
+    public BlockEvaluation getUTXOSpender(TransactionOutPoint txout) throws BlockStoreException {
+        return store.getTransactionOutputSpender(txout.getHash(), txout.getIndex());
     }
 
     public UTXO getUTXO(TransactionOutPoint out) throws BlockStoreException {

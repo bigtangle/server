@@ -210,7 +210,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " INTO tokens (blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop, prevblockhash, spent, spenderblockhash) "
             + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-    protected final String SELECT_TOKEN_SPENT_SQL = "SELECT spent FROM tokens WHERE blockhash = ?";
+    protected final String SELECT_TOKEN_SPENT_BY_BLOCKHASH_SQL = "SELECT spent FROM tokens WHERE blockhash = ?";
+    
+    protected final String SELECT_TOKEN_ANY_SPENT_BY_TOKEN_SQL = "SELECT spent FROM tokens WHERE tokenid = ? AND tokenindex = ? AND spent = true";
 
     protected final String SELECT_TOKEN_CONFIRMED_SQL = "SELECT confirmed FROM tokens WHERE blockhash = ?";
 
@@ -308,6 +310,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_COUNT_MULTISIGN_SIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = ? AND tokenindex = ? AND sign = ?";
 
     /* REWARD BLOCKS */
+    // TODO as done with the tokens, any checks must look for ANY spent or ANY confirmed
+    // TODO add everywhere: 
+//    if (!resultSet.next()) {
+//        return null;
+//    }
     protected final String INSERT_TX_REWARD_SQL = getInsert()
             + "  INTO txreward (blockhash, prevheight, confirmed, spent, spenderblockhash, eligibility, prevblockhash) VALUES (?, ?, ?, ?, ?, ?, ?)";
     protected final String SELECT_CONFIRMED_TX_REWARD_SQL = "SELECT blockhash FROM txreward WHERE prevheight = ?";
@@ -2464,7 +2471,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement = conn.get().prepareStatement(SELECT_TOKEN_SPENDER_SQL);
             preparedStatement.setString(1, blockhash);
             ResultSet resultSet = preparedStatement.executeQuery();
-            resultSet.next();
+            if (!resultSet.next()) {
+                return null;
+            }
             return resultSet.getString(1);
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -2484,8 +2493,32 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TOKEN_SPENT_SQL);
+            preparedStatement = conn.get().prepareStatement(SELECT_TOKEN_SPENT_BY_BLOCKHASH_SQL);
             preparedStatement.setString(1, blockhash);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            return resultSet.getBoolean(1);
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public boolean getTokenAnySpent(String tokenId, int tokenIndex) throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+        maybeConnect();
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_TOKEN_ANY_SPENT_BY_TOKEN_SQL);
+            preparedStatement.setString(1, tokenId);
+            preparedStatement.setInt(2, tokenIndex);
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
             return resultSet.getBoolean(1);
@@ -2557,7 +2590,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setString(1, tokenid);
             preparedStatement.setInt(2, tokenindex);
             ResultSet resultSet = preparedStatement.executeQuery();
-            resultSet.next();
+            if (!resultSet.next()) {
+                return null;
+            }
             return getBlockWrap(Sha256Hash.wrap(resultSet.getString(1)));
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -3449,7 +3484,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_SPENDER_SQL);
             preparedStatement.setBytes(1, hash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
-            resultSet.next();
+            if (!resultSet.next()) {
+                return null;
+            }
             return Sha256Hash.wrap(resultSet.getBytes(1));
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);

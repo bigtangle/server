@@ -65,7 +65,7 @@ public class BlockWrap {
 
         // Dynamic conflicts: conflicting transaction outpoints
         this.getBlock().getTransactions().stream().flatMap(t -> t.getInputs().stream()).filter(in -> !in.isCoinBase())
-                .map(in -> new ConflictCandidate(this, in.getOutpoint())).forEach(c -> blockConflicts.add(c));
+                .map(in -> ConflictCandidate.fromTransactionOutpoint(this, in.getOutpoint())).forEach(c -> blockConflicts.add(c));
         
         addTypeSpecificConflictCandidates(blockConflicts);
 
@@ -83,18 +83,29 @@ public class BlockWrap {
         case BLOCKTYPE_INITIAL:
             break;
         case BLOCKTYPE_REWARD:
-            // Dynamic conflicts: mining reward height intervals
-            blockConflicts.add(new ConflictCandidate(this, Utils.readInt64(this.getBlock().getTransactions().get(0).getData(), 0)));
+            // Dynamic conflicts: mining rewards require the previous reward
+            try {
+                RewardInfo rewardInfo = RewardInfo.parse(this.getBlock().getTransactions().get(0).getData());
+                blockConflicts.add(ConflictCandidate.fromRewardBlockHash(this, rewardInfo.getPrevRewardHash()));
+            } catch (IOException e) {
+                // Cannot happen since any blocks added already were checked.
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
             break;
         case BLOCKTYPE_TOKEN_CREATION:
-            // Dynamic conflicts: token issuance ids
             try {
-                TokenInfo tokenInfo;
-                    tokenInfo = new TokenInfo().parse(this.getBlock().getTransactions().get(0).getData());
-                Token tokens = tokenInfo.getTokens();
-                blockConflicts.add(new ConflictCandidate(this, tokens));
+                TokenInfo tokenInfo = new TokenInfo().parse(this.getBlock().getTransactions().get(0).getData());
+                // Dynamic conflicts: token issuances with index>0 require the previous issuance, while index=0 uses the tokenid as conflict point
+                if (tokenInfo.getTokens().getTokenindex() != 0)
+                    blockConflicts.add(ConflictCandidate.fromToken(this, tokenInfo.getTokens()));
+                else 
+                    blockConflicts.add(ConflictCandidate.fromToken(this, tokenInfo.getTokens()));
+                    
             } catch (IOException e) {
+                // Cannot happen since any blocks added already were checked.
                 e.printStackTrace();
+                throw new RuntimeException(e);
             }
             break;
         case BLOCKTYPE_TRANSFER:

@@ -332,8 +332,10 @@ public class MultiSignService {
                 multiSignAddresses = tokenInfo.getMultiSignAddresses();
             }
             if (multiSignAddresses.size() == 0) {
+            // TODO dead code
                 throw new BlockStoreException("multisignaddresse list size = 0");
             }
+            // TODO check pubkey signs tokenid if tokenindex=0
             for (MultiSignAddress multiSignAddress : multiSignAddresses) {
                 byte[] pubKey = Utils.HEX.decode(multiSignAddress.getPubKeyHex());
                 multiSignAddress.setAddress(ECKey.fromPublicOnly(pubKey).toAddress(networkParameters).toBase58());

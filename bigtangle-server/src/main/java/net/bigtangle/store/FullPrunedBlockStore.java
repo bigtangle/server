@@ -264,6 +264,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public boolean getTokenSpent(String blockhash) throws BlockStoreException;
 
+    public boolean getTokenAnySpent(String tokenId, int tokenIndex) throws BlockStoreException;
+
     public boolean getTokenConfirmed(String blockHash) throws BlockStoreException;
 
     public String getTokenSpender(String blockhash) throws BlockStoreException;
