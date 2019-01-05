@@ -127,9 +127,10 @@ object JdbcTest {
   // -> for backwards propagation, it is possible to purge approverhashes that have been passed through after x iterations, where 
   // x is the difference in height between the approver and the block. after that, no duplicates of this approverhash can reach again, hence just drop it.
   // -> for forwards propagation of conflictpoints, it is impossible to purge conflictpoints due to new blocks appearing potentially anywhere, hence max range definition.
-  // -> for forwards propagation of hashes for purpose of reward eligibility, it is impossible to purge hashes since
+  // -> for forwards propagation of hashes for purpose of reward eligibility, it is impossible to purge hashes since else it is not efficiently computable.
   // it is possible however to define max range as max_reward_interval before which's height the reward must exist, but this will explode memory-wise.
-  // the other solution is to backpropagate the reward approval hash and after y iterations, where y is the difference between reward block height and its fromheight.
+  // 
+  // THE SOLUTION: the other solution is to backpropagate the reward approval hash and after y iterations, where y is the difference between reward block height and its fromheight.
   // all blocks in the rewarded interval have been touched and can be summed up to determine eligibility of reward block.
   // then we could purge, i.e. very low memory requirements, and we could introduce the sperrzeit until eligibility is determined.
   // this would then require active voting by servers, i.e. starting one tip selection @ the reward block. VOTE FOR MAX RATING

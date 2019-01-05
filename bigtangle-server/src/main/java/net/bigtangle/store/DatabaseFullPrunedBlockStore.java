@@ -316,11 +316,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_COUNT_MULTISIGN_SIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = ? AND tokenindex = ? AND sign = ?";
 
     /* REWARD BLOCKS */
-    // TODO as done with the tokens, any checks must look for ANY spent or ANY confirmed
-    // TODO add everywhere: 
-//    if (!resultSet.next()) {
-//        return null;
-//    }
     protected final String INSERT_TX_REWARD_SQL = getInsert()
             + "  INTO txreward (blockhash, toheight, confirmed, spent, spenderblockhash, eligibility, prevblockhash, nexttxreward) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     protected final String SELECT_TX_REWARD_NEXT_TX_REWARD_SQL = "SELECT nexttxreward FROM txreward WHERE blockhash = ?";
