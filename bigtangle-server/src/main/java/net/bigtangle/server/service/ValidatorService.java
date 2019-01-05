@@ -424,7 +424,7 @@ public class ValidatorService {
      * @param blocksToAdd
      * @throws BlockStoreException
      */
-    public void removeWhereUsedOutputsUnconfirmed(Set<BlockWrap> blocksToAdd)
+    private void removeWhereUsedOutputsUnconfirmed(Set<BlockWrap> blocksToAdd)
             throws BlockStoreException {
         new HashSet<BlockWrap>(blocksToAdd).stream()
         .filter(b -> !b.getBlockEvaluation().isMilestone()) // Milestones are always ok
@@ -484,7 +484,7 @@ public class ValidatorService {
 
     // disallow unconfirmed prev UTXOs and spent UTXOs if
     // unmaintained (unundoable) spend
-    public void resolveValidityConflicts(Set<BlockWrap> blocksToAdd, boolean unconfirmLosingMilestones)
+    public void resolveAllConflicts(Set<BlockWrap> blocksToAdd, boolean unconfirmLosingMilestones)
             throws BlockStoreException {
         // Remove blocks and their approvers that have at least one input
         // with its corresponding output not confirmed yet
@@ -578,7 +578,7 @@ public class ValidatorService {
      *         resolution
      * @throws BlockStoreException
      */
-    public HashSet<BlockWrap> resolveConflicts(Set<ConflictCandidate> conflictingOutPoints,
+    private HashSet<BlockWrap> resolveConflicts(Set<ConflictCandidate> conflictingOutPoints,
             boolean unconfirmLosingMilestones) throws BlockStoreException {
         // Initialize blocks that will survive the conflict resolution
         HashSet<BlockWrap> initialBlocks = conflictingOutPoints.stream().map(c -> c.getBlock())
@@ -715,7 +715,7 @@ public class ValidatorService {
      * @param conflictingOutPoints
      * @throws BlockStoreException
      */
-    public void findFixableConflicts(Set<BlockWrap> blocksToAdd, Set<ConflictCandidate> conflictingOutPoints,
+    private void findFixableConflicts(Set<BlockWrap> blocksToAdd, Set<ConflictCandidate> conflictingOutPoints,
             Set<BlockWrap> conflictingMilestoneBlocks) throws BlockStoreException {
 
         findUndoableMilestoneConflicts(blocksToAdd, conflictingOutPoints, conflictingMilestoneBlocks);
@@ -801,7 +801,7 @@ public class ValidatorService {
         }
     }
 
-    public void filterSpent(Collection<ConflictCandidate> blockConflicts) {
+    private void filterSpent(Collection<ConflictCandidate> blockConflicts) {
         blockConflicts.removeIf(c -> {
             try {
                 return !isSpent(c);
@@ -1044,6 +1044,11 @@ public class ValidatorService {
         case BLOCKTYPE_INITIAL:
             return SolidityState.getFailState();
         case BLOCKTYPE_REWARD:
+            // Check token issuances are solid
+            SolidityState rewardSolidityState = checkRewardSolidity(block, storedPrev, storedPrevBranch);
+            if (!(rewardSolidityState.getState() == State.Success)) {
+                return rewardSolidityState;
+            }
             
             break;
         case BLOCKTYPE_TOKEN_CREATION:
@@ -1069,8 +1074,7 @@ public class ValidatorService {
         return SolidityState.getSuccessState();
     }
     
-    public SolidityState checkRewardSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch) throws BlockStoreException {
-
+    private SolidityState checkRewardSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch) throws BlockStoreException {
         List<Transaction> transactions = block.getTransactions();
         
         if (transactions.size() != 1)
@@ -1113,7 +1117,7 @@ public class ValidatorService {
         return SolidityState.getSuccessState();
     }
 
-    public SolidityState checkTokenSolidity(Block block) {
+    private SolidityState checkTokenSolidity(Block block) {
         if (block.getTransactions().size() != 1) {
             logger.debug("Incorrect tx count! ");
             return SolidityState.getFailState();

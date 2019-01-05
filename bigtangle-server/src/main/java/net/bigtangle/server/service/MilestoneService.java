@@ -310,7 +310,7 @@ public class MilestoneService {
 			HashSet<BlockWrap> blocksToAdd = store.getBlocksToAddToMilestone();
 
 			// VALIDITY CHECKS
-			validatorService.resolveValidityConflicts(blocksToAdd, true);
+			validatorService.resolveAllConflicts(blocksToAdd, true);
 
 			// Finally add the resolved new milestone blocks to the milestone
 			for (BlockWrap block : blocksToAdd)
