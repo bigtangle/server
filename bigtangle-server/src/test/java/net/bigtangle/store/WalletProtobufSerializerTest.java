@@ -32,7 +32,6 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Transaction.Purpose;
 import net.bigtangle.core.TransactionInput;
-import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.DeterministicKey;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.testing.FakeTxBuilder;
@@ -46,8 +45,6 @@ import net.bigtangle.wallet.UnreadableWalletException;
 import net.bigtangle.wallet.Wallet;
 import net.bigtangle.wallet.WalletExtension;
 import net.bigtangle.wallet.WalletProtobufSerializer;
-import net.bigtangle.wallet.WalletTransaction;
-import net.bigtangle.wallet.WalletTransaction.Pool;
 
 public class WalletProtobufSerializerTest {
     private static final NetworkParameters PARAMS = MainNetParams.get();

@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -43,7 +42,6 @@ import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.ordermatch.config.DBStoreConfiguration;
 import net.bigtangle.server.ordermatch.store.FullPrunedBlockStore;
-import net.bigtangle.utils.MapToBeanMapperUtil;
 import net.bigtangle.utils.OkHttp3Util;
 
 @RunWith(SpringRunner.class)

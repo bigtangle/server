@@ -21,8 +21,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -63,7 +61,6 @@ import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
@@ -105,7 +102,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam));
         SettingResponse settingResponse = Json.jsonmapper().readValue(resp, SettingResponse.class);
         String version = settingResponse.getVersion();
-       // assertTrue(version.equals("0.3.2"));
+        assertTrue(version.equals("0.3.2"));
     }
 
     // FIXME @Test
@@ -177,9 +174,6 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         payMultiSign_ = this.store.getPayMultiSignWithOrderid(payMultiSign.getOrderid());
         // assertArrayEquals(payMultiSign_.getBlockhash(), ecKey.getPubKey());
     }
-
-    @Autowired
-    private MilestoneService milestoneService;
 
     @Test
     public void testWalletWrapperECKey() {
@@ -266,7 +260,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 PayMultiSignAddressListResponse.class);
         List<PayMultiSignAddress> payMultiSignAddresses = payMultiSignAddressListResponse.getPayMultiSignAddresses();
         assertTrue(payMultiSignAddresses.size() > 0);
-        KeyParameter aesKey = null;
+        // KeyParameter aesKey = null;
         ECKey currentECKey = null;
         for (PayMultiSignAddress payMultiSignAddress : payMultiSignAddresses) {
             if (payMultiSignAddress.getSign() == 1) {
@@ -292,11 +286,11 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
         UTXO output = testTransactionAndGetBalances(amount.getTokenHex(), false, ecKeys);
         log.debug(output.toString());
-        // filter the
+        // filter 
         TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, output, 0);
         Transaction transaction = new Transaction(networkParameters);
         transaction.addOutput(amount, toKey);
-        // remainder of utxo goes here with multi sign keys ecKeys
+        // remainder of utxo goes here with multisign keys ecKeys
         Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, ecKeys);
         Coin amount2 = multisigOutput.getValue().subtract(amount);
         transaction.addOutput(amount2, scriptPubKey);
@@ -876,7 +870,8 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         }
     }
 
-    // TODO fix index previous @Test
+    // TODO fix index previous 
+    @Test
     @SuppressWarnings("unchecked")
     public void testCreateMultiSigTokenIndexCheckTokenExist() throws JsonProcessingException, Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
@@ -988,7 +983,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         ECKey outKey = new ECKey();
         log.debug("pubkey= " + Utils.HEX.encode(outKey.getPubKey()));
         // ECKey ecKey = ECKey.fromPublicOnly(outKey.getPubKey());
-        log.debug("pivkey= " + outKey.getPrivateKeyAsHex());
+        log.debug("privkey= " + outKey.getPrivateKeyAsHex());
     }
 
     public void testRequestBlock(Block block) throws Exception {
@@ -1000,7 +995,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getBlock.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block re = networkParameters.getDefaultSerializer().makeBlock(data);
-        log.info(" resp : " + re);
+        log.info("resp : " + re);
 
     }
 
@@ -1065,6 +1060,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
         block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
         block.solve();
+        
         // save block
         OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
 
@@ -1090,6 +1086,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
         block_.addCoinbaseTransaction(key4.getPubKey(), basecoin, updateTokenInfo);
         block_.solve();
+        
         // save block
         OkHttp3Util.post(contextRoot + ReqCmd.updateTokenInfo.name(), block_.bitcoinSerialize());
 

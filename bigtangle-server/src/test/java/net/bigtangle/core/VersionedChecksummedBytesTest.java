@@ -5,17 +5,14 @@
 
 package net.bigtangle.core;
 
-import org.junit.Test;
-
-import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.VersionedChecksummedBytes;
-import net.bigtangle.params.MainNetParams;
-import net.bigtangle.params.MainNetParams;
-
 import static net.bigtangle.core.Utils.HEX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
+
+import net.bigtangle.params.MainNetParams;
 
 /**
  *

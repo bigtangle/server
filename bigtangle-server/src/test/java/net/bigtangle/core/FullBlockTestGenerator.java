@@ -186,8 +186,9 @@ public class FullBlockTestGenerator {
         final Script OP_TRUE_SCRIPT = new ScriptBuilder().op(OP_TRUE).build();
         final Script OP_NOP_SCRIPT = new ScriptBuilder().op(OP_NOP).build();
 
-        // TODO: Rename this variable.
         List<Rule> blocks = new LinkedList<Rule>() {
+            private static final long serialVersionUID = 1L;
+
             @Override
             public boolean add(Rule element) {
                 if (outStream != null && element instanceof BlockAndValidity) {
@@ -793,8 +794,7 @@ public class FullBlockTestGenerator {
                     Sha256Hash hash = tx.hashForSignature(1, b39p2shScriptPubKey, SigHash.SINGLE, false);
 
                     // Sign input
-                    try {
-                        ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(73);
+                    try (ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(73)) {
                         bos.write(coinbaseOutKey.sign(hash).encodeToDER());
                         bos.write(SigHash.SINGLE.value);
                         byte[] signature = bos.toByteArray();
@@ -807,7 +807,7 @@ public class FullBlockTestGenerator {
                         scriptSig = scriptSigBos.toByteArray();
                     } catch (IOException e) {
                         throw new RuntimeException(e);  // Cannot happen.
-                    }
+                    } 
                 }
 
                 input.setScriptBytes(scriptSig);
@@ -863,9 +863,9 @@ public class FullBlockTestGenerator {
                                 b39p2shScriptPubKey, SigHash.SINGLE, false);
 
                         // Sign input
-                        try {
-                            ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(
-                                    73);
+                        try (ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(
+                                    73);){
+                            
                             bos.write(coinbaseOutKey.sign(hash).encodeToDER());
                             bos.write(SigHash.SINGLE.value);
                             byte[] signature = bos.toByteArray();
@@ -1805,7 +1805,7 @@ public class FullBlockTestGenerator {
         Integer height = blockToHeightMap.get(baseBlock.getHash());
         if (height != null)
             checkState(height == nextBlockHeight - 1);
-        Coin coinbaseValue = FIFTY_COINS.shiftRight(nextBlockHeight / params.getSubsidyDecreaseBlockCount())
+        FIFTY_COINS.shiftRight(nextBlockHeight / params.getSubsidyDecreaseBlockCount())
                 .add((prevOut != null ? prevOut.value.subtract(SATOSHI) : ZERO))
                 .add(additionalCoinbaseValue == null ? ZERO : additionalCoinbaseValue);
         Block block = BlockForTest.createNextBlock(baseBlock,Block.BLOCK_VERSION_GENESIS, params.getGenesisBlock());

@@ -15,10 +15,6 @@ import java.io.ObjectOutputStream;
 
 import org.junit.Test;
 
-import net.bigtangle.core.DumpedPrivateKey;
-import net.bigtangle.core.ECKey;
-import net.bigtangle.core.WrongNetworkException;
-import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.MainNetParams;
 
 public class DumpedPrivateKeyTest {

@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Configuration;
 
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.params.MainNetParams;
-import net.bigtangle.params.MainNetParams;
 
 @Configuration
 public class NetConfiguration {

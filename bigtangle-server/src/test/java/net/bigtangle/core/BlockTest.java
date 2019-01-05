@@ -26,8 +26,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.io.ByteStreams;
 
 import net.bigtangle.params.MainNetParams;
-import net.bigtangle.params.MainNetParams;
-import net.bigtangle.params.MainNetParams;
 import net.bigtangle.script.ScriptOpCodes;
 import net.bigtangle.wallet.Wallet;
 //TODO no binary blockBytes

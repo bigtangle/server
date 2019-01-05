@@ -753,38 +753,40 @@ public class Script {
      */
     public static byte[] removeAllInstancesOf(byte[] inputScript, byte[] chunkToRemove) {
         // We usually don't end up removing anything
-        UnsafeByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(inputScript.length);
-
-        int cursor = 0;
-        while (cursor < inputScript.length) {
-            boolean skip = equalsRange(inputScript, cursor, chunkToRemove);
-            
-            int opcode = inputScript[cursor++] & 0xFF;
-            int additionalBytes = 0;
-            if (opcode >= 0 && opcode < OP_PUSHDATA1) {
-                additionalBytes = opcode;
-            } else if (opcode == OP_PUSHDATA1) {
-                additionalBytes = (0xFF & inputScript[cursor]) + 1;
-            } else if (opcode == OP_PUSHDATA2) {
-                additionalBytes = ((0xFF & inputScript[cursor]) |
-                                  ((0xFF & inputScript[cursor+1]) << 8)) + 2;
-            } else if (opcode == OP_PUSHDATA4) {
-                additionalBytes = ((0xFF & inputScript[cursor]) |
-                                  ((0xFF & inputScript[cursor+1]) << 8) |
-                                  ((0xFF & inputScript[cursor+1]) << 16) |
-                                  ((0xFF & inputScript[cursor+1]) << 24)) + 4;
-            }
-            if (!skip) {
-                try {
-                    bos.write(opcode);
-                    bos.write(Arrays.copyOfRange(inputScript, cursor, cursor + additionalBytes));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+        try (UnsafeByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(inputScript.length)) {
+            int cursor = 0;
+            while (cursor < inputScript.length) {
+                boolean skip = equalsRange(inputScript, cursor, chunkToRemove);
+                
+                int opcode = inputScript[cursor++] & 0xFF;
+                int additionalBytes = 0;
+                if (opcode >= 0 && opcode < OP_PUSHDATA1) {
+                    additionalBytes = opcode;
+                } else if (opcode == OP_PUSHDATA1) {
+                    additionalBytes = (0xFF & inputScript[cursor]) + 1;
+                } else if (opcode == OP_PUSHDATA2) {
+                    additionalBytes = ((0xFF & inputScript[cursor]) |
+                                      ((0xFF & inputScript[cursor+1]) << 8)) + 2;
+                } else if (opcode == OP_PUSHDATA4) {
+                    additionalBytes = ((0xFF & inputScript[cursor]) |
+                                      ((0xFF & inputScript[cursor+1]) << 8) |
+                                      ((0xFF & inputScript[cursor+1]) << 16) |
+                                      ((0xFF & inputScript[cursor+1]) << 24)) + 4;
                 }
+                if (!skip) {
+                    try {
+                        bos.write(opcode);
+                        bos.write(Arrays.copyOfRange(inputScript, cursor, cursor + additionalBytes));
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                cursor += additionalBytes;
             }
-            cursor += additionalBytes;
+            return bos.toByteArray();
+        } catch (IOException e1) {
+            throw new RuntimeException(e1);
         }
-        return bos.toByteArray();
     }
     
     /**

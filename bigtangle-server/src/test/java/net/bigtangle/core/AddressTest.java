@@ -23,8 +23,6 @@ import org.junit.Test;
 
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.Networks;
-import net.bigtangle.params.MainNetParams;
-import net.bigtangle.params.MainNetParams;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 

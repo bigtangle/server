@@ -33,7 +33,6 @@ import net.bigtangle.crypto.ChildNumber;
 import net.bigtangle.crypto.DeterministicKey;
 import net.bigtangle.crypto.KeyCrypter;
 import net.bigtangle.params.MainNetParams;
-import net.bigtangle.params.MainNetParams;
 import net.bigtangle.utils.BriefLogFormatter;
 
 public class DeterministicKeyChainTest {

@@ -178,7 +178,7 @@ public abstract class AbstractIntegrationTest {
         return testTransactionAndGetBalances(false);
     }
 
-    // get balance for the walleKeys
+    // get balance for the walletKeys
     public List<UTXO> testTransactionAndGetBalances(boolean withZero) throws Exception {
         return testTransactionAndGetBalances(withZero, walletKeys);
     }
@@ -195,7 +195,7 @@ public abstract class AbstractIntegrationTest {
         throw new RuntimeException();
     }
 
-    // get balance for the walleKeys
+    // get balance for the walletKeys
     public List<UTXO> testTransactionAndGetBalances(boolean withZero, List<ECKey> keys) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         List<String> keyStrHex000 = new ArrayList<String>();
@@ -242,7 +242,7 @@ public abstract class AbstractIntegrationTest {
 
     }
 
-    // transfer the coin from pub testPub to address in wallet
+    // transfer the coin from public testPub to address in wallet
     @SuppressWarnings("deprecation")
     public void testInitTransferWallet() throws Exception {
         ECKey fromkey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));

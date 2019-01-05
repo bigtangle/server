@@ -1,20 +1,16 @@
 package net.bigtangle.stream
 
+import org.apache.kafka.common.serialization.ByteArrayDeserializer
+import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark.SparkConf
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.Seconds
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.kafka010.ConsumerStrategies
 import org.apache.spark.streaming.kafka010.KafkaUtils
 import org.apache.spark.streaming.kafka010.LocationStrategies
-import org.apache.kafka.clients.consumer.ConsumerConfig
-import java.util.Properties
-import org.apache.kafka.common.serialization.StringDeserializer
-import org.apache.kafka.common.serialization.ByteArraySerializer
-import org.apache.kafka.common.serialization.ByteArrayDeserializer
-import org.apache.spark.sql.SparkSession
+
 import net.bigtangle.params.MainNetParams
-import net.bigtangle.core.Block
-import net.bigtangle.stream.Logs
  
  
 

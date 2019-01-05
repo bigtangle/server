@@ -98,7 +98,6 @@ import static com.google.common.collect.Lists.newLinkedList;
  * But even when you are requesting the 33rd key, you will still be looking 100 keys ahead.
  * </p>
  */
-@SuppressWarnings("PublicStaticCollectionField")
 public class DeterministicKeyChain implements EncryptableKeyChain {
     private static final Logger log = LoggerFactory.getLogger(DeterministicKeyChain.class);
     public static final String DEFAULT_PASSPHRASE_FOR_MNEMONIC = "";
@@ -268,7 +267,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     public static Builder<?> builder() {
-        return new Builder();
+        return new Builder<>();
     }
 
     /**

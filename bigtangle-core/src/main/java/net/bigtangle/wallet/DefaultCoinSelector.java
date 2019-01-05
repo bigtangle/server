@@ -18,14 +18,9 @@
 
 package net.bigtangle.wallet;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-
-import com.google.common.annotations.VisibleForTesting;
 
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.TransactionOutput;

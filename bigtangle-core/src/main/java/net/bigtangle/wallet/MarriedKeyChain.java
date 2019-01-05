@@ -117,7 +117,7 @@ public class MarriedKeyChain extends DeterministicKeyChain {
     }
 
     public static Builder<?> builder() {
-        return new Builder();
+        return new Builder<>();
     }
 
     // Protobuf deserialization constructors

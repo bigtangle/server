@@ -18,10 +18,6 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import net.bigtangle.core.Coin;
-import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.utils.MonetaryFormat;
-
 public class CoinTest {
 
     @Test

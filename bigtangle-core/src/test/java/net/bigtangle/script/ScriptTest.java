@@ -60,7 +60,6 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.MainNetParams;
-import net.bigtangle.params.MainNetParams;
 import net.bigtangle.script.Script.VerifyFlag;
 
 public class ScriptTest {

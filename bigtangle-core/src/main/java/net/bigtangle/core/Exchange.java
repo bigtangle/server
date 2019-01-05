@@ -8,8 +8,6 @@ import java.beans.Transient;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.sound.midi.VoiceStatus;
-
 import org.apache.commons.lang3.StringUtils;
 
 import net.bigtangle.utils.UUIDUtil;

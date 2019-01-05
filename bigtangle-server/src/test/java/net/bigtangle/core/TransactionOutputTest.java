@@ -20,7 +20,6 @@ package net.bigtangle.core;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
 
 import org.junit.After;
 import org.junit.Before;
@@ -28,15 +27,9 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 
-import net.bigtangle.core.Address;
-import net.bigtangle.core.Coin;
-import net.bigtangle.core.ECKey;
-import net.bigtangle.core.Transaction;
-import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.store.AbstractBlockGraph;
 import net.bigtangle.testing.TestWithWallet;
 import net.bigtangle.wallet.SendRequest;
 

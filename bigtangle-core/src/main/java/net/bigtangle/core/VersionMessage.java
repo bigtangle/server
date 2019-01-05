@@ -19,13 +19,13 @@
  */
 package net.bigtangle.core;
 
-import com.google.common.base.Objects;
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Locale;
+
+import javax.annotation.Nullable;
+
+import com.google.common.base.Objects;
 
 /**
  * <p>

@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableList;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.params.MainNetParams;
-import net.bigtangle.params.MainNetParams;
 
 public class BitcoinURITest {
     private BitcoinURI testObject = null;

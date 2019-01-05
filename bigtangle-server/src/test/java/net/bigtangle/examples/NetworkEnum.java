@@ -7,7 +7,6 @@ package net.bigtangle.examples;
 
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.params.MainNetParams;
-import net.bigtangle.params.MainNetParams;
 
 public enum NetworkEnum {
     MAIN,

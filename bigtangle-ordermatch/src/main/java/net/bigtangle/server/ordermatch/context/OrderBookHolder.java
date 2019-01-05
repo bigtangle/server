@@ -13,8 +13,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.mysql.jdbc.log.Log;
-
 import net.bigtangle.core.Json;
 import net.bigtangle.core.OrderPublish;
 import net.bigtangle.server.ordermatch.bean.OrderBook;

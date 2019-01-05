@@ -32,14 +32,11 @@ import com.google.common.base.Objects;
 
 import net.bigtangle.script.Script;
 
-// TODO: Fix this class: should not talk about addresses, height should be optional/support mempool height etc
-
 /**
  * A UTXO message contains the information necessary to check a spending
- * transaction. It avoids having to store the entire parentTransaction just to
- * get the hash and index. Useful when working with free standing outputs.
+ * transaction and consensus logic. It does not stand for Unspent Transaction Output
+ * but for Used Transaction Output, i.e. they are not necessarily unspent.
  */
-// TODO rename this to TXO
 public class UTXO {
 
     public UTXO() {
