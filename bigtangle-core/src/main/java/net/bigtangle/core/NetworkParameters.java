@@ -146,7 +146,7 @@ public abstract class NetworkParameters {
 		final ScriptBuilder inputBuilder = new ScriptBuilder();
 		coinbase.addInput(new TransactionInput(params, coinbase, inputBuilder.build().getProgram()));
 		
-		RewardInfo rewardInfo = new RewardInfo(-2l, -1l, NetworkParameters.INITIAL_TX_REWARD, Sha256Hash.ZERO_HASH.toString());
+		RewardInfo rewardInfo = new RewardInfo(-1l, 0l, Sha256Hash.ZERO_HASH.toString());
 		
 		coinbase.setData(rewardInfo.toByteArray());
 		add(params, testCoin + "," + testPub, coinbase);

@@ -83,12 +83,13 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     
     private static final String CREATE_TX_REWARD_TABLE = "CREATE TABLE txreward (\n"
             + "   blockhash varbinary(32) NOT NULL,\n" 
-            + "   prevheight bigint NOT NULL,\n"
+            + "   toheight bigint NOT NULL,\n"
             + "   confirmed boolean NOT NULL,\n" 
             + "   spent boolean NOT NULL,\n"
             + "   spenderblockhash varbinary(32),\n"
             + "   eligibility boolean NOT NULL,\n"
-            + "   prevblockhash varbinary(32),\n"
+            + "   prevblockhash varbinary(32) NOT NULL,\n"
+            + "   nexttxreward bigint NOT NULL,\n"
             + "   PRIMARY KEY (blockhash) )";
     
     private static final String CREATE_OUTPUT_MULTI_TABLE = "CREATE TABLE outputsmulti (\n" 

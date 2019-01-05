@@ -16,17 +16,15 @@ public class RewardInfo implements java.io.Serializable {
 
     private long fromHeight;
     private long toHeight;
-    private long nextPerTxReward;
     private String prevRewardHash;
 
     public RewardInfo() {
     }
     
-    public RewardInfo(long fromHeight, long toHeight, long nextPerTxReward, String prevRewardHash) {
+    public RewardInfo(long fromHeight, long toHeight, String prevRewardHash) {
         super();
         this.fromHeight = fromHeight;
         this.toHeight = toHeight;
-        this.nextPerTxReward = nextPerTxReward;
         this.prevRewardHash = prevRewardHash;
     }
 
@@ -40,10 +38,6 @@ public class RewardInfo implements java.io.Serializable {
 
     public long getToHeight() {
         return toHeight;
-    }
-
-    public long getNextPerTxReward() {
-        return nextPerTxReward;
     }
 
     public String getPrevRewardHash() {
@@ -68,7 +62,7 @@ public class RewardInfo implements java.io.Serializable {
 
     @Override
     public String toString() {
-        return "RewardInfo [fromHeight=" + fromHeight + ", toHeight=" + toHeight+ ", nextPerTxReward=" + nextPerTxReward+ ", prevRewardHash=" + prevRewardHash + "]";
+        return "RewardInfo [fromHeight=" + fromHeight + ", toHeight=" + toHeight + ", prevRewardHash=" + prevRewardHash + "]";
     }
     
     

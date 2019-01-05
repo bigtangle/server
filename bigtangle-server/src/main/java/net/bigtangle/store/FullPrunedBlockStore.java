@@ -231,26 +231,30 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void updateTransactionOutputSpendPending(Sha256Hash hash, long index, boolean b) throws BlockStoreException;
 
     /* Reward TXOs */
-    public Sha256Hash getConfirmedRewardBlock(long height) throws BlockStoreException;
+    public Sha256Hash getMaxConfirmedRewardBlockHash() throws BlockStoreException;
+    
+    public boolean getRewardEligible(Sha256Hash hash) throws BlockStoreException;
 
-    public boolean getTxRewardEligible(Sha256Hash hash) throws BlockStoreException;
+    public long getRewardNextTxReward(Sha256Hash blockHash) throws BlockStoreException;
 
-    public boolean getTxRewardConfirmed(Sha256Hash hash) throws BlockStoreException;
+    public long getRewardToHeight(Sha256Hash blockHash) throws BlockStoreException;
 
-    public void insertTxReward(Sha256Hash hash, long prevHeight, boolean eligibility, Sha256Hash prevBlockHash)
-            throws BlockStoreException;
+    public boolean getRewardConfirmed(Sha256Hash hash) throws BlockStoreException;
 
-    public void updateTxRewardConfirmed(Sha256Hash hash, boolean b) throws BlockStoreException;
+    public boolean getRewardSpent(Sha256Hash hash) throws BlockStoreException;
 
-    public void updateTxRewardSpent(Sha256Hash hash, boolean b, Sha256Hash spenderHash) throws BlockStoreException;
+    public void insertReward(Sha256Hash hash, long toHeight, boolean eligibility, Sha256Hash prevBlockHash,
+            long nextTxReward) throws BlockStoreException;
 
-    public long getMaxPrevTxRewardHeight() throws BlockStoreException;
+    public void updateRewardConfirmed(Sha256Hash hash, boolean b) throws BlockStoreException;
 
-    public boolean getTxRewardSpent(Sha256Hash hash) throws BlockStoreException;
+    public void updateRewardSpent(Sha256Hash hash, boolean b, Sha256Hash spenderHash) throws BlockStoreException;
 
-    public Sha256Hash getTxRewardSpender(Sha256Hash hash) throws BlockStoreException;
+    public void updateRewardNextTxReward(Sha256Hash hash, long nextTxReward) throws BlockStoreException;
 
-    public Sha256Hash getTxRewardPrevBlockHash(Sha256Hash hash) throws BlockStoreException;
+    public Sha256Hash getRewardSpender(Sha256Hash hash) throws BlockStoreException;
+
+    public Sha256Hash getRewardPrevBlockHash(Sha256Hash hash) throws BlockStoreException;
 
     /* Token TXOs */
     public void insertToken(String blockhash, Token tokens) throws BlockStoreException;
@@ -398,8 +402,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     void insertLogResult(LogResult logResult) throws BlockStoreException;
 
-    LogResult queryLogResultById(String logResultId) throws BlockStoreException;
-
     Token getCalMaxTokenIndex(String tokenid) throws BlockStoreException;
 
     void insertBatchBlock(Block block) throws BlockStoreException;
@@ -424,4 +426,5 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     // addresses) throws BlockStoreException;
 
     HashSet<Block> getUnsolidBlocks(byte[] dep) throws BlockStoreException;
+
 }

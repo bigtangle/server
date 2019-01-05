@@ -456,7 +456,7 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
         }
     }
 
-    public void updateTxRewardConfirmed(Sha256Hash hash, boolean b) throws BlockStoreException {
+    public void updateRewardConfirmed(Sha256Hash hash, boolean b) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
