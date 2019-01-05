@@ -92,25 +92,30 @@ public class TransactionService {
 
     public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
             throws Exception {
+        
+        Triple<RewardEligibility, Transaction, Pair<Long, Long>> result = validatorService.makeReward(prevTrunk, prevBranch, prevRewardHash);
+        
+        if (!(result.getLeft() == RewardEligibility.ELIGIBLE)) {
+            logger.warn("Generated reward block is deemed ineligible! Try again somewhere else?");
+            return null;
+        }
+        
         Block r1 = blockService.getBlock(prevTrunk);
         Block r2 = blockService.getBlock(prevBranch);
       
-     
         Block block = new Block(networkParameters, r1, r2);
         block.setBlockType(Block.Type.BLOCKTYPE_REWARD);
-        Triple<Transaction, Boolean, Long> generated = validatorService.generateMiningRewardTX(r1, r2, prevRewardHash);
         
-        if (!generated.getMiddle())
-            logger.warn("Generated reward block is deemed ineligible! Try again later?");
-        
-        block.addTransaction(generated.getLeft());
-        block.setDifficultyTarget(generated.getRight());
+        // Make the new block
+        block.addTransaction(result.getMiddle());
+        block.setDifficultyTarget(result.getRight().getLeft());
         block.setLastMiningRewardBlock(Math.max(r1.getLastMiningRewardBlock(), r2.getLastMiningRewardBlock()) + 1);
+        
         // Enforce timestamp equal to previous max for reward blocktypes
         block.setTime(Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
         
         block.solve();
-        blockgraph.add(block, true);
+        blockgraph.add(block, false);
         return block;
     }
     

@@ -63,6 +63,7 @@ import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.script.Script;
+import net.bigtangle.server.service.RewardEligibility;
 import net.bigtangle.server.service.SolidityState;
 
 /**
@@ -798,7 +799,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
             // Just fill the tables with some valid data
             // Reward output table
-            insertReward(params.getGenesisBlock().getHash(), 0, true,
+            insertReward(params.getGenesisBlock().getHash(), 0, RewardEligibility.ELIGIBLE,
                     params.getGenesisBlock().getHash(), NetworkParameters.INITIAL_TX_REWARD);
             updateRewardConfirmed(params.getGenesisBlock().getHash(), true);
 
@@ -3458,7 +3459,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public boolean getRewardEligible(Sha256Hash hash) throws BlockStoreException {
+    public RewardEligibility getRewardEligible(Sha256Hash hash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -3466,7 +3467,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setBytes(1, hash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
-            return resultSet.getBoolean(1);
+            return RewardEligibility.values()[resultSet.getInt(1)];
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } finally {
@@ -3598,7 +3599,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void insertReward(Sha256Hash hash, long toHeight, boolean eligibility, Sha256Hash prevBlockHash, long nextTxReward)
+    public void insertReward(Sha256Hash hash, long toHeight, RewardEligibility eligibility, Sha256Hash prevBlockHash, long nextTxReward)
             throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -3609,7 +3610,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setBoolean(3, false);
             preparedStatement.setBoolean(4, false);
             preparedStatement.setBytes(5, null);
-            preparedStatement.setBoolean(6, eligibility);
+            preparedStatement.setInt(6, eligibility.ordinal());
             preparedStatement.setBytes(7, prevBlockHash.getBytes());
             preparedStatement.setLong(8, nextTxReward);
             preparedStatement.executeUpdate();

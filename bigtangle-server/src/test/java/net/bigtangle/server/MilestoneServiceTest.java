@@ -475,20 +475,29 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
                 Block.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
         blockgraph.add(rollingBlock, true);
 
-        Block preLastRollingBlock = null;
-        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL_MIN + 10; i++) {
-            preLastRollingBlock = rollingBlock;
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
-            blockgraph.add(rollingBlock, true);
+        Block rollingBlock1 = rollingBlock;
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + 10; i++) {
+            rollingBlock1 = BlockForTest.createNextBlock(rollingBlock1, Block.BLOCK_VERSION_GENESIS, rollingBlock1);
+            blockgraph.add(rollingBlock1, true);
         }
+
+        Block rollingBlock2 = rollingBlock;
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + 10; i++) {
+            rollingBlock2 = BlockForTest.createNextBlock(rollingBlock2, Block.BLOCK_VERSION_GENESIS, rollingBlock2);
+            blockgraph.add(rollingBlock2, true);
+        }
+
+        Block fusingBlock = BlockForTest.createNextBlock(rollingBlock1,
+                Block.BLOCK_VERSION_GENESIS, rollingBlock2);
+        blockgraph.add(fusingBlock, true);
+        
 
         // Generate ineligible mining reward block
         Block rewardBlock1 = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock.getHash(), rollingBlock.getHash());
+                rollingBlock1.getHash(), rollingBlock1.getHash());
         milestoneService.update();
 
-        // Mining reward block should not go through since approvees are not
-        // milestone
+        // Mining reward block should usually not go through since not sufficiently approved
         milestoneService.update();
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isMilestone());
 
@@ -496,9 +505,9 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         // different
         // coinbases for the sake of testing)
         Block rewardBlock2 = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-                preLastRollingBlock.getHash(), rollingBlock.getHash());
+                fusingBlock.getHash(), rollingBlock1.getHash());
         Block rewardBlock3 = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock.getHash(), preLastRollingBlock.getHash());
+                fusingBlock.getHash(), rollingBlock2.getHash());
         milestoneService.update();
 
         // Second mining reward block should now go through since everything is
@@ -525,12 +534,6 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isMilestone());
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isMilestone());
         assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isMilestone());
-
-        // Check UTXO have been updated correctly
-        Transaction tx2 = rewardBlock2.getTransactions().get(0);
-        assertFalse(store.getTransactionOutput(tx2.getHash(), 0).isConfirmed());
-        Transaction tx3 = rewardBlock3.getTransactions().get(0);
-        assertTrue(store.getTransactionOutput(tx3.getHash(), 0).isConfirmed());
 
         // Check that not both mining blocks get approved
         for (int i = 1; i < 10; i++) {

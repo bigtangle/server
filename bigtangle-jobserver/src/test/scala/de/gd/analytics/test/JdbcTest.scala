@@ -132,7 +132,8 @@ object JdbcTest {
   // the other solution is to backpropagate the reward approval hash and after y iterations, where y is the difference between reward block height and its fromheight.
   // all blocks in the rewarded interval have been touched and can be summed up to determine eligibility of reward block.
   // then we could purge, i.e. very low memory requirements, and we could introduce the sperrzeit until eligibility is determined.
-  // this would then require active voting by servers, i.e. starting one tip selection @ the reward block.
+  // this would then require active voting by servers, i.e. starting one tip selection @ the reward block. VOTE FOR MAX RATING
+  // then the original eligibility sperrzeit begins from the time the eligibility is determined and is overrided as known by rating etc.
   
   // Garbage cleanup:
   // there exist multiple types of garbage on the tangle:
@@ -144,7 +145,7 @@ object JdbcTest {
   // Node types:
   // FullPruned nodes: prune unmaintained blocks
   // History nodes: no pruning
-  // Janitor nodes: history nodes that help by pushing old orphan tips that are valid
+  // Janitor nodes: history nodes that help by pushing old orphan tips that are valid (but only those of heights that are already rewarded
   
   
   // TODO use dynamic MAX_STEPS

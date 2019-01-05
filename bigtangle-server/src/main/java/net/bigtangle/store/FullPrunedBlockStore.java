@@ -33,6 +33,7 @@ import net.bigtangle.core.UTXOProvider;
 import net.bigtangle.core.UserData;
 import net.bigtangle.core.VOSExecute;
 import net.bigtangle.kafka.KafkaMessageProducer;
+import net.bigtangle.server.service.RewardEligibility;
 import net.bigtangle.server.service.SolidityState;
 
 /**
@@ -233,7 +234,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     /* Reward TXOs */
     public Sha256Hash getMaxConfirmedRewardBlockHash() throws BlockStoreException;
     
-    public boolean getRewardEligible(Sha256Hash hash) throws BlockStoreException;
+    public RewardEligibility getRewardEligible(Sha256Hash hash) throws BlockStoreException;
 
     public long getRewardNextTxReward(Sha256Hash blockHash) throws BlockStoreException;
 
@@ -243,7 +244,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public boolean getRewardSpent(Sha256Hash hash) throws BlockStoreException;
 
-    public void insertReward(Sha256Hash hash, long toHeight, boolean eligibility, Sha256Hash prevBlockHash,
+    public void insertReward(Sha256Hash hash, long toHeight, RewardEligibility eligibility, Sha256Hash prevBlockHash,
             long nextTxReward) throws BlockStoreException;
 
     public void updateRewardConfirmed(Sha256Hash hash, boolean b) throws BlockStoreException;

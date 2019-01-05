@@ -15,7 +15,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
@@ -32,6 +31,7 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.directory.api.util.exception.NotImplementedException;
 import org.slf4j.Logger;
@@ -39,7 +39,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockEvaluation;
@@ -149,102 +148,80 @@ public class ValidatorService {
         }
         return address;
     }
-
+    
     /**
-     * Deterministically creates a mining reward transaction based on the
-     * previous blocks and previous reward transaction.
+     * NOTE: The reward block is assumed to having successfully gone through checkRewardSolidity beforehand!
+     * For connecting purposes, checks if the given rewardBlock is eligible now.
      * 
-     * @return Pair of mining reward transaction and boolean indicating whether
-     *         this mining reward transaction is eligible to be voted on at this
-     *         moment of time.
+     * @param rewardBlock
+     * @return eligibility of rewards + new perTxReward)
      * @throws BlockStoreException
      */
-    public Triple<Transaction, Boolean, Long> generateMiningRewardTX(Block prevTrunk, Block prevBranch,
-            Sha256Hash prevRewardHash) throws BlockStoreException {
-        // Count how many blocks from miners in the reward interval are approved
-        // and build rewards
-        // TODO overhaul this to only make virtual txs on confirm, not check...
-        // TODO move this to fullp..graph
-        boolean eligibility = true;
-        Queue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
-                Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
-
-        BlockWrap prevTrunkBlock = store.getBlockWrap(prevTrunk.getHash());
-        BlockWrap prevBranchBlock = store.getBlockWrap(prevBranch.getHash());
-        blockQueue.add(prevTrunkBlock);
-        blockQueue.add(prevBranchBlock);
-
-        // Read previous reward block's data
-        BlockWrap prevRewardBlock = store.getBlockWrap(prevRewardHash);
-        long prevToHeight = 0, minHeight = 0, perTxReward = 0;
+    public Pair<RewardEligibility, Long> checkRewardEligibility(Block rewardBlock) throws BlockStoreException {
         try {
-            RewardInfo rewardInfo = RewardInfo.parse(prevRewardBlock.getBlock().getTransactions().get(0).getData());
-            
-            prevToHeight = rewardInfo.getToHeight();
-            minHeight = prevToHeight + (long) NetworkParameters.REWARD_HEIGHT_INTERVAL_MIN - 1;
-            perTxReward = store.getRewardNextTxReward(prevRewardHash);
+            RewardInfo rewardInfo = RewardInfo.parse(rewardBlock.getTransactions().get(0).getData());
+            Triple<RewardEligibility, Transaction, Pair<Long, Long>> result = makeReward(
+                    rewardBlock.getPrevBlockHash(), rewardBlock.getPrevBranchBlockHash(), Sha256Hash.wrap(rewardInfo.getPrevRewardHash()));
 
-            if (prevTrunkBlock.getBlockEvaluation().getHeight() < minHeight - 1
-                    && prevBranchBlock.getBlockEvaluation().getHeight() < minHeight - 1)
-                return null;
+            if (rewardBlock.getDifficultyTarget() != result.getRight().getLeft() || !rewardBlock.getTransactions().get(0).equals(result.getMiddle()))
+                return Pair.of(RewardEligibility.INVALID, result.getRight().getRight()); 
+            else
+                return Pair.of(result.getLeft(), result.getRight().getRight()); 
 
         } catch (IOException e) {
             // Cannot happen since checked before
             e.printStackTrace();
             throw new RuntimeException(e);
         }
-        
+    }
+    
+    /**
+     * DOES NOT CHECK FOR SOLIDITY.
+     * Computes eligibility of rewards + data tx + Pair.of(new difficulty + new perTxReward) here for new reward blocks. 
+     * This is a prototype implementation. In the actual Spark implementation, 
+     * the computational cost is not a problem, since it is instead backpropagated and calculated for free with delay.
+     * For more info, see Jdbctest notes.
+     * 
+     * @param prevTrunk a predecessor block in the db
+     * @param prevBranch a predecessor block in the db
+     * @param prevRewardHash the predecessor reward
+     * @return eligibility of rewards + data tx + Pair.of(new difficulty + new perTxReward)
+     */
+    public Triple<RewardEligibility, Transaction, Pair<Long, Long>> makeReward(Sha256Hash prevTrunk, Sha256Hash prevBranch,
+            Sha256Hash prevRewardHash) throws BlockStoreException {
+
+        // Count how many blocks from miners in the reward interval are approved
+        Queue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
+                Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
+
+        BlockWrap prevTrunkBlock = store.getBlockWrap(prevTrunk);
+        BlockWrap prevBranchBlock = store.getBlockWrap(prevBranch);
+        blockQueue.add(prevTrunkBlock);
+        blockQueue.add(prevBranchBlock);
+
+        // Read previous reward block's data
+        BlockWrap prevRewardBlock = store.getBlockWrap(prevRewardHash);
+        long prevToHeight = store.getRewardToHeight(prevRewardHash);
+        long prevDifficulty = prevRewardBlock.getBlock().getDifficultyTarget();
         long fromHeight = prevToHeight + 1;
-        long toHeight = prevToHeight + (long) NetworkParameters.REWARD_HEIGHT_INTERVAL_MIN;
+        long toHeight = prevToHeight + (long) NetworkParameters.REWARD_HEIGHT_INTERVAL;
 
         // Initialize
-        Set<BlockWrap> currentHeightBlocks = new HashSet<>();
-        Map<BlockWrap, Set<Sha256Hash>> snapshotWeights = new HashMap<>();
-        Map<Address, Long> finalRewardCount = new HashMap<>();
         BlockWrap currentBlock = null, approvedBlock = null;
         long currentHeight = Long.MAX_VALUE;
         long totalRewardCount = 0;
 
-        for (BlockWrap tip : blockQueue) {
-            snapshotWeights.put(tip, new HashSet<>());
-        }
-
         // Go backwards by height
         while ((currentBlock = blockQueue.poll()) != null) {
-
-            // If we have reached a new height level, try trigger payout
-            // calculation
-            if (currentHeight > currentBlock.getBlockEvaluation().getHeight()) {
-
-                // Calculate rewards if in reward interval height
-                if (currentHeight <= toHeight) {
-                    totalRewardCount = calculateHeightRewards(currentHeightBlocks, snapshotWeights, finalRewardCount,
-                            totalRewardCount);
-                }
-
-                // Finished with this height level, go to next level
-                currentHeightBlocks.clear();
-                long currentHeightTmp = currentHeight;
-                snapshotWeights.entrySet()
-                        .removeIf(e -> e.getKey().getBlockEvaluation().getHeight() == currentHeightTmp);
-                currentHeight = currentBlock.getBlockEvaluation().getHeight();
-            }
-
+            currentHeight = currentBlock.getBlockEvaluation().getHeight();
+            
             // Stop criterion: Block height lower than approved interval height
             if (currentHeight < fromHeight)
-                continue;
-
-            // Add your own hash to approver hashes of current approver hashes
-            snapshotWeights.get(currentBlock).add(currentBlock.getBlockHash());
+                break;
 
             // If in relevant reward height interval, count it
             if (currentHeight <= toHeight) {
-                // Failure criterion: rewarding non-milestone blocks
-                if (currentBlock.getBlockEvaluation().isMilestone() == false)
-                    eligibility = false;
-
-                // Count the blocks of current height
-                currentHeightBlocks.add(currentBlock);
+                totalRewardCount++;
             }
 
             // Continue with both approved blocks
@@ -252,64 +229,40 @@ public class ValidatorService {
             if (!blockQueue.contains(approvedBlock)) {
                 if (approvedBlock != null) {
                     blockQueue.add(approvedBlock);
-                    snapshotWeights.put(approvedBlock, new HashSet<>(snapshotWeights.get(currentBlock)));
                 }
-            } else {
-                snapshotWeights.get(approvedBlock).add(currentBlock.getBlockHash());
-            }
+            } 
             approvedBlock = store.getBlockWrap(currentBlock.getBlock().getPrevBranchBlockHash());
             if (!blockQueue.contains(approvedBlock)) {
                 if (approvedBlock != null) {
                     blockQueue.add(approvedBlock);
-                    snapshotWeights.put(approvedBlock, new HashSet<>(snapshotWeights.get(currentBlock)));
                 }
-            } else {
-                snapshotWeights.get(approvedBlock).add(currentBlock.getBlockHash());
-            }
+            } 
         }
 
-        // Exception for height 0 (genesis): since prevblock null, finish payout
-        // calculation
-        if (currentHeight == 0) {
-            // For each height, throw away anything below the 99-percentile
-            // in terms of reduced weight
-            totalRewardCount = calculateHeightRewards(currentHeightBlocks, snapshotWeights, finalRewardCount,
-                    totalRewardCount);
-        }
-
-        // Build transaction outputs sorted by addresses
-        Transaction tx = new Transaction(networkParameters);
-        for (Entry<Address, Long> entry : finalRewardCount.entrySet().stream()
-                .sorted(Comparator.comparing((Entry<Address, Long> e) -> e.getKey())).collect(Collectors.toList()))
-            tx.addOutput(Coin.SATOSHI.times(entry.getValue() * perTxReward), entry.getKey());
-
-        // The input does not really need to be a valid signature, as long
-        // as it has the right general form and is slightly different for
-        // different tx
-        TransactionInput input = new TransactionInput(networkParameters, tx, Script.createInputScript(
-                prevTrunkBlock.getBlockHash().getBytes(), prevBranchBlock.getBlockHash().getBytes()));
-        tx.addInput(input);
-
-        // TX reward adjustments for next rewards
-        long nextPerTxReward = calculateNextTxReward(prevTrunkBlock, prevBranchBlock, prevRewardBlock, perTxReward,
+        // New difficulty
+        long difficulty = calculateNextDifficulty(prevDifficulty, prevTrunkBlock, prevBranchBlock, prevRewardBlock,
                 totalRewardCount);
+
+        // Build transaction for block
+        Transaction tx = new Transaction(networkParameters);
 
         // Build the type-specific tx data
         RewardInfo rewardInfo = new RewardInfo(fromHeight, toHeight, prevRewardHash.toString());
         tx.setData(rewardInfo.toByteArray());
 
-        // Check eligibility: sufficient amount of milestone blocks approved?
-        if (!checkEligibility(fromHeight, toHeight, totalRewardCount))
-            eligibility = false;
+        // New rewards
+        long perTxReward = calculateNextTxReward(prevTrunkBlock, prevBranchBlock, prevRewardBlock,
+                store.getRewardNextTxReward(prevRewardHash), totalRewardCount);
 
-        // New difficulty
-        long prevDifficulty = prevTrunk.getLastMiningRewardBlock() > prevBranch.getLastMiningRewardBlock()
-                ? prevTrunk.getDifficultyTarget()
-                : prevBranch.getDifficultyTarget();
-        long difficulty = calculateNextDifficulty(prevDifficulty, prevTrunkBlock, prevBranchBlock, prevRewardBlock,
-                totalRewardCount);
-
-        return Triple.of(tx, eligibility, difficulty);
+        // Ensure prevTrunk/prevBranch are same consensus number (but not here)
+        if (prevTrunkBlock.getBlock().getLastMiningRewardBlock() != prevRewardBlock.getBlock().getLastMiningRewardBlock()
+                || prevBranchBlock.getBlock().getLastMiningRewardBlock() != prevRewardBlock.getBlock().getLastMiningRewardBlock())
+            return Triple.of(RewardEligibility.INVALID, tx, Pair.of(difficulty, perTxReward));
+        // Ensure enough blocks are approved 
+        else if (totalRewardCount >= store.getCountMilestoneBlocksInInterval(fromHeight, toHeight) * 99 / 100 )
+            return Triple.of(RewardEligibility.ELIGIBLE, tx, Pair.of(difficulty, perTxReward));
+        else 
+            return Triple.of(RewardEligibility.INELIGIBLE, tx, Pair.of(difficulty, perTxReward));
     }
 
     private long calculateNextDifficulty(long prevDifficulty, BlockWrap prevTrunkBlock, BlockWrap prevBranchBlock,
@@ -350,41 +303,13 @@ public class ValidatorService {
                 prevBranchBlock.getBlock().getTimeSeconds());
         long timespan = Math.max(1, (currentTime - prevRewardBlock.getBlock().getTimeSeconds()));
 
-        // TODO virtual txs for reward
-        // TODO include result from difficulty adjustment
+        // TODO include result from difficulty adjustment to actually stay on target
         // BigInteger result = BigInteger.valueOf(currPerTxReward);
         long nextPerTxReward = NetworkParameters.TARGET_YEARLY_MINING_PAYOUT * timespan / 31536000L / totalRewardCount;
         nextPerTxReward = Math.max(nextPerTxReward, currPerTxReward / 4);
         nextPerTxReward = Math.min(nextPerTxReward, currPerTxReward * 4);
         nextPerTxReward = Math.max(nextPerTxReward, 1);
         return nextPerTxReward;
-    }
-
-    private boolean checkEligibility(long fromHeight, long toHeight, long totalRewardCount) throws BlockStoreException {
-        return totalRewardCount >= store.getCountMilestoneBlocksInInterval(fromHeight, toHeight) * 99 / 100;
-    }
-
-    private long calculateHeightRewards(Set<BlockWrap> currentHeightBlocks,
-            Map<BlockWrap, Set<Sha256Hash>> snapshotWeights, Map<Address, Long> finalRewardCount,
-            long totalRewardCount) {
-        long heightRewardCount = (long) Math.ceil(0.95d * currentHeightBlocks.size());
-        totalRewardCount += heightRewardCount;
-
-        long rewarded = 0;
-        for (BlockWrap rewardedBlock : currentHeightBlocks.stream()
-                .sorted(Comparator.comparingLong(b -> snapshotWeights.get(b).size()).reversed())
-                .collect(Collectors.toList())) {
-            if (rewarded >= heightRewardCount)
-                break;
-
-            Address miner = new Address(networkParameters, rewardedBlock.getBlock().getMinerAddress());
-            if (!finalRewardCount.containsKey(miner))
-                finalRewardCount.put(miner, 1L);
-            else
-                finalRewardCount.put(miner, finalRewardCount.get(miner) + 1);
-            rewarded++;
-        }
-        return totalRewardCount;
     }
 
     /**
@@ -499,7 +424,7 @@ public class ValidatorService {
      * @param blocksToAdd
      * @throws BlockStoreException
      */
-    public void removeWherePreconditionsUnfulfilled(Set<BlockWrap> blocksToAdd)
+    public void removeWhereUsedOutputsUnconfirmed(Set<BlockWrap> blocksToAdd)
             throws BlockStoreException {
         new HashSet<BlockWrap>(blocksToAdd).stream()
         .filter(b -> !b.getBlockEvaluation().isMilestone()) // Milestones are always ok
@@ -522,17 +447,33 @@ public class ValidatorService {
             }
         });
 
-        // Additionally, for reward blocks they must be eligible
-        // If ineligible, preconditions are sufficient age and milestone
-        // rating range
+        // Additionally, for reward blocks: invalid never, ineligible overrule, eligible ok
+        // If ineligible, overrule by sufficient age and milestone rating range
+        // TODO Also add eligibility lockout period, e.g. time + avg tip height sufficient to avoid prebuilders    
         new HashSet<BlockWrap>(blocksToAdd).stream()
         .filter(b -> b.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD) // prefilter for reward blocks
         .forEach(b -> {
             try {
-              if (!store.getRewardEligible(b.getBlock().getHash())
-                      && !(b.getBlockEvaluation().getRating() > NetworkParameters.MILESTONE_UPPER_THRESHOLD
-                              && b.getBlockEvaluation().getInsertTime() < System.currentTimeMillis() / 1000 - 30)) 
-                  blockService.removeBlockAndApproversFrom(blocksToAdd, b);
+                switch (store.getRewardEligible(b.getBlock().getHash())) {
+                case ELIGIBLE:
+                    // OK
+                    break;
+                case INELIGIBLE:
+                    if (!(b.getBlockEvaluation().getRating() > NetworkParameters.MILESTONE_UPPER_THRESHOLD
+                            && b.getBlockEvaluation().getInsertTime() < System.currentTimeMillis() / 1000 - NetworkParameters.OVERRULE_TIME)) 
+                        blockService.removeBlockAndApproversFrom(blocksToAdd, b);
+                    break;
+                case INVALID:
+                    blockService.removeBlockAndApproversFrom(blocksToAdd, b);
+                    break;
+                case UNKNOWN:
+                    // Cannot happen in non-Spark implementation.
+                    blockService.removeBlockAndApproversFrom(blocksToAdd, b);
+                    break;
+                default:
+                    throw new NotImplementedException();
+                
+                }
             } catch (BlockStoreException e) {
                 // Cannot happen.
                 e.printStackTrace();
@@ -547,7 +488,7 @@ public class ValidatorService {
             throws BlockStoreException {
         // Remove blocks and their approvers that have at least one input
         // with its corresponding output not confirmed yet
-        removeWherePreconditionsUnfulfilled(blocksToAdd);
+        removeWhereUsedOutputsUnconfirmed(blocksToAdd);
 
         // Resolve conflicting block combinations:
         // Disallow conflicts with unmaintained/pruned milestone blocks,
@@ -561,7 +502,7 @@ public class ValidatorService {
         // Remove blocks and their approvers that have at least one input
         // with its corresponding output not confirmed yet
         // This is needed since reorgs could have been triggered
-        removeWherePreconditionsUnfulfilled(blocksToAdd);
+        removeWhereUsedOutputsUnconfirmed(blocksToAdd);
     }
 
     private void resolvePrunedConflicts(Set<BlockWrap> blocksToAdd) throws BlockStoreException {
@@ -838,7 +779,7 @@ public class ValidatorService {
     }
 
     // Returns null if no spending block found
-    // TODO refactor this garbage
+    // TODO refactor and FIX this garbage
     private BlockWrap getSpendingBlock(ConflictCandidate c) throws BlockStoreException {
         BlockWrap milestoneBlock = null;
         switch (c.getConflictPoint().getType()) {
@@ -853,6 +794,7 @@ public class ValidatorService {
             
             // Initial issuances are competing with each other
             if (connectedToken.getTokenindex() == 0) {
+                // TODO This seems wrong?
                 return store.getTokenIssuingConfirmedBlock(connectedToken.getTokenid(), connectedToken.getTokenindex()); 
             }
             else {
@@ -1107,7 +1049,6 @@ public class ValidatorService {
     }
 
     private SolidityState checkTypeSpecificSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch) throws BlockStoreException {
-        List<Transaction> transactions = block.getTransactions();
         switch (block.getBlockType()) {
         case BLOCKTYPE_CROSSTANGLE:
             break;
@@ -1118,110 +1059,11 @@ public class ValidatorService {
         case BLOCKTYPE_INITIAL:
             return SolidityState.getFailState();
         case BLOCKTYPE_REWARD:
-            if (transactions.size() != 1)
-                return SolidityState.getFailState(); // Incorrect tx count
-
-            if (!transactions.get(0).isCoinBase())
-                return SolidityState.getFailState(); // TX is not coinbase
-
-            // Check that the tx has correct data
-            try {
-                RewardInfo rewardInfo = RewardInfo.parse(transactions.get(0).getData());
-                
-                // Ensure dependency (prev reward hash) exists
-                StoredBlock dependency = store.get(Sha256Hash.wrap(rewardInfo.getPrevRewardHash()));
-                if (dependency == null)       
-                    return SolidityState.from(Sha256Hash.wrap(rewardInfo.getPrevRewardHash())); 
-                
-                // Ensure dependency (prev reward hash) is valid predecessor
-                if (dependency.getHeader().getBlockType() != Type.BLOCKTYPE_INITIAL && dependency.getHeader().getBlockType() != Type.BLOCKTYPE_REWARD)
-                    return SolidityState.getFailState();         
-                
-                // Ensure fromHeight is starting from prevToHeight+1
-                if (rewardInfo.getFromHeight() != store.getRewardToHeight(Sha256Hash.wrap(rewardInfo.getPrevRewardHash())) + 1)
-                    return SolidityState.getFailState(); // Invalid fromHeight
-                
-                // Ensure toHeights follow the rules
-                if (rewardInfo.getToHeight() - rewardInfo.getFromHeight() != NetworkParameters.REWARD_HEIGHT_INTERVAL_MIN - 1)
-                    return SolidityState.getFailState(); // Invalid toHeight
-                
-                // TODO remove rewardInfo.getNextPerTxReward() and ;
-                
-                // save in db just in time: toHeight, nextTxReward
-                
-//                byte[] data = ;
-//                if (data == null || data.length < 8)
-//                    return SolidityState.getFailState(); // Missing fromHeight
-//                                                         // data
-//                long u = Utils.readInt64(data, 0);
-//                if (rewardInfo.getFromHeight() % NetworkParameters.REWARD_HEIGHT_INTERVAL != 0)
-//                    return SolidityState.getFailState(); // Invalid fromHeight
-                
-            } catch (IOException e) {
-                // Incorrect data format
-                return SolidityState.getFailState();
-            }
-            
-            // TODO From here validity merge// Check that the tx has correct data (long fromHeight)
-            // TODO overhaul
-            try {
-                RewardInfo rewardInfo = RewardInfo.parse(transactions.get(0).getData());                
-                Sha256Hash prevRewardHash = Sha256Hash.wrap(rewardInfo.getPrevRewardHash());
-                
-                // Check if eligible
-                try {
-                    Triple<Transaction, Boolean, Long> rewardEligibleDifficulty = generateMiningRewardTX(
-                            storedPrev.getHeader(), storedPrevBranch.getHeader(), prevRewardHash);
-                    
-                    // TODO do not generate here
-
-                    // Reward must have been built correctly.
-                    if (!rewardEligibleDifficulty.getLeft().getHash().equals(block.getTransactions().get(0).getHash()))
-                        return SolidityState.getFailState();
-
-                    // Difficulty must be correct
-                    if (rewardEligibleDifficulty.getRight() != block.getDifficultyTarget())
-                        return SolidityState.getFailState();
-                    if (Math.max(storedPrev.getHeader().getLastMiningRewardBlock(),
-                            storedPrevBranch.getHeader().getLastMiningRewardBlock())
-                            + 1 != block.getLastMiningRewardBlock())
-                        return SolidityState.getFailState();
-                } catch (BlockStoreException e) {
-                    logger.info("", e);
-                    return SolidityState.getFailState();
-                }
-                
-            } catch (IOException e) {
-                // Cannot happen
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
-
-            // TODO built correctly?
-//            try {
-//                Triple<Transaction, Boolean, Long> rewardEligibleDifficulty = generateMiningRewardTX(
-//                        storedPrev.getHeader(), storedPrevBranch.getHeader(), prevRewardHash);
-//
-//                // Reward must have been built correctly.
-//                if (!rewardEligibleDifficulty.getLeft().getHash().equals(block.getTransactions().get(0).getHash()))
-//                    return false;
-//
-//                // Difficulty must be correct
-//                if (rewardEligibleDifficulty.getRight() != block.getDifficultyTarget())
-//                    return false;
-//                if (Math.max(storedPrev.getHeader().getLastMiningRewardBlock(),
-//                        storedPrevBranch.getHeader().getLastMiningRewardBlock())
-//                        + 1 != block.getLastMiningRewardBlock())
-//                    return false;
-//            } catch (BlockStoreException e) {
-//                logger.info("", e);
-//                return false;
-//            }
             
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             // Check token issuances are solid
-            SolidityState tokenSolidityState = checkToken(block);
+            SolidityState tokenSolidityState = checkTokenSolidity(block);
             if (!(tokenSolidityState.getState() == State.Success)) {
                 return tokenSolidityState;
             }
@@ -1241,8 +1083,52 @@ public class ValidatorService {
 
         return SolidityState.getSuccessState();
     }
+    
+    public SolidityState checkRewardSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch) throws BlockStoreException {
 
-    public SolidityState checkToken(Block block) {
+        List<Transaction> transactions = block.getTransactions();
+        
+        if (transactions.size() != 1)
+            return SolidityState.getFailState(); // Incorrect tx count
+
+        if (!transactions.get(0).isCoinBase())
+            return SolidityState.getFailState(); // TX is not coinbase
+
+        // Check that the tx has correct data
+        RewardInfo rewardInfo;
+        try {
+            rewardInfo = RewardInfo.parse(transactions.get(0).getData());
+        } catch (IOException e) {
+            // Incorrect data format
+            return SolidityState.getFailState();
+        }
+        
+        // NotNull checks
+        if (rewardInfo.getPrevRewardHash() == null)
+            return SolidityState.getFailState();     
+            
+        // Ensure dependency (prev reward hash) exists
+        Sha256Hash prevRewardHash = Sha256Hash.wrap(rewardInfo.getPrevRewardHash());
+        StoredBlock dependency = store.get(prevRewardHash);
+        if (dependency == null)       
+            return SolidityState.from(prevRewardHash); 
+        
+        // Ensure dependency (prev reward hash) is valid predecessor
+        if (dependency.getHeader().getBlockType() != Type.BLOCKTYPE_INITIAL && dependency.getHeader().getBlockType() != Type.BLOCKTYPE_REWARD)
+            return SolidityState.getFailState();         
+        
+        // Ensure fromHeight is starting from prevToHeight+1
+        if (rewardInfo.getFromHeight() != store.getRewardToHeight(prevRewardHash) + 1)
+            return SolidityState.getFailState(); // Invalid fromHeight
+        
+        // Ensure toHeights follow the rules
+        if (rewardInfo.getToHeight() - rewardInfo.getFromHeight() != NetworkParameters.REWARD_HEIGHT_INTERVAL - 1)
+            return SolidityState.getFailState(); // Invalid toHeight
+        
+        return SolidityState.getSuccessState();
+    }
+
+    public SolidityState checkTokenSolidity(Block block) {
         if (block.getTransactions().size() != 1) {
             logger.debug("Incorrect tx count! ");
             return SolidityState.getFailState();

@@ -87,7 +87,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   confirmed boolean NOT NULL,\n" 
             + "   spent boolean NOT NULL,\n"
             + "   spenderblockhash varbinary(32),\n"
-            + "   eligibility boolean NOT NULL,\n"
+            + "   eligibility int NOT NULL,\n"
             + "   prevblockhash varbinary(32) NOT NULL,\n"
             + "   nexttxreward bigint NOT NULL,\n"
             + "   PRIMARY KEY (blockhash) )";
