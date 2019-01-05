@@ -47,19 +47,26 @@ import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ConflictCandidate;
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Json;
+import net.bigtangle.core.MultiSignAddress;
+import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.Token;
+import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
+import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.Script.VerifyFlag;
+import net.bigtangle.server.service.SolidityState.State;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.ContextPropagatingThreadFactory;
 
@@ -74,8 +81,6 @@ public class ValidatorService {
     protected NetworkParameters networkParameters;
     @Autowired
     private TransactionService transactionService;
-    @Autowired
-    private MultiSignService multiSignService;
     @Autowired
     private NetworkParameters params;
 
@@ -158,7 +163,7 @@ public class ValidatorService {
             Sha256Hash prevRewardHash) throws BlockStoreException {
         // Count how many blocks from miners in the reward interval are approved
         // and build rewards
-        // TODO overhaul this to only make, not check...
+        // TODO overhaul this to only make virtual txs on confirm, not check...
         // TODO move this to fullp..graph
         boolean eligibility = true;
         Queue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
@@ -921,13 +926,13 @@ public class ValidatorService {
 
         // Check transactions are solid
         SolidityState transactionalSolidityState = checkTransactionalSolidity(block, height);
-        if (!transactionalSolidityState.isOK()) {
+        if (!(transactionalSolidityState.getState() == State.Success)) {
             return transactionalSolidityState;
         }
 
         // Check type-specific solidity
         SolidityState typeSpecificSolidityState = checkTypeSpecificSolidity(block, storedPrev, storedPrevBranch);
-        if (!transactionalSolidityState.isOK()) {
+        if (!(transactionalSolidityState.getState() == State.Success)) {
             return typeSpecificSolidityState;
         }
 
@@ -1215,41 +1220,10 @@ public class ValidatorService {
             
             break;
         case BLOCKTYPE_TOKEN_CREATION:
-            if (transactions.size() != 1)
-                return SolidityState.getFailState(); // Incorrect tx count
-
-            if (!transactions.get(0).isCoinBase())
-                return SolidityState.getFailState(); // TX is not coinbase
-            
-            try {
-                // TODO add waiting for older token issuance by
-                // TODO split in checks solidity and validity
-
-                // TODO if (tokenInfo.getTokens().getTokenindex() == 0) do not add on solidity waiting list
-
-                // Check according to previous issuance, or if it does not exist
-                // the normal signature
-                if (!this.multiSignService.checkToken(block, false)) {
-                    return SolidityState.getFailState();
-                }
-            } catch (Exception e) {
-                logger.error("", e);
-                return SolidityState.getFailState();
-            }
-            
-            // TODO from here validity merge
-            // Check issuance block specific validity
-            try {
-                // TODO split in checks of solidity and validity
-
-                // Check according to previous issuance, or if it does not exist
-                // the normal signature
-                if (!this.multiSignService.checkToken(block, false)) {
-                    return SolidityState.getFailState();
-                }
-            } catch (Exception e) {
-                logger.error("", e);
-                return SolidityState.getFailState();
+            // Check token issuances are solid
+            SolidityState tokenSolidityState = checkToken(block);
+            if (!(tokenSolidityState.getState() == State.Success)) {
+                return tokenSolidityState;
             }
 
             break;
@@ -1266,5 +1240,185 @@ public class ValidatorService {
         }
 
         return SolidityState.getSuccessState();
+    }
+
+    public SolidityState checkToken(Block block) {
+        if (block.getTransactions().size() != 1) {
+            logger.debug("Incorrect tx count! ");
+            return SolidityState.getFailState();
+        }
+
+        if (!block.getTransactions().get(0).isCoinBase()) {
+            logger.debug("TX is not coinbase! ");
+            return SolidityState.getFailState(); 
+        }
+        
+        Transaction tx = block.getTransactions().get(0);
+        if (tx.getData() == null) {
+            logger.debug("No transaction data! ");
+            return SolidityState.getFailState(); 
+        }
+        
+        TokenInfo currentToken = null;
+        try {
+            currentToken = new TokenInfo().parse(tx.getData());
+        } catch (IOException e) {
+            logger.debug("Token data malformed! ", e);
+            return SolidityState.getFailState(); 
+        }
+        if (currentToken.getTokens() == null) {
+            logger.debug("getTokens is null");
+            return SolidityState.getFailState(); 
+        }
+        if (currentToken.getMultiSignAddresses() == null) {
+            logger.debug("getMultiSignAddresses is null");
+            return SolidityState.getFailState(); 
+        }
+        if (currentToken.getTokens().getTokenid() == null) {
+            logger.debug("getTokenid is null");
+            return SolidityState.getFailState(); 
+        }
+        if (currentToken.getTokens().getPrevblockhash() == null) {
+            logger.debug("getTokenid is null");
+            return SolidityState.getFailState(); 
+        }
+        if (currentToken.getTokens().getTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
+            logger.debug("Not allowed");
+            return SolidityState.getFailState(); 
+        }
+        if (currentToken.getTokens().getTokenindex() > NetworkParameters.TOKEN_MAX_ISSUANCE_NUMBER) {
+            logger.debug("Too many token issuances");
+            return SolidityState.getFailState(); 
+        }
+        if (currentToken.getTokens().getAmount() > Long.MAX_VALUE / NetworkParameters.TOKEN_MAX_ISSUANCE_NUMBER) {
+            logger.debug("Too many tokens issued");
+            return SolidityState.getFailState(); 
+        }
+        if (currentToken.getTokens().getDescription() != null && currentToken.getTokens().getDescription().length() > NetworkParameters.TOKEN_MAX_DESC_LENGTH) {
+            logger.debug("Too long description");
+            return SolidityState.getFailState(); 
+        }
+        if (currentToken.getTokens().getTokenname() != null && currentToken.getTokens().getTokenname().length() > NetworkParameters.TOKEN_MAX_NAME_LENGTH) {
+            logger.debug("Too long name");
+            return SolidityState.getFailState(); 
+        }
+        if (currentToken.getTokens().getUrl() != null && currentToken.getTokens().getUrl().length() > NetworkParameters.TOKEN_MAX_URL_LENGTH) {
+            logger.debug("Too long url");
+            return SolidityState.getFailState(); 
+        }
+        if (currentToken.getTokens().getSignnumber() < 0) {
+            logger.debug("Invalid sign number");
+            return SolidityState.getFailState(); 
+        }
+
+        // Check previous issuance hash exists or initial issuance
+        if ((currentToken.getTokens().getPrevblockhash().equals("")
+                && currentToken.getTokens().getTokenindex() != 0)
+                || (!currentToken.getTokens().getPrevblockhash().equals("")
+                        && currentToken.getTokens().getTokenindex() == 0)) {
+            logger.debug("Must reference a previous block if not index 0");
+            return SolidityState.getFailState(); 
+        }
+
+        if (currentToken.getTokens().getTokenindex() != 0) {
+        }
+
+        // Must define enough permissioned addresses
+        if (currentToken.getTokens().getSignnumber() > currentToken.getMultiSignAddresses().size()) {
+            logger.debug("Cannot fulfill required sign number from multisign address list");
+            return SolidityState.getFailState(); 
+        }
+
+        // Get permissioned addresses
+        Token prevToken = null;
+        List<MultiSignAddress> permissionedAddresses = null;
+        // If not initial issuance, we check according to the previous token
+        if (currentToken.getTokens().getTokenindex() != 0) {
+            try {
+                // Previous issuance must exist to check solidity
+                prevToken = store.getToken(currentToken.getTokens().getPrevblockhash());
+                if (prevToken == null) {
+                    logger.debug("Previous token does not exist");
+                    return SolidityState.from(Sha256Hash.wrap(currentToken.getTokens().getPrevblockhash())); 
+                }
+
+                // Compare members of previous and current issuance
+                if (!currentToken.getTokens().getTokenid().equals(prevToken.getTokenid())) {
+                    logger.debug("Wrong token ID");
+                    return SolidityState.getFailState(); 
+                }
+                if (currentToken.getTokens().getTokenindex() != prevToken.getTokenindex() + 1) {
+                    logger.debug("Wrong token index");
+                    return SolidityState.getFailState(); 
+                }
+                if (!currentToken.getTokens().getTokenname().equals(prevToken.getTokenname())) {
+                    logger.debug("Cannot change token name");
+                    return SolidityState.getFailState(); 
+                }
+                if (currentToken.getTokens().getTokentype() != prevToken.getTokentype()) {
+                    logger.debug("Cannot change token type");
+                    return SolidityState.getFailState(); 
+                }
+
+                // Must allow more issuances
+                if (prevToken.isTokenstop()) {
+                    logger.debug("Previous token does not allow further issuance");
+                    return SolidityState.getFailState(); 
+                }
+
+                // Get addresses allowed to reissue
+                permissionedAddresses = store.getMultiSignAddressListByTokenidAndBlockHashHex(prevToken.getTokenid(),
+                            prevToken.getPrevblockhash());
+            } catch (BlockStoreException e) {
+                // Cannot happen, previous token must exist
+                e.printStackTrace();
+            }
+        } else {
+            // First time issuances must sign for the token id
+            permissionedAddresses = new ArrayList<>();
+            MultiSignAddress firstTokenAddress = new MultiSignAddress(currentToken.getTokens().getTokenid(), "", currentToken.getTokens().getTokenid());
+            permissionedAddresses.add(firstTokenAddress);
+        }
+
+        HashMap<String, MultiSignAddress> multiSignAddressRes = new HashMap<String, MultiSignAddress>();
+        for (MultiSignAddress multiSignAddress : permissionedAddresses) {
+            byte[] pubKey = Utils.HEX.decode(multiSignAddress.getPubKeyHex());
+            multiSignAddress.setAddress(ECKey.fromPublicOnly(pubKey).toAddress(networkParameters).toBase58());
+            multiSignAddressRes.put(multiSignAddress.getAddress(), multiSignAddress);
+        }
+
+        int signatureCount = 0;
+        // Get signatures from transaction
+        String jsonStr = new String(tx.getDataSignature());
+        MultiSignByRequest multiSignByRequest;
+        try {
+            multiSignByRequest = Json.jsonmapper().readValue(jsonStr, MultiSignByRequest.class);
+        } catch (IOException e) {
+            logger.debug("Signature data malformed! ", e);
+            return SolidityState.getFailState(); 
+        }
+        for (MultiSignBy multiSignBy : multiSignByRequest.getMultiSignBies()) {
+            String address = multiSignBy.getAddress();
+            if (!multiSignAddressRes.containsKey(address)) {
+                logger.debug("multisignby address not in permissioned address list");
+                return SolidityState.getFailState(); 
+            }
+        }
+
+        // Count successful signature verifications
+        for (MultiSignBy multiSignBy : multiSignByRequest.getMultiSignBies()) {
+            byte[] pubKey = Utils.HEX.decode(multiSignBy.getPublickey());
+            byte[] data = tx.getHash().getBytes();
+            byte[] signature = Utils.HEX.decode(multiSignBy.getSignature());
+            if (ECKey.verify(data, signature, pubKey))
+                signatureCount++;
+        }
+
+        // Return whether sufficient signatures exist
+        int requiredSignatureCount = prevToken == null ? 1 : prevToken.getSignnumber();
+        if (signatureCount >= requiredSignatureCount)
+            return SolidityState.getSuccessState();
+        else
+            return SolidityState.getFailState(); 
     }
 }

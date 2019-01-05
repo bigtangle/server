@@ -69,7 +69,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         transactionService.addConnected(block.bitcoinSerialize(), true, false);
     }
     
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testUnsolidBlockDisallowed() throws Exception {
         Sha256Hash sha256Hash1 = getRandomSha256Hash();
         Sha256Hash sha256Hash2 = getRandomSha256Hash();
@@ -80,6 +80,9 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         // Send over API method to disallow unsolids
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
+        
+        // Should not be added since insolid
+        assertNull(store.get(block.getHash()));
     }
 
     @Test

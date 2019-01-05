@@ -107,20 +107,19 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             
             // Check the block's solidity, if dependency missing, put on waiting list unless disallowed
             SolidityState solidityState = validatorService.checkBlockSolidity(block, storedPrev, storedPrevBranch);
-            if (!solidityState.isOK()) {
+            if (!(solidityState.getState() == State.Success)) {
                 if (solidityState.getState() == State.Unfixable) {
                     // Drop forever if invalid
                     log.debug("Dropping invalid block!");
                     throw new VerificationException("This block is invalid.");
-                } else if (allowUnsolid) {
-                    // If dependency missing and allowing waiting list, add to list
-                    insertUnsolidBlock(block, solidityState);
                 } else {
-                    // If dependency missing and disallowing waiting list, fail too
-                    log.debug("Dropping unresolved block!");
-                    throw new VerificationException("Dependency resolution failed.");
+                    // If dependency missing and allowing waiting list, add to list
+                    if (allowUnsolid) 
+                        insertUnsolidBlock(block, solidityState);
+                    else
+                        log.debug("Dropping unresolved block!");
+                    return false;
                 }
-                return false;
             } else {
                 // Otherwise, all dependencies exist and the block has been validated
                 try {
@@ -602,7 +601,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     @Override
     protected void insertUnsolidBlock(Block block, SolidityState solidityState) throws BlockStoreException {
-        if (solidityState.isOK() || solidityState.getState() == State.Unfixable)
+        if (solidityState.getState() == State.Success || solidityState.getState() == State.Unfixable)
             return;
         
         // Insert waiting into solidity waiting queue until dependency is resolved
@@ -659,7 +658,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         if (block.getBlockType() == Block.Type.BLOCKTYPE_REWARD) {
             // Get reward data from previous reward cycle
             try {
-                // TODO do not generate here
                 List<Transaction> transactions = block.getTransactions();
                 RewardInfo rewardInfo = RewardInfo.parse(transactions.get(0).getData());
                 
@@ -669,7 +667,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 Triple<Transaction, Boolean, Long> referenceReward = validatorService
                         .generateMiningRewardTX(storedPrev.getHeader(), storedPrevBranch.getHeader(), prevRewardHash);
     
-                // TODO actually insert here?
+                // TODO clear out throws in generateMiningRewardTX, check all that stuff beforehand then only get eligibility here
+                // Insert here with eligibility information (efficient since precomputed on spark)
+                // TODO Also add eligibility lockout period, e.g. time + avg tip height sufficient to avoid prebuilders    
                 blockStore.insertReward(block.getHash(), fromHeight, referenceReward.getMiddle(), prevRewardHash, 0);
             } catch (IOException e) {
                 // Cannot happen when connecting

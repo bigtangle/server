@@ -21,6 +21,7 @@ public class TokenInfo implements java.io.Serializable {
 
     private List<MultiSignAddress> multiSignAddresses;
 
+    // TODO stop using json parser
     public byte[] toByteArray() {
         try {
             String jsonStr = Json.jsonmapper().writeValueAsString(this);

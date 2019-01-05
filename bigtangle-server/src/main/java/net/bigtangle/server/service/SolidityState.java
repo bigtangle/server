@@ -32,11 +32,6 @@ public class SolidityState {
         return missingDependency;
     }
 
-    public boolean isOK() {
-        return state == State.Success;
-    }
-
-    
     public static SolidityState getSuccessState() {
         return successState;
     }
