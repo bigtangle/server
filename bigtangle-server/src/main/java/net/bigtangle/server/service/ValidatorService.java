@@ -6,6 +6,7 @@ package net.bigtangle.server.service;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -1252,38 +1253,44 @@ public class ValidatorService {
             permissionedAddresses.add(firstTokenAddress);
         }
 
-        HashMap<String, MultiSignAddress> multiSignAddressRes = new HashMap<String, MultiSignAddress>();
+        // Get permissioned pubkeys wrapped to check for bytearray equality
+        Set<ByteBuffer> permissionedPubKeys = new HashSet<ByteBuffer>();
         for (MultiSignAddress multiSignAddress : permissionedAddresses) {
             byte[] pubKey = Utils.HEX.decode(multiSignAddress.getPubKeyHex());
-            multiSignAddress.setAddress(ECKey.fromPublicOnly(pubKey).toAddress(networkParameters).toBase58());
-            multiSignAddressRes.put(multiSignAddress.getAddress(), multiSignAddress);
+            permissionedPubKeys.add(ByteBuffer.wrap(pubKey));
         }
 
         int signatureCount = 0;
         // Get signatures from transaction
         String jsonStr = new String(tx.getDataSignature());
-        MultiSignByRequest multiSignByRequest;
+        MultiSignByRequest txSignatures;
         try {
-            multiSignByRequest = Json.jsonmapper().readValue(jsonStr, MultiSignByRequest.class);
+            txSignatures = Json.jsonmapper().readValue(jsonStr, MultiSignByRequest.class);
         } catch (IOException e) {
             logger.debug("Signature data malformed! ", e);
             return SolidityState.getFailState(); 
         }
-        for (MultiSignBy multiSignBy : multiSignByRequest.getMultiSignBies()) {
-            String address = multiSignBy.getAddress();
-            if (!multiSignAddressRes.containsKey(address)) {
-                logger.debug("multisignby address not in permissioned address list");
+        
+        // Ensure all multiSignBys pubkeys are from the permissioned list
+        for (MultiSignBy multiSignBy : txSignatures.getMultiSignBies()) {
+            ByteBuffer pubKey = ByteBuffer.wrap(Utils.HEX.decode(multiSignBy.getPublickey()));
+            if (!permissionedPubKeys.contains(pubKey)) {
+                logger.debug("multisignby key not in permissioned address list");
                 return SolidityState.getFailState(); 
             }
+            
+            // Cannot use same address multiple times
+            permissionedPubKeys.remove(pubKey);
         }
-
+        
         // Count successful signature verifications
-        for (MultiSignBy multiSignBy : multiSignByRequest.getMultiSignBies()) {
+        for (MultiSignBy multiSignBy : txSignatures.getMultiSignBies()) {
             byte[] pubKey = Utils.HEX.decode(multiSignBy.getPublickey());
             byte[] data = tx.getHash().getBytes();
             byte[] signature = Utils.HEX.decode(multiSignBy.getSignature());
-            if (ECKey.verify(data, signature, pubKey))
+            if (ECKey.verify(data, signature, pubKey)) {
                 signatureCount++;
+            }
         }
 
         // Return whether sufficient signatures exist
