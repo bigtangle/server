@@ -781,39 +781,25 @@ public class ValidatorService {
     // Returns null if no spending block found
     // TODO refactor and FIX this garbage
     private BlockWrap getSpendingBlock(ConflictCandidate c) throws BlockStoreException {
-        BlockWrap milestoneBlock = null;
         switch (c.getConflictPoint().getType()) {
         case TXOUT:
             final BlockEvaluation utxoSpender = transactionService.getUTXOSpender(c.getConflictPoint().getConnectedOutpoint());
             if (utxoSpender == null)
                 return null;
-            milestoneBlock = store.getBlockWrap(utxoSpender.getBlockHash());
-            break;
+            return store.getBlockWrap(utxoSpender.getBlockHash());
         case TOKENISSUANCE:
             final Token connectedToken = c.getConflictPoint().getConnectedToken();
             
-            // Initial issuances are competing with each other
-            if (connectedToken.getTokenindex() == 0) {
-                // TODO This seems wrong?
-                return store.getTokenIssuingConfirmedBlock(connectedToken.getTokenid(), connectedToken.getTokenindex()); 
-            }
-            else {
-                final String tokenSpender = store.getTokenSpender(connectedToken.getPrevblockhash());
-                if (tokenSpender == null)
-                    return null;
-                milestoneBlock = store.getBlockWrap(Sha256Hash.wrap(tokenSpender));
-            }
-            break;
+            // The spender is always the one block with the same tokenid and index that is confirmed
+            return store.getTokenIssuingConfirmedBlock(connectedToken.getTokenid(), connectedToken.getTokenindex()); 
         case REWARDISSUANCE:
             final Sha256Hash txRewardSpender = store.getRewardSpender(Sha256Hash.wrap(c.getConflictPoint().getConnectedReward().getPrevRewardHash()));
             if (txRewardSpender == null)
                 return null;
-            milestoneBlock = store.getBlockWrap(txRewardSpender);
-            break;
+            return store.getBlockWrap(txRewardSpender);
         default:
             throw new NotImplementedException();
         }
-        return milestoneBlock;
     }
 
     public void filterSpent(Collection<ConflictCandidate> blockConflicts) {
@@ -1204,9 +1190,6 @@ public class ValidatorService {
                         && currentToken.getTokens().getTokenindex() == 0)) {
             logger.debug("Must reference a previous block if not index 0");
             return SolidityState.getFailState(); 
-        }
-
-        if (currentToken.getTokens().getTokenindex() != 0) {
         }
 
         // Must define enough permissioned addresses

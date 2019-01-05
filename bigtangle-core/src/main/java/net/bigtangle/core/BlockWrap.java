@@ -96,11 +96,7 @@ public class BlockWrap {
         case BLOCKTYPE_TOKEN_CREATION:
             try {
                 TokenInfo tokenInfo = new TokenInfo().parse(this.getBlock().getTransactions().get(0).getData());
-                // Dynamic conflicts: token issuances with index>0 require the previous issuance, while index=0 uses the tokenid as conflict point
-                if (tokenInfo.getTokens().getTokenindex() != 0)
-                    blockConflicts.add(ConflictCandidate.fromToken(this, tokenInfo.getTokens()));
-                else 
-                    blockConflicts.add(ConflictCandidate.fromToken(this, tokenInfo.getTokens()));
+                blockConflicts.add(ConflictCandidate.fromToken(this, tokenInfo.getTokens()));
                     
             } catch (IOException e) {
                 // Cannot happen since any blocks added already were checked.

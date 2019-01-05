@@ -56,10 +56,16 @@ public class ConflictPoint {
         case REWARDISSUANCE:
             return getConnectedReward().getPrevRewardHash().equals(other.getConnectedReward().getPrevRewardHash());
         case TOKENISSUANCE:
-            // Dynamic conflicts: token issuances with index>0 require the previous issuance, while index=0 uses the tokenid as conflict point
+            // Differing tokenids are always not conflicting with each other
+            if (getConnectedToken().getTokenid() != other.getConnectedToken().getTokenid())
+                return false;
+            
+            // Differing tokenindexes are always not conflicting with each other
             if (getConnectedToken().getTokenindex() != other.getConnectedToken().getTokenindex())
                 return false;
-            else if (getConnectedToken().getTokenindex() != 0)
+            
+            // Dynamic conflicts: token issuances with index>0 require the previous issuance, while index=0 uses the tokenid as conflict point
+            if (getConnectedToken().getTokenindex() != 0)
                 return getConnectedToken().getPrevblockhash().equals(other.getConnectedToken().getPrevblockhash());
             else 
                 return getConnectedToken().getTokenid().equals(other.getConnectedToken().getTokenid());

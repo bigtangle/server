@@ -171,8 +171,8 @@ public class MultiSignService {
                 throw new BlockStoreException("signnumber value <= 0");
             }
             // as conflict
-            if (!allowConflicts && (tokens0 != null && tokens.getTokenindex() <= 1L)) {
-                throw new BlockStoreException("tokens already existed");
+            if (!allowConflicts && (tokens0 != null && tokens0.isConfirmed() && tokens.getTokenindex() <= 1L)) {
+                throw new BlockStoreException("tokens already exist");
             }
 
             String prevblockhash = tokens.getPrevblockhash();
