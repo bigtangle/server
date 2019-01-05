@@ -56,19 +56,8 @@ public class ConflictPoint {
         case REWARDISSUANCE:
             return getConnectedReward().getPrevRewardHash().equals(other.getConnectedReward().getPrevRewardHash());
         case TOKENISSUANCE:
-            // Differing tokenids are always not conflicting with each other
-            if (getConnectedToken().getTokenid() != other.getConnectedToken().getTokenid())
-                return false;
-            
-            // Differing tokenindexes are always not conflicting with each other
-            if (getConnectedToken().getTokenindex() != other.getConnectedToken().getTokenindex())
-                return false;
-            
-            // Dynamic conflicts: token issuances with index>0 require the previous issuance, while index=0 uses the tokenid as conflict point
-            if (getConnectedToken().getTokenindex() != 0)
-                return getConnectedToken().getPrevblockhash().equals(other.getConnectedToken().getPrevblockhash());
-            else 
-                return getConnectedToken().getTokenid().equals(other.getConnectedToken().getTokenid());
+                return getConnectedToken().getTokenid().equals(other.getConnectedToken().getTokenid())
+                        && getConnectedToken().getTokenindex() == other.getConnectedToken().getTokenindex();
         case TXOUT:
             return getConnectedOutpoint().getIndex() == other.getConnectedOutpoint().getIndex()
                     && getConnectedOutpoint().getHash().equals(other.getConnectedOutpoint().getHash());
@@ -83,7 +72,7 @@ public class ConflictPoint {
         case REWARDISSUANCE:
             return Objects.hashCode(getConnectedReward().getPrevRewardHash());
         case TOKENISSUANCE:
-            return Objects.hashCode(getConnectedToken().getPrevblockhash());
+            return Objects.hashCode(getConnectedToken().getTokenid(), getConnectedToken().getTokenindex());
         case TXOUT:
             return Objects.hashCode(getConnectedOutpoint().getIndex(), getConnectedOutpoint().getHash());
         default:

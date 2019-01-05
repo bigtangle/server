@@ -367,7 +367,7 @@ public class ValidatorService {
             case TOKENISSUANCE:
                 final Token connectedToken = c.getConflictPoint().getConnectedToken();
                 
-                // Initial issuances are allowed iff no other same token issuances are confirmed
+                // Initial issuances are allowed iff no other same token issuances are confirmed, i.e. spent iff any token confirmed
                 if (connectedToken.getTokenindex() == 0)
                     return store.getTokenAnyConfirmed(connectedToken.getTokenid(), connectedToken.getTokenindex()); 
                 else
@@ -386,9 +386,9 @@ public class ValidatorService {
         case TOKENISSUANCE:
             final Token connectedToken = c.getConflictPoint().getConnectedToken();
             
-            // Initial issuances are allowed iff no other same token issuances are confirmed
+            // Initial issuances are allowed (although they may be spent already)
             if (connectedToken.getTokenindex() == 0)
-                return !store.getTokenAnyConfirmed(connectedToken.getTokenid(), connectedToken.getTokenindex()); 
+                return true; 
             else
                 return store.getTokenConfirmed(connectedToken.getPrevblockhash());
         case REWARDISSUANCE:
@@ -779,7 +779,6 @@ public class ValidatorService {
     }
 
     // Returns null if no spending block found
-    // TODO refactor and FIX this garbage
     private BlockWrap getSpendingBlock(ConflictCandidate c) throws BlockStoreException {
         switch (c.getConflictPoint().getType()) {
         case TXOUT:

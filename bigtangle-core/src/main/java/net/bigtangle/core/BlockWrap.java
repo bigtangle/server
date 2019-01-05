@@ -11,8 +11,7 @@ import java.util.HashSet;
 import org.apache.commons.lang3.NotImplementedException;
 
 /**
- * Wraps a {@link Block} object with extra data that can be derived from the
- * blockstore
+ * Wraps a {@link Block} object with extra data from the db
  */
 public class BlockWrap {
     protected Block block;
@@ -96,8 +95,7 @@ public class BlockWrap {
         case BLOCKTYPE_TOKEN_CREATION:
             try {
                 TokenInfo tokenInfo = new TokenInfo().parse(this.getBlock().getTransactions().get(0).getData());
-                blockConflicts.add(ConflictCandidate.fromToken(this, tokenInfo.getTokens()));
-                    
+                blockConflicts.add(ConflictCandidate.fromToken(this, tokenInfo.getTokens()));                    
             } catch (IOException e) {
                 // Cannot happen since any blocks added already were checked.
                 e.printStackTrace();
