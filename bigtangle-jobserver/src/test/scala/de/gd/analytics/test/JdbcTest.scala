@@ -121,6 +121,32 @@ object JdbcTest {
 
   }
   
+  // TODO define max steps forward from non-milestone -> computational complexity stays low enough in the relevant range, anything outside of max range is currently not viable for milestone
+  
+  // "we cannot precache #blocks approved per block because it is too big" 
+  // -> for backwards propagation, it is possible to purge approverhashes that have been passed through after x iterations, where 
+  // x is the difference in height between the approver and the block. after that, no duplicates of this approverhash can reach again, hence just drop it.
+  // -> for forwards propagation of conflictpoints, it is impossible to purge conflictpoints due to new blocks appearing potentially anywhere, hence max range definition.
+  // -> for forwards propagation of hashes for purpose of reward eligibility, it is impossible to purge hashes since
+  // it is possible however to define max range as max_reward_interval before which's height the reward must exist, but this will explode memory-wise.
+  // the other solution is to backpropagate the reward approval hash and after y iterations, where y is the difference between reward block height and its fromheight.
+  // all blocks in the rewarded interval have been touched and can be summed up to determine eligibility of reward block.
+  // then we could purge, i.e. very low memory requirements, and we could introduce the sperrzeit until eligibility is determined.
+  // this would then require active voting by servers, i.e. starting one tip selection @ the reward block.
+  
+  // Garbage cleanup:
+  // there exist multiple types of garbage on the tangle:
+  // unsolid blocks: purge after a while and blacklist/punish the sending node
+  // unmaintained milestone blocks: simply purge after timeout of e.g. 3 days etc. if not "history node"
+  // garbage tips that approve some very old milestone blocks can either be in conflict with unmaintained milestone stuff
+  // -> drop, or they could be valid -> someone ("janitor nodes") can simply repush them until they are in. 
+  
+  // Node types:
+  // FullPruned nodes: prune unmaintained blocks
+  // History nodes: no pruning
+  // Janitor nodes: history nodes that help by pushing old orphan tips that are valid
+  
+  
   // TODO use dynamic MAX_STEPS
   // TODO rating select tips, then (weight depth milestonedepth rating), then milestone, then maintained separately
 
