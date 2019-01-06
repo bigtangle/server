@@ -628,10 +628,15 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Finally, look in the solidity waiting queue for blocks that are still waiting
         
         // It could be a missing block...
-        blockStore.getUnsolidBlocks(block.getHash().getBytes()).stream().forEach(b -> add(b, true));;
+        for (Block b : blockStore.getUnsolidBlocks(block.getHash().getBytes())) {
+            add(b, true);
+        }
+        
         // Or it could be a missing transaction
         for (TransactionOutput txout : block.getTransactions().stream().flatMap(t -> t.getOutputs().stream()).collect(Collectors.toList())) {
-            blockStore.getUnsolidBlocks(txout.getOutPointFor().bitcoinSerialize()).stream().forEach(b -> add(b, true));;
+            for (Block b : blockStore.getUnsolidBlocks(txout.getOutPointFor().bitcoinSerialize())) {
+                add(b, true);
+            }
         }
     }
 

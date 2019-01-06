@@ -96,8 +96,7 @@ public class TransactionService {
         Triple<RewardEligibility, Transaction, Pair<Long, Long>> result = validatorService.makeReward(prevTrunk, prevBranch, prevRewardHash);
         
         if (!(result.getLeft() == RewardEligibility.ELIGIBLE)) {
-            logger.warn("Generated reward block is deemed ineligible! Try again somewhere else?");
-            return null;
+            throw new RuntimeException("Generated reward block is deemed ineligible! Try again somewhere else?");
         }
         
         Block r1 = blockService.getBlock(prevTrunk);

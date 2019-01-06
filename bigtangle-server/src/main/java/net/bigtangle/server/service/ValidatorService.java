@@ -246,6 +246,13 @@ public class ValidatorService {
 
         // Build transaction for block
         Transaction tx = new Transaction(networkParameters);
+        
+        // The input does not really need to be a valid signature, as long
+        // as it has the right general form and is slightly different for
+        // different tx
+        TransactionInput input = new TransactionInput(networkParameters, tx, Script.createInputScript(
+                prevTrunkBlock.getBlockHash().getBytes(), prevBranchBlock.getBlockHash().getBytes()));
+        tx.addInput(input);
 
         // Build the type-specific tx data
         RewardInfo rewardInfo = new RewardInfo(fromHeight, toHeight, prevRewardHash.toString());
@@ -255,12 +262,8 @@ public class ValidatorService {
         long perTxReward = calculateNextTxReward(prevTrunkBlock, prevBranchBlock, prevRewardBlock,
                 store.getRewardNextTxReward(prevRewardHash), totalRewardCount);
 
-        // Ensure prevTrunk/prevBranch are same consensus number (but not here)
-        if (prevTrunkBlock.getBlock().getLastMiningRewardBlock() != prevRewardBlock.getBlock().getLastMiningRewardBlock()
-                || prevBranchBlock.getBlock().getLastMiningRewardBlock() != prevRewardBlock.getBlock().getLastMiningRewardBlock())
-            return Triple.of(RewardEligibility.INVALID, tx, Pair.of(difficulty, perTxReward));
         // Ensure enough blocks are approved 
-        else if (totalRewardCount >= store.getCountMilestoneBlocksInInterval(fromHeight, toHeight) * 99 / 100 )
+        if (totalRewardCount >= store.getCountMilestoneBlocksInInterval(fromHeight, toHeight) * 99 / 100 )
             return Triple.of(RewardEligibility.ELIGIBLE, tx, Pair.of(difficulty, perTxReward));
         else 
             return Triple.of(RewardEligibility.INELIGIBLE, tx, Pair.of(difficulty, perTxReward));
@@ -860,7 +863,7 @@ public class ValidatorService {
 
         // Check type-specific solidity
         SolidityState typeSpecificSolidityState = checkTypeSpecificSolidity(block, storedPrev, storedPrevBranch);
-        if (!(transactionalSolidityState.getState() == State.Success)) {
+        if (!(typeSpecificSolidityState.getState() == State.Success)) {
             return typeSpecificSolidityState;
         }
 

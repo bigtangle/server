@@ -191,6 +191,8 @@ object JdbcTest {
   // Maintained has three states: confirmed unmaintained (ideally prunable after a while), unconfirmed maintained and unconfirmed unmaintained (newest blocks out of reach)
   // this will prevent the problem of needing to maintain infinitely many blocks in ddos
 
+  // TODO unmaintained cannot happen if not rewarded yet! also not if still used for milestoning
+  
   def transitionWeight(deltaWeight: Long): Double = {
     // TODO
     val alpha = 0.1
