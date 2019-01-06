@@ -1189,6 +1189,16 @@ public class ValidatorService {
             logger.debug("Invalid sign number");
             return SolidityState.getFailState(); 
         }
+        
+        // Check all token issuance transaction outputs are actually of the given token
+        for (Transaction tx1 : block.getTransactions()) {
+            for (TransactionOutput out : tx1.getOutputs()) {
+                if (!out.getValue().getTokenHex().equals(currentToken.getTokens().getTokenid())) {
+                    logger.debug("Invalid tokens were generated");
+                    return SolidityState.getFailState();                     
+                }
+            }
+        }
 
         // Check previous issuance hash exists or initial issuance
         if ((currentToken.getTokens().getPrevblockhash().equals("")
@@ -1264,6 +1274,12 @@ public class ValidatorService {
         }
 
         int signatureCount = 0;
+        // Ensure signatures exist
+        if (tx.getDataSignature() == null) {
+            logger.debug("signatures are null");
+            return SolidityState.getFailState(); 
+        }
+        
         // Get signatures from transaction
         String jsonStr = new String(tx.getDataSignature());
         MultiSignByRequest txSignatures;

@@ -4,7 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -15,7 +14,6 @@ import java.util.List;
 import java.util.Random;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -24,18 +22,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.PrunedException;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Token;
+import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -43,7 +38,6 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.crypto.TransactionSignature;
-import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.config.DBStoreConfiguration;
@@ -52,7 +46,6 @@ import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.server.service.TipsService;
 import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.store.FullPrunedBlockStore;
-import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)
@@ -131,7 +124,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     // TODO refactor abstractintegrationtest, other tests etc. 
     
     @Test(expected=VerificationException.class)
-    public void testFutureTimestamp() throws Exception {
+    public void testVerificationFutureTimestamp() throws Exception {
         store.resetStore();
         
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
@@ -144,7 +137,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     }
 
     @Test(expected=VerificationException.class)
-    public void testIncorrectPoW() throws Exception {
+    public void testVerificationIncorrectPoW() throws Exception {
         store.resetStore();
         
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
@@ -359,22 +352,32 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         assertNotNull(store.get(rewardBlock2.getHash()));
     }
 
-    // TODO
     @Test
     public void testUnsolidMissingToken() throws Exception {
         store.resetStore();
         
-        // Create block with UTXO
-        Transaction tx1 = makeTestTransaction();
-        Block depBlock = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                networkParameters.getGenesisBlock(), tx1);
-        
-        milestoneService.update();
+        // Generate an eligible issuance
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
 
-        // Create block with dependency
-        Transaction tx2 = makeTestTransaction();
-        Block block = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                networkParameters.getGenesisBlock(), tx2);
+        TokenInfo tokenInfo = new TokenInfo();
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount, false, false);
+        tokenInfo.setTokens(tokens);
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+
+        Block depBlock = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+
+        // Generate second eligible issuance
+        TokenInfo tokenInfo2 = new TokenInfo();        
+        Token tokens2 = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 1, amount, false, false);
+        tokenInfo2.setTokens(tokens2);
+        tokenInfo2.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+
+        Block block = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
         
         store.resetStore();
         
@@ -435,7 +438,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testTokenIssuanceConflict() throws Exception {
+    public void testConflictToken() throws Exception {
         store.resetStore();
 
         // Generate an eligible issuance

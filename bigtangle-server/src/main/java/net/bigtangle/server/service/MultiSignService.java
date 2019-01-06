@@ -147,7 +147,7 @@ public class MultiSignService {
 
     public boolean checkMultiSignPre(Block block, boolean allowConflicts) throws BlockStoreException, Exception {
         try {
-            // TODO check this
+            // TODO this won't work, check ValidatorService.checkTokenSolidity()
 
             if (block.getTransactions() == null || block.getTransactions().isEmpty()) {
                 throw new BlockStoreException("block transaction is empty");

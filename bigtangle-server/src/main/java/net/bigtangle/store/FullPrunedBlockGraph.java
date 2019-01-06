@@ -115,6 +115,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             StoredBlock storedPrevBranch = blockStore.get(block.getPrevBranchBlockHash());
             
             // Check the block's solidity, if dependency missing, put on waiting list unless disallowed
+            // TODO throw exceptions instead of "unfixable". The class soliditystate is used for the spark implementation?
             SolidityState solidityState = validatorService.checkBlockSolidity(block, storedPrev, storedPrevBranch);
             if (!(solidityState.getState() == State.Success)) {
                 if (solidityState.getState() == State.Unfixable) {
@@ -146,7 +147,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             throw new VerificationException(e);
         } catch (VerificationException e) {
             log.debug("", e);
-            throw new VerificationException("Could not verify block:\n" + block.toString(), e);
+            throw new VerificationException("Could not verify block:\n" + e.toString() + block.toString());
         } finally {
             lock.unlock();
         }
