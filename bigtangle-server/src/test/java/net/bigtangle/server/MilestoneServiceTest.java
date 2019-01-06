@@ -53,62 +53,12 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class MilestoneServiceTest extends AbstractIntegrationTest {
-    
-    // TODO test all consensus rules as soon as they are finished, i.e. code coverage + rule coverage
-
-    @Test
-    public void testUnsolidBlockAllowed() throws Exception {
-        Sha256Hash sha256Hash1 = getRandomSha256Hash();
-        Sha256Hash sha256Hash2 = getRandomSha256Hash();
-        Block block = new Block(this.networkParameters, sha256Hash1, sha256Hash2, Block.Type.BLOCKTYPE_TRANSFER,
-                System.currentTimeMillis() / 1000, 0, Block.EASIEST_DIFFICULTY_TARGET);
-        block.solve();
-        System.out.println(block.getHashAsString());
-
-        // Send over kafka method to allow unsolids
-        transactionService.addConnected(block.bitcoinSerialize(), true, false);
-    }
-    
-    @Test
-    public void testUnsolidBlockDisallowed() throws Exception {
-        Sha256Hash sha256Hash1 = getRandomSha256Hash();
-        Sha256Hash sha256Hash2 = getRandomSha256Hash();
-        Block block = new Block(this.networkParameters, sha256Hash1, sha256Hash2, Block.Type.BLOCKTYPE_TRANSFER,
-                System.currentTimeMillis() / 1000, 0, Block.EASIEST_DIFFICULTY_TARGET);
-        block.solve();
-        System.out.println(block.getHashAsString());
-
-        // Send over API method to disallow unsolids
-        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
-        
-        // Should not be added since insolid
-        assertNull(store.get(block.getHash()));
-    }
-
-    @Test
-    public void testUnsolidBlockReconnect() throws Exception {
-        Block depBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
-                networkParameters.getGenesisBlock());
-        
-        Sha256Hash sha256Hash = depBlock.getHash();
-        Block block = new Block(this.networkParameters, sha256Hash, sha256Hash, Block.Type.BLOCKTYPE_TRANSFER,
-                System.currentTimeMillis() / 1000, 0, Block.EASIEST_DIFFICULTY_TARGET);
-        block.solve();
-        System.out.println(block.getHashAsString());
-        transactionService.addConnected(block.bitcoinSerialize(), true, false);
-        
-        // Should not be added since insolid
-        assertNull(store.get(block.getHash()));
-
-        // Add missing dependency
-        this.blockgraph.add(depBlock, true);
-
-        // After adding the missing dependency, should be added 
-        assertNotNull(store.get(block.getHash()));
-        assertNotNull(store.get(depBlock.getHash()));
-    }
-    
     // TODO test waiting for outputs
+    
+    // TODO test single attributes to be updated
+    // TODO put mining/token into ValidatorServiceTest
+    // TODO add solidityTest
+    // TODO refactor AbstractIntegrationTest and all the other tests
 
     public Sha256Hash getRandomSha256Hash() {
         byte[] rawHashBytes = new byte[32];
@@ -547,25 +497,6 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isMilestone());
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isMilestone());
         assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isMilestone());
-    }
-
-    @Test
-    public void manualTest() throws Exception {
-        store.resetStore();
-
-        // Generate two blocks
-        createAndAddNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                networkParameters.getGenesisBlock());
-        createAndAddNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                networkParameters.getGenesisBlock());
-        milestoneService.update();
-
-        // Generate block normally now
-        Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
-        Block r1 = blockService.getBlock(tipsToApprove.getLeft());
-        Block r2 = blockService.getBlock(tipsToApprove.getRight());
-        Block b = BlockForTest.createNextBlock(r2, Block.BLOCK_VERSION_GENESIS,  r1);
-        blockgraph.add(b, true);
     }
 
     // @Test

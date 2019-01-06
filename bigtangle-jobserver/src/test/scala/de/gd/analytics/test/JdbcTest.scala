@@ -304,8 +304,7 @@ object JdbcTest {
     maintainedGraph
   }
 
-  // TODO height difference scaler ameliorates prebuilding (candlestick) a bit at least
-  //also, by punishing candlesticks (set flag ineligible if too far) and stopping where we are at it will be fixed?
+  // TODO by punishing candlesticks (set flag ineligible if too far) and stopping where we are at it will be fixed?
   /**
    * Test spark implementation for depth updates
    */
