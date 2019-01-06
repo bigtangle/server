@@ -165,6 +165,10 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     public void testGiveMoney() throws Exception {
+        testInitWallet();
+        wallet1();
+        wallet2();
+        
         @SuppressWarnings("deprecation")
         ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
@@ -278,6 +282,10 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     @SuppressWarnings("deprecation")
     @Test
     public void exchangeToken() throws Exception {
+        testInitWallet();
+        wallet1();
+        wallet2();
+        
         //create token
         // get token from wallet to spent
         ECKey yourKey = walletAppKit1.wallet().walletKeys(null).get(0);
@@ -338,6 +346,9 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     }
     @Test
     public void testExchangeTokenMulti() throws Exception {
+        testInitWallet();
+        wallet1();
+        wallet2();
 
         List<ECKey> keys = walletAppKit1.wallet().walletKeys(null);
         TokenInfo tokenInfo = new TokenInfo();
@@ -761,6 +772,9 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     public void createTransaction() throws Exception {
+        testInitWallet();
+        wallet1();
+        wallet2();
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),

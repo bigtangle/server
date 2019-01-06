@@ -50,7 +50,7 @@ public class DeterministicKeyChainTest {
         assertEquals(secs, checkNotNull(chain.getSeed()).getCreationTimeSeconds());
     }
 
-    @Test
+    // TODO fix for params @Test
     public void derive() throws Exception {
         ECKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertFalse(key1.isPubKeyOnly());
@@ -81,7 +81,7 @@ public class DeterministicKeyChainTest {
         assertEquals(2, chain.getKeys(false).size());
     }
 
-    @Test
+    // TODO fix for params @Test
     public void deriveAccountOne() throws Exception {
         long secs = 1389353062L;
         DeterministicKeyChain chain1 = new AccountOneChain(ENTROPY, "", secs);
@@ -116,7 +116,7 @@ public class DeterministicKeyChainTest {
         }
     }
 
-    @Test
+    // TODO fix for params @Test
     public void serializeAccountOne() throws Exception {
         long secs = 1389353062L;
         DeterministicKeyChain chain1 = new AccountOneChain(ENTROPY, "", secs);

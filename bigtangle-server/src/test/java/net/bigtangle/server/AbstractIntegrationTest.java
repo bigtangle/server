@@ -23,13 +23,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockitoTestExecutionListener;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import org.springframework.test.context.support.DirtiesContextTestExecutionListener;
-import org.springframework.web.context.WebApplicationContext;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -63,7 +61,6 @@ import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.server.config.DBStoreConfiguration;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.server.service.TipsService;
@@ -95,8 +92,6 @@ public abstract class AbstractIntegrationTest {
     WalletAppKit walletAppKit2;
 
     @Autowired
-    protected WebApplicationContext webContext;
-    @Autowired
     protected FullPrunedBlockGraph blockgraph;
     @Autowired
     protected BlockService blockService;
@@ -110,16 +105,10 @@ public abstract class AbstractIntegrationTest {
     protected FullPrunedBlockStore store;
     @Autowired
     protected TipsService tipsService;
-
     @Autowired
     public void prepareContextRoot(@Value("${local.server.port}") int port) {
         contextRoot = String.format(CONTEXT_ROOT_TEMPLATE, port);
     }
-
-    @Autowired
-    ConfigurableApplicationContext applicationContext;
-    @Autowired
-    DBStoreConfiguration dbConfiguration;
 
     protected static ECKey outKey = new ECKey();
     protected static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
@@ -128,14 +117,8 @@ public abstract class AbstractIntegrationTest {
 
     @Before
     public void setUp() throws Exception {
-        store = dbConfiguration.store();
         store.resetStore();
-
         walletKeys();
-
-        testInitWallet();
-        wallet1();
-        wallet2();
     }
 
     protected Sha256Hash getRandomSha256Hash() {
@@ -199,10 +182,6 @@ public abstract class AbstractIntegrationTest {
 
     public String getContextRoot() {
         return contextRoot;
-    }
-
-    public ConfigurableApplicationContext getApplicationContext() {
-        return applicationContext;
     }
 
     public void walletKeys() throws Exception {

@@ -70,6 +70,9 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
     @Test
     // transfer the coin to address with multisign for spent
     public void testMultiSigns() throws Exception {
+        testInitWallet();
+        wallet1();
+        wallet2();
        
         List<ECKey> wallet1Keys_part = new ArrayList<ECKey>();
         wallet1Keys_part.add(wallet1Keys.get(0));
@@ -127,6 +130,9 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
     @Test
     // transfer the coin to address
     public void testTransferWallet() throws Exception {
+        testInitWallet();
+        wallet1();
+        wallet2();
 
         // get new Block to be used from server
         HashMap<String, String> requestParam = new HashMap<String, String>();

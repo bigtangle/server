@@ -29,7 +29,6 @@ public class ResetTest extends AbstractIntegrationTest {
     @Test
     // init
     public void testReset() throws Exception {
-        store = dbConfiguration.store();
         store.resetStore();
     }
 

@@ -224,6 +224,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
     @Test
     public void testCreateMultiSigList() throws Exception {
+        testInitWallet();
+        wallet1();
+        wallet2();
+        
         List<ECKey> signKeys = new LinkedList<ECKey>();
         signKeys.add(walletAppKit.wallet().walletKeys(null).get(0));
         signKeys.add(walletAppKit1.wallet().walletKeys(null).get(0));
@@ -874,6 +878,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testCreateMultiSigTokenIndexCheckTokenExist() throws JsonProcessingException, Exception {
+        testInitWallet();
+        wallet1();
+        wallet2();
+        
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         String tokenid = keys.get(3).getPublicKeyAsHex();
         for (int i = 1; i <= 2; i++) {
@@ -968,8 +976,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     @Test
     public void testCreateToken() throws JsonProcessingException, Exception {
         // Setup transaction and signatures
+        testInitWallet();
         wallet1();
         wallet2();
+        
         List<ECKey> signKeys = new LinkedList<ECKey>();
         signKeys.add(walletAppKit.wallet().walletKeys(null).get(0));
         signKeys.add(walletAppKit1.wallet().walletKeys(null).get(0));
