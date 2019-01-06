@@ -502,7 +502,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_TOKEN_CREATION:
             // Unconfirm dependents
             if (blockStore.getTokenSpent(block.getHashAsString())) {
-                // TODO Unify saving mode: stop using strings as saving mode in interfaces and propagate the change to everywhere
                 removeBlockFromMilestone(Sha256Hash.wrap(blockStore.getTokenSpender(block.getHashAsString())), traversedBlockHashes);
             }
             break;
@@ -552,13 +551,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_TRANSFER:
             break;
         case BLOCKTYPE_USERDATA:
-            // TODO reverse confirm
             break;
         case BLOCKTYPE_VOS:
-            // TODO reverse confirm
             break;
         case BLOCKTYPE_VOS_EXECUTE:
-            // TODO reverse confirm
             break;
         default:
             throw new NotImplementedException();

@@ -260,7 +260,7 @@ public class ValidatorService {
 
         // New rewards
         long perTxReward = calculateNextTxReward(prevTrunkBlock, prevBranchBlock, prevRewardBlock,
-                store.getRewardNextTxReward(prevRewardHash), totalRewardCount);
+                store.getRewardNextTxReward(prevRewardHash), totalRewardCount, difficulty, prevDifficulty);
 
         // Ensure enough blocks are approved 
         if (totalRewardCount >= store.getCountMilestoneBlocksInInterval(fromHeight, toHeight) * 99 / 100 )
@@ -301,15 +301,19 @@ public class ValidatorService {
     }
 
     private long calculateNextTxReward(BlockWrap prevTrunkBlock, BlockWrap prevBranchBlock, BlockWrap prevRewardBlock,
-            long currPerTxReward, long totalRewardCount) {
+            long currPerTxReward, long totalRewardCount, long difficulty, long prevDifficulty) {
         // The following is used as proxy for current time by consensus rules
         long currentTime = Math.max(prevTrunkBlock.getBlock().getTimeSeconds(),
                 prevBranchBlock.getBlock().getTimeSeconds());
         long timespan = Math.max(1, (currentTime - prevRewardBlock.getBlock().getTimeSeconds()));
+        long nextPerTxRewardUnnormalized = NetworkParameters.TARGET_YEARLY_MINING_PAYOUT * timespan / 31536000L / totalRewardCount;
 
-        // TODO include result from difficulty adjustment to actually stay on target
-        // BigInteger result = BigInteger.valueOf(currPerTxReward);
-        long nextPerTxReward = NetworkParameters.TARGET_YEARLY_MINING_PAYOUT * timespan / 31536000L / totalRewardCount;
+        // Include result from difficulty adjustment to stay on target better
+        BigInteger target = Utils.decodeCompactBits(difficulty);
+        BigInteger prevTarget = Utils.decodeCompactBits(prevDifficulty);
+        BigInteger nextPerTxRewardBigInteger = prevTarget.divide(target).multiply(BigInteger.valueOf(nextPerTxRewardUnnormalized));
+        long nextPerTxReward = nextPerTxRewardBigInteger.min(BigInteger.valueOf(Long.MAX_VALUE)).longValue();
+        
         nextPerTxReward = Math.max(nextPerTxReward, currPerTxReward / 4);
         nextPerTxReward = Math.min(nextPerTxReward, currPerTxReward * 4);
         nextPerTxReward = Math.max(nextPerTxReward, 1);
@@ -453,7 +457,6 @@ public class ValidatorService {
 
         // Additionally, for reward blocks: invalid never, ineligible overrule, eligible ok
         // If ineligible, overrule by sufficient age and milestone rating range
-        // TODO Also add eligibility lockout period, e.g. time + avg tip height sufficient to avoid prebuilders    
         new HashSet<BlockWrap>(blocksToAdd).stream()
         .filter(b -> b.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD) // prefilter for reward blocks
         .forEach(b -> {
