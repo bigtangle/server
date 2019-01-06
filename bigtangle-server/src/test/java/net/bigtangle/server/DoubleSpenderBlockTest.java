@@ -40,7 +40,8 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Ignore
 public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
- 
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DoubleSpenderBlockTest.class);
 
     public Thread createThreadCountDownLatch(int method, CountDownLatch countDownLatch) {
         Thread thread = new Thread(new Runnable() {
@@ -122,8 +123,6 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
             }
         }
     }
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(DoubleSpenderBlockTest.class);
 
     @SuppressWarnings("deprecation")
     public void test100EmptyBlock() throws Exception {

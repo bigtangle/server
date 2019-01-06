@@ -13,9 +13,6 @@ import java.util.List;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -32,13 +29,9 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
-import net.bigtangle.kafka.BlockStreamHandler;
-import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.server.service.BlockService;
-import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.SendRequest;
 
@@ -46,19 +39,7 @@ import net.bigtangle.wallet.SendRequest;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class KafkaServiceTest extends AbstractIntegrationTest {
-    private static final Logger logger = LoggerFactory.getLogger(KafkaServiceTest.class);
-
-    @Autowired
-    private NetworkParameters networkParameters;
-    @Autowired
-    private MilestoneService milestoneService;
-    @Autowired
-    private BlockService blockService;
-    @Autowired
-    private KafkaMessageProducer kafkaMessageProducer;
-    @Autowired
-    private BlockStreamHandler blockStreamHandler;
-
+    
     @Test
     public void getBalance() throws Exception {
         // Check that we aren't accidentally leaving any references
@@ -114,17 +95,17 @@ public class KafkaServiceTest extends AbstractIntegrationTest {
     public void testUTXOProviderWithWallet() throws Exception {
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
-        ECKey outKey = new ECKey();
-        int height = 1;
+//        ECKey outKey = new ECKey();
+//        int height = 1;
 
         // Build some blocks on genesis block to create a spendable output.
         Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
                 Block.BLOCK_VERSION_GENESIS, 
                 networkParameters.getGenesisBlock());
         kafkaMessageProducer.sendMessage(rollingBlock.bitcoinSerialize());
-        Transaction transaction = rollingBlock.getTransactions().get(0);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
-        byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
+//        Transaction transaction = rollingBlock.getTransactions().get(0);
+//        TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
+//        byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
         for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
             kafkaMessageProducer.sendMessage(rollingBlock.bitcoinSerialize());

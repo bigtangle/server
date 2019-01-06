@@ -20,7 +20,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -53,7 +52,6 @@ import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.wallet.SendRequest;
@@ -65,10 +63,6 @@ import net.bigtangle.wallet.Wallet.MissingSigsMode;
 public class ClientIntegrationTest extends AbstractIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(ClientIntegrationTest.class);
- 
- 
-    @Autowired
-    private MilestoneService milestoneService;
 
     @Test
     public void testBatchBlock() throws Exception {
@@ -400,7 +394,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
         TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, yourutxo, 0);
 
-        transaction.addOutput(amount, new Address(networkParameters, myutxo.getAddress()));
+        transaction.addOutput(amount, Address.fromBase58(networkParameters, myutxo.getAddress()));
 
         Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(3, signKeys);
         Coin amount2 = multisigOutput.getValue().subtract(amount);

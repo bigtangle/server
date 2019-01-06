@@ -57,6 +57,8 @@ import net.bigtangle.core.http.server.resp.GetBalancesResponse;
 import net.bigtangle.core.http.server.resp.MultiSignResponse;
 import net.bigtangle.core.http.server.resp.TokenIndexResponse;
 import net.bigtangle.crypto.TransactionSignature;
+import net.bigtangle.kafka.BlockStreamHandler;
+import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
@@ -81,7 +83,7 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 public abstract class AbstractIntegrationTest {
 
     private static final String CONTEXT_ROOT_TEMPLATE = "http://localhost:%s/";
-    private static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
+    protected static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
     public String contextRoot;
     public List<ECKey> walletKeys;
     public List<ECKey> wallet1Keys;
@@ -106,7 +108,11 @@ public abstract class AbstractIntegrationTest {
     @Autowired
     protected TipsService tipsService;
     @Autowired
-    public void prepareContextRoot(@Value("${local.server.port}") int port) {
+    protected KafkaMessageProducer kafkaMessageProducer;
+    @Autowired
+    protected BlockStreamHandler blockStreamHandler;
+    @Autowired
+    protected void prepareContextRoot(@Value("${local.server.port}") int port) {
         contextRoot = String.format(CONTEXT_ROOT_TEMPLATE, port);
     }
 

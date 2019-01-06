@@ -425,7 +425,8 @@ public class TransactionInput extends ChildMessage {
         }
         Script pubKey = output.getScriptPubKey();
         int myIndex = getParentTransaction().getInputs().indexOf(this);
-        getScriptSig().correctlySpends(getParentTransaction(), myIndex, pubKey);
+        Script r = getScriptSig();
+        r.correctlySpends(getParentTransaction(), (long) myIndex, pubKey, Script.ALL_VERIFY_FLAGS);
     }
 
     /**

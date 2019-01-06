@@ -36,6 +36,7 @@ public class OrderPublishService {
     public AbstractResponse saveOrderPublish(Map<String, Object> request) throws Exception {
         String address = (String) request.get("address");
         String tokenid = (String) request.get("tokenid");
+        @SuppressWarnings("unchecked")
         List<String> signaddress = (List<String>) request.get("signaddress");
         int type = (Integer) request.get("type");
         String validateto = (String) request.get("validateto");

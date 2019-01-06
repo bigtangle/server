@@ -539,7 +539,7 @@ public class Script {
     private int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) {
         checkArgument(chunks.get(0).isOpCode()); // P2SH scriptSig
         int numKeys = Script.decodeFromOpN(chunks.get(chunks.size() - 2).opcode);
-        TransactionSignature signature = TransactionSignature.decodeFromBitcoin(signatureBytes, true);
+        TransactionSignature signature = TransactionSignature.decodeFromBitcoin(signatureBytes, true, false);
         for (int i = 0 ; i < numKeys ; i++) {
             if (ECKey.fromPublicOnly(chunks.get(i + 1).data).verify(hash, signature)) {
                 return i;
@@ -1532,7 +1532,7 @@ public class Script {
             // We could reasonably move this out of the loop, but because signature verification is significantly
             // more expensive than hashing, its not a big deal.
             try {
-                TransactionSignature sig = TransactionSignature.decodeFromBitcoin(sigs.getFirst(), requireCanonical);
+                TransactionSignature sig = TransactionSignature.decodeFromBitcoin(sigs.getFirst(), requireCanonical, false);
                 Sha256Hash hash = txContainingThis.hashForSignature(index, connectedScript, (byte) sig.sighashFlags);
                 if (ECKey.verify(hash.getBytes(), sig, pubKey))
                     sigs.pollFirst();
@@ -1559,23 +1559,6 @@ public class Script {
                 throw new ScriptException("Script failed OP_CHECKMULTISIGVERIFY");
         }
         return opCount;
-    }
-
-    /**
-     * Verifies that this script (interpreted as a scriptSig) correctly spends the given scriptPubKey, enabling all
-     * validation rules.
-     * @param txContainingThis The transaction in which this input scriptSig resides.
-     *                         Accessing txContainingThis from another thread while this method runs results in undefined behavior.
-     * @param scriptSigIndex The index in txContainingThis of the scriptSig (note: NOT the index of the scriptPubKey).
-     * @param scriptPubKey The connected scriptPubKey containing the conditions needed to claim the value.
-     * @deprecated Use {@link #correctlySpends(net.bigtangle.core.Transaction, long, net.bigtangle.script.Script, java.util.Set)}
-     * instead so that verification flags do not change as new verification options
-     * are added.
-     */
-    @Deprecated
-    public void correctlySpends(Transaction txContainingThis, long scriptSigIndex, Script scriptPubKey)
-            throws ScriptException {
-        correctlySpends(txContainingThis, scriptSigIndex, scriptPubKey, ALL_VERIFY_FLAGS);
     }
 
     /**

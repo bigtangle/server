@@ -172,7 +172,7 @@ public class DeterministicKeyChainTest {
         assertEquals(0, listenerKeys.size());
         chain.setLookaheadSize(5);
         assertEquals(0, listenerKeys.size());
-        ECKey key = chain.getKey(KeyChain.KeyPurpose.CHANGE);
+//        ECKey key = chain.getKey(KeyChain.KeyPurpose.CHANGE);
       //  assertEquals(1, listenerKeys.size());  // 1 event
      //   final List<ECKey> firstEvent = listenerKeys.get(0);
      //   assertEquals(1, firstEvent.size());
