@@ -4,21 +4,20 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -40,84 +39,11 @@ import net.bigtangle.core.VerificationException;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.server.config.DBStoreConfiguration;
-import net.bigtangle.server.service.BlockService;
-import net.bigtangle.server.service.MilestoneService;
-import net.bigtangle.server.service.TipsService;
-import net.bigtangle.server.service.TransactionService;
-import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ValidatorServiceTest extends AbstractIntegrationTest {
-
-    private static final Logger log = LoggerFactory.getLogger(ValidatorServiceTest.class);
-
-    @Autowired
-    private BlockService blockService;
-    @Autowired
-    private MilestoneService milestoneService;
-    @Autowired
-    private TransactionService transactionService;
-    @Autowired
-    private NetworkParameters networkParameters;
-    @Autowired
-    private FullPrunedBlockStore store;
-    @Autowired
-    private TipsService tipsService;
-    
-    @Autowired
-    DBStoreConfiguration dbConfiguration;
-
-    ECKey outKey = new ECKey();
-
-    public Sha256Hash getRandomSha256Hash() {
-        byte[] rawHashBytes = new byte[32];
-        new Random().nextBytes(rawHashBytes);
-        Sha256Hash sha256Hash = Sha256Hash.wrap(rawHashBytes);
-        return sha256Hash;
-    }
-
-    private Block createAndAddNextBlock(Block b1, long bVersion, byte[] pubKey, Block b2)
-            throws Exception {
-        Block block = BlockForTest.createNextBlock(b1, bVersion, b2);
-        blockService.saveBlock(block);
-        log.debug("created block:" + block.getHashAsString());
-        return block;
-    }
-
-    private Block createAndAddNextBlockWithTransaction(Block b1, long bVersion, byte[] pubKey, Block b2,
-            Transaction prevOut) throws Exception {
-        Block block = BlockForTest.createNextBlock(b1, bVersion, b2);
-        block.addTransaction(prevOut);
-        block.solve();
-        blockService.saveBlock(block);
-        log.debug("created block:" + block.getHashAsString());
-        return block;
-    }
-
-    private Transaction makeTestTransaction() throws Exception {
-        @SuppressWarnings("deprecation")
-        ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        // use UTXO to create double spending, this can not be created with
-        // wallet
-        List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
-                0);
-        Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
-        Transaction doublespendTX = new Transaction(networkParameters);
-        doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount, genesiskey));
-        TransactionInput input = doublespendTX.addInput(spendableOutput);
-        Sha256Hash sighash = doublespendTX.hashForSignature(0, spendableOutput.getScriptBytes(),
-                Transaction.SigHash.ALL, false);
-    
-        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
-                false);
-        Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
-        input.setScriptSig(inputScript);
-        return doublespendTX;
-    }
     
     // TODO manual creation of tests via summary consensus rules.md
     // TODO code coverage
@@ -396,7 +322,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testTokenIssuanceReorg() throws Exception {
+    public void testReorgToken() throws Exception {
         store.resetStore();
 
         // Generate an eligible issuance
@@ -472,7 +398,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testMiningRewardEligibility() throws Exception {
+    public void testReorgMiningReward() throws Exception {
         store.resetStore();
 
         // Generate blocks until passing first reward interval
@@ -553,4 +479,232 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isMilestone());
         assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isMilestone());
     }
+
+    //TODO this doesn't work because of the current difficulty maximum @Test
+    public void testSolidityPredecessorDifficultyInheritance() throws Exception {
+        store.resetStore();
+
+        // Generate blocks until passing first reward interval and second reward interval
+        Block rollingBlock = networkParameters.getGenesisBlock();
+        for (int i = 0; i < 3; i++) {
+            Block rollingBlockNew = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
+            
+            // The difficulty should be equal to the previous difficulty
+            assertEquals(rollingBlock.getDifficultyTarget(), rollingBlockNew.getDifficultyTarget());
+            
+            rollingBlock = rollingBlockNew;
+            blockgraph.add(rollingBlock, true);     
+        }
+        milestoneService.update();
+        
+        // Generate eligible mining reward block
+        Block rewardBlock1 = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock.getHash(), rollingBlock.getHash());
+
+        // The difficulty should now not be equal to the previous difficulty
+        assertNotEquals(rollingBlock.getDifficultyTarget(), rewardBlock1.getDifficultyTarget());
+
+        for (int i = 0; i < 3; i++) {
+            Block rollingBlockNew = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
+            
+            // The difficulty should be equal to the previous difficulty
+            assertEquals(rollingBlock.getDifficultyTarget(), rollingBlockNew.getDifficultyTarget());
+            
+            rollingBlock = rollingBlockNew;
+            blockgraph.add(rollingBlock, true);     
+        }
+    }
+
+    @Test
+    public void testSolidityPredecessorConsensusInheritance() throws Exception {
+        store.resetStore();
+
+        // Generate blocks until passing first reward interval and second reward interval
+        Block rollingBlock = networkParameters.getGenesisBlock();
+        for (int i = 0; i < 3; i++) {
+            Block rollingBlockNew = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
+            
+            // The difficulty should be equal to the previous difficulty
+            assertEquals(rollingBlock.getLastMiningRewardBlock(), rollingBlockNew.getLastMiningRewardBlock());
+            
+            rollingBlock = rollingBlockNew;
+            blockgraph.add(rollingBlock, true);     
+        }
+        milestoneService.update();
+        
+        // Generate eligible mining reward block
+        Block rewardBlock1 = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock.getHash(), rollingBlock.getHash());
+
+        // The difficulty should now not be equal to the previous difficulty
+        assertNotEquals(rollingBlock.getLastMiningRewardBlock(), rewardBlock1.getLastMiningRewardBlock());
+
+        for (int i = 0; i < 3; i++) {
+            Block rollingBlockNew = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
+            
+            // The difficulty should be equal to the previous difficulty
+            assertEquals(rollingBlock.getLastMiningRewardBlock(), rollingBlockNew.getLastMiningRewardBlock());
+            
+            rollingBlock = rollingBlockNew;
+            blockgraph.add(rollingBlock, true);     
+        }
+    }
+
+    @Test
+    public void testSolidityPredecessorTimeInheritance() throws Exception {
+        store.resetStore();
+
+        // Generate blocks until passing first reward interval and second reward interval
+        Block rollingBlock = networkParameters.getGenesisBlock();
+        for (int i = 0; i < 3; i++) {
+            Block rollingBlockNew = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
+            
+            // The time should not be moving backwards
+            assertTrue(rollingBlock.getTimeSeconds() <= rollingBlockNew.getTimeSeconds());
+            
+            rollingBlock = rollingBlockNew;
+            blockgraph.add(rollingBlock, true);     
+        }
+        milestoneService.update();
+
+        // The time is allowed to stay the same
+        Block b = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
+        b.setTime(rollingBlock.getTimeSeconds()); // 01/01/2000 @ 12:00am (UTC)
+        b.solve();
+        blockgraph.add(b, true);
+        
+        // The time is not allowed to move backwards
+        try {
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
+            rollingBlock.setTime(946684800); // 01/01/2000 @ 12:00am (UTC)
+            b.solve();
+            blockgraph.add(rollingBlock, true);     
+            fail();
+        } catch (VerificationException e) {
+        }
+    }
+
+    @Test
+    public void testSolidityCoinbase() throws Exception {
+        store.resetStore();
+
+        // TODO test all cases (with working if possible and) not working coinbases
+    }
+
+    @Test
+    public void testSolidityTXInputScriptsCorrect() throws Exception {
+        store.resetStore();
+        
+        // Create block with UTXO
+        Transaction tx1 = makeTestTransaction();
+        createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+                networkParameters.getGenesisBlock(), tx1);
+        
+        store.resetStore();
+
+        // Again but with incorrect input script
+        try {
+            tx1.getInput(0).setScriptSig(new Script(new byte[0]));
+            createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+                    networkParameters.getGenesisBlock(), tx1);
+            fail();
+        } catch (VerificationException e) {
+        }
+    }
+
+    @Test
+    public void testSolidityTXOutputSumCorrect() throws Exception {
+        store.resetStore();
+
+        // Create block with UTXO
+        {
+            Transaction tx1 = makeTestTransaction();
+            createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+                    networkParameters.getGenesisBlock(), tx1);
+        }
+        
+        store.resetStore();
+
+        // Again but with less output coins
+        {
+            @SuppressWarnings("deprecation")
+            ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+            List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+            TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+                    0);
+            Coin amount = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
+            Transaction tx2 = new Transaction(networkParameters);
+            tx2.addOutput(new TransactionOutput(networkParameters, tx2, amount, genesiskey));
+            tx2.addOutput(new TransactionOutput(networkParameters, tx2, spendableOutput.getValue().subtract(amount).subtract(amount), genesiskey));
+            TransactionInput input = tx2.addInput(spendableOutput);
+            Sha256Hash sighash = tx2.hashForSignature(0, spendableOutput.getScriptBytes(),
+                    Transaction.SigHash.ALL, false);
+            TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+                    false);
+            Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+            input.setScriptSig(inputScript);
+            createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+                    networkParameters.getGenesisBlock(), tx2);
+        }
+        
+        store.resetStore();
+
+        // Again but with more output coins
+        try {
+            @SuppressWarnings("deprecation")
+            ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+            List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+            TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+                    0);
+            Coin amount = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
+            Transaction tx2 = new Transaction(networkParameters);
+            tx2.addOutput(new TransactionOutput(networkParameters, tx2, amount.add(amount), genesiskey));
+            tx2.addOutput(new TransactionOutput(networkParameters, tx2, spendableOutput.getValue(), genesiskey));
+            TransactionInput input = tx2.addInput(spendableOutput);
+            Sha256Hash sighash = tx2.hashForSignature(0, spendableOutput.getScriptBytes(),
+                    Transaction.SigHash.ALL, false);
+            TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+                    false);
+            Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+            input.setScriptSig(inputScript);
+            tx2.getOutput(0).getValue().value = tx2.getOutput(0).getValue().value + 1;
+            createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+                    networkParameters.getGenesisBlock(), tx2);
+            fail();
+        } catch (VerificationException e) {
+        }
+    }
+
+    @Test
+    public void testSolidityTXOutputNonNegative() throws Exception {
+        store.resetStore();
+
+        // Create block with negative outputs
+        try {
+            @SuppressWarnings("deprecation")
+            ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+            List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+            TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+                    0);
+            Coin amount = Coin.valueOf(-1, NetworkParameters.BIGTANGLE_TOKENID);
+            Transaction tx2 = new Transaction(networkParameters);
+            tx2.addOutput(new TransactionOutput(networkParameters, tx2, amount, genesiskey));
+            tx2.addOutput(new TransactionOutput(networkParameters, tx2, spendableOutput.getValue().minus(amount), genesiskey));
+            TransactionInput input = tx2.addInput(spendableOutput);
+            Sha256Hash sighash = tx2.hashForSignature(0, spendableOutput.getScriptBytes(),
+                    Transaction.SigHash.ALL, false);
+            TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+                    false);
+            Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+            input.setScriptSig(inputScript);
+            tx2.getOutput(0).getValue().value = tx2.getOutput(0).getValue().value + 1;
+            createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+                    networkParameters.getGenesisBlock(), tx2);
+            fail();
+        } catch (VerificationException e) {
+        }
+    }
+    
+    // TODO check too many sigops in tx
+
 }

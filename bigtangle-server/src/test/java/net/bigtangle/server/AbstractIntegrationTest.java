@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 import org.junit.Before;
@@ -36,29 +37,41 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.PrunedException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionInput;
+import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.VerificationException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
 import net.bigtangle.core.http.server.resp.MultiSignResponse;
 import net.bigtangle.core.http.server.resp.TokenIndexResponse;
+import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.ReqCmd;
+import net.bigtangle.script.Script;
+import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.config.DBStoreConfiguration;
+import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
+import net.bigtangle.server.service.TipsService;
+import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {})
@@ -78,15 +91,25 @@ public abstract class AbstractIntegrationTest {
     public List<ECKey> wallet2Keys;
 
     WalletAppKit walletAppKit;
-    protected static ObjectMapper objectMapper;
-
     WalletAppKit walletAppKit1;
     WalletAppKit walletAppKit2;
-    @Autowired
-    protected WebApplicationContext webContext;
 
     @Autowired
-    private ConfigurableApplicationContext applicationContext;
+    protected WebApplicationContext webContext;
+    @Autowired
+    protected FullPrunedBlockGraph blockgraph;
+    @Autowired
+    protected BlockService blockService;
+    @Autowired
+    protected MilestoneService milestoneService;
+    @Autowired
+    protected TransactionService transactionService;
+    @Autowired
+    protected NetworkParameters networkParameters;
+    @Autowired
+    protected FullPrunedBlockStore store;
+    @Autowired
+    protected TipsService tipsService;
 
     @Autowired
     public void prepareContextRoot(@Value("${local.server.port}") int port) {
@@ -94,25 +117,17 @@ public abstract class AbstractIntegrationTest {
     }
 
     @Autowired
-    protected FullPrunedBlockGraph blockgraph;
-    @Autowired
-    protected FullPrunedBlockStore store;
-
-    @Autowired
-    private MilestoneService milestoneService;
+    ConfigurableApplicationContext applicationContext;
     @Autowired
     DBStoreConfiguration dbConfiguration;
-    @Autowired
-    NetworkParameters networkParameters;
 
-    static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
-    static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
+    protected static ECKey outKey = new ECKey();
+    protected static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
+    protected static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
+    protected static ObjectMapper objectMapper = new ObjectMapper();
 
     @Before
     public void setUp() throws Exception {
-
-        objectMapper = new ObjectMapper();
-
         store = dbConfiguration.store();
         store.resetStore();
 
@@ -121,7 +136,57 @@ public abstract class AbstractIntegrationTest {
         testInitWallet();
         wallet1();
         wallet2();
+    }
 
+    protected Sha256Hash getRandomSha256Hash() {
+        byte[] rawHashBytes = new byte[32];
+        new Random().nextBytes(rawHashBytes);
+        Sha256Hash sha256Hash = Sha256Hash.wrap(rawHashBytes);
+        return sha256Hash;
+    }
+
+    protected Block createAndAddNextBlock(Block b1, long bVersion, byte[] pubKey, Block b2)
+            throws VerificationException, PrunedException {
+        Block block = BlockForTest.createNextBlock(b1, bVersion, b2);
+        this.blockgraph.add(block, true);
+        return block;
+    }
+
+    protected Block createAndAddNextBlockWithTransaction(Block b1, long bVersion, byte[] pubKey, Block b2,
+            Transaction prevOut) throws VerificationException, PrunedException {
+        Block block = createNextBlockWithTransaction(b1, bVersion, b2, prevOut);
+        this.blockgraph.add(block, true);
+        return block;
+    }
+
+    protected Block createNextBlockWithTransaction(Block b1, long bVersion, Block b2, Transaction prevOut) {
+        Block block = BlockForTest.createNextBlock(b1, bVersion, b2);
+        block.addTransaction(prevOut);
+        block.solve();
+        return block;
+    }
+
+    protected Transaction makeTestTransaction() throws Exception {
+        @SuppressWarnings("deprecation")
+        ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        // use UTXO to create double spending, this can not be created with
+        // wallet
+        List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+                0);
+        Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
+        Transaction tx = new Transaction(networkParameters);
+        tx.addOutput(new TransactionOutput(networkParameters, tx, amount, genesiskey));
+        tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), genesiskey));
+        TransactionInput input = tx.addInput(spendableOutput);
+        Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(),
+                Transaction.SigHash.ALL, false);
+    
+        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+                false);
+        Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+        input.setScriptSig(inputScript);
+        return tx;
     }
 
     public String toJson(Object object) throws JsonProcessingException {

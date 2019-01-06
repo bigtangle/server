@@ -115,7 +115,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             StoredBlock storedPrevBranch = blockStore.get(block.getPrevBranchBlockHash());
             
             // Check the block's solidity, if dependency missing, put on waiting list unless disallowed
-            // TODO throw exceptions instead of "unfixable". The class soliditystate is used for the spark implementation?
+            // TODO optionally throw exceptions instead of "unfixable". The class soliditystate is used for the spark implementation and should stay.
             SolidityState solidityState = validatorService.checkBlockSolidity(block, storedPrev, storedPrevBranch);
             if (!(solidityState.getState() == State.Success)) {
                 if (solidityState.getState() == State.Unfixable) {

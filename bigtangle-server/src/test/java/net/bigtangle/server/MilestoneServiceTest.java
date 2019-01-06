@@ -6,19 +6,13 @@ package net.bigtangle.server;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
-import java.util.Random;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -26,66 +20,110 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.PrunedException;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.VerificationException;
 import net.bigtangle.crypto.TransactionSignature;
-import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.server.service.BlockService;
-import net.bigtangle.server.service.MilestoneService;
-import net.bigtangle.server.service.TipsService;
-import net.bigtangle.server.service.TransactionService;
-import net.bigtangle.store.FullPrunedBlockStore;
-import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class MilestoneServiceTest extends AbstractIntegrationTest {
-    // TODO test waiting for outputs
-    
-    // TODO test single attributes to be updated
-    // TODO put mining/token into ValidatorServiceTest
-    // TODO add solidityTest
-    // TODO refactor AbstractIntegrationTest and all the other tests
-
-    public Sha256Hash getRandomSha256Hash() {
-        byte[] rawHashBytes = new byte[32];
-        new Random().nextBytes(rawHashBytes);
-        Sha256Hash sha256Hash = Sha256Hash.wrap(rawHashBytes);
-        return sha256Hash;
-    }
-
-    private static final Logger log = LoggerFactory.getLogger(MilestoneServiceTest.class);
-
-    @Autowired
-    private BlockService blockService;
-    @Autowired
-    private MilestoneService milestoneService;
-    @Autowired
-    private TransactionService transactionService;
-    @Autowired
-    private NetworkParameters networkParameters;
-    @Autowired
-    protected FullPrunedBlockStore store;
-    @Autowired
-    private TipsService tipsService;
-
-    ECKey outKey = new ECKey();
 
     @Test
-    public void testStatisticsUpdate() throws Exception {
+    public void testUnconfirmedOutput() throws Exception {
+        store.resetStore();
+        
+        // Create block with UTXO
+        Transaction tx1 = makeTestTransaction();
+        Block depBlock = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+                networkParameters.getGenesisBlock(), tx1);
+        
+        milestoneService.update();
+
+        // Create block with dependency
+        Transaction tx2 = makeTestTransaction();
+        Block block = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+                networkParameters.getGenesisBlock(), tx2);
+        
+        store.resetStore();
+
+        blockgraph.add(depBlock, false);
+        blockgraph.add(block, false);
+        
+        Block b1 = createAndAddNextBlock(depBlock, Block.BLOCK_VERSION_GENESIS,
+                outKey.getPubKey(), block);
+        
+        milestoneService.update(1);
+
+        // One update cycle should not allow the second transaction to go through since it was not confirmed yet
+        assertTrue(blockService.getBlockEvaluation(depBlock.getHash()).isMilestone());
+        assertFalse(blockService.getBlockEvaluation(block.getHash()).isMilestone());
+        assertFalse(blockService.getBlockEvaluation(b1.getHash()).isMilestone());
+        
+        milestoneService.update(1);
+
+        // Second update cycle should allow all through
+        assertTrue(blockService.getBlockEvaluation(depBlock.getHash()).isMilestone());
+        assertTrue(blockService.getBlockEvaluation(block.getHash()).isMilestone());
+        assertTrue(blockService.getBlockEvaluation(b1.getHash()).isMilestone());
+    }
+
+    @Test
+    public void testPrunedConflict() throws Exception {
+        store.resetStore();
+        
+        // Create block with UTXO
+        Transaction tx1 = makeTestTransaction();
+        Block txBlock1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+                networkParameters.getGenesisBlock(), tx1);
+     
+        // Generate blocks until first ones become unmaintained
+        Block rollingBlock = BlockForTest.createNextBlock(txBlock1,
+                Block.BLOCK_VERSION_GENESIS, txBlock1);
+        blockgraph.add(rollingBlock, true);
+
+        for (int i = 0; i < NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 5; i++) {
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS,rollingBlock);
+            blockgraph.add(rollingBlock, true);
+        }
+        milestoneService.update();
+        milestoneService.update();
+
+        // First block is no longer maintained, while newest one is maintained
+        assertFalse(blockService.getBlockEvaluation(txBlock1.getHash()).isMaintained());
+        assertTrue(blockService.getBlockEvaluation(rollingBlock.getHash()).isMaintained());
+        
+        // All confirmed
+        assertTrue(blockService.getBlockEvaluation(txBlock1.getHash()).isMilestone());
+        assertTrue(blockService.getBlockEvaluation(rollingBlock.getHash()).isMilestone());
+        
+        // Create conflicting block with UTXO
+        Block txBlock2 = createAndAddNextBlockWithTransaction(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+                rollingBlock, tx1);
+
+        milestoneService.update();
+        milestoneService.update();
+
+        // No change in maintenance
+        assertFalse(blockService.getBlockEvaluation(txBlock1.getHash()).isMaintained());
+        assertTrue(blockService.getBlockEvaluation(rollingBlock.getHash()).isMaintained());
+        assertTrue(blockService.getBlockEvaluation(txBlock2.getHash()).isMaintained());
+        
+        // Confirmation should stay true except for conflict
+        assertTrue(blockService.getBlockEvaluation(txBlock1.getHash()).isMilestone());
+        assertTrue(blockService.getBlockEvaluation(rollingBlock.getHash()).isMilestone());
+        assertFalse(blockService.getBlockEvaluation(txBlock2.getHash()).isMilestone());
+    }
+
+    @Test
+    public void testUpdateWithConflict() throws Exception {
         store.resetStore();
 
         Block b1 = createAndAddNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
@@ -340,8 +378,8 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(b8link.getHash()).isMilestone());
     }
 
-    // TODO @Test
-    public void testReorgDeadlockResolution() throws Exception {
+    // TODO feature not implemented @Test
+    public void testReorgUnmaintained() throws Exception {
         store.resetStore();
 
         // Generate blocks until first ones become unmaintained
@@ -354,6 +392,8 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
             blockgraph.add(rollingBlock, true);
         }
         milestoneService.update();
+        milestoneService.update();
+        
         Block oldTangleBlock = rollingBlock;
 
         // Genesis block is no longer maintained, while newest one is maintained
@@ -379,7 +419,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testLinearConflictDeadlockResolution() throws Exception {
+    public void testReorgMaintained() throws Exception {
         store.resetStore();
 
         // Generate two conflicting blocks where the second block approves the
@@ -430,7 +470,6 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
             Block b = BlockForTest.createNextBlock(r2, Block.BLOCK_VERSION_GENESIS,
                     r1);
             blockgraph.add(b, true);
-            log.debug("create block  : " + i + " " + rollingBlock);
         }
         milestoneService.update();
 
@@ -438,23 +477,5 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(b1.getHash()).isMilestone());
         assertFalse(blockService.getBlockEvaluation(b2.getHash()).isMilestone());
         assertTrue(blockService.getBlockEvaluation(b2.getHash()).getRating() < 50);
-    }
-
-    private Block createAndAddNextBlock(Block b1, long bVersion, byte[] pubKey, Block b2)
-            throws VerificationException, PrunedException {
-        Block block = BlockForTest.createNextBlock(b1, bVersion, b2);
-        this.blockgraph.add(block, true);
-        log.debug("created block:" + block.getHashAsString());
-        return block;
-    }
-
-    private Block createAndAddNextBlockWithTransaction(Block b1, long bVersion, byte[] pubKey, Block b2,
-            Transaction prevOut) throws VerificationException, PrunedException {
-        Block block = BlockForTest.createNextBlock(b1, bVersion, b2);
-        block.addTransaction(prevOut);
-        block.solve();
-        this.blockgraph.add(block, true);
-        log.debug("created block:" + block.getHashAsString());
-        return block;
     }
 }

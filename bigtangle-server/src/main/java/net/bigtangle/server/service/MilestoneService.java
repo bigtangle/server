@@ -49,13 +49,22 @@ public class MilestoneService {
 	private ValidatorService validatorService;
 
 	private final Semaphore lock = new Semaphore(1, true);
+	
+    /**
+     * Scheduled update function that updates the Tangle
+     * 
+     * @throws BlockStoreException
+     */
+    public void update() throws BlockStoreException {
+        update(Integer.MAX_VALUE);
+    }
 
 	/**
 	 * Scheduled update function that updates the Tangle
 	 * 
 	 * @throws BlockStoreException
 	 */
-	public void update() throws BlockStoreException {
+	public void update(int numberUpdates) throws BlockStoreException {
 		if (!lock.tryAcquire()) {
 			log.debug("Milestone Update already running. Returning...");
 			return;
@@ -81,7 +90,7 @@ public class MilestoneService {
 
 			watch.stop();
 			watch = Stopwatch.createStarted();
-			updateMilestone();
+			updateMilestone(numberUpdates);
 			log.info("Milestone update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
 			watch.stop();
@@ -299,13 +308,13 @@ public class MilestoneService {
 	 * 
 	 * @throws BlockStoreException
 	 */
-	private void updateMilestone() throws BlockStoreException {
+	private void updateMilestone(int numberUpdates) throws BlockStoreException {
 		// First remove any blocks that should no longer be in the milestone
 		HashSet<BlockEvaluation> blocksToRemove = store.getBlocksToRemoveFromMilestone();
 		for (BlockEvaluation block : blocksToRemove)
 			blockService.unconfirm(block);
 
-		for (int i = 0; true; i++) {
+		for (int i = 0; i < numberUpdates; i++) {
 			// Now try to find blocks that can be added to the milestone
 			HashSet<BlockWrap> blocksToAdd = store.getBlocksToAddToMilestone();
 
