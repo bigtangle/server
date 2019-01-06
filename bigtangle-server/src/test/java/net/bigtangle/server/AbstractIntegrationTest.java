@@ -57,8 +57,6 @@ import net.bigtangle.core.http.server.resp.GetBalancesResponse;
 import net.bigtangle.core.http.server.resp.MultiSignResponse;
 import net.bigtangle.core.http.server.resp.TokenIndexResponse;
 import net.bigtangle.crypto.TransactionSignature;
-import net.bigtangle.kafka.BlockStreamHandler;
-import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
@@ -107,10 +105,6 @@ public abstract class AbstractIntegrationTest {
     protected FullPrunedBlockStore store;
     @Autowired
     protected TipsService tipsService;
-    @Autowired
-    protected KafkaMessageProducer kafkaMessageProducer;
-    @Autowired
-    protected BlockStreamHandler blockStreamHandler;
     @Autowired
     protected void prepareContextRoot(@Value("${local.server.port}") int port) {
         contextRoot = String.format(CONTEXT_ROOT_TEMPLATE, port);

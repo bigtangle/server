@@ -13,6 +13,7 @@ import java.util.List;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -29,6 +30,8 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
+import net.bigtangle.kafka.BlockStreamHandler;
+import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
@@ -39,6 +42,11 @@ import net.bigtangle.wallet.SendRequest;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class KafkaServiceTest extends AbstractIntegrationTest {
+    
+    @Autowired
+    protected KafkaMessageProducer kafkaMessageProducer;
+    @Autowired
+    protected BlockStreamHandler blockStreamHandler;
     
     @Test
     public void getBalance() throws Exception {
