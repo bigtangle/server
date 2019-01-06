@@ -188,7 +188,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public BlockEvaluation getBlockEvaluation(Sha256Hash hash) throws BlockStoreException;
 
-    public BlockEvaluation getTransactionOutputSpender(Sha256Hash prevBlockHash, long index) throws BlockStoreException;
+    public BlockEvaluation getTransactionOutputSpender(Sha256Hash txHash, long index) throws BlockStoreException;
 
     public PriorityQueue<BlockWrap> getSolidTipsDescending() throws BlockStoreException;
 
@@ -427,5 +427,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     // addresses) throws BlockStoreException;
 
     HashSet<Block> getUnsolidBlocks(byte[] dep) throws BlockStoreException;
+
+    Sha256Hash getTransactionOutputConfirmingBlock(Sha256Hash hash, long index) throws BlockStoreException;
 
 }

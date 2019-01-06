@@ -54,8 +54,8 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         
         store.resetStore();
 
-        blockgraph.add(depBlock, false);
-        blockgraph.add(block, false);
+        blockGraph.add(depBlock, false);
+        blockGraph.add(block, false);
         
         Block b1 = createAndAddNextBlock(depBlock, Block.BLOCK_VERSION_GENESIS,
                 outKey.getPubKey(), block);
@@ -87,11 +87,11 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         // Generate blocks until first ones become unmaintained
         Block rollingBlock = BlockForTest.createNextBlock(txBlock1,
                 Block.BLOCK_VERSION_GENESIS, txBlock1);
-        blockgraph.add(rollingBlock, true);
+        blockGraph.add(rollingBlock, true);
 
         for (int i = 0; i < NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 5; i++) {
             rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS,rollingBlock);
-            blockgraph.add(rollingBlock, true);
+            blockGraph.add(rollingBlock, true);
         }
         milestoneService.update();
         milestoneService.update();
@@ -385,11 +385,11 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         // Generate blocks until first ones become unmaintained
         Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
                 Block.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
-        blockgraph.add(rollingBlock, true);
+        blockGraph.add(rollingBlock, true);
 
         for (int i = 0; i < NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 5; i++) {
             rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS,rollingBlock);
-            blockgraph.add(rollingBlock, true);
+            blockGraph.add(rollingBlock, true);
         }
         milestoneService.update();
         milestoneService.update();
@@ -404,11 +404,11 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         // Generate longer new Tangle
         rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
                 networkParameters.getGenesisBlock());
-        blockgraph.add(rollingBlock, true);
+        blockGraph.add(rollingBlock, true);
 
         for (int i = 0; i < NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 25; i++) {
             rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
-            blockgraph.add(rollingBlock, true);
+            blockGraph.add(rollingBlock, true);
         }
         milestoneService.update();
         Block newTangleBlock = rollingBlock;
@@ -445,16 +445,16 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Block b1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
                 Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), networkParameters.getGenesisBlock(),
                 doublespendTX);
-        blockgraph.add(b1, true);
+        blockGraph.add(b1, true);
         Block b2 = createAndAddNextBlockWithTransaction(b1, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                 b1, doublespendTX);
-        blockgraph.add(b2, true);
+        blockGraph.add(b2, true);
 
         // Approve these blocks by adding linear tangle onto them
         Block rollingBlock = b2;
         for (int i = 0; i < 10; i++) {
             rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
-            blockgraph.add(rollingBlock, true);
+            blockGraph.add(rollingBlock, true);
         }
         milestoneService.update();
 
@@ -469,7 +469,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
             Block r2 = blockService.getBlock(tipsToApprove.getRight());
             Block b = BlockForTest.createNextBlock(r2, Block.BLOCK_VERSION_GENESIS,
                     r1);
-            blockgraph.add(b, true);
+            blockGraph.add(b, true);
         }
         milestoneService.update();
 

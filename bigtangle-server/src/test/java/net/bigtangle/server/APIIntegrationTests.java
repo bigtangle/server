@@ -202,11 +202,11 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         Context.propagate(new Context(networkParameters));
         Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
                 Block.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
-        blockgraph.add(rollingBlock, true);
+        blockGraph.add(rollingBlock, true);
         for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS,
                     networkParameters.getGenesisBlock());
-            blockgraph.add(rollingBlock, true);
+            blockGraph.add(rollingBlock, true);
         }
         return rollingBlock;
     }

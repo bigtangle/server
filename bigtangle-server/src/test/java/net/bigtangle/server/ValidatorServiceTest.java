@@ -44,10 +44,9 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ValidatorServiceTest extends AbstractIntegrationTest {
-    
-    // TODO manual creation of tests via summary consensus rules.md
+
+    // TODO conflicts
     // TODO code coverage
-    // TODO refactor abstractintegrationtest, other tests etc. 
     
     @Test(expected=VerificationException.class)
     public void testVerificationFutureTimestamp() throws Exception {
@@ -228,7 +227,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             blocks1.add(rollingBlock);
         }
         for (Block b : blocks1) {
-            blockgraph.add(b, true);            
+            blockGraph.add(b, true);            
         }
         milestoneService.update();
         
@@ -246,7 +245,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             blocks2.add(rollingBlock);
         }
         for (Block b : blocks2) {
-            blockgraph.add(b, true);            
+            blockGraph.add(b, true);            
         }
         milestoneService.update();
         
@@ -257,10 +256,10 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         
         store.resetStore();
         for (Block b : blocks1) {
-            blockgraph.add(b, true);            
+            blockGraph.add(b, true);            
         }
         for (Block b : blocks2) {
-            blockgraph.add(b, true);            
+            blockGraph.add(b, true);            
         }
         milestoneService.update();
         
@@ -353,7 +352,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Block rollingBlock = networkParameters.getGenesisBlock();
         for (int i = 1; i < 5; i++) {
             rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
-            blockgraph.add(rollingBlock, true);
+            blockGraph.add(rollingBlock, true);
         }
         milestoneService.update();
 
@@ -387,14 +386,11 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
         Block block2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, genHash, genHash);
         Block rollingBlock = BlockForTest.createNextBlock(block2, Block.BLOCK_VERSION_GENESIS, block1);
-        blockgraph.add(rollingBlock, true);
+        blockGraph.add(rollingBlock, true);
         milestoneService.update();
 
         assertFalse(blockService.getBlockEvaluation(block2.getHash()).isMilestone()
                 && blockService.getBlockEvaluation(block1.getHash()).isMilestone());
-
-        // TODO Generate differing ineligible issuances
-        // TODO Generate issuance continuation
     }
 
     @Test
@@ -404,23 +400,23 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate blocks until passing first reward interval
         Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
                 Block.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
-        blockgraph.add(rollingBlock, true);
+        blockGraph.add(rollingBlock, true);
 
         Block rollingBlock1 = rollingBlock;
         for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + 2; i++) {
             rollingBlock1 = BlockForTest.createNextBlock(rollingBlock1, Block.BLOCK_VERSION_GENESIS, rollingBlock1);
-            blockgraph.add(rollingBlock1, true);
+            blockGraph.add(rollingBlock1, true);
         }
 
         Block rollingBlock2 = rollingBlock;
         for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + 2; i++) {
             rollingBlock2 = BlockForTest.createNextBlock(rollingBlock2, Block.BLOCK_VERSION_GENESIS, rollingBlock2);
-            blockgraph.add(rollingBlock2, true);
+            blockGraph.add(rollingBlock2, true);
         }
 
         Block fusingBlock = BlockForTest.createNextBlock(rollingBlock1,
                 Block.BLOCK_VERSION_GENESIS, rollingBlock2);
-        blockgraph.add(fusingBlock, true);
+        blockGraph.add(fusingBlock, true);
         
 
         // Generate ineligible mining reward block
@@ -446,7 +442,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         rollingBlock = rewardBlock2;
         for (int i = 1; i < 20; i++) {
             rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
-            blockgraph.add(rollingBlock, true);
+            blockGraph.add(rollingBlock, true);
         }
         milestoneService.update();
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isMilestone());
@@ -459,7 +455,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         rollingBlock = rewardBlock3;
         for (int i = 1; i < 40; i++) {
             rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
-            blockgraph.add(rollingBlock, true);
+            blockGraph.add(rollingBlock, true);
         }
         milestoneService.update();
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isMilestone());
@@ -472,7 +468,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             Block r1 = blockService.getBlock(tipsToApprove.getLeft());
             Block r2 = blockService.getBlock(tipsToApprove.getRight());
             Block b = BlockForTest.createNextBlock(r2, Block.BLOCK_VERSION_GENESIS, r1);
-            blockgraph.add(b, true);
+            blockGraph.add(b, true);
         }
         milestoneService.update();
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isMilestone());
@@ -493,7 +489,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             assertEquals(rollingBlock.getDifficultyTarget(), rollingBlockNew.getDifficultyTarget());
             
             rollingBlock = rollingBlockNew;
-            blockgraph.add(rollingBlock, true);     
+            blockGraph.add(rollingBlock, true);     
         }
         milestoneService.update();
         
@@ -511,7 +507,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             assertEquals(rollingBlock.getDifficultyTarget(), rollingBlockNew.getDifficultyTarget());
             
             rollingBlock = rollingBlockNew;
-            blockgraph.add(rollingBlock, true);     
+            blockGraph.add(rollingBlock, true);     
         }
     }
 
@@ -528,7 +524,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             assertEquals(rollingBlock.getLastMiningRewardBlock(), rollingBlockNew.getLastMiningRewardBlock());
             
             rollingBlock = rollingBlockNew;
-            blockgraph.add(rollingBlock, true);     
+            blockGraph.add(rollingBlock, true);     
         }
         milestoneService.update();
         
@@ -546,7 +542,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             assertEquals(rollingBlock.getLastMiningRewardBlock(), rollingBlockNew.getLastMiningRewardBlock());
             
             rollingBlock = rollingBlockNew;
-            blockgraph.add(rollingBlock, true);     
+            blockGraph.add(rollingBlock, true);     
         }
     }
 
@@ -563,7 +559,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             assertTrue(rollingBlock.getTimeSeconds() <= rollingBlockNew.getTimeSeconds());
             
             rollingBlock = rollingBlockNew;
-            blockgraph.add(rollingBlock, true);     
+            blockGraph.add(rollingBlock, true);     
         }
         milestoneService.update();
 
@@ -571,14 +567,14 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Block b = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
         b.setTime(rollingBlock.getTimeSeconds()); // 01/01/2000 @ 12:00am (UTC)
         b.solve();
-        blockgraph.add(b, true);
+        blockGraph.add(b, true);
         
         // The time is not allowed to move backwards
         try {
             rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
             rollingBlock.setTime(946684800); // 01/01/2000 @ 12:00am (UTC)
             b.solve();
-            blockgraph.add(rollingBlock, true);     
+            blockGraph.add(rollingBlock, true);     
             fail();
         } catch (VerificationException e) {
         }

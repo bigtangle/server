@@ -138,6 +138,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, "
             + "spendpending FROM outputs WHERE hash = ? AND outputindex = ?";
 
+    protected final String SELECT_OUTPUT_CONFIRMING_BLOCK_SQL = "SELECT blockhash FROM outputs WHERE hash = ? AND outputindex = ?";
+
     protected final String SELECT_OUTPUTS_HISTORY_SQL = "SELECT hash,outputindex,height, coinvalue, scriptbytes, toaddress ,"
             + " addresstargetable, coinbase,blockhash, tokenid, fromaddress, memo, spent, confirmed, "
             + "spendpending,time FROM outputs WHERE 1=1";
@@ -1077,6 +1079,33 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public StoredBlock getOnceUndoableStoredBlock(Sha256Hash hash) throws BlockStoreException {
         return get(hash, true);
+    }
+
+    @Override
+    public Sha256Hash getTransactionOutputConfirmingBlock(Sha256Hash hash, long index) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(SELECT_OUTPUT_CONFIRMING_BLOCK_SQL);
+            s.setBytes(1, hash.getBytes());
+            s.setLong(2, index);
+            ResultSet results = s.executeQuery();
+            if (!results.next()) {
+                return null;
+            }
+            // Parse it.
+            return results.getBytes(1) != null ? Sha256Hash.wrap(results.getBytes(1)) : null;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
     }
 
     @Override
@@ -2143,12 +2172,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public BlockEvaluation getTransactionOutputSpender(Sha256Hash prevTxHash, long index) throws BlockStoreException {
+    public BlockEvaluation getTransactionOutputSpender(Sha256Hash txHash, long index) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_OUTPUT_SPENDER_SQL);
-            preparedStatement.setBytes(1, prevTxHash.getBytes());
+            preparedStatement.setBytes(1, txHash.getBytes());
             preparedStatement.setLong(2, index);
 
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -3510,7 +3539,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             if (!resultSet.next()) {
                 return null;
             }
-            return Sha256Hash.wrap(resultSet.getBytes(1));
+            return resultSet.getBytes(1) == null ? null : Sha256Hash.wrap(resultSet.getBytes(1));
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } finally {

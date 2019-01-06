@@ -115,8 +115,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             StoredBlock storedPrevBranch = blockStore.get(block.getPrevBranchBlockHash());
             
             // Check the block's solidity, if dependency missing, put on waiting list unless disallowed
-            // TODO optionally throw exceptions instead of "unfixable". The class soliditystate is used for the spark implementation and should stay.
-            SolidityState solidityState = validatorService.checkBlockSolidity(block, storedPrev, storedPrevBranch);
+            // The class SolidityState is used for the Spark implementation and should stay.
+            SolidityState solidityState = validatorService.checkBlockSolidity(block, storedPrev, storedPrevBranch, true);
             if (!(solidityState.getState() == State.Success)) {
                 if (solidityState.getState() == State.Unfixable) {
                     // Drop forever if invalid
@@ -147,7 +147,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             throw new VerificationException(e);
         } catch (VerificationException e) {
             log.debug("", e);
-            throw new VerificationException("Could not verify block:\n" + e.toString() + block.toString());
+            throw new VerificationException("Could not verify block:\n" + e.toString() + "\n" + block.toString());
         } finally {
             lock.unlock();
         }
@@ -736,7 +736,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      *         moment of time.
      * @throws BlockStoreException
      */
-    private Transaction generateVirtualMiningRewardTX(Block block) throws BlockStoreException {
+    public Transaction generateVirtualMiningRewardTX(Block block) throws BlockStoreException {
         
         Sha256Hash prevRewardHash = null;
         try {

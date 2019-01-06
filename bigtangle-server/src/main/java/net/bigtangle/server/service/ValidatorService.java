@@ -824,7 +824,14 @@ public class ValidatorService {
      * Otherwise, appropriate solidity states are returned to imply missing dependencies.
      */
     public SolidityState checkBlockSolidity(Block block, @Nullable StoredBlock storedPrev,
-            @Nullable StoredBlock storedPrevBranch) throws BlockStoreException {
+            @Nullable StoredBlock storedPrevBranch, boolean throwExceptions) throws BlockStoreException {
+        if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
+            if (throwExceptions)
+                throw new VerificationException("Genesis blocks not allowed");
+            return SolidityState.getFailState();
+        }
+            
+        
         // Check predecessor blocks exist
         if (storedPrev == null) {
             return SolidityState.from(block.getPrevBlockHash());
@@ -835,34 +842,42 @@ public class ValidatorService {
         
         // Check timestamp: enforce monotone time increase
         if (block.getTimeSeconds() < storedPrev.getHeader().getTimeSeconds()
-                || block.getTimeSeconds() < storedPrevBranch.getHeader().getTimeSeconds())
+                || block.getTimeSeconds() < storedPrevBranch.getHeader().getTimeSeconds()) {
+            if (throwExceptions)
+                throw new VerificationException("Timestamps are wrong!");
             return SolidityState.getFailState();
+        }
 
         // Check difficulty and latest consensus block is passed through correctly
-        if (block.getBlockType() != Block.Type.BLOCKTYPE_REWARD
-                && block.getBlockType() != Block.Type.BLOCKTYPE_INITIAL) {
+        if (block.getBlockType() != Block.Type.BLOCKTYPE_REWARD) {
             if (storedPrev.getHeader().getLastMiningRewardBlock() >= storedPrevBranch.getHeader()
                     .getLastMiningRewardBlock()) {
                 if (block.getLastMiningRewardBlock() != storedPrev.getHeader().getLastMiningRewardBlock()
-                        || block.getDifficultyTarget() != storedPrev.getHeader().getDifficultyTarget())
-                    return SolidityState.getFailState();
+                        || block.getDifficultyTarget() != storedPrev.getHeader().getDifficultyTarget()) {
+                    if (throwExceptions)
+                        throw new VerificationException("Difficulty and consensus not inherited correctly");
+                    return SolidityState.getFailState();                    
+                }
             } else {
                 if (block.getLastMiningRewardBlock() != storedPrevBranch.getHeader().getLastMiningRewardBlock()
-                        || block.getDifficultyTarget() != storedPrevBranch.getHeader().getDifficultyTarget())
+                        || block.getDifficultyTarget() != storedPrevBranch.getHeader().getDifficultyTarget()) {
+                    if (throwExceptions)
+                        throw new VerificationException("Difficulty and consensus not inherited correctly");
                     return SolidityState.getFailState();
+                }
             }
         }
 
         long height = Math.max(storedPrev.getHeight(), storedPrevBranch.getHeight()) + 1;
 
         // Check transactions are solid
-        SolidityState transactionalSolidityState = checkTransactionalSolidity(block, height);
+        SolidityState transactionalSolidityState = checkTransactionalSolidity(block, height, throwExceptions);
         if (!(transactionalSolidityState.getState() == State.Success)) {
             return transactionalSolidityState;
         }
 
         // Check type-specific solidity
-        SolidityState typeSpecificSolidityState = checkTypeSpecificSolidity(block, storedPrev, storedPrevBranch);
+        SolidityState typeSpecificSolidityState = checkTypeSpecificSolidity(block, storedPrev, storedPrevBranch, throwExceptions);
         if (!(typeSpecificSolidityState.getState() == State.Success)) {
             return typeSpecificSolidityState;
         }
@@ -870,12 +885,14 @@ public class ValidatorService {
         return SolidityState.getSuccessState();
     }
 
-    private SolidityState checkTransactionalSolidity(Block block, long height) throws BlockStoreException {
+    private SolidityState checkTransactionalSolidity(Block block, long height, boolean throwExceptions) throws BlockStoreException {
         List<Transaction> transactions = block.getTransactions();
 
         // Coinbase allowance
         for (Transaction tx : transactions) {
             if (tx.isCoinBase() && !block.allowCoinbaseTransaction()) {
+                if (throwExceptions)
+                    throw new VerificationException("Coinbase not allowed");
                 return SolidityState.getFailState();
             }
         }
@@ -1005,10 +1022,14 @@ public class ValidatorService {
         } catch (VerificationException e) {
             scriptVerificationExecutor.shutdownNow();
             logger.info("", e);
+            if (throwExceptions)
+                throw new VerificationException(e);
             return SolidityState.getFailState();
         } catch (BlockStoreException e) {
             scriptVerificationExecutor.shutdownNow();
             logger.error("", e);
+            if (throwExceptions)
+                throw new VerificationException(e);
             return SolidityState.getFailState();
         }
         
@@ -1037,7 +1058,7 @@ public class ValidatorService {
         return true;
     }
 
-    private SolidityState checkTypeSpecificSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch) throws BlockStoreException {
+    private SolidityState checkTypeSpecificSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, boolean throwExceptions) throws BlockStoreException {
         switch (block.getBlockType()) {
         case BLOCKTYPE_CROSSTANGLE:
             break;
@@ -1046,10 +1067,12 @@ public class ValidatorService {
         case BLOCKTYPE_GOVERNANCE:
             break;
         case BLOCKTYPE_INITIAL:
+            if (throwExceptions)
+                throw new VerificationException("Not allowed. Shouldn't happen.");
             return SolidityState.getFailState();
         case BLOCKTYPE_REWARD:
             // Check token issuances are solid
-            SolidityState rewardSolidityState = checkRewardSolidity(block, storedPrev, storedPrevBranch);
+            SolidityState rewardSolidityState = checkRewardSolidity(block, storedPrev, storedPrevBranch, throwExceptions);
             if (!(rewardSolidityState.getState() == State.Success)) {
                 return rewardSolidityState;
             }
@@ -1057,7 +1080,7 @@ public class ValidatorService {
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             // Check token issuances are solid
-            SolidityState tokenSolidityState = checkTokenSolidity(block);
+            SolidityState tokenSolidityState = checkTokenSolidity(block, throwExceptions);
             if (!(tokenSolidityState.getState() == State.Success)) {
                 return tokenSolidityState;
             }
@@ -1078,27 +1101,37 @@ public class ValidatorService {
         return SolidityState.getSuccessState();
     }
     
-    private SolidityState checkRewardSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch) throws BlockStoreException {
+    private SolidityState checkRewardSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, boolean throwExceptions) throws BlockStoreException {
         List<Transaction> transactions = block.getTransactions();
         
-        if (transactions.size() != 1)
-            return SolidityState.getFailState(); // Incorrect tx count
+        if (transactions.size() != 1) {
+            if (throwExceptions)
+                throw new VerificationException("Incorrect tx count");
+            return SolidityState.getFailState(); 
+        }
 
-        if (!transactions.get(0).isCoinBase())
-            return SolidityState.getFailState(); // TX is not coinbase
+        if (!transactions.get(0).isCoinBase()) {
+            if (throwExceptions)
+                throw new VerificationException("TX is not coinbase");
+            return SolidityState.getFailState(); 
+        }
 
         // Check that the tx has correct data
         RewardInfo rewardInfo;
         try {
             rewardInfo = RewardInfo.parse(transactions.get(0).getData());
         } catch (IOException e) {
-            // Incorrect data format
+            if (throwExceptions)
+                throw new VerificationException("Incorrect data format");
             return SolidityState.getFailState();
         }
         
         // NotNull checks
-        if (rewardInfo.getPrevRewardHash() == null)
+        if (rewardInfo.getPrevRewardHash() == null) {
+            if (throwExceptions)
+                throw new VerificationException("No previous reward defined");
             return SolidityState.getFailState();     
+        }
             
         // Ensure dependency (prev reward hash) exists
         Sha256Hash prevRewardHash = Sha256Hash.wrap(rewardInfo.getPrevRewardHash());
@@ -1107,34 +1140,46 @@ public class ValidatorService {
             return SolidityState.from(prevRewardHash); 
         
         // Ensure dependency (prev reward hash) is valid predecessor
-        if (dependency.getHeader().getBlockType() != Type.BLOCKTYPE_INITIAL && dependency.getHeader().getBlockType() != Type.BLOCKTYPE_REWARD)
-            return SolidityState.getFailState();         
+        if (dependency.getHeader().getBlockType() != Type.BLOCKTYPE_INITIAL && dependency.getHeader().getBlockType() != Type.BLOCKTYPE_REWARD){
+            if (throwExceptions)
+                throw new VerificationException("Predecessor invalid");
+            return SolidityState.getFailState();     
+        }
         
         // Ensure fromHeight is starting from prevToHeight+1
-        if (rewardInfo.getFromHeight() != store.getRewardToHeight(prevRewardHash) + 1)
-            return SolidityState.getFailState(); // Invalid fromHeight
+        if (rewardInfo.getFromHeight() != store.getRewardToHeight(prevRewardHash) + 1){
+            if (throwExceptions)
+                throw new VerificationException("Invalid fromHeight");
+            return SolidityState.getFailState();     
+        }
         
         // Ensure toHeights follow the rules
-        if (rewardInfo.getToHeight() - rewardInfo.getFromHeight() != NetworkParameters.REWARD_HEIGHT_INTERVAL - 1)
-            return SolidityState.getFailState(); // Invalid toHeight
+        if (rewardInfo.getToHeight() - rewardInfo.getFromHeight() != NetworkParameters.REWARD_HEIGHT_INTERVAL - 1){
+            if (throwExceptions)
+                throw new VerificationException("Invalid toHeight");
+            return SolidityState.getFailState();     
+        }
         
         return SolidityState.getSuccessState();
     }
 
-    private SolidityState checkTokenSolidity(Block block) {
+    private SolidityState checkTokenSolidity(Block block, boolean throwExceptions) {
         if (block.getTransactions().size() != 1) {
-            logger.debug("Incorrect tx count! ");
+            if (throwExceptions)
+                throw new VerificationException("Incorrect tx count! ");
             return SolidityState.getFailState();
         }
 
         if (!block.getTransactions().get(0).isCoinBase()) {
-            logger.debug("TX is not coinbase! ");
+            if (throwExceptions)
+                throw new VerificationException("TX is not coinbase! ");
             return SolidityState.getFailState(); 
         }
         
         Transaction tx = block.getTransactions().get(0);
         if (tx.getData() == null) {
-            logger.debug("No transaction data! ");
+            if (throwExceptions)
+                throw new VerificationException("No transaction data! ");
             return SolidityState.getFailState(); 
         }
         
@@ -1142,51 +1187,63 @@ public class ValidatorService {
         try {
             currentToken = new TokenInfo().parse(tx.getData());
         } catch (IOException e) {
-            logger.debug("Token data malformed! ", e);
+            if (throwExceptions)
+                throw new VerificationException("Token data malformed! ", e);
             return SolidityState.getFailState(); 
         }
         if (currentToken.getTokens() == null) {
-            logger.debug("getTokens is null");
+            if (throwExceptions)
+                throw new VerificationException("getTokens is null");
             return SolidityState.getFailState(); 
         }
         if (currentToken.getMultiSignAddresses() == null) {
-            logger.debug("getMultiSignAddresses is null");
+            if (throwExceptions)
+                throw new VerificationException("getMultiSignAddresses is null");
             return SolidityState.getFailState(); 
         }
         if (currentToken.getTokens().getTokenid() == null) {
-            logger.debug("getTokenid is null");
+            if (throwExceptions)
+                throw new VerificationException("getTokenid is null");
             return SolidityState.getFailState(); 
         }
         if (currentToken.getTokens().getPrevblockhash() == null) {
-            logger.debug("getTokenid is null");
+            if (throwExceptions)
+                throw new VerificationException("getTokenid is null");
             return SolidityState.getFailState(); 
         }
         if (currentToken.getTokens().getTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
-            logger.debug("Not allowed");
+            if (throwExceptions)
+                throw new VerificationException("Not allowed");
             return SolidityState.getFailState(); 
         }
         if (currentToken.getTokens().getTokenindex() > NetworkParameters.TOKEN_MAX_ISSUANCE_NUMBER) {
-            logger.debug("Too many token issuances");
+            if (throwExceptions)
+                throw new VerificationException("Too many token issuances");
             return SolidityState.getFailState(); 
         }
         if (currentToken.getTokens().getAmount() > Long.MAX_VALUE / NetworkParameters.TOKEN_MAX_ISSUANCE_NUMBER) {
-            logger.debug("Too many tokens issued");
-            return SolidityState.getFailState(); 
+            if (throwExceptions)
+                throw new VerificationException("Too many tokens issued");
+            return SolidityState.getFailState();
         }
         if (currentToken.getTokens().getDescription() != null && currentToken.getTokens().getDescription().length() > NetworkParameters.TOKEN_MAX_DESC_LENGTH) {
-            logger.debug("Too long description");
+            if (throwExceptions)
+                throw new VerificationException("Too long description");
             return SolidityState.getFailState(); 
         }
         if (currentToken.getTokens().getTokenname() != null && currentToken.getTokens().getTokenname().length() > NetworkParameters.TOKEN_MAX_NAME_LENGTH) {
-            logger.debug("Too long name");
+            if (throwExceptions)
+                throw new VerificationException("Too long name");
             return SolidityState.getFailState(); 
         }
         if (currentToken.getTokens().getUrl() != null && currentToken.getTokens().getUrl().length() > NetworkParameters.TOKEN_MAX_URL_LENGTH) {
-            logger.debug("Too long url");
+            if (throwExceptions)
+                throw new VerificationException("Too long url");
             return SolidityState.getFailState(); 
         }
         if (currentToken.getTokens().getSignnumber() < 0) {
-            logger.debug("Invalid sign number");
+            if (throwExceptions)
+                throw new VerificationException("Invalid sign number");
             return SolidityState.getFailState(); 
         }
         
@@ -1194,7 +1251,8 @@ public class ValidatorService {
         for (Transaction tx1 : block.getTransactions()) {
             for (TransactionOutput out : tx1.getOutputs()) {
                 if (!out.getValue().getTokenHex().equals(currentToken.getTokens().getTokenid())) {
-                    logger.debug("Invalid tokens were generated");
+                    if (throwExceptions)
+                        throw new VerificationException("Invalid tokens were generated");
                     return SolidityState.getFailState();                     
                 }
             }
@@ -1205,13 +1263,15 @@ public class ValidatorService {
                 && currentToken.getTokens().getTokenindex() != 0)
                 || (!currentToken.getTokens().getPrevblockhash().equals("")
                         && currentToken.getTokens().getTokenindex() == 0)) {
-            logger.debug("Must reference a previous block if not index 0");
+            if (throwExceptions)
+                throw new VerificationException("Must reference a previous block if not index 0");
             return SolidityState.getFailState(); 
         }
 
         // Must define enough permissioned addresses
         if (currentToken.getTokens().getSignnumber() > currentToken.getMultiSignAddresses().size()) {
-            logger.debug("Cannot fulfill required sign number from multisign address list");
+            if (throwExceptions)
+                throw new VerificationException("Cannot fulfill required sign number from multisign address list");
             return SolidityState.getFailState(); 
         }
 
@@ -1224,31 +1284,37 @@ public class ValidatorService {
                 // Previous issuance must exist to check solidity
                 prevToken = store.getToken(currentToken.getTokens().getPrevblockhash());
                 if (prevToken == null) {
-                    logger.debug("Previous token does not exist");
+                    if (throwExceptions)
+                        throw new VerificationException("Previous token does not exist");
                     return SolidityState.from(Sha256Hash.wrap(currentToken.getTokens().getPrevblockhash())); 
                 }
 
                 // Compare members of previous and current issuance
                 if (!currentToken.getTokens().getTokenid().equals(prevToken.getTokenid())) {
-                    logger.debug("Wrong token ID");
+                    if (throwExceptions)
+                        throw new VerificationException("Wrong token ID");
                     return SolidityState.getFailState(); 
                 }
                 if (currentToken.getTokens().getTokenindex() != prevToken.getTokenindex() + 1) {
-                    logger.debug("Wrong token index");
+                    if (throwExceptions)
+                        throw new VerificationException("Wrong token index");
                     return SolidityState.getFailState(); 
                 }
                 if (!currentToken.getTokens().getTokenname().equals(prevToken.getTokenname())) {
-                    logger.debug("Cannot change token name");
+                    if (throwExceptions)
+                        throw new VerificationException("Cannot change token name");
                     return SolidityState.getFailState(); 
                 }
                 if (currentToken.getTokens().getTokentype() != prevToken.getTokentype()) {
-                    logger.debug("Cannot change token type");
+                    if (throwExceptions)
+                        throw new VerificationException("Cannot change token type");
                     return SolidityState.getFailState(); 
                 }
 
                 // Must allow more issuances
                 if (prevToken.isTokenstop()) {
-                    logger.debug("Previous token does not allow further issuance");
+                    if (throwExceptions)
+                        throw new VerificationException("Previous token does not allow further issuance");
                     return SolidityState.getFailState(); 
                 }
 
@@ -1276,7 +1342,8 @@ public class ValidatorService {
         int signatureCount = 0;
         // Ensure signatures exist
         if (tx.getDataSignature() == null) {
-            logger.debug("signatures are null");
+            if (throwExceptions)
+                throw new VerificationException("signatures are null");
             return SolidityState.getFailState(); 
         }
         
@@ -1286,7 +1353,8 @@ public class ValidatorService {
         try {
             txSignatures = Json.jsonmapper().readValue(jsonStr, MultiSignByRequest.class);
         } catch (IOException e) {
-            logger.debug("Signature data malformed! ", e);
+            if (throwExceptions)
+                throw new VerificationException("Signature data malformed!", e);
             return SolidityState.getFailState(); 
         }
         
@@ -1294,7 +1362,8 @@ public class ValidatorService {
         for (MultiSignBy multiSignBy : txSignatures.getMultiSignBies()) {
             ByteBuffer pubKey = ByteBuffer.wrap(Utils.HEX.decode(multiSignBy.getPublickey()));
             if (!permissionedPubKeys.contains(pubKey)) {
-                logger.debug("multisignby key not in permissioned address list");
+                if (throwExceptions)
+                    throw new VerificationException("multisignby key not in permissioned address list");
                 return SolidityState.getFailState(); 
             }
             
@@ -1316,7 +1385,9 @@ public class ValidatorService {
         int requiredSignatureCount = prevToken == null ? 1 : prevToken.getSignnumber();
         if (signatureCount >= requiredSignatureCount)
             return SolidityState.getSuccessState();
-        else
-            return SolidityState.getFailState(); 
+
+        if (throwExceptions)
+            throw new VerificationException("Not enough signatures");
+        return SolidityState.getFailState(); 
     }
 }

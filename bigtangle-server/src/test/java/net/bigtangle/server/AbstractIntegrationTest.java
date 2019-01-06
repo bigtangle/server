@@ -92,7 +92,7 @@ public abstract class AbstractIntegrationTest {
     WalletAppKit walletAppKit2;
 
     @Autowired
-    protected FullPrunedBlockGraph blockgraph;
+    protected FullPrunedBlockGraph blockGraph;
     @Autowired
     protected BlockService blockService;
     @Autowired
@@ -131,14 +131,14 @@ public abstract class AbstractIntegrationTest {
     protected Block createAndAddNextBlock(Block b1, long bVersion, byte[] pubKey, Block b2)
             throws VerificationException, PrunedException {
         Block block = BlockForTest.createNextBlock(b1, bVersion, b2);
-        this.blockgraph.add(block, true);
+        this.blockGraph.add(block, true);
         return block;
     }
 
     protected Block createAndAddNextBlockWithTransaction(Block b1, long bVersion, byte[] pubKey, Block b2,
             Transaction prevOut) throws VerificationException, PrunedException {
         Block block = createNextBlockWithTransaction(b1, bVersion, b2, prevOut);
-        this.blockgraph.add(block, true);
+        this.blockGraph.add(block, true);
         return block;
     }
 
