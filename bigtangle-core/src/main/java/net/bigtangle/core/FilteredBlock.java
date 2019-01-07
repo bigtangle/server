@@ -20,10 +20,17 @@
  */
 package net.bigtangle.core;
 
-import com.google.common.base.Objects;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import com.google.common.base.Objects;
+
+import net.bigtangle.core.VerificationException.MerkleRootMismatchException;
 
 /**
  * <p>A FilteredBlock is used to relay a block with its transactions filtered using a {@link BloomFilter}. It consists
@@ -84,7 +91,7 @@ public class FilteredBlock extends Message {
             cachedTransactionHashes = hashesMatched;
             return Collections.unmodifiableList(cachedTransactionHashes);
         } else
-            throw new VerificationException("Merkle root of block header does not match merkle root of partial merkle tree.");
+            throw new MerkleRootMismatchException();
     }
     
     /**

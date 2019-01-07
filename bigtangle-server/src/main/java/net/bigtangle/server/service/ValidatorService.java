@@ -63,6 +63,25 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
+import net.bigtangle.core.VerificationException.CoinbaseDisallowedException;
+import net.bigtangle.core.VerificationException.DifficultyConsensusInheritanceException;
+import net.bigtangle.core.VerificationException.GenesisBlockDisallowedException;
+import net.bigtangle.core.VerificationException.IncorrectTransactionCountException;
+import net.bigtangle.core.VerificationException.InsufficientSignaturesException;
+import net.bigtangle.core.VerificationException.InvalidDependencyException;
+import net.bigtangle.core.VerificationException.InvalidSignatureException;
+import net.bigtangle.core.VerificationException.InvalidTokenOutputException;
+import net.bigtangle.core.VerificationException.InvalidTransactionDataException;
+import net.bigtangle.core.VerificationException.MalformedTransactionDataException;
+import net.bigtangle.core.VerificationException.MissingDependencyException;
+import net.bigtangle.core.VerificationException.MissingTransactionDataException;
+import net.bigtangle.core.VerificationException.NotCoinbaseException;
+import net.bigtangle.core.VerificationException.PreviousTokenDisallowsException;
+import net.bigtangle.core.VerificationException.SigOpsException;
+import net.bigtangle.core.VerificationException.TimeReversionException;
+import net.bigtangle.core.VerificationException.TransactionInputsDisallowedException;
+import net.bigtangle.core.VerificationException.TransactionOutputsDisallowedException;
+import net.bigtangle.core.VerificationException.TransactionValueException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.Script.VerifyFlag;
@@ -246,13 +265,6 @@ public class ValidatorService {
 
         // Build transaction for block
         Transaction tx = new Transaction(networkParameters);
-        
-//        // The input does not really need to be a valid signature, as long
-//        // as it has the right general form and is slightly different for
-//        // different tx
-//        TransactionInput input = new TransactionInput(networkParameters, tx, Script.createInputScript(
-//                prevTrunkBlock.getBlockHash().getBytes(), prevBranchBlock.getBlockHash().getBytes()));
-//        tx.addInput(input);
 
         // Build the type-specific tx data
         RewardInfo rewardInfo = new RewardInfo(fromHeight, toHeight, prevRewardHash.toString());
@@ -830,7 +842,7 @@ public class ValidatorService {
             @Nullable StoredBlock storedPrevBranch, boolean throwExceptions) throws BlockStoreException {
         if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
             if (throwExceptions)
-                throw new VerificationException("Genesis blocks not allowed");
+                throw new GenesisBlockDisallowedException();
             return SolidityState.getFailState();
         }
             
@@ -847,7 +859,7 @@ public class ValidatorService {
         if (block.getTimeSeconds() < storedPrev.getHeader().getTimeSeconds()
                 || block.getTimeSeconds() < storedPrevBranch.getHeader().getTimeSeconds()) {
             if (throwExceptions)
-                throw new VerificationException("Timestamps are wrong!");
+                throw new TimeReversionException();
             return SolidityState.getFailState();
         }
 
@@ -858,14 +870,14 @@ public class ValidatorService {
                 if (block.getLastMiningRewardBlock() != storedPrev.getHeader().getLastMiningRewardBlock()
                         || block.getDifficultyTarget() != storedPrev.getHeader().getDifficultyTarget()) {
                     if (throwExceptions)
-                        throw new VerificationException("Difficulty and consensus not inherited correctly");
+                        throw new DifficultyConsensusInheritanceException();
                     return SolidityState.getFailState();                    
                 }
             } else {
                 if (block.getLastMiningRewardBlock() != storedPrevBranch.getHeader().getLastMiningRewardBlock()
                         || block.getDifficultyTarget() != storedPrevBranch.getHeader().getDifficultyTarget()) {
                     if (throwExceptions)
-                        throw new VerificationException("Difficulty and consensus not inherited correctly");
+                        throw new DifficultyConsensusInheritanceException();
                     return SolidityState.getFailState();
                 }
             }
@@ -895,7 +907,7 @@ public class ValidatorService {
         for (Transaction tx : transactions) {
             if (tx.isCoinBase() && !block.allowCoinbaseTransaction()) {
                 if (throwExceptions)
-                    throw new VerificationException("Coinbase not allowed");
+                    throw new CoinbaseDisallowedException();
                 return SolidityState.getFailState();
             }
         }
@@ -963,7 +975,7 @@ public class ValidatorService {
                             if (prevOut.getScript().isPayToScriptHash())
                                 sigOps += Script.getP2SHSigOpCount(in.getScriptBytes());
                             if (sigOps > Block.MAX_BLOCK_SIGOPS)
-                                throw new VerificationException("Too many P2SH SigOps in block");
+                                throw new SigOpsException();
                         }
                         prevOutScripts.add(prevOut.getScript());
                         txOutsSpent.add(prevOut);
@@ -988,12 +1000,12 @@ public class ValidatorService {
                     txOutsCreated.add(newOut);
                 }
                 if (!checkOutputSigns(valueOut))
-                    throw new VerificationException("Transaction output value out of range");
+                    throw new TransactionValueException("Transaction output value out of range");
                 if (isCoinBase) {
                     // coinbaseValue = valueOut;
                 } else {
                     if (!checkInputOutput(valueIn, valueOut))
-                        throw new VerificationException("Transaction input value out of range");
+                        throw new TransactionValueException("Transaction input value out of range");
                     // totalFees = totalFees.add(valueIn.subtract(valueOut));
                 }
 
@@ -1071,7 +1083,7 @@ public class ValidatorService {
             break;
         case BLOCKTYPE_INITIAL:
             if (throwExceptions)
-                throw new VerificationException("Not allowed. Shouldn't happen.");
+                throw new GenesisBlockDisallowedException();
             return SolidityState.getFailState();
         case BLOCKTYPE_REWARD:
             // Check token issuances are solid
@@ -1109,19 +1121,25 @@ public class ValidatorService {
         
         if (transactions.size() != 1) {
             if (throwExceptions)
-                throw new VerificationException("Incorrect tx count");
+                throw new IncorrectTransactionCountException();
             return SolidityState.getFailState(); 
         }
 
         if (!transactions.get(0).getInputs().isEmpty()) {
             if (throwExceptions)
-                throw new VerificationException("TX has inputs");
+                throw new TransactionInputsDisallowedException();
             return SolidityState.getFailState(); 
         }
 
         if (!transactions.get(0).getOutputs().isEmpty()) {
             if (throwExceptions)
-                throw new VerificationException("TX has outputs");
+                throw new TransactionOutputsDisallowedException();
+            return SolidityState.getFailState(); 
+        }
+        
+        if (transactions.get(0).getData() == null) {
+            if (throwExceptions)
+                throw new MissingTransactionDataException();
             return SolidityState.getFailState(); 
         }
 
@@ -1131,14 +1149,14 @@ public class ValidatorService {
             rewardInfo = RewardInfo.parse(transactions.get(0).getData());
         } catch (IOException e) {
             if (throwExceptions)
-                throw new VerificationException("Incorrect data format");
+                throw new MalformedTransactionDataException();
             return SolidityState.getFailState();
         }
         
         // NotNull checks
         if (rewardInfo.getPrevRewardHash() == null) {
             if (throwExceptions)
-                throw new VerificationException("No previous reward defined");
+                throw new MissingDependencyException();
             return SolidityState.getFailState();     
         }
             
@@ -1151,28 +1169,28 @@ public class ValidatorService {
         // Ensure dependency (prev reward hash) is valid predecessor
         if (dependency.getHeader().getBlockType() != Type.BLOCKTYPE_INITIAL && dependency.getHeader().getBlockType() != Type.BLOCKTYPE_REWARD){
             if (throwExceptions)
-                throw new VerificationException("Predecessor invalid");
+                throw new InvalidDependencyException("Predecessor is not reward or genesis");
             return SolidityState.getFailState();     
         }
         
         // Ensure fromHeight is starting from prevToHeight+1
         if (rewardInfo.getFromHeight() != store.getRewardToHeight(prevRewardHash) + 1){
             if (throwExceptions)
-                throw new VerificationException("Invalid fromHeight");
+                throw new InvalidTransactionDataException("Invalid fromHeight");
             return SolidityState.getFailState();     
         }
         
         // Ensure toHeights follow the rules
         if (rewardInfo.getToHeight() - rewardInfo.getFromHeight() != NetworkParameters.REWARD_HEIGHT_INTERVAL - 1){
             if (throwExceptions)
-                throw new VerificationException("Invalid toHeight");
+                throw new InvalidTransactionDataException("Invalid toHeight");
             return SolidityState.getFailState();     
         }
         
         // Ensure we are sufficiently far away from the rewarded interval
         if (height - rewardInfo.getToHeight() < NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE) {
             if (throwExceptions)
-                throw new VerificationException("Too close to the rewarded interval");
+                throw new InvalidTransactionDataException("Too close to the rewarded interval");
             return SolidityState.getFailState();     
         }
         
@@ -1182,20 +1200,20 @@ public class ValidatorService {
     private SolidityState checkTokenSolidity(Block block, long height, boolean throwExceptions) {
         if (block.getTransactions().size() != 1) {
             if (throwExceptions)
-                throw new VerificationException("Incorrect tx count! ");
+                throw new IncorrectTransactionCountException();
             return SolidityState.getFailState();
         }
 
         if (!block.getTransactions().get(0).isCoinBase()) {
             if (throwExceptions)
-                throw new VerificationException("TX is not coinbase! ");
+                throw new NotCoinbaseException();
             return SolidityState.getFailState(); 
         }
         
         Transaction tx = block.getTransactions().get(0);
         if (tx.getData() == null) {
             if (throwExceptions)
-                throw new VerificationException("No transaction data! ");
+                throw new MissingTransactionDataException();
             return SolidityState.getFailState(); 
         }
         
@@ -1204,62 +1222,62 @@ public class ValidatorService {
             currentToken = new TokenInfo().parse(tx.getData());
         } catch (IOException e) {
             if (throwExceptions)
-                throw new VerificationException("Token data malformed! ", e);
+                throw new MalformedTransactionDataException();
             return SolidityState.getFailState(); 
         }
         if (currentToken.getTokens() == null) {
             if (throwExceptions)
-                throw new VerificationException("getTokens is null");
+                throw new InvalidTransactionDataException("getTokens is null");
             return SolidityState.getFailState(); 
         }
         if (currentToken.getMultiSignAddresses() == null) {
             if (throwExceptions)
-                throw new VerificationException("getMultiSignAddresses is null");
+                throw new InvalidTransactionDataException("getMultiSignAddresses is null");
             return SolidityState.getFailState(); 
         }
         if (currentToken.getTokens().getTokenid() == null) {
             if (throwExceptions)
-                throw new VerificationException("getTokenid is null");
+                throw new InvalidTransactionDataException("getTokenid is null");
             return SolidityState.getFailState(); 
         }
         if (currentToken.getTokens().getPrevblockhash() == null) {
             if (throwExceptions)
-                throw new VerificationException("getTokenid is null");
+                throw new InvalidTransactionDataException("getTokenid is null");
             return SolidityState.getFailState(); 
         }
         if (currentToken.getTokens().getTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
             if (throwExceptions)
-                throw new VerificationException("Not allowed");
+                throw new InvalidTransactionDataException("Not allowed");
             return SolidityState.getFailState(); 
         }
         if (currentToken.getTokens().getTokenindex() > NetworkParameters.TOKEN_MAX_ISSUANCE_NUMBER) {
             if (throwExceptions)
-                throw new VerificationException("Too many token issuances");
+                throw new InvalidTransactionDataException("Too many token issuances");
             return SolidityState.getFailState(); 
         }
         if (currentToken.getTokens().getAmount() > Long.MAX_VALUE / NetworkParameters.TOKEN_MAX_ISSUANCE_NUMBER) {
             if (throwExceptions)
-                throw new VerificationException("Too many tokens issued");
+                throw new InvalidTransactionDataException("Too many tokens issued");
             return SolidityState.getFailState();
         }
         if (currentToken.getTokens().getDescription() != null && currentToken.getTokens().getDescription().length() > NetworkParameters.TOKEN_MAX_DESC_LENGTH) {
             if (throwExceptions)
-                throw new VerificationException("Too long description");
+                throw new InvalidTransactionDataException("Too long description");
             return SolidityState.getFailState(); 
         }
         if (currentToken.getTokens().getTokenname() != null && currentToken.getTokens().getTokenname().length() > NetworkParameters.TOKEN_MAX_NAME_LENGTH) {
             if (throwExceptions)
-                throw new VerificationException("Too long name");
+                throw new InvalidTransactionDataException("Too long name");
             return SolidityState.getFailState(); 
         }
         if (currentToken.getTokens().getUrl() != null && currentToken.getTokens().getUrl().length() > NetworkParameters.TOKEN_MAX_URL_LENGTH) {
             if (throwExceptions)
-                throw new VerificationException("Too long url");
+                throw new InvalidTransactionDataException("Too long url");
             return SolidityState.getFailState(); 
         }
         if (currentToken.getTokens().getSignnumber() < 0) {
             if (throwExceptions)
-                throw new VerificationException("Invalid sign number");
+                throw new InvalidTransactionDataException("Invalid sign number");
             return SolidityState.getFailState(); 
         }
         
@@ -1268,7 +1286,7 @@ public class ValidatorService {
             for (TransactionOutput out : tx1.getOutputs()) {
                 if (!out.getValue().getTokenHex().equals(currentToken.getTokens().getTokenid())) {
                     if (throwExceptions)
-                        throw new VerificationException("Invalid tokens were generated");
+                        throw new InvalidTokenOutputException();
                     return SolidityState.getFailState();                     
                 }
             }
@@ -1280,14 +1298,14 @@ public class ValidatorService {
                 || (!currentToken.getTokens().getPrevblockhash().equals("")
                         && currentToken.getTokens().getTokenindex() == 0)) {
             if (throwExceptions)
-                throw new VerificationException("Must reference a previous block if not index 0");
+                throw new MissingDependencyException();
             return SolidityState.getFailState(); 
         }
 
         // Must define enough permissioned addresses
         if (currentToken.getTokens().getSignnumber() > currentToken.getMultiSignAddresses().size()) {
             if (throwExceptions)
-                throw new VerificationException("Cannot fulfill required sign number from multisign address list");
+                throw new InvalidTransactionDataException("Cannot fulfill required sign number from multisign address list");
             return SolidityState.getFailState(); 
         }
 
@@ -1301,36 +1319,36 @@ public class ValidatorService {
                 prevToken = store.getToken(currentToken.getTokens().getPrevblockhash());
                 if (prevToken == null) {
                     if (throwExceptions)
-                        throw new VerificationException("Previous token does not exist");
+                        throw new MissingDependencyException();
                     return SolidityState.from(Sha256Hash.wrap(currentToken.getTokens().getPrevblockhash())); 
                 }
 
                 // Compare members of previous and current issuance
                 if (!currentToken.getTokens().getTokenid().equals(prevToken.getTokenid())) {
                     if (throwExceptions)
-                        throw new VerificationException("Wrong token ID");
+                        throw new InvalidDependencyException("Wrong token ID");
                     return SolidityState.getFailState(); 
                 }
                 if (currentToken.getTokens().getTokenindex() != prevToken.getTokenindex() + 1) {
                     if (throwExceptions)
-                        throw new VerificationException("Wrong token index");
+                        throw new InvalidDependencyException("Wrong token index");
                     return SolidityState.getFailState(); 
                 }
                 if (!currentToken.getTokens().getTokenname().equals(prevToken.getTokenname())) {
                     if (throwExceptions)
-                        throw new VerificationException("Cannot change token name");
+                        throw new PreviousTokenDisallowsException("Cannot change token name");
                     return SolidityState.getFailState(); 
                 }
                 if (currentToken.getTokens().getTokentype() != prevToken.getTokentype()) {
                     if (throwExceptions)
-                        throw new VerificationException("Cannot change token type");
+                        throw new PreviousTokenDisallowsException("Cannot change token type");
                     return SolidityState.getFailState(); 
                 }
 
                 // Must allow more issuances
                 if (prevToken.isTokenstop()) {
                     if (throwExceptions)
-                        throw new VerificationException("Previous token does not allow further issuance");
+                        throw new PreviousTokenDisallowsException("Previous token does not allow further issuance");
                     return SolidityState.getFailState(); 
                 }
 
@@ -1359,7 +1377,7 @@ public class ValidatorService {
         // Ensure signatures exist
         if (tx.getDataSignature() == null) {
             if (throwExceptions)
-                throw new VerificationException("signatures are null");
+                throw new MissingTransactionDataException();
             return SolidityState.getFailState(); 
         }
         
@@ -1370,7 +1388,7 @@ public class ValidatorService {
             txSignatures = Json.jsonmapper().readValue(jsonStr, MultiSignByRequest.class);
         } catch (IOException e) {
             if (throwExceptions)
-                throw new VerificationException("Signature data malformed!", e);
+                throw new MalformedTransactionDataException();
             return SolidityState.getFailState(); 
         }
         
@@ -1379,7 +1397,7 @@ public class ValidatorService {
             ByteBuffer pubKey = ByteBuffer.wrap(Utils.HEX.decode(multiSignBy.getPublickey()));
             if (!permissionedPubKeys.contains(pubKey)) {
                 if (throwExceptions)
-                    throw new VerificationException("multisignby key not in permissioned address list");
+                    throw new InvalidSignatureException();
                 return SolidityState.getFailState(); 
             }
             
@@ -1403,7 +1421,7 @@ public class ValidatorService {
             return SolidityState.getSuccessState();
 
         if (throwExceptions)
-            throw new VerificationException("Not enough signatures");
+            throw new InsufficientSignaturesException();
         return SolidityState.getFailState(); 
     }
 }

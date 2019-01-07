@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Random;
 
 import javax.annotation.Nullable;
@@ -42,6 +41,13 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
+import net.bigtangle.core.VerificationException.CoinbaseDisallowedException;
+import net.bigtangle.core.VerificationException.DifficultyTargetException;
+import net.bigtangle.core.VerificationException.LargerThanMaxBlockSize;
+import net.bigtangle.core.VerificationException.MerkleRootMismatchException;
+import net.bigtangle.core.VerificationException.ProofOfWorkException;
+import net.bigtangle.core.VerificationException.SigOpsException;
+import net.bigtangle.core.VerificationException.TimeTravelerException;
 import net.bigtangle.equihash.EquihashProof;
 import net.bigtangle.equihash.EquihashSolver;
 import net.bigtangle.script.Script;
@@ -88,7 +94,7 @@ public class Block extends Message {
             + 4 // blockType
             + (NetworkParameters.USE_EQUIHASH ? EquihashProof.BYTE_LENGTH : 0); // for Equihash
 
-    static final long ALLOWED_TIME_DRIFT = 5 * 60;
+    static final long ALLOWED_TIME_DRIFT = 5 * 60; // TODO move a low of this crap to networkparameters
 
     /**
      * A constant shared by the entire network: how large in bytes a block is
@@ -693,7 +699,7 @@ public class Block extends Message {
     public BigInteger getDifficultyTargetAsInteger() throws VerificationException {
         BigInteger target = Utils.decodeCompactBits(difficultyTarget);
         if (target.signum() < 0 || target.compareTo(NetworkParameters.MAX_TARGET) > 0)
-            throw new VerificationException("Difficulty target is bad: " + target.toString());
+            throw new DifficultyTargetException();
         return target;
     }
 
@@ -726,7 +732,7 @@ public class Block extends Message {
             if (!EquihashSolver.testProof(params.equihashN, params.equihashK, getHash(), getEquihashProof())) {
                 // Proof of work check failed!
                 if (throwException)
-                    throw new VerificationException("Equihash proof is wrong");
+                    throw new ProofOfWorkException();
                 else
                     return false;
             }
@@ -737,8 +743,7 @@ public class Block extends Message {
             if (h.compareTo(target) > 0) {
                 // Proof of work check failed!
                 if (throwException)
-                    throw new VerificationException(
-                            "Hash is higher than target: " + getHashAsString() + " vs " + target.toString(16));
+                    throw new ProofOfWorkException();
                 else
                     return false;
             }
@@ -751,8 +756,7 @@ public class Block extends Message {
         // Allow injection of a fake clock to allow unit testing.
         long currentTime = Utils.currentTimeSeconds();
         if (time > currentTime + ALLOWED_TIME_DRIFT)
-            throw new VerificationException(String.format(Locale.US, "Block too far in future: %d vs %d", time,
-                    currentTime + ALLOWED_TIME_DRIFT));
+            throw new TimeTravelerException(); // TODO this shouldn't throw because it does not make the block invalid forever.
     }
 
     private void checkSigOps() throws VerificationException {
@@ -764,14 +768,14 @@ public class Block extends Message {
             sigOps += tx.getSigOpCount();
         }
         if (sigOps > MAX_BLOCK_SIGOPS)
-            throw new VerificationException("Block had too many Signature Operations");
+            throw new SigOpsException();
     }
 
     private void checkMerkleRoot() throws VerificationException {
         Sha256Hash calculatedRoot = calculateMerkleRoot();
         if (!calculatedRoot.equals(merkleRoot)) {
             log.error("Merkle tree did not verify");
-            throw new VerificationException("Merkle hashes do not match: " + calculatedRoot + " vs " + merkleRoot);
+            throw new MerkleRootMismatchException();
         }
     }
 
@@ -889,13 +893,13 @@ public class Block extends Message {
         // if (transactions.isEmpty())
         // throw new VerificationException("Block had no transactions");
         if (this.getOptimalEncodingMessageSize() > getMaxBlockSize())
-            throw new VerificationException("Block larger than MAX_BLOCK_SIZE");
+            throw new LargerThanMaxBlockSize();
         checkMerkleRoot();
         checkSigOps();
 
         for (Transaction transaction : transactions) {
             if (!allowCoinbaseTransaction() && transaction.isCoinBase()) {
-                throw new VerificationException("Coinbase Transaction is not allowed for this block type");
+                throw new CoinbaseDisallowedException();
             }
             
             transaction.verify();

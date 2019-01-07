@@ -35,7 +35,7 @@ public class VerificationException extends RuntimeException {
 
     public static class LargerThanMaxBlockSize extends VerificationException {
         public LargerThanMaxBlockSize() {
-            super("Transaction larger than MAX_BLOCK_SIZE");
+            super("Message larger than MAX_BLOCK_SIZE");
         }
     }
 
@@ -75,6 +75,150 @@ public class VerificationException extends RuntimeException {
     public static class UnexpectedCoinbaseInput extends VerificationException {
         public UnexpectedCoinbaseInput() {
             super("Coinbase input as input in non-coinbase transaction");
+        }
+    }
+
+    public static class GenericInvalidityException extends VerificationException {
+        public GenericInvalidityException() {
+            super("This block is invalid.");
+        }
+    }
+
+    public static class GenesisBlockDisallowedException extends VerificationException {
+        public GenesisBlockDisallowedException() {
+            super("Genesis blocks not allowed");
+        }
+    }
+
+    public static class TimeReversionException extends VerificationException {
+        public TimeReversionException() {
+            super("Timestamps are reversing!");
+        }
+    }
+
+    public static class DifficultyConsensusInheritanceException extends VerificationException {
+        public DifficultyConsensusInheritanceException() {
+            super("Difficulty and consensus not inherited correctly");
+        }
+    }
+
+    public static class IncorrectTransactionCountException extends VerificationException {
+        public IncorrectTransactionCountException() {
+            super("Incorrect tx count");
+        }
+    }
+
+    public static class TransactionInputsDisallowedException extends VerificationException {
+        public TransactionInputsDisallowedException() {
+            super("TX has inputs");
+        }
+    }
+
+    public static class TransactionOutputsDisallowedException extends VerificationException {
+        public TransactionOutputsDisallowedException() {
+            super("TX has outputs");
+        }
+    }
+
+    public static class MalformedTransactionDataException extends VerificationException {
+        public MalformedTransactionDataException() {
+            super("Incorrect data format");
+        }
+    }
+
+    public static class MissingDependencyException extends VerificationException {
+        public MissingDependencyException() {
+            super("No dependency defined");
+        }
+    }
+
+    public static class InvalidDependencyException extends VerificationException {
+        public InvalidDependencyException(String msg) {
+            super(msg);
+        }
+    }
+
+    public static class InvalidTransactionDataException extends VerificationException {
+        public InvalidTransactionDataException(String msg) {
+            super(msg);
+        }
+    }
+
+    public static class NotCoinbaseException extends VerificationException {
+        public NotCoinbaseException() {
+            super("TX is not coinbase! ");
+        }
+    }
+
+    public static class CoinbaseDisallowedException extends VerificationException {
+        public CoinbaseDisallowedException() {
+            super("TX is coinbase! ");
+        }
+    }
+
+    public static class MissingTransactionDataException extends VerificationException {
+        public MissingTransactionDataException() {
+            super("Missing required transaction data! ");
+        }
+    }
+
+    public static class InvalidTokenOutputException extends VerificationException {
+        public InvalidTokenOutputException() {
+            super("Invalid tokens were generated");
+        }
+    }
+
+    public static class PreviousTokenDisallowsException extends VerificationException {
+        public PreviousTokenDisallowsException(String msg) {
+            super(msg);
+        }
+    }
+
+    public static class InvalidSignatureException extends VerificationException {
+        public InvalidSignatureException() {
+            super("Some signatures are not valid here");
+        }
+    }
+
+    public static class InsufficientSignaturesException extends VerificationException {
+        public InsufficientSignaturesException() {
+            super("Not enough signatures");
+        }
+    }
+
+    public static class SigOpsException extends VerificationException {
+        public SigOpsException() {
+            super("Block had too many Signature Operations");
+        }
+    }
+
+    public static class MerkleRootMismatchException extends VerificationException {
+        public MerkleRootMismatchException() {
+            super("Merkle hashes do not match");
+        }
+    }
+
+    public static class ProofOfWorkException extends VerificationException {
+        public ProofOfWorkException() {
+            super("Hash is higher than target");
+        }
+    }
+
+    public static class TimeTravelerException extends VerificationException {
+        public TimeTravelerException() {
+            super("Block too far in future");
+        }
+    }
+    
+    public static class TransactionValueException extends VerificationException {
+        public TransactionValueException(String msg) {
+            super(msg);
+        }
+    }
+    
+    public static class DifficultyTargetException extends VerificationException {
+        public DifficultyTargetException() {
+            super("Difficulty target is bad");
         }
     }
 }

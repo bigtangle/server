@@ -56,6 +56,7 @@ import net.bigtangle.core.UserData;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.VerificationException;
+import net.bigtangle.core.VerificationException.GenericInvalidityException;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.service.RewardEligibility;
 import net.bigtangle.server.service.SolidityState;
@@ -122,7 +123,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 if (solidityState.getState() == State.Unfixable) {
                     // Drop forever if invalid
                     log.debug("Dropping invalid block!");
-                    throw new VerificationException("This block is invalid.");
+                    throw new GenericInvalidityException();
                 } else {
                     // If dependency missing and allowing waiting list, add to list
                     if (allowUnsolid) 
@@ -147,8 +148,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             log.error("", e);
             throw new VerificationException(e);
         } catch (VerificationException e) {
-            log.debug("", e);
-            throw new VerificationException("Could not verify block:\n" + e.toString() + "\n" + block.toString());
+            log.debug("Could not verify block:\n" + e.toString() + "\n" + block.toString());
+            throw e;
         } finally {
             lock.unlock();
         }
@@ -405,11 +406,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 
                 // Sanity check
                 if (prevOut == null)
-                    throw new VerificationException("Attempted to spend a non-existent output!");
+                    throw new RuntimeException("Attempted to spend a non-existent output!");
                 if (prevOut.isSpent())
-                    throw new VerificationException("Attempted to spend an already spent output!");
+                    throw new RuntimeException("Attempted to spend an already spent output!");
                 if (!prevOut.isConfirmed())
-                    throw new VerificationException("Attempted to spend an unconfirmed output!");
+                    throw new RuntimeException("Attempted to spend an unconfirmed output!");
                 
                 blockStore.updateTransactionOutputSpent(prevOut.getHash(), prevOut.getIndex(), true, blockhash);
             }
@@ -421,7 +422,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             
             // Sanity check
             if (utxo != null && utxo.isSpent())
-                throw new VerificationException("Attempted to reset an already spent output! Cannot happen.");
+                throw new RuntimeException("Attempted to reset an already spent output!");
             
             blockStore.updateTransactionOutputConfirmed(tx.getHash(), out.getIndex(), true);
             blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), out.getIndex(), blockhash);

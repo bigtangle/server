@@ -51,6 +51,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     // TODO conflicts
     // TODO code coverage
+    // TODO catch specific verification exceptions
+    
     @Test
     public void testConflictTransactionalUTXO() throws Exception {
         store.resetStore();
