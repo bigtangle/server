@@ -32,8 +32,6 @@ public class VerificationException extends RuntimeException {
     public VerificationException(String msg, Throwable t) {
         super(msg, t);
     }
-    
-    // TODO add more, remove obsolete
 
     public static class LargerThanMaxBlockSize extends VerificationException {
         public LargerThanMaxBlockSize() {
@@ -66,7 +64,7 @@ public class VerificationException extends RuntimeException {
         }
     }
 
-
+    // TODO use this
     public static class BlockVersionOutOfDate extends VerificationException {
         public BlockVersionOutOfDate(final long version) {
             super("Block version #"
@@ -77,12 +75,6 @@ public class VerificationException extends RuntimeException {
     public static class UnexpectedCoinbaseInput extends VerificationException {
         public UnexpectedCoinbaseInput() {
             super("Coinbase input as input in non-coinbase transaction");
-        }
-    }
-
-    public static class CoinbaseHeightMismatch extends VerificationException {
-        public CoinbaseHeightMismatch(final String message) {
-            super(message);
         }
     }
 }

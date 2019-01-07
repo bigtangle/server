@@ -13,7 +13,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -45,7 +44,6 @@ import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
-import net.bigtangle.wallet.Wallet;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -111,7 +109,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         blockGraph.add(rollingBlock, true);
 
         Block rollingBlock1 = rollingBlock;
-        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + 2; i++) {
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
             rollingBlock1 = BlockForTest.createNextBlock(rollingBlock1, Block.BLOCK_VERSION_GENESIS, rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
@@ -498,7 +496,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         assertNotNull(store.get(depBlock.getHash()));
     }
 
-    // TODO reward min distance to height
     @Test
     public void testUnsolidMissingReward() throws Exception {
         store.resetStore();
@@ -507,7 +504,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval and second reward interval
         Block rollingBlock = networkParameters.getGenesisBlock();
-        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + 2; i++) {
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
             rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
             blocks1.add(rollingBlock);
         }
@@ -525,7 +522,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isMilestone());
         
         // Make more for next reward interval
-        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + 2; i++) {
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
             rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
             blocks2.add(rollingBlock);
         }
@@ -657,13 +654,13 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         blockGraph.add(rollingBlock, true);
 
         Block rollingBlock1 = rollingBlock;
-        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + 2; i++) {
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
             rollingBlock1 = BlockForTest.createNextBlock(rollingBlock1, Block.BLOCK_VERSION_GENESIS, rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
         Block rollingBlock2 = rollingBlock;
-        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + 2; i++) {
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
             rollingBlock2 = BlockForTest.createNextBlock(rollingBlock2, Block.BLOCK_VERSION_GENESIS, rollingBlock2);
             blockGraph.add(rollingBlock2, true);
         }
@@ -734,7 +731,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval and second reward interval
         Block rollingBlock = networkParameters.getGenesisBlock();
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
             Block rollingBlockNew = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
             
             // The difficulty should be equal to the previous difficulty
@@ -770,7 +767,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval and second reward interval
         Block rollingBlock = networkParameters.getGenesisBlock();
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
             Block rollingBlockNew = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
             
             // The difficulty should be equal to the previous difficulty
@@ -861,7 +858,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                     blockGraph.add(rollingBlock, false);
                     
                     fail();
-                    // TODO add verificationexceptiontypes
                 } catch (VerificationException e) {
                 }
         }
@@ -882,8 +878,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             tokenInfo.setTokens(tokens);
             tokenInfo.getMultiSignAddresses()
                     .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-            Wallet r = walletAppKit.wallet();
-            HashMap<String, String> requestParam = new HashMap<String, String>();
             
             Block block = BlockForTest.createNextBlock(genesisBlock, Block.BLOCK_VERSION_GENESIS, genesisBlock);
             block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
@@ -924,6 +918,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             
             fail();
         } catch (VerificationException e) {
+            // TODO add verificationexceptions, then expect the correct one
         }
     }
 

@@ -467,7 +467,7 @@ public class ValidatorService {
                     break;
                 case INELIGIBLE:
                     if (!(b.getBlockEvaluation().getRating() > NetworkParameters.MILESTONE_UPPER_THRESHOLD
-                            && b.getBlockEvaluation().getInsertTime() < System.currentTimeMillis() / 1000 - NetworkParameters.OVERRULE_TIME)) 
+                            && b.getBlockEvaluation().getInsertTime() < System.currentTimeMillis() / 1000 - NetworkParameters.REWARD_OVERRULE_TIME)) 
                         blockService.removeBlockAndApproversFrom(blocksToAdd, b);
                     break;
                 case INVALID:
@@ -880,7 +880,7 @@ public class ValidatorService {
         }
 
         // Check type-specific solidity
-        SolidityState typeSpecificSolidityState = checkTypeSpecificSolidity(block, storedPrev, storedPrevBranch, throwExceptions);
+        SolidityState typeSpecificSolidityState = checkTypeSpecificSolidity(block, height, throwExceptions);
         if (!(typeSpecificSolidityState.getState() == State.Success)) {
             return typeSpecificSolidityState;
         }
@@ -1061,7 +1061,7 @@ public class ValidatorService {
         return true;
     }
 
-    private SolidityState checkTypeSpecificSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, boolean throwExceptions) throws BlockStoreException {
+    private SolidityState checkTypeSpecificSolidity(Block block, long height, boolean throwExceptions) throws BlockStoreException {
         switch (block.getBlockType()) {
         case BLOCKTYPE_CROSSTANGLE:
             break;
@@ -1075,7 +1075,7 @@ public class ValidatorService {
             return SolidityState.getFailState();
         case BLOCKTYPE_REWARD:
             // Check token issuances are solid
-            SolidityState rewardSolidityState = checkRewardSolidity(block, storedPrev, storedPrevBranch, throwExceptions);
+            SolidityState rewardSolidityState = checkRewardSolidity(block, height, throwExceptions);
             if (!(rewardSolidityState.getState() == State.Success)) {
                 return rewardSolidityState;
             }
@@ -1083,7 +1083,7 @@ public class ValidatorService {
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             // Check token issuances are solid
-            SolidityState tokenSolidityState = checkTokenSolidity(block, throwExceptions);
+            SolidityState tokenSolidityState = checkTokenSolidity(block, height, throwExceptions);
             if (!(tokenSolidityState.getState() == State.Success)) {
                 return tokenSolidityState;
             }
@@ -1104,7 +1104,7 @@ public class ValidatorService {
         return SolidityState.getSuccessState();
     }
     
-    private SolidityState checkRewardSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, boolean throwExceptions) throws BlockStoreException {
+    private SolidityState checkRewardSolidity(Block block, long height,  boolean throwExceptions) throws BlockStoreException {
         List<Transaction> transactions = block.getTransactions();
         
         if (transactions.size() != 1) {
@@ -1169,10 +1169,17 @@ public class ValidatorService {
             return SolidityState.getFailState();     
         }
         
+        // Ensure we are sufficiently far away from the rewarded interval
+        if (height - rewardInfo.getToHeight() < NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE) {
+            if (throwExceptions)
+                throw new VerificationException("Too close to the rewarded interval");
+            return SolidityState.getFailState();     
+        }
+        
         return SolidityState.getSuccessState();
     }
 
-    private SolidityState checkTokenSolidity(Block block, boolean throwExceptions) {
+    private SolidityState checkTokenSolidity(Block block, long height, boolean throwExceptions) {
         if (block.getTransactions().size() != 1) {
             if (throwExceptions)
                 throw new VerificationException("Incorrect tx count! ");
