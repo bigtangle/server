@@ -210,8 +210,8 @@ public class VerificationException extends RuntimeException {
         }
     }
     
-    public static class TransactionValueException extends VerificationException {
-        public TransactionValueException(String msg) {
+    public static class InvalidTransactionException extends VerificationException {
+        public InvalidTransactionException(String msg) {
             super(msg);
         }
     }

@@ -81,7 +81,7 @@ import net.bigtangle.core.VerificationException.SigOpsException;
 import net.bigtangle.core.VerificationException.TimeReversionException;
 import net.bigtangle.core.VerificationException.TransactionInputsDisallowedException;
 import net.bigtangle.core.VerificationException.TransactionOutputsDisallowedException;
-import net.bigtangle.core.VerificationException.TransactionValueException;
+import net.bigtangle.core.VerificationException.InvalidTransactionException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.Script.VerifyFlag;
@@ -1000,12 +1000,12 @@ public class ValidatorService {
                     txOutsCreated.add(newOut);
                 }
                 if (!checkOutputSigns(valueOut))
-                    throw new TransactionValueException("Transaction output value out of range");
+                    throw new InvalidTransactionException("Transaction output value out of range");
                 if (isCoinBase) {
                     // coinbaseValue = valueOut;
                 } else {
                     if (!checkInputOutput(valueIn, valueOut))
-                        throw new TransactionValueException("Transaction input value out of range");
+                        throw new InvalidTransactionException("Transaction input value out of range");
                     // totalFees = totalFees.add(valueIn.subtract(valueOut));
                 }
 
@@ -1038,7 +1038,7 @@ public class ValidatorService {
             scriptVerificationExecutor.shutdownNow();
             logger.info("", e);
             if (throwExceptions)
-                throw new VerificationException(e);
+                throw e;
             return SolidityState.getFailState();
         } catch (BlockStoreException e) {
             scriptVerificationExecutor.shutdownNow();

@@ -23,6 +23,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
+import net.bigtangle.core.VerificationException.CoinbaseDisallowedException;
+import net.bigtangle.core.VerificationException.InvalidTokenOutputException;
+import net.bigtangle.core.VerificationException.TimeReversionException;
+import net.bigtangle.core.VerificationException.InvalidTransactionException;
 import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
@@ -30,6 +34,7 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.ScriptException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
@@ -51,7 +56,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     // TODO conflicts
     // TODO code coverage
-    // TODO catch specific verification exceptions
     
     @Test
     public void testConflictTransactionalUTXO() throws Exception {
@@ -816,19 +820,19 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         milestoneService.update();
 
         // The time is allowed to stay the same
-        Block b = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
-        b.setTime(rollingBlock.getTimeSeconds()); // 01/01/2000 @ 12:00am (UTC)
-        b.solve();
-        blockGraph.add(b, true);
+        rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
+        rollingBlock.setTime(rollingBlock.getTimeSeconds()); // 01/01/2000 @ 12:00am (UTC)
+        rollingBlock.solve();
+        blockGraph.add(rollingBlock, true);
         
         // The time is not allowed to move backwards
         try {
             rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
             rollingBlock.setTime(946684800); // 01/01/2000 @ 12:00am (UTC)
-            b.solve();
+            rollingBlock.solve();
             blockGraph.add(rollingBlock, true);     
             fail();
-        } catch (VerificationException e) {
+        } catch (TimeReversionException e) {
         }
     }
 
@@ -860,7 +864,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                     blockGraph.add(rollingBlock, false);
                     
                     fail();
-                } catch (VerificationException e) {
+                } catch (CoinbaseDisallowedException e) {
                 }
         }
         
@@ -919,8 +923,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             blockGraph.add(block, false);
             
             fail();
-        } catch (VerificationException e) {
-            // TODO add verificationexceptions, then expect the correct one
+        } catch (InvalidTokenOutputException e) {
         }
     }
 
@@ -941,7 +944,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                     networkParameters.getGenesisBlock(), tx1);
             fail();
-        } catch (VerificationException e) {
+        } catch (ScriptException e) {
         }
     }
 
@@ -1004,7 +1007,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                     networkParameters.getGenesisBlock(), tx2);
             fail();
-        } catch (VerificationException e) {
+        } catch (InvalidTransactionException e) {
         }
     }
 
@@ -1034,7 +1037,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                     networkParameters.getGenesisBlock(), tx2);
             fail();
-        } catch (VerificationException e) {
+        } catch (InvalidTransactionException e) {
         }
     }
     
