@@ -13,10 +13,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
@@ -24,13 +22,14 @@ import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
+import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
@@ -41,10 +40,12 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
+import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
+import net.bigtangle.wallet.Wallet;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -854,6 +855,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                     
                     // Check it fails
                     Block rollingBlock = BlockForTest.createNextBlock(genesisBlock, Block.BLOCK_VERSION_GENESIS, genesisBlock);
+                    rollingBlock.setBlockType(type);
                     rollingBlock.addTransaction(tx);
                     rollingBlock.solve();
                     blockGraph.add(rollingBlock, false);
@@ -865,8 +867,64 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
         
         // For the types that allow coinbase, not just any coinbase is allowed
-        // TODO Crosstangle
-        // TODO token
+        try {
+            // Generate an eligible issuance
+            ECKey outKey = walletKeys.get(0);
+            byte[] pubKey = outKey.getPubKey();
+            TokenInfo tokenInfo = new TokenInfo();
+            
+            Coin coinbase = Coin.valueOf(77777L, pubKey);
+            long amount = coinbase.getValue();
+            
+            Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount, false, true);
+            tokenInfo.setTokens(tokens);
+            
+            tokenInfo.setTokens(tokens);
+            tokenInfo.getMultiSignAddresses()
+                    .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+            Wallet r = walletAppKit.wallet();
+            HashMap<String, String> requestParam = new HashMap<String, String>();
+            
+            Block block = BlockForTest.createNextBlock(genesisBlock, Block.BLOCK_VERSION_GENESIS, genesisBlock);
+            block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+            
+            if (null != null)
+                block.setPrevBlockHash(null);
+            
+            if (null != null)
+                block.setPrevBranchBlockHash(null);
+            
+            block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
+            
+            // Add invalid coinbases into it
+            block.getTransactions().get(0).addOutput(Coin.SATOSHI.times(2), outKey.toAddress(networkParameters));
+            block.solve();
+            
+            Transaction transaction = block.getTransactions().get(0);
+            
+            Sha256Hash sighash = transaction.getHash();
+            
+            ECKey.ECDSASignature party1Signature = outKey.sign(sighash, null);
+            byte[] buf1 = party1Signature.encodeToDER();
+            
+            List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+            MultiSignBy multiSignBy0 = new MultiSignBy();
+            multiSignBy0.setTokenid(tokenInfo.getTokens().getTokenid().trim());
+            multiSignBy0.setTokenindex(0);
+            multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
+            multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
+            multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+            multiSignBies.add(multiSignBy0);
+            MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
+            transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
+            
+            // Check it fails
+            block.solve();
+            blockGraph.add(block, false);
+            
+            fail();
+        } catch (VerificationException e) {
+        }
     }
 
     @Test
