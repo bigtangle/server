@@ -21,6 +21,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
@@ -104,25 +105,52 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
      
         // Generate an eligible issuance
-        ECKey outKey = walletKeys.get(0);
-        byte[] pubKey = outKey.getPubKey();
-        TokenInfo tokenInfo = new TokenInfo();
-        
-        Coin coinbase = Coin.valueOf(77777L, pubKey);
-        long amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0,
-                amount, false, true);
+        Sha256Hash firstIssuance;
+        {
+            ECKey outKey = walletKeys.get(0);
+            byte[] pubKey = outKey.getPubKey();
+            TokenInfo tokenInfo = new TokenInfo();
+            
+            Coin coinbase = Coin.valueOf(77777L, pubKey);
+            long amount = coinbase.getValue();
+            Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0,
+                    amount, false, false);
 
-        tokenInfo.setTokens(tokens);
-        tokenInfo.getMultiSignAddresses()
-                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+            tokenInfo.setTokens(tokens);
+            tokenInfo.getMultiSignAddresses()
+                    .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
-        // This (saveBlock) calls milestoneUpdate currently, that's why we need other blocks beforehand.
-        Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+            // This (saveBlock) calls milestoneUpdate currently, that's why we need other blocks beforehand.
+            Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+            firstIssuance = block1.getHash();
 
-        // Should exist now
-        assertFalse(store.getTokenConfirmed(block1.getHash().toString()));
-        assertFalse(store.getTokenSpent(block1.getHash().toString()));        
+            // Should exist now
+            assertFalse(store.getTokenConfirmed(block1.getHash().toString()));
+            assertFalse(store.getTokenSpent(block1.getHash().toString()));        
+        }
+     
+        // Generate a subsequent issuance
+        {
+            ECKey outKey = walletKeys.get(0);
+            byte[] pubKey = outKey.getPubKey();
+            TokenInfo tokenInfo = new TokenInfo();
+            
+            Coin coinbase = Coin.valueOf(77777L, pubKey);
+            long amount = coinbase.getValue();
+            Token tokens = Token.buildSimpleTokenInfo(true, firstIssuance.toString(), Utils.HEX.encode(pubKey), "Test", "Test", 1, 1,
+                    amount, false, true);
+
+            tokenInfo.setTokens(tokens);
+            tokenInfo.getMultiSignAddresses()
+                    .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+
+            // This (saveBlock) calls milestoneUpdate currently, that's why we need other blocks beforehand.
+            Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+
+            // Should exist now
+            assertFalse(store.getTokenConfirmed(block1.getHash().toString()));
+            assertFalse(store.getTokenSpent(block1.getHash().toString()));        
+        }
     }
 
     @Test

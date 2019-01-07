@@ -40,6 +40,7 @@ import net.bigtangle.core.Context;
 import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.RewardInfo;
@@ -714,6 +715,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     byte[] buf = tx.getData();
                     TokenInfo tokenInfo = new TokenInfo().parse(buf);
                     this.blockStore.insertToken(block.getHashAsString(), tokenInfo.getTokens());
+                    for (MultiSignAddress permissionedAddress : tokenInfo.getMultiSignAddresses()) {
+                        permissionedAddress.setBlockhash(block.getHashAsString()); // The primary key must be the correct block
+                        blockStore.insertMultiSignAddress(permissionedAddress);
+                    }
                 } catch (Exception e) {
                     log.error("not possible checked before", e);
                 }

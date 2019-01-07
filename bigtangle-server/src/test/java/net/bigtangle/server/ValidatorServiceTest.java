@@ -47,6 +47,140 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     // TODO conflicts
     // TODO code coverage
+
+    @Test
+    public void testConflictSameTokenSubsequentIssuance() throws Exception {
+        store.resetStore();
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+
+        // Generate an eligible issuance
+//        TokenInfo tokenInfo = new TokenInfo();
+//        Coin coinbase = Coin.valueOf(77777L, pubKey);
+//        long amount = coinbase.getValue();
+//        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0,
+//                amount, false, false);
+//        tokenInfo.setTokens(tokens);
+//        tokenInfo.getMultiSignAddresses()
+//                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+//        Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+//
+//
+//        // Generate a subsequent issuance
+//        TokenInfo tokenInfo2 = new TokenInfo();
+//        Coin coinbase2 = Coin.valueOf(666, pubKey);
+//        long amount2 = coinbase2.getValue();
+//        Token tokens2 = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 1,
+//                amount2, false, true);
+//        tokenInfo2.setTokens(tokens2);
+//        tokenInfo2.getMultiSignAddresses()
+//                .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
+//        Block conflictBlock1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, null, null);
+//
+//        // Make another conflicting issuance that goes through
+//        Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
+//        Block block2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, genHash, genHash);
+//        Block rollingBlock = BlockForTest.createNextBlock(block2, Block.BLOCK_VERSION_GENESIS, block1);
+//        blockGraph.add(rollingBlock, true);
+//        
+//        milestoneService.update();
+//        assertFalse(blockService.getBlockEvaluation(block2.getHash()).isMilestone()
+//                && blockService.getBlockEvaluation(block1.getHash()).isMilestone());
+//        assertTrue(blockService.getBlockEvaluation(block2.getHash()).isMilestone()
+//                || blockService.getBlockEvaluation(block1.getHash()).isMilestone());
+//        
+//        milestoneService.update();
+//        assertFalse(blockService.getBlockEvaluation(block2.getHash()).isMilestone()
+//                && blockService.getBlockEvaluation(block1.getHash()).isMilestone());
+//        assertTrue(blockService.getBlockEvaluation(block2.getHash()).isMilestone()
+//                || blockService.getBlockEvaluation(block1.getHash()).isMilestone());
+    }
+
+    @Test
+    public void testConflictSameTokenFirstIssuance() throws Exception {
+        store.resetStore();
+
+        // Generate an eligible issuance
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+        TokenInfo tokenInfo = new TokenInfo();
+        
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0,
+                amount, false, true);
+
+        tokenInfo.setTokens(tokens);
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+
+        Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+
+        // Make another conflicting issuance that goes through
+        Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
+        Block block2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, genHash, genHash);
+        Block rollingBlock = BlockForTest.createNextBlock(block2, Block.BLOCK_VERSION_GENESIS, block1);
+        blockGraph.add(rollingBlock, true);
+        
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(block2.getHash()).isMilestone()
+                && blockService.getBlockEvaluation(block1.getHash()).isMilestone());
+        assertTrue(blockService.getBlockEvaluation(block2.getHash()).isMilestone()
+                || blockService.getBlockEvaluation(block1.getHash()).isMilestone());
+        
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(block2.getHash()).isMilestone()
+                && blockService.getBlockEvaluation(block1.getHash()).isMilestone());
+        assertTrue(blockService.getBlockEvaluation(block2.getHash()).isMilestone()
+                || blockService.getBlockEvaluation(block1.getHash()).isMilestone());
+    }
+
+    @Test
+    public void testConflictSameTokenidFirstIssuance() throws Exception {
+        store.resetStore();
+
+        // Generate an issuance
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+        TokenInfo tokenInfo = new TokenInfo();
+        
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0,
+                amount, false, true);
+
+        tokenInfo.setTokens(tokens);
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+
+        Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+        
+        // Generate another issuance slightly different
+        TokenInfo tokenInfo2 = new TokenInfo();
+        Coin coinbase2 = Coin.valueOf(6666, pubKey);
+        long amount2 = coinbase2.getValue();
+        Token tokens2 = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test2", "Test2", 1, 0,
+                amount2, false, false);
+        tokenInfo2.setTokens(tokens2);
+        tokenInfo2.getMultiSignAddresses().add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+
+        Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
+        Block block2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, genHash, genHash);
+        Block rollingBlock = BlockForTest.createNextBlock(block2, Block.BLOCK_VERSION_GENESIS, block1);
+        blockGraph.add(rollingBlock, true);
+        
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(block2.getHash()).isMilestone()
+                && blockService.getBlockEvaluation(block1.getHash()).isMilestone());
+        assertTrue(blockService.getBlockEvaluation(block2.getHash()).isMilestone()
+                || blockService.getBlockEvaluation(block1.getHash()).isMilestone());
+        
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(block2.getHash()).isMilestone()
+                && blockService.getBlockEvaluation(block1.getHash()).isMilestone());
+        assertTrue(blockService.getBlockEvaluation(block2.getHash()).isMilestone()
+                || blockService.getBlockEvaluation(block1.getHash()).isMilestone());
+    }
     
     @Test(expected=VerificationException.class)
     public void testVerificationFutureTimestamp() throws Exception {
@@ -360,37 +494,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         assertFalse(blockService.getBlockEvaluation(block1.getHash()).isMilestone());
         assertFalse(store.getTransactionOutput(tx1.getHash(), 0).isConfirmed());
         assertFalse(store.getTokenConfirmed(block1.getHashAsString()));
-    }
-
-    @Test
-    public void testConflictToken() throws Exception {
-        store.resetStore();
-
-        // Generate an eligible issuance
-        ECKey outKey = walletKeys.get(0);
-        byte[] pubKey = outKey.getPubKey();
-        TokenInfo tokenInfo = new TokenInfo();
-        
-        Coin coinbase = Coin.valueOf(77777L, pubKey);
-        long amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0,
-                amount, false, true);
-
-        tokenInfo.setTokens(tokens);
-        tokenInfo.getMultiSignAddresses()
-                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-
-        Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
-
-        // Make another conflicting one that goes through
-        Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
-        Block block2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, genHash, genHash);
-        Block rollingBlock = BlockForTest.createNextBlock(block2, Block.BLOCK_VERSION_GENESIS, block1);
-        blockGraph.add(rollingBlock, true);
-        milestoneService.update();
-
-        assertFalse(blockService.getBlockEvaluation(block2.getHash()).isMilestone()
-                && blockService.getBlockEvaluation(block1.getHash()).isMilestone());
     }
 
     @Test

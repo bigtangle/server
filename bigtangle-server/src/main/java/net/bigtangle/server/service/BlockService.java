@@ -59,6 +59,7 @@ public class BlockService {
 
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
+    // TODO drop a few functions here
     public Block getBlock(Sha256Hash blockhash) throws BlockStoreException {
         return store.get(blockhash).getHeader();
     }

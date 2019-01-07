@@ -1323,7 +1323,7 @@ public class ValidatorService {
 
                 // Get addresses allowed to reissue
                 permissionedAddresses = store.getMultiSignAddressListByTokenidAndBlockHashHex(prevToken.getTokenid(),
-                            prevToken.getPrevblockhash());
+                            prevToken.getBlockhash());
             } catch (BlockStoreException e) {
                 // Cannot happen, previous token must exist
                 e.printStackTrace();

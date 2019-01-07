@@ -111,6 +111,7 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected static ECKey outKey = new ECKey();
+    protected static ECKey outKey2 = new ECKey();
     protected static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
     protected static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
     protected static ObjectMapper objectMapper = new ObjectMapper();
