@@ -2538,7 +2538,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public String getTokenSpender(String blockhash) throws BlockStoreException {
+    public Sha256Hash getTokenSpender(String blockhash) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
@@ -2548,7 +2548,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             if (!resultSet.next()) {
                 return null;
             }
-            return resultSet.getString(1);
+            return resultSet.getBytes(1) == null ? null : Sha256Hash.wrap(resultSet.getBytes(1));
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {
@@ -2682,7 +2682,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void updateTokenSpent(String blockhash, boolean b, String spenderBlockHash) throws BlockStoreException {
+    public void updateTokenSpent(String blockhash, boolean b, Sha256Hash spenderBlockHash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -2691,7 +2691,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             // tokentype = ?, tokenstop =?
             preparedStatement = conn.get().prepareStatement(UPDATE_TOKEN_SPENT_SQL);
             preparedStatement.setBoolean(1, b);
-            preparedStatement.setString(2, spenderBlockHash);
+            preparedStatement.setBytes(2, spenderBlockHash.getBytes());
             preparedStatement.setString(3, blockhash);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {

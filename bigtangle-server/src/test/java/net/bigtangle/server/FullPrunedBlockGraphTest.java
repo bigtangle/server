@@ -97,6 +97,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testConnectTokenUTXOs() throws Exception {
         store.resetStore();
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
 
         // A few blocks exist beforehand
         for (int i = 0; i < 5; i++) {
@@ -107,8 +109,6 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Generate an eligible issuance
         Sha256Hash firstIssuance;
         {
-            ECKey outKey = walletKeys.get(0);
-            byte[] pubKey = outKey.getPubKey();
             TokenInfo tokenInfo = new TokenInfo();
             
             Coin coinbase = Coin.valueOf(77777L, pubKey);
@@ -131,8 +131,6 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
      
         // Generate a subsequent issuance
         {
-            ECKey outKey = walletKeys.get(0);
-            byte[] pubKey = outKey.getPubKey();
             TokenInfo tokenInfo = new TokenInfo();
             
             Coin coinbase = Coin.valueOf(77777L, pubKey);

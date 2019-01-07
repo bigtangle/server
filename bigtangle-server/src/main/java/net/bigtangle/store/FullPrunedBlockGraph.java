@@ -386,7 +386,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     private void confirmToken(Block block) throws BlockStoreException {
         // Set used other output spent
-        blockStore.updateTokenSpent(blockStore.getTokenPrevblockhash(block.getHashAsString()), true, block.getHashAsString());
+        blockStore.updateTokenSpent(blockStore.getTokenPrevblockhash(block.getHashAsString()), true, block.getHash());
 
         // Set own output confirmed
         blockStore.updateTokenConfirmed(block.getHashAsString(), true);
@@ -503,7 +503,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_TOKEN_CREATION:
             // Unconfirm dependents
             if (blockStore.getTokenSpent(block.getHashAsString())) {
-                removeBlockFromMilestone(Sha256Hash.wrap(blockStore.getTokenSpender(block.getHashAsString())), traversedBlockHashes);
+                removeBlockFromMilestone(blockStore.getTokenSpender(block.getHashAsString()), traversedBlockHashes);
             }
             break;
         case BLOCKTYPE_TRANSFER:

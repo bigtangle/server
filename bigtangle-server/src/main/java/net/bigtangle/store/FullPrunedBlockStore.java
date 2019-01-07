@@ -274,13 +274,13 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public boolean getTokenConfirmed(String blockHash) throws BlockStoreException;
 
-    public String getTokenSpender(String blockhash) throws BlockStoreException;
+    public Sha256Hash getTokenSpender(String blockhash) throws BlockStoreException;
 
     public boolean getTokenAnyConfirmed(String tokenid, int tokenindex) throws BlockStoreException;
 
     public BlockWrap getTokenIssuingConfirmedBlock(String tokenid, int tokenindex) throws BlockStoreException;
 
-    public void updateTokenSpent(String tokenPrevblockhash, boolean spent, String blockhash) throws BlockStoreException;
+    public void updateTokenSpent(String blockhash, boolean b, Sha256Hash spenderBlockHash) throws BlockStoreException;
 
     public void updateTokenConfirmed(String blockhash, boolean confirmed) throws BlockStoreException;
 
