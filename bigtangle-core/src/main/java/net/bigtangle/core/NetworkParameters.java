@@ -120,7 +120,7 @@ public abstract class NetworkParameters {
 
     // Reward and Difficulty Synchronization
     public static final long INITIAL_TX_REWARD = 10L;
-    public static final int REWARD_HEIGHT_INTERVAL = 5; // TODO up
+    public static final int REWARD_HEIGHT_INTERVAL = 5; // TODO Mainnet setup
     public static final BigInteger MAX_TARGET = Utils.decodeCompactBits(0x207fFFFFL);
     public static final long TARGET_YEARLY_MINING_PAYOUT = 20000000000L; //3 digits after comma, 2% of 1 trillion total supply
     public static final int TARGET_MAX_TPS = 10;
@@ -142,6 +142,10 @@ public abstract class NetworkParameters {
 	public static Block createGenesis(NetworkParameters params) {
 		Block genesisBlock = new Block(params, Block.BLOCK_VERSION_GENESIS, Block.Type.BLOCKTYPE_INITIAL.ordinal());
 		genesisBlock.setTime(1532896109L);
+		
+		// 1 in 4 blocks shall be correct
+		BigInteger diff = Utils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET); // TODO Mainnet setup all of this
+		genesisBlock.setDifficultyTarget(Utils.encodeCompactBits(diff.divide(BigInteger.valueOf(2))));
 
 		Transaction coinbase = new Transaction(params);
 		final ScriptBuilder inputBuilder = new ScriptBuilder();

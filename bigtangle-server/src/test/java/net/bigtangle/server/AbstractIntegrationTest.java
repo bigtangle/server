@@ -129,6 +129,11 @@ public abstract class AbstractIntegrationTest {
         return sha256Hash;
     }
 
+    protected Block createAndAddNextBlock(Block b1, long bVersion, Block b2)
+            throws VerificationException, PrunedException {
+        return createAndAddNextBlock(b1, bVersion, outKey.getPubKey(), b2);
+    }
+
     protected Block createAndAddNextBlock(Block b1, long bVersion, byte[] pubKey, Block b2)
             throws VerificationException, PrunedException {
         Block block = BlockForTest.createNextBlock(b1, bVersion, b2);

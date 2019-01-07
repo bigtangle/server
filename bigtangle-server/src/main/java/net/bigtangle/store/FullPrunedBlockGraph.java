@@ -251,7 +251,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Write to DB
         try {
             blockStore.beginDatabaseBatchWrite();
-            addBlockToMilestone(blockHash);
+            addBlockToMilestone(blockHash, new HashSet<>());
             blockStore.commitDatabaseBatchWrite();
         } catch (BlockStoreException e) {
             blockStore.abortDatabaseBatchWrite();
@@ -259,24 +259,29 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void addBlockToMilestone(Sha256Hash blockHash) throws BlockStoreException {
+    private void addBlockToMilestone(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes) throws BlockStoreException { 
         BlockWrap blockWrap = blockStore.getBlockWrap(blockHash);
         BlockEvaluation blockEvaluation = blockWrap.getBlockEvaluation();
         Block block = blockWrap.getBlock();
-
+        
         // If already confirmed, return
         if (blockEvaluation.isMilestone())
             return;
 
-        // Set milestone true and update latestMilestoneUpdateTime first to stop
-        // infinite recursions
+        // Set milestone true and update latestMilestoneUpdateTime
         blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), true);
 
-        // Connect all approved blocks first
-        addBlockToMilestone(block.getPrevBlockHash());
-        addBlockToMilestone(block.getPrevBranchBlockHash());
+        // Connect all approved blocks first if not traversed already
+        if (!traversedBlockHashes.contains(block.getPrevBlockHash()))
+            addBlockToMilestone(block.getPrevBlockHash(), traversedBlockHashes);
+        if (!traversedBlockHashes.contains(block.getPrevBranchBlockHash()))
+            addBlockToMilestone(block.getPrevBranchBlockHash(), traversedBlockHashes);
 
+        // Confirm the block
         confirmBlock(block);
+        
+        // Keep track of confirmed blocks
+        traversedBlockHashes.add(blockHash);
     }
 
     private void confirmBlock(Block block) throws BlockStoreException {
@@ -624,16 +629,33 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         blockStore.commitDatabaseBatchWrite();
         // Finally, look in the solidity waiting queue for blocks that are still waiting
-        
         // It could be a missing block...
         for (Block b : blockStore.getUnsolidBlocks(block.getHash().getBytes())) {
-            add(b, true);
+            try {
+                // Clear from waiting list
+                blockStore.deleteUnsolid(b.getHash());
+                
+                // If going through or waiting for more dependencies, all is good
+                add(b, true);
+            } catch (VerificationException e) {
+                // If the block is deemed invalid, we do not propagate the error upwards
+                log.debug(e.getLocalizedMessage());
+            }
         }
         
         // Or it could be a missing transaction
         for (TransactionOutput txout : block.getTransactions().stream().flatMap(t -> t.getOutputs().stream()).collect(Collectors.toList())) {
             for (Block b : blockStore.getUnsolidBlocks(txout.getOutPointFor().bitcoinSerialize())) {
-                add(b, true);
+                try {
+                    // Clear from waiting list
+                    blockStore.deleteUnsolid(b.getHash());
+                    
+                    // If going through or waiting for more dependencies, all is good
+                    add(b, true);
+                } catch (VerificationException e) {
+                    // If the block is deemed invalid, we do not propagate the error upwards
+                    log.debug(e.getLocalizedMessage());
+                }
             }
         }
     }

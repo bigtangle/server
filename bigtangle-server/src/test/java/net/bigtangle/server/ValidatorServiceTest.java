@@ -47,7 +47,89 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     // TODO conflicts
     // TODO code coverage
+    @Test
+    public void testConflictTransactionalUTXO() throws Exception {
+        store.resetStore();
 
+        // Generate two conflicting blocks
+        @SuppressWarnings("deprecation")
+        ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+                0);
+        Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
+        Transaction doublespendTX = new Transaction(networkParameters);
+        doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount, outKey));
+        TransactionInput input = doublespendTX.addInput(spendableOutput);
+        Sha256Hash sighash = doublespendTX.hashForSignature(0, spendableOutput.getScriptBytes(),
+                Transaction.SigHash.ALL, false);
+
+        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+                false);
+        Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+        input.setScriptSig(inputScript);
+
+        // Create blocks with conflict
+        Block b1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
+                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), networkParameters.getGenesisBlock(),
+                doublespendTX);
+        Block b2 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
+                Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), networkParameters.getGenesisBlock(),
+                doublespendTX);
+
+        blockGraph.add(b1, true);
+        blockGraph.add(b2, true);
+
+        createAndAddNextBlock(b1, Block.BLOCK_VERSION_GENESIS, b2);
+        
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(b1.getHash()).isMilestone()
+                && blockService.getBlockEvaluation(b2.getHash()).isMilestone());
+        assertTrue(blockService.getBlockEvaluation(b1.getHash()).isMilestone()
+                || blockService.getBlockEvaluation(b2.getHash()).isMilestone());
+        
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(b1.getHash()).isMilestone()
+                && blockService.getBlockEvaluation(b2.getHash()).isMilestone());
+        assertTrue(blockService.getBlockEvaluation(b1.getHash()).isMilestone()
+                || blockService.getBlockEvaluation(b2.getHash()).isMilestone());
+    }
+
+    @Test
+    public void testConflictReward() throws Exception {
+        store.resetStore();
+
+        // Generate blocks until passing first reward interval
+        Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
+                Block.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
+        blockGraph.add(rollingBlock, true);
+
+        Block rollingBlock1 = rollingBlock;
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + 2; i++) {
+            rollingBlock1 = BlockForTest.createNextBlock(rollingBlock1, Block.BLOCK_VERSION_GENESIS, rollingBlock1);
+            blockGraph.add(rollingBlock1, true);
+        }
+
+        // Generate eligible mining reward blocks 
+        Block b1 = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock1.getHash(), rollingBlock1.getHash());
+        Block b2 = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock1.getHash(), rollingBlock1.getHash());
+        createAndAddNextBlock(b2, Block.BLOCK_VERSION_GENESIS, b1);
+        
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(b1.getHash()).isMilestone()
+                && blockService.getBlockEvaluation(b2.getHash()).isMilestone());
+        assertTrue(blockService.getBlockEvaluation(b1.getHash()).isMilestone()
+                || blockService.getBlockEvaluation(b2.getHash()).isMilestone());
+        
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(b1.getHash()).isMilestone()
+                && blockService.getBlockEvaluation(b2.getHash()).isMilestone());
+        assertTrue(blockService.getBlockEvaluation(b1.getHash()).isMilestone()
+                || blockService.getBlockEvaluation(b2.getHash()).isMilestone());
+    }
+    
     @Test
     public void testConflictSameTokenSubsequentIssuance() throws Exception {
         store.resetStore();
@@ -125,7 +207,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         TokenInfo tokenInfo3 = new TokenInfo();
         Coin coinbase3 = Coin.valueOf(666, pubKey);
         long amount3 = coinbase3.getValue();
-        Token tokens3 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test2", "Test2", 1, 1,
+        Token tokens3 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test", "Test", 1, 1,
                 amount3, false, true);
         tokenInfo3.setTokens(tokens3);
         tokenInfo3.getMultiSignAddresses()
@@ -266,8 +348,10 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         
         Sha256Hash sha256Hash1 = getRandomSha256Hash();
         Sha256Hash sha256Hash2 = getRandomSha256Hash();
-        Block block = new Block(this.networkParameters, sha256Hash1, sha256Hash2, Block.Type.BLOCKTYPE_TRANSFER,
-                System.currentTimeMillis() / 1000, 0, Block.EASIEST_DIFFICULTY_TARGET);
+        Block block = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
+                networkParameters.getGenesisBlock());
+        block.setPrevBlockHash(sha256Hash1);
+        block.setPrevBranchBlockHash(sha256Hash2);
         block.solve();
         System.out.println(block.getHashAsString());
 
@@ -281,8 +365,10 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         
         Sha256Hash sha256Hash1 = getRandomSha256Hash();
         Sha256Hash sha256Hash2 = getRandomSha256Hash();
-        Block block = new Block(this.networkParameters, sha256Hash1, sha256Hash2, Block.Type.BLOCKTYPE_TRANSFER,
-                System.currentTimeMillis() / 1000, 0, Block.EASIEST_DIFFICULTY_TARGET);
+        Block block = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
+                networkParameters.getGenesisBlock());
+        block.setPrevBlockHash(sha256Hash1);
+        block.setPrevBranchBlockHash(sha256Hash2);
         block.solve();
         System.out.println(block.getHashAsString());
 
@@ -301,8 +387,10 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 networkParameters.getGenesisBlock());
         
         Sha256Hash sha256Hash = depBlock.getHash();
-        Block block = new Block(this.networkParameters, sha256Hash, sha256Hash, Block.Type.BLOCKTYPE_TRANSFER,
-                System.currentTimeMillis() / 1000, 0, Block.EASIEST_DIFFICULTY_TARGET);
+        Block block = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
+                networkParameters.getGenesisBlock());
+        block.setPrevBlockHash(sha256Hash);
+        block.setPrevBranchBlockHash(sha256Hash);
         block.solve();
         System.out.println(block.getHashAsString());
         transactionService.addConnected(block.bitcoinSerialize(), true, false);
@@ -326,8 +414,10 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 networkParameters.getGenesisBlock());
         
         Sha256Hash sha256Hash = depBlock.getHash();
-        Block block = new Block(this.networkParameters, sha256Hash, networkParameters.getGenesisBlock().getHash(), Block.Type.BLOCKTYPE_TRANSFER,
-                System.currentTimeMillis() / 1000, 0, Block.EASIEST_DIFFICULTY_TARGET);
+        Block block = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
+                networkParameters.getGenesisBlock());
+        block.setPrevBlockHash(sha256Hash);
+        block.setPrevBranchBlockHash(networkParameters.getGenesisBlock().getHash());
         block.solve();
         System.out.println(block.getHashAsString());
         transactionService.addConnected(block.bitcoinSerialize(), true, false);
@@ -351,8 +441,10 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 networkParameters.getGenesisBlock());
         
         Sha256Hash sha256Hash = depBlock.getHash();
-        Block block = new Block(this.networkParameters, networkParameters.getGenesisBlock().getHash(), sha256Hash, Block.Type.BLOCKTYPE_TRANSFER,
-                System.currentTimeMillis() / 1000, 0, Block.EASIEST_DIFFICULTY_TARGET);
+        Block block = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
+                networkParameters.getGenesisBlock());
+        block.setPrevBlockHash(networkParameters.getGenesisBlock().getHash());
+        block.setPrevBranchBlockHash(sha256Hash);
         block.solve();
         System.out.println(block.getHashAsString());
         transactionService.addConnected(block.bitcoinSerialize(), true, false);
@@ -584,13 +676,11 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         milestoneService.update();
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isMilestone());
 
-        // Generate eligible mining reward blocks (different prevblocks for
-        // different
-        // coinbases for the sake of testing)
+        // Generate eligible mining reward blocks
         Block rewardBlock2 = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 fusingBlock.getHash(), rollingBlock1.getHash());
         Block rewardBlock3 = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-                fusingBlock.getHash(), rollingBlock2.getHash());
+                fusingBlock.getHash(), rollingBlock1.getHash());
         milestoneService.update();
 
         // Second mining reward block should now go through since everything is
@@ -632,7 +722,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isMilestone());
     }
 
-    //TODO this doesn't work because of the current difficulty maximum @Test
+    @Test
     public void testSolidityPredecessorDifficultyInheritance() throws Exception {
         store.resetStore();
 
@@ -656,6 +746,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // The difficulty should now not be equal to the previous difficulty
         assertNotEquals(rollingBlock.getDifficultyTarget(), rewardBlock1.getDifficultyTarget());
 
+        rollingBlock = rewardBlock1;
         for (int i = 0; i < 3; i++) {
             Block rollingBlockNew = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
             

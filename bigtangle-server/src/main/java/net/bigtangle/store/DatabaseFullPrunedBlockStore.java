@@ -2691,7 +2691,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             // tokentype = ?, tokenstop =?
             preparedStatement = conn.get().prepareStatement(UPDATE_TOKEN_SPENT_SQL);
             preparedStatement.setBoolean(1, b);
-            preparedStatement.setBytes(2, spenderBlockHash.getBytes());
+            preparedStatement.setBytes(2, spenderBlockHash == null ? null : spenderBlockHash.getBytes());
             preparedStatement.setString(3, blockhash);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
