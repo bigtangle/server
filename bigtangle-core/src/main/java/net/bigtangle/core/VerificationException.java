@@ -32,6 +32,8 @@ public class VerificationException extends RuntimeException {
     public VerificationException(String msg, Throwable t) {
         super(msg, t);
     }
+    
+    // TODO add more, remove obsolete
 
     public static class LargerThanMaxBlockSize extends VerificationException {
         public LargerThanMaxBlockSize() {

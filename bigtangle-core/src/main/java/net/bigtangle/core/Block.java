@@ -166,16 +166,16 @@ public class Block extends Message {
      */
     public enum Type {
         // TODO implement all conditions for each block type in all switches    
-        BLOCKTYPE_INITIAL(true, 0, 0, Integer.MAX_VALUE), // Genesis block
+        BLOCKTYPE_INITIAL(false, 0, 0, Integer.MAX_VALUE), // Genesis block
         BLOCKTYPE_TRANSFER(false, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // Default block
-        BLOCKTYPE_REWARD(true, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // Rewards of mining
+        BLOCKTYPE_REWARD(false, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // Rewards of mining
         BLOCKTYPE_TOKEN_CREATION(true, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // Custom token issuance
         BLOCKTYPE_USERDATA(false, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // TODO User-defined data
         BLOCKTYPE_VOS(false, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // TODO Smart contracts
         BLOCKTYPE_GOVERNANCE(false, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // TODO Governance of software
         BLOCKTYPE_FILE(false, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // TODO User-defined file
         BLOCKTYPE_VOS_EXECUTE(false, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // TODO VOS execution result
-        BLOCKTYPE_CROSSTANGLE(true, 1, 1, MAX_DEFAULT_BLOCK_SIZE); // TODO transfer from mainnet to permissioned
+        BLOCKTYPE_CROSSTANGLE(false, 1, 1, MAX_DEFAULT_BLOCK_SIZE); // TODO transfer from mainnet to permissioned
 
         private boolean allowCoinbaseTransaction;
         private int powMultiplier; // TODO use in reward calcs

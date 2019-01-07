@@ -700,8 +700,8 @@ public class Transaction extends ChildMessage {
             String script;
             String script2;
             try {
-                script = inputs.get(0).getScriptSig().toString();
-                script2 = outputs.get(0).toString();
+                script = inputs.isEmpty() ? "None" : inputs.get(0).getScriptSig().toString();
+                script2 = outputs.isEmpty() ? "None" : outputs.get(0).toString();
             } catch (ScriptException e) {
                 script = "???";
                 script2 = "???";

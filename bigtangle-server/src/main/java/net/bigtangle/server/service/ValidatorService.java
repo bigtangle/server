@@ -247,12 +247,12 @@ public class ValidatorService {
         // Build transaction for block
         Transaction tx = new Transaction(networkParameters);
         
-        // The input does not really need to be a valid signature, as long
-        // as it has the right general form and is slightly different for
-        // different tx
-        TransactionInput input = new TransactionInput(networkParameters, tx, Script.createInputScript(
-                prevTrunkBlock.getBlockHash().getBytes(), prevBranchBlock.getBlockHash().getBytes()));
-        tx.addInput(input);
+//        // The input does not really need to be a valid signature, as long
+//        // as it has the right general form and is slightly different for
+//        // different tx
+//        TransactionInput input = new TransactionInput(networkParameters, tx, Script.createInputScript(
+//                prevTrunkBlock.getBlockHash().getBytes(), prevBranchBlock.getBlockHash().getBytes()));
+//        tx.addInput(input);
 
         // Build the type-specific tx data
         RewardInfo rewardInfo = new RewardInfo(fromHeight, toHeight, prevRewardHash.toString());
@@ -1113,9 +1113,15 @@ public class ValidatorService {
             return SolidityState.getFailState(); 
         }
 
-        if (!transactions.get(0).isCoinBase()) {
+        if (!transactions.get(0).getInputs().isEmpty()) {
             if (throwExceptions)
-                throw new VerificationException("TX is not coinbase");
+                throw new VerificationException("TX has inputs");
+            return SolidityState.getFailState(); 
+        }
+
+        if (!transactions.get(0).getOutputs().isEmpty()) {
+            if (throwExceptions)
+                throw new VerificationException("TX has outputs");
             return SolidityState.getFailState(); 
         }
 

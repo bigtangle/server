@@ -13,7 +13,10 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
@@ -21,7 +24,9 @@ import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
+import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
@@ -830,8 +835,38 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityCoinbase() throws Exception {
         store.resetStore();
-
-        // TODO test all cases (with working if possible and) not working coinbases
+        final Block genesisBlock = networkParameters.getGenesisBlock();
+        
+        // For disallowed types: coinbases are not allowed
+        for (Type type : Block.Type.values()) {
+            if (!type.allowCoinbaseTransaction())
+                try {
+                    // Build transaction
+                    Transaction tx = new Transaction(networkParameters);
+                    tx.addOutput(Coin.SATOSHI.times(2), outKey.toAddress(networkParameters));
+                    
+                    // The input does not really need to be a valid signature, as long
+                    // as it has the right general form and is slightly different for
+                    // different tx
+                    TransactionInput input = new TransactionInput(networkParameters, tx, Script.createInputScript(
+                            genesisBlock.getHash().getBytes(), genesisBlock.getHash().getBytes()));
+                    tx.addInput(input);
+                    
+                    // Check it fails
+                    Block rollingBlock = BlockForTest.createNextBlock(genesisBlock, Block.BLOCK_VERSION_GENESIS, genesisBlock);
+                    rollingBlock.addTransaction(tx);
+                    rollingBlock.solve();
+                    blockGraph.add(rollingBlock, false);
+                    
+                    fail();
+                    // TODO add verificationexceptiontypes
+                } catch (VerificationException e) {
+                }
+        }
+        
+        // For the types that allow coinbase, not just any coinbase is allowed
+        // TODO Crosstangle
+        // TODO token
     }
 
     @Test

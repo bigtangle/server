@@ -378,7 +378,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(b8link.getHash()).isMilestone());
     }
 
-    // TODO feature not implemented @Test
+    // TODO deep reorg feature not implemented @Test
     public void testReorgUnmaintained() throws Exception {
         store.resetStore();
 
