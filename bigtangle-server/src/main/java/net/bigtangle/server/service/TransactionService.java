@@ -85,14 +85,21 @@ public class TransactionService {
 
     }
 
-    public Block createMiningRewardBlock(Sha256Hash prevRewardHash) throws Exception {
+    public Block createAndAddMiningRewardBlock(Sha256Hash prevRewardHash) throws Exception {
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
-        return createMiningRewardBlock(prevRewardHash, tipsToApprove.getLeft(), tipsToApprove.getRight());
+        return createAndAddMiningRewardBlock(prevRewardHash, tipsToApprove.getLeft(), tipsToApprove.getRight());
+    }
+
+    public Block createAndAddMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
+            throws Exception {
+        
+        Block block = createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch);
+        blockgraph.add(block, false);
+        return block;
     }
 
     public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
-            throws Exception {
-        
+            throws BlockStoreException {
         Triple<RewardEligibility, Transaction, Pair<Long, Long>> result = validatorService.makeReward(prevTrunk, prevBranch, prevRewardHash);
         
         if (!(result.getLeft() == RewardEligibility.ELIGIBLE)) {
@@ -114,7 +121,6 @@ public class TransactionService {
         block.setTime(Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
         
         block.solve();
-        blockgraph.add(block, false);
         return block;
     }
     

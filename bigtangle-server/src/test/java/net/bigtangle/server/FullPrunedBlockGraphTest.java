@@ -32,8 +32,19 @@ import net.bigtangle.core.Utils;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     
-    // TODO unconfirm dependents correctly!
-    // TODO Tipsservice test
+    /*
+     *  TODO Tipsservice test
+        -> CHECK: no conflicts with milestone: used "generalized UTXOs" are confirmed + unspent for approved non-milestone blocks
+        -> CHECK: no conflicts with each other  
+        -> CHECK: type-specific selection conditions (see below)
+        -> Reward CHECK: eligibility==eligible or (eligibility==ineligible and overruled)
+     */
+    
+    /*  TODO dependents
+     *  -> Reward: generalized UTXO spenders
+        -> Reward: virtual UTXO spenders
+        -> Token: generalized UTXO spenders
+     */
 
     @Test
     public void testConnectTransactionalUTXOs() throws Exception {
@@ -86,7 +97,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate mining reward block
-        Block rewardBlock1 = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
         
         // Should exist now
@@ -201,7 +212,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate mining reward block
-        Block rewardBlock1 = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
         
         // Confirm
@@ -317,7 +328,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
         
         // Generate mining reward block
-        Block rewardBlock11 = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock11 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
         
         // Confirm

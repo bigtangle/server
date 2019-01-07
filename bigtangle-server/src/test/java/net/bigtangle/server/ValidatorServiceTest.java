@@ -23,10 +23,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
-import net.bigtangle.core.VerificationException.CoinbaseDisallowedException;
-import net.bigtangle.core.VerificationException.InvalidTokenOutputException;
-import net.bigtangle.core.VerificationException.TimeReversionException;
-import net.bigtangle.core.VerificationException.InvalidTransactionException;
 import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
@@ -34,6 +30,7 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.ScriptException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
@@ -44,6 +41,16 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
+import net.bigtangle.core.VerificationException.CoinbaseDisallowedException;
+import net.bigtangle.core.VerificationException.InvalidDependencyException;
+import net.bigtangle.core.VerificationException.InvalidTokenOutputException;
+import net.bigtangle.core.VerificationException.InvalidTransactionDataException;
+import net.bigtangle.core.VerificationException.InvalidTransactionException;
+import net.bigtangle.core.VerificationException.MalformedTransactionDataException;
+import net.bigtangle.core.VerificationException.MissingDependencyException;
+import net.bigtangle.core.VerificationException.MissingTransactionDataException;
+import net.bigtangle.core.VerificationException.TimeReversionException;
+import net.bigtangle.core.VerificationException.TransactionInputsDisallowedException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
@@ -54,7 +61,6 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ValidatorServiceTest extends AbstractIntegrationTest {
 
-    // TODO conflicts
     // TODO code coverage
     
     @Test
@@ -121,9 +127,9 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
 
         // Generate eligible mining reward blocks 
-        Block b1 = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block b1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
-        Block b2 = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block b2 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
         createAndAddNextBlock(b2, NetworkParameters.BLOCK_VERSION_GENESIS, b1);
         
@@ -520,7 +526,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         milestoneService.update();
         
         // Generate eligible mining reward block
-        Block rewardBlock1 = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
         milestoneService.update();
 
@@ -538,7 +544,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         milestoneService.update();
         
         // Generate eligible second mining reward block
-        Block rewardBlock2 = transactionService.createMiningRewardBlock(rewardBlock1.getHash(),
+        Block rewardBlock2 = transactionService.createAndAddMiningRewardBlock(rewardBlock1.getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
         milestoneService.update();
         
@@ -677,7 +683,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         
 
         // Generate ineligible mining reward block
-        Block rewardBlock1 = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
         milestoneService.update();
 
@@ -686,9 +692,9 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isMilestone());
 
         // Generate eligible mining reward blocks
-        Block rewardBlock2 = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock2 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 fusingBlock.getHash(), rollingBlock1.getHash());
-        Block rewardBlock3 = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock3 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 fusingBlock.getHash(), rollingBlock1.getHash());
         milestoneService.update();
 
@@ -749,7 +755,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         milestoneService.update();
         
         // Generate eligible mining reward block
-        Block rewardBlock1 = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
 
         // The difficulty should now not be equal to the previous difficulty
@@ -785,7 +791,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         milestoneService.update();
         
         // Generate eligible mining reward block
-        Block rewardBlock1 = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
 
         // The consensus number should now be equal to the previous number + 1
@@ -1041,6 +1047,202 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
     }
     
-    // TODO check too many sigops in tx
+    // TODO check sigops
+    
+    /* TODO mutate all fields of tokeninfo too
+    -> Token CHECK: only 1 coinbase tx
+    -> Token CHECK: well-formed tx data TokenInfo
+    -> Token CHECK: required fields of TokenInfo exist, i.e. not null
+    -> Token CHECK: fields may not be oversize
+    -> Token CHECK: issued tokens in txouts must be the same as the issued token
+    -> Token CHECK: number of permissioned addresses ok
+    -> Token CHECK: predecessor is TOKEN 
+    -> Token CHECK: predecessor is of same tokenid and of one lower tokenindex 
+    -> Token CHECK: predecessor is of same name and type
+    -> Token CHECK: predecessor allows further issuances
+    -> Token CHECK: signatures exist
+    -> Token CHECK: signatures well-formed
+    -> Token CHECK: signatures valid, unique and for permissioned addresses
+    -> Token CHECK: enough signatures 
+    */
 
+    @Test
+    public void testSolidityRewardTxWithTransfers() throws Exception {
+        store.resetStore();
+        Block rollingBlock = networkParameters.getGenesisBlock();
+
+        // Generate blocks until passing first reward interval
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+            blockGraph.add(rollingBlock, true);
+        }        
+
+        // Generate mining reward block with spending inputs
+        Block rewardBlock = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock.getHash(), rollingBlock.getHash());
+        Transaction tx = rewardBlock.getTransactions().get(0);
+        
+        @SuppressWarnings("deprecation")
+        ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+                0);
+        Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
+        tx.addOutput(new TransactionOutput(networkParameters, tx, amount, genesiskey));
+        tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), genesiskey));
+        TransactionInput input = tx.addInput(spendableOutput);
+        Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(),
+                Transaction.SigHash.ALL, false);
+    
+        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+                false);
+        Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+        input.setScriptSig(inputScript);
+        rewardBlock.solve();
+        
+        // Should not go through
+        try {
+            blockGraph.add(rewardBlock, false);
+            
+            fail();
+        } catch (TransactionInputsDisallowedException e) {
+        }
+    }
+
+    @Test
+    public void testSolidityRewardTxWithMissingRewardInfo() throws Exception {
+        store.resetStore();
+        Block rollingBlock = networkParameters.getGenesisBlock();
+
+        // Generate blocks until passing first reward interval
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+            blockGraph.add(rollingBlock, true);
+        }        
+
+        // Generate mining reward block with malformed tx data
+        Block rewardBlock = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock.getHash(), rollingBlock.getHash());
+        rewardBlock.getTransactions().get(0).setData(null);
+        rewardBlock.solve();
+        
+        // Should not go through
+        try {
+            blockGraph.add(rewardBlock, false);
+            
+            fail();
+        } catch (MissingTransactionDataException e) {
+        }
+    }
+
+    @Test
+    public void testSolidityRewardTxWithMalformedRewardInfo() throws Exception {
+        store.resetStore();
+        Block rollingBlock = networkParameters.getGenesisBlock();
+
+        // Generate blocks until passing first reward interval
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+            blockGraph.add(rollingBlock, true);
+        }        
+
+        // Generate mining reward block with malformed tx data
+        Block rewardBlock = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock.getHash(), rollingBlock.getHash());
+        rewardBlock.getTransactions().get(0).setData(new byte[] {2, 3, 4});;
+        rewardBlock.solve();
+        
+        // Should not go through
+        try {
+            blockGraph.add(rewardBlock, false);
+            
+            fail();
+        } catch (MalformedTransactionDataException e) {
+        }
+    }
+
+    @Test
+    public void testSolidityRewardTxWithInvalidRewardInfo() throws Exception {
+        store.resetStore();
+        Block rollingBlock = networkParameters.getGenesisBlock();
+
+        // Generate blocks until passing first reward interval
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+            blockGraph.add(rollingBlock, true);
+        }        
+
+        // Generate mining reward block with malformed fields
+        Block rewardBlock = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock.getHash(), rollingBlock.getHash());
+        Block testBlock1 = networkParameters.getDefaultSerializer().makeBlock(rewardBlock.bitcoinSerialize());
+        Block testBlock2 = networkParameters.getDefaultSerializer().makeBlock(rewardBlock.bitcoinSerialize());
+        Block testBlock3 = networkParameters.getDefaultSerializer().makeBlock(rewardBlock.bitcoinSerialize());
+        Block testBlock4 = networkParameters.getDefaultSerializer().makeBlock(rewardBlock.bitcoinSerialize());
+        Block testBlock5 = networkParameters.getDefaultSerializer().makeBlock(rewardBlock.bitcoinSerialize());
+        Block testBlock6 = networkParameters.getDefaultSerializer().makeBlock(rewardBlock.bitcoinSerialize());
+        Block testBlock7 = networkParameters.getDefaultSerializer().makeBlock(rewardBlock.bitcoinSerialize());
+        RewardInfo rewardInfo1 = RewardInfo.parse(testBlock1.getTransactions().get(0).getData());
+        RewardInfo rewardInfo2 = RewardInfo.parse(testBlock2.getTransactions().get(0).getData());
+        RewardInfo rewardInfo3 = RewardInfo.parse(testBlock3.getTransactions().get(0).getData());
+        RewardInfo rewardInfo4 = RewardInfo.parse(testBlock4.getTransactions().get(0).getData());
+        RewardInfo rewardInfo5 = RewardInfo.parse(testBlock5.getTransactions().get(0).getData());
+        RewardInfo rewardInfo6 = RewardInfo.parse(testBlock6.getTransactions().get(0).getData());
+        RewardInfo rewardInfo7 = RewardInfo.parse(testBlock7.getTransactions().get(0).getData());
+        rewardInfo1.setFromHeight(-1);
+        rewardInfo2.setPrevRewardHash(null);
+        rewardInfo3.setPrevRewardHash(getRandomSha256Hash());
+        rewardInfo4.setPrevRewardHash(rollingBlock.getHash());
+        rewardInfo5.setPrevRewardHash(rollingBlock.getHash());
+        rewardInfo6.setToHeight(12341324);
+        rewardInfo7.setToHeight(-1);
+        testBlock1.getTransactions().get(0).setData(rewardInfo1.toByteArray());
+        testBlock2.getTransactions().get(0).setData(rewardInfo2.toByteArray());
+        testBlock3.getTransactions().get(0).setData(rewardInfo3.toByteArray());
+        testBlock4.getTransactions().get(0).setData(rewardInfo4.toByteArray());
+        testBlock5.getTransactions().get(0).setData(rewardInfo5.toByteArray());
+        testBlock6.getTransactions().get(0).setData(rewardInfo6.toByteArray());
+        testBlock7.getTransactions().get(0).setData(rewardInfo7.toByteArray());
+        testBlock1.solve();
+        testBlock2.solve();
+        testBlock3.solve();
+        testBlock4.solve();
+        testBlock5.solve();
+        testBlock6.solve();
+        testBlock7.solve();
+        
+        // Should not go through
+        try {
+            blockGraph.add(testBlock1, false);
+            fail();
+        } catch (InvalidTransactionDataException e) {
+        }
+        try {
+            blockGraph.add(testBlock2, false);
+            fail();
+        } catch (MissingDependencyException e) {
+        }
+        if (blockGraph.add(testBlock3, false))
+            fail();
+        try {
+            blockGraph.add(testBlock4, false);
+            fail();
+        } catch (InvalidDependencyException e) {
+        }
+        try {
+            blockGraph.add(testBlock5, false);
+            fail();
+        } catch (InvalidDependencyException e) {
+        }
+        try {
+            blockGraph.add(testBlock6, false);
+            fail();
+        } catch (InvalidTransactionDataException e) {
+        }
+        try {
+            blockGraph.add(testBlock7, false);
+            fail();
+        } catch (InvalidTransactionDataException e) {
+        }
+    }
 }

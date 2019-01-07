@@ -720,7 +720,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             
             try {
                 RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
-                Sha256Hash prevRewardHash = Sha256Hash.wrap(rewardInfo.getPrevRewardHash());
+                Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
                 long toHeight = rewardInfo.getToHeight();
     
                 blockStore.insertReward(block.getHash(), toHeight, eligiblityAndTxReward.getLeft(), prevRewardHash, eligiblityAndTxReward.getRight());
@@ -765,7 +765,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         Sha256Hash prevRewardHash = null;
         try {
             RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
-            prevRewardHash = Sha256Hash.wrap(rewardInfo.getPrevRewardHash());
+            prevRewardHash = rewardInfo.getPrevRewardHash();
         } catch (IOException e) {
             // Cannot happen since checked before
             e.printStackTrace();

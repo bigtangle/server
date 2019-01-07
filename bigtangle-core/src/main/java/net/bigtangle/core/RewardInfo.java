@@ -16,12 +16,12 @@ public class RewardInfo implements java.io.Serializable {
 
     private long fromHeight;
     private long toHeight;
-    private String prevRewardHash;
+    private Sha256Hash prevRewardHash;
 
     public RewardInfo() {
     }
     
-    public RewardInfo(long fromHeight, long toHeight, String prevRewardHash) {
+    public RewardInfo(long fromHeight, long toHeight, Sha256Hash prevRewardHash) {
         super();
         this.fromHeight = fromHeight;
         this.toHeight = toHeight;
@@ -32,6 +32,18 @@ public class RewardInfo implements java.io.Serializable {
         return serialVersionUID;
     }
 
+    public void setFromHeight(long fromHeight) {
+        this.fromHeight = fromHeight;
+    }
+
+    public void setToHeight(long toHeight) {
+        this.toHeight = toHeight;
+    }
+
+    public void setPrevRewardHash(Sha256Hash prevRewardHash) {
+        this.prevRewardHash = prevRewardHash;
+    }
+
     public long getFromHeight() {
         return fromHeight;
     }
@@ -40,7 +52,7 @@ public class RewardInfo implements java.io.Serializable {
         return toHeight;
     }
 
-    public String getPrevRewardHash() {
+    public Sha256Hash getPrevRewardHash() {
         return prevRewardHash;
     }
 
@@ -59,11 +71,5 @@ public class RewardInfo implements java.io.Serializable {
         RewardInfo tokenInfo = Json.jsonmapper().readValue(jsonStr, RewardInfo.class);
         return tokenInfo;
     }
-
-    @Override
-    public String toString() {
-        return "RewardInfo [fromHeight=" + fromHeight + ", toHeight=" + toHeight + ", prevRewardHash=" + prevRewardHash + "]";
-    }
-    
     
 }

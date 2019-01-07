@@ -181,7 +181,7 @@ public class ValidatorService {
         try {
             RewardInfo rewardInfo = RewardInfo.parse(rewardBlock.getTransactions().get(0).getData());
             Triple<RewardEligibility, Transaction, Pair<Long, Long>> result = makeReward(
-                    rewardBlock.getPrevBlockHash(), rewardBlock.getPrevBranchBlockHash(), Sha256Hash.wrap(rewardInfo.getPrevRewardHash()));
+                    rewardBlock.getPrevBlockHash(), rewardBlock.getPrevBranchBlockHash(), rewardInfo.getPrevRewardHash());
 
             // Make sure the difficulty and transaction data are correct.
             if (rewardBlock.getDifficultyTarget() != result.getRight().getLeft() || !rewardBlock.getTransactions().get(0).equals(result.getMiddle()))
@@ -268,7 +268,7 @@ public class ValidatorService {
         Transaction tx = new Transaction(networkParameters);
 
         // Build the type-specific tx data
-        RewardInfo rewardInfo = new RewardInfo(fromHeight, toHeight, prevRewardHash.toString());
+        RewardInfo rewardInfo = new RewardInfo(fromHeight, toHeight, prevRewardHash);
         tx.setData(rewardInfo.toByteArray());
 
         // New rewards
@@ -394,7 +394,7 @@ public class ValidatorService {
                 else
                     return store.getTokenSpent(connectedToken.getPrevblockhash());
             case REWARDISSUANCE:
-                return store.getRewardSpent(Sha256Hash.wrap(c.getConflictPoint().getConnectedReward().getPrevRewardHash()));
+                return store.getRewardSpent(c.getConflictPoint().getConnectedReward().getPrevRewardHash());
             default:
                 throw new NotImplementedException();
         }
@@ -413,7 +413,7 @@ public class ValidatorService {
             else
                 return store.getTokenConfirmed(connectedToken.getPrevblockhash());
         case REWARDISSUANCE:
-            return store.getRewardConfirmed(Sha256Hash.wrap(c.getConflictPoint().getConnectedReward().getPrevRewardHash()));
+            return store.getRewardConfirmed(c.getConflictPoint().getConnectedReward().getPrevRewardHash());
         default:
             throw new NotImplementedException();
     }
@@ -812,7 +812,7 @@ public class ValidatorService {
             // The spender is always the one block with the same tokenid and index that is confirmed
             return store.getTokenIssuingConfirmedBlock(connectedToken.getTokenid(), connectedToken.getTokenindex()); 
         case REWARDISSUANCE:
-            final Sha256Hash txRewardSpender = store.getRewardSpender(Sha256Hash.wrap(c.getConflictPoint().getConnectedReward().getPrevRewardHash()));
+            final Sha256Hash txRewardSpender = store.getRewardSpender(c.getConflictPoint().getConnectedReward().getPrevRewardHash());
             if (txRewardSpender == null)
                 return null;
             return store.getBlockWrap(txRewardSpender);
@@ -1133,12 +1133,6 @@ public class ValidatorService {
                 throw new TransactionInputsDisallowedException();
             return SolidityState.getFailState(); 
         }
-
-        if (!transactions.get(0).getOutputs().isEmpty()) {
-            if (throwExceptions)
-                throw new TransactionOutputsDisallowedException();
-            return SolidityState.getFailState(); 
-        }
         
         if (transactions.get(0).getData() == null) {
             if (throwExceptions)
@@ -1164,7 +1158,7 @@ public class ValidatorService {
         }
             
         // Ensure dependency (prev reward hash) exists
-        Sha256Hash prevRewardHash = Sha256Hash.wrap(rewardInfo.getPrevRewardHash());
+        Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
         StoredBlock dependency = store.get(prevRewardHash);
         if (dependency == null)       
             return SolidityState.from(prevRewardHash); 
@@ -1245,7 +1239,7 @@ public class ValidatorService {
         }
         if (currentToken.getTokens().getPrevblockhash() == null) {
             if (throwExceptions)
-                throw new InvalidTransactionDataException("getTokenid is null");
+                throw new InvalidTransactionDataException("getPrevblockhash is null");
             return SolidityState.getFailState(); 
         }
         if (currentToken.getTokens().getTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {

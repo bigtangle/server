@@ -466,6 +466,7 @@ public class Transaction extends ChildMessage {
 
     public void setUpdateTime(Date updatedAt) {
         this.updatedAt = updatedAt;
+        unCache();
     }
 
     /**
@@ -1481,6 +1482,7 @@ public class Transaction extends ChildMessage {
      */
     public void setPurpose(Purpose purpose) {
         this.purpose = purpose;
+        unCache();
     }
 
     /**
@@ -1496,6 +1498,7 @@ public class Transaction extends ChildMessage {
      */
     public void setMemo(String memo) {
         this.memo = memo;
+        unCache();
     }
 
     public byte[] getData() {
@@ -1504,14 +1507,16 @@ public class Transaction extends ChildMessage {
 
     public void setData(byte[] data) {
         this.data = data;
+        unCache();
     }
 
     public byte[] getDataSignature() {
         return dataSignature;
     }
 
-    public void setDataSignature(byte[] datasignatire) {
-        this.dataSignature = datasignatire;
+    public void setDataSignature(byte[] datasignature) {
+        this.dataSignature = datasignature;
+        unCache();
     }
 
     public String getDataClassName() {
@@ -1520,6 +1525,7 @@ public class Transaction extends ChildMessage {
 
     public void setDataClassName(String dataclassname) {
         this.dataClassName = dataclassname;
+        unCache();
     }
 
     public byte[] getToAddressInSubtangle() {
@@ -1528,6 +1534,7 @@ public class Transaction extends ChildMessage {
 
     public void setToAddressInSubtangle(byte[] subtangleID) {
         this.toAddressInSubtangle = subtangleID;
+        unCache();
     }
     
 }
