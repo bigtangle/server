@@ -788,8 +788,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Block rewardBlock1 = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
 
-        // The difficulty should now not be equal to the previous difficulty
-        assertNotEquals(rollingBlock.getLastMiningRewardBlock(), rewardBlock1.getLastMiningRewardBlock());
+        // The consensus number should now be equal to the previous number + 1
+        assertEquals(rollingBlock.getLastMiningRewardBlock() + 1, rewardBlock1.getLastMiningRewardBlock());
 
         for (int i = 0; i < 3; i++) {
             Block rollingBlockNew = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);

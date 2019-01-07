@@ -183,6 +183,7 @@ public class ValidatorService {
             Triple<RewardEligibility, Transaction, Pair<Long, Long>> result = makeReward(
                     rewardBlock.getPrevBlockHash(), rewardBlock.getPrevBranchBlockHash(), Sha256Hash.wrap(rewardInfo.getPrevRewardHash()));
 
+            // Make sure the difficulty and transaction data are correct.
             if (rewardBlock.getDifficultyTarget() != result.getRight().getLeft() || !rewardBlock.getTransactions().get(0).equals(result.getMiddle()))
                 return Pair.of(RewardEligibility.INVALID, result.getRight().getRight()); 
             else
@@ -881,6 +882,13 @@ public class ValidatorService {
                     return SolidityState.getFailState();
                 }
             }
+        } else {
+            if (block.getLastMiningRewardBlock() != Math.max(storedPrev.getHeader().getLastMiningRewardBlock(), storedPrevBranch.getHeader().getLastMiningRewardBlock()) + 1) {
+                if (throwExceptions)
+                    throw new DifficultyConsensusInheritanceException();
+                return SolidityState.getFailState();                    
+            }
+            // 
         }
 
         long height = Math.max(storedPrev.getHeight(), storedPrevBranch.getHeight()) + 1;

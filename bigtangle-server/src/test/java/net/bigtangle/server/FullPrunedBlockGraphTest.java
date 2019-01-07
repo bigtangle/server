@@ -34,7 +34,6 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     
     // TODO unconfirm dependents correctly!
     // TODO Tipsservice test
-    // TODO remove StoredBlock 
 
     @Test
     public void testConnectTransactionalUTXOs() throws Exception {
