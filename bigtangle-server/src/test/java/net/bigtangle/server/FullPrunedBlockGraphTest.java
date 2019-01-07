@@ -34,6 +34,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     
     // TODO unconfirm dependents correctly!
     // TODO Tipsservice test
+    // TODO remove StoredBlock 
 
     @Test
     public void testConnectTransactionalUTXOs() throws Exception {
@@ -41,7 +42,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // A few blocks exist beforehand
         for (int i = 0; i < 5; i++) {
-            Block rollingBlock1 = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
+            Block rollingBlock1 = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
             blockGraph.add(rollingBlock1, true);
         }
         
@@ -50,7 +51,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertNull(transactionService.getUTXO(tx1.getOutput(0).getOutPointFor()));
         assertNull(transactionService.getUTXO(tx1.getOutput(1).getOutPointFor()));
         
-        createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+        createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                 networkParameters.getGenesisBlock(), tx1);
         
         // Should exist now
@@ -70,18 +71,18 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // A few blocks exist beforehand
         for (int i = 0; i < 5; i++) {
-            Block rollingBlock1 = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
+            Block rollingBlock1 = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
             blockGraph.add(rollingBlock1, true);
         }
 
         // Generate blocks until passing first reward interval
         Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
+                NetworkParameters.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
         blockGraph.add(rollingBlock, true);
 
         Block rollingBlock1 = rollingBlock;
         for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock1 = BlockForTest.createNextBlock(rollingBlock1, Block.BLOCK_VERSION_GENESIS, rollingBlock1);
+            rollingBlock1 = BlockForTest.createNextBlock(rollingBlock1, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
@@ -102,7 +103,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // A few blocks exist beforehand
         for (int i = 0; i < 5; i++) {
-            Block rollingBlock1 = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
+            Block rollingBlock1 = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
             blockGraph.add(rollingBlock1, true);
         }
      
@@ -160,7 +161,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertNull(transactionService.getUTXO(tx1.getOutput(0).getOutPointFor()));
         assertNull(transactionService.getUTXO(tx1.getOutput(1).getOutPointFor()));
         
-        Block spenderBlock = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+        Block spenderBlock = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                 networkParameters.getGenesisBlock(), tx1);
         
         // Confirm
@@ -191,12 +192,12 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
+                NetworkParameters.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
         blockGraph.add(rollingBlock, true);
 
         Block rollingBlock1 = rollingBlock;
         for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock1 = BlockForTest.createNextBlock(rollingBlock1, Block.BLOCK_VERSION_GENESIS, rollingBlock1);
+            rollingBlock1 = BlockForTest.createNextBlock(rollingBlock1, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
@@ -258,7 +259,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertNull(transactionService.getUTXO(tx11.getOutput(0).getOutPointFor()));
         assertNull(transactionService.getUTXO(tx11.getOutput(1).getOutPointFor()));
         
-        createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+        createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                 networkParameters.getGenesisBlock(), tx11);
         
         // Confirm
@@ -277,7 +278,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Build alternate path
         Block rollingBlock2 = networkParameters.getGenesisBlock();
         for (int i = 0; i < 3; i++) {
-            rollingBlock2 = BlockForTest.createNextBlock(rollingBlock2, Block.BLOCK_VERSION_GENESIS, rollingBlock2);
+            rollingBlock2 = BlockForTest.createNextBlock(rollingBlock2, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock2);
             blockGraph.add(rollingBlock2, true);     
         }
         
@@ -312,7 +313,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Generate blocks until passing first reward interval
         Block rollingBlock = networkParameters.getGenesisBlock();
         for (int i1 = 0; i1 < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i1++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
         
@@ -329,7 +330,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Build alternate path
         for (int i = 0; i < 5; i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, rollingBlock);
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
             blockGraph.add(rollingBlock, true);     
         }
         
@@ -380,7 +381,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Build alternate path
         Block rollingBlock2 = networkParameters.getGenesisBlock();
         for (int i = 0; i < 3; i++) {
-            rollingBlock2 = BlockForTest.createNextBlock(rollingBlock2, Block.BLOCK_VERSION_GENESIS, rollingBlock2);
+            rollingBlock2 = BlockForTest.createNextBlock(rollingBlock2, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock2);
             blockGraph.add(rollingBlock2, true);     
         }
         

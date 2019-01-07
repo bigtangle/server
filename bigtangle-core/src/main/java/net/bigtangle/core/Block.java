@@ -29,7 +29,6 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Random;
 
@@ -71,59 +70,7 @@ import net.bigtangle.script.ScriptBuilder;
  * 
  */
 public class Block extends Message {
-    /**
-     * Flags used to control which elements of block validation are done on
-     * received blocks.
-     */
-    public enum VerifyFlag {
-        /** Check that block height is in coinbase transaction (BIP 34). */
-        HEIGHT_IN_COINBASE
-    }
-
     private static final Logger log = LoggerFactory.getLogger(Block.class);
-
-    /**
-     * How many bytes are required to represent a block header WITHOUT the
-     * trailing 00 length byte.
-     */
-    public static final int HEADER_SIZE = 80 // bitcoin
-            + 32 // additional branch prev block
-            + 2 * 4 // time and difftarget from int to long
-            + 8 // sequence (lastMiningReward) long
-            + 20 // miner address
-            + 4 // blockType
-            + (NetworkParameters.USE_EQUIHASH ? EquihashProof.BYTE_LENGTH : 0); // for Equihash
-
-    static final long ALLOWED_TIME_DRIFT = 5 * 60; // TODO move a low of this crap to networkparameters
-
-    /**
-     * A constant shared by the entire network: how large in bytes a block is
-     * allowed to be. One day we may have to upgrade everyone to change this, so
-     * Bitcoin can continue to grow. For now it exists as an anti-DoS measure to
-     * avoid somebody creating a titanically huge but valid block and forcing
-     * everyone to download/store it forever.
-     */
-    public static final int MAX_DEFAULT_BLOCK_SIZE = 4 * 1000;
-    /**
-     * A "sigop" is a signature verification operation. Because they're
-     * expensive we also impose a separate limit on the number in a block to
-     * prevent somebody mining a huge block that has way more sigops than
-     * normal, so is very expensive/slow to verify.
-     */
-    public static final int MAX_BLOCK_SIGOPS = MAX_DEFAULT_BLOCK_SIZE / 50;
-
-    /**
-     * A value for difficultyTarget (nBits) that allows half of all possible
-     * hash solutions. Used in unit testing.
-     */
-    public static final long EASIEST_DIFFICULTY_TARGET = 0x207fFFFFL;
-
-    /** Value to use if the block height is unknown */
-    public static final int BLOCK_HEIGHT_UNKNOWN = -1;
-    /** Height of the first block */
-    public static final int BLOCK_HEIGHT_GENESIS = 0;
-
-    public static final long BLOCK_VERSION_GENESIS = 1;
 
     // Fields defined as part of the protocol format.
     private long version;
@@ -173,15 +120,15 @@ public class Block extends Message {
     public enum Type {
         // TODO implement all conditions for each block type in all switches    
         BLOCKTYPE_INITIAL(false, 0, 0, Integer.MAX_VALUE), // Genesis block
-        BLOCKTYPE_TRANSFER(false, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // Default block
-        BLOCKTYPE_REWARD(false, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // Rewards of mining
-        BLOCKTYPE_TOKEN_CREATION(true, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // Custom token issuance
-        BLOCKTYPE_USERDATA(false, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // TODO User-defined data
-        BLOCKTYPE_VOS(false, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // TODO Smart contracts
-        BLOCKTYPE_GOVERNANCE(false, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // TODO Governance of software
-        BLOCKTYPE_FILE(false, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // TODO User-defined file
-        BLOCKTYPE_VOS_EXECUTE(false, 1, 1, MAX_DEFAULT_BLOCK_SIZE), // TODO VOS execution result
-        BLOCKTYPE_CROSSTANGLE(false, 1, 1, MAX_DEFAULT_BLOCK_SIZE); // TODO transfer from mainnet to permissioned
+        BLOCKTYPE_TRANSFER(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Default block
+        BLOCKTYPE_REWARD(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Rewards of mining
+        BLOCKTYPE_TOKEN_CREATION(true, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Custom token issuance
+        BLOCKTYPE_USERDATA(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO User-defined data
+        BLOCKTYPE_VOS(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO Smart contracts
+        BLOCKTYPE_GOVERNANCE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO Governance of software
+        BLOCKTYPE_FILE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO User-defined file
+        BLOCKTYPE_VOS_EXECUTE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO VOS execution result
+        BLOCKTYPE_CROSSTANGLE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE); // TODO transfer from mainnet to permissioned
 
         private boolean allowCoinbaseTransaction;
         private int powMultiplier; // TODO use in reward calcs
@@ -212,11 +159,11 @@ public class Block extends Message {
 
     Block(NetworkParameters params, long setVersion) {
         this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, Block.Type.BLOCKTYPE_TRANSFER.ordinal(), 0, 0,
-                EASIEST_DIFFICULTY_TARGET);
+                NetworkParameters.EASIEST_DIFFICULTY_TARGET);
     }
 
     public Block(NetworkParameters params, long blockVersionGenesis, long type) {
-        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, type, 0, 0, EASIEST_DIFFICULTY_TARGET);
+        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, type, 0, 0, NetworkParameters.EASIEST_DIFFICULTY_TARGET);
     }
 
     public Block(NetworkParameters params, Block r1, Block r2) {
@@ -237,7 +184,7 @@ public class Block extends Message {
             long minTime, long lastMiningRewardBlock, long difficultyTarget) {
         super(params);
         // Set up a few basic things. We are not complete after this though.
-        this.version = Block.BLOCK_VERSION_GENESIS;
+        this.version = NetworkParameters.BLOCK_VERSION_GENESIS;
         this.difficultyTarget = difficultyTarget;
         this.lastMiningRewardBlock = lastMiningRewardBlock;
         this.time = System.currentTimeMillis() / 1000;
@@ -248,7 +195,7 @@ public class Block extends Message {
 
         this.blockType = blocktype;
         this.minerAddress = new byte[20];
-        length = HEADER_SIZE;
+        length = NetworkParameters.HEADER_SIZE;
         this.transactions = new ArrayList<>();
     }
 
@@ -334,7 +281,7 @@ public class Block extends Message {
      */
     protected void parseTransactions(final int transactionsOffset) throws ProtocolException {
         cursor = transactionsOffset;
-        optimalEncodingMessageSize = HEADER_SIZE;
+        optimalEncodingMessageSize = NetworkParameters.HEADER_SIZE;
         if (payload.length == cursor) {
             // This message is just a header, it has no transactions.
             transactionBytesValid = false;
@@ -393,8 +340,8 @@ public class Block extends Message {
     // default for testing
     void writeHeader(OutputStream stream) throws IOException {
         // try for cached write first
-        if (headerBytesValid && payload != null && payload.length >= offset + HEADER_SIZE) {
-            stream.write(payload, offset, HEADER_SIZE);
+        if (headerBytesValid && payload != null && payload.length >= offset + NetworkParameters.HEADER_SIZE) {
+            stream.write(payload, offset, NetworkParameters.HEADER_SIZE);
             return;
         }
         
@@ -431,7 +378,7 @@ public class Block extends Message {
 
         // confirmed we must have transactions either cached or as objects.
         if (transactionBytesValid && payload != null && payload.length >= offset + length) {
-            stream.write(payload, offset + HEADER_SIZE, length - HEADER_SIZE);
+            stream.write(payload, offset + NetworkParameters.HEADER_SIZE, length - NetworkParameters.HEADER_SIZE);
             return;
         }
 
@@ -468,7 +415,7 @@ public class Block extends Message {
         // At least one of the two cacheable components is invalid
         // so fall back to stream write since we can't be sure of the length.
         ByteArrayOutputStream stream = new UnsafeByteArrayOutputStream(
-                length == UNKNOWN_LENGTH ? HEADER_SIZE + guessTransactionsLength() : length);
+                length == UNKNOWN_LENGTH ? NetworkParameters.HEADER_SIZE + guessTransactionsLength() : length);
         try {
             writeHeader(stream);
             writePoW(stream);
@@ -498,7 +445,7 @@ public class Block extends Message {
      */
     private int guessTransactionsLength() {
         if (transactionBytesValid)
-            return payload.length - HEADER_SIZE;
+            return payload.length - NetworkParameters.HEADER_SIZE;
         if (transactions == null)
             return 0;
         int len = VarInt.sizeOf(transactions.size());
@@ -545,7 +492,7 @@ public class Block extends Message {
      */
     private Sha256Hash calculateHash() {
         try {
-            ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(HEADER_SIZE);
+            ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(NetworkParameters.HEADER_SIZE);
             writeHeader(bos);
             return Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bos.toByteArray()));
         } catch (IOException e) {
@@ -558,7 +505,7 @@ public class Block extends Message {
      */
     private Sha256Hash calculatePoWHash() {
         try {
-            ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(HEADER_SIZE);
+            ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(NetworkParameters.HEADER_SIZE);
             writeHeader(bos);
             return Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bos.toByteArray()));
         } catch (IOException e) {
@@ -609,7 +556,7 @@ public class Block extends Message {
 
     /** Returns a copy of the block */
     public Block cloneAsHeader() {
-        Block block = new Block(params, BLOCK_VERSION_GENESIS);
+        Block block = new Block(params, NetworkParameters.BLOCK_VERSION_GENESIS);
         copyBitcoinHeaderTo(block);
         return block;
     }
@@ -756,7 +703,7 @@ public class Block extends Message {
     private void checkTimestamp() throws VerificationException {
         // Allow injection of a fake clock to allow unit testing.
         long currentTime = Utils.currentTimeSeconds();
-        if (time > currentTime + ALLOWED_TIME_DRIFT)
+        if (time > currentTime + NetworkParameters.ALLOWED_TIME_DRIFT)
             throw new TimeTravelerException(); // TODO this shouldn't throw because it does not make the block invalid forever.
     }
 
@@ -768,7 +715,7 @@ public class Block extends Message {
         for (Transaction tx : transactions) {
             sigOps += tx.getSigOpCount();
         }
-        if (sigOps > MAX_BLOCK_SIGOPS)
+        if (sigOps > NetworkParameters.MAX_BLOCK_SIGOPS)
             throw new SigOpsException();
     }
 
@@ -923,7 +870,7 @@ public class Block extends Message {
      * @throws VerificationException
      *             if there was an error verifying the block.
      */
-    public void verify(final int height, final EnumSet<VerifyFlag> flags) throws VerificationException {
+    public void verify(final int height) throws VerificationException {
         verifyHeader();
         verifyTransactions();
     }

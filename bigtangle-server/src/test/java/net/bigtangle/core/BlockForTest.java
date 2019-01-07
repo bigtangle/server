@@ -13,11 +13,11 @@ public class BlockForTest {
 
     public static Block createNextBlock(Block block, @Nullable Address to, TransactionOutPoint prevOut,
             Block branchBlock) {
-        return block.createNextBlock(branchBlock, Block.BLOCK_VERSION_GENESIS, keyForTesting.getPubKeyHash());
+        return block.createNextBlock(branchBlock, NetworkParameters.BLOCK_VERSION_GENESIS, keyForTesting.getPubKeyHash());
     }
 
     public static Block createNextBlock(Block block, @Nullable Address to,  Block branchBlock) {
-        return block.createNextBlock(branchBlock, Block.BLOCK_VERSION_GENESIS, keyForTesting.getPubKeyHash());
+        return block.createNextBlock(branchBlock, NetworkParameters.BLOCK_VERSION_GENESIS, keyForTesting.getPubKeyHash());
     }
 
     public static Block createNextBlock(Block block, Address to, long version, long time, int blockHeight,

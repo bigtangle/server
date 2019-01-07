@@ -78,7 +78,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         OrderPublish orderPublish = getOrderResponse.getOrders().get(0);
 
         Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, outKey.getPubKeyHash());
+                NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKeyHash());
         Transaction transaction = new Transaction(this.networkParameters);
         transaction.setData(orderPublish.getOrderId().getBytes());
 

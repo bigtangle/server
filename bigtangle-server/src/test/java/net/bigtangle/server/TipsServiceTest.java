@@ -19,6 +19,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
@@ -44,14 +45,14 @@ public class TipsServiceTest extends AbstractIntegrationTest {
     public List<Block> createLinearBlock() throws Exception {
         List<Block> blocks = new ArrayList<Block>();
         Block rollingBlock1 = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
+                NetworkParameters.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
         blockGraph.add(rollingBlock1,true);
         blocks.add(rollingBlock1);
        //log.debug("create block, hash : " + rollingBlock1.getHashAsString());
 
         Block rollingBlock = rollingBlock1;
         for (int i = 1; i < 5; i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS,networkParameters.getGenesisBlock());
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS,networkParameters.getGenesisBlock());
             blockGraph.add(rollingBlock,true);
            log.debug("create block, hash : " + rollingBlock.getHashAsString());
             blocks.add(rollingBlock);
@@ -62,13 +63,13 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
     public List<Block> createBlock() throws Exception {
 
-        Block b0 = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS,
+        Block b0 = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS,
                 networkParameters.getGenesisBlock());
-        Block b1 = BlockForTest.createNextBlock(b0, Block.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
-        Block b2 = BlockForTest.createNextBlock(b1, Block.BLOCK_VERSION_GENESIS, b0);
-        Block b3 = BlockForTest.createNextBlock(b1, Block.BLOCK_VERSION_GENESIS, b2);
-        Block b4 = BlockForTest.createNextBlock(b3, Block.BLOCK_VERSION_GENESIS,b2);
-        Block b5 = BlockForTest.createNextBlock(b4, Block.BLOCK_VERSION_GENESIS, b1);
+        Block b1 = BlockForTest.createNextBlock(b0, NetworkParameters.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
+        Block b2 = BlockForTest.createNextBlock(b1, NetworkParameters.BLOCK_VERSION_GENESIS, b0);
+        Block b3 = BlockForTest.createNextBlock(b1, NetworkParameters.BLOCK_VERSION_GENESIS, b2);
+        Block b4 = BlockForTest.createNextBlock(b3, NetworkParameters.BLOCK_VERSION_GENESIS,b2);
+        Block b5 = BlockForTest.createNextBlock(b4, NetworkParameters.BLOCK_VERSION_GENESIS, b1);
         List<Block> blocks = new ArrayList<Block>();
         blocks.add(b0);
         blocks.add(b1);
@@ -105,7 +106,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         	Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
             Block r1 = blockService.getBlock(tipsToApprove.getLeft());
             Block r2 = blockService.getBlock(tipsToApprove.getRight());
-            Block rollingBlock = BlockForTest.createNextBlock(r2, Block.BLOCK_VERSION_GENESIS,r1);
+            Block rollingBlock = BlockForTest.createNextBlock(r2, NetworkParameters.BLOCK_VERSION_GENESIS,r1);
             blockGraph.add(rollingBlock,true);
            log.debug("create block  : " + i + " " + rollingBlock);
         }

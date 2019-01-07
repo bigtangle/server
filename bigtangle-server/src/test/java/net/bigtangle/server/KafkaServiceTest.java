@@ -56,13 +56,13 @@ public class KafkaServiceTest extends AbstractIntegrationTest {
 
         // Build some blocks on genesis block to create a spendable output
         Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
+                NetworkParameters.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
         blockGraph.add(rollingBlock, true);
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
         byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
         for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS,
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS,
                     networkParameters.getGenesisBlock());
             kafkaMessageProducer.sendMessage(rollingBlock.bitcoinSerialize());
         }
@@ -108,14 +108,14 @@ public class KafkaServiceTest extends AbstractIntegrationTest {
 
         // Build some blocks on genesis block to create a spendable output.
         Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
-                Block.BLOCK_VERSION_GENESIS, 
+                NetworkParameters.BLOCK_VERSION_GENESIS, 
                 networkParameters.getGenesisBlock());
         kafkaMessageProducer.sendMessage(rollingBlock.bitcoinSerialize());
 //        Transaction transaction = rollingBlock.getTransactions().get(0);
 //        TransactionOutPoint spendableOutput = new TransactionOutPoint(networkParameters, 0, transaction.getHash());
 //        byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
         for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, Block.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
             kafkaMessageProducer.sendMessage(rollingBlock.bitcoinSerialize());
         }
     }

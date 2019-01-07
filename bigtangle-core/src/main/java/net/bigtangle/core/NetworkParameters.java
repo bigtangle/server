@@ -33,11 +33,11 @@ import javax.annotation.Nullable;
 
 import com.google.common.base.Objects;
 
+import net.bigtangle.equihash.EquihashProof;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.utils.MonetaryFormat;
-import net.bigtangle.utils.VersionTally;
 
 /**
  * <p>
@@ -55,6 +55,8 @@ import net.bigtangle.utils.VersionTally;
  * </p>
  */
 public abstract class NetworkParameters {
+    
+    // TODO Mainnet release
     
 	/**
 	 * The string returned by getId() for the main, production network where people
@@ -118,8 +120,53 @@ public abstract class NetworkParameters {
     protected int equihashN;
     protected int equihashK;
 
+    /**
+     * The version number at the start of the network.
+     */
+    public static final long BLOCK_VERSION_GENESIS = 1;
+
+    /**
+     * A value for difficultyTarget (nBits) that allows half of all possible
+     * hash solutions. Used in unit testing.
+     */
+    public static final long EASIEST_DIFFICULTY_TARGET = 0x207fFFFFL;
+    
+    /**
+     * A constant shared by the entire network: how large in bytes a block is
+     * allowed to be. One day we may have to upgrade everyone to change this, so
+     * Bitcoin can continue to grow. For now it exists as an anti-DoS measure to
+     * avoid somebody creating a titanically huge but valid block and forcing
+     * everyone to download/store it forever.
+     */
+    public static final int MAX_DEFAULT_BLOCK_SIZE = 4 * 1000;
+
+    /**
+     * A "sigop" is a signature verification operation. Because they're
+     * expensive we also impose a separate limit on the number in a block to
+     * prevent somebody mining a huge block that has way more sigops than
+     * normal, so is very expensive/slow to verify.
+     */
+    public static final int MAX_BLOCK_SIGOPS = MAX_DEFAULT_BLOCK_SIZE / 50;
+
+    /**
+     * The maximum allowed time drift of blocks into the future in seconds.
+     */
+    public static final long ALLOWED_TIME_DRIFT = 5 * 60; 
+
+    /**
+     * How many bytes are required to represent a block header WITHOUT the
+     * trailing 00 length byte.
+     */
+    public static final int HEADER_SIZE = 80 // bitcoin
+            + 32 // additional branch prev block
+            + 2 * 4 // time and difftarget from int to long
+            + 8 // sequence (lastMiningReward) long
+            + 20 // miner address
+            + 4 // blockType
+            + (USE_EQUIHASH ? EquihashProof.BYTE_LENGTH : 0); // for Equihash
+
+
     // Reward and Difficulty Synchronization
-    // TODO Mainnet setup
     public static final long REWARD_INITIAL_TX_REWARD = 10L;
     public static final long REWARD_MIN_HEIGHT_DIFFERENCE = 2;
     public static final int REWARD_HEIGHT_INTERVAL = 5; 
@@ -143,11 +190,11 @@ public abstract class NetworkParameters {
 	}
 
 	public static Block createGenesis(NetworkParameters params) {
-		Block genesisBlock = new Block(params, Block.BLOCK_VERSION_GENESIS, Block.Type.BLOCKTYPE_INITIAL.ordinal());
+		Block genesisBlock = new Block(params, NetworkParameters.BLOCK_VERSION_GENESIS, Block.Type.BLOCKTYPE_INITIAL.ordinal());
 		genesisBlock.setTime(1532896109L);
 		
 		// 1 in 4 blocks shall be correct
-		BigInteger diff = Utils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET); // TODO Mainnet setup all of this
+		BigInteger diff = Utils.decodeCompactBits(NetworkParameters.EASIEST_DIFFICULTY_TARGET); 
 		genesisBlock.setDifficultyTarget(Utils.encodeCompactBits(diff.divide(BigInteger.valueOf(2))));
 
 		Transaction coinbase = new Transaction(params);
@@ -222,27 +269,6 @@ public abstract class NetworkParameters {
 
 	public int getSpendableCoinbaseDepth() {
 		return spendableCoinbaseDepth;
-	}
-
-	/**
-	 * Returns true if the block height is either not a checkpoint, or is a
-	 * checkpoint and the hash matches.
-	 */
-	public boolean passesCheckpoint(long height, Sha256Hash hash) {
-		Sha256Hash checkpointHash = checkpoints.get(height);
-		return checkpointHash == null || checkpointHash.equals(hash);
-	}
-
-	/**
-	 * Returns true if the given height has a recorded checkpoint.
-	 */
-	public boolean isCheckpoint(long height) {
-		Sha256Hash checkpointHash = checkpoints.get(height);
-		return checkpointHash != null;
-	}
-
-	public int getSubsidyDecreaseBlockCount() {
-		return subsidyDecreaseBlockCount;
 	}
 
 	/**
@@ -432,29 +458,6 @@ public abstract class NetworkParameters {
 	public int getMajorityWindow() {
 		return majorityWindow;
 	}
-
-	/**
-	 * The flags indicating which block validation tests should be applied to the
-	 * given block. Enables support for alternative blockchains which enable tests
-	 * based on different criteria.
-	 * 
-	 * @param block
-	 *            block to determine flags for.
-	 * @param height
-	 *            height of the block, if known, null otherwise. Returned tests
-	 *            should be a safe subset if block height is unknown.
-	 */
-	public EnumSet<Block.VerifyFlag> getBlockVerificationFlags(final Block block, final VersionTally tally,
-			final long height) {
-		final EnumSet<Block.VerifyFlag> flags = EnumSet.noneOf(Block.VerifyFlag.class);
-
-		return flags;
-	}
-	
-    public EnumSet<Script.VerifyFlag> getTransactionVerificationFlags(final Block block, final Transaction transaction,
-            final VersionTally tally) {
-        return getTransactionVerificationFlags(block, transaction);
-    }
 
 	/**
 	 * The flags indicating which script validation tests should be applied to the

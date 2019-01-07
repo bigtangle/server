@@ -1382,7 +1382,7 @@ public class Transaction extends ChildMessage {
      * @throws VerificationException
      */
     public void verify() throws VerificationException {
-        if (this.getMessageSize() > Block.MAX_DEFAULT_BLOCK_SIZE)
+        if (this.getMessageSize() > NetworkParameters.MAX_DEFAULT_BLOCK_SIZE)
             throw new VerificationException.LargerThanMaxBlockSize();
 
         HashSet<TransactionOutPoint> outpoints = new HashSet<TransactionOutPoint>();

@@ -39,7 +39,7 @@ public class StoredBlock {
     // graph. As of May 2011 it takes 8
     // bytes to represent this field, so 12 bytes should be plenty for now.
 
-    public static final int COMPACT_SERIALIZED_SIZE = Block.HEADER_SIZE + 4; // for
+    public static final int COMPACT_SERIALIZED_SIZE = NetworkParameters.HEADER_SIZE + 4; // for
                                                                              // height
 
     private Block header;
@@ -90,12 +90,12 @@ public class StoredBlock {
         // Stored blocks track total work done in this graph, because the
         // canonical graph is the one that represents
         // the largest amount of work done not the tallest.
-        long height = Block.BLOCK_HEIGHT_UNKNOWN;
         if (storedPrev != null && storedPrevBranch != null) {
-            height = Math.max(storedPrev.getHeight(), storedPrevBranch.getHeight()) + 1;
+            return new StoredBlock(block, Math.max(storedPrev.getHeight(), storedPrevBranch.getHeight()) + 1);
+        } else {
+            // Cannot happen.
+            throw new RuntimeException("Cannot build StoredBlock without predecessors.");
         }
-
-        return new StoredBlock(block, height);
     }
 
     /**
@@ -125,7 +125,7 @@ public class StoredBlock {
         // same bytes we read off the wire,
         // avoiding serialization round-trips.
         byte[] bytes = getHeader().unsafeBitcoinSerialize();
-        buffer.put(bytes, 0, Block.HEADER_SIZE); // Trim the trailing 00 byte
+        buffer.put(bytes, 0, NetworkParameters.HEADER_SIZE); // Trim the trailing 00 byte
                                                  // (zero transactions).
     }
 
@@ -136,10 +136,10 @@ public class StoredBlock {
     public static StoredBlock deserializeCompact(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
 
         int height = buffer.getInt(); // +4 bytes
-        byte[] header = new byte[Block.HEADER_SIZE + 1]; // Extra byte for the
+        byte[] header = new byte[NetworkParameters.HEADER_SIZE + 1]; // Extra byte for the
                                                          // 00 transactions
                                                          // length.
-        buffer.get(header, 0, Block.HEADER_SIZE);
+        buffer.get(header, 0, NetworkParameters.HEADER_SIZE);
         return new StoredBlock(params.getDefaultSerializer().makeBlock(header), height);
     }
 

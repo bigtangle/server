@@ -938,13 +938,8 @@ public class ValidatorService {
             List<Future<VerificationException>> listScriptVerificationResults = new ArrayList<Future<VerificationException>>(
                     block.getTransactions().size());
 
-            if (!params.isCheckpoint(height)) {
-                for (Transaction tx : block.getTransactions()) {
-                    final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx);
-
-                    if (verifyFlags.contains(VerifyFlag.P2SH))
-                        sigOps += tx.getSigOpCount();
-                }
+            for (Transaction tx : block.getTransactions()) {
+                sigOps += tx.getSigOpCount();
             }
 
             for (final Transaction tx : block.getTransactions()) {
@@ -974,7 +969,7 @@ public class ValidatorService {
                         if (verifyFlags.contains(VerifyFlag.P2SH)) {
                             if (prevOut.getScript().isPayToScriptHash())
                                 sigOps += Script.getP2SHSigOpCount(in.getScriptBytes());
-                            if (sigOps > Block.MAX_BLOCK_SIGOPS)
+                            if (sigOps > NetworkParameters.MAX_BLOCK_SIGOPS)
                                 throw new SigOpsException();
                         }
                         prevOutScripts.add(prevOut.getScript());
