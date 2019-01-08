@@ -526,7 +526,7 @@ public class ValidatorService {
                 case INELIGIBLE:
                     // Overruled?
                     return (!(b.getBlockEvaluation().getRating() > NetworkParameters.MILESTONE_UPPER_THRESHOLD
-                            && b.getBlockEvaluation().getInsertTime() < System.currentTimeMillis() / 1000 - NetworkParameters.REWARD_OVERRULE_TIME));
+                            && b.getBlockEvaluation().getInsertTime() < System.currentTimeMillis() - NetworkParameters.REWARD_OVERRULE_TIME_MS));
                 case INVALID:
                     // Never eligible
                     return true;
