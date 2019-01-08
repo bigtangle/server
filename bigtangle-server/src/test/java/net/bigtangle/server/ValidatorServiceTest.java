@@ -69,6 +69,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     // TODO code coverage
     // TODO drop string from everywhere, stop using sha256hash.wrap!
+    // TODO field mutations check
     
     @Test
     public void testConflictTransactionalUTXO() throws Exception {
@@ -1195,30 +1196,63 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     */
     
     @Test
-    public void testSolidityTokenMutatedData() throws Exception {
+    public void testSolidityTokenMalformedData() throws Exception {
         store.resetStore();
         
         // Generate an eligible issuance tokenInfo
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
-        TokenInfo tokenInfo = new TokenInfo();
+        TokenInfo tokenInfo0 = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount, false, true);
-        tokenInfo.setTokens(tokens);
-        tokenInfo.getMultiSignAddresses()
+        tokenInfo0.setTokens(tokens);
+        tokenInfo0.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        // TODO 
+        
         // Make mutated versions of the data
-        // TODO
-        tokenInfo.setTokens(null);
+        // TODO tokeninfo1 is empty data, then 2 random bytes
+        TokenInfo tokenInfo3 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo4 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo5 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo6 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo7 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo8 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo9 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo10 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo11 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo12 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo13 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo14 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo15 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo16 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo17 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo18 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo19 = TokenInfo.parse(tokenInfo0.toByteArray());
+//        tokenInfo3.setTokens(null);
+//        tokenInfo4.setMultiSignAddresses(null);
+//        tokenInfo5.getTokens().setAmount(amount);
+//        tokenInfo5.getTokens().setBlockhash(blockhash);
+//        tokenInfo5.getTokens().setDescription(description);
+//        tokenInfo5.getTokens().setMultiserial(multiserial);
+//        tokenInfo5.getTokens().setPrevblockhash(prevblockhash);
+//        tokenInfo5.getTokens().setSignnumber(signnumber);
+//        tokenInfo5.getTokens().setTokenid(tokenid);
+//        tokenInfo5.getTokens().setTokenindex(tokenindex);
+//        tokenInfo5.getTokens().setTokenname(tokenname);
+//        tokenInfo5.getTokens().setTokenstop(tokenstop);
+//        tokenInfo5.getTokens().setTokentype(tokentype);
+//        tokenInfo5.getTokens().setUrl(url);
+        
+        
+        // TODO blcosk
 
         // Make block including it
         Block block = createNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
         
         // Coinbase with signatures
-        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
+        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo0);
         Transaction transaction = block.getTransactions().get(0);
         Sha256Hash sighash1 = transaction.getHash();
         ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);

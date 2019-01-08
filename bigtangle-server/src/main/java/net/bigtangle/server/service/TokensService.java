@@ -68,7 +68,7 @@ public class TokensService {
                 return;
             }
             byte[] buf = transaction.getData();
-            TokenInfo tokenInfo = new TokenInfo().parse(buf);
+            TokenInfo tokenInfo = TokenInfo.parse(buf);
 
             final String tokenid = tokenInfo.getTokens().getTokenid();
             Token tokens = this.store.getToken(tokenInfo.getTokens().getBlockhash());

@@ -85,17 +85,12 @@ public class StoredBlock {
      * Creates a new StoredBlock, calculating the additional fields by adding to
      * the values in this block.
      */
-    public static StoredBlock  build(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch)
+    public static StoredBlock  build(Block block, long height)
             throws VerificationException {
         // Stored blocks track total work done in this graph, because the
         // canonical graph is the one that represents
         // the largest amount of work done not the tallest.
-        if (storedPrev != null && storedPrevBranch != null) {
-            return new StoredBlock(block, Math.max(storedPrev.getHeight(), storedPrevBranch.getHeight()) + 1);
-        } else {
-            // Cannot happen.
-            throw new RuntimeException("Cannot build StoredBlock without predecessors.");
-        }
+        return new StoredBlock(block, height);
     }
 
     /**

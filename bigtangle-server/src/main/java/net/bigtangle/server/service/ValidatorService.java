@@ -72,6 +72,7 @@ import net.bigtangle.core.VerificationException.InvalidDependencyException;
 import net.bigtangle.core.VerificationException.InvalidSignatureException;
 import net.bigtangle.core.VerificationException.InvalidTokenOutputException;
 import net.bigtangle.core.VerificationException.InvalidTransactionDataException;
+import net.bigtangle.core.VerificationException.InvalidTransactionException;
 import net.bigtangle.core.VerificationException.MalformedTransactionDataException;
 import net.bigtangle.core.VerificationException.MissingDependencyException;
 import net.bigtangle.core.VerificationException.MissingTransactionDataException;
@@ -80,8 +81,6 @@ import net.bigtangle.core.VerificationException.PreviousTokenDisallowsException;
 import net.bigtangle.core.VerificationException.SigOpsException;
 import net.bigtangle.core.VerificationException.TimeReversionException;
 import net.bigtangle.core.VerificationException.TransactionInputsDisallowedException;
-import net.bigtangle.core.VerificationException.TransactionOutputsDisallowedException;
-import net.bigtangle.core.VerificationException.InvalidTransactionException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.Script.VerifyFlag;
@@ -1216,7 +1215,7 @@ public class ValidatorService {
         
         TokenInfo currentToken = null;
         try {
-            currentToken = new TokenInfo().parse(tx.getData());
+            currentToken = TokenInfo.parse(tx.getData());
         } catch (IOException e) {
             if (throwExceptions)
                 throw new MalformedTransactionDataException();
@@ -1317,6 +1316,7 @@ public class ValidatorService {
                 if (prevToken == null) {
                     if (throwExceptions)
                         throw new MissingDependencyException();
+                    // TODO catch IllegalArgumentException
                     return SolidityState.from(Sha256Hash.wrap(currentToken.getTokens().getPrevblockhash())); 
                 }
 
@@ -1407,6 +1407,7 @@ public class ValidatorService {
             byte[] pubKey = Utils.HEX.decode(multiSignBy.getPublickey());
             byte[] data = tx.getHash().getBytes();
             byte[] signature = Utils.HEX.decode(multiSignBy.getSignature());
+            // TODO catch pubkey wrong size, incorrect multisignby fields
             if (ECKey.verify(data, signature, pubKey)) {
                 signatureCount++;
             }

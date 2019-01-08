@@ -136,7 +136,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 // Otherwise, all dependencies exist and the block has been validated
                 try {
                     blockStore.beginDatabaseBatchWrite();
-                    connectBlock(block, storedPrev, storedPrevBranch, Math.max(storedPrev.getHeight(), storedPrevBranch.getHeight()) + 1);
+                    connect(block, Math.max(storedPrev.getHeight(), storedPrevBranch.getHeight()) + 1);
                     blockStore.commitDatabaseBatchWrite();
                     return true;
                 } catch (BlockStoreException e) {
@@ -155,12 +155,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void connectBlock(final Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height)
+    private void connect(final Block block, long height)
             throws BlockStoreException, VerificationException {
         checkState(lock.isHeldByCurrentThread());
         connectUTXOs(block, height);
-        connectTypeSpecificUTXOs(block, storedPrev, storedPrevBranch);
-        StoredBlock newBlock = StoredBlock.build(block, storedPrev, storedPrevBranch);
+        connectTypeSpecificUTXOs(block, height);
+        StoredBlock newBlock = StoredBlock.build(block, height);
         blockStore.put(newBlock, new StoredUndoableBlock(newBlock.getHeader().getHash(), block.getTransactions()));
         solidifyBlock(block);
     }
@@ -712,7 +712,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void connectTypeSpecificUTXOs(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch)
+    private void connectTypeSpecificUTXOs(Block block, long height)
             throws BlockStoreException {
         if (block.getBlockType() == Block.Type.BLOCKTYPE_REWARD) {
             // Check if eligible:
@@ -736,7 +736,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             if (tx.getData() != null) {
                 try {
                     byte[] buf = tx.getData();
-                    TokenInfo tokenInfo = new TokenInfo().parse(buf);
+                    TokenInfo tokenInfo = TokenInfo.parse(buf);
+                    
+                    // TODO correctly insert tokens! do not insert directly from the wire!
+                    
                     this.blockStore.insertToken(block.getHashAsString(), tokenInfo.getTokens());
                     for (MultiSignAddress permissionedAddress : tokenInfo.getMultiSignAddresses()) {
                         permissionedAddress.setBlockhash(block.getHashAsString()); // The primary key must be the correct block
@@ -755,9 +758,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * previous blocks and previous reward transaction. DOES NOT CHECK FOR SOLIDITY.
      * You have to ensure that the approved blocks result in an eligible reward block.
      * 
-     * @return Pair of mining reward transaction and boolean indicating whether
-     *         this mining reward transaction is eligible to be voted on at this
-     *         moment of time.
+     * @return mining reward transaction 
      * @throws BlockStoreException
      */
     public Transaction generateVirtualMiningRewardTX(Block block) throws BlockStoreException {

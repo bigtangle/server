@@ -175,7 +175,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
                 networkParameters.getGenesisBlock(), tx1);
         
         // Confirm
-        milestoneService.update();
+        blockGraph.confirm(spenderBlock.getHash());
         
         // Should be confirmed now
         final UTXO utxo1 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor());
@@ -216,7 +216,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
                 rollingBlock1.getHash(), rollingBlock1.getHash());
         
         // Confirm
-        milestoneService.update();
+        blockGraph.confirm(rewardBlock1.getHash());
 
         // Should be confirmed now
         assertTrue(store.getRewardConfirmed(rewardBlock1.getHash()));
@@ -254,6 +254,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // This (saveBlock) calls milestoneUpdate currently
         Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+        blockGraph.confirm(block1.getHash());
 
         // Should be confirmed now
         assertTrue(store.getTokenConfirmed(block1.getHash().toString()));
@@ -269,11 +270,11 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertNull(transactionService.getUTXO(tx11.getOutput(0).getOutPointFor()));
         assertNull(transactionService.getUTXO(tx11.getOutput(1).getOutPointFor()));
         
-        createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+        Block block = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
                 networkParameters.getGenesisBlock(), tx11);
         
         // Confirm
-        milestoneService.update();
+        blockGraph.confirm(block.getHash());
         
         // Should be confirmed now
         final UTXO utxo11 = transactionService.getUTXO(tx11.getOutput(0).getOutPointFor());
@@ -285,15 +286,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertFalse(utxo11.isSpent());
         assertFalse(utxo21.isSpent());
         
-        // Build alternate path
-        Block rollingBlock2 = networkParameters.getGenesisBlock();
-        for (int i = 0; i < 3; i++) {
-            rollingBlock2 = BlockForTest.createNextBlock(rollingBlock2, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock2);
-            blockGraph.add(rollingBlock2, true);     
-        }
-        
         // Unconfirm
-        milestoneService.update();
+        blockGraph.unconfirm(block.getHash());
         
         // Should be unconfirmed now
         final UTXO utxo1 = transactionService.getUTXO(tx11.getOutput(0).getOutPointFor());
@@ -332,20 +326,14 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
                 rollingBlock.getHash(), rollingBlock.getHash());
         
         // Confirm
-        milestoneService.update();
+        blockGraph.confirm(rewardBlock11.getHash());
         
         // Should be confirmed now
         assertTrue(store.getRewardConfirmed(rewardBlock11.getHash()));
         assertFalse(store.getRewardSpent(rewardBlock11.getHash()));
-
-        // Build alternate path
-        for (int i = 0; i < 5; i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
-            blockGraph.add(rollingBlock, true);     
-        }
         
         // Unconfirm
-        milestoneService.update();
+        blockGraph.unconfirm(rewardBlock11.getHash());
 
         // Should be unconfirmed now
         assertFalse(store.getRewardConfirmed(rewardBlock11.getHash()));
@@ -383,20 +371,14 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         
         // This (saveBlock) calls milestoneUpdate currently
         Block block11 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+        blockGraph.confirm(block11.getHash());
         
         // Should be confirmed now
         assertTrue(store.getTokenConfirmed(block11.getHash().toString()));
         assertFalse(store.getTokenSpent(block11.getHash().toString()));
-
-        // Build alternate path
-        Block rollingBlock2 = networkParameters.getGenesisBlock();
-        for (int i = 0; i < 3; i++) {
-            rollingBlock2 = BlockForTest.createNextBlock(rollingBlock2, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock2);
-            blockGraph.add(rollingBlock2, true);     
-        }
         
         // Unconfirm
-        milestoneService.update();
+        blockGraph.unconfirm(block11.getHash());
 
         // Should be unconfirmed now
         assertFalse(store.getTokenConfirmed(block11.getHash().toString()));

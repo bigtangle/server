@@ -1086,7 +1086,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
         Transaction transaction = block0.getTransactions().get(0);
 
-        TokenInfo updateTokenInfo = new TokenInfo().parse(transaction.getData());
+        TokenInfo updateTokenInfo = TokenInfo.parse(transaction.getData());
         updateTokenInfo.getTokens().setTokenname("UPDATE_TOKEN");
         ECKey key4 = keys.get(3);
         updateTokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key4.getPublicKeyAsHex()));

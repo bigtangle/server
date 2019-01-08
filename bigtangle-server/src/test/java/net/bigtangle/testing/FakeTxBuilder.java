@@ -292,7 +292,7 @@ public class FakeTxBuilder {
             b.solve();
             BlockPair pair = new BlockPair();
             pair.block = b;
-            pair.storedBlock = StoredBlock.build(b, previousStoredBlock, previousStoredBlock);
+            pair.storedBlock = StoredBlock.build(b, height);
             blockStore.put(pair.storedBlock);
             // blockStore.setChainHead(pair.storedBlock);
             return pair;

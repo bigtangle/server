@@ -3568,7 +3568,13 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
     // for unit tests
     public Block saveTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey,
             Sha256Hash overrideHash1, Sha256Hash overrideHash2) throws JsonProcessingException, Exception {
+        Block block = makeTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, overrideHash1, overrideHash2);
+        OkHttp3Util.post(serverurl + ReqCmd.multiSign.name(), block.bitcoinSerialize());
+        return block;
+    }
 
+    private Block makeTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey,
+            Sha256Hash overrideHash1, Sha256Hash overrideHash2) throws Exception, JsonProcessingException {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(serverurl + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -3603,7 +3609,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
 
         // save block
         block.solve();
-        OkHttp3Util.post(serverurl + ReqCmd.multiSign.name(), block.bitcoinSerialize());
         return block;
     }
 
