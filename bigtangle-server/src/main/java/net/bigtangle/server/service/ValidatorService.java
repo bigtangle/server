@@ -170,7 +170,8 @@ public class ValidatorService {
     
     /**
      * NOTE: The reward block is assumed to having successfully gone through checkRewardSolidity beforehand!
-     * For connecting purposes, checks if the given rewardBlock is eligible now.
+     * For connecting purposes, checks if the given rewardBlock is eligible NOW.
+     * In Spark, this would be calculated delayed and free.
      * 
      * @param rewardBlock
      * @return eligibility of rewards + new perTxReward)
@@ -200,7 +201,7 @@ public class ValidatorService {
      * Computes eligibility of rewards + data tx + Pair.of(new difficulty + new perTxReward) here for new reward blocks. 
      * This is a prototype implementation. In the actual Spark implementation, 
      * the computational cost is not a problem, since it is instead backpropagated and calculated for free with delay.
-     * For more info, see Jdbctest notes.
+     * For more info, see notes.
      * 
      * @param prevTrunk a predecessor block in the db
      * @param prevBranch a predecessor block in the db
@@ -344,6 +345,10 @@ public class ValidatorService {
      * @throws BlockStoreException 
      */
     public boolean isEligibleForApprovalSelection(HashSet<BlockWrap> currentApprovedNonMilestoneBlocks) throws BlockStoreException {
+        // Currently ineligible blocks are not ineligible. If we find one, we must stop
+        if (!findWhereCurrentlyIneligible(currentApprovedNonMilestoneBlocks).isEmpty())
+            return false;
+        
         // If there exists a new block whose dependency is already spent
         // (conflicting with milestone) or not confirmed yet (missing other milestones), we fail to
         // approve this block since the current milestone takes precedence / doesn't allow for the addition of these blocks
@@ -369,7 +374,6 @@ public class ValidatorService {
      * @param block
      *            The block to check for eligibility.
      * @param currentApprovedNonMilestoneBlocks
-     *            THIS SET IS ASSUMED TO BE COMPATIBLE WITH THE MILESTONE.
      *            The set of all currently approved non-milestone blocks. 
      * @return true if the given block is eligible to be walked to during
      *         approval tip selection.
@@ -386,24 +390,9 @@ public class ValidatorService {
         @SuppressWarnings("unchecked")
         HashSet<BlockWrap> allApprovedNonMilestoneBlocks = (HashSet<BlockWrap>) currentApprovedNonMilestoneBlocks.clone();
         blockService.addApprovedNonMilestoneBlocksTo(allApprovedNonMilestoneBlocks, block);
-        @SuppressWarnings("unchecked")
-        HashSet<BlockWrap> newApprovedNonMilestoneBlocks = (HashSet<BlockWrap>) allApprovedNonMilestoneBlocks.clone();
-        newApprovedNonMilestoneBlocks.removeAll(currentApprovedNonMilestoneBlocks);
 
-        // If there exists a new block whose dependency is already spent
-        // (conflicting with milestone) or not confirmed yet (missing other milestones), we fail to
-        // approve this block since the current milestone takes precedence / doesn't allow for the addition of these blocks
-        if (findBlockWithSpentOrUnconfirmedInputs(newApprovedNonMilestoneBlocks))
-            return false;
-
-        // If conflicts among the approved non-milestone blocks exist, cannot approve
-        HashSet<ConflictCandidate> conflictingOutPoints = new HashSet<>();
-        findCandidateConflicts(allApprovedNonMilestoneBlocks, conflictingOutPoints);
-        if (!conflictingOutPoints.isEmpty())
-            return false;
-
-        // Otherwise, the new approved block set is compatible with current milestone
-        return true;
+        // If this set of blocks is eligible, all is fine
+        return isEligibleForApprovalSelection(allApprovedNonMilestoneBlocks);
     }
     
     
@@ -464,9 +453,101 @@ public class ValidatorService {
                 .isPresent();
     }
 
+    // disallow unconfirmed prev UTXOs and spent UTXOs if
+    // unmaintained (unundoable) spend
+    /**
+     * Resolves all conflicts such that the milestone is compatible with all blocks remaining in the set of blocks. 
+     * If not allowing unconfirming losing milestones, the milestones are always prioritized over non-milestone candidates.
+     * 
+     * @param blocksToAdd the set of blocks to add to the current milestone
+     * @param unconfirmLosingMilestones if false, the milestones are always prioritized over non-milestone candidates.
+     * @throws BlockStoreException
+     */
+    public void resolveAllConflicts(Set<BlockWrap> blocksToAdd, boolean unconfirmLosingMilestones)
+            throws BlockStoreException {
+        // Remove currently ineligible blocks
+        // i.e. for reward blocks: invalid never, ineligible overrule, eligible ok
+        // If ineligible, overrule by sufficient age and milestone rating range
+        removeWhereCurrentlyIneligible(blocksToAdd);
+        
+        // Remove blocks and their approvers that have at least one input
+        // with its corresponding output not confirmed yet
+        removeWhereUsedOutputsUnconfirmed(blocksToAdd);
+
+        // Resolve conflicting block combinations:
+        // Disallow conflicts with unmaintained/pruned milestone blocks,
+        //  i.e. remove those whose input is already spent by such blocks
+        resolvePrunedConflicts(blocksToAdd);
+        
+        // Then resolve conflicts between maintained milestone + new candidates
+        // This may trigger reorgs, i.e. unconfirming current milestones!
+        resolveUndoableConflicts(blocksToAdd, unconfirmLosingMilestones);
+
+        // Remove blocks and their approvers that have at least one input
+        // with its corresponding output not confirmed yet
+        // This is needed since reorgs could have been triggered
+        removeWhereUsedOutputsUnconfirmed(blocksToAdd);
+    }
+
+    /**
+     * Remove blocks from blocksToAdd that are currently locally ineligible.
+     * 
+     * @param blocksToAdd
+     * @throws BlockStoreException
+     */
+    private void removeWhereCurrentlyIneligible(Set<BlockWrap> blocksToAdd) {
+        findWhereCurrentlyIneligible(blocksToAdd)
+        .forEach(b -> {
+            try {
+                blockService.removeBlockAndApproversFrom(blocksToAdd, b);
+            } catch (BlockStoreException e) {
+                // Cannot happen.
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    /**
+     * Find blocks from blocksToAdd that are currently locally ineligible.
+     * 
+     * @param blocksToAdd
+     * @throws BlockStoreException
+     */
+    private Set<BlockWrap> findWhereCurrentlyIneligible(Set<BlockWrap> blocksToAdd) {
+        return blocksToAdd.stream()
+        .filter(b -> b.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD) // prefilter for reward blocks
+        .filter(b -> {
+            try {
+                switch (store.getRewardEligible(b.getBlock().getHash())) {
+                case ELIGIBLE:
+                    // OK
+                    return false;
+                case INELIGIBLE:
+                    // Overruled?
+                    return (!(b.getBlockEvaluation().getRating() > NetworkParameters.MILESTONE_UPPER_THRESHOLD
+                            && b.getBlockEvaluation().getInsertTime() < System.currentTimeMillis() / 1000 - NetworkParameters.REWARD_OVERRULE_TIME));
+                case INVALID:
+                    // Never eligible
+                    return true;
+                case UNKNOWN:
+                    // Cannot happen in non-Spark implementation.
+                    return true;
+                default:
+                    throw new NotImplementedException();
+                
+                }
+            } catch (BlockStoreException e) {
+                // Cannot happen.
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+        }).collect(Collectors.toSet());
+    }
+
     /**
      * Remove blocks from blocksToAdd that have at least one used output not
-     * confirmed yet. They may however be spent already -> conflict.
+     * confirmed yet. They may however be spent already, since this leads to conflicts.
      * 
      * @param blocksToAdd
      * @throws BlockStoreException
@@ -493,62 +574,6 @@ public class ValidatorService {
                 throw new RuntimeException(e);
             }
         });
-
-        // Additionally, for reward blocks: invalid never, ineligible overrule, eligible ok
-        // If ineligible, overrule by sufficient age and milestone rating range
-        new HashSet<BlockWrap>(blocksToAdd).stream()
-        .filter(b -> b.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD) // prefilter for reward blocks
-        .forEach(b -> {
-            try {
-                switch (store.getRewardEligible(b.getBlock().getHash())) {
-                case ELIGIBLE:
-                    // OK
-                    break;
-                case INELIGIBLE:
-                    if (!(b.getBlockEvaluation().getRating() > NetworkParameters.MILESTONE_UPPER_THRESHOLD
-                            && b.getBlockEvaluation().getInsertTime() < System.currentTimeMillis() / 1000 - NetworkParameters.REWARD_OVERRULE_TIME)) 
-                        blockService.removeBlockAndApproversFrom(blocksToAdd, b);
-                    break;
-                case INVALID:
-                    blockService.removeBlockAndApproversFrom(blocksToAdd, b);
-                    break;
-                case UNKNOWN:
-                    // Cannot happen in non-Spark implementation.
-                    blockService.removeBlockAndApproversFrom(blocksToAdd, b);
-                    break;
-                default:
-                    throw new NotImplementedException();
-                
-                }
-            } catch (BlockStoreException e) {
-                // Cannot happen.
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
-        });
-    }
-
-    // disallow unconfirmed prev UTXOs and spent UTXOs if
-    // unmaintained (unundoable) spend
-    public void resolveAllConflicts(Set<BlockWrap> blocksToAdd, boolean unconfirmLosingMilestones)
-            throws BlockStoreException {
-        // Remove blocks and their approvers that have at least one input
-        // with its corresponding output not confirmed yet
-        removeWhereUsedOutputsUnconfirmed(blocksToAdd);
-
-        // Resolve conflicting block combinations:
-        // Disallow conflicts with unmaintained/pruned milestone blocks,
-        //  i.e. remove those whose input is already spent by such blocks
-        resolvePrunedConflicts(blocksToAdd);
-        
-        // Then resolve conflicts between maintained milestone + new candidates
-        // This may trigger reorgs, i.e. unconfirming current milestones!
-        resolveUndoableConflicts(blocksToAdd, unconfirmLosingMilestones);
-
-        // Remove blocks and their approvers that have at least one input
-        // with its corresponding output not confirmed yet
-        // This is needed since reorgs could have been triggered
-        removeWhereUsedOutputsUnconfirmed(blocksToAdd);
     }
 
     private void resolvePrunedConflicts(Set<BlockWrap> blocksToAdd) throws BlockStoreException {
@@ -597,8 +622,9 @@ public class ValidatorService {
         for (BlockWrap b : conflictingMilestoneBlocks.stream().filter(b -> losingBlocks.contains(b))
                 .collect(Collectors.toList())) {
             if (!unconfirmLosingMilestones) {
+                // Cannot happen since milestones are preferred during conflict sorting
                 logger.error("Cannot unconfirm milestone blocks when not allowing unconfirmation!");
-                break;
+                throw new RuntimeException("Cannot unconfirm milestone blocks when not allowing unconfirmation!");
             }
 
             blockService.unconfirm(b.getBlockEvaluation());

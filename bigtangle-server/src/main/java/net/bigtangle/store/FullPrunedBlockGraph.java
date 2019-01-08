@@ -366,7 +366,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         Transaction tx = generateVirtualMiningRewardTX(block);
         
         // If virtual reward tx outputs have not been inserted yet, insert them        
-        tryInsertReward(block, tx);
+        insertReward(block, tx);
         
         // Set virtual reward tx outputs to true
         confirmTransaction(tx, block.getHash());
@@ -378,7 +378,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.updateRewardConfirmed(block.getHash(), true);
     }
 
-    private void tryInsertReward(Block block, Transaction virtualTx) {
+    private void insertReward(Block block, Transaction virtualTx) {
         try {
             ArrayList<Transaction> txs = new ArrayList<Transaction>();
             txs.add(virtualTx);
@@ -754,7 +754,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * @return mining reward transaction 
      * @throws BlockStoreException
      */
-    // TODO only needs to be called once: confirm. all other can be replaced
     public Transaction generateVirtualMiningRewardTX(Block block) throws BlockStoreException {
         
         Sha256Hash prevRewardHash = null;
