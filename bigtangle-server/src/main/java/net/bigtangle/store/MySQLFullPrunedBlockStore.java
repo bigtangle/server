@@ -33,6 +33,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    settingvalue blob,\n" 
             + "    CONSTRAINT setting_pk PRIMARY KEY (name)  \n" + ")\n";
 
+    // TODO lower the sizes of stuff to their exact size limitations! use NetworkParameters!
     private static final String CREATE_BLOCKS_TABLE = "CREATE TABLE blocks (\n"
             + "    hash varbinary(32) NOT NULL,\n"
             + "    height bigint NOT NULL,\n"
