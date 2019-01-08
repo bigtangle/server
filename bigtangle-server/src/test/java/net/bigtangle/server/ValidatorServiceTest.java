@@ -1039,7 +1039,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testSolidityRewardTxWithMalformedRewardInfo() throws Exception {
+    public void testSolidityRewardTxMalformedData1() throws Exception {
         store.resetStore();
         Block rollingBlock = networkParameters.getGenesisBlock();
 
@@ -1065,7 +1065,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testSolidityRewardMutatedRewardInfo() throws Exception {
+    public void testSolidityRewardTxMalformedData2() throws Exception {
         store.resetStore();
         Block rollingBlock = networkParameters.getGenesisBlock();
 
@@ -1168,8 +1168,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     
     @Test
     public void testSolidityTokenMalformedData() throws Exception {
-        
         store.resetStore();
+        ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         
         // Generate an eligible issuance tokenInfo
         ECKey outKey = walletKeys.get(0);
@@ -1183,6 +1183,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
         
         // Make mutated versions of the data
+        //1: data null
+        //2: sigdata null
         TokenInfo tokenInfo3 = TokenInfo.parse(tokenInfo0.toByteArray());
         TokenInfo tokenInfo4 = TokenInfo.parse(tokenInfo0.toByteArray());
         TokenInfo tokenInfo5 = TokenInfo.parse(tokenInfo0.toByteArray());
@@ -1200,21 +1202,44 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         TokenInfo tokenInfo17 = TokenInfo.parse(tokenInfo0.toByteArray());
         TokenInfo tokenInfo18 = TokenInfo.parse(tokenInfo0.toByteArray());
         TokenInfo tokenInfo19 = TokenInfo.parse(tokenInfo0.toByteArray());
-//        tokenInfo3.setTokens(null);
-//        tokenInfo4.setMultiSignAddresses(null);
-//        tokenInfo5.getTokens().setAmount(amount);
-//        tokenInfo5.getTokens().setBlockhash(blockhash);
-//        tokenInfo5.getTokens().setDescription(description);
-//        tokenInfo5.getTokens().setMultiserial(multiserial);
-//        tokenInfo5.getTokens().setPrevblockhash(prevblockhash);
-//        tokenInfo5.getTokens().setSignnumber(signnumber);
-//        tokenInfo5.getTokens().setTokenid(tokenid);
-//        tokenInfo5.getTokens().setTokenindex(tokenindex);
-//        tokenInfo5.getTokens().setTokenname(tokenname);
-//        tokenInfo5.getTokens().setTokenstop(tokenstop);
-//        tokenInfo5.getTokens().setTokentype(tokentype);
-//        tokenInfo5.getTokens().setUrl(url);
-//        tokenInfo5.getMultiSignAddresses().get(0).setAddress(address);
+        tokenInfo3.setTokens(null);
+        tokenInfo4.setMultiSignAddresses(null);
+        tokenInfo5.getTokens().setAmount(-1);
+        tokenInfo5.getTokens().setBlockhash(null);
+        tokenInfo5.getTokens().setBlockhash("test");
+        tokenInfo5.getTokens().setBlockhash(networkParameters.getGenesisBlock().getHashAsString());
+        tokenInfo5.getTokens().setDescription(null);
+        tokenInfo5.getTokens().setDescription(new String(new char[NetworkParameters.TOKEN_MAX_DESC_LENGTH]).replace("\0", "A"));
+        tokenInfo5.getTokens().setDescription(new String(new char[NetworkParameters.TOKEN_MAX_DESC_LENGTH + 1]).replace("\0", "A"));
+        tokenInfo5.getTokens().setMultiserial(false); // TODO this field is useless, drop it
+        tokenInfo5.getTokens().setPrevblockhash(null);
+        tokenInfo5.getTokens().setPrevblockhash("test");
+        tokenInfo5.getTokens().setPrevblockhash(networkParameters.getGenesisBlock().getHashAsString());
+        tokenInfo5.getTokens().setSignnumber(-1);
+        tokenInfo5.getTokens().setSignnumber(0);
+        tokenInfo5.getTokens().setSignnumber(5);
+        tokenInfo5.getTokens().setTokenid(null);
+        tokenInfo5.getTokens().setTokenid("");
+        tokenInfo5.getTokens().setTokenid("test");
+        tokenInfo5.getTokens().setTokenid(Utils.HEX.encode(genesiskey.getPubKey()));
+        tokenInfo5.getTokens().setTokenindex(-1);
+        tokenInfo5.getTokens().setTokenindex(5);
+        tokenInfo5.getTokens().setTokenindex(NetworkParameters.TOKEN_MAX_ISSUANCE_NUMBER + 1);
+        tokenInfo5.getTokens().setTokenname(null);
+        tokenInfo5.getTokens().setTokenname("");
+        tokenInfo5.getTokens().setTokenname(new String(new char[NetworkParameters.TOKEN_MAX_NAME_LENGTH]).replace("\0", "A"));
+        tokenInfo5.getTokens().setTokenname(new String(new char[NetworkParameters.TOKEN_MAX_NAME_LENGTH + 1]).replace("\0", "A"));
+        tokenInfo5.getTokens().setTokenstop(false); 
+        tokenInfo5.getTokens().setTokentype(-1); // TODO this field has no usage, test this later...
+        tokenInfo5.getTokens().setUrl(null);
+        tokenInfo5.getTokens().setUrl("");
+        tokenInfo5.getTokens().setUrl(new String(new char[NetworkParameters.TOKEN_MAX_URL_LENGTH]).replace("\0", "A"));
+        tokenInfo5.getTokens().setUrl(new String(new char[NetworkParameters.TOKEN_MAX_URL_LENGTH + 1]).replace("\0", "A"));
+        tokenInfo5.getMultiSignAddresses().remove(0);
+        tokenInfo5.getMultiSignAddresses().get(0).setAddress(null);
+        tokenInfo5.getMultiSignAddresses().get(0).setAddress("");
+        tokenInfo5.getMultiSignAddresses().get(0).setAddress(new String(new char[222]).replace("\0", "A"));
+        // TODO
 //        tokenInfo5.getMultiSignAddresses().get(0).setBlockhash(blockhash);
 //        tokenInfo5.getMultiSignAddresses().get(0).setPosIndex(posIndex);
 //        tokenInfo5.getMultiSignAddresses().get(0).setPubKeyHex(pubKeyHex);
@@ -1235,16 +1260,19 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
         byte[] buf1 = party1Signature.encodeToDER();
         
-//        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
-//        MultiSignBy multiSignBy0 = new MultiSignBy();
-//        multiSignBy0.setTokenid(tokenInfo.getTokens().getTokenid().trim());
-//        multiSignBy0.setTokenindex(0);
-//        multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
-//        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
-//        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
-//        multiSignBies.add(multiSignBy0);
-//        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
-//        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
+        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+        MultiSignBy multiSignBy0 = new MultiSignBy();
+        multiSignBy0.setTokenid(tokenInfo0.getTokens().getTokenid().trim());
+        multiSignBy0.setTokenindex(0);
+        multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+        multiSignBies.add(multiSignBy0);
+        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
+        
+        // TODO
+//        multiSignByRequest.getMultiSignBies().get(0).
         
         
         
@@ -1259,8 +1287,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Should not go through
         try {
             blockGraph.add(block, false);
-            
-            //TODO fail();
+            fail();
         } catch (InvalidTransactionDataException e) {
         }
     }
