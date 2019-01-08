@@ -839,72 +839,80 @@ public class ValidatorService {
      * Otherwise, appropriate solidity states are returned to imply missing dependencies.
      */
     public SolidityState checkBlockSolidity(Block block, @Nullable StoredBlock storedPrev,
-            @Nullable StoredBlock storedPrevBranch, boolean throwExceptions) throws BlockStoreException {
-        if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
-            if (throwExceptions)
-                throw new GenesisBlockDisallowedException();
-            return SolidityState.getFailState();
-        }
+            @Nullable StoredBlock storedPrevBranch, boolean throwExceptions) {
+        try {
+            if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
+                if (throwExceptions)
+                    throw new GenesisBlockDisallowedException();
+                return SolidityState.getFailState();
+            }
+                
             
-        
-        // Check predecessor blocks exist
-        if (storedPrev == null) {
-            return SolidityState.from(block.getPrevBlockHash());
-        }
-        if (storedPrevBranch == null) {
-            return SolidityState.from(block.getPrevBranchBlockHash());
-        }
-        
-        // Check timestamp: enforce monotone time increase
-        if (block.getTimeSeconds() < storedPrev.getHeader().getTimeSeconds()
-                || block.getTimeSeconds() < storedPrevBranch.getHeader().getTimeSeconds()) {
-            if (throwExceptions)
-                throw new TimeReversionException();
-            return SolidityState.getFailState();
-        }
-
-        // Check difficulty and latest consensus block is passed through correctly
-        if (block.getBlockType() != Block.Type.BLOCKTYPE_REWARD) {
-            if (storedPrev.getHeader().getLastMiningRewardBlock() >= storedPrevBranch.getHeader()
-                    .getLastMiningRewardBlock()) {
-                if (block.getLastMiningRewardBlock() != storedPrev.getHeader().getLastMiningRewardBlock()
-                        || block.getDifficultyTarget() != storedPrev.getHeader().getDifficultyTarget()) {
+            // Check predecessor blocks exist
+            if (storedPrev == null) {
+                return SolidityState.from(block.getPrevBlockHash());
+            }
+            if (storedPrevBranch == null) {
+                return SolidityState.from(block.getPrevBranchBlockHash());
+            }
+            
+            // Check timestamp: enforce monotone time increase
+            if (block.getTimeSeconds() < storedPrev.getHeader().getTimeSeconds()
+                    || block.getTimeSeconds() < storedPrevBranch.getHeader().getTimeSeconds()) {
+                if (throwExceptions)
+                    throw new TimeReversionException();
+                return SolidityState.getFailState();
+            }
+    
+            // Check difficulty and latest consensus block is passed through correctly
+            if (block.getBlockType() != Block.Type.BLOCKTYPE_REWARD) {
+                if (storedPrev.getHeader().getLastMiningRewardBlock() >= storedPrevBranch.getHeader()
+                        .getLastMiningRewardBlock()) {
+                    if (block.getLastMiningRewardBlock() != storedPrev.getHeader().getLastMiningRewardBlock()
+                            || block.getDifficultyTarget() != storedPrev.getHeader().getDifficultyTarget()) {
+                        if (throwExceptions)
+                            throw new DifficultyConsensusInheritanceException();
+                        return SolidityState.getFailState();                    
+                    }
+                } else {
+                    if (block.getLastMiningRewardBlock() != storedPrevBranch.getHeader().getLastMiningRewardBlock()
+                            || block.getDifficultyTarget() != storedPrevBranch.getHeader().getDifficultyTarget()) {
+                        if (throwExceptions)
+                            throw new DifficultyConsensusInheritanceException();
+                        return SolidityState.getFailState();
+                    }
+                }
+            } else {
+                if (block.getLastMiningRewardBlock() != Math.max(storedPrev.getHeader().getLastMiningRewardBlock(), storedPrevBranch.getHeader().getLastMiningRewardBlock()) + 1) {
                     if (throwExceptions)
                         throw new DifficultyConsensusInheritanceException();
                     return SolidityState.getFailState();                    
                 }
-            } else {
-                if (block.getLastMiningRewardBlock() != storedPrevBranch.getHeader().getLastMiningRewardBlock()
-                        || block.getDifficultyTarget() != storedPrevBranch.getHeader().getDifficultyTarget()) {
-                    if (throwExceptions)
-                        throw new DifficultyConsensusInheritanceException();
-                    return SolidityState.getFailState();
-                }
             }
-        } else {
-            if (block.getLastMiningRewardBlock() != Math.max(storedPrev.getHeader().getLastMiningRewardBlock(), storedPrevBranch.getHeader().getLastMiningRewardBlock()) + 1) {
-                if (throwExceptions)
-                    throw new DifficultyConsensusInheritanceException();
-                return SolidityState.getFailState();                    
+    
+            long height = Math.max(storedPrev.getHeight(), storedPrevBranch.getHeight()) + 1;
+    
+            // Check transactions are solid
+            SolidityState transactionalSolidityState = checkTransactionalSolidity(block, height, throwExceptions);
+            if (!(transactionalSolidityState.getState() == State.Success)) {
+                return transactionalSolidityState;
             }
-            // 
+    
+            // Check type-specific solidity
+            SolidityState typeSpecificSolidityState = checkTypeSpecificSolidity(block, height, throwExceptions);
+            if (!(typeSpecificSolidityState.getState() == State.Success)) {
+                return typeSpecificSolidityState;
+            }
+    
+            return SolidityState.getSuccessState();
+        } catch (VerificationException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.error("Unhandled exception in checkSolidity: ", e);
+            if (throwExceptions)
+                throw new VerificationException(e);
+            return SolidityState.getFailState();
         }
-
-        long height = Math.max(storedPrev.getHeight(), storedPrevBranch.getHeight()) + 1;
-
-        // Check transactions are solid
-        SolidityState transactionalSolidityState = checkTransactionalSolidity(block, height, throwExceptions);
-        if (!(transactionalSolidityState.getState() == State.Success)) {
-            return transactionalSolidityState;
-        }
-
-        // Check type-specific solidity
-        SolidityState typeSpecificSolidityState = checkTypeSpecificSolidity(block, height, throwExceptions);
-        if (!(typeSpecificSolidityState.getState() == State.Success)) {
-            return typeSpecificSolidityState;
-        }
-
-        return SolidityState.getSuccessState();
     }
 
     private SolidityState checkTransactionalSolidity(Block block, long height, boolean throwExceptions) throws BlockStoreException {
@@ -1316,7 +1324,6 @@ public class ValidatorService {
                 if (prevToken == null) {
                     if (throwExceptions)
                         throw new MissingDependencyException();
-                    // TODO catch IllegalArgumentException
                     return SolidityState.from(Sha256Hash.wrap(currentToken.getTokens().getPrevblockhash())); 
                 }
 
@@ -1407,7 +1414,7 @@ public class ValidatorService {
             byte[] pubKey = Utils.HEX.decode(multiSignBy.getPublickey());
             byte[] data = tx.getHash().getBytes();
             byte[] signature = Utils.HEX.decode(multiSignBy.getSignature());
-            // TODO catch pubkey wrong size, incorrect multisignby fields
+            
             if (ECKey.verify(data, signature, pubKey)) {
                 signatureCount++;
             }

@@ -13,7 +13,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -56,20 +55,15 @@ import net.bigtangle.core.VerificationException.TimeReversionException;
 import net.bigtangle.core.VerificationException.TransactionInputsDisallowedException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.crypto.TransactionSignature;
-import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
-import net.bigtangle.wallet.Wallet;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ValidatorServiceTest extends AbstractIntegrationTest {
 
-    // TODO code coverage
-    // TODO drop string from everywhere, stop using sha256hash.wrap!
-    // TODO field mutations check
+    // TODO drop string from everywhere, stop using sha256hash.wrap, stop using jsonserialization!
     
     @Test
     public void testConflictTransactionalUTXO() throws Exception {
@@ -1178,6 +1172,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         } catch (InvalidTransactionDataException e) {
         }
     }
+
     
     /* TODO mutate all fields of tokeninfo too
     -> Token CHECK: well-formed tx data TokenInfo
@@ -1194,100 +1189,99 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     -> Token CHECK: signatures valid, unique and for permissioned addresses
     -> Token CHECK: enough signatures 
     */
-    
-    @Test
-    public void testSolidityTokenMalformedData() throws Exception {
-        store.resetStore();
-        
-        // Generate an eligible issuance tokenInfo
-        ECKey outKey = walletKeys.get(0);
-        byte[] pubKey = outKey.getPubKey();
-        TokenInfo tokenInfo0 = new TokenInfo();
-        Coin coinbase = Coin.valueOf(77777L, pubKey);
-        long amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount, false, true);
-        tokenInfo0.setTokens(tokens);
-        tokenInfo0.getMultiSignAddresses()
-                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        
-        // Make mutated versions of the data
-        // TODO tokeninfo1 is empty data, then 2 random bytes
-        TokenInfo tokenInfo3 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo4 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo5 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo6 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo7 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo8 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo9 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo10 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo11 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo12 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo13 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo14 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo15 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo16 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo17 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo18 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo19 = TokenInfo.parse(tokenInfo0.toByteArray());
-//        tokenInfo3.setTokens(null);
-//        tokenInfo4.setMultiSignAddresses(null);
-//        tokenInfo5.getTokens().setAmount(amount);
-//        tokenInfo5.getTokens().setBlockhash(blockhash);
-//        tokenInfo5.getTokens().setDescription(description);
-//        tokenInfo5.getTokens().setMultiserial(multiserial);
-//        tokenInfo5.getTokens().setPrevblockhash(prevblockhash);
-//        tokenInfo5.getTokens().setSignnumber(signnumber);
-//        tokenInfo5.getTokens().setTokenid(tokenid);
-//        tokenInfo5.getTokens().setTokenindex(tokenindex);
-//        tokenInfo5.getTokens().setTokenname(tokenname);
-//        tokenInfo5.getTokens().setTokenstop(tokenstop);
-//        tokenInfo5.getTokens().setTokentype(tokentype);
-//        tokenInfo5.getTokens().setUrl(url);
-        
-        
-        // TODO blcosk
-
-        // Make block including it
-        Block block = createNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
-        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
-        
-        // Coinbase with signatures
-        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo0);
-        Transaction transaction = block.getTransactions().get(0);
-        Sha256Hash sighash1 = transaction.getHash();
-        ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
-        byte[] buf1 = party1Signature.encodeToDER();
-        
-        // TODO
-//        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
-//        MultiSignBy multiSignBy0 = new MultiSignBy();
-//        multiSignBy0.setTokenid(tokenInfo.getTokens().getTokenid().trim());
-//        multiSignBy0.setTokenindex(0);
-//        multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
-//        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
-//        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
-//        multiSignBies.add(multiSignBy0);
-//        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
-//        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
-        
-        
-        
-        
-        
-        
-        
-        
-        // save block
-        block.solve();
-        
-        // Should not go through
-        try {
-            blockGraph.add(block, false);
-            
-            fail();
-        } catch (InvalidTransactionDataException e) {
-        }
-    }
+//    
+//    @Test
+//    public void testSolidityTokenMalformedData() throws Exception {
+//        
+//        store.resetStore();
+//        
+//        // Generate an eligible issuance tokenInfo
+//        ECKey outKey = walletKeys.get(0);
+//        byte[] pubKey = outKey.getPubKey();
+//        TokenInfo tokenInfo0 = new TokenInfo();
+//        Coin coinbase = Coin.valueOf(77777L, pubKey);
+//        long amount = coinbase.getValue();
+//        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount, false, true);
+//        tokenInfo0.setTokens(tokens);
+//        tokenInfo0.getMultiSignAddresses()
+//                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+//        
+//        // Make mutated versions of the data
+//        TokenInfo tokenInfo3 = TokenInfo.parse(tokenInfo0.toByteArray());
+//        TokenInfo tokenInfo4 = TokenInfo.parse(tokenInfo0.toByteArray());
+//        TokenInfo tokenInfo5 = TokenInfo.parse(tokenInfo0.toByteArray());
+//        TokenInfo tokenInfo6 = TokenInfo.parse(tokenInfo0.toByteArray());
+//        TokenInfo tokenInfo7 = TokenInfo.parse(tokenInfo0.toByteArray());
+//        TokenInfo tokenInfo8 = TokenInfo.parse(tokenInfo0.toByteArray());
+//        TokenInfo tokenInfo9 = TokenInfo.parse(tokenInfo0.toByteArray());
+//        TokenInfo tokenInfo10 = TokenInfo.parse(tokenInfo0.toByteArray());
+//        TokenInfo tokenInfo11 = TokenInfo.parse(tokenInfo0.toByteArray());
+//        TokenInfo tokenInfo12 = TokenInfo.parse(tokenInfo0.toByteArray());
+//        TokenInfo tokenInfo13 = TokenInfo.parse(tokenInfo0.toByteArray());
+//        TokenInfo tokenInfo14 = TokenInfo.parse(tokenInfo0.toByteArray());
+//        TokenInfo tokenInfo15 = TokenInfo.parse(tokenInfo0.toByteArray());
+//        TokenInfo tokenInfo16 = TokenInfo.parse(tokenInfo0.toByteArray());
+//        TokenInfo tokenInfo17 = TokenInfo.parse(tokenInfo0.toByteArray());
+//        TokenInfo tokenInfo18 = TokenInfo.parse(tokenInfo0.toByteArray());
+//        TokenInfo tokenInfo19 = TokenInfo.parse(tokenInfo0.toByteArray());
+////        tokenInfo3.setTokens(null);
+////        tokenInfo4.setMultiSignAddresses(null);
+////        tokenInfo5.getTokens().setAmount(amount);
+////        tokenInfo5.getTokens().setBlockhash(blockhash);
+////        tokenInfo5.getTokens().setDescription(description);
+////        tokenInfo5.getTokens().setMultiserial(multiserial);
+////        tokenInfo5.getTokens().setPrevblockhash(prevblockhash);
+////        tokenInfo5.getTokens().setSignnumber(signnumber);
+////        tokenInfo5.getTokens().setTokenid(tokenid);
+////        tokenInfo5.getTokens().setTokenindex(tokenindex);
+////        tokenInfo5.getTokens().setTokenname(tokenname);
+////        tokenInfo5.getTokens().setTokenstop(tokenstop);
+////        tokenInfo5.getTokens().setTokentype(tokentype);
+////        tokenInfo5.getTokens().setUrl(url);
+//        
+//        
+//        // make blocks
+//
+//        // Make block including it
+//        Block block = createNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
+//        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+//        
+//        // Coinbase with signatures
+//        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo0);
+//        Transaction transaction = block.getTransactions().get(0);
+//        Sha256Hash sighash1 = transaction.getHash();
+//        ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
+//        byte[] buf1 = party1Signature.encodeToDER();
+//        
+////        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+////        MultiSignBy multiSignBy0 = new MultiSignBy();
+////        multiSignBy0.setTokenid(tokenInfo.getTokens().getTokenid().trim());
+////        multiSignBy0.setTokenindex(0);
+////        multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
+////        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
+////        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+////        multiSignBies.add(multiSignBy0);
+////        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
+////        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
+//        
+//        
+//        
+//        
+//        
+//        
+//        
+//        
+//        // save block
+//        block.solve();
+//        
+//        // Should not go through
+//        try {
+//            blockGraph.add(block, false);
+//            
+//            fail();
+//        } catch (InvalidTransactionDataException e) {
+//        }
+//    }
     
     @Test
     public void testSolidityTokenNoTransaction() throws Exception {
