@@ -13,6 +13,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -42,6 +43,7 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.core.VerificationException.CoinbaseDisallowedException;
+import net.bigtangle.core.VerificationException.IncorrectTransactionCountException;
 import net.bigtangle.core.VerificationException.InvalidDependencyException;
 import net.bigtangle.core.VerificationException.InvalidTokenOutputException;
 import net.bigtangle.core.VerificationException.InvalidTransactionDataException;
@@ -49,19 +51,24 @@ import net.bigtangle.core.VerificationException.InvalidTransactionException;
 import net.bigtangle.core.VerificationException.MalformedTransactionDataException;
 import net.bigtangle.core.VerificationException.MissingDependencyException;
 import net.bigtangle.core.VerificationException.MissingTransactionDataException;
+import net.bigtangle.core.VerificationException.NotCoinbaseException;
 import net.bigtangle.core.VerificationException.TimeReversionException;
 import net.bigtangle.core.VerificationException.TransactionInputsDisallowedException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.crypto.TransactionSignature;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
+import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
+import net.bigtangle.wallet.Wallet;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     // TODO code coverage
+    // TODO drop string from everywhere, stop using sha256hash.wrap!
     
     @Test
     public void testConflictTransactionalUTXO() throws Exception {
@@ -843,7 +850,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testSolidityCoinbase() throws Exception {
+    public void testSolidityCoinbaseDisallowed() throws Exception {
         store.resetStore();
         final Block genesisBlock = networkParameters.getGenesisBlock();
         
@@ -872,64 +879,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                     fail();
                 } catch (CoinbaseDisallowedException e) {
                 }
-        }
-        
-        // For the types that allow coinbase, not just any coinbase is allowed
-        try {
-            // Generate an eligible issuance
-            ECKey outKey = walletKeys.get(0);
-            byte[] pubKey = outKey.getPubKey();
-            TokenInfo tokenInfo = new TokenInfo();
-            
-            Coin coinbase = Coin.valueOf(77777L, pubKey);
-            long amount = coinbase.getValue();
-            
-            Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount, false, true);
-            tokenInfo.setTokens(tokens);
-            
-            tokenInfo.setTokens(tokens);
-            tokenInfo.getMultiSignAddresses()
-                    .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-            
-            Block block = BlockForTest.createNextBlock(genesisBlock, NetworkParameters.BLOCK_VERSION_GENESIS, genesisBlock);
-            block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
-            
-            if (null != null)
-                block.setPrevBlockHash(null);
-            
-            if (null != null)
-                block.setPrevBranchBlockHash(null);
-            
-            block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
-            
-            // Add invalid coinbases into it
-            block.getTransactions().get(0).addOutput(Coin.SATOSHI.times(2), outKey.toAddress(networkParameters));
-            block.solve();
-            
-            Transaction transaction = block.getTransactions().get(0);
-            
-            Sha256Hash sighash = transaction.getHash();
-            
-            ECKey.ECDSASignature party1Signature = outKey.sign(sighash, null);
-            byte[] buf1 = party1Signature.encodeToDER();
-            
-            List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
-            MultiSignBy multiSignBy0 = new MultiSignBy();
-            multiSignBy0.setTokenid(tokenInfo.getTokens().getTokenid().trim());
-            multiSignBy0.setTokenindex(0);
-            multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
-            multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
-            multiSignBy0.setSignature(Utils.HEX.encode(buf1));
-            multiSignBies.add(multiSignBy0);
-            MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
-            transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
-            
-            // Check it fails
-            block.solve();
-            blockGraph.add(block, false);
-            
-            fail();
-        } catch (InvalidTokenOutputException e) {
         }
     }
 
@@ -1049,23 +998,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     
     // TODO check sigops
     
-    /* TODO mutate all fields of tokeninfo too
-    -> Token CHECK: only 1 coinbase tx
-    -> Token CHECK: well-formed tx data TokenInfo
-    -> Token CHECK: required fields of TokenInfo exist, i.e. not null
-    -> Token CHECK: fields may not be oversize
-    -> Token CHECK: issued tokens in txouts must be the same as the issued token
-    -> Token CHECK: number of permissioned addresses ok
-    -> Token CHECK: predecessor is TOKEN 
-    -> Token CHECK: predecessor is of same tokenid and of one lower tokenindex 
-    -> Token CHECK: predecessor is of same name and type
-    -> Token CHECK: predecessor allows further issuances
-    -> Token CHECK: signatures exist
-    -> Token CHECK: signatures well-formed
-    -> Token CHECK: signatures valid, unique and for permissioned addresses
-    -> Token CHECK: enough signatures 
-    */
-
     @Test
     public void testSolidityRewardTxWithTransfers() throws Exception {
         store.resetStore();
@@ -1162,7 +1094,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testSolidityRewardTxWithInvalidRewardInfo() throws Exception {
+    public void testSolidityRewardMutatedRewardInfo() throws Exception {
         store.resetStore();
         Block rollingBlock = networkParameters.getGenesisBlock();
 
@@ -1245,4 +1177,283 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         } catch (InvalidTransactionDataException e) {
         }
     }
+    
+    /* TODO mutate all fields of tokeninfo too
+    -> Token CHECK: well-formed tx data TokenInfo
+    -> Token CHECK: required fields of TokenInfo exist, i.e. not null
+    -> Token CHECK: fields may not be oversize
+    -> Token CHECK: issued tokens in txouts must be the same as the issued token
+    -> Token CHECK: number of permissioned addresses ok
+    -> Token CHECK: predecessor is TOKEN 
+    -> Token CHECK: predecessor is of same tokenid and of one lower tokenindex 
+    -> Token CHECK: predecessor is of same name and type
+    -> Token CHECK: predecessor allows further issuances
+    -> Token CHECK: signatures exist
+    -> Token CHECK: signatures well-formed
+    -> Token CHECK: signatures valid, unique and for permissioned addresses
+    -> Token CHECK: enough signatures 
+    */
+    
+    @Test
+    public void testSolidityTokenMutatedData() throws Exception {
+        store.resetStore();
+        
+        // Generate an eligible issuance tokenInfo
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+        TokenInfo tokenInfo = new TokenInfo();
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount, false, true);
+        tokenInfo.setTokens(tokens);
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+        // TODO 
+        // Make mutated versions of the data
+        // TODO
+        tokenInfo.setTokens(null);
+
+        // Make block including it
+        Block block = createNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
+        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+        
+        // Coinbase with signatures
+        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
+        Transaction transaction = block.getTransactions().get(0);
+        Sha256Hash sighash1 = transaction.getHash();
+        ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
+        byte[] buf1 = party1Signature.encodeToDER();
+        
+        // TODO
+//        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+//        MultiSignBy multiSignBy0 = new MultiSignBy();
+//        multiSignBy0.setTokenid(tokenInfo.getTokens().getTokenid().trim());
+//        multiSignBy0.setTokenindex(0);
+//        multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
+//        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
+//        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+//        multiSignBies.add(multiSignBy0);
+//        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
+//        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
+        
+        
+        
+        
+        
+        
+        
+        
+        // save block
+        block.solve();
+        
+        // Should not go through
+        try {
+            blockGraph.add(block, false);
+            
+            fail();
+        } catch (InvalidTransactionDataException e) {
+        }
+    }
+    
+    @Test
+    public void testSolidityTokenNoTransaction() throws Exception {
+        store.resetStore();
+
+        // Make block including it
+        Block block = createNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
+        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+        
+        // save block
+        block.solve();
+        
+        // Should not go through
+        try {
+            blockGraph.add(block, false);
+            fail();
+        } catch (IncorrectTransactionCountException e) {
+        }
+    }
+    
+    @Test
+    public void testSolidityTokenMultipleTransactions1() throws Exception {
+        store.resetStore();
+        
+        // Generate an eligible issuance tokenInfo
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+        TokenInfo tokenInfo = new TokenInfo();
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount, false, true);
+        tokenInfo.setTokens(tokens);
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+
+        // Make block including it
+        Block block = createNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
+        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+        
+        // Coinbase with signatures
+        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
+        Transaction transaction = block.getTransactions().get(0);
+        Sha256Hash sighash1 = transaction.getHash();
+        ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
+        byte[] buf1 = party1Signature.encodeToDER();
+        
+        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+        MultiSignBy multiSignBy0 = new MultiSignBy();
+        multiSignBy0.setTokenid(tokenInfo.getTokens().getTokenid().trim());
+        multiSignBy0.setTokenindex(0);
+        multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+        multiSignBies.add(multiSignBy0);
+        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
+        
+        // Add another transfer transaction
+        Transaction tx = makeTestTransaction();
+        block.addTransaction(tx);
+        
+        // save block
+        block.solve();
+        
+        // Should not go through
+        try {
+            blockGraph.add(block, false);
+            
+            fail();
+        } catch (IncorrectTransactionCountException e) {
+        }
+    }
+    
+    @Test
+    public void testSolidityTokenMultipleTransactions2() throws Exception {
+        store.resetStore();
+        
+        // Generate an eligible issuance tokenInfo
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+        TokenInfo tokenInfo = new TokenInfo();
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount, false, true);
+        tokenInfo.setTokens(tokens);
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+
+        // Make block including it
+        Block block = createNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
+        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+        
+        // Coinbase with signatures
+        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
+        Transaction transaction = block.getTransactions().get(0);
+        Sha256Hash sighash1 = transaction.getHash();
+        ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
+        byte[] buf1 = party1Signature.encodeToDER();
+        
+        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+        MultiSignBy multiSignBy0 = new MultiSignBy();
+        multiSignBy0.setTokenid(tokenInfo.getTokens().getTokenid().trim());
+        multiSignBy0.setTokenindex(0);
+        multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+        multiSignBies.add(multiSignBy0);
+        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
+        
+        // Add transaction again
+        block.addTransaction(transaction);
+        
+        // save block
+        block.solve();
+        
+        // Should not go through
+        try {
+            blockGraph.add(block, false);
+            
+            fail();
+        } catch (IncorrectTransactionCountException e) {
+        }
+    }
+    
+    @Test
+    public void testSolidityTokenTransferTransaction() throws Exception {
+        store.resetStore();
+
+        // Make block including it
+        Block block = createNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
+        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+
+        // Add transfer transaction
+        Transaction tx = makeTestTransaction();
+        block.addTransaction(tx);
+        
+        // save block
+        block.solve();
+        
+        // Should not go through
+        try {
+            blockGraph.add(block, false);
+            
+            fail();
+        } catch (NotCoinbaseException e) {
+        }
+    }
+    
+    @Test
+    public void testSolidityTokenWrongTokenCoinbase() throws Exception {
+        store.resetStore();
+
+        // Generate an eligible issuance tokenInfo
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+        TokenInfo tokenInfo = new TokenInfo();
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount, false, true);
+        tokenInfo.setTokens(tokens);
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+
+        // Make block including it
+        Block block = createNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
+        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+        
+        // Coinbase with signatures
+        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
+        Transaction transaction = block.getTransactions().get(0);
+        
+        // Add another output for other tokens
+        block.getTransactions().get(0).addOutput(Coin.SATOSHI.times(2), outKey.toAddress(networkParameters));
+        
+        Sha256Hash sighash1 = transaction.getHash();
+        ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
+        byte[] buf1 = party1Signature.encodeToDER();
+        
+        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+        MultiSignBy multiSignBy0 = new MultiSignBy();
+        multiSignBy0.setTokenid(tokenInfo.getTokens().getTokenid().trim());
+        multiSignBy0.setTokenindex(0);
+        multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+        multiSignBies.add(multiSignBy0);
+        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
+        
+        // save block
+        block.solve();
+        
+        // Should not go through
+        try {
+            blockGraph.add(block, false);
+            
+            fail();
+        } catch (InvalidTokenOutputException e) {
+        }
+    }
+
 }
