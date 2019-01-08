@@ -841,6 +841,12 @@ public class ValidatorService {
     public SolidityState checkBlockSolidity(Block block, @Nullable StoredBlock storedPrev,
             @Nullable StoredBlock storedPrevBranch, boolean throwExceptions) {
         try {
+            if (block.getHash() == Sha256Hash.ZERO_HASH){
+                if (throwExceptions)
+                    throw new VerificationException("Lucky zeros not allowed");
+                return SolidityState.getFailState();
+            }
+            
             if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
                 if (throwExceptions)
                     throw new GenesisBlockDisallowedException();
