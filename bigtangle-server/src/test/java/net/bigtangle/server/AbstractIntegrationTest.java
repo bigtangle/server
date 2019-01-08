@@ -367,7 +367,7 @@ public abstract class AbstractIntegrationTest {
                     Json.jsonmapper().writeValueAsString(requestParam00));
 
             TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-            Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+            long tokenindex_ = tokenIndexResponse.getTokenindex();
             String prevblockhash = tokenIndexResponse.getBlockhash();
 
             Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
@@ -402,7 +402,7 @@ public abstract class AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+        long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),

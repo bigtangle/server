@@ -525,7 +525,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+        long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
@@ -561,7 +561,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+        long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
@@ -602,7 +602,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+        long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
@@ -683,7 +683,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+        long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
@@ -762,7 +762,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+        long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
@@ -887,7 +887,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             int amount = 100000000;
             Coin basecoin = Coin.valueOf(amount, tokenid);
 
-            Integer tokenindex_ = 1;
+            long tokenindex_ = 1;
             Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
                     UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
             tokenInfo.setTokens(tokens);
@@ -1041,7 +1041,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+        long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         int amount = 100000000;

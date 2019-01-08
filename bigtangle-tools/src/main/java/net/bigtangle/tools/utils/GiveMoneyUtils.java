@@ -56,7 +56,7 @@ public class GiveMoneyUtils {
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2,
                 TokenIndexResponse.class);
-        Integer tokenindex = tokenIndexResponse.getTokenindex();
+        long tokenindex = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
         
         Token tokens = Token.buildSimpleTokenInfo(false, prevblockhash, tokenId, UUID.randomUUID().toString(),

@@ -17,7 +17,7 @@ public class Token implements java.io.Serializable {
     
     private boolean confirmed;
     private String tokenid;
-    private int tokenindex;
+    private long tokenindex;
     private long amount;
     private String tokenname;
     private String description;
@@ -57,11 +57,11 @@ public class Token implements java.io.Serializable {
         this.tokenid = tokenid;
     }
 
-    public int getTokenindex() {
+    public long getTokenindex() {
         return tokenindex;
     }
 
-    public void setTokenindex(int tokenindex) {
+    public void setTokenindex(long tokenindex) {
         this.tokenindex = tokenindex;
     }
 
@@ -138,7 +138,7 @@ public class Token implements java.io.Serializable {
     }
 
     public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname, String description, 
-            int signnumber, int tokenindex, long amount, boolean multiserial, boolean tokenstop) {
+            int signnumber, long tokenindex, long amount, boolean multiserial, boolean tokenstop) {
         Token tokens = new Token();
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);

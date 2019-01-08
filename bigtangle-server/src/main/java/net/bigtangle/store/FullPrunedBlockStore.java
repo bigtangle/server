@@ -260,7 +260,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     /* Token TXOs */
     public void insertToken(String blockhash, Token tokens) throws BlockStoreException;
 
-    public void insertToken(String blockhash, boolean confirmed, String tokenid, int tokenindex, long amount,
+    void insertToken(String blockhash, boolean confirmed, String tokenid, long tokenindex, long amount,
             String tokenname, String description, String url, int signnumber, boolean multiserial, int tokentype,
             boolean tokenstop, String prevblockhash) throws BlockStoreException;
 
@@ -270,15 +270,15 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public boolean getTokenSpent(String blockhash) throws BlockStoreException;
 
-    public boolean getTokenAnySpent(String tokenId, int tokenIndex) throws BlockStoreException;
+    public boolean getTokenAnySpent(String tokenId, long tokenindex) throws BlockStoreException;
 
     public boolean getTokenConfirmed(String blockHash) throws BlockStoreException;
 
     public Sha256Hash getTokenSpender(String blockhash) throws BlockStoreException;
 
-    public boolean getTokenAnyConfirmed(String tokenid, int tokenindex) throws BlockStoreException;
+    public boolean getTokenAnyConfirmed(String tokenid, long tokenindex) throws BlockStoreException;
 
-    public BlockWrap getTokenIssuingConfirmedBlock(String tokenid, int tokenindex) throws BlockStoreException;
+    public BlockWrap getTokenIssuingConfirmedBlock(String tokenid, long tokenindex) throws BlockStoreException;
 
     public void updateTokenSpent(String blockhash, boolean b, Sha256Hash spenderBlockHash) throws BlockStoreException;
 
@@ -338,7 +338,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     void saveMultiSign(MultiSign multiSign) throws BlockStoreException;
 
-    void updateMultiSign(String tokenid, int tokenindex, String address, byte[] bytes, int sign)
+    void updateMultiSign(String tokenid, long tokenindex, String address, byte[] bytes, int sign)
             throws BlockStoreException;
 
     void updateMultiSignBlockHash(String tokenid, long tokenindex, String address, byte[] bytes)
