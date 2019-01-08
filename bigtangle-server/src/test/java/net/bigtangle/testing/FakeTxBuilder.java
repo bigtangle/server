@@ -19,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
@@ -283,7 +282,7 @@ public class FakeTxBuilder {
             long timeSeconds, int height, Transaction... transactions) {
         try {
             Block previousBlock = previousStoredBlock.getHeader();
-            Block b = BlockForTest.createNextBlock(previousBlock, version, previousBlock);
+            Block b = previousBlock.createNextBlock(previousBlock);
             // Coinbase tx was already added.
             for (Transaction tx : transactions) {
                 // tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
@@ -333,15 +332,14 @@ public class FakeTxBuilder {
 
     public static Block makeSolvedTestBlock(BlockStore blockStore, Address coinsTo) throws Exception {
         Pair<Sha256Hash, Sha256Hash> validatedBlockPair = tipsManager.getValidatedBlockPair();
-        Block b = BlockForTest.createNextBlock(blockStore.get(validatedBlockPair.getLeft()).getHeader(), coinsTo,
-                blockStore.get(validatedBlockPair.getRight()).getHeader());
+        Block b = blockStore.get(validatedBlockPair.getLeft()).getHeader().createNextBlock(blockStore.get(validatedBlockPair.getRight()).getHeader());
         b.solve();
         return b;
     }
 
     public static Block makeSolvedTestBlock(Block prev, Transaction... transactions) throws BlockStoreException {
         Address to = new ECKey().toAddress(prev.getParams());
-        Block b = BlockForTest.createNextBlock(prev, to, prev);
+        Block b = prev.createNextBlock(prev);
         // Coinbase tx already exists.
         for (Transaction tx : transactions) {
             b.addTransaction(tx);
@@ -352,7 +350,7 @@ public class FakeTxBuilder {
 
     public static Block makeSolvedTestBlock(Block prev, Address to, Transaction... transactions)
             throws BlockStoreException {
-        Block b = BlockForTest.createNextBlock(prev, to, prev);
+        Block b = prev.createNextBlock(prev);
         // Coinbase tx already exists.
         for (Transaction tx : transactions) {
             b.addTransaction(tx);

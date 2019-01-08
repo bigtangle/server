@@ -215,13 +215,13 @@ public class FullBlockTestGenerator {
         Queue<TransactionOutPointWithValue> spendableOutputs = new LinkedList<TransactionOutPointWithValue>();
 
         int chainHeadHeight = 1;
-        Block chainHead =BlockForTest.createNextBlock( params.getGenesisBlock(),NetworkParameters.BLOCK_VERSION_GENESIS, params.getGenesisBlock());
+        Block chainHead =params.getGenesisBlock().createNextBlock(params.getGenesisBlock());
         blocks.add(new BlockAndValidity(chainHead, true, false, chainHead.getHash(), 1, "Initial Block"));
         spendableOutputs.offer(new TransactionOutPointWithValue(
                 new TransactionOutPoint(params, 0, chainHead.getTransactions().get(0).getHash()),
                 FIFTY_COINS, chainHead.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
         for (int i = 1; i < params.getSpendableCoinbaseDepth(); i++) {
-            chainHead = BlockForTest.createNextBlock(chainHead,NetworkParameters.BLOCK_VERSION_GENESIS, params.getGenesisBlock());
+            chainHead = chainHead.createNextBlock(params.getGenesisBlock());
             chainHeadHeight++;
             blocks.add(new BlockAndValidity(chainHead, true, false, chainHead.getHash(), i+1, "Initial Block chain output generation"));
             spendableOutputs.offer(new TransactionOutPointWithValue(
@@ -1805,7 +1805,7 @@ public class FullBlockTestGenerator {
         Integer height = blockToHeightMap.get(baseBlock.getHash());
         if (height != null)
             checkState(height == nextBlockHeight - 1);
-        Block block = BlockForTest.createNextBlock(baseBlock,NetworkParameters.BLOCK_VERSION_GENESIS, params.getGenesisBlock());
+        Block block = baseBlock.createNextBlock(params.getGenesisBlock());
         Transaction t = new Transaction(params);
         if (prevOut != null) {
             // Entirely invalid scriptPubKey to ensure we aren't pre-verifying too much

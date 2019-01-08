@@ -414,7 +414,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
         }
 
-        // Set own outputs confirmed (may be non-existent if value is zero)
+        // Set own outputs confirmed
         for (TransactionOutput out : tx.getOutputs()) {
             blockStore.updateTransactionOutputConfirmed(tx.getHash(), out.getIndex(), true);
             blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), out.getIndex(), blockhash);

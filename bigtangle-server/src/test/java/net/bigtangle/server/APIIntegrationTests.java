@@ -29,7 +29,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
 import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
@@ -200,12 +199,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     // @Before
     public Block getRollingBlock(ECKey outKey) throws Exception {
         Context.propagate(new Context(networkParameters));
-        Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
-                NetworkParameters.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
+        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
         blockGraph.add(rollingBlock, true);
         for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS,
-                    networkParameters.getGenesisBlock());
+            rollingBlock = rollingBlock.createNextBlock(networkParameters.getGenesisBlock());
             blockGraph.add(rollingBlock, true);
         }
         return rollingBlock;

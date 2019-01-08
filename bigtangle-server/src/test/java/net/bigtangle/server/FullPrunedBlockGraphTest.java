@@ -18,7 +18,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.MultiSignAddress;
@@ -39,30 +38,17 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
-    
-    /*  TODO dependents
-     *  -> Reward: generalized UTXO spenders
-        -> Reward: virtual UTXO spenders
-        -> Token: generalized UTXO spenders
-     */
 
     @Test
     public void testConnectTransactionalUTXOs() throws Exception {
         store.resetStore();
-
-        // A few blocks exist beforehand
-        for (int i = 0; i < 5; i++) {
-            Block rollingBlock1 = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
-            blockGraph.add(rollingBlock1, true);
-        }
         
         // Create block with UTXOs
-        Transaction tx1 = makeTestTransaction();
+        Transaction tx1 = createTestGenesisTransaction();
         assertNull(transactionService.getUTXO(tx1.getOutput(0).getOutPointFor()));
         assertNull(transactionService.getUTXO(tx1.getOutput(1).getOutPointFor()));
         
-        createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                networkParameters.getGenesisBlock(), tx1);
+        createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx1);
         
         // Should exist now
         final UTXO utxo1 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor());
@@ -79,20 +65,13 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     public void testConnectRewardUTXOs() throws Exception {
         store.resetStore();
 
-        // A few blocks exist beforehand
-        for (int i = 0; i < 5; i++) {
-            Block rollingBlock1 = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
-            blockGraph.add(rollingBlock1, true);
-        }
-
         // Generate blocks until passing first reward interval
-        Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
-                NetworkParameters.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
+        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
         blockGraph.add(rollingBlock, true);
 
         Block rollingBlock1 = rollingBlock;
         for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock1 = BlockForTest.createNextBlock(rollingBlock1, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock1);
+            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
@@ -110,12 +89,6 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         store.resetStore();
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
-
-        // A few blocks exist beforehand
-        for (int i = 0; i < 5; i++) {
-            Block rollingBlock1 = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
-            blockGraph.add(rollingBlock1, true);
-        }
      
         // Generate an eligible issuance
         Sha256Hash firstIssuance;
@@ -136,7 +109,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             firstIssuance = block1.getHash();
 
             // Should exist now
-            assertFalse(store.getTokenConfirmed(block1.getHash().toString()));
+            store.getTokenConfirmed(block1.getHash().toString()); // Fine as long as it does not throw
             assertFalse(store.getTokenSpent(block1.getHash().toString()));        
         }
      
@@ -157,7 +130,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
 
             // Should exist now
-            assertFalse(store.getTokenConfirmed(block1.getHash().toString()));
+            store.getTokenConfirmed(block1.getHash().toString()); // Fine as long as it does not throw
             assertFalse(store.getTokenSpent(block1.getHash().toString()));        
         }
     }
@@ -167,12 +140,11 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         store.resetStore();
         
         // Create block with UTXOs
-        Transaction tx1 = makeTestTransaction();
+        Transaction tx1 = createTestGenesisTransaction();
         assertNull(transactionService.getUTXO(tx1.getOutput(0).getOutPointFor()));
         assertNull(transactionService.getUTXO(tx1.getOutput(1).getOutPointFor()));
         
-        Block spenderBlock = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                networkParameters.getGenesisBlock(), tx1);
+        Block spenderBlock = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx1);
         
         // Confirm
         blockGraph.confirm(spenderBlock.getHash());
@@ -201,13 +173,12 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         store.resetStore();
 
         // Generate blocks until passing first reward interval
-        Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
-                NetworkParameters.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
+        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
         blockGraph.add(rollingBlock, true);
 
         Block rollingBlock1 = rollingBlock;
         for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock1 = BlockForTest.createNextBlock(rollingBlock1, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock1);
+            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
@@ -266,12 +237,11 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         store.resetStore();
         
         // Create block with UTXOs
-        Transaction tx11 = makeTestTransaction();
+        Transaction tx11 = createTestGenesisTransaction();
         assertNull(transactionService.getUTXO(tx11.getOutput(0).getOutPointFor()));
         assertNull(transactionService.getUTXO(tx11.getOutput(1).getOutPointFor()));
         
-        Block block = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                networkParameters.getGenesisBlock(), tx11);
+        Block block = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx11);
         
         // Confirm
         blockGraph.confirm(block.getHash());
@@ -317,7 +287,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Generate blocks until passing first reward interval
         Block rollingBlock = networkParameters.getGenesisBlock();
         for (int i1 = 0; i1 < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i1++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
         
@@ -386,17 +356,15 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testUnconfirmTransactionalDependents() throws Exception {
+    public void testUnconfirmDependentsTransactional() throws Exception {
         store.resetStore();
         
         // Create blocks with UTXOs
-        Transaction tx1 = makeTestTransaction();
-        Block block1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                networkParameters.getGenesisBlock(), tx1);
+        Transaction tx1 = createTestGenesisTransaction();
+        Block block1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx1);
         blockGraph.confirm(block1.getHash());
-        Transaction tx2 = makeTestTransaction();
-        Block block2 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                networkParameters.getGenesisBlock(), tx2);
+        Transaction tx2 = createTestGenesisTransaction();
+        Block block2 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx2);
         blockGraph.confirm(block2.getHash());
         
         // Should be confirmed now
@@ -442,17 +410,17 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testUnconfirmRewardDependentsOtherRewards() throws Exception {
+    public void testUnconfirmDependentsRewardOtherRewards() throws Exception {
         store.resetStore();
         
         // Generate blocks until passing second reward interval
         Block rollingBlock = networkParameters.getGenesisBlock();
         for (int i1 = 0; i1 < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i1++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
         for (int i1 = 0; i1 < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i1++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
         
@@ -507,30 +475,28 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertFalse(utxo1.isConfirmed());
         assertFalse(utxo1.isSpent());
     }
-
-    // TODO refactor names here
     
     @Test
-    public void testUnconfirmRewardDependentsVirtualSpenders() throws Exception {
+    public void testUnconfirmDependentsRewardVirtualSpenders() throws Exception {
         store.resetStore();
         
         // Generate blocks until passing second reward interval
         Block rollingBlock = networkParameters.getGenesisBlock();
-        for (int i1 = 0; i1 < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i1++) {
-            rollingBlock = createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
         
         // Generate mining reward block
-        Block rewardBlock11 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
         
         // Confirm
-        blockGraph.confirm(rewardBlock11.getHash());
+        blockGraph.confirm(rewardBlock.getHash());
         
         // Should be confirmed now
-        assertTrue(store.getRewardConfirmed(rewardBlock11.getHash()));
-        assertFalse(store.getRewardSpent(rewardBlock11.getHash()));
+        assertTrue(store.getRewardConfirmed(rewardBlock.getHash()));
+        assertFalse(store.getRewardSpent(rewardBlock.getHash()));
         
         // Generate spending block
         @SuppressWarnings("deprecation")
@@ -554,8 +520,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertNull(transactionService.getUTXO(tx.getOutput(0).getOutPointFor()));
         assertNull(transactionService.getUTXO(tx.getOutput(1).getOutPointFor()));
         
-        Block spenderBlock = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                networkParameters.getGenesisBlock(), tx);
+        Block spenderBlock = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx);
         
         // Confirm
         blockGraph.confirm(spenderBlock.getHash());
@@ -571,11 +536,11 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertFalse(utxo21.isSpent());
         
         // Unconfirm reward block
-        blockGraph.unconfirm(rewardBlock11.getHash());
+        blockGraph.unconfirm(rewardBlock.getHash());
 
         // Both should be unconfirmed now
-        assertFalse(store.getRewardConfirmed(rewardBlock11.getHash()));
-        assertFalse(store.getRewardSpent(rewardBlock11.getHash()));
+        assertFalse(store.getRewardConfirmed(rewardBlock.getHash()));
+        assertFalse(store.getRewardSpent(rewardBlock.getHash()));
         final UTXO utxo1 = transactionService.getUTXO(tx.getOutput(0).getOutPointFor());
         final UTXO utxo2 = transactionService.getUTXO(tx.getOutput(1).getOutPointFor());
         assertNotNull(utxo1);
@@ -590,11 +555,71 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertNull(store.getTransactionOutputConfirmingBlock(utxo2.getHash(), utxo2.getIndex()));
         
         // Check the virtual txs too
-        Transaction virtualTX = blockGraph.generateVirtualMiningRewardTX(rewardBlock11);
+        Transaction virtualTX = blockGraph.generateVirtualMiningRewardTX(rewardBlock);
         UTXO utxo3 = transactionService.getUTXO(virtualTX.getOutput(0).getOutPointFor());
         assertFalse(utxo3.isConfirmed());
         assertFalse(utxo3.isSpent());
         assertNull(store.getTransactionOutputSpender(utxo3.getHash(), utxo3.getIndex()));
+    }
+
+    @Test
+    public void testUnconfirmDependentsToken() throws Exception {
+        store.resetStore();
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+        
+        // Generate an eligible issuance
+        Sha256Hash firstIssuance;
+        {
+            TokenInfo tokenInfo = new TokenInfo();
+            
+            Coin coinbase = Coin.valueOf(77777L, pubKey);
+            long amount = coinbase.getValue();
+            Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0,
+                    amount, false, false);
+
+            tokenInfo.setTokens(tokens);
+            tokenInfo.getMultiSignAddresses()
+                    .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+
+            // This (saveBlock) calls milestoneUpdate currently, that's why we need other blocks beforehand.
+            Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+            firstIssuance = block1.getHash();  
+        }
+     
+        // Generate a subsequent issuance
+        Sha256Hash subseqIssuance;
+        {
+            TokenInfo tokenInfo = new TokenInfo();
+            
+            Coin coinbase = Coin.valueOf(77777L, pubKey);
+            long amount = coinbase.getValue();
+            Token tokens = Token.buildSimpleTokenInfo(true, firstIssuance.toString(), Utils.HEX.encode(pubKey), "Test", "Test", 1, 1,
+                    amount, false, true);
+
+            tokenInfo.setTokens(tokens);
+            tokenInfo.getMultiSignAddresses()
+                    .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+
+            // This (saveBlock) calls milestoneUpdate currently, that's why we need other blocks beforehand.
+            Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+            subseqIssuance = block1.getHash();
+        }
+
+        // Confirm
+        blockGraph.confirm(firstIssuance);
+        blockGraph.confirm(subseqIssuance);
+        
+        // Should be confirmed now
+        assertTrue(store.getTokenConfirmed(subseqIssuance.toString()));
+        assertTrue(store.getTokenConfirmed(subseqIssuance.toString()));
+        
+        // Unconfirm
+        blockGraph.unconfirm(firstIssuance);
+
+        // Should be unconfirmed now
+        assertFalse(store.getTokenConfirmed(subseqIssuance.toString()));
+        assertFalse(store.getTokenConfirmed(subseqIssuance.toString()));
     }
     
 }
