@@ -333,6 +333,34 @@ public class ValidatorService {
     }
 
     /**
+     * Checks if the given set is eligible to be walked to during local
+     * approval tip selection given the current set of non-milestone blocks to
+     * include. This is the case if the set is compatible with the
+     * current milestone. It must disallow spent prev UTXOs / unconfirmed prev UTXOs
+     * 
+     * @param currentApprovedNonMilestoneBlocks
+     *            The set of all currently approved non-milestone blocks. 
+     * @return true if the given set is eligible
+     * @throws BlockStoreException 
+     */
+    public boolean isEligibleForApprovalSelection(HashSet<BlockWrap> currentApprovedNonMilestoneBlocks) throws BlockStoreException {
+        // If there exists a new block whose dependency is already spent
+        // (conflicting with milestone) or not confirmed yet (missing other milestones), we fail to
+        // approve this block since the current milestone takes precedence / doesn't allow for the addition of these blocks
+        if (findBlockWithSpentOrUnconfirmedInputs(currentApprovedNonMilestoneBlocks))
+            return false;
+
+        // If conflicts among the approved non-milestone blocks exist, cannot approve
+        HashSet<ConflictCandidate> conflictingOutPoints = new HashSet<>();
+        findCandidateConflicts(currentApprovedNonMilestoneBlocks, conflictingOutPoints);
+        if (!conflictingOutPoints.isEmpty())
+            return false;
+
+        // Otherwise, the new approved block set is compatible with current milestone
+        return true;
+    }
+
+    /**
      * Checks if the given block is eligible to be walked to during local
      * approval tip selection given the current set of non-milestone blocks to
      * include. This is the case if the block + the set is compatible with the
@@ -341,9 +369,8 @@ public class ValidatorService {
      * @param block
      *            The block to check for eligibility.
      * @param currentApprovedNonMilestoneBlocks
-     *            The set of all currently approved non-milestone blocks. Note
-     *            that this set is assumed to be compatible with the current
-     *            milestone.
+     *            THIS SET IS ASSUMED TO BE COMPATIBLE WITH THE MILESTONE.
+     *            The set of all currently approved non-milestone blocks. 
      * @return true if the given block is eligible to be walked to during
      *         approval tip selection.
      * @throws BlockStoreException 

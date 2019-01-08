@@ -171,7 +171,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Block conflictBlock1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, block1.getHash(), block1.getHash());
         Block conflictBlock2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, block1.getHash(), block1.getHash());
 
-        // Make another conflicting issuance that goes through
+        // Make a fusing block
         Block rollingBlock = conflictBlock1.createNextBlock(conflictBlock2);
         blockGraph.add(rollingBlock, true);
         
@@ -226,7 +226,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 .add(new MultiSignAddress(tokens3.getTokenid(), "", outKey.getPublicKeyAsHex()));        
         Block conflictBlock2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo3, coinbase3, outKey, null, block1.getHash(), block1.getHash());
 
-        // Make another conflicting issuance that goes through
+        // Make a fusing block
         Block rollingBlock = conflictBlock1.createNextBlock(conflictBlock2);
         blockGraph.add(rollingBlock, true);
         

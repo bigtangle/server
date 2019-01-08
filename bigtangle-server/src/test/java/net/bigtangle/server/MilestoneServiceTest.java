@@ -171,14 +171,14 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(b7.getHash()).isMilestone());
         assertFalse(blockService.getBlockEvaluation(b8.getHash()).isMilestone());
         assertFalse(blockService.getBlockEvaluation(b8link.getHash()).isMilestone());
-        // assertFalse(blockService.getBlockEvaluation(b9.getHash()).isMilestone());
-        // assertFalse(blockService.getBlockEvaluation(b10.getHash()).isMilestone());
-        // assertFalse(blockService.getBlockEvaluation(b11.getHash()).isMilestone());
-        // assertFalse(blockService.getBlockEvaluation(b12.getHash()).isMilestone());
-        // assertFalse(blockService.getBlockEvaluation(b13.getHash()).isMilestone());
-        // assertFalse(blockService.getBlockEvaluation(b14.getHash()).isMilestone());
-        // assertFalse(blockService.getBlockEvaluation(bOrphan1.getHash()).isMilestone());
-        // assertFalse(blockService.getBlockEvaluation(bOrphan5.getHash()).isMilestone());
+        assertFalse(blockService.getBlockEvaluation(b9.getHash()).isMilestone());
+        assertFalse(blockService.getBlockEvaluation(b10.getHash()).isMilestone());
+        assertFalse(blockService.getBlockEvaluation(b11.getHash()).isMilestone());
+        assertFalse(blockService.getBlockEvaluation(b12.getHash()).isMilestone());
+        assertFalse(blockService.getBlockEvaluation(b13.getHash()).isMilestone());
+        assertFalse(blockService.getBlockEvaluation(b14.getHash()).isMilestone());
+        assertFalse(blockService.getBlockEvaluation(bOrphan1.getHash()).isMilestone());
+        assertFalse(blockService.getBlockEvaluation(bOrphan5.getHash()).isMilestone());
 
         // Now make block 8 heavier and higher rated than b5 to make it
         // disconnect block
