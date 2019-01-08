@@ -409,8 +409,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     throw new RuntimeException("Attempted to spend a non-existent output!");
                 if (prevOut.isSpent())
                     throw new RuntimeException("Attempted to spend an already spent output!");
-                if (!prevOut.isConfirmed())
-                    throw new RuntimeException("Attempted to spend an unconfirmed output!");
                 
                 blockStore.updateTransactionOutputSpent(prevOut.getHash(), prevOut.getIndex(), true, blockhash);
             }
@@ -418,12 +416,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Set own outputs confirmed (may be non-existent if value is zero)
         for (TransactionOutput out : tx.getOutputs()) {
-            UTXO utxo = blockStore.getTransactionOutput(out.getOutPointFor().getHash(), out.getOutPointFor().getIndex());
-            
-            // Sanity check
-            if (utxo != null && utxo.isSpent())
-                throw new RuntimeException("Attempted to reset an already spent output!");
-            
             blockStore.updateTransactionOutputConfirmed(tx.getHash(), out.getIndex(), true);
             blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), out.getIndex(), blockhash);
             blockStore.updateTransactionOutputSpent(tx.getHash(), out.getIndex(), false, null);
@@ -504,6 +496,15 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             // Unconfirm dependents
             if (blockStore.getRewardSpent(block.getHash())) {
                 removeBlockFromMilestone(blockStore.getRewardSpender(block.getHash()), traversedBlockHashes);
+            }
+            // Disconnect all virtual transaction output dependents
+            Transaction tx = generateVirtualMiningRewardTX(block);
+            for (TransactionOutput txout : tx.getOutputs()) {
+                UTXO utxo = blockStore.getTransactionOutput(tx.getHash(), txout.getIndex());
+                if (utxo.isSpent()) {
+                    removeBlockFromMilestone(
+                            blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()).getBlockHash(), traversedBlockHashes);
+                }
             }
             break;
         case BLOCKTYPE_TOKEN_CREATION:
@@ -610,12 +611,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         
         // Set own outputs unconfirmed
         for (TransactionOutput txout : tx.getOutputs()) {
-            UTXO utxo = blockStore.getTransactionOutput(tx.getHash(), txout.getIndex());
-            
-            // Sanity check no dependents
-            if (utxo.isSpent())
-                throw new RuntimeException("Attempted to unconfirm a spent output!");
-
             blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), txout.getIndex(), null);
             blockStore.updateTransactionOutputConfirmed(tx.getHash(), txout.getIndex(), false);
         }
@@ -694,11 +689,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), height, isCoinBase, script,
                         getScriptAddress(script), null, out.getFromaddress(), tx.getMemo(),
                         Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0);
-                // Filter zero UTXO
-                if (!newOut.getValue().isZero()) {
-                    newOut.setTime(timeSeconds);
-                    blockStore.addUnspentTransactionOutput(newOut);
-                }
+                newOut.setTime(timeSeconds);
+                blockStore.addUnspentTransactionOutput(newOut);
                 if (script.isSentToMultiSig()) {
                     int minsignnumber = script.getNumberOfSignaturesRequiredToSpend();
                     for (ECKey ecKey : script.getPubKeys()) {
@@ -762,6 +754,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * @return mining reward transaction 
      * @throws BlockStoreException
      */
+    // TODO only needs to be called once: confirm. all other can be replaced
     public Transaction generateVirtualMiningRewardTX(Block block) throws BlockStoreException {
         
         Sha256Hash prevRewardHash = null;

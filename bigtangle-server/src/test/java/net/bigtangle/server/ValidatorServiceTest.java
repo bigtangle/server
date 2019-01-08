@@ -703,7 +703,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Second mining reward block should now go through since everything is
         // updated
         rollingBlock = rewardBlock2;
-        for (int i = 1; i < 20; i++) {
+        for (int i = 1; i < 30; i++) {
             rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
             blockGraph.add(rollingBlock, true);
         }

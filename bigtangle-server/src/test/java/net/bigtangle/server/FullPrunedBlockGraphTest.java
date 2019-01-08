@@ -10,6 +10,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.List;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,20 +27,18 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionInput;
+import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.crypto.TransactionSignature;
+import net.bigtangle.script.Script;
+import net.bigtangle.script.ScriptBuilder;
+import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
-    
-    /*
-     *  TODO Tipsservice test
-        -> CHECK: no conflicts with milestone: used "generalized UTXOs" are confirmed + unspent for approved non-milestone blocks
-        -> CHECK: no conflicts with each other  
-        -> CHECK: type-specific selection conditions (see below)
-        -> Reward CHECK: eligibility==eligible or (eligibility==ineligible and overruled)
-     */
     
     /*  TODO dependents
      *  -> Reward: generalized UTXO spenders
@@ -179,7 +179,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         
         // Should be confirmed now
         final UTXO utxo1 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor());
-        final UTXO utxo2 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor());
+        final UTXO utxo2 = transactionService.getUTXO(tx1.getOutput(1).getOutPointFor());
         assertTrue(utxo1.isConfirmed());
         assertTrue(utxo2.isConfirmed());
         assertFalse(utxo1.isSpent());
@@ -278,7 +278,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         
         // Should be confirmed now
         final UTXO utxo11 = transactionService.getUTXO(tx11.getOutput(0).getOutPointFor());
-        final UTXO utxo21 = transactionService.getUTXO(tx11.getOutput(0).getOutPointFor());
+        final UTXO utxo21 = transactionService.getUTXO(tx11.getOutput(1).getOutPointFor());
         assertNotNull(utxo11);
         assertNotNull(utxo21);
         assertTrue(utxo11.isConfirmed());
@@ -291,7 +291,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         
         // Should be unconfirmed now
         final UTXO utxo1 = transactionService.getUTXO(tx11.getOutput(0).getOutPointFor());
-        final UTXO utxo2 = transactionService.getUTXO(tx11.getOutput(0).getOutPointFor());
+        final UTXO utxo2 = transactionService.getUTXO(tx11.getOutput(1).getOutPointFor());
         assertNotNull(utxo1);
         assertNotNull(utxo2);
         assertFalse(utxo1.isConfirmed());
@@ -383,6 +383,218 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Should be unconfirmed now
         assertFalse(store.getTokenConfirmed(block11.getHash().toString()));
         assertFalse(store.getTokenSpent(block11.getHash().toString()));        
+    }
+
+    @Test
+    public void testUnconfirmTransactionalDependents() throws Exception {
+        store.resetStore();
+        
+        // Create blocks with UTXOs
+        Transaction tx1 = makeTestTransaction();
+        Block block1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+                networkParameters.getGenesisBlock(), tx1);
+        blockGraph.confirm(block1.getHash());
+        Transaction tx2 = makeTestTransaction();
+        Block block2 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+                networkParameters.getGenesisBlock(), tx2);
+        blockGraph.confirm(block2.getHash());
+        
+        // Should be confirmed now
+        assertTrue(store.getBlockEvaluation(block1.getHash()).isMilestone());
+        assertTrue(store.getBlockEvaluation(block2.getHash()).isMilestone());
+        UTXO utxo11 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor());
+        UTXO utxo21 = transactionService.getUTXO(tx1.getOutput(1).getOutPointFor());
+        assertNotNull(utxo11);
+        assertNotNull(utxo21);
+        assertTrue(utxo11.isConfirmed());
+        assertTrue(utxo21.isConfirmed());
+        assertTrue(utxo11.isSpent());
+        assertFalse(utxo21.isSpent());        
+        utxo11 = transactionService.getUTXO(tx2.getOutput(0).getOutPointFor());
+        utxo21 = transactionService.getUTXO(tx2.getOutput(1).getOutPointFor());
+        assertNotNull(utxo11);
+        assertNotNull(utxo21);
+        assertTrue(utxo11.isConfirmed());
+        assertTrue(utxo21.isConfirmed());
+        assertFalse(utxo11.isSpent());
+        assertFalse(utxo21.isSpent());
+        
+        // Unconfirm first block
+        blockGraph.unconfirm(block1.getHash());
+        
+        // Both should be unconfirmed now
+        assertFalse(store.getBlockEvaluation(block1.getHash()).isMilestone());
+        assertFalse(store.getBlockEvaluation(block2.getHash()).isMilestone());
+        for (Transaction tx : new Transaction[] {tx1, tx2}) {
+            final UTXO utxo1 = transactionService.getUTXO(tx.getOutput(0).getOutPointFor());
+            final UTXO utxo2 = transactionService.getUTXO(tx.getOutput(1).getOutPointFor());
+            assertNotNull(utxo1);
+            assertNotNull(utxo2);
+            assertFalse(utxo1.isConfirmed());
+            assertFalse(utxo2.isConfirmed());
+            assertFalse(utxo1.isSpent());
+            assertFalse(utxo2.isSpent());
+            
+            // Extra for transactional UTXOs
+            assertNull(store.getTransactionOutputConfirmingBlock(utxo1.getHash(), utxo1.getIndex()));
+            assertNull(store.getTransactionOutputConfirmingBlock(utxo2.getHash(), utxo2.getIndex()));
+        }
+    }
+
+    @Test
+    public void testUnconfirmRewardDependentsOtherRewards() throws Exception {
+        store.resetStore();
+        
+        // Generate blocks until passing second reward interval
+        Block rollingBlock = networkParameters.getGenesisBlock();
+        for (int i1 = 0; i1 < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i1++) {
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+            blockGraph.add(rollingBlock, true);
+        }
+        for (int i1 = 0; i1 < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i1++) {
+            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+            blockGraph.add(rollingBlock, true);
+        }
+        
+        // Generate mining reward block
+        Block rewardBlock11 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock.getHash(), rollingBlock.getHash());
+        
+        // Confirm
+        blockGraph.confirm(rewardBlock11.getHash());
+        
+        // Should be confirmed now
+        assertTrue(store.getRewardConfirmed(rewardBlock11.getHash()));
+        assertFalse(store.getRewardSpent(rewardBlock11.getHash()));
+        
+        // Generate second mining reward block
+        Block rewardBlock2 = transactionService.createAndAddMiningRewardBlock(rewardBlock11.getHash(),
+                rollingBlock.getHash(), rollingBlock.getHash());
+        
+        // Confirm
+        blockGraph.confirm(rewardBlock2.getHash());
+        
+        // Should be confirmed now
+        assertTrue(store.getRewardConfirmed(rewardBlock11.getHash()));
+        assertTrue(store.getRewardSpent(rewardBlock11.getHash()));
+        assertTrue(store.getRewardConfirmed(rewardBlock2.getHash()));
+        assertFalse(store.getRewardSpent(rewardBlock2.getHash()));
+        
+        // Unconfirm
+        blockGraph.unconfirm(rewardBlock11.getHash());
+
+        // Both should be unconfirmed now
+        assertFalse(store.getRewardConfirmed(rewardBlock11.getHash()));
+        assertFalse(store.getRewardSpent(rewardBlock11.getHash()));
+        assertFalse(store.getRewardConfirmed(rewardBlock2.getHash()));
+        assertFalse(store.getRewardSpent(rewardBlock2.getHash()));
+        
+        // Further manipulations on prev UTXOs
+        assertTrue(store.getRewardConfirmed(networkParameters.getGenesisBlock().getHash()));
+        assertFalse(store.getRewardSpent(networkParameters.getGenesisBlock().getHash()));
+        assertNull(store.getRewardSpender(networkParameters.getGenesisBlock().getHash()));
+        assertFalse(store.getRewardConfirmed(rewardBlock11.getHash()));
+        assertFalse(store.getRewardSpent(rewardBlock11.getHash()));
+        assertNull(store.getRewardSpender(rewardBlock11.getHash()));
+        
+        // Check the virtual txs too
+        Transaction virtualTX = blockGraph.generateVirtualMiningRewardTX(rewardBlock11);
+        UTXO utxo1 = transactionService.getUTXO(virtualTX.getOutput(0).getOutPointFor());
+        assertFalse(utxo1.isConfirmed());
+        assertFalse(utxo1.isSpent());
+        virtualTX = blockGraph.generateVirtualMiningRewardTX(rewardBlock2);
+        utxo1 = transactionService.getUTXO(virtualTX.getOutput(0).getOutPointFor());
+        assertFalse(utxo1.isConfirmed());
+        assertFalse(utxo1.isSpent());
+    }
+
+    // TODO refactor names here
+    
+    @Test
+    public void testUnconfirmRewardDependentsVirtualSpenders() throws Exception {
+        store.resetStore();
+        
+        // Generate blocks until passing second reward interval
+        Block rollingBlock = networkParameters.getGenesisBlock();
+        for (int i1 = 0; i1 < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i1++) {
+            rollingBlock = createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+            blockGraph.add(rollingBlock, true);
+        }
+        
+        // Generate mining reward block
+        Block rewardBlock11 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock.getHash(), rollingBlock.getHash());
+        
+        // Confirm
+        blockGraph.confirm(rewardBlock11.getHash());
+        
+        // Should be confirmed now
+        assertTrue(store.getRewardConfirmed(rewardBlock11.getHash()));
+        assertFalse(store.getRewardSpent(rewardBlock11.getHash()));
+        
+        // Generate spending block
+        @SuppressWarnings("deprecation")
+        ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+        outputs.removeIf(o -> o.getValue().value == NetworkParameters.testCoin);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+                0);
+        Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
+        Transaction tx = new Transaction(networkParameters);
+        tx.addOutput(new TransactionOutput(networkParameters, tx, amount, genesiskey));
+        tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), genesiskey));
+        TransactionInput input = tx.addInput(spendableOutput);
+        Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(),
+                Transaction.SigHash.ALL, false);
+        
+        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+                false);
+        Script inputScript = ScriptBuilder.createInputScript(tsrecsig, genesiskey);
+        input.setScriptSig(inputScript);
+        assertNull(transactionService.getUTXO(tx.getOutput(0).getOutPointFor()));
+        assertNull(transactionService.getUTXO(tx.getOutput(1).getOutPointFor()));
+        
+        Block spenderBlock = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
+                networkParameters.getGenesisBlock(), tx);
+        
+        // Confirm
+        blockGraph.confirm(spenderBlock.getHash());
+     
+        // Should be confirmed now
+        final UTXO utxo11 = transactionService.getUTXO(tx.getOutput(0).getOutPointFor());
+        final UTXO utxo21 = transactionService.getUTXO(tx.getOutput(1).getOutPointFor());
+        assertNotNull(utxo11);
+        assertNotNull(utxo21);
+        assertTrue(utxo11.isConfirmed());
+        assertTrue(utxo21.isConfirmed());
+        assertFalse(utxo11.isSpent());
+        assertFalse(utxo21.isSpent());
+        
+        // Unconfirm reward block
+        blockGraph.unconfirm(rewardBlock11.getHash());
+
+        // Both should be unconfirmed now
+        assertFalse(store.getRewardConfirmed(rewardBlock11.getHash()));
+        assertFalse(store.getRewardSpent(rewardBlock11.getHash()));
+        final UTXO utxo1 = transactionService.getUTXO(tx.getOutput(0).getOutPointFor());
+        final UTXO utxo2 = transactionService.getUTXO(tx.getOutput(1).getOutPointFor());
+        assertNotNull(utxo1);
+        assertNotNull(utxo2);
+        assertFalse(utxo1.isConfirmed());
+        assertFalse(utxo2.isConfirmed());
+        assertFalse(utxo1.isSpent());
+        assertFalse(utxo2.isSpent());
+        
+        // Extra for transactional UTXOs
+        assertNull(store.getTransactionOutputConfirmingBlock(utxo1.getHash(), utxo1.getIndex()));
+        assertNull(store.getTransactionOutputConfirmingBlock(utxo2.getHash(), utxo2.getIndex()));
+        
+        // Check the virtual txs too
+        Transaction virtualTX = blockGraph.generateVirtualMiningRewardTX(rewardBlock11);
+        UTXO utxo3 = transactionService.getUTXO(virtualTX.getOutput(0).getOutPointFor());
+        assertFalse(utxo3.isConfirmed());
+        assertFalse(utxo3.isSpent());
+        assertNull(store.getTransactionOutputSpender(utxo3.getHash(), utxo3.getIndex()));
     }
     
 }
