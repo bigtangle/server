@@ -418,11 +418,11 @@ public class Transaction extends ChildMessage {
      * 
      * @return the sum of the outputs regardless of who owns them.
      */
-    public Coin getOutputSum() {
-        Coin totalOut = Coin.ZERO;
+    public long getOutputSum() {
+        long totalOut = 0;
 
         for (TransactionOutput output : outputs) {
-            totalOut = totalOut.add(output.getValue());
+            totalOut = totalOut + output.getValue().getValue();
         }
 
         return totalOut;

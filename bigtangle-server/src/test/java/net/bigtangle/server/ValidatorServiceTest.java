@@ -1165,10 +1165,18 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     -> Token CHECK: signatures valid, unique and for permissioned addresses
     -> Token CHECK: enough signatures 
     */
+
+    interface TestExecutor {
+        public boolean expectsException();
+        public void preApply(TokenInfo info);
+    }
+
+    //1: TODO data null
     
     @Test
-    public void testSolidityTokenMalformedData() throws Exception {
+    public void testSolidityTokenMutatedData() throws Exception {
         store.resetStore();
+        @SuppressWarnings("deprecation")
         ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         
         // Generate an eligible issuance tokenInfo
@@ -1183,114 +1191,617 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
         
         // Make mutated versions of the data
-        //1: data null
-        //2: sigdata null
-        TokenInfo tokenInfo3 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo4 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo5 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo6 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo7 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo8 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo9 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo10 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo11 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo12 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo13 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo14 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo15 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo16 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo17 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo18 = TokenInfo.parse(tokenInfo0.toByteArray());
-        TokenInfo tokenInfo19 = TokenInfo.parse(tokenInfo0.toByteArray());
-        tokenInfo3.setTokens(null);
-        tokenInfo4.setMultiSignAddresses(null);
-        tokenInfo5.getTokens().setAmount(-1);
-        tokenInfo5.getTokens().setBlockhash(null);
-        tokenInfo5.getTokens().setBlockhash("test");
-        tokenInfo5.getTokens().setBlockhash(networkParameters.getGenesisBlock().getHashAsString());
-        tokenInfo5.getTokens().setDescription(null);
-        tokenInfo5.getTokens().setDescription(new String(new char[NetworkParameters.TOKEN_MAX_DESC_LENGTH]).replace("\0", "A"));
-        tokenInfo5.getTokens().setDescription(new String(new char[NetworkParameters.TOKEN_MAX_DESC_LENGTH + 1]).replace("\0", "A"));
-        tokenInfo5.getTokens().setMultiserial(false); // TODO this field is useless, drop it
-        tokenInfo5.getTokens().setPrevblockhash(null);
-        tokenInfo5.getTokens().setPrevblockhash("test");
-        tokenInfo5.getTokens().setPrevblockhash(networkParameters.getGenesisBlock().getHashAsString());
-        tokenInfo5.getTokens().setSignnumber(-1);
-        tokenInfo5.getTokens().setSignnumber(0);
-        tokenInfo5.getTokens().setSignnumber(5);
-        tokenInfo5.getTokens().setTokenid(null);
-        tokenInfo5.getTokens().setTokenid("");
-        tokenInfo5.getTokens().setTokenid("test");
-        tokenInfo5.getTokens().setTokenid(Utils.HEX.encode(genesiskey.getPubKey()));
-        tokenInfo5.getTokens().setTokenindex(-1);
-        tokenInfo5.getTokens().setTokenindex(5);
-        tokenInfo5.getTokens().setTokenindex(NetworkParameters.TOKEN_MAX_ISSUANCE_NUMBER + 1);
-        tokenInfo5.getTokens().setTokenname(null);
-        tokenInfo5.getTokens().setTokenname("");
-        tokenInfo5.getTokens().setTokenname(new String(new char[NetworkParameters.TOKEN_MAX_NAME_LENGTH]).replace("\0", "A"));
-        tokenInfo5.getTokens().setTokenname(new String(new char[NetworkParameters.TOKEN_MAX_NAME_LENGTH + 1]).replace("\0", "A"));
-        tokenInfo5.getTokens().setTokenstop(false); 
-        tokenInfo5.getTokens().setTokentype(-1); // TODO this field has no usage, test this later...
-        tokenInfo5.getTokens().setUrl(null);
-        tokenInfo5.getTokens().setUrl("");
-        tokenInfo5.getTokens().setUrl(new String(new char[NetworkParameters.TOKEN_MAX_URL_LENGTH]).replace("\0", "A"));
-        tokenInfo5.getTokens().setUrl(new String(new char[NetworkParameters.TOKEN_MAX_URL_LENGTH + 1]).replace("\0", "A"));
-        tokenInfo5.getMultiSignAddresses().remove(0);
-        tokenInfo5.getMultiSignAddresses().get(0).setAddress(null);
-        tokenInfo5.getMultiSignAddresses().get(0).setAddress("");
-        tokenInfo5.getMultiSignAddresses().get(0).setAddress(new String(new char[222]).replace("\0", "A"));
-        // TODO
-//        tokenInfo5.getMultiSignAddresses().get(0).setBlockhash(blockhash);
-//        tokenInfo5.getMultiSignAddresses().get(0).setPosIndex(posIndex);
-//        tokenInfo5.getMultiSignAddresses().get(0).setPubKeyHex(pubKeyHex);
-//        tokenInfo5.getMultiSignAddresses().get(0).setTokenid(tokenid);
-        
-        
-        
-        // make blocks
+        // TODO setting blockhash is useless, drop it
+        // TODO amount can be inferred, drop it
+        // TODO multiserial is useless?
+        // TODO try too few signatures for signnumber? split output multisig and token multisig definitions
+        // TODO type is useless
+        // TODO MultiSignAddress.address useless
+        // TODO MultiSignAddress.blockhash useless
+        // TODO MultiSignAddress.tokenid does not matter, must be inferred
+        TestExecutor[] executors = new TestExecutor[] { new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+                tokenInfo5.setTokens(null);
+            }
 
-        // Make block including it
-        Block block = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+            @Override
+            public boolean expectsException() {
+                return true;
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+                tokenInfo5.setMultiSignAddresses(null);
+            }
+
+            @Override
+            public boolean expectsException() {
+                return true;
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+                tokenInfo5.getTokens().setAmount(-1);
+            }
+
+            @Override
+            public boolean expectsException() {
+                return true;
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens().setBlockhash(null);
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false;
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens().setDescription(null);
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false;
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens().setDescription(
+                        new String(new char[NetworkParameters.TOKEN_MAX_DESC_LENGTH]).replace("\0", "A"));
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false;
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens().setDescription(
+                        new String(new char[NetworkParameters.TOKEN_MAX_DESC_LENGTH + 1]).replace("\0", "A"));
+            }
+
+            @Override
+            public boolean expectsException() {
+                return true;
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens().setMultiserial(false);
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false;
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+                tokenInfo5.getTokens().setPrevblockhash(null);
+            }
+
+            @Override
+            public boolean expectsException() {
+                return true;
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens().setPrevblockhash("test");
+            }
+
+            @Override
+            public boolean expectsException() {
+                return true;
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens().setPrevblockhash(getRandomSha256Hash().toString());
+            }
+
+            @Override
+            public boolean expectsException() {
+                return true;
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens().setPrevblockhash(networkParameters.getGenesisBlock().getHashAsString());
+            }
+
+            @Override
+            public boolean expectsException() {
+                return true;
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens().setSignnumber(-1);
+            }
+
+            @Override
+            public boolean expectsException() {
+                return true;
+            }
+        }, new TestExecutor() { //13
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens().setSignnumber(0);
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false;
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens().setTokenid(null);
+            }
+
+            @Override
+            public boolean expectsException() {
+                return true;
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens().setTokenid("");
+            }
+
+            @Override
+            public boolean expectsException() {
+                return true;
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens().setTokenid("test");
+            }
+
+            @Override
+            public boolean expectsException() {
+                return true;
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens().setTokenid(Utils.HEX.encode(genesiskey.getPubKey()));
+            }
+
+            @Override
+            public boolean expectsException() {
+                return true;
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens().setTokenindex(-1);
+            }
+
+            @Override
+            public boolean expectsException() {
+                return true;
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens().setTokenindex(5);
+            }
+
+            @Override
+            public boolean expectsException() {
+                return true;
+
+            }
+        }, new TestExecutor() { //20
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens().setTokenindex(NetworkParameters.TOKEN_MAX_ISSUANCE_NUMBER + 1);
+            }
+
+            @Override
+            public boolean expectsException() {
+                return true;
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens().setTokenname(null);
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false;
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens().setTokenname("");
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false;
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens()
+                        .setTokenname(new String(new char[NetworkParameters.TOKEN_MAX_NAME_LENGTH]).replace("\0", "A"));
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false;
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens().setTokenname(
+                        new String(new char[NetworkParameters.TOKEN_MAX_NAME_LENGTH + 1]).replace("\0", "A"));
+            }
+
+            @Override
+            public boolean expectsException() {
+                return true;
+
+            }
+        }, new TestExecutor() { //25
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens().setTokenstop(false);
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false;
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens().setTokentype(-1);
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false;
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+                tokenInfo5.getTokens().setUrl(null);
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false;
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens().setUrl("");
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false;
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getTokens()
+                        .setUrl(new String(new char[NetworkParameters.TOKEN_MAX_URL_LENGTH]).replace("\0", "A"));
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false;
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) { //30
+
+                tokenInfo5.getTokens()
+                        .setUrl(new String(new char[NetworkParameters.TOKEN_MAX_URL_LENGTH + 1]).replace("\0", "A"));
+            }
+
+            @Override
+            public boolean expectsException() {
+                return true;
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getMultiSignAddresses().remove(0);
+            }
+
+            @Override
+            public boolean expectsException() {
+                return true;
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getMultiSignAddresses().get(0).setAddress(null);
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false;
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getMultiSignAddresses().get(0).setAddress("");
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false;
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getMultiSignAddresses().get(0).setAddress(new String(new char[222]).replace("\0", "A"));
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false;
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {//35
+
+                tokenInfo5.getMultiSignAddresses().get(0).setBlockhash(null);
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false; // these do not matter, they are overwritten
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getMultiSignAddresses().get(0).setBlockhash("test");
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false; // these do not matter, they are overwritten
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getMultiSignAddresses().get(0).setBlockhash(getRandomSha256Hash().toString());
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false; // these do not matter, they are overwritten
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getMultiSignAddresses().get(0)
+                        .setBlockhash(networkParameters.getGenesisBlock().getHashAsString());
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false; // these do not matter, they are overwritten
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getMultiSignAddresses().get(0).setPosIndex(-1);
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false; // these do not matter, they are overwritten
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) { //40
+
+                tokenInfo5.getMultiSignAddresses().get(0).setPosIndex(0);
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false; // these do not matter, they are overwritten
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getMultiSignAddresses().get(0).setPosIndex(4);
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false; // these do not matter, they are overwritten
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getMultiSignAddresses().get(0).setPubKeyHex(Utils.HEX.encode(outKey2.getPubKey()));
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false;
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getMultiSignAddresses().get(0).setTokenid(null);
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false;
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getMultiSignAddresses().get(0).setTokenid("");
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false;
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getMultiSignAddresses().get(0).setTokenid("test");
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false;
+
+            }
+        }, new TestExecutor() {
+            @Override
+            public void preApply(TokenInfo tokenInfo5) {
+
+                tokenInfo5.getMultiSignAddresses().get(0).setTokenid(Utils.HEX.encode(genesiskey.getPubKey()));
+            }
+
+            @Override
+            public boolean expectsException() {
+                return false;
+
+            }
+        } };
         
-        // Coinbase with signatures
-        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo0);
-        Transaction transaction = block.getTransactions().get(0);
-        Sha256Hash sighash1 = transaction.getHash();
-        ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
-        byte[] buf1 = party1Signature.encodeToDER();
-        
-        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
-        MultiSignBy multiSignBy0 = new MultiSignBy();
-        multiSignBy0.setTokenid(tokenInfo0.getTokens().getTokenid().trim());
-        multiSignBy0.setTokenindex(0);
-        multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
-        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
-        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
-        multiSignBies.add(multiSignBy0);
-        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
-        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
-        
-        // TODO
-//        multiSignByRequest.getMultiSignBies().get(0).
-        
-        
-        
-        
-        
-        
-        
-        
-        // save block
-        block.solve();
-        
-        // Should not go through
-        try {
-            blockGraph.add(block, false);
-            fail();
-        } catch (InvalidTransactionDataException e) {
+        for (int i = 0; i < executors.length; i++) {
+            // Modify the tokenInfo
+            TokenInfo tokenInfo = TokenInfo.parse(tokenInfo0.toByteArray());
+            executors[i].preApply(tokenInfo);
+            
+            // Make block including it
+            Block block = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+            block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+            
+            // Coinbase with signatures
+            if (tokenInfo.getMultiSignAddresses() != null) {
+                
+                block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
+                Transaction transaction = block.getTransactions().get(0);
+                Sha256Hash sighash1 = transaction.getHash();
+                ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
+                byte[] buf1 = party1Signature.encodeToDER();
+                
+                List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+                MultiSignBy multiSignBy0 = new MultiSignBy();
+                if (tokenInfo.getTokens() != null && tokenInfo.getTokens().getTokenid() != null)
+                    multiSignBy0.setTokenid(tokenInfo.getTokens().getTokenid().trim());
+                else
+                    multiSignBy0.setTokenid(Utils.HEX.encode(outKey.getPubKey()));
+                multiSignBy0.setTokenindex(0);
+                multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
+                multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
+                multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+                multiSignBies.add(multiSignBy0);
+                MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
+                transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
+            }
+            
+            // solve block
+            block.solve();
+            
+            // Should not go through
+            if (executors[i].expectsException()) {
+                try {
+                    blockGraph.add(block, false);
+                    fail("Number " + i + " failed");
+                } catch (VerificationException e) {
+                }
+            } else {
+                if (!blockGraph.add(block, false))
+                    fail("Number " + i + " failed");
+            }
         }
     }
+    
+    // TODO Malformed DataSignatures
+    //2: sigdata null
     
     @Test
     public void testSolidityTokenNoTransaction() throws Exception {

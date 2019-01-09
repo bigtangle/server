@@ -730,8 +730,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     byte[] buf = tx.getData();
                     TokenInfo tokenInfo = TokenInfo.parse(buf);
                     
-                    // Correctly insert tokens with confirmed false.
+                    // Correctly insert tokens
                     tokenInfo.getTokens().setConfirmed(false);
+                    tokenInfo.getTokens().setBlockhash(block.getHashAsString());
                     
                     this.blockStore.insertToken(block.getHashAsString(), tokenInfo.getTokens());
                     for (MultiSignAddress permissionedAddress : tokenInfo.getMultiSignAddresses()) {

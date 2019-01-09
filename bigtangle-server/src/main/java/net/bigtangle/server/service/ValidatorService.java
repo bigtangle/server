@@ -1344,6 +1344,14 @@ public class ValidatorService {
             return SolidityState.getFailState(); 
         }
         
+        // Check field correctness: amount
+        if (currentToken.getTokens().getAmount() != block.getTransactions().get(0).getOutputSum()) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Incorrect amount field");
+            return SolidityState.getFailState();
+        }
+        
+        
         // Check all token issuance transaction outputs are actually of the given token
         for (Transaction tx1 : block.getTransactions()) {
             for (TransactionOutput out : tx1.getOutputs()) {
