@@ -7,6 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.AbstractResponse;
 import net.bigtangle.core.http.server.resp.SubtangleResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -18,9 +21,17 @@ public class SubtanglePermissionService {
     @Autowired
     protected FullPrunedBlockStore store;
 
-    public void savePubkey(String pubkey) throws BlockStoreException {
-        store.deleteSubtanglePermission(pubkey);
-        store.insertSubtanglePermission(pubkey, null, SubtangleStatus.wait);
+    public boolean savePubkey(String pubkey, String signHex) throws BlockStoreException {
+        ECKey key = ECKey.fromPublicOnly(Utils.HEX.decode(pubkey));
+
+        byte[] signOutput = Utils.HEX.decode(signHex);
+        boolean flag = key.verify(Sha256Hash.ZERO_HASH.getBytes(), signOutput);
+        if (flag) {
+            store.deleteSubtanglePermission(pubkey);
+            store.insertSubtanglePermission(pubkey, null, SubtangleStatus.wait);
+        }
+        return flag;
+
     }
 
     public AbstractResponse getSubtanglePermissionList(List<String> pubkeys) throws BlockStoreException {

@@ -347,8 +347,14 @@ public class DispatcherController {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String pubkey = (String) request.get("pubkey");
-                subtanglePermissionService.savePubkey(pubkey);
-                this.outPrintJSONString(httpServletResponse, OkResponse.create());
+                String signHex = (String) request.get("signHex");
+                boolean flag = subtanglePermissionService.savePubkey(pubkey, signHex);
+                if (flag) {
+                    this.outPrintJSONString(httpServletResponse, OkResponse.create());
+                } else {
+                    this.outPrintJSONString(httpServletResponse, ErrorResponse.create(0));
+                }
+
             }
                 break;
             case getSubtanglePermissionList: {
