@@ -11,6 +11,7 @@ public class MultiSignAddress implements java.io.Serializable {
     
     private String blockhash;
 
+    // TODO Why is this required?
     private String tokenid;
     
     private String address;

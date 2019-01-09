@@ -23,7 +23,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
-import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
@@ -42,6 +41,7 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.core.VerificationException.CoinbaseDisallowedException;
+import net.bigtangle.core.VerificationException.IncorrectTransactionCountException;
 import net.bigtangle.core.VerificationException.InvalidDependencyException;
 import net.bigtangle.core.VerificationException.InvalidTokenOutputException;
 import net.bigtangle.core.VerificationException.InvalidTransactionDataException;
@@ -49,6 +49,7 @@ import net.bigtangle.core.VerificationException.InvalidTransactionException;
 import net.bigtangle.core.VerificationException.MalformedTransactionDataException;
 import net.bigtangle.core.VerificationException.MissingDependencyException;
 import net.bigtangle.core.VerificationException.MissingTransactionDataException;
+import net.bigtangle.core.VerificationException.NotCoinbaseException;
 import net.bigtangle.core.VerificationException.TimeReversionException;
 import net.bigtangle.core.VerificationException.TransactionInputsDisallowedException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
@@ -61,7 +62,7 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ValidatorServiceTest extends AbstractIntegrationTest {
 
-    // TODO code coverage
+    // TODO drop string from everywhere, stop using sha256hash.wrap, stop using jsonserialization!
     
     @Test
     public void testConflictTransactionalUTXO() throws Exception {
@@ -86,17 +87,13 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         input.setScriptSig(inputScript);
 
         // Create blocks with conflict
-        Block b1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
-                NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKey(), networkParameters.getGenesisBlock(),
-                doublespendTX);
-        Block b2 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
-                NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKey(), networkParameters.getGenesisBlock(),
-                doublespendTX);
+        Block b1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), doublespendTX);
+        Block b2 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), doublespendTX);
 
         blockGraph.add(b1, true);
         blockGraph.add(b2, true);
 
-        createAndAddNextBlock(b1, NetworkParameters.BLOCK_VERSION_GENESIS, b2);
+        createAndAddNextBlock(b1, b2);
         
         milestoneService.update();
         assertFalse(blockService.getBlockEvaluation(b1.getHash()).isMilestone()
@@ -116,13 +113,12 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         store.resetStore();
 
         // Generate blocks until passing first reward interval
-        Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
-                NetworkParameters.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
+        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
         blockGraph.add(rollingBlock, true);
 
         Block rollingBlock1 = rollingBlock;
         for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock1 = BlockForTest.createNextBlock(rollingBlock1, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock1);
+            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
@@ -131,7 +127,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 rollingBlock1.getHash(), rollingBlock1.getHash());
         Block b2 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
-        createAndAddNextBlock(b2, NetworkParameters.BLOCK_VERSION_GENESIS, b1);
+        createAndAddNextBlock(b2, b1);
         
         milestoneService.update();
         assertFalse(blockService.getBlockEvaluation(b1.getHash()).isMilestone()
@@ -175,8 +171,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Block conflictBlock1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, block1.getHash(), block1.getHash());
         Block conflictBlock2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, block1.getHash(), block1.getHash());
 
-        // Make another conflicting issuance that goes through
-        Block rollingBlock = BlockForTest.createNextBlock(conflictBlock1, NetworkParameters.BLOCK_VERSION_GENESIS, conflictBlock2);
+        // Make a fusing block
+        Block rollingBlock = conflictBlock1.createNextBlock(conflictBlock2);
         blockGraph.add(rollingBlock, true);
         
         milestoneService.update();
@@ -230,8 +226,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 .add(new MultiSignAddress(tokens3.getTokenid(), "", outKey.getPublicKeyAsHex()));        
         Block conflictBlock2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo3, coinbase3, outKey, null, block1.getHash(), block1.getHash());
 
-        // Make another conflicting issuance that goes through
-        Block rollingBlock = BlockForTest.createNextBlock(conflictBlock1, NetworkParameters.BLOCK_VERSION_GENESIS, conflictBlock2);
+        // Make a fusing block
+        Block rollingBlock = conflictBlock1.createNextBlock(conflictBlock2);
         blockGraph.add(rollingBlock, true);
         
         milestoneService.update();
@@ -270,7 +266,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Make another conflicting issuance that goes through
         Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
         Block block2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, genHash, genHash);
-        Block rollingBlock = BlockForTest.createNextBlock(block2, NetworkParameters.BLOCK_VERSION_GENESIS, block1);
+        Block rollingBlock = block2.createNextBlock(block1);
         blockGraph.add(rollingBlock, true);
         
         milestoneService.update();
@@ -317,7 +313,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
         Block block2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, genHash, genHash);
-        Block rollingBlock = BlockForTest.createNextBlock(block2, NetworkParameters.BLOCK_VERSION_GENESIS, block1);
+        Block rollingBlock = block2.createNextBlock(block1);
         blockGraph.add(rollingBlock, true);
         
         milestoneService.update();
@@ -340,7 +336,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
         Block r2 = blockService.getBlock(tipsToApprove.getRight());
-        Block b = BlockForTest.createNextBlock(r2, NetworkParameters.BLOCK_VERSION_GENESIS,  r1);
+        Block b = r2.createNextBlock(r1);
         b.setTime(1577836800); // 01/01/2020 @ 12:00am (UTC)
         b.solve();
         blockService.saveBlock(b);
@@ -353,7 +349,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
         Block r2 = blockService.getBlock(tipsToApprove.getRight());
-        Block b = BlockForTest.createNextBlock(r2, NetworkParameters.BLOCK_VERSION_GENESIS,  r1);
+        Block b = r2.createNextBlock(r1);
         b.setTime(1377836800);
         blockService.saveBlock(b);
     }
@@ -364,8 +360,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         
         Sha256Hash sha256Hash1 = getRandomSha256Hash();
         Sha256Hash sha256Hash2 = getRandomSha256Hash();
-        Block block = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS,
-                networkParameters.getGenesisBlock());
+        Block block = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
         block.setPrevBlockHash(sha256Hash1);
         block.setPrevBranchBlockHash(sha256Hash2);
         block.solve();
@@ -381,8 +376,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         
         Sha256Hash sha256Hash1 = getRandomSha256Hash();
         Sha256Hash sha256Hash2 = getRandomSha256Hash();
-        Block block = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS,
-                networkParameters.getGenesisBlock());
+        Block block = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
         block.setPrevBlockHash(sha256Hash1);
         block.setPrevBranchBlockHash(sha256Hash2);
         block.solve();
@@ -399,12 +393,10 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testUnsolidBlockReconnectBlock() throws Exception {
         store.resetStore();
         
-        Block depBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS,
-                networkParameters.getGenesisBlock());
+        Block depBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
         
         Sha256Hash sha256Hash = depBlock.getHash();
-        Block block = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS,
-                networkParameters.getGenesisBlock());
+        Block block = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
         block.setPrevBlockHash(sha256Hash);
         block.setPrevBranchBlockHash(sha256Hash);
         block.solve();
@@ -426,12 +418,10 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testUnsolidMissingPredecessor1() throws Exception {
         store.resetStore();
         
-        Block depBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS,
-                networkParameters.getGenesisBlock());
+        Block depBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
         
         Sha256Hash sha256Hash = depBlock.getHash();
-        Block block = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS,
-                networkParameters.getGenesisBlock());
+        Block block = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
         block.setPrevBlockHash(sha256Hash);
         block.setPrevBranchBlockHash(networkParameters.getGenesisBlock().getHash());
         block.solve();
@@ -453,12 +443,10 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testUnsolidMissingPredecessor2() throws Exception {
         store.resetStore();
         
-        Block depBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS,
-                networkParameters.getGenesisBlock());
+        Block depBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
         
         Sha256Hash sha256Hash = depBlock.getHash();
-        Block block = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS,
-                networkParameters.getGenesisBlock());
+        Block block = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
         block.setPrevBlockHash(networkParameters.getGenesisBlock().getHash());
         block.setPrevBranchBlockHash(sha256Hash);
         block.solve();
@@ -481,16 +469,14 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         store.resetStore();
         
         // Create block with UTXO
-        Transaction tx1 = makeTestTransaction();
-        Block depBlock = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                networkParameters.getGenesisBlock(), tx1);
+        Transaction tx1 = createTestGenesisTransaction();
+        Block depBlock = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx1);
         
         milestoneService.update();
 
         // Create block with dependency
-        Transaction tx2 = makeTestTransaction();
-        Block block = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                networkParameters.getGenesisBlock(), tx2);
+        Transaction tx2 = createTestGenesisTransaction();
+        Block block = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx2);
         
         store.resetStore();
         
@@ -517,7 +503,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate blocks until passing first reward interval and second reward interval
         Block rollingBlock = networkParameters.getGenesisBlock();
         for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blocks1.add(rollingBlock);
         }
         for (Block b : blocks1) {
@@ -535,7 +521,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         
         // Make more for next reward interval
         for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blocks2.add(rollingBlock);
         }
         for (Block b : blocks2) {
@@ -645,7 +631,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Remove it from the milestone
         Block rollingBlock = networkParameters.getGenesisBlock();
         for (int i = 1; i < 5; i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
         milestoneService.update();
@@ -661,24 +647,22 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         store.resetStore();
 
         // Generate blocks until passing first reward interval
-        Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
-                NetworkParameters.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
+        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
         blockGraph.add(rollingBlock, true);
 
         Block rollingBlock1 = rollingBlock;
         for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock1 = BlockForTest.createNextBlock(rollingBlock1, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock1);
+            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
         Block rollingBlock2 = rollingBlock;
         for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock2 = BlockForTest.createNextBlock(rollingBlock2, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock2);
+            rollingBlock2 = rollingBlock2.createNextBlock(rollingBlock2);
             blockGraph.add(rollingBlock2, true);
         }
 
-        Block fusingBlock = BlockForTest.createNextBlock(rollingBlock1,
-                NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock2);
+        Block fusingBlock = rollingBlock1.createNextBlock(rollingBlock2);
         blockGraph.add(fusingBlock, true);
         
 
@@ -701,8 +685,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Second mining reward block should now go through since everything is
         // updated
         rollingBlock = rewardBlock2;
-        for (int i = 1; i < 20; i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+        for (int i = 1; i < 30; i++) {
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
         milestoneService.update();
@@ -715,7 +699,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // updated
         rollingBlock = rewardBlock3;
         for (int i = 1; i < 60; i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
         milestoneService.update();
@@ -728,7 +712,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
             Block r1 = blockService.getBlock(tipsToApprove.getLeft());
             Block r2 = blockService.getBlock(tipsToApprove.getRight());
-            Block b = BlockForTest.createNextBlock(r2, NetworkParameters.BLOCK_VERSION_GENESIS, r1);
+            Block b = r2.createNextBlock(r1);
             blockGraph.add(b, true);
         }
         milestoneService.update();
@@ -744,7 +728,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate blocks until passing first reward interval and second reward interval
         Block rollingBlock = networkParameters.getGenesisBlock();
         for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            Block rollingBlockNew = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+            Block rollingBlockNew = rollingBlock.createNextBlock(rollingBlock);
             
             // The difficulty should be equal to the previous difficulty
             assertEquals(rollingBlock.getDifficultyTarget(), rollingBlockNew.getDifficultyTarget());
@@ -763,7 +747,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         rollingBlock = rewardBlock1;
         for (int i = 0; i < 3; i++) {
-            Block rollingBlockNew = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+            Block rollingBlockNew = rollingBlock.createNextBlock(rollingBlock);
             
             // The difficulty should be equal to the previous difficulty
             assertEquals(rollingBlock.getDifficultyTarget(), rollingBlockNew.getDifficultyTarget());
@@ -780,7 +764,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate blocks until passing first reward interval and second reward interval
         Block rollingBlock = networkParameters.getGenesisBlock();
         for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            Block rollingBlockNew = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+            Block rollingBlockNew = rollingBlock.createNextBlock(rollingBlock);
             
             // The difficulty should be equal to the previous difficulty
             assertEquals(rollingBlock.getLastMiningRewardBlock(), rollingBlockNew.getLastMiningRewardBlock());
@@ -798,7 +782,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         assertEquals(rollingBlock.getLastMiningRewardBlock() + 1, rewardBlock1.getLastMiningRewardBlock());
 
         for (int i = 0; i < 3; i++) {
-            Block rollingBlockNew = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+            Block rollingBlockNew = rollingBlock.createNextBlock(rollingBlock);
             
             // The difficulty should be equal to the previous difficulty
             assertEquals(rollingBlock.getLastMiningRewardBlock(), rollingBlockNew.getLastMiningRewardBlock());
@@ -815,7 +799,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate blocks until passing first reward interval and second reward interval
         Block rollingBlock = networkParameters.getGenesisBlock();
         for (int i = 0; i < 3; i++) {
-            Block rollingBlockNew = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+            Block rollingBlockNew = rollingBlock.createNextBlock(rollingBlock);
             
             // The time should not be moving backwards
             assertTrue(rollingBlock.getTimeSeconds() <= rollingBlockNew.getTimeSeconds());
@@ -826,14 +810,14 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         milestoneService.update();
 
         // The time is allowed to stay the same
-        rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+        rollingBlock = rollingBlock.createNextBlock(rollingBlock);
         rollingBlock.setTime(rollingBlock.getTimeSeconds()); // 01/01/2000 @ 12:00am (UTC)
         rollingBlock.solve();
         blockGraph.add(rollingBlock, true);
         
         // The time is not allowed to move backwards
         try {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             rollingBlock.setTime(946684800); // 01/01/2000 @ 12:00am (UTC)
             rollingBlock.solve();
             blockGraph.add(rollingBlock, true);     
@@ -843,7 +827,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testSolidityCoinbase() throws Exception {
+    public void testSolidityCoinbaseDisallowed() throws Exception {
         store.resetStore();
         final Block genesisBlock = networkParameters.getGenesisBlock();
         
@@ -863,7 +847,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                     tx.addInput(input);
                     
                     // Check it fails
-                    Block rollingBlock = BlockForTest.createNextBlock(genesisBlock, NetworkParameters.BLOCK_VERSION_GENESIS, genesisBlock);
+                    Block rollingBlock = genesisBlock.createNextBlock(genesisBlock);
                     rollingBlock.setBlockType(type);
                     rollingBlock.addTransaction(tx);
                     rollingBlock.solve();
@@ -873,64 +857,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 } catch (CoinbaseDisallowedException e) {
                 }
         }
-        
-        // For the types that allow coinbase, not just any coinbase is allowed
-        try {
-            // Generate an eligible issuance
-            ECKey outKey = walletKeys.get(0);
-            byte[] pubKey = outKey.getPubKey();
-            TokenInfo tokenInfo = new TokenInfo();
-            
-            Coin coinbase = Coin.valueOf(77777L, pubKey);
-            long amount = coinbase.getValue();
-            
-            Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount, false, true);
-            tokenInfo.setTokens(tokens);
-            
-            tokenInfo.setTokens(tokens);
-            tokenInfo.getMultiSignAddresses()
-                    .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-            
-            Block block = BlockForTest.createNextBlock(genesisBlock, NetworkParameters.BLOCK_VERSION_GENESIS, genesisBlock);
-            block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
-            
-            if (null != null)
-                block.setPrevBlockHash(null);
-            
-            if (null != null)
-                block.setPrevBranchBlockHash(null);
-            
-            block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
-            
-            // Add invalid coinbases into it
-            block.getTransactions().get(0).addOutput(Coin.SATOSHI.times(2), outKey.toAddress(networkParameters));
-            block.solve();
-            
-            Transaction transaction = block.getTransactions().get(0);
-            
-            Sha256Hash sighash = transaction.getHash();
-            
-            ECKey.ECDSASignature party1Signature = outKey.sign(sighash, null);
-            byte[] buf1 = party1Signature.encodeToDER();
-            
-            List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
-            MultiSignBy multiSignBy0 = new MultiSignBy();
-            multiSignBy0.setTokenid(tokenInfo.getTokens().getTokenid().trim());
-            multiSignBy0.setTokenindex(0);
-            multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
-            multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
-            multiSignBy0.setSignature(Utils.HEX.encode(buf1));
-            multiSignBies.add(multiSignBy0);
-            MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
-            transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
-            
-            // Check it fails
-            block.solve();
-            blockGraph.add(block, false);
-            
-            fail();
-        } catch (InvalidTokenOutputException e) {
-        }
     }
 
     @Test
@@ -938,17 +864,15 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         store.resetStore();
         
         // Create block with UTXO
-        Transaction tx1 = makeTestTransaction();
-        createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                networkParameters.getGenesisBlock(), tx1);
+        Transaction tx1 = createTestGenesisTransaction();
+        createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx1);
         
         store.resetStore();
 
         // Again but with incorrect input script
         try {
             tx1.getInput(0).setScriptSig(new Script(new byte[0]));
-            createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                    networkParameters.getGenesisBlock(), tx1);
+            createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx1);
             fail();
         } catch (ScriptException e) {
         }
@@ -960,9 +884,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Create block with UTXO
         {
-            Transaction tx1 = makeTestTransaction();
-            createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                    networkParameters.getGenesisBlock(), tx1);
+            Transaction tx1 = createTestGenesisTransaction();
+            createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx1);
         }
         
         store.resetStore();
@@ -985,8 +908,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                     false);
             Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
             input.setScriptSig(inputScript);
-            createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                    networkParameters.getGenesisBlock(), tx2);
+            createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx2);
         }
         
         store.resetStore();
@@ -1010,8 +932,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
             input.setScriptSig(inputScript);
             tx2.getOutput(0).getValue().value = tx2.getOutput(0).getValue().value + 1;
-            createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                    networkParameters.getGenesisBlock(), tx2);
+            createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx2);
             fail();
         } catch (InvalidTransactionException e) {
         }
@@ -1040,8 +961,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
             input.setScriptSig(inputScript);
             tx2.getOutput(0).getValue().value = tx2.getOutput(0).getValue().value + 1;
-            createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKey(),
-                    networkParameters.getGenesisBlock(), tx2);
+            createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx2);
             fail();
         } catch (InvalidTransactionException e) {
         }
@@ -1049,23 +969,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     
     // TODO check sigops
     
-    /* TODO mutate all fields of tokeninfo too
-    -> Token CHECK: only 1 coinbase tx
-    -> Token CHECK: well-formed tx data TokenInfo
-    -> Token CHECK: required fields of TokenInfo exist, i.e. not null
-    -> Token CHECK: fields may not be oversize
-    -> Token CHECK: issued tokens in txouts must be the same as the issued token
-    -> Token CHECK: number of permissioned addresses ok
-    -> Token CHECK: predecessor is TOKEN 
-    -> Token CHECK: predecessor is of same tokenid and of one lower tokenindex 
-    -> Token CHECK: predecessor is of same name and type
-    -> Token CHECK: predecessor allows further issuances
-    -> Token CHECK: signatures exist
-    -> Token CHECK: signatures well-formed
-    -> Token CHECK: signatures valid, unique and for permissioned addresses
-    -> Token CHECK: enough signatures 
-    */
-
     @Test
     public void testSolidityRewardTxWithTransfers() throws Exception {
         store.resetStore();
@@ -1073,7 +976,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }        
 
@@ -1116,7 +1019,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }        
 
@@ -1136,13 +1039,13 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testSolidityRewardTxWithMalformedRewardInfo() throws Exception {
+    public void testSolidityRewardTxMalformedData1() throws Exception {
         store.resetStore();
         Block rollingBlock = networkParameters.getGenesisBlock();
 
         // Generate blocks until passing first reward interval
         for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }        
 
@@ -1162,13 +1065,13 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testSolidityRewardTxWithInvalidRewardInfo() throws Exception {
+    public void testSolidityRewardTxMalformedData2() throws Exception {
         store.resetStore();
         Block rollingBlock = networkParameters.getGenesisBlock();
 
         // Generate blocks until passing first reward interval
         for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS, rollingBlock);
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }        
 
@@ -1245,4 +1148,349 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         } catch (InvalidTransactionDataException e) {
         }
     }
+
+    
+    /* TODO mutate all fields of tokeninfo too
+    -> Token CHECK: well-formed tx data TokenInfo
+    -> Token CHECK: required fields of TokenInfo exist, i.e. not null
+    -> Token CHECK: fields may not be oversize
+    -> Token CHECK: issued tokens in txouts must be the same as the issued token
+    -> Token CHECK: number of permissioned addresses ok
+    -> Token CHECK: predecessor is TOKEN 
+    -> Token CHECK: predecessor is of same tokenid and of one lower tokenindex 
+    -> Token CHECK: predecessor is of same name and type
+    -> Token CHECK: predecessor allows further issuances
+    -> Token CHECK: signatures exist
+    -> Token CHECK: signatures well-formed
+    -> Token CHECK: signatures valid, unique and for permissioned addresses
+    -> Token CHECK: enough signatures 
+    */
+    
+    @Test
+    public void testSolidityTokenMalformedData() throws Exception {
+        store.resetStore();
+        ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        
+        // Generate an eligible issuance tokenInfo
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+        TokenInfo tokenInfo0 = new TokenInfo();
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount, false, true);
+        tokenInfo0.setTokens(tokens);
+        tokenInfo0.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+        
+        // Make mutated versions of the data
+        //1: data null
+        //2: sigdata null
+        TokenInfo tokenInfo3 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo4 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo5 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo6 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo7 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo8 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo9 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo10 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo11 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo12 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo13 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo14 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo15 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo16 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo17 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo18 = TokenInfo.parse(tokenInfo0.toByteArray());
+        TokenInfo tokenInfo19 = TokenInfo.parse(tokenInfo0.toByteArray());
+        tokenInfo3.setTokens(null);
+        tokenInfo4.setMultiSignAddresses(null);
+        tokenInfo5.getTokens().setAmount(-1);
+        tokenInfo5.getTokens().setBlockhash(null);
+        tokenInfo5.getTokens().setBlockhash("test");
+        tokenInfo5.getTokens().setBlockhash(networkParameters.getGenesisBlock().getHashAsString());
+        tokenInfo5.getTokens().setDescription(null);
+        tokenInfo5.getTokens().setDescription(new String(new char[NetworkParameters.TOKEN_MAX_DESC_LENGTH]).replace("\0", "A"));
+        tokenInfo5.getTokens().setDescription(new String(new char[NetworkParameters.TOKEN_MAX_DESC_LENGTH + 1]).replace("\0", "A"));
+        tokenInfo5.getTokens().setMultiserial(false); // TODO this field is useless, drop it
+        tokenInfo5.getTokens().setPrevblockhash(null);
+        tokenInfo5.getTokens().setPrevblockhash("test");
+        tokenInfo5.getTokens().setPrevblockhash(networkParameters.getGenesisBlock().getHashAsString());
+        tokenInfo5.getTokens().setSignnumber(-1);
+        tokenInfo5.getTokens().setSignnumber(0);
+        tokenInfo5.getTokens().setSignnumber(5);
+        tokenInfo5.getTokens().setTokenid(null);
+        tokenInfo5.getTokens().setTokenid("");
+        tokenInfo5.getTokens().setTokenid("test");
+        tokenInfo5.getTokens().setTokenid(Utils.HEX.encode(genesiskey.getPubKey()));
+        tokenInfo5.getTokens().setTokenindex(-1);
+        tokenInfo5.getTokens().setTokenindex(5);
+        tokenInfo5.getTokens().setTokenindex(NetworkParameters.TOKEN_MAX_ISSUANCE_NUMBER + 1);
+        tokenInfo5.getTokens().setTokenname(null);
+        tokenInfo5.getTokens().setTokenname("");
+        tokenInfo5.getTokens().setTokenname(new String(new char[NetworkParameters.TOKEN_MAX_NAME_LENGTH]).replace("\0", "A"));
+        tokenInfo5.getTokens().setTokenname(new String(new char[NetworkParameters.TOKEN_MAX_NAME_LENGTH + 1]).replace("\0", "A"));
+        tokenInfo5.getTokens().setTokenstop(false); 
+        tokenInfo5.getTokens().setTokentype(-1); // TODO this field has no usage, test this later...
+        tokenInfo5.getTokens().setUrl(null);
+        tokenInfo5.getTokens().setUrl("");
+        tokenInfo5.getTokens().setUrl(new String(new char[NetworkParameters.TOKEN_MAX_URL_LENGTH]).replace("\0", "A"));
+        tokenInfo5.getTokens().setUrl(new String(new char[NetworkParameters.TOKEN_MAX_URL_LENGTH + 1]).replace("\0", "A"));
+        tokenInfo5.getMultiSignAddresses().remove(0);
+        tokenInfo5.getMultiSignAddresses().get(0).setAddress(null);
+        tokenInfo5.getMultiSignAddresses().get(0).setAddress("");
+        tokenInfo5.getMultiSignAddresses().get(0).setAddress(new String(new char[222]).replace("\0", "A"));
+        // TODO
+//        tokenInfo5.getMultiSignAddresses().get(0).setBlockhash(blockhash);
+//        tokenInfo5.getMultiSignAddresses().get(0).setPosIndex(posIndex);
+//        tokenInfo5.getMultiSignAddresses().get(0).setPubKeyHex(pubKeyHex);
+//        tokenInfo5.getMultiSignAddresses().get(0).setTokenid(tokenid);
+        
+        
+        
+        // make blocks
+
+        // Make block including it
+        Block block = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+        
+        // Coinbase with signatures
+        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo0);
+        Transaction transaction = block.getTransactions().get(0);
+        Sha256Hash sighash1 = transaction.getHash();
+        ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
+        byte[] buf1 = party1Signature.encodeToDER();
+        
+        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+        MultiSignBy multiSignBy0 = new MultiSignBy();
+        multiSignBy0.setTokenid(tokenInfo0.getTokens().getTokenid().trim());
+        multiSignBy0.setTokenindex(0);
+        multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+        multiSignBies.add(multiSignBy0);
+        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
+        
+        // TODO
+//        multiSignByRequest.getMultiSignBies().get(0).
+        
+        
+        
+        
+        
+        
+        
+        
+        // save block
+        block.solve();
+        
+        // Should not go through
+        try {
+            blockGraph.add(block, false);
+            fail();
+        } catch (InvalidTransactionDataException e) {
+        }
+    }
+    
+    @Test
+    public void testSolidityTokenNoTransaction() throws Exception {
+        store.resetStore();
+
+        // Make block including it
+        Block block = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+        
+        // save block
+        block.solve();
+        
+        // Should not go through
+        try {
+            blockGraph.add(block, false);
+            fail();
+        } catch (IncorrectTransactionCountException e) {
+        }
+    }
+    
+    @Test
+    public void testSolidityTokenMultipleTransactions1() throws Exception {
+        store.resetStore();
+        
+        // Generate an eligible issuance tokenInfo
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+        TokenInfo tokenInfo = new TokenInfo();
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount, false, true);
+        tokenInfo.setTokens(tokens);
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+
+        // Make block including it
+        Block block = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+        
+        // Coinbase with signatures
+        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
+        Transaction transaction = block.getTransactions().get(0);
+        Sha256Hash sighash1 = transaction.getHash();
+        ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
+        byte[] buf1 = party1Signature.encodeToDER();
+        
+        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+        MultiSignBy multiSignBy0 = new MultiSignBy();
+        multiSignBy0.setTokenid(tokenInfo.getTokens().getTokenid().trim());
+        multiSignBy0.setTokenindex(0);
+        multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+        multiSignBies.add(multiSignBy0);
+        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
+        
+        // Add another transfer transaction
+        Transaction tx = createTestGenesisTransaction();
+        block.addTransaction(tx);
+        
+        // save block
+        block.solve();
+        
+        // Should not go through
+        try {
+            blockGraph.add(block, false);
+            
+            fail();
+        } catch (IncorrectTransactionCountException e) {
+        }
+    }
+    
+    @Test
+    public void testSolidityTokenMultipleTransactions2() throws Exception {
+        store.resetStore();
+        
+        // Generate an eligible issuance tokenInfo
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+        TokenInfo tokenInfo = new TokenInfo();
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount, false, true);
+        tokenInfo.setTokens(tokens);
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+
+        // Make block including it
+        Block block = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+        
+        // Coinbase with signatures
+        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
+        Transaction transaction = block.getTransactions().get(0);
+        Sha256Hash sighash1 = transaction.getHash();
+        ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
+        byte[] buf1 = party1Signature.encodeToDER();
+        
+        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+        MultiSignBy multiSignBy0 = new MultiSignBy();
+        multiSignBy0.setTokenid(tokenInfo.getTokens().getTokenid().trim());
+        multiSignBy0.setTokenindex(0);
+        multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+        multiSignBies.add(multiSignBy0);
+        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
+        
+        // Add transaction again
+        block.addTransaction(transaction);
+        
+        // save block
+        block.solve();
+        
+        // Should not go through
+        try {
+            blockGraph.add(block, false);
+            
+            fail();
+        } catch (IncorrectTransactionCountException e) {
+        }
+    }
+    
+    @Test
+    public void testSolidityTokenTransferTransaction() throws Exception {
+        store.resetStore();
+
+        // Make block including it
+        Block block = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+
+        // Add transfer transaction
+        Transaction tx = createTestGenesisTransaction();
+        block.addTransaction(tx);
+        
+        // save block
+        block.solve();
+        
+        // Should not go through
+        try {
+            blockGraph.add(block, false);
+            
+            fail();
+        } catch (NotCoinbaseException e) {
+        }
+    }
+    
+    @Test
+    public void testSolidityTokenWrongTokenCoinbase() throws Exception {
+        store.resetStore();
+
+        // Generate an eligible issuance tokenInfo
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+        TokenInfo tokenInfo = new TokenInfo();
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount, false, true);
+        tokenInfo.setTokens(tokens);
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+
+        // Make block including it
+        Block block = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+        
+        // Coinbase with signatures
+        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
+        Transaction transaction = block.getTransactions().get(0);
+        
+        // Add another output for other tokens
+        block.getTransactions().get(0).addOutput(Coin.SATOSHI.times(2), outKey.toAddress(networkParameters));
+        
+        Sha256Hash sighash1 = transaction.getHash();
+        ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
+        byte[] buf1 = party1Signature.encodeToDER();
+        
+        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+        MultiSignBy multiSignBy0 = new MultiSignBy();
+        multiSignBy0.setTokenid(tokenInfo.getTokens().getTokenid().trim());
+        multiSignBy0.setTokenindex(0);
+        multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+        multiSignBies.add(multiSignBy0);
+        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
+        
+        // save block
+        block.solve();
+        
+        // Should not go through
+        try {
+            blockGraph.add(block, false);
+            
+            fail();
+        } catch (InvalidTokenOutputException e) {
+        }
+    }
+
 }

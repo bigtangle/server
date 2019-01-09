@@ -9,11 +9,11 @@ import net.bigtangle.core.http.AbstractResponse;
 
 public class TokenIndexResponse extends AbstractResponse {
 
-    private int tokenindex;
+    private long tokenindex;
 
     private String blockhash;
 
-    public int getTokenindex() {
+    public long getTokenindex() {
         return tokenindex;
     }
 
@@ -21,7 +21,7 @@ public class TokenIndexResponse extends AbstractResponse {
         return blockhash;
     }
 
-    public static AbstractResponse createTokenSerialIndexResponse(int tokenindex, String blockhash) {
+    public static AbstractResponse createTokenSerialIndexResponse(long tokenindex, String blockhash) {
         TokenIndexResponse res = new TokenIndexResponse();
         res.tokenindex = tokenindex;
         res.blockhash = blockhash;

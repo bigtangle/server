@@ -62,7 +62,7 @@ public class MultiSignService {
             map.put("address", multiSign.getAddress());
             Block block = this.networkParameters.getDefaultSerializer().makeBlock(multiSign.getBlockhash());
             Transaction transaction = block.getTransactions().get(0);
-            TokenInfo tokenInfo = new TokenInfo().parse(transaction.getData());
+            TokenInfo tokenInfo = TokenInfo.parse(transaction.getData());
             map.put("signnumber", tokenInfo.getTokens().getSignnumber());
             map.put("tokenname", tokenInfo.getTokens().getTokenname());
 
@@ -95,7 +95,7 @@ public class MultiSignService {
             this.store.beginDatabaseBatchWrite();
             Transaction transaction = block.getTransactions().get(0);
             byte[] buf = transaction.getData();
-            TokenInfo tokenInfo = new TokenInfo().parse(buf);
+            TokenInfo tokenInfo = TokenInfo.parse(buf);
             final Token tokens = tokenInfo.getTokens();
 
             String prevblockhash = tokens.getPrevblockhash();
@@ -157,7 +157,7 @@ public class MultiSignService {
                 throw new BlockStoreException("block transaction data is null");
             }
             byte[] buf = transaction.getData();
-            TokenInfo tokenInfo = new TokenInfo().parse(buf);
+            TokenInfo tokenInfo = TokenInfo.parse(buf);
             final Token tokens = tokenInfo.getTokens();
             if (tokens == null) {
                 throw new BlockStoreException("tokeninfo is null");

@@ -33,6 +33,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    settingvalue blob,\n" 
             + "    CONSTRAINT setting_pk PRIMARY KEY (name)  \n" + ")\n";
 
+    // TODO lower the sizes of stuff to their exact size limitations! use NetworkParameters!
     private static final String CREATE_BLOCKS_TABLE = "CREATE TABLE blocks (\n"
             + "    hash varbinary(32) NOT NULL,\n"
             + "    height bigint NOT NULL,\n"
@@ -122,6 +123,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    PRIMARY KEY (blockhash) \n)";
 
     //update on confirm
+    // TODO Why is this required?
     private static final String CREATE_MULTISIGNADDRESS_TABLE = "CREATE TABLE multisignaddress (\n"
             + "    blockhash varchar(255) NOT NULL,\n"
             + "    tokenid varchar(255) NOT NULL  ,\n"
@@ -135,7 +137,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    tokenindex bigint NOT NULL   ,\n"
             + "    address varchar(255),\n" 
             + "    PRIMARY KEY (tokenid,tokenindex, address) \n)";
-    
+
     private static final String CREATE_MULTISIGN_TABLE = "CREATE TABLE multisign (\n"
             + "    id varchar(255) NOT NULL  ,\n" 
             + "    tokenid varchar(255) NOT NULL  ,\n" 

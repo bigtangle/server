@@ -1173,6 +1173,18 @@ public class Block extends Message {
      * @param height
      *            block height, if known, or -1 otherwise.
      */
+    public Block createNextBlock(Block branchBlock) {
+        @SuppressWarnings("deprecation")
+        ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPriv), Utils.HEX.decode(NetworkParameters.testPub));
+        return createNextBlock(branchBlock, NetworkParameters.BLOCK_VERSION_GENESIS, genesiskey.getPubKeyHash());
+    }
+
+    /**
+     * Returns a solved, valid empty block that builds on top of this one and the specified other Block. 
+     * 
+     * @param height
+     *            block height, if known, or -1 otherwise.
+     */
     public Block createNextBlock(Block branchBlock, final long version, byte[] mineraddress) {
         Block b = new Block(params, version);
 
@@ -1181,11 +1193,11 @@ public class Block extends Message {
         b.setPrevBranchBlockHash(branchBlock.getHash());
         
         // Set difficulty according to previous consensus
-        //only BLOCKTYPE_REWARD and BLOCKTYPE_INITIAL should overwrite this
+        // only BLOCKTYPE_REWARD and BLOCKTYPE_INITIAL should overwrite this
         b.setLastMiningRewardBlock(Math.max(lastMiningRewardBlock, branchBlock.lastMiningRewardBlock));       
         b.setDifficultyTarget(lastMiningRewardBlock >= branchBlock.lastMiningRewardBlock ? difficultyTarget : branchBlock.difficultyTarget);        
 
-        // Don't let timestamp go backwards, ex the genesis block
+        // Don't let timestamp go backwards
         long minTime = Math.max(getTimeSeconds(), branchBlock.getTimeSeconds());
         if (getTimeSeconds() >= minTime)
             b.setTime(getTimeSeconds() + 1);

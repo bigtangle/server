@@ -65,17 +65,6 @@ public class BlockEvaluation implements Serializable {
         return BlockEvaluation.build(block.getHash(), 0, 0, 1, 0, false, currentTimeMillis, 0, currentTimeMillis, true);
     }
 
-    /**
-     * Returns an invalid evaluation that is considered confirmed with max rating for the prototype Block
-     * 
-     * @param block prototype block
-     * @return an evaluation that is considered confirmed with max rating for the prototype Block
-     */
-    public static BlockEvaluation getPrototypeEvaluation(Block block) {
-        long currentTimeMillis = System.currentTimeMillis();
-        return BlockEvaluation.build(block.getHash(), 100, Long.MAX_VALUE, Long.MAX_VALUE, 1, true, currentTimeMillis, Long.MAX_VALUE, currentTimeMillis, false);
-    }
-
     public static BlockEvaluation build(Sha256Hash blockhash, long rating, long depth, long cumulativeWeight,
             long height, boolean milestone, long milestoneLastUpdateTime, long milestoneDepth, long insertTime,
             boolean maintained) {

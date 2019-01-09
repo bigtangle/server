@@ -19,11 +19,11 @@ import org.springframework.stereotype.Service;
 import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.VerificationException;
 import net.bigtangle.store.FullPrunedBlockStore;
 
 @Service
@@ -88,7 +88,7 @@ public class TipsService {
      */
     public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair(Block prototype) throws BlockStoreException {
         HashSet<BlockWrap> currentApprovedNonMilestoneBlocks = new HashSet<>();
-        currentApprovedNonMilestoneBlocks.add(new BlockWrap(prototype, BlockEvaluation.getPrototypeEvaluation(prototype), networkParameters));
+        blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, store.getBlockWrap(prototype.getHash()));
         return getValidatedBlockPair(currentApprovedNonMilestoneBlocks);
     }
 
@@ -98,9 +98,13 @@ public class TipsService {
 		BlockWrap left = entryPoints.get(0);
 		BlockWrap right = entryPoints.get(1);
 		
-		//Unnecessary: left/right are never non-milestone initially
+		// Unnecessary: left/right are never non-milestone initially
 		//blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, left);
 		//blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, right);
+        
+        // Necessary: Initial test if the prototype's currentApprovedNonMilestoneBlocks are actually valid
+        if (!validatorService.isEligibleForApprovalSelection(currentApprovedNonMilestoneBlocks))
+            throw new VerificationException("The given prototype is invalid");
 
 		// Perform next steps
 		BlockWrap nextLeft = performValidatedStep(left, currentApprovedNonMilestoneBlocks);

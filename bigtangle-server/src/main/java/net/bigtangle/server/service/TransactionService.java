@@ -92,18 +92,28 @@ public class TransactionService {
 
     public Block createAndAddMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
             throws Exception {
-        
-        Block block = createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch);
+        return createAndAddMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, false);
+    }
+
+    public Block createAndAddMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch, boolean override)
+            throws Exception {
+        Block block = createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, override);
         blockgraph.add(block, false);
         return block;
     }
 
-    public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
+    public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch) throws BlockStoreException {
+        return createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, false);
+    }
+
+    public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch, boolean override)
             throws BlockStoreException {
         Triple<RewardEligibility, Transaction, Pair<Long, Long>> result = validatorService.makeReward(prevTrunk, prevBranch, prevRewardHash);
         
         if (!(result.getLeft() == RewardEligibility.ELIGIBLE)) {
-            throw new RuntimeException("Generated reward block is deemed ineligible! Try again somewhere else?");
+            if (!override)
+                throw new RuntimeException("Generated reward block is deemed ineligible! Try again somewhere else?");
+            logger.warn("Generated reward block is deemed ineligible! Overriding.. ");
         }
         
         Block r1 = blockService.getBlock(prevTrunk);

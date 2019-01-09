@@ -17,8 +17,6 @@ public class TokenInfo implements java.io.Serializable {
     private static final long serialVersionUID = 1554582498768357964L;
 
     private Token tokens;
-    private List<Token> positveTokenList = new ArrayList<Token>(); 
-
     private List<MultiSignAddress> multiSignAddresses;
 
     // TODO stop using json parser
@@ -32,15 +30,9 @@ public class TokenInfo implements java.io.Serializable {
         return new byte[0];
     }
 
-    public TokenInfo parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
+    public static TokenInfo parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
         String jsonStr = new String(buf);
-        TokenInfo tokenInfo = Json.jsonmapper().readValue(jsonStr, TokenInfo.class);
-        if (tokenInfo == null)
-            return this;
-        this.tokens = tokenInfo.getTokens();
-        this.positveTokenList = tokenInfo.getPositveTokenList();
-        this.multiSignAddresses = tokenInfo.getMultiSignAddresses();
-        return this;
+        return Json.jsonmapper().readValue(jsonStr, TokenInfo.class);
     }
 
     public Token getTokens() {
@@ -63,18 +55,8 @@ public class TokenInfo implements java.io.Serializable {
         this.multiSignAddresses = new ArrayList<>();
     }
 
-    public List<Token> getPositveTokenList() {
-        return positveTokenList;
-    }
-
-    public void setPositveTokenList(List<Token> positveTokenList) {
-        this.positveTokenList = positveTokenList;
-    }
-
     @Override
     public String toString() {
         return "TokenInfo [tokens=" + tokens + ", multiSignAddresses=" + multiSignAddresses + "]";
     }
-    
-    
 }

@@ -29,7 +29,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
 import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
@@ -200,12 +199,10 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     // @Before
     public Block getRollingBlock(ECKey outKey) throws Exception {
         Context.propagate(new Context(networkParameters));
-        Block rollingBlock = BlockForTest.createNextBlock(networkParameters.getGenesisBlock(),
-                NetworkParameters.BLOCK_VERSION_GENESIS, networkParameters.getGenesisBlock());
+        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
         blockGraph.add(rollingBlock, true);
         for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {
-            rollingBlock = BlockForTest.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS,
-                    networkParameters.getGenesisBlock());
+            rollingBlock = rollingBlock.createNextBlock(networkParameters.getGenesisBlock());
             blockGraph.add(rollingBlock, true);
         }
         return rollingBlock;
@@ -528,7 +525,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+        long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
@@ -564,7 +561,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+        long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
@@ -605,7 +602,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+        long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
@@ -686,7 +683,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+        long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
@@ -765,7 +762,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+        long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
@@ -890,7 +887,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
             int amount = 100000000;
             Coin basecoin = Coin.valueOf(amount, tokenid);
 
-            Integer tokenindex_ = 1;
+            long tokenindex_ = 1;
             Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
                     UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
             tokenInfo.setTokens(tokens);
@@ -1044,7 +1041,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+        long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         int amount = 100000000;
@@ -1086,7 +1083,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
         Transaction transaction = block0.getTransactions().get(0);
 
-        TokenInfo updateTokenInfo = new TokenInfo().parse(transaction.getData());
+        TokenInfo updateTokenInfo = TokenInfo.parse(transaction.getData());
         updateTokenInfo.getTokens().setTokenname("UPDATE_TOKEN");
         ECKey key4 = keys.get(3);
         updateTokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key4.getPublicKeyAsHex()));

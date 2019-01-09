@@ -35,7 +35,6 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockForTest;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
@@ -105,6 +104,7 @@ public abstract class AbstractIntegrationTest {
     protected FullPrunedBlockStore store;
     @Autowired
     protected TipsService tipsService;
+
     @Autowired
     protected void prepareContextRoot(@Value("${local.server.port}") int port) {
         contextRoot = String.format(CONTEXT_ROOT_TEMPLATE, port);
@@ -129,65 +129,41 @@ public abstract class AbstractIntegrationTest {
         return sha256Hash;
     }
 
-    protected Block createAndAddNextBlock(Block b1, long bVersion, Block b2)
-            throws VerificationException, PrunedException {
-        return createAndAddNextBlock(b1, bVersion, outKey.getPubKey(), b2);
-    }
-
-    protected Block createAndAddNextBlock(Block b1, long bVersion, byte[] pubKey, Block b2)
-            throws VerificationException, PrunedException {
-        Block block = BlockForTest.createNextBlock(b1, bVersion, b2);
+    protected Block createAndAddNextBlock(Block b1, Block b2) throws VerificationException, PrunedException {
+        Block block = b1.createNextBlock(b2);
         this.blockGraph.add(block, true);
         return block;
     }
 
-    protected Block createAndAddNextBlockWithTransaction(Block b1, long bVersion, byte[] pubKey, Block b2,
-            Transaction prevOut) throws VerificationException, PrunedException {
-        Block block = createNextBlockWithTransaction(b1, bVersion, b2, prevOut);
+    protected Block createAndAddNextBlockWithTransaction(Block b1, Block b2, Transaction prevOut)
+            throws VerificationException, PrunedException {
+        Block block1 = b1.createNextBlock(b2);
+        block1.addTransaction(prevOut);
+        block1.solve();
+        Block block = block1;
         this.blockGraph.add(block, true);
         return block;
     }
 
-    protected Block createNextBlockWithTransaction(Block b1, long bVersion, Block b2, Transaction prevOut) {
-        Block block = BlockForTest.createNextBlock(b1, bVersion, b2);
-        block.addTransaction(prevOut);
-        block.solve();
-        return block;
-    }
-
-    protected Transaction makeTestTransaction() throws Exception {
+    protected Transaction createTestGenesisTransaction() throws Exception {
         @SuppressWarnings("deprecation")
         ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        // use UTXO to create double spending, this can not be created with
-        // wallet
         List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
                 0);
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         Transaction tx = new Transaction(networkParameters);
         tx.addOutput(new TransactionOutput(networkParameters, tx, amount, genesiskey));
-        tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), genesiskey));
+        tx.addOutput(
+                new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), genesiskey));
         TransactionInput input = tx.addInput(spendableOutput);
-        Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(),
-                Transaction.SigHash.ALL, false);
-    
+        Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+
         TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
                 false);
         Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
         input.setScriptSig(inputScript);
         return tx;
-    }
-
-    public String toJson(Object object) throws JsonProcessingException {
-        return getMapper().writeValueAsString(object);
-    }
-
-    public static ObjectMapper getMapper() {
-        return objectMapper;
-    }
-
-    public String getContextRoot() {
-        return contextRoot;
     }
 
     public void walletKeys() throws Exception {
@@ -373,8 +349,10 @@ public abstract class AbstractIntegrationTest {
     // create a token with multi sign
     public void testCreateMultiSigToken(List<ECKey> keys, TokenInfo tokenInfo)
             throws JsonProcessingException, Exception {
-        // First issuance cannot be multisign but instead needs the signature of the token id
-        // Hence we first create a normal token with multiple permissioned, then we can issue via multisign
+        // First issuance cannot be multisign but instead needs the signature of
+        // the token id
+        // Hence we first create a normal token with multiple permissioned, then
+        // we can issue via multisign
         {
             String tokenid = keys.get(0).getPublicKeyAsHex();
 
@@ -389,7 +367,7 @@ public abstract class AbstractIntegrationTest {
                     Json.jsonmapper().writeValueAsString(requestParam00));
 
             TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-            Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+            long tokenindex_ = tokenIndexResponse.getTokenindex();
             String prevblockhash = tokenIndexResponse.getBlockhash();
 
             Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
@@ -405,9 +383,9 @@ public abstract class AbstractIntegrationTest {
             // TODO this doesn't work because checkMultiSignPre is wrong
             walletAppKit.wallet().saveToken(tokenInfo, basecoin, keys.get(0), null);
         }
-        
+
         milestoneService.update();
-        
+
         // Setup transaction and signatures
         // List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
 
@@ -424,7 +402,7 @@ public abstract class AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        Integer tokenindex_ = tokenIndexResponse.getTokenindex();
+        long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),

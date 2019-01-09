@@ -136,7 +136,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 // Otherwise, all dependencies exist and the block has been validated
                 try {
                     blockStore.beginDatabaseBatchWrite();
-                    connectBlock(block, storedPrev, storedPrevBranch, Math.max(storedPrev.getHeight(), storedPrevBranch.getHeight()) + 1);
+                    connect(block, Math.max(storedPrev.getHeight(), storedPrevBranch.getHeight()) + 1);
                     blockStore.commitDatabaseBatchWrite();
                     return true;
                 } catch (BlockStoreException e) {
@@ -155,12 +155,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void connectBlock(final Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height)
+    private void connect(final Block block, long height)
             throws BlockStoreException, VerificationException {
         checkState(lock.isHeldByCurrentThread());
         connectUTXOs(block, height);
-        connectTypeSpecificUTXOs(block, storedPrev, storedPrevBranch);
-        StoredBlock newBlock = StoredBlock.build(block, storedPrev, storedPrevBranch);
+        connectTypeSpecificUTXOs(block, height);
+        StoredBlock newBlock = StoredBlock.build(block, height);
         blockStore.put(newBlock, new StoredUndoableBlock(newBlock.getHeader().getHash(), block.getTransactions()));
         solidifyBlock(block);
     }
@@ -366,7 +366,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         Transaction tx = generateVirtualMiningRewardTX(block);
         
         // If virtual reward tx outputs have not been inserted yet, insert them        
-        tryInsertReward(block, tx);
+        insertReward(block, tx);
         
         // Set virtual reward tx outputs to true
         confirmTransaction(tx, block.getHash());
@@ -378,7 +378,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.updateRewardConfirmed(block.getHash(), true);
     }
 
-    private void tryInsertReward(Block block, Transaction virtualTx) {
+    private void insertReward(Block block, Transaction virtualTx) {
         try {
             ArrayList<Transaction> txs = new ArrayList<Transaction>();
             txs.add(virtualTx);
@@ -409,21 +409,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     throw new RuntimeException("Attempted to spend a non-existent output!");
                 if (prevOut.isSpent())
                     throw new RuntimeException("Attempted to spend an already spent output!");
-                if (!prevOut.isConfirmed())
-                    throw new RuntimeException("Attempted to spend an unconfirmed output!");
                 
                 blockStore.updateTransactionOutputSpent(prevOut.getHash(), prevOut.getIndex(), true, blockhash);
             }
         }
 
-        // Set own outputs confirmed (may be non-existent if value is zero)
+        // Set own outputs confirmed
         for (TransactionOutput out : tx.getOutputs()) {
-            UTXO utxo = blockStore.getTransactionOutput(out.getOutPointFor().getHash(), out.getOutPointFor().getIndex());
-            
-            // Sanity check
-            if (utxo != null && utxo.isSpent())
-                throw new RuntimeException("Attempted to reset an already spent output!");
-            
             blockStore.updateTransactionOutputConfirmed(tx.getHash(), out.getIndex(), true);
             blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), out.getIndex(), blockhash);
             blockStore.updateTransactionOutputSpent(tx.getHash(), out.getIndex(), false, null);
@@ -504,6 +496,15 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             // Unconfirm dependents
             if (blockStore.getRewardSpent(block.getHash())) {
                 removeBlockFromMilestone(blockStore.getRewardSpender(block.getHash()), traversedBlockHashes);
+            }
+            // Disconnect all virtual transaction output dependents
+            Transaction tx = generateVirtualMiningRewardTX(block);
+            for (TransactionOutput txout : tx.getOutputs()) {
+                UTXO utxo = blockStore.getTransactionOutput(tx.getHash(), txout.getIndex());
+                if (utxo.isSpent()) {
+                    removeBlockFromMilestone(
+                            blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()).getBlockHash(), traversedBlockHashes);
+                }
             }
             break;
         case BLOCKTYPE_TOKEN_CREATION:
@@ -610,12 +611,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         
         // Set own outputs unconfirmed
         for (TransactionOutput txout : tx.getOutputs()) {
-            UTXO utxo = blockStore.getTransactionOutput(tx.getHash(), txout.getIndex());
-            
-            // Sanity check no dependents
-            if (utxo.isSpent())
-                throw new RuntimeException("Attempted to unconfirm a spent output!");
-
             blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), txout.getIndex(), null);
             blockStore.updateTransactionOutputConfirmed(tx.getHash(), txout.getIndex(), false);
         }
@@ -694,11 +689,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), height, isCoinBase, script,
                         getScriptAddress(script), null, out.getFromaddress(), tx.getMemo(),
                         Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0);
-                // Filter zero UTXO
-                if (!newOut.getValue().isZero()) {
-                    newOut.setTime(timeSeconds);
-                    blockStore.addUnspentTransactionOutput(newOut);
-                }
+                newOut.setTime(timeSeconds);
+                blockStore.addUnspentTransactionOutput(newOut);
                 if (script.isSentToMultiSig()) {
                     int minsignnumber = script.getNumberOfSignaturesRequiredToSpend();
                     for (ECKey ecKey : script.getPubKeys()) {
@@ -712,7 +704,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void connectTypeSpecificUTXOs(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch)
+    private void connectTypeSpecificUTXOs(Block block, long height)
             throws BlockStoreException {
         if (block.getBlockType() == Block.Type.BLOCKTYPE_REWARD) {
             // Check if eligible:
@@ -736,7 +728,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             if (tx.getData() != null) {
                 try {
                     byte[] buf = tx.getData();
-                    TokenInfo tokenInfo = new TokenInfo().parse(buf);
+                    TokenInfo tokenInfo = TokenInfo.parse(buf);
+                    
+                    // Correctly insert tokens with confirmed false.
+                    tokenInfo.getTokens().setConfirmed(false);
+                    
                     this.blockStore.insertToken(block.getHashAsString(), tokenInfo.getTokens());
                     for (MultiSignAddress permissionedAddress : tokenInfo.getMultiSignAddresses()) {
                         permissionedAddress.setBlockhash(block.getHashAsString()); // The primary key must be the correct block
@@ -755,9 +751,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * previous blocks and previous reward transaction. DOES NOT CHECK FOR SOLIDITY.
      * You have to ensure that the approved blocks result in an eligible reward block.
      * 
-     * @return Pair of mining reward transaction and boolean indicating whether
-     *         this mining reward transaction is eligible to be voted on at this
-     *         moment of time.
+     * @return mining reward transaction 
      * @throws BlockStoreException
      */
     public Transaction generateVirtualMiningRewardTX(Block block) throws BlockStoreException {

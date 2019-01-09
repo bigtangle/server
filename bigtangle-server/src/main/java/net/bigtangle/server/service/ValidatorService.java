@@ -72,6 +72,7 @@ import net.bigtangle.core.VerificationException.InvalidDependencyException;
 import net.bigtangle.core.VerificationException.InvalidSignatureException;
 import net.bigtangle.core.VerificationException.InvalidTokenOutputException;
 import net.bigtangle.core.VerificationException.InvalidTransactionDataException;
+import net.bigtangle.core.VerificationException.InvalidTransactionException;
 import net.bigtangle.core.VerificationException.MalformedTransactionDataException;
 import net.bigtangle.core.VerificationException.MissingDependencyException;
 import net.bigtangle.core.VerificationException.MissingTransactionDataException;
@@ -80,8 +81,6 @@ import net.bigtangle.core.VerificationException.PreviousTokenDisallowsException;
 import net.bigtangle.core.VerificationException.SigOpsException;
 import net.bigtangle.core.VerificationException.TimeReversionException;
 import net.bigtangle.core.VerificationException.TransactionInputsDisallowedException;
-import net.bigtangle.core.VerificationException.TransactionOutputsDisallowedException;
-import net.bigtangle.core.VerificationException.InvalidTransactionException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.Script.VerifyFlag;
@@ -171,7 +170,8 @@ public class ValidatorService {
     
     /**
      * NOTE: The reward block is assumed to having successfully gone through checkRewardSolidity beforehand!
-     * For connecting purposes, checks if the given rewardBlock is eligible now.
+     * For connecting purposes, checks if the given rewardBlock is eligible NOW.
+     * In Spark, this would be calculated delayed and free.
      * 
      * @param rewardBlock
      * @return eligibility of rewards + new perTxReward)
@@ -201,7 +201,7 @@ public class ValidatorService {
      * Computes eligibility of rewards + data tx + Pair.of(new difficulty + new perTxReward) here for new reward blocks. 
      * This is a prototype implementation. In the actual Spark implementation, 
      * the computational cost is not a problem, since it is instead backpropagated and calculated for free with delay.
-     * For more info, see Jdbctest notes.
+     * For more info, see notes.
      * 
      * @param prevTrunk a predecessor block in the db
      * @param prevBranch a predecessor block in the db
@@ -334,6 +334,38 @@ public class ValidatorService {
     }
 
     /**
+     * Checks if the given set is eligible to be walked to during local
+     * approval tip selection given the current set of non-milestone blocks to
+     * include. This is the case if the set is compatible with the
+     * current milestone. It must disallow spent prev UTXOs / unconfirmed prev UTXOs
+     * 
+     * @param currentApprovedNonMilestoneBlocks
+     *            The set of all currently approved non-milestone blocks. 
+     * @return true if the given set is eligible
+     * @throws BlockStoreException 
+     */
+    public boolean isEligibleForApprovalSelection(HashSet<BlockWrap> currentApprovedNonMilestoneBlocks) throws BlockStoreException {
+        // Currently ineligible blocks are not ineligible. If we find one, we must stop
+        if (!findWhereCurrentlyIneligible(currentApprovedNonMilestoneBlocks).isEmpty())
+            return false;
+        
+        // If there exists a new block whose dependency is already spent
+        // (conflicting with milestone) or not confirmed yet (missing other milestones), we fail to
+        // approve this block since the current milestone takes precedence / doesn't allow for the addition of these blocks
+        if (findBlockWithSpentOrUnconfirmedInputs(currentApprovedNonMilestoneBlocks))
+            return false;
+
+        // If conflicts among the approved non-milestone blocks exist, cannot approve
+        HashSet<ConflictCandidate> conflictingOutPoints = new HashSet<>();
+        findCandidateConflicts(currentApprovedNonMilestoneBlocks, conflictingOutPoints);
+        if (!conflictingOutPoints.isEmpty())
+            return false;
+
+        // Otherwise, the new approved block set is compatible with current milestone
+        return true;
+    }
+
+    /**
      * Checks if the given block is eligible to be walked to during local
      * approval tip selection given the current set of non-milestone blocks to
      * include. This is the case if the block + the set is compatible with the
@@ -342,9 +374,7 @@ public class ValidatorService {
      * @param block
      *            The block to check for eligibility.
      * @param currentApprovedNonMilestoneBlocks
-     *            The set of all currently approved non-milestone blocks. Note
-     *            that this set is assumed to be compatible with the current
-     *            milestone.
+     *            The set of all currently approved non-milestone blocks. 
      * @return true if the given block is eligible to be walked to during
      *         approval tip selection.
      * @throws BlockStoreException 
@@ -360,24 +390,9 @@ public class ValidatorService {
         @SuppressWarnings("unchecked")
         HashSet<BlockWrap> allApprovedNonMilestoneBlocks = (HashSet<BlockWrap>) currentApprovedNonMilestoneBlocks.clone();
         blockService.addApprovedNonMilestoneBlocksTo(allApprovedNonMilestoneBlocks, block);
-        @SuppressWarnings("unchecked")
-        HashSet<BlockWrap> newApprovedNonMilestoneBlocks = (HashSet<BlockWrap>) allApprovedNonMilestoneBlocks.clone();
-        newApprovedNonMilestoneBlocks.removeAll(currentApprovedNonMilestoneBlocks);
 
-        // If there exists a new block whose dependency is already spent
-        // (conflicting with milestone) or not confirmed yet (missing other milestones), we fail to
-        // approve this block since the current milestone takes precedence / doesn't allow for the addition of these blocks
-        if (findBlockWithSpentOrUnconfirmedInputs(newApprovedNonMilestoneBlocks))
-            return false;
-
-        // If conflicts among the approved non-milestone blocks exist, cannot approve
-        HashSet<ConflictCandidate> conflictingOutPoints = new HashSet<>();
-        findCandidateConflicts(allApprovedNonMilestoneBlocks, conflictingOutPoints);
-        if (!conflictingOutPoints.isEmpty())
-            return false;
-
-        // Otherwise, the new approved block set is compatible with current milestone
-        return true;
+        // If this set of blocks is eligible, all is fine
+        return isEligibleForApprovalSelection(allApprovedNonMilestoneBlocks);
     }
     
     
@@ -438,9 +453,101 @@ public class ValidatorService {
                 .isPresent();
     }
 
+    // disallow unconfirmed prev UTXOs and spent UTXOs if
+    // unmaintained (unundoable) spend
+    /**
+     * Resolves all conflicts such that the milestone is compatible with all blocks remaining in the set of blocks. 
+     * If not allowing unconfirming losing milestones, the milestones are always prioritized over non-milestone candidates.
+     * 
+     * @param blocksToAdd the set of blocks to add to the current milestone
+     * @param unconfirmLosingMilestones if false, the milestones are always prioritized over non-milestone candidates.
+     * @throws BlockStoreException
+     */
+    public void resolveAllConflicts(Set<BlockWrap> blocksToAdd, boolean unconfirmLosingMilestones)
+            throws BlockStoreException {
+        // Remove currently ineligible blocks
+        // i.e. for reward blocks: invalid never, ineligible overrule, eligible ok
+        // If ineligible, overrule by sufficient age and milestone rating range
+        removeWhereCurrentlyIneligible(blocksToAdd);
+        
+        // Remove blocks and their approvers that have at least one input
+        // with its corresponding output not confirmed yet
+        removeWhereUsedOutputsUnconfirmed(blocksToAdd);
+
+        // Resolve conflicting block combinations:
+        // Disallow conflicts with unmaintained/pruned milestone blocks,
+        //  i.e. remove those whose input is already spent by such blocks
+        resolvePrunedConflicts(blocksToAdd);
+        
+        // Then resolve conflicts between maintained milestone + new candidates
+        // This may trigger reorgs, i.e. unconfirming current milestones!
+        resolveUndoableConflicts(blocksToAdd, unconfirmLosingMilestones);
+
+        // Remove blocks and their approvers that have at least one input
+        // with its corresponding output not confirmed yet
+        // This is needed since reorgs could have been triggered
+        removeWhereUsedOutputsUnconfirmed(blocksToAdd);
+    }
+
+    /**
+     * Remove blocks from blocksToAdd that are currently locally ineligible.
+     * 
+     * @param blocksToAdd
+     * @throws BlockStoreException
+     */
+    private void removeWhereCurrentlyIneligible(Set<BlockWrap> blocksToAdd) {
+        findWhereCurrentlyIneligible(blocksToAdd)
+        .forEach(b -> {
+            try {
+                blockService.removeBlockAndApproversFrom(blocksToAdd, b);
+            } catch (BlockStoreException e) {
+                // Cannot happen.
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    /**
+     * Find blocks from blocksToAdd that are currently locally ineligible.
+     * 
+     * @param blocksToAdd
+     * @throws BlockStoreException
+     */
+    private Set<BlockWrap> findWhereCurrentlyIneligible(Set<BlockWrap> blocksToAdd) {
+        return blocksToAdd.stream()
+        .filter(b -> b.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD) // prefilter for reward blocks
+        .filter(b -> {
+            try {
+                switch (store.getRewardEligible(b.getBlock().getHash())) {
+                case ELIGIBLE:
+                    // OK
+                    return false;
+                case INELIGIBLE:
+                    // Overruled?
+                    return (!(b.getBlockEvaluation().getRating() > NetworkParameters.MILESTONE_UPPER_THRESHOLD
+                            && b.getBlockEvaluation().getInsertTime() < System.currentTimeMillis() - NetworkParameters.REWARD_OVERRULE_TIME_MS));
+                case INVALID:
+                    // Never eligible
+                    return true;
+                case UNKNOWN:
+                    // Cannot happen in non-Spark implementation.
+                    return true;
+                default:
+                    throw new NotImplementedException();
+                
+                }
+            } catch (BlockStoreException e) {
+                // Cannot happen.
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+        }).collect(Collectors.toSet());
+    }
+
     /**
      * Remove blocks from blocksToAdd that have at least one used output not
-     * confirmed yet. They may however be spent already -> conflict.
+     * confirmed yet. They may however be spent already, since this leads to conflicts.
      * 
      * @param blocksToAdd
      * @throws BlockStoreException
@@ -467,62 +574,6 @@ public class ValidatorService {
                 throw new RuntimeException(e);
             }
         });
-
-        // Additionally, for reward blocks: invalid never, ineligible overrule, eligible ok
-        // If ineligible, overrule by sufficient age and milestone rating range
-        new HashSet<BlockWrap>(blocksToAdd).stream()
-        .filter(b -> b.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD) // prefilter for reward blocks
-        .forEach(b -> {
-            try {
-                switch (store.getRewardEligible(b.getBlock().getHash())) {
-                case ELIGIBLE:
-                    // OK
-                    break;
-                case INELIGIBLE:
-                    if (!(b.getBlockEvaluation().getRating() > NetworkParameters.MILESTONE_UPPER_THRESHOLD
-                            && b.getBlockEvaluation().getInsertTime() < System.currentTimeMillis() / 1000 - NetworkParameters.REWARD_OVERRULE_TIME)) 
-                        blockService.removeBlockAndApproversFrom(blocksToAdd, b);
-                    break;
-                case INVALID:
-                    blockService.removeBlockAndApproversFrom(blocksToAdd, b);
-                    break;
-                case UNKNOWN:
-                    // Cannot happen in non-Spark implementation.
-                    blockService.removeBlockAndApproversFrom(blocksToAdd, b);
-                    break;
-                default:
-                    throw new NotImplementedException();
-                
-                }
-            } catch (BlockStoreException e) {
-                // Cannot happen.
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
-        });
-    }
-
-    // disallow unconfirmed prev UTXOs and spent UTXOs if
-    // unmaintained (unundoable) spend
-    public void resolveAllConflicts(Set<BlockWrap> blocksToAdd, boolean unconfirmLosingMilestones)
-            throws BlockStoreException {
-        // Remove blocks and their approvers that have at least one input
-        // with its corresponding output not confirmed yet
-        removeWhereUsedOutputsUnconfirmed(blocksToAdd);
-
-        // Resolve conflicting block combinations:
-        // Disallow conflicts with unmaintained/pruned milestone blocks,
-        //  i.e. remove those whose input is already spent by such blocks
-        resolvePrunedConflicts(blocksToAdd);
-        
-        // Then resolve conflicts between maintained milestone + new candidates
-        // This may trigger reorgs, i.e. unconfirming current milestones!
-        resolveUndoableConflicts(blocksToAdd, unconfirmLosingMilestones);
-
-        // Remove blocks and their approvers that have at least one input
-        // with its corresponding output not confirmed yet
-        // This is needed since reorgs could have been triggered
-        removeWhereUsedOutputsUnconfirmed(blocksToAdd);
     }
 
     private void resolvePrunedConflicts(Set<BlockWrap> blocksToAdd) throws BlockStoreException {
@@ -571,8 +622,9 @@ public class ValidatorService {
         for (BlockWrap b : conflictingMilestoneBlocks.stream().filter(b -> losingBlocks.contains(b))
                 .collect(Collectors.toList())) {
             if (!unconfirmLosingMilestones) {
+                // Cannot happen since milestones are preferred during conflict sorting
                 logger.error("Cannot unconfirm milestone blocks when not allowing unconfirmation!");
-                break;
+                throw new RuntimeException("Cannot unconfirm milestone blocks when not allowing unconfirmation!");
             }
 
             blockService.unconfirm(b.getBlockEvaluation());
@@ -840,72 +892,86 @@ public class ValidatorService {
      * Otherwise, appropriate solidity states are returned to imply missing dependencies.
      */
     public SolidityState checkBlockSolidity(Block block, @Nullable StoredBlock storedPrev,
-            @Nullable StoredBlock storedPrevBranch, boolean throwExceptions) throws BlockStoreException {
-        if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
-            if (throwExceptions)
-                throw new GenesisBlockDisallowedException();
-            return SolidityState.getFailState();
-        }
+            @Nullable StoredBlock storedPrevBranch, boolean throwExceptions) {
+        try {
+            if (block.getHash() == Sha256Hash.ZERO_HASH){
+                if (throwExceptions)
+                    throw new VerificationException("Lucky zeros not allowed");
+                return SolidityState.getFailState();
+            }
             
-        
-        // Check predecessor blocks exist
-        if (storedPrev == null) {
-            return SolidityState.from(block.getPrevBlockHash());
-        }
-        if (storedPrevBranch == null) {
-            return SolidityState.from(block.getPrevBranchBlockHash());
-        }
-        
-        // Check timestamp: enforce monotone time increase
-        if (block.getTimeSeconds() < storedPrev.getHeader().getTimeSeconds()
-                || block.getTimeSeconds() < storedPrevBranch.getHeader().getTimeSeconds()) {
-            if (throwExceptions)
-                throw new TimeReversionException();
-            return SolidityState.getFailState();
-        }
-
-        // Check difficulty and latest consensus block is passed through correctly
-        if (block.getBlockType() != Block.Type.BLOCKTYPE_REWARD) {
-            if (storedPrev.getHeader().getLastMiningRewardBlock() >= storedPrevBranch.getHeader()
-                    .getLastMiningRewardBlock()) {
-                if (block.getLastMiningRewardBlock() != storedPrev.getHeader().getLastMiningRewardBlock()
-                        || block.getDifficultyTarget() != storedPrev.getHeader().getDifficultyTarget()) {
+            if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
+                if (throwExceptions)
+                    throw new GenesisBlockDisallowedException();
+                return SolidityState.getFailState();
+            }
+                
+            
+            // Check predecessor blocks exist
+            if (storedPrev == null) {
+                return SolidityState.from(block.getPrevBlockHash());
+            }
+            if (storedPrevBranch == null) {
+                return SolidityState.from(block.getPrevBranchBlockHash());
+            }
+            
+            // Check timestamp: enforce monotone time increase
+            if (block.getTimeSeconds() < storedPrev.getHeader().getTimeSeconds()
+                    || block.getTimeSeconds() < storedPrevBranch.getHeader().getTimeSeconds()) {
+                if (throwExceptions)
+                    throw new TimeReversionException();
+                return SolidityState.getFailState();
+            }
+    
+            // Check difficulty and latest consensus block is passed through correctly
+            if (block.getBlockType() != Block.Type.BLOCKTYPE_REWARD) {
+                if (storedPrev.getHeader().getLastMiningRewardBlock() >= storedPrevBranch.getHeader()
+                        .getLastMiningRewardBlock()) {
+                    if (block.getLastMiningRewardBlock() != storedPrev.getHeader().getLastMiningRewardBlock()
+                            || block.getDifficultyTarget() != storedPrev.getHeader().getDifficultyTarget()) {
+                        if (throwExceptions)
+                            throw new DifficultyConsensusInheritanceException();
+                        return SolidityState.getFailState();                    
+                    }
+                } else {
+                    if (block.getLastMiningRewardBlock() != storedPrevBranch.getHeader().getLastMiningRewardBlock()
+                            || block.getDifficultyTarget() != storedPrevBranch.getHeader().getDifficultyTarget()) {
+                        if (throwExceptions)
+                            throw new DifficultyConsensusInheritanceException();
+                        return SolidityState.getFailState();
+                    }
+                }
+            } else {
+                if (block.getLastMiningRewardBlock() != Math.max(storedPrev.getHeader().getLastMiningRewardBlock(), storedPrevBranch.getHeader().getLastMiningRewardBlock()) + 1) {
                     if (throwExceptions)
                         throw new DifficultyConsensusInheritanceException();
                     return SolidityState.getFailState();                    
                 }
-            } else {
-                if (block.getLastMiningRewardBlock() != storedPrevBranch.getHeader().getLastMiningRewardBlock()
-                        || block.getDifficultyTarget() != storedPrevBranch.getHeader().getDifficultyTarget()) {
-                    if (throwExceptions)
-                        throw new DifficultyConsensusInheritanceException();
-                    return SolidityState.getFailState();
-                }
             }
-        } else {
-            if (block.getLastMiningRewardBlock() != Math.max(storedPrev.getHeader().getLastMiningRewardBlock(), storedPrevBranch.getHeader().getLastMiningRewardBlock()) + 1) {
-                if (throwExceptions)
-                    throw new DifficultyConsensusInheritanceException();
-                return SolidityState.getFailState();                    
+    
+            long height = Math.max(storedPrev.getHeight(), storedPrevBranch.getHeight()) + 1;
+    
+            // Check transactions are solid
+            SolidityState transactionalSolidityState = checkTransactionalSolidity(block, height, throwExceptions);
+            if (!(transactionalSolidityState.getState() == State.Success)) {
+                return transactionalSolidityState;
             }
-            // 
+    
+            // Check type-specific solidity
+            SolidityState typeSpecificSolidityState = checkTypeSpecificSolidity(block, height, throwExceptions);
+            if (!(typeSpecificSolidityState.getState() == State.Success)) {
+                return typeSpecificSolidityState;
+            }
+    
+            return SolidityState.getSuccessState();
+        } catch (VerificationException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.error("Unhandled exception in checkSolidity: ", e);
+            if (throwExceptions)
+                throw new VerificationException(e);
+            return SolidityState.getFailState();
         }
-
-        long height = Math.max(storedPrev.getHeight(), storedPrevBranch.getHeight()) + 1;
-
-        // Check transactions are solid
-        SolidityState transactionalSolidityState = checkTransactionalSolidity(block, height, throwExceptions);
-        if (!(transactionalSolidityState.getState() == State.Success)) {
-            return transactionalSolidityState;
-        }
-
-        // Check type-specific solidity
-        SolidityState typeSpecificSolidityState = checkTypeSpecificSolidity(block, height, throwExceptions);
-        if (!(typeSpecificSolidityState.getState() == State.Success)) {
-            return typeSpecificSolidityState;
-        }
-
-        return SolidityState.getSuccessState();
     }
 
     private SolidityState checkTransactionalSolidity(Block block, long height, boolean throwExceptions) throws BlockStoreException {
@@ -1216,7 +1282,7 @@ public class ValidatorService {
         
         TokenInfo currentToken = null;
         try {
-            currentToken = new TokenInfo().parse(tx.getData());
+            currentToken = TokenInfo.parse(tx.getData());
         } catch (IOException e) {
             if (throwExceptions)
                 throw new MalformedTransactionDataException();
@@ -1407,6 +1473,7 @@ public class ValidatorService {
             byte[] pubKey = Utils.HEX.decode(multiSignBy.getPublickey());
             byte[] data = tx.getHash().getBytes();
             byte[] signature = Utils.HEX.decode(multiSignBy.getSignature());
+            
             if (ECKey.verify(data, signature, pubKey)) {
                 signatureCount++;
             }

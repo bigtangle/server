@@ -2461,7 +2461,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public void insertToken(String blockhash, Token tokens) throws BlockStoreException {
         boolean confirmed = false;
         String tokenid = tokens.getTokenid();
-        int tokenindex = tokens.getTokenindex();
+        long tokenindex = tokens.getTokenindex();
         long amount = tokens.getAmount();
         String tokenname = tokens.getTokenname();
         String description = tokens.getDescription();
@@ -2476,7 +2476,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void insertToken(String blockhash, boolean confirmed, String tokenid, int tokenindex, long amount,
+    public void insertToken(String blockhash, boolean confirmed, String tokenid, long tokenindex, long amount,
             String tokenname, String description, String url, int signnumber, boolean multiserial, int tokentype,
             boolean tokenstop, String prevblockhash) throws BlockStoreException {
         maybeConnect();
@@ -2488,7 +2488,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setString(1, blockhash);
             preparedStatement.setBoolean(2, confirmed);
             preparedStatement.setString(3, tokenid);
-            preparedStatement.setInt(4, tokenindex);
+            preparedStatement.setLong(4, tokenindex);
             preparedStatement.setLong(5, amount);
             preparedStatement.setString(6, tokenname);
             preparedStatement.setString(7, description);
@@ -2586,13 +2586,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public boolean getTokenAnySpent(String tokenId, int tokenIndex) throws BlockStoreException {
+    public boolean getTokenAnySpent(String tokenId, long tokenIndex) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_TOKEN_ANY_SPENT_BY_TOKEN_SQL);
             preparedStatement.setString(1, tokenId);
-            preparedStatement.setInt(2, tokenIndex);
+            preparedStatement.setLong(2, tokenIndex);
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
             return resultSet.getBoolean(1);
@@ -2633,13 +2633,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public boolean getTokenAnyConfirmed(String tokenid, int tokenindex) throws BlockStoreException {
+    public boolean getTokenAnyConfirmed(String tokenid, long tokenIndex) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_TOKEN_ANY_CONFIRMED_SQL);
             preparedStatement.setString(1, tokenid);
-            preparedStatement.setInt(2, tokenindex);
+            preparedStatement.setLong(2, tokenIndex);
             ResultSet resultSet = preparedStatement.executeQuery();
             return resultSet.next();
         } catch (SQLException e) {
@@ -2656,13 +2656,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public BlockWrap getTokenIssuingConfirmedBlock(String tokenid, int tokenindex) throws BlockStoreException {
+    public BlockWrap getTokenIssuingConfirmedBlock(String tokenid, long tokenIndex) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_TOKEN_ISSUING_CONFIRMED_BLOCK_SQL);
             preparedStatement.setString(1, tokenid);
-            preparedStatement.setInt(2, tokenindex);
+            preparedStatement.setLong(2, tokenIndex);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (!resultSet.next()) {
                 return null;
@@ -3347,7 +3347,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void updateMultiSign(String tokenid, int tokenindex, String address, byte[] blockhash, int sign)
+    public void updateMultiSign(String tokenid, long tokenIndex, String address, byte[] blockhash, int sign)
             throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -3356,7 +3356,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setBytes(1, blockhash);
             preparedStatement.setInt(2, sign);
             preparedStatement.setString(3, tokenid);
-            preparedStatement.setLong(4, tokenindex);
+            preparedStatement.setLong(4, tokenIndex);
             preparedStatement.setString(5, address);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {

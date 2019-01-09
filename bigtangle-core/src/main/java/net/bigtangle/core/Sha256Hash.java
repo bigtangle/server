@@ -61,15 +61,6 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
 	}
 
     /**
-     * Use {@link #wrap(String)} instead.
-     */
-    @Deprecated
-    public Sha256Hash(String hexString) {
-        checkArgument(hexString.length() == LENGTH * 2);
-        this.bytes = Utils.HEX.decode(hexString);
-    }
-
-    /**
      * Creates a new instance that wraps the given hash value.
      *
      * @param rawHashBytes the raw hash bytes to wrap
