@@ -10,7 +10,7 @@ server:
     key-store: ${KEYSTORE:src/main/resources/ca.pkcs12}
     key-store-password: ${KEYSTOREPW:changeit}
     keyStoreType: ${KEYSTORETYPE:PKCS12}
-
+  permissioned: ${PERMISSIONED:false}
 db:
   dbtype: ${DBTYPE:mysql}
   hostname: ${DB_HOSTNAME:localhost}

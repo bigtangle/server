@@ -41,6 +41,7 @@ public class ServerConfiguration {
 
     private String serverversion;
     private String clientversion;
+    private Boolean permissioned;  
     
     public String getRequester() {
         return requester;
@@ -154,6 +155,14 @@ public class ServerConfiguration {
 
     public void setClientversion(String clientversion) {
         this.clientversion = clientversion;
+    }
+
+    public Boolean getPermissioned() {
+        return permissioned;
+    }
+
+    public void setPermissioned(Boolean permissioned) {
+        this.permissioned = permissioned;
     }
 
     
