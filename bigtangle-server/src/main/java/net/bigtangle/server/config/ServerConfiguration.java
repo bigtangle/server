@@ -42,7 +42,7 @@ public class ServerConfiguration {
     private String serverversion;
     private String clientversion;
     private Boolean permissioned;  
-    
+    private String  permissionadmin;
     public String getRequester() {
         return requester;
     }
@@ -163,6 +163,14 @@ public class ServerConfiguration {
 
     public void setPermissioned(Boolean permissioned) {
         this.permissioned = permissioned;
+    }
+
+    public String getPermissionadmin() {
+        return permissionadmin;
+    }
+
+    public void setPermissionadmin(String permissionadmin) {
+        this.permissionadmin = permissionadmin;
     }
 
     
