@@ -28,8 +28,8 @@ import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Token;
+import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -167,12 +167,15 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
 
     @Test
     public void testVeryKey() throws Exception {
+        String privateKey = "";
         String pubkey = "";
-        ECKey key = ECKey.fromPublicOnly(Utils.HEX.decode(pubkey));
+        ECKey key = ECKey.fromPrivate(Utils.HEX.decode(privateKey));
+
         byte[] output = key.sign(Sha256Hash.ZERO_HASH).encodeToDER();
-        assertTrue(key.verify(Sha256Hash.ZERO_HASH.getBytes(), output));
+        String signHex = Utils.HEX.encode(output);
         HashMap<String, String> requestParam = new HashMap<String, String>();
         requestParam.put("pubkey", pubkey);
+        requestParam.put("signHex", signHex);
         OkHttp3Util.post(contextRoot + ReqCmd.regSubtangle, Json.jsonmapper().writeValueAsString(requestParam));
     }
 }
