@@ -21,6 +21,8 @@ import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.Coin;
@@ -41,6 +43,8 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.core.VerificationException.CoinbaseDisallowedException;
+import net.bigtangle.core.VerificationException.DifficultyConsensusInheritanceException;
+import net.bigtangle.core.VerificationException.GenesisBlockDisallowedException;
 import net.bigtangle.core.VerificationException.IncorrectTransactionCountException;
 import net.bigtangle.core.VerificationException.InsufficientSignaturesException;
 import net.bigtangle.core.VerificationException.InvalidDependencyException;
@@ -51,7 +55,9 @@ import net.bigtangle.core.VerificationException.InvalidTransactionException;
 import net.bigtangle.core.VerificationException.MalformedTransactionDataException;
 import net.bigtangle.core.VerificationException.MissingDependencyException;
 import net.bigtangle.core.VerificationException.MissingTransactionDataException;
+import net.bigtangle.core.VerificationException.NegativeValueOutput;
 import net.bigtangle.core.VerificationException.NotCoinbaseException;
+import net.bigtangle.core.VerificationException.PreviousTokenDisallowsException;
 import net.bigtangle.core.VerificationException.ProofOfWorkException;
 import net.bigtangle.core.VerificationException.SigOpsException;
 import net.bigtangle.core.VerificationException.TimeReversionException;
@@ -62,12 +68,11 @@ import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
+import net.bigtangle.wallet.Wallet;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ValidatorServiceTest extends AbstractIntegrationTest {
-    
-    // TODO Code coverage: clear the soliditystate.failstate then cover all code
     
     @Test
     public void testConflictTransactionalUTXO() throws Exception {
@@ -314,7 +319,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Token tokens2 = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test2", "Test2", 1, 0,
                 amount2, false, false);
         tokenInfo2.setTokens(tokens2);
-        tokenInfo2.getMultiSignAddresses().add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+        tokenInfo2.getMultiSignAddresses().add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
         Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
         Block block2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, genHash, genHash);
@@ -590,12 +595,12 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Generate second eligible issuance
         TokenInfo tokenInfo2 = new TokenInfo();        
-        Token tokens2 = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 1, amount, false, false);
+        Token tokens2 = Token.buildSimpleTokenInfo(true, depBlock.getHashAsString(), Utils.HEX.encode(pubKey), "Test", "Test", 1, 1, amount, false, false);
         tokenInfo2.setTokens(tokens2);
         tokenInfo2.getMultiSignAddresses()
-                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+                .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
-        Block block = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+        Block block = walletAppKit.wallet().saveTokenUnitTest(tokenInfo2, coinbase, outKey, null, networkParameters.getGenesisBlock().getHash(), networkParameters.getGenesisBlock().getHash());
         
         store.resetStore();
         
@@ -647,6 +652,26 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             rollingBlock = rollingBlockNew;
             blockGraph.add(rollingBlock, true);     
         }
+        
+        try {
+            Block failingBlock = rollingBlock.createNextBlock(networkParameters.getGenesisBlock());
+            failingBlock.setDifficultyTarget(networkParameters.getGenesisBlock().getDifficultyTarget());
+            failingBlock.solve();
+            blockGraph.add(failingBlock, false);
+            fail();
+        } catch (DifficultyConsensusInheritanceException e) {
+            // Expected
+        }
+        
+        try {
+            Block failingBlock = networkParameters.getGenesisBlock().createNextBlock(rollingBlock);
+            failingBlock.setDifficultyTarget(networkParameters.getGenesisBlock().getDifficultyTarget());
+            failingBlock.solve();
+            blockGraph.add(failingBlock, false);
+            fail();
+        } catch (DifficultyConsensusInheritanceException e) {
+            // Expected
+        }
     }
 
     @Test
@@ -681,6 +706,36 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             
             rollingBlock = rollingBlockNew;
             blockGraph.add(rollingBlock, true);     
+        }
+        
+        try {
+            Block failingBlock = rollingBlock.createNextBlock(networkParameters.getGenesisBlock());
+            failingBlock.setLastMiningRewardBlock(2);
+            failingBlock.solve();
+            blockGraph.add(failingBlock, false);
+            fail();
+        } catch (DifficultyConsensusInheritanceException e) {
+            // Expected
+        }
+        
+        try {
+            Block failingBlock = networkParameters.getGenesisBlock().createNextBlock(rollingBlock);
+            failingBlock.setLastMiningRewardBlock(2);
+            failingBlock.solve();
+            blockGraph.add(failingBlock, false);
+            fail();
+        } catch (DifficultyConsensusInheritanceException e) {
+            // Expected
+        }
+        
+        try {
+            Block failingBlock = transactionService.createMiningRewardBlock(rewardBlock1.getHash(), rollingBlock.getHash(), rollingBlock.getHash(), true);
+            failingBlock.setLastMiningRewardBlock(123);
+            failingBlock.solve();
+            blockGraph.add(failingBlock, false);
+            fail();
+        } catch (DifficultyConsensusInheritanceException e) {
+            // Expected
         }
     }
 
@@ -852,10 +907,25 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                     false);
             Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
             input.setScriptSig(inputScript);
-            tx2.getOutput(0).getValue().value = tx2.getOutput(0).getValue().value + 1;
             createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx2);
             fail();
-        } catch (InvalidTransactionException e) {
+        } catch (NegativeValueOutput e) {
+            //Expected
+        }
+    }
+
+    @Test
+    public void testSolidityNewGenesis() throws Exception {
+        store.resetStore();
+
+        // Create genesis block 
+        try {
+            Block b = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+            b.setBlockType(Type.BLOCKTYPE_INITIAL);
+            b.solve();
+            blockGraph.add(b, false);
+            fail();
+        } catch (GenesisBlockDisallowedException e) {
         }
     }
 
@@ -870,7 +940,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
                     0);
-            Coin amount = Coin.valueOf(-1, NetworkParameters.BIGTANGLE_TOKENID);
+            Coin amount = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
             Transaction tx2 = new Transaction(networkParameters);
             tx2.addOutput(new TransactionOutput(networkParameters, tx2, amount, genesiskey));
             tx2.addOutput(new TransactionOutput(networkParameters, tx2, spendableOutput.getValue().minus(amount), genesiskey));
@@ -882,7 +952,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             
             Script inputScript = scriptBuilder.build();
             input.setScriptSig(inputScript);
-            tx2.getOutput(0).getValue().value = tx2.getOutput(0).getValue().value + 1;
             createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx2);
             fail();
         } catch (SigOpsException e) {
@@ -890,7 +959,56 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     }
     
     @Test
-    public void testSolidityRewardTxWithTransfers() throws Exception {
+    public void testSolidityRewardTxTooClose() throws Exception {
+        store.resetStore();
+        Block rollingBlock = networkParameters.getGenesisBlock();
+
+        // Generate blocks until passing first reward interval
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL; i++) {
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            blockGraph.add(rollingBlock, true);
+        }        
+
+        // Generate mining reward block with spending inputs
+        Block rewardBlock = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock.getHash(), rollingBlock.getHash());
+        
+        // Should not go through
+        try {
+            blockGraph.add(rewardBlock, false);
+            
+            fail();
+        } catch (InvalidTransactionDataException e) {
+        }
+    }
+    
+    @Test
+    public void testSolidityRewardTxWrongDifficulty() throws Exception {
+        store.resetStore();
+        Block rollingBlock = networkParameters.getGenesisBlock();
+
+        // Generate blocks until passing first reward interval
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            blockGraph.add(rollingBlock, true);
+        }        
+
+        // Generate mining reward block with spending inputs
+        Block rewardBlock = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock.getHash(), rollingBlock.getHash());
+        rewardBlock.setDifficultyTarget(rollingBlock.getDifficultyTarget());
+        rewardBlock.solve();
+        
+        // Should not go through
+        try {
+            blockGraph.add(rewardBlock, false);
+            fail();
+        } catch (InvalidTransactionDataException e) {
+        }
+    }
+    
+    @Test
+    public void testSolidityRewardTxWithTransfers1() throws Exception {
         store.resetStore();
         Block rollingBlock = networkParameters.getGenesisBlock();
 
@@ -929,6 +1047,33 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             
             fail();
         } catch (TransactionInputsDisallowedException e) {
+        }
+    }
+    
+    @Test
+    public void testSolidityRewardTxWithTransfers2() throws Exception {
+        store.resetStore();
+        Block rollingBlock = networkParameters.getGenesisBlock();
+
+        // Generate blocks until passing first reward interval
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            blockGraph.add(rollingBlock, true);
+        }        
+
+        // Generate mining reward block with additional tx
+        Block rewardBlock = transactionService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock.getHash(), rollingBlock.getHash());
+        Transaction tx = createTestGenesisTransaction();
+        rewardBlock.addTransaction(tx);
+        rewardBlock.solve();
+        
+        // Should not go through
+        try {
+            blockGraph.add(rewardBlock, false);
+            
+            fail();
+        } catch (IncorrectTransactionCountException e) {
         }
     }
 
@@ -2214,6 +2359,183 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             
             fail();
         } catch (NotCoinbaseException e) {
+        }
+    }
+    
+    @Test 
+    public void testSolidityTokenPredecessorWrongTokenid() throws JsonProcessingException, Exception {
+        store.resetStore();
+
+        // Generate an eligible issuance
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+        TokenInfo tokenInfo = new TokenInfo();
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0,
+                amount, false, false);
+        tokenInfo.setTokens(tokens);
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+        Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+
+        // Generate a subsequent issuance that does not work
+        byte[] pubKey2 = outKey2.getPubKey();
+        TokenInfo tokenInfo2 = new TokenInfo();
+        Coin coinbase2 = Coin.valueOf(666, pubKey2);
+        long amount2 = coinbase2.getValue();
+        Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey2), "Test", "Test", 1, 1,
+                amount2, false, true);
+        tokenInfo2.setTokens(tokens2);
+        tokenInfo2.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey2.getPublicKeyAsHex()));
+        try {
+            Wallet r = walletAppKit.wallet();
+            Block block = r.makeTokenUnitTest(tokenInfo2, coinbase2, outKey, null, block1.getHash(), block1.getHash());
+            blockGraph.add(block, false);
+            fail();
+        } catch (InvalidDependencyException e) {
+        }
+    }
+    
+    @Test 
+    public void testSolidityTokenWrongTokenindex() throws JsonProcessingException, Exception {
+        store.resetStore();
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+
+        // Generate an eligible issuance
+        TokenInfo tokenInfo = new TokenInfo();
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0,
+                amount, false, false);
+        tokenInfo.setTokens(tokens);
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+        Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+
+        // Generate a subsequent issuance that does not work
+        TokenInfo tokenInfo2 = new TokenInfo();
+        Coin coinbase2 = Coin.valueOf(666, pubKey);
+        long amount2 = coinbase2.getValue();
+        Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test", "Test", 1, 2,
+                amount2, false, true);
+        tokenInfo2.setTokens(tokens2);
+        tokenInfo2.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
+        try {
+            Wallet r = walletAppKit.wallet();
+            Block block = r.makeTokenUnitTest(tokenInfo2, coinbase2, outKey, null, block1.getHash(), block1.getHash());
+            blockGraph.add(block, false);
+            fail();
+        } catch (InvalidDependencyException e) {
+        }
+    }
+    
+    @Test 
+    public void testSolidityTokenPredecessorStopped() throws JsonProcessingException, Exception {
+        store.resetStore();
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+
+        // Generate an eligible issuance
+        TokenInfo tokenInfo = new TokenInfo();
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0,
+                amount, false, true);
+        tokenInfo.setTokens(tokens);
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+        Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+
+        // Generate a subsequent issuance that does not work
+        TokenInfo tokenInfo2 = new TokenInfo();
+        Coin coinbase2 = Coin.valueOf(666, pubKey);
+        long amount2 = coinbase2.getValue();
+        Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test", "Test", 1, 1,
+                amount2, false, true);
+        tokenInfo2.setTokens(tokens2);
+        tokenInfo2.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
+        try {
+            Wallet r = walletAppKit.wallet();
+            Block block = r.makeTokenUnitTest(tokenInfo2, coinbase2, outKey, null, block1.getHash(), block1.getHash());
+            blockGraph.add(block, false);
+            fail();
+        } catch (PreviousTokenDisallowsException e) {
+        }
+    }
+    
+    @Test 
+    public void testSolidityTokenPredecessorConflictingType() throws JsonProcessingException, Exception {
+        store.resetStore();
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+
+        // Generate an eligible issuance
+        TokenInfo tokenInfo = new TokenInfo();
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0,
+                amount, false, false);
+        tokenInfo.setTokens(tokens);
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+        Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+
+        // Generate a subsequent issuance that does not work
+        TokenInfo tokenInfo2 = new TokenInfo();
+        Coin coinbase2 = Coin.valueOf(666, pubKey);
+        long amount2 = coinbase2.getValue();
+        Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test", "Test", 1, 1,
+                amount2, false, true);
+        tokens2.setTokentype(123);
+        tokenInfo2.setTokens(tokens2);
+        tokenInfo2.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
+        try {
+            Wallet r = walletAppKit.wallet();
+            Block block = r.makeTokenUnitTest(tokenInfo2, coinbase2, outKey, null, block1.getHash(), block1.getHash());
+            blockGraph.add(block, false);
+            fail();
+        } catch (PreviousTokenDisallowsException e) {
+        }
+    }
+    
+    @Test 
+    public void testSolidityTokenPredecessorConflictingName() throws JsonProcessingException, Exception {
+        store.resetStore();
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+
+        // Generate an eligible issuance
+        TokenInfo tokenInfo = new TokenInfo();
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0,
+                amount, false, false);
+        tokenInfo.setTokens(tokens);
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+        Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+
+        // Generate a subsequent issuance that does not work
+        TokenInfo tokenInfo2 = new TokenInfo();
+        Coin coinbase2 = Coin.valueOf(666, pubKey);
+        long amount2 = coinbase2.getValue();
+        Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test2", "Test", 1, 1,
+                amount2, false, true);
+        tokenInfo2.setTokens(tokens2);
+        tokenInfo2.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
+        try {
+            Wallet r = walletAppKit.wallet();
+            Block block = r.makeTokenUnitTest(tokenInfo2, coinbase2, outKey, null, block1.getHash(), block1.getHash());
+            blockGraph.add(block, false);
+            fail();
+        } catch (PreviousTokenDisallowsException e) {
         }
     }
     

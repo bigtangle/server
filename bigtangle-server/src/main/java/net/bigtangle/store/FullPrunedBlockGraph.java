@@ -779,12 +779,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Read previous reward block's data
         BlockWrap prevRewardBlock = blockStore.getBlockWrap(prevRewardHash);
-        long prevToHeight = 0, minHeight = 0, perTxReward = 0;
+        long prevToHeight = 0, perTxReward = 0;
         try {
             RewardInfo rewardInfo = RewardInfo.parse(prevRewardBlock.getBlock().getTransactions().get(0).getData());
             
             prevToHeight = rewardInfo.getToHeight();
-            minHeight = prevToHeight + (long) NetworkParameters.REWARD_HEIGHT_INTERVAL - 1;
             perTxReward = blockStore.getRewardNextTxReward(prevRewardHash);
 
         } catch (IOException e) {

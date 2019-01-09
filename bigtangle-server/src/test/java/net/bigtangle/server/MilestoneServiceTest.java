@@ -119,6 +119,48 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
+    public void testUpdateConflictingMilestoneCandidates() throws Exception {
+        store.resetStore();
+        
+        @SuppressWarnings("deprecation")
+        ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        // use UTXO to create double spending, this can not be created with
+        // wallet
+        List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+                0);
+        Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
+        Transaction doublespendTX = new Transaction(networkParameters);
+        doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount, outKey));
+        TransactionInput input = doublespendTX.addInput(spendableOutput);
+        Sha256Hash sighash = doublespendTX.hashForSignature(0, spendableOutput.getScriptBytes(),
+                Transaction.SigHash.ALL, false);
+
+        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+                false);
+        Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+        input.setScriptSig(inputScript);
+
+
+        // Create blocks with a conflict
+        Block b1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), doublespendTX);
+        milestoneService.update();
+        assertTrue(blockService.getBlockEvaluation(b1.getHash()).isMilestone());
+        Block b2 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), doublespendTX);
+        Block b3 = createAndAddNextBlock(b1, b2);
+        for (int i = 0; i < 15; i++) {
+            createAndAddNextBlock(b3, b3);
+        }
+        createAndAddNextBlock(b2, b2);
+        
+        // TODO seems to fail due to statement caching? try deactivating jdbc statement caching 
+        milestoneService.update();
+
+        assertFalse(blockService.getBlockEvaluation(b1.getHash()).isMilestone());
+        assertTrue(blockService.getBlockEvaluation(b2.getHash()).isMilestone());
+    }
+
+    @Test
     public void testUpdate() throws Exception {
         store.resetStore();
 

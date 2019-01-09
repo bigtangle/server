@@ -3573,7 +3573,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         return block;
     }
 
-    private Block makeTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey,
+    // for unit tests
+    public Block makeTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey,
             Sha256Hash overrideHash1, Sha256Hash overrideHash2) throws Exception, JsonProcessingException {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(serverurl + ReqCmd.getTip.name(),

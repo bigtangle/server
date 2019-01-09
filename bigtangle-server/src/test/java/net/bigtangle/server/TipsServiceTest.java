@@ -64,7 +64,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash(), true);
 
-        for (int i = 0; i < 33; i++) {
+        for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
             
             // Do not hit the ineligible mining reward blocks
@@ -84,7 +84,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         milestoneService.update();        
         assertTrue(store.getBlockEvaluation(b1.getHash()).isMilestone());
 
-        for (int i = 0; i < 33; i++) {
+        for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
             
             // Do not hit the ineligible mining reward block b2 but do go through b1
@@ -123,12 +123,12 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         blockGraph.add(b1, true);
         blockGraph.add(b2, true);
 
-        for (int i = 0; i < 33; i++) {
+        for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);
             assertTrue(tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()));
         }
 
-        for (int i = 0; i < 33; i++) {
+        for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b2);
             assertTrue(tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b2.getHash()));
         }
@@ -136,7 +136,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         // After confirming one of them into the milestone, only that one block is now available
         blockGraph.confirm(b1.getHash());
 
-        for (int i = 0; i < 33; i++) {
+        for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);
             assertTrue(tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()));
         }
@@ -180,12 +180,14 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         boolean hit1 = false;
         boolean hit2 = false;
-        for (int i = 0; i < 33; i++) {
+        for (int i = 0; i < 150; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
             assertTrue((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash())) 
                     || (tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b2.getHash())));
+            if (hit1 && hit2)
+                break;
         }
         assertTrue(hit1);
         assertTrue(hit2);
@@ -193,7 +195,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         // After confirming one of them into the milestone, only that one block is now available
         blockGraph.confirm(b1.getHash());
 
-        for (int i = 0; i < 33; i++) {
+        for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);
             assertTrue(tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()));
         }
@@ -228,12 +230,14 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         boolean hit1 = false;
         boolean hit2 = false;
-        for (int i = 0; i < 33; i++) {
+        for (int i = 0; i < 150; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
             assertTrue((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash())) 
                     || (tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b2.getHash())));
+            if (hit1 && hit2)
+                break;
         }
         assertTrue(hit1);
         assertTrue(hit2);
@@ -241,7 +245,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         // After confirming one of them into the milestone, only that one block is now available
         blockGraph.confirm(b1.getHash());
 
-        for (int i = 0; i < 33; i++) {
+        for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);
             assertTrue(tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()));
         }
@@ -285,12 +289,14 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         boolean hit1 = false;
         boolean hit2 = false;
-        for (int i = 0; i < 33; i++) {
+        for (int i = 0; i < 150; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
             assertTrue((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash())) 
                     || (tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b2.getHash())));
+            if (hit1 && hit2)
+                break;
         }
         assertTrue(hit1);
         assertTrue(hit2);
@@ -298,7 +304,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         // After confirming one of them into the milestone, only that one block is now available
         blockGraph.confirm(b1.getHash());
 
-        for (int i = 0; i < 33; i++) {
+        for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);
             assertTrue(tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()));
         }
@@ -351,12 +357,14 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         boolean hit1 = false;
         boolean hit2 = false;
-        for (int i = 0; i < 33; i++) {
+        for (int i = 0; i < 150; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
             assertTrue((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash())) 
                     || (tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b2.getHash())));
+            if (hit1 && hit2)
+                break;
         }
         assertTrue(hit1);
         assertTrue(hit2);
@@ -364,7 +372,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         // After confirming one of them into the milestone, only that one block is now available
         blockGraph.confirm(b1.getHash());
 
-        for (int i = 0; i < 33; i++) {
+        for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);
             assertTrue(tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()));
         }
@@ -403,12 +411,14 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         boolean hit1 = false;
         boolean hit2 = false;
-        for (int i = 0; i < 33; i++) {
+        for (int i = 0; i < 150; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
             assertTrue((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash())) 
                     || (tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b2.getHash())));
+            if (hit1 && hit2)
+                break;
         }
         assertTrue(hit1);
         assertTrue(hit2);
@@ -416,7 +426,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         // After confirming one of them into the milestone, only that one block is now available
         blockGraph.confirm(b1.getHash());
 
-        for (int i = 0; i < 33; i++) {
+        for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);
             assertTrue(tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()));
         }
@@ -463,12 +473,14 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         boolean hit1 = false;
         boolean hit2 = false;
-        for (int i = 0; i < 33; i++) {
+        for (int i = 0; i < 150; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
             assertTrue((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash())) 
                     || (tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b2.getHash())));
+            if (hit1 && hit2)
+                break;
         }
         assertTrue(hit1);
         assertTrue(hit2);
@@ -476,7 +488,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         // After confirming one of them into the milestone, only that one block is now available
         blockGraph.confirm(b1.getHash());
 
-        for (int i = 0; i < 33; i++) {
+        for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);
             assertTrue(tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()));
         }

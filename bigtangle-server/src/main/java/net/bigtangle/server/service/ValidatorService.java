@@ -63,7 +63,6 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
-import net.bigtangle.core.VerificationException.CoinbaseDisallowedException;
 import net.bigtangle.core.VerificationException.DifficultyConsensusInheritanceException;
 import net.bigtangle.core.VerificationException.GenesisBlockDisallowedException;
 import net.bigtangle.core.VerificationException.IncorrectTransactionCountException;
@@ -182,12 +181,7 @@ public class ValidatorService {
             RewardInfo rewardInfo = RewardInfo.parse(rewardBlock.getTransactions().get(0).getData());
             Triple<RewardEligibility, Transaction, Pair<Long, Long>> result = makeReward(
                     rewardBlock.getPrevBlockHash(), rewardBlock.getPrevBranchBlockHash(), rewardInfo.getPrevRewardHash());
-
-            // Make sure the difficulty and transaction data are correct.
-            if (rewardBlock.getDifficultyTarget() != result.getRight().getLeft() || !rewardBlock.getTransactions().get(0).equals(result.getMiddle()))
-                return Pair.of(RewardEligibility.INVALID, result.getRight().getRight()); 
-            else
-                return Pair.of(result.getLeft(), result.getRight().getRight()); 
+            return Pair.of(result.getLeft(), result.getRight().getRight()); 
 
         } catch (IOException e) {
             // Cannot happen since checked before
@@ -528,7 +522,7 @@ public class ValidatorService {
                     return (!(b.getBlockEvaluation().getRating() > NetworkParameters.MILESTONE_UPPER_THRESHOLD
                             && b.getBlockEvaluation().getInsertTime() < System.currentTimeMillis() - NetworkParameters.REWARD_OVERRULE_TIME_MS));
                 case INVALID:
-                    // Never eligible
+                    // Cannot happen in non-Spark implementation.
                     return true;
                 case UNKNOWN:
                     // Cannot happen in non-Spark implementation.
@@ -977,14 +971,14 @@ public class ValidatorService {
     private SolidityState checkTransactionalSolidity(Block block, long height, boolean throwExceptions) throws BlockStoreException {
         List<Transaction> transactions = block.getTransactions();
 
-        // Coinbase allowance
-        for (Transaction tx : transactions) {
-            if (tx.isCoinBase() && !block.allowCoinbaseTransaction()) {
-                if (throwExceptions)
-                    throw new CoinbaseDisallowedException();
-                return SolidityState.getFailState();
-            }
-        }
+        // Coinbase allowance (already checked in Block.verifyTransactions
+//        for (Transaction tx : transactions) {
+//            if (tx.isCoinBase() && !block.allowCoinbaseTransaction()) {
+//                if (throwExceptions)
+//                    throw new CoinbaseDisallowedException();
+//                return SolidityState.getFailState();
+//            }
+//        }
         
         // All used transaction outputs must exist
         for (final Transaction tx : transactions) {
@@ -1151,9 +1145,7 @@ public class ValidatorService {
         case BLOCKTYPE_GOVERNANCE:
             break;
         case BLOCKTYPE_INITIAL:
-            if (throwExceptions)
-                throw new GenesisBlockDisallowedException();
-            return SolidityState.getFailState();
+            break;
         case BLOCKTYPE_REWARD:
             // Check token issuances are solid
             SolidityState rewardSolidityState = checkRewardSolidity(block, height, throwExceptions);
@@ -1254,6 +1246,22 @@ public class ValidatorService {
         if (height - rewardInfo.getToHeight() < NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Too close to the rewarded interval");
+            return SolidityState.getFailState();     
+        }
+        
+        // Ensure the new difficulty is set correctly
+        Triple<RewardEligibility, Transaction, Pair<Long, Long>> result = makeReward(
+                block.getPrevBlockHash(), block.getPrevBranchBlockHash(), rewardInfo.getPrevRewardHash());
+        if (block.getDifficultyTarget() != result.getRight().getLeft()) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Incorrect difficulty target");
+            return SolidityState.getFailState();     
+        }
+        
+        // Fallback: Ensure the reward information is generated canonically
+        if (!block.getTransactions().get(0).equals(result.getMiddle())) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Incorrect Transaction");
             return SolidityState.getFailState();     
         }
         
@@ -1390,7 +1398,7 @@ public class ValidatorService {
                 prevToken = store.getToken(currentToken.getTokens().getPrevblockhash());
                 if (prevToken == null) {
                     if (throwExceptions)
-                        throw new MissingDependencyException();
+                        return SolidityState.from(Sha256Hash.wrap(currentToken.getTokens().getPrevblockhash())); 
                     return SolidityState.from(Sha256Hash.wrap(currentToken.getTokens().getPrevblockhash())); 
                 }
 
