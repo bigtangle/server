@@ -12,6 +12,8 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 
 public class RewardInfo implements java.io.Serializable {
 
+    // TODO drop string from everywhere, stop using sha256hash.wrap, stop using jsonserialization!
+
     private static final long serialVersionUID = 6516115233185538213L;
 
     private long fromHeight;

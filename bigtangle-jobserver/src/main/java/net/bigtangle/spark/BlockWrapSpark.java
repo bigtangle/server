@@ -77,8 +77,8 @@ public class BlockWrapSpark extends BlockWrap implements Serializable {
     private void readObject(ObjectInputStream aInputStream) throws ClassNotFoundException, IOException {
         int length = aInputStream.readInt();
         byte[] dataRead = new byte[length];
+        params = MainNetParams.get();
         aInputStream.readFully(dataRead, 0, length);
-        params = aInputStream.readInt() == 1 ? MainNetParams.get() : null;
         block = params.getDefaultSerializer().makeBlock(dataRead);
         blockEvaluation = (BlockEvaluation) aInputStream.readObject();
         weightHashes = (HashSet<Sha256Hash>) aInputStream.readObject();
@@ -94,7 +94,6 @@ public class BlockWrapSpark extends BlockWrap implements Serializable {
     // Used in Spark
     private void writeObject(ObjectOutputStream aOutputStream) throws IOException {
         byte[] a = block.bitcoinSerialize();
-        aOutputStream.writeInt(params instanceof MainNetParams ? 1 : 0);
         aOutputStream.writeInt(a.length);
         aOutputStream.write(a);
         aOutputStream.writeObject(blockEvaluation);

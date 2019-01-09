@@ -787,10 +787,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             minHeight = prevToHeight + (long) NetworkParameters.REWARD_HEIGHT_INTERVAL - 1;
             perTxReward = blockStore.getRewardNextTxReward(prevRewardHash);
 
-            if (prevTrunkBlock.getBlockEvaluation().getHeight() < minHeight - 1
-                    && prevBranchBlock.getBlockEvaluation().getHeight() < minHeight - 1)
-                return null;
-
         } catch (IOException e) {
             // Cannot happen since checked before
             e.printStackTrace();

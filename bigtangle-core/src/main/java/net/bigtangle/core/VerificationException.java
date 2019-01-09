@@ -80,7 +80,7 @@ public class VerificationException extends RuntimeException {
 
     public static class GenericInvalidityException extends VerificationException {
         public GenericInvalidityException() {
-            super("This block is invalid.");
+            super("Shouldn't happen. This block is invalid.");
         }
     }
 

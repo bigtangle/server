@@ -19,8 +19,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Token;
+import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -116,7 +119,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testUpdateWithConflict() throws Exception {
+    public void testUpdate() throws Exception {
         store.resetStore();
 
         Block b1 = createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
@@ -362,42 +365,163 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(b8link.getHash()).isMilestone());
     }
 
-    // TODO deep reorg feature not implemented @Test
-    public void testReorgUnmaintained() throws Exception {
+    // Deep reorg feature not implemented @Test
+//    public void testReorgUnmaintained() throws Exception {
+//        store.resetStore();
+//
+//        // Generate blocks until first ones become unmaintained
+//        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+//        blockGraph.add(rollingBlock, true);
+//
+//        for (int i = 0; i < NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 5; i++) {
+//            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+//            blockGraph.add(rollingBlock, true);
+//        }
+//        milestoneService.update();
+//        milestoneService.update();
+//        
+//        Block oldTangleBlock = rollingBlock;
+//
+//        // Genesis block is no longer maintained, while newest one is maintained
+//        assertFalse(blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash()).isMaintained());
+//        assertTrue(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMaintained());
+//        assertTrue(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMilestone());
+//
+//        // Generate longer new Tangle
+//        rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+//        blockGraph.add(rollingBlock, true);
+//
+//        for (int i = 0; i < NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 25; i++) {
+//            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+//            blockGraph.add(rollingBlock, true);
+//        }
+//        milestoneService.update();
+//        Block newTangleBlock = rollingBlock;
+//
+//        // New Tangle should now be in Milestone?
+//        assertFalse(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMilestone());
+//        assertTrue(blockService.getBlockEvaluation(newTangleBlock.getHash()).isMilestone());
+//    }
+
+    @Test
+    public void testReorgToken() throws Exception {
         store.resetStore();
 
-        // Generate blocks until first ones become unmaintained
+        // Generate an eligible issuance
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+        TokenInfo tokenInfo = new TokenInfo();
+        
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount, false, true);
+        tokenInfo.setTokens(tokens);
+        
+        tokenInfo.setTokens(tokens);
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+        
+        Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+        milestoneService.update();
+
+        // Should go through
+        assertTrue(blockService.getBlockEvaluation(block1.getHash()).isMilestone());
+        Transaction tx1 = block1.getTransactions().get(0);
+        assertTrue(store.getTransactionOutput(tx1.getHash(), 0).isConfirmed());
+        assertTrue(store.getTokenConfirmed(block1.getHashAsString()));
+
+        // Remove it from the milestone
+        Block rollingBlock = networkParameters.getGenesisBlock();
+        for (int i = 1; i < 5; i++) {
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            blockGraph.add(rollingBlock, true);
+        }
+        milestoneService.update();
+
+        // Should be out
+        assertFalse(blockService.getBlockEvaluation(block1.getHash()).isMilestone());
+        assertFalse(store.getTransactionOutput(tx1.getHash(), 0).isConfirmed());
+        assertFalse(store.getTokenConfirmed(block1.getHashAsString()));
+    }
+
+    @Test
+    public void testReorgMiningReward() throws Exception {
+        store.resetStore();
+
+        // Generate blocks until passing first reward interval
         Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
         blockGraph.add(rollingBlock, true);
 
-        for (int i = 0; i < NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 5; i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, true);
+        Block rollingBlock1 = rollingBlock;
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            blockGraph.add(rollingBlock1, true);
         }
-        milestoneService.update();
-        milestoneService.update();
+
+        Block rollingBlock2 = rollingBlock;
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+            rollingBlock2 = rollingBlock2.createNextBlock(rollingBlock2);
+            blockGraph.add(rollingBlock2, true);
+        }
+
+        Block fusingBlock = rollingBlock1.createNextBlock(rollingBlock2);
+        blockGraph.add(fusingBlock, true);
         
-        Block oldTangleBlock = rollingBlock;
 
-        // Genesis block is no longer maintained, while newest one is maintained
-        assertFalse(blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash()).isMaintained());
-        assertTrue(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMaintained());
-        assertTrue(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMilestone());
+        // Generate ineligible mining reward block
+        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock1.getHash(), rollingBlock1.getHash());
+        milestoneService.update();
 
-        // Generate longer new Tangle
-        rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-        blockGraph.add(rollingBlock, true);
+        // Mining reward block should usually not go through since not sufficiently approved
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isMilestone());
 
-        for (int i = 0; i < NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 25; i++) {
+        // Generate eligible mining reward blocks
+        Block rewardBlock2 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                fusingBlock.getHash(), rollingBlock1.getHash());
+        Block rewardBlock3 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                fusingBlock.getHash(), rollingBlock1.getHash());
+        milestoneService.update();
+
+        // Second mining reward block should now go through since everything is
+        // updated
+        rollingBlock = rewardBlock2;
+        for (int i = 1; i < 30; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
         milestoneService.update();
-        Block newTangleBlock = rollingBlock;
+        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isMilestone());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isMilestone());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isMilestone());
 
-        // New Tangle should now be in Milestone?
-        assertFalse(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMilestone());
-        assertTrue(blockService.getBlockEvaluation(newTangleBlock.getHash()).isMilestone());
+        // Third mining reward block should now instead go through since
+        // everything is
+        // updated
+        rollingBlock = rewardBlock3;
+        for (int i = 1; i < 60; i++) {
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            blockGraph.add(rollingBlock, true);
+        }
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isMilestone());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isMilestone());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isMilestone());
+
+        // Check that not both mining blocks get approved
+        for (int i = 1; i < 10; i++) {
+            Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
+            Block r1 = blockService.getBlock(tipsToApprove.getLeft());
+            Block r2 = blockService.getBlock(tipsToApprove.getRight());
+            Block b = r2.createNextBlock(r1);
+            blockGraph.add(b, true);
+        }
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isMilestone());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isMilestone());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isMilestone());
     }
 
     @Test

@@ -14,6 +14,8 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 
 public class TokenInfo implements java.io.Serializable {
 
+    // TODO drop string from everywhere, stop using sha256hash.wrap, stop using jsonserialization!
+
     private static final long serialVersionUID = 1554582498768357964L;
 
     private Token tokens;

@@ -42,7 +42,9 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.core.VerificationException.CoinbaseDisallowedException;
 import net.bigtangle.core.VerificationException.IncorrectTransactionCountException;
+import net.bigtangle.core.VerificationException.InsufficientSignaturesException;
 import net.bigtangle.core.VerificationException.InvalidDependencyException;
+import net.bigtangle.core.VerificationException.InvalidSignatureException;
 import net.bigtangle.core.VerificationException.InvalidTokenOutputException;
 import net.bigtangle.core.VerificationException.InvalidTransactionDataException;
 import net.bigtangle.core.VerificationException.InvalidTransactionException;
@@ -50,7 +52,10 @@ import net.bigtangle.core.VerificationException.MalformedTransactionDataExceptio
 import net.bigtangle.core.VerificationException.MissingDependencyException;
 import net.bigtangle.core.VerificationException.MissingTransactionDataException;
 import net.bigtangle.core.VerificationException.NotCoinbaseException;
+import net.bigtangle.core.VerificationException.ProofOfWorkException;
+import net.bigtangle.core.VerificationException.SigOpsException;
 import net.bigtangle.core.VerificationException.TimeReversionException;
+import net.bigtangle.core.VerificationException.TimeTravelerException;
 import net.bigtangle.core.VerificationException.TransactionInputsDisallowedException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.crypto.TransactionSignature;
@@ -61,8 +66,8 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ValidatorServiceTest extends AbstractIntegrationTest {
-
-    // TODO drop string from everywhere, stop using sha256hash.wrap, stop using jsonserialization!
+    
+    // TODO Code coverage: clear the soliditystate.failstate then cover all code
     
     @Test
     public void testConflictTransactionalUTXO() throws Exception {
@@ -329,7 +334,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 || blockService.getBlockEvaluation(block1.getHash()).isMilestone());
     }
     
-    @Test(expected=VerificationException.class)
+    @Test
     public void testVerificationFutureTimestamp() throws Exception {
         store.resetStore();
         
@@ -339,10 +344,14 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Block b = r2.createNextBlock(r1);
         b.setTime(1577836800); // 01/01/2020 @ 12:00am (UTC)
         b.solve();
-        blockService.saveBlock(b);
+        try {
+            blockService.saveBlock(b);
+            fail();
+        } catch (TimeTravelerException e) {
+        }
     }
 
-    @Test(expected=VerificationException.class)
+    @Test
     public void testVerificationIncorrectPoW() throws Exception {
         store.resetStore();
         
@@ -350,8 +359,12 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
         Block r2 = blockService.getBlock(tipsToApprove.getRight());
         Block b = r2.createNextBlock(r1);
-        b.setTime(1377836800);
-        blockService.saveBlock(b);
+        b.setNonce(1377836800);
+        try {
+            blockService.saveBlock(b);
+            fail();
+        } catch (ProofOfWorkException e) {
+        }
     }
 
     @Test
@@ -601,127 +614,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testReorgToken() throws Exception {
-        store.resetStore();
-
-        // Generate an eligible issuance
-        ECKey outKey = walletKeys.get(0);
-        byte[] pubKey = outKey.getPubKey();
-        TokenInfo tokenInfo = new TokenInfo();
-        
-        Coin coinbase = Coin.valueOf(77777L, pubKey);
-        long amount = coinbase.getValue();
-        
-        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount, false, true);
-        tokenInfo.setTokens(tokens);
-        
-        tokenInfo.setTokens(tokens);
-        tokenInfo.getMultiSignAddresses()
-                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        
-        Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
-        milestoneService.update();
-
-        // Should go through
-        assertTrue(blockService.getBlockEvaluation(block1.getHash()).isMilestone());
-        Transaction tx1 = block1.getTransactions().get(0);
-        assertTrue(store.getTransactionOutput(tx1.getHash(), 0).isConfirmed());
-        assertTrue(store.getTokenConfirmed(block1.getHashAsString()));
-
-        // Remove it from the milestone
-        Block rollingBlock = networkParameters.getGenesisBlock();
-        for (int i = 1; i < 5; i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, true);
-        }
-        milestoneService.update();
-
-        // Should be out
-        assertFalse(blockService.getBlockEvaluation(block1.getHash()).isMilestone());
-        assertFalse(store.getTransactionOutput(tx1.getHash(), 0).isConfirmed());
-        assertFalse(store.getTokenConfirmed(block1.getHashAsString()));
-    }
-
-    @Test
-    public void testReorgMiningReward() throws Exception {
-        store.resetStore();
-
-        // Generate blocks until passing first reward interval
-        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-        blockGraph.add(rollingBlock, true);
-
-        Block rollingBlock1 = rollingBlock;
-        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
-            blockGraph.add(rollingBlock1, true);
-        }
-
-        Block rollingBlock2 = rollingBlock;
-        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock2 = rollingBlock2.createNextBlock(rollingBlock2);
-            blockGraph.add(rollingBlock2, true);
-        }
-
-        Block fusingBlock = rollingBlock1.createNextBlock(rollingBlock2);
-        blockGraph.add(fusingBlock, true);
-        
-
-        // Generate ineligible mining reward block
-        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock1.getHash(), rollingBlock1.getHash());
-        milestoneService.update();
-
-        // Mining reward block should usually not go through since not sufficiently approved
-        milestoneService.update();
-        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isMilestone());
-
-        // Generate eligible mining reward blocks
-        Block rewardBlock2 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-                fusingBlock.getHash(), rollingBlock1.getHash());
-        Block rewardBlock3 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-                fusingBlock.getHash(), rollingBlock1.getHash());
-        milestoneService.update();
-
-        // Second mining reward block should now go through since everything is
-        // updated
-        rollingBlock = rewardBlock2;
-        for (int i = 1; i < 30; i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, true);
-        }
-        milestoneService.update();
-        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isMilestone());
-        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isMilestone());
-        assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isMilestone());
-
-        // Third mining reward block should now instead go through since
-        // everything is
-        // updated
-        rollingBlock = rewardBlock3;
-        for (int i = 1; i < 60; i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, true);
-        }
-        milestoneService.update();
-        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isMilestone());
-        assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isMilestone());
-        assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isMilestone());
-
-        // Check that not both mining blocks get approved
-        for (int i = 1; i < 10; i++) {
-            Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
-            Block r1 = blockService.getBlock(tipsToApprove.getLeft());
-            Block r2 = blockService.getBlock(tipsToApprove.getRight());
-            Block b = r2.createNextBlock(r1);
-            blockGraph.add(b, true);
-        }
-        milestoneService.update();
-        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isMilestone());
-        assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isMilestone());
-        assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isMilestone());
-    }
-
-    @Test
     public void testSolidityPredecessorDifficultyInheritance() throws Exception {
         store.resetStore();
 
@@ -966,8 +858,36 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         } catch (InvalidTransactionException e) {
         }
     }
-    
-    // TODO check sigops
+
+    @Test
+    public void testSoliditySigOps() throws Exception {
+        store.resetStore();
+
+        // Create block with outputs
+        try {
+            @SuppressWarnings("deprecation")
+            ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+            List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+            TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+                    0);
+            Coin amount = Coin.valueOf(-1, NetworkParameters.BIGTANGLE_TOKENID);
+            Transaction tx2 = new Transaction(networkParameters);
+            tx2.addOutput(new TransactionOutput(networkParameters, tx2, amount, genesiskey));
+            tx2.addOutput(new TransactionOutput(networkParameters, tx2, spendableOutput.getValue().minus(amount), genesiskey));
+            TransactionInput input = tx2.addInput(spendableOutput);
+            
+            ScriptBuilder scriptBuilder = new ScriptBuilder();
+            for (int i = 0; i < NetworkParameters.MAX_BLOCK_SIGOPS + 1; i++)
+                scriptBuilder.op(0xac);
+            
+            Script inputScript = scriptBuilder.build();
+            input.setScriptSig(inputScript);
+            tx2.getOutput(0).getValue().value = tx2.getOutput(0).getValue().value + 1;
+            createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx2);
+            fail();
+        } catch (SigOpsException e) {
+        }
+    }
     
     @Test
     public void testSolidityRewardTxWithTransfers() throws Exception {
@@ -1149,29 +1069,146 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
     }
 
-    
-    /* TODO mutate all fields of tokeninfo too
-    -> Token CHECK: well-formed tx data TokenInfo
-    -> Token CHECK: required fields of TokenInfo exist, i.e. not null
-    -> Token CHECK: fields may not be oversize
-    -> Token CHECK: issued tokens in txouts must be the same as the issued token
-    -> Token CHECK: number of permissioned addresses ok
-    -> Token CHECK: predecessor is TOKEN 
-    -> Token CHECK: predecessor is of same tokenid and of one lower tokenindex 
-    -> Token CHECK: predecessor is of same name and type
-    -> Token CHECK: predecessor allows further issuances
-    -> Token CHECK: signatures exist
-    -> Token CHECK: signatures well-formed
-    -> Token CHECK: signatures valid, unique and for permissioned addresses
-    -> Token CHECK: enough signatures 
-    */
-
-    interface TestExecutor {
+    interface TestCase {
         public boolean expectsException();
         public void preApply(TokenInfo info);
     }
 
-    //1: TODO data null
+    @Test
+    public void testSolidityTokenMalformedData1() throws Exception {
+        store.resetStore();
+        
+        // Generate an eligible issuance tokenInfo
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+        TokenInfo tokenInfo = new TokenInfo();
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount, false, true);
+        tokenInfo.setTokens(tokens);
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+
+        // Make block including it
+        Block block = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+        
+        // Coinbase without data
+        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
+        block.getTransactions().get(0).setData(null);
+        
+        // solve block
+        block.solve();
+        
+        // Should not go through
+        try {
+            blockGraph.add(block, false);
+            fail();
+        } catch (MissingTransactionDataException e) {
+        }
+    }
+    
+    @Test
+    public void testSolidityTokenMalformedData2() throws Exception {
+        store.resetStore();
+        
+        // Generate an eligible issuance tokenInfo
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+        TokenInfo tokenInfo = new TokenInfo();
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount, false, true);
+        tokenInfo.setTokens(tokens);
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+
+        // Make block including it
+        Block block = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+        
+        // Coinbase without data
+        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
+        block.getTransactions().get(0).setData(new byte[] {1, 2});
+        
+        // solve block
+        block.solve();
+        
+        // Should not go through
+        try {
+            blockGraph.add(block, false);
+            fail();
+        } catch (MalformedTransactionDataException e) {
+        }
+    }
+    
+    @Test
+    public void testSolidityTokenMalformedDataSignature1() throws Exception {
+        store.resetStore();
+        
+        // Generate an eligible issuance tokenInfo
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+        TokenInfo tokenInfo = new TokenInfo();
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount, false, true);
+        tokenInfo.setTokens(tokens);
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+
+        // Make block including it
+        Block block = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+        
+        // Coinbase without data
+        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
+        block.getTransactions().get(0).setDataSignature(null);
+        
+        // solve block
+        block.solve();
+        
+        // Should not go through
+        try {
+            blockGraph.add(block, false);
+            fail();
+        } catch (MissingTransactionDataException e) {
+        }
+    }
+    
+    @Test
+    public void testSolidityTokenMalformedDataSignature2() throws Exception {
+        store.resetStore();
+        
+        // Generate an eligible issuance tokenInfo
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+        TokenInfo tokenInfo = new TokenInfo();
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount, false, true);
+        tokenInfo.setTokens(tokens);
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+
+        // Make block including it
+        Block block = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+        
+        // Coinbase without data
+        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
+        block.getTransactions().get(0).setDataSignature(new byte[] {1, 2});
+        
+        // solve block
+        block.solve();
+        
+        // Should not go through
+        try {
+            blockGraph.add(block, false);
+            fail();
+        } catch (MalformedTransactionDataException e) {
+        }
+    }
     
     @Test
     public void testSolidityTokenMutatedData() throws Exception {
@@ -1189,17 +1226,17 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         tokenInfo0.setTokens(tokens);
         tokenInfo0.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        
+
+        // TODO try too few signatures for signnumber? split output multisig and token multisig definitions
         // Make mutated versions of the data
         // TODO setting blockhash is useless, drop it
         // TODO amount can be inferred, drop it
         // TODO multiserial is useless?
-        // TODO try too few signatures for signnumber? split output multisig and token multisig definitions
         // TODO type is useless
         // TODO MultiSignAddress.address useless
         // TODO MultiSignAddress.blockhash useless
         // TODO MultiSignAddress.tokenid does not matter, must be inferred
-        TestExecutor[] executors = new TestExecutor[] { new TestExecutor() {
+        TestCase[] executors = new TestCase[] { new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
                 tokenInfo5.setTokens(null);
@@ -1209,7 +1246,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             public boolean expectsException() {
                 return true;
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
                 tokenInfo5.setMultiSignAddresses(null);
@@ -1219,7 +1256,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             public boolean expectsException() {
                 return true;
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
                 tokenInfo5.getTokens().setAmount(-1);
@@ -1229,7 +1266,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             public boolean expectsException() {
                 return true;
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1240,7 +1277,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             public boolean expectsException() {
                 return false;
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1251,7 +1288,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             public boolean expectsException() {
                 return false;
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1263,7 +1300,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             public boolean expectsException() {
                 return false;
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1275,7 +1312,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             public boolean expectsException() {
                 return true;
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1286,7 +1323,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             public boolean expectsException() {
                 return false;
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
                 tokenInfo5.getTokens().setPrevblockhash(null);
@@ -1296,7 +1333,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             public boolean expectsException() {
                 return true;
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1307,7 +1344,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             public boolean expectsException() {
                 return true;
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1318,7 +1355,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             public boolean expectsException() {
                 return true;
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1329,7 +1366,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             public boolean expectsException() {
                 return true;
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1340,7 +1377,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             public boolean expectsException() {
                 return true;
             }
-        }, new TestExecutor() { //13
+        }, new TestCase() { //13
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1351,7 +1388,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             public boolean expectsException() {
                 return false;
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1362,7 +1399,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             public boolean expectsException() {
                 return true;
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1373,7 +1410,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             public boolean expectsException() {
                 return true;
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1384,7 +1421,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             public boolean expectsException() {
                 return true;
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1396,7 +1433,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return true;
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1408,7 +1445,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return true;
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1420,7 +1457,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return true;
 
             }
-        }, new TestExecutor() { //20
+        }, new TestCase() { //20
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1432,7 +1469,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return true;
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1444,7 +1481,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return false;
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1456,7 +1493,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return false;
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1469,7 +1506,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return false;
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1482,7 +1519,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return true;
 
             }
-        }, new TestExecutor() { //25
+        }, new TestCase() { //25
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1494,7 +1531,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return false;
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1506,7 +1543,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return false;
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
                 tokenInfo5.getTokens().setUrl(null);
@@ -1517,7 +1554,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return false;
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1529,7 +1566,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return false;
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1542,7 +1579,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return false;
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) { //30
 
@@ -1555,7 +1592,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return true;
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1567,7 +1604,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return true;
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1579,7 +1616,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return false;
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1591,7 +1628,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return false;
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1603,7 +1640,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return false;
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {//35
 
@@ -1615,7 +1652,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return false; // these do not matter, they are overwritten
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1627,7 +1664,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return false; // these do not matter, they are overwritten
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1639,7 +1676,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return false; // these do not matter, they are overwritten
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1652,7 +1689,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return false; // these do not matter, they are overwritten
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1664,7 +1701,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return false; // these do not matter, they are overwritten
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) { //40
 
@@ -1676,7 +1713,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return false; // these do not matter, they are overwritten
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1688,7 +1725,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return false; // these do not matter, they are overwritten
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1700,7 +1737,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return false;
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1712,7 +1749,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return false;
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1724,7 +1761,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return false;
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1736,7 +1773,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return false;
 
             }
-        }, new TestExecutor() {
+        }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1800,8 +1837,237 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
     }
     
-    // TODO Malformed DataSignatures
-    //2: sigdata null
+    @Test
+    public void testSolidityTokenMutatedDataSignatures() throws Exception {
+        store.resetStore();
+        
+        // Generate an eligible issuance tokenInfo
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+        TokenInfo tokenInfo = new TokenInfo();
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount, false, true);
+        tokenInfo.setTokens(tokens);
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+
+        // Make block including it
+        Block block = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+        
+        // Coinbase with signatures
+        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
+        Transaction transaction = block.getTransactions().get(0);
+        Sha256Hash sighash1 = transaction.getHash();
+        ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
+        byte[] buf1 = party1Signature.encodeToDER();
+        
+        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+        MultiSignBy multiSignBy0 = new MultiSignBy();
+        multiSignBy0.setTokenid(tokenInfo.getTokens().getTokenid().trim());
+        multiSignBy0.setTokenindex(0);
+        multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+        multiSignBies.add(multiSignBy0);
+        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
+        
+        // Mutate signatures
+        Block block1 = networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize());
+        Block block2 = networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize());
+        Block block3 = networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize());
+        Block block4 = networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize());
+        Block block5 = networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize());
+        Block block6 = networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize());
+        Block block7 = networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize());
+        Block block8 = networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize());
+        Block block9 = networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize());
+        Block block10 = networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize());
+        Block block11 = networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize());
+        Block block12 = networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize());
+        Block block13 = networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize());
+        Block block14 = networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize());
+        Block block15 = networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize());
+        Block block16 = networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize());
+        Block block17 = networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize());
+        Block block18 = networkParameters.getDefaultSerializer().makeBlock(block.bitcoinSerialize());
+
+        MultiSignByRequest multiSignByRequest1 = Json.jsonmapper().readValue(transaction.getDataSignature(), MultiSignByRequest.class);
+        MultiSignByRequest multiSignByRequest2 = Json.jsonmapper().readValue(transaction.getDataSignature(), MultiSignByRequest.class);
+        MultiSignByRequest multiSignByRequest3 = Json.jsonmapper().readValue(transaction.getDataSignature(), MultiSignByRequest.class);
+        MultiSignByRequest multiSignByRequest4 = Json.jsonmapper().readValue(transaction.getDataSignature(), MultiSignByRequest.class);
+        MultiSignByRequest multiSignByRequest5 = Json.jsonmapper().readValue(transaction.getDataSignature(), MultiSignByRequest.class);
+        MultiSignByRequest multiSignByRequest6 = Json.jsonmapper().readValue(transaction.getDataSignature(), MultiSignByRequest.class);
+        MultiSignByRequest multiSignByRequest7 = Json.jsonmapper().readValue(transaction.getDataSignature(), MultiSignByRequest.class);
+        MultiSignByRequest multiSignByRequest8 = Json.jsonmapper().readValue(transaction.getDataSignature(), MultiSignByRequest.class);
+        MultiSignByRequest multiSignByRequest9 = Json.jsonmapper().readValue(transaction.getDataSignature(), MultiSignByRequest.class);
+        MultiSignByRequest multiSignByRequest10 = Json.jsonmapper().readValue(transaction.getDataSignature(), MultiSignByRequest.class);
+        MultiSignByRequest multiSignByRequest11 = Json.jsonmapper().readValue(transaction.getDataSignature(), MultiSignByRequest.class);
+        MultiSignByRequest multiSignByRequest12 = Json.jsonmapper().readValue(transaction.getDataSignature(), MultiSignByRequest.class);
+        MultiSignByRequest multiSignByRequest13 = Json.jsonmapper().readValue(transaction.getDataSignature(), MultiSignByRequest.class);
+        MultiSignByRequest multiSignByRequest14 = Json.jsonmapper().readValue(transaction.getDataSignature(), MultiSignByRequest.class);
+        MultiSignByRequest multiSignByRequest15 = Json.jsonmapper().readValue(transaction.getDataSignature(), MultiSignByRequest.class);
+        MultiSignByRequest multiSignByRequest16 = Json.jsonmapper().readValue(transaction.getDataSignature(), MultiSignByRequest.class);
+        MultiSignByRequest multiSignByRequest17 = Json.jsonmapper().readValue(transaction.getDataSignature(), MultiSignByRequest.class);
+        MultiSignByRequest multiSignByRequest18 = Json.jsonmapper().readValue(transaction.getDataSignature(), MultiSignByRequest.class);
+        
+        multiSignByRequest1.setMultiSignBies(null);
+        multiSignByRequest2.setMultiSignBies(new ArrayList<>());
+        multiSignByRequest3.getMultiSignBies().get(0).setAddress(null);
+        multiSignByRequest4.getMultiSignBies().get(0).setAddress("");
+        multiSignByRequest5.getMultiSignBies().get(0).setAddress("test");
+        multiSignByRequest6.getMultiSignBies().get(0).setPublickey(null);
+        multiSignByRequest7.getMultiSignBies().get(0).setPublickey("");
+        multiSignByRequest8.getMultiSignBies().get(0).setPublickey("test");
+        multiSignByRequest9.getMultiSignBies().get(0).setPublickey(Utils.HEX.encode(outKey2.getPubKey()));
+        multiSignByRequest10.getMultiSignBies().get(0).setSignature(null);
+        multiSignByRequest11.getMultiSignBies().get(0).setSignature("");
+        multiSignByRequest12.getMultiSignBies().get(0).setSignature("test");
+        multiSignByRequest13.getMultiSignBies().get(0).setSignature(Utils.HEX.encode(outKey2.getPubKey()));
+        multiSignByRequest14.getMultiSignBies().get(0).setTokenid(null);
+        multiSignByRequest15.getMultiSignBies().get(0).setTokenid("");
+        multiSignByRequest16.getMultiSignBies().get(0).setTokenid("test");
+        multiSignByRequest17.getMultiSignBies().get(0).setTokenindex(-1);
+        multiSignByRequest18.getMultiSignBies().get(0).setTokenindex(1);
+
+        block1.getTransactions().get(0).setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest1));
+        block2.getTransactions().get(0).setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest2));
+        block3.getTransactions().get(0).setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest3));
+        block4.getTransactions().get(0).setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest4));
+        block5.getTransactions().get(0).setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest5));
+        block6.getTransactions().get(0).setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest6));
+        block7.getTransactions().get(0).setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest7));
+        block8.getTransactions().get(0).setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest8));
+        block9.getTransactions().get(0).setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest9));
+        block10.getTransactions().get(0).setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest10));
+        block11.getTransactions().get(0).setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest11));
+        block12.getTransactions().get(0).setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest12));
+        block13.getTransactions().get(0).setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest13));
+        block14.getTransactions().get(0).setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest14));
+        block15.getTransactions().get(0).setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest15));
+        block16.getTransactions().get(0).setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest16));
+        block17.getTransactions().get(0).setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest17));
+        block18.getTransactions().get(0).setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest18));
+        
+        block1.solve();
+        block2.solve();
+        block3.solve();
+        block4.solve();
+        block5.solve();
+        block6.solve();
+        block7.solve();
+        block8.solve();
+        block9.solve();
+        block10.solve();
+        block11.solve();
+        block12.solve();
+        block13.solve();
+        block14.solve();
+        block15.solve();
+        block16.solve();
+        block17.solve();
+        block18.solve();
+        
+        // Test
+        try {
+            blockGraph.add(block1, false);
+            fail();
+        } catch (InsufficientSignaturesException e) {
+        }
+        try {
+            blockGraph.add(block2, false);
+            fail();
+        } catch (InsufficientSignaturesException e) {
+        }
+        
+        // TODO MultiSignByRequest.setAddress is useless field, remove!
+        try {
+            blockGraph.add(block3, false);
+        } catch (VerificationException e) {
+            fail();
+        }
+        try {
+            blockGraph.add(block4, false);
+        } catch (VerificationException e) {
+            fail();
+        }
+        try {
+            blockGraph.add(block5, false);
+        } catch (VerificationException e) {
+            fail();
+        }
+        
+        try {
+            blockGraph.add(block6, false);
+            fail();
+        } catch (VerificationException e) {
+        }
+        try {
+            blockGraph.add(block7, false);
+            fail();
+        } catch (VerificationException e) {
+        }
+        try {
+            blockGraph.add(block8, false);
+            fail();
+        } catch (VerificationException e) {
+        }
+        try {
+            blockGraph.add(block9, false);
+            fail();
+        } catch (InvalidSignatureException e) {
+        }
+        try {
+            blockGraph.add(block10, false);
+            fail();
+        } catch (VerificationException e) {
+        }
+        try {
+            blockGraph.add(block11, false);
+            fail();
+        } catch (VerificationException e) {
+        }
+        try {
+            blockGraph.add(block12, false);
+            fail();
+        } catch (VerificationException e) {
+        }
+        try {
+            blockGraph.add(block13, false);
+            fail();
+        } catch (VerificationException e) {
+        }
+        
+        // TODO MultiSignByRequest.tokenid is useless field, remove!
+        try {
+            blockGraph.add(block14, false);
+        } catch (VerificationException e) {
+            fail();
+        }
+        try {
+            blockGraph.add(block15, false);
+        } catch (VerificationException e) {
+            fail();
+        }
+        try {
+            blockGraph.add(block16, false);
+        } catch (VerificationException e) {
+            fail();
+        }
+        // TODO MultiSignByRequest.tokenindex is useless field, remove!
+        try {
+            blockGraph.add(block17, false);
+        } catch (VerificationException e) {
+            fail();
+        }
+        try {
+            blockGraph.add(block18, false);
+        } catch (VerificationException e) {
+            fail();
+        }
+    }
     
     @Test
     public void testSolidityTokenNoTransaction() throws Exception {
@@ -1960,7 +2226,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
-        long amount = coinbase.getValue();
+        long amount = coinbase.getValue() + 2;
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount, false, true);
         tokenInfo.setTokens(tokens);
         tokenInfo.getMultiSignAddresses()

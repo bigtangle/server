@@ -133,7 +133,6 @@ public class Block extends Message {
         private boolean allowCoinbaseTransaction;
         private int powMultiplier; // TODO use in reward calcs
         private int rewardMultiplier; // TODO use in reward calcs
-        // TODO add max_size_multipliers too
         private int maxSize;
         
         private Type(boolean allowCoinbaseTransaction, int powMultiplier, int rewardMultiplier, int maxSize) {
