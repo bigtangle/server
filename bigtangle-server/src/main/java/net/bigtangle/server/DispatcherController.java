@@ -357,6 +357,18 @@ public class DispatcherController {
 
             }
                 break;
+            case updateSubtangle: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String pubkey = (String) request.get("pubkey");
+                String userdataPubkey = (String) request.get("userdataPubkey");
+                String status = (String) request.get("status");
+                subtanglePermissionService.updateSubtanglePermission(pubkey, "", userdataPubkey, status);
+
+                this.outPrintJSONString(httpServletResponse, OkResponse.create());
+
+            }
+                break;
             case getSubtanglePermissionList: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);

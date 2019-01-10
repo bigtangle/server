@@ -233,7 +233,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     /* Reward TXOs */
     public Sha256Hash getMaxConfirmedRewardBlockHash() throws BlockStoreException;
-    
+
     public RewardEligibility getRewardEligible(Sha256Hash hash) throws BlockStoreException;
 
     public long getRewardNextTxReward(Sha256Hash blockHash) throws BlockStoreException;
@@ -417,6 +417,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     void insertSubtanglePermission(String pubkey, String userdatapubkey, String status) throws BlockStoreException;
 
     void deleteSubtanglePermission(String pubkey) throws BlockStoreException;
+
+    void updateSubtanglePermission(String pubkey, String userdataPubkey, String status) throws BlockStoreException;
 
     List<Map<String, String>> getAllSubtanglePermissionList() throws BlockStoreException;
 

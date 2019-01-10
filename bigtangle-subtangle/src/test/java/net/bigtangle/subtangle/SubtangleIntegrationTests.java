@@ -41,6 +41,7 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.AbstractIntegrationTest;
+import net.bigtangle.store.SubtangleStatus;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
@@ -177,5 +178,16 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         requestParam.put("pubkey", pubkey);
         requestParam.put("signHex", signHex);
         OkHttp3Util.post(contextRoot + ReqCmd.regSubtangle, Json.jsonmapper().writeValueAsString(requestParam));
+    }
+
+    @Test
+    public void testUpdateSubtangle() throws Exception {
+        String pubkey = "";
+
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        requestParam.put("pubkey", pubkey);
+        requestParam.put("userdataPubkey", pubkey);
+        requestParam.put("status", SubtangleStatus.OK);
+        OkHttp3Util.post(contextRoot + ReqCmd.updateSubtangle, Json.jsonmapper().writeValueAsString(requestParam));
     }
 }
