@@ -1069,6 +1069,7 @@ public class Transaction extends ChildMessage {
         return hashForSignature(inputIndex, redeemScript.getProgram(), (byte) sigHash);
     }
 
+    // TODO check this, do signatures sign everything in the transaction?
     /**
      * This is required for signatures which use a sigHashType which cannot be
      * represented using SigHash and anyoneCanPay See transaction
