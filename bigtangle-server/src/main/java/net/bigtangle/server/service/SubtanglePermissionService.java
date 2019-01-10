@@ -34,6 +34,14 @@ public class SubtanglePermissionService {
 
     }
 
+    public void updateSubtanglePermission(String pubkey, String signHex, String userdataPubkey, String status)
+            throws BlockStoreException {
+
+            store.updateSubtanglePermission(pubkey, userdataPubkey, status);
+ 
+
+    }
+
     public AbstractResponse getSubtanglePermissionList(List<String> pubkeys) throws BlockStoreException {
 
         List<Map<String, String>> maps = store.getSubtanglePermissionListByPubkeys(pubkeys);

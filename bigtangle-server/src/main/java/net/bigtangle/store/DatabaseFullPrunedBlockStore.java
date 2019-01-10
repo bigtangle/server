@@ -125,7 +125,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "milestone, milestonelastupdate, milestonedepth, inserttime, maintained )"
             + " VALUES(?, ?, ?, ?, ?,?,  ?, ?, ?, ?, ?, ?, ?,  ?, ?, ?)";
 
-    protected final String INSERT_UNSOLIDBLOCKS_SQL = getInsert() + "  INTO unsolidblocks(hash,   block,  inserttime  , reason, missingdependency)"
+    protected final String INSERT_UNSOLIDBLOCKS_SQL = getInsert()
+            + "  INTO unsolidblocks(hash,   block,  inserttime  , reason, missingdependency)"
             + " VALUES(?, ?, ?, ?, ? )";
 
     protected final String SELECT_OUTPUTS_COUNT_SQL = "SELECT COUNT(*) FROM outputs WHERE hash = ?";
@@ -219,7 +220,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     protected final String SELECT_TOKEN_SPENT_BY_BLOCKHASH_SQL = "SELECT spent FROM tokens WHERE blockhash = ?";
-    
+
     protected final String SELECT_TOKEN_ANY_SPENT_BY_TOKEN_SQL = "SELECT spent FROM tokens WHERE tokenid = ? AND tokenindex = ? AND spent = true";
 
     protected final String SELECT_TOKEN_CONFIRMED_SQL = "SELECT confirmed FROM tokens WHERE blockhash = ?";
@@ -351,7 +352,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String INSERT_SUBTANGLE_PERMISSION_SQL = "INSERT INTO  subtangle_permission (pubkey, userdataPubkey , status) VALUE (?, ?, ?)";
 
     protected final String DELETE_SUBTANGLE_PERMISSION_SQL = "DELETE FROM  subtangle_permission WHERE pubkey=?";
-
+    protected final String UPATE_ALL_SUBTANGLE_PERMISSION_SQL = "UPDATE   subtangle_permission set status=? ,userdataPubkey=? WHERE  pubkey=? ";
     protected final String UPATE_SUBTANGLE_PERMISSION_SQL = "UPDATE   subtangle_permission set status=? WHERE  pubkey=? AND userdataPubkey=?";
     protected final String UPATE_SUBTANGLE_PERMISSION_A_SQL = "UPDATE   subtangle_permission set status=? WHERE  pubkey=? ";
 
@@ -2065,7 +2066,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement s = null;
         HashSet<Block> resultSet = new HashSet<>();
         try {
-            // Since both waiting reasons are hashes, we can simply look for the hashes
+            // Since both waiting reasons are hashes, we can simply look for the
+            // hashes
             s = conn.get().prepareStatement(SELECT_UNSOLIDBLOCKS_FROM_DEPENDENCY_SQL);
             s.setBytes(1, dep);
             ResultSet results = s.executeQuery();
@@ -2112,7 +2114,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 throw new RuntimeException("Should not happen");
             default:
                 throw new NotImplementedException();
-            
+
             }
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
@@ -3575,7 +3577,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
+
     @Override
     public long getRewardToHeight(Sha256Hash blockHash) throws BlockStoreException {
         maybeConnect();
@@ -3623,8 +3625,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void insertReward(Sha256Hash hash, long toHeight, RewardEligibility eligibility, Sha256Hash prevBlockHash, long nextTxReward)
-            throws BlockStoreException {
+    public void insertReward(Sha256Hash hash, long toHeight, RewardEligibility eligibility, Sha256Hash prevBlockHash,
+            long nextTxReward) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -3650,7 +3652,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-            
+
     @Override
     public void updateRewardNextTxReward(Sha256Hash hash, long nextTxReward) throws BlockStoreException {
         maybeConnect();
@@ -4440,7 +4442,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
+
     @Override
     public Sha256Hash getMaxConfirmedRewardBlockHash() throws BlockStoreException {
         maybeConnect();
@@ -4590,6 +4592,30 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             preparedStatement = conn.get().prepareStatement(DELETE_SUBTANGLE_PERMISSION_SQL);
             preparedStatement.setString(1, pubkey);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void updateSubtanglePermission(String pubkey, String userdataPubkey, String status)
+            throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(UPATE_ALL_SUBTANGLE_PERMISSION_SQL);
+            preparedStatement.setString(1, status);
+            preparedStatement.setString(2, userdataPubkey);
+            preparedStatement.setString(3, pubkey);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
