@@ -119,6 +119,7 @@ public class Block extends Message {
      */
     public enum Type {
         // TODO implement all conditions for each block type in all switches    
+        // TODO add size multiplier to pow difficulty
         BLOCKTYPE_INITIAL(false, 0, 0, Integer.MAX_VALUE), // Genesis block
         BLOCKTYPE_TRANSFER(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Default block
         BLOCKTYPE_REWARD(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Rewards of mining

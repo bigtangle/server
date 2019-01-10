@@ -1372,15 +1372,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         tokenInfo0.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
-        // TODO try too few signatures for signnumber? split output multisig and token multisig definitions
-        // Make mutated versions of the data
-        // TODO setting blockhash is useless, drop it
-        // TODO amount can be inferred, drop it
-        // TODO multiserial is useless?
-        // TODO type is useless
-        // TODO MultiSignAddress.address useless
-        // TODO MultiSignAddress.blockhash useless
-        // TODO MultiSignAddress.tokenid does not matter, must be inferred
         TestCase[] executors = new TestCase[] { new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
@@ -2127,7 +2118,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         } catch (InsufficientSignaturesException e) {
         }
         
-        // TODO MultiSignByRequest.setAddress is useless field, remove!
         try {
             blockGraph.add(block3, false);
         } catch (VerificationException e) {
@@ -2185,7 +2175,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         } catch (VerificationException e) {
         }
         
-        // TODO MultiSignByRequest.tokenid is useless field, remove!
         try {
             blockGraph.add(block14, false);
         } catch (VerificationException e) {
@@ -2201,7 +2190,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         } catch (VerificationException e) {
             fail();
         }
-        // TODO MultiSignByRequest.tokenindex is useless field, remove!
         try {
             blockGraph.add(block17, false);
         } catch (VerificationException e) {

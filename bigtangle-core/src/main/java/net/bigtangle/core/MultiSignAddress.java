@@ -8,17 +8,12 @@ package net.bigtangle.core;
 public class MultiSignAddress implements java.io.Serializable {
 
     private static final long serialVersionUID = -2956933642847534834L;
-    
-    private String blockhash;
 
-    // TODO Why is this required?
-    private String tokenid;
-    
-    private String address;
-    
-    private String pubKeyHex;
-    
-    private int posIndex;
+    private String blockhash;  // TODO must be inferred on insertion
+    private String tokenid; // TODO slated for removal since the primary key is the blockhash    
+    private String address; // TODO slated for removal, useless?    
+    private String pubKeyHex;    
+    private int posIndex; // TODO slated for removal, useless?
     
     public int getPosIndex() {
         return posIndex;

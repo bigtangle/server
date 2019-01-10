@@ -14,14 +14,13 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 
 public class TokenInfo implements java.io.Serializable {
 
-    // TODO drop string from everywhere, stop using sha256hash.wrap, stop using jsonserialization!
+    // TODO drop string from everywhere, stop using Sha256Hash.wrap, instead use Sha256Hash, stop using jsonserialization!
 
     private static final long serialVersionUID = 1554582498768357964L;
 
     private Token tokens;
     private List<MultiSignAddress> multiSignAddresses;
 
-    // TODO stop using json parser
     public byte[] toByteArray() {
         try {
             String jsonStr = Json.jsonmapper().writeValueAsString(this);

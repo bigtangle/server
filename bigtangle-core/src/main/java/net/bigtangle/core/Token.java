@@ -18,20 +18,18 @@ public class Token implements java.io.Serializable {
     private boolean confirmed;
     private String tokenid;
     private long tokenindex;
-    private long amount;
     private String tokenname;
     private String description;
     private String url;
     private int signnumber;
-    private boolean multiserial;
-    private int tokentype;
+    private boolean multiserial; // TODO multiserial is useless?
+    private int tokentype; // TODO type is useless? TODO write logic for type differentiation?
     private boolean tokenstop;
-    
-    // for solidity checks
     private String prevblockhash;
-
+    
     // not serialized on the wire
-    private String blockhash;
+    private String blockhash;  // TODO slated for extraction
+    private long amount; // TODO  must be inferred on insertion, slated for extraction
 
     public String getBlockhash() {
         return blockhash;

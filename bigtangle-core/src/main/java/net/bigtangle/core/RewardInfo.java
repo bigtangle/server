@@ -16,8 +16,8 @@ public class RewardInfo implements java.io.Serializable {
 
     private static final long serialVersionUID = 6516115233185538213L;
 
-    private long fromHeight;
-    private long toHeight;
+    private long fromHeight; // TODO slated for removal, can be inferred
+    private long toHeight; // TODO remove or allow variable toHeights
     private Sha256Hash prevRewardHash;
 
     public RewardInfo() {

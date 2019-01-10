@@ -9,14 +9,10 @@ public class MultiSignBy implements java.io.Serializable {
 
     private static final long serialVersionUID = 3478025339600098446L;
 
-    private String tokenid;
-
-    private long tokenindex;
-
-    private String address;
-    
+    private String tokenid; // TODO slated for removal, useless?
+    private long tokenindex; // TODO slated for removal, useless?
+    private String address; // TODO slated for removal, useless?    
     private String publickey;
-
     private String signature;
 
     public String getTokenid() {
