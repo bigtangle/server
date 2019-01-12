@@ -36,6 +36,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.MyHomeAddress;
+import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
@@ -706,7 +707,7 @@ public class UserdataController {
             }
 
             filepathTF.setText(file.getAbsolutePath());
-            if (file.length() > Block.MAX_DEFAULT_BLOCK_SIZE - 20 * 1000) {
+            if (file.length() > NetworkParameters.MAX_DEFAULT_BLOCK_SIZE - 20 * 1000) {
                 GuiUtils.informationalAlert("", Main.getText("fileTooLarge"), "");
                 return;
             }
