@@ -359,6 +359,12 @@ public class ValidatorService {
         return true;
     }
 
+    //Difference between isEligibleForApprovalSelection(HashSet<BlockWrap>) here and 
+    // resolveAllConflicts(Set<BlockWrap>, boolean) below is that
+    // the approval check disallows conflicts completely, while
+    // the milestone resolveAllConflicts(Set<BlockWrap>, boolean) 
+    // takes candidate conflicts + conflicts with maintained milestone and resolves them
+    //Both disallow where usedoutput unconfirmed or ineligible for other reasons. 
     /**
      * Checks if the given block is eligible to be walked to during local
      * approval tip selection given the current set of non-milestone blocks to

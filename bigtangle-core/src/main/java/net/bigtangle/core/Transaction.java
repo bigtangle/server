@@ -300,12 +300,12 @@ public class Transaction extends ChildMessage {
     public Sha256Hash getHash() {
         if (hash == null) {
             byte[] buf = unsafeBitcoinSerialize();
-            hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(buf, 0, buf.length - calculateDataSignatireLen()));
+            hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(buf, 0, buf.length - calculateDataSignatureLen()));
         }
         return hash;
     }
 
-    public int calculateDataSignatireLen() {
+    public int calculateDataSignatureLen() {
         int len = 4;
         if (this.dataSignature != null) {
             len += this.dataSignature.length;

@@ -47,7 +47,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    rating bigint ,\n"
             + "    depth bigint,\n"
             + "    cumulativeweight  bigint ,\n" 
-            + "    milestone boolean,\n" 
+            + "    milestone boolean,\n" //TODO rename to confirmed
             + "    milestonelastupdate bigint,\n" 
             + "    milestonedepth bigint,\n"
             + "    inserttime bigint,\n" 
@@ -71,13 +71,13 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    toaddress varchar(255),\n" 
             + "    addresstargetable bigint,\n" 
             + "    coinbase boolean,\n"
-            + "    blockhash varbinary(32),\n" // confirming blockhash 
+            + "    blockhash varbinary(32),\n" // confirming blockhash
             + "    tokenid varchar(255),\n"
             + "    fromaddress varchar(255),\n" 
             + "    memo varchar(80),\n" 
             + "    spent boolean NOT NULL,\n"
             + "    confirmed boolean NOT NULL,\n" 
-            + "    spendpending boolean NOT NULL,\n"
+            + "    spendpending boolean NOT NULL,\n" // true iff there exists a transaction on the Tangle that can spend this output
             + "    spenderblockhash  varbinary(32),\n"
             + "    time bigint NOT NULL,\n"
             + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex) USING BTREE \n" + ")\n";
@@ -103,9 +103,42 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n"
             + "    hash varbinary(32) NOT NULL,\n"
             + "    CONSTRAINT tips_pk PRIMARY KEY (hash) USING BTREE \n" + ")\n";
+    
+    // TODO constraints orderblocks: 
+    // burn only one type of tokens
+    // tokenid or targettokenid = BIG
+    // coinvalue % atomicgivevalue = 0
+    // coinvalue, targetcoinvalue < Integer.MAX_VALUE
+    
+    // TODO order processing
+    // newly created openorders have ttl reduced by one
+    
+    // openorders: 
+    // insert on connect of order blocks
+    // tryinsert on confirm of ordermatch. DUPLICATES MAY OCCUR WHEN REORGING, IGNORE!
+    // confirm on confirm of ordermatch. 
+    // unconfirm on unconfirm of ordermatch. 
+    // spent on confirm of next ordermatch.
+    // unspent on unconfirm of next ordermatch. 
+    private static final String CREATE_ORDERS_TABLE = "CREATE TABLE openorders (\n" 
+            + "    txhash varbinary(32) NOT NULL,\n" // transactionhash
+            + "    blockhash varbinary(32) NOT NULL,\n" // ZEROHASH if issued by order blocks, issuing ordermatch blockhash if issued by ordermatch block
+            + "    offercoinvalue bigint NOT NULL,\n" // amount of tokens in order (tokens locked in for the order)
+            + "    offertokenid varchar(255),\n" // tokenid of the used tokens
+            + "    confirmed boolean NOT NULL,\n" // true iff a order block of this order is confirmed
+            + "    spent boolean NOT NULL,\n" // true iff used by a confirmed ordermatch block (either returned or used for another orderoutput/output)
+            + "    spenderblockhash  varbinary(32),\n" // if confirmed, this is the consuming ordermatch blockhash, else null
+            + "    targetcoinvalue varchar(255),\n" // amount of target tokens wanted
+            + "    targettokenid varchar(255),\n" // tokenid of the wanted tokens
+            + "    beneficiarypubkey varchar(255),\n" // the pubkey that will receive the targettokens on completion or returned tokens on cancels
+            + "    ttl varchar(255),\n" // the amount of ordermatch blocks this token is kept open without further refreshments
+            + "    refindex bigint,\n" // a number used to track operations on the order, e.g. increasing by one when refreshing
+            + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, blockhash) USING BTREE \n" + ")\n"; 
+    
+    // generalized utxo orders: insert on connect of order/refresh/cancel blocks
 
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
-            + "    blockhash varchar(255) NOT NULL,\n"
+            + "    blockhash varchar(255) NOT NULL,\n" // TODO txhash
             + "    confirmed boolean NOT NULL,\n" 
             + "    tokenid varchar(255) NOT NULL  ,\n"
             + "    tokenindex bigint NOT NULL   ,\n"
@@ -122,8 +155,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    spenderblockhash  varbinary(32),\n"
             + "    PRIMARY KEY (blockhash) \n)";
 
-    //update on confirm
-    // TODO Why is this required?
     private static final String CREATE_MULTISIGNADDRESS_TABLE = "CREATE TABLE multisignaddress (\n"
             + "    blockhash varchar(255) NOT NULL,\n"
             + "    tokenid varchar(255) NOT NULL  ,\n"

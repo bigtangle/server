@@ -121,7 +121,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             SolidityState solidityState = validatorService.checkBlockSolidity(block, storedPrev, storedPrevBranch, true);
             if (!(solidityState.getState() == State.Success)) {
                 if (solidityState.getState() == State.Unfixable) {
-                    // Drop forever if invalid
+                    // Drop if invalid
                     log.debug("Dropping invalid block!");
                     throw new GenericInvalidityException();
                 } else {
@@ -494,24 +494,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             break;
         case BLOCKTYPE_REWARD:
             // Unconfirm dependents
-            if (blockStore.getRewardSpent(block.getHash())) {
-                removeBlockFromMilestone(blockStore.getRewardSpender(block.getHash()), traversedBlockHashes);
-            }
-            // Disconnect all virtual transaction output dependents
-            Transaction tx = generateVirtualMiningRewardTX(block);
-            for (TransactionOutput txout : tx.getOutputs()) {
-                UTXO utxo = blockStore.getTransactionOutput(tx.getHash(), txout.getIndex());
-                if (utxo.isSpent()) {
-                    removeBlockFromMilestone(
-                            blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()).getBlockHash(), traversedBlockHashes);
-                }
-            }
+            unconfirmRewardDependents(block, traversedBlockHashes);
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             // Unconfirm dependents
-            if (blockStore.getTokenSpent(block.getHashAsString())) {
-                removeBlockFromMilestone(blockStore.getTokenSpender(block.getHashAsString()), traversedBlockHashes);
-            }
+            unconfirmTokenDependents(block, traversedBlockHashes);
             break;
         case BLOCKTYPE_TRANSFER:
             break;
@@ -524,6 +511,29 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         default:
             throw new NotImplementedException();
         
+        }
+    }
+
+    private void unconfirmTokenDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes)
+            throws BlockStoreException {
+        if (blockStore.getTokenSpent(block.getHashAsString())) {
+            removeBlockFromMilestone(blockStore.getTokenSpender(block.getHashAsString()), traversedBlockHashes);
+        }
+    }
+
+    private void unconfirmRewardDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes)
+            throws BlockStoreException {
+        if (blockStore.getRewardSpent(block.getHash())) {
+            removeBlockFromMilestone(blockStore.getRewardSpender(block.getHash()), traversedBlockHashes);
+        }
+        // Disconnect all virtual transaction output dependents
+        Transaction tx = generateVirtualMiningRewardTX(block);
+        for (TransactionOutput txout : tx.getOutputs()) {
+            UTXO utxo = blockStore.getTransactionOutput(tx.getHash(), txout.getIndex());
+            if (utxo.isSpent()) {
+                removeBlockFromMilestone(
+                        blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()).getBlockHash(), traversedBlockHashes);
+            }
         }
     }
 
@@ -706,44 +716,72 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     private void connectTypeSpecificUTXOs(Block block, long height)
             throws BlockStoreException {
-        if (block.getBlockType() == Block.Type.BLOCKTYPE_REWARD) {
-            // Check if eligible:
-            Pair<RewardEligibility, Long> eligiblityAndTxReward = validatorService.checkRewardEligibility(block);    
-            
-            try {
-                RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
-                Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
-                long toHeight = rewardInfo.getToHeight();
-    
-                blockStore.insertReward(block.getHash(), toHeight, eligiblityAndTxReward.getLeft(), prevRewardHash, eligiblityAndTxReward.getRight());
-            } catch (IOException e) {
-                // Cannot happen when connecting
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
+        switch (block.getBlockType()) {
+        case BLOCKTYPE_CROSSTANGLE:
+            break;
+        case BLOCKTYPE_FILE:
+            break;
+        case BLOCKTYPE_GOVERNANCE:
+            break;
+        case BLOCKTYPE_INITIAL:
+            break;
+        case BLOCKTYPE_REWARD:
+            connectReward(block);
+            break;
+        case BLOCKTYPE_TOKEN_CREATION:
+            connectToken(block);
+            break;
+        case BLOCKTYPE_TRANSFER:
+            break;
+        case BLOCKTYPE_USERDATA:
+            break;
+        case BLOCKTYPE_VOS:
+            break;
+        case BLOCKTYPE_VOS_EXECUTE:
+            break;
+        default:
+            break;
+        
         }
+    }
 
-        if (block.getBlockType() == Block.Type.BLOCKTYPE_TOKEN_CREATION) {
-            Transaction tx = block.getTransactions().get(0);
-            if (tx.getData() != null) {
-                try {
-                    byte[] buf = tx.getData();
-                    TokenInfo tokenInfo = TokenInfo.parse(buf);
-                    
-                    // Correctly insert tokens
-                    tokenInfo.getTokens().setConfirmed(false);
-                    tokenInfo.getTokens().setBlockhash(block.getHashAsString());
-                    
-                    this.blockStore.insertToken(block.getHashAsString(), tokenInfo.getTokens());
-                    for (MultiSignAddress permissionedAddress : tokenInfo.getMultiSignAddresses()) {
-                        permissionedAddress.setBlockhash(block.getHashAsString()); // The primary key must be the correct block
-                        blockStore.insertMultiSignAddress(permissionedAddress);
-                    }
-                } catch (Exception e) {
-                    log.error("not possible checked before", e);
+    private void connectReward(Block block) throws BlockStoreException {
+        // Check if eligible:
+        Pair<RewardEligibility, Long> eligiblityAndTxReward = validatorService.checkRewardEligibility(block);    
+        
+        try {
+            RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
+            Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
+            long toHeight = rewardInfo.getToHeight();
+   
+            blockStore.insertReward(block.getHash(), toHeight, eligiblityAndTxReward.getLeft(), prevRewardHash, eligiblityAndTxReward.getRight());
+        } catch (IOException e) {
+            // Cannot happen when connecting
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void connectToken(Block block) {
+        Transaction tx = block.getTransactions().get(0);
+        if (tx.getData() != null) {
+            try {
+                byte[] buf = tx.getData();
+                TokenInfo tokenInfo = TokenInfo.parse(buf);
+                
+                // Correctly insert tokens
+                tokenInfo.getTokens().setConfirmed(false);
+                tokenInfo.getTokens().setBlockhash(block.getHashAsString());
+                
+                this.blockStore.insertToken(block.getHashAsString(), tokenInfo.getTokens());
+                for (MultiSignAddress permissionedAddress : tokenInfo.getMultiSignAddresses()) {
+                    permissionedAddress.setBlockhash(block.getHashAsString()); // The primary key must be the correct block
+                    blockStore.insertMultiSignAddress(permissionedAddress);
                 }
-
+            } catch (Exception e) {
+                log.error("not possible checked before", e);
             }
+
         }
     }
 

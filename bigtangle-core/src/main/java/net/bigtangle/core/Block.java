@@ -122,14 +122,19 @@ public class Block extends Message {
         // TODO add size multiplier to pow difficulty
         BLOCKTYPE_INITIAL(false, 0, 0, Integer.MAX_VALUE), // Genesis block
         BLOCKTYPE_TRANSFER(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Default block
-        BLOCKTYPE_REWARD(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Rewards of mining
+        BLOCKTYPE_REWARD(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Rewards of mining // TODO rename to consensus
         BLOCKTYPE_TOKEN_CREATION(true, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Custom token issuance
         BLOCKTYPE_USERDATA(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO User-defined data
         BLOCKTYPE_VOS(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO Smart contracts
         BLOCKTYPE_GOVERNANCE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO Governance of software
         BLOCKTYPE_FILE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO User-defined file
         BLOCKTYPE_VOS_EXECUTE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO VOS execution result
-        BLOCKTYPE_CROSSTANGLE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE); // TODO transfer from mainnet to permissioned
+        BLOCKTYPE_CROSSTANGLE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO transfer from mainnet to permissioned
+        BLOCKTYPE_ORDER_OPEN(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Opens a new order
+        BLOCKTYPE_ORDER_REFRESH(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Issues a new refresh order
+        BLOCKTYPE_ORDER_CANCEL(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Issues a new cancel order
+        BLOCKTYPE_ORDER_RECLAIM(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Reclaims lost orders
+        BLOCKTYPE_ORDER_MATCH(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE); // Performs order matching, TODO merge into reward
 
         private boolean allowCoinbaseTransaction;
         private int powMultiplier; // TODO use in reward calcs
