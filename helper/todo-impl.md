@@ -301,6 +301,19 @@ add possible to attach address at payment to KYC
 ** verification is finished and transfer to public address 
 ** check of kyc: find the address as token in public address
 
+ ** trusted center create token as trusted center for KYC.
+ ** user transfers the uploaded passport
+ ** trusted center checks the identity 
+ ** trusted center transfer a token to the address 
+ ** token can not be revoked, but should be a valid to date?
+ 
+ ** user can define in his setting to trusted center as add the trusted center to his watched token
+ ** user can set the acceptance for token transfer with only trusted center user
+ ** user A   pay User B,  check solidity will be failed.
+ 
+ ** exchange may define required trusted center for
+ 
+
 ## setup a list of token as same token
 ** user config in setting to load the same token list from a URL (token issuer) 
 ** mark the same token in display and mark the revoked token in color for help 
