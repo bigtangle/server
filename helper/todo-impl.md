@@ -301,7 +301,30 @@ add possible to attach address at payment to KYC
 ** verification is finished and transfer to public address 
 ** check of kyc: find the address as token in public address
 
-## setup a list of token as same token
+ ** trusted center create token as trusted center for KYC.
+ ** user transfers the uploaded passport
+ ** trusted center checks the identity 
+ ** trusted center transfer a token to the address 
+ ** token can not be revoked, but should be a valid to date?
+ 
+ ** user can define in his setting to trusted center as add the trusted center to his watched token
+ ** user can set the acceptance for token transfer with only trusted center user
+ ** user A   pay User B,  check solidity will be failed.
+ 
+ ** exchange may define required trusted center for
+ 
+## meta token with a list of token
+To revoke given token, user can create a list of token for valid. Only the last version of this token is valid.
+Example:
+ Central bank create euro 2011, euro 2018
+ meta token is euro with list of valid token: 
+ euro version1= euro 2011, euro 2018
+ euro version2 =  euro 2018
+ This enable to full control of the valid token. Indirect the delete of token and in case of lost of key and control and user can create a new meta token.
+ 
+ Alternative define the negative token? meta token not euro 2011
+ 
+## setup a list of token as same token (this is too complicated)
 ** user config in setting to load the same token list from a URL (token issuer) 
 ** mark the same token in display and mark the revoked token in color for help 
 **  watched one token will accept all same token.
