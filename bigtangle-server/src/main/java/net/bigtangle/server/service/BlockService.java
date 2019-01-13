@@ -168,30 +168,6 @@ public class BlockService {
     private BlockRequester blockRequester;
 
     /**
-     * Adds the specified block and all approved blocks to the milestone. This
-     * will connect all transactions of the block by marking used UTXOs spent
-     * and adding new UTXOs to the db.
-     * 
-     * @param blockEvaluation
-     * @throws BlockStoreException
-     */
-    public void confirm(BlockEvaluation blockEvaluation) throws BlockStoreException {
-        blockgraph.confirm(blockEvaluation.getBlockHash());
-    }
-
-    /**
-     * Removes the specified block and all its output spenders and approvers
-     * from the milestone. This will disconnect all transactions of the block by
-     * marking used UTXOs unspent and removing UTXOs of the block from the db.
-     * 
-     * @param blockEvaluation
-     * @throws BlockStoreException
-     */
-    public void unconfirm(BlockEvaluation blockEvaluation) throws BlockStoreException {
-        blockgraph.unconfirm(blockEvaluation.getBlockHash());
-    }
-
-    /**
      * Recursively removes the specified block and its approvers from the
      * collection if this block is contained in the collection.
      * 

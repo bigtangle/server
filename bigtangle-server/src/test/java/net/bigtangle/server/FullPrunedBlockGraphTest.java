@@ -10,6 +10,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.HashSet;
 import java.util.List;
 
 import org.junit.Test;
@@ -147,7 +148,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Block spenderBlock = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx1);
         
         // Confirm
-        blockGraph.confirm(spenderBlock.getHash());
+        blockGraph.confirm(spenderBlock.getHash(), new HashSet<>());
         
         // Should be confirmed now
         final UTXO utxo1 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor());
@@ -187,7 +188,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
                 rollingBlock1.getHash(), rollingBlock1.getHash());
         
         // Confirm
-        blockGraph.confirm(rewardBlock1.getHash());
+        blockGraph.confirm(rewardBlock1.getHash(), new HashSet<>());
 
         // Should be confirmed now
         assertTrue(store.getRewardConfirmed(rewardBlock1.getHash()));
@@ -225,7 +226,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // This (saveBlock) calls milestoneUpdate currently
         Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
-        blockGraph.confirm(block1.getHash());
+        blockGraph.confirm(block1.getHash(), new HashSet<>());
 
         // Should be confirmed now
         assertTrue(store.getTokenConfirmed(block1.getHash().toString()));
@@ -244,7 +245,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Block block = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx11);
         
         // Confirm
-        blockGraph.confirm(block.getHash());
+        blockGraph.confirm(block.getHash(), new HashSet<>());
         
         // Should be confirmed now
         final UTXO utxo11 = transactionService.getUTXO(tx11.getOutput(0).getOutPointFor());
@@ -257,7 +258,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertFalse(utxo21.isSpent());
         
         // Unconfirm
-        blockGraph.unconfirm(block.getHash());
+        blockGraph.unconfirm(block.getHash(), new HashSet<>());
         
         // Should be unconfirmed now
         final UTXO utxo1 = transactionService.getUTXO(tx11.getOutput(0).getOutPointFor());
@@ -296,14 +297,14 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
                 rollingBlock.getHash(), rollingBlock.getHash());
         
         // Confirm
-        blockGraph.confirm(rewardBlock11.getHash());
+        blockGraph.confirm(rewardBlock11.getHash(), new HashSet<>());
         
         // Should be confirmed now
         assertTrue(store.getRewardConfirmed(rewardBlock11.getHash()));
         assertFalse(store.getRewardSpent(rewardBlock11.getHash()));
         
         // Unconfirm
-        blockGraph.unconfirm(rewardBlock11.getHash());
+        blockGraph.unconfirm(rewardBlock11.getHash(), new HashSet<>());
 
         // Should be unconfirmed now
         assertFalse(store.getRewardConfirmed(rewardBlock11.getHash()));
@@ -341,14 +342,14 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         
         // This (saveBlock) calls milestoneUpdate currently
         Block block11 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
-        blockGraph.confirm(block11.getHash());
+        blockGraph.confirm(block11.getHash(), new HashSet<>());
         
         // Should be confirmed now
         assertTrue(store.getTokenConfirmed(block11.getHash().toString()));
         assertFalse(store.getTokenSpent(block11.getHash().toString()));
         
         // Unconfirm
-        blockGraph.unconfirm(block11.getHash());
+        blockGraph.unconfirm(block11.getHash(), new HashSet<>());
 
         // Should be unconfirmed now
         assertFalse(store.getTokenConfirmed(block11.getHash().toString()));
@@ -362,10 +363,10 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Create blocks with UTXOs
         Transaction tx1 = createTestGenesisTransaction();
         Block block1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx1);
-        blockGraph.confirm(block1.getHash());
+        blockGraph.confirm(block1.getHash(), new HashSet<>());
         Transaction tx2 = createTestGenesisTransaction();
         Block block2 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx2);
-        blockGraph.confirm(block2.getHash());
+        blockGraph.confirm(block2.getHash(), new HashSet<>());
         
         // Should be confirmed now
         assertTrue(store.getBlockEvaluation(block1.getHash()).isMilestone());
@@ -388,7 +389,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertFalse(utxo21.isSpent());
         
         // Unconfirm first block
-        blockGraph.unconfirm(block1.getHash());
+        blockGraph.unconfirm(block1.getHash(), new HashSet<>());
         
         // Both should be unconfirmed now
         assertFalse(store.getBlockEvaluation(block1.getHash()).isMilestone());
@@ -429,7 +430,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
                 rollingBlock.getHash(), rollingBlock.getHash());
         
         // Confirm
-        blockGraph.confirm(rewardBlock11.getHash());
+        blockGraph.confirm(rewardBlock11.getHash(), new HashSet<>());
         
         // Should be confirmed now
         assertTrue(store.getRewardConfirmed(rewardBlock11.getHash()));
@@ -440,7 +441,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
                 rollingBlock.getHash(), rollingBlock.getHash());
         
         // Confirm
-        blockGraph.confirm(rewardBlock2.getHash());
+        blockGraph.confirm(rewardBlock2.getHash(), new HashSet<>());
         
         // Should be confirmed now
         assertTrue(store.getRewardConfirmed(rewardBlock11.getHash()));
@@ -449,7 +450,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertFalse(store.getRewardSpent(rewardBlock2.getHash()));
         
         // Unconfirm
-        blockGraph.unconfirm(rewardBlock11.getHash());
+        blockGraph.unconfirm(rewardBlock11.getHash(), new HashSet<>());
 
         // Both should be unconfirmed now
         assertFalse(store.getRewardConfirmed(rewardBlock11.getHash()));
@@ -492,7 +493,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
                 rollingBlock.getHash(), rollingBlock.getHash());
         
         // Confirm
-        blockGraph.confirm(rewardBlock.getHash());
+        blockGraph.confirm(rewardBlock.getHash(), new HashSet<>());
         
         // Should be confirmed now
         assertTrue(store.getRewardConfirmed(rewardBlock.getHash()));
@@ -523,7 +524,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Block spenderBlock = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx);
         
         // Confirm
-        blockGraph.confirm(spenderBlock.getHash());
+        blockGraph.confirm(spenderBlock.getHash(), new HashSet<>());
      
         // Should be confirmed now
         final UTXO utxo11 = transactionService.getUTXO(tx.getOutput(0).getOutPointFor());
@@ -536,7 +537,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertFalse(utxo21.isSpent());
         
         // Unconfirm reward block
-        blockGraph.unconfirm(rewardBlock.getHash());
+        blockGraph.unconfirm(rewardBlock.getHash(), new HashSet<>());
 
         // Both should be unconfirmed now
         assertFalse(store.getRewardConfirmed(rewardBlock.getHash()));
@@ -607,15 +608,15 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Confirm
-        blockGraph.confirm(firstIssuance);
-        blockGraph.confirm(subseqIssuance);
+        blockGraph.confirm(firstIssuance, new HashSet<>());
+        blockGraph.confirm(subseqIssuance, new HashSet<>());
         
         // Should be confirmed now
         assertTrue(store.getTokenConfirmed(subseqIssuance.toString()));
         assertTrue(store.getTokenConfirmed(subseqIssuance.toString()));
         
         // Unconfirm
-        blockGraph.unconfirm(firstIssuance);
+        blockGraph.unconfirm(firstIssuance, new HashSet<>());
 
         // Should be unconfirmed now
         assertFalse(store.getTokenConfirmed(subseqIssuance.toString()));

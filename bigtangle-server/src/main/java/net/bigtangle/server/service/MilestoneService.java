@@ -38,11 +38,9 @@ public class MilestoneService {
 	private static final int WARNING_MILESTONE_UPDATE_LOOPS = 20;
 
 	@Autowired
-	protected FullPrunedBlockGraph blockGraphService;
+	protected FullPrunedBlockGraph blockGraph;
 	@Autowired
 	protected FullPrunedBlockStore store;
-	@Autowired
-	private BlockService blockService;
 	@Autowired
 	private TipsService tipsService;
 	@Autowired
@@ -311,8 +309,9 @@ public class MilestoneService {
 	private void updateMilestone(int numberUpdates) throws BlockStoreException {
 		// First remove any blocks that should no longer be in the milestone
 		HashSet<BlockEvaluation> blocksToRemove = store.getBlocksToRemoveFromMilestone();
+		HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
 		for (BlockEvaluation block : blocksToRemove)
-			blockService.unconfirm(block);
+			blockGraph.unconfirm(block.getBlockHash(), traversedUnconfirms);
 
 		for (int i = 0; i < numberUpdates; i++) {
 			// Now try to find blocks that can be added to the milestone
@@ -322,8 +321,9 @@ public class MilestoneService {
 			validatorService.resolveAllConflicts(blocksToAdd, true);
 
 			// Finally add the resolved new milestone blocks to the milestone
+			HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
 			for (BlockWrap block : blocksToAdd)
-				blockService.confirm(block.getBlockEvaluation());
+				blockGraph.confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms);
 
 			// Exit condition: there are no more blocks to add
 			if (blocksToAdd.isEmpty())

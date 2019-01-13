@@ -25,6 +25,7 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang3.tuple.Pair;
+import org.assertj.core.util.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -239,7 +240,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         vosExecute_.setExecute(vosExecute_.getExecute() + 1);
         this.blockStore.updateVOSExecute(vosExecute_);
     }
-
+    
     /**
      * Adds the specified block and all approved blocks to the milestone. This
      * will connect all transactions of the block by marking used UTXOs spent
@@ -248,11 +249,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * @param blockHash
      * @throws BlockStoreException
      */
-    public void confirm(Sha256Hash blockHash) throws BlockStoreException {
+    public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes) throws BlockStoreException {
         // Write to DB
         try {
             blockStore.beginDatabaseBatchWrite();
-            addBlockToMilestone(blockHash, new HashSet<>());
+            addBlockToMilestone(blockHash, traversedBlockHashes);
             blockStore.commitDatabaseBatchWrite();
         } catch (BlockStoreException e) {
             blockStore.abortDatabaseBatchWrite();
@@ -266,7 +267,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         Block block = blockWrap.getBlock();
         
         // If already confirmed, return
-        if (blockEvaluation.isMilestone())
+        if (blockEvaluation.isMilestone() || traversedBlockHashes.contains(blockHash))
             return;
 
         // Set milestone true and update latestMilestoneUpdateTime
@@ -430,11 +431,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * @param blockHash
      * @throws BlockStoreException
      */
-    public void unconfirm(Sha256Hash blockHash) throws BlockStoreException {
+    public void unconfirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes) throws BlockStoreException {
         // Write to DB
         try {
             blockStore.beginDatabaseBatchWrite();
-            HashSet<Sha256Hash> traversedBlockHashes = new HashSet<>();
             removeBlockFromMilestone(blockHash, traversedBlockHashes);
             blockStore.commitDatabaseBatchWrite();
         } catch (BlockStoreException e) {

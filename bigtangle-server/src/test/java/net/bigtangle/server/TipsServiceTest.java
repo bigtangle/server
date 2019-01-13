@@ -7,6 +7,7 @@ package net.bigtangle.server;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.HashSet;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -55,8 +56,8 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, false);
         }
-        blockGraph.confirm(rollingBlock.getHash());
-        blockGraph.confirm(rollingBlock1.getHash());
+        blockGraph.confirm(rollingBlock.getHash(), new HashSet<>());
+        blockGraph.confirm(rollingBlock1.getHash(), new HashSet<>());
 
         // Generate ineligible mining reward blocks 
         Block b1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
@@ -134,7 +135,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         }
         
         // After confirming one of them into the milestone, only that one block is now available
-        blockGraph.confirm(b1.getHash());
+        blockGraph.confirm(b1.getHash(), new HashSet<>());
 
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);
@@ -193,7 +194,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         assertTrue(hit2);
         
         // After confirming one of them into the milestone, only that one block is now available
-        blockGraph.confirm(b1.getHash());
+        blockGraph.confirm(b1.getHash(), new HashSet<>());
 
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);
@@ -243,7 +244,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         assertTrue(hit2);
         
         // After confirming one of them into the milestone, only that one block is now available
-        blockGraph.confirm(b1.getHash());
+        blockGraph.confirm(b1.getHash(), new HashSet<>());
 
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);
@@ -302,7 +303,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         assertTrue(hit2);
         
         // After confirming one of them into the milestone, only that one block is now available
-        blockGraph.confirm(b1.getHash());
+        blockGraph.confirm(b1.getHash(), new HashSet<>());
 
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);
@@ -370,7 +371,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         assertTrue(hit2);
         
         // After confirming one of them into the milestone, only that one block is now available
-        blockGraph.confirm(b1.getHash());
+        blockGraph.confirm(b1.getHash(), new HashSet<>());
 
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);
@@ -424,7 +425,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         assertTrue(hit2);
         
         // After confirming one of them into the milestone, only that one block is now available
-        blockGraph.confirm(b1.getHash());
+        blockGraph.confirm(b1.getHash(), new HashSet<>());
 
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);
@@ -486,7 +487,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         assertTrue(hit2);
         
         // After confirming one of them into the milestone, only that one block is now available
-        blockGraph.confirm(b1.getHash());
+        blockGraph.confirm(b1.getHash(), new HashSet<>());
 
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);

@@ -84,12 +84,15 @@ import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.Script.VerifyFlag;
 import net.bigtangle.server.service.SolidityState.State;
+import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.ContextPropagatingThreadFactory;
 
 @Service
 public class ValidatorService {
 
+	@Autowired
+	protected FullPrunedBlockGraph blockGraph;
     @Autowired
     protected FullPrunedBlockStore store;
     @Autowired
@@ -615,10 +618,11 @@ public class ValidatorService {
 
         // Resolve all conflicts by grouping by UTXO ordered by descending
         // rating
-        HashSet<BlockWrap> losingBlocks = resolveConflicts(conflictingOutPoints, unconfirmLosingMilestones);
+        HashSet<BlockWrap> losingBlocks = resolveConflicts(conflictingOutPoints, unconfirmLosingMilestones, blocksToAdd);
 
         // For milestone blocks that have been eliminated call disconnect
         // procedure
+		HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
         for (BlockWrap b : conflictingMilestoneBlocks.stream().filter(b -> losingBlocks.contains(b))
                 .collect(Collectors.toList())) {
             if (!unconfirmLosingMilestones) {
@@ -627,15 +631,13 @@ public class ValidatorService {
                 throw new RuntimeException("Cannot unconfirm milestone blocks when not allowing unconfirmation!");
             }
 
-            blockService.unconfirm(b.getBlockEvaluation());
+            blockGraph.unconfirm(b.getBlockEvaluation().getBlockHash(), traversedUnconfirms);
         }
 
         // For candidates that have been eliminated (conflictingOutPoints in
         // blocksToAdd \ winningBlocks) remove them from blocksToAdd
-        for (ConflictCandidate b : conflictingOutPoints.stream()
-                .filter(b -> blocksToAdd.contains(b.getBlock()) && losingBlocks.contains(b.getBlock()))
-                .collect(Collectors.toList())) {
-            blockService.removeBlockAndApproversFrom(blocksToAdd, b.getBlock());
+        for (BlockWrap b : losingBlocks) {
+            blockService.removeBlockAndApproversFrom(blocksToAdd, b);
         }
     }
 
@@ -651,11 +653,11 @@ public class ValidatorService {
      * @throws BlockStoreException
      */
     private HashSet<BlockWrap> resolveConflicts(Set<ConflictCandidate> conflictingOutPoints,
-            boolean unconfirmLosingMilestones) throws BlockStoreException {
-        // Initialize blocks that will survive the conflict resolution
+            boolean unconfirmLosingMilestones, Set<BlockWrap> blocksToAdd) throws BlockStoreException {
+        // Initialize blocks that will/will not survive the conflict resolution
         HashSet<BlockWrap> initialBlocks = conflictingOutPoints.stream().map(c -> c.getBlock())
                 .collect(Collectors.toCollection(HashSet::new));
-        HashSet<BlockWrap> winningBlocks = new HashSet<>();
+        HashSet<BlockWrap> winningBlocks = new HashSet<>(blocksToAdd);
         for (BlockWrap winningBlock : initialBlocks) {
             blockService.addApprovedNonMilestoneBlocksTo(winningBlocks, winningBlock);
             blockService.addMilestoneApproversTo(winningBlocks, winningBlock);
@@ -709,8 +711,7 @@ public class ValidatorService {
             }
 
             // If such a block exists, this conflict is resolved by eliminating
-            // all other
-            // blocks in this conflict from winning Blocks
+            // all other blocks in this conflict from winning blocks
             if (maxRatingPair != null) {
                 for (ConflictCandidate c : conflict) {
                     if (c != maxRatingPair) {
