@@ -39,7 +39,6 @@ import net.bigtangle.core.MyHomeAddress;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
-import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Uploadfile;
 import net.bigtangle.core.UploadfileInfo;
@@ -277,17 +276,16 @@ public class UserdataController {
 
             Transaction coinbase = new Transaction(Main.params);
 
-            TokenInfo tokenInfo = (TokenInfo) Main.getUserdata(DataClassName.TOKEN.name(), true);
-            List<Token> list = tokenInfo.getPositveTokenList();
+            WatchedInfo tokenInfo = (WatchedInfo) Main.getUserdata(DataClassName.TOKEN.name(), true);
+            List<UserSettingData> list = tokenInfo.getUserSettingDatas();
             List<Token> tempList = new ArrayList<Token>();
-            for (Token tokens : list) {
-                if (name.trim().equals(tokens.getTokenname().trim())
-                        && tokenid.trim().equals(tokens.getTokenid().trim())) {
+            for (UserSettingData tokens : list) {
+                if (name.trim().equals(tokens.getValue().trim()) && tokenid.trim().equals(tokens.getKey().trim())) {
                     continue;
                 }
-                tempList.add(tokens);
+                tempList.add(new Token(tokens.getKey(), tokens.getValue()));
             }
-            tokenInfo.setPositveTokenList(tempList);
+            tokenInfo.setTokenList(tempList);
 
             coinbase.setDataClassName(DataClassName.TOKEN.name());
             byte[] buf1 = tokenInfo.toByteArray();
@@ -295,8 +293,17 @@ public class UserdataController {
 
             block.addTransaction(coinbase);
             block.solve();
+            byte[] buf = block.bitcoinSerialize();
+            OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.saveBlock.name(), buf);
 
-            OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
+            if (buf != null) {
+                File file = new File(Main.keyFileDirectory + "/usersetting.block");
+                if (file.exists()) {
+                    file.delete();
+                }
+                FileUtil.writeFile(file, buf);
+            }
+
             initTokenTableView();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
@@ -582,7 +589,7 @@ public class UserdataController {
             for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
                 pubKeyList.add(ecKey.getPublicKeyAsHex());
             }
-                Type blocktype = Block.Type.BLOCKTYPE_USERDATA;
+            Type blocktype = Block.Type.BLOCKTYPE_USERDATA;
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("blocktype", blocktype);
             requestParam.put("pubKeyList", pubKeyList);
@@ -634,7 +641,7 @@ public class UserdataController {
                     Map<String, Object> map = new HashMap<String, Object>();
                     map.put("key", userSettingData.getKey());
                     map.put("value", userSettingData.getValue());
-                    map.put("domaijj", userSettingData.getDomain());
+                    map.put("domain", userSettingData.getDomain());
                     allData.add(map);
                 }
             }
@@ -656,7 +663,7 @@ public class UserdataController {
         for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
             pubKeyList.add(ecKey.getPublicKeyAsHex());
         }
-          Type blocktype = Block.Type.BLOCKTYPE_USERDATA;
+        Type blocktype = Block.Type.BLOCKTYPE_USERDATA;
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("blocktype", blocktype);
         requestParam.put("pubKeyList", pubKeyList);

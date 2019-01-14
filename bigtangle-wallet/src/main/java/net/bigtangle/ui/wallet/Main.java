@@ -78,7 +78,6 @@ import net.bigtangle.core.ProtocolException;
 import net.bigtangle.core.ScriptException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
-import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
@@ -138,7 +137,7 @@ public class Main extends Application {
 
     public static List<String> userdataList = new ArrayList<String>();
     // TODO as instance variable, not static
-    public static TokenInfo tokenInfo;
+    public static WatchedInfo tokenInfo;
 
     @Override
     public void start(Stage mainWindow) throws Exception {
@@ -164,7 +163,7 @@ public class Main extends Application {
 
     public static void addToken(String contextRoot, String tokenname, String tokenid, String type) throws Exception {
         String domain = type;
-          Type blocktype = Block.Type.BLOCKTYPE_USERDATA;
+        Type blocktype = Block.Type.BLOCKTYPE_USERDATA;
         if (DataClassName.SERVERURL.name().equals(type)) {
             type = DataClassName.WATCHED.name();
             // blocktype = NetworkParameters.BLOCKTYPE_USERDATA_SERVERURL;

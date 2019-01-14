@@ -126,7 +126,8 @@ public class OkHttp3Util {
 
     @SuppressWarnings("unused")
     private static OkHttpClient getOkHttpClientSafe() {
-        OkHttpClient client = new OkHttpClient.Builder().connectTimeout(timeoutMinute, TimeUnit.MINUTES)
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(timeoutMinute, TimeUnit.MINUTES)
                 .writeTimeout(timeoutMinute, TimeUnit.MINUTES).readTimeout(timeoutMinute, TimeUnit.MINUTES).build();
         return client;
     }

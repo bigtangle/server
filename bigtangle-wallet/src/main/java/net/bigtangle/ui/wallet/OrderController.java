@@ -39,7 +39,6 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.Token;
-import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenType;
 import net.bigtangle.core.UserSettingData;
 import net.bigtangle.core.Utils;
@@ -140,12 +139,11 @@ public class OrderController extends ExchangeController {
             stateRB2.setUserData("match");
             stateRB3.setUserData("finish");
             WatchedInfo watchedInfo = (WatchedInfo) Main.getUserdata(DataClassName.TOKEN.name(), true);
-            Main.tokenInfo = new TokenInfo();
+            Main.tokenInfo = new WatchedInfo();
             List<UserSettingData> list = watchedInfo.getUserSettingDatas();
             for (UserSettingData userSettingData : list) {
                 if (DataClassName.TOKEN.name().equals(userSettingData.getDomain().trim())) {
-                    Main.tokenInfo.getPositveTokenList()
-                            .add(new Token(userSettingData.getKey(), userSettingData.getValue()));
+                    Main.tokenInfo.getTokenList().add(new Token(userSettingData.getKey(), userSettingData.getValue()));
                 }
             }
             initMarketComboBox();
@@ -349,8 +347,8 @@ public class OrderController extends ExchangeController {
             }
         } else {
 
-            if (Main.tokenInfo != null && Main.tokenInfo.getPositveTokenList() != null) {
-                for (Token p : Main.tokenInfo.getPositveTokenList()) {
+            if (Main.tokenInfo != null && Main.tokenInfo.getTokenList() != null) {
+                for (Token p : Main.tokenInfo.getTokenList()) {
                     if (!isSystemCoin(p.getTokenname() + ":" + p.getTokenid())
                             && p.getTokenname().endsWith(":" + Main.getText("Token"))) {
                         if (!tokenData.contains(
