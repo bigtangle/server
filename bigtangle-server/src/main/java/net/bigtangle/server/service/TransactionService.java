@@ -67,7 +67,6 @@ public class TransactionService {
     TaskExecutor taskExecutor;
 
     public ByteBuffer askTransaction() throws Exception {
-
         Block rollingBlock = askTransactionBlock();
 
         byte[] data = rollingBlock.bitcoinSerialize();
@@ -81,8 +80,7 @@ public class TransactionService {
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
         Block r2 = blockService.getBlock(tipsToApprove.getRight());
 
-        return new Block(this.networkParameters, r1, r2);
-
+        return r1.createNextBlock(r2);
     }
 
     public Block createAndAddMiningRewardBlock(Sha256Hash prevRewardHash) throws Exception {

@@ -153,7 +153,6 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         }
         createAndAddNextBlock(b2, b2);
         
-        // TODO seems to fail due to statement caching? try deactivating jdbc statement caching 
         milestoneService.update();
 
         assertFalse(blockService.getBlockEvaluation(b1.getHash()).isMilestone());

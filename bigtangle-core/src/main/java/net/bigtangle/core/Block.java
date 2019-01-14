@@ -1203,9 +1203,10 @@ public class Block extends Message {
         b.setDifficultyTarget(lastMiningRewardBlock >= branchBlock.lastMiningRewardBlock ? difficultyTarget : branchBlock.difficultyTarget);        
 
         // Don't let timestamp go backwards
-        long minTime = Math.max(getTimeSeconds(), branchBlock.getTimeSeconds());
-        if (getTimeSeconds() >= minTime)
-            b.setTime(getTimeSeconds() + 1);
+        long currTime = getTimeSeconds();
+		long minTime = Math.max(currTime, branchBlock.getTimeSeconds());
+        if (currTime >= minTime)
+            b.setTime(currTime + 1);
         else
             b.setTime(minTime);
         b.solve();
