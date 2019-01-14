@@ -41,6 +41,7 @@ import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.WatchedInfo;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.params.OrdermatchReqCmd;
@@ -124,11 +125,11 @@ public class ExchangeController {
 
     private boolean isWatched(String tokenid) {
         try {
-            TokenInfo tokenInfo = Main.tokenInfo;
+            WatchedInfo tokenInfo = Main.tokenInfo;
             if (tokenInfo == null) {
                 return false;
             }
-            List<Token> tokenList = tokenInfo.getPositveTokenList();
+            List<Token> tokenList = tokenInfo.getTokenList();
             if (tokenList == null || tokenList.isEmpty()) {
                 return false;
             }

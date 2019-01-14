@@ -19,6 +19,7 @@ public class WatchedInfo implements java.io.Serializable {
      */
     private static final long serialVersionUID = -8908923887095777610L;
     private List<UserSettingData> userSettingDatas = new ArrayList<UserSettingData>();
+    private List<Token> tokenList = new ArrayList<Token>();
 
     public byte[] toByteArray() {
         try {
@@ -37,6 +38,7 @@ public class WatchedInfo implements java.io.Serializable {
         if (watchedInfo == null)
             return this;
         this.userSettingDatas = watchedInfo.getUserSettingDatas();
+        this.tokenList = watchedInfo.getTokenList();
         return this;
     }
 
@@ -46,6 +48,14 @@ public class WatchedInfo implements java.io.Serializable {
 
     public void setUserSettingDatas(List<UserSettingData> userSettingDatas) {
         this.userSettingDatas = userSettingDatas;
+    }
+
+    public List<Token> getTokenList() {
+        return tokenList;
+    }
+
+    public void setTokenList(List<Token> tokenList) {
+        this.tokenList = tokenList;
     }
 
 }
