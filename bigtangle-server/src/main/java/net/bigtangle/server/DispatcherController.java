@@ -4,6 +4,9 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
+import static net.bigtangle.core.Utils.HEX;
+import static net.bigtangle.core.Utils.reverseBytes;
+
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
@@ -81,6 +85,20 @@ public class DispatcherController {
 
     @Autowired
     private LogResultService logResultService;
+
+    public void checkAuth(HttpServletResponse httpServletResponse, HttpServletRequest httprequest) {
+        String header = httprequest.getHeader("Authorization");
+        if (header != null && !header.trim().isEmpty()) {
+            String pubkey = header.split("")[0];
+            String signHex = header.split("")[1];
+            String contentHex = header.split("")[2];
+            ECKey key = ECKey.fromPublicOnly(Utils.HEX.decode(pubkey));
+            byte[] message = reverseBytes(HEX.decode(contentHex));
+            byte[] signOutput = Utils.HEX.decode(signHex);
+            boolean flag = key.verify(Sha256Hash.ZERO_HASH.getBytes(), signOutput);
+        }
+
+    }
 
     @SuppressWarnings("unchecked")
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })

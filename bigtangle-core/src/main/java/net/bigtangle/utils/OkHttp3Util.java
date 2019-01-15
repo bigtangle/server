@@ -34,12 +34,15 @@ import okhttp3.Response;
 public class OkHttp3Util {
 
     private static final Logger logger = LoggerFactory.getLogger(OkHttp3Util.class);
-    private static long timeoutMinute=6;
+    private static long timeoutMinute = 6;
     private static OkHttpClient client = null;
+    public static String pubkey;
+    public static String signHex;
+    public static String contentHex;
 
     public static String post(String url, byte[] b) throws Exception {
         logger.debug(url);
-        OkHttpClient client = getOkHttpClient();
+        OkHttpClient client = getOkHttpClientSafe(pubkey, signHex, contentHex);
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), b);
         Request request = new Request.Builder().url(url).post(body).build();
         Response response = client.newCall(request).execute();
@@ -59,7 +62,7 @@ public class OkHttp3Util {
     @SuppressWarnings("unchecked")
     public static byte[] post(String url, String s) throws Exception {
         logger.debug("url : " + url);
-        OkHttpClient client = getOkHttpClient();
+        OkHttpClient client = getOkHttpClientSafe(pubkey, signHex, contentHex);
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), s);
         Request request = new Request.Builder().url(url).post(body).build();
         Response response = client.newCall(request).execute();
@@ -82,7 +85,7 @@ public class OkHttp3Util {
     }
 
     public static String postString(String url, String s) throws Exception {
-        OkHttpClient client = getOkHttpClient();
+        OkHttpClient client = getOkHttpClientSafe(pubkey, signHex, contentHex);
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), s);
         Request request = new Request.Builder().url(url).post(body).build();
         Response response = client.newCall(request).execute();
@@ -124,11 +127,10 @@ public class OkHttp3Util {
 
     }
 
-    @SuppressWarnings("unused")
-    private static OkHttpClient getOkHttpClientSafe() {
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(timeoutMinute, TimeUnit.MINUTES)
-                .writeTimeout(timeoutMinute, TimeUnit.MINUTES).readTimeout(timeoutMinute, TimeUnit.MINUTES).build();
+    private static OkHttpClient getOkHttpClientSafe(String pubkey, String signHex, String contentHex) {
+        OkHttpClient client = new OkHttpClient.Builder().connectTimeout(timeoutMinute, TimeUnit.MINUTES)
+                .writeTimeout(timeoutMinute, TimeUnit.MINUTES).readTimeout(timeoutMinute, TimeUnit.MINUTES)
+                .addInterceptor(new BasicAuthInterceptor(pubkey, signHex, contentHex)).build();
         return client;
     }
 
@@ -171,4 +173,5 @@ public class OkHttp3Util {
             throw new RuntimeException(e);
         }
     }
+
 }
