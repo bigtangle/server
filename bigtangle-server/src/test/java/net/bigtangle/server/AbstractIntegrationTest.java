@@ -154,7 +154,8 @@ public abstract class AbstractIntegrationTest {
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         Transaction tx = new Transaction(networkParameters);
         tx.addOutput(new TransactionOutput(networkParameters, tx, amount, genesiskey));
-        tx.addOutput(
+        if (spendableOutput.getValue().subtract(amount).getValue() != 0)
+        	tx.addOutput(
                 new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), genesiskey));
         TransactionInput input = tx.addInput(spendableOutput);
         Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);

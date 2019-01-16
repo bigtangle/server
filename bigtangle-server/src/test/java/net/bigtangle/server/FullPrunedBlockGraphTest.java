@@ -380,13 +380,9 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertTrue(utxo11.isSpent());
         assertFalse(utxo21.isSpent());        
         utxo11 = transactionService.getUTXO(tx2.getOutput(0).getOutPointFor());
-        utxo21 = transactionService.getUTXO(tx2.getOutput(1).getOutPointFor());
         assertNotNull(utxo11);
-        assertNotNull(utxo21);
         assertTrue(utxo11.isConfirmed());
-        assertTrue(utxo21.isConfirmed());
         assertFalse(utxo11.isSpent());
-        assertFalse(utxo21.isSpent());
         
         // Unconfirm first block
         blockGraph.unconfirm(block1.getHash(), new HashSet<>());
@@ -396,17 +392,12 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertFalse(store.getBlockEvaluation(block2.getHash()).isMilestone());
         for (Transaction tx : new Transaction[] {tx1, tx2}) {
             final UTXO utxo1 = transactionService.getUTXO(tx.getOutput(0).getOutPointFor());
-            final UTXO utxo2 = transactionService.getUTXO(tx.getOutput(1).getOutPointFor());
             assertNotNull(utxo1);
-            assertNotNull(utxo2);
             assertFalse(utxo1.isConfirmed());
-            assertFalse(utxo2.isConfirmed());
             assertFalse(utxo1.isSpent());
-            assertFalse(utxo2.isSpent());
             
             // Extra for transactional UTXOs
             assertNull(store.getTransactionOutputConfirmingBlock(utxo1.getHash(), utxo1.getIndex()));
-            assertNull(store.getTransactionOutputConfirmingBlock(utxo2.getHash(), utxo2.getIndex()));
         }
     }
 

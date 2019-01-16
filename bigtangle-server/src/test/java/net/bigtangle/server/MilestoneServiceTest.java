@@ -119,7 +119,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testUpdateConflictingMilestoneCandidates() throws Exception {
+    public void testUpdateConflictingTransactionalMilestoneCandidates() throws Exception {
         store.resetStore();
         
         @SuppressWarnings("deprecation")
@@ -157,6 +157,47 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         assertFalse(blockService.getBlockEvaluation(b1.getHash()).isMilestone());
         assertTrue(blockService.getBlockEvaluation(b2.getHash()).isMilestone());
+    }
+
+    @Test
+    public void testUpdateConflictingTokenMilestoneCandidates() throws Exception {
+        store.resetStore();
+        
+        // Generate an eligible issuance
+        ECKey outKey = walletKeys.get(0);
+        byte[] pubKey = outKey.getPubKey();
+        TokenInfo tokenInfo = new TokenInfo();
+        
+        Coin coinbase = Coin.valueOf(77777L, pubKey);
+        long amount = coinbase.getValue();
+        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0,
+                amount, false, true);
+
+        tokenInfo.setTokens(tokens);
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+
+        Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+
+        // Make another conflicting issuance that goes through
+        Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
+        Block block2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, genHash, genHash);
+        Block rollingBlock = block2.createNextBlock(block1);
+        blockGraph.add(rollingBlock, true);
+        
+        // Let block 1 win
+        createAndAddNextBlock(block1, block1);
+        milestoneService.update();
+        assertTrue(blockService.getBlockEvaluation(block1.getHash()).isMilestone());
+        assertFalse(blockService.getBlockEvaluation(block2.getHash()).isMilestone());
+
+        // Reorg to block 2
+        for (int i = 0; i < 15; i++) {
+            createAndAddNextBlock(block2, block2);
+        }
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(block1.getHash()).isMilestone());
+        assertTrue(blockService.getBlockEvaluation(block2.getHash()).isMilestone());
     }
 
     @Test

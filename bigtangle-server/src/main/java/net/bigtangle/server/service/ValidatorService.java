@@ -1068,14 +1068,19 @@ public class ValidatorService {
                             Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0);
 
                     txOutsCreated.add(newOut);
+                    
+                    // Filter zero UTXOs
+//                    if (newOut.getValue().isZero()) {
+//                        throw new InvalidTransactionException("Transaction output value is zero");
+//                    }
                 }
                 if (!checkOutputSigns(valueOut))
-                    throw new InvalidTransactionException("Transaction output value out of range");
+                    throw new InvalidTransactionException("Transaction output value negative");
                 if (isCoinBase) {
                     // coinbaseValue = valueOut;
                 } else {
                     if (!checkInputOutput(valueIn, valueOut))
-                        throw new InvalidTransactionException("Transaction input value out of range");
+                        throw new InvalidTransactionException("Transaction input and output values do not match");
                     // totalFees = totalFees.add(valueIn.subtract(valueOut));
                 }
 

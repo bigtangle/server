@@ -47,7 +47,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    rating bigint ,\n"
             + "    depth bigint,\n"
             + "    cumulativeweight  bigint ,\n" 
-            + "    milestone boolean,\n" //TODO rename to confirmed
+            + "    milestone boolean,\n" 
             + "    milestonelastupdate bigint,\n" 
             + "    milestonedepth bigint,\n"
             + "    inserttime bigint,\n" 
@@ -104,22 +104,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    hash varbinary(32) NOT NULL,\n"
             + "    CONSTRAINT tips_pk PRIMARY KEY (hash) USING BTREE \n" + ")\n";
     
-    // TODO constraints orderblocks: 
-    // burn only one type of tokens
-    // tokenid or targettokenid = BIG
-    // coinvalue % atomicgivevalue = 0
-    // coinvalue, targetcoinvalue < Integer.MAX_VALUE
     
-    // TODO order processing
-    // newly created openorders have ttl reduced by one
-    
-    // openorders: 
-    // insert on connect of order blocks
-    // tryinsert on confirm of ordermatch. DUPLICATES MAY OCCUR WHEN REORGING, IGNORE!
-    // confirm on confirm of ordermatch. 
-    // unconfirm on unconfirm of ordermatch. 
-    // spent on confirm of next ordermatch.
-    // unspent on unconfirm of next ordermatch. 
     private static final String CREATE_ORDERS_TABLE = "CREATE TABLE openorders (\n" 
             + "    txhash varbinary(32) NOT NULL,\n" // transactionhash
             + "    blockhash varbinary(32) NOT NULL,\n" // ZEROHASH if issued by order blocks, issuing ordermatch blockhash if issued by ordermatch block
@@ -134,11 +119,9 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    ttl varchar(255),\n" // the amount of ordermatch blocks this token is kept open without further refreshments
             + "    refindex bigint,\n" // a number used to track operations on the order, e.g. increasing by one when refreshing
             + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, blockhash) USING BTREE \n" + ")\n"; 
-    
-    // generalized utxo orders: insert on connect of order/refresh/cancel blocks
 
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
-            + "    blockhash varchar(255) NOT NULL,\n" // TODO txhash
+            + "    blockhash varchar(255) NOT NULL,\n"
             + "    confirmed boolean NOT NULL,\n" 
             + "    tokenid varchar(255) NOT NULL  ,\n"
             + "    tokenindex bigint NOT NULL   ,\n"
