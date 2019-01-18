@@ -181,6 +181,9 @@ public abstract class NetworkParameters {
     public static final int TOKEN_MAX_DESC_LENGTH = 500;
     public static final int TOKEN_MAX_URL_LENGTH = 100;
 
+    // Order matching config
+	public static final int INITIAL_ORDER_TTL = 2;
+
 
 	public static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
 	public static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";

@@ -30,6 +30,10 @@ public class ConflictCandidate {
         return new ConflictCandidate(block, ConflictPoint.fromToken(token));
     }
 
+    public static ConflictCandidate fromOrder(BlockWrap block, OrderRecordInfo order) {
+        return new ConflictCandidate(block, ConflictPoint.fromOrder(order));
+    }
+
     public static ConflictCandidate fromConflictPoint(BlockWrap block, ConflictPoint conflictPoint) {
         return new ConflictCandidate(block, conflictPoint);
     }

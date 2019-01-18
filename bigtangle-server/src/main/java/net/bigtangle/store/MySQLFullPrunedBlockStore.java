@@ -113,11 +113,11 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    confirmed boolean NOT NULL,\n" // true iff a order block of this order is confirmed
             + "    spent boolean NOT NULL,\n" // true iff used by a confirmed ordermatch block (either returned or used for another orderoutput/output)
             + "    spenderblockhash  varbinary(32),\n" // if confirmed, this is the consuming ordermatch blockhash, else null
-            + "    targetcoinvalue varchar(255),\n" // amount of target tokens wanted
+            + "    targetcoinvalue bigint,\n" // amount of target tokens wanted
             + "    targettokenid varchar(255),\n" // tokenid of the wanted tokens
             + "    beneficiarypubkey varchar(255),\n" // the pubkey that will receive the targettokens on completion or returned tokens on cancels
-            + "    ttl varchar(255),\n" // the amount of ordermatch blocks this token is kept open without further refreshments
-            + "    refindex bigint,\n" // a number used to track operations on the order, e.g. increasing by one when refreshing
+            + "    ttl int,\n" // the amount of ordermatch blocks this token is kept open without further refreshments
+            + "    opindex int,\n" // a number used to track operations on the order, e.g. increasing by one when refreshing
             + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, blockhash) USING BTREE \n" + ")\n"; 
 
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
@@ -253,6 +253,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_LOGRESULT_TABLE);
         sqlStatements.add(CREATE_BATCHBLOCK_TABLE);
         sqlStatements.add(CREATE_SUBTANGLE_PERMISSION_TABLE);
+        sqlStatements.add(CREATE_ORDERS_TABLE);
         return sqlStatements;
     }
 

@@ -20,6 +20,7 @@ import net.bigtangle.core.LogResult;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
+import net.bigtangle.core.OrderInfo;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.PayMultiSignAddress;
@@ -230,7 +231,22 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void updateTransactionOutputConfirmed(Sha256Hash hash, long index, boolean b) throws BlockStoreException;
 
     public void updateTransactionOutputSpendPending(Sha256Hash hash, long index, boolean b) throws BlockStoreException;
+    
+    /* Orders */
+    public boolean getOrderSpent(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException;
 
+	public boolean getOrderConfirmed(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException;
+
+	public Sha256Hash getOrderSpender(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException;
+
+	public OrderInfo getOrder(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException;
+
+	public void insertOrder(OrderInfo record) throws BlockStoreException;
+
+	public void updateOrderConfirmed(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash, boolean confirmed) throws BlockStoreException;
+
+	public void updateOrderSpent(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash, boolean spent, Sha256Hash spenderBlockHash) throws BlockStoreException;
+	
     /* Reward TXOs */
     public Sha256Hash getMaxConfirmedRewardBlockHash() throws BlockStoreException;
 
@@ -431,5 +447,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     HashSet<Block> getUnsolidBlocks(byte[] dep) throws BlockStoreException;
 
     Sha256Hash getTransactionOutputConfirmingBlock(Sha256Hash hash, long index) throws BlockStoreException;
+
 
 }

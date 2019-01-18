@@ -110,8 +110,22 @@ public class BlockWrap {
             break;
         case BLOCKTYPE_VOS_EXECUTE:
             break;
+		case BLOCKTYPE_ORDER_OPEN:
+			break;
+		case BLOCKTYPE_ORDER_OP:
+			break;
+		case BLOCKTYPE_ORDER_RECLAIM:
+			try {
+                OrderRecordInfo orderInfo = OrderRecordInfo.parse(this.getBlock().getTransactions().get(0).getData());
+                blockConflicts.add(ConflictCandidate.fromOrder(this, orderInfo));                    
+            } catch (IOException e) {
+                // Cannot happen since any blocks added already were checked.
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+			break;
         default:
-            throw new NotImplementedException("Blocktype not implemented!");
+            throw new NotImplementedException("Blocktype not implemented!");       
         
         }
     }

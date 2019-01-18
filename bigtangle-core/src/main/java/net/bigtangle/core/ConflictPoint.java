@@ -7,6 +7,8 @@ package net.bigtangle.core;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.NotImplementedException;
+
 import com.google.common.base.Objects;
 
 public class ConflictPoint {
@@ -19,26 +21,33 @@ public class ConflictPoint {
     private RewardInfo connectedReward;
     @Nullable
     private Token connectedToken;
+    @Nullable
+    private OrderRecordInfo connectedOrder;
 
     private ConflictPoint(ConflictType type, TransactionOutPoint connectedOutpoint, RewardInfo reward,
-            Token connectedToken) {
+            Token connectedToken, OrderRecordInfo connectedOrder) {
         super();
         this.type = type;
         this.connectedOutpoint = connectedOutpoint;
         this.connectedReward = reward;
         this.connectedToken = connectedToken;
+        this.connectedOrder = connectedOrder;
     }
 
     public static ConflictPoint fromTransactionOutpoint(TransactionOutPoint connectedOutpoint) {
-        return new ConflictPoint(ConflictType.TXOUT, connectedOutpoint, null, null);
+        return new ConflictPoint(ConflictType.TXOUT, connectedOutpoint, null, null, null);
     }
 
     public static ConflictPoint fromReward(RewardInfo reward) {
-        return new ConflictPoint(ConflictType.REWARDISSUANCE, null, reward, null);
+        return new ConflictPoint(ConflictType.REWARDISSUANCE, null, reward, null, null);
     }
 
     public static ConflictPoint fromToken(Token token) {
-        return new ConflictPoint(ConflictType.TOKENISSUANCE, null, null, token);
+        return new ConflictPoint(ConflictType.TOKENISSUANCE, null, null, token, null);
+    }
+
+    public static ConflictPoint fromOrder(OrderRecordInfo connectedOrder) {
+        return new ConflictPoint(ConflictType.ORDER, null, null, null, connectedOrder);
     }
     
     @Override
@@ -61,8 +70,11 @@ public class ConflictPoint {
         case TXOUT:
             return getConnectedOutpoint().getIndex() == other.getConnectedOutpoint().getIndex()
                     && getConnectedOutpoint().getHash().equals(other.getConnectedOutpoint().getHash());
-        default:
-            return true;
+		case ORDER:
+			return getConnectedOrder().getTxHash().equals(other.getConnectedOrder().getTxHash())
+					&& getConnectedOrder().getIssuingMatcherBlockHash().equals(other.getConnectedOrder().getIssuingMatcherBlockHash());
+		default:
+			throw new NotImplementedException("Conflicts not implemented.");
         }
     }
 
@@ -75,13 +87,15 @@ public class ConflictPoint {
             return Objects.hashCode(getConnectedToken().getTokenid(), getConnectedToken().getTokenindex());
         case TXOUT:
             return Objects.hashCode(getConnectedOutpoint().getIndex(), getConnectedOutpoint().getHash());
-        default:
-            return super.hashCode();
+		case ORDER:
+            return Objects.hashCode(getConnectedOrder().getTxHash(), getConnectedOrder().getIssuingMatcherBlockHash());
+		default:
+			throw new NotImplementedException("Conflicts not implemented.");
         }
     }
 
     public enum ConflictType {
-        TXOUT, TOKENISSUANCE, REWARDISSUANCE
+        TXOUT, TOKENISSUANCE, REWARDISSUANCE, ORDER
     }
 
     public ConflictType getType() {
@@ -98,5 +112,9 @@ public class ConflictPoint {
 
     public Token getConnectedToken() {
         return connectedToken;
+    }
+
+    public OrderRecordInfo getConnectedOrder() {
+        return connectedOrder;
     }
 }

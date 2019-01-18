@@ -131,10 +131,8 @@ public class Block extends Message {
         BLOCKTYPE_VOS_EXECUTE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO VOS execution result
         BLOCKTYPE_CROSSTANGLE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO transfer from mainnet to permissioned
         BLOCKTYPE_ORDER_OPEN(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Opens a new order
-        BLOCKTYPE_ORDER_REFRESH(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Issues a new refresh order
-        BLOCKTYPE_ORDER_CANCEL(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Issues a new cancel order
-        BLOCKTYPE_ORDER_RECLAIM(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Reclaims lost orders
-        BLOCKTYPE_ORDER_MATCH(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE); // Performs order matching, TODO merge into reward
+        BLOCKTYPE_ORDER_OP(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Issues a refresh/cancel of an order
+        BLOCKTYPE_ORDER_RECLAIM(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE); // Reclaims lost orders
 
         private boolean allowCoinbaseTransaction;
         private int powMultiplier; // TODO use in reward calcs

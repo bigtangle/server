@@ -43,6 +43,7 @@ import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OrderInfo;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.PayMultiSignAddress;
@@ -96,7 +97,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_VOSEXECUTE_TABLE = "DROP TABLE IF EXISTS vosexecute";
     public static String DROP_LOGRESULT_TABLE = "DROP TABLE IF EXISTS logresult";
     public static String DROP_BATCHBLOCK_TABLE = "DROP TABLE IF EXISTS batchblock";
-    public static String DROP_SUBTANGLE_PERMISSION_TABLE = "DROP TABLE IF EXISTS subtangle_permission";
+    public static String DROP_SUBTANGLE_PERMISSION_TABLE = "DROP TABLE IF EXISTS subtangle_permission"; 
+    public static String DROP_ORDERS_TABLE = "DROP TABLE IF EXISTS openorders";
 
     // Queries SQL.
     protected final String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
@@ -215,6 +217,21 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " WHERE  outputs.hash = ? AND outputindex= ?" + afterSelect();
     protected final String SELECT_MAX_IMPORT_TIME_SQL = "SELECT MAX(inserttime) " + "FROM blocks";
 
+
+    protected final String UPDATE_ORDER_SPENT_SQL = getUpdate() + " openorders SET spent = ?, spenderblockhash = ? "
+            + " WHERE txhash = ? AND blockhash = ?";
+    protected final String UPDATE_ORDER_CONFIRMED_SQL = getUpdate() + " openorders SET confirmed = ? "
+            + " WHERE txhash = ? AND blockhash = ?";
+    protected final String SELECT_ORDER_SPENT_SQL = "SELECT spent FROM openorders WHERE txhash = ? AND blockhash = ?";
+    protected final String SELECT_ORDER_CONFIRMED_SQL = "SELECT confirmed FROM openorders WHERE txhash = ? AND blockhash = ?";
+    protected final String SELECT_ORDER_SPENDER_SQL = "SELECT spenderblockhash FROM openorders WHERE txhash = ? AND blockhash = ?";
+    protected final String SELECT_ORDER_SQL = "SELECT txhash, blockhash, offercoinvalue, offertokenid, confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, ttl, opindex"
+            + " FROM openorders WHERE txhash = ? AND blockhash = ?";
+    protected final String INSERT_ORDER_SQL = getInsert()
+            + "  INTO openorders (txhash, blockhash, offercoinvalue, offertokenid, confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, ttl, opindex) "
+            + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    
+    
     protected final String INSERT_TOKENS_SQL = getInsert()
             + " INTO tokens (blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber, multiserial, tokentype, tokenstop, prevblockhash, spent, spenderblockhash) "
             + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -542,6 +559,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_LOGRESULT_TABLE);
         sqlStatements.add(DROP_BATCHBLOCK_TABLE);
         sqlStatements.add(DROP_SUBTANGLE_PERMISSION_TABLE);
+        sqlStatements.add(DROP_ORDERS_TABLE);        
         return sqlStatements;
     }
 
@@ -4712,6 +4730,186 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 list.add(map);
             }
             return list;
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public boolean getOrderConfirmed(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_ORDER_CONFIRMED_SQL);
+            preparedStatement.setBytes(1, txHash.getBytes());
+            preparedStatement.setBytes(2, issuingMatcherBlockHash.getBytes());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            return resultSet.getBoolean(1);
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public Sha256Hash getOrderSpender(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_ORDER_SPENDER_SQL);
+            preparedStatement.setBytes(1, txHash.getBytes());
+            preparedStatement.setBytes(2, issuingMatcherBlockHash.getBytes());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            return resultSet.getBytes(1) == null ? null : Sha256Hash.wrap(resultSet.getBytes(1));
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public boolean getOrderSpent(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_ORDER_SPENT_SQL);
+            preparedStatement.setBytes(1, txHash.getBytes());
+            preparedStatement.setBytes(2, issuingMatcherBlockHash.getBytes());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            return resultSet.getBoolean(1);
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public OrderInfo getOrder(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_ORDER_SQL);
+            preparedStatement.setBytes(1, txHash.getBytes());
+            preparedStatement.setBytes(2, issuingMatcherBlockHash.getBytes());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (!resultSet.next())
+            	return null;
+            
+            return new OrderInfo(Sha256Hash.wrap(resultSet.getBytes(1)), Sha256Hash.wrap(resultSet.getBytes(2)), resultSet.getLong(3), 
+            		resultSet.getString(4), resultSet.getBoolean(5), resultSet.getBoolean(6), resultSet.getBytes(7) == null ? null : Sha256Hash.wrap(resultSet.getBytes(7)), resultSet.getLong(8), 
+            		resultSet.getString(9), resultSet.getBytes(10), resultSet.getInt(11), resultSet.getInt(12));          
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public void insertOrder(OrderInfo record) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(INSERT_ORDER_SQL);
+            preparedStatement.setBytes(1, record.getTxHash().getBytes());
+            preparedStatement.setBytes(2, record.getIssuingMatcherBlockHash().getBytes());
+            preparedStatement.setLong(3, record.getOfferValue());
+            preparedStatement.setString(4, record.getOfferTokenid());
+            preparedStatement.setBoolean(5, record.isConfirmed());
+            preparedStatement.setBoolean(6, record.isSpent());
+            preparedStatement.setBytes(7, record.getSpenderBlockHash() != null ? record.getSpenderBlockHash().getBytes() : null);
+            preparedStatement.setLong(8, record.getTargetValue());
+            preparedStatement.setString(9, record.getTargetTokenid());
+            preparedStatement.setBytes(10, record.getBeneficiaryPubKey());
+            preparedStatement.setInt(11, record.getTtl());
+            preparedStatement.setInt(12, record.getOpIndex());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void updateOrderConfirmed(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash, boolean confirmed) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(UPDATE_ORDER_CONFIRMED_SQL);
+            preparedStatement.setBoolean(1, confirmed);
+            preparedStatement.setBytes(2, txHash.getBytes());
+            preparedStatement.setBytes(3, issuingMatcherBlockHash.getBytes());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public void updateOrderSpent(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash, boolean spent, Sha256Hash spenderBlockHash)
+    		throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(UPDATE_ORDER_SPENT_SQL);
+            preparedStatement.setBoolean(1, spent);
+            preparedStatement.setBytes(2, spenderBlockHash != null ? spenderBlockHash.getBytes() : null);
+            preparedStatement.setBytes(3, txHash.getBytes());
+            preparedStatement.setBytes(4, issuingMatcherBlockHash.getBytes());
+            preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {

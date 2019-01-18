@@ -42,6 +42,8 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OrderInfo;
+import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
@@ -355,10 +357,35 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 }
             }
             break;
+		case BLOCKTYPE_ORDER_OPEN:
+			confirmOrderOpen(block);
+			break;
+		case BLOCKTYPE_ORDER_OP:
+			break;
+		case BLOCKTYPE_ORDER_RECLAIM:
+			confirmOrderReclaim(block);
+			break;
         default:
             throw new NotImplementedException();
         
         }
+    }
+    
+    private void confirmOrderMatching(Block block) {
+    	
+    }
+
+    
+    private void confirmOrderReclaim(Block block) throws BlockStoreException {
+    	/*TODO 
+    	 * -> Order Reclaim: Set consumed order record to spent and set spender block to this block's hash
+    	 * -> Order Reclaim: Insert if nonexistent and set virtual reclaim UTXO to confirmed
+		 */
+    }
+
+    private void confirmOrderOpen(Block block) throws BlockStoreException {
+        // Set own output confirmed
+        blockStore.updateOrderConfirmed(block.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH, true);
     }
 
     private void confirmReward(Block block) throws BlockStoreException {
@@ -507,6 +534,15 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             break;
         case BLOCKTYPE_VOS_EXECUTE:
             break;
+		case BLOCKTYPE_ORDER_OPEN:
+			// TODO
+			break;
+		case BLOCKTYPE_ORDER_OP:
+			// TODO
+			break;
+		case BLOCKTYPE_ORDER_RECLAIM:
+			// TODO
+			break;
         default:
             throw new NotImplementedException();
         
@@ -573,6 +609,15 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             break;
         case BLOCKTYPE_VOS_EXECUTE:
             break;
+		case BLOCKTYPE_ORDER_OPEN:
+			// TODO
+			break;
+		case BLOCKTYPE_ORDER_OP:
+			// TODO
+			break;
+		case BLOCKTYPE_ORDER_RECLAIM:
+			// TODO
+			break;
         default:
             throw new NotImplementedException();
         
@@ -738,9 +783,48 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             break;
         case BLOCKTYPE_VOS_EXECUTE:
             break;
+		case BLOCKTYPE_ORDER_OPEN:
+			connectOrder(block);
+			break;
+		case BLOCKTYPE_ORDER_OP:
+			break;
+		case BLOCKTYPE_ORDER_RECLAIM:
+			break;
         default:
             break;
         
+        }
+    }
+
+    private void connectOrder(Block block) throws BlockStoreException {
+        try {
+            OrderOpenInfo reqInfo = OrderOpenInfo.parse(block.getTransactions().get(0).getData());
+            
+            String offerTokenid = null;
+            long offerValue = 0;
+            for (final Transaction tx : block.getTransactions()) {
+                for (int index = 0; index < tx.getInputs().size(); index++) {
+                    TransactionInput in = tx.getInputs().get(index);
+                    UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(),
+                            in.getOutpoint().getIndex());
+                    if (prevOut == null) {
+                        // Cannot happen due to solidity checks before
+                        throw new RuntimeException("Block attempts to spend a not yet existent output!");
+                    }
+                    
+                    offerTokenid = Utils.HEX.encode(prevOut.getValue().getTokenid());
+                    offerValue += prevOut.getValue().getValue();
+                }
+            }
+            
+            OrderInfo record = new OrderInfo(block.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH, 
+            		offerValue, offerTokenid, false, false, null, reqInfo.getTargetValue(), reqInfo.getTargetTokenid(), 
+            		reqInfo.getBeneficiaryPubKey(), NetworkParameters.INITIAL_ORDER_TTL, 0);
+            blockStore.insertOrder(record);
+        } catch (IOException e) {
+            // Cannot happen when connecting
+            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 
