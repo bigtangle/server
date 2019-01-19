@@ -118,7 +118,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    beneficiarypubkey varchar(255),\n" // the pubkey that will receive the targettokens on completion or returned tokens on cancels
             + "    ttl int,\n" // the amount of ordermatch blocks this token is kept open without further refreshments
             + "    opindex int,\n" // a number used to track operations on the order, e.g. increasing by one when refreshing
-            + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, blockhash) USING BTREE \n" + ")\n"; 
+            + "    CONSTRAINT outputs_pk PRIMARY KEY (txhash, blockhash) USING BTREE \n" + ")\n"; 
 
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
             + "    blockhash varchar(255) NOT NULL,\n"

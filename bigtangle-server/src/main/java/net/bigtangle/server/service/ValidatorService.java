@@ -928,13 +928,13 @@ public class ValidatorService {
 
         	// TODO different block type transactions should include their block type in the transaction hash
             // for now, we must disallow someone respending this transaction as non-order opening
-            if (block.getBlockType() != Type.BLOCKTYPE_ORDER_OPEN) {
+            if (block.getBlockType() != Type.BLOCKTYPE_ORDER_OPEN && block.getTransactions().size() > 0) {
                 try {
                 	OrderOpenInfo.parse(block.getTransactions().get(0).getData());
                     if (throwExceptions)
                         throw new MalformedTransactionDataException();
                     return SolidityState.getFailState();
-                } catch (IOException e) {
+                } catch (Exception e) {
                 	// Expected
                 }
             }
