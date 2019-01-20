@@ -52,7 +52,7 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderInfo;
+import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.OrderOpInfo;
 import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.OrderReclaimInfo;
@@ -1279,10 +1279,24 @@ public class ValidatorService {
             return SolidityState.from(info.getNonConfirmingMatcherBlockHash());     
         }
         
+        // Ensure it is an order open block
+        if (orderBlock.getHeader().getBlockType() != Type.BLOCKTYPE_ORDER_OPEN) {
+            if (throwExceptions)
+                throw new InvalidDependencyException("The given block does not open a reclaimable order.");
+            return SolidityState.getFailState(); 
+        }
+        
         // Ensure the predecessing order matching block exists
         StoredBlock orderMatchingBlock = store.get(info.getNonConfirmingMatcherBlockHash()); 
         if (orderMatchingBlock == null) {
             return SolidityState.from(info.getNonConfirmingMatcherBlockHash());     
+        }
+
+        // Ensure it is an order matching block
+        if (orderMatchingBlock.getHeader().getBlockType() != Type.BLOCKTYPE_REWARD) {
+            if (throwExceptions)
+                throw new InvalidDependencyException("The given matching block is not the right type.");
+            return SolidityState.getFailState(); 
         }
         
         // Ensure the predecessing order matching block is of sufficient height, i.e. higher than the order opening
@@ -1342,7 +1356,8 @@ public class ValidatorService {
         }
         
         // Check that the tx inputs only burn one type of tokens
-        Set<String> valueIn = new HashSet<String>();
+        String tokenid = null;
+        long value = 0;
         for (final Transaction tx : block.getTransactions()) {
             for (int index = 0; index < tx.getInputs().size(); index++) {
                 TransactionInput in = tx.getInputs().get(index);
@@ -1353,19 +1368,27 @@ public class ValidatorService {
                     throw new RuntimeException("Block attempts to spend a not yet existent output!");
                 }
                 
-                valueIn.add(Utils.HEX.encode(prevOut.getValue().getTokenid()));
+                if (tokenid == null)
+                    tokenid = Utils.HEX.encode(prevOut.getValue().getTokenid());
+                else if (tokenid != Utils.HEX.encode(prevOut.getValue().getTokenid())) {
+                    if (throwExceptions)
+                        throw new VerificationException("Cannot use multiple different tokens");
+                    return SolidityState.getFailState();     
+                }
+                    
+                value += prevOut.getValue().getValue();
             }
         }
-        if (valueIn.size() != 1) {
+        
+        if (value > Integer.MAX_VALUE) {
             if (throwExceptions)
-                throw new VerificationException("Cannot use multiple tokens");
+                throw new VerificationException("The order is too large.");
             return SolidityState.getFailState();     
         }
 
         // Check that either the burnt token or the target token is BIG
-        String usedToken = valueIn.iterator().next();
-		if (usedToken.equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) && orderInfo.getTargetTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)
-				|| !usedToken.equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) && !orderInfo.getTargetTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
+		if (tokenid.equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) && orderInfo.getTargetTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)
+				|| !tokenid.equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) && !orderInfo.getTargetTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
             if (throwExceptions)
                 throw new VerificationException("Invalid exchange combination. Ensure BIG is sold or bought.");
             return SolidityState.getFailState();     
@@ -1405,7 +1428,7 @@ public class ValidatorService {
         }
         
         // Ensure the predecessing tx exists
-        OrderInfo order = store.getOrder(info.getTxHash(), Sha256Hash.ZERO_HASH); 
+        OrderRecord order = store.getOrder(info.getTxHash(), Sha256Hash.ZERO_HASH); 
         if (order == null) {
             return SolidityState.from(new TransactionOutPoint(networkParameters, 0, info.getTxHash()));     
         }

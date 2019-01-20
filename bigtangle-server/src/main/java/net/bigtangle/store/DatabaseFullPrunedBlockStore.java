@@ -43,7 +43,7 @@ import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderInfo;
+import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.PayMultiSignAddress;
@@ -222,6 +222,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " WHERE txhash = ? AND blockhash = ?";
     protected final String UPDATE_ORDER_CONFIRMED_SQL = getUpdate() + " openorders SET confirmed = ? "
             + " WHERE txhash = ? AND blockhash = ?";
+    protected final String SELECT_ORDERS_BY_ISSUER_SQL = "SELECT txhash, blockhash, offercoinvalue, offertokenid, confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, ttl, opindex"
+            + " FROM openorders WHERE blockhash = ?";
     protected final String SELECT_ORDER_SPENT_SQL = "SELECT spent FROM openorders WHERE txhash = ? AND blockhash = ?";
     protected final String SELECT_ORDER_CONFIRMED_SQL = "SELECT confirmed FROM openorders WHERE txhash = ? AND blockhash = ?";
     protected final String SELECT_ORDER_SPENDER_SQL = "SELECT spenderblockhash FROM openorders WHERE txhash = ? AND blockhash = ?";
@@ -4816,7 +4818,35 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
     
     @Override
-    public OrderInfo getOrder(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException {
+    public Map<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrders(Sha256Hash issuingMatcherBlockHash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        Map<Sha256Hash, OrderRecord> result = new HashMap<>();
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_ORDERS_BY_ISSUER_SQL);
+            preparedStatement.setBytes(1, issuingMatcherBlockHash.getBytes());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                result.put(Sha256Hash.wrap(resultSet.getBytes(1)), new OrderRecord(Sha256Hash.wrap(resultSet.getBytes(1)), Sha256Hash.wrap(resultSet.getBytes(2)), resultSet.getLong(3), 
+                        resultSet.getString(4), resultSet.getBoolean(5), resultSet.getBoolean(6), resultSet.getBytes(7) == null ? null : Sha256Hash.wrap(resultSet.getBytes(7)), resultSet.getLong(8), 
+                                resultSet.getString(9), resultSet.getBytes(10), resultSet.getInt(11), resultSet.getInt(12)));
+            }
+            return result;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public OrderRecord getOrder(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -4827,7 +4857,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             if (!resultSet.next())
             	return null;
             
-            return new OrderInfo(Sha256Hash.wrap(resultSet.getBytes(1)), Sha256Hash.wrap(resultSet.getBytes(2)), resultSet.getLong(3), 
+            return new OrderRecord(Sha256Hash.wrap(resultSet.getBytes(1)), Sha256Hash.wrap(resultSet.getBytes(2)), resultSet.getLong(3), 
             		resultSet.getString(4), resultSet.getBoolean(5), resultSet.getBoolean(6), resultSet.getBytes(7) == null ? null : Sha256Hash.wrap(resultSet.getBytes(7)), resultSet.getLong(8), 
             		resultSet.getString(9), resultSet.getBytes(10), resultSet.getInt(11), resultSet.getInt(12));          
         } catch (SQLException ex) {
@@ -4844,7 +4874,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
     
     @Override
-    public void insertOrder(OrderInfo record) throws BlockStoreException {
+    public void insertOrder(OrderRecord record) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {

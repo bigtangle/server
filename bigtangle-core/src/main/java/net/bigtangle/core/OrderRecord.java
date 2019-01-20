@@ -10,7 +10,7 @@ import java.io.IOException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
-public class OrderInfo implements java.io.Serializable {
+public class OrderRecord implements java.io.Serializable {
 
 	private static final long serialVersionUID = -2331665478149550684L;
 	
@@ -27,7 +27,7 @@ public class OrderInfo implements java.io.Serializable {
     private int ttl;
     private int opIndex; 
 
-    public OrderInfo(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash, long offerValue, String offerTokenid,
+    public OrderRecord(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash, long offerValue, String offerTokenid,
 			boolean confirmed, boolean spent, Sha256Hash spenderBlockHash, long targetValue, String targetTokenid,
 			byte[] beneficiaryPubKey, int ttl, int opIndex) {
 		super();
@@ -155,9 +155,9 @@ public class OrderInfo implements java.io.Serializable {
         return new byte[0];
     }
 
-    public static OrderInfo parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
+    public static OrderRecord parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
         String jsonStr = new String(buf);
-        OrderInfo tokenInfo = Json.jsonmapper().readValue(jsonStr, OrderInfo.class);
+        OrderRecord tokenInfo = Json.jsonmapper().readValue(jsonStr, OrderRecord.class);
         return tokenInfo;
     }
     

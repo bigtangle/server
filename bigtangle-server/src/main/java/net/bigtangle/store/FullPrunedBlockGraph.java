@@ -8,14 +8,18 @@ package net.bigtangle.store;
 import static com.google.common.base.Preconditions.checkState;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
@@ -25,6 +29,7 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +37,7 @@ import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
+import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.BlockWrap;
@@ -42,8 +48,13 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderInfo;
+import net.bigtangle.core.OrderRecord;
+import net.bigtangle.core.OrderOpInfo;
+import net.bigtangle.core.OrderOpInfo.OrderOp;
 import net.bigtangle.core.OrderOpenInfo;
+import net.bigtangle.core.OrderPublish;
+import net.bigtangle.core.OrderReclaimInfo;
+import net.bigtangle.core.OrderRecordInfo;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
@@ -59,7 +70,11 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.VerificationException;
 import net.bigtangle.core.VerificationException.GenericInvalidityException;
+import net.bigtangle.core.VerificationException.MalformedTransactionDataException;
 import net.bigtangle.script.Script;
+import net.bigtangle.server.ordermatch.bean.OrderBook;
+import net.bigtangle.server.ordermatch.bean.OrderBookEvents;
+import net.bigtangle.server.ordermatch.bean.Side;
 import net.bigtangle.server.service.RewardEligibility;
 import net.bigtangle.server.service.SolidityState;
 import net.bigtangle.server.service.SolidityState.State;
@@ -306,6 +321,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_REWARD:
             // For rewards, update reward to be confirmed now
             confirmReward(block);
+            
+            // Also do the orders here, since we merged order matching into the rewards
+            confirmOrderMatching(block);
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             // For token creations, update token db
@@ -371,16 +389,48 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
     
-    private void confirmOrderMatching(Block block) {
-    	
+    private void confirmOrderMatching(Block block) throws BlockStoreException {
+        // Get list of consumed orders, virtual order matching tx and newly generated remaining order book
+        Triple<Collection<OrderRecord>, Transaction, Collection<OrderRecord>> matchingResult = generateOrderMatching(block);
+        
+        // All consumed order records are now spent by this block
+        for (OrderRecord o : matchingResult.getLeft()) {
+            blockStore.updateOrderSpent(o.getTxHash(), o.getIssuingMatcherBlockHash(), true, block.getHash());
+        }
+
+        // If virtual outputs have not been inserted yet, insert them  
+        insertVirtualUTXOs(block, matchingResult.getMiddle());
+        // And confirm them
+        confirmTransaction(matchingResult.getMiddle(), block.getHash());
+        
+        // Finally, if the new orders have not been inserted yet, insert them (as confirmed)
+        insertVirtualOrderRecords(block, matchingResult.getRight());
     }
 
-    
     private void confirmOrderReclaim(Block block) throws BlockStoreException {
-    	/*TODO 
-    	 * -> Order Reclaim: Set consumed order record to spent and set spender block to this block's hash
-    	 * -> Order Reclaim: Insert if nonexistent and set virtual reclaim UTXO to confirmed
-		 */
+        // Read the requested reclaim
+        OrderReclaimInfo info = null;
+        try {
+            info = OrderReclaimInfo.parse(block.getTransactions().get(0).getData());
+        } catch (IOException e) {
+            // Cannot happen.
+            throw new RuntimeException(e);
+        }
+        
+        // Read the referenced order block's tx's hash from db
+        Sha256Hash txHash = blockStore.get(info.getOrderBlockHash()).getHeader().getTransactions().get(0).getHash(); 
+
+        // Set consumed order record to spent and set spender block to this block's hash
+        blockStore.updateOrderSpent(txHash, Sha256Hash.ZERO_HASH, true, block.getHash());
+
+        // Get virtual reclaim tx
+        Transaction tx = generateReclaimTX(block);
+        
+        // If virtual outputs have not been inserted yet, insert them        
+        insertVirtualUTXOs(block, tx);
+        
+        // Set virtual outputs confirmed
+        confirmTransaction(tx, block.getHash());
     }
 
     private void confirmOrderOpen(Block block) throws BlockStoreException {
@@ -393,9 +443,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         Transaction tx = generateVirtualMiningRewardTX(block);
         
         // If virtual reward tx outputs have not been inserted yet, insert them        
-        insertReward(block, tx);
+        insertVirtualUTXOs(block, tx);
         
-        // Set virtual reward tx outputs to true
+        // Set virtual reward tx outputs confirmed
         confirmTransaction(tx, block.getHash());
         
         // Set used other output spent
@@ -405,14 +455,25 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.updateRewardConfirmed(block.getHash(), true);
     }
 
-    private void insertReward(Block block, Transaction virtualTx) {
+    private void insertVirtualOrderRecords(Block block, Collection<OrderRecord> orders) {
+        try {
+            for (OrderRecord o : orders)
+                blockStore.insertOrder(o);
+        } catch (BlockStoreException e) {
+            // Expected after reorgs
+            log.warn("Probably reinserting orders: ", e);
+        }
+    }
+    
+    private void insertVirtualUTXOs(Block block, Transaction virtualTx) {
         try {
             ArrayList<Transaction> txs = new ArrayList<Transaction>();
             txs.add(virtualTx);
             long height = blockStore.getBlockEvaluation(block.getHash()).getHeight();
-            connectUTXOs(height, txs, block.getTimeSeconds());
+            connectUTXOs(height, txs, block.getTimeSeconds()); 
+            // TODO remove height from UTXOs, such a thing does not exist. Instead it is the confirming blockhashes height
         } catch (BlockStoreException e) {
-            // Expected
+            // Expected after reorgs
             log.warn("Probably reinserting reward: ", e);
         }
     }
@@ -817,9 +878,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 }
             }
             
-            OrderInfo record = new OrderInfo(block.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH, 
+            OrderRecord record = new OrderRecord(block.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH, 
             		offerValue, offerTokenid, false, false, null, reqInfo.getTargetValue(), reqInfo.getTargetTokenid(), 
             		reqInfo.getBeneficiaryPubKey(), NetworkParameters.INITIAL_ORDER_TTL, 0);
+            
             blockStore.insertOrder(record);
         } catch (IOException e) {
             // Cannot happen when connecting
@@ -866,6 +928,214 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
 
         }
+    }
+
+    /**
+     * Deterministically execute the order matching algorithm on this block.
+     * 
+     * @return MODIFIED new consumed orders, virtual order matching tx and newly generated remaining MODIFIED order book
+     * @throws BlockStoreException
+     */
+    public Triple<Collection<OrderRecord>, Transaction, Collection<OrderRecord>> generateOrderMatching(Block block) throws BlockStoreException {
+
+        /*TODO
+        -> Order Match: all consumed order records to spent and set spender block to this block's hash
+        -> Order Match: Insert if nonexistent and set virtual UTXOs to confirmed (cancelled due to ttl or cancelop, executed)
+        -> Order Match: Insert if nonexistent and set new remaining orders to confirmed (where new ttl, remaining value valid) 
+        */
+        // Get previous order matching block
+        Sha256Hash prevRewardHash = null;
+        try {
+            RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
+            prevRewardHash = rewardInfo.getPrevRewardHash();
+        } catch (IOException e) {
+            // Cannot happen since checked before
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+
+        // Collect all orders approved by this block in the reward interval
+        List<BlockWrap> relevantBlocks = collectConsumedOrdersAndOpsBlocks(block, prevRewardHash);
+        
+        // Find all new Cancels, Refreshs and Orders from collected
+        List<OrderOpInfo> cancels = new ArrayList<>(), refreshs = new ArrayList<>();
+        Map<Sha256Hash, OrderRecord> newOrders = new HashMap<>();
+        
+        for (BlockWrap b : relevantBlocks) {
+            if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
+                final Sha256Hash txHash = b.getBlock().getTransactions().get(0).getHash();
+                newOrders.put(txHash, blockStore.getOrder(txHash, Sha256Hash.ZERO_HASH));
+            } else if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OP) {
+                OrderOpInfo info = null;
+                try {
+                    info = OrderOpInfo.parse(b.getBlock().getTransactions().get(0).getData());
+                } catch (IOException e) {
+                    // Cannot happen since checked before
+                    e.printStackTrace();
+                    throw new RuntimeException(e);
+                }
+                if (info.getOp() == OrderOp.CANCEL)
+                    cancels.add(info);
+                else if (info.getOp() == OrderOp.REFRESH)
+                    refreshs.add(info);
+            }
+        }
+        
+        // Add the old leftover orders from the db to get all open orders
+        Map<Sha256Hash, OrderRecord> remainingOrders = blockStore.getOrderMatchingIssuedOrders(prevRewardHash);
+        remainingOrders.putAll(newOrders);
+        
+        // From all orders and ops, begin order matching algorithm:
+        ConcurrentHashMap<String, OrderBook> orderBooks = new ConcurrentHashMap<String, OrderBook>();
+        List<OrderRecord> cancelledOrders = new ArrayList<>();
+        
+        // Process cancel ops
+        for (OrderOpInfo c : cancels) {
+            cancelledOrders.add(remainingOrders.get(c.getTxHash()));
+            remainingOrders.remove(c.getTxHash());
+        }
+        
+        // Match orders
+        Map<ByteBuffer, Map<String, Long>> pubKey2ReceivedTokens = new HashMap<>();
+        // TODO order match, remove fully executed orders, modify partially executed orders
+        // TODO order book: add old ones first, then new ones sorted by their hash xor deterministic randomness (some kind of FIFO)
+        // TODO after order matching, write back by adding executed orders to beneficiary proceeds, dropping fully executed orders and updating partly executed orders
+        // refactor: include the cancels and ttl timeouts below and above in the order book?
+        
+        
+        
+//      OrderBook orderBook = orderBooks.get(order.getTokenId());
+//      if (orderBook == null) {
+//          orderBook = new OrderBook(new OrderBookEvents());
+//          orderBooks.put(order.getTokenId(), orderBook);
+//      }
+        
+        
+        // New remaining: TTL decrease by one unless refreshed, process order timeouts
+        Iterator<Entry<Sha256Hash, OrderRecord>> it = remainingOrders.entrySet().iterator();
+        while (it.hasNext()) {
+            final Entry<Sha256Hash, OrderRecord> next = it.next();
+            OrderRecord order = next.getValue();
+            order.setTtl(order.getTtl() - 1);
+            if (order.getTtl() <= 0) { // TODO unless refreshed, then set to full value again
+                cancelledOrders.add(order);
+                it.remove();
+            }
+        }
+        
+        // Make tx with cancelled and executed orders
+        Transaction tx = new Transaction(networkParameters);
+        // TODO cancelled/executed proceeds tx.addOutput(Coin.valueOf(value, tokenid), ECKey.fromPublicOnly(blockStore.getOrder(orderTx.getHash(), Sha256Hash.ZERO_HASH).getBeneficiaryPubKey()));
+        
+        // The input does not really need to be a valid signature
+        TransactionInput input = new TransactionInput(networkParameters, tx, Script.createInputScript(
+                block.getPrevBlockHash().getBytes(), block.getPrevBranchBlockHash().getBytes()));
+        tx.addInput(input);
+        
+        // Return MODIFIED new consumed orders, virtual order matching tx and newly generated remaining MODIFIED order book
+        return Triple.of(newOrders.values(), tx, remainingOrders.values());
+    }
+
+    private List<BlockWrap> collectConsumedOrdersAndOpsBlocks(Block block, Sha256Hash prevRewardHash) throws BlockStoreException {
+        List<BlockWrap> relevantBlocks = new ArrayList<>();
+        
+        Queue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
+                Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
+
+        BlockWrap prevTrunkBlock = blockStore.getBlockWrap(block.getPrevBlockHash());
+        BlockWrap prevBranchBlock = blockStore.getBlockWrap(block.getPrevBranchBlockHash());
+        blockQueue.add(prevTrunkBlock);
+        blockQueue.add(prevBranchBlock);
+
+        // Read previous reward block's data
+        BlockWrap prevRewardBlock = blockStore.getBlockWrap(prevRewardHash);
+        long prevToHeight = 0;
+        try {
+            RewardInfo rewardInfo = RewardInfo.parse(prevRewardBlock.getBlock().getTransactions().get(0).getData());
+            prevToHeight = rewardInfo.getToHeight();
+        } catch (IOException e) {
+            // Cannot happen since checked before
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+        
+        long fromHeight = prevToHeight + 1;
+        long toHeight = prevToHeight + (long) NetworkParameters.REWARD_HEIGHT_INTERVAL;
+
+        // Initialize
+        BlockWrap currentBlock = null, approvedBlock = null;
+        long currentHeight;
+
+        // Go backwards by height
+        while ((currentBlock = blockQueue.poll()) != null) {
+            currentHeight = currentBlock.getBlockEvaluation().getHeight();
+
+            // Stop criterion: Block height lower than approved interval height
+            if (currentHeight < fromHeight)
+                continue;
+
+            // If in relevant reward height interval and a relevant block, collect it
+            if (currentHeight <= toHeight) {
+                relevantBlocks.add(currentBlock);
+            }
+
+            // Continue with both approved blocks
+            approvedBlock = blockStore.getBlockWrap(currentBlock.getBlock().getPrevBlockHash());
+            if (!blockQueue.contains(approvedBlock)) {
+                if (approvedBlock != null) {
+                    blockQueue.add(approvedBlock);
+                }
+            } 
+            approvedBlock = blockStore.getBlockWrap(currentBlock.getBlock().getPrevBranchBlockHash());
+            if (!blockQueue.contains(approvedBlock)) {
+                if (approvedBlock != null) {
+                    blockQueue.add(approvedBlock);
+                }
+            } 
+        }
+        
+        return relevantBlocks;
+    }
+    
+    /**
+     * Deterministically create a reclaim tx for a lost order. Assumes the block is a valid reclaim block.
+     * 
+     * @return reclaim transaction 
+     * @throws BlockStoreException
+     */
+    public Transaction generateReclaimTX(Block block) throws BlockStoreException {
+        // Read the requested reclaim
+        OrderReclaimInfo info = null;
+        try {
+            info = OrderReclaimInfo.parse(block.getTransactions().get(0).getData());
+        } catch (IOException e) {
+            // Cannot happen.
+            throw new RuntimeException(e);
+        }
+        
+        // Read the referenced order block's tx
+        Transaction orderTx = blockStore.get(info.getOrderBlockHash()).getHeader().getTransactions().get(0); 
+        
+        // Find out how much was spent on the order
+        long value = 0;
+        byte[] tokenid = null;
+        for (TransactionOutput output : orderTx.getOutputs()) {
+            tokenid = output.getValue().getTokenid();
+            value += output.getValue().getValue();
+        }
+        
+        // Build transaction returning the spent tokens
+        Transaction tx = new Transaction(networkParameters);
+        tx.addOutput(Coin.valueOf(value, tokenid), ECKey.fromPublicOnly(blockStore.getOrder(orderTx.getHash(), Sha256Hash.ZERO_HASH).getBeneficiaryPubKey()));
+        
+        // The input does not really need to be a valid signature, as long
+        // as it has the right general form and is slightly different for
+        // different tx
+        TransactionInput input = new TransactionInput(networkParameters, tx, Script.createInputScript(
+                block.getPrevBlockHash().getBytes(), block.getPrevBranchBlockHash().getBytes()));
+        tx.addInput(input);
+
+        return tx;
     }
 
     /**
