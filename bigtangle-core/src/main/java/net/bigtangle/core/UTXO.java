@@ -66,10 +66,6 @@ public class UTXO {
         this.index = index;
     }
 
-    public void setHeight(long height) {
-        this.height = height;
-    }
-
     public void setCoinbase(boolean coinbase) {
         this.coinbase = coinbase;
     }
@@ -83,7 +79,6 @@ public class UTXO {
     private Script script;
     private Sha256Hash hash;
     private long index;
-    private long height;
     private boolean coinbase;
     private String address;
     private Sha256Hash blockhash;
@@ -134,13 +129,12 @@ public class UTXO {
      * @param address
      *            The address.
      */
-    public UTXO(Sha256Hash hash, long index, Coin value, long height, boolean coinbase, Script script, String address,
+    public UTXO(Sha256Hash hash, long index, Coin value, boolean coinbase, Script script, String address,
             Sha256Hash blockhash, String fromaddress, String memo, String tokenid, boolean spent, boolean confirmed,
             boolean spendPending, long minimumsign) {
         this.hash = hash;
         this.index = index;
         this.value = value;
-        this.height = height;
         this.script = script;
         this.coinbase = coinbase;
         this.blockhash = blockhash;
@@ -181,8 +175,8 @@ public class UTXO {
             throw new EOFException();
         index = Utils.readUint32(indexBytes, 0);
 
-        height = ((in.read() & 0xFF)) | ((in.read() & 0xFF) << 8) | ((in.read() & 0xFF) << 16)
-                | ((in.read() & 0xFF) << 24);
+//        height = ((in.read() & 0xFF)) | ((in.read() & 0xFF) << 8) | ((in.read() & 0xFF) << 16)
+//                | ((in.read() & 0xFF) << 24);
 
         byte[] coinbaseByte = new byte[1];
         in.read(coinbaseByte);
@@ -224,11 +218,6 @@ public class UTXO {
     /** The index of this output in the transaction which holds it. */
     public long getIndex() {
         return index;
-    }
-
-    /** Gets the height of the block that created this output. */
-    public long getHeight() {
-        return height;
     }
 
     /** Gets the flag of whether this was created by a coinbase tx. */
@@ -277,10 +266,10 @@ public class UTXO {
         bos.write(hash.getBytes());
         Utils.uint32ToByteStreamLE(index, bos);
 
-        bos.write((int) (0xFF & (height)));
-        bos.write((int) (0xFF & (height >> 8)));
-        bos.write((int) (0xFF & (height >> 16)));
-        bos.write((int) (0xFF & (height >> 24)));
+//        bos.write((int) (0xFF & (height)));
+//        bos.write((int) (0xFF & (height >> 8)));
+//        bos.write((int) (0xFF & (height >> 16)));
+//        bos.write((int) (0xFF & (height >> 24)));
 
         bos.write(new byte[] { (byte) (coinbase ? 1 : 0) });
     }

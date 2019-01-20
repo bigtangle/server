@@ -65,7 +65,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" 
             + "    hash varbinary(32) NOT NULL,\n"
             + "    outputindex bigint NOT NULL,\n"
-            + "    height bigint NOT NULL,\n"
             + "    coinvalue bigint NOT NULL,\n" 
             + "    scriptbytes mediumblob NOT NULL,\n"
             + "    toaddress varchar(255),\n" 
@@ -216,7 +215,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   CONSTRAINT batchblock_pk PRIMARY KEY (pubkey) USING BTREE \n" + ")";
 
     // Some indexes to speed up inserts
-    private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_height_toaddress_idx ON outputs (hash, outputindex, height, toaddress) USING btree";
+    private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_toaddress_idx ON outputs (hash, outputindex, toaddress) USING btree";
     private static final String CREATE_OUTPUTS_TOADDRESS_INDEX = "CREATE INDEX outputs_toaddress_idx ON outputs (toaddress) USING btree";
     private static final String CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX = "CREATE INDEX outputs_addresstargetable_idx ON outputs (addresstargetable) USING btree";
     private static final String CREATE_OUTPUTS_HASH_INDEX = "CREATE INDEX outputs_hash_idx ON outputs (hash) USING btree";

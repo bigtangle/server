@@ -133,23 +133,23 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected final String SELECT_OUTPUTS_COUNT_SQL = "SELECT COUNT(*) FROM outputs WHERE hash = ?";
     protected final String INSERT_OUTPUTS_SQL = getInsert()
-            + " INTO outputs (hash, outputindex, height, coinvalue, scriptbytes, toaddress, addresstargetable,"
+            + " INTO outputs (hash, outputindex, coinvalue, scriptbytes, toaddress, addresstargetable,"
             + " coinbase, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending,time)"
-            + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?,?)";
+            + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-    protected final String SELECT_OUTPUTS_SQL = "SELECT height, coinvalue, scriptbytes, coinbase, toaddress,"
+    protected final String SELECT_OUTPUTS_SQL = "SELECT coinvalue, scriptbytes, coinbase, toaddress,"
             + " addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, "
             + "spendpending FROM outputs WHERE hash = ? AND outputindex = ?";
 
     protected final String SELECT_OUTPUT_CONFIRMING_BLOCK_SQL = "SELECT blockhash FROM outputs WHERE hash = ? AND outputindex = ?";
 
-    protected final String SELECT_OUTPUTS_HISTORY_SQL = "SELECT hash,outputindex,height, coinvalue, scriptbytes, toaddress ,"
+    protected final String SELECT_OUTPUTS_HISTORY_SQL = "SELECT hash,outputindex, coinvalue, scriptbytes, toaddress ,"
             + " addresstargetable, coinbase,blockhash, tokenid, fromaddress, memo, spent, confirmed, "
             + "spendpending,time FROM outputs WHERE 1=1";
 
     protected final String DELETE_OUTPUTS_SQL = "DELETE FROM outputs WHERE hash = ? AND outputindex= ?";
 
-    protected final String SELECT_TRANSACTION_OUTPUTS_SQL = "SELECT " + "outputs.hash, coinvalue, scriptbytes, height, "
+    protected final String SELECT_TRANSACTION_OUTPUTS_SQL = "SELECT " + "outputs.hash, coinvalue, scriptbytes, "
             + " outputs.outputindex, coinbase, " + "case  when outputs.toaddress ='' then outputsmulti.toaddress "
             + "when outputs.toaddress is null then outputsmulti.toaddress "
             + " else outputs.toaddress end, addresstargetable, blockhash, tokenid, "
@@ -159,7 +159,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " WHERE outputs.toaddress = ? " + " OR outputsmulti.toaddress = ?";
 
     protected final String SELECT_TRANSACTION_OUTPUTS_TOKEN_SQL = "SELECT " + " outputs.hash, coinvalue, "
-            + " scriptbytes, height, outputs.outputindex, coinbase, outputs.toaddress, addresstargetable,"
+            + " scriptbytes, outputs.outputindex, coinbase, outputs.toaddress, addresstargetable,"
             + " blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending "
             + " FROM outputs LEFT JOIN outputsmulti "
             + " ON outputs.hash = outputsmulti.hash AND outputs.outputindex = outputsmulti.outputindex "
@@ -841,7 +841,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             // it can be consumed
             // in future.
             Script script = new Script(out.getScriptBytes());
-            UTXO newOut = new UTXO(block.getTransactions().get(0).getHash(), out.getIndex(), out.getValue(), 0, true,
+            UTXO newOut = new UTXO(block.getTransactions().get(0).getHash(), out.getIndex(), out.getValue(), true,
                     script, script.getToAddress(params, true).toString(), block.getHash(), out.getFromaddress(),
                     block.getTransactions().get(0).getMemo(), Utils.HEX.encode(out.getValue().getTokenid()), false,
                     true, false, 0);
@@ -1143,20 +1143,19 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 return null;
             }
             // Parse it.
-            long height = results.getLong(1);
-            Coin coinvalue = Coin.valueOf(results.getLong(2), results.getString(8));
-            byte[] scriptBytes = results.getBytes(3);
-            boolean coinbase = results.getBoolean(4);
-            String address = results.getString(5);
-            Sha256Hash blockhash = results.getBytes(7) != null ? Sha256Hash.wrap(results.getBytes(7)) : null;
+            Coin coinvalue = Coin.valueOf(results.getLong(1), results.getString(7));
+            byte[] scriptBytes = results.getBytes(2);
+            boolean coinbase = results.getBoolean(3);
+            String address = results.getString(4);
+            Sha256Hash blockhash = results.getBytes(6) != null ? Sha256Hash.wrap(results.getBytes(6)) : null;
 
-            String fromaddress = results.getString(9);
-            String memo = results.getString(10);
-            boolean spent = results.getBoolean(11);
-            boolean confirmed = results.getBoolean(12);
-            boolean spendPending = results.getBoolean(13);
+            String fromaddress = results.getString(8);
+            String memo = results.getString(9);
+            boolean spent = results.getBoolean(10);
+            boolean confirmed = results.getBoolean(11);
+            boolean spendPending = results.getBoolean(12);
             String tokenid = results.getString("tokenid");
-            UTXO txout = new UTXO(hash, index, coinvalue, height, coinbase, new Script(scriptBytes), address, blockhash,
+            UTXO txout = new UTXO(hash, index, coinvalue, coinbase, new Script(scriptBytes), address, blockhash,
                     fromaddress, memo, tokenid, spent, confirmed, spendPending, 0);
             return txout;
         } catch (SQLException ex) {
@@ -1181,20 +1180,19 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setBytes(1, out.getHash().getBytes());
             // index is actually an unsigned int
             s.setLong(2, out.getIndex());
-            s.setLong(3, out.getHeight());
-            s.setLong(4, out.getValue().value);
-            s.setBytes(5, out.getScript().getProgram());
-            s.setString(6, out.getAddress());
-            s.setLong(7, out.getScript().getScriptType().ordinal());
-            s.setBoolean(8, out.isCoinbase());
-            s.setBytes(9, out.getBlockhash() != null ? out.getBlockhash().getBytes() : null);
-            s.setString(10, Utils.HEX.encode(out.getValue().tokenid));
-            s.setString(11, out.getFromaddress());
-            s.setString(12, out.getMemo());
-            s.setBoolean(13, out.isSpent());
-            s.setBoolean(14, out.isConfirmed());
-            s.setBoolean(15, out.isSpendPending());
-            s.setLong(16, out.getTime());
+            s.setLong(3, out.getValue().value);
+            s.setBytes(4, out.getScript().getProgram());
+            s.setString(5, out.getAddress());
+            s.setLong(6, out.getScript().getScriptType().ordinal());
+            s.setBoolean(7, out.isCoinbase());
+            s.setBytes(8, out.getBlockhash() != null ? out.getBlockhash().getBytes() : null);
+            s.setString(9, Utils.HEX.encode(out.getValue().tokenid));
+            s.setString(10, out.getFromaddress());
+            s.setString(11, out.getMemo());
+            s.setBoolean(12, out.isSpent());
+            s.setBoolean(13, out.isConfirmed());
+            s.setBoolean(14, out.isSpendPending());
+            s.setLong(15, out.getTime());
             s.executeUpdate();
             s.close();
         } catch (SQLException e) {
@@ -1366,23 +1364,22 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 ResultSet rs = s.executeQuery();
                 while (rs.next()) {
                     Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));
-                    Coin amount = Coin.valueOf(rs.getLong(2), rs.getString(10));
+                    Coin amount = Coin.valueOf(rs.getLong(2), rs.getString(9));
                     byte[] scriptBytes = rs.getBytes(3);
-                    int height = rs.getInt(4);
-                    int index = rs.getInt(5);
-                    boolean coinbase = rs.getBoolean(6);
-                    String toAddress = rs.getString(7);
-                    // addresstargetable =rs.getBytes(8);
-                    Sha256Hash blockhash = rs.getBytes(9) != null ? Sha256Hash.wrap(rs.getBytes(9)) : null;
+                    int index = rs.getInt(4);
+                    boolean coinbase = rs.getBoolean(5);
+                    String toAddress = rs.getString(6);
+                    // addresstargetable =rs.getBytes(7);
+                    Sha256Hash blockhash = rs.getBytes(8) != null ? Sha256Hash.wrap(rs.getBytes(8)) : null;
 
-                    String fromaddress = rs.getString(11);
-                    String memo = rs.getString(12);
-                    boolean spent = rs.getBoolean(13);
-                    boolean confirmed = rs.getBoolean(14);
-                    boolean spendPending = rs.getBoolean(15);
+                    String fromaddress = rs.getString(10);
+                    String memo = rs.getString(11);
+                    boolean spent = rs.getBoolean(12);
+                    boolean confirmed = rs.getBoolean(13);
+                    boolean spendPending = rs.getBoolean(14);
                     String tokenid = rs.getString("tokenid");
                     long minimumsign = rs.getLong("minimumsign");
-                    UTXO output = new UTXO(hash, index, amount, height, coinbase, new Script(scriptBytes), toAddress,
+                    UTXO output = new UTXO(hash, index, amount, coinbase, new Script(scriptBytes), toAddress,
                             blockhash, fromaddress, memo, tokenid, spent, confirmed, spendPending, minimumsign);
                     outputs.add(output);
                 }
@@ -1417,23 +1414,22 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 ResultSet rs = s.executeQuery();
                 while (rs.next()) {
                     Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));
-                    Coin amount = Coin.valueOf(rs.getLong(2), rs.getString(10));
+                    Coin amount = Coin.valueOf(rs.getLong(2), rs.getString(9));
                     byte[] scriptBytes = rs.getBytes(3);
-                    int height = rs.getInt(4);
-                    int index = rs.getInt(5);
-                    boolean coinbase = rs.getBoolean(6);
-                    String toAddress = rs.getString(7);
-                    // addresstargetable =rs.getBytes(8);
-                    Sha256Hash blockhash = Sha256Hash.wrap(rs.getBytes(9));
+                    int index = rs.getInt(4);
+                    boolean coinbase = rs.getBoolean(5);
+                    String toAddress = rs.getString(6);
+                    // addresstargetable =rs.getBytes(7);
+                    Sha256Hash blockhash = rs.getBytes(8) != null ? Sha256Hash.wrap(rs.getBytes(8)) : null;
 
-                    String fromaddress = rs.getString(11);
-                    String memo = rs.getString(12);
-                    boolean spent = rs.getBoolean(13);
-                    boolean confirmed = rs.getBoolean(14);
-                    boolean spendPending = rs.getBoolean(15);
+                    String fromaddress = rs.getString(10);
+                    String memo = rs.getString(11);
+                    boolean spent = rs.getBoolean(12);
+                    boolean confirmed = rs.getBoolean(13);
+                    boolean spendPending = rs.getBoolean(14);
                     String tokenid = rs.getString("tokenid");
                     long minimumsign = rs.getLong("minimumsign");
-                    UTXO output = new UTXO(hash, index, amount, height, coinbase, new Script(scriptBytes), toAddress,
+                    UTXO output = new UTXO(hash, index, amount, coinbase, new Script(scriptBytes), toAddress,
                             blockhash, fromaddress, memo, tokenid, spent, confirmed, spendPending, minimumsign);
                     outputs.add(output);
                 }
@@ -1580,7 +1576,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 Sha256Hash hash = Sha256Hash.wrap(rs.getBytes("hash"));
                 Coin amount = Coin.valueOf(rs.getLong("coinvalue"), rs.getString("tokenid"));
                 byte[] scriptBytes = rs.getBytes("scriptbytes");
-                int height = rs.getInt("height");
                 int index = rs.getInt("outputindex");
                 boolean coinbase = rs.getBoolean("coinbase");
                 String toAddress = rs.getString("toaddress");
@@ -1594,7 +1589,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 boolean spendPending = rs.getBoolean("spendpending");
                 String tokenid = rs.getString("tokenid");
                 long minimumsign = 0;
-                UTXO output = new UTXO(hash, index, amount, height, coinbase, new Script(scriptBytes), toAddress,
+                UTXO output = new UTXO(hash, index, amount, coinbase, new Script(scriptBytes), toAddress,
                         blockhash, fromaddress1, memo, tokenid, spent, confirmed, spendPending, minimumsign);
                 output.setTime(rs.getLong("time"));
                 UTXOs.add(output);
@@ -3858,7 +3853,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 return null;
             }
             UserData userData = new UserData();
-            Sha256Hash blockhash = Sha256Hash.wrap(resultSet.getBytes("blockhash"));
+            Sha256Hash blockhash = resultSet.getBytes("blockhash") != null ? Sha256Hash.wrap(resultSet.getBytes("blockhash")) : null;
             userData.setBlockhash(blockhash);
             userData.setData(resultSet.getBytes("data"));
             userData.setDataclassname(resultSet.getString("dataclassname"));
@@ -3924,7 +3919,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             List<UserData> list = new ArrayList<UserData>();
             while (resultSet.next()) {
                 UserData userData = new UserData();
-                Sha256Hash blockhash = Sha256Hash.wrap(resultSet.getBytes("blockhash"));
+                Sha256Hash blockhash = resultSet.getBytes("blockhash") != null ? Sha256Hash.wrap(resultSet.getBytes("blockhash")) : null;
                 userData.setBlockhash(blockhash);
                 userData.setData(resultSet.getBytes("data"));
                 userData.setDataclassname(resultSet.getString("dataclassname"));
@@ -4244,7 +4239,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public UTXO getOutputsWithHexStr(byte[] hash, long outputindex) throws BlockStoreException {
-        String sql = "SELECT height, coinvalue, scriptbytes, coinbase, toaddress,"
+        String sql = "SELECT coinvalue, scriptbytes, coinbase, toaddress,"
                 + " addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, "
                 + " spendpending FROM outputs WHERE hash = ? and outputindex = ?";
 
@@ -4259,23 +4254,22 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 return null;
             }
             // Parse it.
-            long height = results.getLong(1);
-            Coin coinvalue = Coin.valueOf(results.getLong(2), results.getString(8));
-            byte[] scriptBytes = results.getBytes(3);
-            boolean coinbase = results.getBoolean(4);
-            String address = results.getString(5);
-            Sha256Hash blockhash = results.getBytes(7) != null ? Sha256Hash.wrap(results.getBytes(7)) : null;
+            Coin coinvalue = Coin.valueOf(results.getLong(1), results.getString(7));
+            byte[] scriptBytes = results.getBytes(2);
+            boolean coinbase = results.getBoolean(3);
+            String address = results.getString(4);
+            Sha256Hash blockhash = results.getBytes(6) != null ? Sha256Hash.wrap(results.getBytes(6)) : null;
 
-            String fromaddress = results.getString(9);
-            String memo = results.getString(10);
-            boolean spent = results.getBoolean(11);
-            boolean confirmed = results.getBoolean(12);
-            boolean spendPending = results.getBoolean(13);
+            String fromaddress = results.getString(8);
+            String memo = results.getString(9);
+            boolean spent = results.getBoolean(10);
+            boolean confirmed = results.getBoolean(11);
+            boolean spendPending = results.getBoolean(12);
             String tokenid = results.getString("tokenid");
 
             // long outputindex = results.getLong("outputindex");
 
-            UTXO utxo = new UTXO(Sha256Hash.wrap(hash), outputindex, coinvalue, height, coinbase,
+            UTXO utxo = new UTXO(Sha256Hash.wrap(hash), outputindex, coinvalue, coinbase,
                     new Script(scriptBytes), address, blockhash, fromaddress, memo, tokenid, spent, confirmed,
                     spendPending, 0);
             return utxo;

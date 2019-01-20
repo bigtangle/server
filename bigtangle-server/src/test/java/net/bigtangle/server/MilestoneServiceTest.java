@@ -580,8 +580,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isMilestone());
 
         // Third mining reward block should now instead go through since
-        // everything is
-        // updated
+        // everything is updated
         rollingBlock = rewardBlock3;
         for (int i = 1; i < 60; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);

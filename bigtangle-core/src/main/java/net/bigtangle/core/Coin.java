@@ -283,8 +283,8 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         return this.value;
     }
 
-    private static final MonetaryFormat FRIENDLY_FORMAT = MonetaryFormat.BTA.minDecimals(0)
-            .repeatOptionalDecimals(1, 3).postfixCode();
+//    private static final MonetaryFormat FRIENDLY_FORMAT = MonetaryFormat.BTA.minDecimals(0)
+//            .repeatOptionalDecimals(1, 3).postfixCode();
 
  
  

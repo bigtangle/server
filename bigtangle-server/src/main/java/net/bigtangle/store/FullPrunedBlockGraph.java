@@ -481,9 +481,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         try {
             ArrayList<Transaction> txs = new ArrayList<Transaction>();
             txs.add(virtualTx);
-            long height = blockStore.getBlockEvaluation(block.getHash()).getHeight();
-            connectUTXOs(height, txs, block.getTimeSeconds()); 
-            // TODO remove height from UTXOs, such a thing does not exist. Instead it is the confirming blockhashes height
+            connectUTXOs(txs); 
         } catch (BlockStoreException e) {
             // Expected after reorgs
             log.warn("Probably reinserting reward: ", e);
@@ -889,11 +887,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     protected void connectUTXOs(Block block, long height) throws BlockStoreException, VerificationException {
         List<Transaction> transactions = block.getTransactions();
-        long timeSeconds = block.getTimeSeconds();
-        connectUTXOs(height, transactions, timeSeconds);
+        connectUTXOs(transactions);
     }
 
-    private void connectUTXOs(long height, List<Transaction> transactions, long timeSeconds)
+    private void connectUTXOs(List<Transaction> transactions)
             throws BlockStoreException {
         for (final Transaction tx : transactions) {
             boolean isCoinBase = tx.isCoinBase();
@@ -908,10 +905,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             Sha256Hash hash = tx.getHash();
             for (TransactionOutput out : tx.getOutputs()) {
                 Script script = getScript(out.getScriptBytes());
-                UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), height, isCoinBase, script,
+                UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), isCoinBase, script,
                         getScriptAddress(script), null, out.getFromaddress(), tx.getMemo(),
                         Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0);
-                newOut.setTime(timeSeconds);
+                newOut.setTime(System.currentTimeMillis() / 1000);
                 blockStore.addUnspentTransactionOutput(newOut);
                 if (script.isSentToMultiSig()) {
                     int minsignnumber = script.getNumberOfSignaturesRequiredToSpend();

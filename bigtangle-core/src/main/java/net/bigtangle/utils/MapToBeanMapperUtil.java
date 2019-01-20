@@ -38,13 +38,13 @@ public abstract class MapToBeanMapperUtil {
         Sha256Hash hash = Sha256Hash.wrap((String) map.get("hashHex"));
         long index = (Integer) map.get("index");
         Coin amount = parseCoin((Map<String, Object>) map.get("value"));
-        long height = (Integer) map.get("height");
+        //long height = (Integer) map.get("height");
         boolean coinbase = (Boolean) map.get("coinbase");
         String scriptHex = (String) map.get("scriptHex");
         String address = (String) map.get("address");
         String fromaddress = (String) map.get("fromaddress");
         Sha256Hash blockhash = map.get("blockHashHex") != "" ? Sha256Hash.wrap((String) map.get("blockHashHex")) : null;
-        String description = (String) map.get("description");
+        //String description = (String) map.get("description");
         String tokenHex = (String) amount.getTokenHex();
         // System.out.println("tokenHex==" + tokenHex);
         boolean spent = (Boolean) map.get("spent");
@@ -53,7 +53,7 @@ public abstract class MapToBeanMapperUtil {
         boolean spendPending = (Boolean) map.get("spendPending");
         String memo = (String) map.get("memo");
         long minimumsign = Long.parseLong( map.get("minimumsign")+"");
-        UTXO output = new UTXO(hash, index, amount, height, coinbase, new Script(Utils.HEX.decode(scriptHex)), address,
+        UTXO output = new UTXO(hash, index, amount, coinbase, new Script(Utils.HEX.decode(scriptHex)), address,
                 blockhash, fromaddress, memo, tokenHex, spent, confirmed, spendPending, minimumsign);
         return output;
     }

@@ -1096,7 +1096,7 @@ public class ValidatorService {
                     // it can be consumed
                     // in future.
                     Script script = getScript(out.getScriptBytes());
-                    UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), height, isCoinBase, script,
+                    UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), isCoinBase, script,
                             getScriptAddress(script), block.getHash(), out.getFromaddress(), tx.getMemo(),
                             Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0);
 

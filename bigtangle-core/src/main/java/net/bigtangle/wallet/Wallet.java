@@ -2680,57 +2680,56 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         return false;
     }
 
-    /**
-     * Returns the spendable candidates from the {@link UTXOProvider} based on
-     * keys that the wallet contains.
-     * 
-     * @return The list of candidates.
-     */
-    protected LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(
-            boolean excludeImmatureCoinbases) {
-        checkState(lock.isHeldByCurrentThread());
-        checkNotNull(vUTXOProvider, "No UTXO provider has been set");
-        LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
-        try {
-            // TODO fix this by putting depth into FreeStandingTransactionOutput
-            long chainHeight = 0;
-            for (UTXO output : getStoredOutputsFromUTXOProvider()) {
-                boolean coinbase = output.isCoinbase();
-                long depth = chainHeight - output.getHeight() + 1; // the
-                                                                   // current
-                                                                   // depth of
-                                                                   // the output
-                                                                   // (1 = same
-                                                                   // as head).
-                // Do not try and spend coinbases that were mined too recently,
-                // the protocol forbids it.
-                if (!excludeImmatureCoinbases || !coinbase || depth >= params.getSpendableCoinbaseDepth()) {
-                    candidates.add(new FreeStandingTransactionOutput(params, output, chainHeight));
-                }
-            }
-        } catch (UTXOProviderException e) {
-            throw new RuntimeException("UTXO provider error", e);
-        }
-        // We need to handle the pending transactions that we know about.
-        for (Transaction tx : pending.values()) {
-            // Remove the spent outputs.
-            for (TransactionInput input : tx.getInputs()) {
-                if (input.getConnectedOutput().isMine(this)) {
-                    candidates.remove(input.getConnectedOutput());
-                }
-            }
-            // Add change outputs. Do not try and spend coinbases that were
-            // mined too recently, the protocol forbids it.
-            if (!excludeImmatureCoinbases) {
-                for (TransactionOutput output : tx.getOutputs()) {
-                    if (output.isAvailableForSpending() && output.isMine(this)) {
-                        candidates.add(output);
-                    }
-                }
-            }
-        }
-        return candidates;
-    }
+//    /**
+//     * Returns the spendable candidates from the {@link UTXOProvider} based on
+//     * keys that the wallet contains.
+//     * 
+//     * @return The list of candidates.
+//     */
+//    protected LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(
+//            boolean excludeImmatureCoinbases) {
+//        checkState(lock.isHeldByCurrentThread());
+//        checkNotNull(vUTXOProvider, "No UTXO provider has been set");
+//        LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
+//        try {
+//            long chainHeight = 0;
+//            for (UTXO output : getStoredOutputsFromUTXOProvider()) {
+//                boolean coinbase = output.isCoinbase();
+//                long depth = chainHeight - output.getHeight() + 1; // the
+//                                                                   // current
+//                                                                   // depth of
+//                                                                   // the output
+//                                                                   // (1 = same
+//                                                                   // as head).
+//                // Do not try and spend coinbases that were mined too recently,
+//                // the protocol forbids it.
+//                if (!excludeImmatureCoinbases || !coinbase || depth >= params.getSpendableCoinbaseDepth()) {
+//                    candidates.add(new FreeStandingTransactionOutput(params, output, chainHeight));
+//                }
+//            }
+//        } catch (UTXOProviderException e) {
+//            throw new RuntimeException("UTXO provider error", e);
+//        }
+//        // We need to handle the pending transactions that we know about.
+//        for (Transaction tx : pending.values()) {
+//            // Remove the spent outputs.
+//            for (TransactionInput input : tx.getInputs()) {
+//                if (input.getConnectedOutput().isMine(this)) {
+//                    candidates.remove(input.getConnectedOutput());
+//                }
+//            }
+//            // Add change outputs. Do not try and spend coinbases that were
+//            // mined too recently, the protocol forbids it.
+//            if (!excludeImmatureCoinbases) {
+//                for (TransactionOutput output : tx.getOutputs()) {
+//                    if (output.isAvailableForSpending() && output.isMine(this)) {
+//                        candidates.add(output);
+//                    }
+//                }
+//            }
+//        }
+//        return candidates;
+//    }
 
     /**
      * Get all the {@link UTXO}'s from the {@link UTXOProvider} based on keys
