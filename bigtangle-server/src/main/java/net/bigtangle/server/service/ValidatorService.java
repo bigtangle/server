@@ -420,7 +420,7 @@ public class ValidatorService {
                     return store.getTokenSpent(connectedToken.getPrevblockhash());
             case REWARDISSUANCE:
                 return store.getRewardSpent(c.getConflictPoint().getConnectedReward().getPrevRewardHash());
-            case ORDER:
+            case ORDERRECLAIM:
                 OrderRecordInfo connectedOrder = c.getConflictPoint().getConnectedOrder();
                 return store.getOrderSpent(connectedOrder.getTxHash(), connectedOrder.getIssuingMatcherBlockHash());
             default:
@@ -442,9 +442,11 @@ public class ValidatorService {
                 return store.getTokenConfirmed(connectedToken.getPrevblockhash());
         case REWARDISSUANCE:
             return store.getRewardConfirmed(c.getConflictPoint().getConnectedReward().getPrevRewardHash());
-        case ORDER:
+        case ORDERRECLAIM:
             OrderRecordInfo connectedOrder = c.getConflictPoint().getConnectedOrder();
-            return store.getOrderConfirmed(connectedOrder.getTxHash(), connectedOrder.getIssuingMatcherBlockHash());
+            // To reclaim, not only must the order record be confirmed, but it must be confirmed by the issuing block as well
+            return store.getOrderConfirmed(connectedOrder.getTxHash(), connectedOrder.getIssuingMatcherBlockHash())
+                    && store.getBlockEvaluation(connectedOrder.getIssuingMatcherBlockHash()).isMilestone();
         default:
             throw new NotImplementedException();
     }
@@ -575,7 +577,7 @@ public class ValidatorService {
         .flatMap(b -> b.toConflictCandidates().stream())
         .filter(c -> {
             try {
-                return !isConfirmed(c); // Any candidates where used output unconfirmed
+                return !isConfirmed(c); // Any candidates where used dependencies unconfirmed
             } catch (BlockStoreException e) {
                 // Cannot happen.
                 e.printStackTrace();
@@ -882,7 +884,7 @@ public class ValidatorService {
             if (txRewardSpender == null)
                 return null;
             return store.getBlockWrap(txRewardSpender);
-        case ORDER:
+        case ORDERRECLAIM:
             OrderRecordInfo connectedOrder = c.getConflictPoint().getConnectedOrder();
             final Sha256Hash orderSpender = store.getOrderSpender(connectedOrder.getTxHash(), connectedOrder.getIssuingMatcherBlockHash());
             if (orderSpender == null)
@@ -927,7 +929,7 @@ public class ValidatorService {
             }
 
         	// TODO different block type transactions should include their block type in the transaction hash
-            // for now, we must disallow someone respending this transaction as non-order opening
+            // for now, we must disallow someone burning this transaction as non-order opening
             if (block.getBlockType() != Type.BLOCKTYPE_ORDER_OPEN && block.getTransactions().size() > 0) {
                 try {
                 	OrderOpenInfo.parse(block.getTransactions().get(0).getData());
@@ -1349,6 +1351,7 @@ public class ValidatorService {
         }
         
         // Check bounds for target coin values
+        // TODO after changing the values to 256 bit, remove the value limitations!
         if (orderInfo.getTargetValue() < 1 || orderInfo.getTargetValue() > Integer.MAX_VALUE) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Invalid target value");
@@ -1385,6 +1388,7 @@ public class ValidatorService {
                 throw new VerificationException("The order is too large.");
             return SolidityState.getFailState();     
         }
+        
 
         // Check that either the burnt token or the target token is BIG
 		if (tokenid.equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) && orderInfo.getTargetTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)
@@ -1393,6 +1397,21 @@ public class ValidatorService {
                 throw new VerificationException("Invalid exchange combination. Ensure BIG is sold or bought.");
             return SolidityState.getFailState();     
 		}
+        
+        // Check that we have a correct price given in full BIGs
+        if (tokenid.equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
+            if (value % orderInfo.getTargetValue() != 0) {
+                if (throwExceptions)
+                    throw new VerificationException("The given order's price is not integer.");
+                return SolidityState.getFailState();     
+            }
+        } else {
+            if (orderInfo.getTargetValue() % value != 0) {
+                if (throwExceptions)
+                    throw new VerificationException("The given order's price is not integer.");
+                return SolidityState.getFailState();     
+            }
+        }
         
         return SolidityState.getSuccessState();
     }

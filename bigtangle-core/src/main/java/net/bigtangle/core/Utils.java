@@ -652,4 +652,14 @@ public class Utils {
             throw new RuntimeException(e);
         }
     }
+    
+    /**
+     * Xors the arrays
+     */
+    public static byte[] xor(byte[] a, byte[] b) {
+        byte[] c = new byte[a.length];
+        for (int i = 0; i < a.length; i++) 
+            c[i] = (byte) (a[i] ^ b[i]);
+        return c;
+    }
 }

@@ -6,17 +6,15 @@ package net.bigtangle.server.ordermatch.bean;
 
 import java.util.ArrayList;
 
-import org.apache.commons.math3.fraction.Fraction;
-
 class PriceLevel {
 
     private Side side;
 
-    private Fraction price;
+    private long price;
 
     private ArrayList<Order> orders;
 
-    public PriceLevel(Side side, Fraction price) {
+    public PriceLevel(Side side, long price) {
         this.side   = side;
         this.price  = price;
         this.orders = new ArrayList<>();
@@ -26,7 +24,7 @@ class PriceLevel {
         return side;
     }
 
-    public Fraction getPrice() {
+    public long getPrice() {
         return price;
     }
 

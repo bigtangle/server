@@ -4818,10 +4818,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
     
     @Override
-    public Map<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrders(Sha256Hash issuingMatcherBlockHash) throws BlockStoreException {
+    public HashMap<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrders(Sha256Hash issuingMatcherBlockHash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
-        Map<Sha256Hash, OrderRecord> result = new HashMap<>();
+        HashMap<Sha256Hash, OrderRecord> result = new HashMap<>();
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_ORDERS_BY_ISSUER_SQL);
             preparedStatement.setBytes(1, issuingMatcherBlockHash.getBytes());

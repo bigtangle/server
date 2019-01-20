@@ -47,7 +47,7 @@ public class ConflictPoint {
     }
 
     public static ConflictPoint fromOrder(OrderRecordInfo connectedOrder) {
-        return new ConflictPoint(ConflictType.ORDER, null, null, null, connectedOrder);
+        return new ConflictPoint(ConflictType.ORDERRECLAIM, null, null, null, connectedOrder);
     }
     
     @Override
@@ -70,7 +70,7 @@ public class ConflictPoint {
         case TXOUT:
             return getConnectedOutpoint().getIndex() == other.getConnectedOutpoint().getIndex()
                     && getConnectedOutpoint().getHash().equals(other.getConnectedOutpoint().getHash());
-		case ORDER:
+		case ORDERRECLAIM:
 			return getConnectedOrder().getTxHash().equals(other.getConnectedOrder().getTxHash())
 					&& getConnectedOrder().getIssuingMatcherBlockHash().equals(other.getConnectedOrder().getIssuingMatcherBlockHash());
 		default:
@@ -87,7 +87,7 @@ public class ConflictPoint {
             return Objects.hashCode(getConnectedToken().getTokenid(), getConnectedToken().getTokenindex());
         case TXOUT:
             return Objects.hashCode(getConnectedOutpoint().getIndex(), getConnectedOutpoint().getHash());
-		case ORDER:
+		case ORDERRECLAIM:
             return Objects.hashCode(getConnectedOrder().getTxHash(), getConnectedOrder().getIssuingMatcherBlockHash());
 		default:
 			throw new NotImplementedException("Conflicts not implemented.");
@@ -95,7 +95,7 @@ public class ConflictPoint {
     }
 
     public enum ConflictType {
-        TXOUT, TOKENISSUANCE, REWARDISSUANCE, ORDER
+        TXOUT, TOKENISSUANCE, REWARDISSUANCE, ORDERRECLAIM
     }
 
     public ConflictType getType() {

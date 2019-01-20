@@ -4,8 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server.ordermatch.bean;
 
-import org.apache.commons.math3.fraction.Fraction;
-
 /**
  * The interface for outbound events from an order book.
  */
@@ -23,7 +21,7 @@ public interface OrderBookListener {
      * @param remainingQuantity the remaining quantity of the resting order
      */
     void match(String restingOrderId, String incomingOrderId, Side incomingSide,
-            Fraction price, long executedQuantity, long remainingQuantity);
+            long price, long executedQuantity, long remainingQuantity);
 
     /**
      * Add an order to the order book.
@@ -33,7 +31,7 @@ public interface OrderBookListener {
      * @param price the limit price
      * @param size the size
      */
-    void add(String orderId, Side side, Fraction price, long size);
+    void add(String orderId, Side side, long price, long size);
 
     /**
      * Cancel a quantity of an order.

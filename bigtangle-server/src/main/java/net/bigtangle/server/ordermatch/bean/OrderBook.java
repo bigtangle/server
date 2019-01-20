@@ -4,23 +4,21 @@
  *******************************************************************************/
 package net.bigtangle.server.ordermatch.bean;
 
-import java.util.Comparator;
+import it.unimi.dsi.fastutil.longs.Long2ObjectRBTreeMap;
+import it.unimi.dsi.fastutil.longs.LongComparators;
+
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import org.apache.commons.math3.fraction.Fraction;
-
-import it.unimi.dsi.fastutil.objects.Object2ObjectRBTreeMap;
 
 /**
  * An order book.
  */
 public class OrderBook {
 
-    private Object2ObjectRBTreeMap<Fraction, PriceLevel> bids;
-    private Object2ObjectRBTreeMap<Fraction, PriceLevel> asks;
+    private Long2ObjectRBTreeMap<PriceLevel> bids;
+    private Long2ObjectRBTreeMap<PriceLevel> asks;
 
 //    private Long2ObjectOpenHashMap<Order> orders;
     private ConcurrentHashMap<String, Order> orders;
@@ -43,19 +41,18 @@ public class OrderBook {
      * @param listener a listener for outbound events from the order book
      */
     public OrderBook(OrderBookListener listener) {
-        final Comparator<Fraction> naturalComparator = Comparator.naturalOrder();
-        this.bids = new Object2ObjectRBTreeMap<>(naturalComparator.reversed());
-        this.asks = new Object2ObjectRBTreeMap<>(naturalComparator);
+        this.bids = new Long2ObjectRBTreeMap<>(LongComparators.OPPOSITE_COMPARATOR);
+        this.asks = new Long2ObjectRBTreeMap<>(LongComparators.NATURAL_COMPARATOR);
 //        this.orders = new Long2ObjectOpenHashMap<>();
         this.orders = new ConcurrentHashMap<String, Order>();
         this.listener = listener;
     }
     
-    public void enter(long orderId_, Side side, Fraction price, long size) {
+    public void enter(long orderId_, Side side, long price, long size) {
         this.enter(String.valueOf(orderId_), side, price, size);
     }
 
-    public void enter(Side side, Fraction price, long size) {
+    public void enter(Side side, long price, long size) {
         this.enter(UUID.randomUUID().toString().replaceAll("-", ""), side, price, size);
     }
 
@@ -76,7 +73,7 @@ public class OrderBook {
      * @param price the limit price
      * @param size the size
      */
-    public void enter(String orderId, Side side, Fraction price, long size) {
+    public void enter(String orderId, Side side, long price, long size) {
         try {
             this.lock();
             if (orders.containsKey(orderId)) {
@@ -92,12 +89,12 @@ public class OrderBook {
         }
     }
 
-    private void buy(String orderId, Fraction price, long size) {
+    private void buy(String orderId, long price, long size) {
         long remainingQuantity = size;
 
         PriceLevel bestLevel = getBestLevel(asks);
 
-        while (remainingQuantity > 0 && bestLevel != null && bestLevel.getPrice().compareTo(price) <= 0) {
+        while (remainingQuantity > 0 && bestLevel != null && bestLevel.getPrice() <= price) {
             remainingQuantity = bestLevel.match(orderId, Side.BUY, remainingQuantity, listener);
 
             if (bestLevel.isEmpty())
@@ -113,12 +110,12 @@ public class OrderBook {
         }
     }
 
-    private void sell(String orderId, Fraction price, long size) {
+    private void sell(String orderId, long price, long size) {
         long remainingQuantity = size;
 
         PriceLevel bestLevel = getBestLevel(bids);
 
-        while (remainingQuantity > 0 && bestLevel != null && bestLevel.getPrice().compareTo(price) >= 0) {
+        while (remainingQuantity > 0 && bestLevel != null && bestLevel.getPrice() >= price) {
             remainingQuantity = bestLevel.match(orderId, Side.SELL, remainingQuantity, listener);
 
             if (bestLevel.isEmpty())
@@ -177,14 +174,14 @@ public class OrderBook {
         }
     }
 
-    private PriceLevel getBestLevel(Object2ObjectRBTreeMap<Fraction, PriceLevel> levels) {
+    private PriceLevel getBestLevel(Long2ObjectRBTreeMap<PriceLevel> levels) {
         if (levels.isEmpty())
             return null;
 
-        return levels.get(levels.firstKey());
+        return levels.get(levels.firstLongKey());
     }
 
-    private Order add(Object2ObjectRBTreeMap<Fraction, PriceLevel> levels, String orderId, Side side, Fraction price, long size) {
+    private Order add(Long2ObjectRBTreeMap<PriceLevel> levels, String orderId, Side side, long price, long size) {
         PriceLevel level = levels.get(price);
         if (level == null) {
             level = new PriceLevel(side, price);

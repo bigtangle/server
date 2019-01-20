@@ -5,6 +5,7 @@
 
 package net.bigtangle.store;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -247,7 +248,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
 	public void updateOrderSpent(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash, boolean spent, Sha256Hash spenderBlockHash) throws BlockStoreException;
 
-	public Map<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrders(Sha256Hash issuingMatcherBlockHash) throws BlockStoreException;
+	public HashMap<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrders(Sha256Hash issuingMatcherBlockHash) throws BlockStoreException;
 	
     /* Reward TXOs */
     public Sha256Hash getMaxConfirmedRewardBlockHash() throws BlockStoreException;
