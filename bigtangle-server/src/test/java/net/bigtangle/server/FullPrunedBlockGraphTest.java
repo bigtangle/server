@@ -27,6 +27,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderOpenInfo;
+import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
@@ -521,6 +522,89 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
 		// Ensure virtual UTXOs are now confirmed
 		Transaction tx = blockGraph.generateOrderMatching(rewardBlock1).getMiddle();
+        final UTXO utxo1 = transactionService.getUTXO(tx.getOutput(0).getOutPointFor());
+        assertTrue(utxo1.isConfirmed());
+        assertFalse(utxo1.isSpent());
+	}
+
+    @Test
+    public void testConfirmOrderReclaimUTXOs() throws Exception {
+        store.resetStore();
+		@SuppressWarnings("deprecation")
+		ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		
+		Block block1 = null;
+		{
+			// Make a buy order for "test"s
+			Transaction tx = new Transaction(networkParameters);
+			OrderOpenInfo info = new OrderOpenInfo(2, "test", genesiskey.getPubKey());
+			tx.setData(info.toByteArray());
+	        
+	        // Create burning 2 BIG
+			List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+			TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+			        0);
+			Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
+			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, genesiskey));
+			tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), genesiskey));
+			TransactionInput input = tx.addInput(spendableOutput);
+			Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+			
+			TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+			        false);
+			Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+			input.setScriptSig(inputScript);
+	
+	        // Create block with order
+			block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+			block1.addTransaction(tx);
+			block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+			block1.solve();
+			this.blockGraph.add(block1, true);
+		}
+		
+		// Generate blocks until passing first reward interval
+        Block rollingBlock1 = networkParameters.getGenesisBlock();
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            blockGraph.add(rollingBlock1, true);
+        }
+
+        // Generate mining reward block
+        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock1.getHash(), rollingBlock1.getHash());
+        Block fusingBlock = rewardBlock1.createNextBlock(block1);
+        blockGraph.add(fusingBlock, false);
+        
+        // Try order reclaim
+		Block block2 = null;
+		{
+			Transaction tx = new Transaction(networkParameters);
+			OrderReclaimInfo info = new OrderReclaimInfo(0, block1.getHash(), rewardBlock1.getHash());
+			tx.setData(info.toByteArray());
+	
+	        // Create block with order reclaim
+			block2 = fusingBlock.createNextBlock(fusingBlock);
+			block2.addTransaction(tx);
+			block2.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
+			block2.solve();
+			this.blockGraph.add(block2, false);
+		}
+        
+        // Confirm
+        blockGraph.confirm(rewardBlock1.getHash(), new HashSet<>());
+        blockGraph.confirm(block2.getHash(), new HashSet<>());
+
+        // Reward should be confirmed
+        assertTrue(store.getRewardConfirmed(rewardBlock1.getHash()));
+        assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
+
+        // Order should be confirmed and spent now
+        assertTrue(store.getOrderConfirmed(block1.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH));
+        assertTrue(store.getOrderSpent(block1.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH));
+
+        // Since the order matching did not collect the confirmed block, the reclaim works
+        Transaction tx = blockGraph.generateReclaimTX(block2);
         final UTXO utxo1 = transactionService.getUTXO(tx.getOutput(0).getOutPointFor());
         assertTrue(utxo1.isConfirmed());
         assertFalse(utxo1.isSpent());

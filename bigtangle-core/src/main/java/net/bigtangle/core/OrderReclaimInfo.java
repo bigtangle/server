@@ -45,8 +45,8 @@ public class OrderReclaimInfo implements java.io.Serializable {
 		return blockHash;
 	}
 
-	public void setTxHash(Sha256Hash txHash) {
-		this.blockHash = txHash;
+	public void setOrderBlockHash(Sha256Hash orderBlockHash) {
+		this.blockHash = orderBlockHash;
 	}
 
 	public Sha256Hash getNonConfirmingMatcherBlockHash() {

@@ -1419,20 +1419,46 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             throw new RuntimeException(e);
         }
         
-        // Read the referenced order block's tx
+        // Read the referenced order block
         Transaction orderTx = blockStore.get(info.getOrderBlockHash()).getHeader().getTransactions().get(0); 
         
         // Find out how much was spent on the order
-        long value = 0;
-        byte[] tokenid = null;
-        for (TransactionOutput output : orderTx.getOutputs()) {
-            tokenid = output.getValue().getTokenid();
-            value += output.getValue().getValue();
+        // TODO refactor this, this happens at three different places
+        String offerTokenid = null;
+        long offerValue = 0;
+        for (int index = 0; index < orderTx.getInputs().size(); index++) {
+            TransactionInput in = orderTx.getInputs().get(index);
+            UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(),
+                    in.getOutpoint().getIndex());
+            if (prevOut == null) {
+                // Cannot happen due to solidity checks before
+                throw new RuntimeException("Block attempts to spend a not yet existent output!");
+            }
+
+            if (offerTokenid != null && !offerTokenid.equals(Utils.HEX.encode(prevOut.getValue().getTokenid()))) {
+                // Cannot happen due to solidity checks before
+                throw new RuntimeException("Differing token id!");
+            }
+            
+            offerTokenid = Utils.HEX.encode(prevOut.getValue().getTokenid());
+            offerValue += prevOut.getValue().getValue();
+        }
+        
+        for (int index = 0; index < orderTx.getOutputs().size(); index++) {
+            TransactionOutput out = orderTx.getOutputs().get(index);
+
+            if (offerTokenid != null && !offerTokenid.equals(Utils.HEX.encode(out.getValue().getTokenid()))) {
+                // Cannot happen due to solidity checks before
+                throw new RuntimeException("Differing token id!");
+            }
+            
+            offerTokenid = Utils.HEX.encode(out.getValue().getTokenid());
+            offerValue -= out.getValue().getValue();
         }
         
         // Build transaction returning the spent tokens
         Transaction tx = new Transaction(networkParameters);
-        tx.addOutput(Coin.valueOf(value, tokenid), ECKey.fromPublicOnly(blockStore.getOrder(orderTx.getHash(), Sha256Hash.ZERO_HASH).getBeneficiaryPubKey()));
+        tx.addOutput(Coin.valueOf(offerValue, Utils.HEX.decode(offerTokenid)), ECKey.fromPublicOnly(blockStore.getOrder(orderTx.getHash(), Sha256Hash.ZERO_HASH).getBeneficiaryPubKey()));
         
         // The input does not really need to be a valid signature, as long
         // as it has the right general form and is slightly different for
