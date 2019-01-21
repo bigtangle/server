@@ -62,7 +62,7 @@ import net.bigtangle.core.VerificationException.ProofOfWorkException;
 import net.bigtangle.core.VerificationException.SigOpsException;
 import net.bigtangle.core.VerificationException.TimeReversionException;
 import net.bigtangle.core.VerificationException.TimeTravelerException;
-import net.bigtangle.core.VerificationException.TransactionInputsDisallowedException;
+import net.bigtangle.core.VerificationException.TransactionOutputsDisallowedException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
@@ -1046,7 +1046,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             blockGraph.add(rewardBlock, false);
             
             fail();
-        } catch (TransactionInputsDisallowedException e) {
+        } catch (TransactionOutputsDisallowedException e) {
         }
     }
     
