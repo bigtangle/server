@@ -23,6 +23,10 @@ public class OrderOpInfo implements java.io.Serializable {
 	private int opIndex;
 	private Sha256Hash txHash;
 
+    public OrderOpInfo() {
+		super();
+	}
+
 	public OrderOpInfo(OrderOp op, int opIndex, Sha256Hash txHash) {
 		super();
 		this.op = op;

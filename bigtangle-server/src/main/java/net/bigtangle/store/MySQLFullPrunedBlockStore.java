@@ -114,7 +114,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    spenderblockhash  varbinary(32),\n" // if confirmed, this is the consuming ordermatch blockhash, else null
             + "    targetcoinvalue bigint,\n" // amount of target tokens wanted
             + "    targettokenid varchar(255),\n" // tokenid of the wanted tokens
-            + "    beneficiarypubkey varchar(255),\n" // the pubkey that will receive the targettokens on completion or returned tokens on cancels
+            + "    beneficiarypubkey binary(33),\n" // the pubkey that will receive the targettokens on completion or returned tokens on cancels
             + "    ttl int,\n" // the amount of ordermatch blocks this token is kept open without further refreshments
             + "    opindex int,\n" // a number used to track operations on the order, e.g. increasing by one when refreshing
             + "    CONSTRAINT outputs_pk PRIMARY KEY (txhash, blockhash) USING BTREE \n" + ")\n"; 

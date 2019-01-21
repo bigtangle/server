@@ -976,9 +976,26 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                         // Cannot happen due to solidity checks before
                         throw new RuntimeException("Block attempts to spend a not yet existent output!");
                     }
+
+                    if (offerTokenid != null && !offerTokenid.equals(Utils.HEX.encode(prevOut.getValue().getTokenid()))) {
+                        // Cannot happen due to solidity checks before
+                        throw new RuntimeException("Differing token id!");
+                    }
                     
                     offerTokenid = Utils.HEX.encode(prevOut.getValue().getTokenid());
                     offerValue += prevOut.getValue().getValue();
+                }
+                
+                for (int index = 0; index < tx.getOutputs().size(); index++) {
+                    TransactionOutput out = tx.getOutputs().get(index);
+
+                    if (offerTokenid != null && !offerTokenid.equals(Utils.HEX.encode(out.getValue().getTokenid()))) {
+                        // Cannot happen due to solidity checks before
+                        throw new RuntimeException("Differing token id!");
+                    }
+                    
+                    offerTokenid = Utils.HEX.encode(out.getValue().getTokenid());
+                    offerValue -= out.getValue().getValue();
                 }
             }
             
@@ -1037,7 +1054,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     /**
      * Deterministically execute the order matching algorithm on this block.
      * 
-     * @return MODIFIED new consumed orders, virtual order matching tx and newly generated remaining MODIFIED order book
+     * @return new consumed orders, virtual order matching tx and newly generated remaining MODIFIED order book
      * @throws BlockStoreException
      */
     public Triple<Collection<OrderRecord>, Transaction, Collection<OrderRecord>> generateOrderMatching(Block block) throws BlockStoreException {
@@ -1064,11 +1081,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         List<OrderOpInfo> cancels = new ArrayList<>(), refreshs = new ArrayList<>();
         Map<Sha256Hash, OrderRecord> newOrders = new TreeMap<>(Comparator
                 .comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));
+        Set<OrderRecord> untouchedNewOrders = new HashSet<>();
+        
         
         for (BlockWrap b : relevantBlocks) {
             if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
                 final Sha256Hash txHash = b.getBlock().getTransactions().get(0).getHash();
                 newOrders.put(txHash, blockStore.getOrder(txHash, Sha256Hash.ZERO_HASH));
+                untouchedNewOrders.add(blockStore.getOrder(txHash, Sha256Hash.ZERO_HASH));
             } else if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OP) {
                 OrderOpInfo info = null;
                 try {
@@ -1189,22 +1209,16 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 
                 if (matchEvent.incomingSide == Side.BUY) {
                     // When incoming is buy, the resting proceeds would receive BIG
-                    Long restingBIGProceeds = restingProceeds.get(NetworkParameters.BIGTANGLE_TOKENID_STRING);
-                    if (restingBIGProceeds == null) {
-                        restingBIGProceeds = 0L;
-                        restingProceeds.put(NetworkParameters.BIGTANGLE_TOKENID_STRING, restingBIGProceeds);
+                    if (restingProceeds.get(NetworkParameters.BIGTANGLE_TOKENID_STRING) == null) {
+                        restingProceeds.put(NetworkParameters.BIGTANGLE_TOKENID_STRING, 0L);
                     }
                     
                     // When incoming is buy, the incoming proceeds would receive the token and perhaps returned BIGs
-                    Long incomingTokenProceeds = incomingProceeds.get(tokenId);
-                    if (incomingTokenProceeds == null) {
-                        incomingTokenProceeds = 0L;
-                        incomingProceeds.put(tokenId, incomingTokenProceeds);
+                    if (incomingProceeds.get(tokenId) == null) {
+                        incomingProceeds.put(tokenId, 0L);
                     }
-                    Long incomingBIGProceeds = incomingProceeds.get(NetworkParameters.BIGTANGLE_TOKENID_STRING);
-                    if (incomingBIGProceeds == null) {
-                        incomingBIGProceeds = 0L;
-                        incomingProceeds.put(NetworkParameters.BIGTANGLE_TOKENID_STRING, incomingBIGProceeds);
+                    if (incomingProceeds.get(NetworkParameters.BIGTANGLE_TOKENID_STRING) == null) {
+                        incomingProceeds.put(NetworkParameters.BIGTANGLE_TOKENID_STRING, 0L);
                     }
                     
                     long sellableAmount = restingOrder.getOfferValue();
@@ -1212,13 +1226,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     long incomingPrice = incomingOrder.getOfferValue() / incomingOrder.getTargetValue();
                     
                     // The resting order receives the BIG according to its price
-                    restingProceeds.put(NetworkParameters.BIGTANGLE_TOKENID_STRING, restingBIGProceeds + executedAmount * executedPrice);
+                    restingProceeds.put(NetworkParameters.BIGTANGLE_TOKENID_STRING, restingProceeds.get(NetworkParameters.BIGTANGLE_TOKENID_STRING) + executedAmount * executedPrice);
                     
                     // The incoming order receives the token according to the resting price
-                    incomingProceeds.put(tokenId, incomingTokenProceeds + executedAmount);
+                    incomingProceeds.put(tokenId, incomingProceeds.get(tokenId) + executedAmount);
                     
                     // The difference in price is returned to the incoming beneficiary
-                    incomingProceeds.put(NetworkParameters.BIGTANGLE_TOKENID_STRING, incomingBIGProceeds 
+                    incomingProceeds.put(NetworkParameters.BIGTANGLE_TOKENID_STRING, incomingProceeds.get(NetworkParameters.BIGTANGLE_TOKENID_STRING) 
                             + executedAmount * (incomingPrice - executedPrice));
                     
                     // Finally, the orders could be fulfilled now, so we can remove them from the order list
@@ -1238,17 +1252,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     
                 } else {
                     // When incoming is sell, the resting proceeds would receive tokens
-                    Long restingTokenProceeds = restingProceeds.get(tokenId);
-                    if (restingTokenProceeds == null) {
-                        restingTokenProceeds = 0L;
-                        restingProceeds.put(tokenId, restingTokenProceeds);
+                    if (restingProceeds.get(tokenId) == null) {
+                        restingProceeds.put(tokenId, 0L);
                     }
                     
                     // When incoming is sell, the incoming proceeds would receive BIGs
-                    Long incomingBIGProceeds = incomingProceeds.get(NetworkParameters.BIGTANGLE_TOKENID_STRING);
-                    if (incomingBIGProceeds == null) {
-                        incomingBIGProceeds = 0L;
-                        incomingProceeds.put(NetworkParameters.BIGTANGLE_TOKENID_STRING, incomingBIGProceeds);
+                    if (incomingProceeds.get(NetworkParameters.BIGTANGLE_TOKENID_STRING) == null) {
+                        incomingProceeds.put(NetworkParameters.BIGTANGLE_TOKENID_STRING, 0L);
                     }
 
                     long sellableAmount = incomingOrder.getOfferValue();
@@ -1256,10 +1266,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     long incomingPrice = incomingOrder.getTargetValue() / incomingOrder.getOfferValue();
                     
                     // The resting order receives the tokens
-                    restingProceeds.put(tokenId, restingTokenProceeds + executedAmount);
+                    restingProceeds.put(tokenId, restingProceeds.get(tokenId) + executedAmount);
                     
                     // The incoming order receives the BIG according to the resting price
-                    incomingProceeds.put(NetworkParameters.BIGTANGLE_TOKENID_STRING, incomingBIGProceeds 
+                    incomingProceeds.put(NetworkParameters.BIGTANGLE_TOKENID_STRING, incomingProceeds.get(NetworkParameters.BIGTANGLE_TOKENID_STRING) 
                             + executedAmount * executedPrice);
                     
                     // Finally, the orders could be fulfilled now, so we can remove them from the order list
@@ -1280,7 +1290,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
         }
         
-        // All remaining: TTL decrease by one, remove timeouts
+        // All remaining: TTL decrease by one, remove timeouts, set issuing order blockhash
         Iterator<Entry<Sha256Hash, OrderRecord>> it = remainingOrders.entrySet().iterator();
         while (it.hasNext()) {
             final Entry<Sha256Hash, OrderRecord> next = it.next();
@@ -1289,7 +1299,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             if (order.getTtl() <= 0) { 
                 cancelledOrders.add(order);
                 it.remove();
-            }
+                continue;
+            } 
+            order.setIssuingMatcherBlockHash(block.getHash());
         }
         
         // Add to proceeds all cancelled orders going back to the beneficiary
@@ -1316,7 +1328,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 String tokenId = tokenProceeds.getKey();
                 long proceedsValue = tokenProceeds.getValue();
                 
-                tx.addOutput(Coin.valueOf(proceedsValue, tokenId), ECKey.fromPublicOnly(beneficiaryPubKey));
+                if (proceedsValue != 0)
+                	tx.addOutput(Coin.valueOf(proceedsValue, tokenId), ECKey.fromPublicOnly(beneficiaryPubKey));
             }
         }
         
@@ -1326,7 +1339,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         tx.addInput(input);
         
         // Return MODIFIED new consumed orders, virtual order matching tx and newly generated remaining MODIFIED order book
-        return Triple.of(newOrders.values(), tx, remainingOrders.values());
+        return Triple.of(untouchedNewOrders, tx, remainingOrders.values());
     }
 
     private List<BlockWrap> collectConsumedOrdersAndOpsBlocks(Block block, Sha256Hash prevRewardHash) throws BlockStoreException {

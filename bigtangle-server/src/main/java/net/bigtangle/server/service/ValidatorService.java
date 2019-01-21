@@ -52,10 +52,10 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.OrderOpInfo;
 import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.OrderReclaimInfo;
+import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.OrderRecordInfo;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
@@ -85,7 +85,6 @@ import net.bigtangle.core.VerificationException.NotCoinbaseException;
 import net.bigtangle.core.VerificationException.PreviousTokenDisallowsException;
 import net.bigtangle.core.VerificationException.SigOpsException;
 import net.bigtangle.core.VerificationException.TimeReversionException;
-import net.bigtangle.core.VerificationException.TransactionInputsDisallowedException;
 import net.bigtangle.core.VerificationException.TransactionOutputsDisallowedException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.script.Script;
@@ -930,15 +929,16 @@ public class ValidatorService {
 
         	// TODO different block type transactions should include their block type in the transaction hash
             // for now, we must disallow someone burning this transaction as non-order opening
-            if (block.getBlockType() != Type.BLOCKTYPE_ORDER_OPEN && block.getTransactions().size() > 0) {
-                try {
-                	OrderOpenInfo.parse(block.getTransactions().get(0).getData());
-                    if (throwExceptions)
-                        throw new MalformedTransactionDataException();
-                    return SolidityState.getFailState();
-                } catch (Exception e) {
-                	// Expected
-                }
+            if (block.getBlockType() != Type.BLOCKTYPE_ORDER_OPEN) {
+            	for (Transaction tx : block.getTransactions())
+	                try {
+	                	OrderOpenInfo.parse(tx.getData());
+	                    if (throwExceptions)
+	                        throw new MalformedTransactionDataException();
+	                    return SolidityState.getFailState();
+	                } catch (Exception e) {
+	                	// Expected
+	                }
             }
             
             // Check predecessor blocks exist
@@ -1246,6 +1246,13 @@ public class ValidatorService {
                 throw new IncorrectTransactionCountException();
             return SolidityState.getFailState();
         }
+
+        // No output creation
+        if (!block.getTransactions().get(0).getOutputs().isEmpty()) {
+            if (throwExceptions)
+                throw new TransactionOutputsDisallowedException();
+            return SolidityState.getFailState(); 
+        }
         
         Transaction tx = block.getTransactions().get(0);
         if (tx.getData() == null) {
@@ -1319,13 +1326,6 @@ public class ValidatorService {
                 throw new IncorrectTransactionCountException();
             return SolidityState.getFailState(); 
         }
-
-        // No spending, all is being burnt
-        if (!transactions.get(0).getOutputs().isEmpty()) {
-            if (throwExceptions)
-                throw new TransactionOutputsDisallowedException();
-            return SolidityState.getFailState(); 
-        }
         
         if (transactions.get(0).getData() == null) {
             if (throwExceptions)
@@ -1360,7 +1360,7 @@ public class ValidatorService {
         
         // Check that the tx inputs only burn one type of tokens
         String tokenid = null;
-        long value = 0;
+        long burnValue = 0;
         for (final Transaction tx : block.getTransactions()) {
             for (int index = 0; index < tx.getInputs().size(); index++) {
                 TransactionInput in = tx.getInputs().get(index);
@@ -1373,17 +1373,29 @@ public class ValidatorService {
                 
                 if (tokenid == null)
                     tokenid = Utils.HEX.encode(prevOut.getValue().getTokenid());
-                else if (tokenid != Utils.HEX.encode(prevOut.getValue().getTokenid())) {
+                else if (!tokenid.equals(Utils.HEX.encode(prevOut.getValue().getTokenid()))) {
                     if (throwExceptions)
                         throw new VerificationException("Cannot use multiple different tokens");
                     return SolidityState.getFailState();     
                 }
                     
-                value += prevOut.getValue().getValue();
+                burnValue += prevOut.getValue().getValue();
+            }
+
+            for (int index = 0; index < tx.getOutputs().size(); index++) {
+                TransactionOutput out = tx.getOutputs().get(index);
+                
+                if (!tokenid.equals(Utils.HEX.encode(out.getValue().getTokenid()))) {
+                    if (throwExceptions)
+                        throw new VerificationException("Cannot use multiple different tokens");
+                    return SolidityState.getFailState();     
+                }
+                    
+                burnValue -= out.getValue().getValue();
             }
         }
         
-        if (value > Integer.MAX_VALUE) {
+        if (burnValue > Integer.MAX_VALUE) {
             if (throwExceptions)
                 throw new VerificationException("The order is too large.");
             return SolidityState.getFailState();     
@@ -1400,13 +1412,13 @@ public class ValidatorService {
         
         // Check that we have a correct price given in full BIGs
         if (tokenid.equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
-            if (value % orderInfo.getTargetValue() != 0) {
+            if (burnValue % orderInfo.getTargetValue() != 0) {
                 if (throwExceptions)
                     throw new VerificationException("The given order's price is not integer.");
                 return SolidityState.getFailState();     
             }
         } else {
-            if (orderInfo.getTargetValue() % value != 0) {
+            if (orderInfo.getTargetValue() % burnValue != 0) {
                 if (throwExceptions)
                     throw new VerificationException("The given order's price is not integer.");
                 return SolidityState.getFailState();     
@@ -1421,6 +1433,13 @@ public class ValidatorService {
             if (throwExceptions)
                 throw new IncorrectTransactionCountException();
             return SolidityState.getFailState();
+        }
+
+        // No output creation
+        if (!block.getTransactions().get(0).getOutputs().isEmpty()) {
+            if (throwExceptions)
+                throw new TransactionOutputsDisallowedException();
+            return SolidityState.getFailState(); 
         }
         
         Transaction tx = block.getTransactions().get(0);
@@ -1476,9 +1495,10 @@ public class ValidatorService {
             return SolidityState.getFailState(); 
         }
 
-        if (!transactions.get(0).getInputs().isEmpty()) {
+        // No output creation
+        if (!transactions.get(0).getOutputs().isEmpty()) {
             if (throwExceptions)
-                throw new TransactionInputsDisallowedException();
+                throw new TransactionOutputsDisallowedException();
             return SolidityState.getFailState(); 
         }
         

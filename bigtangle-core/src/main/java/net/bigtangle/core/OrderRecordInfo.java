@@ -16,6 +16,10 @@ public class OrderRecordInfo implements java.io.Serializable {
 	
 	private Sha256Hash txHash;
     private Sha256Hash issuingMatcherBlockHash;
+
+    public OrderRecordInfo() {
+		super();
+	}
     
     public OrderRecordInfo(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) {
 		super();

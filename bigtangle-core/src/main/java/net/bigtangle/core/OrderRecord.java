@@ -5,11 +5,6 @@
 
 package net.bigtangle.core;
 
-import java.io.IOException;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-
 public class OrderRecord implements java.io.Serializable {
 
 	private static final long serialVersionUID = -2331665478149550684L;
@@ -144,21 +139,4 @@ public class OrderRecord implements java.io.Serializable {
 	public static long getSerialversionuid() {
 		return serialVersionUID;
 	}
-
-	public byte[] toByteArray() {
-        try {
-            String jsonStr = Json.jsonmapper().writeValueAsString(this);
-            return jsonStr.getBytes();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return new byte[0];
-    }
-
-    public static OrderRecord parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
-        String jsonStr = new String(buf);
-        OrderRecord tokenInfo = Json.jsonmapper().readValue(jsonStr, OrderRecord.class);
-        return tokenInfo;
-    }
-    
 }

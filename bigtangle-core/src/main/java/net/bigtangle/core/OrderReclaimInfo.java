@@ -22,6 +22,10 @@ public class OrderReclaimInfo implements java.io.Serializable {
 	private Sha256Hash blockHash;
     private Sha256Hash nonConfirmingMatcherBlockHash;
 
+    public OrderReclaimInfo() {
+		super();
+	}
+
 	public OrderReclaimInfo(int opIndex, Sha256Hash blockHash, Sha256Hash nonConfirmingMatcherBlockHash) {
 		super();
 		this.opIndex = opIndex;

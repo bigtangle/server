@@ -18,7 +18,11 @@ public class OrderOpenInfo implements java.io.Serializable {
     private String targetTokenid;
     private byte[] beneficiaryPubKey;
 
-    public OrderOpenInfo(long targetValue, String targetTokenid, byte[] beneficiaryPubKey) {
+    public OrderOpenInfo() {
+		super();
+	}
+
+	public OrderOpenInfo(long targetValue, String targetTokenid, byte[] beneficiaryPubKey) {
 		super();
 		this.targetValue = targetValue;
 		this.targetTokenid = targetTokenid;
