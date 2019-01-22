@@ -374,5 +374,19 @@ user must be activated via email and ask verification via mobile number after re
 
 https://github.com/xmrig/xmrig
 
+  
+## fiat payment and integration into bigtangle
+* user pay the fiat money or any cryptocurrency with a given public address to a trusted account for example bank or paypal  account Inasset   --> cc.bigtangle.net start a payment via web app and check the payment, upload the public keys
+* Inasset creates a multi sign token for the fiat money with same amount in BigTangle
+* Inasset pay this token to the given public address.
+* User pay this token to Token address and can ask transfer this token  to his bank account.
 
- 
+## mainnet start bigtangle and permissioned subtangle inasset exchange with KYC
+
+
+## central bank solution and demos
+
+## fix first multi sign token must contain signature of token id (prevent duplicated attack )
+
+## archtecture of bigtangle and subtangle
+
