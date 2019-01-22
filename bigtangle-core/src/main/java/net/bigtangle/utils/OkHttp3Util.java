@@ -42,7 +42,7 @@ public class OkHttp3Util {
 
     public static String post(String url, byte[] b) throws Exception {
         logger.debug(url);
-        OkHttpClient client = getOkHttpClientSafe(pubkey, signHex, contentHex);
+        OkHttpClient client = getOkHttpClient();
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), b);
         Request request = new Request.Builder().url(url).post(body).build();
         Response response = client.newCall(request).execute();
@@ -166,6 +166,7 @@ public class OkHttp3Util {
                             return true;
                         }
                     }).connectTimeout(timeoutMinute, TimeUnit.MINUTES).writeTimeout(timeoutMinute, TimeUnit.MINUTES)
+                    .addInterceptor(new BasicAuthInterceptor(pubkey, signHex, contentHex)) 
                     .readTimeout(timeoutMinute, TimeUnit.MINUTES).build();
 
             return client;
